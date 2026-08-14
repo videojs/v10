@@ -8,12 +8,6 @@ import { isMediaVideoDimensionsCapable, isMediaVideoRenditionCapable } from '@vi
 import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 
-const QUALITY_AUTO_VALUE = 'auto';
-
-function getRenditionValue(rendition: VideoRenditionLike, index: number): string {
-  return rendition.id || String(index);
-}
-
 function toMediaRendition(rendition: VideoRenditionLike): MediaVideoRendition {
   return {
     ...(rendition.id !== undefined && { id: rendition.id }),
@@ -36,20 +30,16 @@ export const qualityFeature = definePlayerFeature({
   state: ({ target }): MediaQualityState => ({
     videoRenditionList: [],
     activeVideoRendition: null,
-    selectVideoRendition(value: string) {
+    selectVideoRendition(index: number | null) {
       const { media } = target();
       if (!isMediaVideoRenditionCapable(media)) return;
 
-      if (value === QUALITY_AUTO_VALUE) {
+      if (index === null) {
         media.videoRenditions.selectedIndex = -1;
         return;
       }
 
-      const index = [...media.videoRenditions].findIndex(
-        (rendition, renditionIndex) => getRenditionValue(rendition, renditionIndex) === value
-      );
-
-      if (index !== -1) media.videoRenditions.selectedIndex = index;
+      if (index >= 0 && index < media.videoRenditions.length) media.videoRenditions.selectedIndex = index;
     },
   }),
 

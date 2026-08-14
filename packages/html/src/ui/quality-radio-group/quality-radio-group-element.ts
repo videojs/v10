@@ -27,9 +27,10 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #mediaState = new PlayerController(this, playerContext, selectQuality);
   readonly #options = new RadioOptionsController<QualityRadioGroupOption>(this, {
-    renderItem: (item, label, option) => this.#setContent(item, label, option.tier, option.badge),
+    renderItem: (item, label, option) => this.#setContent(item, label, option),
     setItemAttributes: (item, option) => item.setAttribute('data-rendition', option.value),
-    getOptionCacheKey: (option) => `${option.tier ?? ''}:${option.badge ?? ''}`,
+    getOptionCacheKey: (option) =>
+      option.kind === 'rendition' ? `${option.parts.tier ?? ''}:${option.parts.bitrate ?? ''}` : '',
     onValueChange: (value) => {
       const media = this.#mediaState.value;
       if (media) this.#core.selectValue(media, value);
@@ -64,13 +65,16 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     if (state) applyStateDataAttrs(this, state, QualityRadioGroupDataAttrs);
   }
 
-  #setContent(item: MenuRadioItemElement, label: string, tier: string | undefined, badge: string | undefined): void {
+  #setContent(item: MenuRadioItemElement, label: string, option: QualityRadioGroupOption): void {
     const labelPart = item.querySelector<HTMLElement>('[data-part~="label"]');
     const tierPart = item.querySelector<HTMLElement>('[data-part~="tier"]');
     const badgePart = item.querySelector<HTMLElement>('[data-part~="badge"]');
+    const primary = option.kind === 'rendition' ? translateText(option.parts.primary, this.#i18n.value) : label;
+    const tier = option.kind === 'rendition' ? option.parts.tier : undefined;
+    const bitrate = option.kind === 'rendition' ? option.parts.bitrate : undefined;
 
     if (labelPart) {
-      labelPart.textContent = label;
+      labelPart.textContent = primary;
     }
 
     if (tierPart) {
@@ -79,12 +83,12 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     }
 
     if (badgePart) {
-      badgePart.textContent = badge ?? '';
-      badgePart.hidden = !badge;
+      badgePart.textContent = bitrate ?? '';
+      badgePart.hidden = !bitrate;
     }
 
     if (!labelPart && !tierPart && !badgePart) {
-      item.textContent = [label, tier, badge].filter(Boolean).join(' ');
+      item.textContent = label;
     }
   }
 }

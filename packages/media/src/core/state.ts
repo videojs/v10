@@ -262,8 +262,8 @@ export interface MediaQualityState {
   videoRenditionList: MediaVideoRendition[];
   /** Video rendition currently playing, including when automatic ABR is selected. */
   activeVideoRendition: MediaVideoRendition | null;
-  /** Select a video rendition by menu value, or automatic ABR with `"auto"`. */
-  selectVideoRendition(value: string): void;
+  /** Select a video rendition by list index, or use automatic ABR with `null`. */
+  selectVideoRendition(index: number | null): void;
 }
 
 export interface MediaAudioTrack {

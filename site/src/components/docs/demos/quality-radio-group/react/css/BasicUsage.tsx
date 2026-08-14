@@ -1,4 +1,4 @@
-import { createPlayer, Menu, useQualityOptions } from '@videojs/react';
+import { createPlayer, Menu, useVideoQualityOptions } from '@videojs/react';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
@@ -7,8 +7,8 @@ const Player = createPlayer({ features: videoFeatures });
 const src = '{{VJS8_DEMO_VIDEO_HLS}}';
 
 function QualityMenu(): ReactNode {
-  const quality = useQualityOptions();
-  if (quality?.state.availability !== 'available') return null;
+  const quality = useVideoQualityOptions();
+  if (quality?.availability !== 'available') return null;
 
   return (
     <Menu.Root side="top" align="end">
@@ -20,15 +20,15 @@ function QualityMenu(): ReactNode {
           className="menu-group"
           value={quality.value}
           onValueChange={quality.setValue}
-          aria-label="Quality"
+          aria-label={quality.label}
         >
           {quality.options.map((option) => (
             <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled} className="menu-item">
               <span>
-                {option.label}
-                {option.tier ? <sup className="menu-tier">{option.tier}</sup> : null}
+                {option.parts.primary}
+                {option.parts.tier ? <sup className="menu-tier">{option.parts.tier}</sup> : null}
               </span>
-              {option.badge ? <span className="menu-badge">{option.badge}</span> : null}
+              {option.parts.bitrate ? <span className="menu-badge">{option.parts.bitrate}</span> : null}
               <Menu.ItemIndicator checked={option.value === quality.value} forceMount className="menu-indicator">
                 ✓
               </Menu.ItemIndicator>

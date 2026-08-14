@@ -18,9 +18,23 @@ function createMediaState(overrides: Partial<MediaQualityState> = {}): MediaQual
 function createState(overrides: Partial<QualityRadioGroupState> = {}): QualityRadioGroupState {
   return {
     options: [
-      { value: QUALITY_AUTO_VALUE, label: 'Auto', disabled: false },
-      { value: '0', label: '1080p', disabled: false },
-      { value: '1', label: '720p', disabled: false },
+      { kind: 'auto', value: QUALITY_AUTO_VALUE, label: 'Auto', disabled: false },
+      {
+        kind: 'rendition',
+        value: 'rendition:0',
+        label: '1080p HD',
+        disabled: false,
+        rendition: { id: '0', height: 1080, selected: false },
+        parts: { primary: '1080p', tier: 'HD' },
+      },
+      {
+        kind: 'rendition',
+        value: 'rendition:1',
+        label: '720p',
+        disabled: false,
+        rendition: { id: '1', height: 720, selected: false },
+        parts: { primary: '720p' },
+      },
     ],
     value: QUALITY_AUTO_VALUE,
     disabled: false,
@@ -41,9 +55,23 @@ describe('QualityRadioGroupCore', () => {
       const state = core.getState();
 
       expect(state.options).toEqual([
-        { value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
-        { value: '0', label: '1080p', disabled: false, tier: 'HD' },
-        { value: '1', label: '720p', disabled: false },
+        { kind: 'auto', value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
+        {
+          kind: 'rendition',
+          value: 'rendition:0',
+          label: '1080p HD',
+          disabled: false,
+          rendition: media.videoRenditionList[0],
+          parts: { primary: '1080p', tier: 'HD' },
+        },
+        {
+          kind: 'rendition',
+          value: 'rendition:1',
+          label: '720p',
+          disabled: false,
+          rendition: media.videoRenditionList[1],
+          parts: { primary: '720p' },
+        },
       ]);
       expect(state.value).toBe(QUALITY_AUTO_VALUE);
     });
@@ -60,10 +88,31 @@ describe('QualityRadioGroupCore', () => {
       core.setMedia(media);
 
       expect(core.getState().options).toEqual([
-        { value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
-        { value: '0', label: '1080p', disabled: false, tier: 'HD', badge: '6 Mbps' },
-        { value: '1', label: '1080p', disabled: false, tier: 'HD', badge: '3 Mbps' },
-        { value: '2', label: '720p', disabled: false },
+        { kind: 'auto', value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
+        {
+          kind: 'rendition',
+          value: 'rendition:0',
+          label: '1080p HD 6 Mbps',
+          disabled: false,
+          rendition: media.videoRenditionList[0],
+          parts: { primary: '1080p', tier: 'HD', bitrate: '6 Mbps' },
+        },
+        {
+          kind: 'rendition',
+          value: 'rendition:1',
+          label: '1080p HD 3 Mbps',
+          disabled: false,
+          rendition: media.videoRenditionList[1],
+          parts: { primary: '1080p', tier: 'HD', bitrate: '3 Mbps' },
+        },
+        {
+          kind: 'rendition',
+          value: 'rendition:2',
+          label: '720p',
+          disabled: false,
+          rendition: media.videoRenditionList[2],
+          parts: { primary: '720p' },
+        },
       ]);
     });
 
@@ -79,10 +128,31 @@ describe('QualityRadioGroupCore', () => {
       core.setMedia(media);
 
       expect(core.getState().options).toEqual([
-        { value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
-        { value: '0', label: '1080p', disabled: false, tier: 'HD' },
-        { value: '1', label: '2160p', disabled: false, tier: '4K' },
-        { value: '2', label: '4320p', disabled: false, tier: '8K' },
+        { kind: 'auto', value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
+        {
+          kind: 'rendition',
+          value: 'rendition:0',
+          label: '1080p HD',
+          disabled: false,
+          rendition: media.videoRenditionList[0],
+          parts: { primary: '1080p', tier: 'HD' },
+        },
+        {
+          kind: 'rendition',
+          value: 'rendition:1',
+          label: '2160p 4K',
+          disabled: false,
+          rendition: media.videoRenditionList[1],
+          parts: { primary: '2160p', tier: '4K' },
+        },
+        {
+          kind: 'rendition',
+          value: 'rendition:2',
+          label: '4320p 8K',
+          disabled: false,
+          rendition: media.videoRenditionList[2],
+          parts: { primary: '4320p', tier: '8K' },
+        },
       ]);
     });
 
@@ -96,7 +166,7 @@ describe('QualityRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().value).toBe('1');
+      expect(core.getState().value).toBe('rendition:1');
     });
 
     it('labels automatic with the active rendition', () => {
@@ -110,6 +180,7 @@ describe('QualityRadioGroupCore', () => {
 
       expect(state.value).toBe(QUALITY_AUTO_VALUE);
       expect(state.options[0]).toEqual({
+        kind: 'auto',
         value: QUALITY_AUTO_VALUE,
         label: { key: 'menu.autoWithLabel', text: 'Auto ({label})' },
         labelParams: { label: '720p' },
@@ -182,16 +253,46 @@ describe('QualityRadioGroupCore', () => {
 
       core.selectValue(media, QUALITY_AUTO_VALUE);
 
-      expect(media.selectVideoRendition).toHaveBeenCalledWith(QUALITY_AUTO_VALUE);
+      expect(media.selectVideoRendition).toHaveBeenCalledWith(null);
     });
 
     it('selects a known rendition', () => {
       const core = new QualityRadioGroupCore();
       const media = createMediaState();
 
-      core.selectValue(media, '1');
+      core.selectValue(media, 'rendition:1');
 
-      expect(media.selectVideoRendition).toHaveBeenCalledWith('1');
+      expect(media.selectVideoRendition).toHaveBeenCalledWith(1);
+    });
+
+    it('keeps automatic selection distinct from a rendition whose id is auto', () => {
+      const core = new QualityRadioGroupCore();
+      const media = createMediaState({
+        videoRenditionList: [
+          { id: 'auto', height: 1080, selected: false },
+          { id: 'other', height: 720, selected: false },
+        ],
+      });
+      core.setMedia(media);
+
+      core.selectValue(media, 'rendition:0');
+
+      expect(media.selectVideoRendition).toHaveBeenCalledWith(0);
+    });
+
+    it('selects the correct duplicate rendition without ids', () => {
+      const core = new QualityRadioGroupCore();
+      const media = createMediaState({
+        videoRenditionList: [
+          { height: 1080, bitrate: 6_000_000, selected: false },
+          { height: 1080, bitrate: 6_000_000, selected: false },
+        ],
+      });
+      core.setMedia(media);
+
+      core.selectValue(media, 'rendition:1');
+
+      expect(media.selectVideoRendition).toHaveBeenCalledWith(1);
     });
 
     it('does nothing for an unknown rendition', () => {

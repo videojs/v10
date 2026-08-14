@@ -116,19 +116,32 @@ describe('qualityFeature', () => {
     const store = createStore<PlayerTarget>()(qualityFeature);
     store.attach({ media, container: null });
 
-    store.state.selectVideoRendition('auto');
+    store.state.selectVideoRendition(null);
 
     expect((media as any).videoRenditions.selectedIndex).toBe(-1);
   });
 
-  it('selects a rendition by value', () => {
+  it('selects a rendition', () => {
     const media = createMedia([createRendition({ id: '0', height: 1080 }), createRendition({ id: '1', height: 720 })]);
     const store = createStore<PlayerTarget>()(qualityFeature);
     store.attach({ media, container: null });
 
-    store.state.selectVideoRendition('1');
+    store.state.selectVideoRendition(1);
 
     expect((media as any).videoRenditions.selectedIndex).toBe(1);
+  });
+
+  it('selects a rendition whose id is auto', () => {
+    const media = createMedia([
+      createRendition({ id: 'auto', height: 1080 }),
+      createRendition({ id: 'other', height: 720 }),
+    ]);
+    const store = createStore<PlayerTarget>()(qualityFeature);
+    store.attach({ media, container: null });
+
+    store.state.selectVideoRendition(0);
+
+    expect((media as any).videoRenditions.selectedIndex).toBe(0);
   });
 
   it('resyncs on rendition change', () => {

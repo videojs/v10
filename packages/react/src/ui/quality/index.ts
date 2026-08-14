@@ -1,6 +1,8 @@
 export {
-  type QualityOption,
-  type QualityOptionsProps,
-  type QualityOptionsResult,
-  useQualityOptions,
-} from './use-quality-options';
+  useVideoQualityOptions,
+  type VideoQualityAutoOption,
+  type VideoQualityOption,
+  type VideoQualityOptionsProps,
+  type VideoQualityOptionsResult,
+  type VideoQualityRenditionOption,
+} from './use-video-quality-options';

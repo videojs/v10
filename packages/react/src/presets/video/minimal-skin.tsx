@@ -57,7 +57,7 @@ import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { PlaybackRateRadioGroup } from '@/ui/playback-rate-radio-group';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
-import { useQualityOptions } from '@/ui/quality';
+import { useVideoQualityOptions } from '@/ui/quality';
 import { QualityRadioGroup } from '@/ui/quality-radio-group';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
@@ -123,7 +123,7 @@ function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
 function SettingsMenu(): ReactNode {
   const t = useTranslator();
   const playbackRate = usePlaybackRateOptions();
-  const quality = useQualityOptions();
+  const quality = useVideoQualityOptions();
   const audioTrack = useAudioTrackOptions();
   const captions = useCaptionsOptions();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
@@ -176,10 +176,10 @@ function SettingsMenu(): ReactNode {
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
                       <span>
-                        {item.label}
-                        {item.tier ? <sup className="media-menu__tier">{item.tier}</sup> : null}
+                        {item.parts.primary}
+                        {item.parts.tier ? <sup className="media-menu__tier">{item.parts.tier}</sup> : null}
                       </span>
-                      {item.badge ? <span className="media-badge">{item.badge}</span> : null}
+                      {item.parts.bitrate ? <span className="media-badge">{item.parts.bitrate}</span> : null}
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>

@@ -9,9 +9,13 @@ import { Fragment, forwardRef } from 'react';
 import type { HTMLProps, UIComponentProps } from '../../utils/types';
 import { MenuRadioGroup } from '../menu/menu-radio-group';
 import type { MenuRadioItemProps } from '../menu/menu-radio-item';
-import { type QualityOption, type QualityOptionsProps, useQualityOptions } from '../quality/use-quality-options';
+import {
+  useVideoQualityOptions,
+  type VideoQualityOption,
+  type VideoQualityOptionsProps,
+} from '../quality/use-video-quality-options';
 
-export type QualityRadioGroupItemState = QualityOption & {
+export type QualityRadioGroupItemState = VideoQualityOption & {
   /** Whether this quality option is currently selected. */
   checked: boolean;
 };
@@ -23,7 +27,7 @@ export interface QualityRadioGroupItemProps extends Omit<MenuRadioItemProps, 're
 
 export interface QualityRadioGroupProps
   extends Omit<UIComponentProps<'div', QualityRadioGroupCore.State>, 'children'>,
-    QualityOptionsProps {
+    VideoQualityOptionsProps {
   /** Render one consumer-owned menu radio item for every quality option. */
   renderItem: (props: QualityRadioGroupItemProps, state: QualityRadioGroupItemState) => ReactElement;
 }
@@ -36,8 +40,8 @@ export interface QualityRadioGroupProps
  * <QualityRadioGroup
  *   renderItem={(props, item) => (
  *     <Menu.RadioItem {...props}>
- *       {item.label}
- *       {item.tier ? <sup>{item.tier}</sup> : null}
+ *       {item.parts.primary}
+ *       {item.parts.tier ? <sup>{item.parts.tier}</sup> : null}
  *       <Menu.ItemIndicator checked={item.checked} />
  *     </Menu.RadioItem>
  *   )}
@@ -58,7 +62,7 @@ export const QualityRadioGroup = forwardRef<HTMLDivElement, QualityRadioGroupPro
       'aria-labelledby': ariaLabelledBy,
       ...elementProps
     } = componentProps;
-    const quality = useQualityOptions({ label, formatRendition, disabled });
+    const quality = useVideoQualityOptions({ label, formatRendition, disabled });
     if (!quality) return null;
 
     const { state, value, options, setValue } = quality;

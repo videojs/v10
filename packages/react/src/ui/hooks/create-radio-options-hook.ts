@@ -27,14 +27,17 @@ interface RadioOptionsHookConfig<Props, Media, State extends RadioOptionsState> 
 
 type StateOption<State extends RadioOptionsState> = State extends RadioOptionsState<infer Option> ? Option : never;
 
-export type TranslatedRadioOption<Option extends RadioOption> = Omit<Option, 'label' | 'labelParams' | 'disabled'> & {
-  label: string;
-  disabled: boolean;
-};
+export type TranslatedRadioOption<Option extends RadioOption> = Option extends RadioOption
+  ? Omit<Option, 'label' | 'labelParams' | 'disabled'> & {
+      label: string;
+      disabled: boolean;
+    }
+  : never;
 
 export interface RadioOptionsHookResult<Option extends RadioOption, State extends RadioOptionsState> {
   state: State;
   label: string;
+  availability: State['availability'];
   value: string;
   selectedLabel: string;
   options: TranslatedRadioOption<Option>[];
@@ -83,6 +86,7 @@ export function createRadioOptionsHook<Props, Media, State extends RadioOptionsS
     return {
       state,
       label: translateText(core.getLabel(state), t, core.getLabelParams?.(state)),
+      availability: state.availability,
       value: state.value,
       selectedLabel: options.find((option) => option.value === state.value)?.label ?? '',
       options,

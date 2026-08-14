@@ -30,7 +30,7 @@ function renderQualityRadioGroup({
 }: {
   videoRenditionList?: MediaVideoRendition[];
   activeVideoRendition?: MediaVideoRendition | null;
-  selectVideoRendition?: (value: string) => void;
+  selectVideoRendition?: (index: number | null) => void;
   locale?: string;
   group?: React.ReactNode;
 } = {}) {
@@ -57,7 +57,9 @@ describe('QualityRadioGroup', () => {
           renderItem={(props, state) => {
             states.push(state);
             return (
-              <Menu.RadioItem {...props}>{state.tier ? `${state.label} ${state.tier}` : state.label}</Menu.RadioItem>
+              <Menu.RadioItem {...props}>
+                {state.parts.tier ? `${state.parts.primary} ${state.parts.tier}` : state.parts.primary}
+              </Menu.RadioItem>
             );
           }}
         />
@@ -67,9 +69,19 @@ describe('QualityRadioGroup', () => {
     expect(screen.getByRole('menuitemradio', { name: 'Auto' }).getAttribute('data-rendition')).toBe('auto');
     expect(screen.getByRole('menuitemradio', { name: 'Auto' }).getAttribute('aria-checked')).toBe('true');
     expect(states.slice(-3)).toEqual([
-      expect.objectContaining({ value: 'auto', label: 'Auto', checked: true }),
-      expect.objectContaining({ value: '0', label: '1080p', tier: 'HD', checked: false }),
-      expect.objectContaining({ value: '1', label: '720p', checked: false }),
+      expect.objectContaining({ value: 'auto', label: 'Auto', parts: { primary: 'Auto' }, checked: true }),
+      expect.objectContaining({
+        value: 'rendition:0',
+        label: '1080p HD',
+        parts: { primary: '1080p', tier: 'HD' },
+        checked: false,
+      }),
+      expect.objectContaining({
+        value: 'rendition:1',
+        label: '720p',
+        parts: { primary: '720p' },
+        checked: false,
+      }),
     ]);
   });
 
@@ -79,7 +91,7 @@ describe('QualityRadioGroup', () => {
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: '720p' }));
 
-    expect(selectVideoRendition).toHaveBeenCalledWith('1');
+    expect(selectVideoRendition).toHaveBeenCalledWith(1);
   });
 
   it('exposes group state through attributes and callbacks', () => {

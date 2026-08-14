@@ -246,11 +246,11 @@ describe('QualityRadioGroupElement', () => {
     await waitForMenu(menu, options);
 
     const item = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)].find(
-      (candidate) => candidate.value === '1'
+      (candidate) => candidate.value === 'rendition:1'
     )!;
 
     item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
-    expect(selectVideoRendition).toHaveBeenCalledWith('1');
+    expect(selectVideoRendition).toHaveBeenCalledWith(1);
   });
 });

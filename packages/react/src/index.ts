@@ -137,10 +137,12 @@ export {
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export {
-  type QualityOption,
-  type QualityOptionsProps,
-  type QualityOptionsResult,
-  useQualityOptions,
+  useVideoQualityOptions,
+  type VideoQualityAutoOption,
+  type VideoQualityOption,
+  type VideoQualityOptionsProps,
+  type VideoQualityOptionsResult,
+  type VideoQualityRenditionOption,
 } from './ui/quality';
 export {
   QualityRadioGroup,
