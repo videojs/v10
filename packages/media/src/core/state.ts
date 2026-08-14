@@ -148,12 +148,8 @@ export interface MediaStreamTypeState {
 
 /** Resolved content metadata exposed by the player store. */
 export interface MediaMetadataState {
-  /** The resolved content title. */
-  contentTitle: string;
-  /** Set or clear the user title override. */
-  setContentTitle(value: string | null): void;
-  /** Set or clear the fallback used when neither the user nor media supplies a title. */
-  setDefaultContentTitle(value: string | null): void;
+  /** The resolved content title. Set it through the player, not through the store. */
+  title: string;
 }
 
 export interface MediaLiveState {

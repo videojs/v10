@@ -126,7 +126,7 @@ describe('createPlayer', () => {
       }
 
       render(
-        <Player contentTitle="Replacement title">
+        <Player title="Replacement title">
           <Consumer />
         </Player>
       );
@@ -137,7 +137,7 @@ describe('createPlayer', () => {
       act(() => setMedia(document.createElement('video')));
 
       expect(store).not.toBe(destroyedStore);
-      expect(store.contentTitle).toBe('Replacement title');
+      expect(store.title).toBe('Replacement title');
     });
 
     it('survives React StrictMode without StoreError', () => {
@@ -227,49 +227,43 @@ describe('createPlayer', () => {
 
       function Consumer() {
         store = usePlayer();
-        return <span>{store.contentTitle}</span>;
+        return <span>{store.title}</span>;
       }
 
       const { rerender } = render(
-        <Player contentTitle="Initial title">
+        <Player title="Initial title">
           <Consumer />
         </Player>
       );
 
       expect(screen.getByText('Initial title')).toBeTruthy();
 
-      act(() => store.setDefaultContentTitle('Imperative fallback'));
       rerender(
-        <Player contentTitle="Initial title">
+        <Player title="Updated title">
           <Consumer />
         </Player>
       );
+      expect(store.title).toBe('Updated title');
 
-      rerender(
-        <Player contentTitle="Updated title">
-          <Consumer />
-        </Player>
-      );
-      expect(store.contentTitle).toBe('Updated title');
-
+      // Dropping the prop clears the override, leaving what the media carries.
       rerender(
         <Player>
           <Consumer />
         </Player>
       );
-      expect(store.contentTitle).toBe('Imperative fallback');
+      expect(store.title).toBe('');
     });
 
     it('seeds config inputs during SSR', () => {
       const { Player, usePlayer } = createPlayer({ features: [metadataFeature] });
 
       function Consumer() {
-        return <span>{usePlayer((state) => state.contentTitle)}</span>;
+        return <span>{usePlayer((state) => state.title)}</span>;
       }
 
       expect(
         renderToString(
-          <Player contentTitle="SSR title">
+          <Player title="SSR title">
             <Consumer />
           </Player>
         )
@@ -280,18 +274,18 @@ describe('createPlayer', () => {
       const { Player, usePlayer } = createPlayer({ features: [metadataFeature] });
 
       function Consumer() {
-        return <span>{usePlayer((state) => state.contentTitle)}</span>;
+        return <span>{usePlayer((state) => state.title)}</span>;
       }
 
       const container = document.createElement('div');
       container.innerHTML = renderToString(
-        <Player contentTitle="Hydrated title">
+        <Player title="Hydrated title">
           <Consumer />
         </Player>
       );
 
       const view = render(
-        <Player contentTitle="Hydrated title">
+        <Player title="Hydrated title">
           <Consumer />
         </Player>,
         { container, hydrate: true }
@@ -331,7 +325,7 @@ describe('createPlayer', () => {
       const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const { rerender } = render(
         <Boundary>
-          <Player contentTitle="Committed title">
+          <Player title="Committed title">
             <Consumer />
           </Player>
         </Boundary>
@@ -340,13 +334,13 @@ describe('createPlayer', () => {
 
       rerender(
         <Boundary>
-          <Player contentTitle="Abandoned title">
+          <Player title="Abandoned title">
             <Consumer fail />
           </Player>
         </Boundary>
       );
 
-      expect(committedStore.contentTitle).toBe('Committed title');
+      expect(committedStore.title).toBe('Committed title');
       consoleError.mockRestore();
     });
 

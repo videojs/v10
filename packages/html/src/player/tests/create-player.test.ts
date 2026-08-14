@@ -114,7 +114,7 @@ describe('createPlayer', () => {
     expect(result).not.toHaveProperty('ContainerMixin');
   });
 
-  it('maps selected feature inputs to kebab-cased reactive properties and attributes', async () => {
+  it('maps selected feature inputs to reactive properties and attributes', async () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
     const ProviderElement = ProviderMixin(MediaElement);
     const tagName = 'test-metadata-provider';
@@ -122,12 +122,11 @@ describe('createPlayer', () => {
 
     const player = document.createElement(tagName) as InstanceType<typeof ProviderElement>;
     player.setAttribute('content-title', 'Attribute title');
-    player.setAttribute('default-content-title', 'Fallback');
     document.body.append(player);
 
     expect(player.contentTitle).toBe('Attribute title');
-    expect(player.store.contentTitle).toBe('Attribute title');
-    expect(ProviderElement.observedAttributes).toContain('default-content-title');
+    expect(player.store.title).toBe('Attribute title');
+    expect(ProviderElement.observedAttributes).toContain('content-title');
 
     player.contentTitle = 'Property title';
 
@@ -136,26 +135,35 @@ describe('createPlayer', () => {
 
     await player.updateComplete;
 
-    expect(player.store.contentTitle).toBe('Property title');
+    expect(player.store.title).toBe('Property title');
 
     player.setAttribute('content-title', '');
     await player.updateComplete;
-    expect(player.store.contentTitle).toBe('');
+    expect(player.store.title).toBe('');
 
     player.removeAttribute('content-title');
     await player.updateComplete;
-    expect(player.store.contentTitle).toBe('Fallback');
+    expect(player.store.title).toBe('');
+  });
 
-    player.store.setContentTitle('Imperative title');
+  it('leaves the element its own `title`, which means the tooltip', async () => {
+    const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
+    const ProviderElement = ProviderMixin(MediaElement);
+    const tagName = 'test-title-provider';
+    customElements.define(tagName, ProviderElement);
 
-    expect(player.store.contentTitle).toBe('Imperative title');
-    expect(player.contentTitle).toBeNull();
-    expect(player.hasAttribute('content-title')).toBe(false);
-
-    player.remove();
+    const player = document.createElement(tagName) as InstanceType<typeof ProviderElement>;
     document.body.append(player);
 
-    expect(player.store.contentTitle).toBe('Imperative title');
+    // Nothing was installed over the native accessor, so this is still the tooltip.
+    expect(Object.getOwnPropertyDescriptor(ProviderElement.prototype, 'title')).toBeUndefined();
+    expect(ProviderElement.observedAttributes).not.toContain('title');
+
+    player.title = 'Tooltip';
+    await player.updateComplete;
+
+    expect(player.getAttribute('title')).toBe('Tooltip');
+    expect(player.store.title).toBe('');
   });
 
   it('leaves config attributes inert when their feature is absent', () => {

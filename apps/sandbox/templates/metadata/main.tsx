@@ -12,9 +12,9 @@ type ContentDataVideo = HTMLVideoElement & {
   contentData: Record<string, string | null | undefined>;
 };
 
-function MetadataVideo({ contentTitle }: { contentTitle: string | null | undefined }) {
+function MetadataVideo({ mediaTitle }: { mediaTitle: string | null | undefined }) {
   const media = useRef<ContentDataVideo | null>(null);
-  const initialTitle = useRef(contentTitle);
+  const initialTitle = useRef(mediaTitle);
 
   const configureMedia = useCallback((element: HTMLVideoElement | null) => {
     if (!element) {
@@ -31,13 +31,13 @@ function MetadataVideo({ contentTitle }: { contentTitle: string | null | undefin
   }, []);
 
   useLayoutEffect(() => {
-    if (!media.current || Object.is(media.current.contentData.title, contentTitle)) return;
+    if (!media.current || Object.is(media.current.contentData.title, mediaTitle)) return;
     const contentData = { ...media.current.contentData };
-    if (contentTitle === undefined) delete contentData.title;
-    else contentData.title = contentTitle;
+    if (mediaTitle === undefined) delete contentData.title;
+    else contentData.title = mediaTitle;
     media.current.contentData = contentData;
     media.current.dispatchEvent(new Event('contentdatachange'));
-  }, [contentTitle]);
+  }, [mediaTitle]);
 
   return (
     <Video
@@ -52,14 +52,14 @@ function MetadataVideo({ contentTitle }: { contentTitle: string | null | undefin
 }
 
 function PlayerPreview({ mediaTitle }: { mediaTitle: string | null | undefined }) {
-  const contentTitle = usePlayer((state) => state.contentTitle);
+  const title = usePlayer((state) => state.title);
 
   return (
     <div className="relative mt-6 overflow-hidden rounded-lg bg-black shadow-lg">
-      <MetadataVideo contentTitle={mediaTitle} />
+      <MetadataVideo mediaTitle={mediaTitle} />
       <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 to-transparent px-5 pb-12 pt-4">
-        {contentTitle ? (
-          <h2 className="text-xl font-semibold text-white drop-shadow">{contentTitle}</h2>
+        {title ? (
+          <h2 className="text-xl font-semibold text-white drop-shadow">{title}</h2>
         ) : (
           <span className="text-sm text-white/70">No content title is defined</span>
         )}
@@ -71,7 +71,6 @@ function PlayerPreview({ mediaTitle }: { mediaTitle: string | null | undefined }
 const sources = [
   { key: 'user', label: 'User title' },
   { key: 'media', label: 'Media title' },
-  { key: 'default', label: 'User default' },
 ] as const;
 
 type SourceKey = (typeof sources)[number]['key'];
@@ -80,17 +79,14 @@ function App() {
   const [enabled, setEnabled] = useState<Record<SourceKey, boolean>>({
     user: true,
     media: true,
-    default: true,
   });
   const [values, setValues] = useState<Record<SourceKey, string>>({
     user: 'User title',
     media: 'Media title',
-    default: 'Default title',
   });
 
   const userTitle = enabled.user ? values.user : null;
   const mediaTitle = enabled.media ? values.media : undefined;
-  const defaultTitle = enabled.default ? values.default : null;
 
   return (
     <main className="mx-auto max-w-3xl p-8">
@@ -127,11 +123,11 @@ function App() {
         ))}
       </fieldset>
 
-      <Player contentTitle={userTitle} defaultContentTitle={defaultTitle}>
+      <Player title={userTitle}>
         <PlayerPreview mediaTitle={mediaTitle} />
       </Player>
 
-      <p className="mt-4 font-mono text-sm text-zinc-600">user ?? media ?? userDefault ?? featureDefault</p>
+      <p className="mt-4 font-mono text-sm text-zinc-600">user ?? media ?? featureDefault</p>
     </main>
   );
 }

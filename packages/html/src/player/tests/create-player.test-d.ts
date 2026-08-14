@@ -65,8 +65,8 @@ describe('createPlayer', () => {
     const metadataProvider = new MetadataProvider();
     const plainProvider = new PlainProvider();
 
+    // The store calls this `title`; on an element that name is the tooltip.
     assertType<string | null | undefined>(metadataProvider.contentTitle);
-    assertType<string | null | undefined>(metadataProvider.defaultContentTitle);
 
     // @ts-expect-error metadata properties are absent when the feature is absent.
     plainProvider.contentTitle;

@@ -53,12 +53,12 @@ describe('createPlayer', () => {
     const withMetadata = createPlayer({ features: [metadataFeature] });
     const withoutMetadata = createPlayer({ features: [features.playback] });
 
-    <withMetadata.Player contentTitle="Title" defaultContentTitle={null}>
+    <withMetadata.Player title="Title">
       <div />
     </withMetadata.Player>;
 
     // @ts-expect-error metadata props are absent when the feature is absent.
-    <withoutMetadata.Player contentTitle="Title">
+    <withoutMetadata.Player title="Title">
       <div />
     </withoutMetadata.Player>;
   });
