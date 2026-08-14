@@ -30,7 +30,7 @@ export const { Player } = createPlayer({
 import { createPlayer, features } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({
+export const { ProviderMixin } = createPlayer({
   features: [...videoFeatures, features.orientationLock],
 });
 ```
@@ -52,7 +52,7 @@ export const { Player } = createPlayer({
 import { createPlayer, features } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({
+export const { ProviderMixin } = createPlayer({
   features: [...videoFeatures, features.orientationLock({ type: 'portrait' })],
 });
 ```
