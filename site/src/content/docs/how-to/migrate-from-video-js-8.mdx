@@ -55,7 +55,9 @@ Most of this guide is about which of those three a given v8 option now belongs t
 
 ## Your first player
 
-Here's a standard v8 setup: one file, captions, thumbnails, a poster, and the default skin.
+<FrameworkCase frameworks={["html"]}>
+
+Here's a standard v8 setup: one file, captions, a poster, and the default skin.
 
 ```html
 <link href="https://vjs.zencdn.net/8.x/video-js.css" rel="stylesheet" />
@@ -74,8 +76,6 @@ Here's a standard v8 setup: one file, captions, thumbnails, a poster, and the de
 
 <script src="https://vjs.zencdn.net/8.x/video.min.js"></script>
 ```
-
-<FrameworkCase frameworks={["html"]}>
 
 v10 ships web components, so the migration keeps its declarative feel. One script from the CDN gives you the player and the default skin:
 
@@ -115,7 +115,36 @@ There's also a minimal skin, closer to v8's control bar if the default's frosted
 
 <FrameworkCase frameworks={["react"]}>
 
-If you were using `video.js` in React, you were probably managing a ref, calling `videojs()` in an effect, and disposing on unmount. `@videojs/react` replaces all of that with real components.
+v8 shipped no React package, so you were managing a ref, calling `videojs()` in an effect, and disposing on unmount. Something like this:
+
+```tsx
+import { useEffect, useRef } from 'react';
+import videojs from 'video.js';
+import 'video.js/dist/video-js.css';
+
+export function MyPlayer() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const playerRef = useRef<ReturnType<typeof videojs> | null>(null);
+
+  useEffect(() => {
+    const el = document.createElement('video-js');
+    containerRef.current?.appendChild(el);
+
+    playerRef.current = videojs(el, {
+      controls: true,
+      preload: 'auto',
+      poster: '/poster.jpg',
+      sources: [{ src: '/video.mp4', type: 'video/mp4' }],
+    });
+
+    return () => playerRef.current?.dispose();
+  }, []);
+
+  return <div ref={containerRef} />;
+}
+```
+
+`@videojs/react` replaces all of that with real components.
 
 ```bash
 npm install @videojs/react
@@ -316,13 +345,23 @@ video-player {
 }
 ```
 
-`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. To recolor icons and text, use `--media-color-primary`. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
+`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces at once. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar, which is the closest thing to v8's `font-size` trick for sizing controls. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
 
 ### Level 3: eject
 
 **Ejecting** means copying the skin's source into your project and editing it, the way you would a shadcn component. The packaged skin isn't compiled magic; it's a tree of components, so ejecting starts as copy and paste. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has copy-paste-ready implementations for every packaged skin.
 
 This is where v8's `controlBar` config and `addChild` calls end up, and honestly it's the better trade. Instead of `controlBar: { pictureInPictureToggle: false }`, you delete a line. Instead of subclassing a component to change its behavior, you edit the markup.
+
+<FrameworkCase frameworks={["html"]}>
+
+Swap the skin import for `video/ui`, which registers the player, the container, and every UI element without wrapping them in a skin:
+
+```js
+import '@videojs/html/video/ui';
+```
+
+Then write the layout yourself:
 
 ```html
 <video-player>
@@ -358,11 +397,50 @@ This is where v8's `controlBar` config and `addChild` calls end up, and honestly
 </video-player>
 ```
 
-That last block is where `userActions` went. v8's `userActions.hotkeys` was a function you wrote; here each shortcut is an element with a key and an action, and `userActions.click` and `doubleClick` become gesture elements with a region. The packaged skins already include a sensible set of both, which is why you don't see them in the earlier examples.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-In React it's the same idea: drop `VideoSkin` and compose the <DocsLink slug="concepts/ui-components">UI components</DocsLink> inside `Player.Provider` yourself. Compound parts are namespaced, so `media-slider-track` is `TimeSlider.Track`.
+
+Drop `VideoSkin` and compose the <DocsLink slug="concepts/ui-components">UI components</DocsLink> inside your provider yourself. Compound parts are namespaced, so a time slider is assembled from `TimeSlider.Root`, `TimeSlider.Track`, and friends:
+
+```tsx
+import { Controls, createPlayer, Hotkey, MuteButton, PlayButton, TimeSlider } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+export function MyPlayer() {
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <Video src="/video.mp4" playsInline />
+
+        <Controls.Root>
+          <PlayButton />
+          <MuteButton />
+          <TimeSlider.Root>
+            <TimeSlider.Track>
+              <TimeSlider.Fill />
+              <TimeSlider.Buffer />
+            </TimeSlider.Track>
+            <TimeSlider.Thumb />
+          </TimeSlider.Root>
+          {/* No PiPButton, so no picture-in-picture control renders. */}
+        </Controls.Root>
+
+        <Hotkey keys="Space" action="togglePaused" />
+        <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+
 </FrameworkCase>
+
+Those hotkey and gesture declarations are where `userActions` went. v8's `userActions.hotkeys` was a function you wrote; here each shortcut is a component with a key and an action, and `userActions.click` and `doubleClick` become gestures with a region. The packaged skins already include a sensible set of both, which is why you don't see them in the earlier examples.
+
+Ejecting is also where you take on the skin's CSS. The packaged skins ship styles for everything above; a bare layout renders unstyled until you bring those along, which is why <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> hands you the CSS next to the markup.
 
 ## Plugins
 
@@ -515,13 +593,31 @@ For audio, use `audioFeatures` with the audio skin, or the live audio pair. Ther
 
 You get `streamType`, `targetLiveWindow`, and `liveEdgeStart` in state, plus a live button that jumps to the live edge. v8's `liveTracker` tuning has no equivalent ([#1730](https://github.com/videojs/v10/issues/1730)).
 
+The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need one of them on a live player, compose your own feature list instead of using the preset.
+
 ## Coming soon
 
-Two changes are in flight that touch this guide. Neither is released yet, so everything above is what works today.
+Changes in flight that touch this guide. None has shipped, so everything above is what works today.
 
 **The player will own the poster.** `poster` and a blurred placeholder are moving from the skin onto the player, and the player will resolve them through a chain: what you set, then what the media reports about itself, then a default you supply. That last part is new to v8 users — it means a media component can hand you a poster you never wrote down, the way the Mux one derives a thumbnail from a playback ID ([#1798](https://github.com/videojs/v10/issues/1798)).
 
 **The skins will show a title.** `content-title` already reaches player state, but nothing draws it yet, so v8's `TitleBar` has no visual equivalent today. A title component and skin support are in flight ([#1123](https://github.com/videojs/v10/issues/1123)).
+
+<FrameworkCase frameworks={["react"]}>
+**`createPlayer` stops being step one.** Each preset will export a pre-composed player, so the standard case skips feature composition entirely and `createPlayer` becomes the escape hatch for custom feature sets:
+
+```tsx
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+<VideoPlayer.Provider contentTitle="Movie title">
+  <VideoSkin>
+    <Video src="/video.mp4" playsInline />
+  </VideoSkin>
+</VideoPlayer.Provider>
+```
+
+The preset entry point will carry the React client boundary too, so the `'use client'` directive in the examples above becomes unnecessary ([#2116](https://github.com/videojs/v10/pull/2116)).
+</FrameworkCase>
 
 ## Known gaps
 
@@ -530,19 +626,19 @@ Ordered roughly by how likely each is to block a v8 migration.
 - **No ads support.** v8's IMA and ad-plugin ecosystem has no v10 equivalent. This is the most common hard blocker.
 - **No playlist support.** No `videojs-playlist` equivalent.
 - **No plugin system**, by design. Budget for rebuilding UI plugins as components. See [Plugins](#plugins).
-- React has no `on*` event props. Use `usePlayer` and selectors, or listeners on a media ref ([#1426](https://github.com/videojs/v10/issues/1426), [#1041](https://github.com/videojs/v10/issues/1041)).
-- Playback rates are fixed at `0.2`–`2`; you can't choose the set yet ([#1404](https://github.com/videojs/v10/issues/1404)).
+- React has no `on*` event props. Use `usePlayer` and selectors, or listeners on a media ref.
+- Playback rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — so v8's `playbackRates` has no equivalent yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - No text-track settings dialog. v8's `textTrackSettings` let viewers restyle captions; v10 exposes only the positioning custom properties its skins define.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
 - Nothing persists between sessions: volume, captions language, speed, quality. That's out of scope for GA ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423).
 - No VHS-equivalent tuning surface. Engine settings belong to the engine you chose, and the default HLS component deliberately exposes few of them.
-- Chapters render in the time slider from a `<track kind="chapters">`, but there's no active-chapter state and no `chapterchange` event ([#1441](https://github.com/videojs/v10/issues/1441)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
+- Chapters render in the time slider from a `<track kind="chapters">`, but there's no chapter menu to navigate from and no active-chapter state, so v8's chapters menu has no equivalent ([#1873](https://github.com/videojs/v10/issues/1873)). Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - The controls auto-hide delay isn't configurable, so v8's `inactivityTimeout` has no equivalent ([#1728](https://github.com/videojs/v10/issues/1728)).
 - No full-window fullscreen fallback. v8 had one for browsers without the Fullscreen API; [support is around 96%](https://caniuse.com/fullscreen) now.
-- Multiple `<source>` elements with `size` metadata don't become a quality menu. Use HLS or DASH for adaptive quality.
-- Two skins, and no runtime theme switch ([#181](https://github.com/videojs/v10/issues/181)).
+- Multiple `<source>` elements with `size` metadata don't become a quality menu. Use HLS or DASH for adaptive quality; picking renditions by resolution won't be added ([#1415](https://github.com/videojs/v10/issues/1415)).
+- Two skins, and no runtime theme switch.
 - Native controls are not automatically removed when custom controls load ([#1160](https://github.com/videojs/v10/issues/1160)).
-- Smaller conveniences with homes: resolution controls [#1415](https://github.com/videojs/v10/issues/1415), restore-last-volume and smart unmute [#1425](https://github.com/videojs/v10/issues/1425), debug mode [#1406](https://github.com/videojs/v10/issues/1406), autoplay with muted fallback [#1039](https://github.com/videojs/v10/issues/1039). Several sit under the parity epic [#1535](https://github.com/videojs/v10/issues/1535).
+- Smaller conveniences without homes yet: debug mode ([#1406](https://github.com/videojs/v10/issues/1406)) and autoplay with a muted fallback ([#1039](https://github.com/videojs/v10/issues/1039)).
 
 ## See also
 
