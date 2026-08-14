@@ -59,29 +59,31 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
 
 <FrameworkCase frameworks={["react"]}>
 
-Media Chrome's React package wraps its custom elements. `@videojs/react` ships native components composed under a <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> provider instead.
+Media Chrome's React package wraps its custom elements. `@videojs/react` ships native components composed with <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> instead.
 
 ```tsx
 'use client';
 
-import { createPlayer, PlayButton } from '@videojs/react';
+import { Container, createPlayer, PlayButton } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export function MyPlayer() {
   return (
-    <Player.Provider>
-      <Player.Container>
+    <Player>
+      <Container>
         <Video src="video.mp4" />
         <PlayButton />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }
 ```
 
-`createPlayer` takes the <DocsLink slug="concepts/features">features</DocsLink> your player needs and returns a typed `Provider`, `Container`, and `usePlayer` hook. Call it once, outside your component, and reuse it.
+`createPlayer` takes the <DocsLink slug="concepts/features">features</DocsLink> your player needs and returns a typed `Player` component and `usePlayer` hook. Call it once, outside your component, and reuse it. `Container` is the box the media and controls live in, and it's shared rather than per-player, so it comes from the package root.
+
+If you don't need a custom feature list, a <DocsLink slug="concepts/presets">preset</DocsLink> hands you the same pair already configured: `VideoPlayer` and `usePlayer` from `@videojs/react/video`.
 
 Where Media Chrome asks you to restyle a shadow root, Video.js components take a `render` prop, so you supply the element and Video.js supplies the behavior and state:
 
@@ -248,12 +250,10 @@ The skin hides controls by removing `data-visible` from the root `<media-control
 
 Two things make this fragile. It matches the skin's own selectors exactly, so it only wins on source order — load your stylesheet after the skin's. And the class names are the default skin's; the minimal skin fades `.media-minimal-skin--video .media-controls` instead, with no groups to reach.
 
-To change the *delay* rather than disable it, note that the idle timer is a constant inside `controlsFeature`. Fork that feature and swap it into a custom feature list:
+To change the *delay* rather than disable it, note that the idle timer is a constant inside `controlsFeature`. Fork that feature, swap it into a custom feature list, and pass that list to `createPlayer`:
 
 ```ts
-const Player = createPlayer({
-  features: videoFeatures.map((f) => (f.name === 'controls' ? myControlsFeature : f)),
-});
+const features = videoFeatures.map((f) => (f.name === 'controls' ? myControlsFeature : f));
 ```
 
 ### Breakpoints
