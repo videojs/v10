@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
+import type { SvtaError } from '../../../media/errors';
 import type { TrackSelectionState } from '../../../media/primitives/select-tracks';
 import type {
   AudioSelectionSet,
@@ -178,6 +179,154 @@ describe('selectVideoTrack', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedVideoTrackId.get()).toBe('video-high');
+
+    reactor.destroy();
+  });
+});
+
+// The capability pre-pass and the verdict it produces. This is what lets a
+// *pinned* selection notice it has gone unplayable: `resolve-track` relabels the
+// whole type's container from the first resolved media playlist, long after the
+// pick was made under the fMP4 default.
+describe('selectVideoTrack — capability constraint + verdict', () => {
+  const playable: PartiallyResolvedVideoTrack = {
+    type: 'video',
+    id: 'video-mp4',
+    url: 'http://example.com/video-mp4.m3u8',
+    bandwidth: 1_000_000,
+    mimeType: 'video/mp4',
+    codecs: ['avc1.4d401f'],
+  };
+  const undecodable: PartiallyResolvedVideoTrack = {
+    type: 'video',
+    id: 'video-hevc',
+    url: 'http://example.com/video-hevc.m3u8',
+    bandwidth: 4_000_000,
+    mimeType: 'video/mp4',
+    codecs: ['hvc1.2.4.L153.B0'],
+  };
+
+  /** Rejects anything whose codec list names HEVC — stands in for the DOM probe. */
+  const noHevc = (track: { codecs?: string[] }) => !track.codecs?.some((codec) => codec.startsWith('hvc1'));
+
+  function makeErrorState(presentation: MaybeResolvedPresentation) {
+    return { ...makeState({ presentation }), errors: signal<SvtaError[] | undefined>(undefined) };
+  }
+
+  it('prunes an undecodable rendition before the chain picks', async () => {
+    const state = makeErrorState(createPresentation({ video: [undecodable, playable] }));
+
+    const reactor = selectVideoTrack.setup({ state, config: { canPlayTrack: noHevc } });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBe('video-mp4');
+    expect(state.errors.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  it('makes no pick when every rendition is undecodable', async () => {
+    const state = makeErrorState(createPresentation({ video: [undecodable] }));
+
+    const reactor = selectVideoTrack.setup({ state, config: { canPlayTrack: noHevc } });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    // No verdict without `requireVideoTrack`: this behavior reports only the
+    // condition no per-rendition cause covers, and it isn't this composition's
+    // place to say an absent type is fatal.
+    expect(state.errors.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  // The warm path, and the reason this behavior needed an effect rather than
+  // entry alone: the pick is made while the type still carries the fMP4 default,
+  // and only the later relabel reveals it as MPEG-TS.
+  it('clears a pick already made when a later container relabel prunes every rendition', async () => {
+    const fmp4Labelled = createPresentation({ video: [{ ...playable, id: 'video-1' }] });
+    const state = makeErrorState(fmp4Labelled);
+
+    // The DOM probe's real answer: a non-fMP4 container is unplayable outright.
+    const reactor = selectVideoTrack.setup({
+      state,
+      config: {
+        canPlayTrack: (track: { mimeType?: string }) => track.mimeType !== 'video/mp2t',
+        requireVideoTrack: true,
+      },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedVideoTrackId.get()).toBe('video-1');
+
+    // What `applyContainerMimeType` does once the media playlist resolves with no
+    // EXT-X-MAP: relabel every rendition of the type, in a new presentation object.
+    state.presentation.set(
+      createPresentation({ video: [{ ...playable, id: 'video-1', mimeType: 'video/mp2t' }] }) as Presentation
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  // The partially-unplayable case, which is how encryption presents: it is detected
+  // per media playlist, so a pruned pick can sit beside renditions that still look
+  // playable. The pin is dropped rather than moved — moving it would make this
+  // `switchVideoTrack` with extra steps — and losing it is the failure, because
+  // `entry` has already run and nothing will choose again.
+  it('deselects when the pick alone is constrained away', async () => {
+    const encrypted = { ...playable, id: 'video-encrypted' };
+    const clear = { ...playable, id: 'video-clear' };
+    const state = makeErrorState(createPresentation({ video: [encrypted, clear] }));
+
+    // Unplayable only *after* the pick, which is the real sequence: encryption is
+    // read off a media playlist, and only the selected rendition's is fetched.
+    // Pruning it up front would let `entry` avoid it and never exercise this path.
+    let pruneEncrypted = false;
+    const reactor = selectVideoTrack.setup({
+      state,
+      config: { canPlayTrack: (track: { id?: string }) => !(pruneEncrypted && track.id === 'video-encrypted') },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedVideoTrackId.get()).toBe('video-encrypted');
+
+    pruneEncrypted = true;
+    // Re-notify the candidate set the way committing a resolved track does.
+    state.presentation.set(createPresentation({ video: [encrypted, clear] }) as Presentation);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Dropped, not moved to `video-clear`.
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    // No verdict: a sibling still looks playable, so nothing here can claim the
+    // type is unplayable. What made the pick unplayable reported its own cause as
+    // the playlist resolved — 4008 for the real encryption case.
+    expect(state.errors.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  it('passes every rendition through when no probe is wired', async () => {
+    const state = makeErrorState(createPresentation({ video: [undecodable] }));
+
+    const reactor = selectVideoTrack.setup({ state });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBe('video-hevc');
+    expect(state.errors.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  // The optional-slot contract: reporting goes through a seam that no-ops when
+  // `collectErrors` isn't composed, so the clear still happens either way.
+  it('still clears the pick when no errors slot is composed', async () => {
+    const state = makeState({ presentation: createPresentation({ video: [undecodable] }) });
+
+    const reactor = selectVideoTrack.setup({ state, config: { canPlayTrack: noHevc } });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
 
     reactor.destroy();
   });

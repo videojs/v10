@@ -5,13 +5,16 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import { canPlayTrack } from '../../../media/dom/capabilities';
 import type { ScreenResolution } from '../../../media/dom/screen';
+import { SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { MaybeResolvedPresentation } from '../../../media/types';
+import type { CanPlayTrack, MaybeResolvedPresentation } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
+import { collectErrors, reportAbsentTrackType } from '../../behaviors/collect-errors';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -27,6 +30,11 @@ import {
   screenResolutionCap,
   selectVideoTrack,
 } from '../../behaviors/select-tracks';
+import {
+  type ReportUnsupportedTrackConditions,
+  reportUnsupportedTrackConditions,
+} from '../../primitives/report-track-conditions';
+import { excludeUnplayableTracks } from '../../primitives/selection-rules';
 
 // ============================================================================
 // Background-video engine state & context
@@ -61,6 +69,13 @@ export interface BackgroundVideoEngineState {
    * selection rule — which treats `undefined` as "don't cap".
    */
   screenResolution?: ScreenResolution;
+  /**
+   * Conditions reported while this source is loaded — the per-rendition causes
+   * `resolveVideoTrack` reports and the verdict `selectVideoTrack` reports when
+   * the constraints prune every rendition. Owned and cleared per source by
+   * `collectErrors`; the adapter derives which are fatal.
+   */
+  errors?: SvtaError[];
 }
 
 /**
@@ -95,6 +110,13 @@ export type BackgroundVideoEngineSignals = {
 export interface BackgroundVideoEngineConfig
   extends ShareSignalsConfig<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   /**
+   * Hard-constraint pre-pass handed to `selectVideoTrack`. Defaults to
+   * `[reportAbsentTrackType(2011), excludeUnplayableTracks]` — report a source
+   * offering no video at all (this engine composes only video, so it can never
+   * play one), then prune the renditions this environment can't decode.
+   */
+  constraints?: SelectVideoTrackConfig['constraints'];
+  /**
    * Selection-rule chain handed to `selectVideoTrack`. Defaults to
    * `[screenResolutionCap, preferHighestResolution]` — narrows to the renditions
    * that fit the screen, takes the largest of those, and pins it for the session.
@@ -114,6 +136,19 @@ export interface BackgroundVideoEngineConfig
    * `trackScreenResolution`; defaults to `true`.
    */
   useDevicePixelRatio?: boolean;
+  /**
+   * Codec/container capability probe read by `selectVideoTrack`'s constraint
+   * pre-pass. Defaults to the DOM `canPlayTrack`; override to force-exclude a
+   * codec.
+   */
+  canPlayTrack?: CanPlayTrack;
+  /**
+   * Per-rendition condition reporting, called by `resolveVideoTrack` once a
+   * media playlist parses. Defaults to
+   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
+   * (1004) and encryption (4008).
+   */
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
 }
 
 // ============================================================================
@@ -133,6 +168,13 @@ const shareSignals = makeShareSignals<BackgroundVideoEngineState, BackgroundVide
  * `loadActivated: true` so the composition behaves as if preload has
  * already been activated — appropriate for ambient / hero / GIF-replacement
  * surfaces that should start loading the moment a src is set.
+ *
+ * Error reporting is *not* subtracted: `collectErrors` owns the sequence,
+ * `resolveVideoTrack` reports per-rendition causes, and `selectVideoTrack`
+ * reports the video verdict when nothing survives its constraints. Without them
+ * every unplayable source here is a silent stall — an unsupported container,
+ * encryption this engine can't decrypt, and an undecodable codec all leave
+ * `HTMLMediaElement.error` null on both Chromium and WebKit.
  *
  * Native `loop` / `muted` / `autoplay` are adapter concerns and live on
  * `HlsBackgroundVideoMediaElement` rather than the engine.
@@ -157,9 +199,12 @@ export function createBackgroundVideoEngine(
 ): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   const finalConfig = {
     ...config,
+    constraints: config.constraints ?? [reportAbsentTrackType(SVTA_NO_SUPPORTED_VIDEO_TRACK), excludeUnplayableTracks],
     rules: config.rules ?? [screenResolutionCap, preferHighestResolution],
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     resolveDuration: getResolvedSelectedTrackDuration,
+    canPlayTrack: config.canPlayTrack ?? canPlayTrack,
+    reportUnsupportedTrackConditions: config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditions,
   };
 
   return createComposition(
@@ -168,7 +213,12 @@ export function createBackgroundVideoEngine(
       // Presentation duration
       calculatePresentationDuration,
 
-      // Track selection - pinned single-rendition pick on presentation resolve.
+      // Owns `errors` and its per-source lifecycle; reporters append into it.
+      collectErrors,
+
+      // Track selection - pinned single-rendition pick on presentation resolve,
+      // unpinned again if the constraint pre-pass later prunes every rendition
+      // (which is how a container relabel reaches a pick already made).
       selectVideoTrack,
       // Resolve selected video track (fetch its media playlist)
       resolveVideoTrack,

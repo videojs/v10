@@ -28,12 +28,24 @@ export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps
  * Mixin that adds the background-video SPF playback engine to any base class,
  * for an HLS URL.
  *
- * `src` is the whole surface, and selection always pins the top rendition on
- * offer. There is no cap of its own because the manifest is the better place to
- * narrow one: a delivery param — `?max_resolution=720p` on a Mux stream URL, for
- * one — keeps the renditions it excludes out of the manifest entirely, rather
- * than fetched-then-unpicked. Deriving a cap from the screen instead is on the
- * roadmap, and lands here when it does.
+ * `src` is the whole surface. Failures are deliberately not on it: nothing about
+ * an unplayable source reaches the media element on its own here — an unsupported
+ * container, encryption with no EME, and an undecodable codec all leave
+ * `HTMLMediaElement.error` null with the element stalled at `readyState 0`
+ * (measured on Chromium and WebKit) — so the engine reports them onto
+ * `engine.state.errors` and logs each one instead. See
+ * `internal/design/spf/features/errors.md`.
+ *
+ * Selection pins the largest rendition that *fits the screen*, and holds it for
+ * the session. The manifest is still the better place to narrow further: a
+ * delivery param — `?max_resolution=720p` on a Mux stream URL, for one — keeps
+ * the renditions it excludes out of the manifest entirely, rather than
+ * fetched-then-unpicked.
+ *
+ * The pin is given up, never moved, if the pick turns out to be unplayable: the
+ * container is only known once a media playlist resolves, which is after the pick
+ * is made, so the selection clears rather than quietly appending bytes nothing can
+ * decode.
  *
  * `@videojs/spf/mux-background-video` is this same Media under a Mux-flavored
  * name — an alias, not a variant. Nothing about the surface changes with the
@@ -164,8 +176,8 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
 
     #createEngine(): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
       // No selection config of its own: the engine's default rule chain already
-      // narrows to the largest rendition on offer, which is exactly what this
-      // adapter used to hand over as a bespoke picker.
+      // narrows to the largest rendition that fits the screen, which is exactly
+      // what this adapter used to hand over as a bespoke picker.
       return createBackgroundVideoEngine({
         ...this.#config,
         onSignalsReady: (signals) => {

@@ -9,6 +9,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
+import { SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { createBackgroundVideoEngine } from '../engine-background-video';
 
@@ -58,6 +59,133 @@ describe('createBackgroundVideoEngine', () => {
     expect('userVideoTrackSelection' in state).toBe(false);
 
     engine.destroy();
+  });
+
+  // Error reporting is deliberately *not* subtracted: nothing about an unplayable
+  // source reaches the media element on its own, so without the sequence a
+  // background video fails invisibly.
+  describe('errors', () => {
+    const unplayablePresentation = (): MaybeResolvedPresentation => ({
+      id: 'p',
+      url: 'https://example.com/v.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'video-switching',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: '720p-ts',
+                  url: 'https://example.com/720p.m3u8',
+                  bandwidth: 2_000_000,
+                  // Already relabeled, as `resolve-track` leaves the whole type
+                  // once a media playlist resolves without an EXT-X-MAP.
+                  mimeType: 'video/mp2t',
+                  codecs: ['avc1.42E01E'],
+                  width: 1280,
+                  height: 720,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    it('declares the errors slot', () => {
+      const engine = createBackgroundVideoEngine();
+      expect('errors' in (snapshot(engine.state) as Record<string, unknown>)).toBe(true);
+      engine.destroy();
+    });
+
+    // MPEG-TS: the capability constraint prunes it, so nothing is selected. No
+    // verdict — the cause (1004) is reported by `resolveVideoTrack` as the playlist
+    // resolves, which is more specific and needs no manifest fetch here.
+    it('makes no pick for an unplayable container', async () => {
+      const engine = createBackgroundVideoEngine();
+      engine.state.presentation.set(unplayablePresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.selectedVideoTrackId.get()).toBeUndefined();
+      expect(engine.state.errors.get()).toBeUndefined();
+      engine.destroy();
+    });
+
+    // The one failure with no per-rendition cause behind it: nothing resolves, so
+    // nothing reports. `reportAbsentTrackType` at the head of the constraint chain
+    // is what covers it, composed because this engine is video-only.
+    it('reports for a source with no video renditions at all', async () => {
+      const engine = createBackgroundVideoEngine();
+      engine.state.presentation.set(audioOnlyPresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.errors.get()).toEqual([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      engine.destroy();
+    });
+
+    const audioOnlyPresentation = (): MaybeResolvedPresentation =>
+      ({
+        id: 'p',
+        url: 'https://example.com/audio-only.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'audio-set',
+            type: 'audio',
+            switchingSets: [
+              {
+                id: 'audio-switching',
+                type: 'audio',
+                tracks: [
+                  {
+                    type: 'audio',
+                    id: 'audio-1',
+                    url: 'https://example.com/audio.m3u8',
+                    bandwidth: 128_000,
+                    mimeType: 'audio/mp4',
+                    codecs: ['mp4a.40.2'],
+                    groupId: 'g',
+                    name: 'English',
+                    sampleRate: 48_000,
+                    channels: 2,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }) as never;
+
+    it('reports the absent type once, not on every presentation write', async () => {
+      // The constraint chain runs inside a `computed` that re-derives on every
+      // write, and the sequence keeps duplicates, so the guard is load-bearing.
+      const engine = createBackgroundVideoEngine();
+      engine.state.presentation.set(audioOnlyPresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      engine.state.presentation.set(audioOnlyPresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.errors.get()).toHaveLength(1);
+      engine.destroy();
+    });
+
+    it('clears the sequence on src unload so the next source starts clean', async () => {
+      const engine = createBackgroundVideoEngine();
+      engine.state.presentation.set(audioOnlyPresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(engine.state.errors.get()).toHaveLength(1);
+
+      engine.state.presentation.set(undefined);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.errors.get()).toBeUndefined();
+      engine.destroy();
+    });
   });
 
   it('omits subtracted context slots — no audio segment loader / text actors', () => {

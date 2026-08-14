@@ -143,24 +143,6 @@ retry-exhaustion, pipeline producers) are not.
   through unresolved carries the prior source's errors forward.
   `resolve-track` guards the same transition with a commit-time id
   check; doing likewise here is a follow-up.
-- **A type absent entirely is silent, which is wrong for a composition
-  that needs it.** `hasTracksOfType` correctly treats "no tracks of this
-  type" as legitimate — a video-only source must not report 2012 — but
-  the audio-only engine composes *only* audio, so a source with no audio
-  rendition is unplayable and reports nothing at all. Observed on a
-  muxed-audio MPEG-TS source (`hls-1` in the sandbox): no cause, since
-  `reportUnsupportedTrackConditions` runs per resolved track and none resolves; no
-  verdict, since the guard returns first; the element sits at
-  `readyState 0` with `error === null`. `track-switching` can't tell the
-  two apart — it's per-type and composition-agnostic, and per §Open
-  questions producers must not assert fatality — so the fix likely mirrors
-  the causes/verdicts split: report "this type has no renditions" as a
-  distinct non-fatal-by-default condition and let each adapter's
-  `FATAL_SVTA_CODES` decide, which the audio-only adapter's narrower set
-  already demonstrates. No existing code fits (1004/1005 and 2011/2012 all
-  presuppose renditions that *were* there), so this needs a code chosen
-  against the spec. A source with no tracks of **any** type is the same
-  gap, wider: every type takes the silent path.
 - **Manifest fetch/parse failure never reaches `errors`.**
   `resolve-presentation` carries a `TODO(error-management)` and only
   `console.error`s. Notably the path a 403 takes, so an expired signed or
@@ -243,6 +225,8 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 |---|---|---|
 | `collectErrors` | `playback/behaviors/collect-errors.ts` | Owns the `errors` slot and its per-source lifecycle. No effects, no policy — a lifecycle owner, not an error handler. Same slot-owner-vs-writer split as `setupFailoverMonitor` / `failedCdns` |
 | `switchVideoTrack` / `switchAudioTrack` / `switchTextTrack` | `playback/behaviors/track-switching.ts` | Report the **verdict** (2011 / 2012) when a type has renditions but constraints pruned every one. Per-variant `noSupportedTrackCode`; text supplies none, since absent subtitles aren't a failure. Reports generically — it never reads a constraint's state, so it doesn't know *why* the set emptied |
+| `selectVideoTrack` | `playback/behaviors/select-tracks.ts` | The *pinned* variant. `entry` stays the only thing that ever **selects**; a sibling `effects` entry on the same `presentation-resolved` state only ever **de**selects, dropping a pick the constraints turned against. Keeping selection out of the reaction is what separates this from `switchVideoTrack` — a re-pick here would make it that behavior with extra steps — but it must *be* a reaction, since container and encryption are only known once a media playlist resolves, after `entry` ran. It reports nothing itself: whatever made the pick unplayable already reported its own cause (1004 / 4008), more specific than a verdict and already logged. A pick naming a track the manifest never offered is left alone, preserving the module's external-writes contract |
+| `reportAbsentTrackType` | `playback/behaviors/collect-errors.ts` | The one failure with no cause behind it: a source offering **no** renditions of a type the composition needs. Nothing resolves, so `reportUnsupportedTrackConditions` never runs and no cause exists to be more specific than a verdict. Shaped as a *constraint* rather than config so a composition opts in by adding it to `constraints` and one that doesn't pays nothing — it never actually constrains, returning its input untouched. Belongs at the head of the chain, where an empty input still means "the source offers none" rather than "the constraints ahead pruned them all." Idempotent, because the chain runs inside a `computed` that re-derives on every `presentation` write while the sequence keeps duplicates |
 | `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `playback/behaviors/resolve-track.ts` | Call the `reportUnsupportedTrackConditions` seam post-parse, reporting **causes** per rendition as it resolves — before committing the parsed track |
 
 **Helpers and seams:**
@@ -261,7 +245,19 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 `hls-audio/adapter.ts`. Each owns `FATAL_SVTA_CODES` (its fatality
 allow-list — the audio-only set is narrower, since it composes no video
 selection and so can never report 2011), the `error` getter, and the
-`'error'` dispatch. First fatal wins, latched on the *reported* code so a
+`'error'` dispatch.
+
+**The background-video composition deliberately has no adapter surface.** It
+reports onto `state.errors` and logs, and stops there: `src` is that Media's whole
+surface, and every failure it can meet already reports a specific cause. Worth
+recording because the measurement says the stakes are real — on Chromium and
+WebKit (2026-08-14) every unplayable source there is a *silent stall* with
+`HTMLMediaElement.error` null at `readyState 0`, since nothing in MSE reports it
+either. Chromium accepts MPEG-TS appends into a `video/mp4` SourceBuffer, fires
+`update` (not `error`), and buffers nothing; WebKit demuxes the TS outright. No
+SourceBuffer error, no MediaSource error, no element error on either. So the
+reported sequence plus its console output is the only failure signal that exists
+for that composition. First fatal wins, latched on the *reported* code so a
 later append doesn't re-fire. Where the sequence holds an
 unimplemented-capability cause, the surfaced code becomes 99001 and the
 condition is logged with the sequence attached; the `message` stays
@@ -323,6 +319,19 @@ limitations*).
     regardless of which constraint emptied the set** (all-CDN cooldown
     reads the same as capability rejection); nothing for a type with no
     tracks; 2012 for the audio variant; nothing for text
+  - `packages/spf/src/playback/behaviors/tests/select-tracks.test.ts` →
+    *capability constraint + verdict* — prunes an undecodable rendition
+    before the chain picks; no pick plus 2011 when every rendition is
+    undecodable; **clears a pick already made when a later container
+    relabel prunes every rendition** (the warm path the pinned variant
+    exists to survive); does not re-pick after unpinning (the pinning
+    contract); nothing reported for a presentation with no video tracks;
+    passes everything through with no probe wired
+  - `packages/spf/src/playback/engines/hls/tests/engine-background-video.test.ts`
+    → *errors* — declares the slot; makes no pick for an unplayable
+    container *without* reporting a verdict (the 1004 cause covers it);
+    reports 2011 for a source with no video renditions at all; reports that
+    **once**, not per presentation write; clears on src unload
   - `packages/spf/src/media/dom/tests/capabilities.test.ts` — encrypted
     renditions asserted unplayable without consulting `isTypeSupported`;
     clear renditions still fall through to the codec probe (the other
@@ -365,7 +374,9 @@ limitations*).
   DRM asset with no license path), each labelled with the error it should
   produce. `SPF_HLS_SOURCE_IDS` is what keeps the unlicensed DRM
   source reachable there while the presets that *can* license DRM get the
-  playable variants instead.
+  playable variants instead. The two SPF background presets
+  (`hls-background-video`, `mux-background-video`) take the same source
+  list, so the same failing shapes reach the pinned variant.
 - **Out of scope / deferred:**
   - **No E2E for the encrypted path** — no encrypted source is wired into
     the e2e fixtures, so 4008 → 99001 is unit-verified plus manually

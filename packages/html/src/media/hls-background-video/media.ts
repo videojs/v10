@@ -33,6 +33,11 @@ const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElement) as unknown as Const
  * required. Mux playback-ID identity, poster, and storyboard belong to
  * `<mux-video>`; none of them mean anything without controls to hang them on.
  *
+ * Nothing about an unplayable source reaches the inner `<video>` on its own, so
+ * `error` on it stays null and the element sits at `readyState 0`. The engine
+ * reports and logs each condition instead, which keeps a source that never appears
+ * diagnosable from the console without widening this element's surface.
+ *
  * `<mux-background-video>` is this element under the name the package it replaces
  * used. Same class, so the tag is a naming choice and nothing more.
  *

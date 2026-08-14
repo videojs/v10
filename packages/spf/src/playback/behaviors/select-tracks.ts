@@ -5,9 +5,17 @@
  * already exists. When the presentation is unset/reset (transitions back to unresolved),
  * clears the selection so a stale id from the previous source doesn't persist.
  *
- * Lifecycle-driven: each transition fires its work once. Does not police the
- * selection between transitions; external writes (user picks, ABR, programmatic
- * filter-driven re-picks) are left alone.
+ * Lifecycle-driven: the pick fires once per transition, and nothing re-picks —
+ * that is what separates these from the `switch*` variants. External writes (user
+ * picks, ABR, programmatic filter-driven re-picks) are left alone, including a
+ * write naming a track the manifest never offered.
+ *
+ * The one thing policed between transitions is a pick the *constraints* turn
+ * against: a rendition's container and encryption are only known once its media
+ * playlist resolves, which is after the pick was made, so a selection that becomes
+ * unplayable is dropped. Dropped, never moved — re-picking is exactly the behavior
+ * `switchVideoTrack` exists to provide. Dropping reports nothing on its own, since
+ * whatever made the pick unplayable already reported its own, more specific cause.
  *
  * Selection runs the same rule model `switchVideoTrack` does — a hard
  * `constraints` pre-pass, then an ordered `rules` chain, with the pick as the
@@ -45,7 +53,7 @@
 
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
+import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import {
   type AudioSelectionConfig,
   byDescendingResolution,
@@ -55,7 +63,14 @@ import {
 } from '../../media/primitives/select-tracks';
 import { isResolvedPresentation, type TrackType } from '../../media/types';
 import { getTracksByType } from '../../media/utils/tracks';
-import { applyConstraints, applyRules, type SelectionRule } from '../primitives/selection-rules';
+import {
+  applyConstraints,
+  applyRules,
+  type CapabilityConstraintConfig,
+  excludeUnplayableTracks,
+  type SelectionRule,
+  sameCandidateSet,
+} from '../primitives/selection-rules';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 
 // ============================================================================
@@ -102,6 +117,27 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
       : ('presentation-unresolved' as const)
   );
 
+  const deps = { state, config: ruleConfig };
+
+  // The playable candidate set — the type's tracks after the hard-constraints
+  // pre-pass. A `computed` so it re-evaluates when its inputs change, which is what
+  // lets a *pinned* selection still notice it has gone unplayable: `resolve-track`
+  // relabels the whole type's container from the first resolved media playlist,
+  // long after `entry` made its pick under the fMP4 default.
+  //
+  // The `equals` gates notification on the set of track ids rather than array
+  // identity, matching `setupTrackSwitching`'s. Segment appends and live reloads
+  // both swap in a new presentation object carrying the same variants; without
+  // this the effect below would re-run on every one of them.
+  const candidateSet = computed(
+    () => {
+      const presentation = state.presentation.get();
+      if (!isResolvedPresentation(presentation)) return [];
+      return applyConstraints(constraints, getTracksByType(presentation, trackType), deps);
+    },
+    { equals: sameCandidateSet }
+  );
+
   return createMachineReactor({
     initial: 'presentation-unresolved',
     monitor: () => derivedStateSignal.get(),
@@ -125,18 +161,50 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
             // the reactor's `'presentation-resolved'` gate is exactly
             // `isResolvedPresentation(state.presentation.get())`, which
             // requires a truthy Presentation.
-            const deps = { state, config: ruleConfig };
-            const candidates = getTracksByType(state.presentation.get()!, trackType);
+            //
             // Constraints prune the unplayable, then the chain narrows and ranks;
             // the pick is the head. An empty `rules` chain therefore selects the
             // first candidate, which falls out of the model rather than needing a
             // first-track code path of its own.
-            const survivors = applyRules(rules, applyConstraints(constraints, candidates, deps), deps);
+            const survivors = applyRules(rules, peek(candidateSet), deps);
             const id = survivors[0]?.id;
             if (id) state[selectedKey].set(id);
           }
           return () => state[selectedKey].set(undefined);
         },
+        effects: [
+          // Selection is `entry`'s alone — this only ever *de*selects. Keeping the
+          // pick out of a reaction is what makes this the pinned variant rather
+          // than a worse-spelled `switchVideoTrack`: nothing here re-ranks or moves
+          // the pin. It has to be a reaction all the same, because what it watches
+          // for is learned late — container and encryption come from a rendition's
+          // media playlist, which resolves after the pick was made.
+          //
+          // Deliberately does *not* report why. Whatever made the pick unplayable
+          // reported its own cause as the playlist resolved (1004 container, 4008
+          // encryption, via `reportUnsupportedTrackConditions`), which is both more
+          // specific than a verdict and already logged. The one condition no cause
+          // covers is nothing being playable at all — no rendition resolved, so
+          // none reported — which is why that alone emits here. See
+          // `internal/design/spf/features/errors.md`.
+          () => {
+            // Untracked: writing the slot below must not re-enter this reaction.
+            const selectedId = peek(state[selectedKey]);
+            if (!selectedId) return;
+            if (candidateSet.get().some((track) => track.id === selectedId)) return;
+
+            // Only a pick the source actually offers is this behavior's to drop. An
+            // id absent from the manifest was never selectable, and external writes
+            // are left alone — see this module's header.
+            const presentation = peek(state.presentation);
+            if (
+              isResolvedPresentation(presentation) &&
+              getTracksByType(presentation, trackType).some((track) => track.id === selectedId)
+            ) {
+              state[selectedKey].set(undefined);
+            }
+          },
+        ],
       },
     },
   });
@@ -245,13 +313,20 @@ export const screenResolutionCap: SelectTrackRule<unknown> = (tracks, { state })
 
 /**
  * Config for `selectVideoTrack`. Pass `rules` to replace the selection chain, or
- * `constraints` to prune candidates before it runs; otherwise the chain is empty
- * and the first candidate is the pick.
+ * `constraints` to replace the capability pre-pass; otherwise the chain is empty
+ * and the first playable candidate is the pick.
  */
-export interface SelectVideoTrackConfig {
+export interface SelectVideoTrackConfig extends CapabilityConstraintConfig {
   constraints?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
   rules?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
 }
+
+/**
+ * Default video constraints: the capability pre-pass alone. No
+ * `excludeFailedCdns` — this variant's compositions run no failover monitor, so
+ * `failedCdns` has no writer and the constraint would always pass through.
+ */
+const DEFAULT_VIDEO_CONSTRAINTS: readonly SelectTrackRule<SelectVideoTrackConfig>[] = [excludeUnplayableTracks];
 
 /**
  * Select a video track when a presentation loads. Clears the selection on
@@ -276,7 +351,7 @@ export const selectVideoTrack = defineBehavior({
       config: {
         selectedKey: VIDEO_TYPE_CONFIG.selectedKey,
         trackType: 'video',
-        constraints: config?.constraints ?? [],
+        constraints: config?.constraints ?? DEFAULT_VIDEO_CONSTRAINTS,
         rules: config?.rules ?? DEFAULT_VIDEO_RULES,
         ruleConfig: config,
       },

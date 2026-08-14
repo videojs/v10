@@ -14,6 +14,8 @@
  * narrowing rules and rankers, with the pick as the first survivor.
  */
 
+import type { CanPlayTrack } from '../../media/types';
+
 /**
  * Deps handed to each rule and to `applyRules`, mirroring a behavior's setup
  * deps so a rule reads from the same surfaces a behavior does. `context` is
@@ -90,4 +92,60 @@ export function applyConstraints<T, State, Context, Config>(
   let current = tracks;
   for (const constraint of constraints) current = constraint(current, deps);
   return current;
+}
+
+/**
+ * Whether two candidate sets hold the same tracks, by id.
+ *
+ * The `equals` both selection behaviors give their candidate-set `computed`. A
+ * live playlist refresh swaps in a new presentation object carrying the same
+ * variants, and a constraint's own inputs can churn without changing which
+ * tracks survive; in both cases the set is unchanged and the reaction must not
+ * re-fire. Compares by id rather than array identity for exactly that.
+ */
+export function sameCandidateSet<T extends { id: string }>(a: readonly T[], b: readonly T[]): boolean {
+  return a.length === b.length && a.every((track) => b.some((other) => other.id === track.id));
+}
+
+/**
+ * What {@link excludeUnplayableTracks} reads off the config it is handed.
+ *
+ * Read through a cast rather than constraining the rule's `Config` generic, the
+ * same way `screenResolutionCap` reads `screenResolution` off its state: a rule
+ * composes into chains whose config types have nothing else in common, and
+ * constraining the generic would make every one of those a weak-type mismatch.
+ * Each engine defaults `canPlayTrack` to the DOM-bound probe; unwired means "no
+ * capability filtering" and the constraint passes everything through.
+ */
+export interface CapabilityConstraintConfig {
+  canPlayTrack?: CanPlayTrack;
+}
+
+/**
+ * Capability constraint — a *hard* filter for the {@link applyConstraints}
+ * pre-pass. Removes renditions this environment can't decode, probed via the
+ * injected `canPlayTrack` (codec → `MediaSource.isTypeSupported`, plus the
+ * container and encryption assertions that probe can't make). Constraining here
+ * — before selection — means an unplayable variant is pruned upstream and never
+ * picked, instead of surviving into the pipeline to fail late at
+ * `createSourceBuffer`. That late throw stays as a defensive structural
+ * guarantee; with this constraint it should rarely fire.
+ *
+ * Lives here rather than beside `switchVideoTrack` for the reason this module
+ * exists: both the re-evaluating variant and the pinned `selectVideoTrack` apply
+ * it, and reaching it through `behaviors/track-switching.ts` would drag the ABR
+ * path into a composition that deliberately omits it.
+ *
+ * Passes everything through when there's no probe (a composition that didn't
+ * wire one, or DOM-free tests). When it prunes *every* track, the empty result is
+ * preserved (per `applyConstraints`) — "nothing playable" — which each consuming
+ * behavior answers by clearing its selection and reporting the type's verdict.
+ */
+export function excludeUnplayableTracks<T, State, Context, Config>(
+  tracks: readonly T[],
+  { config }: SelectionRuleDeps<State, Context, Config>
+): readonly T[] {
+  const canPlay = (config as CapabilityConstraintConfig | undefined)?.canPlayTrack;
+  if (!canPlay) return tracks;
+  return tracks.filter((track) => canPlay(track as Parameters<CanPlayTrack>[0]));
 }

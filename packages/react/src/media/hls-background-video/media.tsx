@@ -32,6 +32,11 @@ export interface HlsBackgroundVideoProps
  * storyboard belong to `MuxVideo`, since none of them mean anything without
  * controls to hang them on.
  *
+ * `onError` on the underlying `<video>` will not fire for an unplayable source:
+ * nothing about one reaches the media element on its own. The engine reports and
+ * logs each condition instead, so a source that never appears is diagnosable from
+ * the console without a prop for it.
+ *
  * `MuxBackgroundVideo` is this same component under the name the package it
  * replaces used — an alias, not a variant.
  */
