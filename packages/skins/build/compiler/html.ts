@@ -5,6 +5,7 @@ import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 interface CreateCompilerHtmlConfigOptions {
   style: SkinStyleTarget;
   styles: SkinStyleManifest;
+  rootClassName?: string | undefined;
 }
 
 interface HtmlComponentDescriptor {
@@ -13,6 +14,10 @@ interface HtmlComponentDescriptor {
 }
 
 const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
+  Container: {
+    modules: ['@videojs/html/media/container'],
+    elements: { ContainerPrimitive: 'media-container' },
+  },
   Controls: {
     modules: ['@videojs/html/ui/controls'],
     elements: { 'Controls.Root': 'media-controls', 'Controls.Group': 'media-controls-group' },
@@ -32,6 +37,10 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
   Popover: {
     modules: ['@videojs/html/ui/popover'],
     elements: { 'Popover.Popup': 'media-popover' },
+  },
+  Poster: {
+    modules: ['@videojs/html/ui/poster'],
+    elements: { PosterPrimitive: 'media-poster' },
   },
   SeekButton: {
     modules: ['@videojs/html/ui/seek-button'],
@@ -113,8 +122,23 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
       rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
+          const rootContainer = code.function('DefaultVideoSkin').jsx.element('Container');
+          const containerPrimitiveClassName = code
+            .function('Container')
+            .jsx.props('className')
+            .on('ContainerPrimitive');
 
           return [
+            rootContainer.addProp('className', () => {
+              if (!styleTarget.rootClassName) {
+                throw new Error('HTML Skin root lowering requires `rootClassName`.');
+              }
+              return styleTarget.rootClassName;
+            }),
+            containerPrimitiveClassName.replace(({ value }) => code.value.array([value, 'className'])),
+            code.function('Container').setProps(['children', 'className']),
+            code.jsx.element('Slot').replace('slot'),
+            code.jsx.element('OverlayPrimitive').replace('div'),
             code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
             code.jsx.element('Popover.Trigger').unwrap(),
             code.jsx.element('TooltipPrimitive.Root').unwrap({ forwardPropsTo: 'TooltipPrimitive.Popup' }),
@@ -126,8 +150,14 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
               code.jsx.element(source).addProp('name', name),
               code.jsx.element(source).replace('media-icon'),
             ]),
-            code.jsx.props('className').replace(({ value }) => code.value.call(cn, [value])),
-            code.jsx.props('className').rename('class'),
+            code.jsx
+              .props('className')
+              .on(/^[a-z]/)
+              .replace(({ value }) => code.value.call(cn, [value])),
+            code.jsx
+              .props('className')
+              .on(/^[a-z]/)
+              .rename('class'),
             code
               .interface('ButtonTooltipProps')
               .property('children')
@@ -140,13 +170,21 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
   });
 }
 
-export function resolveHtmlElementImports(componentSymbols: readonly string[]): string[] {
+const markupElementModules = {
+  'media-container': '@videojs/html/media/container',
+  'media-poster': '@videojs/html/ui/poster',
+} as const;
+
+export function resolveHtmlElementImports(componentSymbols: readonly string[], markup = ''): string[] {
   const symbols = new Set(componentSymbols);
   const imports = new Set<string>();
 
   for (const symbol of symbols) {
     if (symbol === 'Slider' && (symbols.has('TimeSlider') || symbols.has('VolumeSlider'))) continue;
     for (const source of htmlComponents[symbol]?.modules ?? []) imports.add(source);
+  }
+  for (const [element, module] of Object.entries(markupElementModules)) {
+    if (markup.includes(`<${element}`)) imports.add(module);
   }
 
   return [...imports].sort();

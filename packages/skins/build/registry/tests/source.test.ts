@@ -23,7 +23,7 @@ describe('generateReactRegistry', () => {
     expect(Object.keys(output.items)).toEqual(['default-video', 'play-button']);
     expect(output.items['default-video']?.some((file) => file.path === 'skin.tsx')).toBe(true);
     expect(output.items['default-video']?.find((file) => file.path === 'skin.tsx')?.content).toContain(
-      'className="media-skin media-skin-video media-theme-default'
+      'className={cn("media-skin media-skin-video media-theme-default", className)}'
     );
     expect(output.items['play-button']?.some((file) => file.path === 'components/play-button/play-button.tsx')).toBe(
       true
