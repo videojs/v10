@@ -6,7 +6,7 @@ The migration is mostly **moving configuration into markup** and replacing Plyr'
 
 ## Why switch?
 
-Plyr is simple and familiar, so the reason to migrate should be practical. These are the strongest wins when your app can use HTML5, HLS, DASH, Vimeo, or Mux-backed media. We've taken our vast experience building some of the best players and thrown it all into Video.js v10. 
+Plyr is simple and familiar, so the reason to migrate should be practical. These are the strongest wins when your app can use HTML5, HLS, DASH, Vimeo, YouTube, or Mux-backed media. We've taken our vast experience building some of the best players and thrown it all into Video.js v10.
 
 - **♿ Accessibility starts in the component model.** Plyr has long-running reports around WCAG compliance, slider semantics, keyboard behavior, focus visibility, and menu roles ([#905](https://github.com/sampotts/plyr/issues/905), [#103](https://github.com/sampotts/plyr/issues/103)). Video.js v10 exposes buttons, sliders, menus, radio groups, and tooltips as focused components with state attributes and accessibility behavior built into each part.
 - **📺 Streaming controls are first-class media state.** Streaming was an afterthought in Plyr. HLS quality switching is one of Plyr's most-requested gaps ([#1741](https://github.com/sampotts/plyr/issues/1741), [#218](https://github.com/sampotts/plyr/issues/218)). Video.js v10 models HLS, DASH, and Mux-backed media directly, so quality UI can read rendition state instead of parsing manifests and wiring hls.js in application code.
@@ -17,7 +17,7 @@ Plyr is simple and familiar, so the reason to migrate should be practical. These
 - **🎛️ Layout and skins are easier to own.** Plyr's iframe and aspect-ratio behavior has produced workarounds for cropping and fullscreen sizing ([#339](https://github.com/sampotts/plyr/issues/339)). Video.js v10 separates the provider, container, media, and skin, so sizing belongs to the container or skin and the UI can be [ejected](#ejecting) when you need full control.
 - **⌨️ Input behavior is explicit.** Plyr has recurring mobile tap and fullscreen threads ([#718](https://github.com/sampotts/plyr/issues/718), [#1190](https://github.com/sampotts/plyr/issues/1190)). Video.js v10 has common gestures and hotkey support built into the skins - you can [eject](#ejecting) to customize them. 
 
-Video.js v10 is still moving toward GA. Features like ads, playlists, chapters, YouTube, preference persistence, and audio-track selection are active areas, so check Known gaps when those features matter to your migration.
+Video.js v10 is still moving toward GA. Features like ads, playlists, preference persistence, and cue-point APIs are active areas, so check Known gaps when those features matter to your migration.
 
 ---
 
@@ -107,8 +107,8 @@ interface VideoPlayerProps {
 export function VideoPlayer({ origin }: VideoPlayerProps) {
   return (
     <Player.Provider>
-      <MinimalVideoSkin>
-        <Video src={`${origin}/video.mp4`} poster={`${origin}/poster.jpg`} playsInline>
+      <MinimalVideoSkin poster={`${origin}/poster.jpg`}>
+        <Video src={`${origin}/video.mp4`} playsInline>
           <track kind="captions" label="English" src={`${origin}/captions/en.vtt`} srclang="en" default />
           <track kind="metadata" label="thumbnails" src={`${origin}/storyboard.vtt`} default />
         </Video>
@@ -199,13 +199,41 @@ In both instances, you should set the `src` attribute to the URL for the Vimeo v
 
 ### YouTube
 
-Video.js v10 doesn't currently support YouTube media but it's on target for GA and can be [tracked here](https://github.com/videojs/v10/issues/1434). 
+YouTube is supported through a first-class media component. For **HTML (Web Components)**, replace `<video>` with `<youtube-video>` and add the module import:
+
+```js
+import '@videojs/html/media/youtube-video';
+```
+
+```html
+<video-player>
+  <video-minimal-skin>
+    <youtube-video src="https://youtu.be/aqz-KE-bpKQ" playsinline></youtube-video>
+  </video-minimal-skin>
+</video-player>
+```
+
+For **React**, replace `<Video>` with `<YouTubeVideo>` and add the import:
+
+```js
+import { YouTubeVideo } from '@videojs/react/media/youtube-video';
+```
+
+```jsx
+<Player.Provider>
+  <MinimalVideoSkin>
+    <YouTubeVideo src="https://youtu.be/aqz-KE-bpKQ" playsInline />
+  </MinimalVideoSkin>
+</Player.Provider>
+```
+
+The component accepts YouTube watch, short, embed, Shorts, live, playlist, and privacy-enhanced URLs, as well as raw 11-character video IDs.
 
 ### Internationalization
 
 Video.js v10 ships with English labels by default and includes locale packs for:
 
-`ar`, `az`, `bg`, `bn`, `bs`, `ca`, `cs`, `cy`, `da`, `de`, `el`, `es`, `et`, `eu`, `fa`, `fi`, `fr`, `gd`, `gl`, `he`, `hi`, `hr`, `hu`, `it`, `ja`, `ko`, `lv`, `mr`, `nb`, `ne`, `nl`, `nn`, `oc`, `pl`, `pt-BR`, `pt-PT`, `ro`, `ru`, `sk`, `sl`, `sr`, `sv`, `te`, `th`, `tr`, `uk`, `vi`, `zh-CN`, and `zh-TW`.
+`ar`, `az`, `bg`, `bn`, `bs`, `ca`, `cs`, `cy`, `da`, `de`, `el`, `es`, `et`, `eu`, `fa`, `fi`, `fr`, `gd`, `gl`, `he`, `hi`, `hr`, `hu`, `id`, `it`, `ja`, `ko`, `lt`, `lv`, `mr`, `nb`, `ne`, `nl`, `nn`, `oc`, `pl`, `pt-BR`, `pt-PT`, `ro`, `ru`, `sk`, `sl`, `sr`, `sv`, `te`, `th`, `tr`, `uk`, `vi`, `zh-CN`, and `zh-TW`.
 
 The shorthand tags `pt` and `zh` are also available as aliases.
 
@@ -218,9 +246,13 @@ For CDN users:
   import { registerI18n } from 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn/i18n.js';
 
   registerI18n('en', {
-    play: 'Start video',
-    pause: 'Pause video',
-    menuSettings: 'Options',
+    buttons: {
+      play: 'Start video',
+      pause: 'Pause video',
+    },
+    menu: {
+      settings: 'Options',
+    },
   });
 </script>
 
@@ -255,9 +287,13 @@ export function MyPlayer() {
       <I18nProvider
         locale="en"
         translations={{
-          play: 'Start video',
-          pause: 'Pause video',
-          menuSettings: 'Options',
+          buttons: {
+            play: 'Start video',
+            pause: 'Pause video',
+          },
+          menu: {
+            settings: 'Options',
+          },
         }}
       >
         <MinimalVideoSkin>
@@ -278,9 +314,9 @@ Here's a matrix for configuration options in Plyr and how it maps to Video.js v1
 | Plyr option | Video.js v10 |
 |---|---|
 | `controls` | The skins include all the common controls, laid out in a familiar way that users would expect. However, if you want to customize the skin beyond basic colors, you can elect to [eject the skin](#ejecting) and change layout, styles, or icons. |
-| `settings` | Included automatically in the skins when quality, speed, or captions are available. |
+| `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
-| `poster` / `data-poster` | As above; use the `poster` slot in HTML or React's `poster` prop on the media component. |
+| `poster` / `data-poster` | Use the `poster` slot in HTML or the React skin's `poster` prop. |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
 | `hideControls` | Preset skins auto-hide controls based on activity. The delay is currently not configurable. |
 | `clickToPlay` | Preset video skins include click and tap gestures. [Eject the skin](#ejecting) to remove or change them. |
@@ -292,6 +328,7 @@ Here's a matrix for configuration options in Plyr and how it maps to Video.js v1
 | `speed` | Included in the preset settings menu when playback rates are available. |
 | `fullscreen` | Native fullscreen is supported; Plyr's full-window fallback is not a matching feature. |
 | `provider: 'vimeo'` | Use the Vimeo media component inside the player skin as shown in [Vimeo](#vimeo) above. |
+| `provider: 'youtube'` | Use the YouTube media component inside the player skin as shown in [YouTube](#youtube) above. |
 | `storage` | Unsupported at this time. |
 | `i18n` | The most common languages are available by default but you can also provide custom translations, if required. See [Internationalization](#internationalization) above for more info. |
 | `ads` | Unsupported at this time. |
@@ -329,24 +366,20 @@ Video.js v10 skins offer similar color customization via CSS variables. [Eject t
 
 /* Video.js */
 .video-player {
-  --media-color-primary: rebeccapurple;
+  --media-accent-color: rebeccapurple;
 }
 ```
 
 ## Ejecting
 
-If you need extra customization of layout, styles or icons, you can elect to "eject" the skin into your application, much like a shadcn installation. Then you have complete control over the skin.
-
-⚠️ The process for ejecting is TBD. 
+If you need extra customization of layout, styles, or icons, you can "eject" the skin into your application, much like a shadcn installation. Copy the HTML or React skin and its CSS into your project, then modify the components and styles directly.
 
 ## Known gaps
 
-- YouTube media is not implemented as a first-class Video.js v10 media element; see [#1434](https://github.com/videojs/v10/issues/1434).
 - Plyr's ads option has no built-in equivalent.
-- Plyr's `storage` option has no built-in equivalent for persisted volume, captions language, muted state, speed, or quality. Volume and muted persistence are tracked in [#1428](https://github.com/videojs/v10/issues/1428); subtitle language preference is tracked in [#1423](https://github.com/videojs/v10/issues/1423).
+- Plyr's `storage` option has no built-in equivalent for persisted volume, captions language, muted state, speed, or quality. Player setting persistence is tracked in [#944](https://github.com/videojs/v10/issues/944); subtitle language preference is tracked in [#1423](https://github.com/videojs/v10/issues/1423).
 - Plyr's full-window fullscreen fallback has no matching Video.js feature. This was designed to be a fallback when the fullscreen API wasn't supported but given the [browser support for fullscreen is ~96%](https://caniuse.com/fullscreen), this unlikely to be required.
 - Plain MP4 source arrays with `size` metadata do not automatically create a quality menu. Use Mux, HLS, or DASH for adaptive quality when possible. A simpler source-driven quality menu may be considered later.
-- Chapter UI and cue-point APIs are not complete yet; see [#1441](https://github.com/videojs/v10/issues/1441) and [#1442](https://github.com/videojs/v10/issues/1442).
+- Preset skins segment the time slider and show chapter titles when the media includes a default `<track kind="chapters">`. Dedicated cue-point APIs are not complete yet; see [#1442](https://github.com/videojs/v10/issues/1442).
 - The controls auto-hide delay and disabled state are not configurable yet.
 - Native controls are not automatically removed when custom controls load; see [#1160](https://github.com/videojs/v10/issues/1160).
-
