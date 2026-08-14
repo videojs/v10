@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { signal } from '../../../core/signals/primitives';
 import { initSegment, mediaSegment, trak } from '../../../media/mp4/tests/synthetic-boxes';
 import type { Cue, MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';

@@ -1,5 +1,5 @@
 import { flush } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { type AlertDialogOptions, createAlertDialog } from '../alert-dialog';
 import { createTransition } from '../transition';
 

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation } from '../../../media/types';
 import { DEFAULT_FAILOVER_MONITOR_CONFIG, setupFailoverMonitor } from '../setup-failover-monitor';

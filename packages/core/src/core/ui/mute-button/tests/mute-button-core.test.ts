@@ -1,5 +1,5 @@
 import type { MediaVolumeState } from '@videojs/media';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { MuteButtonState } from '../mute-button-core';
 import { MuteButtonCore } from '../mute-button-core';
 

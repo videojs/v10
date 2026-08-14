@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { effect } from '../../../../core/signals/effect';
 import { createSourceBufferActor } from '../source-buffer';
 

@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import type { UnknownStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { useIndicatorVisibility } from '../use-indicator-visibility';
 

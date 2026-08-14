@@ -1,5 +1,5 @@
 import type { MediaControlsState } from '@videojs/media';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { ControlsCore } from '../controls-core';
 
 describe('ControlsCore', () => {

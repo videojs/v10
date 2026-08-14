@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { PopoverCore, type PopoverInput } from '../popover-core';
 
 const CLOSED: PopoverInput = { active: false, status: 'idle' };

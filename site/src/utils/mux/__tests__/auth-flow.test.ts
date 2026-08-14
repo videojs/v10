@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { CreateUploadResult, LoginResult } from '../auth-flow';
 import { createEndpointCoordinator, initiateAuthPopup } from '../auth-flow';
 

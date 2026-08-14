@@ -7,7 +7,7 @@
  * confirm the seed, the absence of subtracted state slots, and the picker
  * configurability.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { snapshot } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { createBackgroundVideoEngine } from '../engine-background-video';

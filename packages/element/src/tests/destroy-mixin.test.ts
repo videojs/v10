@@ -1,5 +1,5 @@
 import type { ReactiveController } from '@videojs/element';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { DestroyMixin } from '../destroy-mixin';
 import { ReactiveElement } from '../reactive-element';
 

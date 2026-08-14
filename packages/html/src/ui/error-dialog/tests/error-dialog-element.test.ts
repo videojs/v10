@@ -1,5 +1,5 @@
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { AlertDialogCloseElement } from '../../alert-dialog/alert-dialog-close-element';

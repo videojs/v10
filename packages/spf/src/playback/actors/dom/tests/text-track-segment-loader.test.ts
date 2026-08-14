@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { TextTrack } from '../../../../media/types';
 import { createTextTrackSegmentLoaderActor } from '../../text-track-segment-loader';
 import { createTextTracksActor } from '../text-tracks';

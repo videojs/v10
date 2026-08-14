@@ -1,5 +1,5 @@
 import { createSelector, createStore, type StateContext } from '@videojs/store';
-import { assertType, describe, expect, it } from 'vitest';
+import { assertType, describe, expect, it } from 'vite-plus/test';
 import {
   type ConfigurablePlayerFeatureConfig,
   combinePlayerFeatureConfigs,

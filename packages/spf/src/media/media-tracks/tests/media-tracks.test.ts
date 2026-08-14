@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { matchesPartialTrack } from '../../primitives/select-tracks';
 import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../types';
 import {

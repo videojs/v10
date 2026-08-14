@@ -1,20 +1,94 @@
 import { globSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { UserConfig } from 'tsdown';
-import { defineConfig } from 'tsdown';
+import { defineConfig } from 'vite-plus';
+import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 import { cdnI18nExternalPlugin } from '../../build/plugins/cdn-i18n-external-plugin.ts';
+import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
-import { baseConfig } from '../../build/tsdown.ts';
+import {
+  baseConfig,
+  isDevBuildMode,
+  type PackageBuildMode,
+  packageBuildConfig,
+  packageBuildModes,
+} from '../../build/pack.ts';
+import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
-type BuildMode = 'dev' | 'prod';
+type CdnBuildMode = 'dev' | 'prod';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
+const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
-const buildModes: BuildMode[] = ['dev', 'prod'];
+const defineEntries = Object.fromEntries(
+  globSync('src/define/**/*.ts')
+    .filter((file) => !file.includes('.test.'))
+    .map((file) => {
+      const key = file.replace('src/', '').replace('.ts', '');
+      return [key, file];
+    })
+);
 
-const presets = [
+const presetEntries = Object.fromEntries(
+  globSync('src/presets/*.ts').map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
+    return [key, file];
+  })
+);
+
+const iconEntries = Object.fromEntries(
+  globSync('src/icons/**/index.ts').map((file) => {
+    const key = file.replace('src/', '').replace('.ts', '');
+    return [key, file];
+  })
+);
+
+const i18nLocaleEntries = Object.fromEntries([
+  ['i18n/locales/all', 'src/i18n/locales/all.ts'],
+  ['i18n/locales/all/register', 'src/i18n/locales/all/register.ts'],
+  ['i18n/locales/en', 'src/i18n/locales/en.ts'],
+  ['i18n/locales/en/register', 'src/i18n/locales/en/register.ts'],
+  ...localeTags.map((tag) => [`i18n/locales/${tag}`, `src/i18n/locales/${tag}.ts`]),
+  ...localeTags.map((tag) => [`i18n/locales/${tag}/register`, `src/i18n/locales/${tag}/register.ts`]),
+]);
+
+const createPackagePackConfig = (mode: PackageBuildMode): PackUserConfig => ({
+  ...packageBuildConfig(mode, 'browser'),
+  name: 'package',
+  entry: {
+    index: 'src/index.ts',
+    'i18n/index': 'src/i18n/index.ts',
+    ...i18nLocaleEntries,
+    ...iconEntries,
+    ...defineEntries,
+    ...presetEntries,
+  },
+  treeshake: {
+    // The sideEffects field in package.json uses dist paths, but the build
+    // runs against source. Ensure define/* modules (which register custom
+    // elements as a side effect) are never tree-shaken from skin bundles.
+    moduleSideEffects: [
+      { test: /\/define\//, sideEffects: true },
+      { test: /\/icons\/(?:dist\/)?element\//, sideEffects: true },
+      { test: /\/i18n\/locales\/.+\/register/, sideEffects: true },
+    ],
+  },
+  deps: {
+    alwaysBundle: [/^@videojs\/icons/, /^@videojs\/skins/],
+  },
+  alias: {
+    '@': new URL('./src', import.meta.url).pathname,
+  },
+  plugins: [
+    copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
+    inlineCssPlugin({ skinsDir, minify: !isDevBuildMode(mode) }),
+    inlineTemplatePlugin({ minify: !isDevBuildMode(mode) }),
+  ],
+});
+
+const cdnBuildModes: CdnBuildMode[] = ['dev', 'prod'];
+const cdnPresets = [
   'video',
   'video-headless',
   'video-minimal',
@@ -29,7 +103,7 @@ const presets = [
   'audio-minimal-ui',
   'background',
 ];
-const media = [
+const cdnMedia = [
   'google-cast',
   'hls-audio',
   'hls-background-video',
@@ -57,7 +131,7 @@ const media = [
  * where two flavors of one element can end up in a single realm — see the
  * tag-collision note in `define/media/mux-video/spf`.
  */
-const mediaEntries = media.flatMap((name) => {
+const cdnMediaEntries = cdnMedia.flatMap((name) => {
   const dir = `src/cdn/media/${name}`;
 
   if (!statSync(dir, { throwIfNoEntry: false })?.isDirectory()) {
@@ -70,7 +144,7 @@ const mediaEntries = media.flatMap((name) => {
   });
 });
 
-const localeEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
+const cdnLocaleEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
   src: file,
   name: `locales/${basename(file, '.ts')}`,
 }));
@@ -84,16 +158,12 @@ const localeEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
  */
 export const entries = [
   { src: 'src/cdn/i18n.ts', name: 'i18n' },
-  ...localeEntries,
-  ...presets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
-  ...mediaEntries,
+  ...cdnLocaleEntries,
+  ...cdnPresets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
+  ...cdnMediaEntries,
 ];
 
-/**
- * Rolldown plugin that generates empty `.d.ts` stubs for dev CDN entry points.
- * CDN entries are side-effect-only modules with no exports — the stubs let
- * TypeScript resolve `import '@videojs/html/cdn/...'` without errors.
- */
+/** Generate empty declaration stubs for side-effect-only dev CDN entries. */
 function dtsStubsPlugin(outDir: string) {
   function generate(dir: string) {
     for (const file of readdirSync(dir, { withFileTypes: true })) {
@@ -113,23 +183,17 @@ function dtsStubsPlugin(outDir: string) {
   };
 }
 
-/**
- * One config per mode with all entries grouped together.
- * This lets rolldown extract shared modules (store, element, core, hls.js, etc.)
- * into shared chunks instead of duplicating them across every bundle.
- * The ES module loader handles chunk deduplication transparently.
- */
-const configs: UserConfig[] = [];
+/** Group CDN entries by mode so Rolldown can extract shared chunks. */
+const cdnPackConfigs: PackUserConfig[] = [];
+const cdnOutDir = 'cdn';
 
-const outDir = 'cdn';
-
-for (const mode of buildModes) {
+for (const mode of cdnBuildModes) {
   const isProd = mode === 'prod';
-
   const entryMap = Object.fromEntries(entries.map(({ src, name }) => [isProd ? name : `${name}.dev`, src]));
 
-  configs.push({
+  cdnPackConfigs.push({
     ...baseConfig,
+    name: 'cdn',
     entry: entryMap,
     platform: 'browser',
     format: 'es',
@@ -138,15 +202,17 @@ for (const mode of buildModes) {
     clean: mode === 'dev',
     dts: false,
     minify: isProd,
-    noExternal: [/.*/],
-    inlineOnly: false,
+    deps: {
+      alwaysBundle: [/.*/],
+      onlyBundle: false,
+    },
     treeshake: {
       moduleSideEffects: [
         { test: /\/define\//, sideEffects: true },
         { test: /\/icons\/(?:dist\/)?element\//, sideEffects: true },
       ],
     },
-    outDir,
+    outDir: cdnOutDir,
     alias: {
       '@': new URL('./src', import.meta.url).pathname,
     },
@@ -157,7 +223,7 @@ for (const mode of buildModes) {
       cdnI18nExternalPlugin({ prod: isProd }),
       inlineCssPlugin({ skinsDir, minify: isProd }),
       inlineTemplatePlugin({ minify: isProd }),
-      ...(!isProd ? [dtsStubsPlugin(outDir)] : []),
+      ...(!isProd ? [dtsStubsPlugin(cdnOutDir)] : []),
     ],
     inputOptions: {
       onwarn(warning, defaultHandler) {
@@ -173,4 +239,16 @@ for (const mode of buildModes) {
   });
 }
 
-export default defineConfig(configs);
+export default defineConfig({
+  define: {
+    __DEV__: 'true',
+  },
+  test: {
+    passWithNoTests: true,
+    onConsoleLog: (log) => !log.includes('Lit is in dev mode'),
+    environment: 'happy-dom',
+    // Dynamic composite imports can exceed Vitest's default under workspace load.
+    testTimeout: 15_000,
+  },
+  pack: [...packageBuildModes.map(createPackagePackConfig), ...cdnPackConfigs],
+});

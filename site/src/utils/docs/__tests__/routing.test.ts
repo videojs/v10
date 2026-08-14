@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { Guide, Sidebar } from '../../../types/docs';
 import { resolveDocsLinkUrl, resolveFrameworkChange, resolveIndexRedirect } from '../routing';
 

@@ -1,19 +1,11 @@
 <video-player class="video-player">
-    <media-container>
-        <video
-            src="{{VJS10_DEMO_VIDEO_MP4}}"
-            autoplay
-            muted
-            playsinline
-            loop
-        ></video>
-        <div class="bar">
-            <button type="button" commandfor="popover-demo" class="trigger">Settings</button>
-            <media-popover id="popover-demo" class="media-popover">
-                <div class="popup">
-                    Popover content
-                </div>
-            </media-popover>
-        </div>
-    </media-container>
+  <media-container>
+    <video src="{{VJS10_DEMO_VIDEO_MP4}}" autoplay muted playsinline loop></video>
+    <div class="bar">
+      <button type="button" commandfor="popover-demo" class="trigger">Settings</button>
+      <media-popover id="popover-demo" class="media-popover">
+        <div class="popup">Popover content</div>
+      </media-popover>
+    </div>
+  </media-container>
 </video-player>

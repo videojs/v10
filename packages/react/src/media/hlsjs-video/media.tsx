@@ -10,8 +10,7 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
 export interface HlsJsVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsMediaProps>,
-    Partial<HlsMediaProps> {
+  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsMediaProps>, Partial<HlsMediaProps> {
   children?: ReactNode;
 }
 

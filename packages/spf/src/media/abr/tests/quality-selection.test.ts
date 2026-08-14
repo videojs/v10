@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { PartiallyResolvedVideoTrack } from '../../types';
 import { DEFAULT_QUALITY_CONFIG, resolutionArea, selectLowestQuality, selectQuality } from '../quality-selection';
 

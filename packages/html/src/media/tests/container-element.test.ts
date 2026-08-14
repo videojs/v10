@@ -1,5 +1,5 @@
 import { registerI18n } from '@videojs/core/i18n';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../container-element';

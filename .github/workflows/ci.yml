@@ -71,11 +71,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-typecheck-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-ci-typecheck-
+
       - name: Build packages for type resolution
         run: pnpm build:packages
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
   test:
     needs: install
@@ -114,17 +130,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Cache turbo test setup
-        uses: actions/cache@v5
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-test-${{ github.sha }}-${{ matrix.package }}
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-${{ matrix.package }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ${{ runner.os }}-turbo-test-
-            ${{ runner.os }}-turbo-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-${{ matrix.package }}-
 
+      - name: Build package dependencies
+        if: matrix.package != '@videojs/cli'
+        run: pnpm exec vp run --filter="${{ matrix.package }}..." build
+
+      # CLI tests resolve a committed CDN-manifest fixture and are deliberately
+      # independent of the site's production build graph.
       - name: Test package
-        run: pnpm turbo run test --filter="${{ matrix.package }}"
+        run: pnpm --filter "${{ matrix.package }}" test
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
   test-spf:
     name: Test (@videojs/spf)
@@ -149,8 +178,24 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-spf-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-spf-
+
       - name: Test SPF
-        run: pnpm turbo run test --filter="@videojs/spf" --env-mode=loose
+        run: pnpm exec vp run --filter="@videojs/spf..." build && pnpm exec vp run @videojs/spf#test
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
   workspace:
     needs: install
@@ -195,13 +240,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Cache turbo build setup
-        uses: actions/cache@v5
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-build-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-ci-build-
 
       - name: Build
         run: pnpm build:packages
@@ -213,3 +259,10 @@ jobs:
       # reference an external CDN or resolve outside the directory.
       - name: Check CDN bundles are self-contained
         run: pnpm -F @videojs/html check:cdn
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}

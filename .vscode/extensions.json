@@ -1,10 +1,9 @@
 {
   "recommendations": [
-    "biomejs.biome",
+    "VoidZero.vite-plus-extension-pack",
     "hyrious.import-cost",
     "streetsidesoftware.code-spell-checker",
     "DavidAnson.vscode-markdownlint",
-    "esbenp.prettier-vscode",
     "astro-build.astro-vscode",
     "unifiedjs.vscode-mdx"
   ]

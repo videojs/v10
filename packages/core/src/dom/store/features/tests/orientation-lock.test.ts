@@ -1,6 +1,6 @@
 import { createStore } from '@videojs/store';
-import type { Mock } from 'vitest';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { Mock } from 'vite-plus/test';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { orientationLockFeature } from '../orientation-lock';

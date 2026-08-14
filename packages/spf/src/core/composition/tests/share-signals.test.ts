@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { signal } from '../../signals/primitives';
 import type { ContextSignals, StateSignals } from '../create-composition';
 import { makeShareSignals } from '../share-signals';

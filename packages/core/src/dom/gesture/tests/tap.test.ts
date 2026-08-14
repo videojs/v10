@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { GestureMatchResult, GestureType } from '../gesture';
 import { TapRecognizer } from '../tap';

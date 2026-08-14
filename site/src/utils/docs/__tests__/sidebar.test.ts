@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { Guide, Section, Sidebar, SidebarLink } from '../../../types/docs';
 import {
   filterSidebar,

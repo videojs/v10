@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { VimeoVideo } from '../vimeo-video';
 
 /** Flush the microtask a deferred embed waits on before it is built. */

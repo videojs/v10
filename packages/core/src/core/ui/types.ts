@@ -48,8 +48,10 @@ export interface RadioOptionsState<Option extends RadioOption = RadioOption> ext
 }
 
 /** Constraint for media button cores that provide a label derived from state. */
-export interface MediaButtonComponent<Props = object, ComponentState extends ButtonState = ButtonState>
-  extends MediaUIComponent<Props, ComponentState> {
+export interface MediaButtonComponent<
+  Props = object,
+  ComponentState extends ButtonState = ButtonState,
+> extends MediaUIComponent<Props, ComponentState> {
   readonly state: State<ComponentState>;
   getLabel(state: ComponentState): Text | string;
 }

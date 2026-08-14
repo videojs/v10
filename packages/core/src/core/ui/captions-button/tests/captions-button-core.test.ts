@@ -1,5 +1,5 @@
 import type { MediaTextTrackState } from '@videojs/media';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { CaptionsButtonState } from '../captions-button-core';
 import { CaptionsButtonCore } from '../captions-button-core';
 

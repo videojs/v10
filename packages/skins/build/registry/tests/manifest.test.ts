@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { skinRegistry } from '../../../canonical/registry/config';
 import { canonicalRoot, loadSkinCatalog } from '../../catalog/load';
 import { resolveSkinClosure } from '../../catalog/resolve';

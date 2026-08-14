@@ -1,4 +1,15 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite-plus';
+import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+
+const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
+  ...packageBuildConfig(mode, 'neutral'),
+  entry: {
+    index: './src/core/index.ts',
+    html: './src/html/index.ts',
+    react: './src/react/index.ts',
+  },
+});
 
 export default defineConfig({
   define: {
@@ -32,4 +43,5 @@ export default defineConfig({
       },
     ],
   },
+  pack: packageBuildModes.map(createPackConfig),
 });

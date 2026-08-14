@@ -6,7 +6,7 @@
  * flavor's `engine` / `preferPlayback` options carry — this source is Mux
  * identity and nothing else.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { MuxVideoMedia } from '../media';
 
 describe('MuxVideoMedia', () => {

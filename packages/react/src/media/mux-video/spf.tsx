@@ -15,7 +15,8 @@ import { MuxStoryboard } from './storyboard';
 // `src` and `source` come from `MuxMediaProps`: the Mux Media owns both, and its
 // `source` is the structured Mux one rather than the generic engine's.
 export interface MuxVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsVideoMediaProps | keyof MuxMediaProps>,
+  extends
+    Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsVideoMediaProps | keyof MuxMediaProps>,
     Partial<Omit<HlsVideoMediaProps, 'src'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;

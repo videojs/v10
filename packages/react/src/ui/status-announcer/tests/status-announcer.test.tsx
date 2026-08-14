@@ -1,7 +1,7 @@
 import { act, cleanup, render } from '@testing-library/react';
 import type { UnknownStore } from '@videojs/store';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { StatusAnnouncer } from '../status-announcer';
 

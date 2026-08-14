@@ -15,7 +15,8 @@ import { MuxStoryboard } from './storyboard';
 // `source` comes from `MuxMediaProps` only: `MuxSource` extends `HlsSource` with
 // Mux identity fields, so the narrower type has to win.
 export interface MuxVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsMediaProps | keyof MuxMediaProps>,
+  extends
+    Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsMediaProps | keyof MuxMediaProps>,
     Partial<Omit<HlsMediaProps, 'source'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;

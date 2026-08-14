@@ -15,7 +15,8 @@ import { useSyncProps } from '../../utils/use-sync-props';
 // `src` is the only prop the Media owns, taken from the adapter rather than
 // restated here so the two can't disagree about what the surface is.
 export interface HlsBackgroundVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsBackgroundVideoMediaProps>,
+  extends
+    Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsBackgroundVideoMediaProps>,
     Partial<HlsBackgroundVideoMediaProps> {}
 
 /**

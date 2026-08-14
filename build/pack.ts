@@ -3,7 +3,7 @@ export type PackageBuildMode = 'dev' | 'default';
 
 export const packageBuildModes: PackageBuildMode[] = ['dev', 'default'];
 
-/** Applied to every tsdown config in the monorepo. */
+/** Applied to every Vite+ pack config in the monorepo. */
 export const baseConfig = {
   report: process.env.CI === 'true',
 } as const;

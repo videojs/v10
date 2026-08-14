@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { MaybeResolvedPresentation } from '../../types';
 import { addFailedCdn, getCdnId, getOrderedCdnIds } from '../cdn';
 

@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { compileSkinStyles, loadDesignSystem } from '../compile';
 import type { SkinStyleManifest, SkinStyleRecipe } from '../manifest';
 

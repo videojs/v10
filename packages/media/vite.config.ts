@@ -1,9 +1,9 @@
-import type { UserConfig } from 'tsdown';
-import { defineConfig } from 'tsdown';
-import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
+import { defineConfig } from 'vite-plus';
+import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import packageJson from './package.json' with { type: 'json' };
 
-const createConfig = (mode: PackageBuildMode): UserConfig => ({
+const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
   entry: {
     index: './src/core/index.ts',
@@ -29,4 +29,29 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   },
 });
 
-export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));
+export default defineConfig({
+  define: {
+    __DEV__: 'true',
+    __PLAYER_VERSION__: JSON.stringify('10.0.0-beta.25'),
+  },
+  test: {
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'media',
+          include: ['src/core/**/*.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'media/dom',
+          include: ['src/dom/**/*.test.ts'],
+          environment: 'jsdom',
+        },
+      },
+    ],
+  },
+  pack: packageBuildModes.map(createPackConfig),
+});

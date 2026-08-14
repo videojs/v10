@@ -164,13 +164,13 @@
     }
   },
   "scripts": {
-    "build": "tsdown",
-    "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
+    "build": "vp pack --filter package",
+    "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn",
     "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts",
     "build:archive": "node --import tsx ./scripts/build-dist-archive.ts",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build:watch": "vp pack --filter package --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
+    "test": "vp test run",
     "clean": "rimraf --glob dist cdn archive docs types '*.tsbuildinfo'",
     "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts html"
   },
@@ -187,9 +187,9 @@
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "happy-dom": "^20.11.1",
-    "tsdown": "^0.22.14",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   },
   "publishConfig": {
     "access": "public"

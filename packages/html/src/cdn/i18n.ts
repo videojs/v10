@@ -1,9 +1,4 @@
-export type {
-  FlatTranslations,
-  Locale,
-  TranslationParams,
-  Translator,
-} from '@videojs/core/i18n';
+export type { FlatTranslations, Locale, TranslationParams, Translator } from '@videojs/core/i18n';
 export {
   createTranslator,
   DEFAULT_LOCALE,

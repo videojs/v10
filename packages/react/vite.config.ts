@@ -1,13 +1,12 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { UserConfig } from 'tsdown';
-import { defineConfig } from 'tsdown';
+import { defineConfig } from 'vite-plus';
+import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
-import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
-
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
 const i18nLocaleEntries = Object.fromEntries([
@@ -19,17 +18,28 @@ const i18nLocaleEntries = Object.fromEntries([
   ...localeTags.map((tag) => [`i18n/locales/${tag}/register`, `src/i18n/locales/${tag}/register.ts`]),
 ]);
 
-const createConfig = (mode: PackageBuildMode): UserConfig => ({
+const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
   // Flavor modules sit beside their element's index rather than under one, so
   // they need their own entries to stay separate chunks: importing one flavor
   // must never pull the other engine in with it.
   entry: ['src/**/index.{ts,tsx}', 'src/media/*/{hls-js,spf}.tsx', i18nLocaleEntries],
-  noExternal: [/^@videojs\/skins/],
+  deps: {
+    alwaysBundle: [/^@videojs\/skins/],
+  },
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
   plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}`, rebuild: false })],
 });
 
-export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));
+export default defineConfig({
+  define: {
+    __DEV__: 'true',
+  },
+  test: {
+    environment: 'jsdom',
+    include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts', 'tests/**/*.test.ts'],
+  },
+  pack: packageBuildModes.map(createPackConfig),
+});

@@ -18,8 +18,9 @@ import type { ActorSnapshot } from './actor';
  * meaningful state machine (e.g., a message-driven model with DOM side
  * effects). For actors that need per-state behavior, use `createMachineActor`.
  */
-export interface TransitionActor<Context extends object, Message extends { type: string }>
-  extends Machine<ActorSnapshot<'active' | 'destroyed', Context>> {
+export interface TransitionActor<Context extends object, Message extends { type: string }> extends Machine<
+  ActorSnapshot<'active' | 'destroyed', Context>
+> {
   send(message: Message): void;
 }
 

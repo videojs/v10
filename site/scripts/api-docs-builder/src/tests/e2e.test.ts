@@ -92,7 +92,7 @@
  *                   without CustomMediaElement. API reference manually maintained.
  */
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { type FeatureResult, generateFeatureReferences } from '../feature-handler';
 import { generateMediaElementReferences, type MediaElementResult } from '../media-element-handler';
 import { generateComponentReferences } from '../pipeline';

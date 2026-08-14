@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { createSliderState, createTimeSliderState } from '../../tests/test-helpers';
 import { getSliderCSSVars, getSliderPreviewStyle, getTimeSliderCSSVars } from '../slider-css-vars';

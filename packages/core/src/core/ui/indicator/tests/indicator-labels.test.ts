@@ -1,5 +1,5 @@
 import { formatTimeAsPhrase } from '@videojs/utils/time';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createTranslator, type FlatTranslations } from '../../../i18n';
 
 import { createStatusAnnouncerLabels } from '../../status-announcer/status-announcer-labels';

@@ -6,8 +6,8 @@ Use this file for durable repository rules. Prefer retrieval-led reasoning: insp
 
 - Setup and contributor workflow: `CONTRIBUTING.md`
 - Available commands and dependency versions: root and package `package.json` files
-- Workspace topology: `pnpm-workspace.yaml`, `turbo.json`, and package manifests
-- Formatting and static checks: `biome.json`, `tsconfig*.json`, and `build/scripts/check-workspace.mjs`
+- Workspace topology: `pnpm-workspace.yaml`, Vite+ `run` configuration, and package manifests
+- Formatting and static checks: `vite.config.ts`, `tsconfig*.json`, and `build/scripts/check-workspace.mjs`
 - Current behavior: implementation and colocated tests
 - Public package behavior: package source, exports, and README files
 - Architecture rationale: `internal/design/`, `internal/decisions/`, and `rfc/`
@@ -40,6 +40,7 @@ pnpm dev
 pnpm -F <pkg> test [path-or-pattern]
 pnpm -F <pkg> build
 pnpm typecheck
+pnpm lint
 pnpm lint:fix:file <file>
 pnpm check:workspace
 ```

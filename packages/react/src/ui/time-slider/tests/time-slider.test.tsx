@@ -2,7 +2,7 @@ import { cleanup, render } from '@testing-library/react';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { HTMLAttributes } from 'react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';

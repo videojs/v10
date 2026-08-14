@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import type { Media } from '@videojs/media';
 import { addMediaComponent, getMediaComponents } from '@videojs/media/dom/media-host';
 import { MuxData as MuxDataComponent, MuxMedia } from '@videojs/media/dom/mux';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { createPlayerWrapper } from '../../testing/mocks';
 import { MuxData } from '../mux-data';
 

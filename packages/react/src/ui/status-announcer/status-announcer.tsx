@@ -11,7 +11,8 @@ import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 
 export interface StatusAnnouncerProps
-  extends UIComponentProps<'div', StatusAnnouncerCore.State>,
+  extends
+    UIComponentProps<'div', StatusAnnouncerCore.State>,
     Pick<StatusAnnouncerCore.Props, 'closeDelay' | 'labels'> {}
 
 export const StatusAnnouncer = forwardRef(function StatusAnnouncer(

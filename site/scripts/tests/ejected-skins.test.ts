@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { DEMO_POSTER_SRC, DEMO_VIDEO_SRC, SKINS } from '../ejected-skins/config.ts';
 import {
   createRenderMediaIcon,

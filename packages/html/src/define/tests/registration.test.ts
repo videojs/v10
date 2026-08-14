@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, type MockInstance, vi } from 'vite-plus/test';
 
 /**
  * Tests that composite define files register all expected custom elements

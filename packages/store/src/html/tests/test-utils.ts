@@ -1,6 +1,6 @@
 import { ReactiveElement } from '@videojs/element';
 import { noop } from '@videojs/utils/function';
-import { afterEach } from 'vitest';
+import { afterEach } from 'vite-plus/test';
 import { defineSlice } from '../../core/slice';
 import type { Store } from '../../core/store';
 import { createStore as createCoreStore } from '../../core/store';

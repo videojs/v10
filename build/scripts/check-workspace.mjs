@@ -64,8 +64,8 @@ function checkCiTestCoverage() {
   }
 
   // Collect package names from standalone test jobs (e.g. test-spf).
-  // Match: `--filter="@videojs/xxx"` in turbo run test commands.
-  for (const m of ciText.matchAll(/turbo run test --filter="([^"]+)"/g)) {
+  // Match: `vp run @videojs/xxx#test` commands.
+  for (const m of ciText.matchAll(/vp run (@videojs\/[^#\s]+)#test/g)) {
     testedInCi.add(m[1]);
   }
 

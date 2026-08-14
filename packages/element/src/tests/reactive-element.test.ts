@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ReactiveElement } from '../reactive-element';
 import type { PropertyValues, ReactiveController } from '../types';
 

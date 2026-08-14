@@ -10,7 +10,7 @@
  * `@videojs/spf/mux-background-video` re-exports these same classes, so its own
  * test asserts identity and leans on this file for behavior.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { HlsBackgroundVideoMediaElement } from '../adapter';
 

@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { transform } from '@videojs/compiler';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { loadSkinStyleManifest } from '../../styles/manifest';
 import { createCompilerReactConfig } from '../react';
 

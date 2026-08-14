@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { HTMLAudioElementHost } from '../audio-host';
 import type { MediaComponent } from '../media-host';
 import { addMediaComponent, getMediaProp } from '../utils';

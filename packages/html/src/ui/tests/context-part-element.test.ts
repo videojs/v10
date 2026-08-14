@@ -1,6 +1,6 @@
 import type { StateAttrMap } from '@videojs/core';
 import { ContextConsumer, ContextProvider, createContext } from '@videojs/element/context';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { ContextPartElement, type PartContextValue } from '../context-part-element';
 import { MediaElement } from '../media-element';

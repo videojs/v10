@@ -15,7 +15,8 @@ export function useLazyTranslations(resolvedLocale: Locale, loader: LocaleLoader
   const [lazyLayer, setLazyLayer] = useState<Partial<FlatTranslations>>({});
   const lazySeqRef = useRef(0);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rerun when `resolvedLocale` changes even though the reset callback does not reference it.
+  // rerun when `resolvedLocale` changes even though the reset callback does not reference it.
+  // oxlint-disable-next-line react/exhaustive-deps
   useLayoutEffect(() => {
     lazySeqRef.current += 1;
     setLazyLayer({});

@@ -6,7 +6,7 @@
  * browser test environment.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 describe('TextTrack Cue Persistence Investigation', () => {
   describe('Baseline: Synchronous cue addition', () => {

@@ -14,7 +14,8 @@ import { useSyncProps } from '../../utils/use-sync-props';
 // `source` comes from `MuxMediaProps` only: `MuxSource` extends `HlsSource` with
 // Mux identity fields, so the narrower type has to win.
 export interface MuxAudioProps
-  extends Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsMediaProps | keyof MuxMediaProps>,
+  extends
+    Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsMediaProps | keyof MuxMediaProps>,
     Partial<Omit<HlsMediaProps, 'source'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;

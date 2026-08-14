@@ -8,8 +8,8 @@
  */
 
 import type { ReactNode } from 'react';
-import type { Mock } from 'vitest';
-import { vi } from 'vitest';
+import type { Mock } from 'vite-plus/test';
+import { vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../i18n';
 import { PlayerContextProvider, type PlayerContextValue } from '../player/context';

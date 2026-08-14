@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { MediaError } from '../../../core/media-error';
 import { HTMLVideoElementHost } from '../../video-host';
 import { NativeHlsMediaErrorsMixin } from '../errors';

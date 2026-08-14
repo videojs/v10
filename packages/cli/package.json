@@ -16,9 +16,9 @@
   ],
   "scripts": {
     "copy-docs": "node --import tsx ../../site/scripts/copy-package-docs.ts cli",
-    "build": "pnpm run copy-docs && tsdown",
-    "dev": "tsdown --watch",
-    "test": "vitest run",
+    "build": "pnpm run copy-docs && vp pack",
+    "dev": "vp pack --watch",
+    "test": "vp test run",
     "clean": "rimraf dist docs"
   },
   "dependencies": {
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "site": "workspace:*",
-    "tsdown": "^0.22.14",
-    "vitest": "^4.1.10"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

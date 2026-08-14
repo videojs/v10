@@ -1,6 +1,6 @@
-import type { UserConfig } from 'tsdown';
-import { defineConfig } from 'tsdown';
-import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
+import { defineConfig } from 'vite-plus';
+import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import en from './src/core/i18n/locales/en.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
 
@@ -14,7 +14,7 @@ const localeEntries = Object.fromEntries([
   ...textNamespaces.map((namespace) => [`i18n/text/${namespace}`, `./src/core/i18n/text/${namespace}.ts`]),
 ]);
 
-const createConfig = (mode: PackageBuildMode): UserConfig => ({
+const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
   deps: { neverBundle: ['@videojs/jsx'] },
   entry: {
@@ -29,4 +29,36 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   },
 });
 
-export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));
+export default defineConfig({
+  define: {
+    __DEV__: 'true',
+  },
+  test: {
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'core',
+          include: ['src/core/**/*.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'core/dom',
+          include: ['src/dom/**/*.test.ts'],
+          environment: 'jsdom',
+          setupFiles: ['src/dom/tests/setup.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'core/scripts',
+          include: ['scripts/**/*.test.ts'],
+        },
+      },
+    ],
+  },
+  pack: packageBuildModes.map(createPackConfig),
+});

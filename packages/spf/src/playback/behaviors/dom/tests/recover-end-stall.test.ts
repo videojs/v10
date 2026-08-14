@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { shouldForceEnded } from '../recover-end-stall';
 
 // At the end-of-stream freeze: MediaSource ended, finite duration, actively playing,

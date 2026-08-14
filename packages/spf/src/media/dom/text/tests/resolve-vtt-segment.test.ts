@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import { resolveVttSegmentMetadata } from '../../../text/resolve-vtt-metadata';
 import { destroyVttResolver, resolveVttSegment, resolveVttSegmentWithMetadata } from '../resolve-vtt-segment';
 

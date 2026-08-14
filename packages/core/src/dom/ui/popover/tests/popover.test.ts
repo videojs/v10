@@ -1,5 +1,5 @@
 import { flush } from '@videojs/store';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { createPopupGroup } from '../popup-group';
 import { createTestPopover } from './popover-helpers';
 

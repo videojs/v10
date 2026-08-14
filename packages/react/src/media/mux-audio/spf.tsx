@@ -14,7 +14,8 @@ import { useSyncProps } from '../../utils/use-sync-props';
 // `src` and `source` come from `MuxMediaProps`: the Mux Media owns both, and its
 // `source` is the structured Mux one rather than the generic engine's.
 export interface MuxAudioProps
-  extends Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioMediaProps | keyof MuxMediaProps>,
+  extends
+    Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioMediaProps | keyof MuxMediaProps>,
     Partial<Omit<HlsAudioMediaProps, 'src'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;

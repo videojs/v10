@@ -1,5 +1,23 @@
-import { playwright } from '@vitest/browser-playwright';
-import { defineConfig } from 'vitest/config';
+import { playwright } from 'vite-plus/test/browser-playwright';
+import { defineConfig } from 'vite-plus';
+import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+
+const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
+  ...packageBuildConfig(mode, 'neutral'),
+  entry: {
+    index: 'src/index.ts',
+    dom: 'src/dom.ts',
+    hls: 'src/playback/engines/hls/index.ts',
+    'media-tracks': 'src/media/media-tracks/index.ts',
+    'hls-audio': 'src/playback/adapters/hls-audio/index.ts',
+    'hls-background-video': 'src/playback/adapters/hls-background-video/index.ts',
+    'hls-video': 'src/playback/adapters/hls-video/index.ts',
+    'mux-audio': 'src/playback/adapters/mux-audio/index.ts',
+    'mux-background-video': 'src/playback/adapters/mux-background-video/index.ts',
+    'mux-video': 'src/playback/adapters/mux-video/index.ts',
+  },
+});
 
 export default defineConfig({
   test: {
@@ -114,4 +132,5 @@ export default defineConfig({
       },
     ],
   },
+  pack: packageBuildModes.map(createPackConfig),
 });

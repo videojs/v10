@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { TooltipCore, type TooltipInput } from '../tooltip-core';
 
 const CLOSED: TooltipInput = { active: false, status: 'idle' };

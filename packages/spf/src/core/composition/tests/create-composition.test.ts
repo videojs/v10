@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import {
   type Behavior,
   buildSignalMap,
@@ -408,7 +408,8 @@ describe('buildSignalMap', () => {
   });
 
   it('produces an empty map for an empty key list', () => {
-    // biome-ignore lint/complexity/noBannedTypes: empty interface intentional
+    // empty interface intentional
+    // oxlint-disable-next-line typescript/no-empty-object-type
     const map = buildSignalMap<{}>([], {});
     expect(Object.keys(map)).toEqual([]);
   });

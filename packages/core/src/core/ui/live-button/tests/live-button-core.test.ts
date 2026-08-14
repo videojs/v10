@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import type { LiveButtonMediaState, LiveButtonState } from '../live-button-core';
 import { LiveButtonCore } from '../live-button-core';

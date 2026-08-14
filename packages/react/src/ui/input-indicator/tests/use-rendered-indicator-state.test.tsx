@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import type { IndicatorLifecycleState, TransitionState } from '@videojs/core';
 import { createState } from '@videojs/store';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const transitionMock = vi.hoisted(() => ({
   createTransition: vi.fn(),
