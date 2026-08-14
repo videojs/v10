@@ -9,14 +9,14 @@ date: 2026-02-25
 
 The HTML player element (`<video-player>`) is a **provider only** — it owns the store and provides state context to descendants. A separate `<media-container>` element handles layout, media attachment, and acts as the fullscreen target. The `PlayerElement` no longer combines `ProviderMixin` and `ContainerMixin` by default.
 
-This mirrors the React architecture where `Provider`, `Container`, and media components (`Video`, `Audio`) are distinct:
+This mirrors the React architecture where `Player`, `Container`, and media components (`Video`, `Audio`) are distinct:
 
 ```tsx
-<Provider>
+<Player>
   <VideoSkin> {/* Container + UI */}
     <Video src="..." />
   </VideoSkin>
-</Provider>
+</Player>
 ```
 
 The HTML equivalent:
@@ -31,24 +31,24 @@ The HTML equivalent:
 
 ## Context
 
-On the React side, the separation between `Provider` (state), `Container` (layout/media attachment), and `Video` (media element) is natural — React's component model encourages composition through nesting.
+On the React side, the separation between `Player` (state), `Container` (layout/media attachment), and `Video` (media element) is natural — React's component model encourages composition through nesting.
 
 On the HTML side, there was temptation to combine the provider and container into a single `<video-player>` element. This would make the wrapping element feel more "functional" as a traditional HTML element that handles both state and layout. However, combining them means:
 
-- **Skins diverge across platforms.** In React, a skin is `Container` + UI controls — the provider wraps outside. If the HTML player element _is_ the container, then HTML skins don't include a container (it's already baked in), while React skins do. "Skin" means different things on each platform.
+- **Skins diverge across platforms.** In React, a skin is `Container` + UI controls — `Player` wraps outside. If the HTML player element _is_ the container, then HTML skins don't include a container (it's already baked in), while React skins do. "Skin" means different things on each platform.
 - **Features outside the fullscreen target lose state access.** The container is the fullscreen target. If it's also the provider, then anything outside it (playlist, transcript, sidebar) is also outside the player's state scope and can't use `PlayerController` or context to access player state.
 
-The current architecture already exposes `ProviderMixin` and `ContainerMixin` separately via `createPlayer()`. This decision formalizes the separation as the default — `PlayerElement` becomes provider-only rather than a combined provider+container.
+The current architecture exposes `ProviderMixin` through `createPlayer()` and `ContainerMixin` independently from the main package. This decision formalizes the separation as the default — `PlayerElement` becomes provider-only rather than a combined provider+container.
 
 ## Alternatives Considered
 
 - **Combined provider+container as `<video-player>`** — Bundles state management and layout into a single element. Feels more natural in HTML at first, but forces anything outside the fullscreen target to also be outside the player's state scope. Skins would mean different things on each platform: in React, a skin wraps a container; in HTML, the skin _is_ the player. Rejected because of the parity and extensibility problems described in the rationale.
 
-- **Naming the element `<video-provider>`** — Directly mirrors the React `Provider` component. Rejected because it breaks HTML naming conventions. In HTML, the parent element of a domain is named after the domain: `<form>` wraps a form, `<table>` wraps a table. A video player's parent element should be called "player", not "provider".
+- **Naming the element `<video-provider>`** — Names the state-boundary implementation detail. Rejected because it breaks HTML naming conventions. In HTML, the parent element of a domain is named after the domain: `<form>` wraps a form, `<table>` wraps a table. A video player's parent element should be called "player", not "provider".
 
 ## Rationale
 
-**Cross-platform skin parity.** Skins should mean the same thing on both platforms. In React, a skin is a `Container` plus UI controls — it doesn't include the provider. If the HTML player element combines provider and container, then HTML skins would exclude the container (it's already baked into `<video-player>`), breaking parity. Keeping them separate means a skin on both platforms is: container + UI.
+**Cross-platform skin parity.** Skins should mean the same thing on both platforms. In React, a skin is a `Container` plus UI controls — it doesn't include `Player`. If the HTML player element combines provider and container, then HTML skins would exclude the container (it's already baked into `<video-player>`), breaking parity. Keeping them separate means a skin on both platforms is: container + UI.
 
 ```tsx
 // React: Skin = Container + UI
@@ -94,9 +94,9 @@ If the container is bundled into `<video-player>`, these features must live _out
 **Programmatic composition remains available.** For developers building non-declarative players who want a single combined element, `ProviderMixin` and `ContainerMixin` can still be composed together:
 
 ```ts
-import { createPlayer } from '@videojs/html';
+import { ContainerMixin, createPlayer } from '@videojs/html';
 
-const { ProviderMixin, ContainerMixin } = createPlayer({ features });
+const { ProviderMixin } = createPlayer({ features });
 
 // Combine into a single element if desired
 class MyPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {

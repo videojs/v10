@@ -864,7 +864,7 @@ function destructureSkinProps(source: string): string {
  *     out (a file must export only components for Fast Refresh to apply edits).
  *
  * Also: merges SkinProps into PlayerProps (adding `src`), inlines the skin body
- * into VideoPlayer/AudioPlayer wrapped in `Player.Provider`, and removes the
+ * into VideoPlayer/AudioPlayer wrapped in `Player`, and removes the
  * separate Skin export.
  */
 function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: string; component: string } {
@@ -879,7 +879,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
     `import { createPlayer } from '@videojs/react';`,
     `import { ${features} } from '@videojs/react/${subpath}';`,
     '',
-    `export const Player = createPlayer({ features: ${features} });`,
+    `export const { Player } = createPlayer({ features: ${features} });`,
     '',
   ].join('\n');
 
@@ -896,7 +896,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
   source = source.replace(/export interface \w+SkinProps/, `export interface ${playerName}Props`);
   source = source.replace(/(\s*)children\?: ReactNode;/, `$1src: string;`);
 
-  // 3. Replace the skin function: rename, swap children→src, wrap in Player.Provider
+  // 3. Replace the skin function: rename, swap children→src, wrap in Player
   //    Match the destructured form: function XSkin({ children, className, poster, ...rest }: XSkinProps): ReactNode {
   source = source.replace(
     /export function \w+Skin\(\{ children, ([^}]+)\}: \w+SkinProps\): ReactNode \{\n([\s\S]*?)\n\}/,
@@ -904,7 +904,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
       // Replace {children} with <Video/Audio> element inside the body
       let newBody = body.replace(/^\n+/, '').replace(/(\s*)\{children\}/, `$1<${mediaTag} src={src}${playsInline} />`);
 
-      // Wrap the return body in <Player.Provider>, re-indenting everything
+      // Wrap the return body in <Player>, re-indenting everything
       // inside `return (...)` by 2 extra spaces for the new wrapper.
       const returnIdx = newBody.indexOf('return (');
       if (returnIdx !== -1) {
@@ -915,7 +915,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
           .split('\n')
           .map((line) => (line.trim() === '' ? '' : `  ${line}`))
           .join('\n');
-        newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player.Provider>\n${reindented}\n    </Player.Provider>\n  )${newBody.slice(parenEnd + 1)}`;
+        newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player>\n${reindented}\n    </Player>\n  )${newBody.slice(parenEnd + 1)}`;
       }
 
       const hasPoster = destructuredRest.includes('poster');
@@ -992,7 +992,7 @@ export async function processReactSkin(
   // 10. Destructure skin props in function argument instead of body
   tsx = destructureSkinProps(tsx);
 
-  // 11. Flatten skin into player (split into player.ts + Player.tsx, wrap in Player.Provider)
+  // 11. Flatten skin into player (split into player.ts + Player.tsx, wrap in Player)
   const mediaType = getSkinMediaType(skin);
   const { player, component } = flattenSkinIntoPlayer(tsx, mediaType);
   const componentFile = mediaType === 'video' ? 'VideoPlayer' : 'AudioPlayer';

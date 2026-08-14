@@ -2,7 +2,11 @@ import {
   applyStyles,
   getAnchorNames,
   getPositionedSide,
+  type InlineStyleSnapshot,
+  observeResize,
   rafThrottle,
+  restoreInlineStyles,
+  snapshotInlineStyles,
   supportsAnchorPositioning,
 } from '@videojs/utils/dom';
 import { kebabCase } from '@videojs/utils/string';
@@ -57,11 +61,11 @@ export class PopupPositioner {
   #options: PopupPositionerOptions | null = null;
   #boundaryElement: Element | null = null;
   #abort: AbortController | null = null;
-  #observer: ResizeObserver | null = null;
+  #stopObservingResize: (() => void) | null = null;
   #triggerAnchorName: string | null = null;
   #triggerAnchorAdded = false;
   #popupAnchor: InlineStyleValue | null = null;
-  #popupStyles = new Map<string, InlineStyleValue>();
+  #popupStyles: InlineStyleSnapshot | null = null;
   readonly #reposition = rafThrottle(() => this.#position());
 
   sync(options: PopupPositionerOptions): void {
@@ -117,19 +121,16 @@ export class PopupPositioner {
     window.addEventListener('scroll', this.#schedule, { capture: true, passive: true, signal });
     window.addEventListener('resize', this.#schedule, { signal });
 
-    if (typeof ResizeObserver === 'function') {
-      this.#observer = new ResizeObserver(() => this.#schedule());
-      this.#observer.observe(options.trigger);
-      this.#observer.observe(options.popup);
-      if (this.#boundaryElement) this.#observer.observe(this.#boundaryElement);
-    }
+    const resizeTargets: Element[] = [options.trigger, options.popup];
+    if (this.#boundaryElement) resizeTargets.push(this.#boundaryElement);
+    this.#stopObservingResize = observeResize(resizeTargets, () => this.#schedule());
   }
 
   #stopTracking(): void {
     this.#abort?.abort();
     this.#abort = null;
-    this.#observer?.disconnect();
-    this.#observer = null;
+    this.#stopObservingResize?.();
+    this.#stopObservingResize = null;
     this.#reposition.cancel();
     this.#restoreAnchorStyles();
   }
@@ -183,7 +184,7 @@ export class PopupPositioner {
   }
 
   #capturePopupStyles(popup: HTMLElement, cssVars: PositioningCSSVars): void {
-    if (this.#popupStyles.size > 0) return;
+    if (this.#popupStyles) return;
 
     const props = [
       ...POPUP_STYLE_PROPS,
@@ -193,16 +194,13 @@ export class PopupPositioner {
       cssVars.availableHeight,
     ];
 
-    for (const prop of props) {
-      this.#popupStyles.set(prop, this.#readStyle(popup, prop));
-    }
+    this.#popupStyles = snapshotInlineStyles(popup, props);
   }
 
   #restorePopupStyles(popup: HTMLElement): void {
-    for (const [prop, style] of this.#popupStyles) {
-      this.#writeStyle(popup, prop, style);
-    }
-    this.#popupStyles.clear();
+    if (!this.#popupStyles) return;
+    restoreInlineStyles(popup, this.#popupStyles);
+    this.#popupStyles = null;
   }
 
   #applyAnchorStyles(trigger: HTMLElement, popup: HTMLElement, anchorName: string): void {

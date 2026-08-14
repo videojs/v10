@@ -22,7 +22,9 @@ Use `ContainerMixin` when the <DocsLink slug="reference/provider-mixin">provider
 For a single element that both owns the store and attaches the container, compose both mixins on the same base class:
 
 ```ts
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
+import { ContainerMixin, createPlayer } from '@videojs/html';
+
+const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
 ```
@@ -32,7 +34,9 @@ class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
 Pair `ContainerMixin` with <DocsLink slug="reference/provider-mixin">`ProviderMixin`</DocsLink> when the store owner is a different element from the container:
 
 ```ts
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
+import { ContainerMixin, createPlayer } from '@videojs/html';
+
+const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 // Provider owns the store, sits at the top
 class PlayerShell extends ProviderMixin(MediaElement) {}

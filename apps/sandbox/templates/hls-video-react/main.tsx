@@ -13,7 +13,7 @@ import { HlsVideo } from '@videojs/react/media/hls-video';
 import { videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
-const { Provider } = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 const buttonStyle: React.CSSProperties = {
   background: 'none',
@@ -28,7 +28,7 @@ const buttonStyle: React.CSSProperties = {
 
 function App() {
   return (
-    <Provider>
+    <Player>
       <div
         style={{
           display: 'inline-flex',
@@ -64,7 +64,7 @@ function App() {
           />
         </div>
       </div>
-    </Provider>
+    </Player>
   );
 }
 

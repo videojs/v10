@@ -89,31 +89,28 @@ If you're building a React app, the approach is a little different. Firstly, ins
 npm install @videojs/react 
 ```
 
-Create a reusable `VideoPlayer` component in your app:
+Create a reusable player component in your app:
 
-```js
+```tsx
 'use client';
 
 import '@videojs/react/video/minimal-skin.css';
-import { createPlayer } from '@videojs/react';
-import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video';
+import { MinimalVideoSkin, Video, VideoPlayer } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
-
-interface VideoPlayerProps {
+interface AppVideoPlayerProps {
   origin: string;
 }
 
-export function VideoPlayer({ origin }: VideoPlayerProps) {
+export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <MinimalVideoSkin poster={`${origin}/poster.jpg`}>
         <Video src={`${origin}/video.mp4`} playsInline>
           <track kind="captions" label="English" src={`${origin}/captions/en.vtt`} srclang="en" default />
           <track kind="metadata" label="thumbnails" src={`${origin}/storyboard.vtt`} default />
         </Video>
       </MinimalVideoSkin>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }
 ```
@@ -220,11 +217,11 @@ import { YouTubeVideo } from '@videojs/react/media/youtube-video';
 ```
 
 ```jsx
-<Player.Provider>
+<VideoPlayer>
   <MinimalVideoSkin>
     <YouTubeVideo src="https://youtu.be/aqz-KE-bpKQ" playsInline />
   </MinimalVideoSkin>
-</Player.Provider>
+</VideoPlayer>
 ```
 
 The component accepts YouTube watch, short, embed, Shorts, live, playlist, and privacy-enhanced URLs, as well as raw 11-character video IDs.
@@ -271,19 +268,16 @@ For package users, same idea but import from @videojs/html/i18n.
 
 Use the React provider when you want scoped overrides:
 
-```js
-'use client'
+```tsx
+'use client';
 
 import '@videojs/react/video/minimal-skin.css';
 import { I18nProvider } from '@videojs/react/i18n';
-import { createPlayer } from '@videojs/react';
-import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video';
-
-const Player = createPlayer({ features: videoFeatures });
+import { MinimalVideoSkin, Video, VideoPlayer } from '@videojs/react/video';
 
 export function MyPlayer() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <I18nProvider
         locale="en"
         translations={{
@@ -300,7 +294,7 @@ export function MyPlayer() {
           <Video src="/video.mp4" playsInline />
         </MinimalVideoSkin>
       </I18nProvider>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }
 ```
@@ -352,7 +346,7 @@ Use the media element for standard playback operations:
 | `player.fullscreen.enter()` | Fullscreen feature or fullscreen control |
 | `player.toggleCaptions()` | Text-track feature or captions control |
 
-For custom UI, read and write through the Video.js player store. In React, use `Player.usePlayer()` or selectors. In HTML custom elements, use `PlayerController`.
+For custom UI, read and write through the Video.js player store. In React, import `usePlayer` from the preset and call it directly or with a selector. In HTML custom elements, use `PlayerController`.
 
 ## Rewrite styles
 

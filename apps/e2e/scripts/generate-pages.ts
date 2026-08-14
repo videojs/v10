@@ -201,30 +201,27 @@ function reactVideoPage(media: string, resource: string, config: MediaTypeConfig
 
   const isDefaultVideo = media === 'video';
   const mediaImport = isDefaultVideo
-    ? `import { Video, VideoSkin, videoFeatures } from '@videojs/react/video';`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoSkin, videoFeatures } from '@videojs/react/video';`;
+    ? `import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer, VideoSkin } from '@videojs/react/video';`;
 
   const posterProp = config.hasPoster ? ` poster={MEDIA.${resource}.poster}` : '';
   const storyboardTrack = config.hasStoryboard
     ? `\n          <track kind="metadata" label="thumbnails" src={MEDIA.${resource}.storyboard} default />`
     : '';
 
-  return `import { createPlayer } from '@videojs/react';
-${mediaImport}
+  return `${mediaImport}
 import '@videojs/react/video/skin.css';
 import { createRoot } from 'react-dom/client';
 import { MEDIA } from '../resources';
 
-const Player = createPlayer({ features: videoFeatures });
-
 function App() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <VideoSkin${posterProp} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} playsInline crossOrigin="anonymous">${storyboardTrack}
         </${reactMedia.component}>
       </VideoSkin>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }
 
@@ -238,24 +235,21 @@ function reactAudioPage(media: string, resource: string): string {
 
   const isDefaultAudio = media === 'audio';
   const mediaImport = isDefaultAudio
-    ? `import { Audio, AudioSkin, audioFeatures } from '@videojs/react/audio';`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioSkin, audioFeatures } from '@videojs/react/audio';`;
+    ? `import { Audio, AudioPlayer, AudioSkin } from '@videojs/react/audio';`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioPlayer, AudioSkin } from '@videojs/react/audio';`;
 
-  return `import { createPlayer } from '@videojs/react';
-${mediaImport}
+  return `${mediaImport}
 import '@videojs/react/audio/skin.css';
 import { createRoot } from 'react-dom/client';
 import { MEDIA } from '../resources';
 
-const Player = createPlayer({ features: audioFeatures });
-
 function App() {
   return (
-    <Player.Provider>
+    <AudioPlayer>
       <AudioSkin style={{ maxWidth: 600, margin: '0 auto' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} />
       </AudioSkin>
-    </Player.Provider>
+    </AudioPlayer>
   );
 }
 

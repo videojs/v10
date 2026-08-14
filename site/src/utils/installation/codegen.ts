@@ -246,11 +246,11 @@ function getSkinComponent(skin: Exclude<Skin, 'none'>): string {
   return map[skin];
 }
 
-function getUseCaseFeatures(useCase: UseCase): string {
+function getPresetPlayer(useCase: UseCase): string {
   const map: Record<UseCase, string> = {
-    'default-video': 'videoFeatures',
-    'default-audio': 'audioFeatures',
-    'background-video': 'backgroundFeatures',
+    'default-video': 'VideoPlayer',
+    'default-audio': 'AudioPlayer',
+    'background-video': 'BackgroundVideoPlayer',
   };
   return map[useCase];
 }
@@ -264,7 +264,7 @@ export function generateReactCreateCode(
 ): Record<'MyPlayer.tsx', string> {
   const { useCase, skin, renderer } = opts;
   const rendererComponent = getRendererComponent(renderer);
-  const featureType = getUseCaseFeatures(useCase);
+  const playerComponent = getPresetPlayer(useCase);
 
   const isBackgroundVideo = useCase === 'background-video';
   const isNoSkin = skin === 'none';
@@ -285,12 +285,12 @@ export function generateReactCreateCode(
   if (isBackgroundVideo) {
     skinComponent = 'BackgroundVideoSkin';
     skinCssImport = '@videojs/react/background/skin.css';
-    presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/background';`;
+    presetImport = `import { ${playerComponent}, ${skinComponent}, ${rendererComponent} } from '@videojs/react/background';`;
   } else if (isNoSkin) {
     if (isPresetRenderer(renderer)) {
-      presetImport = `import { ${rendererComponent} } from '@videojs/react/${group}';`;
+      presetImport = `import { ${playerComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
     } else {
-      presetImport = '';
+      presetImport = `import { ${playerComponent} } from '@videojs/react/${group}';`;
       mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getMediaSubpath(renderer) ?? renderer}';`;
     }
   } else {
@@ -298,36 +298,31 @@ export function generateReactCreateCode(
     skinComponent = getSkinComponent(skin);
     skinCssImport = `@videojs/react/${group}/${skinFile}.css`;
     if (isPresetRenderer(renderer)) {
-      presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
+      presetImport = `import { ${playerComponent}, ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
     } else {
-      presetImport = `import { ${skinComponent} } from '@videojs/react/${group}';`;
+      presetImport = `import { ${playerComponent}, ${skinComponent} } from '@videojs/react/${group}';`;
       mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getMediaSubpath(renderer) ?? renderer}';`;
     }
   }
 
   const playerJsx = skinComponent
-    ? `    <Player.Provider>
+    ? `    <${playerComponent}>
       <${skinComponent}>
         ${rendererJsx}
       </${skinComponent}>
-    </Player.Provider>`
-    : `    <Player.Provider>
+    </${playerComponent}>`
+    : `    <${playerComponent}>
       ${rendererJsx}
-    </Player.Provider>`;
+    </${playerComponent}>`;
 
   const imports = [
     ...(skinCssImport ? [`import '${skinCssImport}';`] : []),
-    `import { createPlayer, ${featureType} } from '@videojs/react';`,
-    ...(presetImport ? [presetImport] : []),
+    presetImport,
     ...(mediaImport ? [mediaImport] : []),
   ].join('\n');
 
   return {
-    'MyPlayer.tsx': `'use client';
-
-${imports}
-
-const Player = createPlayer({ features: ${featureType} });
+    'MyPlayer.tsx': `${imports}
 
 interface MyPlayerProps {
   src: string;

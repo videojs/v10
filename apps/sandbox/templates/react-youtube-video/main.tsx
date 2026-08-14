@@ -1,5 +1,5 @@
 import '@app/styles.css';
-import { VideoProvider } from '@app/shared/react/providers';
+import { VideoPlayer } from '@app/shared/react/players';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { useSkin } from '@app/shared/react/use-skin';
 import { YOUTUBE_VIDEO_SRC } from '@app/shared/sources';
@@ -17,11 +17,11 @@ function App() {
   const styling = useMemo(readStyling, []);
 
   return (
-    <VideoProvider>
+    <VideoPlayer>
       <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
         <YouTubeVideo className="block w-full h-full" src={YOUTUBE_VIDEO_SRC} playsInline />
       </VideoSkinComponent>
-    </VideoProvider>
+    </VideoPlayer>
   );
 }
 

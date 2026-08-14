@@ -100,6 +100,18 @@ describe('syncMenuSize', () => {
     expect(content.style.getPropertyValue('--media-menu-width')).toBe('200px');
   });
 
+  it('ignores a non-positive available width before positioning', () => {
+    const content = document.createElement('div');
+    const root = document.createElement('div');
+    content.style.setProperty('--media-menu-available-width', '0px');
+    content.append(root);
+    setSize(root, 180, 120);
+
+    syncMenuSize(content);
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
+  });
+
   it('propagates the deepest active submenu size through nested menus', () => {
     const root = document.createElement('div');
     const rootItems = document.createElement('div');
