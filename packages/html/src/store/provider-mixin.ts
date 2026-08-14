@@ -36,15 +36,16 @@ interface ConfigInput {
 
 /**
  * Name each input on the element. A key whose own name is taken there declares
- * an `htmlAttribute` instead, and the property follows from that.
+ * an `html.attribute` instead, and the property follows from that.
  */
 function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
   return Object.entries(config).map(([key, entry]) => {
-    const attribute = entry.htmlAttribute ?? kebabCase(key);
+    const declared = entry.html?.attribute;
+    const attribute = declared ?? kebabCase(key);
 
-    if (__DEV__ && entry.htmlAttribute && entry.htmlAttribute !== kebabCase(entry.htmlAttribute)) {
+    if (__DEV__ && declared && declared !== kebabCase(declared)) {
       // Markup lowercases attribute names, so an uppercase letter here never matches.
-      console.warn(`[vjs-html] config htmlAttribute "${entry.htmlAttribute}" is not kebab-case and will never match`);
+      console.warn(`[vjs-html] config html.attribute "${declared}" is not kebab-case and will never match`);
     }
 
     return { property: camelCase(attribute), attribute, entry };

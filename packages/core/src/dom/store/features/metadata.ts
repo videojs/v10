@@ -28,7 +28,7 @@ export const metadataFeature = definePlayerFeature({
       state: USER_TITLE,
       // `title` already means the tooltip on an element, so the input takes
       // another name there.
-      htmlAttribute: 'content-title',
+      html: { attribute: 'content-title' },
     },
   } satisfies PlayerFeatureConfig<MetadataSourceState>,
   state: ({ set }): MetadataSourceState => ({
