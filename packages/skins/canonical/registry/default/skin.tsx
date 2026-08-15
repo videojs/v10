@@ -1,4 +1,5 @@
 import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/react';
+import { CaptionsButton } from '@/components/videojs/captions-button/captions-button';
 import { FullscreenButton } from '@/components/videojs/fullscreen-button/fullscreen-button';
 import { PlayButton } from '@/components/videojs/play-button/play-button';
 import { VolumePopover } from '@/components/videojs/volume-popover/volume-popover';
@@ -43,6 +44,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           </Controls.Group>
 
           <Controls.Group className="flex items-center gap-media-controls-gap">
+            <CaptionsButton />
             <VolumePopover />
             <FullscreenButton />
           </Controls.Group>

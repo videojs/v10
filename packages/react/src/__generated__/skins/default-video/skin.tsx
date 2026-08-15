@@ -1,6 +1,7 @@
 import { Controls } from '@/ui/controls';
 import { Time as TimePrimitive } from '@/ui/time';
 import { Tooltip } from '@/ui/tooltip';
+import { CaptionsButton } from './components/buttons/captions-button';
 import { FullscreenButton } from './components/buttons/fullscreen-button';
 import { PlayButton } from './components/buttons/play-button';
 import { VolumePopover } from './components/controls/volume-popover';
@@ -46,6 +47,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           </Controls.Group>
 
           <Controls.Group className="media-controls-group-primary">
+            <CaptionsButton />
             <VolumePopover />
             <FullscreenButton />
           </Controls.Group>

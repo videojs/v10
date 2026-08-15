@@ -44,6 +44,30 @@
       filter: drop-shadow(0 1px 0 var(--media-shadow-color));
     }
 
+    .media-captions-off-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-captions-button) {
+      &:not([data-active]) .media-captions-off-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-captions-on-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-captions-button) {
+      &[data-active] .media-captions-on-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
     .media-fullscreen-enter-icon {
       opacity: 0;
       display: none;

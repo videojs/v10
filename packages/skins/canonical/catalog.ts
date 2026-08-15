@@ -115,6 +115,13 @@ export const skinCatalog = {
       description: 'A button that enters and exits fullscreen with state-aware icons and an accessible tooltip.',
     }),
     defineSkinComponent({
+      name: 'captions-button',
+      type: 'component',
+      source: './components/buttons/captions-button.tsx',
+      title: 'Captions Button',
+      description: 'A state-aware button that toggles captions and subtitles.',
+    }),
+    defineSkinComponent({
       name: 'mute-button',
       type: 'component',
       source: './components/buttons/mute-button.tsx',

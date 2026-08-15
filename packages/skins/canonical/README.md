@@ -15,6 +15,7 @@ The current authored paths are:
 
 - `skins/default-video/skin.tsx`
 - `components/buttons/button-tooltip.tsx`
+- `components/buttons/captions-button.tsx`
 - `components/buttons/fullscreen-button.tsx`
 - `components/buttons/mute-button.tsx`
 - `components/buttons/play-button.tsx`

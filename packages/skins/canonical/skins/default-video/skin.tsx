@@ -1,5 +1,6 @@
 import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/core/components';
 import { Slot } from '@videojs/jsx';
+import { CaptionsButton } from '../../components/buttons/captions-button';
 import { FullscreenButton } from '../../components/buttons/fullscreen-button';
 import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
@@ -32,6 +33,7 @@ export function DefaultVideoSkin() {
           </Controls.Group>
 
           <Controls.Group className={styles.controlsGroup.primary}>
+            <CaptionsButton />
             <VolumePopover />
             <FullscreenButton />
           </Controls.Group>

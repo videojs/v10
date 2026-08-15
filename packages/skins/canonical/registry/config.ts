@@ -24,6 +24,7 @@ export const skinRegistry = {
   style: 'tailwind',
   items: [
     'buffering-indicator',
+    'captions-button',
     'default-video',
     'error-dialog',
     'fullscreen-button',

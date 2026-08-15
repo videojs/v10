@@ -13,10 +13,13 @@ export default defineStyles({
   styles: {
     button: buttonStyles,
     buttonIcon: 'size-media-icon drop-shadow-media-icon',
+    captionsButton: 'group/captions',
     fullscreenButton: 'group/fullscreen',
     muteButton: 'group/mute',
     playButton: 'group/play',
     seekButton: '',
+    captionsOffIcon: 'hidden opacity-0 group-not-data-active/captions:block group-not-data-active/captions:opacity-100',
+    captionsOnIcon: 'hidden opacity-0 group-data-active/captions:block group-data-active/captions:opacity-100',
     fullscreenEnterIcon: [
       'hidden opacity-0 group-not-data-fullscreen/fullscreen:block group-not-data-fullscreen/fullscreen:opacity-100',
     ],

@@ -18,6 +18,10 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
     modules: ['@videojs/html/ui/buffering-indicator'],
     elements: { BufferingIndicatorPrimitive: 'media-buffering-indicator' },
   },
+  CaptionsButton: {
+    modules: ['@videojs/html/ui/captions-button'],
+    elements: { CaptionsButtonPrimitive: 'media-captions-button' },
+  },
   Container: {
     modules: ['@videojs/html/media/container'],
     elements: { ContainerPrimitive: 'media-container' },
@@ -108,6 +112,8 @@ const componentTags = Object.fromEntries(
 );
 
 const iconNames = {
+  CaptionsOffIcon: 'captions-off',
+  CaptionsOnIcon: 'captions-on',
   FullscreenEnterIcon: 'fullscreen-enter',
   FullscreenExitIcon: 'fullscreen-exit',
   PauseIcon: 'pause',

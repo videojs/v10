@@ -2,6 +2,7 @@
 import { createComponent } from '@videojs/jsx';
 
 import BufferingIndicatorDef from './buffering-indicator/buffering-indicator-component';
+import CaptionsButtonDef from './captions-button/captions-button-component';
 import ContainerDef from './container/container-component';
 import ControlsDef from './controls/controls-component';
 import ErrorDialogDef from './error-dialog/error-dialog-component';
@@ -19,6 +20,7 @@ import TooltipDef from './tooltip/tooltip-component';
 import VolumeSliderDef from './volume-slider/volume-slider-component';
 
 export const BufferingIndicator = createComponent(BufferingIndicatorDef);
+export const CaptionsButton = createComponent(CaptionsButtonDef);
 export const Container = createComponent(ContainerDef);
 export const Controls = createComponent(ControlsDef);
 export const ErrorDialog = createComponent(ErrorDialogDef);
@@ -37,6 +39,7 @@ export const VolumeSlider = createComponent(VolumeSliderDef);
 
 export const COMPONENTS = {
   BufferingIndicator: BufferingIndicatorDef,
+  CaptionsButton: CaptionsButtonDef,
   Container: ContainerDef,
   Controls: ControlsDef,
   ErrorDialog: ErrorDialogDef,

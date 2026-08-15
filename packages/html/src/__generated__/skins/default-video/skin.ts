@@ -1,6 +1,7 @@
 import '../../../icons/element';
 import '../../../define/media/container';
 import '../../../define/ui/buffering-indicator';
+import '../../../define/ui/captions-button';
 import '../../../define/ui/controls';
 import '../../../define/ui/error-dialog';
 import '../../../define/ui/fullscreen-button';
@@ -58,6 +59,14 @@ export const skin = /* html */ `<media-container class="media-container media-sk
         <media-time class="media-time" type="remaining" toggle></media-time>
       </media-controls-group>
       <media-controls-group class="media-controls-group-primary">
+        <media-captions-button class="media-button media-captions-button">
+          <media-icon class="media-button-icon media-captions-off-icon" name="captions-off"></media-icon>
+          <media-icon class="media-button-icon media-captions-on-icon" name="captions-on"></media-icon>
+        </media-captions-button>
+        <media-tooltip side="top" class="media-surface media-tooltip">
+          <media-tooltip-label></media-tooltip-label>
+          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+        </media-tooltip>
         <media-mute-button class="media-button media-mute-button">
           <media-icon class="media-button-icon media-volume-off-icon" name="volume-off"></media-icon>
           <media-icon class="media-button-icon media-volume-low-icon" name="volume-low"></media-icon>
