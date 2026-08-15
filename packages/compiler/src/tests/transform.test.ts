@@ -1,11 +1,83 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { jsx, rewrite, transform } from '..';
-import { addProp, byTag, childAsProp, replace } from '../jsx';
+import { addProp, byTag, childAsProp, lowerTemplates, replace } from '../jsx';
 
 const compact = (value: string): string => value.replace(/\s+/g, '');
 
 describe('transform', () => {
+  it('lowers named templates to a render prop or literal template root', async () => {
+    const source = `import { Template } from '@videojs/jsx';
+export function Timeline() {
+  return <Chapters><Template name="chapter" className="chapter"><Track /></Template><Track /></Chapters>;
+}`;
+    const react = await transform(source, {
+      config: {
+        target: jsx({
+          transforms: [
+            lowerTemplates({
+              templates: {
+                chapter: { kind: 'render-prop', parent: 'Chapters', prop: 'renderChapter', rootTag: 'div' },
+              },
+            }),
+          ],
+        }),
+      },
+    });
+    const html = await transform(source, {
+      config: {
+        target: jsx({
+          transforms: [
+            lowerTemplates({
+              templates: {
+                chapter: { kind: 'element', parent: 'Chapters', rootTag: 'div' },
+              },
+            }),
+          ],
+        }),
+      },
+    });
+
+    expect(compact(react.code)).toContain(
+      compact(
+        '<Chapters renderChapter={props => (<div {...props} className="chapter"><Track /></div>)}><Track /></Chapters>'
+      )
+    );
+    expect(compact(html.code)).toContain(
+      compact('<Chapters><template><div className="chapter"><Track /></div></template><Track /></Chapters>')
+    );
+    expect(`${react.code}\n${html.code}`).not.toContain('name="chapter"');
+  });
+
+  it('rejects invalid named template declarations', async () => {
+    const config = {
+      target: jsx({
+        transforms: [
+          lowerTemplates({
+            templates: {
+              chapter: { kind: 'element' as const, parent: 'Chapters', rootTag: 'div' },
+            },
+          }),
+        ],
+      }),
+    };
+
+    await expect(
+      transform(`export function Timeline(){ return <Chapters><Template></Template></Chapters>; }`, { config })
+    ).rejects.toThrow('requires a static `name` prop');
+    await expect(
+      transform(
+        `export function Timeline(){ return <Chapters><Template name="chapter"><Track /></Template><Template name="chapter"><Track /></Template></Chapters>; }`,
+        { config }
+      )
+    ).rejects.toThrow('Duplicate <Template name="chapter">');
+    await expect(
+      transform(`export function Timeline(){ return <Root><Template name="chapter"><Track /></Template></Root>; }`, {
+        config,
+      })
+    ).rejects.toThrow('must be a direct child of <Chapters>');
+  });
+
   it('adds a props binding to a parameterless function', async () => {
     const result = await transform(`export function Button(){ return <Root/>; }`, {
       config: {

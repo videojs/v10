@@ -33,6 +33,7 @@ describe('createCompilerHtmlConfig', () => {
       '@videojs/html/ui/controls',
       '@videojs/html/ui/play-button',
       '@videojs/html/ui/time-slider',
+      '@videojs/html/ui/time-slider-chapters',
       '@videojs/html/ui/tooltip',
       '@videojs/html/ui/tooltip-group',
     ]);

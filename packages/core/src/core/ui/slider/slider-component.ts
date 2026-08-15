@@ -9,6 +9,11 @@ export interface SliderValueProps {
   format?: ((value: number) => string) | undefined;
 }
 
+export interface SliderPreviewProps {
+  /** Whether the preview is clamped to the slider bounds. */
+  overflow?: 'clamp' | 'visible' | undefined;
+}
+
 export default defineComponent({
   name: 'Slider',
   parts: {
@@ -23,7 +28,7 @@ export default defineComponent({
         Image: defineComponent(),
       },
     }),
-    Preview: defineComponent(),
+    Preview: defineComponent<SliderPreviewProps>(),
     Value: defineComponent<SliderValueProps>(),
   },
   dataAttrs: SliderDataAttrs,

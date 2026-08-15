@@ -1,4 +1,5 @@
 import { defineConfig, html, rewrite } from '@videojs/compiler';
+import { lowerTemplates } from '@videojs/compiler/ast';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -106,13 +107,15 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
     elements: { 'TimePrimitive.Value': 'media-time' },
   },
   TimeSlider: {
-    modules: ['@videojs/html/ui/time-slider'],
+    modules: ['@videojs/html/ui/time-slider', '@videojs/html/ui/time-slider-chapters'],
     elements: {
       'TimeSliderPrimitive.Root': 'media-time-slider',
       'TimeSliderPrimitive.Track': 'media-slider-track',
       'TimeSliderPrimitive.Fill': 'media-slider-fill',
       'TimeSliderPrimitive.Buffer': 'media-slider-buffer',
       'TimeSliderPrimitive.Thumb': 'media-slider-thumb',
+      'TimeSliderPrimitive.Chapters': 'media-time-slider-chapters',
+      'TimeSliderPrimitive.ChapterTitle': 'media-time-slider-chapter-title',
       'TimeSliderPrimitive.Preview': 'media-slider-preview',
       'TimeSliderPrimitive.Value': 'media-slider-value',
     },
@@ -183,6 +186,16 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
     }),
     plugins: [
       skinStyles({ manifest: styleTarget.styles, target: styleTarget.style }),
+      {
+        name: '@videojs/skins:html-templates',
+        setup: () => ({
+          transform: lowerTemplates({
+            templates: {
+              chapter: { kind: 'element', parent: 'TimeSliderPrimitive.Chapters', rootTag: 'div' },
+            },
+          }),
+        }),
+      },
       rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
@@ -205,6 +218,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.jsx.element('ErrorDialogPrimitive.Root').unwrap(),
             code.jsx.element('OverlayPrimitive').replace('div'),
             code.jsx.element('InputIndicatorOverlayPrimitive').replace('div'),
+            code.jsx.element('PreviewValuePrimitive').replace('div'),
             code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
             code.jsx.element('Popover.Trigger').unwrap(),
             code.jsx.element('TooltipPrimitive.Root').unwrap({ forwardPropsTo: 'TooltipPrimitive.Popup' }),

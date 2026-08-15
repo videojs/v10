@@ -18,6 +18,13 @@ export { hasChild } from './matchers/has-child';
 export { anyTag, byTag, type JsxElementLike, type Matcher, tagName } from './matchers/tag';
 export { type AddPropImportRef, type AddPropOptions, addProp } from './transforms/add-prop';
 export { type ChildAsPropOptions, childAsProp } from './transforms/child-as-prop';
+export {
+  type LowerTemplatesOptions,
+  lowerTemplates,
+  type TemplateElementLowering,
+  type TemplateLowering,
+  type TemplateRenderPropLowering,
+} from './transforms/lower-templates';
 export { type ReplaceOptions, replace } from './transforms/replace';
 export {
   type JsxChildReplacement,

@@ -17,6 +17,7 @@ import '../../../define/ui/status-announcer';
 import '../../../define/ui/status-indicator';
 import '../../../define/ui/time';
 import '../../../define/ui/time-slider';
+import '../../../define/ui/time-slider-chapters';
 import '../../../define/ui/tooltip';
 import '../../../define/ui/tooltip-group';
 import '../../../define/ui/volume-indicator';
@@ -49,18 +50,30 @@ export const skin = /* html */ `<media-container class="media-container media-sk
       <media-controls-group class="media-controls-group-time">
         <media-time class="media-time" type="current"></media-time>
         <media-time-slider class="media-slider">
-          <media-slider-track class="media-slider-track">
-            <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
-            <media-slider-fill class="media-slider-fill"></media-slider-fill>
-          </media-slider-track>
+          <media-time-slider-chapters class="media-slider-chapters">
+            <template>
+              <div class="media-slider-chapter">
+                <media-slider-track class="media-slider-chapter-track">
+                  <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
+                  <media-slider-fill class="media-slider-fill"></media-slider-fill>
+                </media-slider-track>
+              </div>
+            </template>
+            <media-slider-track class="media-slider-track">
+              <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
+              <media-slider-fill class="media-slider-fill"></media-slider-fill>
+            </media-slider-track>
+          </media-time-slider-chapters>
           <media-slider-thumb class="media-slider-thumb"></media-slider-thumb>
-          <div class="media-surface media-thumbnail">
-            <media-slider-thumbnail class="media-thumbnail-image"></media-slider-thumbnail>
-            <media-slider-value class="media-slider-value" type="pointer"></media-slider-value>
-            <media-icon class="media-spinner-icon" name="spinner"></media-icon>
-          </div>
-          <media-slider-preview class="media-slider-preview">
-            <media-slider-value class="media-slider-value" type="pointer"></media-slider-value>
+          <media-slider-preview class="media-slider-preview" overflow="visible">
+            <div class="media-surface media-thumbnail">
+              <media-slider-thumbnail class="media-thumbnail-image"></media-slider-thumbnail>
+              <media-icon class="media-spinner-icon" name="spinner"></media-icon>
+            </div>
+            <div class="media-preview-value">
+              <media-time-slider-chapter-title class="media-chapter-title"></media-time-slider-chapter-title>
+              <media-slider-value class="media-slider-value" type="pointer"></media-slider-value>
+            </div>
           </media-slider-preview>
         </media-time-slider>
         <media-time class="media-time" type="remaining" toggle></media-time>

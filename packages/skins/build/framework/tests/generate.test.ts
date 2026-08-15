@@ -17,6 +17,7 @@ describe('createFrameworkSkin', () => {
     const poster = content(output, 'react', 'components/layout/poster.tsx');
     const container = content(output, 'react', 'components/layout/container.tsx');
     const volumeSlider = content(output, 'react', 'components/sliders/volume-slider.tsx');
+    const timeSlider = content(output, 'react', 'components/sliders/time-slider.tsx');
 
     expect(files.map((file) => file.fileName)).toEqual([
       'components/buttons/airplay-button.tsx',
@@ -54,6 +55,9 @@ describe('createFrameworkSkin', () => {
     expect(buttonTooltip).toContain('export interface ButtonTooltipProps extends TooltipPrimitive.RootProps');
     expect(playButton).toContain('export function PlayButton()');
     expect(volumeSlider).toContain('export function VolumeSlider(props: VolumeSliderProps = {})');
+    expect(timeSlider).toContain('renderChapter={props =>');
+    expect(timeSlider).toContain('<TimeSliderPrimitive.ChapterTitle');
+    expect(timeSlider).not.toContain('<Template');
     expect(container).toContain('export function Container');
     expect(container).toContain('ContainerProps');
     expect(container).toContain('<ContainerPrimitive {...props}');
@@ -128,6 +132,7 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain("import '@videojs/html/ui/seek-indicator'");
     expect(html).toContain("import '@videojs/html/ui/status-announcer'");
     expect(html).toContain("import '@videojs/html/ui/status-indicator'");
+    expect(html).toContain("import '@videojs/html/ui/time-slider-chapters'");
     expect(html).toContain("import '@videojs/html/ui/volume-indicator'");
     expect(html).toContain('export const skin = /* html */ `<media-container');
     expect(html).toContain('class="media-container media-skin media-skin-video media-theme-default"');
@@ -151,6 +156,10 @@ describe('createFrameworkSkin', () => {
     expect(html).not.toContain('commandfor=');
     expect(html).not.toContain(' id=');
     expect(html).toContain('<media-time-slider class="media-slider">');
+    expect(html).toContain('<media-time-slider-chapters class="media-slider-chapters">');
+    expect(html).toContain('<template>');
+    expect(html).toContain('<div class="media-slider-chapter">');
+    expect(html).toContain('<media-time-slider-chapter-title class="media-chapter-title">');
     expect(html).toContain('<media-volume-slider class="media-slider" thumb-alignment="edge" orientation="vertical">');
     expect(html).toContain('<media-time class="media-time" type="remaining" toggle>');
     expect(html).toContain('open-on-hover');

@@ -32,6 +32,11 @@ export interface SlotProps {
   children?: unknown;
 }
 
+export interface TemplateProps extends BaseProps {
+  /** Static compiler key identifying this repeated subtree within its containing component. */
+  name: string;
+}
+
 export interface Component<Props extends object> {
   (props: BaseProps & Props): ComponentNode;
   readonly $$component: { name: string; part: string | null };
@@ -70,6 +75,7 @@ function createRuntimeComponentPart<Props extends object>(name: string, part: st
 }
 
 export const Slot = createRuntimeComponentPart<SlotProps>('Slot', null);
+export const Template = createRuntimeComponentPart<TemplateProps>('Template', null);
 
 export function createComponent<Props extends object>(manifest: ComponentManifest<Props, undefined>): Component<Props>;
 export function createComponent<const Parts extends ComponentRecord>(

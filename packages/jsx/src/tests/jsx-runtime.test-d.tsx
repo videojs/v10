@@ -1,6 +1,6 @@
 /** @jsxImportSource .. */
 
-import { createComponent, Slot } from '../jsx-runtime';
+import { createComponent, Slot, Template } from '../jsx-runtime';
 import { defineComponent } from '../manifest';
 
 const Button = createComponent(defineComponent<{ disabled?: boolean }>({ name: 'Button' }));
@@ -21,6 +21,11 @@ void (
   </Slider.Root>
 );
 void (<Slot name="poster" />);
+void (
+  <Template name="item" className="item">
+    <Button />
+  </Template>
+);
 
 // @ts-expect-error - target-specific props are not part of canonical components
 void (<Button id="play" />);
@@ -30,3 +35,5 @@ void (<Button className={['button', 1]} />);
 void (<Slider.Root orientation="diagonal" />);
 // @ts-expect-error - canonical source rejects platform intrinsics
 void (<button type="button" />);
+// @ts-expect-error - templates require a static semantic name
+void (<Template />);

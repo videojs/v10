@@ -1,5 +1,5 @@
 import { defineConfig, jsx, rewrite } from '@videojs/compiler';
-import { anyTag, childAsProp, type ImportRef } from '@videojs/compiler/ast';
+import { anyTag, childAsProp, type ImportRef, lowerTemplates } from '@videojs/compiler/ast';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -31,7 +31,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             name,
           }),
         '@videojs/jsx': (name) =>
-          name === 'Slot'
+          name === 'Slot' || name === 'Template'
             ? false
             : resolveImport({
                 source: 'react',
@@ -47,6 +47,21 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
     }),
     plugins: [
       skinStyles({ manifest: options.styles, target: options.style }),
+      {
+        name: '@videojs/skins:react-templates',
+        setup: () => ({
+          transform: lowerTemplates({
+            templates: {
+              chapter: {
+                kind: 'render-prop',
+                parent: 'TimeSliderPrimitive.Chapters',
+                prop: 'renderChapter',
+                rootTag: 'div',
+              },
+            },
+          }),
+        }),
+      },
       rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
@@ -162,6 +177,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             code.jsx.element('OverlayPrimitive').replace('div'),
             code.variable('InputIndicatorOverlayPrimitive').remove(),
             code.jsx.element('InputIndicatorOverlayPrimitive').replace('div'),
+            code.variable('PreviewValuePrimitive').remove(),
+            code.jsx.element('PreviewValuePrimitive').replace('div'),
             code.jsx.element('Text').replace('span'),
             code.jsx.element('Slider.Thumbnail.Root').replace('div'),
             code.jsx.element('Slider.Thumbnail.Image').replace('Slider.Thumbnail'),
