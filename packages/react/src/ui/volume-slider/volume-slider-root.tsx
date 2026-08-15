@@ -18,6 +18,7 @@ const noopVolume = {
   volume: 0,
   muted: false,
   volumeAvailability: 'unsupported' as const,
+  mutedAvailability: 'unsupported' as const,
   setVolume: () => 0,
   toggleMuted: () => false,
 };
