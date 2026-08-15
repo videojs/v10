@@ -1,7 +1,10 @@
 import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/core/components';
 import { Slot } from '@videojs/jsx';
+import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
+import { CastButton } from '../../components/buttons/cast-button';
 import { FullscreenButton } from '../../components/buttons/fullscreen-button';
+import { PiPButton } from '../../components/buttons/pip-button';
 import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { BufferingIndicator } from '../../components/feedback/buffering-indicator';
@@ -35,6 +38,9 @@ export function DefaultVideoSkin() {
           <Controls.Group className={styles.controlsGroup.primary}>
             <CaptionsButton />
             <VolumePopover />
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
             <FullscreenButton />
           </Controls.Group>
         </Tooltip.Provider>

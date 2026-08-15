@@ -17,6 +17,7 @@ describe('resolveSkinCatalog', () => {
   it('infers the canonical Skin catalog and complete default-video closure', async () => {
     const resolved = await loadSkinCatalog();
     expect(resolved.items).toMatchObject([
+      { name: 'airplay-button', dependencies: ['button-tooltip'] },
       {
         name: 'buffering-indicator',
         dependencies: [],
@@ -26,18 +27,22 @@ describe('resolveSkinCatalog', () => {
         dependencies: [],
       },
       { name: 'captions-button', dependencies: ['button-tooltip'] },
+      { name: 'cast-button', dependencies: ['button-tooltip'] },
       { name: 'container', dependencies: [] },
       {
         name: 'default-video',
         scopeClass: 'media-skin-video',
         theme: 'default',
         dependencies: [
+          'airplay-button',
           'buffering-indicator',
           'captions-button',
+          'cast-button',
           'container',
           'error-dialog',
           'fullscreen-button',
           'overlay',
+          'pip-button',
           'play-button',
           'poster',
           'time-slider',
@@ -48,6 +53,7 @@ describe('resolveSkinCatalog', () => {
       { name: 'fullscreen-button', dependencies: ['button-tooltip'] },
       { name: 'mute-button', dependencies: [] },
       { name: 'overlay', dependencies: [] },
+      { name: 'pip-button', dependencies: ['button-tooltip'] },
       { name: 'play-button', dependencies: ['button-tooltip'] },
       { name: 'poster', dependencies: [] },
       { name: 'seek-button', dependencies: ['button-tooltip'] },
@@ -58,13 +64,16 @@ describe('resolveSkinCatalog', () => {
 
     const closure = resolveSkinClosure(resolved, 'default-video');
     expect(closure.items.map((item) => item.name)).toEqual([
-      'buffering-indicator',
       'button-tooltip',
+      'airplay-button',
+      'buffering-indicator',
       'captions-button',
+      'cast-button',
       'container',
       'error-dialog',
       'fullscreen-button',
       'overlay',
+      'pip-button',
       'play-button',
       'poster',
       'time-slider',
@@ -84,7 +93,7 @@ describe('resolveSkinCatalog', () => {
       './styles/components/slider.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(14);
+    expect(closure.sourceFiles).toHaveLength(17);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 

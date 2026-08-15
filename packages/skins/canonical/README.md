@@ -14,11 +14,14 @@ Canonical source:
 The current authored paths are:
 
 - `skins/default-video/skin.tsx`
+- `components/buttons/airplay-button.tsx`
 - `components/buttons/button-tooltip.tsx`
 - `components/buttons/captions-button.tsx`
+- `components/buttons/cast-button.tsx`
 - `components/buttons/fullscreen-button.tsx`
 - `components/buttons/mute-button.tsx`
 - `components/buttons/play-button.tsx`
+- `components/buttons/pip-button.tsx`
 - `components/buttons/seek-button.tsx`
 - `components/controls/volume-popover.tsx`
 - `components/feedback/buffering-indicator.tsx`

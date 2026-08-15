@@ -14,6 +14,10 @@ interface HtmlComponentDescriptor {
 }
 
 const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
+  AirPlayButton: {
+    modules: ['@videojs/html/ui/airplay-button'],
+    elements: { AirPlayButtonPrimitive: 'media-airplay-button' },
+  },
   BufferingIndicator: {
     modules: ['@videojs/html/ui/buffering-indicator'],
     elements: { BufferingIndicatorPrimitive: 'media-buffering-indicator' },
@@ -21,6 +25,10 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
   CaptionsButton: {
     modules: ['@videojs/html/ui/captions-button'],
     elements: { CaptionsButtonPrimitive: 'media-captions-button' },
+  },
+  CastButton: {
+    modules: ['@videojs/html/ui/cast-button'],
+    elements: { CastButtonPrimitive: 'media-cast-button' },
   },
   Container: {
     modules: ['@videojs/html/media/container'],
@@ -50,6 +58,10 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
   PlayButton: {
     modules: ['@videojs/html/ui/play-button'],
     elements: { PlayButtonPrimitive: 'media-play-button' },
+  },
+  PiPButton: {
+    modules: ['@videojs/html/ui/pip-button'],
+    elements: { PiPButtonPrimitive: 'media-pip-button' },
   },
   Popover: {
     modules: ['@videojs/html/ui/popover'],
@@ -112,11 +124,17 @@ const componentTags = Object.fromEntries(
 );
 
 const iconNames = {
+  AirPlayEnterIcon: 'airplay-enter',
+  AirPlayExitIcon: 'airplay-exit',
   CaptionsOffIcon: 'captions-off',
   CaptionsOnIcon: 'captions-on',
+  CastEnterIcon: 'cast-enter',
+  CastExitIcon: 'cast-exit',
   FullscreenEnterIcon: 'fullscreen-enter',
   FullscreenExitIcon: 'fullscreen-exit',
   PauseIcon: 'pause',
+  PipEnterIcon: 'pip-enter',
+  PipExitIcon: 'pip-exit',
   PlayIcon: 'play',
   RestartIcon: 'restart',
   SeekIcon: 'seek',

@@ -1,9 +1,12 @@
 import { Controls } from '@/ui/controls';
 import { Time as TimePrimitive } from '@/ui/time';
 import { Tooltip } from '@/ui/tooltip';
+import { AirPlayButton } from './components/buttons/airplay-button';
 import { CaptionsButton } from './components/buttons/captions-button';
+import { CastButton } from './components/buttons/cast-button';
 import { FullscreenButton } from './components/buttons/fullscreen-button';
 import { PlayButton } from './components/buttons/play-button';
+import { PiPButton } from './components/buttons/pip-button';
 import { VolumePopover } from './components/controls/volume-popover';
 import { BufferingIndicator } from './components/feedback/buffering-indicator';
 import { ErrorDialog } from './components/feedback/error-dialog';
@@ -49,6 +52,9 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           <Controls.Group className="media-controls-group-primary">
             <CaptionsButton />
             <VolumePopover />
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
             <FullscreenButton />
           </Controls.Group>
         </Tooltip.Provider>

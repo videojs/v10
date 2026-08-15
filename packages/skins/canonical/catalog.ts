@@ -73,6 +73,13 @@ export const skinCatalog = {
   ],
   components: [
     defineSkinComponent({
+      name: 'airplay-button',
+      type: 'component',
+      source: './components/buttons/airplay-button.tsx',
+      title: 'AirPlay Button',
+      description: 'A state-aware button that starts and stops AirPlay playback.',
+    }),
+    defineSkinComponent({
       name: 'container',
       type: 'component',
       source: './components/layout/container.tsx',
@@ -120,6 +127,20 @@ export const skinCatalog = {
       source: './components/buttons/captions-button.tsx',
       title: 'Captions Button',
       description: 'A state-aware button that toggles captions and subtitles.',
+    }),
+    defineSkinComponent({
+      name: 'cast-button',
+      type: 'component',
+      source: './components/buttons/cast-button.tsx',
+      title: 'Cast Button',
+      description: 'A state-aware button that starts and stops Google Cast playback.',
+    }),
+    defineSkinComponent({
+      name: 'pip-button',
+      type: 'component',
+      source: './components/buttons/pip-button.tsx',
+      title: 'Picture-in-Picture Button',
+      description: 'A state-aware button that enters and exits picture-in-picture.',
     }),
     defineSkinComponent({
       name: 'mute-button',

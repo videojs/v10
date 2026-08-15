@@ -1,11 +1,14 @@
 import '../../../icons/element';
 import '../../../define/media/container';
+import '../../../define/ui/airplay-button';
 import '../../../define/ui/buffering-indicator';
 import '../../../define/ui/captions-button';
+import '../../../define/ui/cast-button';
 import '../../../define/ui/controls';
 import '../../../define/ui/error-dialog';
 import '../../../define/ui/fullscreen-button';
 import '../../../define/ui/mute-button';
+import '../../../define/ui/pip-button';
 import '../../../define/ui/play-button';
 import '../../../define/ui/popover';
 import '../../../define/ui/poster';
@@ -86,6 +89,30 @@ export const skin = /* html */ `<media-container class="media-container media-sk
             <media-slider-thumb class="media-slider-thumb"></media-slider-thumb>
           </media-volume-slider>
         </media-popover>
+        <media-cast-button class="media-button media-cast-button">
+          <media-icon class="media-button-icon media-cast-enter-icon" name="cast-enter"></media-icon>
+          <media-icon class="media-button-icon media-cast-exit-icon" name="cast-exit"></media-icon>
+        </media-cast-button>
+        <media-tooltip side="top" class="media-surface media-tooltip">
+          <media-tooltip-label></media-tooltip-label>
+          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+        </media-tooltip>
+        <media-airplay-button class="media-button media-airplay-button">
+          <media-icon class="media-button-icon media-airplay-enter-icon" name="airplay-enter"></media-icon>
+          <media-icon class="media-button-icon media-airplay-exit-icon" name="airplay-exit"></media-icon>
+        </media-airplay-button>
+        <media-tooltip side="top" class="media-surface media-tooltip">
+          <media-tooltip-label></media-tooltip-label>
+          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+        </media-tooltip>
+        <media-pip-button class="media-button media-pip-button">
+          <media-icon class="media-button-icon media-pip-enter-icon" name="pip-enter"></media-icon>
+          <media-icon class="media-button-icon media-pip-exit-icon" name="pip-exit"></media-icon>
+        </media-pip-button>
+        <media-tooltip side="top" class="media-surface media-tooltip">
+          <media-tooltip-label></media-tooltip-label>
+          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+        </media-tooltip>
         <media-fullscreen-button class="media-button media-fullscreen-button">
           <media-icon class="media-button-icon media-fullscreen-enter-icon" name="fullscreen-enter"></media-icon>
           <media-icon class="media-button-icon media-fullscreen-exit-icon" name="fullscreen-exit"></media-icon>

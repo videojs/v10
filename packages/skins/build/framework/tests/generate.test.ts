@@ -19,10 +19,13 @@ describe('createFrameworkSkin', () => {
     const volumeSlider = content(output, 'react', 'components/sliders/volume-slider.tsx');
 
     expect(files.map((file) => file.fileName)).toEqual([
+      'components/buttons/airplay-button.tsx',
       'components/buttons/button-tooltip.tsx',
       'components/buttons/captions-button.tsx',
+      'components/buttons/cast-button.tsx',
       'components/buttons/fullscreen-button.tsx',
       'components/buttons/mute-button.tsx',
+      'components/buttons/pip-button.tsx',
       'components/buttons/play-button.tsx',
       'components/controls/volume-popover.tsx',
       'components/feedback/buffering-indicator.tsx',
@@ -108,17 +111,23 @@ describe('createFrameworkSkin', () => {
     const html = content(output, 'html', 'skin.ts');
 
     expect(html).toContain("import '@videojs/html/icons/element'");
+    expect(html).toContain("import '@videojs/html/ui/airplay-button'");
     expect(html).toContain("import '@videojs/html/media/container'");
     expect(html).toContain("import '@videojs/html/ui/poster'");
     expect(html).toContain("import '@videojs/html/ui/buffering-indicator'");
     expect(html).toContain("import '@videojs/html/ui/captions-button'");
+    expect(html).toContain("import '@videojs/html/ui/cast-button'");
     expect(html).toContain("import '@videojs/html/ui/error-dialog'");
+    expect(html).toContain("import '@videojs/html/ui/pip-button'");
     expect(html).toContain('export const skin = /* html */ `<media-container');
     expect(html).toContain('class="media-container media-skin media-skin-video media-theme-default"');
     expect(html).toContain('<slot></slot>');
     expect(html).toContain('<media-poster class="media-poster"><slot name="poster"></slot></media-poster>');
     expect(html).toContain('<media-buffering-indicator class="media-buffering-indicator">');
     expect(html).toContain('<media-captions-button class="media-button media-captions-button">');
+    expect(html).toContain('<media-cast-button class="media-button media-cast-button">');
+    expect(html).toContain('<media-airplay-button class="media-button media-airplay-button">');
+    expect(html).toContain('<media-pip-button class="media-button media-pip-button">');
     expect(html).toContain('<media-error-dialog class="media-surface media-error-dialog">');
     expect(html).toContain('<media-alert-dialog-title class="media-error-dialog-title">');
     expect(html).toContain('<div class="media-overlay"></div>');

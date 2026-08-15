@@ -1,7 +1,10 @@
 import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/react';
+import { AirPlayButton } from '@/components/videojs/airplay-button/airplay-button';
 import { CaptionsButton } from '@/components/videojs/captions-button/captions-button';
+import { CastButton } from '@/components/videojs/cast-button/cast-button';
 import { FullscreenButton } from '@/components/videojs/fullscreen-button/fullscreen-button';
 import { PlayButton } from '@/components/videojs/play-button/play-button';
+import { PiPButton } from '@/components/videojs/pip-button/pip-button';
 import { VolumePopover } from '@/components/videojs/volume-popover/volume-popover';
 import { BufferingIndicator } from '@/components/videojs/buffering-indicator/buffering-indicator';
 import { ErrorDialog } from '@/components/videojs/error-dialog/error-dialog';
@@ -46,6 +49,9 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           <Controls.Group className="flex items-center gap-media-controls-gap">
             <CaptionsButton />
             <VolumePopover />
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
             <FullscreenButton />
           </Controls.Group>
         </Tooltip.Provider>

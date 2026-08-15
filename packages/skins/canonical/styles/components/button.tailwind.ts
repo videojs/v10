@@ -13,13 +13,36 @@ export default defineStyles({
   styles: {
     button: buttonStyles,
     buttonIcon: 'size-media-icon drop-shadow-media-icon',
+    airplayButton: [
+      'group/airplay',
+      'not-data-[airplay-state=connected]:[--media-icon--airplay__fill-animation:none]',
+      'not-data-[airplay-state=connected]:[--media-icon--airplay__triangle-animation:none]',
+    ],
     captionsButton: 'group/captions',
+    castButton: 'group/cast',
     fullscreenButton: 'group/fullscreen',
     muteButton: 'group/mute',
+    pipButton: 'group/pip',
     playButton: 'group/play',
     seekButton: '',
     captionsOffIcon: 'hidden opacity-0 group-not-data-active/captions:block group-not-data-active/captions:opacity-100',
     captionsOnIcon: 'hidden opacity-0 group-data-active/captions:block group-data-active/captions:opacity-100',
+    airplayEnterIcon: [
+      'hidden opacity-0 group-not-data-[airplay-state=connected]/airplay:block',
+      'group-not-data-[airplay-state=connected]/airplay:opacity-100',
+    ],
+    airplayExitIcon: [
+      'hidden opacity-0 group-data-[airplay-state=connected]/airplay:block',
+      'group-data-[airplay-state=connected]/airplay:opacity-100',
+    ],
+    castEnterIcon: [
+      'hidden opacity-0 group-not-data-[cast-state=connected]/cast:block',
+      'group-not-data-[cast-state=connected]/cast:opacity-100',
+    ],
+    castExitIcon: [
+      'hidden opacity-0 group-data-[cast-state=connected]/cast:block',
+      'group-data-[cast-state=connected]/cast:opacity-100',
+    ],
     fullscreenEnterIcon: [
       'hidden opacity-0 group-not-data-fullscreen/fullscreen:block group-not-data-fullscreen/fullscreen:opacity-100',
     ],
@@ -36,6 +59,8 @@ export default defineStyles({
       'group-not-data-ended/play:group-not-data-started/play:block',
       'group-not-data-ended/play:group-not-data-started/play:opacity-100',
     ],
+    pipEnterIcon: 'hidden opacity-0 group-not-data-pip/pip:block group-not-data-pip/pip:opacity-100',
+    pipExitIcon: 'hidden opacity-0 group-data-pip/pip:block group-data-pip/pip:opacity-100',
     restartIcon: 'hidden opacity-0 group-data-ended/play:block group-data-ended/play:opacity-100',
     seekBackwardIcon: '-scale-x-100',
     volumeHighIcon: [

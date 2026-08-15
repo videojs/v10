@@ -1,5 +1,34 @@
 @layer videojs.components {
   @scope (.media-skin-video) {
+    .media-airplay-button:not([data-airplay-state='connected']) {
+      --media-icon--airplay__fill-animation: none;
+      --media-icon--airplay__triangle-animation: none;
+    }
+
+    .media-airplay-enter-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-airplay-button) {
+      &:not([data-airplay-state='connected']) .media-airplay-enter-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-airplay-exit-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-airplay-button) {
+      &[data-airplay-state='connected'] .media-airplay-exit-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
     .media-button {
       width: var(--media-control-size);
       height: var(--media-control-size);
@@ -68,6 +97,30 @@
       }
     }
 
+    .media-cast-enter-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-cast-button) {
+      &:not([data-cast-state='connected']) .media-cast-enter-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-cast-exit-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-cast-button) {
+      &[data-cast-state='connected'] .media-cast-exit-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
     .media-fullscreen-enter-icon {
       opacity: 0;
       display: none;
@@ -99,6 +152,30 @@
 
     @scope (.media-play-button) {
       &[data-started]:not([data-paused]):not([data-ended]) .media-pause-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-pip-enter-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-pip-button) {
+      &:not([data-pip]) .media-pip-enter-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-pip-exit-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-pip-button) {
+      &[data-pip] .media-pip-exit-icon {
         opacity: 1;
         display: block;
       }

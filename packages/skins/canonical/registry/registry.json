@@ -4,6 +4,41 @@
   "homepage": "https://videojs.org",
   "items": [
     {
+      "name": "airplay-button",
+      "type": "registry:component",
+      "title": "AirPlay Button",
+      "description": "A state-aware button that starts and stops AirPlay playback.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/airplay-button/airplay-button.tsx",
+          "target": "components/videojs/airplay-button/airplay-button.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/button-tooltip/button-tooltip.tsx",
+          "target": "components/videojs/button-tooltip/button-tooltip.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react", "react"],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
       "name": "buffering-indicator",
       "type": "registry:component",
       "title": "Buffering Indicator",
@@ -69,6 +104,41 @@
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
     },
     {
+      "name": "cast-button",
+      "type": "registry:component",
+      "title": "Cast Button",
+      "description": "A state-aware button that starts and stops Google Cast playback.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/button-tooltip/button-tooltip.tsx",
+          "target": "components/videojs/button-tooltip/button-tooltip.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/cast-button/cast-button.tsx",
+          "target": "components/videojs/cast-button/cast-button.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react", "react"],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
       "name": "default-video",
       "type": "registry:block",
       "title": "Default Video Skin",
@@ -97,12 +167,15 @@
       ],
       "dependencies": ["@videojs/react", "@videojs/utils", "react"],
       "registryDependencies": [
+        "@videojs/airplay-button",
         "@videojs/buffering-indicator",
         "@videojs/captions-button",
+        "@videojs/cast-button",
         "@videojs/container",
         "@videojs/error-dialog",
         "@videojs/fullscreen-button",
         "@videojs/overlay",
+        "@videojs/pip-button",
         "@videojs/play-button",
         "@videojs/poster",
         "@videojs/time-slider",
@@ -202,6 +275,41 @@
           "type": "registry:file"
         }
       ],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
+      "name": "pip-button",
+      "type": "registry:component",
+      "title": "Picture-in-Picture Button",
+      "description": "A state-aware button that enters and exits picture-in-picture.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/button-tooltip/button-tooltip.tsx",
+          "target": "components/videojs/button-tooltip/button-tooltip.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/pip-button/pip-button.tsx",
+          "target": "components/videojs/pip-button/pip-button.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react", "react"],
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
     },
     {
