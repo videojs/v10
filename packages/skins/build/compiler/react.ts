@@ -20,6 +20,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
     options.resolveImport ? options.resolveImport(reference) : reference;
   const containerProps = requiredReactImport(resolveImport, 'ContainerProps');
   const posterProps = requiredReactImport(resolveImport, 'PosterProps');
+  const usePlayerRef = requiredReactImport(resolveImport, 'usePlayer');
   return defineConfig({
     target: jsx({
       imports: {
@@ -53,9 +54,11 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const ReactNode = code.import('react', 'ReactNode', { type: true });
           const ContainerProps = code.import(containerProps.source, containerProps.name, { type: true });
           const PosterProps = code.import(posterProps.source, posterProps.name, { type: true });
+          const usePlayer = code.import(usePlayerRef.source, usePlayerRef.name);
           const defaultVideoSkin = code.function('DefaultVideoSkin');
           const container = code.function('Container');
           const poster = code.function('Poster');
+          const volumePopover = code.function('VolumePopover');
           const posterIsString = () => code.value.equal(code.value.typeOf('poster'), code.value.string('string'));
 
           return [
@@ -138,6 +141,23 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                 )
               ),
             poster.jsx.element('PosterPrimitive').selfClosing(),
+            volumePopover.prepend(() =>
+              code.statement.const(
+                'volumeAvailability',
+                code.value.call(usePlayer, [
+                  code.value.arrow(['state'], code.value.property('state', 'volumeAvailability')),
+                ])
+              )
+            ),
+            volumePopover.jsx
+              .element('Popover.Root')
+              .replace(({ element }) =>
+                code.value.conditional(
+                  code.value.equal('volumeAvailability', code.value.string('available')),
+                  element,
+                  code.jsx.create('MuteButton')
+                )
+              ),
             code.variable('OverlayPrimitive').remove(),
             code.jsx.element('OverlayPrimitive').replace('div'),
             code.variable('InputIndicatorOverlayPrimitive').remove(),

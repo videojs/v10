@@ -81,6 +81,7 @@ export interface CreateHelpers {
     number(value: number): ts.NumericLiteral;
     object(properties?: readonly ts.ObjectLiteralElementLike[]): ts.ObjectLiteralExpression;
     onlyIf(options: ValueOnlyIfOptions): ts.ConditionalExpression;
+    property(object: ValueReference, name: string): ts.PropertyAccessExpression;
     string(value: string): ts.StringLiteral;
     typeOf(value: ValueReference): ts.TypeOfExpression;
     undefined(): ts.Identifier;
@@ -142,6 +143,7 @@ export interface ValueHelpers {
   isArray(): MatchPredicate;
   number(value: number): ts.NumericLiteral;
   object(properties?: readonly ts.ObjectLiteralElementLike[]): ts.ObjectLiteralExpression;
+  property(object: ValueReference, name: string): ts.PropertyAccessExpression;
   string(value: string): ts.StringLiteral;
   typeOf(value: ValueReference): ts.TypeOfExpression;
   when(
@@ -224,9 +226,9 @@ export interface FunctionSelection {
   addProps(props: readonly FunctionPropSpec[], parameterIndex?: number): CompilerTransform;
   insertBefore(statements: FunctionSiblingStatementSpec): CompilerTransform;
   setProps(props: readonly FunctionPropSpec[], options?: FunctionPropsOptions): CompilerTransform;
-  append(statements: StatementSpec): CompilerTransform;
-  beforeReturn(statements: StatementSpec): CompilerTransform;
-  prepend(statements: StatementSpec): CompilerTransform;
+  append(statements: FunctionStatementSpec): CompilerTransform;
+  beforeReturn(statements: FunctionStatementSpec): CompilerTransform;
+  prepend(statements: FunctionStatementSpec): CompilerTransform;
 }
 
 export interface ModuleSelection {
@@ -250,6 +252,7 @@ export interface ConstStatementOptions {
 }
 
 export type StatementSpec = ts.Statement | readonly ts.Statement[];
+export type FunctionStatementSpec = StatementSpec | ((context: FunctionDeclarationContext) => StatementSpec);
 export type FunctionSiblingStatementSpec = StatementSpec | ((context: FunctionDeclarationContext) => StatementSpec);
 
 export interface TransformHelpers {
@@ -437,6 +440,7 @@ function createValueHelpers(match: MatchHelpers, create: CreateHelpers): ValueHe
     isArray: match.value.array,
     number: create.value.number,
     object: create.value.object,
+    property: create.value.property,
     string: create.value.string,
     typeOf: create.value.typeOf,
     when(value, condition, fallback) {
@@ -733,6 +737,9 @@ function createCreateHelpers(): CreateHelpers {
       },
       object(properties = []) {
         return ts.factory.createObjectLiteralExpression([...properties]);
+      },
+      property(object, name) {
+        return ts.factory.createPropertyAccessExpression(valueFromReference(object), name);
       },
       onlyIf(options) {
         const value = valueFromReference(options.value);
@@ -1157,12 +1164,14 @@ function removeVariableDeclarations(name: string | RegExp): CompilerTransform {
 function editFunctionBody(
   declaration: ts.FunctionDeclaration,
   position: 'prepend' | 'append' | 'beforeReturn',
-  statements: StatementSpec,
+  statements: FunctionStatementSpec,
   factory: ts.NodeFactory
 ): ts.FunctionDeclaration | undefined {
   if (!declaration.body) return undefined;
 
-  const nextStatements = normalizeStatements(statements);
+  const functionContext: FunctionDeclarationContext = { function: declaration, factory };
+  const resolved = typeof statements === 'function' ? statements(functionContext) : statements;
+  const nextStatements = normalizeStatements(resolved);
   if (nextStatements.length === 0) return undefined;
 
   let bodyStatements: ts.Statement[];

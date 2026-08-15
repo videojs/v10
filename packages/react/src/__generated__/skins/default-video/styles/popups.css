@@ -41,5 +41,9 @@
       margin: 0;
       padding-block: 0.75rem;
     }
+
+    .media-volume-popover:has(:is(media-volume-slider[data-hidden])) {
+      display: none;
+    }
   }
 }

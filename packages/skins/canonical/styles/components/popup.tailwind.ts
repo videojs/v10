@@ -9,6 +9,6 @@ export default defineStyles({
       'data-open:flex data-open:items-center data-open:gap-1',
     ],
     tooltipShortcut: 'text-[0.75em] font-semibold',
-    volumePopover: 'm-0 rounded-media-pill border-0 py-3',
+    volumePopover: ['m-0 rounded-media-pill border-0 py-3', 'has-[media-volume-slider[data-hidden]]:hidden'],
   },
 });

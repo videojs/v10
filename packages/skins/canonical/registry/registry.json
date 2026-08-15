@@ -603,7 +603,7 @@
           "type": "registry:file"
         }
       ],
-      "dependencies": ["@videojs/react"],
+      "dependencies": ["@videojs/core", "@videojs/react"],
       "registryDependencies": ["@videojs/volume-slider"],
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
     },

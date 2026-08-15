@@ -342,7 +342,12 @@ export function Template({ backdrop }) {
               ),
               code
                 .function('Template')
-                .prepend(code.statement.const('backdropState', code.value.call(useBackdrop, ['backdrop']))),
+                .prepend(() =>
+                  code.statement.const(
+                    'backdropState',
+                    code.value.call(useBackdrop, [code.value.property('backdrop', 'state')])
+                  )
+                ),
               code
                 .function('Template')
                 .beforeReturn(code.statement.const('ready', code.value.call('Boolean', ['backdropState']))),
@@ -357,7 +362,7 @@ export function Template({ backdrop }) {
     expect(result.code.indexOf('import { Frame }')).toBeLessThan(result.code.indexOf('export const TOP_ACTIONS'));
     expect(result.code).toContain('import { useBackdrop } from "@fixture/react"');
     expect(compactCode).toContain(compact('export const TOP_ACTIONS = ["togglePaused"] as const;'));
-    expect(compactCode).toContain(compact('const backdropState = useBackdrop(backdrop);'));
+    expect(compactCode).toContain(compact('const backdropState = useBackdrop(backdrop.state);'));
     expect(compactCode).toContain(compact('const ready = Boolean(backdropState);return <Frame />;'));
   });
 });

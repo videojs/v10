@@ -176,6 +176,7 @@ function reactPackageImportResolver(reference: ImportRef): ImportRef | false {
     if (reference.name === 'Poster' || reference.name === 'PosterProps') {
       return { ...reference, source: '@/ui/poster' };
     }
+    if (reference.name === 'usePlayer') return { ...reference, source: '@/player/context' };
     if (reference.name === 'RenderProp') return { ...reference, source: '@/utils/types' };
     return { ...reference, source: `@/ui/${reactComponentModule(reference.name)}` };
   }
