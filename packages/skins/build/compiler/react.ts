@@ -1,5 +1,12 @@
 import { defineConfig, jsx, rewrite } from '@videojs/compiler';
-import { anyTag, childAsProp, type ImportRef, lowerTemplates } from '@videojs/compiler/ast';
+import {
+  anyTag,
+  childAsProp,
+  type ImportRef,
+  lowerTemplateParts,
+  lowerTemplates,
+  lowerText,
+} from '@videojs/compiler/ast';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -21,6 +28,11 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
   const containerProps = requiredReactImport(resolveImport, 'ContainerProps');
   const posterProps = requiredReactImport(resolveImport, 'PosterProps');
   const usePlayerRef = requiredReactImport(resolveImport, 'usePlayer');
+  const useTranslatorRef = requiredReactImport(resolveImport, 'useTranslator');
+  const useQualityOptionsRef = requiredReactImport(resolveImport, 'useQualityOptions');
+  const useAudioTrackOptionsRef = requiredReactImport(resolveImport, 'useAudioTrackOptions');
+  const usePlaybackRateOptionsRef = requiredReactImport(resolveImport, 'usePlaybackRateOptions');
+  const useCaptionsOptionsRef = requiredReactImport(resolveImport, 'useCaptionsOptions');
   return defineConfig({
     target: jsx({
       imports: {
@@ -48,6 +60,61 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
     plugins: [
       skinStyles({ manifest: options.styles, target: options.style }),
       {
+        name: '@videojs/skins:react-text',
+        setup: () => ({
+          transform: lowerText({
+            targetTag: 'span',
+            descriptors: ['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText'],
+            lowering: { kind: 'translate', translator: 't' },
+          }),
+        }),
+      },
+      {
+        name: '@videojs/skins:react-template-parts',
+        setup: () => ({
+          transform: lowerTemplateParts({
+            parts: {
+              'QualitySettingsMenu:selected-label': {
+                kind: 'value',
+                root: 'quality',
+                property: 'selectedLabel',
+                optionalAccess: true,
+              },
+              'AudioTrackSettingsMenu:selected-label': {
+                kind: 'value',
+                root: 'audioTrack',
+                property: 'selectedLabel',
+                optionalAccess: true,
+              },
+              'PlaybackRateSettingsMenu:selected-label': {
+                kind: 'value',
+                root: 'playbackRate',
+                property: 'selectedLabel',
+                optionalAccess: true,
+              },
+              'CaptionsSettingsMenu:selected-label': {
+                kind: 'value',
+                root: 'captions',
+                property: 'selectedLabel',
+                optionalAccess: true,
+              },
+              'quality-option:label': { kind: 'value', root: 'item', property: 'label' },
+              'quality-option:tier': {
+                kind: 'value',
+                root: 'item',
+                property: 'tier',
+                optional: true,
+                tag: 'sup',
+              },
+              'quality-option:badge': { kind: 'value', root: 'item', property: 'badge', optional: true },
+              'audio-track-option:label': { kind: 'value', root: 'item', property: 'label' },
+              'playback-rate-option:label': { kind: 'value', root: 'item', property: 'label' },
+              'captions-option:label': { kind: 'value', root: 'item', property: 'label' },
+            },
+          }),
+        }),
+      },
+      {
         name: '@videojs/skins:react-templates',
         setup: () => ({
           transform: lowerTemplates({
@@ -57,6 +124,30 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                 parent: 'TimeSliderPrimitive.Chapters',
                 prop: 'renderChapter',
                 rootTag: 'div',
+              },
+              'quality-option': {
+                kind: 'render-prop',
+                parent: 'QualityRadioGroup',
+                prop: 'renderItem',
+                parameters: ['props', 'item'],
+              },
+              'audio-track-option': {
+                kind: 'render-prop',
+                parent: 'AudioTrackRadioGroup',
+                prop: 'renderItem',
+                parameters: ['props', 'item'],
+              },
+              'playback-rate-option': {
+                kind: 'render-prop',
+                parent: 'PlaybackRateRadioGroup',
+                prop: 'renderItem',
+                parameters: ['props', 'item'],
+              },
+              'captions-option': {
+                kind: 'render-prop',
+                parent: 'CaptionsRadioGroup',
+                prop: 'renderItem',
+                parameters: ['props', 'item'],
               },
             },
           }),
@@ -74,6 +165,18 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const container = code.function('Container');
           const poster = code.function('Poster');
           const volumePopover = code.function('VolumePopover');
+          const settingsFunctions = [
+            'SettingsMenu',
+            'QualitySettingsMenu',
+            'AudioTrackSettingsMenu',
+            'PlaybackRateSettingsMenu',
+            'CaptionsSettingsMenu',
+          ];
+          const useTranslator = code.import(useTranslatorRef.source, useTranslatorRef.name);
+          const useQualityOptions = code.import(useQualityOptionsRef.source, useQualityOptionsRef.name);
+          const useAudioTrackOptions = code.import(useAudioTrackOptionsRef.source, useAudioTrackOptionsRef.name);
+          const usePlaybackRateOptions = code.import(usePlaybackRateOptionsRef.source, usePlaybackRateOptionsRef.name);
+          const useCaptionsOptions = code.import(useCaptionsOptionsRef.source, useCaptionsOptionsRef.name);
           const posterIsString = () => code.value.equal(code.value.typeOf('poster'), code.value.string('string'));
 
           return [
@@ -173,12 +276,89 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                   code.jsx.create('MuteButton')
                 )
               ),
+            ...settingsFunctions.map((name) =>
+              code.function(name).prepend(() => code.statement.const('t', code.value.call(useTranslator, [])))
+            ),
+            code
+              .function('QualitySettingsMenu')
+              .prepend(() => code.statement.const('quality', code.value.call(useQualityOptions, []))),
+            code
+              .function('AudioTrackSettingsMenu')
+              .prepend(() => code.statement.const('audioTrack', code.value.call(useAudioTrackOptions, []))),
+            code
+              .function('PlaybackRateSettingsMenu')
+              .prepend(() => code.statement.const('playbackRate', code.value.call(usePlaybackRateOptions, []))),
+            code
+              .function('CaptionsSettingsMenu')
+              .prepend(() => code.statement.const('captions', code.value.call(useCaptionsOptions, []))),
+            ...[
+              ['QualitySettingsMenu', 'quality', 'hasQuality'],
+              ['AudioTrackSettingsMenu', 'audioTrack', 'hasAudioTrack'],
+              ['PlaybackRateSettingsMenu', 'playbackRate', 'hasPlaybackRate'],
+              ['CaptionsSettingsMenu', 'captions', 'hasCaptions'],
+            ].flatMap(([functionName, value, availability]) => [
+              code
+                .function(functionName!)
+                .beforeReturn(() =>
+                  code.statement.const(
+                    availability!,
+                    code.value.equal(
+                      code.value.property(code.value.optionalProperty(value!, 'state'), 'availability'),
+                      code.value.string('available')
+                    )
+                  )
+                ),
+              code
+                .function(functionName!)
+                .jsx.element('Menu.Root')
+                .replace(({ element }) => code.value.and(availability!, element)),
+            ]),
+            code
+              .function('VideoSettingsMenu')
+              .prepend(() => [
+                code.statement.const('quality', code.value.call(useQualityOptions, [])),
+                code.statement.const('audioTrack', code.value.call(useAudioTrackOptions, [])),
+                code.statement.const('playbackRate', code.value.call(usePlaybackRateOptions, [])),
+                code.statement.const('captions', code.value.call(useCaptionsOptions, [])),
+              ]),
+            code.function('VideoSettingsMenu').beforeReturn(() =>
+              code.statement.const(
+                'hasSettings',
+                ['quality', 'audioTrack', 'playbackRate', 'captions']
+                  .map((value) =>
+                    code.value.equal(
+                      code.value.property(code.value.optionalProperty(value, 'state'), 'availability'),
+                      code.value.string('available')
+                    )
+                  )
+                  .reduceRight((right, left) => code.value.or(left, right))
+              )
+            ),
+            code
+              .function('VideoSettingsMenu')
+              .jsx.element('SettingsMenu')
+              .replace(({ element }) => code.value.and('hasSettings', element)),
+            ...[
+              'QualitySettingsMenu',
+              'AudioTrackSettingsMenu',
+              'PlaybackRateSettingsMenu',
+              'CaptionsSettingsMenu',
+            ].map((name) =>
+              code
+                .function(name)
+                .jsx.element('Menu.ItemIndicator')
+                .addProp('checked', code.value.property('item', 'checked'))
+            ),
             code.variable('OverlayPrimitive').remove(),
             code.jsx.element('OverlayPrimitive').replace('div'),
             code.variable('InputIndicatorOverlayPrimitive').remove(),
             code.jsx.element('InputIndicatorOverlayPrimitive').replace('div'),
             code.variable('PreviewValuePrimitive').remove(),
             code.jsx.element('PreviewValuePrimitive').replace('div'),
+            code.variable('HintPrimitive').remove(),
+            code.jsx.element('HintPrimitive').replace('span'),
+            code.variable('OptionLabelPrimitive').remove(),
+            code.jsx.element('OptionLabelPrimitive').replace('span'),
             code.jsx.element('Text').replace('span'),
             code.jsx.element('Slider.Thumbnail.Root').replace('div'),
             code.jsx.element('Slider.Thumbnail.Image').replace('Slider.Thumbnail'),
@@ -187,6 +367,10 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .where(code.value.isArray())
               .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
             code.interface('ButtonTooltipProps').replaceExtends('TooltipProps', 'TooltipPrimitive.RootProps'),
+            code
+              .interface('SettingsMenuProps')
+              .property('children')
+              .setType(() => code.type.named(ReactNode)),
             code
               .interface('ButtonTooltipProps')
               .property('children')

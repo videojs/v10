@@ -14,6 +14,8 @@ const CANONICAL_PACKAGE_IMPORTS: ReadonlySet<string> = new Set([
   '@videojs/jsx',
 ]);
 
+const CANONICAL_PACKAGE_IMPORT_PREFIXES = ['@videojs/core/i18n/text/'] as const;
+
 interface CanonicalImportViolation {
   file: string;
   line: number;
@@ -41,7 +43,10 @@ function violationForSource(
     return isWithinRoot(canonicalRoot, resolve(dirname(file), source)) ? null : 'outside-canonical-root';
   }
 
-  return CANONICAL_PACKAGE_IMPORTS.has(source) ? null : 'package-not-allowed';
+  return CANONICAL_PACKAGE_IMPORTS.has(source) ||
+    CANONICAL_PACKAGE_IMPORT_PREFIXES.some((prefix) => source.startsWith(prefix))
+    ? null
+    : 'package-not-allowed';
 }
 
 export function checkCanonicalImports(canonicalRoot = DEFAULT_CANONICAL_ROOT): CanonicalImportCheckResult {

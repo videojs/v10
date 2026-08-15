@@ -13,6 +13,7 @@ import { VideoInputIndicators } from '../../components/feedback/video-input-indi
 import { Container } from '../../components/layout/container';
 import { Overlay } from '../../components/layout/overlay';
 import { Poster } from '../../components/layout/poster';
+import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
 import styles from '../../styles/skins/default-video.tailwind';
 
@@ -39,6 +40,7 @@ export function DefaultVideoSkin() {
           <Controls.Group className={styles.controlsGroup.primary}>
             <CaptionsButton />
             <VolumePopover />
+            <VideoSettingsMenu />
             <CastButton />
             <AirPlayButton />
             <PiPButton />

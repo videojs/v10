@@ -12,6 +12,7 @@ import { VideoInputIndicators } from './internal/components/feedback/video-input
 import { Container } from '@/components/videojs/container/container';
 import { Overlay } from '@/components/videojs/overlay/overlay';
 import { Poster } from '@/components/videojs/poster/poster';
+import { VideoSettingsMenu } from '@/components/videojs/video-settings-menu/video-settings-menu';
 import { TimeSlider } from '@/components/videojs/time-slider/time-slider';
 import { cn } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
@@ -50,6 +51,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           <Controls.Group className="flex items-center gap-media-controls-gap">
             <CaptionsButton />
             <VolumePopover />
+            <VideoSettingsMenu />
             <CastButton />
             <AirPlayButton />
             <PiPButton />

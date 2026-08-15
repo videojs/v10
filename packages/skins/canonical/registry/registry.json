@@ -145,6 +145,41 @@
       "description": "A video skin with play, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.",
       "files": [
         {
+          "path": "canonical/registry/default/components/video-settings-menu/audio-track-settings-menu.tsx",
+          "target": "components/videojs/video-settings-menu/audio-track-settings-menu.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/captions-settings-menu.tsx",
+          "target": "components/videojs/video-settings-menu/captions-settings-menu.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/menu-chevron.tsx",
+          "target": "components/videojs/video-settings-menu/menu-chevron.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/playback-rate-settings-menu.tsx",
+          "target": "components/videojs/video-settings-menu/playback-rate-settings-menu.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/quality-settings-menu.tsx",
+          "target": "components/videojs/video-settings-menu/quality-settings-menu.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/settings-menu.tsx",
+          "target": "components/videojs/video-settings-menu/settings-menu.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/video-settings-menu.tsx",
+          "target": "components/videojs/video-settings-menu/video-settings-menu.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "canonical/registry/default/internal/components/feedback/video-input-indicators.tsx",
           "target": "components/videojs/internal/components/feedback/video-input-indicators.tsx",
           "type": "registry:component"
@@ -170,7 +205,7 @@
           "type": "registry:file"
         }
       ],
-      "dependencies": ["@videojs/react", "@videojs/utils", "react"],
+      "dependencies": ["@videojs/core", "@videojs/react", "@videojs/utils", "react"],
       "registryDependencies": [
         "@videojs/airplay-button",
         "@videojs/buffering-indicator",

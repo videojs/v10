@@ -37,6 +37,12 @@ export interface TemplateProps extends BaseProps {
   name: string;
 }
 
+export interface TemplatePartProps {
+  /** Static compiler key identifying this value outlet within its containing template or component. */
+  name: string;
+  children: unknown;
+}
+
 export interface Component<Props extends object> {
   (props: BaseProps & Props): ComponentNode;
   readonly $$component: { name: string; part: string | null };
@@ -75,7 +81,9 @@ function createRuntimeComponentPart<Props extends object>(name: string, part: st
 }
 
 export const Slot = createRuntimeComponentPart<SlotProps>('Slot', null);
-export const Template = createRuntimeComponentPart<TemplateProps>('Template', null);
+export const Template = Object.assign(createRuntimeComponentPart<TemplateProps>('Template', null), {
+  Part: createRuntimeComponentPart<TemplatePartProps>('Template', 'Part'),
+});
 
 export function createComponent<Props extends object>(manifest: ComponentManifest<Props, undefined>): Component<Props>;
 export function createComponent<const Parts extends ComponentRecord>(

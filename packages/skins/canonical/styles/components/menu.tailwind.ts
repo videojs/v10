@@ -1,0 +1,43 @@
+import { defineStyles } from '../define';
+
+const itemBase = [
+  'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left',
+  'outline-2 -outline-offset-2 outline-transparent',
+  'hover:bg-media-control-hover data-highlighted:bg-media-control-hover',
+  'focus-visible:outline-current focus-visible:outline-offset-2',
+];
+
+export default defineStyles({
+  role: 'menus',
+  styles: {
+    settings: [
+      'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-media-surface border-0 p-1',
+      'h-(--media-menu-height) w-(--media-menu-width)',
+      '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
+    ],
+    group: 'relative flex flex-col gap-0.5',
+    itemBase,
+    item: [
+      'justify-between tabular-nums text-inherit',
+      'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
+      'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
+    ],
+    submenuPanel: [
+      'absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
+      'data-starting-style:translate-x-full data-ending-style:translate-x-full',
+    ],
+    back: 'mb-0.5 w-full',
+    separator: 'my-1 border-b border-media-surface',
+    hint: 'ml-auto inline-flex min-w-0 items-center gap-1 pl-2 opacity-70',
+    hintLabel: 'max-w-24 overflow-hidden text-ellipsis whitespace-nowrap',
+    tier: 'pl-0.5 text-[0.7em] font-semibold leading-none opacity-70',
+    badge: 'rounded-media-pill bg-media-control-hover px-1.5 text-[0.7em] font-semibold',
+    indicator: 'ml-auto -mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
+    icon: 'size-media-icon shrink-0 opacity-70 drop-shadow-media-icon group-hover/menu-item:opacity-100',
+    chevron: 'size-3.5',
+    chevronFlipped: 'rotate-180',
+    settingsTrigger: 'group/settings',
+    settingsIcon: 'group-aria-expanded/settings:rotate-90',
+    srOnly: 'sr-only',
+  },
+});

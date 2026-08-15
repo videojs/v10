@@ -5,6 +5,7 @@ export const skinStyleRoles = [
   'container',
   'controls',
   'dialog',
+  'menus',
   'overlays',
   'popups',
   'poster',

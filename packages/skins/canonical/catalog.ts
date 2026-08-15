@@ -223,5 +223,12 @@ export const skinCatalog = {
       title: 'Volume Control',
       description: 'A mute toggle with a vertical slider for adjusting playback volume in a popover.',
     }),
+    defineSkinComponent({
+      name: 'video-settings-menu',
+      type: 'component',
+      source: './components/menus/video-settings-menu.tsx',
+      title: 'Video Settings Menu',
+      description: 'Nested video quality, audio track, playback rate, and captions settings menus.',
+    }),
   ],
 } as const satisfies SkinCatalog;

@@ -13,6 +13,7 @@ export {
   Slot,
   type SlotProps,
   Template,
+  type TemplatePartProps,
   type TemplateProps,
   VIDEOJS_NODE,
 } from './jsx-runtime';

@@ -18,6 +18,8 @@ describe('createFrameworkSkin', () => {
     const container = content(output, 'react', 'components/layout/container.tsx');
     const volumeSlider = content(output, 'react', 'components/sliders/volume-slider.tsx');
     const timeSlider = content(output, 'react', 'components/sliders/time-slider.tsx');
+    const settingsMenu = content(output, 'react', 'components/menus/settings-menu.tsx');
+    const qualityMenu = content(output, 'react', 'components/menus/quality-settings-menu.tsx');
 
     expect(files.map((file) => file.fileName)).toEqual([
       'components/buttons/airplay-button.tsx',
@@ -39,6 +41,13 @@ describe('createFrameworkSkin', () => {
       'components/layout/container.tsx',
       'components/layout/overlay.tsx',
       'components/layout/poster.tsx',
+      'components/menus/audio-track-settings-menu.tsx',
+      'components/menus/captions-settings-menu.tsx',
+      'components/menus/menu-chevron.tsx',
+      'components/menus/playback-rate-settings-menu.tsx',
+      'components/menus/quality-settings-menu.tsx',
+      'components/menus/settings-menu.tsx',
+      'components/menus/video-settings-menu.tsx',
       'components/sliders/time-slider.tsx',
       'components/sliders/volume-slider.tsx',
       'skin.tsx',
@@ -58,6 +67,10 @@ describe('createFrameworkSkin', () => {
     expect(timeSlider).toContain('renderChapter={props =>');
     expect(timeSlider).toContain('<TimeSliderPrimitive.ChapterTitle');
     expect(timeSlider).not.toContain('<Template');
+    expect(settingsMenu).toContain('const t = useTranslator()');
+    expect(qualityMenu).toContain('renderItem={(props, item) =>');
+    expect(qualityMenu).toContain('{item.tier ? <sup');
+    expect(qualityMenu).not.toContain('<Template');
     expect(container).toContain('export function Container');
     expect(container).toContain('ContainerProps');
     expect(container).toContain('<ContainerPrimitive {...props}');
@@ -82,6 +95,7 @@ describe('createFrameworkSkin', () => {
       'styles/container.css',
       'styles/controls.css',
       'styles/dialog.css',
+      'styles/menus.css',
       'styles/overlays.css',
       'styles/popups.css',
       'styles/poster.css',
@@ -96,6 +110,7 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/buttons.css')).not.toContain(':where(');
     expect(style(output, 'styles/controls.css')).toContain('.media-controls {');
     expect(style(output, 'styles/dialog.css')).toContain('.media-error-dialog {');
+    expect(style(output, 'styles/menus.css')).toContain('.media-settings {');
     expect(style(output, 'styles/controls.css')).toContain('background-color: var(--media-surface-background)');
     expect(style(output, 'styles/popups.css')).toContain('.media-surface {');
     expect(style(output, 'styles/container.css')).toContain('.media-container {');
@@ -133,6 +148,7 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain("import '@videojs/html/ui/status-announcer'");
     expect(html).toContain("import '@videojs/html/ui/status-indicator'");
     expect(html).toContain("import '@videojs/html/ui/time-slider-chapters'");
+    expect(html).toContain("import '@videojs/html/ui/quality-radio-group'");
     expect(html).toContain("import '@videojs/html/ui/volume-indicator'");
     expect(html).toContain('export const skin = /* html */ `<media-container');
     expect(html).toContain('class="media-container media-skin media-skin-video media-theme-default"');
@@ -153,8 +169,10 @@ describe('createFrameworkSkin', () => {
     expect(html).not.toContain('media-seek-button');
     expect(html).not.toContain('@videojs/html/ui/seek-button');
     expect(html).toContain('<media-tooltip side="top" class="media-surface media-tooltip">');
-    expect(html).not.toContain('commandfor=');
-    expect(html).not.toContain(' id=');
+    expect(html).toContain('commandfor="settings-menu"');
+    expect(html).toContain('id="settings-quality-menu"');
+    expect(html).toContain('<media-quality-radio-group class="media-group">');
+    expect(html).toContain('<span data-part="label"></span>');
     expect(html).toContain('<media-time-slider class="media-slider">');
     expect(html).toContain('<media-time-slider-chapters class="media-slider-chapters">');
     expect(html).toContain('<template>');

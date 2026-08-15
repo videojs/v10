@@ -81,6 +81,8 @@ export interface CreateHelpers {
     number(value: number): ts.NumericLiteral;
     object(properties?: readonly ts.ObjectLiteralElementLike[]): ts.ObjectLiteralExpression;
     onlyIf(options: ValueOnlyIfOptions): ts.ConditionalExpression;
+    optionalProperty(object: ValueReference, name: string): ts.PropertyAccessChain;
+    or(left: ValueReference, right: ts.Expression): ts.BinaryExpression;
     property(object: ValueReference, name: string): ts.PropertyAccessExpression;
     string(value: string): ts.StringLiteral;
     typeOf(value: ValueReference): ts.TypeOfExpression;
@@ -143,6 +145,8 @@ export interface ValueHelpers {
   isArray(): MatchPredicate;
   number(value: number): ts.NumericLiteral;
   object(properties?: readonly ts.ObjectLiteralElementLike[]): ts.ObjectLiteralExpression;
+  optionalProperty(object: ValueReference, name: string): ts.PropertyAccessChain;
+  or(left: ValueReference, right: ts.Expression): ts.BinaryExpression;
   property(object: ValueReference, name: string): ts.PropertyAccessExpression;
   string(value: string): ts.StringLiteral;
   typeOf(value: ValueReference): ts.TypeOfExpression;
@@ -440,6 +444,8 @@ function createValueHelpers(match: MatchHelpers, create: CreateHelpers): ValueHe
     isArray: match.value.array,
     number: create.value.number,
     object: create.value.object,
+    optionalProperty: create.value.optionalProperty,
+    or: create.value.or,
     property: create.value.property,
     string: create.value.string,
     typeOf: create.value.typeOf,
@@ -738,8 +744,25 @@ function createCreateHelpers(): CreateHelpers {
       object(properties = []) {
         return ts.factory.createObjectLiteralExpression([...properties]);
       },
+      optionalProperty(object, name) {
+        return ts.factory.createPropertyAccessChain(
+          valueFromReference(object),
+          ts.factory.createToken(ts.SyntaxKind.QuestionDotToken),
+          name
+        );
+      },
+      or(left, right) {
+        return ts.factory.createBinaryExpression(
+          valueFromReference(left),
+          ts.factory.createToken(ts.SyntaxKind.BarBarToken),
+          right
+        );
+      },
       property(object, name) {
-        return ts.factory.createPropertyAccessExpression(valueFromReference(object), name);
+        const expression = valueFromReference(object);
+        return ts.isOptionalChain(expression)
+          ? ts.factory.createPropertyAccessChain(expression, undefined, name)
+          : ts.factory.createPropertyAccessExpression(expression, name);
       },
       onlyIf(options) {
         const value = valueFromReference(options.value);

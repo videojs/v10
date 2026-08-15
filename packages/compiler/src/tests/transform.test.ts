@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { jsx, rewrite, transform } from '..';
-import { addProp, byTag, childAsProp, lowerTemplates, replace } from '../jsx';
+import { addProp, byTag, childAsProp, lowerTemplateParts, lowerTemplates, replace } from '../jsx';
 
 const compact = (value: string): string => value.replace(/\s+/g, '');
 
@@ -76,6 +76,55 @@ export function Timeline() {
         config,
       })
     ).rejects.toThrow('must be a direct child of <Chapters>');
+  });
+
+  it('lowers named template parts into callback values and HTML metadata', async () => {
+    const source = `export function Options(){ return <Group><Template name="option"><Item><Template.Part name="label"><Text /></Template.Part><Template.Part name="badge"><Text className="badge" /></Template.Part></Item></Template></Group>; }`;
+    const react = await transform(source, {
+      config: {
+        target: jsx({
+          transforms: [
+            lowerTemplateParts({
+              parts: {
+                'option:label': { kind: 'value', root: 'item', property: 'label' },
+                'option:badge': { kind: 'value', root: 'item', property: 'badge', optional: true },
+              },
+            }),
+            lowerTemplates({
+              templates: {
+                option: { kind: 'render-prop', parent: 'Group', prop: 'renderItem', parameters: ['props', 'item'] },
+              },
+            }),
+          ],
+        }),
+      },
+    });
+    const html = await transform(source, {
+      config: {
+        target: jsx({
+          transforms: [
+            lowerTemplateParts({
+              parts: {
+                'option:label': { kind: 'attribute', attribute: 'data-part', value: 'label' },
+                'option:badge': { kind: 'attribute', attribute: 'data-part', value: 'badge' },
+              },
+            }),
+            lowerTemplates({ templates: { option: { kind: 'element', parent: 'Group' } } }),
+          ],
+        }),
+      },
+    });
+
+    expect(compact(react.code)).toContain(
+      compact(
+        '<Group renderItem={(props, item) => (<Item {...props}><Text>{item.label}</Text>{item.badge ? <Text className="badge">{item.badge}</Text> : null}</Item>)}></Group>'
+      )
+    );
+    expect(compact(html.code)).toContain(
+      compact(
+        '<Group><template><Item><Text data-part="label" /><Text className="badge" data-part="badge" /></Item></template></Group>'
+      )
+    );
   });
 
   it('adds a props binding to a parameterless function', async () => {

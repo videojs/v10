@@ -19,12 +19,23 @@ export { anyTag, byTag, type JsxElementLike, type Matcher, tagName } from './mat
 export { type AddPropImportRef, type AddPropOptions, addProp } from './transforms/add-prop';
 export { type ChildAsPropOptions, childAsProp } from './transforms/child-as-prop';
 export {
+  type LowerTemplatePartsOptions,
   type LowerTemplatesOptions,
+  lowerTemplateParts,
   lowerTemplates,
   type TemplateElementLowering,
   type TemplateLowering,
+  type TemplatePartAttributeLowering,
+  type TemplatePartLowering,
+  type TemplatePartValueLowering,
   type TemplateRenderPropLowering,
 } from './transforms/lower-templates';
+export {
+  type DescriptorTextLowering,
+  type LowerTextOptions,
+  lowerText,
+  type TranslateTextLowering,
+} from './transforms/lower-text';
 export { type ReplaceOptions, replace } from './transforms/replace';
 export {
   type JsxChildReplacement,

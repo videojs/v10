@@ -23,7 +23,9 @@ void (
 void (<Slot name="poster" />);
 void (
   <Template name="item" className="item">
-    <Button />
+    <Template.Part name="label">
+      <Button />
+    </Template.Part>
   </Template>
 );
 
@@ -37,3 +39,5 @@ void (<Slider.Root orientation="diagonal" />);
 void (<button type="button" />);
 // @ts-expect-error - templates require a static semantic name
 void (<Template />);
+// @ts-expect-error - template parts require one authored child
+void (<Template.Part name="label" />);

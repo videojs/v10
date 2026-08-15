@@ -14,6 +14,7 @@ import { VideoInputIndicators } from './components/feedback/video-input-indicato
 import { Container } from './components/layout/container';
 import { Overlay } from './components/layout/overlay';
 import { Poster } from './components/layout/poster';
+import { VideoSettingsMenu } from './components/menus/video-settings-menu';
 import { TimeSlider } from './components/sliders/time-slider';
 import { cn } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
@@ -53,6 +54,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           <Controls.Group className="media-controls-group-primary">
             <CaptionsButton />
             <VolumePopover />
+            <VideoSettingsMenu />
             <CastButton />
             <AirPlayButton />
             <PiPButton />

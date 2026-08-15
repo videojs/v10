@@ -49,6 +49,7 @@ describe('resolveSkinCatalog', () => {
           'status-announcer',
           'status-indicator',
           'time-slider',
+          'video-settings-menu',
           'volume-indicator',
           'volume-popover',
         ],
@@ -65,6 +66,7 @@ describe('resolveSkinCatalog', () => {
       { name: 'status-announcer', dependencies: [] },
       { name: 'status-indicator', dependencies: [] },
       { name: 'time-slider', dependencies: [] },
+      { name: 'video-settings-menu', dependencies: [] },
       { name: 'volume-indicator', dependencies: [] },
       { name: 'volume-popover', dependencies: ['mute-button', 'volume-slider'] },
       { name: 'volume-slider', dependencies: [] },
@@ -88,6 +90,7 @@ describe('resolveSkinCatalog', () => {
       'status-announcer',
       'status-indicator',
       'time-slider',
+      'video-settings-menu',
       'volume-indicator',
       'mute-button',
       'volume-slider',
@@ -100,6 +103,7 @@ describe('resolveSkinCatalog', () => {
       './styles/components/container.tailwind.ts',
       './styles/components/error-dialog.tailwind.ts',
       './styles/components/input-indicator-overlay.tailwind.ts',
+      './styles/components/menu.tailwind.ts',
       './styles/components/overlay.tailwind.ts',
       './styles/components/popup.tailwind.ts',
       './styles/components/poster.tailwind.ts',
@@ -110,7 +114,7 @@ describe('resolveSkinCatalog', () => {
       './styles/components/volume-indicator.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(22);
+    expect(closure.sourceFiles).toHaveLength(29);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 

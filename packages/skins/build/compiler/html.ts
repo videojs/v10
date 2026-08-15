@@ -1,5 +1,5 @@
 import { defineConfig, html, rewrite } from '@videojs/compiler';
-import { lowerTemplates } from '@videojs/compiler/ast';
+import { lowerTemplateParts, lowerTemplates, lowerText } from '@videojs/compiler/ast';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -56,6 +56,20 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
     modules: ['@videojs/html/ui/mute-button'],
     elements: { MuteButtonPrimitive: 'media-mute-button' },
   },
+  Menu: {
+    modules: ['@videojs/html/ui/menu'],
+    elements: {
+      'Menu.Content': 'media-menu',
+      'Menu.Group': 'div',
+      'Menu.GroupLabel': 'media-menu-group-label',
+      'Menu.Item': 'media-menu-item',
+      'Menu.ItemIndicator': 'media-menu-item-indicator',
+      'Menu.RadioGroup': 'media-menu-radio-group',
+      'Menu.RadioItem': 'media-menu-radio-item',
+      'Menu.Separator': 'div',
+      'Menu.CheckboxItem': 'media-menu-checkbox-item',
+    },
+  },
   PlayButton: {
     modules: ['@videojs/html/ui/play-button'],
     elements: { PlayButtonPrimitive: 'media-play-button' },
@@ -101,7 +115,7 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
       'StatusIndicatorPrimitive.Value': 'media-status-indicator-value',
     },
   },
-  Text: { modules: [], elements: { Text: 'span' } },
+  Text: { modules: ['@videojs/html/i18n'], elements: {} },
   Time: {
     modules: ['@videojs/html/ui/time'],
     elements: { 'TimePrimitive.Value': 'media-time' },
@@ -146,6 +160,22 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
       'VolumeIndicatorPrimitive.Value': 'media-volume-indicator-value',
     },
   },
+  QualityRadioGroup: {
+    modules: ['@videojs/html/ui/quality-radio-group'],
+    elements: { QualityRadioGroup: 'media-quality-radio-group' },
+  },
+  AudioTrackRadioGroup: {
+    modules: ['@videojs/html/ui/audio-track-radio-group'],
+    elements: { AudioTrackRadioGroup: 'media-audio-track-radio-group' },
+  },
+  PlaybackRateRadioGroup: {
+    modules: ['@videojs/html/ui/playback-rate-radio-group'],
+    elements: { PlaybackRateRadioGroup: 'media-playback-rate-radio-group' },
+  },
+  CaptionsRadioGroup: {
+    modules: ['@videojs/html/ui/captions-radio-group'],
+    elements: { CaptionsRadioGroup: 'media-captions-radio-group' },
+  },
 };
 
 const componentTags = Object.fromEntries(
@@ -159,16 +189,21 @@ const iconNames = {
   CaptionsOnIcon: 'captions-on',
   CastEnterIcon: 'cast-enter',
   CastExitIcon: 'cast-exit',
+  CheckIcon: 'check',
   ChevronIcon: 'chevron',
   FullscreenEnterIcon: 'fullscreen-enter',
   FullscreenExitIcon: 'fullscreen-exit',
+  GearIcon: 'gear',
   PauseIcon: 'pause',
   PipEnterIcon: 'pip-enter',
   PipExitIcon: 'pip-exit',
   PlayIcon: 'play',
   RestartIcon: 'restart',
   SeekIcon: 'seek',
+  SpeechIcon: 'speech',
+  SpeedIcon: 'speed',
   SpinnerIcon: 'spinner',
+  SwitchesIcon: 'switches',
   VolumeHighIcon: 'volume-high',
   VolumeLowIcon: 'volume-low',
   VolumeOffIcon: 'volume-off',
@@ -187,11 +222,84 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
     plugins: [
       skinStyles({ manifest: styleTarget.styles, target: styleTarget.style }),
       {
+        name: '@videojs/skins:html-text',
+        setup: () => ({
+          transform: lowerText({
+            targetTag: 'media-text',
+            descriptors: ['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText'],
+            lowering: { kind: 'descriptor' },
+          }),
+        }),
+      },
+      {
+        name: '@videojs/skins:html-template-parts',
+        setup: () => ({
+          transform: lowerTemplateParts({
+            parts: {
+              'QualitySettingsMenu:selected-label': {
+                kind: 'attribute',
+                attribute: 'data-part',
+                value: 'hint',
+                tag: 'span',
+              },
+              'AudioTrackSettingsMenu:selected-label': {
+                kind: 'attribute',
+                attribute: 'data-part',
+                value: 'hint',
+                tag: 'span',
+              },
+              'PlaybackRateSettingsMenu:selected-label': {
+                kind: 'attribute',
+                attribute: 'data-part',
+                value: 'hint',
+                tag: 'span',
+              },
+              'CaptionsSettingsMenu:selected-label': {
+                kind: 'attribute',
+                attribute: 'data-part',
+                value: 'hint',
+                tag: 'span',
+              },
+              'quality-option:label': { kind: 'attribute', attribute: 'data-part', value: 'label', tag: 'span' },
+              'quality-option:tier': {
+                kind: 'attribute',
+                attribute: 'data-part',
+                value: 'tier',
+                tag: 'sup',
+              },
+              'quality-option:badge': { kind: 'attribute', attribute: 'data-part', value: 'badge', tag: 'span' },
+              'audio-track-option:label': {
+                kind: 'attribute',
+                attribute: 'data-part',
+                value: 'label',
+                tag: 'span',
+              },
+              'playback-rate-option:label': {
+                kind: 'attribute',
+                attribute: 'data-part',
+                value: 'label',
+                tag: 'span',
+              },
+              'captions-option:label': {
+                kind: 'attribute',
+                attribute: 'data-part',
+                value: 'label',
+                tag: 'span',
+              },
+            },
+          }),
+        }),
+      },
+      {
         name: '@videojs/skins:html-templates',
         setup: () => ({
           transform: lowerTemplates({
             templates: {
               chapter: { kind: 'element', parent: 'TimeSliderPrimitive.Chapters', rootTag: 'div' },
+              'quality-option': { kind: 'element', parent: 'QualityRadioGroup' },
+              'audio-track-option': { kind: 'element', parent: 'AudioTrackRadioGroup' },
+              'playback-rate-option': { kind: 'element', parent: 'PlaybackRateRadioGroup' },
+              'captions-option': { kind: 'element', parent: 'CaptionsRadioGroup' },
             },
           }),
         }),
@@ -204,6 +312,13 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             .function('Container')
             .jsx.props('className')
             .on('ContainerPrimitive');
+          const submenuNames = ['Quality', 'AudioTrack', 'PlaybackRate', 'Captions'] as const;
+          const submenuIds = {
+            Quality: 'settings-quality-menu',
+            AudioTrack: 'settings-audio-menu',
+            PlaybackRate: 'settings-speed-menu',
+            Captions: 'settings-captions-menu',
+          } as const;
 
           return [
             rootContainer.addProp('className', () => {
@@ -219,10 +334,25 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.jsx.element('OverlayPrimitive').replace('div'),
             code.jsx.element('InputIndicatorOverlayPrimitive').replace('div'),
             code.jsx.element('PreviewValuePrimitive').replace('div'),
+            code.jsx.element('HintPrimitive').replace('span'),
+            code.jsx.element('OptionLabelPrimitive').replace('span'),
             code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
             code.jsx.element('Popover.Trigger').unwrap(),
             code.jsx.element('TooltipPrimitive.Root').unwrap({ forwardPropsTo: 'TooltipPrimitive.Popup' }),
             code.jsx.element('TooltipPrimitive.Trigger').unwrap(),
+            code.jsx.element('Menu.Root').unwrap({ forwardPropsTo: 'Menu.Content' }),
+            code.function('SettingsMenu').jsx.element('Menu.Trigger').addProp('commandfor', 'settings-menu'),
+            code.function('SettingsMenu').jsx.element('Menu.Trigger').replace('button'),
+            code.function('SettingsMenu').jsx.element('Menu.Content').addProp('id', 'settings-menu'),
+            ...submenuNames.flatMap((name) => {
+              const component = `${name}SettingsMenu`;
+              const id = submenuIds[name];
+              return [
+                code.function(component).jsx.element('Menu.Trigger').addProp('commandfor', id),
+                code.function(component).jsx.element('Menu.Trigger').replace('media-menu-item'),
+                code.function(component).jsx.element('Menu.Content').addProp('id', id),
+              ];
+            }),
             code.function('MuteButton').addProps([{ name: 'props', spread: true }]),
             code.jsx.element('MuteButtonPrimitive').spreadProps('props'),
             ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),

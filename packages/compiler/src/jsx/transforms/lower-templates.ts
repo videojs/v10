@@ -7,6 +7,8 @@ import {
   type JsxElementLike,
   jsxAttributes,
   readStringAttribute,
+  singleJsxElementChild,
+  updateJsxAttributes,
 } from '../../utils/jsx';
 import { tagName } from '../matchers/tag';
 
@@ -14,18 +16,18 @@ export interface TemplateElementLowering {
   kind: 'element';
   /** Element containing the repeated root. */
   templateTag?: string | undefined;
-  /** Concrete root created for each repeated item. */
-  rootTag: string;
+  /** Concrete generated root. Omit to use the Template's single element child. */
+  rootTag?: string | undefined;
 }
 
 export interface TemplateRenderPropLowering {
   kind: 'render-prop';
   /** Prop receiving the repeated-item render callback. */
   prop: string;
-  /** Concrete root returned by the callback. */
-  rootTag: string;
-  /** Callback parameter spread onto the repeated root. */
-  parameter?: string | undefined;
+  /** Concrete generated root. Omit to use the Template's single element child. */
+  rootTag?: string | undefined;
+  /** Callback parameters. The first parameter is spread onto the repeated root. */
+  parameters?: readonly string[] | undefined;
 }
 
 export type TemplateLowering = (TemplateElementLowering | TemplateRenderPropLowering) & {
@@ -38,6 +40,37 @@ export interface LowerTemplatesOptions {
   tag?: string | undefined;
   /** Lowering configuration keyed by static Template name. */
   templates: Readonly<Record<string, TemplateLowering>>;
+}
+
+export interface TemplatePartValueLowering {
+  kind: 'value';
+  /** Callback or hook result containing the target value. */
+  root: string;
+  /** Property read from the root. Omit to use the root value itself. */
+  property?: string | undefined;
+  /** Use optional property access. */
+  optionalAccess?: boolean | undefined;
+  /** Omit the authored child when the resolved value is absent. */
+  optional?: boolean | undefined;
+  /** Replace the authored child tag while preserving its props. */
+  tag?: string | undefined;
+}
+
+export interface TemplatePartAttributeLowering {
+  kind: 'attribute';
+  attribute: string;
+  value: string;
+  /** Replace the authored child tag while preserving its props. */
+  tag?: string | undefined;
+}
+
+export type TemplatePartLowering = TemplatePartValueLowering | TemplatePartAttributeLowering;
+
+export interface LowerTemplatePartsOptions {
+  /** Canonical Template.Part tag. Defaults to `Template.Part`. */
+  tag?: string | undefined;
+  /** Lowering keyed by `template-name:part-name` or `function-name:part-name`. */
+  parts: Readonly<Record<string, TemplatePartLowering>>;
 }
 
 interface TemplateReference {
@@ -69,6 +102,48 @@ export function lowerTemplates(options: LowerTemplatesOptions): CompilerTransfor
       };
 
       return ts.visitEachChild(sourceFile, visit, context);
+    };
+  };
+}
+
+/** Lower named Template.Part outlets to target values or metadata attributes. */
+export function lowerTemplateParts(options: LowerTemplatePartsOptions): CompilerTransform {
+  const partTag = options.tag ?? 'Template.Part';
+
+  return (context) => {
+    const factory = context.factory;
+
+    return (sourceFile) => {
+      const seen = new Set<string>();
+
+      const visit = (
+        node: ts.Node,
+        functionName?: string,
+        templateName?: string
+      ): ts.VisitResult<ts.Node | undefined> => {
+        const nextFunctionName = ts.isFunctionDeclaration(node) && node.name ? node.name.text : functionName;
+        const nextTemplateName =
+          ts.isJsxElement(node) && tagName(node) === 'Template' ? readRequiredName(node, 'Template') : templateName;
+        const next = ts.visitEachChild(node, (child) => visit(child, nextFunctionName, nextTemplateName), context);
+        if (!ts.isJsxElement(next) || tagName(next) !== partTag) return next;
+
+        const name = readRequiredName(next, 'Template.Part');
+        const scope = nextTemplateName ?? nextFunctionName;
+        if (!scope) fail(next, '<Template.Part> must be declared inside a named Template or function.');
+        const key = `${scope}:${name}`;
+        if (seen.has(key)) fail(next, `Duplicate <Template.Part name="${name}"> in scope \`${scope}\`.`);
+        seen.add(key);
+        const lowering = options.parts[key];
+        if (!lowering) fail(next, `No target lowering is configured for <Template.Part> key \`${key}\`.`);
+
+        const child = singleJsxElementChild(next.children);
+        if (!child || ts.isJsxFragment(child)) {
+          fail(next, `<Template.Part name="${name}"> must contain exactly one component child.`);
+        }
+        return lowerTemplatePartChild(child, lowering, factory);
+      };
+
+      return ts.visitEachChild(sourceFile, (node) => visit(node), context);
     };
   };
 }
@@ -113,9 +188,7 @@ function readTemplate(
   element: ts.JsxElement,
   templates: Readonly<Record<string, TemplateLowering>>
 ): TemplateReference {
-  const name = readStringAttribute(element.openingElement.attributes, 'name');
-  if (name === undefined) fail(element, '<Template> requires a static `name` prop.');
-  if (name === null || name.length === 0) fail(element, '<Template name> must be a non-empty string literal.');
+  const name = readRequiredName(element, 'Template');
   const lowering = templates[name];
   if (!lowering) fail(element, `No target lowering is configured for <Template name="${name}">.`);
   return { element, name, lowering };
@@ -139,12 +212,12 @@ function lowerRenderPropTemplates(
     if (findJsxAttribute(attributes, lowering.prop)) {
       fail(parent, `${describeTag(lowering.parent)} already declares the \`${lowering.prop}\` template prop.`);
     }
-    const parameter = lowering.parameter ?? 'props';
-    const root = createRoot(reference.element, lowering.rootTag, factory, parameter);
+    const parameters = lowering.parameters?.length ? lowering.parameters : ['props'];
+    const root = createRoot(reference.element, factory, lowering.rootTag, parameters[0]);
     const callback = factory.createArrowFunction(
       undefined,
       undefined,
-      [factory.createParameterDeclaration(undefined, undefined, parameter)],
+      parameters.map((parameter) => factory.createParameterDeclaration(undefined, undefined, parameter)),
       undefined,
       factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
       factory.createParenthesizedExpression(root)
@@ -174,7 +247,7 @@ function lowerRenderPropTemplates(
 
 function createTemplateElement(reference: TemplateReference, factory: ts.NodeFactory): ts.JsxElement {
   const lowering = reference.lowering as TemplateElementLowering;
-  const root = createRoot(reference.element, lowering.rootTag, factory);
+  const root = createRoot(reference.element, factory, lowering.rootTag);
   const tag = factory.createIdentifier(lowering.templateTag ?? 'template');
   return factory.createJsxElement(
     factory.createJsxOpeningElement(tag, undefined, factory.createJsxAttributes([])),
@@ -183,7 +256,29 @@ function createTemplateElement(reference: TemplateReference, factory: ts.NodeFac
   );
 }
 
-function createRoot(template: ts.JsxElement, rootTag: string, factory: ts.NodeFactory, spread?: string): ts.JsxElement {
+function createRoot(
+  template: ts.JsxElement,
+  factory: ts.NodeFactory,
+  rootTag?: string,
+  spread?: string
+): JsxElementLike {
+  if (!rootTag) {
+    const child = singleJsxElementChild(template.children);
+    if (!child || ts.isJsxFragment(child)) {
+      fail(template, '<Template> must contain exactly one component child when no generated root is configured.');
+    }
+    if (!spread) return child;
+    const attributes = jsxAttributes(child);
+    return updateJsxAttributes(
+      child,
+      factory.updateJsxAttributes(attributes, [
+        factory.createJsxSpreadAttribute(factory.createIdentifier(spread)),
+        ...attributes.properties,
+      ]),
+      factory
+    );
+  }
+
   const attributes = jsxAttributes(template).properties.filter(
     (property) => !(ts.isJsxAttribute(property) && property.name.getText() === 'name')
   );
@@ -197,6 +292,89 @@ function createRoot(template: ts.JsxElement, rootTag: string, factory: ts.NodeFa
     template.children,
     factory.createJsxClosingElement(tag)
   );
+}
+
+function lowerTemplatePartChild(
+  child: JsxElementLike,
+  lowering: TemplatePartLowering,
+  factory: ts.NodeFactory
+): ts.JsxChild {
+  let element = lowering.tag ? replaceTag(child, lowering.tag, factory) : child;
+
+  if (lowering.kind === 'attribute') {
+    const attributes = jsxAttributes(element);
+    element = updateJsxAttributes(
+      element,
+      factory.updateJsxAttributes(attributes, [
+        ...attributes.properties,
+        factory.createJsxAttribute(
+          factory.createIdentifier(lowering.attribute),
+          factory.createStringLiteral(lowering.value)
+        ),
+      ]),
+      factory
+    );
+    return element;
+  }
+
+  const root = factory.createIdentifier(lowering.root);
+  const value = lowering.property
+    ? lowering.optionalAccess
+      ? factory.createPropertyAccessChain(root, factory.createToken(ts.SyntaxKind.QuestionDotToken), lowering.property)
+      : factory.createPropertyAccessExpression(root, lowering.property)
+    : root;
+  element = withChildren(element, [factory.createJsxExpression(undefined, value)], factory);
+  return lowering.optional
+    ? factory.createJsxExpression(
+        undefined,
+        factory.createConditionalExpression(
+          value,
+          factory.createToken(ts.SyntaxKind.QuestionToken),
+          element,
+          factory.createToken(ts.SyntaxKind.ColonToken),
+          factory.createNull()
+        )
+      )
+    : element;
+}
+
+function replaceTag(element: JsxElementLike, name: string, factory: ts.NodeFactory): JsxElementLike {
+  const tag = factory.createIdentifier(name);
+  if (ts.isJsxSelfClosingElement(element)) {
+    return factory.updateJsxSelfClosingElement(element, tag, element.typeArguments, element.attributes);
+  }
+  return factory.updateJsxElement(
+    element,
+    factory.updateJsxOpeningElement(
+      element.openingElement,
+      tag,
+      element.openingElement.typeArguments,
+      element.openingElement.attributes
+    ),
+    element.children,
+    factory.updateJsxClosingElement(element.closingElement, tag)
+  );
+}
+
+function withChildren(
+  element: JsxElementLike,
+  children: readonly ts.JsxChild[],
+  factory: ts.NodeFactory
+): ts.JsxElement {
+  const tag = ts.isJsxElement(element) ? element.openingElement.tagName : element.tagName;
+  const typeArguments = ts.isJsxElement(element) ? element.openingElement.typeArguments : element.typeArguments;
+  return factory.createJsxElement(
+    factory.createJsxOpeningElement(tag, typeArguments, jsxAttributes(element)),
+    children,
+    factory.createJsxClosingElement(tag)
+  );
+}
+
+function readRequiredName(element: JsxElementLike, label: string): string {
+  const name = readStringAttribute(jsxAttributes(element), 'name');
+  if (name === undefined) fail(element, `<${label}> requires a static \`name\` prop.`);
+  if (name === null || name.length === 0) fail(element, `<${label} name> must be a non-empty string literal.`);
+  return name;
 }
 
 function matchesTag(value: string, expected: string | RegExp): boolean {

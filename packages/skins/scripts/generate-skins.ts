@@ -156,6 +156,7 @@ function htmlPackageImportResolver(outputFile: string): (specifier: string) => s
 }
 
 function htmlPackageModule(specifier: string): string {
+  if (specifier === '@videojs/html/i18n') return 'src/define/i18n';
   const uiPrefix = '@videojs/html/ui/';
   if (specifier.startsWith(uiPrefix)) return posix.join('src/define/ui', specifier.slice(uiPrefix.length));
   const mediaPrefix = '@videojs/html/media/';
@@ -177,6 +178,19 @@ function reactPackageImportResolver(reference: ImportRef): ImportRef | false {
       return { ...reference, source: '@/ui/poster' };
     }
     if (reference.name === 'usePlayer') return { ...reference, source: '@/player/context' };
+    if (reference.name === 'useTranslator') return { ...reference, source: '@/i18n' };
+    if (reference.name === 'useQualityOptions') {
+      return { ...reference, source: '@/ui/quality/use-quality-options' };
+    }
+    if (reference.name === 'useAudioTrackOptions') {
+      return { ...reference, source: '@/ui/audio-track/use-audio-track-options' };
+    }
+    if (reference.name === 'usePlaybackRateOptions') {
+      return { ...reference, source: '@/ui/playback-rate/use-playback-rate-options' };
+    }
+    if (reference.name === 'useCaptionsOptions') {
+      return { ...reference, source: '@/ui/captions-radio-group/use-captions-options' };
+    }
     if (reference.name === 'RenderProp') return { ...reference, source: '@/utils/types' };
     return { ...reference, source: `@/ui/${reactComponentModule(reference.name)}` };
   }

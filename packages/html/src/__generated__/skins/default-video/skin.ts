@@ -1,17 +1,23 @@
 import '../../../icons/element';
+import '../../../define/i18n';
 import '../../../define/media/container';
 import '../../../define/ui/airplay-button';
+import '../../../define/ui/audio-track-radio-group';
 import '../../../define/ui/buffering-indicator';
 import '../../../define/ui/captions-button';
+import '../../../define/ui/captions-radio-group';
 import '../../../define/ui/cast-button';
 import '../../../define/ui/controls';
 import '../../../define/ui/error-dialog';
 import '../../../define/ui/fullscreen-button';
+import '../../../define/ui/menu';
 import '../../../define/ui/mute-button';
 import '../../../define/ui/pip-button';
 import '../../../define/ui/play-button';
+import '../../../define/ui/playback-rate-radio-group';
 import '../../../define/ui/popover';
 import '../../../define/ui/poster';
+import '../../../define/ui/quality-radio-group';
 import '../../../define/ui/seek-indicator';
 import '../../../define/ui/status-announcer';
 import '../../../define/ui/status-indicator';
@@ -106,6 +112,121 @@ export const skin = /* html */ `<media-container class="media-container media-sk
             <media-slider-thumb class="media-slider-thumb"></media-slider-thumb>
           </media-volume-slider>
         </media-popover>
+        <button class="media-button media-settings-trigger" commandfor="settings-menu">
+          <media-icon class="media-button-icon media-settings-icon" name="gear"></media-icon>
+          <media-text class="media-sr-only" token="menu.settings">Settings</media-text>
+        </button>
+        <media-tooltip side="top" class="media-surface media-tooltip">
+          <media-text token="menu.settings">Settings</media-text>
+        </media-tooltip>
+        <media-menu side="top" align="center" class="media-surface media-settings" id="settings-menu">
+          <div class="media-group">
+            <media-menu-item class="media-item-base media-item" commandfor="settings-quality-menu">
+              <media-icon class="media-icon" name="switches"></media-icon>
+              <media-text token="menu.quality">Quality</media-text>
+              <span class="media-hint">
+                <span class="media-hint-label" data-part="hint"></span>
+                <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
+              </span>
+            </media-menu-item>
+            <media-menu class="media-submenu-panel" id="settings-quality-menu">
+              <media-menu-item class="media-item-base media-back">
+                <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
+                <media-text token="menu.quality">Quality</media-text>
+              </media-menu-item>
+              <div class="media-separator"></div>
+              <media-quality-radio-group class="media-group">
+                <template>
+                  <media-menu-radio-item class="media-item-base media-item">
+                    <span>
+                      <span data-part="label"></span>
+                      <sup class="media-tier" data-part="tier"></sup>
+                    </span>
+                    <span class="media-badge" data-part="badge"></span>
+                    <media-menu-item-indicator force-mount class="media-indicator">
+                      <media-icon class="media-icon" name="check"></media-icon>
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-quality-radio-group>
+            </media-menu>
+            <media-menu-item class="media-item-base media-item" commandfor="settings-audio-menu">
+              <media-icon class="media-icon" name="speech"></media-icon>
+              <media-text token="menu.audio">Audio</media-text>
+              <span class="media-hint">
+                <span class="media-hint-label" data-part="hint"></span>
+                <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
+              </span>
+            </media-menu-item>
+            <media-menu class="media-submenu-panel" id="settings-audio-menu">
+              <media-menu-item class="media-item-base media-back">
+                <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
+                <media-text token="menu.audio">Audio</media-text>
+              </media-menu-item>
+              <div class="media-separator"></div>
+              <media-audio-track-radio-group class="media-group">
+                <template>
+                  <media-menu-radio-item class="media-item-base media-item">
+                    <span data-part="label"></span>
+                    <media-menu-item-indicator force-mount class="media-indicator">
+                      <media-icon class="media-icon" name="check"></media-icon>
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-audio-track-radio-group>
+            </media-menu>
+            <media-menu-item class="media-item-base media-item" commandfor="settings-speed-menu">
+              <media-icon class="media-icon" name="speed"></media-icon>
+              <media-text token="menu.speed">Speed</media-text>
+              <span class="media-hint">
+                <span class="media-hint-label" data-part="hint"></span>
+                <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
+              </span>
+            </media-menu-item>
+            <media-menu class="media-submenu-panel" id="settings-speed-menu">
+              <media-menu-item class="media-item-base media-back">
+                <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
+                <media-text token="menu.speed">Speed</media-text>
+              </media-menu-item>
+              <div class="media-separator"></div>
+              <media-playback-rate-radio-group class="media-group">
+                <template>
+                  <media-menu-radio-item class="media-item-base media-item">
+                    <span data-part="label"></span>
+                    <media-menu-item-indicator force-mount class="media-indicator">
+                      <media-icon class="media-icon" name="check"></media-icon>
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-playback-rate-radio-group>
+            </media-menu>
+            <media-menu-item class="media-item-base media-item" commandfor="settings-captions-menu">
+              <media-icon class="media-icon" name="captions-off"></media-icon>
+              <media-text token="menu.captions">Captions</media-text>
+              <span class="media-hint">
+                <span class="media-hint-label" data-part="hint"></span>
+                <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
+              </span>
+            </media-menu-item>
+            <media-menu class="media-submenu-panel" id="settings-captions-menu">
+              <media-menu-item class="media-item-base media-back">
+                <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
+                <media-text token="menu.captions">Captions</media-text>
+              </media-menu-item>
+              <div class="media-separator"></div>
+              <media-captions-radio-group class="media-group">
+                <template>
+                  <media-menu-radio-item class="media-item-base media-item">
+                    <span data-part="label"></span>
+                    <media-menu-item-indicator force-mount class="media-indicator">
+                      <media-icon class="media-icon" name="check"></media-icon>
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-captions-radio-group>
+            </media-menu>
+          </div>
+        </media-menu>
         <media-cast-button class="media-button media-cast-button">
           <media-icon class="media-button-icon media-cast-enter-icon" name="cast-enter"></media-icon>
           <media-icon class="media-button-icon media-cast-exit-icon" name="cast-exit"></media-icon>
