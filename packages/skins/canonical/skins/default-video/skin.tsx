@@ -26,26 +26,33 @@ export function DefaultVideoSkin() {
       <BufferingIndicator />
       <ErrorDialog />
 
-      <Controls.Root className={styles.controls}>
+      <Controls.Root className={styles.controls.root}>
         <Tooltip.Provider>
-          <Controls.Group className={styles.controlsGroup.primary}>
-            <PlayButton />
+          <Controls.Group className={styles.controls.primary}>
+            <Controls.Group className={styles.buttonGroup}>
+              <PlayButton />
+              <VolumePopover />
+            </Controls.Group>
+
+            <Controls.Group className={styles.timeControls}>
+              <TimePrimitive.Value className={styles.time.current} type="current" />
+              <TimeSlider />
+              <TimePrimitive.Value className={styles.time.remaining} type="remaining" toggle />
+            </Controls.Group>
+
+            <Controls.Group className={styles.buttonGroup}>
+              <CaptionsButton />
+              <VideoSettingsMenu />
+            </Controls.Group>
           </Controls.Group>
 
-          <Controls.Group className={styles.controlsGroup.time}>
-            <TimePrimitive.Value className={styles.time} type="current" />
-            <TimeSlider />
-            <TimePrimitive.Value className={styles.time} type="remaining" toggle />
-          </Controls.Group>
-
-          <Controls.Group className={styles.controlsGroup.primary}>
-            <CaptionsButton />
-            <VolumePopover />
-            <VideoSettingsMenu />
-            <CastButton />
-            <AirPlayButton />
-            <PiPButton />
-            <FullscreenButton />
+          <Controls.Group className={styles.controls.secondary}>
+            <Controls.Group className={styles.buttonGroup}>
+              <CastButton />
+              <AirPlayButton />
+              <PiPButton />
+              <FullscreenButton />
+            </Controls.Group>
           </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>

@@ -142,7 +142,7 @@
       "name": "default-video",
       "type": "registry:block",
       "title": "Default Video Skin",
-      "description": "A video skin with play, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.",
+      "description": "A complete on-demand video skin with responsive controls, settings, feedback, and input bindings.",
       "files": [
         {
           "path": "canonical/registry/default/components/video-input-bindings/video-input-bindings.tsx",

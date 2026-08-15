@@ -112,7 +112,9 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/buttons.css').match(/\.media-button \{/g)).toHaveLength(1);
     expect(style(output, 'styles/buttons.css')).not.toContain('.media-play-button {');
     expect(style(output, 'styles/buttons.css')).not.toContain(':where(');
-    expect(style(output, 'styles/controls.css')).toContain('.media-controls {');
+    expect(style(output, 'styles/controls.css')).toContain('.media-controls-root {');
+    expect(style(output, 'styles/controls.css')).toContain('.media-controls-primary {');
+    expect(style(output, 'styles/controls.css')).toContain('.media-controls-secondary {');
     expect(style(output, 'styles/dialog.css')).toContain('.media-error-dialog {');
     expect(style(output, 'styles/menus.css')).toContain('.media-settings {');
     expect(style(output, 'styles/controls.css')).toContain('background-color: var(--media-surface-background)');
@@ -167,7 +169,7 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('<media-pip-button class="media-button media-pip-button">');
     expect(html).toContain('<div class="media-input-indicator-overlay">');
     expect(html).toContain('actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"');
-    expect(html).toContain('<media-volume-indicator class="media-volume-indicator">');
+    expect(html).toContain('<media-volume-indicator class="media-surface media-volume-indicator">');
     expect(html).toContain('<media-error-dialog class="media-surface media-error-dialog">');
     expect(html).toContain('<media-alert-dialog-title class="media-error-dialog-title">');
     expect(html).toContain('<div class="media-overlay"></div>');
@@ -187,7 +189,9 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('<div class="media-slider-chapter">');
     expect(html).toContain('<media-time-slider-chapter-title class="media-chapter-title">');
     expect(html).toContain('<media-volume-slider class="media-slider" thumb-alignment="edge" orientation="vertical">');
-    expect(html).toContain('<media-time class="media-time" type="remaining" toggle>');
+    expect(html).toContain('<media-time class="media-time-remaining" type="remaining" toggle>');
+    expect(html).toContain('<media-controls-group class="media-controls-primary">');
+    expect(html).toContain('<media-controls-group class="media-controls-secondary">');
     expect(html).toContain('open-on-hover');
     expect(html).toContain('delay="200"');
     expect(html).toContain('close-delay="100"');

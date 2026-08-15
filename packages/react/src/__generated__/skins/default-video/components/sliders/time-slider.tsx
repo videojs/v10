@@ -21,7 +21,7 @@ export function TimeSlider() {
           <TimeSliderPrimitive.Fill className="media-slider-fill" />
         </TimeSliderPrimitive.Track>
       </TimeSliderPrimitive.Chapters>
-      <TimeSliderPrimitive.Thumb className="media-slider-thumb" />
+      <TimeSliderPrimitive.Thumb className="media-slider-thumb media-slider-thumb-interactive" />
       <TimeSliderPrimitive.Preview className="media-slider-preview" overflow="visible">
         <div className="media-surface media-thumbnail">
           <Slider.Thumbnail className="media-thumbnail-image" />

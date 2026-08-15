@@ -9,6 +9,7 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@videojs/icons/components';
+import popupStyles from '../../styles/components/popup.tailwind';
 import styles from '../../styles/components/status-indicator.tailwind';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
@@ -16,7 +17,10 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export function StatusIndicator() {
   return (
-    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className={styles.statusIndicator}>
+    <StatusIndicatorPrimitive.Root
+      actions={TOP_STATUS_ACTIONS}
+      className={[popupStyles.surface, styles.statusIndicator]}
+    >
       <CaptionsOnIcon className={[styles.statusIndicatorIcon, styles.statusCaptionsOnIcon]} />
       <CaptionsOffIcon className={[styles.statusIndicatorIcon, styles.statusCaptionsOffIcon]} />
       <FullscreenEnterIcon className={[styles.statusIndicatorIcon, styles.statusFullscreenEnterIcon]} />

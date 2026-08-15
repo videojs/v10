@@ -22,7 +22,7 @@ export interface SkinStyleManifest {
   modules: ReadonlyMap<string, ReadonlyMap<string, SkinStyleRecipe>>;
   recipes: readonly SkinStyleRecipe[];
   groupOwners: ReadonlyMap<string, string>;
-  peerMarkers: ReadonlySet<string>;
+  peerOwners: ReadonlyMap<string, string>;
 }
 
 /** Load controlled canonical style modules and normalize their explicit definitions. */
@@ -34,7 +34,7 @@ export async function loadSkinStyleManifest(files: readonly string[]): Promise<S
   const recipes: SkinStyleRecipe[] = [];
   const classes = new Map<string, SkinStyleRecipe>();
   const groupOwners = new Map<string, string>();
-  const peerMarkers = new Set<string>();
+  const peerOwners = new Map<string, string>();
 
   for (const inputFile of moduleFiles) {
     const modulePath = await realpath(inputFile);
@@ -63,7 +63,7 @@ export async function loadSkinStyleManifest(files: readonly string[]): Promise<S
       classes.set(className, recipe);
       moduleRecipes.set(tokenKey(tokenPath), recipe);
       recipes.push(recipe);
-      registerRelationshipMarkers(groupOwners, peerMarkers, recipe);
+      registerRelationshipMarkers(groupOwners, peerOwners, recipe);
     });
     modules.set(modulePath, moduleRecipes);
   }
@@ -72,7 +72,7 @@ export async function loadSkinStyleManifest(files: readonly string[]): Promise<S
     modules,
     recipes: Object.freeze(recipes),
     groupOwners,
-    peerMarkers,
+    peerOwners,
   });
 }
 
@@ -130,23 +130,27 @@ function splitUtilities(value: SkinStyleValue): readonly string[] {
 
 function registerRelationshipMarkers(
   groupOwners: Map<string, string>,
-  peerMarkers: Set<string>,
+  peerOwners: Map<string, string>,
   recipe: SkinStyleRecipe
 ): void {
   for (const utility of recipe.utilities) {
     if (isPeerMarker(utility)) {
-      peerMarkers.add(utility);
+      registerRelationshipOwner(peerOwners, utility, recipe);
       continue;
     }
     if (!isGroupMarker(utility)) continue;
-    const previous = groupOwners.get(utility);
-    if (previous && previous !== recipe.className) {
-      throw new Error(
-        `Skin relationship marker \`${utility}\` maps to both \`${previous}\` and \`${recipe.className}\`.`
-      );
-    }
-    groupOwners.set(utility, recipe.className);
+    registerRelationshipOwner(groupOwners, utility, recipe);
   }
+}
+
+function registerRelationshipOwner(owners: Map<string, string>, utility: string, recipe: SkinStyleRecipe): void {
+  const previous = owners.get(utility);
+  if (previous && previous !== recipe.className) {
+    throw new Error(
+      `Skin relationship marker \`${utility}\` maps to both \`${previous}\` and \`${recipe.className}\`.`
+    );
+  }
+  owners.set(utility, recipe.className);
 }
 
 export function isGroupPeerMarker(value: string): boolean {

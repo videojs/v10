@@ -40,26 +40,33 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       <BufferingIndicator />
       <ErrorDialog />
 
-      <Controls.Root className="media-controls">
+      <Controls.Root className="media-controls-root">
         <Tooltip.Provider>
-          <Controls.Group className="media-controls-group-primary">
-            <PlayButton />
+          <Controls.Group className="media-controls-primary">
+            <Controls.Group className="media-button-group">
+              <PlayButton />
+              <VolumePopover />
+            </Controls.Group>
+
+            <Controls.Group className="media-time-controls">
+              <TimePrimitive.Value className="media-time-current" type="current" />
+              <TimeSlider />
+              <TimePrimitive.Value className="media-time-remaining" type="remaining" toggle />
+            </Controls.Group>
+
+            <Controls.Group className="media-button-group">
+              <CaptionsButton />
+              <VideoSettingsMenu />
+            </Controls.Group>
           </Controls.Group>
 
-          <Controls.Group className="media-controls-group-time">
-            <TimePrimitive.Value className="media-time" type="current" />
-            <TimeSlider />
-            <TimePrimitive.Value className="media-time" type="remaining" toggle />
-          </Controls.Group>
-
-          <Controls.Group className="media-controls-group-primary">
-            <CaptionsButton />
-            <VolumePopover />
-            <VideoSettingsMenu />
-            <CastButton />
-            <AirPlayButton />
-            <PiPButton />
-            <FullscreenButton />
+          <Controls.Group className="media-controls-secondary">
+            <Controls.Group className="media-button-group">
+              <CastButton />
+              <AirPlayButton />
+              <PiPButton />
+              <FullscreenButton />
+            </Controls.Group>
           </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>

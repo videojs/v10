@@ -23,6 +23,7 @@
     }
 
     .media-group {
+      anchor-scope: --menu-item-highlight-anchor;
       flex-direction: column;
       gap: 0.125rem;
       display: flex;
@@ -104,6 +105,9 @@
       gap: 0.375rem;
       padding-block: 0.375rem;
       padding-inline: 0.5rem;
+      transition-property: color, background-color;
+      transition-duration: 0.1s;
+      transition-timing-function: ease-in-out;
       display: flex;
       position: relative;
     }
@@ -132,24 +136,44 @@
 
     .media-settings {
       height: var(--media-menu-height);
+      max-height: min(var(--media-popover-available-height, 14rem), 14rem);
       width: var(--media-menu-width);
       max-width: var(--media-popover-available-width);
-      border-radius: var(--media-radius-surface);
+      overscroll-behavior: none;
+      min-width: 12rem;
+      transition-property: opacity, filter, transform, scale, width, height;
+      transition-duration:
+        var(--popup-transition-duration), var(--popup-transition-duration), var(--popup-transition-duration),
+        var(--popup-transition-duration), var(--menu-transition-duration), var(--menu-transition-duration);
+      --menu-transition-duration: 0.25s;
       border-style: solid;
       border-width: 0;
-      min-width: 12rem;
+      border-radius: 0.75rem;
       margin: 0;
       padding: 0.25rem;
       overflow: hidden;
     }
 
     .media-settings[data-submenu-expanded='true'] > :not([data-submenu]) {
+      filter: blur(8px);
       translate: -100%;
+    }
+
+    .media-settings-icon {
+      transition-property: transform;
+      transition-duration: 0.15s;
+      transition-timing-function: ease-in-out;
     }
 
     @scope (.media-settings-trigger) {
       &[aria-expanded='true'] .media-settings-icon {
         rotate: 90deg;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-settings-icon {
+        transition-duration: 0s;
       }
     }
 
@@ -169,9 +193,12 @@
       z-index: 10;
       max-height: inherit;
       overscroll-behavior: none;
+      transition-property: translate, filter;
+      transition-duration: var(--menu-transition-duration);
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
+      transition-timing-function: ease-out;
       position: absolute;
       top: 0;
       overflow: auto;
@@ -179,6 +206,8 @@
 
     .media-submenu-panel[data-ending-style],
     .media-submenu-panel[data-starting-style] {
+      pointer-events: none;
+      filter: blur(8px);
       translate: 100%;
     }
 

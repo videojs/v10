@@ -323,6 +323,19 @@ export function Template({ children, className }: TemplateProps) {
     expect(result.code).not.toContain('className');
   });
 
+  it('scopes JSX wrapper removal to a matching function', async () => {
+    const source = `export function Target() { return <Group><Item /></Group>; }
+export function Other() { return <Group><Item /></Group>; }`;
+    const result = await transform(source, {
+      config: {
+        plugins: [rewrite((code) => [code.function('Target').jsx.element('Group').unwrap()])],
+      },
+    });
+
+    expect(compact(result.code)).toContain(compact('function Target() { return <><Item /></>; }'));
+    expect(compact(result.code)).toContain(compact('function Other() { return <Group><Item /></Group>; }'));
+  });
+
   it('scopes JSX prop edits to matching element tags', async () => {
     const source = `export function Template(){ return <Panel className="component"><div className="native" /></Panel>; }`;
     const result = await transform(source, {

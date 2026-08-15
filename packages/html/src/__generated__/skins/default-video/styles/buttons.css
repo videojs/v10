@@ -33,9 +33,14 @@
       width: var(--media-control-size);
       height: var(--media-control-size);
       cursor: pointer;
+      touch-action: manipulation;
       border-radius: var(--media-radius-pill);
+      text-align: center;
+      min-height: 0;
       color: inherit;
       outline-offset: -2px;
+      -webkit-user-select: none;
+      user-select: none;
       background-color: #0000;
       border-style: solid;
       border-width: 0;
@@ -43,6 +48,9 @@
       flex-shrink: 0;
       place-items: center;
       padding: 0;
+      transition-property: background-color, color, outline-offset, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: ease-out;
       display: grid;
     }
 
@@ -56,6 +64,10 @@
       background-color: var(--media-control-hover-background);
       outline-offset: 2px;
       outline-color: currentColor;
+    }
+
+    .media-button:not([aria-disabled='true']):active {
+      scale: 0.9;
     }
 
     .media-button[aria-disabled='true'] {

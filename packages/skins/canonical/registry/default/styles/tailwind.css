@@ -10,6 +10,7 @@
   --color-media-slider-buffer: var(--media-slider-buffer-background);
   --color-media-slider-track: var(--media-slider-track-background);
   --color-media-surface: var(--media-surface-background);
+  --color-media-surface-border: var(--media-surface-border);
   --font-media: var(--media-font-family);
   --text-media: var(--media-font-size);
   --spacing-media-control: var(--media-control-size);

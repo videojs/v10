@@ -18,7 +18,7 @@ export function StatusIndicator() {
   return (
     <StatusIndicatorPrimitive.Root
       actions={TOP_STATUS_ACTIONS}
-      className="group/input-status pointer-events-none absolute top-3 flex items-center gap-2 rounded-media-pill bg-black/25 px-2.5 py-1 font-medium transition-[opacity,scale,translate] duration-100 ease-out data-starting-style:scale-90 data-starting-style:opacity-0 data-ending-style:-translate-y-1/4 data-ending-style:scale-90 data-ending-style:opacity-0"
+      className="relative bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] after:shadow-[inset_0_1px_0_0_var(--media-surface-border)] group/input-status pointer-events-none absolute top-3 flex items-center gap-2 rounded-media-pill bg-black/25 px-2.5 py-1 font-medium transition-[opacity,scale,translate] duration-100 ease-out data-starting-style:scale-90 data-starting-style:opacity-0 data-ending-style:-translate-y-1/4 data-ending-style:scale-90 data-ending-style:opacity-0"
     >
       <CaptionsOnIcon className="hidden shrink-0 group-data-[status=captions-on]/input-status:block" />
       <CaptionsOffIcon className="hidden shrink-0 group-data-[status=captions-off]/input-status:block" />

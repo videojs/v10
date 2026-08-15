@@ -23,7 +23,7 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
           <Text>{settingsText}</Text>
         </TooltipPrimitive.Popup>
       </TooltipPrimitive.Root>
-      <Menu.Content className={[popupStyles.surface, styles.settings]}>
+      <Menu.Content className={[popupStyles.surface, popupStyles.popover, styles.settings, styles.group]}>
         <Menu.Group className={styles.group}>{children}</Menu.Group>
       </Menu.Content>
     </Menu.Root>

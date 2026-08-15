@@ -16,7 +16,7 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export function StatusIndicator() {
   return (
-    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className="media-status-indicator">
+    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className="media-surface media-status-indicator">
       <CaptionsOnIcon className="media-status-indicator-icon media-status-captions-on-icon" />
       <CaptionsOffIcon className="media-status-indicator-icon media-status-captions-off-icon" />
       <FullscreenEnterIcon className="media-status-indicator-icon media-status-fullscreen-enter-icon" />

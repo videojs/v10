@@ -94,7 +94,7 @@ function keepLastExactDeclaration(declarations: Declaration[]): Declaration[] {
   const output: Declaration[] = [];
   for (let index = declarations.length - 1; index >= 0; index--) {
     const declaration = declarations[index]!;
-    const key = JSON.stringify(declaration);
+    const key = JSON.stringify(declaration, (name, value) => (name === 'loc' ? undefined : value));
     if (seen.has(key)) continue;
     seen.add(key);
     output.push(declaration);

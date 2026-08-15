@@ -349,6 +349,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.jsx.element('TooltipPrimitive.Root').unwrap({ forwardPropsTo: 'TooltipPrimitive.Popup' }),
             code.jsx.element('TooltipPrimitive.Trigger').unwrap(),
             code.jsx.element('Menu.Root').unwrap({ forwardPropsTo: 'Menu.Content' }),
+            code.function('SettingsMenu').jsx.element('Menu.Group').unwrap(),
             code.function('SettingsMenu').jsx.element('Menu.Trigger').addProp('commandfor', 'settings-menu'),
             code.function('SettingsMenu').jsx.element('Menu.Trigger').replace('button'),
             code.function('SettingsMenu').jsx.element('Menu.Content').addProp('id', 'settings-menu'),

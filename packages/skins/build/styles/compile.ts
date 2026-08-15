@@ -10,10 +10,6 @@ export async function compileSkinStyles(options: {
   manifest: SkinStyleManifest;
   scopeClass: string;
 }): Promise<Map<SkinStyleRole, string>> {
-  const peerMarkers = [...options.manifest.peerMarkers];
-  if (peerMarkers.length > 0) {
-    throw new Error(`Vanilla Skin styles do not support peer relationships: ${peerMarkers.join(', ')}.`);
-  }
   const byRole = new Map<SkinStyleRole, SkinCssRecipe[]>();
 
   for (const recipe of [...options.manifest.recipes].sort((a, b) => a.className.localeCompare(b.className))) {
@@ -29,7 +25,9 @@ export async function compileSkinStyles(options: {
 
   const roles: SkinCssRole[] = skinStyleRoles.flatMap((role) => {
     const recipes = byRole.get(role);
-    return recipes?.length ? [{ name: role, recipes, groupOwners: options.manifest.groupOwners }] : [];
+    return recipes?.length
+      ? [{ name: role, recipes, groupOwners: options.manifest.groupOwners, peerOwners: options.manifest.peerOwners }]
+      : [];
   });
   const emitted = await emitSkinRoleCss({
     design: options.design,

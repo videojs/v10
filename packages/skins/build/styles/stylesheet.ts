@@ -7,4 +7,5 @@ export interface SkinCssRole {
   name: string;
   recipes: readonly SkinCssRecipe[];
   groupOwners: ReadonlyMap<string, string>;
+  peerOwners: ReadonlyMap<string, string>;
 }

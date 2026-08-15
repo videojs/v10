@@ -7,7 +7,7 @@ export function VolumeSlider(props: VolumeSliderProps = {}) {
       <VolumeSliderPrimitive.Track className="media-slider-track">
         <VolumeSliderPrimitive.Fill className="media-slider-fill" />
       </VolumeSliderPrimitive.Track>
-      <VolumeSliderPrimitive.Thumb className="media-slider-thumb" />
+      <VolumeSliderPrimitive.Thumb className="media-slider-thumb media-slider-thumb-persistent" />
     </VolumeSliderPrimitive.Root>
   );
 }

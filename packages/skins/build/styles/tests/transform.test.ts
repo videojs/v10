@@ -16,7 +16,7 @@ const manifest: SkinStyleManifest = {
   modules: new Map([[modulePath, new Map(recipes.map((recipe) => [recipe.tokenPath.join('.'), recipe]))]]),
   recipes,
   groupOwners: new Map(),
-  peerMarkers: new Set(),
+  peerOwners: new Map(),
 };
 const source = `
   import styles from './fixture.tailwind';

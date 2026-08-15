@@ -3,7 +3,7 @@ import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 
 export function VolumeIndicator() {
   return (
-    <VolumeIndicatorPrimitive.Root className="media-volume-indicator">
+    <VolumeIndicatorPrimitive.Root className="media-surface media-volume-indicator">
       <VolumeIndicatorPrimitive.Fill className="media-volume-indicator-fill">
         <VolumeHighIcon className="media-volume-indicator-icon media-volume-high-indicator-icon" />
         <VolumeLowIcon className="media-volume-indicator-icon media-volume-low-indicator-icon" />

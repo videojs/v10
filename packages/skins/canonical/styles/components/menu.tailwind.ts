@@ -5,17 +5,23 @@ const itemBase = [
   'outline-2 -outline-offset-2 outline-transparent',
   'hover:bg-media-control-hover data-highlighted:bg-media-control-hover',
   'focus-visible:outline-current focus-visible:outline-offset-2',
+  '[transition-property:color,background-color] [transition-duration:100ms] [transition-timing-function:ease-in-out]',
 ];
 
 export default defineStyles({
   role: 'menus',
   styles: {
     settings: [
-      'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-media-surface border-0 p-1',
+      'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl border-0 p-1',
+      'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
       'h-(--media-menu-height) w-(--media-menu-width)',
+      '[transition-property:opacity,filter,transform,scale,width,height]',
+      '[transition-duration:var(--popup-transition-duration),var(--popup-transition-duration),var(--popup-transition-duration),var(--popup-transition-duration),var(--menu-transition-duration),var(--menu-transition-duration)]',
+      '[--menu-transition-duration:250ms]',
       '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
+      '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
     ],
-    group: 'relative flex flex-col gap-0.5',
+    group: 'relative flex flex-col gap-0.5 [anchor-scope:--menu-item-highlight-anchor]',
     itemBase,
     item: [
       'justify-between tabular-nums text-inherit',
@@ -24,7 +30,10 @@ export default defineStyles({
     ],
     submenuPanel: [
       'absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
+      '[transition-property:translate,filter] [transition-duration:var(--menu-transition-duration)] [transition-timing-function:ease-out]',
+      'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
       'data-starting-style:translate-x-full data-ending-style:translate-x-full',
+      'data-starting-style:[filter:blur(8px)] data-ending-style:[filter:blur(8px)]',
     ],
     back: 'mb-0.5 w-full',
     separator: 'my-1 border-b border-media-surface',
@@ -37,7 +46,10 @@ export default defineStyles({
     chevron: 'size-3.5',
     chevronFlipped: 'rotate-180',
     settingsTrigger: 'group/settings',
-    settingsIcon: 'group-aria-expanded/settings:rotate-90',
+    settingsIcon: [
+      '[transition-property:transform] [transition-duration:150ms] [transition-timing-function:ease-in-out]',
+      'group-aria-expanded/settings:rotate-90 motion-reduce:[transition-duration:0ms]',
+    ],
     srOnly: 'sr-only',
   },
 });

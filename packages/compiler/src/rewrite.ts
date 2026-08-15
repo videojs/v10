@@ -185,7 +185,7 @@ export interface JsxElementSelection {
   unwrap(options?: JsxElementUnwrapOptions): CompilerTransform;
 }
 
-export type ScopedJsxElementSelection = Omit<JsxElementSelection, 'unwrap'>;
+export type ScopedJsxElementSelection = JsxElementSelection;
 
 export interface JsxSpreadPropsOptions {
   position?: 'start' | 'end' | undefined;
@@ -531,10 +531,15 @@ function createJsxElementSelection(
     spreadProps: (value, options) =>
       edit.jsx.element({ when, transform: edit.jsx.addPropsSpread(value, options), withinFunction }),
     unwrap(options = {}) {
-      if (withinFunction) throw new Error('Function-scoped JSX unwrap is not supported.');
       return unwrapJsxElement({
         match: when,
         ...(options.forwardPropsTo ? { forwardPropsTo: match.jsx.tag(options.forwardPropsTo) } : {}),
+        ...(withinFunction
+          ? {
+              withinFunction: (node: ts.FunctionDeclaration, factory: ts.NodeFactory) =>
+                withinFunction(node, { function: node, factory }),
+            }
+          : {}),
       });
     },
   };

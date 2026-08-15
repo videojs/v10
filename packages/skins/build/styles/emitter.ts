@@ -45,8 +45,8 @@ export async function emitSkinRoleCss(options: EmitSkinRoleCssOptions): Promise<
 function scopeRoleCss(css: string, scopeClass: string, role: SkinCssRole): string {
   const relationshipOwners = new Set(role.groupOwners.values());
   const wrapped = `@layer videojs.components {\n@scope (.${scopeClass}) {\n${css}\n}\n}`;
-  return decoder
-    .decode(
+  return optimizeSemanticCss(
+    decoder.decode(
       transform({
         filename: 'scoped.css',
         code: encoder.encode(wrapped),
@@ -67,7 +67,7 @@ function scopeRoleCss(css: string, scopeClass: string, role: SkinCssRole): strin
         },
       }).code
     )
-    .trim();
+  );
 }
 
 function scopeSkinRootSelectors(selectors: SelectorList): SelectorList {
@@ -132,13 +132,14 @@ interface AnalyzedRole {
 }
 
 function emitRole(analyzed: AnalyzedRole, role: SkinCssRole): string {
+  const relationshipOwners = new Map([...role.groupOwners, ...role.peerOwners]);
   const rules = [...role.recipes]
     .sort((a, b) => a.className.localeCompare(b.className))
     .map((recipe) => {
       const source = analyzed.recipeRules.get(recipe.className);
       if (!source) throw new Error(`Tailwind did not emit the semantic style '.${recipe.className}'.`);
-      const rule = replaceRuleClasses(source, role.groupOwners);
-      assertNoRelationshipMarkers(rule, role.groupOwners);
+      const rule = replaceRuleClasses(source, relationshipOwners);
+      assertNoRelationshipMarkers(rule, relationshipOwners);
       return rule;
     });
   return inlinePrivateTailwindVariables(emitRuleSet(analyzed.template, rules), analyzed.tailwindDefaults);

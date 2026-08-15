@@ -37,9 +37,28 @@
     .media-overlay {
       pointer-events: none;
       border-radius: inherit;
+      opacity: 0;
+      transition-property: opacity, backdrop-filter;
+      transition-duration: var(--controls-transition-duration);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      transition-timing-function: ease-out;
       position: absolute;
       inset: 0;
+    }
+
+    .media-overlay:is(:where(.media-error-dialog)[data-open] ~ *) {
+      opacity: 1;
+      backdrop-filter: blur(16px) saturate(1.5);
+    }
+
+    .media-overlay:is(:where(.media-buffering-indicator)[data-visible] ~ *) {
+      opacity: 1;
+      backdrop-filter: blur(4px);
+      background-color: oklab(0% none none / 0.35);
+    }
+
+    .media-overlay:is(:where(.media-controls-root)[data-visible] ~ *) {
+      opacity: 1;
     }
 
     .media-playback-status-icon {

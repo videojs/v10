@@ -67,8 +67,7 @@ export const skinCatalog = {
       theme: 'default',
       source: './skins/default-video/skin.tsx',
       title: 'Default Video Skin',
-      description:
-        'A video skin with play, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.',
+      description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input bindings.',
     }),
   ],
   components: [

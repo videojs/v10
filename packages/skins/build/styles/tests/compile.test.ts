@@ -45,16 +45,18 @@ describe('compileSkinStyles', () => {
     expect(styles.get('buttons')).not.toContain('calc(2px * -1)');
   });
 
-  it('rejects peer relationships in vanilla output', async () => {
+  it('rewrites named peer variants to their semantic owner', async () => {
     const peer = recipe('control', 'media-control', ['peer/control']);
+    const overlay = recipe('overlay', 'media-overlay', ['opacity-0', 'peer-data-visible/control:opacity-100']);
 
-    await expect(
-      compileSkinStyles({
-        design: await loadDesignSystem(designPath),
-        manifest: manifest([peer], new Map(), new Set(['peer/control'])),
-        scopeClass: 'media-skin-video',
-      })
-    ).rejects.toThrow('Vanilla Skin styles do not support peer relationships: peer/control');
+    const styles = await compileSkinStyles({
+      design: await loadDesignSystem(designPath),
+      manifest: manifest([peer, overlay], new Map(), new Map([['peer/control', peer.className]])),
+      scopeClass: 'media-skin-video',
+    });
+
+    expect(styles.get('buttons')).toContain('.media-overlay:is(:where(.media-control)[data-visible] ~ *)');
+    expect(styles.get('buttons')).not.toContain('peer\\/control');
   });
 });
 
@@ -71,7 +73,7 @@ function recipe(token: string, className: string, utilities: readonly string[]):
 function manifest(
   recipes: readonly SkinStyleRecipe[],
   groupOwners: ReadonlyMap<string, string> = new Map(),
-  peerMarkers: ReadonlySet<string> = new Set()
+  peerOwners: ReadonlyMap<string, string> = new Map()
 ): SkinStyleManifest {
-  return { modules: new Map(), recipes, groupOwners, peerMarkers };
+  return { modules: new Map(), recipes, groupOwners, peerOwners };
 }

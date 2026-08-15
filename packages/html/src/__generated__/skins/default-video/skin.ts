@@ -42,87 +42,92 @@ export const skin = /* html */ `<media-container class="media-container media-sk
     <media-alert-dialog-description class="media-error-dialog-description"></media-alert-dialog-description>
     <media-alert-dialog-close class="media-button media-error-dialog-close"></media-alert-dialog-close>
   </media-error-dialog>
-  <media-controls class="media-controls">
+  <media-controls class="media-controls-root">
     <media-tooltip-group>
-      <media-controls-group class="media-controls-group-primary">
-        <media-play-button class="media-button media-play-button">
-          <media-icon class="media-button-icon media-restart-icon" name="restart"></media-icon>
-          <media-icon class="media-button-icon media-play-icon" name="play"></media-icon>
-          <media-icon class="media-button-icon media-pause-icon" name="pause"></media-icon>
-        </media-play-button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-tooltip-label></media-tooltip-label>
-          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
-        </media-tooltip>
-      </media-controls-group>
-      <media-controls-group class="media-controls-group-time">
-        <media-time class="media-time" type="current"></media-time>
-        <media-time-slider class="media-slider">
-          <media-time-slider-chapters class="media-slider-chapters">
-            <template>
-              <div class="media-slider-chapter">
-                <media-slider-track class="media-slider-chapter-track">
-                  <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
-                  <media-slider-fill class="media-slider-fill"></media-slider-fill>
-                </media-slider-track>
+      <media-controls-group class="media-controls-primary">
+        <media-controls-group class="media-button-group">
+          <media-play-button class="media-button media-play-button">
+            <media-icon class="media-button-icon media-restart-icon" name="restart"></media-icon>
+            <media-icon class="media-button-icon media-play-icon" name="play"></media-icon>
+            <media-icon class="media-button-icon media-pause-icon" name="pause"></media-icon>
+          </media-play-button>
+          <media-tooltip side="top" class="media-surface media-tooltip">
+            <media-tooltip-label></media-tooltip-label>
+            <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+          </media-tooltip>
+          <media-mute-button class="media-button media-mute-button">
+            <media-icon class="media-button-icon media-volume-off-icon" name="volume-off"></media-icon>
+            <media-icon class="media-button-icon media-volume-low-icon" name="volume-low"></media-icon>
+            <media-icon class="media-button-icon media-volume-high-icon" name="volume-high"></media-icon>
+          </media-mute-button>
+          <media-popover
+            open-on-hover
+            delay="200"
+            close-delay="100"
+            side="top"
+            class="media-surface media-volume-popover"
+          >
+            <media-volume-slider class="media-slider" thumb-alignment="edge" orientation="vertical">
+              <media-slider-track class="media-slider-track">
+                <media-slider-fill class="media-slider-fill"></media-slider-fill>
+              </media-slider-track>
+              <media-slider-thumb class="media-slider-thumb media-slider-thumb-persistent"></media-slider-thumb>
+            </media-volume-slider>
+          </media-popover>
+        </media-controls-group>
+        <media-controls-group class="media-time-controls">
+          <media-time class="media-time-current" type="current"></media-time>
+          <media-time-slider class="media-slider">
+            <media-time-slider-chapters class="media-slider-chapters">
+              <template>
+                <div class="media-slider-chapter">
+                  <media-slider-track class="media-slider-chapter-track">
+                    <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
+                    <media-slider-fill class="media-slider-fill"></media-slider-fill>
+                  </media-slider-track>
+                </div>
+              </template>
+              <media-slider-track class="media-slider-track">
+                <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
+                <media-slider-fill class="media-slider-fill"></media-slider-fill>
+              </media-slider-track>
+            </media-time-slider-chapters>
+            <media-slider-thumb class="media-slider-thumb media-slider-thumb-interactive"></media-slider-thumb>
+            <media-slider-preview class="media-slider-preview" overflow="visible">
+              <div class="media-surface media-thumbnail">
+                <media-slider-thumbnail class="media-thumbnail-image"></media-slider-thumbnail>
+                <media-icon class="media-spinner-icon" name="spinner"></media-icon>
               </div>
-            </template>
-            <media-slider-track class="media-slider-track">
-              <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
-              <media-slider-fill class="media-slider-fill"></media-slider-fill>
-            </media-slider-track>
-          </media-time-slider-chapters>
-          <media-slider-thumb class="media-slider-thumb"></media-slider-thumb>
-          <media-slider-preview class="media-slider-preview" overflow="visible">
-            <div class="media-surface media-thumbnail">
-              <media-slider-thumbnail class="media-thumbnail-image"></media-slider-thumbnail>
-              <media-icon class="media-spinner-icon" name="spinner"></media-icon>
-            </div>
-            <div class="media-preview-value">
-              <media-time-slider-chapter-title class="media-chapter-title"></media-time-slider-chapter-title>
-              <media-slider-value class="media-slider-value" type="pointer"></media-slider-value>
-            </div>
-          </media-slider-preview>
-        </media-time-slider>
-        <media-time class="media-time" type="remaining" toggle></media-time>
-      </media-controls-group>
-      <media-controls-group class="media-controls-group-primary">
-        <media-captions-button class="media-button media-captions-button">
-          <media-icon class="media-button-icon media-captions-off-icon" name="captions-off"></media-icon>
-          <media-icon class="media-button-icon media-captions-on-icon" name="captions-on"></media-icon>
-        </media-captions-button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-tooltip-label></media-tooltip-label>
-          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
-        </media-tooltip>
-        <media-mute-button class="media-button media-mute-button">
-          <media-icon class="media-button-icon media-volume-off-icon" name="volume-off"></media-icon>
-          <media-icon class="media-button-icon media-volume-low-icon" name="volume-low"></media-icon>
-          <media-icon class="media-button-icon media-volume-high-icon" name="volume-high"></media-icon>
-        </media-mute-button>
-        <media-popover
-          open-on-hover
-          delay="200"
-          close-delay="100"
-          side="top"
-          class="media-surface media-volume-popover"
-        >
-          <media-volume-slider class="media-slider" thumb-alignment="edge" orientation="vertical">
-            <media-slider-track class="media-slider-track">
-              <media-slider-fill class="media-slider-fill"></media-slider-fill>
-            </media-slider-track>
-            <media-slider-thumb class="media-slider-thumb"></media-slider-thumb>
-          </media-volume-slider>
-        </media-popover>
-        <button class="media-button media-settings-trigger" commandfor="settings-menu">
-          <media-icon class="media-button-icon media-settings-icon" name="gear"></media-icon>
-          <media-text class="media-sr-only" token="menu.settings">Settings</media-text>
-        </button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-text token="menu.settings">Settings</media-text>
-        </media-tooltip>
-        <media-menu side="top" align="center" class="media-surface media-settings" id="settings-menu">
-          <div class="media-group">
+              <div class="media-preview-value">
+                <media-time-slider-chapter-title class="media-chapter-title"></media-time-slider-chapter-title>
+                <media-slider-value class="media-slider-value" type="pointer"></media-slider-value>
+              </div>
+            </media-slider-preview>
+          </media-time-slider>
+          <media-time class="media-time-remaining" type="remaining" toggle></media-time>
+        </media-controls-group>
+        <media-controls-group class="media-button-group">
+          <media-captions-button class="media-button media-captions-button">
+            <media-icon class="media-button-icon media-captions-off-icon" name="captions-off"></media-icon>
+            <media-icon class="media-button-icon media-captions-on-icon" name="captions-on"></media-icon>
+          </media-captions-button>
+          <media-tooltip side="top" class="media-surface media-tooltip">
+            <media-tooltip-label></media-tooltip-label>
+            <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+          </media-tooltip>
+          <button class="media-button media-settings-trigger" commandfor="settings-menu">
+            <media-icon class="media-button-icon media-settings-icon" name="gear"></media-icon>
+            <media-text class="media-sr-only" token="menu.settings">Settings</media-text>
+          </button>
+          <media-tooltip side="top" class="media-surface media-tooltip">
+            <media-text token="menu.settings">Settings</media-text>
+          </media-tooltip>
+          <media-menu
+            side="top"
+            align="center"
+            class="media-surface media-popover media-settings media-group"
+            id="settings-menu"
+          >
             <media-menu-item class="media-item-base media-item" commandfor="settings-quality-menu">
               <media-icon class="media-icon" name="switches"></media-icon>
               <media-text token="menu.quality">Quality</media-text>
@@ -227,40 +232,44 @@ export const skin = /* html */ `<media-container class="media-container media-sk
                 </template>
               </media-captions-radio-group>
             </media-menu>
-          </div>
-        </media-menu>
-        <media-cast-button class="media-button media-cast-button">
-          <media-icon class="media-button-icon media-cast-enter-icon" name="cast-enter"></media-icon>
-          <media-icon class="media-button-icon media-cast-exit-icon" name="cast-exit"></media-icon>
-        </media-cast-button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-tooltip-label></media-tooltip-label>
-          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
-        </media-tooltip>
-        <media-airplay-button class="media-button media-airplay-button">
-          <media-icon class="media-button-icon media-airplay-enter-icon" name="airplay-enter"></media-icon>
-          <media-icon class="media-button-icon media-airplay-exit-icon" name="airplay-exit"></media-icon>
-        </media-airplay-button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-tooltip-label></media-tooltip-label>
-          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
-        </media-tooltip>
-        <media-pip-button class="media-button media-pip-button">
-          <media-icon class="media-button-icon media-pip-enter-icon" name="pip-enter"></media-icon>
-          <media-icon class="media-button-icon media-pip-exit-icon" name="pip-exit"></media-icon>
-        </media-pip-button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-tooltip-label></media-tooltip-label>
-          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
-        </media-tooltip>
-        <media-fullscreen-button class="media-button media-fullscreen-button">
-          <media-icon class="media-button-icon media-fullscreen-enter-icon" name="fullscreen-enter"></media-icon>
-          <media-icon class="media-button-icon media-fullscreen-exit-icon" name="fullscreen-exit"></media-icon>
-        </media-fullscreen-button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-tooltip-label></media-tooltip-label>
-          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
-        </media-tooltip>
+          </media-menu>
+        </media-controls-group>
+      </media-controls-group>
+      <media-controls-group class="media-controls-secondary">
+        <media-controls-group class="media-button-group">
+          <media-cast-button class="media-button media-cast-button">
+            <media-icon class="media-button-icon media-cast-enter-icon" name="cast-enter"></media-icon>
+            <media-icon class="media-button-icon media-cast-exit-icon" name="cast-exit"></media-icon>
+          </media-cast-button>
+          <media-tooltip side="top" class="media-surface media-tooltip">
+            <media-tooltip-label></media-tooltip-label>
+            <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+          </media-tooltip>
+          <media-airplay-button class="media-button media-airplay-button">
+            <media-icon class="media-button-icon media-airplay-enter-icon" name="airplay-enter"></media-icon>
+            <media-icon class="media-button-icon media-airplay-exit-icon" name="airplay-exit"></media-icon>
+          </media-airplay-button>
+          <media-tooltip side="top" class="media-surface media-tooltip">
+            <media-tooltip-label></media-tooltip-label>
+            <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+          </media-tooltip>
+          <media-pip-button class="media-button media-pip-button">
+            <media-icon class="media-button-icon media-pip-enter-icon" name="pip-enter"></media-icon>
+            <media-icon class="media-button-icon media-pip-exit-icon" name="pip-exit"></media-icon>
+          </media-pip-button>
+          <media-tooltip side="top" class="media-surface media-tooltip">
+            <media-tooltip-label></media-tooltip-label>
+            <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+          </media-tooltip>
+          <media-fullscreen-button class="media-button media-fullscreen-button">
+            <media-icon class="media-button-icon media-fullscreen-enter-icon" name="fullscreen-enter"></media-icon>
+            <media-icon class="media-button-icon media-fullscreen-exit-icon" name="fullscreen-exit"></media-icon>
+          </media-fullscreen-button>
+          <media-tooltip side="top" class="media-surface media-tooltip">
+            <media-tooltip-label></media-tooltip-label>
+            <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
+          </media-tooltip>
+        </media-controls-group>
       </media-controls-group>
     </media-tooltip-group>
   </media-controls>
@@ -289,7 +298,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
   <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
   <media-status-announcer class="media-status-announcer"></media-status-announcer>
   <div class="media-input-indicator-overlay">
-    <media-volume-indicator class="media-volume-indicator">
+    <media-volume-indicator class="media-surface media-volume-indicator">
       <media-volume-indicator-fill class="media-volume-indicator-fill">
         <media-icon
           class="media-volume-indicator-icon media-volume-high-indicator-icon"
@@ -302,7 +311,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
     </media-volume-indicator>
     <media-status-indicator
       actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"
-      class="media-status-indicator"
+      class="media-surface media-status-indicator"
     >
       <media-icon class="media-status-indicator-icon media-status-captions-on-icon" name="captions-on"></media-icon>
       <media-icon class="media-status-indicator-icon media-status-captions-off-icon" name="captions-off"></media-icon>
