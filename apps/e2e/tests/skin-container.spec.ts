@@ -38,8 +38,10 @@ for (const { framework, path } of SOURCE_SKINS) {
       const poster = page.locator('media-poster, img.media-poster').first();
 
       await expect(poster).toHaveAttribute('data-visible', '');
+      await expect(poster).toHaveCSS('opacity', '1');
       await page.locator('video').evaluate((video: HTMLVideoElement) => video.play());
       await expect(poster).not.toHaveAttribute('data-visible');
+      await expect(poster).toHaveCSS('opacity', '0');
     });
   });
 }

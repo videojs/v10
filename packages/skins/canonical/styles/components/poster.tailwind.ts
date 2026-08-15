@@ -7,7 +7,7 @@ export default defineStyles({
       'pointer-events-none absolute inset-0 h-full w-full rounded-[inherit]',
       '[object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]',
       'transition-opacity duration-250 not-data-visible:opacity-0',
-      '[&[data-visible]:not([data-loaded])]:opacity-0',
+      '[&[data-visible][src]:not([data-loaded])]:opacity-0',
       'before:pointer-events-none before:absolute before:inset-0',
       'before:[background-image:var(--media-poster-placeholder,none)] before:bg-no-repeat',
       'before:[background-position:var(--media-object-position,center)]',

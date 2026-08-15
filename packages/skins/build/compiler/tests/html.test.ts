@@ -65,6 +65,7 @@ describe('createCompilerHtmlConfig', () => {
     expect(result.code).toContain('<media-container');
     expect(result.code).toContain('{children}');
     expect(posterResult.code).toContain('<media-poster');
+    expect(posterResult.code).toContain('[&[data-visible][src]:not([data-loaded])]:opacity-0');
     expect(posterResult.code).toContain('<slot name="poster"/>');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinContainer');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinPoster');

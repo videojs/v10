@@ -40,7 +40,7 @@
       inset: 0;
     }
 
-    .media-poster[data-visible]:not([data-loaded]) {
+    .media-poster[data-visible][src]:not([data-loaded]) {
       opacity: 0;
     }
   }
