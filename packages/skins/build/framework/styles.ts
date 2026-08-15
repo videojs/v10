@@ -11,10 +11,11 @@ export interface FrameworkStyleFile {
 export async function createFrameworkStyles(
   resources: SkinStyleResources,
   rootDir: string,
-  styles: ReadonlyMap<SkinStyleRole, string>
+  styles: ReadonlyMap<SkinStyleRole, string>,
+  theme = 'default'
 ): Promise<FrameworkStyleFile[]> {
-  const themePath = resources.themes.default;
-  if (!themePath) throw new Error('Framework Skin generation requires a default theme resource.');
+  const themePath = resources.themes[theme];
+  if (!themePath) throw new Error(`Framework Skin generation requires a \`${theme}\` theme resource.`);
 
   const roleFiles = [...styles]
     .map(([role, content]) => ({ fileName: `${role}.css`, content }))

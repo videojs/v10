@@ -32,25 +32,32 @@ interface GenerateSkinsOptions {
   frameworkTargets?: readonly FrameworkSkinTarget[] | undefined;
 }
 
-const DEFAULT_SKIN = 'default-video';
-const DEFAULT_SKIN_OUTPUT_DIR = `src/__generated__/skins/${DEFAULT_SKIN}`;
+const frameworkSkins = [
+  { name: 'default-video', iconSet: 'default' },
+  { name: 'minimal-video', iconSet: 'minimal' },
+] as const;
 
-const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = [
-  {
-    framework: 'html',
-    packageRoot: resolve(skinsPackageRoot, '../html'),
-    outputDir: DEFAULT_SKIN_OUTPUT_DIR,
-    skin: DEFAULT_SKIN,
-    resolveImport: htmlPackageImportResolver(posix.join(DEFAULT_SKIN_OUTPUT_DIR, 'skin.ts')),
-  },
-  {
-    framework: 'react',
-    packageRoot: resolve(skinsPackageRoot, '../react'),
-    outputDir: DEFAULT_SKIN_OUTPUT_DIR,
-    skin: DEFAULT_SKIN,
-    resolveImport: reactPackageImportResolver,
-  },
-];
+const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = frameworkSkins.flatMap(({ name, iconSet }) => {
+  const outputDir = `src/__generated__/skins/${name}`;
+  return [
+    {
+      framework: 'html' as const,
+      packageRoot: resolve(skinsPackageRoot, '../html'),
+      outputDir,
+      skin: name,
+      iconSet,
+      resolveImport: htmlPackageImportResolver(posix.join(outputDir, 'skin.ts')),
+    },
+    {
+      framework: 'react' as const,
+      packageRoot: resolve(skinsPackageRoot, '../react'),
+      outputDir,
+      skin: name,
+      iconSet,
+      resolveImport: reactPackageImportResolver,
+    },
+  ];
+});
 
 /** Generate framework Skins and the contained React/Tailwind registry. */
 async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> {

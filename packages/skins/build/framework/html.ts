@@ -3,7 +3,7 @@ import { format } from 'oxfmt';
 import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../compiler/html';
-import { skinRootClassName } from '../compiler/skin-root';
+import { skinRootClassName, skinRootComponentName } from '../compiler/skin-root';
 import type { SkinStyleManifest } from '../styles/manifest';
 
 interface GenerateHtmlSkinOptions {
@@ -25,6 +25,7 @@ export async function generateHtmlSkin(
     ...createCompilerHtmlConfig({
       style: 'vanilla',
       styles: options.styles,
+      rootComponentName: skinRootComponentName(skin),
       rootClassName: skinRootClassName(skin),
     }),
     input: options.entryFile,

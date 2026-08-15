@@ -38,6 +38,7 @@ export default defineStyles({
     volumePopover: [
       ...popupBase,
       'rounded-media-pill py-3',
+      'data-[side=right]:bg-transparent data-[side=right]:p-0 data-[side=right]:shadow-none data-[side=right]:backdrop-blur-none data-[side=right]:after:hidden',
       'data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)',
       'data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)',
       'has-[media-volume-slider[data-hidden]]:hidden',

@@ -32,6 +32,7 @@ describe('generateReactRegistry', () => {
       'styles/tailwind.css',
       'styles/base.css',
       'styles/themes/default.css',
+      'styles/themes/minimal.css',
     ]);
     expect(
       Object.values(output.items)

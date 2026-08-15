@@ -3,7 +3,7 @@ import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import { createCompilerReactConfig, type ReactImportResolver } from '../compiler/react';
 import { emitReactModules } from '../compiler/react-modules';
-import { skinRootClassName } from '../compiler/skin-root';
+import { skinRootClassName, skinRootComponentName } from '../compiler/skin-root';
 import type { GeneratedFile } from '../output/files';
 import type { SkinStyleManifest } from '../styles/manifest';
 
@@ -36,6 +36,7 @@ export async function generateReactSkins(
     style: 'vanilla',
     styles: options.styles,
     iconSet: options.iconSet,
+    rootComponentName: skinRootComponentName(skin),
     rootClassName: skinRootClassName(skin),
     ...(options.resolveImport ? { resolveImport: options.resolveImport } : {}),
   });

@@ -1,0 +1,14 @@
+import { PiPButton as PiPButtonPrimitive } from '@/ui/pip-button';
+import { PipEnterIcon, PipExitIcon } from '@/icons/minimal';
+import { ButtonTooltip } from './button-tooltip';
+
+export function PiPButton() {
+  return (
+    <ButtonTooltip side="top">
+      <PiPButtonPrimitive className="media-button media-pip-button">
+        <PipEnterIcon className="media-button-icon media-pip-enter-icon" />
+        <PipExitIcon className="media-button-icon media-pip-exit-icon" />
+      </PiPButtonPrimitive>
+    </ButtonTooltip>
+  );
+}

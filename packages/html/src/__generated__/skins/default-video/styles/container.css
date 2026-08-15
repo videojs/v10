@@ -70,6 +70,12 @@
       opacity: 1;
     }
 
+    @media (pointer: fine) {
+      .media-container:has([data-controls]:not([data-visible])) {
+        cursor: none;
+      }
+    }
+
     .media-container video {
       border-radius: inherit;
       object-fit: var(--media-object-fit, contain);

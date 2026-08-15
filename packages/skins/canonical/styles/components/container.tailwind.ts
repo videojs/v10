@@ -8,6 +8,7 @@ export default defineStyles({
       'font-media text-media leading-normal subpixel-antialiased',
       'outline-2 -outline-offset-4 outline-transparent [transition-property:outline-offset,outline-color] [transition-duration:100ms] [transition-timing-function:ease-out]',
       'focus-visible:outline-current focus-visible:outline-offset-2',
+      'pointer-fine:has-[[data-controls]:not([data-visible])]:cursor-none',
       '[&_video]:block [&_video]:h-full [&_video]:w-full [&_video]:rounded-[inherit]',
       '[&_video]:[object-fit:var(--media-object-fit,contain)]',
       '[&_video]:[object-position:var(--media-object-position,center)]',

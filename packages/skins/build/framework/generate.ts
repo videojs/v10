@@ -76,7 +76,8 @@ export async function createFrameworkSkin(
     styles: await createFrameworkStyles(
       catalog.resources.styles,
       options.rootDir,
-      await compileSkinStyles({ design, manifest: styles, scopeClass: skin.scopeClass })
+      await compileSkinStyles({ design, manifest: styles, scopeClass: skin.scopeClass }),
+      skin.theme
     ),
   };
 }

@@ -1,0 +1,36 @@
+@layer videojs.theme {
+  .media-theme-minimal {
+    --container-border-radius: var(--media-border-radius, 0.75rem);
+    --controls-transition-duration: 100ms;
+    --error-dialog-transition-delay: 100ms;
+    --error-dialog-transition-duration: 150ms;
+    --popup-transition-duration: 100ms;
+    --scale: 1;
+    --media-controls-color: oklch(1 0 0);
+    --media-controls-gap: 0.25rem;
+    --media-controls-padding: 0.25rem;
+    --media-control-size: calc(2.375rem * var(--scale));
+    --media-control-hover-background: oklch(1 0 0 / 0.1);
+    --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
+    --media-font-size: calc(0.8125rem * var(--scale));
+    --media-icon-size: calc(1.125rem * var(--scale));
+    --media-radius-pill: 0.5rem;
+    --media-radius-surface: 0.625rem;
+    --media-shadow-color: oklch(0 0 0 / 0.35);
+    --media-slider-buffer-background: oklch(1 0 0 / 0.3);
+    --media-slider-thumb-size: 0.75rem;
+    --media-slider-track-background: oklch(1 0 0 / 0.2);
+    --media-slider-track-size: 0.25rem;
+    --media-surface-backdrop-blur: 16px;
+    --media-surface-background: oklch(0 0 0 / 0.5);
+    --media-surface-border: oklch(1 0 0 / 0.1);
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .media-theme-minimal {
+      --media-surface-background: oklch(0 0 0);
+      --media-surface-border: oklch(1 0 0 / 0.25);
+      --media-surface-backdrop-blur: 0px;
+    }
+  }
+}

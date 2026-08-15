@@ -48,7 +48,10 @@ const resources = {
   styles: {
     tailwind: './styles/tailwind.css',
     base: './styles/base.css',
-    themes: { default: './styles/themes/default.css' },
+    themes: {
+      default: './styles/themes/default.css',
+      minimal: './styles/themes/minimal.css',
+    },
   },
 } as const;
 
@@ -68,6 +71,15 @@ export const skinCatalog = {
       source: './skins/default-video/skin.tsx',
       title: 'Default Video Skin',
       description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input bindings.',
+    }),
+    defineSkin({
+      name: 'minimal-video',
+      type: 'skin',
+      scopeClass: 'media-skin-video-minimal',
+      theme: 'minimal',
+      source: './skins/minimal-video/skin.tsx',
+      title: 'Minimal Video Skin',
+      description: 'A compact on-demand video skin with wrapping controls and the complete video component set.',
     }),
   ],
   components: [

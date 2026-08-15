@@ -199,6 +199,35 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/buttons.css').match(/\.media-button \{/g)).toHaveLength(1);
     expect(output.styles.map((file) => file.content).join('\n')).not.toContain('--tw-');
   });
+
+  it('projects the minimal video composition and theme for both frameworks', async () => {
+    const output = await createFrameworkSkin(await loadSkinCatalog(), {
+      rootDir: canonicalRoot,
+      skin: 'minimal-video',
+      iconSet: 'minimal',
+      projections: [{ framework: 'react' }, { framework: 'html' }],
+    });
+    const react = content(output, 'react', 'skin.tsx');
+    const html = content(output, 'html', 'skin.ts');
+
+    expect(react).toContain('export interface MinimalVideoSkinProps extends Omit<ContainerProps');
+    expect(react).toContain('media-skin media-skin-video-minimal media-theme-minimal');
+    expect(react).toContain('<VolumePopover side="right" orientation="horizontal"/>');
+    expect(react).toContain('<TimePrimitive.Group className="media-time-group">');
+    expect(react).toContain('<Controls.Group className="media-controls-remote">');
+    expect(react).not.toContain('SeekButton');
+    expect(react).not.toContain('placeholder');
+
+    expect(html).toContain("import '@videojs/html/icons/element/minimal'");
+    expect(html).toContain('media-skin media-skin-video-minimal media-theme-minimal');
+    expect(html).toContain('orientation="horizontal"');
+    expect(html).toContain('<media-time-group class="media-time-group">');
+    expect(html).toContain('<media-controls-group class="media-controls-remote">');
+    expect(html).not.toContain('media-seek-button');
+    expect(style(output, 'styles/controls.css')).toContain('@scope (.media-skin-video-minimal)');
+    expect(style(output, 'styles/theme.css')).toContain('.media-theme-minimal {');
+    expect(style(output, 'styles/theme.css')).not.toContain('.media-theme-default {');
+  });
 });
 
 function style(output: Awaited<ReturnType<typeof createFrameworkSkin>>, fileName: string): string {

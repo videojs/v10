@@ -1,6 +1,7 @@
 @import "tailwindcss" theme(inline);
 @import "./base.css";
 @import "./themes/default.css";
+@import "./themes/minimal.css";
 
 @source "../**/*.tsx";
 @source "./**/*.tailwind.ts";

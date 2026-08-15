@@ -257,6 +257,15 @@
 
     .media-volume-popover[data-side='right'] {
       transform-origin: 0;
+      backdrop-filter: ;
+      background-color: #0000;
+      padding: 0;
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000;
     }
 
     .media-volume-popover[data-side='right']:before {
@@ -264,6 +273,11 @@
       width: var(--media-popover-side-offset);
       inset-block: 0;
       right: 100%;
+    }
+
+    .media-volume-popover[data-side='right']:after {
+      content: '';
+      display: none;
     }
 
     .media-volume-popover[data-side='top'] {

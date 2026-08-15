@@ -13,6 +13,7 @@ import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 interface CreateCompilerReactConfigOptions {
   style: SkinStyleTarget;
   styles: SkinStyleManifest;
+  rootComponentName?: string | undefined;
   rootClassName?: string | undefined;
   iconSet?: string | undefined;
   resolveImport?: ReactImportResolver | undefined;
@@ -22,6 +23,8 @@ export type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
 
 /** Create the compiler policy for a React Skin projection. */
 export function createCompilerReactConfig(options: CreateCompilerReactConfigOptions) {
+  const rootComponentName = options.rootComponentName ?? 'DefaultVideoSkin';
+  const rootPropsName = `${rootComponentName}Props`;
   const iconSet = options.iconSet ?? 'default';
   const resolveImport = (reference: ImportRef): ImportRef | false =>
     options.resolveImport ? options.resolveImport(reference) : reference;
@@ -161,7 +164,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const ContainerProps = code.import(containerProps.source, containerProps.name, { type: true });
           const PosterProps = code.import(posterProps.source, posterProps.name, { type: true });
           const usePlayer = code.import(usePlayerRef.source, usePlayerRef.name);
-          const defaultVideoSkin = code.function('DefaultVideoSkin');
+          const rootSkin = code.function(rootComponentName);
           const container = code.function('Container');
           const poster = code.function('Poster');
           const volumePopover = code.function('VolumePopover');
@@ -180,9 +183,9 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const posterIsString = () => code.value.equal(code.value.typeOf('poster'), code.value.string('string'));
 
           return [
-            defaultVideoSkin.insertBefore(() =>
+            rootSkin.insertBefore(() =>
               code.statement.interface({
-                name: 'DefaultVideoSkinProps',
+                name: rootPropsName,
                 export: true,
                 extends: [code.type.named('Omit', [code.type.named(ContainerProps), code.type.literal('children')])],
                 properties: [
@@ -203,12 +206,12 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                 ],
               })
             ),
-            defaultVideoSkin.setProps(['children', 'className', 'poster', { name: 'containerProps', spread: true }], {
-              type: 'DefaultVideoSkinProps',
+            rootSkin.setProps(['children', 'className', 'poster', { name: 'containerProps', spread: true }], {
+              type: rootPropsName,
               initializer: code.value.object(),
             }),
-            defaultVideoSkin.jsx.element('Slot').replace(() => code.jsx.expression(code.value.identifier('children'))),
-            defaultVideoSkin.jsx.element('Poster').replace(() =>
+            rootSkin.jsx.element('Slot').replace(() => code.jsx.expression(code.value.identifier('children'))),
+            rootSkin.jsx.element('Poster').replace(() =>
               code.jsx.if(
                 'poster',
                 code.jsx.create('Poster', {
@@ -225,8 +228,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                 })
               )
             ),
-            defaultVideoSkin.jsx.element('Container').spreadProps('containerProps', { position: 'start' }),
-            defaultVideoSkin.jsx.element('Container').addProp('className', () => {
+            rootSkin.jsx.element('Container').spreadProps('containerProps', { position: 'start' }),
+            rootSkin.jsx.element('Container').addProp('className', () => {
               if (!options.rootClassName) {
                 throw new Error('React Skin root lowering requires `rootClassName`.');
               }

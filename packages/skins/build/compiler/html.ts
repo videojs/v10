@@ -6,6 +6,7 @@ import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 interface CreateCompilerHtmlConfigOptions {
   style: SkinStyleTarget;
   styles: SkinStyleManifest;
+  rootComponentName?: string | undefined;
   rootClassName?: string | undefined;
 }
 
@@ -126,7 +127,11 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
   Text: { modules: ['@videojs/html/i18n'], elements: {} },
   Time: {
     modules: ['@videojs/html/ui/time'],
-    elements: { 'TimePrimitive.Value': 'media-time' },
+    elements: {
+      'TimePrimitive.Group': 'media-time-group',
+      'TimePrimitive.Separator': 'media-time-separator',
+      'TimePrimitive.Value': 'media-time',
+    },
   },
   TimeSlider: {
     modules: ['@videojs/html/ui/time-slider', '@videojs/html/ui/time-slider-chapters'],
@@ -219,6 +224,7 @@ const iconNames = {
 
 /** Create the compiler policy for an HTML Skin projection. */
 export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOptions) {
+  const rootComponentName = styleTarget.rootComponentName ?? 'DefaultVideoSkin';
   return defineConfig({
     target: html({
       imports: {
@@ -315,7 +321,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
       rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
-          const rootContainer = code.function('DefaultVideoSkin').jsx.element('Container');
+          const rootContainer = code.function(rootComponentName).jsx.element('Container');
           const containerPrimitiveClassName = code
             .function('Container')
             .jsx.props('className')

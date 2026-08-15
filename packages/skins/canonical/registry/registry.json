@@ -33,6 +33,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/react", "react"],
@@ -62,6 +67,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
@@ -98,6 +108,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/react", "react"],
@@ -132,6 +147,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
@@ -208,6 +228,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/core", "@videojs/react", "@videojs/utils", "react"],
@@ -257,6 +282,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/react"],
@@ -292,6 +322,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/react", "react"],
@@ -321,6 +356,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
@@ -355,6 +395,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
@@ -391,6 +436,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/react", "react"],
@@ -420,6 +470,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
@@ -456,6 +511,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/core", "@videojs/react", "react"],
@@ -485,6 +545,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
@@ -516,6 +581,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/react"],
@@ -545,6 +615,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
@@ -576,6 +651,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/react", "@videojs/utils"],
@@ -605,6 +685,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
@@ -641,6 +726,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/core", "@videojs/react"],
@@ -672,6 +762,11 @@
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
           "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
         }
       ],
       "dependencies": ["@videojs/react"],
@@ -701,6 +796,11 @@
         {
           "path": "canonical/registry/default/styles/themes/default.css",
           "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/minimal.css",
+          "target": "components/videojs/styles/themes/minimal.css",
           "type": "registry:file"
         }
       ],
