@@ -296,6 +296,11 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   set volume(value) {
     if (this.#volume === value) return;
     this.#volume = value;
+    // Nothing else will announce this. A snapshot is read as a patch against
+    // what is already reported, so the embed echoing the level it was just told
+    // to take reads as unchanged and says nothing; the write is the change, and
+    // it is announced here the way a media element announces its own.
+    this.dispatchEvent(new Event('volumechange'));
     // The embed takes the same 0–1 range `HTMLMediaElement` does.
     this.#afterLoad(() => this.#sendCommand(COMMAND_SET_VOLUME, value));
   }
@@ -306,6 +311,9 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   set muted(value) {
     if (this.#muted === value) return;
     this.#muted = value;
+    // Announced here for the same reason the level is: the embed's echo of a
+    // mute it was told to take is not a change.
+    this.dispatchEvent(new Event('volumechange'));
     this.#afterLoad(() => this.#sendCommand(COMMAND_SET_MUTED, value));
   }
 
@@ -669,6 +677,9 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
       this.dispatchEvent(new Event('timeupdate'));
     }
 
+    // Only a level or mute that differs from what is already reported is a
+    // change: the rest is the embed echoing a command back, which the setter
+    // that sent it has announced already.
     const volumeChanged = isNumber(state.volume) && state.volume !== this.#volume;
     const mutedChanged = !isUndefined(state.muted) && state.muted !== this.#muted;
     if (volumeChanged || mutedChanged) {

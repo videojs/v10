@@ -434,6 +434,37 @@ describe('TwitchMedia', () => {
     media.detach();
   });
 
+  it('announces a volume or mute it is given, without repeating the embed echo', async () => {
+    const media = new TwitchMedia();
+    const { iframe } = await attachAndLoad(media);
+    const volumechange = vi.fn();
+    media.addEventListener('volumechange', volumechange);
+
+    // A snapshot is a patch against what is already reported, so nothing else
+    // is going to announce a level the host set itself.
+    media.volume = 0.5;
+    expect(media.volume).toBe(0.5);
+    expect(volumechange).toHaveBeenCalledTimes(1);
+
+    media.muted = true;
+    expect(media.muted).toBe(true);
+    expect(volumechange).toHaveBeenCalledTimes(2);
+
+    // The embed echoing what it was told is not a second change.
+    postPlayerState(iframe, { volume: 0.5, muted: true });
+    expect(volumechange).toHaveBeenCalledTimes(2);
+
+    // A level set from the embed's own controls still is.
+    postPlayerState(iframe, { volume: 0.8 });
+    expect(media.volume).toBe(0.8);
+    expect(volumechange).toHaveBeenCalledTimes(3);
+
+    // Setting what is already reported changes nothing.
+    media.volume = 0.8;
+    expect(volumechange).toHaveBeenCalledTimes(3);
+    media.detach();
+  });
+
   it('updates state from player state snapshots', async () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
