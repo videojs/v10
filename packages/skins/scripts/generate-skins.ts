@@ -177,7 +177,7 @@ function reactPackageImportResolver(reference: ImportRef): ImportRef | false {
       return { ...reference, source: '@/ui/poster' };
     }
     if (reference.name === 'RenderProp') return { ...reference, source: '@/utils/types' };
-    return { ...reference, source: `@/ui/${kebabCase(reference.name)}` };
+    return { ...reference, source: `@/ui/${reactComponentModule(reference.name)}` };
   }
   const iconsPrefix = '@videojs/react/icons';
   if (reference.source === iconsPrefix) return { ...reference, source: '@/icons' };
@@ -185,6 +185,15 @@ function reactPackageImportResolver(reference: ImportRef): ImportRef | false {
     return { ...reference, source: `@/icons/${reference.source.slice(iconsPrefix.length + 1)}` };
   }
   return reference;
+}
+
+const reactComponentModules: Readonly<Record<string, string>> = {
+  AirPlayButton: 'airplay-button',
+  PiPButton: 'pip-button',
+};
+
+function reactComponentModule(name: string): string {
+  return reactComponentModules[name] ?? kebabCase(name);
 }
 
 function kebabCase(value: string): string {

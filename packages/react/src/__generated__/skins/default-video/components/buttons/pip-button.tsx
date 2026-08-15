@@ -1,4 +1,4 @@
-import { PiPButton as PiPButtonPrimitive } from '@/ui/pi-pbutton';
+import { PiPButton as PiPButtonPrimitive } from '@/ui/pip-button';
 import { PipEnterIcon, PipExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
 

@@ -1,4 +1,4 @@
-import { AirPlayButton as AirPlayButtonPrimitive } from '@/ui/air-play-button';
+import { AirPlayButton as AirPlayButtonPrimitive } from '@/ui/airplay-button';
 import { AirPlayEnterIcon, AirPlayExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
 
