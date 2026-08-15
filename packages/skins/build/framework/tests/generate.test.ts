@@ -223,6 +223,9 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('orientation="horizontal"');
     expect(html).toContain('<media-time-group class="media-time-group">');
     expect(html).toContain('<media-controls-group class="media-controls-remote">');
+    expect(html).toContain('media-error-dialog-minimal');
+    expect(html).toContain('media-status-indicator-minimal');
+    expect(html).toContain('media-volume-indicator-minimal');
     expect(html).not.toContain('media-seek-button');
     expect(style(output, 'styles/controls.css')).toContain('@scope (.media-skin-video-minimal)');
     expect(style(output, 'styles/theme.css')).toContain('.media-theme-minimal {');

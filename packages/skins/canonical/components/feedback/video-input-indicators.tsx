@@ -7,15 +7,15 @@ import { VolumeIndicator } from './volume-indicator';
 
 declare const InputIndicatorOverlayPrimitive: (props: { children?: unknown; className?: unknown }) => ComponentNode;
 
-export function VideoInputIndicators() {
+export function VideoInputIndicators({ variant = 'default' }: { variant?: 'default' | 'minimal' } = {}) {
   return (
     <>
       <StatusAnnouncer />
       <InputIndicatorOverlayPrimitive className={styles.inputIndicatorOverlay}>
-        <VolumeIndicator />
-        <StatusIndicator />
+        <VolumeIndicator variant={variant} />
+        <StatusIndicator variant={variant} />
         <SeekIndicator />
-        <PlaybackStatusIndicator />
+        <PlaybackStatusIndicator variant={variant} />
       </InputIndicatorOverlayPrimitive>
     </>
   );

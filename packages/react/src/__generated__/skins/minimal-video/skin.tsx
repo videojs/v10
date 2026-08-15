@@ -38,7 +38,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
         />
       )}
       <BufferingIndicator />
-      <ErrorDialog />
+      <ErrorDialog variant="minimal" />
 
       <Controls.Root className="media-controls-root">
         <Tooltip.Provider>
@@ -71,7 +71,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 
       <Overlay />
       <VideoInputBindings />
-      <VideoInputIndicators />
+      <VideoInputIndicators variant="minimal" />
     </Container>
   );
 }

@@ -37,10 +37,16 @@ export const skin = /* html */ `<media-container class="media-container media-sk
   <media-buffering-indicator class="media-buffering-indicator">
     <media-icon class="media-buffering-spinner-icon" name="spinner"></media-icon>
   </media-buffering-indicator>
-  <media-error-dialog class="media-surface media-error-dialog">
-    <media-alert-dialog-title class="media-error-dialog-title"></media-alert-dialog-title>
-    <media-alert-dialog-description class="media-error-dialog-description"></media-alert-dialog-description>
-    <media-alert-dialog-close class="media-button media-error-dialog-close"></media-alert-dialog-close>
+  <media-error-dialog class="media-surface media-error-dialog media-error-dialog-minimal">
+    <media-alert-dialog-title
+      class="media-error-dialog-title media-error-dialog-title-minimal"
+    ></media-alert-dialog-title>
+    <media-alert-dialog-description
+      class="media-error-dialog-description media-error-dialog-description-minimal"
+    ></media-alert-dialog-description>
+    <media-alert-dialog-close
+      class="media-button media-error-dialog-close media-error-dialog-close-minimal"
+    ></media-alert-dialog-close>
   </media-error-dialog>
   <media-controls class="media-controls-root">
     <media-tooltip-group>
@@ -297,8 +303,8 @@ export const skin = /* html */ `<media-container class="media-container media-sk
   <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
   <media-status-announcer class="media-status-announcer"></media-status-announcer>
   <div class="media-input-indicator-overlay">
-    <media-volume-indicator class="media-surface media-volume-indicator">
-      <media-volume-indicator-fill class="media-volume-indicator-fill">
+    <media-volume-indicator class="media-volume-indicator media-volume-indicator-minimal">
+      <media-volume-indicator-fill class="media-volume-indicator-fill media-volume-indicator-fill-minimal">
         <media-icon
           class="media-volume-indicator-icon media-volume-high-indicator-icon"
           name="volume-high"
@@ -310,7 +316,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
     </media-volume-indicator>
     <media-status-indicator
       actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"
-      class="media-surface media-status-indicator"
+      class="media-status-indicator media-status-indicator-minimal"
     >
       <media-icon class="media-status-indicator-icon media-status-captions-on-icon" name="captions-on"></media-icon>
       <media-icon class="media-status-indicator-icon media-status-captions-off-icon" name="captions-off"></media-icon>
@@ -330,7 +336,10 @@ export const skin = /* html */ `<media-container class="media-container media-sk
       <media-icon class="media-seek-indicator-icon" name="chevron"></media-icon>
       <media-seek-indicator-value class="media-seek-indicator-value"></media-seek-indicator-value>
     </media-seek-indicator>
-    <media-status-indicator actions="togglePaused" class="media-playback-status-indicator">
+    <media-status-indicator
+      actions="togglePaused"
+      class="media-playback-status-indicator media-playback-status-indicator-minimal"
+    >
       <media-icon class="media-playback-status-icon media-status-play-icon" name="play"></media-icon>
       <media-icon class="media-playback-status-icon media-status-pause-icon" name="pause"></media-icon>
     </media-status-indicator>

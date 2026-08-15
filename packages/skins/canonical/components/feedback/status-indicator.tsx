@@ -15,11 +15,15 @@ import styles from '../../styles/components/status-indicator.tailwind';
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
-export function StatusIndicator() {
+export function StatusIndicator({ variant = 'default' }: { variant?: 'default' | 'minimal' } = {}) {
   return (
     <StatusIndicatorPrimitive.Root
       actions={TOP_STATUS_ACTIONS}
-      className={[popupStyles.surface, styles.statusIndicator]}
+      className={
+        variant === 'minimal'
+          ? [styles.statusIndicator, styles.statusIndicatorMinimal]
+          : [popupStyles.surface, styles.statusIndicator]
+      }
     >
       <CaptionsOnIcon className={[styles.statusIndicatorIcon, styles.statusCaptionsOnIcon]} />
       <CaptionsOffIcon className={[styles.statusIndicatorIcon, styles.statusCaptionsOffIcon]} />
@@ -32,9 +36,16 @@ export function StatusIndicator() {
   );
 }
 
-export function PlaybackStatusIndicator() {
+export function PlaybackStatusIndicator({ variant = 'default' }: { variant?: 'default' | 'minimal' } = {}) {
   return (
-    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className={styles.playbackStatusIndicator}>
+    <StatusIndicatorPrimitive.Root
+      actions={PLAYBACK_STATUS_ACTIONS}
+      className={
+        variant === 'minimal'
+          ? [styles.playbackStatusIndicator, styles.playbackStatusIndicatorMinimal]
+          : styles.playbackStatusIndicator
+      }
+    >
       <PlayIcon className={[styles.playbackStatusIcon, styles.statusPlayIcon]} />
       <PauseIcon className={[styles.playbackStatusIcon, styles.statusPauseIcon]} />
     </StatusIndicatorPrimitive.Root>

@@ -3,15 +3,19 @@ import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
 
-export function VideoInputIndicators() {
+export function VideoInputIndicators({
+  variant = 'default',
+}: {
+  variant?: 'default' | 'minimal';
+} = {}) {
   return (
     <>
       <StatusAnnouncer />
       <div className="media-input-indicator-overlay">
-        <VolumeIndicator />
-        <StatusIndicator />
+        <VolumeIndicator variant={variant} />
+        <StatusIndicator variant={variant} />
         <SeekIndicator />
-        <PlaybackStatusIndicator />
+        <PlaybackStatusIndicator variant={variant} />
       </div>
     </>
   );

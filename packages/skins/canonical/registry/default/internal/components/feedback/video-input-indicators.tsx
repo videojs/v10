@@ -3,15 +3,19 @@ import { StatusAnnouncer } from '@/components/videojs/status-announcer/status-an
 import { PlaybackStatusIndicator, StatusIndicator } from '@/components/videojs/status-indicator/status-indicator';
 import { VolumeIndicator } from '@/components/videojs/volume-indicator/volume-indicator';
 
-export function VideoInputIndicators() {
+export function VideoInputIndicators({
+  variant = 'default',
+}: {
+  variant?: 'default' | 'minimal';
+} = {}) {
   return (
     <>
       <StatusAnnouncer />
       <div className="pointer-events-none absolute inset-0 grid grid-cols-3 items-center justify-items-center text-white">
-        <VolumeIndicator />
-        <StatusIndicator />
+        <VolumeIndicator variant={variant} />
+        <StatusIndicator variant={variant} />
         <SeekIndicator />
-        <PlaybackStatusIndicator />
+        <PlaybackStatusIndicator variant={variant} />
       </div>
     </>
   );

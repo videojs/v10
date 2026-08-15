@@ -99,6 +99,12 @@
       }
     }
 
+    .media-playback-status-indicator-minimal {
+      backdrop-filter: none;
+      background-color: #0000;
+      border-radius: 0;
+    }
+
     .media-seek-indicator {
       text-align: center;
       grid-row-start: 1;
@@ -205,6 +211,42 @@
       display: none;
     }
 
+    .media-status-indicator-minimal {
+      backdrop-filter: none;
+      padding-inline: 0.625rem;
+      inset-inline: 0;
+      background-color: #0000;
+      background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
+      border-radius: 0;
+      justify-content: center;
+      width: 100%;
+      padding-top: 0.75rem;
+      padding-bottom: 8rem;
+      top: 0;
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000;
+    }
+
+    .media-status-indicator-minimal:after {
+      content: '';
+      display: none;
+    }
+
+    .media-status-indicator-minimal[data-ending-style],
+    .media-status-indicator-minimal[data-starting-style] {
+      scale: 1;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .media-status-indicator-minimal[data-ending-style] {
+        translate: 0 -100%;
+      }
+    }
+
     .media-status-indicator-value {
       margin-left: auto;
     }
@@ -270,9 +312,57 @@
       display: flex;
     }
 
+    .media-volume-indicator-fill-minimal {
+      width: min(80%, 14rem);
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 0 1px var(--media-surface-border),
+        0 2px 8px var(--media-shadow-color);
+      background-color: oklab(0% none none / 0.25);
+    }
+
     .media-volume-indicator-icon {
       flex-shrink: 0;
       display: none;
+    }
+
+    .media-volume-indicator-minimal {
+      backdrop-filter: none;
+      padding-inline: 0.625rem;
+      inset-inline: 0;
+      background-color: #0000;
+      background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
+      border-radius: 0;
+      justify-content: center;
+      width: 100%;
+      padding-top: 0.75rem;
+      padding-bottom: 8rem;
+      top: 0;
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000;
+    }
+
+    .media-volume-indicator-minimal:after {
+      content: '';
+      display: none;
+    }
+
+    .media-volume-indicator-minimal[data-ending-style],
+    .media-volume-indicator-minimal[data-starting-style] {
+      scale: 1;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .media-volume-indicator-minimal[data-ending-style] {
+        translate: 0 -100%;
+      }
     }
 
     .media-volume-indicator-value {

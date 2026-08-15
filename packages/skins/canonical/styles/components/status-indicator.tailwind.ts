@@ -9,6 +9,11 @@ export default defineStyles({
       'data-starting-style:scale-90 data-starting-style:opacity-0',
       'data-ending-style:-translate-y-1/4 data-ending-style:scale-90 data-ending-style:opacity-0',
     ],
+    statusIndicatorMinimal: [
+      'inset-x-0 top-0 w-full justify-center rounded-none bg-transparent px-2.5 pt-3 pb-32 shadow-none [backdrop-filter:none] after:hidden',
+      '[background-image:linear-gradient(to_bottom,oklch(0_0_0/0.35),oklch(0_0_0/0.2)_3rem,transparent)]',
+      'data-starting-style:scale-100 data-ending-style:scale-100 motion-safe:data-ending-style:-translate-y-full',
+    ],
     statusIndicatorIcon: 'hidden shrink-0',
     statusIndicatorValue: 'ml-auto',
     statusCaptionsOnIcon: 'group-data-[status=captions-on]/input-status:block',
@@ -23,6 +28,7 @@ export default defineStyles({
       'data-ending-style:scale-[0.85] data-ending-style:opacity-0 data-ending-style:duration-100',
       'motion-reduce:duration-50',
     ],
+    playbackStatusIndicatorMinimal: 'rounded-none bg-transparent [backdrop-filter:none]',
     playbackStatusIcon: 'hidden size-[calc(var(--media-icon-size)*1.5)]',
     statusPlayIcon:
       'group-data-[status=play]/playback-status:block group-data-[status=play]/playback-status:translate-x-px',
