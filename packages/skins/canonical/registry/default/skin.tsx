@@ -3,6 +3,7 @@ import { FullscreenButton } from '@/components/videojs/fullscreen-button/fullscr
 import { PlayButton } from '@/components/videojs/play-button/play-button';
 import { VolumePopover } from '@/components/videojs/volume-popover/volume-popover';
 import { BufferingIndicator } from '@/components/videojs/buffering-indicator/buffering-indicator';
+import { ErrorDialog } from '@/components/videojs/error-dialog/error-dialog';
 import { Container } from '@/components/videojs/container/container';
 import { Overlay } from '@/components/videojs/overlay/overlay';
 import { Poster } from '@/components/videojs/poster/poster';
@@ -27,6 +28,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         />
       )}
       <BufferingIndicator />
+      <ErrorDialog />
 
       <Controls.Root className="absolute inset-x-media-controls-gap bottom-media-controls-gap z-10 flex items-center gap-media-controls-gap rounded-media-pill p-media-controls-padding font-media text-media leading-none text-media-controls bg-media-surface shadow-media-surface backdrop-blur-media-surface">
         <Tooltip.Provider>

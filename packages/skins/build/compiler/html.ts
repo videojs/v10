@@ -26,6 +26,15 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
     modules: ['@videojs/html/ui/controls'],
     elements: { 'Controls.Root': 'media-controls', 'Controls.Group': 'media-controls-group' },
   },
+  ErrorDialog: {
+    modules: ['@videojs/html/ui/error-dialog'],
+    elements: {
+      'ErrorDialogPrimitive.Popup': 'media-error-dialog',
+      'ErrorDialogPrimitive.Title': 'media-alert-dialog-title',
+      'ErrorDialogPrimitive.Description': 'media-alert-dialog-description',
+      'ErrorDialogPrimitive.Close': 'media-alert-dialog-close',
+    },
+  },
   FullscreenButton: {
     modules: ['@videojs/html/ui/fullscreen-button'],
     elements: { FullscreenButtonPrimitive: 'media-fullscreen-button' },
@@ -142,6 +151,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             containerPrimitiveClassName.replace(({ value }) => code.value.array([value, 'className'])),
             code.function('Container').setProps(['children', 'className']),
             code.jsx.element('Slot').replace('slot'),
+            code.jsx.element('ErrorDialogPrimitive.Root').unwrap(),
             code.jsx.element('OverlayPrimitive').replace('div'),
             code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
             code.jsx.element('Popover.Trigger').unwrap(),

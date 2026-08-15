@@ -1,6 +1,15 @@
 export const skinStyleDefinition = Symbol.for('@videojs/skins/style-definition');
 
-export const skinStyleRoles = ['buttons', 'container', 'controls', 'overlays', 'popups', 'poster', 'sliders'] as const;
+export const skinStyleRoles = [
+  'buttons',
+  'container',
+  'controls',
+  'dialog',
+  'overlays',
+  'popups',
+  'poster',
+  'sliders',
+] as const;
 
 export type SkinStyleRole = (typeof skinStyleRoles)[number];
 export type SkinStyleValue = string | readonly string[];

@@ -101,6 +101,13 @@ export const skinCatalog = {
       description: 'A delayed spinner displayed while media is waiting for data.',
     }),
     defineSkinComponent({
+      name: 'error-dialog',
+      type: 'component',
+      source: './components/feedback/error-dialog.tsx',
+      title: 'Error Dialog',
+      description: 'An alert dialog that presents and dismisses playback errors.',
+    }),
+    defineSkinComponent({
       name: 'fullscreen-button',
       type: 'component',
       source: './components/buttons/fullscreen-button.tsx',

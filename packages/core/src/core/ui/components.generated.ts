@@ -4,6 +4,7 @@ import { createComponent } from '@videojs/jsx';
 import BufferingIndicatorDef from './buffering-indicator/buffering-indicator-component';
 import ContainerDef from './container/container-component';
 import ControlsDef from './controls/controls-component';
+import ErrorDialogDef from './error-dialog/error-dialog-component';
 import FullscreenButtonDef from './fullscreen-button/fullscreen-button-component';
 import MuteButtonDef from './mute-button/mute-button-component';
 import PlayButtonDef from './play-button/play-button-component';
@@ -20,6 +21,7 @@ import VolumeSliderDef from './volume-slider/volume-slider-component';
 export const BufferingIndicator = createComponent(BufferingIndicatorDef);
 export const Container = createComponent(ContainerDef);
 export const Controls = createComponent(ControlsDef);
+export const ErrorDialog = createComponent(ErrorDialogDef);
 export const FullscreenButton = createComponent(FullscreenButtonDef);
 export const MuteButton = createComponent(MuteButtonDef);
 export const PlayButton = createComponent(PlayButtonDef);
@@ -37,6 +39,7 @@ export const COMPONENTS = {
   BufferingIndicator: BufferingIndicatorDef,
   Container: ContainerDef,
   Controls: ControlsDef,
+  ErrorDialog: ErrorDialogDef,
   FullscreenButton: FullscreenButtonDef,
   MuteButton: MuteButtonDef,
   PlayButton: PlayButtonDef,

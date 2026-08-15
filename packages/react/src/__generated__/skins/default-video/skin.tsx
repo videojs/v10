@@ -5,6 +5,7 @@ import { FullscreenButton } from './components/buttons/fullscreen-button';
 import { PlayButton } from './components/buttons/play-button';
 import { VolumePopover } from './components/controls/volume-popover';
 import { BufferingIndicator } from './components/feedback/buffering-indicator';
+import { ErrorDialog } from './components/feedback/error-dialog';
 import { Container } from './components/layout/container';
 import { Overlay } from './components/layout/overlay';
 import { Poster } from './components/layout/poster';
@@ -30,6 +31,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         />
       )}
       <BufferingIndicator />
+      <ErrorDialog />
 
       <Controls.Root className="media-controls">
         <Tooltip.Provider>

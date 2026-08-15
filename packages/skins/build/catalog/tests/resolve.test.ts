@@ -33,6 +33,7 @@ describe('resolveSkinCatalog', () => {
         dependencies: [
           'buffering-indicator',
           'container',
+          'error-dialog',
           'fullscreen-button',
           'overlay',
           'play-button',
@@ -41,6 +42,7 @@ describe('resolveSkinCatalog', () => {
           'volume-popover',
         ],
       },
+      { name: 'error-dialog', dependencies: [] },
       { name: 'fullscreen-button', dependencies: ['button-tooltip'] },
       { name: 'mute-button', dependencies: [] },
       { name: 'overlay', dependencies: [] },
@@ -56,6 +58,7 @@ describe('resolveSkinCatalog', () => {
     expect(closure.items.map((item) => item.name)).toEqual([
       'buffering-indicator',
       'container',
+      'error-dialog',
       'button-tooltip',
       'fullscreen-button',
       'overlay',
@@ -71,13 +74,14 @@ describe('resolveSkinCatalog', () => {
       './styles/components/buffering.tailwind.ts',
       './styles/components/button.tailwind.ts',
       './styles/components/container.tailwind.ts',
+      './styles/components/error-dialog.tailwind.ts',
       './styles/components/overlay.tailwind.ts',
       './styles/components/popup.tailwind.ts',
       './styles/components/poster.tailwind.ts',
       './styles/components/slider.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(12);
+    expect(closure.sourceFiles).toHaveLength(13);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 

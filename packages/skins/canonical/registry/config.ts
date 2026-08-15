@@ -25,6 +25,7 @@ export const skinRegistry = {
   items: [
     'buffering-indicator',
     'default-video',
+    'error-dialog',
     'fullscreen-button',
     'overlay',
     'play-button',

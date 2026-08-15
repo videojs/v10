@@ -2,6 +2,7 @@ import '../../../icons/element';
 import '../../../define/media/container';
 import '../../../define/ui/buffering-indicator';
 import '../../../define/ui/controls';
+import '../../../define/ui/error-dialog';
 import '../../../define/ui/fullscreen-button';
 import '../../../define/ui/mute-button';
 import '../../../define/ui/play-button';
@@ -19,6 +20,11 @@ export const skin = /* html */ `<media-container class="media-container media-sk
   <media-buffering-indicator class="media-buffering-indicator">
     <media-icon class="media-buffering-spinner-icon" name="spinner"></media-icon>
   </media-buffering-indicator>
+  <media-error-dialog class="media-surface media-error-dialog">
+    <media-alert-dialog-title class="media-error-dialog-title"></media-alert-dialog-title>
+    <media-alert-dialog-description class="media-error-dialog-description"></media-alert-dialog-description>
+    <media-alert-dialog-close class="media-button media-error-dialog-close"></media-alert-dialog-close>
+  </media-error-dialog>
   <media-controls class="media-controls">
     <media-tooltip-group>
       <media-controls-group class="media-controls-group-primary">
