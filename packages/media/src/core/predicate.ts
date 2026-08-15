@@ -53,6 +53,17 @@ export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapabi
   return !isUndefined(media.volume) && !isUndefined(media.muted);
 }
 
+/**
+ * Whether the media reports a mute at all, which is a narrower question than
+ * `isMediaVolumeCapable`: an embed can take a mute command while offering no way
+ * to set a level.
+ */
+export function isMediaMutedCapable(value: unknown): value is Pick<MediaVolumeCapability, 'muted'> {
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.muted);
+}
+
 export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlaybackRateCapability {
   if (!isObject(value)) return false;
   const media = value as Record<string, unknown>;
