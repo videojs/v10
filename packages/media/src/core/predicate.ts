@@ -8,6 +8,7 @@ import type {
   MediaErrorCapability,
   MediaLiveCapability,
   MediaPauseCapability,
+  MediaPictureInPictureCapability,
   MediaPlaybackRateCapability,
   MediaRemotePlaybackCapability,
   MediaSeekCapability,
@@ -56,6 +57,17 @@ export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlayba
   if (!isObject(value)) return false;
   const media = value as Record<string, unknown>;
   return !isUndefined(media.playbackRate);
+}
+
+/**
+ * Only `requestPictureInPicture` is required. A native video element carries it
+ * but leaves exiting to `document`, so demanding the pair would rule out the one
+ * media that most certainly can.
+ */
+export function isMediaPictureInPictureCapable(value: unknown): value is MediaPictureInPictureCapability {
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return isFunction(media.requestPictureInPicture);
 }
 
 export function isMediaBufferCapable(value: unknown): value is MediaBufferCapability {
