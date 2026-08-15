@@ -20,6 +20,7 @@ describe('createFrameworkSkin', () => {
     const timeSlider = content(output, 'react', 'components/sliders/time-slider.tsx');
     const settingsMenu = content(output, 'react', 'components/menus/settings-menu.tsx');
     const qualityMenu = content(output, 'react', 'components/menus/quality-settings-menu.tsx');
+    const inputBindings = content(output, 'react', 'components/input/video-input-bindings.tsx');
 
     expect(files.map((file) => file.fileName)).toEqual([
       'components/buttons/airplay-button.tsx',
@@ -38,6 +39,7 @@ describe('createFrameworkSkin', () => {
       'components/feedback/status-indicator.tsx',
       'components/feedback/video-input-indicators.tsx',
       'components/feedback/volume-indicator.tsx',
+      'components/input/video-input-bindings.tsx',
       'components/layout/container.tsx',
       'components/layout/overlay.tsx',
       'components/layout/poster.tsx',
@@ -71,6 +73,8 @@ describe('createFrameworkSkin', () => {
     expect(qualityMenu).toContain('renderItem={(props, item) =>');
     expect(qualityMenu).toContain('{item.tier ? <sup');
     expect(qualityMenu).not.toContain('<Template');
+    expect(inputBindings.match(/<Hotkey /g)).toHaveLength(17);
+    expect(inputBindings.match(/<Gesture /g)).toHaveLength(5);
     expect(container).toContain('export function Container');
     expect(container).toContain('ContainerProps');
     expect(container).toContain('<ContainerPrimitive {...props}');
@@ -149,6 +153,8 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain("import '@videojs/html/ui/status-indicator'");
     expect(html).toContain("import '@videojs/html/ui/time-slider-chapters'");
     expect(html).toContain("import '@videojs/html/ui/quality-radio-group'");
+    expect(html).toContain("import '@videojs/html/ui/hotkey'");
+    expect(html).toContain("import '@videojs/html/ui/gesture'");
     expect(html).toContain("import '@videojs/html/ui/volume-indicator'");
     expect(html).toContain('export const skin = /* html */ `<media-container');
     expect(html).toContain('class="media-container media-skin media-skin-video media-theme-default"');
@@ -173,6 +179,8 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('id="settings-quality-menu"');
     expect(html).toContain('<media-quality-radio-group class="media-group">');
     expect(html).toContain('<span data-part="label"></span>');
+    expect(html.match(/<media-hotkey /g)).toHaveLength(17);
+    expect(html.match(/<media-gesture /g)).toHaveLength(5);
     expect(html).toContain('<media-time-slider class="media-slider">');
     expect(html).toContain('<media-time-slider-chapters class="media-slider-chapters">');
     expect(html).toContain('<template>');

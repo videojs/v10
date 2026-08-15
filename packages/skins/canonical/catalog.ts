@@ -230,5 +230,12 @@ export const skinCatalog = {
       title: 'Video Settings Menu',
       description: 'Nested video quality, audio track, playback rate, and captions settings menus.',
     }),
+    defineSkinComponent({
+      name: 'video-input-bindings',
+      type: 'component',
+      source: './components/input/video-input-bindings.tsx',
+      title: 'Video Input Bindings',
+      description: 'The standard keyboard and pointer bindings for on-demand video playback.',
+    }),
   ],
 } as const satisfies SkinCatalog;

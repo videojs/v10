@@ -52,6 +52,14 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
     modules: ['@videojs/html/ui/fullscreen-button'],
     elements: { FullscreenButtonPrimitive: 'media-fullscreen-button' },
   },
+  Gesture: {
+    modules: ['@videojs/html/ui/gesture'],
+    elements: { Gesture: 'media-gesture' },
+  },
+  Hotkey: {
+    modules: ['@videojs/html/ui/hotkey'],
+    elements: { Hotkey: 'media-hotkey' },
+  },
   MuteButton: {
     modules: ['@videojs/html/ui/mute-button'],
     elements: { MuteButtonPrimitive: 'media-mute-button' },

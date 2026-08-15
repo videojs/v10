@@ -10,6 +10,8 @@ import '../../../define/ui/cast-button';
 import '../../../define/ui/controls';
 import '../../../define/ui/error-dialog';
 import '../../../define/ui/fullscreen-button';
+import '../../../define/ui/gesture';
+import '../../../define/ui/hotkey';
 import '../../../define/ui/menu';
 import '../../../define/ui/mute-button';
 import '../../../define/ui/pip-button';
@@ -263,6 +265,28 @@ export const skin = /* html */ `<media-container class="media-container media-sk
     </media-tooltip-group>
   </media-controls>
   <div class="media-overlay"></div>
+  <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+  <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+  <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+  <media-hotkey keys="f" action="toggleFullscreen"></media-hotkey>
+  <media-hotkey keys="c" action="toggleSubtitles"></media-hotkey>
+  <media-hotkey keys="i" action="togglePictureInPicture"></media-hotkey>
+  <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+  <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+  <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
+  <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
+  <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+  <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+  <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
+  <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
+  <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
+  <media-hotkey keys="&gt;" action="speedUp"></media-hotkey>
+  <media-hotkey keys="&lt;" action="speedDown"></media-hotkey>
+  <media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
+  <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
+  <media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
+  <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
+  <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
   <media-status-announcer class="media-status-announcer"></media-status-announcer>
   <div class="media-input-indicator-overlay">
     <media-volume-indicator class="media-volume-indicator">

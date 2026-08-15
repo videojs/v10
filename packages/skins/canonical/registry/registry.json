@@ -145,6 +145,11 @@
       "description": "A video skin with play, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.",
       "files": [
         {
+          "path": "canonical/registry/default/components/video-input-bindings/video-input-bindings.tsx",
+          "target": "components/videojs/video-input-bindings/video-input-bindings.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "canonical/registry/default/components/video-settings-menu/audio-track-settings-menu.tsx",
           "target": "components/videojs/video-settings-menu/audio-track-settings-menu.tsx",
           "type": "registry:component"

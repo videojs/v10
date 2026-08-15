@@ -19,6 +19,8 @@ export * from './ui/error-dialog/error-dialog-data-attrs';
 export * from './ui/error-dialog/error-dialog-i18n';
 export * from './ui/fullscreen-button/fullscreen-button-core';
 export * from './ui/fullscreen-button/fullscreen-button-data-attrs';
+export * from './ui/gesture/gesture-core';
+export * from './ui/hotkey/hotkey-core';
 export * from './ui/indicator/indicator-labels';
 export * from './ui/indicator/indicator-lifecycle';
 export * from './ui/input-action/input-action';

@@ -11,6 +11,8 @@ import ContainerDef from './container/container-component';
 import ControlsDef from './controls/controls-component';
 import ErrorDialogDef from './error-dialog/error-dialog-component';
 import FullscreenButtonDef from './fullscreen-button/fullscreen-button-component';
+import GestureDef from './gesture/gesture-component';
+import HotkeyDef from './hotkey/hotkey-component';
 import MenuDef from './menu/menu-component';
 import MuteButtonDef from './mute-button/mute-button-component';
 import PiPButtonDef from './pip-button/pip-button-component';
@@ -41,6 +43,8 @@ export const Container = createComponent(ContainerDef);
 export const Controls = createComponent(ControlsDef);
 export const ErrorDialog = createComponent(ErrorDialogDef);
 export const FullscreenButton = createComponent(FullscreenButtonDef);
+export const Gesture = createComponent(GestureDef);
+export const Hotkey = createComponent(HotkeyDef);
 export const Menu = createComponent(MenuDef);
 export const MuteButton = createComponent(MuteButtonDef);
 export const PiPButton = createComponent(PiPButtonDef);
@@ -72,6 +76,8 @@ export const COMPONENTS = {
   Controls: ControlsDef,
   ErrorDialog: ErrorDialogDef,
   FullscreenButton: FullscreenButtonDef,
+  Gesture: GestureDef,
+  Hotkey: HotkeyDef,
   Menu: MenuDef,
   MuteButton: MuteButtonDef,
   PiPButton: PiPButtonDef,

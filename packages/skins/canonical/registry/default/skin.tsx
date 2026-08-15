@@ -9,6 +9,7 @@ import { VolumePopover } from '@/components/videojs/volume-popover/volume-popove
 import { BufferingIndicator } from '@/components/videojs/buffering-indicator/buffering-indicator';
 import { ErrorDialog } from '@/components/videojs/error-dialog/error-dialog';
 import { VideoInputIndicators } from './internal/components/feedback/video-input-indicators';
+import { VideoInputBindings } from '@/components/videojs/video-input-bindings/video-input-bindings';
 import { Container } from '@/components/videojs/container/container';
 import { Overlay } from '@/components/videojs/overlay/overlay';
 import { Poster } from '@/components/videojs/poster/poster';
@@ -61,6 +62,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       </Controls.Root>
 
       <Overlay />
+      <VideoInputBindings />
       <VideoInputIndicators />
     </Container>
   );
