@@ -1,5 +1,6 @@
 import '../../../icons/element';
 import '../../../define/media/container';
+import '../../../define/ui/buffering-indicator';
 import '../../../define/ui/controls';
 import '../../../define/ui/fullscreen-button';
 import '../../../define/ui/mute-button';
@@ -15,6 +16,9 @@ import '../../../define/ui/volume-slider';
 export const skin = /* html */ `<media-container class="media-container media-skin media-skin-video media-theme-default">
   <slot></slot>
   <media-poster class="media-poster"><slot name="poster"></slot></media-poster>
+  <media-buffering-indicator class="media-buffering-indicator">
+    <media-icon class="media-buffering-spinner-icon" name="spinner"></media-icon>
+  </media-buffering-indicator>
   <media-controls class="media-controls">
     <media-tooltip-group>
       <media-controls-group class="media-controls-group-primary">

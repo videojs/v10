@@ -24,6 +24,7 @@ describe('createFrameworkSkin', () => {
       'components/buttons/mute-button.tsx',
       'components/buttons/play-button.tsx',
       'components/controls/volume-popover.tsx',
+      'components/feedback/buffering-indicator.tsx',
       'components/layout/container.tsx',
       'components/layout/overlay.tsx',
       'components/layout/poster.tsx',
@@ -32,6 +33,7 @@ describe('createFrameworkSkin', () => {
       'skin.tsx',
     ]);
     expect(skin).toContain('from "./components/buttons/play-button"');
+    expect(skin).toContain('from "./components/feedback/buffering-indicator"');
     expect(skin).toContain('export interface DefaultVideoSkinProps extends Omit<ContainerProps');
     expect(skin).toContain('<Container {...containerProps}');
     expect(skin).toContain('{children}');
@@ -83,6 +85,7 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/container.css')).toContain('.media-container {');
     expect(style(output, 'styles/container.css')).not.toContain('.media-overlay {');
     expect(style(output, 'styles/overlays.css')).toContain('.media-overlay {');
+    expect(style(output, 'styles/overlays.css')).toContain('.media-buffering-indicator {');
     expect(style(output, 'styles/poster.css')).toContain('.media-poster {');
     expect(style(output, 'styles/theme.css')).toContain('.media-theme-default {');
     expect(style(output, 'styles/theme.css')).not.toContain('@scope');
@@ -103,10 +106,12 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain("import '@videojs/html/icons/element'");
     expect(html).toContain("import '@videojs/html/media/container'");
     expect(html).toContain("import '@videojs/html/ui/poster'");
+    expect(html).toContain("import '@videojs/html/ui/buffering-indicator'");
     expect(html).toContain('export const skin = /* html */ `<media-container');
     expect(html).toContain('class="media-container media-skin media-skin-video media-theme-default"');
     expect(html).toContain('<slot></slot>');
     expect(html).toContain('<media-poster class="media-poster"><slot name="poster"></slot></media-poster>');
+    expect(html).toContain('<media-buffering-indicator class="media-buffering-indicator">');
     expect(html).toContain('<div class="media-overlay"></div>');
     expect(html).toContain('<media-play-button class="media-button media-play-button">');
     expect(html).not.toContain('media-seek-button');

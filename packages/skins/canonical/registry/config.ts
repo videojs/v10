@@ -23,6 +23,7 @@ export const skinRegistry = {
   framework: 'react',
   style: 'tailwind',
   items: [
+    'buffering-indicator',
     'default-video',
     'fullscreen-button',
     'overlay',

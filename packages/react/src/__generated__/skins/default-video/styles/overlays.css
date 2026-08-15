@@ -1,5 +1,29 @@
 @layer videojs.components {
   @scope (.media-skin-video) {
+    .media-buffering-indicator {
+      pointer-events: none;
+      z-index: 10;
+      color: #fff;
+      place-content: center;
+      display: none;
+      position: absolute;
+      inset: 0;
+    }
+
+    .media-buffering-indicator:not([data-visible]) {
+      --media-spinner-animation: none;
+    }
+
+    .media-buffering-indicator[data-visible] {
+      display: grid;
+    }
+
+    .media-buffering-spinner-icon {
+      width: var(--media-icon-size);
+      height: var(--media-icon-size);
+      filter: drop-shadow(0 1px 0 var(--media-shadow-color));
+    }
+
     .media-overlay {
       pointer-events: none;
       border-radius: inherit;

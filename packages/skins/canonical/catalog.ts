@@ -94,6 +94,13 @@ export const skinCatalog = {
       description: 'The video poster and its presentation styling shared by Skin compositions.',
     }),
     defineSkinComponent({
+      name: 'buffering-indicator',
+      type: 'component',
+      source: './components/feedback/buffering-indicator.tsx',
+      title: 'Buffering Indicator',
+      description: 'A delayed spinner displayed while media is waiting for data.',
+    }),
+    defineSkinComponent({
       name: 'fullscreen-button',
       type: 'component',
       source: './components/buttons/fullscreen-button.tsx',

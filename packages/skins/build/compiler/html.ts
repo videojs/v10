@@ -14,6 +14,10 @@ interface HtmlComponentDescriptor {
 }
 
 const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
+  BufferingIndicator: {
+    modules: ['@videojs/html/ui/buffering-indicator'],
+    elements: { BufferingIndicatorPrimitive: 'media-buffering-indicator' },
+  },
   Container: {
     modules: ['@videojs/html/media/container'],
     elements: { ContainerPrimitive: 'media-container' },

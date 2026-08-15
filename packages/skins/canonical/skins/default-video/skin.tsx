@@ -3,6 +3,7 @@ import { Slot } from '@videojs/jsx';
 import { FullscreenButton } from '../../components/buttons/fullscreen-button';
 import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
+import { BufferingIndicator } from '../../components/feedback/buffering-indicator';
 import { Container } from '../../components/layout/container';
 import { Overlay } from '../../components/layout/overlay';
 import { Poster } from '../../components/layout/poster';
@@ -14,6 +15,7 @@ export function DefaultVideoSkin() {
     <Container>
       <Slot />
       <Poster />
+      <BufferingIndicator />
 
       <Controls.Root className={styles.controls}>
         <Tooltip.Provider>

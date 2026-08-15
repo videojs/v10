@@ -18,6 +18,10 @@ describe('resolveSkinCatalog', () => {
     const resolved = await loadSkinCatalog();
     expect(resolved.items).toMatchObject([
       {
+        name: 'buffering-indicator',
+        dependencies: [],
+      },
+      {
         name: 'button-tooltip',
         dependencies: [],
       },
@@ -27,6 +31,7 @@ describe('resolveSkinCatalog', () => {
         scopeClass: 'media-skin-video',
         theme: 'default',
         dependencies: [
+          'buffering-indicator',
           'container',
           'fullscreen-button',
           'overlay',
@@ -49,6 +54,7 @@ describe('resolveSkinCatalog', () => {
 
     const closure = resolveSkinClosure(resolved, 'default-video');
     expect(closure.items.map((item) => item.name)).toEqual([
+      'buffering-indicator',
       'container',
       'button-tooltip',
       'fullscreen-button',
@@ -62,6 +68,7 @@ describe('resolveSkinCatalog', () => {
       'default-video',
     ]);
     expect(closure.styleFiles).toEqual([
+      './styles/components/buffering.tailwind.ts',
       './styles/components/button.tailwind.ts',
       './styles/components/container.tailwind.ts',
       './styles/components/overlay.tailwind.ts',
@@ -70,7 +77,7 @@ describe('resolveSkinCatalog', () => {
       './styles/components/slider.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(11);
+    expect(closure.sourceFiles).toHaveLength(12);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 
