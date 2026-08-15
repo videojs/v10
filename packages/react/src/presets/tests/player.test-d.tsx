@@ -14,14 +14,14 @@ import { usePlayer as useVideoPlayer, VideoPlayer } from '../video/player';
 
 describe('preset players', () => {
   it('exposes each preset player with its inferred configuration props', () => {
-    <VideoPlayer contentTitle="Video title">Video</VideoPlayer>;
-    <AudioPlayer contentTitle="Audio title">Audio</AudioPlayer>;
-    <LiveVideoPlayer contentTitle="Live video title">Live video</LiveVideoPlayer>;
-    <LiveAudioPlayer contentTitle="Live audio title">Live audio</LiveAudioPlayer>;
+    <VideoPlayer title="Video title">Video</VideoPlayer>;
+    <AudioPlayer title="Audio title">Audio</AudioPlayer>;
+    <LiveVideoPlayer title="Live video title">Live video</LiveVideoPlayer>;
+    <LiveAudioPlayer title="Live audio title">Live audio</LiveAudioPlayer>;
     <BackgroundVideoPlayer>Background video</BackgroundVideoPlayer>;
 
     // @ts-expect-error Background video does not include the metadata feature.
-    <BackgroundVideoPlayer contentTitle="Background title">Background video</BackgroundVideoPlayer>;
+    <BackgroundVideoPlayer title="Background title">Background video</BackgroundVideoPlayer>;
 
     // @ts-expect-error Preset players are components, not createPlayer result objects.
     VideoPlayer.Provider;
