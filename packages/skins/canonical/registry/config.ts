@@ -35,9 +35,13 @@ export const skinRegistry = {
     'play-button',
     'poster',
     'seek-button',
+    'seek-indicator',
+    'status-announcer',
+    'status-indicator',
     'container',
     'time-slider',
     'volume-popover',
+    'volume-indicator',
     'volume-slider',
   ],
 } as const satisfies SkinRegistryConfig;

@@ -45,7 +45,11 @@ describe('resolveSkinCatalog', () => {
           'pip-button',
           'play-button',
           'poster',
+          'seek-indicator',
+          'status-announcer',
+          'status-indicator',
           'time-slider',
+          'volume-indicator',
           'volume-popover',
         ],
       },
@@ -57,7 +61,11 @@ describe('resolveSkinCatalog', () => {
       { name: 'play-button', dependencies: ['button-tooltip'] },
       { name: 'poster', dependencies: [] },
       { name: 'seek-button', dependencies: ['button-tooltip'] },
+      { name: 'seek-indicator', dependencies: [] },
+      { name: 'status-announcer', dependencies: [] },
+      { name: 'status-indicator', dependencies: [] },
       { name: 'time-slider', dependencies: [] },
+      { name: 'volume-indicator', dependencies: [] },
       { name: 'volume-popover', dependencies: ['mute-button', 'volume-slider'] },
       { name: 'volume-slider', dependencies: [] },
     ]);
@@ -76,7 +84,11 @@ describe('resolveSkinCatalog', () => {
       'pip-button',
       'play-button',
       'poster',
+      'seek-indicator',
+      'status-announcer',
+      'status-indicator',
       'time-slider',
+      'volume-indicator',
       'mute-button',
       'volume-slider',
       'volume-popover',
@@ -87,13 +99,18 @@ describe('resolveSkinCatalog', () => {
       './styles/components/button.tailwind.ts',
       './styles/components/container.tailwind.ts',
       './styles/components/error-dialog.tailwind.ts',
+      './styles/components/input-indicator-overlay.tailwind.ts',
       './styles/components/overlay.tailwind.ts',
       './styles/components/popup.tailwind.ts',
       './styles/components/poster.tailwind.ts',
+      './styles/components/seek-indicator.tailwind.ts',
       './styles/components/slider.tailwind.ts',
+      './styles/components/status-announcer.tailwind.ts',
+      './styles/components/status-indicator.tailwind.ts',
+      './styles/components/volume-indicator.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(17);
+    expect(closure.sourceFiles).toHaveLength(22);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 

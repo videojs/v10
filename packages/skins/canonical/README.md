@@ -26,6 +26,11 @@ The current authored paths are:
 - `components/controls/volume-popover.tsx`
 - `components/feedback/buffering-indicator.tsx`
 - `components/feedback/error-dialog.tsx`
+- `components/feedback/seek-indicator.tsx`
+- `components/feedback/status-announcer.tsx`
+- `components/feedback/status-indicator.tsx`
+- `components/feedback/volume-indicator.tsx`
+- `components/feedback/video-input-indicators.tsx`
 - `components/layout/container.tsx`
 - `components/layout/overlay.tsx`
 - `components/layout/poster.tsx`

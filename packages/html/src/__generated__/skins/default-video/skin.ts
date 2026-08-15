@@ -12,10 +12,14 @@ import '../../../define/ui/pip-button';
 import '../../../define/ui/play-button';
 import '../../../define/ui/popover';
 import '../../../define/ui/poster';
+import '../../../define/ui/seek-indicator';
+import '../../../define/ui/status-announcer';
+import '../../../define/ui/status-indicator';
 import '../../../define/ui/time';
 import '../../../define/ui/time-slider';
 import '../../../define/ui/tooltip';
 import '../../../define/ui/tooltip-group';
+import '../../../define/ui/volume-indicator';
 import '../../../define/ui/volume-slider';
 
 export const skin = /* html */ `<media-container class="media-container media-skin media-skin-video media-theme-default">
@@ -125,4 +129,44 @@ export const skin = /* html */ `<media-container class="media-container media-sk
     </media-tooltip-group>
   </media-controls>
   <div class="media-overlay"></div>
+  <media-status-announcer class="media-status-announcer"></media-status-announcer>
+  <div class="media-input-indicator-overlay">
+    <media-volume-indicator class="media-volume-indicator">
+      <media-volume-indicator-fill class="media-volume-indicator-fill">
+        <media-icon
+          class="media-volume-indicator-icon media-volume-high-indicator-icon"
+          name="volume-high"
+        ></media-icon>
+        <media-icon class="media-volume-indicator-icon media-volume-low-indicator-icon" name="volume-low"></media-icon>
+        <media-icon class="media-volume-indicator-icon media-volume-off-indicator-icon" name="volume-off"></media-icon>
+        <media-volume-indicator-value class="media-volume-indicator-value"></media-volume-indicator-value>
+      </media-volume-indicator-fill>
+    </media-volume-indicator>
+    <media-status-indicator
+      actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"
+      class="media-status-indicator"
+    >
+      <media-icon class="media-status-indicator-icon media-status-captions-on-icon" name="captions-on"></media-icon>
+      <media-icon class="media-status-indicator-icon media-status-captions-off-icon" name="captions-off"></media-icon>
+      <media-icon
+        class="media-status-indicator-icon media-status-fullscreen-enter-icon"
+        name="fullscreen-enter"
+      ></media-icon>
+      <media-icon
+        class="media-status-indicator-icon media-status-fullscreen-exit-icon"
+        name="fullscreen-exit"
+      ></media-icon>
+      <media-icon class="media-status-indicator-icon media-status-pip-enter-icon" name="pip-enter"></media-icon>
+      <media-icon class="media-status-indicator-icon media-status-pip-exit-icon" name="pip-exit"></media-icon>
+      <media-status-indicator-value class="media-status-indicator-value"></media-status-indicator-value>
+    </media-status-indicator>
+    <media-seek-indicator class="media-seek-indicator">
+      <media-icon class="media-seek-indicator-icon" name="chevron"></media-icon>
+      <media-seek-indicator-value class="media-seek-indicator-value"></media-seek-indicator-value>
+    </media-seek-indicator>
+    <media-status-indicator actions="togglePaused" class="media-playback-status-indicator">
+      <media-icon class="media-playback-status-icon media-status-play-icon" name="play"></media-icon>
+      <media-icon class="media-playback-status-icon media-status-pause-icon" name="pause"></media-icon>
+    </media-status-indicator>
+  </div>
 </media-container>`;

@@ -140,6 +140,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             poster.jsx.element('PosterPrimitive').selfClosing(),
             code.variable('OverlayPrimitive').remove(),
             code.jsx.element('OverlayPrimitive').replace('div'),
+            code.variable('InputIndicatorOverlayPrimitive').remove(),
+            code.jsx.element('InputIndicatorOverlayPrimitive').replace('div'),
             code.jsx.element('Text').replace('span'),
             code.jsx.element('Slider.Thumbnail.Root').replace('div'),
             code.jsx.element('Slider.Thumbnail.Image').replace('Slider.Thumbnail'),

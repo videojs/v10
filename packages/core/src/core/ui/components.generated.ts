@@ -15,11 +15,15 @@ import PlayButtonDef from './play-button/play-button-component';
 import PopoverDef from './popover/popover-component';
 import PosterDef from './poster/poster-component';
 import SeekButtonDef from './seek-button/seek-button-component';
+import SeekIndicatorDef from './seek-indicator/seek-indicator-component';
 import SliderDef from './slider/slider-component';
+import StatusAnnouncerDef from './status-announcer/status-announcer-component';
+import StatusIndicatorDef from './status-indicator/status-indicator-component';
 import TextDef from './text/text-component';
 import TimeDef from './time/time-component';
 import TimeSliderDef from './time-slider/time-slider-component';
 import TooltipDef from './tooltip/tooltip-component';
+import VolumeIndicatorDef from './volume-indicator/volume-indicator-component';
 import VolumeSliderDef from './volume-slider/volume-slider-component';
 
 export const AirPlayButton = createComponent(AirPlayButtonDef);
@@ -36,11 +40,15 @@ export const PlayButton = createComponent(PlayButtonDef);
 export const Popover = createComponent(PopoverDef);
 export const Poster = createComponent(PosterDef);
 export const SeekButton = createComponent(SeekButtonDef);
+export const SeekIndicator = createComponent(SeekIndicatorDef);
 export const Slider = createComponent(SliderDef);
+export const StatusAnnouncer = createComponent(StatusAnnouncerDef);
+export const StatusIndicator = createComponent(StatusIndicatorDef);
 export const Text = createComponent(TextDef);
 export const Time = createComponent(TimeDef);
 export const TimeSlider = createComponent(TimeSliderDef);
 export const Tooltip = createComponent(TooltipDef);
+export const VolumeIndicator = createComponent(VolumeIndicatorDef);
 export const VolumeSlider = createComponent(VolumeSliderDef);
 
 export const COMPONENTS = {
@@ -58,11 +66,15 @@ export const COMPONENTS = {
   Popover: PopoverDef,
   Poster: PosterDef,
   SeekButton: SeekButtonDef,
+  SeekIndicator: SeekIndicatorDef,
   Slider: SliderDef,
+  StatusAnnouncer: StatusAnnouncerDef,
+  StatusIndicator: StatusIndicatorDef,
   Text: TextDef,
   Time: TimeDef,
   TimeSlider: TimeSliderDef,
   Tooltip: TooltipDef,
+  VolumeIndicator: VolumeIndicatorDef,
   VolumeSlider: VolumeSliderDef,
 } as const;
 

@@ -3,11 +3,12 @@ import { AirPlayButton } from '@/components/videojs/airplay-button/airplay-butto
 import { CaptionsButton } from '@/components/videojs/captions-button/captions-button';
 import { CastButton } from '@/components/videojs/cast-button/cast-button';
 import { FullscreenButton } from '@/components/videojs/fullscreen-button/fullscreen-button';
-import { PlayButton } from '@/components/videojs/play-button/play-button';
 import { PiPButton } from '@/components/videojs/pip-button/pip-button';
+import { PlayButton } from '@/components/videojs/play-button/play-button';
 import { VolumePopover } from '@/components/videojs/volume-popover/volume-popover';
 import { BufferingIndicator } from '@/components/videojs/buffering-indicator/buffering-indicator';
 import { ErrorDialog } from '@/components/videojs/error-dialog/error-dialog';
+import { VideoInputIndicators } from './internal/components/feedback/video-input-indicators';
 import { Container } from '@/components/videojs/container/container';
 import { Overlay } from '@/components/videojs/overlay/overlay';
 import { Poster } from '@/components/videojs/poster/poster';
@@ -58,6 +59,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       </Controls.Root>
 
       <Overlay />
+      <VideoInputIndicators />
     </Container>
   );
 }

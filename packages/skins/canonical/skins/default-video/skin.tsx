@@ -9,6 +9,7 @@ import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { BufferingIndicator } from '../../components/feedback/buffering-indicator';
 import { ErrorDialog } from '../../components/feedback/error-dialog';
+import { VideoInputIndicators } from '../../components/feedback/video-input-indicators';
 import { Container } from '../../components/layout/container';
 import { Overlay } from '../../components/layout/overlay';
 import { Poster } from '../../components/layout/poster';
@@ -47,6 +48,7 @@ export function DefaultVideoSkin() {
       </Controls.Root>
 
       <Overlay />
+      <VideoInputIndicators />
     </Container>
   );
 }

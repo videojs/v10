@@ -30,6 +30,11 @@ describe('createFrameworkSkin', () => {
       'components/controls/volume-popover.tsx',
       'components/feedback/buffering-indicator.tsx',
       'components/feedback/error-dialog.tsx',
+      'components/feedback/seek-indicator.tsx',
+      'components/feedback/status-announcer.tsx',
+      'components/feedback/status-indicator.tsx',
+      'components/feedback/video-input-indicators.tsx',
+      'components/feedback/volume-indicator.tsx',
       'components/layout/container.tsx',
       'components/layout/overlay.tsx',
       'components/layout/poster.tsx',
@@ -93,6 +98,7 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/container.css')).not.toContain('.media-overlay {');
     expect(style(output, 'styles/overlays.css')).toContain('.media-overlay {');
     expect(style(output, 'styles/overlays.css')).toContain('.media-buffering-indicator {');
+    expect(style(output, 'styles/overlays.css')).toContain('.media-input-indicator-overlay {');
     expect(style(output, 'styles/poster.css')).toContain('.media-poster {');
     expect(style(output, 'styles/theme.css')).toContain('.media-theme-default {');
     expect(style(output, 'styles/theme.css')).not.toContain('@scope');
@@ -119,6 +125,10 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain("import '@videojs/html/ui/cast-button'");
     expect(html).toContain("import '@videojs/html/ui/error-dialog'");
     expect(html).toContain("import '@videojs/html/ui/pip-button'");
+    expect(html).toContain("import '@videojs/html/ui/seek-indicator'");
+    expect(html).toContain("import '@videojs/html/ui/status-announcer'");
+    expect(html).toContain("import '@videojs/html/ui/status-indicator'");
+    expect(html).toContain("import '@videojs/html/ui/volume-indicator'");
     expect(html).toContain('export const skin = /* html */ `<media-container');
     expect(html).toContain('class="media-container media-skin media-skin-video media-theme-default"');
     expect(html).toContain('<slot></slot>');
@@ -128,6 +138,9 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('<media-cast-button class="media-button media-cast-button">');
     expect(html).toContain('<media-airplay-button class="media-button media-airplay-button">');
     expect(html).toContain('<media-pip-button class="media-button media-pip-button">');
+    expect(html).toContain('<div class="media-input-indicator-overlay">');
+    expect(html).toContain('actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"');
+    expect(html).toContain('<media-volume-indicator class="media-volume-indicator">');
     expect(html).toContain('<media-error-dialog class="media-surface media-error-dialog">');
     expect(html).toContain('<media-alert-dialog-title class="media-error-dialog-title">');
     expect(html).toContain('<div class="media-overlay"></div>');

@@ -75,11 +75,29 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
     modules: ['@videojs/html/ui/seek-button'],
     elements: { SeekButtonPrimitive: 'media-seek-button' },
   },
+  SeekIndicator: {
+    modules: ['@videojs/html/ui/seek-indicator'],
+    elements: {
+      'SeekIndicatorPrimitive.Root': 'media-seek-indicator',
+      'SeekIndicatorPrimitive.Value': 'media-seek-indicator-value',
+    },
+  },
   Slider: {
     modules: ['@videojs/html/ui/slider'],
     elements: {
       'Slider.Thumbnail.Root': 'div',
       'Slider.Thumbnail.Image': 'media-slider-thumbnail',
+    },
+  },
+  StatusAnnouncer: {
+    modules: ['@videojs/html/ui/status-announcer'],
+    elements: { StatusAnnouncerPrimitive: 'media-status-announcer' },
+  },
+  StatusIndicator: {
+    modules: ['@videojs/html/ui/status-indicator'],
+    elements: {
+      'StatusIndicatorPrimitive.Root': 'media-status-indicator',
+      'StatusIndicatorPrimitive.Value': 'media-status-indicator-value',
     },
   },
   Text: { modules: [], elements: { Text: 'span' } },
@@ -117,6 +135,14 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
       'VolumeSliderPrimitive.Thumb': 'media-slider-thumb',
     },
   },
+  VolumeIndicator: {
+    modules: ['@videojs/html/ui/volume-indicator'],
+    elements: {
+      'VolumeIndicatorPrimitive.Root': 'media-volume-indicator',
+      'VolumeIndicatorPrimitive.Fill': 'media-volume-indicator-fill',
+      'VolumeIndicatorPrimitive.Value': 'media-volume-indicator-value',
+    },
+  },
 };
 
 const componentTags = Object.fromEntries(
@@ -130,6 +156,7 @@ const iconNames = {
   CaptionsOnIcon: 'captions-on',
   CastEnterIcon: 'cast-enter',
   CastExitIcon: 'cast-exit',
+  ChevronIcon: 'chevron',
   FullscreenEnterIcon: 'fullscreen-enter',
   FullscreenExitIcon: 'fullscreen-exit',
   PauseIcon: 'pause',
@@ -177,6 +204,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.jsx.element('Slot').replace('slot'),
             code.jsx.element('ErrorDialogPrimitive.Root').unwrap(),
             code.jsx.element('OverlayPrimitive').replace('div'),
+            code.jsx.element('InputIndicatorOverlayPrimitive').replace('div'),
             code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
             code.jsx.element('Popover.Trigger').unwrap(),
             code.jsx.element('TooltipPrimitive.Root').unwrap({ forwardPropsTo: 'TooltipPrimitive.Popup' }),

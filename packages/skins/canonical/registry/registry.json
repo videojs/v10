@@ -145,6 +145,11 @@
       "description": "A video skin with play, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.",
       "files": [
         {
+          "path": "canonical/registry/default/internal/components/feedback/video-input-indicators.tsx",
+          "target": "components/videojs/internal/components/feedback/video-input-indicators.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "canonical/registry/default/skin.tsx",
           "target": "components/videojs/default-video/skin.tsx",
           "type": "registry:component"
@@ -178,7 +183,11 @@
         "@videojs/pip-button",
         "@videojs/play-button",
         "@videojs/poster",
+        "@videojs/seek-indicator",
+        "@videojs/status-announcer",
+        "@videojs/status-indicator",
         "@videojs/time-slider",
+        "@videojs/volume-indicator",
         "@videojs/volume-popover"
       ],
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
@@ -413,6 +422,96 @@
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
     },
     {
+      "name": "seek-indicator",
+      "type": "registry:component",
+      "title": "Seek Indicator",
+      "description": "Visual feedback for forward and backward seek actions.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/seek-indicator/seek-indicator.tsx",
+          "target": "components/videojs/seek-indicator/seek-indicator.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react"],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
+      "name": "status-announcer",
+      "type": "registry:component",
+      "title": "Status Announcer",
+      "description": "A polite live region that announces media state changes.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/status-announcer/status-announcer.tsx",
+          "target": "components/videojs/status-announcer/status-announcer.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react"],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
+      "name": "status-indicator",
+      "type": "registry:component",
+      "title": "Status Indicator",
+      "description": "Visual feedback for captions, fullscreen, picture-in-picture, and playback actions.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/status-indicator/status-indicator.tsx",
+          "target": "components/videojs/status-indicator/status-indicator.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react"],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
       "name": "container",
       "type": "registry:component",
       "title": "Container",
@@ -506,6 +605,36 @@
       ],
       "dependencies": ["@videojs/react"],
       "registryDependencies": ["@videojs/volume-slider"],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
+      "name": "volume-indicator",
+      "type": "registry:component",
+      "title": "Volume Indicator",
+      "description": "Visual feedback for mute and volume changes.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/volume-indicator/volume-indicator.tsx",
+          "target": "components/videojs/volume-indicator/volume-indicator.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react"],
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
     },
     {
