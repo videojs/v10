@@ -15,7 +15,6 @@ describe('createFrameworkSkin', () => {
     const playButton = content(output, 'react', 'components/buttons/play-button.tsx');
     const overlay = content(output, 'react', 'components/layout/overlay.tsx');
     const poster = content(output, 'react', 'components/layout/poster.tsx');
-    const seekButton = content(output, 'react', 'components/buttons/seek-button.tsx');
     const container = content(output, 'react', 'components/layout/container.tsx');
     const volumeSlider = content(output, 'react', 'components/sliders/volume-slider.tsx');
 
@@ -24,7 +23,6 @@ describe('createFrameworkSkin', () => {
       'components/buttons/fullscreen-button.tsx',
       'components/buttons/mute-button.tsx',
       'components/buttons/play-button.tsx',
-      'components/buttons/seek-button.tsx',
       'components/controls/volume-popover.tsx',
       'components/layout/container.tsx',
       'components/layout/overlay.tsx',
@@ -40,10 +38,9 @@ describe('createFrameworkSkin', () => {
     expect(skin).toContain('poster && <Poster');
     expect(skin).toContain('media-skin media-skin-video media-theme-default');
     expect(skin).not.toContain('className="media-surface');
+    expect(skin).not.toContain('SeekButton');
     expect(buttonTooltip).toContain('export interface ButtonTooltipProps extends TooltipPrimitive.RootProps');
     expect(playButton).toContain('export function PlayButton()');
-    expect(seekButton).toContain("import type { SeekButtonProps } from '@videojs/core'");
-    expect(seekButton).toContain('export function SeekButton(props: SeekButtonProps = {})');
     expect(volumeSlider).toContain('export function VolumeSlider(props: VolumeSliderProps = {})');
     expect(container).toContain('export function Container');
     expect(container).toContain('ContainerProps');
@@ -112,6 +109,8 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('<media-poster class="media-poster"><slot name="poster"></slot></media-poster>');
     expect(html).toContain('<div class="media-overlay"></div>');
     expect(html).toContain('<media-play-button class="media-button media-play-button">');
+    expect(html).not.toContain('media-seek-button');
+    expect(html).not.toContain('@videojs/html/ui/seek-button');
     expect(html).toContain('<media-tooltip side="top" class="media-surface media-tooltip">');
     expect(html).not.toContain('commandfor=');
     expect(html).not.toContain(' id=');

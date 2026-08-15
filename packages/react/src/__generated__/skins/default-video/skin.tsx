@@ -3,7 +3,6 @@ import { Time as TimePrimitive } from '@/ui/time';
 import { Tooltip } from '@/ui/tooltip';
 import { FullscreenButton } from './components/buttons/fullscreen-button';
 import { PlayButton } from './components/buttons/play-button';
-import { SeekButton } from './components/buttons/seek-button';
 import { VolumePopover } from './components/controls/volume-popover';
 import { Container } from './components/layout/container';
 import { Overlay } from './components/layout/overlay';
@@ -13,8 +12,6 @@ import { cn } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
 import type { ContainerProps } from '@/player/container';
 import type { PosterProps } from '@/ui/poster';
-
-const SEEK_SECONDS = 10;
 
 export interface DefaultVideoSkinProps extends Omit<ContainerProps, 'children'> {
   children?: ReactNode;
@@ -36,8 +33,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         <Tooltip.Provider>
           <Controls.Group className="media-controls-group-primary">
             <PlayButton />
-            <SeekButton seconds={-SEEK_SECONDS} />
-            <SeekButton seconds={SEEK_SECONDS} />
           </Controls.Group>
 
           <Controls.Group className="media-controls-group-time">

@@ -7,7 +7,7 @@
       "name": "default-video",
       "type": "registry:block",
       "title": "Default Video Skin",
-      "description": "A video skin with play, seek, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.",
+      "description": "A video skin with play, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.",
       "files": [
         {
           "path": "canonical/registry/default/skin.tsx",
@@ -37,7 +37,6 @@
         "@videojs/overlay",
         "@videojs/play-button",
         "@videojs/poster",
-        "@videojs/seek-button",
         "@videojs/time-slider",
         "@videojs/volume-popover"
       ],

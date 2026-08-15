@@ -6,7 +6,6 @@ import '../../../define/ui/mute-button';
 import '../../../define/ui/play-button';
 import '../../../define/ui/popover';
 import '../../../define/ui/poster';
-import '../../../define/ui/seek-button';
 import '../../../define/ui/time';
 import '../../../define/ui/time-slider';
 import '../../../define/ui/tooltip';
@@ -24,22 +23,6 @@ export const skin = /* html */ `<media-container class="media-container media-sk
           <media-icon class="media-button-icon media-play-icon" name="play"></media-icon>
           <media-icon class="media-button-icon media-pause-icon" name="pause"></media-icon>
         </media-play-button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-tooltip-label></media-tooltip-label>
-          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
-        </media-tooltip>
-        <media-seek-button class="media-button media-seek-button" seconds="-10">
-          <media-icon class="media-button-icon media-seek-backward-icon" name="seek"></media-icon>
-          <span class="media-seek-button-label">10</span>
-        </media-seek-button>
-        <media-tooltip side="top" class="media-surface media-tooltip">
-          <media-tooltip-label></media-tooltip-label>
-          <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
-        </media-tooltip>
-        <media-seek-button class="media-button media-seek-button" seconds="10">
-          <media-icon class="media-button-icon" name="seek"></media-icon>
-          <span class="media-seek-button-label">10</span>
-        </media-seek-button>
         <media-tooltip side="top" class="media-surface media-tooltip">
           <media-tooltip-label></media-tooltip-label>
           <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>

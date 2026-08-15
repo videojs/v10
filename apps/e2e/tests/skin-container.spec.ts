@@ -27,6 +27,7 @@ for (const { framework, path } of SOURCE_SKINS) {
       await expect(container.locator('media-poster, img.media-poster')).toBeAttached();
       await expect(container.locator('media-controls, .media-controls')).toBeAttached();
       await expect(container.locator('.media-overlay')).toBeAttached();
+      await expect(container.locator('media-seek-button, .media-seek-button')).toHaveCount(0);
 
       const placeholder = await container.evaluate((element) =>
         getComputedStyle(element).getPropertyValue('--media-poster-placeholder')

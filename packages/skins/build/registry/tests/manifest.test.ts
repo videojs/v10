@@ -11,7 +11,12 @@ describe('generateReactRegistry', () => {
     const output = await generateReactRegistry(catalog, {
       rootDir: canonicalRoot,
       sourceRoot: skinRegistry.sourceRoot,
-      itemNames: resolveSkinClosure(catalog, skinRegistry.skin).items.map((item) => item.name),
+      itemNames: [
+        ...new Set([
+          ...resolveSkinClosure(catalog, skinRegistry.skin).items.map((item) => item.name),
+          ...skinRegistry.items,
+        ]),
+      ],
     });
     const entry = output.items['play-button']?.find((file) => file.path.endsWith('/play-button.tsx'));
     const posterEntry = output.items.poster?.find((file) => file.path.endsWith('/poster.tsx'));
@@ -47,6 +52,10 @@ describe('generateReactRegistry', () => {
     expect(registry.items.find((item) => item.name === 'default-video')?.registryDependencies).toContain(
       '@videojs/poster'
     );
+    expect(registry.items.find((item) => item.name === 'default-video')?.registryDependencies).not.toContain(
+      '@videojs/seek-button'
+    );
+    expect(registry.items.find((item) => item.name === 'seek-button')).toBeDefined();
     expect(registry.items.find((item) => item.name === 'container')?.dependencies).toEqual([
       '@videojs/react',
       '@videojs/utils',

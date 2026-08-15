@@ -68,7 +68,7 @@ export const skinCatalog = {
       source: './skins/default-video/skin.tsx',
       title: 'Default Video Skin',
       description:
-        'A video skin with play, seek, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.',
+        'A video skin with play, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.',
     }),
   ],
   components: [

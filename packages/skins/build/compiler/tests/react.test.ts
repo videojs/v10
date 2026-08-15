@@ -119,6 +119,7 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).toContain('<Container {...containerProps}');
     expect(result.code).toContain('{children}');
     expect(result.code).toContain('poster && <Poster');
+    expect(result.code).not.toContain('SeekButton');
     expect(result.code).not.toContain('<Slot');
     expect(result.code).not.toContain('placeholder');
     expect(result.code).not.toContain('CSSProperties');

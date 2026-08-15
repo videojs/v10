@@ -32,7 +32,6 @@ describe('resolveSkinCatalog', () => {
           'overlay',
           'play-button',
           'poster',
-          'seek-button',
           'time-slider',
           'volume-popover',
         ],
@@ -56,7 +55,6 @@ describe('resolveSkinCatalog', () => {
       'overlay',
       'play-button',
       'poster',
-      'seek-button',
       'time-slider',
       'mute-button',
       'volume-slider',
@@ -72,7 +70,7 @@ describe('resolveSkinCatalog', () => {
       './styles/components/slider.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(12);
+    expect(closure.sourceFiles).toHaveLength(11);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 
