@@ -11,9 +11,17 @@ export {
   readJsxProp,
   readStringAttribute,
   replaceJsxPropValue,
+  singleJsxChildExpression,
   singleJsxElementChild,
   updateJsxAttributes,
 } from '../utils/jsx';
+export {
+  moveJsxChildToProp,
+  type ReplaceJsxElementTagOptions,
+  replaceJsxElementTag,
+  type SetJsxAttributeOptions,
+  setJsxAttribute,
+} from './edits';
 export { hasChild } from './matchers/has-child';
 export { anyTag, byTag, type JsxElementLike, type Matcher, tagName } from './matchers/tag';
 export { type AddPropImportRef, type AddPropOptions, addProp } from './transforms/add-prop';
@@ -30,12 +38,6 @@ export {
   type TemplatePartValueLowering,
   type TemplateRenderPropLowering,
 } from './transforms/lower-templates';
-export {
-  type DescriptorTextLowering,
-  type LowerTextOptions,
-  lowerText,
-  type TranslateTextLowering,
-} from './transforms/lower-text';
 export { type ReplaceOptions, replace } from './transforms/replace';
 export {
   type JsxChildReplacement,

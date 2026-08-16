@@ -3,11 +3,13 @@ import {
   anyTag,
   childAsProp,
   type ImportRef,
+  type JsxElementLike,
   lowerTemplateParts,
   lowerTemplates,
-  lowerText,
+  replaceJsxElementTag,
+  singleJsxChildExpression,
 } from '@videojs/compiler/ast';
-import type { Expression } from 'typescript';
+import ts, { type Expression } from 'typescript';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -83,16 +85,6 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
         target: options.style,
         composeClassNames: options.composeClassNames,
       }),
-      {
-        name: '@videojs/skins:react-text',
-        setup: () => ({
-          transform: lowerText({
-            targetTag: 'span',
-            descriptors: ['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText'],
-            lowering: { kind: 'translate', translator: 't' },
-          }),
-        }),
-      },
       {
         name: '@videojs/skins:react-template-parts',
         setup: () => ({
@@ -755,7 +747,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             code.jsx.element('HintPrimitive').replace('span'),
             code.variable('OptionLabelPrimitive').remove(),
             code.jsx.element('OptionLabelPrimitive').replace('span'),
-            code.jsx.element('Text').replace('span'),
+            code.jsx.element('Text').replace(({ element, factory }) => lowerReactText(element, factory)),
             code.jsx.element('Slider.Thumbnail.Root').replace('div'),
             code.jsx.element('Slider.Thumbnail.Image').replace('Slider.Thumbnail'),
             code.jsx
@@ -791,6 +783,30 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
       ),
     ],
   });
+}
+
+const textDescriptors = new Set(['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText']);
+
+function lowerReactText(element: JsxElementLike, factory: ts.NodeFactory): JsxElementLike {
+  const descriptor = readTextDescriptor(element);
+  return replaceJsxElementTag(element, factory.createIdentifier('span'), factory, {
+    ...(descriptor
+      ? {
+          children: [
+            factory.createJsxExpression(
+              undefined,
+              factory.createCallExpression(factory.createIdentifier('t'), undefined, [descriptor])
+            ),
+          ],
+        }
+      : {}),
+  });
+}
+
+function readTextDescriptor(element: JsxElementLike): ts.Identifier | undefined {
+  if (!ts.isJsxElement(element)) return undefined;
+  const child = singleJsxChildExpression(element.children);
+  return child && ts.isIdentifier(child) && textDescriptors.has(child.text) ? child : undefined;
 }
 
 function requiredReactImport(resolveImport: (reference: ImportRef) => ImportRef | false, name: string): ImportRef {

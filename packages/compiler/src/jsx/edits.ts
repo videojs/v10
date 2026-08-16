@@ -8,11 +8,11 @@ import {
   updateJsxAttributes,
 } from '../utils/jsx';
 
-interface SetJsxAttributeOptions {
+export interface SetJsxAttributeOptions {
   overwrite?: boolean | undefined;
 }
 
-interface ReplaceJsxElementTagOptions {
+export interface ReplaceJsxElementTagOptions {
   attributes?: ts.JsxAttributes | undefined;
   children?: readonly ts.JsxChild[] | undefined;
   preserveTypeArguments?: boolean | undefined;

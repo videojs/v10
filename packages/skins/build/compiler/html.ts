@@ -1,5 +1,13 @@
 import { defineConfig, html, rewrite } from '@videojs/compiler';
-import { lowerTemplateParts, lowerTemplates, lowerText } from '@videojs/compiler/ast';
+import {
+  type JsxElementLike,
+  lowerTemplateParts,
+  lowerTemplates,
+  replaceJsxElementTag,
+  setJsxAttribute,
+  singleJsxChildExpression,
+} from '@videojs/compiler/ast';
+import ts from 'typescript';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -236,16 +244,6 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
     plugins: [
       skinStyles({ manifest: styleTarget.styles, target: styleTarget.style }),
       {
-        name: '@videojs/skins:html-text',
-        setup: () => ({
-          transform: lowerText({
-            targetTag: 'media-text',
-            descriptors: ['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText'],
-            lowering: { kind: 'descriptor' },
-          }),
-        }),
-      },
-      {
         name: '@videojs/skins:html-template-parts',
         setup: () => ({
           transform: lowerTemplateParts({
@@ -349,6 +347,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.jsx.element('PreviewValuePrimitive').replace('div'),
             code.jsx.element('HintPrimitive').replace('span'),
             code.jsx.element('OptionLabelPrimitive').replace('span'),
+            code.jsx.element('Text').replace(({ element, factory }) => lowerHtmlText(element, factory)),
             code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
             code.jsx.element('Popover.Trigger').unwrap(),
             code.jsx.element('TooltipPrimitive.Root').unwrap({ forwardPropsTo: 'TooltipPrimitive.Popup' }),
@@ -390,6 +389,44 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
       ),
     ],
   });
+}
+
+const textDescriptors = new Set(['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText']);
+
+function lowerHtmlText(element: JsxElementLike, factory: ts.NodeFactory): JsxElementLike {
+  const descriptor = readTextDescriptor(element);
+  let next = element;
+  if (descriptor) {
+    next =
+      setJsxAttribute(
+        next,
+        'token',
+        factory.createJsxAttribute(
+          factory.createIdentifier('token'),
+          factory.createJsxExpression(undefined, factory.createPropertyAccessExpression(descriptor, 'key'))
+        ),
+        factory
+      ) ?? next;
+  }
+
+  return replaceJsxElementTag(next, factory.createIdentifier('media-text'), factory, {
+    ...(descriptor
+      ? {
+          children: [
+            factory.createJsxExpression(
+              undefined,
+              factory.createPropertyAccessExpression(descriptor, factory.createIdentifier('text'))
+            ),
+          ],
+        }
+      : {}),
+  });
+}
+
+function readTextDescriptor(element: JsxElementLike): ts.Identifier | undefined {
+  if (!ts.isJsxElement(element)) return undefined;
+  const child = singleJsxChildExpression(element.children);
+  return child && ts.isIdentifier(child) && textDescriptors.has(child.text) ? child : undefined;
 }
 
 const markupElementModules = {
