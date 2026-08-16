@@ -1,6 +1,6 @@
 # Canonical Skin source
 
-This directory contains the next source root for source-owned Video.js UI. It remains isolated from `../src`, which still feeds the currently published package build until generated output proves parity.
+This directory contains the framework-neutral source for generated Video.js skins and components. The existing package skins under `../src` remain separate while the canonical projections reach parity.
 
 Canonical source:
 
@@ -11,30 +11,6 @@ Canonical source:
 - Imports named Tailwind utility tokens from locally owned style modules.
 - Does not copy Media, Store, feature, or SVG implementations.
 
-The current authored paths are:
+`catalog.ts` is the authoritative inventory of public skins, components, dependencies, and shared style resources. Supporting relative modules remain private to their importing catalog entry.
 
-- `skins/default-video/skin.tsx`
-- `components/buttons/airplay-button.tsx`
-- `components/buttons/button-tooltip.tsx`
-- `components/buttons/captions-button.tsx`
-- `components/buttons/cast-button.tsx`
-- `components/buttons/fullscreen-button.tsx`
-- `components/buttons/mute-button.tsx`
-- `components/buttons/play-button.tsx`
-- `components/buttons/pip-button.tsx`
-- `components/buttons/seek-button.tsx`
-- `components/controls/volume-popover.tsx`
-- `components/feedback/buffering-indicator.tsx`
-- `components/feedback/error-dialog.tsx`
-- `components/feedback/seek-indicator.tsx`
-- `components/feedback/status-announcer.tsx`
-- `components/feedback/status-indicator.tsx`
-- `components/feedback/volume-indicator.tsx`
-- `components/feedback/video-input-indicators.tsx`
-- `components/layout/container.tsx`
-- `components/layout/overlay.tsx`
-- `components/layout/poster.tsx`
-- `components/sliders/volume-slider.tsx`
-- `components/sliders/time-slider.tsx`
-
-Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. Registered source entries form catalog dependencies, while other relative modules remain private to the importing item and are emitted with it. The Tailwind v4 input maps semantic utilities to media variables, so the same source can produce editable registry utilities or role-based vanilla CSS. `catalog.ts` owns the source catalog and shared resources, while `registry/config.ts` owns the complete React/Tailwind publication target and `registry/default` contains its generated projection.
+Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. Registered source entries form catalog dependencies, while other relative modules remain private to the importing item and are emitted with it. The Tailwind v4 input maps semantic utilities to media variables, so the same source can produce editable registry utilities or role-based vanilla CSS. `registry/config.ts` owns the complete React/Tailwind publication target; generated projections are build artifacts and are not tracked.
