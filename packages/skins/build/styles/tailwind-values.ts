@@ -53,6 +53,7 @@ function tailwindInitialValue(initial: ParsedComponent | null | undefined): read
   if (initial.type === 'integer') {
     return [{ type: 'token', value: { type: 'number', value: initial.value } }];
   }
+  return undefined;
 }
 
 export function inlinePrivateTailwindVariables(
@@ -265,8 +266,7 @@ function mergeDeclarationRules(rules: readonly Rule[]): Rule[] {
   for (const source of rules) {
     const rule = cloneCssAst(source);
     if (declarations && rule.type === 'nested-declarations') {
-      declarations.value.declarations.declarations.push(...rule.value.declarations.declarations);
-      declarations.value.declarations.importantDeclarations.push(...rule.value.declarations.importantDeclarations);
+      appendDeclarationBlock(declarations.value.declarations, rule.value.declarations);
       continue;
     }
     if (rule.type === 'nested-declarations') declarations = rule;
@@ -276,8 +276,10 @@ function mergeDeclarationRules(rules: readonly Rule[]): Rule[] {
       if (previous && previous.type === rule.type) {
         const target = previous.type === 'style' ? previous.value : previous.value.style;
         const incoming = rule.type === 'style' ? rule.value : rule.value.style;
-        target.declarations.declarations.push(...incoming.declarations.declarations);
-        target.declarations.importantDeclarations.push(...incoming.declarations.importantDeclarations);
+        if (incoming.declarations) {
+          target.declarations ??= {};
+          appendDeclarationBlock(target.declarations, incoming.declarations);
+        }
         target.rules = [...(target.rules ?? []), ...(incoming.rules ?? [])];
         continue;
       }
@@ -286,6 +288,15 @@ function mergeDeclarationRules(rules: readonly Rule[]): Rule[] {
     output.push(rule);
   }
   return output;
+}
+
+function appendDeclarationBlock(target: DeclarationBlock, incoming: DeclarationBlock): void {
+  if (incoming.declarations?.length) {
+    target.declarations = [...(target.declarations ?? []), ...incoming.declarations];
+  }
+  if (incoming.importantDeclarations?.length) {
+    target.importantDeclarations = [...(target.importantDeclarations ?? []), ...incoming.importantDeclarations];
+  }
 }
 
 function styleRuleKey(rule: Extract<Rule, { type: 'style' | 'nesting' }>): string {
