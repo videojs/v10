@@ -10,21 +10,15 @@
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
-    --media-controls-padding: 0.25rem;
     --media-controls-transition-duration: 100ms;
     --media-scale: 1;
-    --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
-    --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
-    --media-font-size: calc(0.8125 * var(--media-size));
+    --media-spacing: calc(var(--media-scale-unit, 16px) * var(--media-scale) / 4);
     --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
-    --media-slider-thumb-size: 0.75rem;
     --media-slider-track-background: oklch(from currentColor l c h / 0.2);
-    --media-slider-track-size: 0.25rem;
     --media-surface-backdrop-blur: 16px;
     --media-surface-backdrop-saturate: 1.5;
     --media-surface-inner-border: oklch(1 0 0 / 0.1);
     --media-surface-border: var(--media-surface-inner-border);
-    --media-video-border-radius: var(--media-container-border-radius);
   }
 }
 

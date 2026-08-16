@@ -209,14 +209,21 @@ function missingItem(name: string): never {
 function rewriteTailwindInput(source: string, inputFile: string): string {
   // Tailwind directives are outside Lightning CSS's typed AST. Rewrite only
   // anchored top-level directive headers and require each semantic marker once.
-  let output = replaceDirective(
+  let output = replaceRequiredMarker(
     source,
     /^@import\s+(["'])tailwindcss\1\s+theme\(inline\)\s*;\s*$/m,
     '@import "tailwindcss";',
     inputFile,
     'inline Tailwind import'
   );
-  output = replaceDirective(output, /^@theme\s+inline\s*\{/m, '@theme inline {', inputFile, 'inline theme block');
+  output = replaceRequiredMarker(output, /^@theme\s+inline\s*\{/m, '@theme inline {', inputFile, 'inline theme block');
+  output = replaceRequiredMarker(
+    output,
+    /^\s*--spacing:\s*var\(--media-spacing\);\s*$/m,
+    '',
+    inputFile,
+    'scoped Skin spacing bridge'
+  );
   output = output.replace(/^@source\s+.+;\s*$/gm, '').trim();
   const header = output.match(/^(?:(?:@layer\s+[^\n{]+|@import[^\n]+);\s*)+/)?.[0];
   if (!header || !/^@import/m.test(header)) {
@@ -225,7 +232,7 @@ function rewriteTailwindInput(source: string, inputFile: string): string {
   return `${header.trim()}\n\n@source "../**/*.{ts,tsx,html}";\n\n${output.slice(header.length).trimStart()}\n`;
 }
 
-function replaceDirective(
+function replaceRequiredMarker(
   source: string,
   pattern: RegExp,
   replacement: string,

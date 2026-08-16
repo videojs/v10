@@ -58,7 +58,7 @@ describe('generateReactRegistry', () => {
     const root = setup({
       'entry.tsx': `import { helper } from './helpers'; export function Entry(){ return <div>{helper}</div>; }`,
       'helpers/index.ts': `import { createElement } from 'react'; export const helper = createElement;`,
-      'styles/tailwind.css': `@layer theme, base, videojs.base, components, utilities;\n@import "tailwindcss" theme(inline);\n@theme inline { --color-test: red; }\n@source "../";\n`,
+      'styles/tailwind.css': `@layer theme, base, videojs.base, components, utilities;\n@import "tailwindcss" theme(inline);\n@theme inline {\n  --spacing: var(--media-spacing);\n  --color-test: red;\n}\n@source "../";\n`,
       'styles/base.css': `@layer videojs.base {}`,
       'styles/theme.css': `@layer videojs.theme {}`,
     });
@@ -97,6 +97,9 @@ describe('generateReactRegistry', () => {
     expect(output.packageDependenciesByItem.entry).toEqual(['react']);
     expect(output.sharedFiles.find((file) => file.path === 'styles/tailwind.css')?.content).toContain(
       '@layer theme, base, videojs.base, components, utilities;'
+    );
+    expect(output.sharedFiles.find((file) => file.path === 'styles/tailwind.css')?.content).not.toContain(
+      '--spacing: var(--media-spacing)'
     );
   });
 });

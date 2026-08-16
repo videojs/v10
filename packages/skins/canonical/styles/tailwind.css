@@ -11,6 +11,7 @@
 @source "./**/*.tailwind.ts";
 
 @theme inline {
+  --spacing: var(--media-spacing);
   --color-media-accent: var(--media-accent-color, var(--media-default-accent-color));
   --color-media-accent-text: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0 0 0))));
   --color-media-controls: var(--media-controls-color);
@@ -21,14 +22,9 @@
   --color-media-slider-track: var(--media-slider-track-background);
   --color-media-surface: var(--media-surface-background);
   --color-media-surface-border: var(--media-surface-border);
-  --font-media: var(--media-font-family);
-  --text-media: var(--media-font-size);
-  --spacing-media-control: var(--media-control-size);
-  --spacing-media-controls-padding: var(--media-controls-padding);
-  --spacing-media-icon: var(--media-icon-size, calc(1.125 * var(--media-size)));
-  --spacing-media-icon-lg: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
-  --spacing-media-slider-thumb: var(--media-slider-thumb-size);
-  --spacing-media-slider-track: var(--media-slider-track-size);
+  --text-media: calc(var(--media-spacing) * 3.25);
+  --spacing-media-icon: var(--media-icon-size, calc(var(--media-spacing) * 4.5));
+  --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
   --radius-media-control: var(--media-control-radius);
   --radius-media-surface: var(--media-surface-radius);
   --shadow-media-surface:

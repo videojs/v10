@@ -59,7 +59,8 @@ describe('generateReactRegistry', () => {
     expect(overlayEntry?.content).toContain('export interface OverlayProps extends Omit<ComponentProps<"div">');
     expect(overlayEntry?.content).toContain('<div {...props} className={cn(');
     expect(entry?.content).toMatch(/from ["']@\/components\/videojs\/button-tooltip\/button-tooltip["']/);
-    expect(entry?.content).toContain('grid size-media-control');
+    expect(entry?.content).toContain('grid min-h-0');
+    expect(entry?.content).toContain('size-9');
     expect(entry?.content).toContain('export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props');
     expect(entry?.content).toContain('<PlayButtonPrimitive {...props}');
     expect(entry?.content).toContain('resolveClassName(className, state)');
@@ -143,6 +144,7 @@ describe('generateReactRegistry', () => {
     }
     expect(playButton?.files.some((file) => file.target.includes('/styles/'))).toBe(false);
     const tailwind = output.sharedFiles.find((file) => file.path.endsWith('/styles/tailwind.css'));
+    expect(tailwind?.content).not.toContain('--spacing: var(--media-spacing)');
     expect(tailwind?.content).toContain('@import "tailwindcss";');
     expect(tailwind?.content).not.toContain('theme(inline)');
     expect(tailwind?.content).toContain('@theme inline {');

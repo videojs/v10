@@ -42,6 +42,7 @@ describe('tokens', () => {
     const unprefixed = [...customProperties].filter(
       (property) =>
         !property.startsWith('--media-') &&
+        property !== '--spacing' &&
         !/^--(?:color|drop-shadow|ease|font|radius|shadow|spacing|text)-media(?:-|$)/.test(property)
     );
 

@@ -6,7 +6,7 @@ export default defineStyles({
     controls: {
       root: [
         'peer/controls group/controls contents text-white',
-        '[--media-popover-side-offset:calc(0.5rem+var(--media-controls-padding))]',
+        '[--media-popover-side-offset:--spacing(3)]',
         '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
         '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
         '@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10',
@@ -21,7 +21,7 @@ export default defineStyles({
       ],
       primary: [
         'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control',
-        'bg-media-surface p-media-controls-padding shadow-media-surface backdrop-media-surface',
+        'bg-media-surface p-1 shadow-media-surface backdrop-media-surface',
         '@lg/media-root:contents',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
@@ -31,7 +31,7 @@ export default defineStyles({
       ],
       secondary: [
         'absolute top-2 right-2 z-10 flex origin-top items-center rounded-media-control',
-        'bg-media-surface p-media-controls-padding shadow-media-surface backdrop-media-surface',
+        'bg-media-surface p-1 shadow-media-surface backdrop-media-surface',
         '@lg/media-root:contents',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',

@@ -51,14 +51,6 @@ export const tokens = {
     kind: 'internal',
     description: 'Theme border color.',
   },
-  '--media-control-size': {
-    kind: 'internal',
-    description: 'Theme control size.',
-  },
-  '--media-chapter-gap': {
-    kind: 'internal',
-    description: 'Gap between time-slider chapters.',
-  },
   '--media-chapter-inset-end': {
     kind: 'internal',
     description: 'End inset for a time-slider chapter segment.',
@@ -67,10 +59,6 @@ export const tokens = {
     kind: 'internal',
     description: 'Start inset for a time-slider chapter segment.',
   },
-  '--media-container-border-radius': {
-    kind: 'internal',
-    description: 'Resolved player container radius.',
-  },
   '--media-controls-background': {
     kind: 'internal',
     description: 'Theme controls background.',
@@ -78,10 +66,6 @@ export const tokens = {
   '--media-controls-color': {
     kind: 'internal',
     description: 'Theme controls foreground color.',
-  },
-  '--media-controls-padding': {
-    kind: 'internal',
-    description: 'Padding around controls.',
   },
   '--media-controls-transition-duration': {
     kind: 'internal',
@@ -95,25 +79,13 @@ export const tokens = {
     kind: 'internal',
     description: 'Theme focus-ring color.',
   },
-  '--media-font-family': {
+  '--media-slider-preview-max-height': {
     kind: 'internal',
-    description: 'Theme font family.',
+    description: 'Maximum slider preview height.',
   },
-  '--media-font-size': {
+  '--media-slider-preview-max-width': {
     kind: 'internal',
-    description: 'Resolved base font size.',
-  },
-  '--media-max-height': {
-    kind: 'internal',
-    description: 'Component-local maximum height.',
-  },
-  '--media-max-width': {
-    kind: 'internal',
-    description: 'Component-local maximum width.',
-  },
-  '--media-menu-item-highlight-anchor': {
-    kind: 'internal',
-    description: 'Anchor name used by the menu highlight.',
+    description: 'Maximum slider preview width.',
   },
   '--media-control-radius': {
     kind: 'internal',
@@ -127,29 +99,21 @@ export const tokens = {
     kind: 'internal',
     description: 'Theme control scale multiplier.',
   },
+  '--media-spacing': {
+    kind: 'internal',
+    description: 'Scoped Tailwind spacing unit scaled for fullscreen UI.',
+  },
   '--media-shadow-color': {
     kind: 'internal',
     description: 'Theme shadow color.',
-  },
-  '--media-size': {
-    kind: 'internal',
-    description: 'Resolved base control size.',
   },
   '--media-slider-buffer-background': {
     kind: 'internal',
     description: 'Theme slider buffer background.',
   },
-  '--media-slider-thumb-size': {
-    kind: 'internal',
-    description: 'Theme slider thumb size.',
-  },
   '--media-slider-track-background': {
     kind: 'internal',
     description: 'Theme slider track background.',
-  },
-  '--media-slider-track-size': {
-    kind: 'internal',
-    description: 'Theme slider track size.',
   },
   '--media-surface-backdrop-blur': {
     kind: 'internal',
@@ -175,10 +139,6 @@ export const tokens = {
     kind: 'internal',
     description: 'Theme outer surface border.',
   },
-  '--media-thumbnail-max-width': {
-    kind: 'internal',
-    description: 'Maximum preview thumbnail width.',
-  },
   '--media-icon-airplay-fill-animation': {
     kind: 'runtime',
     description: 'AirPlay icon animation state.',
@@ -190,6 +150,10 @@ export const tokens = {
   '--media-menu-height': {
     kind: 'runtime',
     description: 'Measured menu height during submenu transitions.',
+  },
+  '--media-menu-item-highlight-anchor': {
+    kind: 'internal',
+    description: 'Anchor name used by the menu highlight.',
   },
   '--media-menu-width': {
     kind: 'runtime',
@@ -234,18 +198,6 @@ export const tokens = {
   '--media-volume-fill': {
     kind: 'runtime',
     description: 'Volume indicator fill percentage.',
-  },
-  '--media-caption-track-delay': {
-    kind: 'bridge',
-    description: 'Native caption-track transition delay.',
-  },
-  '--media-caption-track-duration': {
-    kind: 'bridge',
-    description: 'Native caption-track transition duration.',
-  },
-  '--media-caption-track-y': {
-    kind: 'bridge',
-    description: 'Native caption-track vertical offset.',
   },
   '--media-popover-boundary-offset': {
     kind: 'bridge',

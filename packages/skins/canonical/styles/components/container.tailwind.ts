@@ -4,8 +4,8 @@ export default defineStyles({
   role: 'container',
   styles: {
     container: [
-      'relative isolate block h-full w-full overflow-hidden rounded-[var(--media-container-border-radius)] bg-black @container/media-root',
-      'font-media text-media leading-normal subpixel-antialiased',
+      'relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root',
+      '[--spacing:var(--media-spacing)] font-sans text-media leading-normal subpixel-antialiased',
       'outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50',
       'focus-visible:outline-media-focus focus-visible:outline-offset-2',
       'pointer-fine:has-[[data-controls]:not([data-visible])]:cursor-none',
@@ -21,7 +21,7 @@ export default defineStyles({
       'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
       'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
       'after:shadow-[inset_0_0_0_1px_var(--media-border-color)] [&:fullscreen]:after:hidden',
-      '[&:fullscreen]:[--media-container-border-radius:0] [&:fullscreen_video]:object-contain',
+      '[&:fullscreen]:[--media-video-border-radius:0] [&:fullscreen_video]:object-contain',
       'min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]',
       'min-[1920px]:[&:fullscreen]:[--media-scale:1.75]',
     ],

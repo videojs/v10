@@ -29,7 +29,7 @@ export default defineStyles({
       base: 'font-semibold leading-tight',
       variants: {
         default: 'px-2 pt-2 text-media',
-        minimal: 'w-full max-w-64 pt-1.5 text-[calc(var(--media-font-size)*1.15)]',
+        minimal: 'w-full max-w-64 pt-1.5 text-[--spacing(3.75)]',
       },
     }),
     errorDialogDescription: variants({
