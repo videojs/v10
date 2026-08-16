@@ -1,4 +1,5 @@
 import {
+  createJsxEditor,
   DiagnosticError,
   defineConfig,
   diagnosticLocationFromNode,
@@ -6,23 +7,7 @@ import {
   rewrite,
   type TransformHelpers,
 } from '@videojs/compiler';
-import {
-  anyTag,
-  childAsProp,
-  hasJsxAttribute,
-  type ImportRef,
-  type JsxElementLike,
-  jsxAttributes,
-  readStringAttribute,
-  removeJsxAttribute,
-  replaceJsxElementChildren,
-  replaceJsxElementTag,
-  setJsxAttribute,
-  singleJsxChildExpression,
-  singleJsxElementChild,
-  tagName,
-  updateJsxAttributes,
-} from '@videojs/compiler/ast';
+import { anyTag, childAsProp, hasJsxAttribute, type ImportRef, type JsxElementLike } from '@videojs/compiler/ast';
 import ts, { type Expression } from 'typescript';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
@@ -835,19 +820,17 @@ function createReactTemplateTransforms(code: TransformHelpers) {
 }
 
 function lowerReactTemplatePart(element: JsxElementLike, part: ReactTemplatePart, factory: ts.NodeFactory): ts.Node {
+  const jsx = createJsxEditor(factory);
   if (readRequiredName(element) !== part.name) return element;
-  if (!ts.isJsxElement(element)) failTemplate(element, '<Template.Part> must contain one component child.');
-  const child = singleJsxElementChild(element.children);
-  if (!child || ts.isJsxFragment(child)) failTemplate(element, '<Template.Part> must contain one component child.');
-
-  let rendered = part.tag ? replaceJsxElementTag(child, factory.createIdentifier(part.tag), factory) : child;
+  let rendered = jsx.children.onlyElement(element);
+  if (part.tag) rendered = jsx.apply(rendered, jsx.tag.replace(part.tag));
   const root = factory.createIdentifier(part.root);
   const value = part.property
     ? part.optionalAccess
       ? factory.createPropertyAccessChain(root, factory.createToken(ts.SyntaxKind.QuestionDotToken), part.property)
       : factory.createPropertyAccessExpression(root, part.property)
     : root;
-  rendered = replaceJsxElementChildren(rendered, [factory.createJsxExpression(undefined, value)], factory);
+  rendered = jsx.apply(rendered, jsx.children.set([jsx.create.expression(value)]));
   return part.optional
     ? factory.createJsxExpression(
         undefined,
@@ -863,18 +846,16 @@ function lowerReactTemplatePart(element: JsxElementLike, part: ReactTemplatePart
 }
 
 function lowerReactTemplate(parent: JsxElementLike, template: ReactTemplate, factory: ts.NodeFactory): JsxElementLike {
-  if (!ts.isJsxElement(parent)) return parent;
-  const matches = parent.children.filter(
-    (child): child is ts.JsxElement =>
-      ts.isJsxElement(child) && tagName(child) === 'Template' && readRequiredName(child) === template.name
+  const jsx = createJsxEditor(factory);
+  const extracted = jsx.children.extractOne(
+    parent,
+    (child) => jsx.tag.name(child) === 'Template' && readRequiredName(child) === template.name
   );
-  if (matches.length === 0) return parent;
-  if (matches.length > 1) failTemplate(matches[1]!, `Duplicate <Template name="${template.name}">.`);
-  if (hasJsxAttribute(parent.openingElement.attributes, template.prop)) {
+  if (!extracted) return parent;
+  if (hasJsxAttribute(ts.isJsxElement(parent) ? parent.openingElement.attributes : parent.attributes, template.prop)) {
     failTemplate(parent, `<${template.parent}> already declares \`${template.prop}\`.`);
   }
-
-  const authored = matches[0]!;
+  const authored = extracted.child;
   const root = createReactTemplateRoot(authored, template, factory);
   const callback = factory.createArrowFunction(
     undefined,
@@ -884,21 +865,12 @@ function lowerReactTemplate(parent: JsxElementLike, template: ReactTemplate, fac
     factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
     factory.createParenthesizedExpression(root)
   );
-  const withProp = setJsxAttribute(
+  return jsx.apply(
     parent,
-    template.prop,
-    factory.createJsxAttribute(
-      factory.createIdentifier(template.prop),
-      factory.createJsxExpression(undefined, callback)
-    ),
-    factory
+    jsx.props.set(template.prop, callback),
+    jsx.children.set(extracted.rest),
+    jsx.selfCloseIfEmpty()
   );
-  if (!withProp) failTemplate(parent, `<${template.parent}> already declares \`${template.prop}\`.`);
-
-  const children = parent.children.filter(
-    (child) => child !== authored && (!ts.isJsxText(child) || child.text.trim().length > 0)
-  );
-  return replaceJsxElementChildren(withProp, children, factory, { selfClosingWhenEmpty: true });
 }
 
 function createReactTemplateRoot(
@@ -906,34 +878,22 @@ function createReactTemplateRoot(
   template: ReactTemplate,
   factory: ts.NodeFactory
 ): JsxElementLike {
+  const jsx = createJsxEditor(factory);
   let root: JsxElementLike;
   if (template.rootTag) {
-    root = replaceJsxElementTag(
-      removeJsxAttribute(authored, 'name', factory),
-      factory.createIdentifier(template.rootTag),
-      factory
-    );
+    root = jsx.apply(authored, jsx.props.remove('name'), jsx.tag.replace(template.rootTag));
   } else {
-    const child = singleJsxElementChild(authored.children);
-    if (!child || ts.isJsxFragment(child)) failTemplate(authored, '<Template> must contain one component child.');
-    root = child;
+    root = jsx.children.onlyElement(authored);
   }
-
-  const attributes = jsxAttributes(root);
-  return updateJsxAttributes(
-    root,
-    factory.updateJsxAttributes(attributes, [
-      factory.createJsxSpreadAttribute(factory.createIdentifier(template.parameters[0]!)),
-      ...attributes.properties,
-    ]),
-    factory
-  );
+  return jsx.apply(root, jsx.props.spread(factory.createIdentifier(template.parameters[0]!), 'start'));
 }
 
 function readRequiredName(element: JsxElementLike): string {
-  const name = readStringAttribute(jsxAttributes(element), 'name');
-  if (name === undefined) failTemplate(element, `<${tagName(element)}> requires a static \`name\` prop.`);
-  if (name === null || name.length === 0) failTemplate(element, `<${tagName(element)} name> must be a string literal.`);
+  const jsx = createJsxEditor(ts.factory);
+  const name = jsx.props.staticString(element, 'name');
+  if (name === undefined) failTemplate(element, `<${jsx.tag.name(element)}> requires a static \`name\` prop.`);
+  if (name === null || name.length === 0)
+    failTemplate(element, `<${jsx.tag.name(element)} name> must be a string literal.`);
   return name;
 }
 
@@ -947,24 +907,23 @@ function failTemplate(node: ts.Node, message: string): never {
 const textDescriptors = new Set(['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText']);
 
 function lowerReactText(element: JsxElementLike, factory: ts.NodeFactory): JsxElementLike {
+  const jsx = createJsxEditor(factory);
   const descriptor = readTextDescriptor(element);
-  return replaceJsxElementTag(element, factory.createIdentifier('span'), factory, {
+  return jsx.apply(
+    element,
+    jsx.tag.replace('span'),
     ...(descriptor
-      ? {
-          children: [
-            factory.createJsxExpression(
-              undefined,
-              factory.createCallExpression(factory.createIdentifier('t'), undefined, [descriptor])
-            ),
-          ],
-        }
-      : {}),
-  });
+      ? [
+          jsx.children.set([
+            jsx.create.expression(factory.createCallExpression(factory.createIdentifier('t'), undefined, [descriptor])),
+          ]),
+        ]
+      : [])
+  );
 }
 
 function readTextDescriptor(element: JsxElementLike): ts.Identifier | undefined {
-  if (!ts.isJsxElement(element)) return undefined;
-  const child = singleJsxChildExpression(element.children);
+  const child = createJsxEditor(ts.factory).children.singleExpression(element);
   return child && ts.isIdentifier(child) && textDescriptors.has(child.text) ? child : undefined;
 }
 

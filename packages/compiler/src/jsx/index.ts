@@ -18,6 +18,7 @@ export {
   singleJsxElementChild,
   updateJsxAttributes,
 } from '../utils/jsx';
+export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './editor';
 export {
   moveJsxChildToProp,
   type ReplaceJsxElementChildrenOptions,

@@ -44,6 +44,7 @@ export {
   shouldUseColor,
   withDiagnosticSource,
 } from './diagnostics';
+export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './jsx/editor';
 export {
   CONFIG_FILENAMES,
   findConfig,
