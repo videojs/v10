@@ -16,10 +16,6 @@ export function TimeSlider() {
             <TimeSliderPrimitive.Fill className={styles.sliderFill} />
           </TimeSliderPrimitive.Track>
         </Template>
-        <TimeSliderPrimitive.Track className={styles.sliderTrack}>
-          <TimeSliderPrimitive.Buffer className={styles.sliderBuffer} />
-          <TimeSliderPrimitive.Fill className={styles.sliderFill} />
-        </TimeSliderPrimitive.Track>
       </TimeSliderPrimitive.Chapters>
       <TimeSliderPrimitive.Thumb className={[styles.sliderThumb, styles.sliderThumbInteractive]} />
       <TimeSliderPrimitive.Preview className={styles.sliderPreview} overflow="visible">

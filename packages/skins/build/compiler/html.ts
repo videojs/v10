@@ -1,11 +1,22 @@
-import { defineConfig, html, rewrite } from '@videojs/compiler';
+import {
+  DiagnosticError,
+  defineConfig,
+  diagnosticLocationFromNode,
+  html,
+  rewrite,
+  type TransformHelpers,
+} from '@videojs/compiler';
 import {
   type JsxElementLike,
-  lowerTemplateParts,
-  lowerTemplates,
+  jsxAttributes,
+  readStringAttribute,
+  removeJsxAttribute,
+  replaceJsxElementChildren,
   replaceJsxElementTag,
   setJsxAttribute,
   singleJsxChildExpression,
+  singleJsxElementChild,
+  tagName,
 } from '@videojs/compiler/ast';
 import ts from 'typescript';
 import type { SkinStyleManifest } from '../styles/manifest';
@@ -243,79 +254,6 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
     }),
     plugins: [
       skinStyles({ manifest: styleTarget.styles, target: styleTarget.style }),
-      {
-        name: '@videojs/skins:html-template-parts',
-        setup: () => ({
-          transform: lowerTemplateParts({
-            parts: {
-              'QualityMenu:selected-label': {
-                kind: 'attribute',
-                attribute: 'data-part',
-                value: 'hint',
-                tag: 'span',
-              },
-              'AudioTrackMenu:selected-label': {
-                kind: 'attribute',
-                attribute: 'data-part',
-                value: 'hint',
-                tag: 'span',
-              },
-              'PlaybackRateMenu:selected-label': {
-                kind: 'attribute',
-                attribute: 'data-part',
-                value: 'hint',
-                tag: 'span',
-              },
-              'CaptionsMenu:selected-label': {
-                kind: 'attribute',
-                attribute: 'data-part',
-                value: 'hint',
-                tag: 'span',
-              },
-              'quality-option:label': { kind: 'attribute', attribute: 'data-part', value: 'label', tag: 'span' },
-              'quality-option:tier': {
-                kind: 'attribute',
-                attribute: 'data-part',
-                value: 'tier',
-                tag: 'sup',
-              },
-              'quality-option:badge': { kind: 'attribute', attribute: 'data-part', value: 'badge', tag: 'span' },
-              'audio-track-option:label': {
-                kind: 'attribute',
-                attribute: 'data-part',
-                value: 'label',
-                tag: 'span',
-              },
-              'playback-rate-option:label': {
-                kind: 'attribute',
-                attribute: 'data-part',
-                value: 'label',
-                tag: 'span',
-              },
-              'captions-option:label': {
-                kind: 'attribute',
-                attribute: 'data-part',
-                value: 'label',
-                tag: 'span',
-              },
-            },
-          }),
-        }),
-      },
-      {
-        name: '@videojs/skins:html-templates',
-        setup: () => ({
-          transform: lowerTemplates({
-            templates: {
-              chapter: { kind: 'element', parent: 'TimeSliderPrimitive.Chapters', rootTag: 'div' },
-              'quality-option': { kind: 'element', parent: 'QualityRadioGroup' },
-              'audio-track-option': { kind: 'element', parent: 'AudioTrackRadioGroup' },
-              'playback-rate-option': { kind: 'element', parent: 'PlaybackRateRadioGroup' },
-              'captions-option': { kind: 'element', parent: 'CaptionsRadioGroup' },
-            },
-          }),
-        }),
-      },
       rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
@@ -332,6 +270,8 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
           ] as const;
 
           return [
+            ...createHtmlTemplatePartTransforms(code),
+            ...createHtmlTemplateTransforms(code),
             rootContainer.addProp('className', () => {
               if (!styleTarget.rootClassName) {
                 throw new Error('HTML Skin root lowering requires `rootClassName`.');
@@ -388,6 +328,131 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
         { name: '@videojs/skins:html' }
       ),
     ],
+  });
+}
+
+interface HtmlTemplatePart {
+  name: string;
+  value: string;
+  tag: string;
+}
+
+interface HtmlTemplate {
+  name: string;
+  parent: string;
+  rootTag?: string | undefined;
+}
+
+function createHtmlTemplatePartTransforms(code: TransformHelpers) {
+  const parts: readonly HtmlTemplatePart[] = [
+    { name: 'selected-label', value: 'hint', tag: 'span' },
+    { name: 'label', value: 'label', tag: 'span' },
+    { name: 'tier', value: 'tier', tag: 'sup' },
+    { name: 'badge', value: 'badge', tag: 'span' },
+  ];
+
+  return [
+    ...parts.map((part) =>
+      code.jsx.element('Template.Part').replace(({ element, factory }) => lowerHtmlTemplatePart(element, part, factory))
+    ),
+    code.jsx
+      .element('Template.Part')
+      .replace(({ element }) =>
+        failTemplate(element, `No HTML lowering is configured for <Template.Part name="${readRequiredName(element)}">.`)
+      ),
+  ];
+}
+
+function createHtmlTemplateTransforms(code: TransformHelpers) {
+  const templates: readonly HtmlTemplate[] = [
+    { name: 'chapter', parent: 'TimeSliderPrimitive.Chapters', rootTag: 'div' },
+    { name: 'quality-option', parent: 'QualityRadioGroup' },
+    { name: 'audio-track-option', parent: 'AudioTrackRadioGroup' },
+    { name: 'playback-rate-option', parent: 'PlaybackRateRadioGroup' },
+    { name: 'captions-option', parent: 'CaptionsRadioGroup' },
+  ];
+
+  return [
+    ...templates.map((template) =>
+      code.jsx.element(template.parent).replace(({ element, factory }) => lowerHtmlTemplate(element, template, factory))
+    ),
+    code.jsx
+      .element('Template')
+      .replace(({ element }) =>
+        failTemplate(element, `No HTML lowering is configured for <Template name="${readRequiredName(element)}">.`)
+      ),
+  ];
+}
+
+function lowerHtmlTemplatePart(element: JsxElementLike, part: HtmlTemplatePart, factory: ts.NodeFactory): ts.Node {
+  if (readRequiredName(element) !== part.name) return element;
+  if (!ts.isJsxElement(element)) failTemplate(element, '<Template.Part> must contain one component child.');
+  const child = singleJsxElementChild(element.children);
+  if (!child || ts.isJsxFragment(child)) failTemplate(element, '<Template.Part> must contain one component child.');
+
+  let rendered = replaceJsxElementTag(child, factory.createIdentifier(part.tag), factory);
+  rendered =
+    setJsxAttribute(
+      rendered,
+      'data-part',
+      factory.createJsxAttribute(factory.createIdentifier('data-part'), factory.createStringLiteral(part.value)),
+      factory
+    ) ?? rendered;
+  return rendered;
+}
+
+function lowerHtmlTemplate(parent: JsxElementLike, template: HtmlTemplate, factory: ts.NodeFactory): JsxElementLike {
+  if (!ts.isJsxElement(parent)) return parent;
+  const matches = parent.children.filter(
+    (child): child is ts.JsxElement =>
+      ts.isJsxElement(child) && tagName(child) === 'Template' && readRequiredName(child) === template.name
+  );
+  if (matches.length === 0) return parent;
+  if (matches.length > 1) failTemplate(matches[1]!, `Duplicate <Template name="${template.name}">.`);
+
+  const authored = matches[0]!;
+  const root = createHtmlTemplateRoot(authored, template, factory);
+  const templateElement = factory.createJsxElement(
+    factory.createJsxOpeningElement(factory.createIdentifier('template'), undefined, factory.createJsxAttributes([])),
+    [root],
+    factory.createJsxClosingElement(factory.createIdentifier('template'))
+  );
+  return replaceJsxElementChildren(
+    parent,
+    parent.children.map((child) => (child === authored ? templateElement : child)),
+    factory
+  );
+}
+
+function createHtmlTemplateRoot(
+  authored: ts.JsxElement,
+  template: HtmlTemplate,
+  factory: ts.NodeFactory
+): JsxElementLike {
+  if (template.rootTag) {
+    return replaceJsxElementTag(
+      removeJsxAttribute(authored, 'name', factory),
+      factory.createIdentifier(template.rootTag),
+      factory
+    );
+  }
+
+  const child = singleJsxElementChild(authored.children);
+  if (!child || ts.isJsxFragment(child)) failTemplate(authored, '<Template> must contain one component child.');
+  return child;
+}
+
+function readRequiredName(element: JsxElementLike): string {
+  const name = readStringAttribute(jsxAttributes(element), 'name');
+  if (name === undefined) failTemplate(element, `<${tagName(element)}> requires a static \`name\` prop.`);
+  if (name === null || name.length === 0) failTemplate(element, `<${tagName(element)} name> must be a string literal.`);
+  return name;
+}
+
+function failTemplate(node: ts.Node, message: string): never {
+  throw new DiagnosticError(message, {
+    ...diagnosticLocationFromNode(node),
+    diagnosticCode: 'jsx-template-invalid',
   });
 }
 

@@ -1,13 +1,27 @@
-import { defineConfig, jsx, rewrite } from '@videojs/compiler';
+import {
+  DiagnosticError,
+  defineConfig,
+  diagnosticLocationFromNode,
+  jsx,
+  rewrite,
+  type TransformHelpers,
+} from '@videojs/compiler';
 import {
   anyTag,
   childAsProp,
+  hasJsxAttribute,
   type ImportRef,
   type JsxElementLike,
-  lowerTemplateParts,
-  lowerTemplates,
+  jsxAttributes,
+  readStringAttribute,
+  removeJsxAttribute,
+  replaceJsxElementChildren,
   replaceJsxElementTag,
+  setJsxAttribute,
   singleJsxChildExpression,
+  singleJsxElementChild,
+  tagName,
+  updateJsxAttributes,
 } from '@videojs/compiler/ast';
 import ts, { type Expression } from 'typescript';
 import type { SkinStyleManifest } from '../styles/manifest';
@@ -85,90 +99,6 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
         target: options.style,
         composeClassNames: options.composeClassNames,
       }),
-      {
-        name: '@videojs/skins:react-template-parts',
-        setup: () => ({
-          transform: lowerTemplateParts({
-            parts: {
-              'QualityMenu:selected-label': {
-                kind: 'value',
-                root: 'quality',
-                property: 'selectedLabel',
-                optionalAccess: true,
-              },
-              'AudioTrackMenu:selected-label': {
-                kind: 'value',
-                root: 'audioTrack',
-                property: 'selectedLabel',
-                optionalAccess: true,
-              },
-              'PlaybackRateMenu:selected-label': {
-                kind: 'value',
-                root: 'playbackRate',
-                property: 'selectedLabel',
-                optionalAccess: true,
-              },
-              'CaptionsMenu:selected-label': {
-                kind: 'value',
-                root: 'captions',
-                property: 'selectedLabel',
-                optionalAccess: true,
-              },
-              'quality-option:label': { kind: 'value', root: 'item', property: 'label' },
-              'quality-option:tier': {
-                kind: 'value',
-                root: 'item',
-                property: 'tier',
-                optional: true,
-                tag: 'sup',
-              },
-              'quality-option:badge': { kind: 'value', root: 'item', property: 'badge', optional: true },
-              'audio-track-option:label': { kind: 'value', root: 'item', property: 'label' },
-              'playback-rate-option:label': { kind: 'value', root: 'item', property: 'label' },
-              'captions-option:label': { kind: 'value', root: 'item', property: 'label' },
-            },
-          }),
-        }),
-      },
-      {
-        name: '@videojs/skins:react-templates',
-        setup: () => ({
-          transform: lowerTemplates({
-            templates: {
-              chapter: {
-                kind: 'render-prop',
-                parent: 'TimeSliderPrimitive.Chapters',
-                prop: 'renderChapter',
-                rootTag: 'div',
-              },
-              'quality-option': {
-                kind: 'render-prop',
-                parent: 'QualityRadioGroup',
-                prop: 'renderItem',
-                parameters: ['props', 'item'],
-              },
-              'audio-track-option': {
-                kind: 'render-prop',
-                parent: 'AudioTrackRadioGroup',
-                prop: 'renderItem',
-                parameters: ['props', 'item'],
-              },
-              'playback-rate-option': {
-                kind: 'render-prop',
-                parent: 'PlaybackRateRadioGroup',
-                prop: 'renderItem',
-                parameters: ['props', 'item'],
-              },
-              'captions-option': {
-                kind: 'render-prop',
-                parent: 'CaptionsRadioGroup',
-                prop: 'renderItem',
-                parameters: ['props', 'item'],
-              },
-            },
-          }),
-        }),
-      },
       rewrite(
         (code) => {
           const cn = code.import(cnReference.source, cnReference.name);
@@ -261,6 +191,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           ] as const;
 
           return [
+            ...createReactTemplatePartTransforms(code),
+            ...createReactTemplateTransforms(code),
             ...(options.extendComponents
               ? [
                   ...directComponents.flatMap(([name, primitive, primitiveProps]) => {
@@ -782,6 +714,221 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
         { name: '@videojs/skins:react' }
       ),
     ],
+  });
+}
+
+interface ReactTemplatePart {
+  name: string;
+  root: string;
+  property?: string | undefined;
+  optionalAccess?: boolean | undefined;
+  optional?: boolean | undefined;
+  tag?: string | undefined;
+}
+
+interface ReactTemplate {
+  name: string;
+  parent: string;
+  prop: string;
+  parameters: readonly string[];
+  rootTag?: string | undefined;
+}
+
+function createReactTemplatePartTransforms(code: TransformHelpers) {
+  const selectedLabelParts: ReadonlyArray<ReactTemplatePart & { scope: string }> = [
+    { scope: 'QualityMenu', name: 'selected-label', root: 'quality', property: 'selectedLabel', optionalAccess: true },
+    {
+      scope: 'AudioTrackMenu',
+      name: 'selected-label',
+      root: 'audioTrack',
+      property: 'selectedLabel',
+      optionalAccess: true,
+    },
+    {
+      scope: 'PlaybackRateMenu',
+      name: 'selected-label',
+      root: 'playbackRate',
+      property: 'selectedLabel',
+      optionalAccess: true,
+    },
+    {
+      scope: 'CaptionsMenu',
+      name: 'selected-label',
+      root: 'captions',
+      property: 'selectedLabel',
+      optionalAccess: true,
+    },
+  ];
+  const itemParts: readonly ReactTemplatePart[] = [
+    { name: 'label', root: 'item', property: 'label' },
+    { name: 'tier', root: 'item', property: 'tier', optional: true, tag: 'sup' },
+    { name: 'badge', root: 'item', property: 'badge', optional: true },
+  ];
+
+  return [
+    ...selectedLabelParts.map(({ scope, ...part }) =>
+      code
+        .function(scope)
+        .jsx.element('Template.Part')
+        .replace(({ element, factory }) => lowerReactTemplatePart(element, part, factory))
+    ),
+    ...itemParts.map((part) =>
+      code.jsx
+        .element('Template.Part')
+        .replace(({ element, factory }) => lowerReactTemplatePart(element, part, factory))
+    ),
+    code.jsx
+      .element('Template.Part')
+      .replace(({ element }) =>
+        failTemplate(
+          element,
+          `No React lowering is configured for <Template.Part name="${readRequiredName(element)}">.`
+        )
+      ),
+  ];
+}
+
+function createReactTemplateTransforms(code: TransformHelpers) {
+  const templates: readonly ReactTemplate[] = [
+    {
+      name: 'chapter',
+      parent: 'TimeSliderPrimitive.Chapters',
+      prop: 'renderChapter',
+      parameters: ['props'],
+      rootTag: 'div',
+    },
+    { name: 'quality-option', parent: 'QualityRadioGroup', prop: 'renderItem', parameters: ['props', 'item'] },
+    { name: 'audio-track-option', parent: 'AudioTrackRadioGroup', prop: 'renderItem', parameters: ['props', 'item'] },
+    {
+      name: 'playback-rate-option',
+      parent: 'PlaybackRateRadioGroup',
+      prop: 'renderItem',
+      parameters: ['props', 'item'],
+    },
+    { name: 'captions-option', parent: 'CaptionsRadioGroup', prop: 'renderItem', parameters: ['props', 'item'] },
+  ];
+
+  return [
+    ...templates.map((template) =>
+      code.jsx
+        .element(template.parent)
+        .replace(({ element, factory }) => lowerReactTemplate(element, template, factory))
+    ),
+    code.jsx
+      .element('Template')
+      .replace(({ element }) =>
+        failTemplate(element, `No React lowering is configured for <Template name="${readRequiredName(element)}">.`)
+      ),
+  ];
+}
+
+function lowerReactTemplatePart(element: JsxElementLike, part: ReactTemplatePart, factory: ts.NodeFactory): ts.Node {
+  if (readRequiredName(element) !== part.name) return element;
+  if (!ts.isJsxElement(element)) failTemplate(element, '<Template.Part> must contain one component child.');
+  const child = singleJsxElementChild(element.children);
+  if (!child || ts.isJsxFragment(child)) failTemplate(element, '<Template.Part> must contain one component child.');
+
+  let rendered = part.tag ? replaceJsxElementTag(child, factory.createIdentifier(part.tag), factory) : child;
+  const root = factory.createIdentifier(part.root);
+  const value = part.property
+    ? part.optionalAccess
+      ? factory.createPropertyAccessChain(root, factory.createToken(ts.SyntaxKind.QuestionDotToken), part.property)
+      : factory.createPropertyAccessExpression(root, part.property)
+    : root;
+  rendered = replaceJsxElementChildren(rendered, [factory.createJsxExpression(undefined, value)], factory);
+  return part.optional
+    ? factory.createJsxExpression(
+        undefined,
+        factory.createConditionalExpression(
+          value,
+          factory.createToken(ts.SyntaxKind.QuestionToken),
+          rendered,
+          factory.createToken(ts.SyntaxKind.ColonToken),
+          factory.createNull()
+        )
+      )
+    : rendered;
+}
+
+function lowerReactTemplate(parent: JsxElementLike, template: ReactTemplate, factory: ts.NodeFactory): JsxElementLike {
+  if (!ts.isJsxElement(parent)) return parent;
+  const matches = parent.children.filter(
+    (child): child is ts.JsxElement =>
+      ts.isJsxElement(child) && tagName(child) === 'Template' && readRequiredName(child) === template.name
+  );
+  if (matches.length === 0) return parent;
+  if (matches.length > 1) failTemplate(matches[1]!, `Duplicate <Template name="${template.name}">.`);
+  if (hasJsxAttribute(parent.openingElement.attributes, template.prop)) {
+    failTemplate(parent, `<${template.parent}> already declares \`${template.prop}\`.`);
+  }
+
+  const authored = matches[0]!;
+  const root = createReactTemplateRoot(authored, template, factory);
+  const callback = factory.createArrowFunction(
+    undefined,
+    undefined,
+    template.parameters.map((name) => factory.createParameterDeclaration(undefined, undefined, name)),
+    undefined,
+    factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+    factory.createParenthesizedExpression(root)
+  );
+  const withProp = setJsxAttribute(
+    parent,
+    template.prop,
+    factory.createJsxAttribute(
+      factory.createIdentifier(template.prop),
+      factory.createJsxExpression(undefined, callback)
+    ),
+    factory
+  );
+  if (!withProp) failTemplate(parent, `<${template.parent}> already declares \`${template.prop}\`.`);
+
+  const children = parent.children.filter(
+    (child) => child !== authored && (!ts.isJsxText(child) || child.text.trim().length > 0)
+  );
+  return replaceJsxElementChildren(withProp, children, factory, { selfClosingWhenEmpty: true });
+}
+
+function createReactTemplateRoot(
+  authored: ts.JsxElement,
+  template: ReactTemplate,
+  factory: ts.NodeFactory
+): JsxElementLike {
+  let root: JsxElementLike;
+  if (template.rootTag) {
+    root = replaceJsxElementTag(
+      removeJsxAttribute(authored, 'name', factory),
+      factory.createIdentifier(template.rootTag),
+      factory
+    );
+  } else {
+    const child = singleJsxElementChild(authored.children);
+    if (!child || ts.isJsxFragment(child)) failTemplate(authored, '<Template> must contain one component child.');
+    root = child;
+  }
+
+  const attributes = jsxAttributes(root);
+  return updateJsxAttributes(
+    root,
+    factory.updateJsxAttributes(attributes, [
+      factory.createJsxSpreadAttribute(factory.createIdentifier(template.parameters[0]!)),
+      ...attributes.properties,
+    ]),
+    factory
+  );
+}
+
+function readRequiredName(element: JsxElementLike): string {
+  const name = readStringAttribute(jsxAttributes(element), 'name');
+  if (name === undefined) failTemplate(element, `<${tagName(element)}> requires a static \`name\` prop.`);
+  if (name === null || name.length === 0) failTemplate(element, `<${tagName(element)} name> must be a string literal.`);
+  return name;
+}
+
+function failTemplate(node: ts.Node, message: string): never {
+  throw new DiagnosticError(message, {
+    ...diagnosticLocationFromNode(node),
+    diagnosticCode: 'jsx-template-invalid',
   });
 }
 

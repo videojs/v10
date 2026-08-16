@@ -91,10 +91,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                   </media-slider-track>
                 </div>
               </template>
-              <media-slider-track class="media-slider-track">
-                <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
-                <media-slider-fill class="media-slider-fill"></media-slider-fill>
-              </media-slider-track>
             </media-time-slider-chapters>
             <media-slider-thumb class="media-slider-thumb media-slider-thumb-interactive"></media-slider-thumb>
             <media-slider-preview class="media-slider-preview" overflow="visible">
@@ -2633,10 +2629,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                 </media-slider-track>
               </div>
             </template>
-            <media-slider-track class="media-slider-track">
-              <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
-              <media-slider-fill class="media-slider-fill"></media-slider-fill>
-            </media-slider-track>
           </media-time-slider-chapters>
           <media-slider-thumb class="media-slider-thumb media-slider-thumb-interactive"></media-slider-thumb>
           <media-slider-preview class="media-slider-preview" overflow="visible">
@@ -5661,12 +5653,7 @@ export function TimeSlider() {
             </TimeSliderPrimitive.Track>
           </div>
         )}
-      >
-        <TimeSliderPrimitive.Track className="media-slider-track">
-          <TimeSliderPrimitive.Buffer className="media-slider-buffer" />
-          <TimeSliderPrimitive.Fill className="media-slider-fill" />
-        </TimeSliderPrimitive.Track>
-      </TimeSliderPrimitive.Chapters>
+      />
       <TimeSliderPrimitive.Thumb className="media-slider-thumb media-slider-thumb-interactive" />
       <TimeSliderPrimitive.Preview className="media-slider-preview" overflow="visible">
         <div className="media-surface media-thumbnail">
@@ -8680,12 +8667,7 @@ export function TimeSlider() {
             </TimeSliderPrimitive.Track>
           </div>
         )}
-      >
-        <TimeSliderPrimitive.Track className="media-slider-track">
-          <TimeSliderPrimitive.Buffer className="media-slider-buffer" />
-          <TimeSliderPrimitive.Fill className="media-slider-fill" />
-        </TimeSliderPrimitive.Track>
-      </TimeSliderPrimitive.Chapters>
+      />
       <TimeSliderPrimitive.Thumb className="media-slider-thumb media-slider-thumb-interactive" />
       <TimeSliderPrimitive.Preview className="media-slider-preview" overflow="visible">
         <div className="media-surface media-thumbnail">
@@ -11735,32 +11717,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
             </TimeSliderPrimitive.Track>
           </div>
         )}
-      >
-        <TimeSliderPrimitive.Track
-          className={cn(
-            'relative isolate h-media-slider-track w-full select-none overflow-hidden rounded-media-pill bg-media-slider-track',
-            'data-[orientation=vertical]:h-full data-[orientation=vertical]:w-media-slider-track',
-          )}
-        >
-          <TimeSliderPrimitive.Buffer
-            className={cn(
-              'absolute inset-y-0 left-0 rounded-[inherit]',
-              'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto',
-              'w-(--media-slider-buffer) bg-media-slider-buffer',
-              'data-[orientation=vertical]:h-(--media-slider-buffer)',
-            )}
-          />
-          <TimeSliderPrimitive.Fill
-            className={cn(
-              'absolute inset-y-0 left-0 rounded-[inherit]',
-              'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto',
-              'w-(--media-slider-fill) bg-media-accent data-[orientation=vertical]:h-(--media-slider-fill)',
-              'group-data-dragging/slider:data-[orientation=horizontal]:w-(--media-slider-pointer)',
-              'group-data-dragging/slider:data-[orientation=vertical]:h-(--media-slider-pointer)',
-            )}
-          />
-        </TimeSliderPrimitive.Track>
-      </TimeSliderPrimitive.Chapters>
+      />
       <TimeSliderPrimitive.Thumb
         className={cn(
           'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-pill bg-current',
