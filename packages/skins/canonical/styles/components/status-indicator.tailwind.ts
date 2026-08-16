@@ -7,19 +7,19 @@ export default defineStyles({
     statusIndicator: variants({
       base: [
         'group/input-status pointer-events-none flex items-center gap-2 font-medium',
-        'transition-[opacity,scale,translate] duration-100 ease-out',
+        'transition-[opacity,scale,translate] duration-(--media-duration-fast) ease-media-out',
         'data-starting-style:opacity-0 data-ending-style:opacity-0',
       ],
       variants: {
         default: [
           ...surface,
-          'absolute top-3 rounded-media-pill bg-black/25 px-2.5 py-1',
+          'absolute top-3 rounded-media-control bg-black/25 px-2.5 py-1',
           'data-starting-style:scale-90',
           'data-ending-style:-translate-y-1/4 data-ending-style:scale-90',
         ],
         minimal: [
           'absolute inset-x-0 top-0 w-full justify-center px-2.5 pt-3 pb-32',
-          '[background-image:linear-gradient(to_bottom,oklch(0_0_0/0.35),oklch(0_0_0/0.2)_3rem,transparent)]',
+          'status-indicator-gradient',
           'data-starting-style:scale-100 data-ending-style:scale-100 motion-safe:data-ending-style:-translate-y-full',
         ],
       },
@@ -35,13 +35,12 @@ export default defineStyles({
     playbackStatusIndicator: variants({
       base: [
         'group/playback-status col-start-2 row-start-1 grid place-content-center p-4 text-center',
-        'transition-[opacity,scale] duration-200 ease-out data-starting-style:scale-[0.85] data-starting-style:opacity-0',
-        'data-ending-style:scale-[0.85] data-ending-style:opacity-0 data-ending-style:duration-100',
-        'motion-reduce:duration-50',
+        'transition-[opacity,scale] duration-(--media-duration-slow) ease-media-out data-starting-style:scale-85 data-starting-style:opacity-0',
+        'data-ending-style:scale-85 data-ending-style:opacity-0 data-ending-style:duration-(--media-duration-fast)',
       ],
-      variants: { default: 'rounded-media-pill bg-black/35 backdrop-blur-sm', minimal: '' },
+      variants: { default: 'rounded-media-control bg-black/35 backdrop-blur-sm', minimal: '' },
     }),
-    playbackStatusIcon: 'hidden size-[calc(var(--media-icon-size)*1.5)]',
+    playbackStatusIcon: 'hidden size-media-icon-lg',
     statusPlayIcon:
       'group-data-[status=play]/playback-status:block group-data-[status=play]/playback-status:translate-x-px',
     statusPauseIcon: 'group-data-[status=pause]/playback-status:block',

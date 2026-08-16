@@ -47,17 +47,13 @@ export const tokens = {
     kind: 'internal',
     description: 'Resolved translucent accent background used by interactive states.',
   },
-  '--media-accent-contrast-color': {
-    kind: 'internal',
-    description: 'Resolved foreground color with contrast against the accent.',
-  },
   '--media-border-color': {
     kind: 'internal',
     description: 'Theme border color.',
   },
-  '--media-button-size': {
+  '--media-control-size': {
     kind: 'internal',
-    description: 'Resolved control button size.',
+    description: 'Theme control size.',
   },
   '--media-chapter-gap': {
     kind: 'internal',
@@ -83,10 +79,6 @@ export const tokens = {
     kind: 'internal',
     description: 'Theme controls foreground color.',
   },
-  '--media-controls-gap': {
-    kind: 'internal',
-    description: 'Gap between controls.',
-  },
   '--media-controls-padding': {
     kind: 'internal',
     description: 'Padding around controls.',
@@ -98,6 +90,26 @@ export const tokens = {
   '--media-default-accent-color': {
     kind: 'internal',
     description: 'Theme fallback accent color.',
+  },
+  '--media-duration-fast': {
+    kind: 'internal',
+    description: 'Fast interaction transition duration.',
+  },
+  '--media-duration-normal': {
+    kind: 'internal',
+    description: 'Default interaction transition duration.',
+  },
+  '--media-duration-slow': {
+    kind: 'internal',
+    description: 'Emphasized interaction transition duration.',
+  },
+  '--media-ease-in-out': {
+    kind: 'internal',
+    description: 'Theme easing for symmetric transitions.',
+  },
+  '--media-ease-out': {
+    kind: 'internal',
+    description: 'Theme easing for entering and exiting UI.',
   },
   '--media-error-dialog-transition-delay': {
     kind: 'internal',
@@ -139,15 +151,11 @@ export const tokens = {
     kind: 'internal',
     description: 'Popup transition duration.',
   },
-  '--media-popup-translate-distance': {
+  '--media-control-radius': {
     kind: 'internal',
-    description: 'Popup transition translation distance.',
+    description: 'Theme control radius.',
   },
-  '--media-radius-pill': {
-    kind: 'internal',
-    description: 'Theme pill radius.',
-  },
-  '--media-radius-surface': {
+  '--media-surface-radius': {
     kind: 'internal',
     description: 'Theme surface radius.',
   },

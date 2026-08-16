@@ -23,23 +23,32 @@
   --color-media-surface-border: var(--media-surface-border);
   --font-media: var(--media-font-family);
   --text-media: var(--media-font-size);
-  --spacing-media-control: var(--media-button-size);
-  --spacing-media-controls-gap: var(--media-controls-gap);
+  --spacing-media-control: var(--media-control-size);
   --spacing-media-controls-padding: var(--media-controls-padding);
   --spacing-media-icon: var(--media-icon-size, calc(1.125 * var(--media-size)));
+  --spacing-media-icon-lg: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
   --spacing-media-slider-thumb: var(--media-slider-thumb-size);
   --spacing-media-slider-track: var(--media-slider-track-size);
-  --radius-media-pill: var(--media-radius-pill);
-  --radius-media-surface: var(--media-radius-surface);
+  --radius-media-control: var(--media-control-radius);
+  --radius-media-surface: var(--media-surface-radius);
   --shadow-media-surface:
     0 0 0 1px var(--media-surface-outer-border), 0 1px 3px 0 var(--media-shadow-color),
     0 1px 2px -1px var(--media-shadow-color);
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-color);
-  --blur-media-surface: var(--media-surface-backdrop-blur);
+  --ease-media-in-out: var(--media-ease-in-out);
+  --ease-media-out: var(--media-ease-out);
+}
+
+@utility status-indicator-gradient {
+  background-image: linear-gradient(to bottom, oklch(0 0 0 / 0.35), oklch(0 0 0 / 0.2) 3rem, transparent);
+}
+
+@utility backdrop-media-surface {
+  backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
 }
 
 @utility transition-settings-menu {
-  transition-timing-function: ease-out;
+  transition-timing-function: var(--media-ease-out);
   transition-duration:
     var(--media-popup-transition-duration), var(--media-popup-transition-duration),
     var(--media-popup-transition-duration), var(--media-popup-transition-duration),

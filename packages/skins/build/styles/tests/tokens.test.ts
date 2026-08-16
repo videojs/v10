@@ -42,7 +42,7 @@ describe('tokens', () => {
     const unprefixed = [...customProperties].filter(
       (property) =>
         !property.startsWith('--media-') &&
-        !/^--(?:blur|color|drop-shadow|font|radius|shadow|spacing|text)-media(?:-|$)/.test(property)
+        !/^--(?:color|drop-shadow|ease|font|radius|shadow|spacing|text)-media(?:-|$)/.test(property)
     );
 
     expect(unprefixed).toEqual([]);

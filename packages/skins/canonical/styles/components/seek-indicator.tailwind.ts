@@ -9,9 +9,9 @@ export default defineStyles({
       'data-[direction=forward]:col-start-3 data-[direction=forward]:justify-self-end',
     ],
     seekIndicatorIcon: [
-      'hidden size-[calc(var(--media-icon-size)*1.5)] group-data-direction/seek-status:block',
+      'hidden size-media-icon-lg group-data-direction/seek-status:block',
       'group-data-[direction=backward]/seek-status:[scale:-1_1]',
-      'transition-[translate,opacity] duration-200 ease-in-out',
+      'transition-[translate,opacity] duration-(--media-duration-slow) ease-media-in-out',
       'group-data-starting-style/seek-status:opacity-0 group-data-ending-style/seek-status:opacity-0',
     ],
     seekIndicatorValue: 'tabular-nums',

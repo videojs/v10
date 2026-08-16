@@ -3,7 +3,6 @@
 @layer videojs.theme.base {
   :is(.media-theme-default, .media-theme-minimal) {
     --media-default-accent-color: oklch(1 0 0);
-    --media-accent-contrast-color: contrast-color(var(--media-accent-color, var(--media-default-accent-color)));
     --media-accent-background-color: var(
       --media-accent-color,
       oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
@@ -11,8 +10,12 @@
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
-    --media-controls-gap: 0.25rem;
     --media-controls-padding: 0.25rem;
+    --media-duration-fast: 100ms;
+    --media-duration-normal: 150ms;
+    --media-duration-slow: 200ms;
+    --media-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --media-ease-out: cubic-bezier(0, 0, 0.2, 1);
     --media-controls-transition-duration: 100ms;
     --media-error-dialog-transition-delay: 100ms;
     --media-popup-transition-duration: 100ms;
@@ -48,6 +51,9 @@
   @media (prefers-reduced-motion: reduce) {
     :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
+      --media-duration-fast: 50ms;
+      --media-duration-normal: 50ms;
+      --media-duration-slow: 50ms;
       --media-error-dialog-transition-delay: 0ms;
       --media-error-dialog-transition-duration: 50ms;
       --media-popup-transition-duration: 0ms;
@@ -67,7 +73,6 @@
   @media (forced-colors: active) {
     :is(.media-theme-default, .media-theme-minimal) {
       --media-accent-color: Highlight;
-      --media-accent-contrast-color: HighlightText;
       --media-accent-background-color: Highlight;
       --media-accent-text-color: HighlightText;
       --media-border-color: CanvasText;

@@ -23,13 +23,11 @@ describe('loadSkinStyleManifest', () => {
     const minimalRecipe = recipeForToken(minimalManifest, statusFile, ['statusIndicator']);
 
     expect(defaultRecipe?.utilities).toContain('top-3');
-    expect(defaultRecipe?.utilities).toContain('rounded-media-pill');
+    expect(defaultRecipe?.utilities).toContain('rounded-media-control');
     expect(minimalRecipe?.utilities).toContain('top-0');
-    expect(minimalRecipe?.utilities).toContain(
-      '[background-image:linear-gradient(to_bottom,oklch(0_0_0/0.35),oklch(0_0_0/0.2)_3rem,transparent)]'
-    );
+    expect(minimalRecipe?.utilities).toContain('status-indicator-gradient');
     expect(minimalRecipe?.utilities).not.toContain('top-3');
-    expect(minimalRecipe?.utilities).not.toContain('rounded-media-pill');
+    expect(minimalRecipe?.utilities).not.toContain('rounded-media-control');
     expect(minimalRecipe?.utilities).not.toContain('bg-media-surface');
     expect(minimalRecipe?.utilities).not.toContain('bg-black/25');
   });

@@ -3,9 +3,9 @@
     --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
     --media-container-border-radius: var(--media-border-radius, 1.75rem);
     --media-error-dialog-transition-duration: 350ms;
-    --media-button-size: calc(2.25 * var(--media-size));
-    --media-radius-pill: 9999px;
-    --media-radius-surface: 0.5rem;
+    --media-control-size: calc(2.25 * var(--media-size));
+    --media-control-radius: 9999px;
+    --media-surface-radius: 0.5rem;
     --media-shadow-color: oklch(0 0 0 / 0.15);
     --media-surface-background: oklch(1 0 0 / 0.1);
     --media-surface-outer-border: oklch(0 0 0 / 0.1);

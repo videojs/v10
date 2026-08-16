@@ -5,7 +5,7 @@ const menuItem = [
   'outline-2 -outline-offset-2 outline-transparent',
   'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
   'focus-visible:outline-media-focus focus-visible:outline-offset-2',
-  'transition-[color,background-color] duration-100 ease-in-out',
+  'transition-[color,background-color] duration-(--media-duration-fast) ease-media-in-out',
 ];
 
 const group = 'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]';
@@ -31,7 +31,7 @@ export default defineStyles({
     ],
     submenuPanel: [
       'absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
-      'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
+      'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-media-out',
       'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
       'data-starting-style:translate-x-full data-ending-style:translate-x-full',
       'data-starting-style:[filter:blur(8px)] data-ending-style:[filter:blur(8px)]',
@@ -41,14 +41,14 @@ export default defineStyles({
     hint: 'ml-auto inline-flex min-w-0 items-center gap-1 pl-2 opacity-70',
     hintLabel: 'max-w-24 overflow-hidden text-ellipsis whitespace-nowrap',
     tier: 'pl-0.5 text-[0.7em] font-semibold leading-none opacity-70',
-    badge: 'rounded-media-pill bg-media-control-hover px-1.5 text-[0.7em] font-semibold',
+    badge: 'rounded-media-control bg-media-control-hover px-1.5 text-[0.7em] font-semibold',
     indicator: 'ml-auto -mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
     icon: 'size-media-icon shrink-0 opacity-70 drop-shadow-media-icon group-hover/menu-item:opacity-100',
     chevron: 'size-3.5',
     chevronFlipped: 'rotate-180',
     settingsTrigger: 'group/settings',
     settingsIcon: [
-      'transition-[transform] duration-150 ease-in-out',
+      'transition-transform duration-(--media-duration-normal) ease-media-in-out',
       'group-aria-expanded/settings:rotate-90 motion-reduce:duration-0',
     ],
     srOnly: 'sr-only',

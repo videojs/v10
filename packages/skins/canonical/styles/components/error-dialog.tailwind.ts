@@ -7,10 +7,10 @@ export default defineStyles({
     errorDialog: variants({
       base: [
         'peer/error z-20 flex flex-col gap-3 outline-none',
-        'not-data-open:hidden transition-[opacity,scale,transform] delay-100 ease-out',
+        'not-data-open:hidden transition-[opacity,scale,transform] delay-(--media-error-dialog-transition-delay) ease-media-out',
         'data-starting-style:scale-50 data-starting-style:opacity-0',
         'data-ending-style:scale-50 data-ending-style:opacity-0 data-ending-style:delay-0',
-        'motion-reduce:duration-50 motion-reduce:delay-0',
+        'motion-reduce:delay-0',
       ],
       variants: {
         default: [
