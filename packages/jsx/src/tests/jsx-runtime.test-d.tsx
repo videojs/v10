@@ -1,9 +1,19 @@
 /** @jsxImportSource .. */
 
-import { createComponent, Slot, Template } from '../jsx-runtime';
+import {
+  type ComponentProps,
+  createComponent,
+  type FunctionComponent,
+  type PropsWithChildren,
+  Slot,
+  Template,
+} from '../jsx-runtime';
 import { defineComponent } from '../manifest';
 
 const Button = createComponent(defineComponent<{ disabled?: boolean }>({ name: 'Button' }));
+declare const Presentational: FunctionComponent;
+declare const WithoutChildren: FunctionComponent<ComponentProps>;
+declare const WithLabel: FunctionComponent<PropsWithChildren<{ label: string }>>;
 const Slider = createComponent(
   defineComponent({
     name: 'Slider',
@@ -15,6 +25,9 @@ const Slider = createComponent(
 );
 
 void (<Button className={['button', undefined, false]} disabled />);
+void (<Presentational className="presentational">Content</Presentational>);
+void (<WithoutChildren className="presentational" />);
+void (<WithLabel label="Label">Content</WithLabel>);
 void (
   <Slider.Root orientation="vertical">
     <Slider.Thumb />
@@ -41,3 +54,5 @@ void (<button type="button" />);
 void (<Template />);
 // @ts-expect-error - template parts require one authored child
 void (<Template.Part name="label" />);
+// @ts-expect-error - children are not added to an explicitly childless component
+void (<WithoutChildren>Content</WithoutChildren>);

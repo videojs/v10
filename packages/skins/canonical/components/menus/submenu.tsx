@@ -1,9 +1,9 @@
 import { Menu } from '@videojs/core/components';
-import type { ComponentNode } from '@videojs/jsx';
+import type { FunctionComponent } from '@videojs/jsx';
 import styles from '../../styles/components/menu.tailwind';
 import { MenuChevron } from './menu-chevron';
 
-declare const SubmenuHint: (props: { children?: unknown; className?: unknown }) => ComponentNode;
+declare const SubmenuHint: FunctionComponent;
 
 export interface SubmenuProps {
   children?: unknown;

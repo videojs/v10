@@ -1,13 +1,13 @@
 import { Text } from '@videojs/core/components';
 import { qualityText } from '@videojs/core/i18n/text/menu';
 import { SwitchesIcon } from '@videojs/icons/components';
-import { type ComponentNode, Template } from '@videojs/jsx';
+import { type FunctionComponent, Template } from '@videojs/jsx';
 import styles from '../../styles/components/menu.tailwind';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 
-declare const QualityOptionLabel: (props: { children?: unknown }) => ComponentNode;
+declare const QualityOptionLabel: FunctionComponent;
 
 export function QualityMenu() {
   return (

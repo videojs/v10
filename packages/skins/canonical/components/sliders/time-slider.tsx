@@ -1,10 +1,10 @@
 import { Slider, TimeSlider as TimeSliderPrimitive } from '@videojs/core/components';
 import { SpinnerIcon } from '@videojs/icons/components';
-import { type ComponentNode, Template } from '@videojs/jsx';
+import { type FunctionComponent, Template } from '@videojs/jsx';
 import popupStyles from '../../styles/components/popup.tailwind';
 import styles from '../../styles/components/slider.tailwind';
 
-declare const PreviewValue: (props: { children?: unknown; className?: unknown }) => ComponentNode;
+declare const PreviewValue: FunctionComponent;
 
 export function TimeSlider() {
   return (

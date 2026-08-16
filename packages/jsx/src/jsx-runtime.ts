@@ -22,10 +22,18 @@ export interface ComponentNode {
 
 export type ClassNameValue = string | false | null | undefined | readonly ClassNameValue[];
 
-export interface BaseProps {
+export interface ComponentProps {
   className?: ClassNameValue;
+}
+
+export interface BaseProps extends ComponentProps {
   children?: unknown;
 }
+
+export type PropsWithChildren<Props extends object = ComponentProps> = Props & Pick<BaseProps, 'children'>;
+
+/** An authored JSX component without compiler component metadata. */
+export type FunctionComponent<Props extends object = BaseProps> = (props: Props) => ComponentNode;
 
 export interface SlotProps {
   name?: string | undefined;
