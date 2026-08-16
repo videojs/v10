@@ -175,19 +175,19 @@ const htmlComponents: Readonly<Record<string, HtmlComponentDescriptor>> = {
   },
   QualityRadioGroup: {
     modules: ['@videojs/html/ui/quality-radio-group'],
-    elements: { QualityRadioGroup: 'media-quality-radio-group' },
+    elements: { QualityRadioGroupPrimitive: 'media-quality-radio-group' },
   },
   AudioTrackRadioGroup: {
     modules: ['@videojs/html/ui/audio-track-radio-group'],
-    elements: { AudioTrackRadioGroup: 'media-audio-track-radio-group' },
+    elements: { AudioTrackRadioGroupPrimitive: 'media-audio-track-radio-group' },
   },
   PlaybackRateRadioGroup: {
     modules: ['@videojs/html/ui/playback-rate-radio-group'],
-    elements: { PlaybackRateRadioGroup: 'media-playback-rate-radio-group' },
+    elements: { PlaybackRateRadioGroupPrimitive: 'media-playback-rate-radio-group' },
   },
   CaptionsRadioGroup: {
     modules: ['@videojs/html/ui/captions-radio-group'],
-    elements: { CaptionsRadioGroup: 'media-captions-radio-group' },
+    elements: { CaptionsRadioGroupPrimitive: 'media-captions-radio-group' },
   },
 };
 
@@ -250,25 +250,25 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
         setup: () => ({
           transform: lowerTemplateParts({
             parts: {
-              'QualitySettingsMenu:selected-label': {
+              'QualityMenu:selected-label': {
                 kind: 'attribute',
                 attribute: 'data-part',
                 value: 'hint',
                 tag: 'span',
               },
-              'AudioTrackSettingsMenu:selected-label': {
+              'AudioTrackMenu:selected-label': {
                 kind: 'attribute',
                 attribute: 'data-part',
                 value: 'hint',
                 tag: 'span',
               },
-              'PlaybackRateSettingsMenu:selected-label': {
+              'PlaybackRateMenu:selected-label': {
                 kind: 'attribute',
                 attribute: 'data-part',
                 value: 'hint',
                 tag: 'span',
               },
-              'CaptionsSettingsMenu:selected-label': {
+              'CaptionsMenu:selected-label': {
                 kind: 'attribute',
                 attribute: 'data-part',
                 value: 'hint',
@@ -326,13 +326,12 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             .function('Container')
             .jsx.props('className')
             .on('ContainerPrimitive');
-          const submenuNames = ['Quality', 'AudioTrack', 'PlaybackRate', 'Captions'] as const;
-          const submenuIds = {
-            Quality: 'settings-quality-menu',
-            AudioTrack: 'settings-audio-menu',
-            PlaybackRate: 'settings-speed-menu',
-            Captions: 'settings-captions-menu',
-          } as const;
+          const submenus = [
+            ['QualityMenu', 'settings-quality-menu'],
+            ['AudioTrackMenu', 'settings-audio-menu'],
+            ['PlaybackRateMenu', 'settings-speed-menu'],
+            ['CaptionsMenu', 'settings-captions-menu'],
+          ] as const;
 
           return [
             rootContainer.addProp('className', () => {
@@ -361,15 +360,11 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.function('SettingsMenu').jsx.element('Menu.Trigger').replace('button'),
             code.function('SettingsMenu').jsx.element('TooltipPrimitive.Popup').addProp('trigger', 'settings-trigger'),
             code.function('SettingsMenu').jsx.element('Menu.Content').addProp('id', 'settings-menu'),
-            ...submenuNames.flatMap((name) => {
-              const component = `${name}SettingsMenu`;
-              const id = submenuIds[name];
-              return [
-                code.function(component).jsx.element('Menu.Trigger').addProp('commandfor', id),
-                code.function(component).jsx.element('Menu.Trigger').replace('media-menu-item'),
-                code.function(component).jsx.element('Menu.Content').addProp('id', id),
-              ];
-            }),
+            code.function('Submenu').setProps(['children', 'icon', 'label', 'selectedLabel', 'menuId']),
+            code.function('Submenu').jsx.element('Menu.Trigger').addProp('commandfor', code.value.identifier('menuId')),
+            code.function('Submenu').jsx.element('Menu.Trigger').replace('media-menu-item'),
+            code.function('Submenu').jsx.element('Menu.Content').addProp('id', code.value.identifier('menuId')),
+            ...submenus.map(([component, id]) => code.function(component).jsx.element('Submenu').addProp('menuId', id)),
             code.function('MuteButton').addProps([{ name: 'props', spread: true }]),
             code.jsx.element('MuteButtonPrimitive').spreadProps('props'),
             ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),

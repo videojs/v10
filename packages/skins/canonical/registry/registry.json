@@ -138,13 +138,13 @@
           "type": "registry:component"
         },
         {
-          "path": "canonical/registry/default/components/video-settings-menu/audio-track-settings-menu.tsx",
-          "target": "components/videojs/video-settings-menu/audio-track-settings-menu.tsx",
+          "path": "canonical/registry/default/components/video-settings-menu/audio-track-menu.tsx",
+          "target": "components/videojs/video-settings-menu/audio-track-menu.tsx",
           "type": "registry:component"
         },
         {
-          "path": "canonical/registry/default/components/video-settings-menu/captions-settings-menu.tsx",
-          "target": "components/videojs/video-settings-menu/captions-settings-menu.tsx",
+          "path": "canonical/registry/default/components/video-settings-menu/captions-menu.tsx",
+          "target": "components/videojs/video-settings-menu/captions-menu.tsx",
           "type": "registry:component"
         },
         {
@@ -153,18 +153,33 @@
           "type": "registry:component"
         },
         {
-          "path": "canonical/registry/default/components/video-settings-menu/playback-rate-settings-menu.tsx",
-          "target": "components/videojs/video-settings-menu/playback-rate-settings-menu.tsx",
+          "path": "canonical/registry/default/components/video-settings-menu/playback-rate-menu.tsx",
+          "target": "components/videojs/video-settings-menu/playback-rate-menu.tsx",
           "type": "registry:component"
         },
         {
-          "path": "canonical/registry/default/components/video-settings-menu/quality-settings-menu.tsx",
-          "target": "components/videojs/video-settings-menu/quality-settings-menu.tsx",
+          "path": "canonical/registry/default/components/video-settings-menu/quality-menu.tsx",
+          "target": "components/videojs/video-settings-menu/quality-menu.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/radio-group.tsx",
+          "target": "components/videojs/video-settings-menu/radio-group.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/radio-item.tsx",
+          "target": "components/videojs/video-settings-menu/radio-item.tsx",
           "type": "registry:component"
         },
         {
           "path": "canonical/registry/default/components/video-settings-menu/settings-menu.tsx",
           "target": "components/videojs/video-settings-menu/settings-menu.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/components/video-settings-menu/submenu.tsx",
+          "target": "components/videojs/video-settings-menu/submenu.tsx",
           "type": "registry:component"
         },
         {

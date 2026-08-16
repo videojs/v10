@@ -1,8 +1,9 @@
-import { AudioTrackSettingsMenu } from './audio-track-settings-menu';
-import { CaptionsSettingsMenu } from './captions-settings-menu';
-import { PlaybackRateSettingsMenu } from './playback-rate-settings-menu';
-import { QualitySettingsMenu } from './quality-settings-menu';
+import { AudioTrackMenu } from './audio-track-menu';
+import { CaptionsMenu } from './captions-menu';
+import { PlaybackRateMenu } from './playback-rate-menu';
+import { QualityMenu } from './quality-menu';
 import { SettingsMenu } from './settings-menu';
+import type { SettingsMenuProps } from './settings-menu';
 import { useQualityOptions, useAudioTrackOptions, usePlaybackRateOptions, useCaptionsOptions } from '@videojs/react';
 
 export interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, 'children'> {}
@@ -20,10 +21,10 @@ export function VideoSettingsMenu({ ...props }: VideoSettingsMenuProps = {}) {
   return (
     hasSettings && (
       <SettingsMenu {...props}>
-        <QualitySettingsMenu />
-        <AudioTrackSettingsMenu />
-        <PlaybackRateSettingsMenu />
-        <CaptionsSettingsMenu />
+        <QualityMenu />
+        <AudioTrackMenu />
+        <PlaybackRateMenu />
+        <CaptionsMenu />
       </SettingsMenu>
     )
   );

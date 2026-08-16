@@ -19,7 +19,10 @@ describe('createFrameworkSkin', () => {
     const volumeSlider = content(output, 'react', 'components/sliders/volume-slider.tsx');
     const timeSlider = content(output, 'react', 'components/sliders/time-slider.tsx');
     const settingsMenu = content(output, 'react', 'components/menus/settings-menu.tsx');
-    const qualityMenu = content(output, 'react', 'components/menus/quality-settings-menu.tsx');
+    const qualityMenu = content(output, 'react', 'components/menus/quality-menu.tsx');
+    const radioGroup = content(output, 'react', 'components/menus/radio-group.tsx');
+    const radioItem = content(output, 'react', 'components/menus/radio-item.tsx');
+    const submenu = content(output, 'react', 'components/menus/submenu.tsx');
     const inputBindings = content(output, 'react', 'components/input/video-input-bindings.tsx');
 
     expect(files.map((file) => file.fileName)).toEqual([
@@ -43,12 +46,15 @@ describe('createFrameworkSkin', () => {
       'components/layout/container.tsx',
       'components/layout/overlay.tsx',
       'components/layout/poster.tsx',
-      'components/menus/audio-track-settings-menu.tsx',
-      'components/menus/captions-settings-menu.tsx',
+      'components/menus/audio-track-menu.tsx',
+      'components/menus/captions-menu.tsx',
       'components/menus/menu-chevron.tsx',
-      'components/menus/playback-rate-settings-menu.tsx',
-      'components/menus/quality-settings-menu.tsx',
+      'components/menus/playback-rate-menu.tsx',
+      'components/menus/quality-menu.tsx',
+      'components/menus/radio-group.tsx',
+      'components/menus/radio-item.tsx',
       'components/menus/settings-menu.tsx',
+      'components/menus/submenu.tsx',
       'components/menus/video-settings-menu.tsx',
       'components/sliders/time-slider.tsx',
       'components/sliders/volume-slider.tsx',
@@ -75,6 +81,15 @@ describe('createFrameworkSkin', () => {
     expect(qualityMenu).toContain('renderItem={(props, item) =>');
     expect(qualityMenu).toContain('{item.tier ? <sup');
     expect(qualityMenu).not.toContain('<Template');
+    expect(qualityMenu).toContain('<RadioItem {...props} checked={item.checked}>');
+    expect(qualityMenu).toContain('/>');
+    expect(qualityMenu).not.toContain('</QualityRadioGroup>');
+    expect(submenu).toContain('export function Submenu');
+    expect(submenu).toContain('<Menu.Root>');
+    expect(radioItem).toContain('<Menu.RadioItem {...props}');
+    expect(radioItem).toContain('checked={checked}>');
+    expect(radioGroup).toContain('interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props');
+    expect(radioGroup).toContain('<QualityRadioGroupPrimitive {...props}');
     expect(inputBindings.match(/<Hotkey /g)).toHaveLength(17);
     expect(inputBindings.match(/<Gesture /g)).toHaveLength(5);
     expect(container).toContain('export function Container');
@@ -186,7 +201,7 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('id="settings-trigger"');
     expect(html).toContain('trigger="settings-trigger"');
     expect(html).toContain('id="settings-quality-menu"');
-    expect(html).toContain('<media-quality-radio-group class="media-group">');
+    expect(html).toContain('<media-quality-radio-group class="media-radio-group">');
     expect(html).toContain('<span data-part="label"></span>');
     expect(html.match(/<media-hotkey /g)).toHaveLength(17);
     expect(html.match(/<media-gesture /g)).toHaveLength(5);

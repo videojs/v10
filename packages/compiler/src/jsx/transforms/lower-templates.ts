@@ -199,7 +199,7 @@ function lowerRenderPropTemplates(
   templateTag: string,
   templates: Readonly<Record<string, TemplateLowering>>,
   factory: ts.NodeFactory
-): ts.JsxElement {
+): ts.JsxElement | ts.JsxSelfClosingElement {
   const references = parent.children
     .filter((child): child is ts.JsxElement => ts.isJsxElement(child) && tagName(child) === templateTag)
     .map((element) => readTemplate(element, templates))
@@ -232,6 +232,17 @@ function lowerRenderPropTemplates(
   }
 
   const removed = new Set(references.map(({ element }) => element));
+  const children = parent.children
+    .filter((child) => !removed.has(child as ts.JsxElement))
+    .filter((child) => !ts.isJsxText(child) || child.text.trim().length > 0);
+  if (children.length === 0) {
+    return factory.createJsxSelfClosingElement(
+      parent.openingElement.tagName,
+      parent.openingElement.typeArguments,
+      attributes
+    );
+  }
+
   return factory.updateJsxElement(
     parent,
     factory.updateJsxOpeningElement(
@@ -240,7 +251,7 @@ function lowerRenderPropTemplates(
       parent.openingElement.typeArguments,
       attributes
     ),
-    parent.children.filter((child) => !removed.has(child as ts.JsxElement)),
+    children,
     parent.closingElement
   );
 }

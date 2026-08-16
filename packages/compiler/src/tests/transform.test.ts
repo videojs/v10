@@ -117,7 +117,7 @@ export function Timeline() {
 
     expect(compact(react.code)).toContain(
       compact(
-        '<Group renderItem={(props, item) => (<Item {...props}><Text>{item.label}</Text>{item.badge ? <Text className="badge">{item.badge}</Text> : null}</Item>)}></Group>'
+        '<Group renderItem={(props, item) => (<Item {...props}><Text>{item.label}</Text>{item.badge ? <Text className="badge">{item.badge}</Text> : null}</Item>)} />'
       )
     );
     expect(compact(html.code)).toContain(

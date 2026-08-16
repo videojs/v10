@@ -26,8 +26,8 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
           <span>{t(settingsText)}</span>
         </TooltipPrimitive.Popup>
       </TooltipPrimitive.Root>
-      <Menu.Content className="media-surface media-popover media-settings media-group">
-        <Menu.Group className="media-group">{children}</Menu.Group>
+      <Menu.Content className="media-surface media-popover media-settings media-menu-group">
+        <Menu.Group className="media-menu-group">{children}</Menu.Group>
       </Menu.Content>
     </Menu.Root>
   );

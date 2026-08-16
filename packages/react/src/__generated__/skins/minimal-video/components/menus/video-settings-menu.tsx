@@ -1,7 +1,7 @@
-import { AudioTrackSettingsMenu } from './audio-track-settings-menu';
-import { CaptionsSettingsMenu } from './captions-settings-menu';
-import { PlaybackRateSettingsMenu } from './playback-rate-settings-menu';
-import { QualitySettingsMenu } from './quality-settings-menu';
+import { AudioTrackMenu } from './audio-track-menu';
+import { CaptionsMenu } from './captions-menu';
+import { PlaybackRateMenu } from './playback-rate-menu';
+import { QualityMenu } from './quality-menu';
 import { SettingsMenu } from './settings-menu';
 import { useQualityOptions } from '@/ui/quality/use-quality-options';
 import { useAudioTrackOptions } from '@/ui/audio-track/use-audio-track-options';
@@ -21,10 +21,10 @@ export function VideoSettingsMenu() {
   return (
     hasSettings && (
       <SettingsMenu>
-        <QualitySettingsMenu />
-        <AudioTrackSettingsMenu />
-        <PlaybackRateSettingsMenu />
-        <CaptionsSettingsMenu />
+        <QualityMenu />
+        <AudioTrackMenu />
+        <PlaybackRateMenu />
+        <CaptionsMenu />
       </SettingsMenu>
     )
   );

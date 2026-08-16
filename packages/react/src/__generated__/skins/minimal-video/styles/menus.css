@@ -22,14 +22,6 @@
       rotate: 180deg;
     }
 
-    .media-group {
-      anchor-scope: --media-menu-item-highlight-anchor;
-      flex-direction: column;
-      gap: 0.125rem;
-      display: flex;
-      position: relative;
-    }
-
     .media-hint {
       opacity: 0.7;
       align-items: center;
@@ -127,6 +119,15 @@
     .media-item-base[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    .media-menu-group,
+    .media-radio-group {
+      anchor-scope: --media-menu-item-highlight-anchor;
+      flex-direction: column;
+      gap: 0.125rem;
+      display: flex;
+      position: relative;
     }
 
     .media-separator {

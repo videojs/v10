@@ -1,14 +1,15 @@
 import { Menu, Tooltip as TooltipPrimitive, useTranslator } from '@videojs/react';
 import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@videojs/react/icons';
-import { cn } from '@/components/videojs/utils';
+import { cn, resolveClassName } from '@/components/videojs/utils';
 import type { ReactNode } from 'react';
 
 export interface SettingsMenuProps extends Menu.RootProps {
   children?: ReactNode;
+  className?: Menu.ContentProps['className'];
 }
 
-export function SettingsMenu({ children, ...props }: SettingsMenuProps) {
+export function SettingsMenu({ children, className, ...props }: SettingsMenuProps) {
   const t = useTranslator();
   return (
     <Menu.Root side="top" align="center" {...props}>
@@ -64,33 +65,36 @@ export function SettingsMenu({ children, ...props }: SettingsMenuProps) {
         </TooltipPrimitive.Popup>
       </TooltipPrimitive.Root>
       <Menu.Content
-        className={cn(
-          'relative bg-media-surface text-media-controls shadow-media-surface [backdrop-filter:blur(var(--media-surface-backdrop-blur))_saturate(var(--media-surface-backdrop-saturate))]',
-          'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
-          'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
-          'm-0 overflow-visible border-0 text-inherit',
-          '[--media-popup-translate-distance:0.5rem]',
-          '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--media-popup-transition-duration)] [transition-timing-function:ease-out]',
-          'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
-          'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
-          'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
-          'before:pointer-events-auto before:absolute',
-          'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
-          'data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full',
-          'data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full',
-          'data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full',
-          'data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)',
-          'data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)',
-          'min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl p-1',
-          'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
-          'h-(--media-menu-height) w-(--media-menu-width)',
-          '[transition-property:opacity,filter,transform,scale,width,height]',
-          '[transition-duration:var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-menu-transition-duration),var(--media-menu-transition-duration)]',
-          '[--media-menu-transition-duration:250ms]',
-          '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
-          '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
-          'flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
-        )}
+        className={(state) =>
+          cn(
+            'relative bg-media-surface text-media-controls shadow-media-surface [backdrop-filter:blur(var(--media-surface-backdrop-blur))_saturate(var(--media-surface-backdrop-saturate))]',
+            'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
+            'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
+            'm-0 overflow-visible border-0 text-inherit',
+            '[--media-popup-translate-distance:0.5rem]',
+            '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--media-popup-transition-duration)] [transition-timing-function:ease-out]',
+            'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
+            'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
+            'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
+            'before:pointer-events-auto before:absolute',
+            'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
+            'data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full',
+            'data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full',
+            'data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full',
+            'data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)',
+            'data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)',
+            'min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl p-1',
+            'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
+            'h-(--media-menu-height) w-(--media-menu-width)',
+            '[transition-property:opacity,filter,transform,scale,width,height]',
+            '[transition-duration:var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-menu-transition-duration),var(--media-menu-transition-duration)]',
+            '[--media-menu-transition-duration:250ms]',
+            '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
+            '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
+            'flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
+            resolveClassName(className, state),
+          )
+        }
       >
         <Menu.Group className="relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]">
           {children}

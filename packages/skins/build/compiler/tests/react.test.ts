@@ -108,8 +108,8 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).not.toContain('popoverProps');
   });
 
-  it('exposes and forwards settings submenu props', async () => {
-    const filename = resolve(canonicalRoot, 'components/menus/audio-track-settings-menu.tsx');
+  it('exposes and forwards domain menu props through the shared submenu', async () => {
+    const filename = resolve(canonicalRoot, 'components/menus/audio-track-menu.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -120,9 +120,47 @@ describe('createCompilerReactConfig', () => {
       }),
     });
 
-    expect(result.code).toContain('interface AudioTrackSettingsMenuProps extends Menu.RootProps');
-    expect(result.code).toContain('...props }: AudioTrackSettingsMenuProps = {}');
+    expect(result.code).toContain('interface AudioTrackMenuProps extends Omit<SubmenuProps');
+    expect(result.code).toContain('...props }: AudioTrackMenuProps = {}');
+    expect(result.code).toContain('<Submenu {...props} icon=');
+    expect(result.code).not.toContain('AudioTrackSettingsMenu');
+  });
+
+  it('forwards submenu className to the visual menu content', async () => {
+    const filename = resolve(canonicalRoot, 'components/menus/submenu.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await transform(source, {
+      filename,
+      config: createCompilerReactConfig({
+        style: 'tailwind',
+        styles: await loadSkinStyleManifest([
+          ...styleFiles,
+          resolve(canonicalRoot, 'styles/components/menu.tailwind.ts'),
+        ]),
+        extendComponents: true,
+      }),
+    });
+
+    expect(result.code).toContain('interface SubmenuProps extends Menu.RootProps');
+    expect(result.code).toContain('className?: Menu.ContentProps["className"]');
     expect(result.code).toContain('<Menu.Root {...props}>');
+    expect(result.code).toContain('resolveClassName(className, state)');
+  });
+
+  it('imports the settings menu props used by the editable video composition', async () => {
+    const filename = resolve(canonicalRoot, 'components/menus/video-settings-menu.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await transform(source, {
+      filename,
+      config: createCompilerReactConfig({
+        style: 'tailwind',
+        styles: await loadSkinStyleManifest(styleFiles),
+        extendComponents: true,
+      }),
+    });
+
+    expect(result.code).toContain('import type { SettingsMenuProps } from "./settings-menu"');
+    expect(result.code).toContain('interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, "children">');
   });
 
   it('allows a projection to resolve generated React imports', async () => {

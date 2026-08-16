@@ -8,6 +8,8 @@ const itemBase = [
   '[transition-property:color,background-color] [transition-duration:100ms] [transition-timing-function:ease-in-out]',
 ];
 
+const group = 'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]';
+
 export default defineStyles({
   role: 'menus',
   styles: {
@@ -21,7 +23,8 @@ export default defineStyles({
       '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
       '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
     ],
-    group: 'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
+    menuGroup: group,
+    radioGroup: group,
     itemBase,
     item: [
       'justify-between tabular-nums text-inherit',

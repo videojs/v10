@@ -143,7 +143,7 @@ describe('resolveSkinCatalog', () => {
       './styles/components/volume-indicator.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(30);
+    expect(closure.sourceFiles).toHaveLength(33);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 

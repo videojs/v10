@@ -98,25 +98,25 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
         setup: () => ({
           transform: lowerTemplateParts({
             parts: {
-              'QualitySettingsMenu:selected-label': {
+              'QualityMenu:selected-label': {
                 kind: 'value',
                 root: 'quality',
                 property: 'selectedLabel',
                 optionalAccess: true,
               },
-              'AudioTrackSettingsMenu:selected-label': {
+              'AudioTrackMenu:selected-label': {
                 kind: 'value',
                 root: 'audioTrack',
                 property: 'selectedLabel',
                 optionalAccess: true,
               },
-              'PlaybackRateSettingsMenu:selected-label': {
+              'PlaybackRateMenu:selected-label': {
                 kind: 'value',
                 root: 'playbackRate',
                 property: 'selectedLabel',
                 optionalAccess: true,
               },
-              'CaptionsSettingsMenu:selected-label': {
+              'CaptionsMenu:selected-label': {
                 kind: 'value',
                 root: 'captions',
                 property: 'selectedLabel',
@@ -188,17 +188,13 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const ComponentProps = code.import('react', 'ComponentProps', { type: true });
           const ContainerProps = code.import(containerProps.source, containerProps.name, { type: true });
           const PosterProps = code.import(posterProps.source, posterProps.name, { type: true });
+          const SettingsMenuProps = code.import('./settings-menu', 'SettingsMenuProps', { type: true });
           const usePlayer = code.import(usePlayerRef.source, usePlayerRef.name);
           const rootSkin = code.function(rootComponentName);
           const container = code.function('Container');
           const poster = code.function('Poster');
           const volumePopover = code.function('VolumePopover');
-          const settingsSubmenuFunctions = [
-            'QualitySettingsMenu',
-            'AudioTrackSettingsMenu',
-            'PlaybackRateSettingsMenu',
-            'CaptionsSettingsMenu',
-          ];
+          const settingsSubmenuFunctions = ['QualityMenu', 'AudioTrackMenu', 'PlaybackRateMenu', 'CaptionsMenu'];
           const settingsFunctions = ['SettingsMenu', ...settingsSubmenuFunctions];
           const useTranslator = code.import(useTranslatorRef.source, useTranslatorRef.name);
           const useQualityOptions = code.import(useQualityOptionsRef.source, useQualityOptionsRef.name);
@@ -264,6 +260,12 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               ['children', 'actions'],
             ],
             ['VolumeIndicator', 'VolumeIndicatorPrimitive.Root', 'VolumeIndicatorPrimitive.RootProps', ['children']],
+          ] as const;
+          const radioGroupComponents = [
+            ['QualityRadioGroup', 'QualityRadioGroupPrimitive', 'QualityRadioGroupPrimitive.Props'],
+            ['AudioTrackRadioGroup', 'AudioTrackRadioGroupPrimitive', 'AudioTrackRadioGroupPrimitive.Props'],
+            ['PlaybackRateRadioGroup', 'PlaybackRateRadioGroupPrimitive', 'PlaybackRateRadioGroupPrimitive.Props'],
+            ['CaptionsRadioGroup', 'CaptionsRadioGroupPrimitive', 'CaptionsRadioGroupPrimitive.Props'],
           ] as const;
 
           return [
@@ -380,29 +382,69 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                   ...settingsSubmenuFunctions.flatMap((name) => {
                     const propsName = `${name}Props`;
                     const component = code.function(name);
+                    const submenuProps = code.import('./submenu', 'SubmenuProps', { type: true });
                     return [
                       component.insertBefore(() =>
                         code.statement.interface({
                           name: propsName,
                           export: true,
-                          extends: [code.type.named('Menu.RootProps')],
+                          extends: [
+                            code.type.named('Omit', [
+                              code.type.named(submenuProps),
+                              code.type.union(
+                                ...['children', 'icon', 'label', 'selectedLabel'].map((property) =>
+                                  code.type.literal(property)
+                                )
+                              ),
+                            ]),
+                          ],
+                          properties: [],
                         })
                       ),
                       component.setProps([{ name: 'props', spread: true }], {
                         type: propsName,
                         initializer: code.value.object(),
                       }),
-                      component.jsx.element('Menu.Root').spreadProps('props'),
+                      component.jsx.element('Submenu').spreadProps('props', { position: 'start' }),
                     ];
                   }),
+                  code.interface('SubmenuProps').addProperties([
+                    {
+                      name: 'className',
+                      optional: true,
+                      type: code.type.indexed(code.type.named('Menu.ContentProps'), code.type.literal('className')),
+                    },
+                  ]),
+                  code.interface('SubmenuProps').extends('Menu.RootProps'),
+                  code.function('Submenu').addProps(['className', { name: 'props', spread: true }]),
+                  code.function('Submenu').jsx.element('Menu.Root').spreadProps('props'),
+                  code
+                    .function('Submenu')
+                    .jsx.props('className')
+                    .on('Menu.Content')
+                    .replace(({ value }) => composeStateClassName(value)),
+                  code.interface('SettingsMenuProps').addProperties([
+                    {
+                      name: 'className',
+                      optional: true,
+                      type: code.type.indexed(code.type.named('Menu.ContentProps'), code.type.literal('className')),
+                    },
+                  ]),
                   code.interface('SettingsMenuProps').extends('Menu.RootProps'),
-                  code.function('SettingsMenu').addProps([{ name: 'props', spread: true }]),
+                  code.function('SettingsMenu').addProps(['className', { name: 'props', spread: true }]),
                   code.function('SettingsMenu').jsx.element('Menu.Root').spreadProps('props'),
+                  code
+                    .function('SettingsMenu')
+                    .jsx.props('className')
+                    .on('Menu.Content')
+                    .replace(({ value }) => composeStateClassName(value)),
                   code.function('VideoSettingsMenu').insertBefore(() =>
                     code.statement.interface({
                       name: 'VideoSettingsMenuProps',
                       export: true,
-                      extends: [omitProps('SettingsMenuProps', ['children'])],
+                      extends: [
+                        code.type.named('Omit', [code.type.named(SettingsMenuProps), code.type.literal('children')]),
+                      ],
                       properties: [],
                     })
                   ),
@@ -568,6 +610,27 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .on('PosterPrimitive')
               .replace(({ value }) => composeStateClassName(value)),
             poster.jsx.element('PosterPrimitive').selfClosing(),
+            ...radioGroupComponents.flatMap(([name, primitive, primitiveProps]) => {
+              const propsName = `${name}Props`;
+              const component = code.function(name);
+              return [
+                component.insertBefore(() =>
+                  code.statement.interface({
+                    name: propsName,
+                    export: true,
+                    extends: [code.type.named(primitiveProps)],
+                    properties: [],
+                  })
+                ),
+                component.setProps(['className', { name: 'props', spread: true }], { type: propsName }),
+                component.jsx.element(primitive).spreadProps('props', { position: 'start' }),
+                component.jsx
+                  .props('className')
+                  .on(primitive)
+                  .replace(({ value }) => composeStateClassName(value)),
+                component.jsx.element(primitive).selfClosing(),
+              ];
+            }),
             volumePopover.prepend(() =>
               code.statement.const(
                 'volumeAvailability',
@@ -589,22 +652,22 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               code.function(name).prepend(() => code.statement.const('t', code.value.call(useTranslator, [])))
             ),
             code
-              .function('QualitySettingsMenu')
+              .function('QualityMenu')
               .prepend(() => code.statement.const('quality', code.value.call(useQualityOptions, []))),
             code
-              .function('AudioTrackSettingsMenu')
+              .function('AudioTrackMenu')
               .prepend(() => code.statement.const('audioTrack', code.value.call(useAudioTrackOptions, []))),
             code
-              .function('PlaybackRateSettingsMenu')
+              .function('PlaybackRateMenu')
               .prepend(() => code.statement.const('playbackRate', code.value.call(usePlaybackRateOptions, []))),
             code
-              .function('CaptionsSettingsMenu')
+              .function('CaptionsMenu')
               .prepend(() => code.statement.const('captions', code.value.call(useCaptionsOptions, []))),
             ...[
-              ['QualitySettingsMenu', 'quality', 'hasQuality'],
-              ['AudioTrackSettingsMenu', 'audioTrack', 'hasAudioTrack'],
-              ['PlaybackRateSettingsMenu', 'playbackRate', 'hasPlaybackRate'],
-              ['CaptionsSettingsMenu', 'captions', 'hasCaptions'],
+              ['QualityMenu', 'quality', 'hasQuality'],
+              ['AudioTrackMenu', 'audioTrack', 'hasAudioTrack'],
+              ['PlaybackRateMenu', 'playbackRate', 'hasPlaybackRate'],
+              ['CaptionsMenu', 'captions', 'hasCaptions'],
             ].flatMap(([functionName, value, availability]) => [
               code
                 .function(functionName!)
@@ -619,7 +682,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                 ),
               code
                 .function(functionName!)
-                .jsx.element('Menu.Root')
+                .jsx.element('Submenu')
                 .replace(({ element }) => code.value.and(availability!, element)),
             ]),
             code
@@ -647,17 +710,24 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .function('VideoSettingsMenu')
               .jsx.element('SettingsMenu')
               .replace(({ element }) => code.value.and('hasSettings', element)),
-            ...[
-              'QualitySettingsMenu',
-              'AudioTrackSettingsMenu',
-              'PlaybackRateSettingsMenu',
-              'CaptionsSettingsMenu',
-            ].map((name) =>
-              code
-                .function(name)
-                .jsx.element('Menu.ItemIndicator')
-                .addProp('checked', code.value.property('item', 'checked'))
+            ...['QualityMenu', 'AudioTrackMenu', 'PlaybackRateMenu', 'CaptionsMenu'].map((name) =>
+              code.function(name).jsx.element('RadioItem').addProp('checked', code.value.property('item', 'checked'))
             ),
+            code.interface('RadioItemProps').extends('Menu.RadioItemProps'),
+            code.interface('RadioItemProps').addProperties([{ name: 'checked', type: code.type.boolean() }]),
+            code.function('RadioItem').setProps(['checked', 'children', 'className', { name: 'props', spread: true }], {
+              type: 'RadioItemProps',
+            }),
+            code.function('RadioItem').jsx.element('Menu.RadioItem').spreadProps('props', { position: 'start' }),
+            code
+              .function('RadioItem')
+              .jsx.props('className')
+              .on('Menu.RadioItem')
+              .replace(({ value }) => composeStateClassName(value)),
+            code
+              .function('RadioItem')
+              .jsx.element('Menu.ItemIndicator')
+              .addProp('checked', code.value.identifier('checked')),
             code.variable('OverlayPrimitive').remove(),
             code.jsx.element('OverlayPrimitive').replace('div'),
             code.variable('InputIndicatorOverlayPrimitive').remove(),
@@ -678,6 +748,20 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             code.interface('ButtonTooltipProps').replaceExtends('TooltipProps', 'TooltipPrimitive.RootProps'),
             code
               .interface('SettingsMenuProps')
+              .property('children')
+              .setType(() => code.type.named(ReactNode)),
+            code
+              .interface('SubmenuProps')
+              .property('children')
+              .setType(() => code.type.named(ReactNode)),
+            ...['icon', 'label', 'selectedLabel'].map((property) =>
+              code
+                .interface('SubmenuProps')
+                .property(property)
+                .setType(() => code.type.named(ReactNode))
+            ),
+            code
+              .interface('RadioItemProps')
               .property('children')
               .setType(() => code.type.named(ReactNode)),
             code

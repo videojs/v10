@@ -127,7 +127,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
         <media-menu
           side="top"
           align="center"
-          class="media-surface media-popover media-settings media-group"
+          class="media-surface media-popover media-settings media-menu-group"
           id="settings-menu"
         >
           <media-menu-item class="media-item-base media-item" commandfor="settings-quality-menu">
@@ -144,7 +144,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
               <media-text token="menu.quality">Quality</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
-            <media-quality-radio-group class="media-group">
+            <media-quality-radio-group class="media-radio-group">
               <template>
                 <media-menu-radio-item class="media-item-base media-item">
                   <span>
@@ -173,7 +173,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
               <media-text token="menu.audio">Audio</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
-            <media-audio-track-radio-group class="media-group">
+            <media-audio-track-radio-group class="media-radio-group">
               <template>
                 <media-menu-radio-item class="media-item-base media-item">
                   <span data-part="label"></span>
@@ -198,7 +198,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
               <media-text token="menu.speed">Speed</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
-            <media-playback-rate-radio-group class="media-group">
+            <media-playback-rate-radio-group class="media-radio-group">
               <template>
                 <media-menu-radio-item class="media-item-base media-item">
                   <span data-part="label"></span>
@@ -223,7 +223,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
               <media-text token="menu.captions">Captions</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
-            <media-captions-radio-group class="media-group">
+            <media-captions-radio-group class="media-radio-group">
               <template>
                 <media-menu-radio-item class="media-item-base media-item">
                   <span data-part="label"></span>
