@@ -241,6 +241,13 @@ const iconNames = {
   VolumeOffIcon: 'volume-off',
 } as const;
 
+const SETTINGS_SUBMENUS = [
+  ['QualityMenu', 'settings-quality-menu'],
+  ['AudioTrackMenu', 'settings-audio-menu'],
+  ['PlaybackRateMenu', 'settings-speed-menu'],
+  ['CaptionsMenu', 'settings-captions-menu'],
+] as const;
+
 /** Create the compiler policy for an HTML Skin projection. */
 export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOptions) {
   const rootComponentName = styleTarget.rootComponentName ?? 'DefaultVideoSkin';
@@ -262,16 +269,12 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             .function('Container')
             .jsx.props('className')
             .on('ContainerPrimitive');
-          const submenus = [
-            ['QualityMenu', 'settings-quality-menu'],
-            ['AudioTrackMenu', 'settings-audio-menu'],
-            ['PlaybackRateMenu', 'settings-speed-menu'],
-            ['CaptionsMenu', 'settings-captions-menu'],
-          ] as const;
-
           return [
+            // Lower constrained canonical JSX before target element rewrites.
             ...createHtmlTemplatePartTransforms(code),
             ...createHtmlTemplateTransforms(code),
+
+            // Establish the Skin root, component content slot, and Container API.
             rootContainer.addProp('className', () => {
               if (!styleTarget.rootClassName) {
                 throw new Error('HTML Skin root lowering requires `rootClassName`.');
@@ -281,6 +284,8 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             containerPrimitiveClassName.replace(({ value }) => code.value.array([value, 'className'])),
             code.function('Container').setProps(['children', 'className']),
             code.jsx.element('Slot').replace('slot'),
+
+            // Target-neutral presentational roles become native HTML elements.
             code.jsx.element('ErrorDialogPrimitive.Root').unwrap(),
             code.jsx.element('OverlayRoot').replace('div'),
             code.jsx.element('StatusIndicatorGroup').replace('div'),
@@ -288,6 +293,8 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.jsx.element('SubmenuHint').replace('span'),
             code.jsx.element('QualityOptionLabel').replace('span'),
             code.jsx.element('Text').replace(({ element, factory }) => lowerHtmlText(element, factory)),
+
+            // Flatten compound target components into their HTML element protocols.
             code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
             code.jsx.element('Popover.Trigger').unwrap(),
             code.jsx.element('TooltipPrimitive.Root').unwrap({ forwardPropsTo: 'TooltipPrimitive.Popup' }),
@@ -303,7 +310,11 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.function('Submenu').jsx.element('Menu.Trigger').addProp('commandfor', code.value.identifier('menuId')),
             code.function('Submenu').jsx.element('Menu.Trigger').replace('media-menu-item'),
             code.function('Submenu').jsx.element('Menu.Content').addProp('id', code.value.identifier('menuId')),
-            ...submenus.map(([component, id]) => code.function(component).jsx.element('Submenu').addProp('menuId', id)),
+            ...SETTINGS_SUBMENUS.map(([component, id]) =>
+              code.function(component).jsx.element('Submenu').addProp('menuId', id)
+            ),
+
+            // Forward authored props before mapping canonical components and icons.
             code.function('MuteButton').addProps([{ name: 'props', spread: true }]),
             code.jsx.element('MuteButtonPrimitive').spreadProps('props'),
             ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),
@@ -311,6 +322,8 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
               code.jsx.element(source).addProp('name', name),
               code.jsx.element(source).replace('media-icon'),
             ]),
+
+            // Compose class arrays, then emit native HTML attribute and child types.
             code.jsx
               .props('className')
               .on(/^[a-z]/)

@@ -41,6 +41,42 @@ interface CreateCompilerReactConfigOptions {
 
 export type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
 
+const SETTINGS_SUBMENU_FUNCTIONS = ['QualityMenu', 'AudioTrackMenu', 'PlaybackRateMenu', 'CaptionsMenu'] as const;
+
+const DIRECT_COMPONENTS = [
+  ['AirPlayButton', 'AirPlayButtonPrimitive', 'AirPlayButtonPrimitive.Props'],
+  ['BufferingIndicator', 'BufferingIndicatorPrimitive', 'BufferingIndicatorPrimitive.Props'],
+  ['CaptionsButton', 'CaptionsButtonPrimitive', 'CaptionsButtonPrimitive.Props'],
+  ['CastButton', 'CastButtonPrimitive', 'CastButtonPrimitive.Props'],
+  ['FullscreenButton', 'FullscreenButtonPrimitive', 'FullscreenButtonPrimitive.Props'],
+  ['MuteButton', 'MuteButtonPrimitive', 'MuteButtonPrimitive.Props'],
+  ['PiPButton', 'PiPButtonPrimitive', 'PiPButtonPrimitive.Props'],
+  ['PlayButton', 'PlayButtonPrimitive', 'PlayButtonPrimitive.Props'],
+  ['SeekButton', 'SeekButtonPrimitive', 'SeekButtonPrimitive.Props'],
+  ['SeekIndicator', 'SeekIndicatorPrimitive.Root', 'SeekIndicatorPrimitive.RootProps'],
+  ['StatusAnnouncer', 'StatusAnnouncerPrimitive', 'StatusAnnouncerPrimitive.Props'],
+  ['TimeSlider', 'TimeSliderPrimitive.Root', 'TimeSliderPrimitive.RootProps'],
+  ['VolumeSlider', 'VolumeSliderPrimitive.Root', 'VolumeSliderPrimitive.RootProps'],
+] as const;
+
+const COMPOSED_COMPONENTS = [
+  ['StatusIndicator', 'StatusIndicatorPrimitive.Root', 'StatusIndicatorPrimitive.RootProps', ['children', 'actions']],
+  [
+    'PlaybackStatusIndicator',
+    'StatusIndicatorPrimitive.Root',
+    'StatusIndicatorPrimitive.RootProps',
+    ['children', 'actions'],
+  ],
+  ['VolumeIndicator', 'VolumeIndicatorPrimitive.Root', 'VolumeIndicatorPrimitive.RootProps', ['children']],
+] as const;
+
+const RADIO_GROUP_COMPONENTS = [
+  ['QualityRadioGroup', 'QualityRadioGroupPrimitive', 'QualityRadioGroupPrimitive.Props'],
+  ['AudioTrackRadioGroup', 'AudioTrackRadioGroupPrimitive', 'AudioTrackRadioGroupPrimitive.Props'],
+  ['PlaybackRateRadioGroup', 'PlaybackRateRadioGroupPrimitive', 'PlaybackRateRadioGroupPrimitive.Props'],
+  ['CaptionsRadioGroup', 'CaptionsRadioGroupPrimitive', 'CaptionsRadioGroupPrimitive.Props'],
+] as const;
+
 /** Create the compiler policy for a React Skin projection. */
 export function createCompilerReactConfig(options: CreateCompilerReactConfigOptions) {
   const rootComponentName = options.rootComponentName ?? 'DefaultVideoSkin';
@@ -116,8 +152,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const container = code.function('Container');
           const poster = code.function('Poster');
           const volumePopover = code.function('VolumePopover');
-          const settingsSubmenuFunctions = ['QualityMenu', 'AudioTrackMenu', 'PlaybackRateMenu', 'CaptionsMenu'];
-          const settingsFunctions = ['SettingsMenu', ...settingsSubmenuFunctions];
+          const settingsFunctions = ['SettingsMenu', ...SETTINGS_SUBMENU_FUNCTIONS];
           const useTranslator = code.import(useTranslatorRef.source, useTranslatorRef.name);
           const useQualityOptions = code.import(useQualityOptionsRef.source, useQualityOptionsRef.name);
           const useAudioTrackOptions = code.import(useAudioTrackOptionsRef.source, useAudioTrackOptionsRef.name);
@@ -153,49 +188,16 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               code.type.named(type),
               code.type.union(...omitted.map((name) => code.type.literal(name))),
             ]);
-          const directComponents = [
-            ['AirPlayButton', 'AirPlayButtonPrimitive', 'AirPlayButtonPrimitive.Props'],
-            ['BufferingIndicator', 'BufferingIndicatorPrimitive', 'BufferingIndicatorPrimitive.Props'],
-            ['CaptionsButton', 'CaptionsButtonPrimitive', 'CaptionsButtonPrimitive.Props'],
-            ['CastButton', 'CastButtonPrimitive', 'CastButtonPrimitive.Props'],
-            ['FullscreenButton', 'FullscreenButtonPrimitive', 'FullscreenButtonPrimitive.Props'],
-            ['MuteButton', 'MuteButtonPrimitive', 'MuteButtonPrimitive.Props'],
-            ['PiPButton', 'PiPButtonPrimitive', 'PiPButtonPrimitive.Props'],
-            ['PlayButton', 'PlayButtonPrimitive', 'PlayButtonPrimitive.Props'],
-            ['SeekButton', 'SeekButtonPrimitive', 'SeekButtonPrimitive.Props'],
-            ['SeekIndicator', 'SeekIndicatorPrimitive.Root', 'SeekIndicatorPrimitive.RootProps'],
-            ['StatusAnnouncer', 'StatusAnnouncerPrimitive', 'StatusAnnouncerPrimitive.Props'],
-            ['TimeSlider', 'TimeSliderPrimitive.Root', 'TimeSliderPrimitive.RootProps'],
-            ['VolumeSlider', 'VolumeSliderPrimitive.Root', 'VolumeSliderPrimitive.RootProps'],
-          ] as const;
-          const composedComponents = [
-            [
-              'StatusIndicator',
-              'StatusIndicatorPrimitive.Root',
-              'StatusIndicatorPrimitive.RootProps',
-              ['children', 'actions'],
-            ],
-            [
-              'PlaybackStatusIndicator',
-              'StatusIndicatorPrimitive.Root',
-              'StatusIndicatorPrimitive.RootProps',
-              ['children', 'actions'],
-            ],
-            ['VolumeIndicator', 'VolumeIndicatorPrimitive.Root', 'VolumeIndicatorPrimitive.RootProps', ['children']],
-          ] as const;
-          const radioGroupComponents = [
-            ['QualityRadioGroup', 'QualityRadioGroupPrimitive', 'QualityRadioGroupPrimitive.Props'],
-            ['AudioTrackRadioGroup', 'AudioTrackRadioGroupPrimitive', 'AudioTrackRadioGroupPrimitive.Props'],
-            ['PlaybackRateRadioGroup', 'PlaybackRateRadioGroupPrimitive', 'PlaybackRateRadioGroupPrimitive.Props'],
-            ['CaptionsRadioGroup', 'CaptionsRadioGroupPrimitive', 'CaptionsRadioGroupPrimitive.Props'],
-          ] as const;
-
           return [
+            // Lower constrained canonical JSX before target component rewrites.
             ...createReactTemplatePartTransforms(code),
             ...createReactTemplateTransforms(code),
+
+            // Registry output opts into editable props on every component boundary.
             ...(options.extendComponents
               ? [
-                  ...directComponents.flatMap(([name, primitive, primitiveProps]) => {
+                  // Components backed by one target primitive.
+                  ...DIRECT_COMPONENTS.flatMap(([name, primitive, primitiveProps]) => {
                     const propsName = `${name}Props`;
                     const component = code.function(name);
                     return [
@@ -217,7 +219,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                         .replace(({ value }) => composeStateClassName(value)),
                     ];
                   }),
-                  ...composedComponents.flatMap(([name, primitive, primitiveProps, omitted]) => {
+                  // Components that own children or behavioral props internally.
+                  ...COMPOSED_COMPONENTS.flatMap(([name, primitive, primitiveProps, omitted]) => {
                     const propsName = `${name}Props`;
                     const component = code.function(name);
                     return [
@@ -239,6 +242,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                         .replace(({ value }) => composeStateClassName(value)),
                     ];
                   }),
+                  // Presentational roots and dialogs expose their rendered target element.
                   code.function('Overlay').insertBefore(() =>
                     code.statement.interface({
                       name: 'OverlayProps',
@@ -280,6 +284,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                     .jsx.props('className')
                     .on('ErrorDialogPrimitive.Popup')
                     .replace(({ value }) => composeStateClassName(value)),
+                  // Popovers and menus forward root behavior plus popup class names.
                   code.interface('VolumePopoverProps').addProperties([
                     {
                       name: 'className',
@@ -303,7 +308,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                     .jsx.props('className')
                     .on('Popover.Popup')
                     .replace(({ value }) => composeStateClassName(value)),
-                  ...settingsSubmenuFunctions.flatMap((name) => {
+                  ...SETTINGS_SUBMENU_FUNCTIONS.flatMap((name) => {
                     const propsName = `${name}Props`;
                     const component = code.function(name);
                     const submenuProps = code.import('./submenu', 'SubmenuProps', { type: true });
@@ -377,6 +382,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                     initializer: code.value.object(),
                   }),
                   code.function('VideoSettingsMenu').jsx.element('SettingsMenu').spreadProps('props'),
+                  // Internal menu and feedback pieces remain editable in registry output.
                   code.function('MenuChevron').insertBefore(() =>
                     code.statement.interface({
                       name: 'MenuChevronProps',
@@ -468,6 +474,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                     .addProp('disabled', code.value.identifier('disabled')),
                 ]
               : []),
+
+            // Public root composition and always-supported Container/Poster APIs.
             rootSkin.insertBefore(() =>
               code.statement.interface({
                 name: rootPropsName,
@@ -551,7 +559,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .on('PosterPrimitive')
               .replace(({ value }) => composeStateClassName(value)),
             poster.jsx.element('PosterPrimitive').selfClosing(),
-            ...radioGroupComponents.flatMap(([name, primitive, primitiveProps]) => {
+            ...RADIO_GROUP_COMPONENTS.flatMap(([name, primitive, primitiveProps]) => {
               const propsName = `${name}Props`;
               const component = code.function(name);
               return [
@@ -572,6 +580,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                 component.jsx.element(primitive).selfClosing(),
               ];
             }),
+            // Runtime availability and settings state used by the React projection.
             volumePopover.prepend(() =>
               code.statement.const(
                 'volumeAvailability',
@@ -651,7 +660,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .function('VideoSettingsMenu')
               .jsx.element('SettingsMenu')
               .replace(({ element }) => code.value.and('hasSettings', element)),
-            ...['QualityMenu', 'AudioTrackMenu', 'PlaybackRateMenu', 'CaptionsMenu'].map((name) =>
+            // Menu item behavior shared by every settings submenu.
+            ...SETTINGS_SUBMENU_FUNCTIONS.map((name) =>
               code.function(name).jsx.element('RadioItem').addProp('checked', code.value.property('item', 'checked'))
             ),
             code.interface('RadioItemProps').extends('Menu.RadioItemProps'),
@@ -669,6 +679,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .function('RadioItem')
               .jsx.element('Menu.ItemIndicator')
               .addProp('checked', code.value.identifier('checked')),
+            // Target-neutral presentational roles become native React elements.
             code.variable('OverlayRoot').remove(),
             code.jsx.element('OverlayRoot').replace('div'),
             code.variable('StatusIndicatorGroup').remove(),
@@ -682,6 +693,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             code.jsx.element('Text').replace(({ element, factory }) => lowerReactText(element, factory)),
             code.jsx.element('Slider.Thumbnail.Root').replace('div'),
             code.jsx.element('Slider.Thumbnail.Image').replace('Slider.Thumbnail'),
+            // Normalize canonical class arrays and target-facing prop types last.
             code.jsx
               .props('className')
               .where(code.value.isArray())
