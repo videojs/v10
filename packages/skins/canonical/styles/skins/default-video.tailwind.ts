@@ -1,12 +1,23 @@
 import { defaultSurface } from '../components/popup.tailwind';
 import { defineStyles } from '../define';
 
-const defaultSurfaceAtLarge = defaultSurface.map((group) =>
-  group
-    .split(/\s+/)
-    .map((utility) => `@lg/media-root:${utility}`)
-    .join(' ')
-);
+const defaultSurfaceAtLarge = [
+  '@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150',
+  '@lg/media-root:after:pointer-events-none @lg/media-root:after:absolute @lg/media-root:after:inset-0 @lg/media-root:after:z-10 @lg/media-root:after:rounded-[inherit]',
+  '@lg/media-root:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]',
+  '@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:bg-black @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-1 @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:ring-transparent',
+  '@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none',
+  '@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]',
+  '@lg/media-root:contrast-more:bg-black @lg/media-root:contrast-more:ring-1 @lg/media-root:contrast-more:ring-transparent @lg/media-root:contrast-more:backdrop-filter-none',
+  '@lg/media-root:contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]',
+  '@lg/media-root:forced-colors:bg-[Canvas] @lg/media-root:forced-colors:ring-1 @lg/media-root:forced-colors:ring-[CanvasText]',
+  '@lg/media-root:forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]',
+  '@lg/media-root:shadow-sm @lg/media-root:shadow-black/15 @lg/media-root:ring-1 @lg/media-root:ring-black/10',
+  '@lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-sm @lg/media-root:[@media(prefers-reduced-transparency:reduce)]:shadow-black/15',
+  '@lg/media-root:contrast-more:shadow-sm @lg/media-root:contrast-more:shadow-black/15',
+  '@lg/media-root:forced-colors:shadow-sm @lg/media-root:forced-colors:shadow-black/15',
+  '@lg/media-root:bg-white/10',
+] as const;
 
 export default defineStyles({
   role: 'controls',
