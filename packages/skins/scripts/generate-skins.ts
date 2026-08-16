@@ -27,7 +27,7 @@ type FrameworkSkinTarget =
       resolveImport?: ReactImportResolver | undefined;
     });
 
-interface GenerateSkinsOptions {
+export interface GenerateSkinsOptions {
   check?: boolean | undefined;
   frameworkTargets?: readonly FrameworkSkinTarget[] | undefined;
 }
@@ -60,7 +60,7 @@ const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = frameworkSkins.f
 });
 
 /** Generate framework Skins and the contained React/Tailwind registry. */
-async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> {
+export async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> {
   const catalog = await loadSkinCatalog();
   const targets = options.frameworkTargets ?? defaultFrameworkTargets;
 

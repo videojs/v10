@@ -27,11 +27,11 @@
   },
   "scripts": {
     "build": "tsdown && pnpm run build:registry",
-    "build:registry": "shadcn build canonical/registry/registry.json --output dist/registry",
+    "build:registry": "pnpm run generate:skins && shadcn build canonical/registry/registry.json --output dist/registry",
     "build:watch": "tsdown --watch ./src --no-clean",
     "check:canonical": "node --import tsx ./scripts/check-canonical-imports.ts",
     "generate:skins": "node --import tsx ./scripts/generate-skins.ts",
-    "check:skins": "node --import tsx ./scripts/generate-skins.ts --check",
+    "check:skins": "vitest run build/output/tests/generated-skins.test.ts",
     "dev": "pnpm run build:watch",
     "test": "pnpm run check:canonical && pnpm run test:types && vitest run",
     "test:types": "tsgo --project ./tsconfig.canonical.json",
