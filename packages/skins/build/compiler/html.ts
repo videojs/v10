@@ -410,7 +410,7 @@ function lowerHtmlTemplate(parent: JsxElementLike, template: HtmlTemplate, facto
 }
 
 function createHtmlTemplateRoot(
-  authored: ts.JsxElement,
+  authored: JsxElementLike,
   template: HtmlTemplate,
   factory: ts.NodeFactory
 ): JsxElementLike {

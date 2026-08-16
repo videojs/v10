@@ -874,7 +874,7 @@ function lowerReactTemplate(parent: JsxElementLike, template: ReactTemplate, fac
 }
 
 function createReactTemplateRoot(
-  authored: ts.JsxElement,
+  authored: JsxElementLike,
   template: ReactTemplate,
   factory: ts.NodeFactory
 ): JsxElementLike {
