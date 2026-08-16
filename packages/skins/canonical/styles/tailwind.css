@@ -3,6 +3,7 @@
 @import "tailwindcss" theme(inline);
 @import "./base.css";
 @import "./captions.css";
+@import "./themes/video.css";
 @import "./themes/default.css";
 @import "./themes/minimal.css";
 
@@ -35,4 +36,13 @@
     0 1px 2px -1px var(--media-shadow-color);
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-color);
   --blur-media-surface: var(--media-surface-backdrop-blur);
+}
+
+@utility transition-settings-menu {
+  transition-timing-function: ease-out;
+  transition-duration:
+    var(--media-popup-transition-duration), var(--media-popup-transition-duration),
+    var(--media-popup-transition-duration), var(--media-popup-transition-duration),
+    var(--media-menu-transition-duration), var(--media-menu-transition-duration);
+  transition-property: opacity, filter, transform, scale, width, height;
 }

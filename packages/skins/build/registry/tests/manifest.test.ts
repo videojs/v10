@@ -101,6 +101,7 @@ describe('generateReactRegistry', () => {
       'components/videojs/styles/tailwind.css',
       'components/videojs/styles/themes/default.css',
       'components/videojs/styles/themes/minimal.css',
+      'components/videojs/styles/themes/video.css',
     ]);
     const utilityItem = registry.items.find((item) => item.name === skinRegistry.utilityItem.name);
     expect(utilityItem?.type).toBe('registry:lib');

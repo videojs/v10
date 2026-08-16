@@ -37,6 +37,7 @@ describe('generateReactRegistry', () => {
       'styles/tailwind.css',
       'styles/base.css',
       'styles/captions.css',
+      'styles/themes/video.css',
       'styles/themes/default.css',
       'styles/themes/minimal.css',
     ]);

@@ -5,7 +5,7 @@ const menuItem = [
   'outline-2 -outline-offset-2 outline-transparent',
   'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
   'focus-visible:outline-media-focus focus-visible:outline-offset-2',
-  '[transition-property:color,background-color] [transition-duration:100ms] [transition-timing-function:ease-in-out]',
+  'transition-[color,background-color] duration-100 ease-in-out',
 ];
 
 const group = 'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]';
@@ -17,9 +17,7 @@ export default defineStyles({
       'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl border-0 p-1',
       'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
       'h-(--media-menu-height) w-(--media-menu-width)',
-      '[transition-property:opacity,filter,transform,scale,width,height]',
-      '[transition-duration:var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-menu-transition-duration),var(--media-menu-transition-duration)]',
-      '[--media-menu-transition-duration:250ms]',
+      'transition-settings-menu [--media-menu-transition-duration:250ms]',
       '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
       '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
     ],
@@ -33,7 +31,7 @@ export default defineStyles({
     ],
     submenuPanel: [
       'absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
-      '[transition-property:translate,filter] [transition-duration:var(--media-menu-transition-duration)] [transition-timing-function:ease-out]',
+      'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
       'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
       'data-starting-style:translate-x-full data-ending-style:translate-x-full',
       'data-starting-style:[filter:blur(8px)] data-ending-style:[filter:blur(8px)]',
@@ -50,8 +48,8 @@ export default defineStyles({
     chevronFlipped: 'rotate-180',
     settingsTrigger: 'group/settings',
     settingsIcon: [
-      '[transition-property:transform] [transition-duration:150ms] [transition-timing-function:ease-in-out]',
-      'group-aria-expanded/settings:rotate-90 motion-reduce:[transition-duration:0ms]',
+      'transition-[transform] duration-150 ease-in-out',
+      'group-aria-expanded/settings:rotate-90 motion-reduce:duration-0',
     ],
     srOnly: 'sr-only',
   },

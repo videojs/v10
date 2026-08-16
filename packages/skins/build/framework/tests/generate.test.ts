@@ -116,6 +116,7 @@ describe('createFrameworkSkin', () => {
       'styles/styles.css',
       'styles/base.css',
       'styles/captions.css',
+      'styles/video.css',
       'styles/theme.css',
       'styles/buttons.css',
       'styles/container.css',

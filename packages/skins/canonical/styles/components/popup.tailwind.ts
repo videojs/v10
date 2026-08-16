@@ -3,7 +3,7 @@ import { defineStyles } from '../define';
 const popupBase = [
   'm-0 overflow-visible border-0 text-inherit',
   '[--media-popup-translate-distance:0.5rem]',
-  '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--media-popup-transition-duration)] [transition-timing-function:ease-out]',
+  'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-out',
   'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
   'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
   'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',

@@ -16,7 +16,7 @@ export default defineStyles({
         default: [
           ...surface,
           'absolute top-1/2 left-1/2 w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] p-3 text-white',
-          'duration-350',
+          'duration-(--media-error-dialog-transition-duration)',
         ],
         minimal: [
           'absolute inset-0 h-full w-full items-center justify-center p-4 text-white',

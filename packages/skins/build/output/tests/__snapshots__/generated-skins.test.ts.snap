@@ -418,7 +418,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       padding: 0;
       transition-property: background-color, color, outline-offset, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
@@ -668,7 +668,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       line-height: 1.5;
       transition-property: outline-offset, outline-color;
       transition-duration: 0.1s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: hidden;
@@ -804,7 +804,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       transition-duration: var(--media-controls-transition-duration);
       inset-inline: 0.5rem;
       align-items: center;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: 0.5rem;
@@ -842,7 +842,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       --media-popover-side-offset: calc(0.5rem + var(--media-controls-padding));
       --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
       --media-tooltip-side-offset: var(--media-popover-side-offset);
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: contents;
     }
 
@@ -919,7 +919,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       transition-property: filter, opacity, scale, translate;
       transition-duration: var(--media-controls-transition-duration);
       align-items: center;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 0.5rem;
@@ -1002,15 +1002,15 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
+      transition-property: opacity, scale, transform;
+      transition-delay: 0.1s;
+      transition-duration: var(--media-error-dialog-transition-duration);
       border-radius: 1.75rem;
       outline-style: none;
       flex-direction: column;
       gap: 0.75rem;
       padding: 0.75rem;
-      transition:
-        opacity 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
-        scale 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
-        transform 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 50%;
@@ -1511,7 +1511,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       padding-inline: 0.5rem;
       transition-property: color, background-color;
       transition-duration: 0.1s;
-      transition-timing-function: ease-in-out;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       position: relative;
     }
@@ -1555,7 +1555,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       max-width: var(--media-popover-available-width);
       overscroll-behavior: none;
       min-width: 12rem;
-      transition-property: opacity, filter, transform, scale, width, height;
+      transition-timing-function: ease-out;
       transition-duration:
         var(--media-popup-transition-duration), var(--media-popup-transition-duration),
         var(--media-popup-transition-duration), var(--media-popup-transition-duration),
@@ -1566,6 +1566,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: 0.75rem;
       margin: 0;
       padding: 0.25rem;
+      transition-property: opacity, filter, transform, scale, width, height;
       overflow: hidden;
     }
 
@@ -1577,7 +1578,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-settings-icon {
       transition-property: transform;
       transition-duration: 0.15s;
-      transition-timing-function: ease-in-out;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @scope (.media-settings-trigger) {
@@ -1613,7 +1614,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
       overflow: auto;
@@ -1646,7 +1647,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -1679,7 +1680,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-style: solid;
       border-width: 0;
       margin: 0;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -1783,7 +1784,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       margin: 0;
       padding-block: 0.35rem;
       padding-inline: 0.625rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -1885,7 +1886,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-width: 0;
       margin: 0;
       padding-block: 0.75rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -2041,7 +2042,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       align-items: center;
       transition-property: filter, opacity, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: calc(100% + 2.625rem);
@@ -2237,7 +2238,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       height: 0.25rem;
       transition-property: opacity, scale;
       transition-duration: 0.2s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 50%;
       left: 50%;
@@ -2261,7 +2262,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       outline: 4px solid #0000;
       transition-property: opacity, height, width, outline-offset, left, top;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       translate: -50% -50%;
     }
@@ -2393,7 +2394,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: 0.75rem;
       transition-property: filter, opacity, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       bottom: calc(100% + 2.25rem);
       left: 50%;
@@ -2422,7 +2423,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: inherit;
       transition-property: opacity;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: clip;
@@ -2438,6 +2439,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 @layer videojs.base, videojs.theme, videojs.components;
 @import './base.css';
 @import './captions.css';
+@import './video.css';
 @import './theme.css';
 @import './buttons.css';
 @import './container.css';
@@ -2451,60 +2453,70 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 @import './sliders.css';
 
 ===== packages/html/src/__generated__/skins/default-video/styles/theme.css =====
-@layer videojs.theme {
+@layer videojs.theme.variant {
   .media-theme-default {
+    --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
+    --media-container-border-radius: var(--media-border-radius, 1.75rem);
+    --media-error-dialog-transition-duration: 350ms;
+    --media-button-size: calc(2.25 * var(--media-size));
+    --media-radius-pill: 9999px;
+    --media-radius-surface: 0.5rem;
+    --media-shadow-color: oklch(0 0 0 / 0.15);
+    --media-surface-background: oklch(1 0 0 / 0.1);
+    --media-surface-outer-border: oklch(0 0 0 / 0.1);
+  }
+}
+
+===== packages/html/src/__generated__/skins/default-video/styles/video.css =====
+@layer videojs.theme.base, videojs.theme.variant, videojs.theme.preferences;
+
+@layer videojs.theme.base {
+  :is(.media-theme-default, .media-theme-minimal) {
     --media-default-accent-color: oklch(1 0 0);
     --media-accent-contrast-color: contrast-color(var(--media-accent-color, var(--media-default-accent-color)));
     --media-accent-background-color: var(
       --media-accent-color,
       oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
     );
-    --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-    --media-container-border-radius: var(--media-border-radius, 1.75rem);
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-gap: 0.25rem;
     --media-controls-padding: 0.25rem;
     --media-controls-transition-duration: 100ms;
     --media-error-dialog-transition-delay: 100ms;
-    --media-error-dialog-transition-duration: 350ms;
     --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
-    --media-button-size: calc(2.25 * var(--media-size));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
     --media-font-size: calc(0.8125 * var(--media-size));
-    --media-radius-pill: 9999px;
-    --media-radius-surface: 0.5rem;
-    --media-shadow-color: oklch(0 0 0 / 0.15);
     --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
     --media-slider-thumb-size: 0.75rem;
     --media-slider-track-background: oklch(from currentColor l c h / 0.2);
     --media-slider-track-size: 0.25rem;
     --media-surface-backdrop-blur: 16px;
     --media-surface-backdrop-saturate: 1.5;
-    --media-surface-background: oklch(1 0 0 / 0.1);
     --media-surface-inner-border: oklch(1 0 0 / 0.1);
-    --media-surface-outer-border: oklch(0 0 0 / 0.1);
     --media-surface-border: var(--media-surface-inner-border);
     --media-video-border-radius: var(--media-container-border-radius);
   }
+}
 
+@layer videojs.theme.preferences {
   @media (pointer: fine) {
-    .media-theme-default:has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
       --media-controls-transition-duration: 300ms;
     }
   }
 
   @media (pointer: coarse) {
-    .media-theme-default:has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
       --media-controls-transition-duration: 150ms;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .media-theme-default {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
       --media-error-dialog-transition-delay: 0ms;
       --media-error-dialog-transition-duration: 50ms;
@@ -2513,7 +2525,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .media-theme-default {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-surface-background: oklch(0 0 0);
       --media-surface-inner-border: oklch(1 0 0 / 0.25);
       --media-surface-outer-border: transparent;
@@ -2523,7 +2535,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   }
 
   @media (forced-colors: active) {
-    .media-theme-default {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-accent-color: Highlight;
       --media-accent-contrast-color: HighlightText;
       --media-accent-background-color: Highlight;
@@ -2954,7 +2966,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       padding: 0;
       transition-property: background-color, color, outline-offset, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
@@ -3204,7 +3216,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       line-height: 1.5;
       transition-property: outline-offset, outline-color;
       transition-duration: 0.1s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: hidden;
@@ -3357,7 +3369,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       flex-wrap: wrap;
       align-items: center;
       column-gap: 0.5rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: 0.25rem;
@@ -3968,7 +3980,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       padding-inline: 0.5rem;
       transition-property: color, background-color;
       transition-duration: 0.1s;
-      transition-timing-function: ease-in-out;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       position: relative;
     }
@@ -4012,7 +4024,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       max-width: var(--media-popover-available-width);
       overscroll-behavior: none;
       min-width: 12rem;
-      transition-property: opacity, filter, transform, scale, width, height;
+      transition-timing-function: ease-out;
       transition-duration:
         var(--media-popup-transition-duration), var(--media-popup-transition-duration),
         var(--media-popup-transition-duration), var(--media-popup-transition-duration),
@@ -4023,6 +4035,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: 0.75rem;
       margin: 0;
       padding: 0.25rem;
+      transition-property: opacity, filter, transform, scale, width, height;
       overflow: hidden;
     }
 
@@ -4034,7 +4047,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-settings-icon {
       transition-property: transform;
       transition-duration: 0.15s;
-      transition-timing-function: ease-in-out;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @scope (.media-settings-trigger) {
@@ -4070,7 +4083,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
       overflow: auto;
@@ -4103,7 +4116,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -4136,7 +4149,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-style: solid;
       border-width: 0;
       margin: 0;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -4240,7 +4253,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       margin: 0;
       padding-block: 0.35rem;
       padding-inline: 0.625rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -4342,7 +4355,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-width: 0;
       margin: 0;
       padding-block: 0.75rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -4498,7 +4511,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       align-items: center;
       transition-property: filter, opacity, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: calc(100% + 2.625rem);
@@ -4694,7 +4707,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       height: 0.25rem;
       transition-property: opacity, scale;
       transition-duration: 0.2s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 50%;
       left: 50%;
@@ -4718,7 +4731,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       outline: 4px solid #0000;
       transition-property: opacity, height, width, outline-offset, left, top;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       translate: -50% -50%;
     }
@@ -4850,7 +4863,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: 0.75rem;
       transition-property: filter, opacity, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       bottom: calc(100% + 2.25rem);
       left: 50%;
@@ -4879,7 +4892,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: inherit;
       transition-property: opacity;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: clip;
@@ -4895,6 +4908,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 @layer videojs.base, videojs.theme, videojs.components;
 @import './base.css';
 @import './captions.css';
+@import './video.css';
 @import './theme.css';
 @import './buttons.css';
 @import './container.css';
@@ -4908,60 +4922,82 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 @import './sliders.css';
 
 ===== packages/html/src/__generated__/skins/minimal-video/styles/theme.css =====
-@layer videojs.theme {
+@layer videojs.theme.variant {
   .media-theme-minimal {
+    --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
+    --media-container-border-radius: var(--media-border-radius, 0.75rem);
+    --media-error-dialog-transition-duration: 150ms;
+    --media-button-size: calc(2.375 * var(--media-size));
+    --media-radius-pill: 0.5rem;
+    --media-radius-surface: 0.625rem;
+    --media-shadow-color: oklch(0 0 0 / 0.2);
+    --media-surface-background: oklch(0 0 0 / 0.5);
+    --media-surface-outer-border: oklch(1 0 0 / 0.1);
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .media-theme-minimal {
+      --media-controls-background: oklch(0 0 0);
+    }
+  }
+
+  @media (forced-colors: active) {
+    .media-theme-minimal {
+      --media-controls-background: Canvas;
+    }
+  }
+}
+
+===== packages/html/src/__generated__/skins/minimal-video/styles/video.css =====
+@layer videojs.theme.base, videojs.theme.variant, videojs.theme.preferences;
+
+@layer videojs.theme.base {
+  :is(.media-theme-default, .media-theme-minimal) {
     --media-default-accent-color: oklch(1 0 0);
     --media-accent-contrast-color: contrast-color(var(--media-accent-color, var(--media-default-accent-color)));
     --media-accent-background-color: var(
       --media-accent-color,
       oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
     );
-    --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-    --media-container-border-radius: var(--media-border-radius, 0.75rem);
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-gap: 0.25rem;
     --media-controls-padding: 0.25rem;
     --media-controls-transition-duration: 100ms;
     --media-error-dialog-transition-delay: 100ms;
-    --media-error-dialog-transition-duration: 150ms;
     --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
-    --media-button-size: calc(2.375 * var(--media-size));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
     --media-font-size: calc(0.8125 * var(--media-size));
-    --media-radius-pill: 0.5rem;
-    --media-radius-surface: 0.625rem;
-    --media-shadow-color: oklch(0 0 0 / 0.2);
     --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
     --media-slider-thumb-size: 0.75rem;
     --media-slider-track-background: oklch(from currentColor l c h / 0.2);
     --media-slider-track-size: 0.25rem;
     --media-surface-backdrop-blur: 16px;
     --media-surface-backdrop-saturate: 1.5;
-    --media-surface-background: oklch(0 0 0 / 0.5);
     --media-surface-inner-border: oklch(1 0 0 / 0.1);
-    --media-surface-outer-border: oklch(1 0 0 / 0.1);
     --media-surface-border: var(--media-surface-inner-border);
     --media-video-border-radius: var(--media-container-border-radius);
   }
+}
 
+@layer videojs.theme.preferences {
   @media (pointer: fine) {
-    .media-theme-minimal:has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
       --media-controls-transition-duration: 300ms;
     }
   }
 
   @media (pointer: coarse) {
-    .media-theme-minimal:has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
       --media-controls-transition-duration: 150ms;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .media-theme-minimal {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
       --media-error-dialog-transition-delay: 0ms;
       --media-error-dialog-transition-duration: 50ms;
@@ -4970,8 +5006,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .media-theme-minimal {
-      --media-controls-background: oklch(0 0 0);
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-surface-background: oklch(0 0 0);
       --media-surface-inner-border: oklch(1 0 0 / 0.25);
       --media-surface-outer-border: transparent;
@@ -4981,13 +5016,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   }
 
   @media (forced-colors: active) {
-    .media-theme-minimal {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-accent-color: Highlight;
       --media-accent-contrast-color: HighlightText;
       --media-accent-background-color: Highlight;
       --media-accent-text-color: HighlightText;
       --media-border-color: CanvasText;
-      --media-controls-background: Canvas;
       --media-controls-color: CanvasText;
       --media-focus-ring-color: CanvasText;
       --media-surface-background: Canvas;
@@ -5893,7 +5927,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       padding: 0;
       transition-property: background-color, color, outline-offset, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
@@ -6143,7 +6177,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       line-height: 1.5;
       transition-property: outline-offset, outline-color;
       transition-duration: 0.1s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: hidden;
@@ -6279,7 +6313,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       transition-duration: var(--media-controls-transition-duration);
       inset-inline: 0.5rem;
       align-items: center;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: 0.5rem;
@@ -6317,7 +6351,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       --media-popover-side-offset: calc(0.5rem + var(--media-controls-padding));
       --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
       --media-tooltip-side-offset: var(--media-popover-side-offset);
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: contents;
     }
 
@@ -6394,7 +6428,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       transition-property: filter, opacity, scale, translate;
       transition-duration: var(--media-controls-transition-duration);
       align-items: center;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 0.5rem;
@@ -6477,15 +6511,15 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
+      transition-property: opacity, scale, transform;
+      transition-delay: 0.1s;
+      transition-duration: var(--media-error-dialog-transition-duration);
       border-radius: 1.75rem;
       outline-style: none;
       flex-direction: column;
       gap: 0.75rem;
       padding: 0.75rem;
-      transition:
-        opacity 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
-        scale 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
-        transform 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 50%;
@@ -6986,7 +7020,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       padding-inline: 0.5rem;
       transition-property: color, background-color;
       transition-duration: 0.1s;
-      transition-timing-function: ease-in-out;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       position: relative;
     }
@@ -7030,7 +7064,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       max-width: var(--media-popover-available-width);
       overscroll-behavior: none;
       min-width: 12rem;
-      transition-property: opacity, filter, transform, scale, width, height;
+      transition-timing-function: ease-out;
       transition-duration:
         var(--media-popup-transition-duration), var(--media-popup-transition-duration),
         var(--media-popup-transition-duration), var(--media-popup-transition-duration),
@@ -7041,6 +7075,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       border-radius: 0.75rem;
       margin: 0;
       padding: 0.25rem;
+      transition-property: opacity, filter, transform, scale, width, height;
       overflow: hidden;
     }
 
@@ -7052,7 +7087,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     .media-settings-icon {
       transition-property: transform;
       transition-duration: 0.15s;
-      transition-timing-function: ease-in-out;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @scope (.media-settings-trigger) {
@@ -7088,7 +7123,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
       overflow: auto;
@@ -7121,7 +7156,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -7154,7 +7189,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       border-style: solid;
       border-width: 0;
       margin: 0;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -7258,7 +7293,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       margin: 0;
       padding-block: 0.35rem;
       padding-inline: 0.625rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -7360,7 +7395,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       border-width: 0;
       margin: 0;
       padding-block: 0.75rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -7516,7 +7551,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       align-items: center;
       transition-property: filter, opacity, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: calc(100% + 2.625rem);
@@ -7712,7 +7747,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       height: 0.25rem;
       transition-property: opacity, scale;
       transition-duration: 0.2s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 50%;
       left: 50%;
@@ -7736,7 +7771,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       outline: 4px solid #0000;
       transition-property: opacity, height, width, outline-offset, left, top;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       translate: -50% -50%;
     }
@@ -7868,7 +7903,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       border-radius: 0.75rem;
       transition-property: filter, opacity, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       bottom: calc(100% + 2.25rem);
       left: 50%;
@@ -7897,7 +7932,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       border-radius: inherit;
       transition-property: opacity;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: clip;
@@ -7913,6 +7948,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 @layer videojs.base, videojs.theme, videojs.components;
 @import './base.css';
 @import './captions.css';
+@import './video.css';
 @import './theme.css';
 @import './buttons.css';
 @import './container.css';
@@ -7926,60 +7962,70 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 @import './sliders.css';
 
 ===== packages/react/src/__generated__/skins/default-video/styles/theme.css =====
-@layer videojs.theme {
+@layer videojs.theme.variant {
   .media-theme-default {
+    --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
+    --media-container-border-radius: var(--media-border-radius, 1.75rem);
+    --media-error-dialog-transition-duration: 350ms;
+    --media-button-size: calc(2.25 * var(--media-size));
+    --media-radius-pill: 9999px;
+    --media-radius-surface: 0.5rem;
+    --media-shadow-color: oklch(0 0 0 / 0.15);
+    --media-surface-background: oklch(1 0 0 / 0.1);
+    --media-surface-outer-border: oklch(0 0 0 / 0.1);
+  }
+}
+
+===== packages/react/src/__generated__/skins/default-video/styles/video.css =====
+@layer videojs.theme.base, videojs.theme.variant, videojs.theme.preferences;
+
+@layer videojs.theme.base {
+  :is(.media-theme-default, .media-theme-minimal) {
     --media-default-accent-color: oklch(1 0 0);
     --media-accent-contrast-color: contrast-color(var(--media-accent-color, var(--media-default-accent-color)));
     --media-accent-background-color: var(
       --media-accent-color,
       oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
     );
-    --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-    --media-container-border-radius: var(--media-border-radius, 1.75rem);
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-gap: 0.25rem;
     --media-controls-padding: 0.25rem;
     --media-controls-transition-duration: 100ms;
     --media-error-dialog-transition-delay: 100ms;
-    --media-error-dialog-transition-duration: 350ms;
     --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
-    --media-button-size: calc(2.25 * var(--media-size));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
     --media-font-size: calc(0.8125 * var(--media-size));
-    --media-radius-pill: 9999px;
-    --media-radius-surface: 0.5rem;
-    --media-shadow-color: oklch(0 0 0 / 0.15);
     --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
     --media-slider-thumb-size: 0.75rem;
     --media-slider-track-background: oklch(from currentColor l c h / 0.2);
     --media-slider-track-size: 0.25rem;
     --media-surface-backdrop-blur: 16px;
     --media-surface-backdrop-saturate: 1.5;
-    --media-surface-background: oklch(1 0 0 / 0.1);
     --media-surface-inner-border: oklch(1 0 0 / 0.1);
-    --media-surface-outer-border: oklch(0 0 0 / 0.1);
     --media-surface-border: var(--media-surface-inner-border);
     --media-video-border-radius: var(--media-container-border-radius);
   }
+}
 
+@layer videojs.theme.preferences {
   @media (pointer: fine) {
-    .media-theme-default:has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
       --media-controls-transition-duration: 300ms;
     }
   }
 
   @media (pointer: coarse) {
-    .media-theme-default:has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
       --media-controls-transition-duration: 150ms;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .media-theme-default {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
       --media-error-dialog-transition-delay: 0ms;
       --media-error-dialog-transition-duration: 50ms;
@@ -7988,7 +8034,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .media-theme-default {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-surface-background: oklch(0 0 0);
       --media-surface-inner-border: oklch(1 0 0 / 0.25);
       --media-surface-outer-border: transparent;
@@ -7998,7 +8044,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   }
 
   @media (forced-colors: active) {
-    .media-theme-default {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-accent-color: Highlight;
       --media-accent-contrast-color: HighlightText;
       --media-accent-background-color: Highlight;
@@ -8907,7 +8953,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       padding: 0;
       transition-property: background-color, color, outline-offset, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
@@ -9157,7 +9203,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       line-height: 1.5;
       transition-property: outline-offset, outline-color;
       transition-duration: 0.1s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: hidden;
@@ -9310,7 +9356,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       flex-wrap: wrap;
       align-items: center;
       column-gap: 0.5rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: 0.25rem;
@@ -9921,7 +9967,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       padding-inline: 0.5rem;
       transition-property: color, background-color;
       transition-duration: 0.1s;
-      transition-timing-function: ease-in-out;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       position: relative;
     }
@@ -9965,7 +10011,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       max-width: var(--media-popover-available-width);
       overscroll-behavior: none;
       min-width: 12rem;
-      transition-property: opacity, filter, transform, scale, width, height;
+      transition-timing-function: ease-out;
       transition-duration:
         var(--media-popup-transition-duration), var(--media-popup-transition-duration),
         var(--media-popup-transition-duration), var(--media-popup-transition-duration),
@@ -9976,6 +10022,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       border-radius: 0.75rem;
       margin: 0;
       padding: 0.25rem;
+      transition-property: opacity, filter, transform, scale, width, height;
       overflow: hidden;
     }
 
@@ -9987,7 +10034,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     .media-settings-icon {
       transition-property: transform;
       transition-duration: 0.15s;
-      transition-timing-function: ease-in-out;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @scope (.media-settings-trigger) {
@@ -10023,7 +10070,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
       overflow: auto;
@@ -10056,7 +10103,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -10089,7 +10136,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       border-style: solid;
       border-width: 0;
       margin: 0;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -10193,7 +10240,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       margin: 0;
       padding-block: 0.35rem;
       padding-inline: 0.625rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -10295,7 +10342,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       border-width: 0;
       margin: 0;
       padding-block: 0.75rem;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -10451,7 +10498,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       align-items: center;
       transition-property: filter, opacity, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: calc(100% + 2.625rem);
@@ -10647,7 +10694,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       height: 0.25rem;
       transition-property: opacity, scale;
       transition-duration: 0.2s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 50%;
       left: 50%;
@@ -10671,7 +10718,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       outline: 4px solid #0000;
       transition-property: opacity, height, width, outline-offset, left, top;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       translate: -50% -50%;
     }
@@ -10803,7 +10850,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       border-radius: 0.75rem;
       transition-property: filter, opacity, scale;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       bottom: calc(100% + 2.25rem);
       left: 50%;
@@ -10832,7 +10879,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       border-radius: inherit;
       transition-property: opacity;
       transition-duration: 0.15s;
-      transition-timing-function: ease-out;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: clip;
@@ -10848,6 +10895,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 @layer videojs.base, videojs.theme, videojs.components;
 @import './base.css';
 @import './captions.css';
+@import './video.css';
 @import './theme.css';
 @import './buttons.css';
 @import './container.css';
@@ -10861,60 +10909,82 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 @import './sliders.css';
 
 ===== packages/react/src/__generated__/skins/minimal-video/styles/theme.css =====
-@layer videojs.theme {
+@layer videojs.theme.variant {
   .media-theme-minimal {
+    --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
+    --media-container-border-radius: var(--media-border-radius, 0.75rem);
+    --media-error-dialog-transition-duration: 150ms;
+    --media-button-size: calc(2.375 * var(--media-size));
+    --media-radius-pill: 0.5rem;
+    --media-radius-surface: 0.625rem;
+    --media-shadow-color: oklch(0 0 0 / 0.2);
+    --media-surface-background: oklch(0 0 0 / 0.5);
+    --media-surface-outer-border: oklch(1 0 0 / 0.1);
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    .media-theme-minimal {
+      --media-controls-background: oklch(0 0 0);
+    }
+  }
+
+  @media (forced-colors: active) {
+    .media-theme-minimal {
+      --media-controls-background: Canvas;
+    }
+  }
+}
+
+===== packages/react/src/__generated__/skins/minimal-video/styles/video.css =====
+@layer videojs.theme.base, videojs.theme.variant, videojs.theme.preferences;
+
+@layer videojs.theme.base {
+  :is(.media-theme-default, .media-theme-minimal) {
     --media-default-accent-color: oklch(1 0 0);
     --media-accent-contrast-color: contrast-color(var(--media-accent-color, var(--media-default-accent-color)));
     --media-accent-background-color: var(
       --media-accent-color,
       oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
     );
-    --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
     --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-    --media-container-border-radius: var(--media-border-radius, 0.75rem);
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-gap: 0.25rem;
     --media-controls-padding: 0.25rem;
     --media-controls-transition-duration: 100ms;
     --media-error-dialog-transition-delay: 100ms;
-    --media-error-dialog-transition-duration: 150ms;
     --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
-    --media-button-size: calc(2.375 * var(--media-size));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
     --media-font-size: calc(0.8125 * var(--media-size));
-    --media-radius-pill: 0.5rem;
-    --media-radius-surface: 0.625rem;
-    --media-shadow-color: oklch(0 0 0 / 0.2);
     --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
     --media-slider-thumb-size: 0.75rem;
     --media-slider-track-background: oklch(from currentColor l c h / 0.2);
     --media-slider-track-size: 0.25rem;
     --media-surface-backdrop-blur: 16px;
     --media-surface-backdrop-saturate: 1.5;
-    --media-surface-background: oklch(0 0 0 / 0.5);
     --media-surface-inner-border: oklch(1 0 0 / 0.1);
-    --media-surface-outer-border: oklch(1 0 0 / 0.1);
     --media-surface-border: var(--media-surface-inner-border);
     --media-video-border-radius: var(--media-container-border-radius);
   }
+}
 
+@layer videojs.theme.preferences {
   @media (pointer: fine) {
-    .media-theme-minimal:has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
       --media-controls-transition-duration: 300ms;
     }
   }
 
   @media (pointer: coarse) {
-    .media-theme-minimal:has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
       --media-controls-transition-duration: 150ms;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .media-theme-minimal {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
       --media-error-dialog-transition-delay: 0ms;
       --media-error-dialog-transition-duration: 50ms;
@@ -10923,8 +10993,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .media-theme-minimal {
-      --media-controls-background: oklch(0 0 0);
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-surface-background: oklch(0 0 0);
       --media-surface-inner-border: oklch(1 0 0 / 0.25);
       --media-surface-outer-border: transparent;
@@ -10934,13 +11003,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
   }
 
   @media (forced-colors: active) {
-    .media-theme-minimal {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-accent-color: Highlight;
       --media-accent-contrast-color: HighlightText;
       --media-accent-background-color: Highlight;
       --media-accent-text-color: HighlightText;
       --media-border-color: CanvasText;
-      --media-controls-background: Canvas;
       --media-controls-color: CanvasText;
       --media-focus-ring-color: CanvasText;
       --media-surface-background: Canvas;
@@ -10967,7 +11035,7 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11042,7 +11110,7 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
           'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
           'm-0 overflow-visible border-0 text-inherit',
           '[--media-popup-translate-distance:0.5rem]',
-          '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--media-popup-transition-duration)] [transition-timing-function:ease-out]',
+          'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-out',
           'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
           'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
           'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -11081,7 +11149,7 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11125,7 +11193,7 @@ export function CastButton({ className, ...props }: CastButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11167,7 +11235,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
       className={cn(
         'relative isolate block h-full w-full overflow-hidden rounded-[var(--media-container-border-radius)] bg-black @container/media-root',
         'font-media text-media leading-normal subpixel-antialiased',
-        'outline-2 -outline-offset-4 outline-transparent [transition-property:outline-offset,outline-color] [transition-duration:100ms] [transition-timing-function:ease-out]',
+        'outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out',
         'focus-visible:outline-media-focus focus-visible:outline-offset-2',
         'pointer-fine:has-[[data-controls]:not([data-visible])]:cursor-none',
         '[&_video]:block [&_video]:h-full [&_video]:w-full [&_video]:rounded-[inherit]',
@@ -11178,7 +11246,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
         'before:[background-position:var(--media-object-position,center)]',
         'before:[background-size:var(--media-object-fit,contain)]',
         'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
-        'before:transition-opacity before:duration-250',
+        'before:transition-opacity before:duration-250 before:ease-in-out',
         'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
         'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
         'after:shadow-[inset_0_0_0_1px_var(--media-border-color)] [&:fullscreen]:after:hidden',
@@ -11215,7 +11283,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
             'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'absolute top-1/2 left-1/2 w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] p-3 text-white',
-            'duration-350',
+            'duration-(--media-error-dialog-transition-duration)',
             resolveClassName(className, state),
           )
         }
@@ -11226,7 +11294,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
           className={cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11256,7 +11324,7 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps)
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11298,7 +11366,7 @@ export function MuteButton({ className, ...props }: MuteButtonProps) {
         cn(
           'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
           'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-          '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+          'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
           'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
           'focus-visible:outline-media-focus focus-visible:outline-offset-2',
           'not-aria-disabled:active:scale-90',
@@ -11345,7 +11413,7 @@ export function Overlay({ className, ...props }: OverlayProps) {
       className={cn(
         'pointer-events-none absolute inset-0 rounded-[inherit] opacity-0',
         '[background-image:linear-gradient(to_top,oklch(0_0_0/0.5),oklch(0_0_0/0.3)_25%,transparent)]',
-        '[transition-property:opacity,backdrop-filter] [transition-duration:var(--media-controls-transition-duration)] [transition-timing-function:ease-out]',
+        'transition-[opacity,backdrop-filter] duration-(--media-controls-transition-duration) ease-out',
         'peer-data-visible/controls:opacity-100',
         'peer-data-visible/buffering:bg-black/35 peer-data-visible/buffering:opacity-100 peer-data-visible/buffering:[backdrop-filter:blur(4px)]',
         'peer-data-open/error:opacity-100 peer-data-open/error:[backdrop-filter:blur(16px)_saturate(1.5)]',
@@ -11372,7 +11440,7 @@ export function PiPButton({ className, ...props }: PiPButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11416,7 +11484,7 @@ export function PlayButton({ className, ...props }: PlayButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11502,7 +11570,7 @@ export function SeekButton({ className, ...props }: SeekButtonProps = {}) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11724,7 +11792,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-pill bg-current',
           'outline-4 -outline-offset-4 outline-transparent hover:outline-current/15 hover:outline-offset-0',
           'focus-visible:outline-current/15 focus-visible:outline-offset-0',
-          '[transition-property:opacity,height,width,outline-offset,left,top] [transition-duration:150ms] [transition-timing-function:ease-out]',
+          'transition-[opacity,height,width,outline-offset,left,top] duration-150 ease-out',
           'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
           'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
           'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]',
@@ -11737,7 +11805,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           'group/preview relative h-1 min-w-(--media-max-width)',
           '[--media-max-width:min(12rem,100cqi)] [--media-max-height:8rem]',
           'before:pointer-events-none before:absolute before:top-1/2 before:left-1/2 before:z-1 before:size-1 before:-translate-1/2 before:scale-50 before:rounded-media-pill before:bg-current before:opacity-0',
-          'before:[transition-property:opacity,scale] before:[transition-duration:200ms] before:[transition-timing-function:ease-out]',
+          'before:transition-[opacity,scale] before:duration-200 before:ease-out',
           'data-pointing:not-data-dragging:before:scale-100 data-pointing:not-data-dragging:before:opacity-100',
         )}
         overflow="visible"
@@ -11749,7 +11817,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'absolute left-1/2 max-w-(--media-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
             '[filter:blur(16px)] origin-bottom',
-            '[transition-property:filter,opacity,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[filter,opacity,scale] duration-150 ease-out',
             'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:[filter:none]',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:scale-100',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:opacity-100',
@@ -11762,7 +11830,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           <Slider.Thumbnail
             className={cn(
               'relative block max-h-(--media-max-height) max-w-(--media-thumbnail-max-width) overflow-clip rounded-[inherit]',
-              '[transition-property:opacity] [transition-duration:150ms] [transition-timing-function:ease-out]',
+              'transition-opacity duration-150 ease-out',
               'data-loading:opacity-0',
             )}
           />
@@ -11777,7 +11845,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           className={cn(
             'absolute left-1/2 max-w-(--media-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
             '[filter:blur(16px)] origin-bottom',
-            '[transition-property:filter,opacity,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+            'transition-[filter,opacity,scale] duration-150 ease-out',
             'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:[filter:none]',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:scale-100',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:opacity-100',
@@ -12129,7 +12197,7 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
           'outline-2 -outline-offset-2 outline-transparent',
           'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
           'focus-visible:outline-media-focus focus-visible:outline-offset-2',
-          '[transition-property:color,background-color] [transition-duration:100ms] [transition-timing-function:ease-in-out]',
+          'transition-[color,background-color] duration-100 ease-in-out',
           'justify-between tabular-nums text-inherit',
           'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
           'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
@@ -12172,7 +12240,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
               className={cn(
                 'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
                 'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-                '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+                'transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
                 'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
                 'focus-visible:outline-media-focus focus-visible:outline-offset-2',
                 'not-aria-disabled:active:scale-90',
@@ -12183,8 +12251,8 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
               <GearIcon
                 className={cn(
                   'size-media-icon drop-shadow-media-icon',
-                  '[transition-property:transform] [transition-duration:150ms] [transition-timing-function:ease-in-out]',
-                  'group-aria-expanded/settings:rotate-90 motion-reduce:[transition-duration:0ms]',
+                  'transition-[transform] duration-150 ease-in-out',
+                  'group-aria-expanded/settings:rotate-90 motion-reduce:duration-0',
                 )}
               />
               <span className="sr-only">{t(settingsText)}</span>
@@ -12198,7 +12266,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'm-0 overflow-visible border-0 text-inherit',
             '[--media-popup-translate-distance:0.5rem]',
-            '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--media-popup-transition-duration)] [transition-timing-function:ease-out]',
+            'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-out',
             'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
             'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -12224,7 +12292,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'm-0 overflow-visible border-0 text-inherit',
             '[--media-popup-translate-distance:0.5rem]',
-            '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--media-popup-transition-duration)] [transition-timing-function:ease-out]',
+            'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-out',
             'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
             'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -12238,9 +12306,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl p-1',
             'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
             'h-(--media-menu-height) w-(--media-menu-width)',
-            '[transition-property:opacity,filter,transform,scale,width,height]',
-            '[transition-duration:var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-menu-transition-duration),var(--media-menu-transition-duration)]',
-            '[--media-menu-transition-duration:250ms]',
+            'transition-settings-menu [--media-menu-transition-duration:250ms]',
             '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
             '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
             'flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
@@ -12279,7 +12345,7 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
           'outline-2 -outline-offset-2 outline-transparent',
           'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
           'focus-visible:outline-media-focus focus-visible:outline-offset-2',
-          '[transition-property:color,background-color] [transition-duration:100ms] [transition-timing-function:ease-in-out]',
+          'transition-[color,background-color] duration-100 ease-in-out',
           'justify-between tabular-nums text-inherit',
           'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
           'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
@@ -12296,7 +12362,7 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
         className={(state) =>
           cn(
             'absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
-            '[transition-property:translate,filter] [transition-duration:var(--media-menu-transition-duration)] [transition-timing-function:ease-out]',
+            'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
             'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
             'data-starting-style:translate-x-full data-ending-style:translate-x-full',
             'data-starting-style:[filter:blur(8px)] data-ending-style:[filter:blur(8px)]',
@@ -12310,7 +12376,7 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
             'outline-2 -outline-offset-2 outline-transparent',
             'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
-            '[transition-property:color,background-color] [transition-duration:100ms] [transition-timing-function:ease-in-out]',
+            'transition-[color,background-color] duration-100 ease-in-out',
             'mb-0.5 w-full',
           )}
         >
@@ -12430,7 +12496,7 @@ export function VolumePopover({
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'm-0 overflow-visible border-0 text-inherit',
             '[--media-popup-translate-distance:0.5rem]',
-            '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--media-popup-transition-duration)] [transition-timing-function:ease-out]',
+            'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-out',
             'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
             'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -12497,7 +12563,7 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
           'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-pill bg-current',
           'outline-4 -outline-offset-4 outline-transparent hover:outline-current/15 hover:outline-offset-0',
           'focus-visible:outline-current/15 focus-visible:outline-offset-0',
-          '[transition-property:opacity,height,width,outline-offset,left,top] [transition-duration:150ms] [transition-timing-function:ease-out]',
+          'transition-[opacity,height,width,outline-offset,left,top] duration-150 ease-out',
           'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
           'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
           'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]',
@@ -12592,7 +12658,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
           '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
           '@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm',
-          '[transition-property:filter,opacity,scale,translate] [transition-duration:var(--media-controls-transition-duration)] [transition-timing-function:ease-out]',
+          'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
           'peer-data-open/error:hidden!',
         )}
       >
@@ -12606,7 +12672,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
               '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
               '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
               '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1',
-              '[transition-property:filter,opacity,scale,translate] [transition-duration:var(--media-controls-transition-duration)] [transition-timing-function:ease-out]',
+              'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
             )}
           >
             <Controls.Group className="flex items-center gap-px">
@@ -12647,7 +12713,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
               '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
               '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
               '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1',
-              '[transition-property:filter,opacity,scale,translate] [transition-duration:var(--media-controls-transition-duration)] [transition-timing-function:ease-out]',
+              'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
             )}
           >
             <Controls.Group className="flex items-center gap-px">
@@ -12723,6 +12789,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 @import 'tailwindcss';
 @import './base.css';
 @import './captions.css';
+@import './themes/video.css';
 @import './themes/default.css';
 @import './themes/minimal.css';
 
@@ -12756,159 +12823,116 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   --blur-media-surface: var(--media-surface-backdrop-blur);
 }
 
+@utility transition-settings-menu {
+  transition-timing-function: ease-out;
+  transition-duration:
+    var(--media-popup-transition-duration), var(--media-popup-transition-duration),
+    var(--media-popup-transition-duration), var(--media-popup-transition-duration),
+    var(--media-menu-transition-duration), var(--media-menu-transition-duration);
+  transition-property: opacity, filter, transform, scale, width, height;
+}
+
 ===== packages/skins/canonical/registry/default/styles/themes/default.css =====
-@layer videojs.theme {
+@layer videojs.theme.variant {
   .media-theme-default {
-    --media-default-accent-color: oklch(1 0 0);
-    --media-accent-contrast-color: contrast-color(var(--media-accent-color, var(--media-default-accent-color)));
-    --media-accent-background-color: var(
-      --media-accent-color,
-      oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
-    );
     --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
-    --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-container-border-radius: var(--media-border-radius, 1.75rem);
-    --media-controls-color: oklch(1 0 0);
-    --media-controls-background: transparent;
-    --media-controls-gap: 0.25rem;
-    --media-controls-padding: 0.25rem;
-    --media-controls-transition-duration: 100ms;
-    --media-error-dialog-transition-delay: 100ms;
     --media-error-dialog-transition-duration: 350ms;
-    --media-popup-transition-duration: 100ms;
-    --media-scale: 1;
-    --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
     --media-button-size: calc(2.25 * var(--media-size));
-    --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
-    --media-font-size: calc(0.8125 * var(--media-size));
     --media-radius-pill: 9999px;
     --media-radius-surface: 0.5rem;
     --media-shadow-color: oklch(0 0 0 / 0.15);
-    --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
-    --media-slider-thumb-size: 0.75rem;
-    --media-slider-track-background: oklch(from currentColor l c h / 0.2);
-    --media-slider-track-size: 0.25rem;
-    --media-surface-backdrop-blur: 16px;
-    --media-surface-backdrop-saturate: 1.5;
     --media-surface-background: oklch(1 0 0 / 0.1);
-    --media-surface-inner-border: oklch(1 0 0 / 0.1);
     --media-surface-outer-border: oklch(0 0 0 / 0.1);
-    --media-surface-border: var(--media-surface-inner-border);
-    --media-video-border-radius: var(--media-container-border-radius);
-  }
-
-  @media (pointer: fine) {
-    .media-theme-default:has([data-controls]:not([data-visible])) {
-      --media-controls-transition-duration: 300ms;
-    }
-  }
-
-  @media (pointer: coarse) {
-    .media-theme-default:has([data-controls]:not([data-visible])) {
-      --media-controls-transition-duration: 150ms;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .media-theme-default {
-      --media-controls-transition-duration: 50ms;
-      --media-error-dialog-transition-delay: 0ms;
-      --media-error-dialog-transition-duration: 50ms;
-      --media-popup-transition-duration: 0ms;
-    }
-  }
-
-  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .media-theme-default {
-      --media-surface-background: oklch(0 0 0);
-      --media-surface-inner-border: oklch(1 0 0 / 0.25);
-      --media-surface-outer-border: transparent;
-      --media-surface-backdrop-blur: 0px;
-      --media-surface-backdrop-saturate: 1;
-    }
-  }
-
-  @media (forced-colors: active) {
-    .media-theme-default {
-      --media-accent-color: Highlight;
-      --media-accent-contrast-color: HighlightText;
-      --media-accent-background-color: Highlight;
-      --media-accent-text-color: HighlightText;
-      --media-border-color: CanvasText;
-      --media-controls-color: CanvasText;
-      --media-focus-ring-color: CanvasText;
-      --media-surface-background: Canvas;
-      --media-surface-inner-border: CanvasText;
-      --media-surface-outer-border: CanvasText;
-    }
   }
 }
 
 ===== packages/skins/canonical/registry/default/styles/themes/minimal.css =====
-@layer videojs.theme {
+@layer videojs.theme.variant {
   .media-theme-minimal {
-    --media-default-accent-color: oklch(1 0 0);
-    --media-accent-contrast-color: contrast-color(var(--media-accent-color, var(--media-default-accent-color)));
-    --media-accent-background-color: var(
-      --media-accent-color,
-      oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
-    );
     --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
-    --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
     --media-container-border-radius: var(--media-border-radius, 0.75rem);
-    --media-controls-color: oklch(1 0 0);
-    --media-controls-background: transparent;
-    --media-controls-gap: 0.25rem;
-    --media-controls-padding: 0.25rem;
-    --media-controls-transition-duration: 100ms;
-    --media-error-dialog-transition-delay: 100ms;
     --media-error-dialog-transition-duration: 150ms;
-    --media-popup-transition-duration: 100ms;
-    --media-scale: 1;
-    --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
     --media-button-size: calc(2.375 * var(--media-size));
-    --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
-    --media-font-size: calc(0.8125 * var(--media-size));
     --media-radius-pill: 0.5rem;
     --media-radius-surface: 0.625rem;
     --media-shadow-color: oklch(0 0 0 / 0.2);
-    --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
-    --media-slider-thumb-size: 0.75rem;
-    --media-slider-track-background: oklch(from currentColor l c h / 0.2);
-    --media-slider-track-size: 0.25rem;
-    --media-surface-backdrop-blur: 16px;
-    --media-surface-backdrop-saturate: 1.5;
     --media-surface-background: oklch(0 0 0 / 0.5);
-    --media-surface-inner-border: oklch(1 0 0 / 0.1);
     --media-surface-outer-border: oklch(1 0 0 / 0.1);
-    --media-surface-border: var(--media-surface-inner-border);
-    --media-video-border-radius: var(--media-container-border-radius);
-  }
-
-  @media (pointer: fine) {
-    .media-theme-minimal:has([data-controls]:not([data-visible])) {
-      --media-controls-transition-duration: 300ms;
-    }
-  }
-
-  @media (pointer: coarse) {
-    .media-theme-minimal:has([data-controls]:not([data-visible])) {
-      --media-controls-transition-duration: 150ms;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .media-theme-minimal {
-      --media-controls-transition-duration: 50ms;
-      --media-error-dialog-transition-delay: 0ms;
-      --media-error-dialog-transition-duration: 50ms;
-      --media-popup-transition-duration: 0ms;
-    }
   }
 
   @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
     .media-theme-minimal {
       --media-controls-background: oklch(0 0 0);
+    }
+  }
+
+  @media (forced-colors: active) {
+    .media-theme-minimal {
+      --media-controls-background: Canvas;
+    }
+  }
+}
+
+===== packages/skins/canonical/registry/default/styles/themes/video.css =====
+@layer videojs.theme.base, videojs.theme.variant, videojs.theme.preferences;
+
+@layer videojs.theme.base {
+  :is(.media-theme-default, .media-theme-minimal) {
+    --media-default-accent-color: oklch(1 0 0);
+    --media-accent-contrast-color: contrast-color(var(--media-accent-color, var(--media-default-accent-color)));
+    --media-accent-background-color: var(
+      --media-accent-color,
+      oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
+    );
+    --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+    --media-controls-color: oklch(1 0 0);
+    --media-controls-background: transparent;
+    --media-controls-gap: 0.25rem;
+    --media-controls-padding: 0.25rem;
+    --media-controls-transition-duration: 100ms;
+    --media-error-dialog-transition-delay: 100ms;
+    --media-popup-transition-duration: 100ms;
+    --media-scale: 1;
+    --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
+    --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
+    --media-font-size: calc(0.8125 * var(--media-size));
+    --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
+    --media-slider-thumb-size: 0.75rem;
+    --media-slider-track-background: oklch(from currentColor l c h / 0.2);
+    --media-slider-track-size: 0.25rem;
+    --media-surface-backdrop-blur: 16px;
+    --media-surface-backdrop-saturate: 1.5;
+    --media-surface-inner-border: oklch(1 0 0 / 0.1);
+    --media-surface-border: var(--media-surface-inner-border);
+    --media-video-border-radius: var(--media-container-border-radius);
+  }
+}
+
+@layer videojs.theme.preferences {
+  @media (pointer: fine) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
+      --media-controls-transition-duration: 300ms;
+    }
+  }
+
+  @media (pointer: coarse) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
+      --media-controls-transition-duration: 150ms;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :is(.media-theme-default, .media-theme-minimal) {
+      --media-controls-transition-duration: 50ms;
+      --media-error-dialog-transition-delay: 0ms;
+      --media-error-dialog-transition-duration: 50ms;
+      --media-popup-transition-duration: 0ms;
+    }
+  }
+
+  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-surface-background: oklch(0 0 0);
       --media-surface-inner-border: oklch(1 0 0 / 0.25);
       --media-surface-outer-border: transparent;
@@ -12918,13 +12942,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   }
 
   @media (forced-colors: active) {
-    .media-theme-minimal {
+    :is(.media-theme-default, .media-theme-minimal) {
       --media-accent-color: Highlight;
       --media-accent-contrast-color: HighlightText;
       --media-accent-background-color: Highlight;
       --media-accent-text-color: HighlightText;
       --media-border-color: CanvasText;
-      --media-controls-background: Canvas;
       --media-controls-color: CanvasText;
       --media-focus-ring-color: CanvasText;
       --media-surface-background: Canvas;
@@ -12958,7 +12981,7 @@ export function resolveClassName<State>(className: ClassName<State>, state: Stat
       "name": "styles",
       "type": "registry:style",
       "title": "Video.js Skin Styles",
-      "description": "Shared Tailwind input, scoped base and captions styles, and Default and Minimal Skin themes.",
+      "description": "Shared Tailwind input, base behavior, and Default and Minimal video themes.",
       "files": [
         {
           "path": "canonical/registry/default/styles/base.css",
@@ -12983,6 +13006,11 @@ export function resolveClassName<State>(className: ClassName<State>, state: Stat
         {
           "path": "canonical/registry/default/styles/themes/minimal.css",
           "target": "components/videojs/styles/themes/minimal.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/video.css",
+          "target": "components/videojs/styles/themes/video.css",
           "type": "registry:file"
         }
       ],

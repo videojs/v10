@@ -50,7 +50,7 @@ const resources = {
   styles: {
     tailwind: './styles/tailwind.css',
     base: './styles/base.css',
-    shared: ['./styles/captions.css'],
+    shared: ['./styles/captions.css', './styles/themes/video.css'],
     themes: {
       default: './styles/themes/default.css',
       minimal: './styles/themes/minimal.css',
