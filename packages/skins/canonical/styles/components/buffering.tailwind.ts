@@ -1,7 +1,7 @@
 import { defineStyles } from '../define';
 
 export default defineStyles({
-  role: 'overlays',
+  role: 'indicator',
   styles: {
     bufferingIndicator: [
       'peer/buffering pointer-events-none absolute inset-0 z-10 hidden place-content-center text-white',

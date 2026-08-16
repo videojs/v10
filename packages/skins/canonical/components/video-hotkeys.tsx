@@ -1,6 +1,6 @@
-import { Gesture, Hotkey } from '@videojs/core/components';
+import { Hotkey } from '@videojs/core/components';
 
-export function VideoInputBindings() {
+export function VideoHotkeys() {
   return (
     <>
       <Hotkey keys="Space" action="togglePaused" />
@@ -20,12 +20,6 @@ export function VideoInputBindings() {
       <Hotkey keys="End" action="seekToPercent" value={100} />
       <Hotkey keys=">" action="speedUp" />
       <Hotkey keys="<" action="speedDown" />
-
-      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <Gesture type="tap" action="toggleControls" pointer="touch" />
-      <Gesture type="doubletap" action="seekStep" value={-10} region="left" />
-      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
-      <Gesture type="doubletap" action="seekStep" value={10} region="right" />
     </>
   );
 }

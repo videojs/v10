@@ -1,7 +1,7 @@
 import { defineStyles } from '../define';
 
 export default defineStyles({
-  role: 'overlays',
+  role: 'indicator',
   styles: {
     statusAnnouncer: 'sr-only',
   },

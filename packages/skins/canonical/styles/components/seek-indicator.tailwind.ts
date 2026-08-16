@@ -1,7 +1,7 @@
 import { defineStyles } from '../define';
 
 export default defineStyles({
-  role: 'overlays',
+  role: 'indicator',
   styles: {
     seekIndicator: [
       'group/seek-status col-start-2 row-start-1 grid place-content-center gap-1 p-4 text-center',

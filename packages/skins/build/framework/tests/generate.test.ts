@@ -23,7 +23,8 @@ describe('createFrameworkSkin', () => {
     const radioGroup = content(output, 'react', 'components/menus/radio-group.tsx');
     const radioItem = content(output, 'react', 'components/menus/radio-item.tsx');
     const submenu = content(output, 'react', 'components/menus/submenu.tsx');
-    const inputBindings = content(output, 'react', 'components/input/video-input-bindings.tsx');
+    const videoGestures = content(output, 'react', 'components/video-gestures.tsx');
+    const videoHotkeys = content(output, 'react', 'components/video-hotkeys.tsx');
 
     expect(files.map((file) => file.fileName)).toEqual([
       'components/buttons/airplay-button.tsx',
@@ -40,9 +41,8 @@ describe('createFrameworkSkin', () => {
       'components/feedback/seek-indicator.tsx',
       'components/feedback/status-announcer.tsx',
       'components/feedback/status-indicator.tsx',
-      'components/feedback/video-input-indicators.tsx',
+      'components/feedback/video-status-indicators.tsx',
       'components/feedback/volume-indicator.tsx',
-      'components/input/video-input-bindings.tsx',
       'components/layout/container.tsx',
       'components/layout/overlay.tsx',
       'components/layout/poster.tsx',
@@ -58,6 +58,8 @@ describe('createFrameworkSkin', () => {
       'components/menus/video-settings-menu.tsx',
       'components/sliders/time-slider.tsx',
       'components/sliders/volume-slider.tsx',
+      'components/video-gestures.tsx',
+      'components/video-hotkeys.tsx',
       'skin.tsx',
     ]);
     expect(skin).toContain('from "./components/buttons/play-button"');
@@ -90,8 +92,8 @@ describe('createFrameworkSkin', () => {
     expect(radioItem).toContain('checked={checked}>');
     expect(radioGroup).toContain('interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props');
     expect(radioGroup).toContain('<QualityRadioGroupPrimitive {...props}');
-    expect(inputBindings.match(/<Hotkey /g)).toHaveLength(17);
-    expect(inputBindings.match(/<Gesture /g)).toHaveLength(5);
+    expect(videoHotkeys.match(/<Hotkey /g)).toHaveLength(17);
+    expect(videoGestures.match(/<Gesture /g)).toHaveLength(5);
     expect(container).toContain('export function Container');
     expect(container).toContain('ContainerProps');
     expect(container).toContain('<ContainerPrimitive {...props}');
@@ -118,6 +120,7 @@ describe('createFrameworkSkin', () => {
       'styles/container.css',
       'styles/controls.css',
       'styles/dialog.css',
+      'styles/indicator.css',
       'styles/menus.css',
       'styles/overlays.css',
       'styles/popups.css',
@@ -142,8 +145,9 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/container.css')).toContain('.media-container {');
     expect(style(output, 'styles/container.css')).not.toContain('.media-overlay {');
     expect(style(output, 'styles/overlays.css')).toContain('.media-overlay {');
-    expect(style(output, 'styles/overlays.css')).toContain('.media-buffering-indicator {');
-    expect(style(output, 'styles/overlays.css')).toContain('.media-input-indicator-overlay {');
+    expect(style(output, 'styles/indicator.css')).toContain('.media-buffering-indicator {');
+    expect(style(output, 'styles/indicator.css')).toContain('.media-status-indicator-overlay {');
+    expect(style(output, 'styles/overlays.css')).not.toContain('.media-buffering-indicator {');
     expect(style(output, 'styles/poster.css')).toContain('.media-poster {');
     expect(style(output, 'styles/theme.css')).toContain('.media-theme-default {');
     expect(style(output, 'styles/theme.css')).not.toContain('@scope');
@@ -187,7 +191,7 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('<media-cast-button class="media-button media-cast-button">');
     expect(html).toContain('<media-airplay-button class="media-button media-airplay-button">');
     expect(html).toContain('<media-pip-button class="media-button media-pip-button">');
-    expect(html).toContain('<div class="media-input-indicator-overlay">');
+    expect(html).toContain('<div class="media-status-indicator-overlay">');
     expect(html).toContain('actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"');
     expect(html).toContain('<media-volume-indicator class="media-volume-indicator">');
     expect(html).toContain('<media-error-dialog class="media-error-dialog">');

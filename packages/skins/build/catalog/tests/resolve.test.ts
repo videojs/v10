@@ -49,7 +49,8 @@ describe('resolveSkinCatalog', () => {
           'status-announcer',
           'status-indicator',
           'time-slider',
-          'video-input-bindings',
+          'video-gestures',
+          'video-hotkeys',
           'video-settings-menu',
           'volume-indicator',
           'volume-popover',
@@ -77,7 +78,8 @@ describe('resolveSkinCatalog', () => {
           'status-announcer',
           'status-indicator',
           'time-slider',
-          'video-input-bindings',
+          'video-gestures',
+          'video-hotkeys',
           'video-settings-menu',
           'volume-indicator',
           'volume-popover',
@@ -93,7 +95,8 @@ describe('resolveSkinCatalog', () => {
       { name: 'status-announcer', dependencies: [] },
       { name: 'status-indicator', dependencies: [] },
       { name: 'time-slider', dependencies: [] },
-      { name: 'video-input-bindings', dependencies: [] },
+      { name: 'video-gestures', dependencies: [] },
+      { name: 'video-hotkeys', dependencies: [] },
       { name: 'video-settings-menu', dependencies: [] },
       { name: 'volume-indicator', dependencies: [] },
       { name: 'volume-popover', dependencies: ['mute-button', 'volume-slider'] },
@@ -118,7 +121,8 @@ describe('resolveSkinCatalog', () => {
       'status-announcer',
       'status-indicator',
       'time-slider',
-      'video-input-bindings',
+      'video-gestures',
+      'video-hotkeys',
       'video-settings-menu',
       'volume-indicator',
       'mute-button',
@@ -131,7 +135,6 @@ describe('resolveSkinCatalog', () => {
       './styles/components/button.tailwind.ts',
       './styles/components/container.tailwind.ts',
       './styles/components/error-dialog.tailwind.ts',
-      './styles/components/input-indicator-overlay.tailwind.ts',
       './styles/components/menu.tailwind.ts',
       './styles/components/overlay.tailwind.ts',
       './styles/components/popup.tailwind.ts',
@@ -139,11 +142,12 @@ describe('resolveSkinCatalog', () => {
       './styles/components/seek-indicator.tailwind.ts',
       './styles/components/slider.tailwind.ts',
       './styles/components/status-announcer.tailwind.ts',
+      './styles/components/status-indicator-overlay.tailwind.ts',
       './styles/components/status-indicator.tailwind.ts',
       './styles/components/volume-indicator.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(33);
+    expect(closure.sourceFiles).toHaveLength(34);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 

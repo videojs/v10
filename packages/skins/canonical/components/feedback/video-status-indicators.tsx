@@ -1,22 +1,22 @@
 import type { ComponentNode } from '@videojs/jsx';
-import styles from '../../styles/components/input-indicator-overlay.tailwind';
+import styles from '../../styles/components/status-indicator-overlay.tailwind';
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
 
-declare const InputIndicatorOverlayPrimitive: (props: { children?: unknown; className?: unknown }) => ComponentNode;
+declare const StatusIndicatorOverlayPrimitive: (props: { children?: unknown; className?: unknown }) => ComponentNode;
 
-export function VideoInputIndicators() {
+export function VideoStatusIndicators() {
   return (
     <>
       <StatusAnnouncer />
-      <InputIndicatorOverlayPrimitive className={styles.inputIndicatorOverlay}>
+      <StatusIndicatorOverlayPrimitive className={styles.statusIndicatorOverlay}>
         <VolumeIndicator />
         <StatusIndicator />
         <SeekIndicator />
         <PlaybackStatusIndicator />
-      </InputIndicatorOverlayPrimitive>
+      </StatusIndicatorOverlayPrimitive>
     </>
   );
 }

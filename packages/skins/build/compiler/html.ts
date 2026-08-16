@@ -345,7 +345,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.jsx.element('Slot').replace('slot'),
             code.jsx.element('ErrorDialogPrimitive.Root').unwrap(),
             code.jsx.element('OverlayPrimitive').replace('div'),
-            code.jsx.element('InputIndicatorOverlayPrimitive').replace('div'),
+            code.jsx.element('StatusIndicatorOverlayPrimitive').replace('div'),
             code.jsx.element('PreviewValuePrimitive').replace('div'),
             code.jsx.element('HintPrimitive').replace('span'),
             code.jsx.element('OptionLabelPrimitive').replace('span'),

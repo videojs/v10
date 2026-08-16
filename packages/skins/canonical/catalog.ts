@@ -72,7 +72,7 @@ export const skinCatalog = {
       variant: 'default',
       source: './skins/default-video/skin.tsx',
       title: 'Default Video Skin',
-      description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input bindings.',
+      description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input controls.',
     }),
     defineSkin({
       name: 'minimal-video',
@@ -245,11 +245,18 @@ export const skinCatalog = {
       description: 'Nested video quality, audio track, playback rate, and captions settings menus.',
     }),
     defineSkinComponent({
-      name: 'video-input-bindings',
+      name: 'video-hotkeys',
       type: 'component',
-      source: './components/input/video-input-bindings.tsx',
-      title: 'Video Input Bindings',
-      description: 'The standard keyboard and pointer bindings for on-demand video playback.',
+      source: './components/video-hotkeys.tsx',
+      title: 'Video Hotkeys',
+      description: 'The standard keyboard controls for on-demand video playback.',
+    }),
+    defineSkinComponent({
+      name: 'video-gestures',
+      type: 'component',
+      source: './components/video-gestures.tsx',
+      title: 'Video Gestures',
+      description: 'The standard pointer gestures for on-demand video playback.',
     }),
   ],
 } as const satisfies SkinCatalog;

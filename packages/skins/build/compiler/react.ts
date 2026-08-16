@@ -482,9 +482,9 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                     .jsx.props('className')
                     .on('ChevronIcon')
                     .replace(({ value }) => code.value.call(cn, [value, 'className'])),
-                  code.function('VideoInputIndicators').insertBefore(() =>
+                  code.function('VideoStatusIndicators').insertBefore(() =>
                     code.statement.interface({
-                      name: 'VideoInputIndicatorsProps',
+                      name: 'VideoStatusIndicatorsProps',
                       export: true,
                       extends: [
                         code.type.named('Omit', [
@@ -495,35 +495,52 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                       properties: [],
                     })
                   ),
-                  code.function('VideoInputIndicators').setProps(['className', { name: 'props', spread: true }], {
-                    type: 'VideoInputIndicatorsProps',
+                  code.function('VideoStatusIndicators').setProps(['className', { name: 'props', spread: true }], {
+                    type: 'VideoStatusIndicatorsProps',
                     initializer: code.value.object(),
                   }),
                   code
-                    .function('VideoInputIndicators')
-                    .jsx.element('InputIndicatorOverlayPrimitive')
+                    .function('VideoStatusIndicators')
+                    .jsx.element('StatusIndicatorOverlayPrimitive')
                     .spreadProps('props', { position: 'start' }),
                   code
-                    .function('VideoInputIndicators')
+                    .function('VideoStatusIndicators')
                     .jsx.props('className')
-                    .on('InputIndicatorOverlayPrimitive')
+                    .on('StatusIndicatorOverlayPrimitive')
                     .replace(({ value }) => code.value.call(cn, [...classNameValues(value), 'className'])),
-                  code.function('VideoInputBindings').insertBefore(() =>
+                  code.function('VideoHotkeys').insertBefore(() =>
                     code.statement.interface({
-                      name: 'VideoInputBindingsProps',
+                      name: 'VideoHotkeysProps',
                       export: true,
                       properties: [{ name: 'disabled', optional: true, type: code.type.boolean() }],
                     })
                   ),
                   code
-                    .function('VideoInputBindings')
+                    .function('VideoHotkeys')
                     .setProps([{ name: 'disabled', initializer: code.value.boolean(false) }], {
-                      type: 'VideoInputBindingsProps',
+                      type: 'VideoHotkeysProps',
                       initializer: code.value.object(),
                     }),
                   code
-                    .function('VideoInputBindings')
-                    .jsx.element(/^(?:Hotkey|Gesture)$/)
+                    .function('VideoHotkeys')
+                    .jsx.element('Hotkey')
+                    .addProp('disabled', code.value.identifier('disabled')),
+                  code.function('VideoGestures').insertBefore(() =>
+                    code.statement.interface({
+                      name: 'VideoGesturesProps',
+                      export: true,
+                      properties: [{ name: 'disabled', optional: true, type: code.type.boolean() }],
+                    })
+                  ),
+                  code
+                    .function('VideoGestures')
+                    .setProps([{ name: 'disabled', initializer: code.value.boolean(false) }], {
+                      type: 'VideoGesturesProps',
+                      initializer: code.value.object(),
+                    }),
+                  code
+                    .function('VideoGestures')
+                    .jsx.element('Gesture')
                     .addProp('disabled', code.value.identifier('disabled')),
                 ]
               : []),
@@ -730,8 +747,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .addProp('checked', code.value.identifier('checked')),
             code.variable('OverlayPrimitive').remove(),
             code.jsx.element('OverlayPrimitive').replace('div'),
-            code.variable('InputIndicatorOverlayPrimitive').remove(),
-            code.jsx.element('InputIndicatorOverlayPrimitive').replace('div'),
+            code.variable('StatusIndicatorOverlayPrimitive').remove(),
+            code.jsx.element('StatusIndicatorOverlayPrimitive').replace('div'),
             code.variable('PreviewValuePrimitive').remove(),
             code.jsx.element('PreviewValuePrimitive').replace('div'),
             code.variable('HintPrimitive').remove(),

@@ -9,13 +9,14 @@ import { PlayButton } from '../../components/buttons/play-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { BufferingIndicator } from '../../components/feedback/buffering-indicator';
 import { ErrorDialog } from '../../components/feedback/error-dialog';
-import { VideoInputIndicators } from '../../components/feedback/video-input-indicators';
-import { VideoInputBindings } from '../../components/input/video-input-bindings';
+import { VideoStatusIndicators } from '../../components/feedback/video-status-indicators';
 import { Container } from '../../components/layout/container';
 import { Overlay } from '../../components/layout/overlay';
 import { Poster } from '../../components/layout/poster';
 import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
+import { VideoGestures } from '../../components/video-gestures';
+import { VideoHotkeys } from '../../components/video-hotkeys';
 import styles from '../../styles/skins/minimal-video.tailwind';
 
 export function MinimalVideoSkin() {
@@ -56,8 +57,9 @@ export function MinimalVideoSkin() {
       </Controls.Root>
 
       <Overlay />
-      <VideoInputBindings />
-      <VideoInputIndicators />
+      <VideoHotkeys />
+      <VideoGestures />
+      <VideoStatusIndicators />
     </Container>
   );
 }

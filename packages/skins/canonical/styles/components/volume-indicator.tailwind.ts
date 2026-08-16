@@ -2,7 +2,7 @@ import { defineStyles, variants } from '../define';
 import { surface } from './popup.tailwind';
 
 export default defineStyles({
-  role: 'overlays',
+  role: 'indicator',
   styles: {
     volumeIndicator: variants({
       base: [
