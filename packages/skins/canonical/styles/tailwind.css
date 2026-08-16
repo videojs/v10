@@ -23,7 +23,12 @@
 }
 
 @utility status-indicator-gradient {
-  background-image: linear-gradient(to bottom, oklch(0 0 0 / 0.35), oklch(0 0 0 / 0.2) 3rem, transparent);
+  background-image: linear-gradient(
+    to bottom,
+    oklch(0 0 0 / 0.35),
+    oklch(0 0 0 / 0.2) calc(var(--media-spacing) * 12),
+    transparent
+  );
 }
 
 @utility transition-settings-menu {

@@ -19,7 +19,7 @@ export default defineStyles({
       'h-(--media-menu-height) w-(--media-menu-width)',
       'transition-settings-menu',
       '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
-      '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
+      '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur-sm',
     ],
     menuGroup: group,
     radioGroup: group,
@@ -34,7 +34,7 @@ export default defineStyles({
       'transition-[translate,filter] duration-250 ease-out',
       'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
       'data-starting-style:translate-x-full data-ending-style:translate-x-full',
-      'data-starting-style:[filter:blur(8px)] data-ending-style:[filter:blur(8px)]',
+      'data-starting-style:blur-sm data-ending-style:blur-sm',
     ],
     back: 'mb-0.5 w-full',
     separator: [

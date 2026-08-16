@@ -2177,14 +2177,19 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       opacity: 0;
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
-      background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      background-image: linear-gradient(
+        to top,
+        oklab(0% none none / 0.5) 0%,
+        oklab(0% none none / 0.3) 25%,
+        #0000 100%
+      );
       transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
     }
 
     .media-overlay:is(:where(.media-error-dialog)[data-open] ~ *) {
       opacity: 1;
-      backdrop-filter: blur(16px) saturate(1.5);
+      backdrop-filter: blur(16px) saturate(150%);
     }
 
     .media-overlay:is(:where(.media-buffering-indicator)[data-visible] ~ *) {
@@ -4341,11 +4346,16 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       justify-content: center;
       align-items: center;
       gap: calc(var(--media-spacing) * 2);
+      background-image: linear-gradient(
+        to bottom,
+        oklch(0% 0 0 / 0.35),
+        oklch(0% 0 0 / 0.2) calc(var(--media-spacing) * 12),
+        transparent
+      );
       width: 100%;
       padding-inline: calc(var(--media-spacing) * 2.5);
       padding-top: calc(var(--media-spacing) * 3);
       padding-bottom: calc(var(--media-spacing) * 32);
-      background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
       font-weight: 500;
       transition-property: opacity, scale, translate;
       transition-duration: 0.1s;
@@ -4409,11 +4419,16 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       pointer-events: none;
       inset-inline: calc(var(--media-spacing) * 0);
       top: calc(var(--media-spacing) * 0);
+      background-image: linear-gradient(
+        to bottom,
+        oklch(0% 0 0 / 0.35),
+        oklch(0% 0 0 / 0.2) calc(var(--media-spacing) * 12),
+        transparent
+      );
       width: 100%;
       padding-inline: calc(var(--media-spacing) * 2.5);
       padding-top: calc(var(--media-spacing) * 3);
       padding-bottom: calc(var(--media-spacing) * 32);
-      background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
       justify-content: center;
       font-weight: 500;
       transition-property: opacity, scale, translate;
@@ -4774,14 +4789,19 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       opacity: 0;
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
-      background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      background-image: linear-gradient(
+        to top,
+        oklab(0% none none / 0.5) 0%,
+        oklab(0% none none / 0.3) 25%,
+        #0000 100%
+      );
       transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
     }
 
     .media-overlay:is(:where(.media-error-dialog)[data-open] ~ *) {
       opacity: 1;
-      backdrop-filter: blur(16px) saturate(1.5);
+      backdrop-filter: blur(16px) saturate(150%);
     }
 
     .media-overlay:is(:where(.media-buffering-indicator)[data-visible] ~ *) {
@@ -8368,14 +8388,19 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       opacity: 0;
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
-      background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      background-image: linear-gradient(
+        to top,
+        oklab(0% none none / 0.5) 0%,
+        oklab(0% none none / 0.3) 25%,
+        #0000 100%
+      );
       transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
     }
 
     .media-overlay:is(:where(.media-error-dialog)[data-open] ~ *) {
       opacity: 1;
-      backdrop-filter: blur(16px) saturate(1.5);
+      backdrop-filter: blur(16px) saturate(150%);
     }
 
     .media-overlay:is(:where(.media-buffering-indicator)[data-visible] ~ *) {
@@ -11010,11 +11035,16 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       justify-content: center;
       align-items: center;
       gap: calc(var(--media-spacing) * 2);
+      background-image: linear-gradient(
+        to bottom,
+        oklch(0% 0 0 / 0.35),
+        oklch(0% 0 0 / 0.2) calc(var(--media-spacing) * 12),
+        transparent
+      );
       width: 100%;
       padding-inline: calc(var(--media-spacing) * 2.5);
       padding-top: calc(var(--media-spacing) * 3);
       padding-bottom: calc(var(--media-spacing) * 32);
-      background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
       font-weight: 500;
       transition-property: opacity, scale, translate;
       transition-duration: 0.1s;
@@ -11078,11 +11108,16 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       pointer-events: none;
       inset-inline: calc(var(--media-spacing) * 0);
       top: calc(var(--media-spacing) * 0);
+      background-image: linear-gradient(
+        to bottom,
+        oklch(0% 0 0 / 0.35),
+        oklch(0% 0 0 / 0.2) calc(var(--media-spacing) * 12),
+        transparent
+      );
       width: 100%;
       padding-inline: calc(var(--media-spacing) * 2.5);
       padding-top: calc(var(--media-spacing) * 3);
       padding-bottom: calc(var(--media-spacing) * 32);
-      background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
       justify-content: center;
       font-weight: 500;
       transition-property: opacity, scale, translate;
@@ -11443,14 +11478,19 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       opacity: 0;
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
-      background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      background-image: linear-gradient(
+        to top,
+        oklab(0% none none / 0.5) 0%,
+        oklab(0% none none / 0.3) 25%,
+        #0000 100%
+      );
       transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
     }
 
     .media-overlay:is(:where(.media-error-dialog)[data-open] ~ *) {
       opacity: 1;
-      backdrop-filter: blur(16px) saturate(1.5);
+      backdrop-filter: blur(16px) saturate(150%);
     }
 
     .media-overlay:is(:where(.media-buffering-indicator)[data-visible] ~ *) {
@@ -12490,8 +12530,8 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
           'bg-white/10',
           'm-0 overflow-visible border-0 text-inherit',
           'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
-          'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
-          'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
+          'data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95',
+          'data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95',
           'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
           'before:pointer-events-auto before:absolute',
           'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
@@ -12818,11 +12858,11 @@ export function Overlay({ className, ...props }: OverlayProps) {
       {...props}
       className={cn(
         'pointer-events-none absolute inset-0 rounded-[inherit] opacity-0',
-        '[background-image:linear-gradient(to_top,oklch(0_0_0/0.5),oklch(0_0_0/0.3)_25%,transparent)]',
+        'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
         'transition-[opacity,backdrop-filter] duration-(--media-controls-transition-duration) ease-out',
         'peer-data-visible/controls:opacity-100',
-        'peer-data-visible/buffering:bg-black/35 peer-data-visible/buffering:opacity-100 peer-data-visible/buffering:[backdrop-filter:blur(4px)]',
-        'peer-data-open/error:opacity-100 peer-data-open/error:[backdrop-filter:blur(16px)_saturate(1.5)]',
+        'peer-data-visible/buffering:bg-black/35 peer-data-visible/buffering:opacity-100 peer-data-visible/buffering:backdrop-blur-xs',
+        'peer-data-open/error:opacity-100 peer-data-open/error:backdrop-blur-lg peer-data-open/error:backdrop-saturate-150',
         className,
       )}
     />
@@ -13251,12 +13291,12 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
             'forced-colors:shadow-sm forced-colors:shadow-black/15',
             'bg-white/10',
             'absolute left-1/2 max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
-            '[filter:blur(16px)] origin-bottom',
+            'origin-bottom blur-lg',
             'transition-[filter,opacity,scale] duration-150 ease-out motion-reduce:duration-50',
-            'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:[filter:none]',
+            'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:filter-none',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:scale-100',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:opacity-100',
-            'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:[filter:none]',
+            'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:filter-none',
             'group/thumbnail pointer-events-none bottom-[calc(100%+2.25rem)] overflow-hidden rounded-xl bg-black/90',
             'has-[[data-loading]]:aspect-video has-[[data-loading]]:w-(--media-slider-preview-max-width)',
           )}
@@ -13279,12 +13319,12 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
         <div
           className={cn(
             'absolute left-1/2 max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
-            '[filter:blur(16px)] origin-bottom',
+            'origin-bottom blur-lg',
             'transition-[filter,opacity,scale] duration-150 ease-out motion-reduce:duration-50',
-            'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:[filter:none]',
+            'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:filter-none',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:scale-100',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:opacity-100',
-            'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:[filter:none]',
+            'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:filter-none',
             'bottom-[calc(100%+2.625rem)] flex flex-col items-center tabular-nums',
           )}
         >
@@ -13745,8 +13785,8 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'bg-white/10',
             'm-0 overflow-visible border-0 text-inherit',
             'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
-            'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
-            'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
+            'data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95',
+            'data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
             'before:pointer-events-auto before:absolute',
             'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
@@ -13783,8 +13823,8 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'bg-white/10',
             'm-0 overflow-visible border-0 text-inherit',
             'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
-            'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
-            'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
+            'data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95',
+            'data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
             'before:pointer-events-auto before:absolute',
             'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
@@ -13798,7 +13838,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'h-(--media-menu-height) w-(--media-menu-width)',
             'transition-settings-menu',
             '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
-            '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
+            '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur-sm',
             'flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
             resolveClassName(className, state),
           )
@@ -13855,7 +13895,7 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
             'transition-[translate,filter] duration-250 ease-out',
             'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
             'data-starting-style:translate-x-full data-ending-style:translate-x-full',
-            'data-starting-style:[filter:blur(8px)] data-ending-style:[filter:blur(8px)]',
+            'data-starting-style:blur-sm data-ending-style:blur-sm',
             resolveClassName(className, state),
           )
         }
@@ -14016,8 +14056,8 @@ export function VolumePopover({
             'bg-white/10',
             'm-0 overflow-visible border-0 text-inherit',
             'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
-            'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
-            'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
+            'data-starting-style:opacity-0 data-starting-style:blur-xs data-starting-style:scale-95',
+            'data-ending-style:opacity-0 data-ending-style:blur-xs data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
             'before:pointer-events-auto before:absolute',
             'data-[side=top]:before:inset-x-0 data-[side=top]:before:top-full',
@@ -14373,7 +14413,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 }
 
 @utility status-indicator-gradient {
-  background-image: linear-gradient(to bottom, oklch(0 0 0 / 0.35), oklch(0 0 0 / 0.2) 3rem, transparent);
+  background-image: linear-gradient(
+    to bottom,
+    oklch(0 0 0 / 0.35),
+    oklch(0 0 0 / 0.2) calc(var(--media-spacing) * 12),
+    transparent
+  );
 }
 
 @utility transition-settings-menu {

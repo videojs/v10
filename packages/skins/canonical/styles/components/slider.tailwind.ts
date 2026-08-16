@@ -7,12 +7,12 @@ const fillBase = [
 
 const previewContent = [
   'absolute left-1/2 max-w-(--media-slider-preview-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
-  '[filter:blur(16px)] origin-bottom',
+  'origin-bottom blur-lg',
   'transition-[filter,opacity,scale] duration-150 ease-out motion-reduce:duration-50',
-  'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:[filter:none]',
+  'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:filter-none',
   'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:scale-100',
   'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:opacity-100',
-  'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:[filter:none]',
+  'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:filter-none',
 ];
 
 export default defineStyles({

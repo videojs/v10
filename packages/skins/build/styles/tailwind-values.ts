@@ -30,6 +30,12 @@ function tailwindInitialValue(initial: ParsedComponent | null | undefined): read
   if (initial.type === 'length' && initial.value.type === 'value') {
     return [{ type: 'length', value: cloneCssAst(initial.value.value) }];
   }
+  if (initial.type === 'length-percentage' && initial.value.type === 'dimension') {
+    return [{ type: 'length', value: cloneCssAst(initial.value.value) }];
+  }
+  if (initial.type === 'length-percentage' && initial.value.type === 'percentage') {
+    return [{ type: 'token', value: { type: 'percentage', value: initial.value.value } }];
+  }
   if (
     initial.type === 'color' ||
     initial.type === 'angle' ||
