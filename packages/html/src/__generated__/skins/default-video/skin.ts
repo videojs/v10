@@ -37,7 +37,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
   <media-buffering-indicator class="media-buffering-indicator">
     <media-icon class="media-buffering-spinner-icon" name="spinner"></media-icon>
   </media-buffering-indicator>
-  <media-error-dialog class="media-surface media-error-dialog">
+  <media-error-dialog class="media-error-dialog">
     <media-alert-dialog-title class="media-error-dialog-title"></media-alert-dialog-title>
     <media-alert-dialog-description class="media-error-dialog-description"></media-alert-dialog-description>
     <media-alert-dialog-close class="media-button media-error-dialog-close"></media-alert-dialog-close>
@@ -115,11 +115,11 @@ export const skin = /* html */ `<media-container class="media-container media-sk
             <media-tooltip-label></media-tooltip-label>
             <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
           </media-tooltip>
-          <button class="media-button media-settings-trigger" commandfor="settings-menu">
+          <button class="media-button media-settings-trigger" commandfor="settings-menu" id="settings-trigger">
             <media-icon class="media-button-icon media-settings-icon" name="gear"></media-icon>
             <media-text class="media-sr-only" token="menu.settings">Settings</media-text>
           </button>
-          <media-tooltip side="top" class="media-surface media-tooltip">
+          <media-tooltip side="top" class="media-surface media-tooltip" trigger="settings-trigger">
             <media-text token="menu.settings">Settings</media-text>
           </media-tooltip>
           <media-menu
@@ -298,7 +298,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
   <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
   <media-status-announcer class="media-status-announcer"></media-status-announcer>
   <div class="media-input-indicator-overlay">
-    <media-volume-indicator class="media-surface media-volume-indicator">
+    <media-volume-indicator class="media-volume-indicator">
       <media-volume-indicator-fill class="media-volume-indicator-fill">
         <media-icon
           class="media-volume-indicator-icon media-volume-high-indicator-icon"
@@ -311,7 +311,7 @@ export const skin = /* html */ `<media-container class="media-container media-sk
     </media-volume-indicator>
     <media-status-indicator
       actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"
-      class="media-surface media-status-indicator"
+      class="media-status-indicator"
     >
       <media-icon class="media-status-indicator-icon media-status-captions-on-icon" name="captions-on"></media-icon>
       <media-icon class="media-status-indicator-icon media-status-captions-off-icon" name="captions-off"></media-icon>

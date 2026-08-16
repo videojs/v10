@@ -6,6 +6,35 @@ import type { SkinStyleManifest, SkinStyleRecipe } from '../manifest';
 const designPath = resolve(import.meta.dirname, '../../../canonical/styles/tailwind.css');
 
 describe('compileSkinStyles', () => {
+  it('includes semantic recipes colocated on the skin scope root', async () => {
+    const container = recipe(
+      'container',
+      'media-container',
+      ['block', 'rounded-[var(--container-border-radius)]'],
+      'container'
+    );
+    const styles = await compileSkinStyles({
+      design: await loadDesignSystem(designPath),
+      manifest: manifest([container]),
+      scopeClass: 'media-skin-video',
+    });
+
+    expect(styles.get('container')).toContain(':scope.media-container');
+    expect(styles.get('container')).toContain('.media-container');
+  });
+
+  it('does not duplicate descendant component recipes onto the skin scope root', async () => {
+    const errorDialog = recipe('errorDialog', 'media-error-dialog', ['block'], 'dialog');
+    const styles = await compileSkinStyles({
+      design: await loadDesignSystem(designPath),
+      manifest: manifest([errorDialog]),
+      scopeClass: 'media-skin-video',
+    });
+
+    expect(styles.get('dialog')).toContain('.media-error-dialog');
+    expect(styles.get('dialog')).not.toContain(':scope.media-error-dialog');
+  });
+
   it('rewrites named group variants to their semantic owner', async () => {
     const playButton = recipe('playButton', 'media-play-button', ['group/play']);
     const restartIcon = recipe('restartIcon', 'media-restart-icon', ['hidden', 'group-data-ended/play:block']);
@@ -60,12 +89,18 @@ describe('compileSkinStyles', () => {
   });
 });
 
-function recipe(token: string, className: string, utilities: readonly string[]): SkinStyleRecipe {
+function recipe(
+  token: string,
+  className: string,
+  utilities: readonly string[],
+  role: SkinStyleRecipe['role'] = 'buttons'
+): SkinStyleRecipe {
   return {
     modulePath: 'test.tailwind.ts',
     tokenPath: token.split('.'),
     className,
-    role: 'buttons',
+    role,
+    utilityGroups: utilities,
     utilities,
   };
 }

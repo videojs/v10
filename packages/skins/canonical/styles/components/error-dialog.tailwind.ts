@@ -1,25 +1,44 @@
-import { defineStyles } from '../define';
+import { defineStyles, variants } from '../define';
+import { surface } from './popup.tailwind';
 
 export default defineStyles({
   role: 'dialog',
   styles: {
-    errorDialog: [
-      'peer/error absolute top-1/2 left-1/2 z-20 flex w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-[1.75rem] p-3 text-white outline-none',
-      'not-data-open:hidden transition-[opacity,scale,transform] duration-350 delay-100 ease-out',
-      'data-starting-style:scale-50 data-starting-style:opacity-0',
-      'data-ending-style:scale-50 data-ending-style:opacity-0 data-ending-style:delay-0',
-      'motion-reduce:duration-50 motion-reduce:delay-0',
-    ],
-    errorDialogMinimal: [
-      'inset-0 top-0 left-0 h-full w-full max-w-none translate-x-0 translate-y-0 items-center justify-center rounded-none bg-transparent p-4 shadow-none [backdrop-filter:none] after:hidden',
-      'duration-(--error-dialog-transition-duration)',
-      'pointer-events-none [&>*]:pointer-events-auto',
-    ],
-    errorDialogTitle: 'px-2 pt-2 text-media font-semibold leading-tight',
-    errorDialogTitleMinimal: 'w-full max-w-64 px-0 pt-1.5 text-[calc(var(--media-font-size)*1.15)]',
-    errorDialogDescription: 'px-2 pb-1.5 opacity-70 wrap-anywhere',
-    errorDialogDescriptionMinimal: 'w-full max-w-64 px-0 pb-1.5',
-    errorDialogClose: 'h-9 w-full bg-white px-4 font-medium text-black',
-    errorDialogCloseMinimal: 'max-w-64',
+    errorDialog: variants({
+      base: [
+        'peer/error z-20 flex flex-col gap-3 outline-none',
+        'not-data-open:hidden transition-[opacity,scale,transform] delay-100 ease-out',
+        'data-starting-style:scale-50 data-starting-style:opacity-0',
+        'data-ending-style:scale-50 data-ending-style:opacity-0 data-ending-style:delay-0',
+        'motion-reduce:duration-50 motion-reduce:delay-0',
+      ],
+      variants: {
+        default: [
+          ...surface,
+          'absolute top-1/2 left-1/2 w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] p-3 text-white',
+          'duration-350',
+        ],
+        minimal: [
+          'absolute inset-0 h-full w-full items-center justify-center p-4 text-white',
+          'duration-(--media-error-dialog-transition-duration)',
+          'pointer-events-none [&>*]:pointer-events-auto',
+        ],
+      },
+    }),
+    errorDialogTitle: variants({
+      base: 'font-semibold leading-tight',
+      variants: {
+        default: 'px-2 pt-2 text-media',
+        minimal: 'w-full max-w-64 pt-1.5 text-[calc(var(--media-font-size)*1.15)]',
+      },
+    }),
+    errorDialogDescription: variants({
+      base: 'pb-1.5 opacity-70 wrap-anywhere',
+      variants: { default: 'px-2', minimal: 'w-full max-w-64' },
+    }),
+    errorDialogClose: variants({
+      base: 'h-9 w-full bg-media-accent px-4 font-medium text-media-accent-text',
+      variants: { default: '', minimal: 'max-w-64' },
+    }),
   },
 });

@@ -18,6 +18,11 @@ describe('generateReactRegistry', () => {
     const output = await generateReactRegistry(catalog, {
       rootDir: canonicalRoot,
       itemNames: ['default-video', 'play-button'],
+      utility: {
+        source: '../build/registry/templates/utils.ts',
+        target: 'utils.ts',
+        importSource: '@/components/videojs/utils',
+      },
     });
 
     expect(Object.keys(output.items)).toEqual(['default-video', 'play-button']);
@@ -34,6 +39,11 @@ describe('generateReactRegistry', () => {
       'styles/themes/default.css',
       'styles/themes/minimal.css',
     ]);
+    expect(output.utilityFiles.map((file) => file.path)).toEqual(['utils.ts']);
+    expect(output.utilityFiles[0]?.content).toContain('twMerge(clsx(inputs))');
+    expect(output.items['default-video']?.find((file) => file.path === 'skin.tsx')?.content).toMatch(
+      /from ["']@\/components\/videojs\/utils["']/
+    );
     expect(
       Object.values(output.items)
         .flat()
@@ -46,7 +56,7 @@ describe('generateReactRegistry', () => {
     const root = setup({
       'entry.tsx': `import { helper } from './helpers'; export function Entry(){ return <div>{helper}</div>; }`,
       'helpers/index.ts': `import { createElement } from 'react'; export const helper = createElement;`,
-      'styles/tailwind.css': `@import "tailwindcss" theme(inline);\n@theme inline { --color-test: red; }\n@source "../";\n`,
+      'styles/tailwind.css': `@layer theme, base, videojs.base, components, utilities;\n@import "tailwindcss" theme(inline);\n@theme inline { --color-test: red; }\n@source "../";\n`,
       'styles/base.css': `@layer videojs.base {}`,
       'styles/theme.css': `@layer videojs.theme {}`,
     });
@@ -83,6 +93,9 @@ describe('generateReactRegistry', () => {
       'from "./helpers/index"'
     );
     expect(output.packageDependenciesByItem.entry).toEqual(['react']);
+    expect(output.sharedFiles.find((file) => file.path === 'styles/tailwind.css')?.content).toContain(
+      '@layer theme, base, videojs.base, components, utilities;'
+    );
   });
 });
 

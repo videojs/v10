@@ -1,7 +1,7 @@
 @layer videojs.components {
   @scope (.media-skin-video) {
     .media-chapter-title {
-      max-width: var(--max-width);
+      max-width: var(--media-max-width);
       text-overflow: ellipsis;
       white-space: nowrap;
       min-width: 0;
@@ -14,7 +14,7 @@
     }
 
     .media-preview-value {
-      max-width: var(--max-width);
+      max-width: var(--media-max-width);
       transform-origin: bottom;
       font-variant-numeric: tabular-nums;
       opacity: 0;
@@ -81,9 +81,9 @@
     }
 
     .media-slider-chapter {
-      --chapter-gap: 0.25rem;
-      --chapter-inset-end: 0.5;
-      --chapter-inset-start: 0.5;
+      --media-chapter-gap: 0.25rem;
+      --media-chapter-inset-end: 0.5;
+      --media-chapter-inset-start: 0.5;
       justify-content: center;
       align-items: center;
       min-width: 0;
@@ -94,11 +94,11 @@
     }
 
     .media-slider-chapter:first-child {
-      --chapter-inset-start: 0;
+      --media-chapter-inset-start: 0;
     }
 
     .media-slider-chapter:last-child {
-      --chapter-inset-end: 0;
+      --media-chapter-inset-end: 0;
     }
 
     .media-slider-chapter[data-orientation='horizontal'] {
@@ -123,8 +123,8 @@
       height: var(--media-slider-track-size);
       width: 100%;
       clip-path: inset(
-        0 calc(100% - var(--media-slider-chapter-end) + var(--chapter-gap) * var(--chapter-inset-end)) 0
-          calc(var(--media-slider-chapter-start) + var(--chapter-gap) * var(--chapter-inset-start)) round
+        0 calc(100% - var(--media-slider-chapter-end) + var(--media-chapter-gap) * var(--media-chapter-inset-end)) 0
+          calc(var(--media-slider-chapter-start) + var(--media-chapter-gap) * var(--media-chapter-inset-start)) round
           var(--media-radius-pill)
       );
     }
@@ -139,8 +139,8 @@
       height: 100%;
       width: var(--media-slider-track-size);
       clip-path: inset(
-        calc(100% - var(--media-slider-chapter-end) + var(--chapter-gap) * var(--chapter-inset-end)) 0
-          calc(var(--media-slider-chapter-start) + var(--chapter-gap) * var(--chapter-inset-start)) 0 round
+        calc(100% - var(--media-slider-chapter-end) + var(--media-chapter-gap) * var(--media-chapter-inset-end)) 0
+          calc(var(--media-slider-chapter-start) + var(--media-chapter-gap) * var(--media-chapter-inset-start)) 0 round
           var(--media-radius-pill)
       );
     }
@@ -174,8 +174,8 @@
     .media-slider-fill {
       width: var(--media-slider-fill);
       border-radius: inherit;
+      background-color: var(--media-accent-color, var(--media-default-accent-color));
       inset-block: 0;
-      background-color: currentColor;
       position: absolute;
       left: 0;
     }
@@ -202,9 +202,9 @@
 
     .media-slider-preview {
       height: 0.25rem;
-      min-width: var(--max-width);
-      --max-height: 8rem;
-      --max-width: min(12rem, 100cqi);
+      min-width: var(--media-max-width);
+      --media-max-height: 8rem;
+      --media-max-width: min(12rem, 100cqi);
       position: relative;
     }
 
@@ -348,8 +348,8 @@
     }
 
     .media-spinner-icon {
-      width: var(--media-icon-size);
-      height: var(--media-icon-size);
+      width: var(--media-icon-size, calc(1.125 * var(--media-size)));
+      height: var(--media-icon-size, calc(1.125 * var(--media-size)));
       opacity: 0;
       filter: drop-shadow(0 1px 0 var(--media-shadow-color));
       position: absolute;
@@ -366,11 +366,11 @@
 
     .media-thumbnail {
       pointer-events: none;
-      max-width: var(--max-width);
+      max-width: var(--media-max-width);
       transform-origin: bottom;
       opacity: 0;
       filter: blur(16px);
-      --thumbnail-max-width: var(--max-width);
+      --media-thumbnail-max-width: var(--media-max-width);
       background-color: oklab(0% none none / 0.9);
       border-radius: 0.75rem;
       transition-property: filter, opacity, scale;
@@ -395,12 +395,12 @@
 
     .media-thumbnail:has([data-loading]) {
       aspect-ratio: 16 / 9;
-      width: var(--thumbnail-max-width);
+      width: var(--media-thumbnail-max-width);
     }
 
     .media-thumbnail-image {
-      max-height: var(--max-height);
-      max-width: var(--thumbnail-max-width);
+      max-height: var(--media-max-height);
+      max-width: var(--media-thumbnail-max-width);
       border-radius: inherit;
       transition-property: opacity;
       transition-duration: 0.15s;

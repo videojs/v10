@@ -357,7 +357,9 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             code.jsx.element('Menu.Root').unwrap({ forwardPropsTo: 'Menu.Content' }),
             code.function('SettingsMenu').jsx.element('Menu.Group').unwrap(),
             code.function('SettingsMenu').jsx.element('Menu.Trigger').addProp('commandfor', 'settings-menu'),
+            code.function('SettingsMenu').jsx.element('Menu.Trigger').addProp('id', 'settings-trigger'),
             code.function('SettingsMenu').jsx.element('Menu.Trigger').replace('button'),
+            code.function('SettingsMenu').jsx.element('TooltipPrimitive.Popup').addProp('trigger', 'settings-trigger'),
             code.function('SettingsMenu').jsx.element('Menu.Content').addProp('id', 'settings-menu'),
             ...submenuNames.flatMap((name) => {
               const component = `${name}SettingsMenu`;

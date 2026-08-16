@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { basename, posix, resolve, sep } from 'node:path';
+import { collectModuleSpecifiers } from '@videojs/compiler/ast';
 import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinStyleResources } from '../catalog/types';
 import { createCompilerReactConfig } from '../compiler/react';
 import { emitReactModules, type ReactModuleLayout } from '../compiler/react-modules';
@@ -15,16 +16,26 @@ export interface RegistrySourceFile extends GeneratedFile {
 
 export interface RegistrySourceOutput {
   sharedFiles: readonly RegistrySourceFile[];
+  utilityFiles: readonly RegistrySourceFile[];
   items: Readonly<Record<string, readonly RegistrySourceFile[]>>;
   packageDependenciesByItem: Readonly<Record<string, readonly string[]>>;
+  utilityDependenciesByItem: Readonly<Record<string, boolean>>;
 }
 
 interface GenerateReactRegistryOptions {
   rootDir: string;
   itemNames?: readonly string[] | undefined;
+  variant?: string | undefined;
   iconSet?: string | undefined;
   sourceRoot?: string | undefined;
   installAlias?: string | undefined;
+  utility?:
+    | {
+        source: string;
+        target: string;
+        importSource: string;
+      }
+    | undefined;
 }
 
 interface SkinItemLayout {
@@ -44,13 +55,22 @@ interface SkinItemContext extends SkinItemLayout {
 interface ResolvedRegistrySourceOptions {
   rootDir: string;
   itemNames?: readonly string[] | undefined;
+  variant: string;
   iconSet: string;
   sourceRoot: string;
+  utility?:
+    | {
+        source: string;
+        target: string;
+        importSource: string;
+      }
+    | undefined;
 }
 
 interface EmittedReactItem {
   files: readonly RegistrySourceFile[];
   packageDependencies: readonly string[];
+  usesUtility: boolean;
 }
 
 /** Emit the editable React/Tailwind source projection consumed by the shadcn registry. */
@@ -66,9 +86,11 @@ export async function generateReactRegistry(
   const styles = await loadCatalogStyleManifest(catalog, {
     rootDir: resolved.rootDir,
     itemNames: selected.map((layout) => layout.item.name),
+    variant: resolved.variant,
   });
   const items: Record<string, RegistrySourceFile[]> = {};
   const packageDependenciesByItem: Record<string, string[]> = {};
+  const utilityDependenciesByItem: Record<string, boolean> = {};
 
   for (const layout of selected) {
     const emitted = await emitReactItem(
@@ -82,12 +104,21 @@ export async function generateReactRegistry(
     );
     items[layout.item.name] = [...emitted.files];
     packageDependenciesByItem[layout.item.name] = [...emitted.packageDependencies];
+    utilityDependenciesByItem[layout.item.name] = emitted.usesUtility;
   }
   return {
     sharedFiles: await createStyleResourceFiles(catalog.resources.styles, resolved),
+    utilityFiles: await createUtilityFiles(resolved),
     items,
     packageDependenciesByItem,
+    utilityDependenciesByItem,
   };
+}
+
+async function createUtilityFiles(options: ResolvedRegistrySourceOptions): Promise<RegistrySourceFile[]> {
+  if (!options.utility) return [];
+  const source = await readFile(absoluteSkinPath(options.rootDir, options.utility.source), 'utf8');
+  return [createRegistrySourceFile(posix.join(options.sourceRoot, options.utility.target), source)];
 }
 
 async function createStyleResourceFiles(
@@ -136,8 +167,10 @@ function resolveOptions(options: GenerateReactRegistryOptions): ResolvedRegistry
   return {
     rootDir: resolve(options.rootDir),
     ...(options.itemNames ? { itemNames: options.itemNames } : {}),
+    variant: options.variant ?? 'default',
     iconSet: options.iconSet ?? 'default',
     sourceRoot: options.sourceRoot ?? '',
+    ...(options.utility ? { utility: options.utility } : {}),
   };
 }
 
@@ -182,11 +215,13 @@ function rewriteTailwindInput(source: string, inputFile: string): string {
     inputFile,
     'inline Tailwind import'
   );
-  output = replaceDirective(output, /^@theme\s+inline\s*\{/m, '@theme {', inputFile, 'inline theme block');
+  output = replaceDirective(output, /^@theme\s+inline\s*\{/m, '@theme inline {', inputFile, 'inline theme block');
   output = output.replace(/^@source\s+.+;\s*$/gm, '').trim();
-  const importBlock = output.match(/^(?:@import[^\n]+;\s*)+/)?.[0];
-  if (!importBlock) throw new Error(`Tailwind source entry \`${inputFile}\` must begin with imports.`);
-  return `${importBlock.trim()}\n\n@source "../**/*.{ts,tsx,html}";\n\n${output.slice(importBlock.length).trimStart()}\n`;
+  const header = output.match(/^(?:(?:@layer\s+[^\n{]+|@import[^\n]+);\s*)+/)?.[0];
+  if (!header || !/^@import/m.test(header)) {
+    throw new Error(`Tailwind source entry \`${inputFile}\` must begin with a layer prelude and imports.`);
+  }
+  return `${header.trim()}\n\n@source "../**/*.{ts,tsx,html}";\n\n${output.slice(header.length).trimStart()}\n`;
 }
 
 function replaceDirective(
@@ -217,6 +252,17 @@ async function emitReactItem(context: SkinItemContext, installAlias: string): Pr
       style: 'tailwind',
       styles: context.styles,
       iconSet: context.options.iconSet,
+      composeClassNames: Boolean(context.options.utility),
+      extendComponents: Boolean(context.options.utility),
+      resolveImport(reference) {
+        if (reference.source === '@videojs/utils/style' && context.options.utility) {
+          return { ...reference, source: context.options.utility.importSource };
+        }
+        if (reference.source === '@videojs/skins/registry' && context.options.utility) {
+          return { ...reference, source: context.options.utility.importSource };
+        }
+        return reference;
+      },
       ...(context.item.type === 'skin' ? { rootClassName: skinRootClassName(context.item) } : {}),
     }),
     configDir: resolve(context.options.rootDir, context.itemDir),
@@ -236,6 +282,11 @@ async function emitReactItem(context: SkinItemContext, installAlias: string): Pr
   return {
     files: output.files.map((file) => createRegistrySourceFile(file.path, file.content)),
     packageDependencies: output.dependencies,
+    usesUtility: context.options.utility
+      ? output.files.some((file) =>
+          collectModuleSpecifiers(file.content, file.path).includes(context.options.utility!.importSource)
+        )
+      : false,
   };
 }
 

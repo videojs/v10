@@ -14,21 +14,61 @@ const styleFiles = [
 ];
 
 describe('createCompilerReactConfig', () => {
-  it('emits canonical button composition with public React imports', async () => {
+  it('opts registry components into forwarded React props', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) }),
+      config: createCompilerReactConfig({
+        style: 'tailwind',
+        styles: await loadSkinStyleManifest(styleFiles),
+        extendComponents: true,
+      }),
       configDir: dirname(filename),
     });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain("import type { SeekButtonProps } from '@videojs/core'");
     expect(result.code).toContain('import { SeekButton as SeekButtonPrimitive } from "@videojs/react"');
     expect(result.code).toContain('import { SeekIcon } from "@videojs/react/icons"');
+    expect(result.code).toContain('export interface SeekButtonProps extends Omit<SeekButtonPrimitive.Props');
+    expect(result.code).toContain('resolveClassName(className, state)');
+    expect(result.code).not.toContain("from '@videojs/core'");
     expect(result.code).toContain('<span className="tabular-nums">');
     expect(result.code).not.toContain('button.tailwind');
+  });
+
+  it('does not extend packaged preset components by default', async () => {
+    const filename = resolve(canonicalRoot, 'components/buttons/play-button.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await transform(source, {
+      filename,
+      config: createCompilerReactConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) }),
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain('export function PlayButton()');
+    expect(result.code).not.toContain('PlayButtonProps');
+    expect(result.code).not.toContain('resolveClassName');
+  });
+
+  it('keeps selected style variants out of editable component props', async () => {
+    const filename = resolve(canonicalRoot, 'components/feedback/status-indicator.tsx');
+    const source = await readFile(filename, 'utf8');
+    const statusStyleFiles = [...styleFiles, resolve(canonicalRoot, 'styles/components/status-indicator.tailwind.ts')];
+    const result = await transform(source, {
+      filename,
+      config: createCompilerReactConfig({
+        style: 'tailwind',
+        styles: await loadSkinStyleManifest(statusStyleFiles, { variant: 'minimal' }),
+        extendComponents: true,
+      }),
+    });
+
+    expect(result.code).toContain('export interface StatusIndicatorProps extends Omit<');
+    expect(result.code).toContain('group/input-status pointer-events-none flex items-center gap-2 font-medium');
+    expect(result.code).toContain('absolute inset-x-0 top-0 w-full justify-center');
+    expect(result.code).not.toContain('variant');
+    expect(result.code).not.toContain('rounded-media-pill');
   });
 
   it('uses public primitive props for the tooltip composition', async () => {
@@ -36,12 +76,53 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) }),
+      config: createCompilerReactConfig({
+        style: 'tailwind',
+        styles: await loadSkinStyleManifest(styleFiles),
+        extendComponents: true,
+      }),
     });
 
     expect(result.code).toContain('interface ButtonTooltipProps extends TooltipPrimitive.RootProps');
     expect(result.code).toContain('children: ReactElement');
+    expect(result.code).toMatch(/<TooltipPrimitive\.Trigger render=\{children\}\s*\/>/);
     expect(result.code).not.toContain('Parameters<typeof TooltipPrimitive.Root>');
+  });
+
+  it('forwards VolumePopover props directly to Popover.Root', async () => {
+    const filename = resolve(canonicalRoot, 'components/controls/volume-popover.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await transform(source, {
+      filename,
+      config: createCompilerReactConfig({
+        style: 'tailwind',
+        styles: await loadSkinStyleManifest(styleFiles),
+        extendComponents: true,
+      }),
+    });
+
+    expect(result.code).toContain('interface VolumePopoverProps extends Popover.RootProps');
+    expect(result.code).toContain('className?: Popover.PopupProps["className"]');
+    expect(result.code).toContain('...props');
+    expect(result.code).toContain('<Popover.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>');
+    expect(result.code).not.toContain('popoverProps');
+  });
+
+  it('exposes and forwards settings submenu props', async () => {
+    const filename = resolve(canonicalRoot, 'components/menus/audio-track-settings-menu.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await transform(source, {
+      filename,
+      config: createCompilerReactConfig({
+        style: 'tailwind',
+        styles: await loadSkinStyleManifest(styleFiles),
+        extendComponents: true,
+      }),
+    });
+
+    expect(result.code).toContain('interface AudioTrackSettingsMenuProps extends Menu.RootProps');
+    expect(result.code).toContain('...props }: AudioTrackSettingsMenuProps = {}');
+    expect(result.code).toContain('<Menu.Root {...props}>');
   });
 
   it('allows a projection to resolve generated React imports', async () => {

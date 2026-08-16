@@ -66,8 +66,8 @@
    still in the DOM — just `display: none` — so its animations would keep
    running. Set the variables to `none` to short-circuit the keyframes. */
 .media-button--airplay:not([data-airplay-state="connected"]) {
-  --media-icon--airplay__fill-animation: none;
-  --media-icon--airplay__triangle-animation: none;
+  --media-icon-airplay-fill-animation: none;
+  --media-icon-airplay-triangle-animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

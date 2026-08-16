@@ -1,12 +1,47 @@
 import { MuteButton as MuteButtonPrimitive } from '@videojs/react';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
+import { cn, resolveClassName } from '@/components/videojs/utils';
 
-export function MuteButton() {
+export interface MuteButtonProps extends Omit<MuteButtonPrimitive.Props, 'children'> {}
+
+export function MuteButton({ className, ...props }: MuteButtonProps) {
   return (
-    <MuteButtonPrimitive className="grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit cursor-pointer outline-2 outline-transparent -outline-offset-2 [transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out] hover:bg-media-control-hover focus-visible:bg-media-control-hover aria-expanded:bg-media-control-hover focus-visible:outline-current focus-visible:outline-offset-2 not-aria-disabled:active:scale-90 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 group/mute">
-      <VolumeOffIcon className="size-media-icon drop-shadow-media-icon hidden opacity-0 group-data-muted/mute:block group-data-muted/mute:opacity-100" />
-      <VolumeLowIcon className="size-media-icon drop-shadow-media-icon hidden opacity-0 group-not-data-muted/mute:group-data-[volume-level=low]/mute:block group-not-data-muted/mute:group-data-[volume-level=low]/mute:opacity-100" />
-      <VolumeHighIcon className="size-media-icon drop-shadow-media-icon hidden opacity-0 group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:block group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:opacity-100" />
+    <MuteButtonPrimitive
+      {...props}
+      className={(state) =>
+        cn(
+          'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
+          'cursor-pointer outline-2 outline-transparent -outline-offset-2',
+          '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
+          'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
+          'focus-visible:outline-media-focus focus-visible:outline-offset-2',
+          'not-aria-disabled:active:scale-90',
+          'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
+          'group/mute',
+          resolveClassName(className, state),
+        )
+      }
+    >
+      <VolumeOffIcon
+        className={cn(
+          'size-media-icon drop-shadow-media-icon',
+          'hidden opacity-0 group-data-muted/mute:block group-data-muted/mute:opacity-100',
+        )}
+      />
+      <VolumeLowIcon
+        className={cn(
+          'size-media-icon drop-shadow-media-icon',
+          'hidden opacity-0 group-not-data-muted/mute:group-data-[volume-level=low]/mute:block',
+          'group-not-data-muted/mute:group-data-[volume-level=low]/mute:opacity-100',
+        )}
+      />
+      <VolumeHighIcon
+        className={cn(
+          'size-media-icon drop-shadow-media-icon',
+          'hidden opacity-0 group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:block',
+          'group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:opacity-100',
+        )}
+      />
     </MuteButtonPrimitive>
   );
 }

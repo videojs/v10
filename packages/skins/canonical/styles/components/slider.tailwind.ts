@@ -6,7 +6,7 @@ const fillBase = [
 ];
 
 const previewContent = [
-  'absolute left-1/2 max-w-(--max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
+  'absolute left-1/2 max-w-(--media-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
   '[filter:blur(16px)] origin-bottom',
   '[transition-property:filter,opacity,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
   'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:[filter:none]',
@@ -30,8 +30,8 @@ export default defineStyles({
     sliderChapters: 'relative flex size-full min-h-0 min-w-0 flex-1 items-center rounded-[inherit]',
     sliderChapter: [
       'group/chapter absolute inset-0 flex min-h-0 min-w-0 items-center justify-center',
-      '[--chapter-gap:0.25rem] [--chapter-inset-start:0.5] [--chapter-inset-end:0.5]',
-      'first:[--chapter-inset-start:0] last:[--chapter-inset-end:0]',
+      '[--media-chapter-gap:0.25rem] [--media-chapter-inset-start:0.5] [--media-chapter-inset-end:0.5]',
+      'first:[--media-chapter-inset-start:0] last:[--media-chapter-inset-end:0]',
       'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start))]',
       'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start)_0)]',
     ],
@@ -40,14 +40,14 @@ export default defineStyles({
       'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
       'data-[orientation=horizontal]:h-media-slider-track data-[orientation=horizontal]:w-full',
       'group-data-highlighted/chapter:data-[orientation=horizontal]:h-[calc(var(--media-slider-track-size)*1.75)]',
-      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--chapter-gap)*var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-gap)*var(--chapter-inset-start))_round_var(--media-radius-pill))]',
+      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--media-chapter-gap)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-chapter-gap)*var(--media-chapter-inset-start))_round_var(--media-radius-pill))]',
       'data-[orientation=vertical]:h-full data-[orientation=vertical]:w-media-slider-track',
       'group-data-highlighted/chapter:data-[orientation=vertical]:w-[calc(var(--media-slider-track-size)*1.75)]',
-      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--chapter-gap)*var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-gap)*var(--chapter-inset-start))_0_round_var(--media-radius-pill))]',
+      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--media-chapter-gap)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-chapter-gap)*var(--media-chapter-inset-start))_0_round_var(--media-radius-pill))]',
     ],
     sliderFill: [
       ...fillBase,
-      'w-(--media-slider-fill) bg-current data-[orientation=vertical]:h-(--media-slider-fill)',
+      'w-(--media-slider-fill) bg-media-accent data-[orientation=vertical]:h-(--media-slider-fill)',
       'group-data-dragging/slider:data-[orientation=horizontal]:w-(--media-slider-pointer)',
       'group-data-dragging/slider:data-[orientation=vertical]:h-(--media-slider-pointer)',
     ],
@@ -71,8 +71,8 @@ export default defineStyles({
     ],
     sliderThumbPersistent: 'size-3',
     sliderPreview: [
-      'group/preview relative h-1 min-w-(--max-width)',
-      '[--max-width:min(12rem,100cqi)] [--max-height:8rem]',
+      'group/preview relative h-1 min-w-(--media-max-width)',
+      '[--media-max-width:min(12rem,100cqi)] [--media-max-height:8rem]',
       'before:pointer-events-none before:absolute before:top-1/2 before:left-1/2 before:z-1 before:size-1 before:-translate-1/2 before:scale-50 before:rounded-media-pill before:bg-current before:opacity-0',
       'before:[transition-property:opacity,scale] before:[transition-duration:200ms] before:[transition-timing-function:ease-out]',
       'data-pointing:not-data-dragging:before:scale-100 data-pointing:not-data-dragging:before:opacity-100',
@@ -85,15 +85,15 @@ export default defineStyles({
     thumbnail: [
       ...previewContent,
       'group/thumbnail pointer-events-none bottom-[calc(100%+2.25rem)] overflow-hidden rounded-xl bg-black/90',
-      '[--thumbnail-max-width:var(--max-width)]',
-      'has-[[data-loading]]:aspect-video has-[[data-loading]]:w-(--thumbnail-max-width)',
+      '[--media-thumbnail-max-width:var(--media-max-width)]',
+      'has-[[data-loading]]:aspect-video has-[[data-loading]]:w-(--media-thumbnail-max-width)',
     ],
     thumbnailImage: [
-      'relative block max-h-(--max-height) max-w-(--thumbnail-max-width) overflow-clip rounded-[inherit]',
+      'relative block max-h-(--media-max-height) max-w-(--media-thumbnail-max-width) overflow-clip rounded-[inherit]',
       '[transition-property:opacity] [transition-duration:150ms] [transition-timing-function:ease-out]',
       'data-loading:opacity-0',
     ],
     previewValue: [...previewContent, 'bottom-[calc(100%+2.625rem)] flex flex-col items-center tabular-nums'],
-    chapterTitle: 'max-w-(--max-width) min-w-0 overflow-hidden text-ellipsis whitespace-nowrap px-3 empty:hidden',
+    chapterTitle: 'max-w-(--media-max-width) min-w-0 overflow-hidden text-ellipsis whitespace-nowrap px-3 empty:hidden',
   },
 });

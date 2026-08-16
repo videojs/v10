@@ -3,8 +3,8 @@ import type { SkinRegistryConfig } from '../../canonical/registry/config';
 import type { ResolvedSkinCatalog, ResolvedSkinItem } from '../catalog/types';
 import type { RegistrySourceFile, RegistrySourceOutput } from './source';
 
-type RegistryItemType = 'registry:block' | 'registry:component';
-type RegistryFileType = 'registry:component' | 'registry:file';
+type RegistryItemType = 'registry:block' | 'registry:component' | 'registry:lib' | 'registry:style';
+type RegistryFileType = 'registry:component' | 'registry:file' | 'registry:lib';
 
 interface RegistryFile {
   path: string;
@@ -38,46 +38,74 @@ export function createRegistryManifest(
 ): ShadcnRegistry {
   const items = new Map(catalog.items.map((item) => [item.name, item]));
   const published = new Set(config.items);
+  for (const sharedItem of [config.styleItem, config.utilityItem]) {
+    if (items.has(sharedItem.name)) {
+      throw new Error(`Registry shared item \`${sharedItem.name}\` conflicts with a Skin catalog item.`);
+    }
+  }
+  const componentItems: RegistryItem[] = config.items.map((name) => {
+    const item = items.get(name);
+    if (!item) throw new Error(`Registry references missing Skin item \`${name}\`.`);
+    const partition = partitionItemDependencies(item, items, published);
+    const files = uniqueFiles(
+      partition.bundledItems
+        .flatMap((includedName) => {
+          const generated = output.items[includedName];
+          if (!generated) throw new Error(`Registry output is missing Skin item \`${includedName}\`.`);
+          return generated;
+        })
+        .map((file) => registryFile(file, item.name, config))
+    );
+    const packageDependencies = [
+      ...new Set(
+        partition.bundledItems.flatMap((includedName) => output.packageDependenciesByItem[includedName] ?? [])
+      ),
+    ].sort();
+
+    return {
+      name: item.name,
+      type: item.type === 'skin' ? 'registry:block' : 'registry:component',
+      title: item.title,
+      description: item.description,
+      files,
+      ...(packageDependencies.length ? { dependencies: packageDependencies } : {}),
+      registryDependencies: [
+        `${config.namespace}/${config.styleItem.name}`,
+        ...(partition.bundledItems.some((item) => output.utilityDependenciesByItem[item])
+          ? [`${config.namespace}/${config.utilityItem.name}`]
+          : []),
+        ...partition.registryItems.map((dependency) => `${config.namespace}/${dependency}`),
+      ].sort(),
+      meta: { framework: config.framework, style: config.style, skin: config.skin },
+    };
+  });
 
   return {
     $schema: 'https://ui.shadcn.com/schema/registry.json',
     name: config.name,
     homepage: config.homepage,
-    items: config.items.map((name) => {
-      const item = items.get(name);
-      if (!item) throw new Error(`Registry references missing Skin item \`${name}\`.`);
-      const partition = partitionItemDependencies(item, items, published);
-      const files = uniqueFiles(
-        [
-          ...output.sharedFiles,
-          ...partition.bundledItems.flatMap((includedName) => {
-            const generated = output.items[includedName];
-            if (!generated) throw new Error(`Registry output is missing Skin item \`${includedName}\`.`);
-            return generated;
-          }),
-        ].map((file) => registryFile(file, item.name, config))
-      );
-      const packageDependencies = [
-        ...new Set(
-          partition.bundledItems.flatMap((includedName) => output.packageDependenciesByItem[includedName] ?? [])
-        ),
-      ].sort();
-
-      return {
-        name: item.name,
-        type: item.type === 'skin' ? 'registry:block' : 'registry:component',
-        title: item.title,
-        description: item.description,
-        files,
-        ...(packageDependencies.length ? { dependencies: packageDependencies } : {}),
-        ...(partition.registryItems.length
-          ? {
-              registryDependencies: partition.registryItems.map((dependency) => `${config.namespace}/${dependency}`),
-            }
-          : {}),
+    items: [
+      {
+        name: config.styleItem.name,
+        type: 'registry:style' as const,
+        title: config.styleItem.title,
+        description: config.styleItem.description,
+        files: uniqueFiles(output.sharedFiles.map((file) => registryFile(file, config.styleItem.name, config))),
         meta: { framework: config.framework, style: config.style, skin: config.skin },
-      };
-    }),
+      },
+      {
+        name: config.utilityItem.name,
+        type: 'registry:lib' as const,
+        title: config.utilityItem.title,
+        description: config.utilityItem.description,
+        files: uniqueFiles(
+          output.utilityFiles.map((file) => registryFile(file, config.utilityItem.name, config, 'registry:lib'))
+        ),
+        dependencies: config.utilityItem.dependencies,
+        meta: { framework: config.framework, style: config.style, skin: config.skin },
+      },
+      ...componentItems,
+    ],
   };
 }
 
@@ -105,11 +133,16 @@ function partitionItemDependencies(
   return { bundledItems: [...bundledItems].sort(), registryItems: [...registryItems].sort() };
 }
 
-function registryFile(file: RegistrySourceFile, owner: string, config: SkinRegistryConfig): RegistryFile {
+function registryFile(
+  file: RegistrySourceFile,
+  owner: string,
+  config: SkinRegistryConfig,
+  sourceType?: RegistryFileType
+): RegistryFile {
   return {
     path: posix.join(config.outputDir, file.path),
     target: registryTarget(file.path, owner, config),
-    type: file.kind === 'source' ? 'registry:component' : 'registry:file',
+    type: file.kind === 'source' ? (sourceType ?? 'registry:component') : 'registry:file',
   };
 }
 

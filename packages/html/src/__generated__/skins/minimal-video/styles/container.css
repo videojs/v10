@@ -1,8 +1,9 @@
 @layer videojs.components {
   @scope (.media-skin-video-minimal) {
-    .media-container {
+    .media-container,
+    :scope.media-container {
       isolation: isolate;
-      border-radius: var(--container-border-radius);
+      border-radius: var(--media-container-border-radius);
       width: 100%;
       height: 100%;
       font-family: var(--media-font-family);
@@ -11,7 +12,7 @@
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
       --media-caption-track-delay: 25ms;
-      --media-caption-track-duration: var(--controls-transition-duration);
+      --media-caption-track-duration: var(--media-controls-transition-duration);
       --media-caption-track-y: -0.5rem;
       background-color: #000;
       outline: 2px solid #0000;
@@ -25,7 +26,8 @@
       container: media-root / inline-size;
     }
 
-    .media-container:before {
+    .media-container:before,
+    :scope.media-container:before {
       pointer-events: none;
       background-image: var(--media-poster-placeholder, none);
       background-size: var(--media-object-fit, contain);
@@ -41,7 +43,8 @@
       inset: 0;
     }
 
-    .media-container:after {
+    .media-container:after,
+    :scope.media-container:after {
       pointer-events: none;
       z-index: 10;
       border-radius: inherit;
@@ -51,32 +54,37 @@
         0 0 #0000,
         0 0 #0000,
         0 0 #0000,
-        inset 0 0 0 1px var(--media-surface-border);
+        inset 0 0 0 1px var(--media-border-color);
       position: absolute;
       inset: 0;
     }
 
-    .media-container:focus-visible {
+    .media-container:focus-visible,
+    :scope.media-container:focus-visible {
       outline-offset: 2px;
-      outline-color: currentColor;
+      outline-color: var(--media-focus-ring-color);
     }
 
-    .media-container:has([data-controls][data-visible]) {
+    .media-container:has([data-controls][data-visible]),
+    :scope.media-container:has([data-controls][data-visible]) {
       --media-caption-track-y: -3.5rem;
     }
 
-    .media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
+    .media-container:has(:is(img[data-visible]:not([data-loaded]))):before,
+    :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
       opacity: 1;
     }
 
     @media (pointer: fine) {
-      .media-container:has([data-controls]:not([data-visible])) {
+      .media-container:has([data-controls]:not([data-visible])),
+      :scope.media-container:has([data-controls]:not([data-visible])) {
         cursor: none;
       }
     }
 
-    .media-container video {
+    .media-container video,
+    :scope.media-container video {
       border-radius: inherit;
       object-fit: var(--media-object-fit, contain);
       object-position: var(--media-object-position, center);
@@ -85,50 +93,60 @@
       display: block;
     }
 
-    .media-container video::-webkit-media-text-track-container {
+    .media-container video::-webkit-media-text-track-container,
+    :scope.media-container video::-webkit-media-text-track-container {
       translate: 0 var(--media-caption-track-y);
     }
 
-    .media-container video::-webkit-media-text-track-container {
+    .media-container video::-webkit-media-text-track-container,
+    :scope.media-container video::-webkit-media-text-track-container {
       transition-property: translate;
     }
 
-    .media-container video::-webkit-media-text-track-container {
+    .media-container video::-webkit-media-text-track-container,
+    :scope.media-container video::-webkit-media-text-track-container {
       transition-delay: var(--media-caption-track-delay);
     }
 
-    .media-container video::-webkit-media-text-track-container {
+    .media-container video::-webkit-media-text-track-container,
+    :scope.media-container video::-webkit-media-text-track-container {
       transition-duration: var(--media-caption-track-duration);
     }
 
-    .media-container:fullscreen {
-      --container-border-radius: 0;
+    .media-container:fullscreen,
+    :scope.media-container:fullscreen {
+      --media-container-border-radius: 0;
     }
 
-    .media-container:fullscreen:after {
+    .media-container:fullscreen:after,
+    :scope.media-container:fullscreen:after {
       content: '';
       display: none;
     }
 
     @media (width >= 1280px) {
-      .media-container:fullscreen {
-        --scale: 1.25;
+      .media-container:fullscreen,
+      :scope.media-container:fullscreen {
+        --media-scale: 1.25;
       }
     }
 
     @media (width >= 1536px) {
-      .media-container:fullscreen {
-        --scale: 1.5;
+      .media-container:fullscreen,
+      :scope.media-container:fullscreen {
+        --media-scale: 1.5;
       }
     }
 
     @media (width >= 1920px) {
-      .media-container:fullscreen {
-        --scale: 1.75;
+      .media-container:fullscreen,
+      :scope.media-container:fullscreen {
+        --media-scale: 1.75;
       }
     }
 
-    .media-container:fullscreen video {
+    .media-container:fullscreen video,
+    :scope.media-container:fullscreen video {
       object-fit: contain;
     }
   }

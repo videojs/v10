@@ -19,8 +19,8 @@
     }
 
     .media-buffering-spinner-icon {
-      width: var(--media-icon-size);
-      height: var(--media-icon-size);
+      width: var(--media-icon-size, calc(1.125 * var(--media-size)));
+      height: var(--media-icon-size, calc(1.125 * var(--media-size)));
       filter: drop-shadow(0 1px 0 var(--media-shadow-color));
     }
 
@@ -39,7 +39,7 @@
       border-radius: inherit;
       opacity: 0;
       transition-property: opacity, backdrop-filter;
-      transition-duration: var(--controls-transition-duration);
+      transition-duration: var(--media-controls-transition-duration);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
       transition-timing-function: ease-out;
       position: absolute;
@@ -97,12 +97,6 @@
       .media-playback-status-indicator {
         transition-duration: 50ms;
       }
-    }
-
-    .media-playback-status-indicator-minimal {
-      backdrop-filter: none;
-      background-color: #0000;
-      border-radius: 0;
     }
 
     .media-seek-indicator {
@@ -181,6 +175,16 @@
     .media-status-indicator {
       pointer-events: none;
       border-radius: var(--media-radius-pill);
+      color: var(--media-controls-color);
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 0 1px var(--media-surface-outer-border),
+        0 1px 3px 0 var(--media-shadow-color),
+        0 1px 2px -1px var(--media-shadow-color);
+      backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       background-color: oklab(0% none none / 0.25);
       align-items: center;
       gap: 0.5rem;
@@ -193,6 +197,22 @@
       display: flex;
       position: absolute;
       top: 0.75rem;
+    }
+
+    .media-status-indicator:after {
+      pointer-events: none;
+      z-index: 10;
+      border-radius: inherit;
+      content: '';
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        inset 0 1px 0 0 var(--media-surface-inner-border),
+        inset 0 0 0 1px oklch(from var(--media-surface-inner-border) l c h/calc(alpha * 0.5));
+      position: absolute;
+      inset: 0;
     }
 
     .media-status-indicator[data-ending-style] {
@@ -209,42 +229,6 @@
     .media-status-indicator-icon {
       flex-shrink: 0;
       display: none;
-    }
-
-    .media-status-indicator-minimal {
-      backdrop-filter: none;
-      padding-inline: 0.625rem;
-      inset-inline: 0;
-      background-color: #0000;
-      background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
-      border-radius: 0;
-      justify-content: center;
-      width: 100%;
-      padding-top: 0.75rem;
-      padding-bottom: 8rem;
-      top: 0;
-      box-shadow:
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000;
-    }
-
-    .media-status-indicator-minimal:after {
-      content: '';
-      display: none;
-    }
-
-    .media-status-indicator-minimal[data-ending-style],
-    .media-status-indicator-minimal[data-starting-style] {
-      scale: 1;
-    }
-
-    @media (prefers-reduced-motion: no-preference) {
-      .media-status-indicator-minimal[data-ending-style] {
-        translate: 0 -100%;
-      }
     }
 
     .media-status-indicator-value {
@@ -273,14 +257,40 @@
     .media-volume-indicator {
       pointer-events: none;
       border-radius: var(--media-radius-pill);
-      background-color: oklab(0% none none / 0.25);
       width: min(80%, 12rem);
+      color: var(--media-controls-color);
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 0 1px var(--media-surface-outer-border),
+        0 1px 3px 0 var(--media-shadow-color),
+        0 1px 2px -1px var(--media-shadow-color);
+      backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
+      background-color: oklab(0% none none / 0.25);
       font-weight: 500;
       transition-property: opacity, scale, translate;
       transition-duration: 0.1s;
       transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0.75rem;
+    }
+
+    .media-volume-indicator:after {
+      pointer-events: none;
+      z-index: 10;
+      border-radius: inherit;
+      content: '';
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        inset 0 1px 0 0 var(--media-surface-inner-border),
+        inset 0 0 0 1px oklch(from var(--media-surface-inner-border) l c h/calc(alpha * 0.5));
+      position: absolute;
+      inset: 0;
     }
 
     .media-volume-indicator[data-ending-style] {
@@ -296,7 +306,10 @@
 
     .media-volume-indicator-fill {
       border-radius: inherit;
-      background-image: linear-gradient(currentColor, currentColor);
+      background-image: linear-gradient(
+        var(--media-accent-color, var(--media-default-accent-color)),
+        var(--media-accent-color, var(--media-default-accent-color))
+      );
       background-size: var(--media-volume-fill, 0%) 100%;
       background-position: 0;
       background-repeat: no-repeat;
@@ -312,57 +325,9 @@
       display: flex;
     }
 
-    .media-volume-indicator-fill-minimal {
-      width: min(80%, 14rem);
-      box-shadow:
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 0 1px var(--media-surface-border),
-        0 2px 8px var(--media-shadow-color);
-      background-color: oklab(0% none none / 0.25);
-    }
-
     .media-volume-indicator-icon {
       flex-shrink: 0;
       display: none;
-    }
-
-    .media-volume-indicator-minimal {
-      backdrop-filter: none;
-      padding-inline: 0.625rem;
-      inset-inline: 0;
-      background-color: #0000;
-      background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
-      border-radius: 0;
-      justify-content: center;
-      width: 100%;
-      padding-top: 0.75rem;
-      padding-bottom: 8rem;
-      top: 0;
-      box-shadow:
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000;
-    }
-
-    .media-volume-indicator-minimal:after {
-      content: '';
-      display: none;
-    }
-
-    .media-volume-indicator-minimal[data-ending-style],
-    .media-volume-indicator-minimal[data-starting-style] {
-      scale: 1;
-    }
-
-    @media (prefers-reduced-motion: no-preference) {
-      .media-volume-indicator-minimal[data-ending-style] {
-        translate: 0 -100%;
-      }
     }
 
     .media-volume-indicator-value {

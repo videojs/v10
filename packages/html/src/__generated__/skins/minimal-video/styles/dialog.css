@@ -1,24 +1,24 @@
 @layer videojs.components {
   @scope (.media-skin-video-minimal) {
     .media-error-dialog {
+      pointer-events: none;
       z-index: 20;
       color: #fff;
-      border-radius: 1.75rem;
+      width: 100%;
+      height: 100%;
+      transition-property: opacity, scale, transform;
+      transition-delay: 0.1s;
+      transition-duration: var(--media-error-dialog-transition-duration);
       outline-style: none;
       flex-direction: column;
+      justify-content: center;
+      align-items: center;
       gap: 0.75rem;
-      width: calc(100% - 1.5rem);
-      max-width: 18rem;
-      padding: 0.75rem;
-      transition:
-        opacity 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
-        scale 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
-        transform 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s;
+      padding: 1rem;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
-      top: 50%;
-      left: 50%;
-      translate: -50% -50%;
+      inset: 0;
     }
 
     .media-error-dialog:not([data-open]) {
@@ -43,78 +43,34 @@
       }
     }
 
-    .media-error-dialog-close {
-      color: #000;
-      background-color: #fff;
-      width: 100%;
-      height: 2.25rem;
-      padding-inline: 1rem;
-      font-weight: 500;
+    .media-error-dialog > * {
+      pointer-events: auto;
     }
 
-    .media-error-dialog-close-minimal {
+    .media-error-dialog-close {
+      background-color: var(--media-accent-color, var(--media-default-accent-color));
+      width: 100%;
       max-width: 16rem;
+      height: 2.25rem;
+      color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+      padding-inline: 1rem;
+      font-weight: 500;
     }
 
     .media-error-dialog-description {
       overflow-wrap: anywhere;
       opacity: 0.7;
-      padding-inline: 0.5rem;
-      padding-bottom: 0.375rem;
-    }
-
-    .media-error-dialog-description-minimal {
-      padding-inline: 0;
       width: 100%;
       max-width: 16rem;
       padding-bottom: 0.375rem;
-    }
-
-    .media-error-dialog-minimal {
-      pointer-events: none;
-      backdrop-filter: none;
-      width: 100%;
-      max-width: none;
-      height: 100%;
-      transition-duration: var(--error-dialog-transition-duration);
-      background-color: #0000;
-      border-radius: 0;
-      justify-content: center;
-      align-items: center;
-      padding: 1rem;
-      inset: 0;
-      translate: 0;
-      box-shadow:
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000;
-    }
-
-    .media-error-dialog-minimal:after {
-      content: '';
-      display: none;
-    }
-
-    .media-error-dialog-minimal > * {
-      pointer-events: auto;
     }
 
     .media-error-dialog-title {
-      font-size: var(--media-font-size);
-      padding-inline: 0.5rem;
-      padding-top: 0.5rem;
-      font-weight: 600;
-      line-height: 1.25;
-    }
-
-    .media-error-dialog-title-minimal {
       width: 100%;
       max-width: 16rem;
       font-size: calc(var(--media-font-size) * 1.15);
-      padding-inline: 0;
       padding-top: 0.375rem;
+      font-weight: 600;
     }
   }
 }

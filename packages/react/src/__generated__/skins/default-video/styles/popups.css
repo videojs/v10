@@ -3,8 +3,8 @@
     .media-popover {
       color: inherit;
       transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--popup-transition-duration);
-      --popup-translate-distance: 0.5rem;
+      transition-duration: var(--media-popup-transition-duration);
+      --media-popup-translate-distance: 0.5rem;
       border-style: solid;
       border-width: 0;
       margin: 0;
@@ -77,9 +77,10 @@
         0 0 #0000,
         0 0 #0000,
         0 0 #0000,
-        0 0 0 1px var(--media-surface-border),
-        0 2px 8px var(--media-shadow-color);
-      backdrop-filter: blur(var(--media-surface-backdrop-blur));
+        0 0 0 1px var(--media-surface-outer-border),
+        0 1px 3px 0 var(--media-shadow-color),
+        0 1px 2px -1px var(--media-shadow-color);
+      backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       position: relative;
     }
 
@@ -93,7 +94,8 @@
         0 0 #0000,
         0 0 #0000,
         0 0 #0000,
-        inset 0 1px 0 0 var(--media-surface-border);
+        inset 0 1px 0 0 var(--media-surface-inner-border),
+        inset 0 0 0 1px oklch(from var(--media-surface-inner-border) l c h/calc(alpha * 0.5));
       position: absolute;
       inset: 0;
     }
@@ -103,8 +105,8 @@
       white-space: nowrap;
       color: inherit;
       transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--popup-transition-duration);
-      --popup-translate-distance: 0.5rem;
+      transition-duration: var(--media-popup-transition-duration);
+      --media-popup-translate-distance: 0.5rem;
       border-style: solid;
       border-width: 0;
       margin: 0;
@@ -206,8 +208,8 @@
       border-radius: var(--media-radius-pill);
       color: inherit;
       transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--popup-transition-duration);
-      --popup-translate-distance: 0.5rem;
+      transition-duration: var(--media-popup-transition-duration);
+      --media-popup-translate-distance: 0.5rem;
       border-style: solid;
       border-width: 0;
       margin: 0;

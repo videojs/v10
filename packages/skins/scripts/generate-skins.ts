@@ -98,14 +98,22 @@ async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> 
   }
 
   const closure = resolveSkinClosure(catalog, skinRegistry.skin);
+  const registrySkin = catalog.items.find((item) => item.type === 'skin' && item.name === skinRegistry.skin);
+  if (registrySkin?.type !== 'skin') throw new Error(`Registry Skin \`${skinRegistry.skin}\` does not exist.`);
   const output = await generateReactRegistry(catalog, {
     rootDir: canonicalRoot,
     itemNames: [...new Set([...closure.items.map((item) => item.name), ...skinRegistry.items])],
+    variant: registrySkin.variant,
     sourceRoot: skinRegistry.sourceRoot,
     installAlias: `@/${skinRegistry.installRoot}`,
+    utility: {
+      source: skinRegistry.utilityItem.source,
+      target: skinRegistry.utilityItem.target,
+      importSource: `@/${skinRegistry.installRoot}/${skinRegistry.utilityItem.target.replace(/\.ts$/, '')}`,
+    },
   });
   const files = await collectGeneratedFiles(
-    [...output.sharedFiles, ...Object.values(output.items).flat()],
+    [...output.sharedFiles, ...output.utilityFiles, ...Object.values(output.items).flat()],
     skinRegistry.outputDir
   );
   files.set(

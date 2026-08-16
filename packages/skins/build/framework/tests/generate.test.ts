@@ -65,7 +65,9 @@ describe('createFrameworkSkin', () => {
     expect(skin).not.toContain('SeekButton');
     expect(buttonTooltip).toContain('export interface ButtonTooltipProps extends TooltipPrimitive.RootProps');
     expect(playButton).toContain('export function PlayButton()');
+    expect(playButton).not.toContain('PlayButtonProps');
     expect(volumeSlider).toContain('export function VolumeSlider(props: VolumeSliderProps = {})');
+    expect(volumeSlider).not.toContain('resolveClassName');
     expect(timeSlider).toContain('renderChapter={props =>');
     expect(timeSlider).toContain('<TimeSliderPrimitive.ChapterTitle');
     expect(timeSlider).not.toContain('<Template');
@@ -84,7 +86,9 @@ describe('createFrameworkSkin', () => {
     expect(poster).toContain('PosterProps');
     expect(poster).toContain('<PosterPrimitive {...props}');
     expect(poster).not.toContain('<Slot');
+    expect(overlay).toContain('export function Overlay()');
     expect(overlay).toContain('<div className="media-overlay"/>');
+    expect(files.map((file) => file.content).join('\n')).not.toContain('resolveClassName');
     expect(files.map((file) => file.content).join('\n')).not.toContain('SkinContainer');
     expect(files.map((file) => file.content).join('\n')).not.toContain('SkinPoster');
     expect(files.map((file) => file.content).join('\n')).not.toContain('placeholder?:');
@@ -118,6 +122,7 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/dialog.css')).toContain('.media-error-dialog {');
     expect(style(output, 'styles/menus.css')).toContain('.media-settings {');
     expect(style(output, 'styles/controls.css')).toContain('background-color: var(--media-surface-background)');
+    expect(style(output, 'styles/buttons.css')).not.toContain('.media-seek-button-label');
     expect(style(output, 'styles/popups.css')).toContain('.media-surface {');
     expect(style(output, 'styles/container.css')).toContain('.media-container {');
     expect(style(output, 'styles/container.css')).not.toContain('.media-overlay {');
@@ -169,8 +174,8 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('<media-pip-button class="media-button media-pip-button">');
     expect(html).toContain('<div class="media-input-indicator-overlay">');
     expect(html).toContain('actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"');
-    expect(html).toContain('<media-volume-indicator class="media-surface media-volume-indicator">');
-    expect(html).toContain('<media-error-dialog class="media-surface media-error-dialog">');
+    expect(html).toContain('<media-volume-indicator class="media-volume-indicator">');
+    expect(html).toContain('<media-error-dialog class="media-error-dialog">');
     expect(html).toContain('<media-alert-dialog-title class="media-error-dialog-title">');
     expect(html).toContain('<div class="media-overlay"></div>');
     expect(html).toContain('<media-play-button class="media-button media-play-button">');
@@ -178,6 +183,8 @@ describe('createFrameworkSkin', () => {
     expect(html).not.toContain('@videojs/html/ui/seek-button');
     expect(html).toContain('<media-tooltip side="top" class="media-surface media-tooltip">');
     expect(html).toContain('commandfor="settings-menu"');
+    expect(html).toContain('id="settings-trigger"');
+    expect(html).toContain('trigger="settings-trigger"');
     expect(html).toContain('id="settings-quality-menu"');
     expect(html).toContain('<media-quality-radio-group class="media-group">');
     expect(html).toContain('<span data-part="label"></span>');
@@ -223,9 +230,12 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('orientation="horizontal"');
     expect(html).toContain('<media-time-group class="media-time-group">');
     expect(html).toContain('<media-controls-group class="media-controls-remote">');
-    expect(html).toContain('media-error-dialog-minimal');
-    expect(html).toContain('media-status-indicator-minimal');
-    expect(html).toContain('media-volume-indicator-minimal');
+    expect(html).toContain('<media-error-dialog class="media-error-dialog">');
+    expect(html).toContain('class="media-status-indicator"');
+    expect(html).toContain('<media-volume-indicator class="media-volume-indicator">');
+    expect(html).not.toContain('media-error-dialog-minimal');
+    expect(html).not.toContain('media-status-indicator-minimal');
+    expect(html).not.toContain('media-volume-indicator-minimal');
     expect(html).not.toContain('media-seek-button');
     expect(style(output, 'styles/controls.css')).toContain('@scope (.media-skin-video-minimal)');
     expect(style(output, 'styles/theme.css')).toContain('.media-theme-minimal {');

@@ -8,6 +8,19 @@ export interface SkinRegistryConfig {
   skin: string;
   framework: 'react';
   style: 'tailwind';
+  styleItem: {
+    name: string;
+    title: string;
+    description: string;
+  };
+  utilityItem: {
+    name: string;
+    title: string;
+    description: string;
+    source: string;
+    target: string;
+    dependencies: readonly string[];
+  };
   items: readonly string[];
 }
 
@@ -22,6 +35,19 @@ export const skinRegistry = {
   skin: 'default-video',
   framework: 'react',
   style: 'tailwind',
+  styleItem: {
+    name: 'styles',
+    title: 'Video.js Skin Styles',
+    description: 'Shared Tailwind input, scoped base styles, and Default and Minimal Skin themes.',
+  },
+  utilityItem: {
+    name: 'utils',
+    title: 'Video.js Utilities',
+    description: 'Class-name composition and state resolution utilities used by editable Video.js Skin components.',
+    source: '../build/registry/templates/utils.ts',
+    target: 'utils.ts',
+    dependencies: ['clsx', 'tailwind-merge'],
+  },
   items: [
     'airplay-button',
     'buffering-indicator',

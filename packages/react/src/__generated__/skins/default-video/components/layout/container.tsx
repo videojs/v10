@@ -1,6 +1,7 @@
 import { Container as ContainerPrimitive } from '@/player/container';
 import { cn } from '@videojs/utils/style';
-import type { ContainerProps } from '@/player/container';
+
+export interface ContainerProps extends ContainerPrimitive.Props {}
 
 export function Container({ children, className, ...props }: ContainerProps) {
   return (

@@ -2,13 +2,23 @@
   @scope (.media-skin-video) {
     .media-error-dialog {
       z-index: 20;
+      background-color: var(--media-surface-background);
       color: #fff;
+      width: calc(100% - 1.5rem);
+      max-width: 18rem;
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 0 1px var(--media-surface-outer-border),
+        0 1px 3px 0 var(--media-shadow-color),
+        0 1px 2px -1px var(--media-shadow-color);
+      backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       border-radius: 1.75rem;
       outline-style: none;
       flex-direction: column;
       gap: 0.75rem;
-      width: calc(100% - 1.5rem);
-      max-width: 18rem;
       padding: 0.75rem;
       transition:
         opacity 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
@@ -23,6 +33,22 @@
 
     .media-error-dialog:not([data-open]) {
       display: none;
+    }
+
+    .media-error-dialog:after {
+      pointer-events: none;
+      z-index: 10;
+      border-radius: inherit;
+      content: '';
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        inset 0 1px 0 0 var(--media-surface-inner-border),
+        inset 0 0 0 1px oklch(from var(--media-surface-inner-border) l c h/calc(alpha * 0.5));
+      position: absolute;
+      inset: 0;
     }
 
     .media-error-dialog[data-ending-style] {
@@ -44,16 +70,12 @@
     }
 
     .media-error-dialog-close {
-      color: #000;
-      background-color: #fff;
+      background-color: var(--media-accent-color, var(--media-default-accent-color));
       width: 100%;
       height: 2.25rem;
+      color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
       padding-inline: 1rem;
       font-weight: 500;
-    }
-
-    .media-error-dialog-close-minimal {
-      max-width: 16rem;
     }
 
     .media-error-dialog-description {
@@ -63,58 +85,12 @@
       padding-bottom: 0.375rem;
     }
 
-    .media-error-dialog-description-minimal {
-      padding-inline: 0;
-      width: 100%;
-      max-width: 16rem;
-      padding-bottom: 0.375rem;
-    }
-
-    .media-error-dialog-minimal {
-      pointer-events: none;
-      backdrop-filter: none;
-      width: 100%;
-      max-width: none;
-      height: 100%;
-      transition-duration: var(--error-dialog-transition-duration);
-      background-color: #0000;
-      border-radius: 0;
-      justify-content: center;
-      align-items: center;
-      padding: 1rem;
-      inset: 0;
-      translate: 0;
-      box-shadow:
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000,
-        0 0 #0000;
-    }
-
-    .media-error-dialog-minimal:after {
-      content: '';
-      display: none;
-    }
-
-    .media-error-dialog-minimal > * {
-      pointer-events: auto;
-    }
-
     .media-error-dialog-title {
       font-size: var(--media-font-size);
       padding-inline: 0.5rem;
       padding-top: 0.5rem;
       font-weight: 600;
       line-height: 1.25;
-    }
-
-    .media-error-dialog-title-minimal {
-      width: 100%;
-      max-width: 16rem;
-      font-size: calc(var(--media-font-size) * 1.15);
-      padding-inline: 0;
-      padding-top: 0.375rem;
     }
   }
 }

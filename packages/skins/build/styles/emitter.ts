@@ -56,7 +56,9 @@ function scopeRoleCss(css: string, scopeClass: string, role: SkinCssRole): strin
               const relationship = relationshipScope(rule, relationshipOwners);
               if (relationship) return relationship;
 
-              const selectors = scopeSkinRootSelectors(rule.value.selectors);
+              const scopedSelectors = scopeSkinRootSelectors(rule.value.selectors);
+              const selectors =
+                role.name === 'container' ? includeScopeRootSelectors(scopedSelectors) : scopedSelectors;
               if (selectors === rule.value.selectors) return;
               return withoutNullValues({
                 ...cloneCssAst(rule),
@@ -68,6 +70,14 @@ function scopeRoleCss(css: string, scopeClass: string, role: SkinCssRole): strin
       }).code
     )
   );
+}
+
+/** Include a scoped recipe when its semantic class is colocated on the scope root. */
+function includeScopeRootSelectors(selectors: SelectorList): SelectorList {
+  return selectors.flatMap((selector) => {
+    if (selector[0]?.type !== 'class') return [selector];
+    return [selector, [{ type: 'pseudo-class', kind: 'scope' } as const, ...selector.map(cloneCssAst)]];
+  });
 }
 
 function scopeSkinRootSelectors(selectors: SelectorList): SelectorList {

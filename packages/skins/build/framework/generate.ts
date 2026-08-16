@@ -1,8 +1,9 @@
 import { resolve } from 'node:path';
+import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import type { ReactImportResolver } from '../compiler/react';
 import { compileSkinStyles, loadDesignSystem } from '../styles/compile';
-import { loadCatalogStyleManifest } from '../styles/manifest';
+import { collectReferencedStyleRecipes, loadCatalogStyleManifest } from '../styles/manifest';
 import { generateHtmlSkin } from './html';
 import { generateReactSkins } from './react';
 import { createFrameworkStyles, type FrameworkStyleFile } from './styles';
@@ -38,7 +39,16 @@ export async function createFrameworkSkin(
   if (skin?.type !== 'skin') throw new Error(`Skin \`${options.skin}\` does not exist.`);
 
   const entryFile = resolve(options.rootDir, skin.source);
-  const styles = await loadCatalogStyleManifest(catalog, { rootDir: options.rootDir, itemNames: [skin.name] });
+  const styles = await loadCatalogStyleManifest(catalog, {
+    rootDir: options.rootDir,
+    itemNames: [skin.name],
+    variant: skin.variant,
+  });
+  const closure = resolveSkinClosure(catalog, skin.name);
+  const recipeNames = await collectReferencedStyleRecipes(
+    closure.sourceFiles.map((file) => resolve(options.rootDir, file)),
+    styles
+  );
   const design = await loadDesignSystem(resolve(options.rootDir, catalog.resources.styles.tailwind));
   const iconSet = options.iconSet ?? 'default';
   const projections = uniqueProjections(options.projections, skin.name);
@@ -76,7 +86,7 @@ export async function createFrameworkSkin(
     styles: await createFrameworkStyles(
       catalog.resources.styles,
       options.rootDir,
-      await compileSkinStyles({ design, manifest: styles, scopeClass: skin.scopeClass }),
+      await compileSkinStyles({ design, manifest: styles, scopeClass: skin.scopeClass, recipeNames }),
       skin.theme
     ),
   };

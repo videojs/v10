@@ -9,22 +9,14 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@videojs/icons/components';
-import popupStyles from '../../styles/components/popup.tailwind';
 import styles from '../../styles/components/status-indicator.tailwind';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
-export function StatusIndicator({ variant = 'default' }: { variant?: 'default' | 'minimal' } = {}) {
+export function StatusIndicator() {
   return (
-    <StatusIndicatorPrimitive.Root
-      actions={TOP_STATUS_ACTIONS}
-      className={
-        variant === 'minimal'
-          ? [styles.statusIndicator, styles.statusIndicatorMinimal]
-          : [popupStyles.surface, styles.statusIndicator]
-      }
-    >
+    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className={styles.statusIndicator}>
       <CaptionsOnIcon className={[styles.statusIndicatorIcon, styles.statusCaptionsOnIcon]} />
       <CaptionsOffIcon className={[styles.statusIndicatorIcon, styles.statusCaptionsOffIcon]} />
       <FullscreenEnterIcon className={[styles.statusIndicatorIcon, styles.statusFullscreenEnterIcon]} />
@@ -36,16 +28,9 @@ export function StatusIndicator({ variant = 'default' }: { variant?: 'default' |
   );
 }
 
-export function PlaybackStatusIndicator({ variant = 'default' }: { variant?: 'default' | 'minimal' } = {}) {
+export function PlaybackStatusIndicator() {
   return (
-    <StatusIndicatorPrimitive.Root
-      actions={PLAYBACK_STATUS_ACTIONS}
-      className={
-        variant === 'minimal'
-          ? [styles.playbackStatusIndicator, styles.playbackStatusIndicatorMinimal]
-          : styles.playbackStatusIndicator
-      }
-    >
+    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className={styles.playbackStatusIndicator}>
       <PlayIcon className={[styles.playbackStatusIcon, styles.statusPlayIcon]} />
       <PauseIcon className={[styles.playbackStatusIcon, styles.statusPauseIcon]} />
     </StatusIndicatorPrimitive.Root>

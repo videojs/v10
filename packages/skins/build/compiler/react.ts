@@ -7,6 +7,7 @@ import {
   lowerTemplates,
   lowerText,
 } from '@videojs/compiler/ast';
+import type { Expression } from 'typescript';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -17,6 +18,9 @@ interface CreateCompilerReactConfigOptions {
   rootClassName?: string | undefined;
   iconSet?: string | undefined;
   resolveImport?: ReactImportResolver | undefined;
+  composeClassNames?: boolean | undefined;
+  /** Add editable target props and className forwarding to generated component boundaries. */
+  extendComponents?: boolean | undefined;
 }
 
 export type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
@@ -36,9 +40,22 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
   const useAudioTrackOptionsRef = requiredReactImport(resolveImport, 'useAudioTrackOptions');
   const usePlaybackRateOptionsRef = requiredReactImport(resolveImport, 'usePlaybackRateOptions');
   const useCaptionsOptionsRef = requiredReactImport(resolveImport, 'useCaptionsOptions');
+  const cnReference = resolveImport({ source: '@videojs/utils/style', name: 'cn' });
+  if (!cnReference) throw new Error('React Skin lowering requires a target import for `cn`.');
+  const resolveClassNameReference = options.extendComponents
+    ? resolveImport({ source: '@videojs/skins/registry', name: 'resolveClassName' })
+    : false;
+  if (options.extendComponents && !resolveClassNameReference) {
+    throw new Error('React Skin lowering requires a target import for `resolveClassName`.');
+  }
   return defineConfig({
     target: jsx({
       imports: {
+        '@videojs/core': (name) =>
+          options.extendComponents &&
+          ['PopoverProps', 'SeekButtonProps', 'TooltipProps', 'VolumeSliderProps'].includes(name)
+            ? false
+            : resolveImport({ source: '@videojs/core', name }),
         '@videojs/core/components': (name) => resolveImport({ source: '@videojs/react', name }),
         '@videojs/icons/components': (name) =>
           resolveImport({
@@ -61,7 +78,11 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
       ],
     }),
     plugins: [
-      skinStyles({ manifest: options.styles, target: options.style }),
+      skinStyles({
+        manifest: options.styles,
+        target: options.style,
+        composeClassNames: options.composeClassNames,
+      }),
       {
         name: '@videojs/skins:react-text',
         setup: () => ({
@@ -158,9 +179,13 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
       },
       rewrite(
         (code) => {
-          const cn = code.import('@videojs/utils/style', 'cn');
+          const cn = code.import(cnReference.source, cnReference.name);
+          const resolveClassName = resolveClassNameReference
+            ? code.import(resolveClassNameReference.source, resolveClassNameReference.name)
+            : undefined;
           const ReactElement = code.import('react', 'ReactElement', { type: true });
           const ReactNode = code.import('react', 'ReactNode', { type: true });
+          const ComponentProps = code.import('react', 'ComponentProps', { type: true });
           const ContainerProps = code.import(containerProps.source, containerProps.name, { type: true });
           const PosterProps = code.import(posterProps.source, posterProps.name, { type: true });
           const usePlayer = code.import(usePlayerRef.source, usePlayerRef.name);
@@ -168,21 +193,298 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const container = code.function('Container');
           const poster = code.function('Poster');
           const volumePopover = code.function('VolumePopover');
-          const settingsFunctions = [
-            'SettingsMenu',
+          const settingsSubmenuFunctions = [
             'QualitySettingsMenu',
             'AudioTrackSettingsMenu',
             'PlaybackRateSettingsMenu',
             'CaptionsSettingsMenu',
           ];
+          const settingsFunctions = ['SettingsMenu', ...settingsSubmenuFunctions];
           const useTranslator = code.import(useTranslatorRef.source, useTranslatorRef.name);
           const useQualityOptions = code.import(useQualityOptionsRef.source, useQualityOptionsRef.name);
           const useAudioTrackOptions = code.import(useAudioTrackOptionsRef.source, useAudioTrackOptionsRef.name);
           const usePlaybackRateOptions = code.import(usePlaybackRateOptionsRef.source, usePlaybackRateOptionsRef.name);
           const useCaptionsOptions = code.import(useCaptionsOptionsRef.source, useCaptionsOptionsRef.name);
           const posterIsString = () => code.value.equal(code.value.typeOf('poster'), code.value.string('string'));
+          const classNameValues = (value: Expression): Expression[] => {
+            const items = code.value.arrayItems(value);
+            return items.length > 0 ? items : [value];
+          };
+          const composeStateClassName = (value: Expression) =>
+            resolveClassName
+              ? code.value.arrow(
+                  ['state'],
+                  code.value.call(cn, [
+                    ...classNameValues(value),
+                    code.value.call(resolveClassName, ['className', 'state']),
+                  ])
+                )
+              : code.value.arrow(
+                  ['state'],
+                  code.value.call(cn, [
+                    ...classNameValues(value),
+                    code.value.conditional(
+                      code.value.equal(code.value.typeOf('className'), code.value.string('function')),
+                      code.value.call('className', ['state']),
+                      code.value.identifier('className')
+                    ),
+                  ])
+                );
+          const omitProps = (type: string, omitted: readonly string[]) =>
+            code.type.named('Omit', [
+              code.type.named(type),
+              code.type.union(...omitted.map((name) => code.type.literal(name))),
+            ]);
+          const directComponents = [
+            ['AirPlayButton', 'AirPlayButtonPrimitive', 'AirPlayButtonPrimitive.Props'],
+            ['BufferingIndicator', 'BufferingIndicatorPrimitive', 'BufferingIndicatorPrimitive.Props'],
+            ['CaptionsButton', 'CaptionsButtonPrimitive', 'CaptionsButtonPrimitive.Props'],
+            ['CastButton', 'CastButtonPrimitive', 'CastButtonPrimitive.Props'],
+            ['FullscreenButton', 'FullscreenButtonPrimitive', 'FullscreenButtonPrimitive.Props'],
+            ['MuteButton', 'MuteButtonPrimitive', 'MuteButtonPrimitive.Props'],
+            ['PiPButton', 'PiPButtonPrimitive', 'PiPButtonPrimitive.Props'],
+            ['PlayButton', 'PlayButtonPrimitive', 'PlayButtonPrimitive.Props'],
+            ['SeekButton', 'SeekButtonPrimitive', 'SeekButtonPrimitive.Props'],
+            ['SeekIndicator', 'SeekIndicatorPrimitive.Root', 'SeekIndicatorPrimitive.RootProps'],
+            ['StatusAnnouncer', 'StatusAnnouncerPrimitive', 'StatusAnnouncerPrimitive.Props'],
+            ['TimeSlider', 'TimeSliderPrimitive.Root', 'TimeSliderPrimitive.RootProps'],
+            ['VolumeSlider', 'VolumeSliderPrimitive.Root', 'VolumeSliderPrimitive.RootProps'],
+          ] as const;
+          const composedComponents = [
+            [
+              'StatusIndicator',
+              'StatusIndicatorPrimitive.Root',
+              'StatusIndicatorPrimitive.RootProps',
+              ['children', 'actions'],
+            ],
+            [
+              'PlaybackStatusIndicator',
+              'StatusIndicatorPrimitive.Root',
+              'StatusIndicatorPrimitive.RootProps',
+              ['children', 'actions'],
+            ],
+            ['VolumeIndicator', 'VolumeIndicatorPrimitive.Root', 'VolumeIndicatorPrimitive.RootProps', ['children']],
+          ] as const;
 
           return [
+            ...(options.extendComponents
+              ? [
+                  ...directComponents.flatMap(([name, primitive, primitiveProps]) => {
+                    const propsName = `${name}Props`;
+                    const component = code.function(name);
+                    return [
+                      component.insertBefore(() =>
+                        code.statement.interface({
+                          name: propsName,
+                          export: true,
+                          extends: [omitProps(primitiveProps, ['children'])],
+                          properties: [],
+                        })
+                      ),
+                      component.setProps(['className', { name: 'props', spread: true }], { type: propsName }),
+                      ...(name === 'SeekButton' || name === 'VolumeSlider'
+                        ? []
+                        : [component.jsx.element(primitive).spreadProps('props', { position: 'start' })]),
+                      component.jsx
+                        .props('className')
+                        .on(primitive)
+                        .replace(({ value }) => composeStateClassName(value)),
+                    ];
+                  }),
+                  ...composedComponents.flatMap(([name, primitive, primitiveProps, omitted]) => {
+                    const propsName = `${name}Props`;
+                    const component = code.function(name);
+                    return [
+                      component.insertBefore(() =>
+                        code.statement.interface({
+                          name: propsName,
+                          export: true,
+                          extends: [omitProps(primitiveProps, omitted)],
+                          properties: [],
+                        })
+                      ),
+                      component.setProps(['className', { name: 'props', spread: true }], {
+                        type: propsName,
+                      }),
+                      component.jsx.element(primitive).spreadProps('props', { position: 'start' }),
+                      component.jsx
+                        .props('className')
+                        .on(primitive)
+                        .replace(({ value }) => composeStateClassName(value)),
+                    ];
+                  }),
+                  code.function('Overlay').insertBefore(() =>
+                    code.statement.interface({
+                      name: 'OverlayProps',
+                      export: true,
+                      extends: [
+                        code.type.named('Omit', [
+                          code.type.named(ComponentProps, [code.type.literal('div')]),
+                          code.type.literal('children'),
+                        ]),
+                      ],
+                      properties: [],
+                    })
+                  ),
+                  code
+                    .function('Overlay')
+                    .setProps(['className', { name: 'props', spread: true }], { type: 'OverlayProps' }),
+                  code.function('Overlay').jsx.element('OverlayPrimitive').spreadProps('props', { position: 'start' }),
+                  code
+                    .function('Overlay')
+                    .jsx.props('className')
+                    .on('OverlayPrimitive')
+                    .replace(({ value }) => code.value.call(cn, [...classNameValues(value), 'className'])),
+                  code.function('ErrorDialog').insertBefore(() =>
+                    code.statement.interface({
+                      name: 'ErrorDialogProps',
+                      export: true,
+                      extends: [omitProps('ErrorDialogPrimitive.PopupProps', ['children'])],
+                      properties: [],
+                    })
+                  ),
+                  code
+                    .function('ErrorDialog')
+                    .setProps(['className', { name: 'props', spread: true }], { type: 'ErrorDialogProps' }),
+                  code.function('ErrorDialog').jsx.element('ErrorDialogPrimitive.Popup').spreadProps('props', {
+                    position: 'start',
+                  }),
+                  code
+                    .function('ErrorDialog')
+                    .jsx.props('className')
+                    .on('ErrorDialogPrimitive.Popup')
+                    .replace(({ value }) => composeStateClassName(value)),
+                  code.interface('VolumePopoverProps').addProperties([
+                    {
+                      name: 'className',
+                      optional: true,
+                      type: code.type.indexed(code.type.named('Popover.PopupProps'), code.type.literal('className')),
+                    },
+                  ]),
+                  code.interface('VolumePopoverProps').extends('Popover.RootProps'),
+                  code
+                    .interface('VolumePopoverProps')
+                    .property('side')
+                    .setType(() => code.type.indexed(code.type.named('Popover.RootProps'), code.type.literal('side'))),
+                  code
+                    .interface('VolumePopoverProps')
+                    .property('orientation')
+                    .setType(() => code.type.union(code.type.literal('horizontal'), code.type.literal('vertical'))),
+                  code.function('VolumePopover').addProps(['className', { name: 'props', spread: true }]),
+                  code.function('VolumePopover').jsx.element('Popover.Root').spreadProps('props'),
+                  code
+                    .function('VolumePopover')
+                    .jsx.props('className')
+                    .on('Popover.Popup')
+                    .replace(({ value }) => composeStateClassName(value)),
+                  ...settingsSubmenuFunctions.flatMap((name) => {
+                    const propsName = `${name}Props`;
+                    const component = code.function(name);
+                    return [
+                      component.insertBefore(() =>
+                        code.statement.interface({
+                          name: propsName,
+                          export: true,
+                          extends: [code.type.named('Menu.RootProps')],
+                        })
+                      ),
+                      component.setProps([{ name: 'props', spread: true }], {
+                        type: propsName,
+                        initializer: code.value.object(),
+                      }),
+                      component.jsx.element('Menu.Root').spreadProps('props'),
+                    ];
+                  }),
+                  code.interface('SettingsMenuProps').extends('Menu.RootProps'),
+                  code.function('SettingsMenu').addProps([{ name: 'props', spread: true }]),
+                  code.function('SettingsMenu').jsx.element('Menu.Root').spreadProps('props'),
+                  code.function('VideoSettingsMenu').insertBefore(() =>
+                    code.statement.interface({
+                      name: 'VideoSettingsMenuProps',
+                      export: true,
+                      extends: [omitProps('SettingsMenuProps', ['children'])],
+                      properties: [],
+                    })
+                  ),
+                  code.function('VideoSettingsMenu').setProps([{ name: 'props', spread: true }], {
+                    type: 'VideoSettingsMenuProps',
+                    initializer: code.value.object(),
+                  }),
+                  code.function('VideoSettingsMenu').jsx.element('SettingsMenu').spreadProps('props'),
+                  code.function('MenuChevron').insertBefore(() =>
+                    code.statement.interface({
+                      name: 'MenuChevronProps',
+                      export: true,
+                      extends: [
+                        code.type.named('Omit', [
+                          code.type.named(ComponentProps, [code.type.literal('svg')]),
+                          code.type.literal('children'),
+                        ]),
+                      ],
+                      properties: [{ name: 'flipped', optional: true, type: code.type.boolean() }],
+                    })
+                  ),
+                  code
+                    .function('MenuChevron')
+                    .setProps(
+                      [
+                        { name: 'flipped', initializer: code.value.boolean(false) },
+                        'className',
+                        { name: 'props', spread: true },
+                      ],
+                      { type: 'MenuChevronProps', initializer: code.value.object() }
+                    ),
+                  code.function('MenuChevron').jsx.element('ChevronIcon').spreadProps('props', { position: 'start' }),
+                  code
+                    .function('MenuChevron')
+                    .jsx.props('className')
+                    .on('ChevronIcon')
+                    .replace(({ value }) => code.value.call(cn, [value, 'className'])),
+                  code.function('VideoInputIndicators').insertBefore(() =>
+                    code.statement.interface({
+                      name: 'VideoInputIndicatorsProps',
+                      export: true,
+                      extends: [
+                        code.type.named('Omit', [
+                          code.type.named(ComponentProps, [code.type.literal('div')]),
+                          code.type.literal('children'),
+                        ]),
+                      ],
+                      properties: [],
+                    })
+                  ),
+                  code.function('VideoInputIndicators').setProps(['className', { name: 'props', spread: true }], {
+                    type: 'VideoInputIndicatorsProps',
+                    initializer: code.value.object(),
+                  }),
+                  code
+                    .function('VideoInputIndicators')
+                    .jsx.element('InputIndicatorOverlayPrimitive')
+                    .spreadProps('props', { position: 'start' }),
+                  code
+                    .function('VideoInputIndicators')
+                    .jsx.props('className')
+                    .on('InputIndicatorOverlayPrimitive')
+                    .replace(({ value }) => code.value.call(cn, [...classNameValues(value), 'className'])),
+                  code.function('VideoInputBindings').insertBefore(() =>
+                    code.statement.interface({
+                      name: 'VideoInputBindingsProps',
+                      export: true,
+                      properties: [{ name: 'disabled', optional: true, type: code.type.boolean() }],
+                    })
+                  ),
+                  code
+                    .function('VideoInputBindings')
+                    .setProps([{ name: 'disabled', initializer: code.value.boolean(false) }], {
+                      type: 'VideoInputBindingsProps',
+                      initializer: code.value.object(),
+                    }),
+                  code
+                    .function('VideoInputBindings')
+                    .jsx.element(/^(?:Hotkey|Gesture)$/)
+                    .addProp('disabled', code.value.identifier('disabled')),
+                ]
+              : []),
             rootSkin.insertBefore(() =>
               code.statement.interface({
                 name: rootPropsName,
@@ -235,32 +537,36 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               }
               return code.value.array([code.value.string(options.rootClassName), 'className']);
             }),
+            container.insertBefore(() =>
+              code.statement.interface({
+                name: 'ContainerProps',
+                export: true,
+                extends: [code.type.named('ContainerPrimitive.Props')],
+                properties: [],
+              })
+            ),
             container.setProps(['children', 'className', { name: 'props', spread: true }], {
-              type: ContainerProps,
+              type: 'ContainerProps',
             }),
             container.jsx.element('ContainerPrimitive').spreadProps('props', { position: 'start' }),
             container.jsx
               .props('className')
               .on('ContainerPrimitive')
-              .replace(({ value }) => code.value.array([value, 'className'])),
-            poster.setProps(['className', { name: 'props', spread: true }], { type: PosterProps }),
+              .replace(({ value }) => code.value.array([...classNameValues(value), 'className'])),
+            poster.insertBefore(() =>
+              code.statement.interface({
+                name: 'PosterProps',
+                export: true,
+                extends: [code.type.named('PosterPrimitive.Props')],
+                properties: [],
+              })
+            ),
+            poster.setProps(['className', { name: 'props', spread: true }], { type: 'PosterProps' }),
             poster.jsx.element('PosterPrimitive').spreadProps('props', { position: 'start' }),
             poster.jsx
               .props('className')
               .on('PosterPrimitive')
-              .replace(({ value }) =>
-                code.value.arrow(
-                  ['state'],
-                  code.value.call(cn, [
-                    value,
-                    code.value.conditional(
-                      code.value.equal(code.value.typeOf('className'), code.value.string('function')),
-                      code.value.call('className', ['state']),
-                      code.value.identifier('className')
-                    ),
-                  ])
-                )
-              ),
+              .replace(({ value }) => composeStateClassName(value)),
             poster.jsx.element('PosterPrimitive').selfClosing(),
             volumePopover.prepend(() =>
               code.statement.const(

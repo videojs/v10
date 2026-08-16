@@ -28,10 +28,11 @@
 
     .media-controls-root {
       z-index: 20;
+      background-color: var(--media-controls-background);
       padding: var(--media-controls-padding);
       color: #fff;
       transition-property: filter, opacity, translate;
-      transition-duration: calc(var(--controls-transition-duration) / 2);
+      transition-duration: calc(var(--media-controls-transition-duration) / 2);
       --media-popover-boundary-offset: 0.25rem;
       --media-popover-side-offset: 1.25rem;
       --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
@@ -50,7 +51,7 @@
     .media-controls-root:not([data-visible]) {
       pointer-events: none;
       opacity: 0;
-      transition-duration: var(--controls-transition-duration);
+      transition-duration: var(--media-controls-transition-duration);
     }
 
     .media-controls-root:is(:where(.media-error-dialog)[data-open] ~ *) {

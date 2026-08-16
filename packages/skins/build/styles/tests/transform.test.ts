@@ -7,7 +7,7 @@ import { skinStyles } from '../transform';
 const filename = resolve(import.meta.dirname, 'component.tsx');
 const modulePath = resolve(import.meta.dirname, 'fixture.tailwind.ts');
 const recipes = [
-  recipe(['button'], 'media-button', ['grid', 'p-0']),
+  recipe(['button'], 'media-button', ['grid p-0']),
   recipe(['seekButton'], 'media-seek-button', []),
   recipe(['buttonIcon'], 'media-button-icon', ['size-4']),
   recipe(['seekBackwardIcon'], 'media-seek-backward-icon', ['-scale-x-100']),
@@ -36,6 +36,24 @@ describe('skinStyles', () => {
     expect(result.code).toContain('className="grid p-0 hook"');
     expect(result.code).toContain('? "size-4 -scale-x-100" : "size-4"');
     expect(result.code).not.toContain('fixture.tailwind');
+  });
+
+  it('can compose shared conditional utilities for an editable projection', async () => {
+    const result = await transform(source, {
+      filename,
+      config: {
+        target: jsx(),
+        plugins: [
+          skinStyles({
+            manifest,
+            target: 'tailwind',
+            composeClassNames: true,
+          }),
+        ],
+      },
+    });
+
+    expect(result.code).toContain('["size-4", reverse && "-scale-x-100"]');
   });
 
   it('projects the same references to semantic classes', async () => {
@@ -93,6 +111,13 @@ function compileWithStyle(target: 'tailwind' | 'vanilla') {
   });
 }
 
-function recipe(tokenPath: readonly string[], className: string, utilities: readonly string[]): SkinStyleRecipe {
-  return { modulePath, tokenPath, className, role: 'buttons', utilities };
+function recipe(tokenPath: readonly string[], className: string, utilityGroups: readonly string[]): SkinStyleRecipe {
+  return {
+    modulePath,
+    tokenPath,
+    className,
+    role: 'buttons',
+    utilityGroups,
+    utilities: utilityGroups.flatMap((group) => group.split(/\s+/)),
+  };
 }

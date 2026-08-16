@@ -4,8 +4,8 @@ const buttonStyles = [
   'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-pill border-0 bg-transparent p-0 text-center text-inherit',
   'cursor-pointer outline-2 outline-transparent -outline-offset-2',
   '[transition-property:background-color,color,outline-offset,scale] [transition-duration:150ms] [transition-timing-function:ease-out]',
-  'hover:bg-media-control-hover focus-visible:bg-media-control-hover aria-expanded:bg-media-control-hover',
-  'focus-visible:outline-current focus-visible:outline-offset-2',
+  'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
+  'focus-visible:outline-media-focus focus-visible:outline-offset-2',
   'not-aria-disabled:active:scale-90',
   'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
 ];
@@ -17,8 +17,8 @@ export default defineStyles({
     buttonIcon: 'size-media-icon drop-shadow-media-icon',
     airplayButton: [
       'group/airplay',
-      'not-data-[airplay-state=connected]:[--media-icon--airplay__fill-animation:none]',
-      'not-data-[airplay-state=connected]:[--media-icon--airplay__triangle-animation:none]',
+      'not-data-[airplay-state=connected]:[--media-icon-airplay-fill-animation:none]',
+      'not-data-[airplay-state=connected]:[--media-icon-airplay-triangle-animation:none]',
     ],
     captionsButton: 'group/captions',
     castButton: 'group/cast',

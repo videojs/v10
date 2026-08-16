@@ -6,12 +6,14 @@ import { emitReactModules } from '../compiler/react-modules';
 import { skinRootClassName, skinRootComponentName } from '../compiler/skin-root';
 import type { GeneratedFile } from '../output/files';
 import type { SkinStyleManifest } from '../styles/manifest';
+import type { SkinStyleTarget } from '../styles/transform';
 
 interface GenerateReactSkinsOptions {
   rootDir: string;
   skin: string;
   iconSet: string;
   styles: SkinStyleManifest;
+  style?: SkinStyleTarget | undefined;
   resolveImport?: ReactImportResolver | undefined;
 }
 
@@ -33,7 +35,7 @@ export async function generateReactSkins(
     }))
     .sort((a, b) => a.outputFile.localeCompare(b.outputFile));
   const config = createCompilerReactConfig({
-    style: 'vanilla',
+    style: options.style ?? 'vanilla',
     styles: options.styles,
     iconSet: options.iconSet,
     rootComponentName: skinRootComponentName(skin),

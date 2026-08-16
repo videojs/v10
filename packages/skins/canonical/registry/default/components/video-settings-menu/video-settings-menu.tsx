@@ -5,7 +5,9 @@ import { QualitySettingsMenu } from './quality-settings-menu';
 import { SettingsMenu } from './settings-menu';
 import { useQualityOptions, useAudioTrackOptions, usePlaybackRateOptions, useCaptionsOptions } from '@videojs/react';
 
-export function VideoSettingsMenu() {
+export interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, 'children'> {}
+
+export function VideoSettingsMenu({ ...props }: VideoSettingsMenuProps = {}) {
   const quality = useQualityOptions();
   const audioTrack = useAudioTrackOptions();
   const playbackRate = usePlaybackRateOptions();
@@ -17,7 +19,7 @@ export function VideoSettingsMenu() {
     captions?.state.availability === 'available';
   return (
     hasSettings && (
-      <SettingsMenu>
+      <SettingsMenu {...props}>
         <QualitySettingsMenu />
         <AudioTrackSettingsMenu />
         <PlaybackRateSettingsMenu />

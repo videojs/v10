@@ -19,12 +19,14 @@ interface SourceBindings {
 
 interface ResolvedClassName {
   classes: readonly string[];
+  groups: readonly string[];
   passThrough: readonly ts.Expression[];
 }
 
 interface SkinStylesOptions {
   manifest: SkinStyleManifest;
   target: SkinStyleTarget;
+  composeClassNames?: boolean | undefined;
 }
 
 /** Project explicit canonical style references to Tailwind utilities or semantic classes. */
@@ -38,7 +40,6 @@ export function skinStyles(options: SkinStylesOptions): CompilerPlugin {
           return (sourceFile) => {
             const bindings = sourceBindings(sourceFile, options.manifest);
             if (bindings.styleImports.size === 0) return sourceFile;
-
             const visit = (node: ts.Node): ts.Node => {
               if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
                 const info = readClassName(node);
@@ -48,8 +49,7 @@ export function skinStyles(options: SkinStylesOptions): CompilerPlugin {
               return ts.visitEachChild(node, visit, transformContext);
             };
 
-            const transformed = ts.visitEachChild(sourceFile, visit, transformContext);
-            return stripStyleBindings(transformed, bindings);
+            return stripStyleBindings(ts.visitEachChild(sourceFile, visit, transformContext), bindings);
           };
         },
       };
@@ -88,29 +88,93 @@ function transformStyleAttribute(
     if (!whenTrue || !whenFalse || whenTrue.passThrough.length > 0 || whenFalse.passThrough.length > 0) {
       return info.element;
     }
-    return replaceJsxPropValue(
-      info,
-      factory.updateConditionalExpression(
-        info.expression,
-        info.expression.condition,
-        info.expression.questionToken,
-        factory.createStringLiteral(whenTrue.classes.join(' ')),
-        info.expression.colonToken,
-        factory.createStringLiteral(whenFalse.classes.join(' '))
-      ),
-      factory
-    );
+    const composition = options.composeClassNames
+      ? composeConditionalClasses(info.expression, whenTrue.classes, whenFalse.classes, factory)
+      : undefined;
+    const replacement = composition
+      ? composition.expression
+      : factory.updateConditionalExpression(
+          info.expression,
+          info.expression.condition,
+          info.expression.questionToken,
+          factory.createStringLiteral(whenTrue.classes.join(' ')),
+          info.expression.colonToken,
+          factory.createStringLiteral(whenFalse.classes.join(' '))
+        );
+    return replaceJsxPropValue(info, replacement, factory);
   }
   if (info.kind !== 'segments') return info.element;
 
   const resolved = resolveSegments(info.segments, bindings, options);
   if (!resolved || (resolved.classes.length === 0 && resolved.passThrough.length === 0)) return info.element;
+  if (options.composeClassNames && resolved.groups.length + resolved.passThrough.length > 1) {
+    return replaceJsxPropValue(
+      info,
+      factory.createArrayLiteralExpression([
+        ...resolved.groups.map((group) => factory.createStringLiteral(group)),
+        ...resolved.passThrough,
+      ]),
+      factory
+    );
+  }
   const literal = factory.createStringLiteral(resolved.classes.join(' '));
   const replacement =
     resolved.passThrough.length === 0
       ? literal
       : factory.createArrayLiteralExpression([literal, ...resolved.passThrough]);
   return replaceJsxPropValue(info, replacement, factory);
+}
+
+function composeConditionalClasses(
+  expression: ts.ConditionalExpression,
+  whenTrue: readonly string[],
+  whenFalse: readonly string[],
+  factory: ts.NodeFactory
+): { expression: ts.Expression; composed: boolean } {
+  let commonLength = 0;
+  while (
+    commonLength < whenTrue.length &&
+    commonLength < whenFalse.length &&
+    whenTrue[commonLength] === whenFalse[commonLength]
+  ) {
+    commonLength++;
+  }
+  if (commonLength === 0) {
+    return {
+      expression: factory.updateConditionalExpression(
+        expression,
+        expression.condition,
+        expression.questionToken,
+        factory.createStringLiteral(whenTrue.join(' ')),
+        expression.colonToken,
+        factory.createStringLiteral(whenFalse.join(' '))
+      ),
+      composed: false,
+    };
+  }
+
+  const common = factory.createStringLiteral(whenTrue.slice(0, commonLength).join(' '));
+  const trueRemainder = whenTrue.slice(commonLength).join(' ');
+  const falseRemainder = whenFalse.slice(commonLength).join(' ');
+  if (!trueRemainder && !falseRemainder) return { expression: common, composed: false };
+  const variant = falseRemainder
+    ? factory.updateConditionalExpression(
+        expression,
+        expression.condition,
+        expression.questionToken,
+        factory.createStringLiteral(trueRemainder),
+        expression.colonToken,
+        factory.createStringLiteral(falseRemainder)
+      )
+    : factory.createBinaryExpression(
+        expression.condition,
+        factory.createToken(ts.SyntaxKind.AmpersandAmpersandToken),
+        factory.createStringLiteral(trueRemainder)
+      );
+  return {
+    expression: factory.createArrayLiteralExpression([common, variant]),
+    composed: true,
+  };
 }
 
 function resolveExpression(
@@ -131,11 +195,23 @@ function resolveSegments(
   options: SkinStylesOptions
 ): ResolvedClassName | undefined {
   const classes: string[] = [];
+  const groups: string[] = [];
   const passThrough: ts.Expression[] = [];
+  const seen = new Set<string>();
+
+  const addGroup = (values: readonly string[]): void => {
+    const unique = values.filter((value) => {
+      if (seen.has(value)) return false;
+      seen.add(value);
+      classes.push(value);
+      return true;
+    });
+    if (unique.length > 0) groups.push(unique.join(' '));
+  };
 
   for (const segment of segments) {
     if (segment.kind === 'literal') {
-      pushClasses(classes, segment.value);
+      addGroup(splitClasses(segment.value));
       continue;
     }
     if (segment.kind === 'opaque') {
@@ -149,15 +225,17 @@ function resolveSegments(
       continue;
     }
     if (options.target === 'vanilla') {
-      classes.push(recipe.className);
+      addGroup([recipe.className]);
     } else {
-      classes.push(...recipe.utilities);
+      for (const group of recipe.utilityGroups) addGroup(splitClasses(group));
     }
   }
 
-  const outputClasses =
-    options.target === 'vanilla' ? classes.filter((className) => !isGroupPeerMarker(className)) : classes;
-  return { classes: [...new Set(outputClasses)], passThrough };
+  if (options.target === 'vanilla') {
+    const outputClasses = classes.filter((className) => !isGroupPeerMarker(className));
+    return { classes: outputClasses, groups: groups.filter((group) => !isGroupPeerMarker(group)), passThrough };
+  }
+  return { classes, groups, passThrough };
 }
 
 function sourceBindings(sourceFile: ts.SourceFile, manifest: SkinStyleManifest): SourceBindings {
@@ -200,8 +278,6 @@ function resolveTokenReference(
   return modulePath ? { modulePath, tokenPath: tail } : undefined;
 }
 
-function pushClasses(output: string[], value: string): void {
-  for (const className of value.split(/\s+/)) {
-    if (className) output.push(className);
-  }
+function splitClasses(value: string): string[] {
+  return value.split(/\s+/).filter(Boolean);
 }

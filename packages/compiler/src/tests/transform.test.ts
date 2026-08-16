@@ -150,10 +150,16 @@ export function Timeline() {
           rewrite((code) => {
             const ContainerProps = code.import('@fixture/react', 'ContainerProps', { type: true });
             return [
-              code.function('Skin').setProps(['children', { name: 'props', spread: true }], {
-                type: ContainerProps,
-                initializer: code.value.object(),
-              }),
+              code
+                .function('Skin')
+                .setProps(
+                  [
+                    { name: 'disabled', initializer: code.value.boolean(false) },
+                    'children',
+                    { name: 'props', spread: true },
+                  ],
+                  { type: ContainerProps, initializer: code.value.object() }
+                ),
             ];
           }),
         ],
@@ -162,7 +168,9 @@ export function Timeline() {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.code).toContain('import type { ContainerProps } from "@fixture/react"');
-    expect(compact(result.code)).toContain(compact('function Skin({ children, ...props }: ContainerProps = {})'));
+    expect(compact(result.code)).toContain(
+      compact('function Skin({ disabled = false, children, ...props }: ContainerProps = {})')
+    );
   });
 
   it('composes generic import, JSX attribute, JSX element, and interface edits', async () => {
@@ -413,6 +421,7 @@ export function Target(){ return <Root />; }`;
                   export: true,
                   extends: [code.type.named('Omit', [code.type.named(BaseProps), code.type.literal('hidden')])],
                   properties: [
+                    { name: 'disabled', optional: true, type: code.type.boolean() },
                     { name: 'value', optional: true, type: code.type.string() },
                     {
                       name: 'render',
@@ -433,10 +442,29 @@ export function Target(){ return <Root />; }`;
     expect(result.code).toContain('import type { BaseProps } from "@fixture/react"');
     expect(compact(result.code)).toContain(
       compact(
-        'export interface TargetProps extends Omit<BaseProps, "hidden"> { value?: string; render?: BaseProps["render"]; }'
+        'export interface TargetProps extends Omit<BaseProps, "hidden"> { disabled?: boolean; value?: string; render?: BaseProps["render"]; }'
       )
     );
     expect(result.code.indexOf('interface TargetProps')).toBeLessThan(result.code.indexOf('function Target'));
+  });
+
+  it('adds missing properties to an existing interface', async () => {
+    const source = `export interface Props { current?: string }`;
+    const result = await transform(source, {
+      config: {
+        plugins: [
+          rewrite((code) => [
+            code.interface('Props').addProperties([
+              { name: 'current', optional: true, type: code.type.string() },
+              { name: 'className', optional: true, type: code.type.string() },
+            ]),
+          ]),
+        ],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(compact(result.code)).toContain(compact('interface Props { current?: string; className?: string; }'));
   });
 
   it('rejects ambiguous JSX prop forwarding targets', async () => {

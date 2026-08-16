@@ -1,6 +1,7 @@
 import { Poster as PosterPrimitive } from '@/ui/poster';
 import { cn } from '@videojs/utils/style';
-import type { PosterProps } from '@/ui/poster';
+
+export interface PosterProps extends PosterPrimitive.Props {}
 
 export function Poster({ className, ...props }: PosterProps) {
   return (

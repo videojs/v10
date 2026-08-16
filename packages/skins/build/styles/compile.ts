@@ -9,10 +9,12 @@ export async function compileSkinStyles(options: {
   design: DesignSystem;
   manifest: SkinStyleManifest;
   scopeClass: string;
+  recipeNames?: ReadonlySet<string> | undefined;
 }): Promise<Map<SkinStyleRole, string>> {
   const byRole = new Map<SkinStyleRole, SkinCssRecipe[]>();
 
   for (const recipe of [...options.manifest.recipes].sort((a, b) => a.className.localeCompare(b.className))) {
+    if (options.recipeNames && !options.recipeNames.has(recipe.className)) continue;
     const compiled = compileRecipe(recipe, options.design);
     if (compiled.candidates.length === 0) continue;
     let recipes = byRole.get(recipe.role);

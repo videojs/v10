@@ -17,11 +17,12 @@
         0 0 #0000,
         0 0 #0000,
         0 0 #0000,
-        0 0 0 1px var(--media-surface-border),
-        0 2px 8px var(--media-shadow-color);
-      backdrop-filter: blur(var(--media-surface-backdrop-blur));
+        0 0 0 1px var(--media-surface-outer-border),
+        0 1px 3px 0 var(--media-shadow-color),
+        0 1px 2px -1px var(--media-shadow-color);
+      backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       transition-property: filter, opacity, scale, translate;
-      transition-duration: var(--controls-transition-duration);
+      transition-duration: var(--media-controls-transition-duration);
       inset-inline: 0.5rem;
       align-items: center;
       transition-timing-function: ease-out;
@@ -57,7 +58,7 @@
     .media-controls-root {
       color: #fff;
       transition-property: filter, opacity, scale, translate;
-      transition-duration: var(--controls-transition-duration);
+      transition-duration: var(--media-controls-transition-duration);
       --media-popover-boundary-offset: 0.75rem;
       --media-popover-side-offset: calc(0.5rem + var(--media-controls-padding));
       --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
@@ -80,9 +81,10 @@
           0 0 #0000,
           0 0 #0000,
           0 0 #0000,
-          0 0 0 1px var(--media-surface-border),
-          0 2px 8px var(--media-shadow-color);
-        backdrop-filter: blur(var(--media-surface-backdrop-blur));
+          0 0 0 1px var(--media-surface-outer-border),
+          0 1px 3px 0 var(--media-shadow-color),
+          0 1px 2px -1px var(--media-shadow-color);
+        backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
         inset-inline: 0.5rem;
         align-items: center;
         display: flex;
@@ -131,11 +133,12 @@
         0 0 #0000,
         0 0 #0000,
         0 0 #0000,
-        0 0 0 1px var(--media-surface-border),
-        0 2px 8px var(--media-shadow-color);
-      backdrop-filter: blur(var(--media-surface-backdrop-blur));
+        0 0 0 1px var(--media-surface-outer-border),
+        0 1px 3px 0 var(--media-shadow-color),
+        0 1px 2px -1px var(--media-shadow-color);
+      backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       transition-property: filter, opacity, scale, translate;
-      transition-duration: var(--controls-transition-duration);
+      transition-duration: var(--media-controls-transition-duration);
       align-items: center;
       transition-timing-function: ease-out;
       display: flex;

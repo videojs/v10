@@ -1,8 +1,8 @@
 @layer videojs.components {
   @scope (.media-skin-video-minimal) {
     .media-airplay-button:not([data-airplay-state='connected']) {
-      --media-icon--airplay__fill-animation: none;
-      --media-icon--airplay__triangle-animation: none;
+      --media-icon-airplay-fill-animation: none;
+      --media-icon-airplay-triangle-animation: none;
     }
 
     .media-airplay-enter-icon {
@@ -30,8 +30,8 @@
     }
 
     .media-button {
-      width: var(--media-control-size);
-      height: var(--media-control-size);
+      width: var(--media-button-size);
+      height: var(--media-button-size);
       cursor: pointer;
       touch-action: manipulation;
       border-radius: var(--media-radius-pill);
@@ -56,14 +56,16 @@
 
     @media (hover: hover) {
       .media-button:hover {
-        background-color: var(--media-control-hover-background);
+        background-color: var(--media-accent-background-color);
+        color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
       }
     }
 
     .media-button:focus-visible {
-      background-color: var(--media-control-hover-background);
+      background-color: var(--media-accent-background-color);
+      color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
       outline-offset: 2px;
-      outline-color: currentColor;
+      outline-color: var(--media-focus-ring-color);
     }
 
     .media-button:not([aria-disabled='true']):active {
@@ -76,12 +78,13 @@
     }
 
     .media-button[aria-expanded='true'] {
-      background-color: var(--media-control-hover-background);
+      background-color: var(--media-accent-background-color);
+      color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
     }
 
     .media-button-icon {
-      width: var(--media-icon-size);
-      height: var(--media-icon-size);
+      width: var(--media-icon-size, calc(1.125 * var(--media-size)));
+      height: var(--media-icon-size, calc(1.125 * var(--media-size)));
       filter: drop-shadow(0 1px 0 var(--media-shadow-color));
     }
 
@@ -216,14 +219,6 @@
         opacity: 1;
         display: block;
       }
-    }
-
-    .media-seek-backward-icon {
-      scale: -1 1;
-    }
-
-    .media-seek-button-label {
-      font-variant-numeric: tabular-nums;
     }
 
     .media-volume-high-icon {

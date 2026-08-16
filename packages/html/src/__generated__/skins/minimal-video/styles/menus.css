@@ -7,7 +7,7 @@
 
     .media-badge {
       border-radius: var(--media-radius-pill);
-      background-color: var(--media-control-hover-background);
+      background-color: var(--media-accent-background-color);
       padding-inline: 0.375rem;
       font-size: 0.7em;
       font-weight: 600;
@@ -23,7 +23,7 @@
     }
 
     .media-group {
-      anchor-scope: --menu-item-highlight-anchor;
+      anchor-scope: --media-menu-item-highlight-anchor;
       flex-direction: column;
       gap: 0.125rem;
       display: flex;
@@ -48,8 +48,8 @@
     }
 
     .media-icon {
-      width: var(--media-icon-size);
-      height: var(--media-icon-size);
+      width: var(--media-icon-size, calc(1.125 * var(--media-size)));
+      height: var(--media-icon-size, calc(1.125 * var(--media-size)));
       opacity: 0.7;
       filter: drop-shadow(0 1px 0 var(--media-shadow-color));
       flex-shrink: 0;
@@ -114,17 +114,19 @@
 
     @media (hover: hover) {
       .media-item-base:hover {
-        background-color: var(--media-control-hover-background);
+        background-color: var(--media-accent-background-color);
+        color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
       }
     }
 
     .media-item-base:focus-visible {
       outline-offset: 2px;
-      outline-color: currentColor;
+      outline-color: var(--media-focus-ring-color);
     }
 
     .media-item-base[data-highlighted] {
-      background-color: var(--media-control-hover-background);
+      background-color: var(--media-accent-background-color);
+      color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
     }
 
     .media-separator {
@@ -143,9 +145,10 @@
       min-width: 12rem;
       transition-property: opacity, filter, transform, scale, width, height;
       transition-duration:
-        var(--popup-transition-duration), var(--popup-transition-duration), var(--popup-transition-duration),
-        var(--popup-transition-duration), var(--menu-transition-duration), var(--menu-transition-duration);
-      --menu-transition-duration: 0.25s;
+        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
+        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
+        var(--media-menu-transition-duration), var(--media-menu-transition-duration);
+      --media-menu-transition-duration: 0.25s;
       border-style: solid;
       border-width: 0;
       border-radius: 0.75rem;
@@ -194,7 +197,7 @@
       max-height: inherit;
       overscroll-behavior: none;
       transition-property: translate, filter;
-      transition-duration: var(--menu-transition-duration);
+      transition-duration: var(--media-menu-transition-duration);
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;

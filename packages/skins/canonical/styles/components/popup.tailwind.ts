@@ -2,8 +2,8 @@ import { defineStyles } from '../define';
 
 const popupBase = [
   'm-0 overflow-visible border-0 text-inherit',
-  '[--popup-translate-distance:0.5rem]',
-  '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--popup-transition-duration)] [transition-timing-function:ease-out]',
+  '[--media-popup-translate-distance:0.5rem]',
+  '[transition-property:opacity,filter,transform,scale] [transition-duration:var(--media-popup-transition-duration)] [transition-timing-function:ease-out]',
   'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
   'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
   'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -14,14 +14,16 @@ const popupBase = [
   'data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full',
 ];
 
+export const surface = [
+  'relative bg-media-surface text-media-controls shadow-media-surface [backdrop-filter:blur(var(--media-surface-backdrop-blur))_saturate(var(--media-surface-backdrop-saturate))]',
+  'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
+  'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
+] as const;
+
 export default defineStyles({
   role: 'popups',
   styles: {
-    surface: [
-      'relative bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface',
-      'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
-      'after:shadow-[inset_0_1px_0_0_var(--media-surface-border)]',
-    ],
+    surface,
     popover: [
       ...popupBase,
       'data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)',

@@ -9,6 +9,7 @@ export interface SkinDefinition extends SkinItemDefinition {
   type: 'skin';
   scopeClass: string;
   theme: keyof SkinStyleResources['themes'];
+  variant: string;
 }
 
 export interface SkinComponent extends SkinItemDefinition {
@@ -68,6 +69,7 @@ export const skinCatalog = {
       type: 'skin',
       scopeClass: 'media-skin-video',
       theme: 'default',
+      variant: 'default',
       source: './skins/default-video/skin.tsx',
       title: 'Default Video Skin',
       description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input bindings.',
@@ -77,6 +79,7 @@ export const skinCatalog = {
       type: 'skin',
       scopeClass: 'media-skin-video-minimal',
       theme: 'minimal',
+      variant: 'minimal',
       source: './skins/minimal-video/skin.tsx',
       title: 'Minimal Video Skin',
       description: 'A compact on-demand video skin with wrapping controls and the complete video component set.',

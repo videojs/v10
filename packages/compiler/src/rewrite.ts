@@ -11,6 +11,7 @@ import {
   createLiteralType,
   createNamedType,
   type InterfaceDeclarationOptions,
+  type InterfacePropertySpec,
 } from './utils/declarations';
 import {
   hasJsxSpreadAttribute,
@@ -74,6 +75,7 @@ export interface CreateHelpers {
     array(items: readonly ValueReference[], options?: ValueArrayOptions): ts.ArrayLiteralExpression | ts.AsExpression;
     arrayItems(value: ts.Expression): ts.Expression[];
     arrow(parameters: readonly string[], body: ts.ConciseBody): ts.ArrowFunction;
+    boolean(value: boolean): ts.TrueLiteral | ts.FalseLiteral;
     call(callee: ValueReference, args: readonly ValueReference[]): ts.CallExpression;
     conditional(test: ts.Expression, whenTrue: ts.Expression, whenFalse: ts.Expression): ts.ConditionalExpression;
     equal(left: ValueReference, right: ValueReference): ts.BinaryExpression;
@@ -96,6 +98,7 @@ export interface CreateHelpers {
     spreadProps(value: ValueReference): ts.JsxSpreadAttribute;
   };
   type: {
+    boolean(): ts.KeywordTypeNode;
     indexed(object: ts.TypeNode, index: ts.TypeNode): ts.IndexedAccessTypeNode;
     literal(value: string | number | boolean): ts.LiteralTypeNode;
     named(value: string | ImportReference, typeArguments?: readonly ts.TypeNode[]): ts.TypeReferenceNode;
@@ -120,6 +123,7 @@ export interface EditHelpers {
     replaceTag(tag: string | ImportReference): JsxElementEdit;
   };
   interface: {
+    addProperties(properties: readonly InterfacePropertySpec[]): InterfaceDeclarationEdit;
     declaration(options: InterfaceDeclarationEditOptions): CompilerTransform;
     extends(value: string | ImportReference): InterfaceDeclarationEdit;
     replaceExtends(from: string | RegExp, to: string | ImportReference): InterfaceDeclarationEdit;
@@ -138,6 +142,7 @@ export interface ValueHelpers {
   array(items: readonly ValueReference[], options?: ValueArrayOptions): ts.ArrayLiteralExpression | ts.AsExpression;
   arrayItems(value: ts.Expression): ts.Expression[];
   arrow(parameters: readonly string[], body: ts.ConciseBody): ts.ArrowFunction;
+  boolean(value: boolean): ts.TrueLiteral | ts.FalseLiteral;
   call(callee: ValueReference, args: readonly ValueReference[]): ts.CallExpression;
   conditional(test: ts.Expression, whenTrue: ts.Expression, whenFalse: ts.Expression): ts.ConditionalExpression;
   equal(left: ValueReference, right: ValueReference): ts.BinaryExpression;
@@ -206,6 +211,7 @@ export interface JsxPropsSelection {
 }
 
 export interface TypeHelpers {
+  boolean(): ts.KeywordTypeNode;
   indexed(object: ts.TypeNode, index: ts.TypeNode): ts.IndexedAccessTypeNode;
   literal(value: string | number | boolean): ts.LiteralTypeNode;
   named(value: string | ImportReference, typeArguments?: readonly ts.TypeNode[]): ts.TypeReferenceNode;
@@ -216,6 +222,7 @@ export interface TypeHelpers {
 }
 
 export interface InterfaceSelection {
+  addProperties(properties: readonly InterfacePropertySpec[]): CompilerTransform;
   extends(value: string | ImportReference): CompilerTransform;
   property(name: string): InterfacePropertySelection;
   replaceExtends(from: string | RegExp, to: string | ImportReference): CompilerTransform;
@@ -345,7 +352,9 @@ export interface FunctionDeclarationEditOptions {
   transform: FunctionDeclarationEdit;
 }
 
-export type FunctionPropSpec = string | { name: string; spread?: boolean | undefined };
+export type FunctionPropSpec =
+  | string
+  | { name: string; spread?: boolean | undefined; initializer?: ValueReference | undefined };
 
 export interface FunctionPropsOptions {
   parameterIndex?: number | undefined;
@@ -437,6 +446,7 @@ function createValueHelpers(match: MatchHelpers, create: CreateHelpers): ValueHe
     array: create.value.array,
     arrayItems: create.value.arrayItems,
     arrow: create.value.arrow,
+    boolean: create.value.boolean,
     call: create.value.call,
     conditional: create.value.conditional,
     equal: create.value.equal,
@@ -605,6 +615,8 @@ function renameJsxProps(when: MatchPredicate, name: string, withinFunction?: Mat
 function createInterfaceSelection(name: string | RegExp, match: MatchHelpers, edit: EditHelpers): InterfaceSelection {
   const when = match.interface.name(name);
   return {
+    addProperties: (properties) =>
+      edit.interface.declaration({ when, transform: edit.interface.addProperties(properties) }),
     extends: (value) => edit.interface.declaration({ when, transform: edit.interface.extends(value) }),
     property: (property) => ({
       setType: (type) =>
@@ -720,6 +732,9 @@ function createCreateHelpers(): CreateHelpers {
           body
         );
       },
+      boolean(value) {
+        return value ? ts.factory.createTrue() : ts.factory.createFalse();
+      },
       call(callee, args) {
         return ts.factory.createCallExpression(valueFromReference(callee), undefined, args.map(valueFromReference));
       },
@@ -820,6 +835,9 @@ function createCreateHelpers(): CreateHelpers {
       },
     },
     type: {
+      boolean() {
+        return ts.factory.createKeywordTypeNode(ts.SyntaxKind.BooleanKeyword);
+      },
       indexed(object, index) {
         return createIndexedAccessType(object, index);
       },
@@ -888,6 +906,8 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
           replaceJsxElementTag(element, jsxTagNameFromReference(tag), factory),
     },
     interface: {
+      addProperties: (properties) => (interfaceContext) =>
+        addInterfaceProperties(interfaceContext.interface, properties, interfaceContext.factory),
       declaration: editInterfaceDeclaration,
       extends: (value) => (interfaceContext) =>
         addInterfaceExtends(interfaceContext.interface, value, interfaceContext.factory),
@@ -1310,6 +1330,38 @@ function addInterfaceExtends(
   );
 }
 
+function addInterfaceProperties(
+  declaration: ts.InterfaceDeclaration,
+  properties: readonly InterfacePropertySpec[],
+  factory: ts.NodeFactory
+): ts.InterfaceDeclaration | undefined {
+  const existing = new Set(
+    declaration.members
+      .filter(ts.isPropertySignature)
+      .map((member) => (ts.isIdentifier(member.name) || ts.isStringLiteral(member.name) ? member.name.text : undefined))
+      .filter((name): name is string => Boolean(name))
+  );
+  const additions = properties.filter((property) => !existing.has(property.name));
+  if (additions.length === 0) return undefined;
+
+  const members = additions.map((property) =>
+    factory.createPropertySignature(
+      property.readonly ? [factory.createModifier(ts.SyntaxKind.ReadonlyKeyword)] : undefined,
+      property.name,
+      property.optional ? factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
+      property.type
+    )
+  );
+  return factory.updateInterfaceDeclaration(
+    declaration,
+    declaration.modifiers,
+    declaration.name,
+    declaration.typeParameters,
+    declaration.heritageClauses,
+    [...declaration.members, ...members]
+  );
+}
+
 function replaceInterfaceExtends(
   declaration: ts.InterfaceDeclaration,
   from: string | RegExp,
@@ -1354,11 +1406,12 @@ function addFunctionProps(
     const elements = props.map((spec) => {
       const name = typeof spec === 'string' ? spec : spec.name;
       const spread = typeof spec === 'object' && spec.spread === true;
+      const initializer = typeof spec === 'object' ? spec.initializer : undefined;
       return factory.createBindingElement(
         spread ? factory.createToken(ts.SyntaxKind.DotDotDotToken) : undefined,
         undefined,
         factory.createIdentifier(name),
-        undefined
+        spread || initializer === undefined ? undefined : valueFromReference(initializer)
       );
     });
     const nextParameter = factory.createParameterDeclaration(
@@ -1400,6 +1453,7 @@ function addFunctionProps(
   for (const spec of props) {
     const name = typeof spec === 'string' ? spec : spec.name;
     const spread = typeof spec === 'object' && spec.spread === true;
+    const initializer = typeof spec === 'object' ? spec.initializer : undefined;
 
     if (spread) {
       if (nextSpreadElement) continue;
@@ -1414,7 +1468,14 @@ function addFunctionProps(
     }
 
     if (existing.has(name)) continue;
-    nextElements.push(factory.createBindingElement(undefined, undefined, factory.createIdentifier(name), undefined));
+    nextElements.push(
+      factory.createBindingElement(
+        undefined,
+        undefined,
+        factory.createIdentifier(name),
+        initializer === undefined ? undefined : valueFromReference(initializer)
+      )
+    );
     existing.add(name);
     changed = true;
   }
@@ -1466,7 +1527,9 @@ function setFunctionProps(
           : undefined,
         undefined,
         factory.createIdentifier(typeof spec === 'string' ? spec : spec.name),
-        undefined
+        typeof spec === 'object' && !spec.spread && spec.initializer !== undefined
+          ? valueFromReference(spec.initializer)
+          : undefined
       )
     )
   );
