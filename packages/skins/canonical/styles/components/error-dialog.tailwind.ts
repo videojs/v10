@@ -7,7 +7,7 @@ export default defineStyles({
     errorDialog: variants({
       base: [
         'peer/error z-20 flex flex-col gap-3 outline-none',
-        'not-data-open:hidden transition-[opacity,scale,transform] delay-(--media-error-dialog-transition-delay) ease-media-out',
+        'not-data-open:hidden transition-[opacity,scale,transform] delay-100 ease-out motion-reduce:delay-0 motion-reduce:duration-50',
         'data-starting-style:scale-50 data-starting-style:opacity-0',
         'data-ending-style:scale-50 data-ending-style:opacity-0 data-ending-style:delay-0',
         'motion-reduce:delay-0',
@@ -16,11 +16,11 @@ export default defineStyles({
         default: [
           ...surface,
           'absolute top-1/2 left-1/2 w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] p-3 text-white',
-          'duration-(--media-error-dialog-transition-duration)',
+          'duration-350',
         ],
         minimal: [
           'absolute inset-0 h-full w-full items-center justify-center p-4 text-white',
-          'duration-(--media-error-dialog-transition-duration)',
+          'duration-150',
           'pointer-events-none [&>*]:pointer-events-auto',
         ],
       },

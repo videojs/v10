@@ -11,7 +11,7 @@ export default defineStyles({
     seekIndicatorIcon: [
       'hidden size-media-icon-lg group-data-direction/seek-status:block',
       'group-data-[direction=backward]/seek-status:[scale:-1_1]',
-      'transition-[translate,opacity] duration-(--media-duration-slow) ease-media-in-out',
+      'transition-[translate,opacity] duration-200 ease-in-out motion-reduce:duration-50',
       'group-data-starting-style/seek-status:opacity-0 group-data-ending-style/seek-status:opacity-0',
     ],
     seekIndicatorValue: 'tabular-nums',

@@ -35,8 +35,6 @@
     0 0 0 1px var(--media-surface-outer-border), 0 1px 3px 0 var(--media-shadow-color),
     0 1px 2px -1px var(--media-shadow-color);
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-color);
-  --ease-media-in-out: var(--media-ease-in-out);
-  --ease-media-out: var(--media-ease-out);
 }
 
 @utility status-indicator-gradient {
@@ -48,10 +46,11 @@
 }
 
 @utility transition-settings-menu {
-  transition-timing-function: var(--media-ease-out);
-  transition-duration:
-    var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-    var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-    var(--media-menu-transition-duration), var(--media-menu-transition-duration);
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: 100ms, 100ms, 100ms, 100ms, 250ms, 250ms;
   transition-property: opacity, filter, transform, scale, width, height;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 0ms, 0ms, 0ms, 0ms, 250ms, 250ms;
+  }
 }

@@ -7,7 +7,7 @@ export default defineStyles({
     statusIndicator: variants({
       base: [
         'group/input-status pointer-events-none flex items-center gap-2 font-medium',
-        'transition-[opacity,scale,translate] duration-(--media-duration-fast) ease-media-out',
+        'transition-[opacity,scale,translate] duration-100 ease-out motion-reduce:duration-50',
         'data-starting-style:opacity-0 data-ending-style:opacity-0',
       ],
       variants: {
@@ -35,8 +35,8 @@ export default defineStyles({
     playbackStatusIndicator: variants({
       base: [
         'group/playback-status col-start-2 row-start-1 grid place-content-center p-4 text-center',
-        'transition-[opacity,scale] duration-(--media-duration-slow) ease-media-out data-starting-style:scale-85 data-starting-style:opacity-0',
-        'data-ending-style:scale-85 data-ending-style:opacity-0 data-ending-style:duration-(--media-duration-fast)',
+        'transition-[opacity,scale] duration-200 ease-out motion-reduce:duration-50 data-starting-style:scale-85 data-starting-style:opacity-0',
+        'data-ending-style:scale-85 data-ending-style:opacity-0 data-ending-style:duration-100 motion-reduce:data-ending-style:duration-50',
       ],
       variants: { default: 'rounded-media-control bg-black/35 backdrop-blur-sm', minimal: '' },
     }),

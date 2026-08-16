@@ -16,7 +16,7 @@ export default defineStyles({
         '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
         '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
         '@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm',
-        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-media-out',
+        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
         'peer-data-open/error:hidden!',
       ],
       primary: [
@@ -27,7 +27,7 @@ export default defineStyles({
         '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
         '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
         '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1',
-        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-media-out',
+        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
       ],
       secondary: [
         'absolute top-2 right-2 z-10 flex origin-top items-center rounded-media-control',
@@ -37,7 +37,7 @@ export default defineStyles({
         '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
         '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
         '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1',
-        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-media-out',
+        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
       ],
     },
     buttonGroup: 'flex items-center gap-px',

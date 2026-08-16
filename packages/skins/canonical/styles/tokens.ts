@@ -91,34 +91,6 @@ export const tokens = {
     kind: 'internal',
     description: 'Theme fallback accent color.',
   },
-  '--media-duration-fast': {
-    kind: 'internal',
-    description: 'Fast interaction transition duration.',
-  },
-  '--media-duration-normal': {
-    kind: 'internal',
-    description: 'Default interaction transition duration.',
-  },
-  '--media-duration-slow': {
-    kind: 'internal',
-    description: 'Emphasized interaction transition duration.',
-  },
-  '--media-ease-in-out': {
-    kind: 'internal',
-    description: 'Theme easing for symmetric transitions.',
-  },
-  '--media-ease-out': {
-    kind: 'internal',
-    description: 'Theme easing for entering and exiting UI.',
-  },
-  '--media-error-dialog-transition-delay': {
-    kind: 'internal',
-    description: 'Error dialog transition delay.',
-  },
-  '--media-error-dialog-transition-duration': {
-    kind: 'internal',
-    description: 'Error dialog transition duration.',
-  },
   '--media-focus-ring-color': {
     kind: 'internal',
     description: 'Theme focus-ring color.',
@@ -142,14 +114,6 @@ export const tokens = {
   '--media-menu-item-highlight-anchor': {
     kind: 'internal',
     description: 'Anchor name used by the menu highlight.',
-  },
-  '--media-menu-transition-duration': {
-    kind: 'internal',
-    description: 'Menu size and submenu transition duration.',
-  },
-  '--media-popup-transition-duration': {
-    kind: 'internal',
-    description: 'Popup transition duration.',
   },
   '--media-control-radius': {
     kind: 'internal',

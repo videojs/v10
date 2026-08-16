@@ -7,7 +7,7 @@ export default defineStyles({
     volumeIndicator: variants({
       base: [
         'group/volume-status pointer-events-none font-medium',
-        'transition-[opacity,scale,translate] duration-(--media-duration-fast) ease-media-out',
+        'transition-[opacity,scale,translate] duration-100 ease-out motion-reduce:duration-50',
         'data-starting-style:opacity-0 data-ending-style:opacity-0',
       ],
       variants: {
@@ -28,7 +28,7 @@ export default defineStyles({
       base: [
         'flex items-center justify-between gap-2 rounded-[inherit] px-2.5 py-1',
         'bg-left bg-no-repeat [background-image:linear-gradient(var(--media-accent-color,var(--media-default-accent-color)),var(--media-accent-color,var(--media-default-accent-color)))]',
-        '[background-size:var(--media-volume-fill,0%)_100%] transition-[background-size] duration-(--media-duration-slow) ease-linear',
+        '[background-size:var(--media-volume-fill,0%)_100%] transition-[background-size] duration-200 ease-linear motion-reduce:duration-50',
       ],
       variants: { default: 'w-full', minimal: 'w-[min(80%,14rem)] bg-black/25 shadow-media-surface' },
     }),

@@ -407,9 +407,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       min-height: 0;
       color: inherit;
       outline-offset: -2px;
-      transition-property: background-color, color, outline-offset, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       -webkit-user-select: none;
       user-select: none;
       background-color: #0000;
@@ -419,6 +416,9 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       flex-shrink: 0;
       place-items: center;
       padding: 0;
+      transition-property: background-color, color, outline-offset, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
@@ -448,6 +448,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-button[aria-expanded='true'] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-button {
+        transition-duration: 50ms;
+      }
     }
 
     .media-button-icon {
@@ -663,12 +669,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       -webkit-font-smoothing: auto;
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
-      transition-property: outline-offset, outline-color;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       background-color: #000;
       outline: 2px solid #0000;
       line-height: 1.5;
+      transition-property: outline-offset, outline-color;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: hidden;
@@ -684,10 +690,10 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       opacity: 0;
       filter: blur(var(--media-poster-placeholder-blur, 20px));
       content: '';
+      background-repeat: no-repeat;
       transition-property: opacity;
       transition-duration: 0.25s;
-      transition-timing-function: var(--media-ease-in-out);
-      background-repeat: no-repeat;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -718,6 +724,13 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
       opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-container,
+      :scope.media-container {
+        transition-duration: 50ms;
+      }
     }
 
     @media (pointer: fine) {
@@ -802,9 +815,9 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       transition-property: filter, opacity, scale, translate;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       inset-inline: 0.5rem;
       align-items: center;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: 0.5rem;
@@ -838,11 +851,11 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       color: #fff;
       transition-property: filter, opacity, scale, translate;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       --media-popover-boundary-offset: 0.75rem;
       --media-popover-side-offset: calc(0.5rem + var(--media-controls-padding));
       --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
       --media-tooltip-side-offset: var(--media-popover-side-offset);
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: contents;
     }
 
@@ -918,8 +931,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       transition-property: filter, opacity, scale, translate;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       align-items: center;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 0.5rem;
@@ -1002,15 +1015,15 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
-      transition-property: opacity, scale, transform;
-      transition-delay: var(--media-error-dialog-transition-delay);
-      transition-duration: var(--media-error-dialog-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-radius: 1.75rem;
       outline-style: none;
       flex-direction: column;
       gap: 0.75rem;
       padding: 0.75rem;
+      transition:
+        opacity 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
+        scale 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
+        transform 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s;
       display: flex;
       position: absolute;
       top: 50%;
@@ -1051,6 +1064,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     @media (prefers-reduced-motion: reduce) {
       .media-error-dialog {
+        transition-duration: 50ms;
         transition-delay: 0s;
       }
     }
@@ -1118,26 +1132,33 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: var(--media-control-radius);
       text-align: center;
       backdrop-filter: blur(8px);
-      transition-property: opacity, scale;
-      transition-duration: var(--media-duration-slow);
-      transition-timing-function: var(--media-ease-out);
       background-color: oklab(0% none none / 0.35);
       grid-row-start: 1;
       grid-column-start: 2;
       place-content: center;
       padding: 1rem;
+      transition-property: opacity, scale;
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
     .media-playback-status-indicator[data-ending-style] {
       opacity: 0;
-      transition-duration: var(--media-duration-fast);
+      transition-duration: 0.1s;
       scale: 0.85;
     }
 
     .media-playback-status-indicator[data-starting-style] {
       opacity: 0;
       scale: 0.85;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-playback-status-indicator,
+      .media-playback-status-indicator[data-ending-style] {
+        transition-duration: 50ms;
+      }
     }
 
     .media-seek-indicator {
@@ -1164,8 +1185,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       width: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
       height: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
       transition-property: translate, opacity;
-      transition-duration: var(--media-duration-slow);
-      transition-timing-function: var(--media-ease-in-out);
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: none;
     }
 
@@ -1185,6 +1206,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     @scope (.media-seek-indicator) {
       &[data-direction='backward'] .media-seek-indicator-icon {
         scale: -1 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-seek-indicator-icon {
+        transition-duration: 50ms;
       }
     }
 
@@ -1226,15 +1253,15 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
-      transition-property: opacity, scale, translate;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       background-color: oklab(0% none none / 0.25);
       align-items: center;
       gap: 0.5rem;
       padding-block: 0.25rem;
       padding-inline: 0.625rem;
       font-weight: 500;
+      transition-property: opacity, scale, translate;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 0.75rem;
@@ -1265,6 +1292,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-status-indicator[data-starting-style] {
       opacity: 0;
       scale: 0.9;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-status-indicator {
+        transition-duration: 50ms;
+      }
     }
 
     .media-status-indicator-icon {
@@ -1319,11 +1352,11 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
-      transition-property: opacity, scale, translate;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       background-color: oklab(0% none none / 0.25);
       font-weight: 500;
+      transition-property: opacity, scale, translate;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0.75rem;
     }
@@ -1355,6 +1388,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       scale: 0.9;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-indicator {
+        transition-duration: 50ms;
+      }
+    }
+
     .media-volume-indicator-fill {
       border-radius: inherit;
       background-image: linear-gradient(
@@ -1362,18 +1401,24 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         var(--media-accent-color, var(--media-default-accent-color))
       );
       background-size: var(--media-volume-fill, 0%) 100%;
-      width: 100%;
-      transition-property: background-size;
-      transition-duration: var(--media-duration-slow);
       background-position: 0;
       background-repeat: no-repeat;
       justify-content: space-between;
       align-items: center;
       gap: 0.5rem;
+      width: 100%;
       padding-block: 0.25rem;
       padding-inline: 0.625rem;
+      transition-property: background-size;
+      transition-duration: 0.2s;
       transition-timing-function: linear;
       display: flex;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-indicator-fill {
+        transition-duration: 50ms;
+      }
     }
 
     .media-volume-indicator-icon {
@@ -1495,9 +1540,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: var(--media-surface-radius);
       text-align: left;
       outline-offset: -2px;
-      transition-property: color, background-color;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-in-out);
       -webkit-user-select: none;
       user-select: none;
       outline: 2px solid #0000;
@@ -1505,6 +1547,9 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       gap: 0.375rem;
       padding-block: 0.375rem;
       padding-inline: 0.5rem;
+      transition-property: color, background-color;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       position: relative;
     }
@@ -1524,6 +1569,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-menu-item[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-menu-item {
+        transition-duration: 50ms;
+      }
     }
 
     .media-radio-group {
@@ -1547,20 +1598,22 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       width: var(--media-menu-width);
       max-width: var(--media-popover-available-width);
       overscroll-behavior: none;
-      min-width: 12rem;
-      transition-timing-function: var(--media-ease-out);
-      transition-duration:
-        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-        var(--media-menu-transition-duration), var(--media-menu-transition-duration);
-      --media-menu-transition-duration: 0.25s;
       border-style: solid;
       border-width: 0;
       border-radius: 0.75rem;
+      min-width: 12rem;
       margin: 0;
       padding: 0.25rem;
       transition-property: opacity, filter, transform, scale, width, height;
+      transition-duration: 0.1s, 0.1s, 0.1s, 0.1s, 0.25s, 0.25s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-settings {
+        transition-duration: 0s, 0s, 0s, 0s, 0.25s, 0.25s;
+      }
     }
 
     .media-settings[data-submenu-expanded='true'] > :not([data-submenu]) {
@@ -1570,8 +1623,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     .media-settings-icon {
       transition-property: transform, translate, scale, rotate;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-in-out);
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @scope (.media-settings-trigger) {
@@ -1602,12 +1655,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       z-index: 10;
       max-height: inherit;
       overscroll-behavior: none;
-      transition-property: translate, filter;
-      transition-duration: var(--media-menu-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
+      transition-property: translate, filter;
+      transition-duration: 0.25s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
       overflow: auto;
@@ -1639,8 +1692,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       opacity: 0;
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -1667,12 +1720,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   @scope (.media-skin-video) {
     .media-popover {
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -1733,6 +1786,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       top: 100%;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-popover {
+        transition-duration: 0s;
+      }
+    }
+
     .media-surface {
       background-color: var(--media-surface-background);
       color: var(--media-controls-color);
@@ -1768,14 +1827,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: var(--media-control-radius);
       white-space: nowrap;
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
       padding-block: 0.35rem;
       padding-inline: 0.625rem;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -1847,6 +1906,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       top: 100%;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-tooltip {
+        transition-duration: 0s;
+      }
+    }
+
     .media-tooltip-shortcut {
       background-color: currentColor;
       border-radius: 0.25rem;
@@ -1870,13 +1935,13 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-volume-popover {
       border-radius: var(--media-control-radius);
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
       padding-block: 0.75rem;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -1954,6 +2019,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       inset-inline: 0;
       top: 100%;
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-popover {
+        transition-duration: 0s;
+      }
+    }
   }
 }
 
@@ -2028,11 +2099,11 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       font-variant-numeric: tabular-nums;
       opacity: 0;
       filter: blur(16px);
-      transition-property: filter, opacity, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       flex-direction: column;
       align-items: center;
+      transition-property: filter, opacity, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: calc(100% + 2.625rem);
@@ -2047,6 +2118,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         opacity: 1;
         filter: none;
         scale: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-preview-value {
+        transition-duration: 50ms;
       }
     }
 
@@ -2163,8 +2240,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     @media (prefers-reduced-motion: no-preference) {
       .media-slider-chapter-track {
         transition-property: height, width;
-        transition-duration: var(--media-duration-slow);
-        transition-timing-function: var(--media-ease-out);
+        transition-duration: 0.2s;
+        transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       }
     }
 
@@ -2222,13 +2299,13 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       z-index: 1;
       border-radius: var(--media-control-radius);
       opacity: 0;
+      content: '';
+      background-color: currentColor;
       width: 0.25rem;
       height: 0.25rem;
       transition-property: opacity, scale;
-      transition-duration: var(--media-duration-slow);
-      content: '';
-      transition-timing-function: var(--media-ease-out);
-      background-color: currentColor;
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 50%;
       left: 50%;
@@ -2242,17 +2319,24 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       scale: 1;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-slider-preview:before {
+        content: '';
+        transition-duration: 50ms;
+      }
+    }
+
     .media-slider-thumb {
       top: 50%;
       left: var(--media-slider-fill);
       z-index: 10;
       border-radius: var(--media-control-radius);
       outline-offset: -4px;
-      transition-property: opacity, height, width, outline-offset, left, top;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       background-color: currentColor;
       outline: 4px solid #0000;
+      transition-property: opacity, height, width, outline-offset, left, top;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       translate: -50% -50%;
     }
@@ -2295,6 +2379,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     @scope (.media-slider) {
       &[data-dragging] .media-slider-thumb[data-orientation='vertical'] {
         top: calc(100% - var(--media-slider-pointer));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-slider-thumb {
+        transition-duration: 50ms;
       }
     }
 
@@ -2379,12 +2469,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       transform-origin: bottom;
       opacity: 0;
       filter: blur(16px);
-      transition-property: filter, opacity, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       --media-thumbnail-max-width: var(--media-max-width);
       background-color: oklab(0% none none / 0.9);
       border-radius: 0.75rem;
+      transition-property: filter, opacity, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       bottom: calc(100% + 2.25rem);
       left: 50%;
@@ -2407,13 +2497,19 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       width: var(--media-thumbnail-max-width);
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-thumbnail {
+        transition-duration: 50ms;
+      }
+    }
+
     .media-thumbnail-image {
       max-height: var(--media-max-height);
       max-width: var(--media-thumbnail-max-width);
       border-radius: inherit;
       transition-property: opacity;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: clip;
@@ -2421,6 +2517,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     .media-thumbnail-image[data-loading] {
       opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-thumbnail-image {
+        transition-duration: 50ms;
+      }
     }
   }
 }
@@ -2447,7 +2549,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   .media-theme-default {
     --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
     --media-container-border-radius: var(--media-border-radius, 1.75rem);
-    --media-error-dialog-transition-duration: 350ms;
     --media-control-size: calc(2.25 * var(--media-size));
     --media-control-radius: 9999px;
     --media-surface-radius: 0.5rem;
@@ -2471,14 +2572,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-padding: 0.25rem;
-    --media-duration-fast: 100ms;
-    --media-duration-normal: 150ms;
-    --media-duration-slow: 200ms;
-    --media-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --media-ease-out: cubic-bezier(0, 0, 0.2, 1);
     --media-controls-transition-duration: 100ms;
-    --media-error-dialog-transition-delay: 100ms;
-    --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
@@ -2511,12 +2605,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   @media (prefers-reduced-motion: reduce) {
     :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
-      --media-duration-fast: 50ms;
-      --media-duration-normal: 50ms;
-      --media-duration-slow: 50ms;
-      --media-error-dialog-transition-delay: 0ms;
-      --media-error-dialog-transition-duration: 50ms;
-      --media-popup-transition-duration: 0ms;
     }
   }
 
@@ -2950,9 +3038,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       min-height: 0;
       color: inherit;
       outline-offset: -2px;
-      transition-property: background-color, color, outline-offset, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       -webkit-user-select: none;
       user-select: none;
       background-color: #0000;
@@ -2962,6 +3047,9 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       flex-shrink: 0;
       place-items: center;
       padding: 0;
+      transition-property: background-color, color, outline-offset, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
@@ -2991,6 +3079,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-button[aria-expanded='true'] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-button {
+        transition-duration: 50ms;
+      }
     }
 
     .media-button-icon {
@@ -3206,12 +3300,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       -webkit-font-smoothing: auto;
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
-      transition-property: outline-offset, outline-color;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       background-color: #000;
       outline: 2px solid #0000;
       line-height: 1.5;
+      transition-property: outline-offset, outline-color;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: hidden;
@@ -3227,10 +3321,10 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       opacity: 0;
       filter: blur(var(--media-poster-placeholder-blur, 20px));
       content: '';
+      background-repeat: no-repeat;
       transition-property: opacity;
       transition-duration: 0.25s;
-      transition-timing-function: var(--media-ease-in-out);
-      background-repeat: no-repeat;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -3261,6 +3355,13 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
       opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-container,
+      :scope.media-container {
+        transition-duration: 50ms;
+      }
     }
 
     @media (pointer: fine) {
@@ -3355,7 +3456,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       color: #fff;
       transition-property: filter, opacity, translate;
       transition-duration: calc(var(--media-controls-transition-duration) / 2);
-      transition-timing-function: var(--media-ease-out);
       --media-popover-boundary-offset: 0.25rem;
       --media-popover-side-offset: 1.25rem;
       --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
@@ -3365,6 +3465,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       flex-wrap: wrap;
       align-items: center;
       column-gap: 0.5rem;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: 0.25rem;
@@ -3429,11 +3530,11 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     @container media-root (width >= 42rem) {
       .media-time-controls {
-        min-width: 0;
-        transition: mask-position 50ms var(--media-ease-out);
         flex-direction: row;
         flex: 1 1 0;
         order: 0;
+        min-width: 0;
+        transition: mask-position 50ms ease-out;
         mask-position: 100% 0;
         mask-size: 200% 100%;
       }
@@ -3512,18 +3613,18 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       pointer-events: none;
       z-index: 20;
       color: #fff;
-      width: 100%;
-      height: 100%;
-      transition-property: opacity, scale, transform;
-      transition-delay: var(--media-error-dialog-transition-delay);
-      transition-duration: var(--media-error-dialog-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       outline-style: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       gap: 0.75rem;
+      width: 100%;
+      height: 100%;
       padding: 1rem;
+      transition:
+        opacity 0.15s cubic-bezier(0, 0, 0.2, 1) 0.1s,
+        scale 0.15s cubic-bezier(0, 0, 0.2, 1) 0.1s,
+        transform 0.15s cubic-bezier(0, 0, 0.2, 1) 0.1s;
       display: flex;
       position: absolute;
       inset: 0;
@@ -3546,6 +3647,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     @media (prefers-reduced-motion: reduce) {
       .media-error-dialog {
+        transition-duration: 50ms;
         transition-delay: 0s;
       }
     }
@@ -3617,25 +3719,32 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     .media-playback-status-indicator {
       text-align: center;
-      transition-property: opacity, scale;
-      transition-duration: var(--media-duration-slow);
-      transition-timing-function: var(--media-ease-out);
       grid-row-start: 1;
       grid-column-start: 2;
       place-content: center;
       padding: 1rem;
+      transition-property: opacity, scale;
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
     .media-playback-status-indicator[data-ending-style] {
       opacity: 0;
-      transition-duration: var(--media-duration-fast);
+      transition-duration: 0.1s;
       scale: 0.85;
     }
 
     .media-playback-status-indicator[data-starting-style] {
       opacity: 0;
       scale: 0.85;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-playback-status-indicator,
+      .media-playback-status-indicator[data-ending-style] {
+        transition-duration: 50ms;
+      }
     }
 
     .media-seek-indicator {
@@ -3662,8 +3771,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       width: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
       height: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
       transition-property: translate, opacity;
-      transition-duration: var(--media-duration-slow);
-      transition-timing-function: var(--media-ease-in-out);
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: none;
     }
 
@@ -3683,6 +3792,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     @scope (.media-seek-indicator) {
       &[data-direction='backward'] .media-seek-indicator-icon {
         scale: -1 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-seek-indicator-icon {
+        transition-duration: 50ms;
       }
     }
 
@@ -3713,19 +3828,19 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     .media-status-indicator {
       pointer-events: none;
-      width: 100%;
-      transition-property: opacity, scale, translate;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       padding-inline: 0.625rem;
       inset-inline: 0;
       background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
       justify-content: center;
       align-items: center;
       gap: 0.5rem;
+      width: 100%;
       padding-top: 0.75rem;
       padding-bottom: 8rem;
       font-weight: 500;
+      transition-property: opacity, scale, translate;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 0;
@@ -3740,6 +3855,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     @media (prefers-reduced-motion: no-preference) {
       .media-status-indicator[data-ending-style] {
         translate: 0 -100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-status-indicator {
+        transition-duration: 50ms;
       }
     }
 
@@ -3783,17 +3904,17 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     .media-volume-indicator {
       pointer-events: none;
-      width: 100%;
-      transition-property: opacity, scale, translate;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       padding-inline: 0.625rem;
       inset-inline: 0;
       background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
       justify-content: center;
+      width: 100%;
       padding-top: 0.75rem;
       padding-bottom: 8rem;
       font-weight: 500;
+      transition-property: opacity, scale, translate;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
     }
@@ -3807,6 +3928,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     @media (prefers-reduced-motion: no-preference) {
       .media-volume-indicator[data-ending-style] {
         translate: 0 -100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-indicator {
+        transition-duration: 50ms;
       }
     }
 
@@ -3827,8 +3954,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         0 0 0 1px var(--media-surface-outer-border),
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
-      transition-property: background-size;
-      transition-duration: var(--media-duration-slow);
       background-position: 0;
       background-repeat: no-repeat;
       justify-content: space-between;
@@ -3836,8 +3961,16 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       gap: 0.5rem;
       padding-block: 0.25rem;
       padding-inline: 0.625rem;
+      transition-property: background-size;
+      transition-duration: 0.2s;
       transition-timing-function: linear;
       display: flex;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-indicator-fill {
+        transition-duration: 50ms;
+      }
     }
 
     .media-volume-indicator-icon {
@@ -3959,9 +4092,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: var(--media-surface-radius);
       text-align: left;
       outline-offset: -2px;
-      transition-property: color, background-color;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-in-out);
       -webkit-user-select: none;
       user-select: none;
       outline: 2px solid #0000;
@@ -3969,6 +4099,9 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       gap: 0.375rem;
       padding-block: 0.375rem;
       padding-inline: 0.5rem;
+      transition-property: color, background-color;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       position: relative;
     }
@@ -3988,6 +4121,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-menu-item[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-menu-item {
+        transition-duration: 50ms;
+      }
     }
 
     .media-radio-group {
@@ -4011,20 +4150,22 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       width: var(--media-menu-width);
       max-width: var(--media-popover-available-width);
       overscroll-behavior: none;
-      min-width: 12rem;
-      transition-timing-function: var(--media-ease-out);
-      transition-duration:
-        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-        var(--media-menu-transition-duration), var(--media-menu-transition-duration);
-      --media-menu-transition-duration: 0.25s;
       border-style: solid;
       border-width: 0;
       border-radius: 0.75rem;
+      min-width: 12rem;
       margin: 0;
       padding: 0.25rem;
       transition-property: opacity, filter, transform, scale, width, height;
+      transition-duration: 0.1s, 0.1s, 0.1s, 0.1s, 0.25s, 0.25s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-settings {
+        transition-duration: 0s, 0s, 0s, 0s, 0.25s, 0.25s;
+      }
     }
 
     .media-settings[data-submenu-expanded='true'] > :not([data-submenu]) {
@@ -4034,8 +4175,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     .media-settings-icon {
       transition-property: transform, translate, scale, rotate;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-in-out);
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @scope (.media-settings-trigger) {
@@ -4066,12 +4207,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       z-index: 10;
       max-height: inherit;
       overscroll-behavior: none;
-      transition-property: translate, filter;
-      transition-duration: var(--media-menu-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
+      transition-property: translate, filter;
+      transition-duration: 0.25s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
       overflow: auto;
@@ -4103,8 +4244,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       opacity: 0;
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -4131,12 +4272,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   @scope (.media-skin-video-minimal) {
     .media-popover {
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -4197,6 +4338,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       top: 100%;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-popover {
+        transition-duration: 0s;
+      }
+    }
+
     .media-surface {
       background-color: var(--media-surface-background);
       color: var(--media-controls-color);
@@ -4232,14 +4379,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       border-radius: var(--media-control-radius);
       white-space: nowrap;
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
       padding-block: 0.35rem;
       padding-inline: 0.625rem;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -4311,6 +4458,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       top: 100%;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-tooltip {
+        transition-duration: 0s;
+      }
+    }
+
     .media-tooltip-shortcut {
       background-color: currentColor;
       border-radius: 0.25rem;
@@ -4334,13 +4487,13 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     .media-volume-popover {
       border-radius: var(--media-control-radius);
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
       padding-block: 0.75rem;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -4418,6 +4571,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       inset-inline: 0;
       top: 100%;
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-popover {
+        transition-duration: 0s;
+      }
+    }
   }
 }
 
@@ -4492,11 +4651,11 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       font-variant-numeric: tabular-nums;
       opacity: 0;
       filter: blur(16px);
-      transition-property: filter, opacity, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       flex-direction: column;
       align-items: center;
+      transition-property: filter, opacity, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: calc(100% + 2.625rem);
@@ -4511,6 +4670,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         opacity: 1;
         filter: none;
         scale: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-preview-value {
+        transition-duration: 50ms;
       }
     }
 
@@ -4627,8 +4792,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     @media (prefers-reduced-motion: no-preference) {
       .media-slider-chapter-track {
         transition-property: height, width;
-        transition-duration: var(--media-duration-slow);
-        transition-timing-function: var(--media-ease-out);
+        transition-duration: 0.2s;
+        transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       }
     }
 
@@ -4686,13 +4851,13 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       z-index: 1;
       border-radius: var(--media-control-radius);
       opacity: 0;
+      content: '';
+      background-color: currentColor;
       width: 0.25rem;
       height: 0.25rem;
       transition-property: opacity, scale;
-      transition-duration: var(--media-duration-slow);
-      content: '';
-      transition-timing-function: var(--media-ease-out);
-      background-color: currentColor;
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 50%;
       left: 50%;
@@ -4706,17 +4871,24 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       scale: 1;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-slider-preview:before {
+        content: '';
+        transition-duration: 50ms;
+      }
+    }
+
     .media-slider-thumb {
       top: 50%;
       left: var(--media-slider-fill);
       z-index: 10;
       border-radius: var(--media-control-radius);
       outline-offset: -4px;
-      transition-property: opacity, height, width, outline-offset, left, top;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       background-color: currentColor;
       outline: 4px solid #0000;
+      transition-property: opacity, height, width, outline-offset, left, top;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       translate: -50% -50%;
     }
@@ -4759,6 +4931,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     @scope (.media-slider) {
       &[data-dragging] .media-slider-thumb[data-orientation='vertical'] {
         top: calc(100% - var(--media-slider-pointer));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-slider-thumb {
+        transition-duration: 50ms;
       }
     }
 
@@ -4843,12 +5021,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       transform-origin: bottom;
       opacity: 0;
       filter: blur(16px);
-      transition-property: filter, opacity, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       --media-thumbnail-max-width: var(--media-max-width);
       background-color: oklab(0% none none / 0.9);
       border-radius: 0.75rem;
+      transition-property: filter, opacity, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       bottom: calc(100% + 2.25rem);
       left: 50%;
@@ -4871,13 +5049,19 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       width: var(--media-thumbnail-max-width);
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-thumbnail {
+        transition-duration: 50ms;
+      }
+    }
+
     .media-thumbnail-image {
       max-height: var(--media-max-height);
       max-width: var(--media-thumbnail-max-width);
       border-radius: inherit;
       transition-property: opacity;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: clip;
@@ -4885,6 +5069,12 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 
     .media-thumbnail-image[data-loading] {
       opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-thumbnail-image {
+        transition-duration: 50ms;
+      }
     }
   }
 }
@@ -4911,7 +5101,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   .media-theme-minimal {
     --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
     --media-container-border-radius: var(--media-border-radius, 0.75rem);
-    --media-error-dialog-transition-duration: 150ms;
     --media-control-size: calc(2.375 * var(--media-size));
     --media-control-radius: 0.5rem;
     --media-surface-radius: 0.625rem;
@@ -4947,14 +5136,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-padding: 0.25rem;
-    --media-duration-fast: 100ms;
-    --media-duration-normal: 150ms;
-    --media-duration-slow: 200ms;
-    --media-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --media-ease-out: cubic-bezier(0, 0, 0.2, 1);
     --media-controls-transition-duration: 100ms;
-    --media-error-dialog-transition-delay: 100ms;
-    --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
@@ -4987,12 +5169,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   @media (prefers-reduced-motion: reduce) {
     :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
-      --media-duration-fast: 50ms;
-      --media-duration-normal: 50ms;
-      --media-duration-slow: 50ms;
-      --media-error-dialog-transition-delay: 0ms;
-      --media-error-dialog-transition-duration: 50ms;
-      --media-popup-transition-duration: 0ms;
     }
   }
 
@@ -5906,9 +6082,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       min-height: 0;
       color: inherit;
       outline-offset: -2px;
-      transition-property: background-color, color, outline-offset, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       -webkit-user-select: none;
       user-select: none;
       background-color: #0000;
@@ -5918,6 +6091,9 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       flex-shrink: 0;
       place-items: center;
       padding: 0;
+      transition-property: background-color, color, outline-offset, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
@@ -5947,6 +6123,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     .media-button[aria-expanded='true'] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-button {
+        transition-duration: 50ms;
+      }
     }
 
     .media-button-icon {
@@ -6162,12 +6344,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       -webkit-font-smoothing: auto;
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
-      transition-property: outline-offset, outline-color;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       background-color: #000;
       outline: 2px solid #0000;
       line-height: 1.5;
+      transition-property: outline-offset, outline-color;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: hidden;
@@ -6183,10 +6365,10 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       opacity: 0;
       filter: blur(var(--media-poster-placeholder-blur, 20px));
       content: '';
+      background-repeat: no-repeat;
       transition-property: opacity;
       transition-duration: 0.25s;
-      transition-timing-function: var(--media-ease-in-out);
-      background-repeat: no-repeat;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -6217,6 +6399,13 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
       opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-container,
+      :scope.media-container {
+        transition-duration: 50ms;
+      }
     }
 
     @media (pointer: fine) {
@@ -6301,9 +6490,9 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       transition-property: filter, opacity, scale, translate;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       inset-inline: 0.5rem;
       align-items: center;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: 0.5rem;
@@ -6337,11 +6526,11 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       color: #fff;
       transition-property: filter, opacity, scale, translate;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       --media-popover-boundary-offset: 0.75rem;
       --media-popover-side-offset: calc(0.5rem + var(--media-controls-padding));
       --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
       --media-tooltip-side-offset: var(--media-popover-side-offset);
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: contents;
     }
 
@@ -6417,8 +6606,8 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
       transition-property: filter, opacity, scale, translate;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       align-items: center;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 0.5rem;
@@ -6501,15 +6690,15 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
-      transition-property: opacity, scale, transform;
-      transition-delay: var(--media-error-dialog-transition-delay);
-      transition-duration: var(--media-error-dialog-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-radius: 1.75rem;
       outline-style: none;
       flex-direction: column;
       gap: 0.75rem;
       padding: 0.75rem;
+      transition:
+        opacity 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
+        scale 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s,
+        transform 0.35s cubic-bezier(0, 0, 0.2, 1) 0.1s;
       display: flex;
       position: absolute;
       top: 50%;
@@ -6550,6 +6739,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 
     @media (prefers-reduced-motion: reduce) {
       .media-error-dialog {
+        transition-duration: 50ms;
         transition-delay: 0s;
       }
     }
@@ -6617,26 +6807,33 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       border-radius: var(--media-control-radius);
       text-align: center;
       backdrop-filter: blur(8px);
-      transition-property: opacity, scale;
-      transition-duration: var(--media-duration-slow);
-      transition-timing-function: var(--media-ease-out);
       background-color: oklab(0% none none / 0.35);
       grid-row-start: 1;
       grid-column-start: 2;
       place-content: center;
       padding: 1rem;
+      transition-property: opacity, scale;
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
     .media-playback-status-indicator[data-ending-style] {
       opacity: 0;
-      transition-duration: var(--media-duration-fast);
+      transition-duration: 0.1s;
       scale: 0.85;
     }
 
     .media-playback-status-indicator[data-starting-style] {
       opacity: 0;
       scale: 0.85;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-playback-status-indicator,
+      .media-playback-status-indicator[data-ending-style] {
+        transition-duration: 50ms;
+      }
     }
 
     .media-seek-indicator {
@@ -6663,8 +6860,8 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       width: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
       height: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
       transition-property: translate, opacity;
-      transition-duration: var(--media-duration-slow);
-      transition-timing-function: var(--media-ease-in-out);
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: none;
     }
 
@@ -6684,6 +6881,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     @scope (.media-seek-indicator) {
       &[data-direction='backward'] .media-seek-indicator-icon {
         scale: -1 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-seek-indicator-icon {
+        transition-duration: 50ms;
       }
     }
 
@@ -6725,15 +6928,15 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
-      transition-property: opacity, scale, translate;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       background-color: oklab(0% none none / 0.25);
       align-items: center;
       gap: 0.5rem;
       padding-block: 0.25rem;
       padding-inline: 0.625rem;
       font-weight: 500;
+      transition-property: opacity, scale, translate;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 0.75rem;
@@ -6764,6 +6967,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     .media-status-indicator[data-starting-style] {
       opacity: 0;
       scale: 0.9;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-status-indicator {
+        transition-duration: 50ms;
+      }
     }
 
     .media-status-indicator-icon {
@@ -6818,11 +7027,11 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
       backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
-      transition-property: opacity, scale, translate;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       background-color: oklab(0% none none / 0.25);
       font-weight: 500;
+      transition-property: opacity, scale, translate;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0.75rem;
     }
@@ -6854,6 +7063,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       scale: 0.9;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-indicator {
+        transition-duration: 50ms;
+      }
+    }
+
     .media-volume-indicator-fill {
       border-radius: inherit;
       background-image: linear-gradient(
@@ -6861,18 +7076,24 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         var(--media-accent-color, var(--media-default-accent-color))
       );
       background-size: var(--media-volume-fill, 0%) 100%;
-      width: 100%;
-      transition-property: background-size;
-      transition-duration: var(--media-duration-slow);
       background-position: 0;
       background-repeat: no-repeat;
       justify-content: space-between;
       align-items: center;
       gap: 0.5rem;
+      width: 100%;
       padding-block: 0.25rem;
       padding-inline: 0.625rem;
+      transition-property: background-size;
+      transition-duration: 0.2s;
       transition-timing-function: linear;
       display: flex;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-indicator-fill {
+        transition-duration: 50ms;
+      }
     }
 
     .media-volume-indicator-icon {
@@ -6994,9 +7215,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       border-radius: var(--media-surface-radius);
       text-align: left;
       outline-offset: -2px;
-      transition-property: color, background-color;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-in-out);
       -webkit-user-select: none;
       user-select: none;
       outline: 2px solid #0000;
@@ -7004,6 +7222,9 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       gap: 0.375rem;
       padding-block: 0.375rem;
       padding-inline: 0.5rem;
+      transition-property: color, background-color;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       position: relative;
     }
@@ -7023,6 +7244,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     .media-menu-item[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-menu-item {
+        transition-duration: 50ms;
+      }
     }
 
     .media-radio-group {
@@ -7046,20 +7273,22 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       width: var(--media-menu-width);
       max-width: var(--media-popover-available-width);
       overscroll-behavior: none;
-      min-width: 12rem;
-      transition-timing-function: var(--media-ease-out);
-      transition-duration:
-        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-        var(--media-menu-transition-duration), var(--media-menu-transition-duration);
-      --media-menu-transition-duration: 0.25s;
       border-style: solid;
       border-width: 0;
       border-radius: 0.75rem;
+      min-width: 12rem;
       margin: 0;
       padding: 0.25rem;
       transition-property: opacity, filter, transform, scale, width, height;
+      transition-duration: 0.1s, 0.1s, 0.1s, 0.1s, 0.25s, 0.25s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-settings {
+        transition-duration: 0s, 0s, 0s, 0s, 0.25s, 0.25s;
+      }
     }
 
     .media-settings[data-submenu-expanded='true'] > :not([data-submenu]) {
@@ -7069,8 +7298,8 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 
     .media-settings-icon {
       transition-property: transform, translate, scale, rotate;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-in-out);
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @scope (.media-settings-trigger) {
@@ -7101,12 +7330,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       z-index: 10;
       max-height: inherit;
       overscroll-behavior: none;
-      transition-property: translate, filter;
-      transition-duration: var(--media-menu-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
+      transition-property: translate, filter;
+      transition-duration: 0.25s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
       overflow: auto;
@@ -7138,8 +7367,8 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       opacity: 0;
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -7166,12 +7395,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   @scope (.media-skin-video) {
     .media-popover {
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -7232,6 +7461,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       top: 100%;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-popover {
+        transition-duration: 0s;
+      }
+    }
+
     .media-surface {
       background-color: var(--media-surface-background);
       color: var(--media-controls-color);
@@ -7267,14 +7502,14 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       border-radius: var(--media-control-radius);
       white-space: nowrap;
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
       padding-block: 0.35rem;
       padding-inline: 0.625rem;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -7346,6 +7581,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       top: 100%;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-tooltip {
+        transition-duration: 0s;
+      }
+    }
+
     .media-tooltip-shortcut {
       background-color: currentColor;
       border-radius: 0.25rem;
@@ -7369,13 +7610,13 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     .media-volume-popover {
       border-radius: var(--media-control-radius);
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
       padding-block: 0.75rem;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -7453,6 +7694,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       inset-inline: 0;
       top: 100%;
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-popover {
+        transition-duration: 0s;
+      }
+    }
   }
 }
 
@@ -7527,11 +7774,11 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       font-variant-numeric: tabular-nums;
       opacity: 0;
       filter: blur(16px);
-      transition-property: filter, opacity, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       flex-direction: column;
       align-items: center;
+      transition-property: filter, opacity, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: calc(100% + 2.625rem);
@@ -7546,6 +7793,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
         opacity: 1;
         filter: none;
         scale: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-preview-value {
+        transition-duration: 50ms;
       }
     }
 
@@ -7662,8 +7915,8 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     @media (prefers-reduced-motion: no-preference) {
       .media-slider-chapter-track {
         transition-property: height, width;
-        transition-duration: var(--media-duration-slow);
-        transition-timing-function: var(--media-ease-out);
+        transition-duration: 0.2s;
+        transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       }
     }
 
@@ -7721,13 +7974,13 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       z-index: 1;
       border-radius: var(--media-control-radius);
       opacity: 0;
+      content: '';
+      background-color: currentColor;
       width: 0.25rem;
       height: 0.25rem;
       transition-property: opacity, scale;
-      transition-duration: var(--media-duration-slow);
-      content: '';
-      transition-timing-function: var(--media-ease-out);
-      background-color: currentColor;
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 50%;
       left: 50%;
@@ -7741,17 +7994,24 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       scale: 1;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-slider-preview:before {
+        content: '';
+        transition-duration: 50ms;
+      }
+    }
+
     .media-slider-thumb {
       top: 50%;
       left: var(--media-slider-fill);
       z-index: 10;
       border-radius: var(--media-control-radius);
       outline-offset: -4px;
-      transition-property: opacity, height, width, outline-offset, left, top;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       background-color: currentColor;
       outline: 4px solid #0000;
+      transition-property: opacity, height, width, outline-offset, left, top;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       translate: -50% -50%;
     }
@@ -7794,6 +8054,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     @scope (.media-slider) {
       &[data-dragging] .media-slider-thumb[data-orientation='vertical'] {
         top: calc(100% - var(--media-slider-pointer));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-slider-thumb {
+        transition-duration: 50ms;
       }
     }
 
@@ -7878,12 +8144,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       transform-origin: bottom;
       opacity: 0;
       filter: blur(16px);
-      transition-property: filter, opacity, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       --media-thumbnail-max-width: var(--media-max-width);
       background-color: oklab(0% none none / 0.9);
       border-radius: 0.75rem;
+      transition-property: filter, opacity, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       bottom: calc(100% + 2.25rem);
       left: 50%;
@@ -7906,13 +8172,19 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       width: var(--media-thumbnail-max-width);
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-thumbnail {
+        transition-duration: 50ms;
+      }
+    }
+
     .media-thumbnail-image {
       max-height: var(--media-max-height);
       max-width: var(--media-thumbnail-max-width);
       border-radius: inherit;
       transition-property: opacity;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: clip;
@@ -7920,6 +8192,12 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 
     .media-thumbnail-image[data-loading] {
       opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-thumbnail-image {
+        transition-duration: 50ms;
+      }
     }
   }
 }
@@ -7946,7 +8224,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   .media-theme-default {
     --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
     --media-container-border-radius: var(--media-border-radius, 1.75rem);
-    --media-error-dialog-transition-duration: 350ms;
     --media-control-size: calc(2.25 * var(--media-size));
     --media-control-radius: 9999px;
     --media-surface-radius: 0.5rem;
@@ -7970,14 +8247,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-padding: 0.25rem;
-    --media-duration-fast: 100ms;
-    --media-duration-normal: 150ms;
-    --media-duration-slow: 200ms;
-    --media-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --media-ease-out: cubic-bezier(0, 0, 0.2, 1);
     --media-controls-transition-duration: 100ms;
-    --media-error-dialog-transition-delay: 100ms;
-    --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
@@ -8010,12 +8280,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   @media (prefers-reduced-motion: reduce) {
     :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
-      --media-duration-fast: 50ms;
-      --media-duration-normal: 50ms;
-      --media-duration-slow: 50ms;
-      --media-error-dialog-transition-delay: 0ms;
-      --media-error-dialog-transition-duration: 50ms;
-      --media-popup-transition-duration: 0ms;
     }
   }
 
@@ -8927,9 +9191,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       min-height: 0;
       color: inherit;
       outline-offset: -2px;
-      transition-property: background-color, color, outline-offset, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       -webkit-user-select: none;
       user-select: none;
       background-color: #0000;
@@ -8939,6 +9200,9 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       flex-shrink: 0;
       place-items: center;
       padding: 0;
+      transition-property: background-color, color, outline-offset, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
@@ -8968,6 +9232,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     .media-button[aria-expanded='true'] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-button {
+        transition-duration: 50ms;
+      }
     }
 
     .media-button-icon {
@@ -9183,12 +9453,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       -webkit-font-smoothing: auto;
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
-      transition-property: outline-offset, outline-color;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       background-color: #000;
       outline: 2px solid #0000;
       line-height: 1.5;
+      transition-property: outline-offset, outline-color;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: hidden;
@@ -9204,10 +9474,10 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       opacity: 0;
       filter: blur(var(--media-poster-placeholder-blur, 20px));
       content: '';
+      background-repeat: no-repeat;
       transition-property: opacity;
       transition-duration: 0.25s;
-      transition-timing-function: var(--media-ease-in-out);
-      background-repeat: no-repeat;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -9238,6 +9508,13 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
       opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-container,
+      :scope.media-container {
+        transition-duration: 50ms;
+      }
     }
 
     @media (pointer: fine) {
@@ -9332,7 +9609,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       color: #fff;
       transition-property: filter, opacity, translate;
       transition-duration: calc(var(--media-controls-transition-duration) / 2);
-      transition-timing-function: var(--media-ease-out);
       --media-popover-boundary-offset: 0.25rem;
       --media-popover-side-offset: 1.25rem;
       --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
@@ -9342,6 +9618,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       flex-wrap: wrap;
       align-items: center;
       column-gap: 0.5rem;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: 0.25rem;
@@ -9406,11 +9683,11 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 
     @container media-root (width >= 42rem) {
       .media-time-controls {
-        min-width: 0;
-        transition: mask-position 50ms var(--media-ease-out);
         flex-direction: row;
         flex: 1 1 0;
         order: 0;
+        min-width: 0;
+        transition: mask-position 50ms ease-out;
         mask-position: 100% 0;
         mask-size: 200% 100%;
       }
@@ -9489,18 +9766,18 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       pointer-events: none;
       z-index: 20;
       color: #fff;
-      width: 100%;
-      height: 100%;
-      transition-property: opacity, scale, transform;
-      transition-delay: var(--media-error-dialog-transition-delay);
-      transition-duration: var(--media-error-dialog-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       outline-style: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       gap: 0.75rem;
+      width: 100%;
+      height: 100%;
       padding: 1rem;
+      transition:
+        opacity 0.15s cubic-bezier(0, 0, 0.2, 1) 0.1s,
+        scale 0.15s cubic-bezier(0, 0, 0.2, 1) 0.1s,
+        transform 0.15s cubic-bezier(0, 0, 0.2, 1) 0.1s;
       display: flex;
       position: absolute;
       inset: 0;
@@ -9523,6 +9800,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 
     @media (prefers-reduced-motion: reduce) {
       .media-error-dialog {
+        transition-duration: 50ms;
         transition-delay: 0s;
       }
     }
@@ -9594,25 +9872,32 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 
     .media-playback-status-indicator {
       text-align: center;
-      transition-property: opacity, scale;
-      transition-duration: var(--media-duration-slow);
-      transition-timing-function: var(--media-ease-out);
       grid-row-start: 1;
       grid-column-start: 2;
       place-content: center;
       padding: 1rem;
+      transition-property: opacity, scale;
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: grid;
     }
 
     .media-playback-status-indicator[data-ending-style] {
       opacity: 0;
-      transition-duration: var(--media-duration-fast);
+      transition-duration: 0.1s;
       scale: 0.85;
     }
 
     .media-playback-status-indicator[data-starting-style] {
       opacity: 0;
       scale: 0.85;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-playback-status-indicator,
+      .media-playback-status-indicator[data-ending-style] {
+        transition-duration: 50ms;
+      }
     }
 
     .media-seek-indicator {
@@ -9639,8 +9924,8 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       width: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
       height: calc(var(--media-icon-size, calc(1.125 * var(--media-size))) * 1.5);
       transition-property: translate, opacity;
-      transition-duration: var(--media-duration-slow);
-      transition-timing-function: var(--media-ease-in-out);
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: none;
     }
 
@@ -9660,6 +9945,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     @scope (.media-seek-indicator) {
       &[data-direction='backward'] .media-seek-indicator-icon {
         scale: -1 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-seek-indicator-icon {
+        transition-duration: 50ms;
       }
     }
 
@@ -9690,19 +9981,19 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 
     .media-status-indicator {
       pointer-events: none;
-      width: 100%;
-      transition-property: opacity, scale, translate;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       padding-inline: 0.625rem;
       inset-inline: 0;
       background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
       justify-content: center;
       align-items: center;
       gap: 0.5rem;
+      width: 100%;
       padding-top: 0.75rem;
       padding-bottom: 8rem;
       font-weight: 500;
+      transition-property: opacity, scale, translate;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       top: 0;
@@ -9717,6 +10008,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     @media (prefers-reduced-motion: no-preference) {
       .media-status-indicator[data-ending-style] {
         translate: 0 -100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-status-indicator {
+        transition-duration: 50ms;
       }
     }
 
@@ -9760,17 +10057,17 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 
     .media-volume-indicator {
       pointer-events: none;
-      width: 100%;
-      transition-property: opacity, scale, translate;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-out);
       padding-inline: 0.625rem;
       inset-inline: 0;
       background-image: linear-gradient(oklch(0% 0 0 / 0.35), oklch(0% 0 0 / 0.2) 3rem, #0000);
       justify-content: center;
+      width: 100%;
       padding-top: 0.75rem;
       padding-bottom: 8rem;
       font-weight: 500;
+      transition-property: opacity, scale, translate;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
     }
@@ -9784,6 +10081,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     @media (prefers-reduced-motion: no-preference) {
       .media-volume-indicator[data-ending-style] {
         translate: 0 -100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-indicator {
+        transition-duration: 50ms;
       }
     }
 
@@ -9804,8 +10107,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
         0 0 0 1px var(--media-surface-outer-border),
         0 1px 3px 0 var(--media-shadow-color),
         0 1px 2px -1px var(--media-shadow-color);
-      transition-property: background-size;
-      transition-duration: var(--media-duration-slow);
       background-position: 0;
       background-repeat: no-repeat;
       justify-content: space-between;
@@ -9813,8 +10114,16 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       gap: 0.5rem;
       padding-block: 0.25rem;
       padding-inline: 0.625rem;
+      transition-property: background-size;
+      transition-duration: 0.2s;
       transition-timing-function: linear;
       display: flex;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-indicator-fill {
+        transition-duration: 50ms;
+      }
     }
 
     .media-volume-indicator-icon {
@@ -9936,9 +10245,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       border-radius: var(--media-surface-radius);
       text-align: left;
       outline-offset: -2px;
-      transition-property: color, background-color;
-      transition-duration: var(--media-duration-fast);
-      transition-timing-function: var(--media-ease-in-out);
       -webkit-user-select: none;
       user-select: none;
       outline: 2px solid #0000;
@@ -9946,6 +10252,9 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       gap: 0.375rem;
       padding-block: 0.375rem;
       padding-inline: 0.5rem;
+      transition-property: color, background-color;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       position: relative;
     }
@@ -9965,6 +10274,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     .media-menu-item[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-menu-item {
+        transition-duration: 50ms;
+      }
     }
 
     .media-radio-group {
@@ -9988,20 +10303,22 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       width: var(--media-menu-width);
       max-width: var(--media-popover-available-width);
       overscroll-behavior: none;
-      min-width: 12rem;
-      transition-timing-function: var(--media-ease-out);
-      transition-duration:
-        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-        var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-        var(--media-menu-transition-duration), var(--media-menu-transition-duration);
-      --media-menu-transition-duration: 0.25s;
       border-style: solid;
       border-width: 0;
       border-radius: 0.75rem;
+      min-width: 12rem;
       margin: 0;
       padding: 0.25rem;
       transition-property: opacity, filter, transform, scale, width, height;
+      transition-duration: 0.1s, 0.1s, 0.1s, 0.1s, 0.25s, 0.25s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: hidden;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-settings {
+        transition-duration: 0s, 0s, 0s, 0s, 0.25s, 0.25s;
+      }
     }
 
     .media-settings[data-submenu-expanded='true'] > :not([data-submenu]) {
@@ -10011,8 +10328,8 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 
     .media-settings-icon {
       transition-property: transform, translate, scale, rotate;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-in-out);
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @scope (.media-settings-trigger) {
@@ -10043,12 +10360,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       z-index: 10;
       max-height: inherit;
       overscroll-behavior: none;
-      transition-property: translate, filter;
-      transition-duration: var(--media-menu-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       inset-inline: 0;
       outline-style: none;
       padding: 0.25rem;
+      transition-property: translate, filter;
+      transition-duration: 0.25s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 0;
       overflow: auto;
@@ -10080,8 +10397,8 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       opacity: 0;
       transition-property: opacity, backdrop-filter;
       transition-duration: var(--media-controls-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       background-image: linear-gradient(to top, oklch(0% 0 0 / 0.5), oklch(0% 0 0 / 0.3) 25%, #0000);
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       inset: 0;
     }
@@ -10108,12 +10425,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
   @scope (.media-skin-video-minimal) {
     .media-popover {
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -10174,6 +10491,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       top: 100%;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-popover {
+        transition-duration: 0s;
+      }
+    }
+
     .media-surface {
       background-color: var(--media-surface-background);
       color: var(--media-controls-color);
@@ -10209,14 +10532,14 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       border-radius: var(--media-control-radius);
       white-space: nowrap;
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
       padding-block: 0.35rem;
       padding-inline: 0.625rem;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -10288,6 +10611,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       top: 100%;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-tooltip {
+        transition-duration: 0s;
+      }
+    }
+
     .media-tooltip-shortcut {
       background-color: currentColor;
       border-radius: 0.25rem;
@@ -10311,13 +10640,13 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     .media-volume-popover {
       border-radius: var(--media-control-radius);
       color: inherit;
-      transition-property: opacity, filter, transform, scale;
-      transition-duration: var(--media-popup-transition-duration);
-      transition-timing-function: var(--media-ease-out);
       border-style: solid;
       border-width: 0;
       margin: 0;
       padding-block: 0.75rem;
+      transition-property: opacity, filter, transform, scale;
+      transition-duration: 0.1s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       overflow: visible;
     }
 
@@ -10395,6 +10724,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       inset-inline: 0;
       top: 100%;
     }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-volume-popover {
+        transition-duration: 0s;
+      }
+    }
   }
 }
 
@@ -10469,11 +10804,11 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       font-variant-numeric: tabular-nums;
       opacity: 0;
       filter: blur(16px);
-      transition-property: filter, opacity, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       flex-direction: column;
       align-items: center;
+      transition-property: filter, opacity, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: flex;
       position: absolute;
       bottom: calc(100% + 2.625rem);
@@ -10488,6 +10823,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
         opacity: 1;
         filter: none;
         scale: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-preview-value {
+        transition-duration: 50ms;
       }
     }
 
@@ -10604,8 +10945,8 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     @media (prefers-reduced-motion: no-preference) {
       .media-slider-chapter-track {
         transition-property: height, width;
-        transition-duration: var(--media-duration-slow);
-        transition-timing-function: var(--media-ease-out);
+        transition-duration: 0.2s;
+        transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       }
     }
 
@@ -10663,13 +11004,13 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       z-index: 1;
       border-radius: var(--media-control-radius);
       opacity: 0;
+      content: '';
+      background-color: currentColor;
       width: 0.25rem;
       height: 0.25rem;
       transition-property: opacity, scale;
-      transition-duration: var(--media-duration-slow);
-      content: '';
-      transition-timing-function: var(--media-ease-out);
-      background-color: currentColor;
+      transition-duration: 0.2s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       top: 50%;
       left: 50%;
@@ -10683,17 +11024,24 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       scale: 1;
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-slider-preview:before {
+        content: '';
+        transition-duration: 50ms;
+      }
+    }
+
     .media-slider-thumb {
       top: 50%;
       left: var(--media-slider-fill);
       z-index: 10;
       border-radius: var(--media-control-radius);
       outline-offset: -4px;
-      transition-property: opacity, height, width, outline-offset, left, top;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       background-color: currentColor;
       outline: 4px solid #0000;
+      transition-property: opacity, height, width, outline-offset, left, top;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       translate: -50% -50%;
     }
@@ -10736,6 +11084,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     @scope (.media-slider) {
       &[data-dragging] .media-slider-thumb[data-orientation='vertical'] {
         top: calc(100% - var(--media-slider-pointer));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-slider-thumb {
+        transition-duration: 50ms;
       }
     }
 
@@ -10820,12 +11174,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       transform-origin: bottom;
       opacity: 0;
       filter: blur(16px);
-      transition-property: filter, opacity, scale;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
       --media-thumbnail-max-width: var(--media-max-width);
       background-color: oklab(0% none none / 0.9);
       border-radius: 0.75rem;
+      transition-property: filter, opacity, scale;
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       position: absolute;
       bottom: calc(100% + 2.25rem);
       left: 50%;
@@ -10848,13 +11202,19 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       width: var(--media-thumbnail-max-width);
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .media-thumbnail {
+        transition-duration: 50ms;
+      }
+    }
+
     .media-thumbnail-image {
       max-height: var(--media-max-height);
       max-width: var(--media-thumbnail-max-width);
       border-radius: inherit;
       transition-property: opacity;
-      transition-duration: var(--media-duration-normal);
-      transition-timing-function: var(--media-ease-out);
+      transition-duration: 0.15s;
+      transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
       display: block;
       position: relative;
       overflow: clip;
@@ -10862,6 +11222,12 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 
     .media-thumbnail-image[data-loading] {
       opacity: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .media-thumbnail-image {
+        transition-duration: 50ms;
+      }
     }
   }
 }
@@ -10888,7 +11254,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
   .media-theme-minimal {
     --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
     --media-container-border-radius: var(--media-border-radius, 0.75rem);
-    --media-error-dialog-transition-duration: 150ms;
     --media-control-size: calc(2.375 * var(--media-size));
     --media-control-radius: 0.5rem;
     --media-surface-radius: 0.625rem;
@@ -10924,14 +11289,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-padding: 0.25rem;
-    --media-duration-fast: 100ms;
-    --media-duration-normal: 150ms;
-    --media-duration-slow: 200ms;
-    --media-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --media-ease-out: cubic-bezier(0, 0, 0.2, 1);
     --media-controls-transition-duration: 100ms;
-    --media-error-dialog-transition-delay: 100ms;
-    --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
@@ -10964,12 +11322,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
   @media (prefers-reduced-motion: reduce) {
     :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
-      --media-duration-fast: 50ms;
-      --media-duration-normal: 50ms;
-      --media-duration-slow: 50ms;
-      --media-error-dialog-transition-delay: 0ms;
-      --media-error-dialog-transition-duration: 50ms;
-      --media-popup-transition-duration: 0ms;
     }
   }
 
@@ -11015,7 +11367,7 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11089,7 +11441,7 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
           'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
           'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
           'm-0 overflow-visible border-0 text-inherit',
-          'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-media-out',
+          'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
           'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
           'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
           'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -11128,7 +11480,7 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11172,7 +11524,7 @@ export function CastButton({ className, ...props }: CastButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11214,7 +11566,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
       className={cn(
         'relative isolate block h-full w-full overflow-hidden rounded-[var(--media-container-border-radius)] bg-black @container/media-root',
         'font-media text-media leading-normal subpixel-antialiased',
-        'outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-(--media-duration-fast) ease-media-out',
+        'outline-2 -outline-offset-4 outline-transparent transition-[outline-offset,outline-color] duration-100 ease-out motion-reduce:duration-50',
         'focus-visible:outline-media-focus focus-visible:outline-offset-2',
         'pointer-fine:has-[[data-controls]:not([data-visible])]:cursor-none',
         '[&_video]:block [&_video]:h-full [&_video]:w-full [&_video]:rounded-[inherit]',
@@ -11225,7 +11577,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
         'before:[background-position:var(--media-object-position,center)]',
         'before:[background-size:var(--media-object-fit,contain)]',
         'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
-        'before:transition-opacity before:duration-250 before:ease-media-in-out',
+        'before:transition-opacity before:duration-250 before:ease-in-out',
         'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
         'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
         'after:shadow-[inset_0_0_0_1px_var(--media-border-color)] [&:fullscreen]:after:hidden',
@@ -11254,7 +11606,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
         className={(state) =>
           cn(
             'peer/error z-20 flex flex-col gap-3 outline-none',
-            'not-data-open:hidden transition-[opacity,scale,transform] delay-(--media-error-dialog-transition-delay) ease-media-out',
+            'not-data-open:hidden transition-[opacity,scale,transform] delay-100 ease-out motion-reduce:duration-50',
             'data-starting-style:scale-50 data-starting-style:opacity-0',
             'data-ending-style:scale-50 data-ending-style:opacity-0 data-ending-style:delay-0',
             'motion-reduce:delay-0',
@@ -11262,7 +11614,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
             'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'absolute top-1/2 left-1/2 w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] p-3 text-white',
-            'duration-(--media-error-dialog-transition-duration)',
+            'duration-350',
             resolveClassName(className, state),
           )
         }
@@ -11273,7 +11625,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
           className={cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11303,7 +11655,7 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps)
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11345,7 +11697,7 @@ export function MuteButton({ className, ...props }: MuteButtonProps) {
         cn(
           'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
           'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-          'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+          'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
           'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
           'focus-visible:outline-media-focus focus-visible:outline-offset-2',
           'not-aria-disabled:active:scale-90',
@@ -11392,7 +11744,7 @@ export function Overlay({ className, ...props }: OverlayProps) {
       className={cn(
         'pointer-events-none absolute inset-0 rounded-[inherit] opacity-0',
         '[background-image:linear-gradient(to_top,oklch(0_0_0/0.5),oklch(0_0_0/0.3)_25%,transparent)]',
-        'transition-[opacity,backdrop-filter] duration-(--media-controls-transition-duration) ease-media-out',
+        'transition-[opacity,backdrop-filter] duration-(--media-controls-transition-duration) ease-out',
         'peer-data-visible/controls:opacity-100',
         'peer-data-visible/buffering:bg-black/35 peer-data-visible/buffering:opacity-100 peer-data-visible/buffering:[backdrop-filter:blur(4px)]',
         'peer-data-open/error:opacity-100 peer-data-open/error:[backdrop-filter:blur(16px)_saturate(1.5)]',
@@ -11419,7 +11771,7 @@ export function PiPButton({ className, ...props }: PiPButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11463,7 +11815,7 @@ export function PlayButton({ className, ...props }: PlayButtonProps) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11549,7 +11901,7 @@ export function SeekButton({ className, ...props }: SeekButtonProps = {}) {
           cn(
             'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-            'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
             'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
             'not-aria-disabled:active:scale-90',
@@ -11591,7 +11943,7 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps) {
         className={cn(
           'hidden size-media-icon-lg group-data-direction/seek-status:block',
           'group-data-[direction=backward]/seek-status:[scale:-1_1]',
-          'transition-[translate,opacity] duration-(--media-duration-slow) ease-media-in-out',
+          'transition-[translate,opacity] duration-200 ease-in-out motion-reduce:duration-50',
           'group-data-starting-style/seek-status:opacity-0 group-data-ending-style/seek-status:opacity-0',
         )}
       />
@@ -11640,7 +11992,7 @@ export function StatusIndicator({ className, ...props }: StatusIndicatorProps) {
       className={(state) =>
         cn(
           'group/input-status pointer-events-none flex items-center gap-2 font-medium',
-          'transition-[opacity,scale,translate] duration-(--media-duration-fast) ease-media-out',
+          'transition-[opacity,scale,translate] duration-100 ease-out motion-reduce:duration-50',
           'data-starting-style:opacity-0 data-ending-style:opacity-0',
           'text-media-controls shadow-media-surface backdrop-media-surface',
           'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
@@ -11676,8 +12028,8 @@ export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusI
       className={(state) =>
         cn(
           'group/playback-status col-start-2 row-start-1 grid place-content-center p-4 text-center',
-          'transition-[opacity,scale] duration-(--media-duration-slow) ease-media-out data-starting-style:scale-85 data-starting-style:opacity-0',
-          'data-ending-style:scale-85 data-ending-style:opacity-0 data-ending-style:duration-(--media-duration-fast)',
+          'transition-[opacity,scale] duration-200 ease-out motion-reduce:duration-50 data-starting-style:scale-85 data-starting-style:opacity-0',
+          'data-ending-style:scale-85 data-ending-style:opacity-0 data-ending-style:duration-100 motion-reduce:data-ending-style:duration-50',
           'rounded-media-control bg-black/35 backdrop-blur-sm',
           resolveClassName(className, state),
         )
@@ -11730,7 +12082,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
             <TimeSliderPrimitive.Track
               className={cn(
                 'relative isolate overflow-hidden rounded-media-control bg-media-slider-track select-none',
-                'motion-safe:transition-[height,width] motion-safe:duration-(--media-duration-slow) motion-safe:ease-media-out',
+                'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
                 'data-[orientation=horizontal]:h-media-slider-track data-[orientation=horizontal]:w-full',
                 'group-data-highlighted/chapter:data-[orientation=horizontal]:h-[calc(var(--media-slider-track-size)*1.75)]',
                 'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--media-chapter-gap)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-chapter-gap)*var(--media-chapter-inset-start))_round_var(--media-control-radius))]',
@@ -11765,7 +12117,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
           'outline-4 -outline-offset-4 outline-transparent hover:outline-current/15 hover:outline-offset-0',
           'focus-visible:outline-current/15 focus-visible:outline-offset-0',
-          'transition-[opacity,height,width,outline-offset,left,top] duration-(--media-duration-normal) ease-media-out',
+          'transition-[opacity,height,width,outline-offset,left,top] duration-150 ease-out motion-reduce:duration-50',
           'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
           'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
           'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]',
@@ -11778,7 +12130,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           'group/preview relative h-1 min-w-(--media-max-width)',
           '[--media-max-width:min(12rem,100cqi)] [--media-max-height:8rem]',
           'before:pointer-events-none before:absolute before:top-1/2 before:left-1/2 before:z-1 before:size-1 before:-translate-1/2 before:scale-50 before:rounded-media-control before:bg-current before:opacity-0',
-          'before:transition-[opacity,scale] before:duration-(--media-duration-slow) before:ease-media-out',
+          'before:transition-[opacity,scale] before:duration-200 before:ease-out motion-reduce:before:duration-50',
           'data-pointing:not-data-dragging:before:scale-100 data-pointing:not-data-dragging:before:opacity-100',
         )}
         overflow="visible"
@@ -11790,7 +12142,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'absolute left-1/2 max-w-(--media-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
             '[filter:blur(16px)] origin-bottom',
-            'transition-[filter,opacity,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[filter,opacity,scale] duration-150 ease-out motion-reduce:duration-50',
             'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:[filter:none]',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:scale-100',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:opacity-100',
@@ -11803,7 +12155,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           <Slider.Thumbnail
             className={cn(
               'relative block max-h-(--media-max-height) max-w-(--media-thumbnail-max-width) overflow-clip rounded-[inherit]',
-              'transition-opacity duration-(--media-duration-normal) ease-media-out',
+              'transition-opacity duration-150 ease-out motion-reduce:duration-50',
               'data-loading:opacity-0',
             )}
           />
@@ -11818,7 +12170,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           className={cn(
             'absolute left-1/2 max-w-(--media-max-width) -translate-x-1/2 translate-y-2 scale-80 opacity-0',
             '[filter:blur(16px)] origin-bottom',
-            'transition-[filter,opacity,scale] duration-(--media-duration-normal) ease-media-out',
+            'transition-[filter,opacity,scale] duration-150 ease-out motion-reduce:duration-50',
             'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100 group-data-pointing/preview:[filter:none]',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:scale-100',
             'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:opacity-100',
@@ -12170,7 +12522,7 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
           'outline-2 -outline-offset-2 outline-transparent',
           'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
           'focus-visible:outline-media-focus focus-visible:outline-offset-2',
-          'transition-[color,background-color] duration-(--media-duration-fast) ease-media-in-out',
+          'transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50',
           'justify-between tabular-nums text-inherit',
           'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
           'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
@@ -12213,7 +12565,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
               className={cn(
                 'grid size-media-control min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
                 'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-                'transition-[background-color,color,outline-offset,scale] duration-(--media-duration-normal) ease-media-out',
+                'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
                 'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
                 'focus-visible:outline-media-focus focus-visible:outline-offset-2',
                 'not-aria-disabled:active:scale-90',
@@ -12224,7 +12576,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
               <GearIcon
                 className={cn(
                   'size-media-icon drop-shadow-media-icon',
-                  'transition-transform duration-(--media-duration-normal) ease-media-in-out',
+                  'transition-transform duration-150 ease-in-out',
                   'group-aria-expanded/settings:rotate-90 motion-reduce:duration-0',
                 )}
               />
@@ -12238,7 +12590,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'm-0 overflow-visible border-0 text-inherit',
-            'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-media-out',
+            'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
             'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
             'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -12263,7 +12615,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'm-0 overflow-visible border-0 text-inherit',
-            'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-media-out',
+            'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
             'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
             'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -12277,7 +12629,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl p-1',
             'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
             'h-(--media-menu-height) w-(--media-menu-width)',
-            'transition-settings-menu [--media-menu-transition-duration:250ms]',
+            'transition-settings-menu',
             '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
             '[&[data-submenu-expanded=true]>:not([data-submenu])]:[filter:blur(8px)]',
             'flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
@@ -12316,7 +12668,7 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
           'outline-2 -outline-offset-2 outline-transparent',
           'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
           'focus-visible:outline-media-focus focus-visible:outline-offset-2',
-          'transition-[color,background-color] duration-(--media-duration-fast) ease-media-in-out',
+          'transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50',
           'justify-between tabular-nums text-inherit',
           'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
           'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
@@ -12333,7 +12685,7 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
         className={(state) =>
           cn(
             'absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
-            'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-media-out',
+            'transition-[translate,filter] duration-250 ease-out',
             'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
             'data-starting-style:translate-x-full data-ending-style:translate-x-full',
             'data-starting-style:[filter:blur(8px)] data-ending-style:[filter:blur(8px)]',
@@ -12347,7 +12699,7 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
             'outline-2 -outline-offset-2 outline-transparent',
             'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
             'focus-visible:outline-media-focus focus-visible:outline-offset-2',
-            'transition-[color,background-color] duration-(--media-duration-fast) ease-media-in-out',
+            'transition-[color,background-color] duration-100 ease-in-out motion-reduce:duration-50',
             'mb-0.5 w-full',
           )}
         >
@@ -12408,7 +12760,7 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps) {
       className={(state) =>
         cn(
           'group/volume-status pointer-events-none font-medium',
-          'transition-[opacity,scale,translate] duration-(--media-duration-fast) ease-media-out',
+          'transition-[opacity,scale,translate] duration-100 ease-out motion-reduce:duration-50',
           'data-starting-style:opacity-0 data-ending-style:opacity-0',
           'text-media-controls shadow-media-surface backdrop-media-surface',
           'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
@@ -12424,7 +12776,7 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps) {
         className={cn(
           'flex items-center justify-between gap-2 rounded-[inherit] px-2.5 py-1',
           'bg-left bg-no-repeat [background-image:linear-gradient(var(--media-accent-color,var(--media-default-accent-color)),var(--media-accent-color,var(--media-default-accent-color)))]',
-          '[background-size:var(--media-volume-fill,0%)_100%] transition-[background-size] duration-(--media-duration-slow) ease-linear',
+          '[background-size:var(--media-volume-fill,0%)_100%] transition-[background-size] duration-200 ease-linear motion-reduce:duration-50',
           'w-full',
         )}
       >
@@ -12466,7 +12818,7 @@ export function VolumePopover({
             'after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]',
             'after:shadow-[inset_0_1px_0_0_var(--media-surface-inner-border),inset_0_0_0_1px_oklch(from_var(--media-surface-inner-border)_l_c_h/calc(alpha*0.5))]',
             'm-0 overflow-visible border-0 text-inherit',
-            'transition-[opacity,filter,transform,scale] duration-(--media-popup-transition-duration) ease-media-out',
+            'transition-[opacity,filter,transform,scale] duration-100 ease-out motion-reduce:duration-0',
             'data-starting-style:opacity-0 data-starting-style:[filter:blur(4px)] data-starting-style:scale-95',
             'data-ending-style:opacity-0 data-ending-style:[filter:blur(4px)] data-ending-style:scale-95',
             'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
@@ -12533,7 +12885,7 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
           'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
           'outline-4 -outline-offset-4 outline-transparent hover:outline-current/15 hover:outline-offset-0',
           'focus-visible:outline-current/15 focus-visible:outline-offset-0',
-          'transition-[opacity,height,width,outline-offset,left,top] duration-(--media-duration-normal) ease-media-out',
+          'transition-[opacity,height,width,outline-offset,left,top] duration-150 ease-out motion-reduce:duration-50',
           'data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2',
           'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
           'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]',
@@ -12628,7 +12980,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
           '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
           '@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm',
-          'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-media-out',
+          'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
           'peer-data-open/error:hidden!',
         )}
       >
@@ -12642,7 +12994,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
               '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
               '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
               '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1',
-              'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-media-out',
+              'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
             )}
           >
             <Controls.Group className="flex items-center gap-px">
@@ -12683,7 +13035,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
               '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
               '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
               '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1',
-              'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-media-out',
+              'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
             )}
           >
             <Controls.Group className="flex items-center gap-px">
@@ -12790,8 +13142,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     0 0 0 1px var(--media-surface-outer-border), 0 1px 3px 0 var(--media-shadow-color),
     0 1px 2px -1px var(--media-shadow-color);
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-color);
-  --ease-media-in-out: var(--media-ease-in-out);
-  --ease-media-out: var(--media-ease-out);
 }
 
 @utility status-indicator-gradient {
@@ -12803,12 +13153,13 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 }
 
 @utility transition-settings-menu {
-  transition-timing-function: var(--media-ease-out);
-  transition-duration:
-    var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-    var(--media-popup-transition-duration), var(--media-popup-transition-duration),
-    var(--media-menu-transition-duration), var(--media-menu-transition-duration);
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: 100ms, 100ms, 100ms, 100ms, 250ms, 250ms;
   transition-property: opacity, filter, transform, scale, width, height;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 0ms, 0ms, 0ms, 0ms, 250ms, 250ms;
+  }
 }
 
 ===== packages/skins/canonical/registry/default/styles/themes/default.css =====
@@ -12816,7 +13167,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   .media-theme-default {
     --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
     --media-container-border-radius: var(--media-border-radius, 1.75rem);
-    --media-error-dialog-transition-duration: 350ms;
     --media-control-size: calc(2.25 * var(--media-size));
     --media-control-radius: 9999px;
     --media-surface-radius: 0.5rem;
@@ -12831,7 +13181,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   .media-theme-minimal {
     --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
     --media-container-border-radius: var(--media-border-radius, 0.75rem);
-    --media-error-dialog-transition-duration: 150ms;
     --media-control-size: calc(2.375 * var(--media-size));
     --media-control-radius: 0.5rem;
     --media-surface-radius: 0.625rem;
@@ -12867,14 +13216,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     --media-controls-color: oklch(1 0 0);
     --media-controls-background: transparent;
     --media-controls-padding: 0.25rem;
-    --media-duration-fast: 100ms;
-    --media-duration-normal: 150ms;
-    --media-duration-slow: 200ms;
-    --media-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    --media-ease-out: cubic-bezier(0, 0, 0.2, 1);
     --media-controls-transition-duration: 100ms;
-    --media-error-dialog-transition-delay: 100ms;
-    --media-popup-transition-duration: 100ms;
     --media-scale: 1;
     --media-size: calc(var(--media-scale-unit, 16px) * var(--media-scale));
     --media-font-family: Inter Variable, Inter, ui-sans-serif, system-ui, sans-serif;
@@ -12907,12 +13249,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   @media (prefers-reduced-motion: reduce) {
     :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
-      --media-duration-fast: 50ms;
-      --media-duration-normal: 50ms;
-      --media-duration-slow: 50ms;
-      --media-error-dialog-transition-delay: 0ms;
-      --media-error-dialog-transition-duration: 50ms;
-      --media-popup-transition-duration: 0ms;
     }
   }
 

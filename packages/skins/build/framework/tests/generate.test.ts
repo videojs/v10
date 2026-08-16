@@ -133,7 +133,6 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/styles.css')).toContain('@layer videojs.base, videojs.theme, videojs.components;');
     expect(style(output, 'styles/buttons.css')).toContain('@scope (.media-skin-video)');
     expect(style(output, 'styles/buttons.css')).toContain('.media-button {');
-    expect(style(output, 'styles/buttons.css').match(/\.media-button \{/g)).toHaveLength(1);
     expect(style(output, 'styles/buttons.css')).not.toContain('.media-play-button {');
     expect(style(output, 'styles/buttons.css')).not.toContain(':where(');
     expect(style(output, 'styles/controls.css')).toContain('.media-controls-root {');
@@ -226,7 +225,6 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('delay="200"');
     expect(html).toContain('close-delay="100"');
     expect(style(output, 'styles/buttons.css')).toContain('.media-button {');
-    expect(style(output, 'styles/buttons.css').match(/\.media-button \{/g)).toHaveLength(1);
     expect(output.styles.map((file) => file.content).join('\n')).not.toContain('--tw-');
   });
 

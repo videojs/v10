@@ -2,7 +2,6 @@
   .media-theme-minimal {
     --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
     --media-container-border-radius: var(--media-border-radius, 0.75rem);
-    --media-error-dialog-transition-duration: 150ms;
     --media-control-size: calc(2.375 * var(--media-size));
     --media-control-radius: 0.5rem;
     --media-surface-radius: 0.625rem;
