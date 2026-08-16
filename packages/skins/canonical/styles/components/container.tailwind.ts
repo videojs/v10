@@ -24,13 +24,6 @@ export default defineStyles({
       '[&:fullscreen]:[--media-container-border-radius:0] [&:fullscreen_video]:object-contain',
       'min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]',
       'min-[1920px]:[&:fullscreen]:[--media-scale:1.75]',
-      '[--media-caption-track-y:-0.5rem] [--media-caption-track-delay:25ms]',
-      '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-      'has-[[data-controls][data-visible]]:[--media-caption-track-y:-3.5rem]',
-      '[&_video::-webkit-media-text-track-container]:translate-y-(--media-caption-track-y)',
-      '[&_video::-webkit-media-text-track-container]:[transition-property:translate]',
-      '[&_video::-webkit-media-text-track-container]:[transition-duration:var(--media-caption-track-duration)]',
-      '[&_video::-webkit-media-text-track-container]:delay-(--media-caption-track-delay)',
     ],
   },
 });

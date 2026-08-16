@@ -36,6 +36,7 @@ describe('generateReactRegistry', () => {
     expect(output.sharedFiles.map((file) => file.path)).toEqual([
       'styles/tailwind.css',
       'styles/base.css',
+      'styles/captions.css',
       'styles/themes/default.css',
       'styles/themes/minimal.css',
     ]);

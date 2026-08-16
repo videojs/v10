@@ -1,6 +1,6 @@
 import { defineStyles } from '../define';
 
-const itemBase = [
+const menuItem = [
   'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left',
   'outline-2 -outline-offset-2 outline-transparent',
   'hover:bg-media-control-hover hover:text-media-accent-text data-highlighted:bg-media-control-hover data-highlighted:text-media-accent-text',
@@ -25,7 +25,7 @@ export default defineStyles({
     ],
     menuGroup: group,
     radioGroup: group,
-    itemBase,
+    menuItem,
     item: [
       'justify-between tabular-nums text-inherit',
       'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',

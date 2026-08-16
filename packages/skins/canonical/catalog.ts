@@ -19,6 +19,7 @@ export interface SkinComponent extends SkinItemDefinition {
 export interface SkinStyleResources {
   tailwind: string;
   base: string;
+  shared?: readonly string[] | undefined;
   themes: Readonly<Record<string, string>>;
 }
 
@@ -49,6 +50,7 @@ const resources = {
   styles: {
     tailwind: './styles/tailwind.css',
     base: './styles/base.css',
+    shared: ['./styles/captions.css'],
     themes: {
       default: './styles/themes/default.css',
       minimal: './styles/themes/minimal.css',

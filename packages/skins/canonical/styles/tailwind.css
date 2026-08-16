@@ -2,6 +2,7 @@
 
 @import "tailwindcss" theme(inline);
 @import "./base.css";
+@import "./captions.css";
 @import "./themes/default.css";
 @import "./themes/minimal.css";
 

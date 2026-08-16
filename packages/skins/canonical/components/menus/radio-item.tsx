@@ -8,7 +8,7 @@ export interface RadioItemProps {
 
 export function RadioItem({ children }: RadioItemProps) {
   return (
-    <Menu.RadioItem className={[styles.itemBase, styles.item]}>
+    <Menu.RadioItem className={[styles.menuItem, styles.item]}>
       {children}
       <Menu.ItemIndicator forceMount className={styles.indicator}>
         <CheckIcon className={styles.icon} />

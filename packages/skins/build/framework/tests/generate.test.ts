@@ -115,6 +115,7 @@ describe('createFrameworkSkin', () => {
     expect(output.styles.map((file) => file.fileName)).toEqual([
       'styles/styles.css',
       'styles/base.css',
+      'styles/captions.css',
       'styles/theme.css',
       'styles/buttons.css',
       'styles/container.css',
@@ -155,6 +156,8 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/base.css')).toContain('@scope (.media-skin)');
     expect(style(output, 'styles/base.css')).toContain('button {');
     expect(style(output, 'styles/base.css')).toContain('[hidden] {');
+    expect(style(output, 'styles/captions.css')).toContain('video::-webkit-media-text-track-container');
+    expect(style(output, 'styles/container.css')).not.toContain('--media-caption-track-y');
   });
 
   it('bundles HTML registrations and markup into one Skin module', async () => {

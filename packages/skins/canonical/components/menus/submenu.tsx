@@ -15,7 +15,7 @@ export interface SubmenuProps {
 export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) {
   return (
     <Menu.Root>
-      <Menu.Trigger className={[styles.itemBase, styles.item]}>
+      <Menu.Trigger className={[styles.menuItem, styles.item]}>
         {icon}
         {label}
         <SubmenuHint className={styles.hint}>
@@ -24,7 +24,7 @@ export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) 
         </SubmenuHint>
       </Menu.Trigger>
       <Menu.Content className={styles.submenuPanel}>
-        <Menu.Item className={[styles.itemBase, styles.back]}>
+        <Menu.Item className={[styles.menuItem, styles.back]}>
           <MenuChevron flipped />
           {label}
         </Menu.Item>

@@ -97,6 +97,7 @@ describe('generateReactRegistry', () => {
     expect(styleItem?.type).toBe('registry:style');
     expect(styleItem?.files.map((file) => file.target)).toEqual([
       'components/videojs/styles/base.css',
+      'components/videojs/styles/captions.css',
       'components/videojs/styles/tailwind.css',
       'components/videojs/styles/themes/default.css',
       'components/videojs/styles/themes/minimal.css',

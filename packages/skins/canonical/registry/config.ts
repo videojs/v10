@@ -38,7 +38,7 @@ export const skinRegistry = {
   styleItem: {
     name: 'styles',
     title: 'Video.js Skin Styles',
-    description: 'Shared Tailwind input, scoped base styles, and Default and Minimal Skin themes.',
+    description: 'Shared Tailwind input, scoped base and captions styles, and Default and Minimal Skin themes.',
   },
   utilityItem: {
     name: 'utils',

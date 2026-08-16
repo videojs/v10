@@ -20,11 +20,14 @@ export async function createFrameworkStyles(
   const roleFiles = [...styles]
     .map(([role, content]) => ({ fileName: `${role}.css`, content }))
     .sort((a, b) => a.fileName.localeCompare(b.fileName));
+  const sharedFiles = [resources.base, ...(resources.shared ?? [])];
   const files: FrameworkStyleFile[] = [
-    {
-      fileName: 'styles/base.css',
-      content: await readFile(resolve(rootDir, resources.base), 'utf8'),
-    },
+    ...(await Promise.all(
+      sharedFiles.map(async (path) => ({
+        fileName: `styles/${basename(path)}`,
+        content: await readFile(resolve(rootDir, path), 'utf8'),
+      }))
+    )),
     { fileName: 'styles/theme.css', content: await readFile(resolve(rootDir, themePath), 'utf8') },
     ...roleFiles.map((file) => ({ ...file, fileName: `styles/${file.fileName}` })),
   ];

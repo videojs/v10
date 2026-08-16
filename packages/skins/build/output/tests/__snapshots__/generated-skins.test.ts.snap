@@ -128,7 +128,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
             class="media-surface media-popover media-settings media-menu-group"
             id="settings-menu"
           >
-            <media-menu-item class="media-item-base media-item" commandfor="settings-quality-menu">
+            <media-menu-item class="media-menu-item media-item" commandfor="settings-quality-menu">
               <media-icon class="media-icon" name="switches"></media-icon>
               <media-text token="menu.quality">Quality</media-text>
               <span class="media-hint">
@@ -137,14 +137,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               </span>
             </media-menu-item>
             <media-menu class="media-submenu-panel" id="settings-quality-menu">
-              <media-menu-item class="media-item-base media-back">
+              <media-menu-item class="media-menu-item media-back">
                 <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
                 <media-text token="menu.quality">Quality</media-text>
               </media-menu-item>
               <div class="media-separator"></div>
               <media-quality-radio-group class="media-radio-group">
                 <template>
-                  <media-menu-radio-item class="media-item-base media-item">
+                  <media-menu-radio-item class="media-menu-item media-item">
                     <span>
                       <span data-part="label"></span>
                       <sup class="media-tier" data-part="tier"></sup>
@@ -157,7 +157,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                 </template>
               </media-quality-radio-group>
             </media-menu>
-            <media-menu-item class="media-item-base media-item" commandfor="settings-audio-menu">
+            <media-menu-item class="media-menu-item media-item" commandfor="settings-audio-menu">
               <media-icon class="media-icon" name="speech"></media-icon>
               <media-text token="menu.audio">Audio</media-text>
               <span class="media-hint">
@@ -166,14 +166,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               </span>
             </media-menu-item>
             <media-menu class="media-submenu-panel" id="settings-audio-menu">
-              <media-menu-item class="media-item-base media-back">
+              <media-menu-item class="media-menu-item media-back">
                 <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
                 <media-text token="menu.audio">Audio</media-text>
               </media-menu-item>
               <div class="media-separator"></div>
               <media-audio-track-radio-group class="media-radio-group">
                 <template>
-                  <media-menu-radio-item class="media-item-base media-item">
+                  <media-menu-radio-item class="media-menu-item media-item">
                     <span data-part="label"></span>
                     <media-menu-item-indicator force-mount class="media-indicator">
                       <media-icon class="media-icon" name="check"></media-icon>
@@ -182,7 +182,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                 </template>
               </media-audio-track-radio-group>
             </media-menu>
-            <media-menu-item class="media-item-base media-item" commandfor="settings-speed-menu">
+            <media-menu-item class="media-menu-item media-item" commandfor="settings-speed-menu">
               <media-icon class="media-icon" name="speed"></media-icon>
               <media-text token="menu.speed">Speed</media-text>
               <span class="media-hint">
@@ -191,14 +191,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               </span>
             </media-menu-item>
             <media-menu class="media-submenu-panel" id="settings-speed-menu">
-              <media-menu-item class="media-item-base media-back">
+              <media-menu-item class="media-menu-item media-back">
                 <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
                 <media-text token="menu.speed">Speed</media-text>
               </media-menu-item>
               <div class="media-separator"></div>
               <media-playback-rate-radio-group class="media-radio-group">
                 <template>
-                  <media-menu-radio-item class="media-item-base media-item">
+                  <media-menu-radio-item class="media-menu-item media-item">
                     <span data-part="label"></span>
                     <media-menu-item-indicator force-mount class="media-indicator">
                       <media-icon class="media-icon" name="check"></media-icon>
@@ -207,7 +207,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                 </template>
               </media-playback-rate-radio-group>
             </media-menu>
-            <media-menu-item class="media-item-base media-item" commandfor="settings-captions-menu">
+            <media-menu-item class="media-menu-item media-item" commandfor="settings-captions-menu">
               <media-icon class="media-icon" name="captions-off"></media-icon>
               <media-text token="menu.captions">Captions</media-text>
               <span class="media-hint">
@@ -216,14 +216,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               </span>
             </media-menu-item>
             <media-menu class="media-submenu-panel" id="settings-captions-menu">
-              <media-menu-item class="media-item-base media-back">
+              <media-menu-item class="media-menu-item media-back">
                 <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
                 <media-text token="menu.captions">Captions</media-text>
               </media-menu-item>
               <div class="media-separator"></div>
               <media-captions-radio-group class="media-radio-group">
                 <template>
-                  <media-menu-radio-item class="media-item-base media-item">
+                  <media-menu-radio-item class="media-menu-item media-item">
                     <span data-part="label"></span>
                     <media-menu-item-indicator force-mount class="media-indicator">
                       <media-icon class="media-icon" name="check"></media-icon>
@@ -627,6 +627,28 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   }
 }
 
+===== packages/html/src/__generated__/skins/default-video/styles/captions.css =====
+@layer videojs.components {
+  @scope (.media-skin) {
+    :scope {
+      --media-caption-track-y: -0.5rem;
+      --media-caption-track-delay: 25ms;
+      --media-caption-track-duration: var(--media-controls-transition-duration);
+    }
+
+    :scope:has([data-controls][data-visible]) {
+      --media-caption-track-y: -3.5rem;
+    }
+
+    video::-webkit-media-text-track-container {
+      translate: 0 var(--media-caption-track-y);
+      transition-delay: var(--media-caption-track-delay);
+      transition-duration: var(--media-caption-track-duration);
+      transition-property: translate;
+    }
+  }
+}
+
 ===== packages/html/src/__generated__/skins/default-video/styles/container.css =====
 @layer videojs.components {
   @scope (.media-skin-video) {
@@ -641,9 +663,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       -webkit-font-smoothing: auto;
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
-      --media-caption-track-delay: 25ms;
-      --media-caption-track-duration: var(--media-controls-transition-duration);
-      --media-caption-track-y: -0.5rem;
       background-color: #000;
       outline: 2px solid #0000;
       line-height: 1.5;
@@ -695,11 +714,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       outline-color: var(--media-focus-ring-color);
     }
 
-    .media-container:has([data-controls][data-visible]),
-    :scope.media-container:has([data-controls][data-visible]) {
-      --media-caption-track-y: -3.5rem;
-    }
-
     .media-container:has(:is(img[data-visible]:not([data-loaded]))):before,
     :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
@@ -721,26 +735,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       width: 100%;
       height: 100%;
       display: block;
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      translate: 0 var(--media-caption-track-y);
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-property: translate;
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-delay: var(--media-caption-track-delay);
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-duration: var(--media-caption-track-duration);
     }
 
     .media-container:fullscreen,
@@ -1458,7 +1452,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     }
 
     @media (hover: hover) {
-      @scope (.media-item-base) {
+      @scope (.media-menu-item) {
         &:hover .media-icon {
           opacity: 1;
         }
@@ -1472,7 +1466,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       margin-right: -0.25rem;
     }
 
-    @scope (.media-item-base) {
+    @scope (.media-menu-item) {
       &[aria-checked='true'] .media-indicator {
         opacity: 1;
       }
@@ -1495,7 +1489,15 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       display: none;
     }
 
-    .media-item-base {
+    .media-menu-group {
+      anchor-scope: --media-menu-item-highlight-anchor;
+      flex-direction: column;
+      gap: 0.125rem;
+      display: flex;
+      position: relative;
+    }
+
+    .media-menu-item {
       cursor: pointer;
       border-radius: var(--media-radius-surface);
       text-align: left;
@@ -1515,23 +1517,22 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     }
 
     @media (hover: hover) {
-      .media-item-base:hover {
+      .media-menu-item:hover {
         background-color: var(--media-accent-background-color);
         color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
       }
     }
 
-    .media-item-base:focus-visible {
+    .media-menu-item:focus-visible {
       outline-offset: 2px;
       outline-color: var(--media-focus-ring-color);
     }
 
-    .media-item-base[data-highlighted] {
+    .media-menu-item[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
     }
 
-    .media-menu-group,
     .media-radio-group {
       anchor-scope: --media-menu-item-highlight-anchor;
       flex-direction: column;
@@ -2436,6 +2437,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 ===== packages/html/src/__generated__/skins/default-video/styles/styles.css =====
 @layer videojs.base, videojs.theme, videojs.components;
 @import './base.css';
+@import './captions.css';
 @import './theme.css';
 @import './buttons.css';
 @import './container.css';
@@ -2665,7 +2667,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
           class="media-surface media-popover media-settings media-menu-group"
           id="settings-menu"
         >
-          <media-menu-item class="media-item-base media-item" commandfor="settings-quality-menu">
+          <media-menu-item class="media-menu-item media-item" commandfor="settings-quality-menu">
             <media-icon class="media-icon" name="switches"></media-icon>
             <media-text token="menu.quality">Quality</media-text>
             <span class="media-hint">
@@ -2674,14 +2676,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
             </span>
           </media-menu-item>
           <media-menu class="media-submenu-panel" id="settings-quality-menu">
-            <media-menu-item class="media-item-base media-back">
+            <media-menu-item class="media-menu-item media-back">
               <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
               <media-text token="menu.quality">Quality</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
             <media-quality-radio-group class="media-radio-group">
               <template>
-                <media-menu-radio-item class="media-item-base media-item">
+                <media-menu-radio-item class="media-menu-item media-item">
                   <span>
                     <span data-part="label"></span>
                     <sup class="media-tier" data-part="tier"></sup>
@@ -2694,7 +2696,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               </template>
             </media-quality-radio-group>
           </media-menu>
-          <media-menu-item class="media-item-base media-item" commandfor="settings-audio-menu">
+          <media-menu-item class="media-menu-item media-item" commandfor="settings-audio-menu">
             <media-icon class="media-icon" name="speech"></media-icon>
             <media-text token="menu.audio">Audio</media-text>
             <span class="media-hint">
@@ -2703,14 +2705,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
             </span>
           </media-menu-item>
           <media-menu class="media-submenu-panel" id="settings-audio-menu">
-            <media-menu-item class="media-item-base media-back">
+            <media-menu-item class="media-menu-item media-back">
               <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
               <media-text token="menu.audio">Audio</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
             <media-audio-track-radio-group class="media-radio-group">
               <template>
-                <media-menu-radio-item class="media-item-base media-item">
+                <media-menu-radio-item class="media-menu-item media-item">
                   <span data-part="label"></span>
                   <media-menu-item-indicator force-mount class="media-indicator">
                     <media-icon class="media-icon" name="check"></media-icon>
@@ -2719,7 +2721,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               </template>
             </media-audio-track-radio-group>
           </media-menu>
-          <media-menu-item class="media-item-base media-item" commandfor="settings-speed-menu">
+          <media-menu-item class="media-menu-item media-item" commandfor="settings-speed-menu">
             <media-icon class="media-icon" name="speed"></media-icon>
             <media-text token="menu.speed">Speed</media-text>
             <span class="media-hint">
@@ -2728,14 +2730,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
             </span>
           </media-menu-item>
           <media-menu class="media-submenu-panel" id="settings-speed-menu">
-            <media-menu-item class="media-item-base media-back">
+            <media-menu-item class="media-menu-item media-back">
               <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
               <media-text token="menu.speed">Speed</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
             <media-playback-rate-radio-group class="media-radio-group">
               <template>
-                <media-menu-radio-item class="media-item-base media-item">
+                <media-menu-radio-item class="media-menu-item media-item">
                   <span data-part="label"></span>
                   <media-menu-item-indicator force-mount class="media-indicator">
                     <media-icon class="media-icon" name="check"></media-icon>
@@ -2744,7 +2746,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               </template>
             </media-playback-rate-radio-group>
           </media-menu>
-          <media-menu-item class="media-item-base media-item" commandfor="settings-captions-menu">
+          <media-menu-item class="media-menu-item media-item" commandfor="settings-captions-menu">
             <media-icon class="media-icon" name="captions-off"></media-icon>
             <media-text token="menu.captions">Captions</media-text>
             <span class="media-hint">
@@ -2753,14 +2755,14 @@ export const skin = /* html */ \`<media-container class="media-container media-s
             </span>
           </media-menu-item>
           <media-menu class="media-submenu-panel" id="settings-captions-menu">
-            <media-menu-item class="media-item-base media-back">
+            <media-menu-item class="media-menu-item media-back">
               <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
               <media-text token="menu.captions">Captions</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
             <media-captions-radio-group class="media-radio-group">
               <template>
-                <media-menu-radio-item class="media-item-base media-item">
+                <media-menu-radio-item class="media-menu-item media-item">
                   <span data-part="label"></span>
                   <media-menu-item-indicator force-mount class="media-indicator">
                     <media-icon class="media-icon" name="check"></media-icon>
@@ -3161,6 +3163,28 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   }
 }
 
+===== packages/html/src/__generated__/skins/minimal-video/styles/captions.css =====
+@layer videojs.components {
+  @scope (.media-skin) {
+    :scope {
+      --media-caption-track-y: -0.5rem;
+      --media-caption-track-delay: 25ms;
+      --media-caption-track-duration: var(--media-controls-transition-duration);
+    }
+
+    :scope:has([data-controls][data-visible]) {
+      --media-caption-track-y: -3.5rem;
+    }
+
+    video::-webkit-media-text-track-container {
+      translate: 0 var(--media-caption-track-y);
+      transition-delay: var(--media-caption-track-delay);
+      transition-duration: var(--media-caption-track-duration);
+      transition-property: translate;
+    }
+  }
+}
+
 ===== packages/html/src/__generated__/skins/minimal-video/styles/container.css =====
 @layer videojs.components {
   @scope (.media-skin-video-minimal) {
@@ -3175,9 +3199,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       -webkit-font-smoothing: auto;
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
-      --media-caption-track-delay: 25ms;
-      --media-caption-track-duration: var(--media-controls-transition-duration);
-      --media-caption-track-y: -0.5rem;
       background-color: #000;
       outline: 2px solid #0000;
       line-height: 1.5;
@@ -3229,11 +3250,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       outline-color: var(--media-focus-ring-color);
     }
 
-    .media-container:has([data-controls][data-visible]),
-    :scope.media-container:has([data-controls][data-visible]) {
-      --media-caption-track-y: -3.5rem;
-    }
-
     .media-container:has(:is(img[data-visible]:not([data-loaded]))):before,
     :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
@@ -3255,26 +3271,6 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       width: 100%;
       height: 100%;
       display: block;
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      translate: 0 var(--media-caption-track-y);
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-property: translate;
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-delay: var(--media-caption-track-delay);
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-duration: var(--media-caption-track-duration);
     }
 
     .media-container:fullscreen,
@@ -3913,7 +3909,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     }
 
     @media (hover: hover) {
-      @scope (.media-item-base) {
+      @scope (.media-menu-item) {
         &:hover .media-icon {
           opacity: 1;
         }
@@ -3927,7 +3923,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       margin-right: -0.25rem;
     }
 
-    @scope (.media-item-base) {
+    @scope (.media-menu-item) {
       &[aria-checked='true'] .media-indicator {
         opacity: 1;
       }
@@ -3950,7 +3946,15 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       display: none;
     }
 
-    .media-item-base {
+    .media-menu-group {
+      anchor-scope: --media-menu-item-highlight-anchor;
+      flex-direction: column;
+      gap: 0.125rem;
+      display: flex;
+      position: relative;
+    }
+
+    .media-menu-item {
       cursor: pointer;
       border-radius: var(--media-radius-surface);
       text-align: left;
@@ -3970,23 +3974,22 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     }
 
     @media (hover: hover) {
-      .media-item-base:hover {
+      .media-menu-item:hover {
         background-color: var(--media-accent-background-color);
         color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
       }
     }
 
-    .media-item-base:focus-visible {
+    .media-menu-item:focus-visible {
       outline-offset: 2px;
       outline-color: var(--media-focus-ring-color);
     }
 
-    .media-item-base[data-highlighted] {
+    .media-menu-item[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
     }
 
-    .media-menu-group,
     .media-radio-group {
       anchor-scope: --media-menu-item-highlight-anchor;
       flex-direction: column;
@@ -4891,6 +4894,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 ===== packages/html/src/__generated__/skins/minimal-video/styles/styles.css =====
 @layer videojs.base, videojs.theme, videojs.components;
 @import './base.css';
+@import './captions.css';
 @import './theme.css';
 @import './buttons.css';
 @import './container.css';
@@ -5520,7 +5524,7 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
     <Menu.RadioItem
       {...props}
       className={(state) =>
-        cn('media-item-base media-item', typeof className === 'function' ? className(state) : className)
+        cn('media-menu-item media-item', typeof className === 'function' ? className(state) : className)
       }
     >
       {children}
@@ -5582,7 +5586,7 @@ export interface SubmenuProps {
 export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) {
   return (
     <Menu.Root>
-      <Menu.Trigger className="media-item-base media-item">
+      <Menu.Trigger className="media-menu-item media-item">
         {icon}
         {label}
         <span className="media-hint">
@@ -5591,7 +5595,7 @@ export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) 
         </span>
       </Menu.Trigger>
       <Menu.Content className="media-submenu-panel">
-        <Menu.Item className="media-item-base media-back">
+        <Menu.Item className="media-menu-item media-back">
           <MenuChevron flipped />
           {label}
         </Menu.Item>
@@ -6098,6 +6102,28 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   }
 }
 
+===== packages/react/src/__generated__/skins/default-video/styles/captions.css =====
+@layer videojs.components {
+  @scope (.media-skin) {
+    :scope {
+      --media-caption-track-y: -0.5rem;
+      --media-caption-track-delay: 25ms;
+      --media-caption-track-duration: var(--media-controls-transition-duration);
+    }
+
+    :scope:has([data-controls][data-visible]) {
+      --media-caption-track-y: -3.5rem;
+    }
+
+    video::-webkit-media-text-track-container {
+      translate: 0 var(--media-caption-track-y);
+      transition-delay: var(--media-caption-track-delay);
+      transition-duration: var(--media-caption-track-duration);
+      transition-property: translate;
+    }
+  }
+}
+
 ===== packages/react/src/__generated__/skins/default-video/styles/container.css =====
 @layer videojs.components {
   @scope (.media-skin-video) {
@@ -6112,9 +6138,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       -webkit-font-smoothing: auto;
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
-      --media-caption-track-delay: 25ms;
-      --media-caption-track-duration: var(--media-controls-transition-duration);
-      --media-caption-track-y: -0.5rem;
       background-color: #000;
       outline: 2px solid #0000;
       line-height: 1.5;
@@ -6166,11 +6189,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       outline-color: var(--media-focus-ring-color);
     }
 
-    .media-container:has([data-controls][data-visible]),
-    :scope.media-container:has([data-controls][data-visible]) {
-      --media-caption-track-y: -3.5rem;
-    }
-
     .media-container:has(:is(img[data-visible]:not([data-loaded]))):before,
     :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
@@ -6192,26 +6210,6 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       width: 100%;
       height: 100%;
       display: block;
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      translate: 0 var(--media-caption-track-y);
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-property: translate;
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-delay: var(--media-caption-track-delay);
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-duration: var(--media-caption-track-duration);
     }
 
     .media-container:fullscreen,
@@ -6929,7 +6927,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     }
 
     @media (hover: hover) {
-      @scope (.media-item-base) {
+      @scope (.media-menu-item) {
         &:hover .media-icon {
           opacity: 1;
         }
@@ -6943,7 +6941,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       margin-right: -0.25rem;
     }
 
-    @scope (.media-item-base) {
+    @scope (.media-menu-item) {
       &[aria-checked='true'] .media-indicator {
         opacity: 1;
       }
@@ -6966,7 +6964,15 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       display: none;
     }
 
-    .media-item-base {
+    .media-menu-group {
+      anchor-scope: --media-menu-item-highlight-anchor;
+      flex-direction: column;
+      gap: 0.125rem;
+      display: flex;
+      position: relative;
+    }
+
+    .media-menu-item {
       cursor: pointer;
       border-radius: var(--media-radius-surface);
       text-align: left;
@@ -6986,23 +6992,22 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
     }
 
     @media (hover: hover) {
-      .media-item-base:hover {
+      .media-menu-item:hover {
         background-color: var(--media-accent-background-color);
         color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
       }
     }
 
-    .media-item-base:focus-visible {
+    .media-menu-item:focus-visible {
       outline-offset: 2px;
       outline-color: var(--media-focus-ring-color);
     }
 
-    .media-item-base[data-highlighted] {
+    .media-menu-item[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
     }
 
-    .media-menu-group,
     .media-radio-group {
       anchor-scope: --media-menu-item-highlight-anchor;
       flex-direction: column;
@@ -7907,6 +7912,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 ===== packages/react/src/__generated__/skins/default-video/styles/styles.css =====
 @layer videojs.base, videojs.theme, videojs.components;
 @import './base.css';
+@import './captions.css';
 @import './theme.css';
 @import './buttons.css';
 @import './container.css';
@@ -8534,7 +8540,7 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
     <Menu.RadioItem
       {...props}
       className={(state) =>
-        cn('media-item-base media-item', typeof className === 'function' ? className(state) : className)
+        cn('media-menu-item media-item', typeof className === 'function' ? className(state) : className)
       }
     >
       {children}
@@ -8596,7 +8602,7 @@ export interface SubmenuProps {
 export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) {
   return (
     <Menu.Root>
-      <Menu.Trigger className="media-item-base media-item">
+      <Menu.Trigger className="media-menu-item media-item">
         {icon}
         {label}
         <span className="media-hint">
@@ -8605,7 +8611,7 @@ export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) 
         </span>
       </Menu.Trigger>
       <Menu.Content className="media-submenu-panel">
-        <Menu.Item className="media-item-base media-back">
+        <Menu.Item className="media-menu-item media-back">
           <MenuChevron flipped />
           {label}
         </Menu.Item>
@@ -9110,6 +9116,28 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
   }
 }
 
+===== packages/react/src/__generated__/skins/minimal-video/styles/captions.css =====
+@layer videojs.components {
+  @scope (.media-skin) {
+    :scope {
+      --media-caption-track-y: -0.5rem;
+      --media-caption-track-delay: 25ms;
+      --media-caption-track-duration: var(--media-controls-transition-duration);
+    }
+
+    :scope:has([data-controls][data-visible]) {
+      --media-caption-track-y: -3.5rem;
+    }
+
+    video::-webkit-media-text-track-container {
+      translate: 0 var(--media-caption-track-y);
+      transition-delay: var(--media-caption-track-delay);
+      transition-duration: var(--media-caption-track-duration);
+      transition-property: translate;
+    }
+  }
+}
+
 ===== packages/react/src/__generated__/skins/minimal-video/styles/container.css =====
 @layer videojs.components {
   @scope (.media-skin-video-minimal) {
@@ -9124,9 +9152,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       -webkit-font-smoothing: auto;
       -moz-osx-font-smoothing: auto;
       outline-offset: -4px;
-      --media-caption-track-delay: 25ms;
-      --media-caption-track-duration: var(--media-controls-transition-duration);
-      --media-caption-track-y: -0.5rem;
       background-color: #000;
       outline: 2px solid #0000;
       line-height: 1.5;
@@ -9178,11 +9203,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       outline-color: var(--media-focus-ring-color);
     }
 
-    .media-container:has([data-controls][data-visible]),
-    :scope.media-container:has([data-controls][data-visible]) {
-      --media-caption-track-y: -3.5rem;
-    }
-
     .media-container:has(:is(img[data-visible]:not([data-loaded]))):before,
     :scope.media-container:has(:is(img[data-visible]:not([data-loaded]))):before {
       content: '';
@@ -9204,26 +9224,6 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       width: 100%;
       height: 100%;
       display: block;
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      translate: 0 var(--media-caption-track-y);
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-property: translate;
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-delay: var(--media-caption-track-delay);
-    }
-
-    .media-container video::-webkit-media-text-track-container,
-    :scope.media-container video::-webkit-media-text-track-container {
-      transition-duration: var(--media-caption-track-duration);
     }
 
     .media-container:fullscreen,
@@ -9862,7 +9862,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     }
 
     @media (hover: hover) {
-      @scope (.media-item-base) {
+      @scope (.media-menu-item) {
         &:hover .media-icon {
           opacity: 1;
         }
@@ -9876,7 +9876,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       margin-right: -0.25rem;
     }
 
-    @scope (.media-item-base) {
+    @scope (.media-menu-item) {
       &[aria-checked='true'] .media-indicator {
         opacity: 1;
       }
@@ -9899,7 +9899,15 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       display: none;
     }
 
-    .media-item-base {
+    .media-menu-group {
+      anchor-scope: --media-menu-item-highlight-anchor;
+      flex-direction: column;
+      gap: 0.125rem;
+      display: flex;
+      position: relative;
+    }
+
+    .media-menu-item {
       cursor: pointer;
       border-radius: var(--media-radius-surface);
       text-align: left;
@@ -9919,23 +9927,22 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
     }
 
     @media (hover: hover) {
-      .media-item-base:hover {
+      .media-menu-item:hover {
         background-color: var(--media-accent-background-color);
         color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
       }
     }
 
-    .media-item-base:focus-visible {
+    .media-menu-item:focus-visible {
       outline-offset: 2px;
       outline-color: var(--media-focus-ring-color);
     }
 
-    .media-item-base[data-highlighted] {
+    .media-menu-item[data-highlighted] {
       background-color: var(--media-accent-background-color);
       color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0% 0 0))));
     }
 
-    .media-menu-group,
     .media-radio-group {
       anchor-scope: --media-menu-item-highlight-anchor;
       flex-direction: column;
@@ -10840,6 +10847,7 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 ===== packages/react/src/__generated__/skins/minimal-video/styles/styles.css =====
 @layer videojs.base, videojs.theme, videojs.components;
 @import './base.css';
+@import './captions.css';
 @import './theme.css';
 @import './buttons.css';
 @import './container.css';
@@ -11177,13 +11185,6 @@ export function Container({ children, className, ...props }: ContainerProps) {
         '[&:fullscreen]:[--media-container-border-radius:0] [&:fullscreen_video]:object-contain',
         'min-[1280px]:[&:fullscreen]:[--media-scale:1.25] min-[1536px]:[&:fullscreen]:[--media-scale:1.5]',
         'min-[1920px]:[&:fullscreen]:[--media-scale:1.75]',
-        '[--media-caption-track-y:-0.5rem] [--media-caption-track-delay:25ms]',
-        '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-        'has-[[data-controls][data-visible]]:[--media-caption-track-y:-3.5rem]',
-        '[&_video::-webkit-media-text-track-container]:translate-y-(--media-caption-track-y)',
-        '[&_video::-webkit-media-text-track-container]:[transition-property:translate]',
-        '[&_video::-webkit-media-text-track-container]:[transition-duration:var(--media-caption-track-duration)]',
-        '[&_video::-webkit-media-text-track-container]:delay-(--media-caption-track-delay)',
         className,
       )}
     >
@@ -12694,11 +12695,34 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
   }
 }
 
+===== packages/skins/canonical/registry/default/styles/captions.css =====
+@layer videojs.components {
+  @scope (.media-skin) {
+    :scope {
+      --media-caption-track-y: -0.5rem;
+      --media-caption-track-delay: 25ms;
+      --media-caption-track-duration: var(--media-controls-transition-duration);
+    }
+
+    :scope:has([data-controls][data-visible]) {
+      --media-caption-track-y: -3.5rem;
+    }
+
+    video::-webkit-media-text-track-container {
+      translate: 0 var(--media-caption-track-y);
+      transition-delay: var(--media-caption-track-delay);
+      transition-duration: var(--media-caption-track-duration);
+      transition-property: translate;
+    }
+  }
+}
+
 ===== packages/skins/canonical/registry/default/styles/tailwind.css =====
 @layer theme, base, videojs.base, components, videojs.theme, videojs.components, utilities;
 
 @import 'tailwindcss';
 @import './base.css';
+@import './captions.css';
 @import './themes/default.css';
 @import './themes/minimal.css';
 
@@ -12934,11 +12958,16 @@ export function resolveClassName<State>(className: ClassName<State>, state: Stat
       "name": "styles",
       "type": "registry:style",
       "title": "Video.js Skin Styles",
-      "description": "Shared Tailwind input, scoped base styles, and Default and Minimal Skin themes.",
+      "description": "Shared Tailwind input, scoped base and captions styles, and Default and Minimal Skin themes.",
       "files": [
         {
           "path": "canonical/registry/default/styles/base.css",
           "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/captions.css",
+          "target": "components/videojs/styles/captions.css",
           "type": "registry:file"
         },
         {

@@ -129,6 +129,7 @@ async function createStyleResourceFiles(
   const entries = [
     { path: resources.tailwind, transform: rewriteTailwindInput },
     { path: resources.base },
+    ...(resources.shared ?? []).map((path) => ({ path })),
     ...Object.entries(resources.themes)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([, path]) => ({ path })),

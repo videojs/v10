@@ -1,0 +1,20 @@
+@layer videojs.components {
+  @scope (.media-skin) {
+    :scope {
+      --media-caption-track-y: -0.5rem;
+      --media-caption-track-delay: 25ms;
+      --media-caption-track-duration: var(--media-controls-transition-duration);
+    }
+
+    :scope:has([data-controls][data-visible]) {
+      --media-caption-track-y: -3.5rem;
+    }
+
+    video::-webkit-media-text-track-container {
+      translate: 0 var(--media-caption-track-y);
+      transition-delay: var(--media-caption-track-delay);
+      transition-duration: var(--media-caption-track-duration);
+      transition-property: translate;
+    }
+  }
+}
