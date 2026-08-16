@@ -82,8 +82,9 @@ export class TimeSliderChaptersCore {
       return this.#result;
     }
 
-    const rangeMax = max > min ? max : min + 1;
-    const chapters = normalizeChapterCues(cues, min, rangeMax);
+    const hasRange = max > min;
+    const rangeMax = hasRange ? max : min + 1;
+    const chapters = normalizeChapterCues(hasRange ? cues : [], min, rangeMax);
     const ranges = chapters.map(({ key, start, end, cue }) => ({ key, start, end, highlight: cue !== null }));
 
     this.#cues = cues;

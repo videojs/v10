@@ -56,6 +56,14 @@ describe('TimeSliderChaptersCore', () => {
     });
   });
 
+  it('ignores chapter cues until the slider domain is available', () => {
+    expect(new TimeSliderChaptersCore().getRanges([cue(0, 40, 'First')], 0, 0)).toMatchObject({
+      chapters: [{ key: 'gap-start-end', start: 0, end: 1, cue: null }],
+      ranges: [{ key: 'gap-start-end', start: 0, end: 1, highlight: false }],
+      max: 1,
+    });
+  });
+
   it('uses the real duration for ranges under one second', () => {
     const result = new TimeSliderChaptersCore().getRanges([cue(0, 0.5, 'Short')], 0, 0.5);
 
