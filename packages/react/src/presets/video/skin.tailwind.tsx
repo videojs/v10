@@ -449,12 +449,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                       </TimeSlider.Track>
                     </div>
                   )}
-                >
-                  <TimeSlider.Track render={<div className={slider.track} />}>
-                    <TimeSlider.Buffer render={<div className={cn(slider.fill.base, slider.fill.buffer)} />} />
-                    <TimeSlider.Fill render={<div className={cn(slider.fill.base, slider.fill.fill)} />} />
-                  </TimeSlider.Track>
-                </TimeSlider.Chapters>
+                />
                 <TimeSlider.Thumb render={<SliderThumb />} />
                 <TimeSlider.Preview overflow="visible" className={slider.preview}>
                   <div className={cn(thumbnail.root, slider.thumbnail)}>

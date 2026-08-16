@@ -7,7 +7,7 @@ import {
   TimeSliderChapterCSSVars,
 } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
-import type { CSSProperties, ReactElement, ReactNode } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
 import { Fragment, forwardRef, useMemo, useState } from 'react';
 
 import type { HTMLProps, UIComponentProps } from '../../../utils/types';
@@ -20,14 +20,13 @@ interface SliderSegmentsProps extends Omit<UIComponentProps<'div', SliderSegment
   ranges: readonly SliderSegmentRange[];
   min: number;
   max: number;
-  children?: ReactNode;
   renderSegment: (props: SegmentProps, state: SliderSegmentState) => ReactElement;
 }
 
 /** Private React adapter for rendering normalized numeric slider segments. */
 export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
   function SliderSegments(componentProps, ref) {
-    const { ranges, min, max, children, renderSegment, render, className, style, ...elementProps } = componentProps;
+    const { ranges, min, max, renderSegment, render, className, style, ...elementProps } = componentProps;
     const slider = useSliderContext();
     const [core] = useState(() => new SliderSegmentsCore());
     const geometry = useMemo(
@@ -67,7 +66,7 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
       {
         state,
         ref,
-        props: [{ 'aria-hidden': 'true' }, sliderAttrs, elementProps, { children: children ?? segments }],
+        props: [{ 'aria-hidden': 'true' }, sliderAttrs, elementProps, { children: segments }],
       }
     );
   }

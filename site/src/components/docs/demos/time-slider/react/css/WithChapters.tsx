@@ -21,12 +21,7 @@ export default function WithChapters() {
                 </TimeSlider.Track>
               </div>
             )}
-          >
-            <TimeSlider.Track className="media-slider-track">
-              <TimeSlider.Buffer className="media-slider-buffer" />
-              <TimeSlider.Fill className="media-slider-fill" />
-            </TimeSlider.Track>
-          </TimeSlider.Chapters>
+          />
           <TimeSlider.Thumb className="media-slider-thumb" />
           <TimeSlider.Preview className="media-slider-preview">
             <TimeSlider.ChapterTitle className="media-slider-chapter-title" />
