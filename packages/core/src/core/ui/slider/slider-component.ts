@@ -1,5 +1,5 @@
 import { defineComponent } from '@videojs/jsx';
-import type { SliderProps } from './slider-core';
+import type { SliderPreviewProps, SliderProps } from './slider-core';
 import { SliderDataAttrs } from './slider-data-attrs';
 
 export interface SliderValueProps {
@@ -7,11 +7,6 @@ export interface SliderValueProps {
   type?: 'current' | 'pointer' | undefined;
   /** Custom formatter for the displayed value. */
   format?: ((value: number) => string) | undefined;
-}
-
-export interface SliderPreviewProps {
-  /** Whether the preview is clamped to the slider bounds. */
-  overflow?: 'clamp' | 'visible' | undefined;
 }
 
 export default defineComponent({

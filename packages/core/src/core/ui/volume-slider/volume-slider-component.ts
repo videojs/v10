@@ -1,5 +1,6 @@
 import { defineComponent } from '@videojs/jsx';
-import type { SliderPreviewProps, SliderValueProps } from '../slider/slider-component';
+import type { SliderValueProps } from '../slider/slider-component';
+import type { SliderPreviewProps } from '../slider/slider-core';
 import type { VolumeSliderProps } from './volume-slider-core';
 import { VolumeSliderDataAttrs } from './volume-slider-data-attrs';
 
