@@ -5,7 +5,7 @@ const buttonStyles = [
   'cursor-pointer outline-2 outline-transparent -outline-offset-2',
   'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
   'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
-  'focus-visible:outline-media-focus focus-visible:outline-offset-2',
+  'focus-visible:outline-current focus-visible:outline-offset-2',
   'not-aria-disabled:active:scale-90',
   'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
 ];
@@ -14,7 +14,13 @@ export default defineStyles({
   role: 'buttons',
   styles: {
     button: variants({ base: buttonStyles, variants: { default: 'size-9', minimal: 'size-9.5' } }),
-    buttonIcon: 'size-media-icon drop-shadow-media-icon',
+    buttonIcon: variants({
+      base: 'size-media-icon',
+      variants: {
+        default: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
+        minimal: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
+      },
+    }),
     airplayButton: [
       'group/airplay',
       'not-data-[airplay-state=connected]:[--media-icon-airplay-fill-animation:none]',

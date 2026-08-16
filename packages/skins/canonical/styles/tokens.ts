@@ -43,14 +43,6 @@ export const tokens = {
     kind: 'public',
     description: 'Base length used to scale fullscreen controls independently of the document root font size.',
   },
-  '--media-accent-background-color': {
-    kind: 'internal',
-    description: 'Resolved translucent accent background used by interactive states.',
-  },
-  '--media-border-color': {
-    kind: 'internal',
-    description: 'Theme border color.',
-  },
   '--media-chapter-inset-end': {
     kind: 'internal',
     description: 'End inset for a time-slider chapter segment.',
@@ -59,25 +51,9 @@ export const tokens = {
     kind: 'internal',
     description: 'Start inset for a time-slider chapter segment.',
   },
-  '--media-controls-background': {
-    kind: 'internal',
-    description: 'Theme controls background.',
-  },
-  '--media-controls-color': {
-    kind: 'internal',
-    description: 'Theme controls foreground color.',
-  },
   '--media-controls-transition-duration': {
     kind: 'internal',
     description: 'Controls visibility transition duration.',
-  },
-  '--media-default-accent-color': {
-    kind: 'internal',
-    description: 'Theme fallback accent color.',
-  },
-  '--media-focus-ring-color': {
-    kind: 'internal',
-    description: 'Theme focus-ring color.',
   },
   '--media-slider-preview-max-height': {
     kind: 'internal',
@@ -102,42 +78,6 @@ export const tokens = {
   '--media-spacing': {
     kind: 'internal',
     description: 'Scoped Tailwind spacing unit scaled for fullscreen UI.',
-  },
-  '--media-shadow-color': {
-    kind: 'internal',
-    description: 'Theme shadow color.',
-  },
-  '--media-slider-buffer-background': {
-    kind: 'internal',
-    description: 'Theme slider buffer background.',
-  },
-  '--media-slider-track-background': {
-    kind: 'internal',
-    description: 'Theme slider track background.',
-  },
-  '--media-surface-backdrop-blur': {
-    kind: 'internal',
-    description: 'Theme surface backdrop blur.',
-  },
-  '--media-surface-backdrop-saturate': {
-    kind: 'internal',
-    description: 'Theme surface backdrop saturation.',
-  },
-  '--media-surface-background': {
-    kind: 'internal',
-    description: 'Theme surface background.',
-  },
-  '--media-surface-border': {
-    kind: 'internal',
-    description: 'Resolved theme surface border.',
-  },
-  '--media-surface-inner-border': {
-    kind: 'internal',
-    description: 'Theme inner surface border.',
-  },
-  '--media-surface-outer-border': {
-    kind: 'internal',
-    description: 'Theme outer surface border.',
   },
   '--media-icon-airplay-fill-animation': {
     kind: 'runtime',

@@ -1,11 +1,7 @@
 @layer videojs.theme.variant {
   .media-theme-default {
-    --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
     --media-video-border-radius: var(--media-border-radius, 1.75rem);
     --media-control-radius: 9999px;
     --media-surface-radius: calc(var(--media-spacing) * 2);
-    --media-shadow-color: oklch(0 0 0 / 0.15);
-    --media-surface-background: oklch(1 0 0 / 0.1);
-    --media-surface-outer-border: oklch(0 0 0 / 0.1);
   }
 }

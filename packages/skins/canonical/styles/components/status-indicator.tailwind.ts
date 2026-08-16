@@ -1,5 +1,5 @@
 import { defineStyles, variants } from '../define';
-import { surface } from './popup.tailwind';
+import { defaultSurface } from './popup.tailwind';
 
 export default defineStyles({
   role: 'indicator',
@@ -12,7 +12,7 @@ export default defineStyles({
       ],
       variants: {
         default: [
-          ...surface,
+          ...defaultSurface,
           'absolute top-3 rounded-media-control bg-black/25 px-2.5 py-1',
           'data-starting-style:scale-90',
           'data-ending-style:-translate-y-1/4 data-ending-style:scale-90',

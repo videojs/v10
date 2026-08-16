@@ -3,6 +3,7 @@ import {
   type Declaration,
   type DeclarationBlock,
   Features,
+  type ParsedComponent,
   type Rule,
   type TokenOrValue,
   transform,
@@ -17,25 +18,35 @@ export function collectTailwindDefaults(rules: readonly Rule[]): Map<string, rea
   const defaults = new Map<string, readonly TokenOrValue[]>();
   visitCssRules(rules, (rule) => {
     if (rule.type !== 'property' || !rule.value.name.startsWith('--tw-')) return;
-    const initial = rule.value.initialValue;
-    if (initial?.type === 'token-list') defaults.set(rule.value.name, cloneCssAst(initial.value));
+    const initial = tailwindInitialValue(rule.value.initialValue);
+    if (initial) defaults.set(rule.value.name, initial);
   });
   return defaults;
 }
 
-function collectTailwindSetters(rules: readonly Rule[]): Set<string> {
-  const setters = new Set<string>();
-  visitCssRules(rules, (rule) => {
-    const block =
-      rule.type === 'style' ? rule.value.declarations : rule.type === 'nesting' ? rule.value.style.declarations : null;
-    if (!block) return;
-    for (const declaration of [...(block.declarations ?? []), ...(block.importantDeclarations ?? [])]) {
-      if (declaration.property === 'custom' && declaration.value.name.startsWith('--tw-')) {
-        setters.add(declaration.value.name);
-      }
-    }
-  });
-  return setters;
+function tailwindInitialValue(initial: ParsedComponent | null | undefined): readonly TokenOrValue[] | undefined {
+  if (!initial) return;
+  if (initial.type === 'token-list') return cloneCssAst(initial.value);
+  if (initial.type === 'length' && initial.value.type === 'value') {
+    return [{ type: 'length', value: cloneCssAst(initial.value.value) }];
+  }
+  if (
+    initial.type === 'color' ||
+    initial.type === 'angle' ||
+    initial.type === 'time' ||
+    initial.type === 'resolution'
+  ) {
+    return [cloneCssAst(initial)];
+  }
+  if (initial.type === 'number') {
+    return [{ type: 'token', value: { type: 'number', value: initial.value } }];
+  }
+  if (initial.type === 'percentage') {
+    return [{ type: 'token', value: { type: 'percentage', value: initial.value } }];
+  }
+  if (initial.type === 'integer') {
+    return [{ type: 'token', value: { type: 'number', value: initial.value } }];
+  }
 }
 
 export function inlinePrivateTailwindVariables(
@@ -49,10 +60,9 @@ export function inlinePrivateTailwindVariables(
     include: Features.Nesting,
     visitor: {
       StyleSheet(stylesheet) {
-        const setters = collectTailwindSetters(stylesheet.rules);
         return withoutNullValues({
           ...cloneCssAst(stylesheet),
-          rules: inlineTailwindRules(stylesheet.rules, defaults, setters),
+          rules: inlineTailwindRules(mergeConditionalRules(stylesheet.rules), defaults),
           licenseComments: [],
         });
       },
@@ -102,11 +112,7 @@ function keepLastExactDeclaration(declarations: Declaration[]): Declaration[] {
   return output.reverse();
 }
 
-function inlineTailwindRules(
-  rules: readonly Rule[],
-  defaults: ReadonlyMap<string, readonly TokenOrValue[]>,
-  setters: ReadonlySet<string>
-): Rule[] {
+function inlineTailwindRules(rules: readonly Rule[], defaults: ReadonlyMap<string, readonly TokenOrValue[]>): Rule[] {
   const output: Rule[] = [];
   for (const source of rules) {
     if (source.type === 'property' && source.value.name.startsWith('--tw-')) continue;
@@ -120,17 +126,20 @@ function inlineTailwindRules(
 
     if (rule.type === 'style') {
       rule.value.selectors = foldGroupDescendantSelectors(rule.value.selectors);
-      inlineTailwindDeclarationBlock(rule.value.declarations, defaults, setters);
-      if (rule.value.rules) rule.value.rules = inlineTailwindRules(rule.value.rules, defaults, setters);
+      inlineTailwindDeclarationBlock(rule.value.declarations, defaults);
+      if (rule.value.rules) rule.value.rules = inlineTailwindRules(mergeConditionalRules(rule.value.rules), defaults);
       if (isEmptyStyleRule(rule.value.declarations, rule.value.rules)) continue;
     } else if (rule.type === 'nesting') {
       rule.value.style.selectors = foldGroupDescendantSelectors(rule.value.style.selectors);
-      inlineTailwindDeclarationBlock(rule.value.style.declarations, defaults, setters);
+      inlineTailwindDeclarationBlock(rule.value.style.declarations, defaults);
       if (rule.value.style.rules)
-        rule.value.style.rules = inlineTailwindRules(rule.value.style.rules, defaults, setters);
+        rule.value.style.rules = inlineTailwindRules(mergeConditionalRules(rule.value.style.rules), defaults);
       if (isEmptyStyleRule(rule.value.style.declarations, rule.value.style.rules)) continue;
+    } else if (rule.type === 'nested-declarations') {
+      inlineTailwindDeclarationBlock(rule.value.declarations, defaults);
+      if (isEmptyStyleRule(rule.value.declarations, undefined)) continue;
     } else if (hasNestedCssRules(rule)) {
-      rule.value.rules = inlineTailwindRules(rule.value.rules, defaults, setters);
+      rule.value.rules = inlineTailwindRules(mergeConditionalRules(rule.value.rules), defaults);
       if (rule.value.rules.length === 0) continue;
     }
 
@@ -141,8 +150,7 @@ function inlineTailwindRules(
 
 function inlineTailwindDeclarationBlock(
   block: DeclarationBlock | undefined,
-  defaults: ReadonlyMap<string, readonly TokenOrValue[]>,
-  setters: ReadonlySet<string>
+  defaults: ReadonlyMap<string, readonly TokenOrValue[]>
 ): void {
   if (!block) return;
   const environment = new Map<string, readonly TokenOrValue[]>(defaults);
@@ -151,21 +159,20 @@ function inlineTailwindDeclarationBlock(
       environment.set(declaration.value.name, declaration.value.value);
     }
   }
-  block.declarations = inlineTailwindDeclarations(block.declarations ?? [], environment, setters);
-  block.importantDeclarations = inlineTailwindDeclarations(block.importantDeclarations ?? [], environment, setters);
+  block.declarations = inlineTailwindDeclarations(block.declarations ?? [], environment);
+  block.importantDeclarations = inlineTailwindDeclarations(block.importantDeclarations ?? [], environment);
 }
 
 function inlineTailwindDeclarations(
   declarations: readonly Declaration[],
-  environment: ReadonlyMap<string, readonly TokenOrValue[]>,
-  setters: ReadonlySet<string>
+  environment: ReadonlyMap<string, readonly TokenOrValue[]>
 ): Declaration[] {
   const output: Declaration[] = [];
   for (const source of declarations) {
     if (source.property === 'custom' && source.value.name.startsWith('--tw-')) continue;
     const declaration = cloneCssAst(source);
     if (declaration.property === 'custom' || declaration.property === 'unparsed') {
-      declaration.value.value = resolveTailwindTokens(declaration.value.value, environment, setters, []);
+      declaration.value.value = resolveTailwindTokens(declaration.value.value, environment, []);
     } else if (JSON.stringify(declaration).includes('--tw-')) {
       throw new DiagnosticError(
         `style emission: cannot inline Tailwind variables in parsed declaration '${declaration.property}'.`,
@@ -180,7 +187,6 @@ function inlineTailwindDeclarations(
 function resolveTailwindTokens(
   tokens: readonly TokenOrValue[],
   environment: ReadonlyMap<string, readonly TokenOrValue[]>,
-  setters: ReadonlySet<string>,
   stack: readonly string[]
 ): TokenOrValue[] {
   const output: TokenOrValue[] = [];
@@ -195,30 +201,90 @@ function resolveTailwindTokens(
           });
         }
         const local = environment.get(name);
-        if (!local && setters.has(name)) {
-          throw new DiagnosticError(
-            `style emission: Tailwind variable '${name}' is set by another rule and cannot be safely inlined.`,
-            { diagnosticCode: 'style-tailwind-variable-cross-rule' }
-          );
-        }
         const replacement = local ?? token.value.fallback;
         if (replacement == null) {
           throw new DiagnosticError(`style emission: cannot resolve Tailwind variable '${name}'.`, {
             diagnosticCode: 'style-tailwind-variable-unresolved',
           });
         }
-        output.push(...resolveTailwindTokens(replacement, environment, setters, [...stack, name]));
+        output.push(...resolveTailwindTokens(replacement, environment, [...stack, name]));
         continue;
       }
       if (token.value.fallback) {
-        token.value.fallback = resolveTailwindTokens(token.value.fallback, environment, setters, stack);
+        token.value.fallback = resolveTailwindTokens(token.value.fallback, environment, stack);
       }
     } else if (token.type === 'function') {
-      token.value.arguments = resolveTailwindTokens(token.value.arguments, environment, setters, stack);
+      token.value.arguments = resolveTailwindTokens(token.value.arguments, environment, stack);
     }
     output.push(foldSimpleCalc(token));
   }
   return normalizeTokenWhitespace(output);
+}
+
+/** Recombine the rules Tailwind splits by utility so related setters and consumers can be inlined together. */
+function mergeConditionalRules(rules: readonly Rule[]): Rule[] {
+  const output: Rule[] = [];
+  const conditionals = new Map<string, Extract<Rule, { type: 'media' | 'container' | 'supports' }>>();
+  for (const source of rules) {
+    const rule = cloneCssAst(source);
+    const key = conditionalRuleKey(rule);
+    const previous = key ? conditionals.get(key) : undefined;
+    if (previous && isMergeableConditionalRule(rule)) {
+      previous.value.rules = mergeDeclarationRules([...previous.value.rules, ...rule.value.rules]);
+      continue;
+    }
+    if (key && isMergeableConditionalRule(rule)) conditionals.set(key, rule);
+    if (hasNestedCssRules(rule)) rule.value.rules = mergeDeclarationRules(rule.value.rules);
+    output.push(rule);
+  }
+  return mergeDeclarationRules(output);
+}
+
+function conditionalRuleKey(rule: Rule): string | undefined {
+  return isMergeableConditionalRule(rule) ? `${rule.type}:${conditionKey(rule)}` : undefined;
+}
+
+function isMergeableConditionalRule(rule: Rule): rule is Extract<Rule, { type: 'media' | 'container' | 'supports' }> {
+  return rule.type === 'media' || rule.type === 'container' || rule.type === 'supports';
+}
+
+function conditionKey(rule: Extract<Rule, { type: 'media' | 'container' | 'supports' }>): string {
+  return JSON.stringify(rule.value, (name, value) => (name === 'loc' || name === 'rules' ? undefined : value));
+}
+
+function mergeDeclarationRules(rules: readonly Rule[]): Rule[] {
+  const output: Rule[] = [];
+  let declarations: Extract<Rule, { type: 'nested-declarations' }> | undefined;
+  const styles = new Map<string, Extract<Rule, { type: 'style' | 'nesting' }>>();
+  for (const source of rules) {
+    const rule = cloneCssAst(source);
+    if (declarations && rule.type === 'nested-declarations') {
+      declarations.value.declarations.declarations.push(...rule.value.declarations.declarations);
+      declarations.value.declarations.importantDeclarations.push(...rule.value.declarations.importantDeclarations);
+      continue;
+    }
+    if (rule.type === 'nested-declarations') declarations = rule;
+    if (rule.type === 'style' || rule.type === 'nesting') {
+      const key = styleRuleKey(rule);
+      const previous = styles.get(key);
+      if (previous && previous.type === rule.type) {
+        const target = previous.type === 'style' ? previous.value : previous.value.style;
+        const incoming = rule.type === 'style' ? rule.value : rule.value.style;
+        target.declarations.declarations.push(...incoming.declarations.declarations);
+        target.declarations.importantDeclarations.push(...incoming.declarations.importantDeclarations);
+        target.rules = [...(target.rules ?? []), ...(incoming.rules ?? [])];
+        continue;
+      }
+      styles.set(key, rule);
+    }
+    output.push(rule);
+  }
+  return output;
+}
+
+function styleRuleKey(rule: Extract<Rule, { type: 'style' | 'nesting' }>): string {
+  const style = rule.type === 'style' ? rule.value : rule.value.style;
+  return `${rule.type}:${JSON.stringify(style.selectors)}`;
 }
 
 function foldSimpleCalc(token: TokenOrValue): TokenOrValue {

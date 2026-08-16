@@ -1,23 +1,7 @@
 @layer videojs.theme.variant {
   .media-theme-minimal {
-    --media-border-color: light-dark(oklch(0 0 0 / 0.15), oklch(1 0 0 / 0.15));
     --media-video-border-radius: var(--media-border-radius, 0.75rem);
     --media-control-radius: calc(var(--media-spacing) * 2);
     --media-surface-radius: calc(var(--media-spacing) * 2.5);
-    --media-shadow-color: oklch(0 0 0 / 0.2);
-    --media-surface-background: oklch(0 0 0 / 0.5);
-    --media-surface-outer-border: oklch(1 0 0 / 0.1);
-  }
-
-  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    .media-theme-minimal {
-      --media-controls-background: oklch(0 0 0);
-    }
-  }
-
-  @media (forced-colors: active) {
-    .media-theme-minimal {
-      --media-controls-background: Canvas;
-    }
   }
 }

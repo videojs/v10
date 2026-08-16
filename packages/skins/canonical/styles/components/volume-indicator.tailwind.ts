@@ -1,5 +1,5 @@
 import { defineStyles, variants } from '../define';
-import { surface } from './popup.tailwind';
+import { defaultSurface, minimalSurfaceFrameOnly } from './popup.tailwind';
 
 export default defineStyles({
   role: 'indicator',
@@ -12,7 +12,7 @@ export default defineStyles({
       ],
       variants: {
         default: [
-          ...surface,
+          ...defaultSurface,
           'absolute top-3 w-[min(80%,12rem)] rounded-media-control bg-black/25',
           'data-starting-style:scale-90',
           'data-ending-style:-translate-y-1/4 data-ending-style:scale-90',
@@ -27,10 +27,13 @@ export default defineStyles({
     volumeIndicatorFill: variants({
       base: [
         'flex items-center justify-between gap-2 rounded-[inherit] px-2.5 py-1',
-        'bg-left bg-no-repeat [background-image:linear-gradient(var(--media-accent-color,var(--media-default-accent-color)),var(--media-accent-color,var(--media-default-accent-color)))]',
+        'bg-left bg-no-repeat [background-image:linear-gradient(var(--media-accent-color,white),var(--media-accent-color,white))]',
         '[background-size:var(--media-volume-fill,0%)_100%] transition-[background-size] duration-200 ease-linear motion-reduce:duration-50',
       ],
-      variants: { default: 'w-full', minimal: 'w-[min(80%,14rem)] bg-black/25 shadow-media-surface' },
+      variants: {
+        default: 'w-full',
+        minimal: [...minimalSurfaceFrameOnly, 'w-[min(80%,14rem)] bg-black/25'],
+      },
     }),
     volumeIndicatorIcon: 'hidden shrink-0',
     volumeIndicatorValue: 'ml-auto',

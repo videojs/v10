@@ -12,33 +12,18 @@
 
 @theme inline {
   --spacing: var(--media-spacing);
-  --color-media-accent: var(--media-accent-color, var(--media-default-accent-color));
+  --color-media-accent: var(--media-accent-color, oklch(1 0 0));
   --color-media-accent-text: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0 0 0))));
-  --color-media-controls: var(--media-controls-color);
-  --color-media-controls-background: var(--media-controls-background);
-  --color-media-control-hover: var(--media-accent-background-color);
-  --color-media-focus: var(--media-focus-ring-color);
-  --color-media-slider-buffer: var(--media-slider-buffer-background);
-  --color-media-slider-track: var(--media-slider-track-background);
-  --color-media-surface: var(--media-surface-background);
-  --color-media-surface-border: var(--media-surface-border);
+  --color-media-control-hover: var(--media-accent-color, oklch(1 0 0 / 0.1));
   --text-media: calc(var(--media-spacing) * 3.25);
   --spacing-media-icon: var(--media-icon-size, calc(var(--media-spacing) * 4.5));
   --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
   --radius-media-control: var(--media-control-radius);
   --radius-media-surface: var(--media-surface-radius);
-  --shadow-media-surface:
-    0 0 0 1px var(--media-surface-outer-border), 0 1px 3px 0 var(--media-shadow-color),
-    0 1px 2px -1px var(--media-shadow-color);
-  --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-color);
 }
 
 @utility status-indicator-gradient {
   background-image: linear-gradient(to bottom, oklch(0 0 0 / 0.35), oklch(0 0 0 / 0.2) 3rem, transparent);
-}
-
-@utility backdrop-media-surface {
-  backdrop-filter: blur(var(--media-surface-backdrop-blur)) saturate(var(--media-surface-backdrop-saturate));
 }
 
 @utility transition-settings-menu {

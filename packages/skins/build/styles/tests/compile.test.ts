@@ -87,6 +87,42 @@ describe('compileSkinStyles', () => {
     expect(styles.get('buttons')).toContain('.media-overlay:is(:where(.media-control)[data-visible] ~ *)');
     expect(styles.get('buttons')).not.toContain('peer\\/control');
   });
+
+  it('inlines registered Tailwind defaults used by native visual utilities', async () => {
+    const surface = recipe(
+      'surface',
+      'media-surface',
+      [
+        'shadow-sm',
+        'shadow-black/15',
+        'ring-1',
+        'ring-black/10',
+        'backdrop-blur-lg',
+        'backdrop-saturate-150',
+        'forced-colors:ring-1',
+        'forced-colors:ring-[CanvasText]',
+        '[@media(prefers-reduced-transparency:reduce)]:backdrop-blur-none',
+        '[@media(prefers-reduced-transparency:reduce)]:backdrop-saturate-100',
+        '@lg/media-root:shadow-sm',
+        '@lg/media-root:shadow-black/15',
+        '@lg/media-root:ring-1',
+        '@lg/media-root:ring-black/10',
+      ],
+      'popups'
+    );
+    const styles = await compileSkinStyles({
+      design: await loadDesignSystem(designPath),
+      manifest: manifest([surface]),
+      scopeClass: 'media-skin-video',
+    });
+
+    expect(styles.get('popups')).toContain('box-shadow:');
+    expect(styles.get('popups')).toContain('backdrop-filter: blur(16px) saturate(150%)');
+    expect(styles.get('popups')).toContain('@media (forced-colors: active)');
+    expect(styles.get('popups')).toContain('@container media-root (width >= 32rem)');
+    expect(styles.get('popups')).toContain('canvastext');
+    expect(styles.get('popups')).not.toContain('--tw-');
+  });
 });
 
 function recipe(

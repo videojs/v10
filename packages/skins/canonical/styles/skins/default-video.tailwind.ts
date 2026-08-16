@@ -1,4 +1,12 @@
+import { defaultSurface } from '../components/popup.tailwind';
 import { defineStyles } from '../define';
+
+const defaultSurfaceAtLarge = defaultSurface.map((group) =>
+  group
+    .split(/\s+/)
+    .map((utility) => `@lg/media-root:${utility}`)
+    .join(' ')
+);
 
 export default defineStyles({
   role: 'controls',
@@ -11,7 +19,7 @@ export default defineStyles({
         '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
         '@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10',
         '@lg/media-root:flex @lg/media-root:items-center @lg/media-root:rounded-media-control',
-        '@lg/media-root:bg-media-surface @lg/media-root:shadow-media-surface @lg/media-root:backdrop-media-surface',
+        ...defaultSurfaceAtLarge,
         '@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3',
         '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
         '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
@@ -21,7 +29,8 @@ export default defineStyles({
       ],
       primary: [
         'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control',
-        'bg-media-surface p-1 shadow-media-surface backdrop-media-surface',
+        ...defaultSurface,
+        'p-1',
         '@lg/media-root:contents',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
@@ -31,7 +40,8 @@ export default defineStyles({
       ],
       secondary: [
         'absolute top-2 right-2 z-10 flex origin-top items-center rounded-media-control',
-        'bg-media-surface p-1 shadow-media-surface backdrop-media-surface',
+        ...defaultSurface,
+        'p-1',
         '@lg/media-root:contents',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
         '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',

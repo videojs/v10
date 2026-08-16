@@ -1,5 +1,5 @@
 import { defineStyles, variants } from '../define';
-import { surface } from './popup.tailwind';
+import { defaultSurface } from './popup.tailwind';
 
 export default defineStyles({
   role: 'dialog',
@@ -14,7 +14,7 @@ export default defineStyles({
       ],
       variants: {
         default: [
-          ...surface,
+          ...defaultSurface,
           'absolute top-1/2 left-1/2 w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] p-3 text-white',
           'duration-350',
         ],

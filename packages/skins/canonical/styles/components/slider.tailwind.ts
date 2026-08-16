@@ -25,7 +25,7 @@ export default defineStyles({
     ],
     sliderTrack: variants({
       base: [
-        'relative isolate w-full select-none overflow-hidden rounded-media-control bg-media-slider-track',
+        'relative isolate w-full select-none overflow-hidden rounded-media-control bg-current/20',
         'data-[orientation=vertical]:h-full',
       ],
       variants: {
@@ -43,7 +43,7 @@ export default defineStyles({
     ],
     sliderChapterTrack: variants({
       base: [
-        'relative isolate overflow-hidden rounded-media-control bg-media-slider-track select-none',
+        'relative isolate overflow-hidden rounded-media-control bg-current/20 select-none',
         'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
         'data-[orientation=horizontal]:w-full',
         'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--media-spacing)*var(--media-chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--media-spacing)*var(--media-chapter-inset-start))_round_var(--media-control-radius))]',
@@ -71,7 +71,7 @@ export default defineStyles({
     ],
     sliderBuffer: [
       ...fillBase,
-      'w-(--media-slider-buffer) bg-media-slider-buffer',
+      'w-(--media-slider-buffer) bg-current/20',
       'data-[orientation=vertical]:h-(--media-slider-buffer)',
     ],
     sliderThumb: [
@@ -96,10 +96,16 @@ export default defineStyles({
       'data-pointing:not-data-dragging:before:scale-100 data-pointing:not-data-dragging:before:opacity-100',
     ],
     sliderValue: 'tabular-nums',
-    spinnerIcon: [
-      'absolute top-1/2 left-1/2 size-media-icon -translate-x-1/2 -translate-y-1/2 opacity-0 drop-shadow-media-icon',
-      'group-has-[[role=img][data-loading]]/thumbnail:opacity-100',
-    ],
+    spinnerIcon: variants({
+      base: [
+        'absolute top-1/2 left-1/2 size-media-icon -translate-x-1/2 -translate-y-1/2 opacity-0',
+        'group-has-[[role=img][data-loading]]/thumbnail:opacity-100',
+      ],
+      variants: {
+        default: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
+        minimal: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
+      },
+    }),
     thumbnail: [
       ...previewContent,
       'group/thumbnail pointer-events-none bottom-[calc(100%+2.25rem)] overflow-hidden rounded-xl bg-black/90',

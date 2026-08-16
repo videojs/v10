@@ -140,7 +140,7 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/controls.css')).toContain('.media-controls-secondary {');
     expect(style(output, 'styles/dialog.css')).toContain('.media-error-dialog {');
     expect(style(output, 'styles/menus.css')).toContain('.media-settings {');
-    expect(style(output, 'styles/controls.css')).toContain('background-color: var(--media-surface-background)');
+    expect(style(output, 'styles/controls.css')).toContain('backdrop-filter: blur(16px) saturate(150%)');
     expect(style(output, 'styles/buttons.css')).not.toContain('.media-seek-button-label');
     expect(style(output, 'styles/popups.css')).toContain('.media-surface {');
     expect(style(output, 'styles/container.css')).toContain('.media-container {');

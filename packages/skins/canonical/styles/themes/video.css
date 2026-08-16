@@ -2,23 +2,9 @@
 
 @layer videojs.theme.base {
   :is(.media-theme-default, .media-theme-minimal) {
-    --media-default-accent-color: oklch(1 0 0);
-    --media-accent-background-color: var(
-      --media-accent-color,
-      oklch(from var(--media-default-accent-color) l c h / calc(alpha * 0.1))
-    );
-    --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-    --media-controls-color: oklch(1 0 0);
-    --media-controls-background: transparent;
     --media-controls-transition-duration: 100ms;
     --media-scale: 1;
     --media-spacing: calc(var(--media-scale-unit, 16px) * var(--media-scale) / 4);
-    --media-slider-buffer-background: oklch(from currentColor l c h / 0.2);
-    --media-slider-track-background: oklch(from currentColor l c h / 0.2);
-    --media-surface-backdrop-blur: 16px;
-    --media-surface-backdrop-saturate: 1.5;
-    --media-surface-inner-border: oklch(1 0 0 / 0.1);
-    --media-surface-border: var(--media-surface-inner-border);
   }
 }
 
@@ -38,30 +24,6 @@
   @media (prefers-reduced-motion: reduce) {
     :is(.media-theme-default, .media-theme-minimal) {
       --media-controls-transition-duration: 50ms;
-    }
-  }
-
-  @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
-    :is(.media-theme-default, .media-theme-minimal) {
-      --media-surface-background: oklch(0 0 0);
-      --media-surface-inner-border: oklch(1 0 0 / 0.25);
-      --media-surface-outer-border: transparent;
-      --media-surface-backdrop-blur: 0px;
-      --media-surface-backdrop-saturate: 1;
-    }
-  }
-
-  @media (forced-colors: active) {
-    :is(.media-theme-default, .media-theme-minimal) {
-      --media-accent-color: Highlight;
-      --media-accent-background-color: Highlight;
-      --media-accent-text-color: HighlightText;
-      --media-border-color: CanvasText;
-      --media-controls-color: CanvasText;
-      --media-focus-ring-color: CanvasText;
-      --media-surface-background: Canvas;
-      --media-surface-inner-border: CanvasText;
-      --media-surface-outer-border: CanvasText;
     }
   }
 }

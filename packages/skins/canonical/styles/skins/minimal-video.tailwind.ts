@@ -5,7 +5,8 @@ export default defineStyles({
   styles: {
     controls: {
       root: [
-        'peer/controls group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-media-controls-background text-white',
+        'peer/controls group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white',
+        '[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]',
         '[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
         '[--media-popover-boundary-offset:--spacing(1)] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
         'p-1 transition-[filter,opacity,translate]',
