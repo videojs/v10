@@ -255,11 +255,11 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                   code
                     .function('Overlay')
                     .setProps(['className', { name: 'props', spread: true }], { type: 'OverlayProps' }),
-                  code.function('Overlay').jsx.element('OverlayPrimitive').spreadProps('props', { position: 'start' }),
+                  code.function('Overlay').jsx.element('OverlayRoot').spreadProps('props', { position: 'start' }),
                   code
                     .function('Overlay')
                     .jsx.props('className')
-                    .on('OverlayPrimitive')
+                    .on('OverlayRoot')
                     .replace(({ value }) => code.value.call(cn, [...classNameValues(value), 'className'])),
                   code.function('ErrorDialog').insertBefore(() =>
                     code.statement.interface({
@@ -425,12 +425,12 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                   }),
                   code
                     .function('VideoStatusIndicators')
-                    .jsx.element('StatusIndicatorOverlayPrimitive')
+                    .jsx.element('StatusIndicatorGroup')
                     .spreadProps('props', { position: 'start' }),
                   code
                     .function('VideoStatusIndicators')
                     .jsx.props('className')
-                    .on('StatusIndicatorOverlayPrimitive')
+                    .on('StatusIndicatorGroup')
                     .replace(({ value }) => code.value.call(cn, [...classNameValues(value), 'className'])),
                   code.function('VideoHotkeys').insertBefore(() =>
                     code.statement.interface({
@@ -669,16 +669,16 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .function('RadioItem')
               .jsx.element('Menu.ItemIndicator')
               .addProp('checked', code.value.identifier('checked')),
-            code.variable('OverlayPrimitive').remove(),
-            code.jsx.element('OverlayPrimitive').replace('div'),
-            code.variable('StatusIndicatorOverlayPrimitive').remove(),
-            code.jsx.element('StatusIndicatorOverlayPrimitive').replace('div'),
-            code.variable('PreviewValuePrimitive').remove(),
-            code.jsx.element('PreviewValuePrimitive').replace('div'),
-            code.variable('HintPrimitive').remove(),
-            code.jsx.element('HintPrimitive').replace('span'),
-            code.variable('OptionLabelPrimitive').remove(),
-            code.jsx.element('OptionLabelPrimitive').replace('span'),
+            code.variable('OverlayRoot').remove(),
+            code.jsx.element('OverlayRoot').replace('div'),
+            code.variable('StatusIndicatorGroup').remove(),
+            code.jsx.element('StatusIndicatorGroup').replace('div'),
+            code.variable('PreviewValue').remove(),
+            code.jsx.element('PreviewValue').replace('div'),
+            code.variable('SubmenuHint').remove(),
+            code.jsx.element('SubmenuHint').replace('span'),
+            code.variable('QualityOptionLabel').remove(),
+            code.jsx.element('QualityOptionLabel').replace('span'),
             code.jsx.element('Text').replace(({ element, factory }) => lowerReactText(element, factory)),
             code.jsx.element('Slider.Thumbnail.Root').replace('div'),
             code.jsx.element('Slider.Thumbnail.Image').replace('Slider.Thumbnail'),

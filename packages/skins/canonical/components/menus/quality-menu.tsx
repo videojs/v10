@@ -7,7 +7,7 @@ import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 
-declare const OptionLabelPrimitive: (props: { children?: unknown }) => ComponentNode;
+declare const QualityOptionLabel: (props: { children?: unknown }) => ComponentNode;
 
 export function QualityMenu() {
   return (
@@ -23,14 +23,14 @@ export function QualityMenu() {
       <QualityRadioGroup>
         <Template name="quality-option">
           <RadioItem>
-            <OptionLabelPrimitive>
+            <QualityOptionLabel>
               <Template.Part name="label">
                 <Text />
               </Template.Part>
               <Template.Part name="tier">
                 <Text className={styles.tier} />
               </Template.Part>
-            </OptionLabelPrimitive>
+            </QualityOptionLabel>
             <Template.Part name="badge">
               <Text className={styles.badge} />
             </Template.Part>

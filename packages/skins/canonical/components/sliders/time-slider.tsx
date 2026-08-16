@@ -4,7 +4,7 @@ import { type ComponentNode, Template } from '@videojs/jsx';
 import popupStyles from '../../styles/components/popup.tailwind';
 import styles from '../../styles/components/slider.tailwind';
 
-declare const PreviewValuePrimitive: (props: { children?: unknown; className?: unknown }) => ComponentNode;
+declare const PreviewValue: (props: { children?: unknown; className?: unknown }) => ComponentNode;
 
 export function TimeSlider() {
   return (
@@ -23,10 +23,10 @@ export function TimeSlider() {
           <Slider.Thumbnail.Image className={styles.thumbnailImage} />
           <SpinnerIcon className={styles.spinnerIcon} />
         </Slider.Thumbnail.Root>
-        <PreviewValuePrimitive className={styles.previewValue}>
+        <PreviewValue className={styles.previewValue}>
           <TimeSliderPrimitive.ChapterTitle className={styles.chapterTitle} />
           <TimeSliderPrimitive.Value className={styles.sliderValue} type="pointer" />
-        </PreviewValuePrimitive>
+        </PreviewValue>
       </TimeSliderPrimitive.Preview>
     </TimeSliderPrimitive.Root>
   );

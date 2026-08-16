@@ -3,7 +3,7 @@ import type { ComponentNode } from '@videojs/jsx';
 import styles from '../../styles/components/menu.tailwind';
 import { MenuChevron } from './menu-chevron';
 
-declare const HintPrimitive: (props: { children?: unknown; className?: unknown }) => ComponentNode;
+declare const SubmenuHint: (props: { children?: unknown; className?: unknown }) => ComponentNode;
 
 export interface SubmenuProps {
   children?: unknown;
@@ -18,10 +18,10 @@ export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) 
       <Menu.Trigger className={[styles.itemBase, styles.item]}>
         {icon}
         {label}
-        <HintPrimitive className={styles.hint}>
+        <SubmenuHint className={styles.hint}>
           {selectedLabel}
           <MenuChevron />
-        </HintPrimitive>
+        </SubmenuHint>
       </Menu.Trigger>
       <Menu.Content className={styles.submenuPanel}>
         <Menu.Item className={[styles.itemBase, styles.back]}>

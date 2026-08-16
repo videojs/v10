@@ -5,18 +5,18 @@ import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
 
-declare const StatusIndicatorOverlayPrimitive: (props: { children?: unknown; className?: unknown }) => ComponentNode;
+declare const StatusIndicatorGroup: (props: { children?: unknown; className?: unknown }) => ComponentNode;
 
 export function VideoStatusIndicators() {
   return (
     <>
       <StatusAnnouncer />
-      <StatusIndicatorOverlayPrimitive className={styles.statusIndicatorOverlay}>
+      <StatusIndicatorGroup className={styles.statusIndicatorOverlay}>
         <VolumeIndicator />
         <StatusIndicator />
         <SeekIndicator />
         <PlaybackStatusIndicator />
-      </StatusIndicatorOverlayPrimitive>
+      </StatusIndicatorGroup>
     </>
   );
 }
