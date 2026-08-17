@@ -14,4 +14,8 @@
   &[data-visible] {
     display: grid;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    --media-spinner-animation: none;
+  }
 }

@@ -78,7 +78,7 @@ export class MenuItemElement extends MediaElement {
           },
           onPointerenter: () => {
             const currentCtx = this.#ctx.value;
-            if (!this.#isDisabled()) currentCtx?.menu.highlight(this, { focus: false });
+            if (!this.#isDisabled()) currentCtx?.menu.highlight(this, { focus: false, pointer: true });
           },
         },
         { signal: this.#disconnect.signal }

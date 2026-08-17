@@ -12,7 +12,7 @@ import { Fragment, forwardRef, useMemo, useState } from 'react';
 
 import type { HTMLProps, UIComponentProps } from '../../../utils/types';
 import { renderElement } from '../../../utils/use-render';
-import { useSliderContext } from '../../slider/context';
+import { useSliderContext, useSliderPointerValue } from '../../slider/context';
 
 type SegmentProps = Omit<HTMLProps<HTMLElement>, 'ref'>;
 
@@ -28,6 +28,7 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
   function SliderSegments(componentProps, ref) {
     const { ranges, min, max, renderSegment, render, className, style, ...elementProps } = componentProps;
     const slider = useSliderContext();
+    const pointerValue = useSliderPointerValue();
     const [core] = useState(() => new SliderSegmentsCore());
     const geometry = useMemo(
       () => core.getGeometry({ ranges, min, max, orientation: slider.state.orientation }),
@@ -36,7 +37,7 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
     const sliderAttrs = getStateDataAttrs(slider.state, slider.stateAttrMap);
 
     const segments = geometry.map((segment) => {
-      const state = core.getState(segment, slider.state, slider.pointerValue);
+      const state = core.getState(segment, slider.state, pointerValue);
       const segmentStyle = {
         [TimeSliderChapterCSSVars.start]: state.startPercent,
         [TimeSliderChapterCSSVars.end]: state.endPercent,
@@ -57,7 +58,7 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
       );
     });
 
-    const state = geometry.length > 0 ? core.getState(geometry[0]!, slider.state, slider.pointerValue) : null;
+    const state = geometry.length > 0 ? core.getState(geometry[0]!, slider.state, pointerValue) : null;
     if (!state) return null;
 
     return renderElement(

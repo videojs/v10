@@ -72,11 +72,11 @@
       @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
         filter: blur(8px);
       }
+    }
 
+    &[data-ending-style] {
       @media (prefers-reduced-motion: no-preference) {
-        &[data-ending-style] {
-          translate: 0 -100%;
-        }
+        translate: 0 -100%;
       }
     }
   }

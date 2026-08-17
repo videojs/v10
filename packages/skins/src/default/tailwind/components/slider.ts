@@ -55,22 +55,22 @@ export const slider = {
     fill: cn(
       'bg-(--accent-color)',
       // Horizontal
-      'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0',
-      'data-[orientation=horizontal]:transition-[width] data-[orientation=horizontal]:w-(--media-slider-fill)',
-      'group-data-dragging/slider:data-[orientation=horizontal]:w-(--media-slider-pointer)',
+      'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
+      'data-[orientation=horizontal]:transition-[clip-path] data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-fill))_0_0_round_calc(infinity*1px))]',
+      'group-data-dragging/slider:data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-pointer))_0_0_round_calc(infinity*1px))]',
       // Vertical
-      'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0',
-      'data-[orientation=vertical]:transition-[height] data-[orientation=vertical]:h-(--media-slider-fill)',
-      'group-data-dragging/slider:data-[orientation=vertical]:h-(--media-slider-pointer)'
+      'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
+      'data-[orientation=vertical]:transition-[clip-path] data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-fill))_0_0_0_round_calc(infinity*1px))]',
+      'group-data-dragging/slider:data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-pointer))_0_0_0_round_calc(infinity*1px))]'
     ),
     buffer: cn(
       'bg-current/20 motion-safe:duration-250 motion-safe:ease-out',
       // Horizontal
-      'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0',
-      'data-[orientation=horizontal]:transition-[width] data-[orientation=horizontal]:w-(--media-slider-buffer)',
+      'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
+      'data-[orientation=horizontal]:transition-[clip-path] data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-buffer))_0_0_round_calc(infinity*1px))]',
       // Vertical
-      'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0',
-      'data-[orientation=vertical]:transition-[height] data-[orientation=vertical]:h-(--media-slider-buffer)'
+      'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
+      'data-[orientation=vertical]:transition-[clip-path] data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-buffer))_0_0_0_round_calc(infinity*1px))]'
     ),
   },
   thumb: {
@@ -99,7 +99,7 @@ export const slider = {
     persistent: 'size-3',
     interactive: cn(
       'size-2.5',
-      'opacity-0 focus-visible:opacity-100 group-hover/slider:opacity-100',
+      'opacity-0 focus-visible:opacity-100 pointer-fine:group-hover/slider:opacity-100',
       'group-active/slider:size-3 group-focus-within/slider:size-3'
     ),
   },

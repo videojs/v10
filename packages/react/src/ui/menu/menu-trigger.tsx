@@ -78,7 +78,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
     if (!element || disabled || !parentMenuApi) return;
-    parentMenuApi.highlight(element, { focus: false });
+    parentMenuApi.highlight(element, { focus: false, pointer: true });
   }, [disabled, parentMenuApi]);
 
   // Root trigger mode — standard button that toggles the menu.

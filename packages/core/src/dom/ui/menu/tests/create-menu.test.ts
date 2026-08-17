@@ -499,6 +499,18 @@ describe('createMenu', () => {
       expect(element.tabIndex).toBe(0);
     });
 
+    it('sets the highlight type for pointer highlights', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+      menu.registerItem(element);
+
+      menu.highlight(element, { focus: false, pointer: true });
+      expect(element.getAttribute(MenuItemDataAttrs.highlighted)).toBe('pointer');
+
+      menu.highlight(element);
+      expect(element.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('removes data-highlighted and resets tabIndex on previously highlighted item', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
@@ -512,6 +524,27 @@ describe('createMenu', () => {
       expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
       expect(a.tabIndex).toBe(-1);
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('lays out an earlier pointer highlight before removing the previous highlight', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.highlight(b, { focus: false, pointer: true });
+      const setHighlight = vi.spyOn(a, 'setAttribute');
+      const layout = vi.spyOn(document.body, 'getBoundingClientRect');
+      const removeHighlight = vi.spyOn(b, 'removeAttribute');
+
+      menu.highlight(a, { focus: false, pointer: true });
+
+      expect(setHighlight).toHaveBeenCalledWith(MenuItemDataAttrs.highlighted, 'pointer');
+      expect(layout).toHaveBeenCalledOnce();
+      expect(removeHighlight).toHaveBeenCalledWith(MenuItemDataAttrs.highlighted);
+      expect(setHighlight.mock.invocationCallOrder[0]).toBeLessThan(layout.mock.invocationCallOrder[0] ?? 0);
+      expect(layout.mock.invocationCallOrder[0]).toBeLessThan(removeHighlight.mock.invocationCallOrder[0] ?? 0);
+      layout.mockRestore();
     });
 
     it('calls onHighlightChange with the new element', () => {

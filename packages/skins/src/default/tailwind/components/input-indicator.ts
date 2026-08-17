@@ -17,9 +17,9 @@ export const topIndicatorRoot = cn(
   'pointer-fine:motion-safe:will-change-[scale,translate,filter,opacity]',
   'pointer-fine:motion-safe:transition-[scale,translate,filter,opacity]',
   'pointer-fine:motion-safe:data-starting-style:blur-sm',
-  'pointer-fine:motion-safe:data-starting-style:scale-90',
+  'pointer-fine:motion-safe:data-starting-style:scale-95',
   'pointer-fine:motion-safe:data-ending-style:blur-sm',
-  'pointer-fine:motion-safe:data-ending-style:scale-90',
+  'pointer-fine:motion-safe:data-ending-style:scale-95',
   'motion-safe:data-ending-style:-translate-y-1/4',
   '[@media(prefers-reduced-transparency:reduce)]:[--surface-background-color:oklch(0_0_0)]',
   'contrast-more:[--surface-background-color:oklch(0_0_0)]'

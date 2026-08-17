@@ -74,11 +74,17 @@
     }
   }
 
-  &:hover .media-slider__thumb,
   &:focus-within .media-slider__thumb,
   .media-slider__thumb--persistent {
     opacity: 1;
     scale: 1;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover .media-slider__thumb {
+      opacity: 1;
+      scale: 1;
+    }
   }
 
   /* Shared track fills */
@@ -91,12 +97,14 @@
     &[data-orientation="horizontal"] {
       inset-block: 0;
       left: 0;
-      transition-property: width;
+      width: 100%;
+      transition-property: clip-path;
     }
     &[data-orientation="vertical"] {
       inset-inline: 0;
       bottom: 0;
-      transition-property: height;
+      height: 100%;
+      transition-property: clip-path;
     }
   }
 
@@ -105,10 +113,10 @@
     background-color: oklch(from currentColor l c h / 0.2);
 
     &[data-orientation="horizontal"] {
-      width: var(--media-slider-buffer);
+      clip-path: inset(0 calc(100% - var(--media-slider-buffer)) 0 0 round calc(Infinity * 1px));
     }
     &[data-orientation="vertical"] {
-      height: var(--media-slider-buffer);
+      clip-path: inset(calc(100% - var(--media-slider-buffer)) 0 0 0 round calc(Infinity * 1px));
     }
   }
 
@@ -117,10 +125,10 @@
     background-color: var(--accent-color);
 
     &[data-orientation="horizontal"] {
-      width: var(--media-slider-fill);
+      clip-path: inset(0 calc(100% - var(--media-slider-fill)) 0 0 round calc(Infinity * 1px));
     }
     &[data-orientation="vertical"] {
-      height: var(--media-slider-fill);
+      clip-path: inset(calc(100% - var(--media-slider-fill)) 0 0 0 round calc(Infinity * 1px));
     }
   }
 
@@ -220,10 +228,10 @@
       top: calc(100% - var(--media-slider-pointer));
     }
     .media-slider__fill[data-orientation="horizontal"] {
-      width: var(--media-slider-pointer);
+      clip-path: inset(0 calc(100% - var(--media-slider-pointer)) 0 0 round calc(Infinity * 1px));
     }
     .media-slider__fill[data-orientation="vertical"] {
-      height: var(--media-slider-pointer);
+      clip-path: inset(calc(100% - var(--media-slider-pointer)) 0 0 0 round calc(Infinity * 1px));
     }
   }
 
