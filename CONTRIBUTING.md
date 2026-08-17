@@ -209,7 +209,7 @@ pnpm add https://pkg.pr.new/@videojs/html@<pr-number-or-sha>
 
 Use this to try a change in a real project before it is released. Previews are versioned `0.0.0-preview-<sha>` so they can never satisfy a semver range for a real release, and they ship without the bundled markdown docs that real releases include.
 
-Because a preview is an installable artifact carrying the Video.js name, it is only published for code someone with repository access pushed or vouched for. Pull requests from a branch in this repo publish automatically; **pull requests from a fork publish only once a maintainer approves them**, and need a fresh approval after new commits.
+Because a preview is an installable artifact carrying the Video.js name, it is only published for code someone with repository access pushed or vouched for. Pull requests from a branch in this repo publish automatically; **pull requests from a fork publish only once a maintainer approves them**. The approval has to be written against the pull request's latest commit, so any new commit needs a fresh approval before it is published.
 
 ### ✅ Workspace Consistency
 

@@ -36,6 +36,10 @@ jobs:
     #   - pull_request: branch lives in this repo, so its author has write access.
     #   - pull_request_review: a fork's pull request, approved by an owner, org
     #     member, or collaborator. Re-approve after new commits to refresh it.
+    #
+    # An approval only counts for the exact commit it was written against, so a
+    # fork cannot land new commits between the review being started and
+    # submitted and have them published on the back of the earlier approval.
     if: >-
       ${{
         github.event_name == 'push'
@@ -43,6 +47,7 @@ jobs:
             && github.event.pull_request.head.repo.full_name == github.repository)
         || (github.event_name == 'pull_request_review'
             && github.event.review.state == 'approved'
+            && github.event.review.commit_id == github.event.pull_request.head.sha
             && github.event.pull_request.head.repo.full_name != github.repository
             && !startsWith(github.event.pull_request.base.ref, 'rfc/')
             && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association))
@@ -51,12 +56,13 @@ jobs:
 
     steps:
       # pkg.pr.new keys previews by the head commit, so check out that commit
-      # rather than the pull request's merge ref.
+      # rather than the pull request's merge ref. On an approval, build the exact
+      # commit that was reviewed.
       - name: Checkout code
         uses: actions/checkout@v5
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.review.commit_id || github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
