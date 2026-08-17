@@ -13,14 +13,15 @@ const previewContent = cn(
 
 export const slider = {
   root: cn(
-    'group/slider relative flex flex-1 items-center justify-center rounded-full outline-none cursor-pointer',
+    'group/slider relative flex flex-1 items-center justify-center rounded-(--track-border-radius) outline-none cursor-pointer',
+    '[--track-border-radius:calc(infinity*1px)]',
     // Horizontal
     'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-(--slider-width,100%) data-[orientation=horizontal]:h-(--slider-height,--spacing(8))',
     // Vertical
     'data-[orientation=vertical]:w-(--slider-width,--spacing(8)) data-[orientation=vertical]:h-(--slider-height,--spacing(20))'
   ),
   track: cn(
-    'relative isolate overflow-hidden bg-current/20 rounded-[inherit] select-none',
+    'relative isolate overflow-hidden bg-current/20 rounded-(--track-border-radius) select-none',
     // Horizontal
     'data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-1',
     // Vertical
@@ -36,14 +37,14 @@ export const slider = {
       'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start)_0)]'
     ),
     track: cn(
-      'relative isolate overflow-hidden bg-current/20 rounded-full select-none',
+      'relative isolate overflow-hidden bg-current/20 rounded-(--track-border-radius) select-none',
       'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
       'data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-1',
       'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
-      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--chapter-gap)*var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-gap)*var(--chapter-inset-start))_round_calc(infinity*1px))]',
+      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--chapter-gap)*var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-gap)*var(--chapter-inset-start))_round_var(--track-border-radius))]',
       'data-[orientation=vertical]:w-1 data-[orientation=vertical]:h-full',
       'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
-      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--chapter-gap)*var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-gap)*var(--chapter-inset-start))_0_round_calc(infinity*1px))]'
+      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--chapter-gap)*var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-gap)*var(--chapter-inset-start))_0_round_var(--track-border-radius))]'
     ),
   },
   fill: {
@@ -56,21 +57,21 @@ export const slider = {
       'bg-(--accent-color)',
       // Horizontal
       'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
-      'data-[orientation=horizontal]:transition-[clip-path] data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-fill))_0_0_round_calc(infinity*1px))]',
-      'group-data-dragging/slider:data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-pointer))_0_0_round_calc(infinity*1px))]',
+      'data-[orientation=horizontal]:transition-[clip-path] data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-fill))_0_0_round_var(--track-border-radius))]',
+      'group-data-dragging/slider:data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-pointer))_0_0_round_var(--track-border-radius))]',
       // Vertical
       'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
-      'data-[orientation=vertical]:transition-[clip-path] data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-fill))_0_0_0_round_calc(infinity*1px))]',
-      'group-data-dragging/slider:data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-pointer))_0_0_0_round_calc(infinity*1px))]'
+      'data-[orientation=vertical]:transition-[clip-path] data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-fill))_0_0_0_round_var(--track-border-radius))]',
+      'group-data-dragging/slider:data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-pointer))_0_0_0_round_var(--track-border-radius))]'
     ),
     buffer: cn(
       'bg-current/20 motion-safe:duration-250 motion-safe:ease-out',
       // Horizontal
       'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0 data-[orientation=horizontal]:w-full',
-      'data-[orientation=horizontal]:transition-[clip-path] data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-buffer))_0_0_round_calc(infinity*1px))]',
+      'data-[orientation=horizontal]:transition-[clip-path] data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-buffer))_0_0_round_var(--track-border-radius))]',
       // Vertical
       'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:h-full',
-      'data-[orientation=vertical]:transition-[clip-path] data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-buffer))_0_0_0_round_calc(infinity*1px))]'
+      'data-[orientation=vertical]:transition-[clip-path] data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-buffer))_0_0_0_round_var(--track-border-radius))]'
     ),
   },
   thumb: {

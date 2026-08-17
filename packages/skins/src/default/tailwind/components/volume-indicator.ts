@@ -7,8 +7,8 @@ export const volumeIndicator = {
     'w-[min(80%,--spacing(48))]',
     'data-open:duration-100',
     '[transform:translateX(0)]',
-    'motion-safe:[&:is([data-min],[data-max])]:[transform:translateX(0.25px)]',
-    'motion-safe:[&:is([data-min],[data-max])]:[transition:transform_300ms_linear(0,-24_20%,16_40%,-8_60%,4_80%,1)]'
+    'motion-safe:[&:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]:[transform:translateX(0.25px)]',
+    'motion-safe:[&:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]:[transition:transform_300ms_linear(0,-24_20%,16_40%,-8_60%,4_80%,1)]'
   ),
   content: cn(
     topIndicatorContent,
