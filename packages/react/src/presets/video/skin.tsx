@@ -458,12 +458,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                       </TimeSlider.Track>
                     </div>
                   )}
-                >
-                  <TimeSlider.Track className="media-slider__track">
-                    <TimeSlider.Buffer className="media-slider__buffer" />
-                    <TimeSlider.Fill className="media-slider__fill" />
-                  </TimeSlider.Track>
-                </TimeSlider.Chapters>
+                />
                 <TimeSlider.Thumb className="media-slider__thumb" />
 
                 <TimeSlider.Preview overflow="visible" className="media-slider__preview">

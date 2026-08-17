@@ -7,8 +7,8 @@ export const volumeIndicator = {
     topIndicatorContent,
     'w-[min(80%,--spacing(56))]',
     '[transform:translateX(0)]',
-    'motion-safe:group-[:is([data-min],[data-max])]/input-indicator:[transform:translateX(0.25px)]',
-    'motion-safe:group-[:is([data-min],[data-max])]/input-indicator:[transition:transform_300ms_linear(0,-24_20%,16_40%,-8_60%,4_80%,1)]'
+    'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/input-indicator:[transform:translateX(0.25px)]',
+    'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/input-indicator:[transition:transform_300ms_linear(0,-24_20%,16_40%,-8_60%,4_80%,1)]'
   ),
   progress: cn(
     'relative w-full h-0.75 rounded-full bg-current/20',

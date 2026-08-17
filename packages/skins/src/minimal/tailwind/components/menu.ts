@@ -49,7 +49,8 @@ const group = cn(
   'supports-[top:anchor(top)]:before:rounded-(--menu-item-border-radius)',
   'supports-[top:anchor(top)]:before:transition-[inset]',
   'supports-[top:anchor(top)]:before:duration-100',
-  'supports-[top:anchor(top)]:before:ease-in-out'
+  'supports-[top:anchor(top)]:before:ease-in-out',
+  'supports-[top:anchor(top)]:has-data-[highlighted=]:before:duration-0'
 );
 
 const menuHostShell = cn(
@@ -87,8 +88,6 @@ export const menu = {
   item: cn(
     itemBase,
     'justify-between tabular-nums text-inherit',
-    'supports-[top:anchor(top)]:hover:[anchor-name:--menu-item-highlight-anchor]',
-    'supports-[top:anchor(top)]:hover:bg-transparent',
     'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--menu-item-highlight-anchor]',
     'supports-[top:anchor(top)]:data-highlighted:bg-transparent',
     'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',

@@ -43,7 +43,7 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
     if (!element || disabled) return;
-    menu.highlight(element, { focus: false });
+    menu.highlight(element, { focus: false, pointer: true });
   }, [menu, disabled]);
 
   return (

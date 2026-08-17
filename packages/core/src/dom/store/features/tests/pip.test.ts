@@ -6,6 +6,25 @@ import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { pipFeature } from '../pip';
 
+function enablePictureInPicture() {
+  Object.defineProperty(document, 'pictureInPictureEnabled', {
+    value: true,
+    writable: true,
+    configurable: true,
+  });
+}
+
+/**
+ * A video element as a browser that supports picture-in-picture presents one.
+ * happy-dom implements neither the method nor the property, so a bare element
+ * reads as media that cannot enter picture-in-picture at all.
+ */
+function createPipCapableVideo(): HTMLVideoElement {
+  const video = createMockVideo();
+  video.requestPictureInPicture = async () => ({}) as PictureInPictureWindow;
+  return video;
+}
+
 describe('pipFeature', () => {
   let originalPictureInPictureEnabled: boolean | undefined;
 
@@ -37,13 +56,34 @@ describe('pipFeature', () => {
     });
 
     it('detects PiP availability when supported', () => {
-      Object.defineProperty(document, 'pictureInPictureEnabled', {
-        value: true,
-        writable: true,
-        configurable: true,
-      });
+      enablePictureInPicture();
 
-      const video = createMockVideo();
+      const video = createPipCapableVideo();
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.pipAvailability).toBe('available');
+    });
+
+    it('reports media that cannot enter PiP as unsupported', () => {
+      enablePictureInPicture();
+
+      // What an iframe embed looks like when its provider has no
+      // picture-in-picture: the browser offers it, this media cannot use it.
+      const media = createMockVideo();
+      const store = createStore<PlayerTarget>()(pipFeature);
+      store.attach({ media, container: null });
+
+      expect(store.state.pipAvailability).toBe('unsupported');
+    });
+
+    it('reports WebKit presentation mode as available', () => {
+      enablePictureInPicture();
+
+      // iPhone Safari reaches picture-in-picture through presentation mode rather
+      // than through `requestPictureInPicture`, so the media is capable without it.
+      const video = createMockVideo() as WebKitVideoElement;
+      video.webkitSetPresentationMode = () => {};
       const store = createStore<PlayerTarget>()(pipFeature);
       store.attach({ media: video, container: null });
 

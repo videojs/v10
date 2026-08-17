@@ -28,6 +28,9 @@ function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailabil
       volume: 1,
       muted: false,
       volumeAvailability,
+      // Mute has an availability of its own, and this slider reads the level's;
+      // these tests vary that one and leave the mute available throughout.
+      mutedAvailability: 'available',
       setVolume: vi.fn(),
       toggleMuted: vi.fn(),
     }),

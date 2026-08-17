@@ -57,7 +57,9 @@ export {
 export {
   type ConstStatementOptions,
   type FunctionPropSpec,
+  type FunctionPropsOptions,
   type FunctionSelection,
+  type FunctionSiblingStatementSpec,
   type ImportOptions,
   type ImportReference,
   type InterfacePropertyContext,
@@ -69,14 +71,19 @@ export {
   type JsxElementUnwrapOptions,
   type JsxHelpers,
   type JsxPropContext,
+  type JsxPropInput,
   type JsxPropsSelection,
   type JsxPropsSpec,
   type JsxPropValue,
+  type JsxPropValueFactory,
+  type JsxSpreadPropsOptions,
   type MatchPredicate,
   type ModuleSelection,
   type RewriteCallback,
   type RewriteOptions,
   rewrite,
+  type ScopedJsxElementSelection,
+  type ScopedJsxHelpers,
   type StatementHelpers,
   type StatementSpec,
   type TransformHelpers,
@@ -85,6 +92,8 @@ export {
   type ValueArrayOptions,
   type ValueHelpers,
   type ValueReference,
+  type VariableSelection,
 } from './rewrite';
 export { CompilerError, type TransformOptions, type TransformResult, transform } from './transform';
 export type { ImportRule } from './transforms';
+export type { InterfaceDeclarationOptions, InterfacePropertySpec } from './utils/declarations';

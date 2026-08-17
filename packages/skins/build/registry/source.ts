@@ -3,6 +3,7 @@ import { basename, posix, resolve, sep } from 'node:path';
 import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinStyleResources } from '../catalog/types';
 import { createCompilerReactConfig } from '../compiler/react';
 import { emitReactModules, type ReactModuleLayout } from '../compiler/react-modules';
+import { skinRootClassName } from '../compiler/skin-root';
 import type { GeneratedFile } from '../output/files';
 import { loadCatalogStyleManifest, type SkinStyleManifest } from '../styles/manifest';
 
@@ -216,6 +217,7 @@ async function emitReactItem(context: SkinItemContext, installAlias: string): Pr
       style: 'tailwind',
       styles: context.styles,
       iconSet: context.options.iconSet,
+      ...(context.item.type === 'skin' ? { rootClassName: skinRootClassName(context.item) } : {}),
     }),
     configDir: resolve(context.options.rootDir, context.itemDir),
     description: `Skin item \`${context.item.name}\``,

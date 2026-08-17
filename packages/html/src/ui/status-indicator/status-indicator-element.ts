@@ -10,7 +10,7 @@ import type { PropertyDeclarationMap } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
-import { InputIndicatorElement } from '../input-indicator/input-indicator-element';
+import { InputIndicatorElement, type InputIndicatorOptions } from '../input-indicator/input-indicator-element';
 import { LiveIndicator } from '../input-indicator/live-indicator';
 
 export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicatorCore.State> {
@@ -32,6 +32,7 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
     dataAttrs: StatusIndicatorDataAttrs,
     render: renderStatusIndicator,
   });
+  readonly #options = { replayOnUpdate: false } satisfies InputIndicatorOptions;
 
   protected get core() {
     return this.#core;
@@ -43,6 +44,10 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
 
   protected get liveIndicator() {
     return this.#liveIndicator;
+  }
+
+  protected override get options() {
+    return this.#options;
   }
 
   protected override syncCoreProps(): void {

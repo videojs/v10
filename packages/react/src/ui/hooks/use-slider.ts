@@ -11,7 +11,7 @@ import {
   selectControls,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
-import { isRTL } from '@videojs/utils/dom';
+import { applyStyles, isRTL } from '@videojs/utils/dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useOptionalPlayer } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
@@ -41,6 +41,7 @@ export interface UseSliderOptions<State extends SliderState = SliderState>
 
 export interface UseSliderReturnValue<State extends SliderState = SliderState> {
   state: State;
+  input: SliderApi['input'];
   cssVars: Record<string, string>;
   rootRef: React.RefCallback<HTMLElement>;
   thumbRef: React.RefCallback<HTMLElement>;
@@ -105,8 +106,14 @@ export function useSlider<State extends SliderState = SliderState>(
 
   useDestroy(slider);
 
-  // Subscribe to slider input state.
-  const input = useSnapshot(slider.input);
+  // Percentage changes are rendered directly below. React only needs to
+  // re-render when interaction state changes.
+  const interaction = useSnapshot(slider.input, ({ dragging, pointing, focused }) => ({
+    dragging,
+    pointing,
+    focused,
+  }));
+  const input = { ...slider.input.current, ...interaction };
 
   // Compute derived state from input + caller-provided projection.
   const state = options.computeState(input);
@@ -122,10 +129,28 @@ export function useSlider<State extends SliderState = SliderState>(
   // Adjust CSS var percents for edge thumb alignment using live DOM measurements.
   const cssVars = options.getCSSVars(slider.adjustForAlignment(state));
 
+  const syncStyles = useCallback(
+    (element = rootElementRef.current) => {
+      if (!element) return;
+      const next = optionsRef.current.computeState(slider.input.current);
+      applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
+    },
+    [slider]
+  );
+
+  useLayoutEffect(() => {
+    syncStyles();
+    return slider.input.subscribe(syncStyles);
+  }, [slider, syncStyles]);
+
   // Ref callbacks for root and thumb elements.
-  const rootRef = useCallback((element: HTMLElement | null) => {
-    rootElementRef.current = element;
-  }, []);
+  const rootRef = useCallback(
+    (element: HTMLElement | null) => {
+      rootElementRef.current = element;
+      syncStyles(element);
+    },
+    [syncStyles]
+  );
 
   const thumbRef = useCallback((element: HTMLElement | null) => {
     thumbElementRef.current = element;
@@ -133,6 +158,7 @@ export function useSlider<State extends SliderState = SliderState>(
 
   return {
     state,
+    input: slider.input,
     cssVars,
     rootRef,
     thumbRef,
