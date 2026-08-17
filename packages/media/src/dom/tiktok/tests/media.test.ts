@@ -1072,6 +1072,45 @@ describe('TikTokMedia bootstrap', () => {
     media.detach();
   });
 
+  it('still puts the tail back down after the caller seeks a parked player', async () => {
+    const media = new TikTokMedia();
+    const { iframe, commands } = await attachBootstrapped(media);
+    const playSpy = vi.fn();
+    media.addEventListener('play', playSpy);
+
+    report(iframe, 'onPlayerReady');
+    report(iframe, 'onStateChange', STATE.PAUSED);
+    // Scrubbing a parked player is not asking it to play, so it must not hand the bootstrap's tail to the caller.
+    media.currentTime = 5;
+    await flushLoad();
+    commands.mockClear();
+
+    report(iframe, 'onStateChange', STATE.PLAYING);
+
+    expect(commands).toHaveBeenCalledWith({ 'x-tiktok-player': true, type: 'pause' }, '*');
+    expect(playSpy).not.toHaveBeenCalled();
+    expect(media.paused).toBe(true);
+    media.detach();
+  });
+
+  it('settles a seek the parked player will never report back', async () => {
+    const media = new TikTokMedia();
+    const { iframe } = await attachBootstrapped(media);
+    const seeked = vi.fn();
+    media.addEventListener('seeked', seeked);
+
+    report(iframe, 'onPlayerReady');
+    media.currentTime = 5;
+    await flushLoad();
+    report(iframe, 'onStateChange', STATE.PAUSED);
+
+    // The embed reports positions only while it plays, so a paused player leaves the seek with nothing to
+    // confirm it. The park put it exactly where it was asked to go, which is confirmation enough.
+    expect(media.seeking).toBe(false);
+    expect(seeked).toHaveBeenCalledTimes(1);
+    media.detach();
+  });
+
   it('leaves the embed to drive itself when it is showing its own controls', async () => {
     const media = new TikTokMedia();
     media.controls = true;

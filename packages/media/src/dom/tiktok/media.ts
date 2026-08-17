@@ -219,7 +219,8 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   pause() {
     // A pause after a pending play is the later intent, so it cancels the replay rather than racing it.
     this.#playRequested = false;
-    this.#takeOver();
+    // Deliberately not a hand-over: only a play makes the embed's next report the caller's. Pausing a parked
+    // player asks for nothing it is not already doing, and taking it over would let the bootstrap's tail through.
     this.#post('pause');
   }
 
@@ -228,7 +229,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   }
   set currentTime(value) {
     if (this.#currentTime === value) return;
-    this.#takeOver();
+    // Scrubbing is not a hand-over either, for the same reason as `pause`.
     // A seek while the bootstrap is still running is where it has to leave the player; parking to the start would
     // rewind the caller, and the position they asked for would never be reported.
     if (this.#bootstrap !== 'off') this.#parkPosition = value;
@@ -237,7 +238,12 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     this.#currentTime = value;
     this.dispatchEvent(new Event('seeking'));
     this.dispatchEvent(new Event('timeupdate'));
-    this.#afterLoad(() => this.#post('seekTo', value));
+    this.#afterLoad(() => {
+      this.#post('seekTo', value);
+      // A player already parked is paused for good, so nothing is coming to confirm this one. A seek made while
+      // the bootstrap is still parking is settled by `#park` instead, once it lands on the position.
+      if (this.#bootstrap === 'parked') this.#settleSeek();
+    });
   }
 
   get duration() {
@@ -549,6 +555,8 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     this.#playFired = false;
     // TikTok mutes itself to get the unasked-for autoplay past the browser, so that mute is its own to undo.
     if (!this.#muted) this.#post('unMute');
+    // The park put the player on the position a seek was waiting for.
+    this.#settleSeek();
     // The play held back rather than raced against the park.
     if (this.#playRequested) {
       this.#playRequested = false;
@@ -557,9 +565,18 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     }
   }
 
-  // Hand a parked player to the caller: what the embed reports next is theirs.
+  // Hand a parked player to the caller: what the embed reports next is theirs. Only a play does this, since only a
+  // play makes the next report of playback something they asked for.
   #takeOver() {
     if (this.#bootstrap === 'parked') this.#bootstrap = 'off';
+  }
+
+  // Settle a seek the embed will not confirm. It reports a position only while it plays, so a seek on a player the
+  // bootstrap is holding paused would otherwise leave `seeking` stuck true and a slider stuck with it.
+  #settleSeek() {
+    if (!this.#seeking) return;
+    this.#seeking = false;
+    this.dispatchEvent(new Event('seeked'));
   }
 
   #onPlayerError({ errorCode, errorType }: TikTokPlayerError) {
