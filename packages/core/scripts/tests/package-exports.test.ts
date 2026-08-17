@@ -10,7 +10,7 @@ describe('@videojs/core package exports', () => {
     delete publishedExports['./components'];
 
     expect(packageJson.publishConfig.exports).toEqual(publishedExports);
-    expect(packageJson.dependencies).not.toHaveProperty('@videojs/jsx');
-    expect(packageJson.devDependencies).toHaveProperty('@videojs/jsx', 'workspace:*');
+    expect(packageJson.dependencies).not.toHaveProperty('@videojs/compiler');
+    expect(packageJson.devDependencies).toHaveProperty('@videojs/compiler', 'workspace:*');
   });
 });

@@ -1,5 +1,5 @@
-import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/core/components';
-import { Slot } from '@videojs/jsx';
+import { Slot } from '@videojs/compiler/components';
+import * as $ from '@videojs/core/components';
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -27,34 +27,34 @@ export function MinimalVideoSkin() {
       <BufferingIndicator />
       <ErrorDialog />
 
-      <Controls.Root className={styles.controls.root}>
-        <Tooltip.Provider>
-          <Controls.Group className={styles.controls.start}>
+      <$.Controls.Root className={styles.controls.root}>
+        <$.Tooltip.Provider>
+          <$.Controls.Group className={styles.controls.start}>
             <PlayButton />
             <VolumePopover side="right" orientation="horizontal" />
-          </Controls.Group>
+          </$.Controls.Group>
 
-          <Controls.Group className={styles.timeline}>
-            <TimePrimitive.Group className={styles.time.group}>
-              <TimePrimitive.Value className={styles.time.current} type="current" toggle />
-              <TimePrimitive.Separator className={styles.time.separator} />
-              <TimePrimitive.Value className={styles.time.duration} type="duration" />
-            </TimePrimitive.Group>
+          <$.Controls.Group className={styles.timeline}>
+            <$.Time.Group className={styles.time.group}>
+              <$.Time.Value className={styles.time.current} type="current" toggle />
+              <$.Time.Separator className={styles.time.separator} />
+              <$.Time.Value className={styles.time.duration} type="duration" />
+            </$.Time.Group>
             <TimeSlider />
-          </Controls.Group>
+          </$.Controls.Group>
 
-          <Controls.Group className={styles.controls.end}>
+          <$.Controls.Group className={styles.controls.end}>
             <CaptionsButton />
             <VideoSettingsMenu />
-            <Controls.Group className={styles.controls.remote}>
+            <$.Controls.Group className={styles.controls.remote}>
               <CastButton />
               <AirPlayButton />
               <PiPButton />
               <FullscreenButton />
-            </Controls.Group>
-          </Controls.Group>
-        </Tooltip.Provider>
-      </Controls.Root>
+            </$.Controls.Group>
+          </$.Controls.Group>
+        </$.Tooltip.Provider>
+      </$.Controls.Root>
 
       <Overlay />
       <VideoHotkeys />

@@ -1,15 +1,10 @@
-import { existsSync, statSync } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { dirname } from 'node:path';
 
 import { isPlainObject } from '@videojs/utils/predicate';
-
+import { parseGenerateComponentsConfig } from './components/generate/components';
+import { parseGenerateTargetConfig } from './components/generate/target';
 import type { CompilerBuildConfig, CompilerConfig } from './config';
-
-interface ConfigModule {
-  default?: CompilerBuildConfig;
-  config?: CompilerBuildConfig;
-}
+import { findConfigFile, loadConfigExport } from './utils/config-file';
 
 export interface LoadedCompilerConfig {
   config: CompilerConfig;
@@ -24,6 +19,10 @@ export interface LoadedCompilerBuildConfig {
 }
 
 export const CONFIG_FILENAMES = [
+  'vjsc.config.js',
+  'vjsc.config.mjs',
+  'vjsc.config.ts',
+  'vjsc.config.mts',
   'compiler.config.js',
   'compiler.config.mjs',
   'compiler.config.ts',
@@ -31,25 +30,11 @@ export const CONFIG_FILENAMES = [
 ];
 
 export function findConfig(cwd: string, override: string | undefined): string | null {
-  if (override) {
-    const path = isAbsolute(override) ? override : resolve(cwd, override);
-    if (!existsSync(path)) throw new Error(`Config file not found: ${path}`);
-    return path;
-  }
-
-  for (const name of CONFIG_FILENAMES) {
-    const path = resolve(cwd, name);
-    if (existsSync(path)) return path;
-  }
-
-  return null;
+  return findConfigFile(cwd, override, CONFIG_FILENAMES);
 }
 
 export async function loadBuildConfigFile(configPath: string): Promise<LoadedCompilerBuildConfig> {
-  const configUrl = pathToFileURL(configPath);
-  configUrl.searchParams.set('mtime', String(statSync(configPath).mtimeMs));
-  const mod = (await import(configUrl.href)) as ConfigModule;
-  const exported = mod.default ?? mod.config;
+  const exported = await loadConfigExport(configPath);
   if (!exported) {
     throw new Error(`Config file ${configPath} must export a default compiler config (use \`defineConfig\`).`);
   }
@@ -93,6 +78,16 @@ function parseBuildConfig(value: unknown, configPath: string): CompilerBuildConf
 
 function validateCompilerConfig(value: unknown, location: string): asserts value is CompilerConfig {
   if (!isPlainObject(value)) throw invalidConfig(location, 'expected an object');
+
+  if (value.generate !== undefined) {
+    if (!isPlainObject(value.generate)) throw invalidConfig(location, '`generate` must be an object');
+    if (value.generate.components !== undefined) {
+      parseGenerateComponentsConfig(value.generate.components, `${location}.generate.components`);
+    }
+    if (value.generate.target !== undefined) {
+      parseGenerateTargetConfig(value.generate.target, `${location}.generate.target`);
+    }
+  }
 
   if (value.input !== undefined && !isCompilerInput(value.input)) {
     throw invalidConfig(location, '`input` must be a string, string array, or string record');
@@ -140,8 +135,11 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
     if (value.target.imports !== undefined) {
       if (!isPlainObject(value.target.imports)) throw invalidConfig(location, '`target.imports` must be an object');
       for (const [source, rule] of Object.entries(value.target.imports)) {
-        if (typeof rule !== 'string' && typeof rule !== 'function') {
-          throw invalidConfig(location, `import rule for ${JSON.stringify(source)} must be a string or function`);
+        if (rule !== false && typeof rule !== 'string' && typeof rule !== 'function') {
+          throw invalidConfig(
+            location,
+            `import rule for ${JSON.stringify(source)} must be false, a string, or function`
+          );
         }
       }
     }

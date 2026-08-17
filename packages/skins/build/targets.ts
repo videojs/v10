@@ -3,6 +3,8 @@ import { basename, posix, resolve } from 'node:path';
 
 import { type CatalogOutputFile, type CatalogStyleTransform, emitCatalog } from '@videojs/compiler/catalog';
 import { format } from 'oxfmt';
+import { registry as htmlRegistry } from '../../html/compiler';
+import { registry as reactRegistry } from '../../react/compiler';
 
 import {
   catalogSourcePath,
@@ -11,7 +13,7 @@ import {
   skinRootClassName,
   skinRootComponentName,
 } from './catalog';
-import { createCompilerHtmlConfig, resolveHtmlElementImports } from './transform/html';
+import { createCompilerHtmlConfig } from './transform/html';
 import { createCompilerReactConfig, type ReactImportResolver } from './transform/react';
 
 export type FrameworkTarget =
@@ -86,6 +88,7 @@ async function emitReactTarget(
   const output = await emitCatalog(catalog, {
     items: [skin.name],
     transform: {
+      registry: reactRegistry,
       compiler: createCompilerReactConfig({
         iconSet,
         rootComponentName: skinRootComponentName(skin),
@@ -124,6 +127,7 @@ async function emitHtmlTarget(
     items: [skin.name],
     transform: {
       mode: 'bundle',
+      registry: htmlRegistry,
       compiler: createCompilerHtmlConfig({
         rootComponentName: skinRootComponentName(skin),
         rootClassName: skinRootClassName(skin),
@@ -148,7 +152,7 @@ async function emitHtmlTarget(
 
   if (html.errors.length > 0) throw new Error(html.errors.map((error) => error.message).join('\n'));
 
-  const imports = htmlImports(output.references, iconSet, html.code).map(
+  const imports = htmlImports(output.references, iconSet, bundled.imports ?? []).map(
     target.resolveImport ?? ((specifier) => specifier)
   );
   const content = `${imports.map((specifier) => `import '${specifier}';`).join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
@@ -198,11 +202,12 @@ async function packageStyles(
   ];
 }
 
-function htmlImports(references: SkinCatalog['references'], iconSet: string, markup: string): string[] {
-  return [
-    ...(references.icons.length > 0 ? [htmlIconElementImport(iconSet)] : []),
-    ...resolveHtmlElementImports(references.components, markup),
-  ];
+function htmlImports(
+  references: SkinCatalog['references'],
+  iconSet: string,
+  componentImports: readonly string[]
+): string[] {
+  return [...(references.icons.length > 0 ? [htmlIconElementImport(iconSet)] : []), ...componentImports];
 }
 
 function htmlIconElementImport(iconSet: string): string {

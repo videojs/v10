@@ -1,4 +1,5 @@
-import { Menu, Text, Tooltip as TooltipPrimitive } from '@videojs/core/components';
+import { Text } from '@videojs/compiler/components';
+import * as $ from '@videojs/core/components';
 import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@videojs/icons/components';
 import buttonStyles from '../../styles/components/button.styles';
@@ -11,21 +12,21 @@ export interface SettingsMenuProps {
 
 export function SettingsMenu({ children }: SettingsMenuProps) {
   return (
-    <Menu.Root side="top" align="center">
-      <TooltipPrimitive.Root side="top">
-        <TooltipPrimitive.Trigger>
-          <Menu.Trigger className={[buttonStyles.root, styles.trigger]}>
+    <$.Menu.Root side="top" align="center">
+      <$.Tooltip.Root side="top">
+        <$.Tooltip.Trigger>
+          <$.Menu.Trigger className={[buttonStyles.root, styles.trigger]}>
             <GearIcon className={[buttonStyles.icon, styles.triggerIcon]} />
             <Text className={styles.srOnly}>{settingsText}</Text>
-          </Menu.Trigger>
-        </TooltipPrimitive.Trigger>
-        <TooltipPrimitive.Popup className={[popupStyles.surface, popupStyles.tooltip]}>
+          </$.Menu.Trigger>
+        </$.Tooltip.Trigger>
+        <$.Tooltip.Popup className={[popupStyles.surface, popupStyles.tooltip]}>
           <Text>{settingsText}</Text>
-        </TooltipPrimitive.Popup>
-      </TooltipPrimitive.Root>
-      <Menu.Content className={[popupStyles.surface, popupStyles.popover, styles.root, styles.group]}>
-        <Menu.Group className={styles.group}>{children}</Menu.Group>
-      </Menu.Content>
-    </Menu.Root>
+        </$.Tooltip.Popup>
+      </$.Tooltip.Root>
+      <$.Menu.Content className={[popupStyles.surface, popupStyles.popover, styles.root, styles.group]}>
+        <$.Menu.Group className={styles.group}>{children}</$.Menu.Group>
+      </$.Menu.Content>
+    </$.Menu.Root>
   );
 }

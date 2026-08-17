@@ -1,0 +1,195 @@
+import type { ComponentDefinition, ComponentRecord, ComponentSet, EmptyProps, InferProps } from '../definition';
+import type { Fragment } from '../jsx-runtime';
+
+export const REGISTRY_NODE = Symbol.for('@videojs/compiler/registry-node');
+export const REGISTRY_TARGET = Symbol.for('@videojs/compiler/registry-target');
+export const REGISTRY_HOST = Symbol.for('@videojs/compiler/registry-host');
+
+export interface TargetNamedImport {
+  readonly from: string;
+  readonly name: string;
+  readonly path?: readonly string[] | undefined;
+}
+
+export interface TargetSideEffectImport {
+  readonly from: string;
+  readonly sideEffect: true;
+}
+
+export type TargetReference =
+  | {
+      readonly import: TargetNamedImport;
+      readonly tagName?: never;
+    }
+  | {
+      readonly tagName: string;
+      readonly import?: TargetSideEffectImport | undefined;
+    };
+
+export interface RegistryNode {
+  readonly [REGISTRY_NODE]: true;
+  readonly type: RegistryElementType;
+  readonly props: Record<string, unknown>;
+  readonly key: string | number | null;
+}
+
+export interface RegistryTarget {
+  readonly [REGISTRY_TARGET]: TargetReference;
+}
+
+export interface RegistryHost {
+  readonly [REGISTRY_HOST]: true;
+}
+
+export interface TargetComponent<Props extends object = Record<string, unknown>> extends RegistryTarget {
+  (props: Props & { children?: unknown }): RegistryNode;
+}
+
+export interface HostComponent extends RegistryHost {
+  (props: Record<string, unknown>): RegistryNode;
+}
+
+export const Host = Object.assign(
+  (_props: Record<string, unknown>): RegistryNode => {
+    throw new Error('@videojs/compiler/components: <Host> can only be evaluated by the registry JSX runtime.');
+  },
+  { [REGISTRY_HOST]: true as const }
+);
+
+export type RegistryElementType = TargetComponent | HostComponent | typeof Fragment;
+
+export interface RegistryRenderContext<Props extends object = EmptyProps> {
+  readonly props: Props;
+  readonly children: unknown;
+}
+
+export interface RegistryPart<Props extends object = EmptyProps> extends RegistryRenderContext<Props> {}
+
+export interface RegistryPartCollection<Props extends object = EmptyProps> {
+  one(): RegistryPart<Props>;
+  all(): readonly RegistryPart<Props>[];
+}
+
+type PartCollections<Parts extends ComponentRecord, Root extends keyof Parts> = {
+  readonly [Part in Exclude<keyof Parts, Root>]: RegistryPartCollection<InferProps<Parts[Part]>>;
+};
+
+export interface RegistryComponentContext<
+  Parts extends ComponentRecord,
+  Root extends keyof Parts & string = keyof Parts & string,
+> {
+  readonly root: RegistryPart<InferProps<Parts[Root]>>;
+  readonly parts: PartCollections<Parts, Root>;
+}
+
+export type RegistryRender<Props extends object = EmptyProps> = (context: RegistryRenderContext<Props>) => RegistryNode;
+
+export type RegistryPartTransform<Props extends object = EmptyProps> =
+  | RegistryHost
+  | RegistryTarget
+  | typeof Fragment
+  | RegistryRender<Props>;
+
+type PartTransforms<Parts extends ComponentRecord> = {
+  readonly [Part in keyof Parts]: RegistryPartTransform<InferProps<Parts[Part]>>;
+};
+
+type RegistryComponentRender<Parts extends ComponentRecord, Root extends keyof Parts & string> = (
+  context: RegistryComponentContext<Parts, Root>
+) => RegistryNode;
+
+type DefinedParts<Definition> = Definition extends { readonly parts?: infer Parts } ? Exclude<Parts, undefined> : never;
+
+type WholeComponentTransform<
+  Definition extends ComponentDefinition<object, ComponentRecord | undefined>,
+  Parts extends ComponentRecord,
+> = Definition['root'] extends keyof Parts & string
+  ? {
+      readonly host?: PartialRegistryTargetTree<Definition> | undefined;
+      readonly render: RegistryComponentRender<Parts, Definition['root']>;
+      readonly parts?: never;
+      readonly imports?: readonly string[] | undefined;
+    }
+  : never;
+
+type CompoundRegistryEntry<
+  Definition extends ComponentDefinition<object, ComponentRecord | undefined>,
+  Parts extends ComponentRecord,
+> =
+  | RegistryTargetTree<Definition>
+  | {
+      readonly host?: PartialRegistryTargetTree<Definition> | undefined;
+      readonly parts: PartTransforms<Parts>;
+      readonly render?: never;
+      readonly imports?: readonly string[] | undefined;
+    }
+  | WholeComponentTransform<Definition, Parts>;
+
+type LeafRegistryEntry<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> =
+  | RegistryTarget
+  | {
+      readonly host?: RegistryTarget | undefined;
+      readonly render?: RegistryPartTransform<InferProps<Definition>> | undefined;
+      readonly imports?: readonly string[] | undefined;
+    };
+
+export type RegistryEntry<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = [
+  DefinedParts<Definition>,
+] extends [never]
+  ? LeafRegistryEntry<Definition>
+  : CompoundRegistryEntry<Definition, Extract<DefinedParts<Definition>, ComponentRecord>>;
+
+export type RegistryEntries<Definitions extends ComponentRecord> = {
+  readonly [Name in keyof Definitions]: RegistryEntry<Definitions[Name]>;
+};
+
+export interface ComponentRegistry {
+  readonly components: ComponentSet;
+  readonly entries: Readonly<Record<string, unknown>>;
+}
+
+export interface DefinedComponentRegistry<Definitions extends ComponentRecord> extends ComponentRegistry {
+  readonly components: ComponentSet<Definitions>;
+  readonly entries: RegistryEntries<Definitions>;
+}
+
+type RegistryTargetTree<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = [
+  DefinedParts<Definition>,
+] extends [never]
+  ? RegistryTarget
+  : {
+      readonly [Part in keyof DefinedParts<Definition>]: RegistryTargetTree<DefinedParts<Definition>[Part]>;
+    };
+
+type PartialRegistryTargetTree<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = [
+  DefinedParts<Definition>,
+] extends [never]
+  ? RegistryTarget
+  : {
+      readonly [Part in keyof DefinedParts<Definition>]?: PartialRegistryTargetTree<DefinedParts<Definition>[Part]>;
+    };
+
+export function defineTarget<Props extends object>(reference: TargetReference): TargetComponent<Props> {
+  const target = (_props: Props & { children?: unknown }): RegistryNode => {
+    throw new Error(
+      '@videojs/compiler/components: target components can only be evaluated by the registry JSX runtime.'
+    );
+  };
+
+  return Object.assign(target, { [REGISTRY_TARGET]: reference });
+}
+
+export function defineRegistry<const Definitions extends ComponentRecord>(
+  components: ComponentSet<Definitions>,
+  entries: RegistryEntries<NoInfer<Definitions>>
+): DefinedComponentRegistry<Definitions> {
+  return { components, entries };
+}
+
+export function isHost(value: unknown): value is HostComponent {
+  return typeof value === 'function' && REGISTRY_HOST in value;
+}
+
+export function isTargetComponent(value: unknown): value is TargetComponent {
+  return typeof value === 'function' && REGISTRY_TARGET in value;
+}

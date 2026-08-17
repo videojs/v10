@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from '@videojs/compiler/components';
 
 import type { AirPlayButtonProps } from './airplay-button-core';
 import { AirPlayButtonDataAttrs } from './airplay-button-data-attrs';

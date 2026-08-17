@@ -1,8 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { transform } from '@videojs/compiler';
+import { type CompilerConfig, transform } from '@videojs/compiler';
+import { plugin as componentsPlugin } from '@videojs/compiler/components';
 import { loadStyleManifest } from '@videojs/compiler/styles';
 import { describe, expect, it } from 'vitest';
+import { registry } from '../../../../react/compiler';
 import { createCompilerReactConfig } from '../react';
 
 const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
@@ -13,13 +15,22 @@ const styleFiles = [
   resolve(canonicalRoot, 'styles/components/poster.styles.ts'),
 ];
 
+function reactConfig(options: Parameters<typeof createCompilerReactConfig>[0]): CompilerConfig {
+  const config = createCompilerReactConfig(options);
+
+  return {
+    ...config,
+    plugins: [...(config.plugins ?? []), componentsPlugin(registry)],
+  };
+}
+
 describe('createCompilerReactConfig', () => {
   it('opts registry components into forwarded React props', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
@@ -27,9 +38,9 @@ describe('createCompilerReactConfig', () => {
     });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain('import { SeekButton as SeekButtonPrimitive } from "@videojs/react"');
+    expect(result.code).toContain('import { SeekButton as SeekButtonTarget } from "@videojs/react"');
     expect(result.code).toContain('import { SeekIcon } from "@videojs/react/icons"');
-    expect(result.code).toContain('export interface SeekButtonProps extends Omit<SeekButtonPrimitive.Props');
+    expect(result.code).toContain('export interface SeekButtonProps extends Omit<SeekButtonTarget.Props');
     expect(result.code).toContain('resolveClassName(className, state)');
     expect(result.code).not.toContain("from '@videojs/core'");
     expect(result.code).toContain('<span className="tabular-nums">');
@@ -41,7 +52,7 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
       }),
     });
@@ -58,7 +69,7 @@ describe('createCompilerReactConfig', () => {
     const statusStyleFiles = [...styleFiles, resolve(canonicalRoot, 'styles/components/status-indicator.styles.ts')];
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: {
           mode: 'tailwind',
           manifest: await loadStyleManifest(statusStyleFiles),
@@ -80,16 +91,16 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
 
-    expect(result.code).toContain('interface ButtonTooltipProps extends TooltipPrimitive.RootProps');
+    expect(result.code).toContain('interface ButtonTooltipProps extends TooltipTarget.RootProps');
     expect(result.code).toContain('children: ReactElement');
-    expect(result.code).toMatch(/<TooltipPrimitive\.Trigger render=\{children\}\s*\/>/);
-    expect(result.code).not.toContain('Parameters<typeof TooltipPrimitive.Root>');
+    expect(result.code).toMatch(/<TooltipTarget\.Trigger render=\{children\}\s*\/>/);
+    expect(result.code).not.toContain('Parameters<typeof TooltipTarget.Root>');
   });
 
   it('forwards VolumePopover props directly to Popover.Root', async () => {
@@ -97,16 +108,18 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
 
-    expect(result.code).toContain('interface VolumePopoverProps extends Popover.RootProps');
-    expect(result.code).toContain('className?: Popover.PopupProps["className"]');
+    expect(result.code).toContain('interface VolumePopoverProps extends PopoverTarget.RootProps');
+    expect(result.code).toContain('className?: PopoverTarget.PopupProps["className"]');
     expect(result.code).toContain('...props');
-    expect(result.code).toContain('<Popover.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>');
+    expect(result.code).toContain(
+      '<PopoverTarget.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>'
+    );
     expect(result.code).not.toContain('popoverProps');
   });
 
@@ -115,7 +128,7 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
@@ -132,7 +145,7 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: {
           mode: 'tailwind',
           manifest: await loadStyleManifest([
@@ -144,9 +157,9 @@ describe('createCompilerReactConfig', () => {
       }),
     });
 
-    expect(result.code).toContain('interface SubmenuProps extends Menu.RootProps');
-    expect(result.code).toContain('className?: Menu.ContentProps["className"]');
-    expect(result.code).toContain('<Menu.Root {...props}>');
+    expect(result.code).toContain('interface SubmenuProps extends MenuTarget.RootProps');
+    expect(result.code).toContain('className?: MenuTarget.ContentProps["className"]');
+    expect(result.code).toContain('<MenuTarget.Root {...props}>');
     expect(result.code).toContain('resolveClassName(className, state)');
   });
 
@@ -155,7 +168,7 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
@@ -170,7 +183,7 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         resolveImport(reference) {
           if (reference.source === '@videojs/react') return { ...reference, source: '@/ui/seek-button' };
@@ -180,7 +193,7 @@ describe('createCompilerReactConfig', () => {
       }),
     });
 
-    expect(result.code).toContain('import { SeekButton as SeekButtonPrimitive } from "@/ui/seek-button"');
+    expect(result.code).toContain('import { SeekButton as SeekButtonTarget } from "@/ui/seek-button"');
     expect(result.code).toContain('import { SeekIcon } from "@/icons"');
   });
 
@@ -189,7 +202,7 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
     const posterSource = await readFile(posterFilename, 'utf8');
-    const config = createCompilerReactConfig({
+    const config = reactConfig({
       styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
     });
     const result = await transform(source, {
@@ -211,11 +224,11 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).toContain('export function Container(');
     expect(result.code).toContain('ContainerProps');
     expect(result.code).not.toContain('Parameters<');
-    expect(result.code).toContain('<ContainerPrimitive {...props}');
+    expect(result.code).toContain('<ContainerTarget {...props}');
     expect(posterResult.code).toContain('export function Poster(');
     expect(posterResult.code).toContain('PosterProps');
     expect(posterResult.code).not.toContain('Parameters<');
-    expect(posterResult.code).toContain('<PosterPrimitive {...props}');
+    expect(posterResult.code).toContain('<PosterTarget {...props}');
     expect(posterResult.code).toContain('[&[data-visible][src]:not([data-loaded])]:opacity-0');
     expect(posterResult.code).not.toContain('Slot');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinContainer');
@@ -227,7 +240,7 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({
+      config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         rootClassName: 'media-skin media-skin-video media-theme-default',
       }),

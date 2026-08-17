@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from '@videojs/compiler/components';
 import type { FullscreenButtonProps } from './fullscreen-button-core';
 import { FullscreenButtonDataAttrs } from './fullscreen-button-data-attrs';
 

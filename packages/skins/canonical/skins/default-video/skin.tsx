@@ -1,5 +1,5 @@
-import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/core/components';
-import { Slot } from '@videojs/jsx';
+import { Slot } from '@videojs/compiler/components';
+import * as $ from '@videojs/core/components';
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -27,36 +27,36 @@ export function DefaultVideoSkin() {
       <BufferingIndicator />
       <ErrorDialog />
 
-      <Controls.Root className={styles.controls.root}>
-        <Tooltip.Provider>
-          <Controls.Group className={styles.controls.primary}>
-            <Controls.Group className={styles.buttons}>
+      <$.Controls.Root className={styles.controls.root}>
+        <$.Tooltip.Provider>
+          <$.Controls.Group className={styles.controls.primary}>
+            <$.Controls.Group className={styles.buttons}>
               <PlayButton />
               <VolumePopover />
-            </Controls.Group>
+            </$.Controls.Group>
 
-            <Controls.Group className={styles.timeline}>
-              <TimePrimitive.Value className={styles.time.current} type="current" />
+            <$.Controls.Group className={styles.timeline}>
+              <$.Time.Value className={styles.time.current} type="current" />
               <TimeSlider />
-              <TimePrimitive.Value className={styles.time.remaining} type="remaining" toggle />
-            </Controls.Group>
+              <$.Time.Value className={styles.time.remaining} type="remaining" toggle />
+            </$.Controls.Group>
 
-            <Controls.Group className={styles.buttons}>
+            <$.Controls.Group className={styles.buttons}>
               <CaptionsButton />
               <VideoSettingsMenu />
-            </Controls.Group>
-          </Controls.Group>
+            </$.Controls.Group>
+          </$.Controls.Group>
 
-          <Controls.Group className={styles.controls.secondary}>
-            <Controls.Group className={styles.buttons}>
+          <$.Controls.Group className={styles.controls.secondary}>
+            <$.Controls.Group className={styles.buttons}>
               <CastButton />
               <AirPlayButton />
               <PiPButton />
               <FullscreenButton />
-            </Controls.Group>
-          </Controls.Group>
-        </Tooltip.Provider>
-      </Controls.Root>
+            </$.Controls.Group>
+          </$.Controls.Group>
+        </$.Tooltip.Provider>
+      </$.Controls.Root>
 
       <Overlay />
       <VideoHotkeys />

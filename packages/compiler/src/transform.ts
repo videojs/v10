@@ -73,6 +73,7 @@ export async function transform(source: string, options: TransformOptions = {}):
     filename,
     sourceText: source,
     configDir: options.configDir ?? process.cwd(),
+    target,
     ...(options.outputFile ? { outputFile: options.outputFile } : {}),
     addAsset(asset) {
       assets.push(asset);

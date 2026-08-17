@@ -1,7 +1,6 @@
-import { Text } from '@videojs/core/components';
+import { type FunctionComponent, Template, Text } from '@videojs/compiler/components';
 import { qualityText } from '@videojs/core/i18n/text/menu';
 import { SwitchesIcon } from '@videojs/icons/components';
-import { type FunctionComponent, Template } from '@videojs/jsx';
 import styles from '../../styles/components/menu.styles';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';

@@ -1,4 +1,4 @@
-import { StatusIndicator as StatusIndicatorPrimitive } from '@videojs/core/components';
+import * as $ from '@videojs/core/components';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -17,23 +17,23 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export function StatusIndicator() {
   return (
-    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className={styles.root}>
+    <$.StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={styles.root}>
       <CaptionsOnIcon className={[styles.icon, styles.icons.captionsOn]} />
       <CaptionsOffIcon className={[styles.icon, styles.icons.captionsOff]} />
       <FullscreenEnterIcon className={[styles.icon, styles.icons.fullscreenEnter]} />
       <FullscreenExitIcon className={[styles.icon, styles.icons.fullscreenExit]} />
       <PipEnterIcon className={[styles.icon, styles.icons.pipEnter]} />
       <PipExitIcon className={[styles.icon, styles.icons.pipExit]} />
-      <StatusIndicatorPrimitive.Value className={styles.value} />
-    </StatusIndicatorPrimitive.Root>
+      <$.StatusIndicator.Value className={styles.value} />
+    </$.StatusIndicator.Root>
   );
 }
 
 export function PlaybackStatusIndicator() {
   return (
-    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className={styles.playback.root}>
+    <$.StatusIndicator.Root actions={PLAYBACK_STATUS_ACTIONS} className={styles.playback.root}>
       <PlayIcon className={[styles.playback.icon, styles.playback.play]} />
       <PauseIcon className={[styles.playback.icon, styles.playback.pause]} />
-    </StatusIndicatorPrimitive.Root>
+    </$.StatusIndicator.Root>
   );
 }

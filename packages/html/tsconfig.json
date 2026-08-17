@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@videojs/compiler/components/registry",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@/*": ["./src/*"]
@@ -8,6 +10,6 @@
     "declarationDir": "types",
     "useDefineForClassFields": false
   },
-  "include": ["src"],
+  "include": ["src", "compiler"],
   "exclude": ["src/cdn/locales"]
 }

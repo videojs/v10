@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from '@videojs/compiler/components';
 import type { MenuProps } from './menu-core';
 import { MenuDataAttrs } from './menu-data-attrs';
 
@@ -17,6 +17,7 @@ export interface MenuItemIndicatorProps {
 
 export default defineComponent({
   name: 'Menu',
+  root: 'Root',
   parts: {
     Root: defineComponent<MenuProps>(),
     Trigger: defineComponent<MenuTriggerProps>(),

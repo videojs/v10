@@ -1,7 +1,7 @@
 import { isAbsolute, relative } from 'node:path';
 import { isObject } from '@videojs/utils/predicate';
 import kleur from 'kleur';
-import type ts from 'typescript';
+import ts from 'typescript';
 import type { CompilerDiagnostic } from './config';
 
 export type LogLevelName = 'silent' | 'error' | 'warn' | 'info' | 'verbose';
@@ -132,9 +132,16 @@ export function mapLogLevelToString(level: LogLevel): LogLevelName {
 }
 
 export function diagnosticLocationFromNode(node: ts.Node): DiagnosticLocation {
-  const sourceFile = node.getSourceFile();
-  const start = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
-  const end = sourceFile.getLineAndCharacterOfPosition(node.getEnd());
+  const original = ts.getOriginalNode(node);
+  const sourceFile = findSourceFile(original) ?? findSourceFile(node);
+
+  if (!sourceFile) return {};
+
+  const startPosition = original.pos >= 0 ? original.getStart(sourceFile) : 0;
+  const endPosition = original.end >= 0 ? original.getEnd() : startPosition;
+  const start = sourceFile.getLineAndCharacterOfPosition(startPosition);
+  const end = sourceFile.getLineAndCharacterOfPosition(endPosition);
+
   return {
     file: sourceFile.fileName,
     line: start.line + 1,
@@ -143,6 +150,14 @@ export function diagnosticLocationFromNode(node: ts.Node): DiagnosticLocation {
     endColumn: end.character + 1,
     sourceText: sourceFile.text,
   };
+}
+
+function findSourceFile(node: ts.Node): ts.SourceFile | undefined {
+  let current: ts.Node | undefined = node;
+
+  while (current && !ts.isSourceFile(current)) current = current.parent;
+
+  return current;
 }
 
 export function withDiagnosticSource(

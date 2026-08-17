@@ -279,9 +279,9 @@ importers:
         specifier: workspace:*
         version: link:../utils
     devDependencies:
-      '@videojs/jsx':
+      '@videojs/compiler':
         specifier: workspace:*
-        version: link:../jsx
+        version: link:../compiler
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@7.2.0)
@@ -335,6 +335,9 @@ importers:
       '@testing-library/dom':
         specifier: ^10.4.1
         version: 10.4.1
+      '@videojs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
@@ -347,6 +350,9 @@ importers:
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(@typescript/native-preview@7.0.0-dev.20260421.2)(@volar/typescript@2.4.28)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)
+      tsx:
+        specifier: ^4.23.1
+        version: 4.23.1
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
@@ -369,9 +375,9 @@ importers:
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
-      '@videojs/jsx':
+      '@videojs/compiler':
         specifier: workspace:*
-        version: link:../jsx
+        version: link:../compiler
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
@@ -384,18 +390,6 @@ importers:
       tsx:
         specifier: ^4.23.1
         version: 4.23.1
-      vitest:
-        specifier: ^4.1.10
-        version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@27.4.0(supports-color@7.2.0))(vite@8.1.5(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
-
-  packages/jsx:
-    devDependencies:
-      tsdown:
-        specifier: ^0.22.14
-        version: 0.22.14(@typescript/native-preview@7.0.0-dev.20260421.2)(@volar/typescript@2.4.28)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)
-      typescript:
-        specifier: ^6.0.2
-        version: 6.0.2
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@27.4.0(supports-color@7.2.0))(vite@8.1.5(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
@@ -458,6 +452,9 @@ importers:
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
+      '@videojs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
@@ -476,6 +473,9 @@ importers:
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(@typescript/native-preview@7.0.0-dev.20260421.2)(@volar/typescript@2.4.28)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)
+      typescript:
+        specifier: 6.0.2
+        version: 6.0.2
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/browser-playwright@4.1.10)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(happy-dom@20.11.1)(jsdom@26.1.0(supports-color@7.2.0))(vite@8.1.5(@types/node@24.12.2)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
@@ -504,9 +504,6 @@ importers:
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons
-      '@videojs/jsx':
-        specifier: workspace:*
-        version: link:../jsx
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.4(babel-plugin-react-compiler@1.0.0)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))

@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from '@videojs/compiler/components';
 import type { SliderPreviewProps, SliderProps } from './slider-core';
 import { SliderDataAttrs } from './slider-data-attrs';
 
@@ -11,6 +11,7 @@ export interface SliderValueProps {
 
 export default defineComponent({
   name: 'Slider',
+  root: 'Root',
   parts: {
     Root: defineComponent<SliderProps>(),
     Track: defineComponent(),

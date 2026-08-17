@@ -10,6 +10,7 @@ import {
   type RegistryFile,
   type RegistryFileType,
 } from '@videojs/compiler/shadcn';
+import { registry as reactRegistry } from '../../../react/compiler';
 import type { skinCatalog } from '../../canonical/catalog';
 import { catalogSourcePath, type SkinCatalog, type SkinCatalogItem, skinRootClassName } from '../catalog';
 import { createCompilerReactConfig } from '../transform/react';
@@ -97,6 +98,7 @@ async function emitSources(
   const emitted = await emitCatalog(catalog, {
     items: itemNames,
     transform: {
+      registry: reactRegistry,
       compiler: (catalogItem) => createCompilerConfig(catalogItem, options),
       configDir: (catalogItem) => resolve(options.rootDir, itemOutputDir(catalogItem, options)),
       styles: {

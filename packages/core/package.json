@@ -57,8 +57,8 @@
     "dist"
   ],
   "scripts": {
-    "generate:components": "node --import tsx ./scripts/generate-components.ts --config components.config.js",
-    "check:components": "node --import tsx ./scripts/generate-components.ts --config components.config.js --check",
+    "generate:components": "vjsc generate",
+    "check:components": "vjsc generate --check",
     "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
     "generate:i18n-types": "node --import tsx ./scripts/generate-i18n-types.ts",
     "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types && pnpm run generate:components",
@@ -76,7 +76,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@videojs/jsx": "workspace:*",
+    "@videojs/compiler": "workspace:*",
     "jsdom": "^26.1.0",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.2",

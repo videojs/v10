@@ -1,9 +1,10 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from '@videojs/compiler/components';
 
 import { ErrorDialogDataAttrs } from './error-dialog-data-attrs';
 
 export default defineComponent({
   name: 'ErrorDialog',
+  root: 'Root',
   parts: {
     Root: defineComponent(),
     Popup: defineComponent(),

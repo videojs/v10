@@ -1,4 +1,6 @@
 import type ts from 'typescript';
+import type { GenerateComponentsConfig } from './components/generate/components';
+import type { GenerateTargetConfig } from './components/generate/target';
 import type { ImportRule } from './transforms/imports';
 
 export type CompilerTransform = ts.TransformerFactory<ts.SourceFile>;
@@ -37,6 +39,7 @@ export interface CompilerContext {
   filename: string;
   sourceText: string;
   configDir: string;
+  target: CompilerTarget;
   outputFile?: string | undefined;
   addAsset(asset: CompilerAsset): void;
   addWatchFile(fileName: string): void;
@@ -86,11 +89,17 @@ export type CompilerTarget = JsxTarget | HtmlTarget;
 export type CompilerExternal = readonly string[] | ((source: string, importer: string | undefined) => boolean);
 
 export interface CompilerConfig {
+  generate?: CompilerGenerateConfig | undefined;
   input?: CompilerInput | undefined;
   external?: CompilerExternal | undefined;
   output?: CompilerOutputOptions | undefined;
   plugins?: readonly CompilerPlugin[] | undefined;
   target?: CompilerTarget | undefined;
+}
+
+export interface CompilerGenerateConfig {
+  components?: GenerateComponentsConfig | readonly GenerateComponentsConfig[] | undefined;
+  target?: GenerateTargetConfig | readonly GenerateTargetConfig[] | undefined;
 }
 
 export type CompilerBuildConfig = CompilerConfig | readonly CompilerConfig[];

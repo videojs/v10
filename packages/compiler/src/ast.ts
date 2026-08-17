@@ -60,6 +60,7 @@ export {
   type AddImportContext,
   type AddImportRef,
   addNamedImport,
+  addSideEffectImport,
   dropUnusedImports,
   dropUnusedLocals,
   type ImportRef,
@@ -68,6 +69,11 @@ export {
   rebaseImportSpecifier,
   transformImports,
 } from './transforms';
+export {
+  collectClassDeclarations,
+  findClassDeclaration,
+  readStaticStringProperty,
+} from './utils/classes';
 export {
   createIndexedAccessType,
   createInterfaceDeclaration,

@@ -1,4 +1,27 @@
-export { type BuildOptions, type BuildResult, build, type OutputFile } from './build';
+export {
+  type BuildOptions,
+  type BuildResult,
+  build,
+  type OutputAssetFile,
+  type OutputChunkFile,
+  type OutputFile,
+} from './build';
+export type {
+  ComponentFileSet,
+  ComponentSource,
+  GenerateComponentsConfig,
+} from './components/generate/components';
+export type {
+  ComponentTargetContext,
+  ComponentTargetResolver,
+  GenerateComponentTargetConfig,
+  GenerateSourceTargetConfig,
+  GenerateTargetConfig,
+  ResolvedSourceModule,
+  ResolvedTarget,
+  SourceTargetContext,
+  SourceTargetResolver,
+} from './components/generate/target';
 export {
   type CompilerAsset,
   type CompilerBuildConfig,
@@ -6,6 +29,7 @@ export {
   type CompilerContext,
   type CompilerDiagnostic,
   type CompilerExternal,
+  type CompilerGenerateConfig,
   type CompilerInput,
   type CompilerOutputOptions,
   type CompilerPipelineStep,

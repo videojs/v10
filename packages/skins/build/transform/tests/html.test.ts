@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { transform } from '@videojs/compiler';
+import { type CompilerConfig, transform } from '@videojs/compiler';
+import { plugin as componentsPlugin } from '@videojs/compiler/components';
 import { loadStyleManifest } from '@videojs/compiler/styles';
 import { describe, expect, it } from 'vitest';
-import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../html';
+import { registry } from '../../../../html/compiler';
+import { createCompilerHtmlConfig } from '../html';
 
 const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 const styleFiles = [
@@ -13,39 +15,30 @@ const styleFiles = [
   resolve(canonicalRoot, 'styles/components/slider.styles.ts'),
 ];
 
+function htmlConfig(options: Parameters<typeof createCompilerHtmlConfig>[0]): CompilerConfig {
+  const config = createCompilerHtmlConfig(options);
+
+  return {
+    ...config,
+    plugins: [...(config.plugins ?? []), componentsPlugin(registry)],
+  };
+}
+
 describe('createCompilerHtmlConfig', () => {
   it('emits idiomatic light-DOM elements', async () => {
     const filename = resolve(canonicalRoot, 'components/sliders/time-slider.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerHtmlConfig({
+      config: htmlConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
       }),
     });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain('<media-time-slider class={cn("group/slider relative flex');
+    expect(result.code).toContain('<media-time-slider class="group/slider relative flex');
     expect(result.code).toContain('<media-slider-thumbnail');
     expect(result.code).not.toContain('className=');
-  });
-
-  it('maps component symbols to exact element registration modules', () => {
-    expect(resolveHtmlElementImports(['Controls', 'PlayButton', 'Slider', 'TimeSlider', 'Tooltip'])).toEqual([
-      '@videojs/html/ui/controls',
-      '@videojs/html/ui/play-button',
-      '@videojs/html/ui/time-slider',
-      '@videojs/html/ui/time-slider-chapters',
-      '@videojs/html/ui/tooltip',
-      '@videojs/html/ui/tooltip-group',
-    ]);
-  });
-
-  it('maps Skin-owned container markup to exact element registration modules', () => {
-    expect(resolveHtmlElementImports([], '<media-container><media-poster></media-poster></media-container>')).toEqual([
-      '@videojs/html/media/container',
-      '@videojs/html/ui/poster',
-    ]);
   });
 
   it('lowers Container and Poster as independent HTML components', async () => {
@@ -53,7 +46,7 @@ describe('createCompilerHtmlConfig', () => {
     const source = await readFile(filename, 'utf8');
     const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
     const posterSource = await readFile(posterFilename, 'utf8');
-    const config = createCompilerHtmlConfig({
+    const config = htmlConfig({
       styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
     });
     const result = await transform(source, {
@@ -78,11 +71,13 @@ describe('createCompilerHtmlConfig', () => {
 
   it('leaves adjacent popup identity wiring to the HTML runtime', async () => {
     const result = await transform(
-      `export function VolumePopover() {
-  return <Popover.Root><Popover.Trigger><MuteButtonPrimitive /></Popover.Trigger><Popover.Popup /></Popover.Root>;
+      `import * as $ from '@videojs/core/components';
+
+export function VolumePopover() {
+  return <$.Popover.Root><$.Popover.Trigger><$.MuteButton /></$.Popover.Trigger><$.Popover.Popup /></$.Popover.Root>;
 }`,
       {
-        config: createCompilerHtmlConfig({
+        config: htmlConfig({
           styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         }),
       }

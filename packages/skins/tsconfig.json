@@ -15,5 +15,6 @@
     "canonical/styles/tokens.ts",
     "vite.config.ts"
   ],
-  "exclude": ["canonical/registry/default"]
+  "exclude": ["canonical/registry/default"],
+  "references": [{ "path": "../html" }, { "path": "../react" }]
 }

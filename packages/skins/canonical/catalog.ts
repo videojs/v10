@@ -1,4 +1,5 @@
 import { defineCatalog } from '@videojs/compiler/catalog';
+import { components } from '@videojs/core/components';
 
 const resources = {
   styles: {
@@ -18,8 +19,14 @@ const resources = {
 
 /** Canonical Skin source catalog shared by package, registry, and future documentation outputs. */
 export const skinCatalog = defineCatalog({
+  components: [components.source],
   resources,
-  allowedImports: ['@videojs/core', '@videojs/compiler/styles', '@videojs/jsx', /^@videojs\/core\/i18n\/text\//],
+  allowedImports: [
+    '@videojs/core',
+    '@videojs/compiler/styles',
+    '@videojs/compiler/components',
+    /^@videojs\/core\/i18n\/text\//,
+  ],
   imports: {
     '@videojs/core/components': 'components',
     '@videojs/icons/components': 'icons',

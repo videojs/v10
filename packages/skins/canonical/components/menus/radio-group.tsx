@@ -1,23 +1,18 @@
-import {
-  AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive,
-  CaptionsRadioGroup as CaptionsRadioGroupPrimitive,
-  PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive,
-  QualityRadioGroup as QualityRadioGroupPrimitive,
-} from '@videojs/core/components';
+import * as $ from '@videojs/core/components';
 import styles from '../../styles/components/menu.styles';
 
 export function QualityRadioGroup({ children }: { children?: unknown }) {
-  return <QualityRadioGroupPrimitive className={styles.radioGroup}>{children}</QualityRadioGroupPrimitive>;
+  return <$.QualityRadioGroup className={styles.radioGroup}>{children}</$.QualityRadioGroup>;
 }
 
 export function AudioTrackRadioGroup({ children }: { children?: unknown }) {
-  return <AudioTrackRadioGroupPrimitive className={styles.radioGroup}>{children}</AudioTrackRadioGroupPrimitive>;
+  return <$.AudioTrackRadioGroup className={styles.radioGroup}>{children}</$.AudioTrackRadioGroup>;
 }
 
 export function PlaybackRateRadioGroup({ children }: { children?: unknown }) {
-  return <PlaybackRateRadioGroupPrimitive className={styles.radioGroup}>{children}</PlaybackRateRadioGroupPrimitive>;
+  return <$.PlaybackRateRadioGroup className={styles.radioGroup}>{children}</$.PlaybackRateRadioGroup>;
 }
 
 export function CaptionsRadioGroup({ children }: { children?: unknown }) {
-  return <CaptionsRadioGroupPrimitive className={styles.radioGroup}>{children}</CaptionsRadioGroupPrimitive>;
+  return <$.CaptionsRadioGroup className={styles.radioGroup}>{children}</$.CaptionsRadioGroup>;
 }

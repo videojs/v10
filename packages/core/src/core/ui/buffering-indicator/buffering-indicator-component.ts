@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from '@videojs/compiler/components';
 
 import type { BufferingIndicatorProps } from './buffering-indicator-core';
 import { BufferingIndicatorDataAttrs } from './buffering-indicator-data-attrs';

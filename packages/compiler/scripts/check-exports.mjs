@@ -15,3 +15,13 @@ for (const [subpath, conditions] of Object.entries(packageJson.exports)) {
     }
   }
 }
+
+const binTargets = typeof packageJson.bin === 'string' ? [packageJson.bin] : Object.values(packageJson.bin ?? {});
+
+for (const target of binTargets) {
+  try {
+    await access(new URL(`../${target.slice(2)}`, import.meta.url));
+  } catch (error) {
+    throw new Error(`Invalid package bin: ${target}`, { cause: error });
+  }
+}

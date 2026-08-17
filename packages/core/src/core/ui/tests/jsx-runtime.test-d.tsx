@@ -1,6 +1,6 @@
-/** @jsxImportSource @videojs/jsx */
+/** @jsxImportSource @videojs/compiler/components */
 
-import { Slot } from '@videojs/jsx';
+import { Slot, Text } from '@videojs/compiler/components';
 import { describe, it } from 'vitest';
 import {
   Controls,
@@ -10,7 +10,6 @@ import {
   Popover,
   SeekButton,
   Slider,
-  Text,
   Time,
   TimeSlider,
   Tooltip,

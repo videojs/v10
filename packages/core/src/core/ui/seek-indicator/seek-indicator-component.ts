@@ -1,10 +1,11 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from '@videojs/compiler/components';
 
 import type { SeekIndicatorProps } from './seek-indicator-core';
 import { SeekIndicatorDataAttrs } from './seek-indicator-data-attrs';
 
 export default defineComponent({
   name: 'SeekIndicator',
+  root: 'Root',
   parts: {
     Root: defineComponent<SeekIndicatorProps>(),
     Value: defineComponent(),

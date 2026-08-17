@@ -33,11 +33,11 @@ export { hasChild } from './matchers/has-child';
 export { anyTag, byTag, type JsxElementLike, type Matcher, tagName } from './matchers/tag';
 export { type AddPropImportRef, type AddPropOptions, addProp } from './transforms/add-prop';
 export { type ChildAsPropOptions, childAsProp } from './transforms/child-as-prop';
-export { type ReplaceOptions, replace } from './transforms/replace';
 export {
   type JsxChildReplacement,
   type ReplaceJsxChildOptions,
   replaceJsxChild,
-} from './transforms/replace-jsx-child';
+} from './transforms/replace/child';
+export { type ReplaceOptions, replace } from './transforms/replace/element';
 export { type UnwrapOptions, unwrap } from './transforms/unwrap';
 export { type WrapOptions, wrap } from './transforms/wrap';

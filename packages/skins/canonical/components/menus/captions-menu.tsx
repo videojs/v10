@@ -1,7 +1,6 @@
-import { Text } from '@videojs/core/components';
+import { Template, Text } from '@videojs/compiler/components';
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { CaptionsOffIcon } from '@videojs/icons/components';
-import { Template } from '@videojs/jsx';
 import styles from '../../styles/components/menu.styles';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';

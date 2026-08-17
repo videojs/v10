@@ -2,6 +2,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { defineComponent, defineComponents, defineRegistry, defineTarget } from '../../components';
 import { defineConfig, jsx } from '../../config';
 import { defineCatalog } from '../define';
 import { emitCatalog } from '../emit';
@@ -14,6 +15,34 @@ afterEach(() => {
 });
 
 describe('emitCatalog', () => {
+  it('uses a component registry without exposing compiler configuration', async () => {
+    const root = setup({
+      'entry.tsx': `import { PlayButton } from '@fixture/components'; export const entry = <PlayButton disabled />;`,
+    });
+    const components = defineComponents('@fixture/components', {
+      PlayButton: defineComponent<{ disabled?: boolean }>({ name: 'PlayButton' }),
+    });
+    const registry = defineRegistry(components, {
+      PlayButton: defineTarget({ import: { from: '@fixture/react', name: 'PlayButton' } }),
+    });
+    const loaded = await loadCatalog(
+      defineCatalog({
+        components: [components.source],
+        allowedImports: ['@fixture/components'],
+        items: [{ name: 'entry', source: './entry.tsx' }],
+      }),
+      { rootDir: root }
+    );
+
+    const output = await emitCatalog(loaded, {
+      transform: { registry },
+      files: { source: ({ sourceFile }) => sourceFile },
+    });
+
+    expect(output.files.source[0]?.content).toContain('from "@fixture/react"');
+    expect(output.files.source[0]?.content).toContain('<PlayButton disabled/>');
+  });
+
   it('transforms, relinks, and collects dependencies for selected catalog items', async () => {
     const root = setup({
       'entry.tsx': `import { dependency } from './dependency'; import { helper } from './private/helper'; import React from 'react'; export const entry = [dependency, helper, React];`,

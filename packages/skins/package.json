@@ -47,7 +47,6 @@
     "@videojs/compiler": "workspace:*",
     "@videojs/core": "workspace:*",
     "@videojs/icons": "workspace:*",
-    "@videojs/jsx": "workspace:*",
     "clsx": "^2.1.1",
     "oxfmt": "^0.62.0",
     "react": "^19.2.8",

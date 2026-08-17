@@ -5,7 +5,7 @@
     "incremental": false,
     "isolatedDeclarations": false,
     "jsx": "react-jsx",
-    "jsxImportSource": "@videojs/jsx",
+    "jsxImportSource": "@videojs/compiler/components",
     "lib": ["ES2022"],
     "noEmit": true
   },

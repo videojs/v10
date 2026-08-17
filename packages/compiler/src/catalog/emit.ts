@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, posix, relative, resolve } from 'node:path';
 
 import { build } from '../build';
+import { type ComponentRegistry, plugin as componentsPlugin } from '../components';
 import type { CompilerConfig } from '../config';
 import { compileStyles } from '../styles/compile';
 import { loadDesignSystem } from '../styles/design-system';
@@ -19,6 +20,8 @@ import { loadCatalogStyles } from './styles';
 export interface CatalogOutputFile {
   readonly path: string;
   readonly content: string;
+  /** External module imports required by a bundled output file. */
+  readonly imports?: readonly string[] | undefined;
 }
 
 export interface CatalogOutputFiles {
@@ -71,7 +74,8 @@ export type CatalogStyleTransform =
 export interface CatalogTransformOptions<Definition extends CatalogDefinition = CatalogDefinition> {
   /** Preserve editable modules by default, or bundle each requested catalog entry. */
   readonly mode?: 'modules' | 'bundle' | undefined;
-  readonly compiler: CompilerConfig | ((catalogItem: CatalogItem<Definition>) => CompilerConfig);
+  readonly registry?: ComponentRegistry | undefined;
+  readonly compiler?: CompilerConfig | ((catalogItem: CatalogItem<Definition>) => CompilerConfig) | undefined;
   readonly configDir?: string | ((catalogItem: CatalogItem<Definition>) => string | undefined) | undefined;
   readonly styles?: CatalogStyleTransform | undefined;
 }
@@ -111,6 +115,8 @@ export async function emitCatalog<const Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   options: CatalogEmitOptions<Definition>
 ): Promise<CatalogOutput<Definition>> {
+  assertRegistryCompatibility(catalog, options.transform.registry);
+
   const requestedNames = options.items ?? catalog.items.map((catalogItem) => catalogItem.name);
   const requested = requestedCatalogItems(catalog, requestedNames);
   const resolved = resolveCatalog(catalog, requestedNames);
@@ -144,6 +150,17 @@ export async function emitCatalog<const Definition extends CatalogDefinition>(
   };
 }
 
+function assertRegistryCompatibility(catalog: Catalog, registry: ComponentRegistry | undefined): void {
+  if (!registry || catalog.components.length === 0) return;
+
+  const componentSources = new Set(catalog.components);
+  if (!componentSources.has(registry.components.source)) {
+    throw new Error(
+      `Component registry for ${JSON.stringify(registry.components.source)} is not declared by this catalog.`
+    );
+  }
+}
+
 async function emitModules<Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   catalogItems: readonly CatalogItem<Definition>[],
@@ -163,7 +180,7 @@ async function emitModules<Definition extends CatalogDefinition>(
     const layouts = layoutsByItem.get(catalogItem.name)!;
     const layoutsByInput = new Map(layouts.map((layout) => [layout.inputFile, layout]));
     const files: CatalogOutputFile[] = [];
-    const config = compilerConfig(options.transform.compiler, catalogItem, styles, options.transform.styles);
+    const config = compilerConfig(options.transform, catalogItem, styles);
     const configDir = compilerConfigDir(options.transform.configDir, catalogItem) ?? catalog.rootDir;
 
     for (const layout of layouts) {
@@ -216,7 +233,7 @@ async function emitBundles<Definition extends CatalogDefinition>(
   for (const catalogItem of catalogItems) {
     const outputFile = toPosixPath(options.files.source({ catalogItem, sourceFile: catalogItem.source }));
     const configDir = compilerConfigDir(options.transform.configDir, catalogItem) ?? catalog.rootDir;
-    const config = compilerConfig(options.transform.compiler, catalogItem, styles, options.transform.styles);
+    const config = compilerConfig(options.transform, catalogItem, styles);
     const result = await build(
       {
         ...config,
@@ -241,7 +258,13 @@ async function emitBundles<Definition extends CatalogDefinition>(
       );
     }
 
-    const files = [{ path: outputFile, content: chunks[0].source }];
+    const files = [
+      {
+        path: outputFile,
+        content: chunks[0].source,
+        ...(chunks[0].imports.length ? { imports: chunks[0].imports } : {}),
+      },
+    ];
     const outputDir = dirname(resolve(catalog.rootDir, outputFile));
 
     assets.push(
@@ -300,14 +323,17 @@ async function loadStyles<Definition extends CatalogDefinition>(
 }
 
 function compilerConfig<Definition extends CatalogDefinition>(
-  compiler: CatalogTransformOptions<Definition>['compiler'],
+  transform: CatalogTransformOptions<Definition>,
   catalogItem: CatalogItem<Definition>,
-  manifest: StyleManifest | undefined,
-  styles: CatalogStyleTransform | undefined
+  manifest: StyleManifest | undefined
 ): CompilerConfig {
-  const config = typeof compiler === 'function' ? compiler(catalogItem) : compiler;
+  const compiler = transform.compiler;
+  const config = (typeof compiler === 'function' ? compiler(catalogItem) : compiler) ?? {};
+  const plugins = [...(transform.registry ? [componentsPlugin(transform.registry)] : []), ...(config.plugins ?? [])];
 
-  if (!manifest || !styles) return config;
+  if (!manifest || !transform.styles) return { ...config, ...(plugins.length > 0 ? { plugins } : {}) };
+
+  const styles = transform.styles;
 
   const styleOptions =
     styles.mode === 'tailwind'
@@ -325,7 +351,7 @@ function compilerConfig<Definition extends CatalogDefinition>(
 
   return {
     ...config,
-    plugins: [stylesPlugin(styleOptions), ...(config.plugins ?? [])],
+    plugins: [stylesPlugin(styleOptions), ...plugins],
   };
 }
 

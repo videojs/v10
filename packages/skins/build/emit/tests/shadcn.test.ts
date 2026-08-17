@@ -49,8 +49,8 @@ describe('emitShadcnRegistry', () => {
     expect(entry?.content).toMatch(/from ["']@\/components\/videojs\/button-tooltip\/button-tooltip["']/);
     expect(entry?.content).toContain('grid min-h-0');
     expect(entry?.content).toContain('size-9');
-    expect(entry?.content).toContain('export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props');
-    expect(entry?.content).toContain('<PlayButtonPrimitive {...props}');
+    expect(entry?.content).toContain('export interface PlayButtonProps extends Omit<PlayButtonTarget.Props');
+    expect(entry?.content).toContain('<PlayButtonTarget {...props}');
     expect(entry?.content).toContain('resolveClassName(className, state)');
     expect(playButton?.files?.some((file) => file.path.endsWith('/play-button/play-button.tsx'))).toBe(true);
     expect(playButton?.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);

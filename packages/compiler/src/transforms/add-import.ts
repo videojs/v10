@@ -15,6 +15,17 @@ export interface AddImportContext {
   outputFile?: string | undefined;
 }
 
+/** Add a bare side-effect import unless the source is already imported. */
+export function addSideEffectImport(sourceFile: ts.SourceFile, source: string, factory: ts.NodeFactory): ts.SourceFile {
+  if (sourceFile.statements.some((statement) => isImportDeclarationFrom(statement, source))) return sourceFile;
+
+  return insertStatementsAfterImports(
+    sourceFile,
+    [factory.createImportDeclaration(undefined, undefined, factory.createStringLiteral(source))],
+    factory
+  );
+}
+
 /**
  * Add a named import (`import { name } from "source"`) to a SourceFile if not
  * already present. Existing imports from the same source are extended in

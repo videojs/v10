@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from '@videojs/compiler/components';
 
 import type { CaptionsButtonProps } from './captions-button-core';
 import { CaptionsButtonDataAttrs } from './captions-button-data-attrs';

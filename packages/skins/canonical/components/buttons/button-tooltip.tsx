@@ -1,6 +1,6 @@
+import type { ComponentNode } from '@videojs/compiler/components';
 import type { TooltipProps } from '@videojs/core';
-import { Tooltip as TooltipPrimitive } from '@videojs/core/components';
-import type { ComponentNode } from '@videojs/jsx';
+import * as $ from '@videojs/core/components';
 import styles from '../../styles/components/popup.styles';
 
 export interface ButtonTooltipProps extends TooltipProps {
@@ -9,12 +9,12 @@ export interface ButtonTooltipProps extends TooltipProps {
 
 export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
   return (
-    <TooltipPrimitive.Root {...props}>
-      <TooltipPrimitive.Trigger>{children}</TooltipPrimitive.Trigger>
-      <TooltipPrimitive.Popup className={[styles.surface, styles.tooltip]}>
-        <TooltipPrimitive.Label />
-        <TooltipPrimitive.Shortcut className={styles.shortcut} />
-      </TooltipPrimitive.Popup>
-    </TooltipPrimitive.Root>
+    <$.Tooltip.Root {...props}>
+      <$.Tooltip.Trigger>{children}</$.Tooltip.Trigger>
+      <$.Tooltip.Popup className={[styles.surface, styles.tooltip]}>
+        <$.Tooltip.Label />
+        <$.Tooltip.Shortcut className={styles.shortcut} />
+      </$.Tooltip.Popup>
+    </$.Tooltip.Root>
   );
 }

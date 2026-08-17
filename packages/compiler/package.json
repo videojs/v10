@@ -9,6 +9,9 @@
     "url": "https://github.com/videojs/v10",
     "directory": "packages/compiler"
   },
+  "bin": {
+    "vjsc": "./dist/cli.js"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -22,6 +25,30 @@
     "./catalog": {
       "types": "./dist/catalog/index.d.ts",
       "default": "./dist/catalog/index.js"
+    },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "default": "./dist/components/index.js"
+    },
+    "./components/jsx-runtime": {
+      "types": "./dist/components/jsx-runtime.d.ts",
+      "default": "./dist/components/jsx-runtime.js"
+    },
+    "./components/jsx-dev-runtime": {
+      "types": "./dist/components/jsx-dev-runtime.d.ts",
+      "default": "./dist/components/jsx-dev-runtime.js"
+    },
+    "./components/registry": {
+      "types": "./dist/components/registry.d.ts",
+      "default": "./dist/components/registry.js"
+    },
+    "./components/registry/jsx-runtime": {
+      "types": "./dist/components/registry/jsx-runtime.d.ts",
+      "default": "./dist/components/registry/jsx-runtime.js"
+    },
+    "./components/registry/jsx-dev-runtime": {
+      "types": "./dist/components/registry/jsx-dev-runtime.d.ts",
+      "default": "./dist/components/registry/jsx-dev-runtime.js"
     },
     "./shadcn": {
       "types": "./dist/shadcn/index.d.ts",

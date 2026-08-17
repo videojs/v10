@@ -5,9 +5,19 @@ export const HTML_RUNTIME_ID = '\0@videojs/compiler:html-runtime';
 export const HTML_RUNTIME_IMPORT = '@videojs/compiler/html-runtime/jsx-runtime';
 
 /** Evaluate a bundled entry against the static JSX runtime and return its HTML. */
-export function renderHtmlChunk(code: string, entryFile: string): string {
+export function renderHtmlChunk(code: string, entryFile: string, imports: readonly string[] = []): string {
   const module = { exports: {} as Record<string, unknown> };
-  runInNewContext(code, { module, exports: module.exports });
+  const external = new Set(imports);
+
+  runInNewContext(code, {
+    module,
+    exports: module.exports,
+    require(specifier: string) {
+      if (!external.has(specifier)) throw new Error(`Unexpected external module in HTML build: ${specifier}`);
+      return {};
+    },
+  });
+
   return String(selectRender(module.exports, entryFile)({})).trim();
 }
 
