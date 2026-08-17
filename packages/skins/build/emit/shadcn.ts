@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { basename, posix, resolve, sep } from 'node:path';
+import { posix, resolve } from 'node:path';
 
 import { collectModuleSpecifiers } from '@videojs/compiler/ast';
 import { type CatalogOutputFile, emitCatalog, resolveCatalog } from '@videojs/compiler/catalog';
@@ -11,7 +11,7 @@ import {
   type RegistryFileType,
 } from '@videojs/compiler/shadcn';
 import type { skinCatalog } from '../../canonical/catalog';
-import { type SkinCatalog, type SkinCatalogItem, skinRootClassName } from '../catalog';
+import { catalogSourcePath, type SkinCatalog, type SkinCatalogItem, skinRootClassName } from '../catalog';
 import { createCompilerReactConfig } from '../transform/react';
 
 type CatalogRegistryConfig = RegistryConfig<typeof skinCatalog>;
@@ -113,7 +113,7 @@ async function emitSources(
         dependency: ({ dependency }) => {
           const entryFile = sourceOutputPath(dependency, dependency.source, options);
 
-          return `${options.installAlias}/${dependency.name}/${withoutTypeScriptExtension(posix.basename(entryFile))}`;
+          return `${options.installAlias}/${dependency.name}/${posix.parse(entryFile).name}`;
         },
       },
     },
@@ -144,7 +144,7 @@ async function emitSources(
 }
 
 async function createUtilityFiles(options: SourceOptions): Promise<ShadcnSourceFile[]> {
-  const source = await readFile(absoluteSkinPath(options.rootDir, options.utility.source), 'utf8');
+  const source = await readFile(resolve(options.rootDir, options.utility.source), 'utf8');
 
   return [createSourceFile(posix.join(options.sourceRoot, options.utility.target), source)];
 }
@@ -165,9 +165,9 @@ async function createStyleResourceFiles(
   ];
 
   for (const entry of entries) {
-    const inputFile = absoluteSkinPath(options.rootDir, entry.source);
+    const inputFile = resolve(options.rootDir, entry.source);
     const source = await readFile(inputFile, 'utf8');
-    const target = posix.join(options.sourceRoot, toPosixPath(entry.target));
+    const target = posix.join(options.sourceRoot, entry.target);
 
     files.push(createSourceFile(target, source));
   }
@@ -181,22 +181,6 @@ function createSourceFile(path: string, content: string): ShadcnSourceFile {
     kind: path.endsWith('.css') ? 'style' : 'source',
     content,
   };
-}
-
-function sourceEntryName(source: string): string {
-  return basename(source);
-}
-
-function withoutTypeScriptExtension(path: string): string {
-  return path.replace(/\.(?:[cm]?ts|tsx)$/, '');
-}
-
-function toPosixPath(path: string): string {
-  return path.split(sep).join('/');
-}
-
-function absoluteSkinPath(rootDir: string, path: string): string {
-  return resolve(rootDir, path);
 }
 
 function createCompilerConfig(item: SkinCatalogItem, options: SourceOptions) {
@@ -218,11 +202,11 @@ function createCompilerConfig(item: SkinCatalogItem, options: SourceOptions) {
 
 function sourceOutputPath(item: SkinCatalogItem, sourceFile: string, options: SourceOptions): string {
   const itemDir = itemOutputDir(item, options);
-  const entrySource = canonicalPath(item.source);
-  const source = canonicalPath(sourceFile);
+  const entrySource = catalogSourcePath(item.source);
+  const source = catalogSourcePath(sourceFile);
 
   return source === entrySource
-    ? posix.join(itemDir, sourceEntryName(item.source))
+    ? posix.join(itemDir, posix.basename(item.source))
     : privateSourceOutput(itemDir, entrySource, source);
 }
 
@@ -307,8 +291,4 @@ function resolveRegistryTarget(path: string, owner: string, config: CatalogRegis
   }
 
   return posix.join(config.installRoot, relativePath);
-}
-
-function canonicalPath(path: string): string {
-  return path.replace(/^\.\//, '');
 }

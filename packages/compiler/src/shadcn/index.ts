@@ -1,5 +1,5 @@
 import { type RegistryItem, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
-import type { CatalogDefinition } from '../catalog/define';
+import type { CatalogDefinition, CatalogItemName } from '../catalog/define';
 import type { CatalogOutputFile, EmittedCatalogItem } from '../catalog/emit';
 import type { Catalog, CatalogItem } from '../catalog/resolve';
 
@@ -7,8 +7,6 @@ type RegistryItemType = RegistryItem['type'];
 export type Registry = ShadcnRegistry;
 export type RegistryFile = NonNullable<RegistryItem['files']>[number];
 export type RegistryFileType = RegistryFile['type'];
-
-type CatalogItemName<Definition extends CatalogDefinition> = Definition['items'][number]['name'];
 
 export interface RegistryConfig<Definition extends CatalogDefinition = CatalogDefinition> {
   readonly name: string;

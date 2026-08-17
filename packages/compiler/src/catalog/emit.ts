@@ -1,6 +1,5 @@
-import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { dirname, extname, isAbsolute, posix, relative, resolve, sep } from 'node:path';
+import { dirname, posix, relative, resolve } from 'node:path';
 
 import { build } from '../build';
 import type { CompilerConfig } from '../config';
@@ -10,6 +9,8 @@ import { collectReferencedStyleRules, type StyleManifest } from '../styles/manif
 import { plugin as stylesPlugin } from '../styles/plugin';
 import { transform } from '../transform';
 import { collectModuleSpecifiers, rewriteModuleSpecifiers } from '../utils/module-specifiers';
+import { toPosixPath } from '../utils/path';
+import { relativeModuleSpecifier, resolveSourceModule } from '../utils/source-module';
 
 import type { CatalogDefinition } from './define';
 import { type Catalog, type CatalogItem, type CatalogResolution, resolveCatalog } from './resolve';
@@ -280,7 +281,7 @@ async function loadStyles<Definition extends CatalogDefinition>(
     manifest
   );
   const compiled = await compileStyles({
-    design: await loadDesignSystem(configPath(styles.input, catalog.rootDir)),
+    design: await loadDesignSystem(resolve(catalog.rootDir, styles.input)),
     manifest,
     ruleClassNames,
     ...(styles.scope ? { scope: styles.scope } : {}),
@@ -394,7 +395,7 @@ function rewriteRelativeImports<Definition extends CatalogDefinition>(
 
       const local = layoutsByInput.get(importedFile);
 
-      if (local) return relativeModulePath(posix.dirname(importer.outputFile), local.outputFile);
+      if (local) return relativeModuleSpecifier(posix.dirname(importer.outputFile), local.outputFile);
 
       const dependency = entriesByInput.get(importedFile);
 
@@ -416,7 +417,7 @@ function rewriteRelativeImports<Definition extends CatalogDefinition>(
         specifier,
       });
 
-      return replacement ?? relativeModulePath(posix.dirname(importer.outputFile), dependencyEntry.outputFile);
+      return replacement ?? relativeModuleSpecifier(posix.dirname(importer.outputFile), dependencyEntry.outputFile);
     },
   });
 }
@@ -465,44 +466,6 @@ function styleOutputPath<Definition extends CatalogDefinition>(
   return toPosixPath(options.files.style?.({ fileName }) ?? fileName);
 }
 
-function resolveSourceModule(importer: string, specifier: string): string | undefined {
-  const candidate = resolve(dirname(importer), specifier);
-
-  if (sourceExtensions.has(extname(candidate)) && existsSync(candidate)) return candidate;
-
-  for (const extension of sourceExtensions) {
-    const fileName = `${candidate}${extension}`;
-
-    if (existsSync(fileName)) return fileName;
-  }
-
-  for (const extension of sourceExtensions) {
-    const fileName = resolve(candidate, `index${extension}`);
-
-    if (existsSync(fileName)) return fileName;
-  }
-
-  return undefined;
-}
-
-function relativeModulePath(from: string, to: string): string {
-  const path = posix.relative(from, withoutTypeScriptExtension(to));
-
-  return path.startsWith('.') ? path : `./${path}`;
-}
-
-function withoutTypeScriptExtension(path: string): string {
-  return path.replace(/\.(?:[cm]?[jt]s|[jt]sx)$/, '');
-}
-
-function toPosixPath(path: string): string {
-  return path.split(sep).join('/');
-}
-
-function configPath(path: string, rootDir: string): string {
-  return isAbsolute(path) ? path : resolve(rootDir, path);
-}
-
 function packageName(specifier: string): string {
   if (!specifier.startsWith('@')) return specifier.split('/')[0] ?? specifier;
 
@@ -516,5 +479,3 @@ function isPackageSpecifier(specifier: string): boolean {
 function missingItem(name: string): never {
   throw new Error(`Catalog output references missing item \`${name}\`.`);
 }
-
-const sourceExtensions = new Set(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']);

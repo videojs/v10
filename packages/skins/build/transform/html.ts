@@ -1,15 +1,17 @@
-import {
-  createJsxEditor,
-  DiagnosticError,
-  defineConfig,
-  diagnosticLocationFromNode,
-  html,
-  rewrite,
-  type TransformHelpers,
-} from '@videojs/compiler';
+import { createJsxEditor, defineConfig, html, rewrite, type TransformHelpers } from '@videojs/compiler';
 import type { JsxElementLike } from '@videojs/compiler/ast';
 import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compiler/styles';
-import ts from 'typescript';
+import type ts from 'typescript';
+import {
+  createTemplateRoot,
+  extractTemplate,
+  readTemplateName,
+  readTextDescriptor,
+  type TemplateDefinition,
+  type TemplatePartName,
+  templateDefinitions,
+  templateError,
+} from './template';
 
 interface CreateCompilerHtmlConfigOptions {
   styles?: StylePluginOptions | undefined;
@@ -334,15 +336,9 @@ export function createCompilerHtmlConfig(options: CreateCompilerHtmlConfigOption
 }
 
 interface HtmlTemplatePart {
-  name: string;
+  name: TemplatePartName;
   value: string;
   tag: string;
-}
-
-interface HtmlTemplate {
-  name: string;
-  parent: string;
-  rootTag?: string | undefined;
 }
 
 function createHtmlTemplatePartTransforms(code: TransformHelpers) {
@@ -360,38 +356,30 @@ function createHtmlTemplatePartTransforms(code: TransformHelpers) {
     code.jsx
       .element('Template.Part')
       .replace(({ element }) =>
-        failTemplate(
+        templateError(
           element,
-          `No HTML transform is configured for <Template.Part name="${readRequiredName(element)}">.`
+          `No HTML transform is configured for <Template.Part name="${readTemplateName(element)}">.`
         )
       ),
   ];
 }
 
 function createHtmlTemplateTransforms(code: TransformHelpers) {
-  const templates: readonly HtmlTemplate[] = [
-    { name: 'chapter', parent: 'TimeSliderPrimitive.Chapters', rootTag: 'div' },
-    { name: 'quality-option', parent: 'QualityRadioGroup' },
-    { name: 'audio-track-option', parent: 'AudioTrackRadioGroup' },
-    { name: 'playback-rate-option', parent: 'PlaybackRateRadioGroup' },
-    { name: 'captions-option', parent: 'CaptionsRadioGroup' },
-  ];
-
   return [
-    ...templates.map((template) =>
+    ...templateDefinitions.map((template) =>
       code.jsx.element(template.parent).replace(({ element, factory }) => lowerHtmlTemplate(element, template, factory))
     ),
     code.jsx
       .element('Template')
       .replace(({ element }) =>
-        failTemplate(element, `No HTML transform is configured for <Template name="${readRequiredName(element)}">.`)
+        templateError(element, `No HTML transform is configured for <Template name="${readTemplateName(element)}">.`)
       ),
   ];
 }
 
 function lowerHtmlTemplatePart(element: JsxElementLike, part: HtmlTemplatePart, factory: ts.NodeFactory): ts.Node {
   const jsx = createJsxEditor(factory);
-  if (readRequiredName(element) !== part.name) return element;
+  if (readTemplateName(element) !== part.name) return element;
   return jsx.apply(
     jsx.children.onlyElement(element),
     jsx.tag.replace(part.tag),
@@ -399,47 +387,18 @@ function lowerHtmlTemplatePart(element: JsxElementLike, part: HtmlTemplatePart, 
   );
 }
 
-function lowerHtmlTemplate(parent: JsxElementLike, template: HtmlTemplate, factory: ts.NodeFactory): JsxElementLike {
-  const jsx = createJsxEditor(factory);
-  const extracted = jsx.children.extractOne(
-    parent,
-    (child) => jsx.tag.name(child) === 'Template' && readRequiredName(child) === template.name
-  );
-  if (!extracted) return parent;
-  const authored = extracted.child;
-  const root = createHtmlTemplateRoot(authored, template, factory);
-  return jsx.apply(parent, jsx.children.replace(authored, jsx.create.element('template', [root])));
-}
-
-function createHtmlTemplateRoot(
-  authored: JsxElementLike,
-  template: HtmlTemplate,
+function lowerHtmlTemplate(
+  parent: JsxElementLike,
+  template: TemplateDefinition,
   factory: ts.NodeFactory
 ): JsxElementLike {
   const jsx = createJsxEditor(factory);
-  if (template.rootTag) {
-    return jsx.apply(authored, jsx.props.remove('name'), jsx.tag.replace(template.rootTag));
-  }
-  return jsx.children.onlyElement(authored);
+  const extracted = extractTemplate(parent, template.name, factory);
+  if (!extracted) return parent;
+  const authored = extracted.child;
+  const root = createTemplateRoot(authored, template.rootTag, factory);
+  return jsx.apply(parent, jsx.children.replace(authored, jsx.create.element('template', [root])));
 }
-
-function readRequiredName(element: JsxElementLike): string {
-  const jsx = createJsxEditor(ts.factory);
-  const name = jsx.props.staticString(element, 'name');
-  if (name === undefined) failTemplate(element, `<${jsx.tag.name(element)}> requires a static \`name\` prop.`);
-  if (name === null || name.length === 0)
-    failTemplate(element, `<${jsx.tag.name(element)} name> must be a string literal.`);
-  return name;
-}
-
-function failTemplate(node: ts.Node, message: string): never {
-  throw new DiagnosticError(message, {
-    ...diagnosticLocationFromNode(node),
-    diagnosticCode: 'jsx-template-invalid',
-  });
-}
-
-const textDescriptors = new Set(['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText']);
 
 function lowerHtmlText(element: JsxElementLike, factory: ts.NodeFactory): JsxElementLike {
   const jsx = createJsxEditor(factory);
@@ -454,11 +413,6 @@ function lowerHtmlText(element: JsxElementLike, factory: ts.NodeFactory): JsxEle
         ]
       : [])
   );
-}
-
-function readTextDescriptor(element: JsxElementLike): ts.Identifier | undefined {
-  const child = createJsxEditor(ts.factory).children.singleExpression(element);
-  return child && ts.isIdentifier(child) && textDescriptors.has(child.text) ? child : undefined;
 }
 
 const markupElementModules = {

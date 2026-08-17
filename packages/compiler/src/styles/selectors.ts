@@ -1,5 +1,5 @@
 import type { Rule, Selector, SelectorComponent, SelectorList } from 'lightningcss';
-import { cloneCssAst } from './css-ast';
+import { cloneCssAst, visitCssRules } from './css-ast';
 
 function cloneSelectorList(selectors: SelectorList): SelectorList {
   return selectors.map(cloneSelector);
@@ -20,32 +20,16 @@ export function replaceSelectorClasses(
 
 export function replaceRuleClasses(rule: Rule, replacements: ReadonlyMap<string, string>): Rule {
   const clone = cloneCssAst(rule);
-  replaceRuleClassesInPlace(clone, replacements);
-  return clone;
-}
 
-function replaceRuleClassesInPlace(rule: Rule, replacements: ReadonlyMap<string, string>): void {
-  switch (rule.type) {
-    case 'style':
-      rule.value.selectors = replaceSelectorClasses(rule.value.selectors, replacements);
-      for (const child of rule.value.rules ?? []) replaceRuleClassesInPlace(child, replacements);
-      return;
-    case 'nesting':
-      rule.value.style.selectors = replaceSelectorClasses(rule.value.style.selectors, replacements);
-      for (const child of rule.value.style.rules ?? []) replaceRuleClassesInPlace(child, replacements);
-      return;
-    case 'media':
-    case 'container':
-    case 'supports':
-    case 'layer-block':
-    case 'moz-document':
-    case 'scope':
-    case 'starting-style':
-      for (const child of rule.value.rules) replaceRuleClassesInPlace(child, replacements);
-      return;
-    default:
-      return;
-  }
+  visitCssRules([clone], (candidate) => {
+    if (candidate.type === 'style') {
+      candidate.value.selectors = replaceSelectorClasses(candidate.value.selectors, replacements);
+    } else if (candidate.type === 'nesting') {
+      candidate.value.style.selectors = replaceSelectorClasses(candidate.value.style.selectors, replacements);
+    }
+  });
+
+  return clone;
 }
 
 /** Render Tailwind group descendants in the component-oriented form a person

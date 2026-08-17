@@ -182,8 +182,8 @@ function normalizeEntries(
   const outputs = new Set<string>();
   return entries.map((entry) => {
     const file = outputFile
-      ? resolveConfigPath(outputFile, configDir)
-      : resolveConfigPath(join(outputDir, renderEntryFileName(entryFileNames, entry.name, entry.inputFile)), configDir);
+      ? resolve(configDir, outputFile)
+      : resolve(configDir, join(outputDir, renderEntryFileName(entryFileNames, entry.name, entry.inputFile)));
     if (outputs.has(file)) throw new Error(`Compiler build output collision: ${file}`);
     outputs.add(file);
     return { ...entry, outputFile: file };
@@ -192,14 +192,14 @@ function normalizeEntries(
 
 function inputEntries(input: CompilerInput, configDir: string): Array<Omit<BuildEntry, 'outputFile'>> {
   if (typeof input === 'string') {
-    const inputFile = resolveConfigPath(input, configDir);
+    const inputFile = resolve(configDir, input);
     return [{ name: entryNameFromPath(inputFile), inputFile }];
   }
 
   if (Array.isArray(input)) {
     const names = new Set<string>();
     return input.map((file) => {
-      const inputFile = resolveConfigPath(file, configDir);
+      const inputFile = resolve(configDir, file);
       const name = entryNameFromPath(inputFile);
       if (names.has(name)) throw new Error(`Compiler build input name collision: ${name}`);
       names.add(name);
@@ -207,16 +207,12 @@ function inputEntries(input: CompilerInput, configDir: string): Array<Omit<Build
     });
   }
 
-  return Object.entries(input).map(([name, file]) => ({ name, inputFile: resolveConfigPath(file, configDir) }));
+  return Object.entries(input).map(([name, file]) => ({ name, inputFile: resolve(configDir, file) }));
 }
 
 function outputFromAsset(asset: CompilerAsset, entryOutputFile: string): OutputFile {
   const fileName = isAbsolute(asset.fileName) ? asset.fileName : resolve(dirname(entryOutputFile), asset.fileName);
   return { type: 'asset', fileName, source: asset.source };
-}
-
-function resolveConfigPath(path: string, configDir: string): string {
-  return isAbsolute(path) ? path : resolve(configDir, path);
 }
 
 function entryNameFromPath(path: string): string {

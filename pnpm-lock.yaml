@@ -232,6 +232,9 @@ importers:
       '@tailwindcss/node':
         specifier: 4.2.1
         version: 4.2.1
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
       kleur:
         specifier: ^4.1.5
         version: 4.1.5
@@ -504,12 +507,12 @@ importers:
       '@videojs/jsx':
         specifier: workspace:*
         version: link:../jsx
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
       '@vitejs/plugin-react':
         specifier: ^6.0.4
         version: 6.0.4(babel-plugin-react-compiler@1.0.0)(vite@8.1.5(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.1)(yaml@2.9.0))
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       oxfmt:
         specifier: ^0.62.0
         version: 0.62.0

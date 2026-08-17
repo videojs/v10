@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { isImportDeclarationFrom } from '../utils/import-declaration';
 import { insertStatementsAfterImports } from '../utils/source-file';
-import { resolveRelative } from './imports';
+import { rebaseImportSpecifier } from './imports';
 
 export interface AddImportRef {
   source: string;
@@ -30,7 +30,7 @@ export function addNamedImport(
   context: AddImportContext = {}
 ): ts.SourceFile {
   const target = ref.source.startsWith('.')
-    ? resolveRelative(ref.source, { rules: {}, configDir: context.configDir, outputFile: context.outputFile })
+    ? rebaseImportSpecifier(ref.source, { rules: {}, configDir: context.configDir, outputFile: context.outputFile })
     : ref.source;
 
   const existing = findImportBinding(sourceFile, target, ref);

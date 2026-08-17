@@ -1,8 +1,16 @@
 import { readFile } from 'node:fs/promises';
-import { dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 import ts from 'typescript';
 import { collectModuleReferences, type ModuleReference } from '../utils/module-references';
-import type { CatalogDefinition, CatalogImportPattern, CatalogImports, CatalogItemDefinition } from './define';
+import { toPosixPath } from '../utils/path';
+import { resolveSourceModule, sourceScriptKind } from '../utils/source-module';
+import type {
+  CatalogDefinition,
+  CatalogImportPattern,
+  CatalogImports,
+  CatalogItemDefinition,
+  CatalogItemName,
+} from './define';
 
 export interface CatalogFiles {
   readonly source: readonly string[];
@@ -48,7 +56,6 @@ export interface CatalogResolution<Definition extends CatalogDefinition = Catalo
   readonly references: CatalogReferences<Definition>;
 }
 
-type CatalogItemName<Definition extends CatalogDefinition> = DefinedItem<Definition>['name'];
 type ReferenceGroups = Map<string, Set<string>>;
 
 interface NormalizedItem<Item extends CatalogItemDefinition> {
@@ -205,7 +212,13 @@ async function analyzeCatalogSourceFile<Definition extends CatalogDefinition>(
   const sourceText = await readCatalogSource(context, fileName);
   context.files.source.add(fileName);
 
-  const sourceFile = ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.Latest, true, scriptKind(fileName));
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    sourceText,
+    ts.ScriptTarget.Latest,
+    true,
+    sourceScriptKind(fileName)
+  );
   for (const reference of collectModuleReferences(sourceFile)) {
     if (!reference.source.startsWith('.')) {
       validatePackageImport(context, sourceFile, reference);
@@ -240,7 +253,7 @@ async function visitRelativeReference<Definition extends CatalogDefinition>(
   sourceFile: ts.SourceFile,
   reference: ModuleReference
 ): Promise<void> {
-  const importedFile = resolveImportedFile(sourceFile.fileName, reference.source);
+  const importedFile = resolveSourceModule(sourceFile.fileName, reference.source);
   if (!importedFile) {
     throw nodeError(
       sourceFile,
@@ -278,7 +291,13 @@ async function validateStyleImports<Definition extends CatalogDefinition>(
   context.visitedStyle.add(fileName);
 
   const sourceText = await readCatalogSource(context, fileName);
-  const sourceFile = ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.Latest, true, scriptKind(fileName));
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    sourceText,
+    ts.ScriptTarget.Latest,
+    true,
+    sourceScriptKind(fileName)
+  );
 
   for (const reference of collectModuleReferences(sourceFile)) {
     if (!reference.source.startsWith('.')) {
@@ -286,7 +305,7 @@ async function validateStyleImports<Definition extends CatalogDefinition>(
       continue;
     }
 
-    const importedFile = resolveImportedFile(fileName, reference.source);
+    const importedFile = resolveSourceModule(fileName, reference.source);
     if (!importedFile) {
       throw nodeError(
         sourceFile,
@@ -391,52 +410,17 @@ function compareStrings(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-function resolveImportedFile(importer: string, source: string): string | undefined {
-  const base = resolve(dirname(importer), source);
-  for (const candidate of [
-    base,
-    `${base}.ts`,
-    `${base}.tsx`,
-    `${base}.mts`,
-    `${base}.cts`,
-    resolve(base, 'index.ts'),
-    resolve(base, 'index.tsx'),
-  ]) {
-    try {
-      if (ts.sys.fileExists(candidate)) return candidate;
-    } catch {
-      // Continue through deterministic TypeScript resolution candidates.
-    }
-  }
-  return undefined;
-}
-
 function isStyleDefinitionFile(fileName: string): boolean {
   return fileName.endsWith('.styles.ts');
 }
 
 function catalogPath(rootDir: string, fileName: string): string {
-  return `./${relative(rootDir, fileName).split(sep).join('/').replaceAll('\\', '/')}`;
+  return `./${toPosixPath(relative(rootDir, fileName))}`;
 }
 
 function isWithinRoot(rootDir: string, fileName: string): boolean {
   const path = relative(rootDir, fileName);
   return path === '' || (!path.startsWith(`..${sep}`) && path !== '..' && !isAbsolute(path));
-}
-
-function scriptKind(fileName: string): ts.ScriptKind {
-  switch (extname(fileName)) {
-    case '.tsx':
-      return ts.ScriptKind.TSX;
-    case '.jsx':
-      return ts.ScriptKind.JSX;
-    case '.js':
-    case '.mjs':
-    case '.cjs':
-      return ts.ScriptKind.JS;
-    default:
-      return ts.ScriptKind.TS;
-  }
 }
 
 function nodeError(sourceFile: ts.SourceFile, node: ts.Node, message: string): Error {

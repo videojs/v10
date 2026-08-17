@@ -3,6 +3,7 @@ export {
   type CatalogImportPattern,
   type CatalogImports,
   type CatalogItemDefinition,
+  type CatalogItemName,
   defineCatalog,
 } from './define';
 export {

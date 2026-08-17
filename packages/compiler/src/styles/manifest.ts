@@ -1,22 +1,17 @@
 import { readFile, realpath } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { resolve } from 'node:path';
 
 import { type OutputChunk, rolldown } from 'rolldown';
 import { twMerge } from 'tailwind-merge';
 import ts from 'typescript';
 
 import { readAccessPath } from '../utils/jsx';
-
-import {
-  getStyleDefinition,
-  isStyleRule,
-  type StyleDefinition,
-  type StyleRule,
-  type StyleTree,
-  type StyleValue,
-  validateStyleDefinition,
-} from './define';
+import { sourceScriptKind } from '../utils/source-module';
+import { splitClassNames } from './class-names';
+import { getStyleDefinition, type StyleDefinition, type StyleValue, validateStyleDefinition } from './define';
 import { type ClassNameInfo, type ClassNameSegment, readClassName } from './jsx-class-name';
+import { resolveManifestStyleModule } from './modules';
+import { visitStyleRules } from './tree';
 
 const STYLE_RUNTIME_ID = '\0@videojs/compiler:styles-runtime';
 
@@ -81,7 +76,7 @@ export function utilityGroupsForRule(rule: StyleManifestRule, variant?: string):
 }
 
 export function utilitiesForRule(rule: StyleManifestRule, variant?: string): readonly string[] {
-  return utilityGroupsForRule(rule, variant).flatMap(splitClasses);
+  return utilityGroupsForRule(rule, variant).flatMap(splitClassNames);
 }
 
 /** Collect the exact semantic rules referenced by JSX source. */
@@ -93,7 +88,7 @@ export async function collectReferencedStyleRules(
 
   for (const file of files.filter((entry) => /\.(?:[cm]?ts|tsx)$/.test(entry))) {
     const sourceText = await readFile(file, 'utf8');
-    const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true, scriptKind(file));
+    const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true, sourceScriptKind(file));
     const bindings = styleBindings(sourceFile, manifest);
 
     if (bindings.size === 0) continue;
@@ -152,7 +147,7 @@ function createStyleManifest(
 
     const moduleRules = new Map<string, StyleManifestRule>();
 
-    visitStyleTree(definition.rules, [], (tokenPath, rule) => {
+    visitStyleRules(definition.rules, (tokenPath, rule) => {
       const utilityGroups = splitUtilityGroups(rule.utilities);
       const variantGroups = Object.fromEntries(
         Object.entries(rule.variants ?? {}).map(([name, value]) => [name, Object.freeze(splitUtilityGroups(value))])
@@ -165,11 +160,14 @@ function createStyleManifest(
         layer: definition.layer,
         scopeRoot: rule.scopeRoot ?? false,
         utilityGroups: Object.freeze(utilityGroups),
-        utilities: Object.freeze(utilityGroups.flatMap(splitClasses)),
+        utilities: Object.freeze(utilityGroups.flatMap(splitClassNames)),
         variantGroups: Object.freeze(variantGroups),
         variants: Object.freeze(
           Object.fromEntries(
-            Object.entries(variantGroups).map(([name, groups]) => [name, Object.freeze(groups.flatMap(splitClasses))])
+            Object.entries(variantGroups).map(([name, groups]) => [
+              name,
+              Object.freeze(groups.flatMap(splitClassNames)),
+            ])
           )
         ),
       });
@@ -259,43 +257,18 @@ function styleBindings(sourceFile: ts.SourceFile, manifest: StyleManifest): Read
 
     if (!importClause?.name || importClause.namedBindings || !statement.moduleSpecifier.text.startsWith('.')) continue;
 
-    const imported = resolve(dirname(sourceFile.fileName), statement.moduleSpecifier.text);
+    const modulePath = resolveManifestStyleModule(sourceFile.fileName, statement.moduleSpecifier.text, manifest);
 
-    for (const modulePath of manifest.modules.keys()) {
-      if (modulePath === imported || modulePath === `${imported}.ts`) {
-        bindings.set(importClause.name.text, modulePath);
-      }
-    }
+    if (modulePath) bindings.set(importClause.name.text, modulePath);
   }
 
   return bindings;
-}
-
-function scriptKind(file: string): ts.ScriptKind {
-  return file.endsWith('.tsx') ? ts.ScriptKind.TSX : file.endsWith('.jsx') ? ts.ScriptKind.JSX : ts.ScriptKind.TS;
-}
-
-function visitStyleTree(
-  tree: StyleTree,
-  path: readonly string[],
-  visit: (path: readonly string[], rule: StyleRule) => void
-): void {
-  for (const [name, value] of Object.entries(tree)) {
-    const tokenPath = [...path, name];
-
-    if (isStyleRule(value)) visit(tokenPath, value);
-    else visitStyleTree(value, tokenPath, visit);
-  }
 }
 
 function splitUtilityGroups(value: StyleValue): string[] {
   const values = typeof value === 'string' ? [value] : value;
 
   return values.map((part) => part.trim().replace(/\s+/g, ' ')).filter(Boolean);
-}
-
-function splitClasses(value: string): string[] {
-  return value.split(/\s+/).filter(Boolean);
 }
 
 /** Preserve authored groups while removing utilities superseded by the selected variant. */
@@ -306,7 +279,7 @@ function mergeUtilityGroups(groups: readonly string[]): readonly string[] {
   for (const utility of merged) retained.set(utility, (retained.get(utility) ?? 0) + 1);
 
   const output = Array.from({ length: groups.length }, () => [] as string[]);
-  const indexedGroups = groups.map((group, index) => ({ index, utilities: splitClasses(group) }));
+  const indexedGroups = groups.map((group, index) => ({ index, utilities: splitClassNames(group) }));
 
   for (const { index, utilities } of indexedGroups.reverse()) {
     const outputGroup = output[index];

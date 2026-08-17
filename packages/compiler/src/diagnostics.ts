@@ -1,4 +1,5 @@
 import { isAbsolute, relative } from 'node:path';
+import { isObject } from '@videojs/utils/predicate';
 import kleur from 'kleur';
 import type ts from 'typescript';
 import type { CompilerDiagnostic } from './config';
@@ -280,7 +281,7 @@ interface CodeFrame {
 }
 
 function isDiagnosticErrorLike(error: unknown): error is DiagnosticErrorLike {
-  return typeof error === 'object' && error !== null;
+  return isObject(error);
 }
 
 function createColors(enabled: boolean): Colors {

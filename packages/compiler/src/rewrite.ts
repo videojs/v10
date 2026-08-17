@@ -3,6 +3,18 @@ import type { CompilerContext, CompilerPipelineStep, CompilerPlugin, CompilerTra
 import type { JsxElementLike } from './jsx';
 import { tagName, unwrap as unwrapJsxElement } from './jsx';
 import { moveJsxChildToProp, replaceJsxElementTag, setJsxAttribute } from './jsx/edits';
+import type { ImportOptions, ImportReference } from './rewrite/import-reference';
+import { createImportReference, isImportReference, type MutableImportReference } from './rewrite/import-reference';
+import {
+  isCompilerPlugin,
+  isNode,
+  readFunctionDeclaration,
+  readInterface,
+  readInterfaceProperty,
+  readJsxElement,
+  readJsxProp,
+  readJsxPropValue,
+} from './rewrite/read';
 import { addNamedImport } from './transforms/add-import';
 import { type ImportRewriteOptions, type ImportRule, transformImports } from './transforms/imports';
 import {
@@ -21,17 +33,7 @@ import {
 } from './utils/jsx';
 import { insertStatementsAfterImports } from './utils/source-file';
 
-export interface ImportReference {
-  readonly source: string;
-  readonly name: string;
-  readonly default?: boolean | undefined;
-  readonly type?: boolean | undefined;
-}
-
-export interface ImportOptions {
-  default?: boolean | undefined;
-  type?: boolean | undefined;
-}
+export type { ImportOptions, ImportReference } from './rewrite/import-reference';
 
 export interface RefHelpers {
   import(source: string, name: string, options?: ImportOptions): ImportReference;
@@ -362,12 +364,6 @@ export interface FunctionPropsOptions {
   initializer?: ts.Expression | undefined;
 }
 
-interface MutableImportReference extends ImportReference {
-  used: boolean;
-}
-
-const IMPORT_REF_SYMBOL = Symbol('@videojs/compiler/import-ref');
-
 export function rewrite(callback: RewriteCallback, options: RewriteOptions = {}): CompilerPlugin {
   return {
     name: options.name ?? 'transform',
@@ -407,15 +403,10 @@ export function rewrite(callback: RewriteCallback, options: RewriteOptions = {})
 function createTransformHelpers(refs: MutableImportReference[], context: CompilerContext): TransformHelpers {
   const ref: RefHelpers = {
     import(source, name, options = {}) {
-      const next = {
-        [IMPORT_REF_SYMBOL]: true,
-        source,
-        name,
-        default: options.default,
-        type: options.type,
-        used: false,
-      } as MutableImportReference;
+      const next = createImportReference(source, name, options);
+
       refs.push(next);
+
       return next;
     },
   };
@@ -1594,66 +1585,4 @@ function heritageTypeName(type: ts.ExpressionWithTypeArguments): string | undefi
 function bindingElementName(element: ts.BindingElement): string | undefined {
   if (ts.isIdentifier(element.name)) return element.name.text;
   return undefined;
-}
-
-function readJsxElement(value: unknown, context: unknown): JsxElementLike | undefined {
-  if (isNode(value) && isJsxNodeLike(value)) return value;
-  if (isObject(context) && isNode(context.element) && isJsxNodeLike(context.element)) return context.element;
-  return undefined;
-}
-
-function readJsxProp(value: unknown, context: unknown): ts.JsxAttribute | undefined {
-  if (isJsxProp(value)) return value;
-  if (isObject(context) && isJsxProp(context.prop)) return context.prop;
-  return undefined;
-}
-
-function readJsxPropValue(value: unknown, context: unknown): ts.Expression | undefined {
-  if (isObject(context) && isNode(context.value) && ts.isExpression(context.value)) return context.value;
-  const prop = readJsxProp(value, context);
-  return prop ? readJsxAttributeExpression(prop) : undefined;
-}
-
-function readInterface(value: unknown, context: unknown): ts.InterfaceDeclaration | undefined {
-  if (isNode(value) && ts.isInterfaceDeclaration(value)) return value;
-  if (isObject(context) && isNode(context.interface) && ts.isInterfaceDeclaration(context.interface)) {
-    return context.interface as ts.InterfaceDeclaration;
-  }
-  return undefined;
-}
-
-function readInterfaceProperty(value: unknown, context: unknown): ts.PropertySignature | undefined {
-  if (isNode(value) && ts.isPropertySignature(value)) return value;
-  if (isObject(context) && isNode(context.property) && ts.isPropertySignature(context.property)) {
-    return context.property as ts.PropertySignature;
-  }
-  return undefined;
-}
-
-function readFunctionDeclaration(value: unknown, context: unknown): ts.FunctionDeclaration | undefined {
-  if (isNode(value) && ts.isFunctionDeclaration(value)) return value;
-  if (isObject(context) && isNode(context.function) && ts.isFunctionDeclaration(context.function)) {
-    return context.function as ts.FunctionDeclaration;
-  }
-  return undefined;
-}
-
-function isJsxProp(value: unknown): value is ts.JsxAttribute {
-  return Boolean(isNode(value) && ts.isJsxAttribute(value));
-}
-
-function isCompilerPlugin(value: CompilerTransform | CompilerPlugin): value is CompilerPlugin {
-  return isObject(value) && typeof value.name === 'string';
-}
-
-function isImportReference(value: unknown): value is MutableImportReference {
-  return Boolean(isObject(value) && value[IMPORT_REF_SYMBOL] === true);
-}
-
-function isObject(value: unknown): value is Record<PropertyKey, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isNode(value: unknown): value is ts.Node {
-  return isObject(value) && typeof value.kind === 'number';
 }

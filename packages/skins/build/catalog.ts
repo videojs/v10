@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import { type Catalog, loadCatalog } from '@videojs/compiler/catalog';
+import { pascalCase } from '@videojs/utils/string';
 import { skinCatalog } from '../canonical/catalog';
 
 export type SkinCatalog = Catalog<typeof skinCatalog>;
@@ -21,5 +22,9 @@ export function skinRootClassName(skin: SkinCatalogSkin): string {
 
 /** Derive the canonical root component export from a catalog Skin name. */
 export function skinRootComponentName(skin: SkinCatalogSkin): string {
-  return `${skin.name.replace(/(^|-)([a-z0-9])/g, (_, _separator, character: string) => character.toUpperCase())}Skin`;
+  return `${pascalCase(skin.name)}Skin`;
+}
+
+export function catalogSourcePath(path: string): string {
+  return path.replace(/^\.\//, '');
 }

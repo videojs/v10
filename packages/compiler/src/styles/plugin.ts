@@ -1,5 +1,5 @@
-import { access, stat } from 'node:fs/promises';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { stat } from 'node:fs/promises';
+import { resolve } from 'node:path';
 
 import ts from 'typescript';
 
@@ -8,6 +8,7 @@ import type { CompilerContext, CompilerPipelineStep, CompilerPlugin } from '../c
 import { compileStyles } from './compile';
 import { type DesignSystem, loadDesignSystem } from './design-system';
 import { loadStyleManifest, type StyleManifest } from './manifest';
+import { isStyleModulePath, resolveStyleModuleFile } from './modules';
 import { createStyleTransform } from './transform';
 
 export interface StyleEmitOptions {
@@ -64,7 +65,7 @@ export function plugin(options: StylePluginOptions): CompilerPlugin {
 
       if (options.mode === 'css' && options.emit) {
         const emit = options.emit;
-        const input = configPath(emit.input, context.configDir);
+        const input = resolve(context.configDir, emit.input);
 
         context.addWatchFile(input);
 
@@ -156,7 +157,7 @@ async function importedStyleFiles(filename: string, source: string): Promise<str
 
     if (!specifier.startsWith('.') || !isStyleModulePath(specifier)) continue;
 
-    const file = await resolveStyleModule(filename, specifier);
+    const file = resolveStyleModuleFile(filename, specifier);
 
     if (!file) throw new Error(`Cannot resolve style module \`${specifier}\` imported by \`${filename}\`.`);
 
@@ -164,30 +165,4 @@ async function importedStyleFiles(filename: string, source: string): Promise<str
   }
 
   return [...new Set(files)];
-}
-
-async function resolveStyleModule(importer: string, specifier: string): Promise<string | undefined> {
-  const imported = resolve(dirname(importer), specifier);
-  const candidates = /\.[cm]?[jt]sx?$/.test(imported)
-    ? [imported]
-    : [imported, `${imported}.ts`, `${imported}.tsx`, `${imported}.js`, `${imported}.mts`, `${imported}.mjs`];
-
-  for (const candidate of candidates) {
-    try {
-      await access(candidate);
-      return candidate;
-    } catch {
-      // Try the next supported source extension.
-    }
-  }
-
-  return undefined;
-}
-
-function isStyleModulePath(path: string): boolean {
-  return /\.styles(?:\.[cm]?[jt]sx?)?$/.test(path);
-}
-
-function configPath(path: string, configDir: string): string {
-  return isAbsolute(path) ? path : resolve(configDir, path);
 }

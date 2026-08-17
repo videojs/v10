@@ -1,3 +1,5 @@
+import { isStyleRule, visitStyleRules } from './tree';
+
 const styleDefinition = Symbol.for('@videojs/compiler/styles/definition');
 
 export type StyleValue = string | readonly string[];
@@ -59,9 +61,7 @@ export function getStyleDefinition(value: unknown): StyleDefinition | undefined 
   return (value as Partial<DefinedStyles<StyleTree>>)[styleDefinition];
 }
 
-export function isStyleRule(value: StyleRule | StyleTree): value is StyleRule {
-  return 'className' in value && 'utilities' in value;
-}
+export { isStyleRule };
 
 function createReferences(tree: StyleTree): Record<string, unknown> {
   const references: Record<string, unknown> = {};
@@ -101,21 +101,9 @@ export function validateStyleDefinition(definition: StyleDefinition): void {
     throw new Error(`Style layer \`${definition.layer}\` must be a CSS layer name.`);
   }
 
-  visitRules(definition.rules, [], (path, rule) => {
+  visitStyleRules(definition.rules, (path, rule) => {
     if (!/^[_a-zA-Z][-_a-zA-Z0-9]*$/.test(rule.className)) {
       throw new Error(`Style rule \`${path.join('.')}\` must declare one unprefixed CSS class name.`);
     }
   });
-}
-
-function visitRules(
-  tree: StyleTree,
-  path: readonly string[],
-  visit: (path: readonly string[], rule: StyleRule) => void
-): void {
-  for (const [name, value] of Object.entries(tree)) {
-    const rulePath = [...path, name];
-    if (isStyleRule(value)) visit(rulePath, value);
-    else visitRules(value, rulePath, visit);
-  }
 }

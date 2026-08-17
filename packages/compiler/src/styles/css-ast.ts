@@ -19,7 +19,14 @@ export function withoutNullValues<T>(value: T): T {
 }
 
 export function collectRuleClasses(rule: Rule, classes: Set<string>): Set<string> {
-  visitRuleSelectors(rule, (selector) => collectSelectorClasses(selector, classes));
+  visitCssRules([rule], (candidate) => {
+    if (candidate.type === 'style') {
+      for (const selector of candidate.value.selectors) collectSelectorClasses(selector, classes);
+    } else if (candidate.type === 'nesting') {
+      for (const selector of candidate.value.style.selectors) collectSelectorClasses(selector, classes);
+    }
+  });
+
   return classes;
 }
 
@@ -47,30 +54,6 @@ export function hasNestedCssRules(
     rule.type === 'scope' ||
     rule.type === 'starting-style'
   );
-}
-
-function visitRuleSelectors(rule: Rule, visit: (selector: Selector) => void): void {
-  switch (rule.type) {
-    case 'style':
-      for (const selector of rule.value.selectors) visit(selector);
-      for (const child of rule.value.rules ?? []) visitRuleSelectors(child, visit);
-      return;
-    case 'nesting':
-      for (const selector of rule.value.style.selectors) visit(selector);
-      for (const child of rule.value.style.rules ?? []) visitRuleSelectors(child, visit);
-      return;
-    case 'media':
-    case 'container':
-    case 'supports':
-    case 'layer-block':
-    case 'moz-document':
-    case 'scope':
-    case 'starting-style':
-      for (const child of rule.value.rules) visitRuleSelectors(child, visit);
-      return;
-    default:
-      return;
-  }
 }
 
 function collectSelectorClasses(selector: Selector, classes: Set<string>): void {

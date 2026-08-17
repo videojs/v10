@@ -5,6 +5,6 @@ export {
   type ImportRef,
   type ImportRewriteOptions,
   type ImportRule,
-  resolveRelative,
+  rebaseImportSpecifier,
   transformImports,
 } from './imports';

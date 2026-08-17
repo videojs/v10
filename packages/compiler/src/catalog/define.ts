@@ -16,6 +16,8 @@ export interface CatalogDefinition {
   readonly allowedImports?: readonly CatalogImportPattern[] | undefined;
 }
 
+export type CatalogItemName<Definition extends CatalogDefinition> = Definition['items'][number]['name'];
+
 /** Preserve authored catalog metadata while checking the compiler contract. */
 export function defineCatalog<const Definition extends CatalogDefinition>(definition: Definition): Definition {
   return definition;

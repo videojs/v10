@@ -1,15 +1,18 @@
-import {
-  createJsxEditor,
-  DiagnosticError,
-  defineConfig,
-  diagnosticLocationFromNode,
-  jsx,
-  rewrite,
-  type TransformHelpers,
-} from '@videojs/compiler';
+import { createJsxEditor, defineConfig, jsx, rewrite, type TransformHelpers } from '@videojs/compiler';
 import { anyTag, childAsProp, hasJsxAttribute, type ImportRef, type JsxElementLike } from '@videojs/compiler/ast';
 import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compiler/styles';
 import ts, { type Expression } from 'typescript';
+import {
+  createTemplateRoot,
+  extractTemplate,
+  readTemplateName,
+  readTextDescriptor,
+  type TemplateDefinition,
+  type TemplateName,
+  type TemplatePartName,
+  templateDefinitions,
+  templateError,
+} from './template';
 
 interface CreateCompilerReactConfigOptions {
   styles?: StylePluginOptions | undefined;
@@ -709,7 +712,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
 }
 
 interface ReactTemplatePart {
-  name: string;
+  name: TemplatePartName;
   root: string;
   property?: string | undefined;
   optionalAccess?: boolean | undefined;
@@ -717,13 +720,10 @@ interface ReactTemplatePart {
   tag?: string | undefined;
 }
 
-interface ReactTemplate {
-  name: string;
-  parent: string;
-  prop: string;
-  parameters: readonly string[];
-  rootTag?: string | undefined;
-}
+type ReactTemplate = TemplateDefinition & {
+  readonly prop: string;
+  readonly parameters: readonly string[];
+};
 
 function createReactTemplatePartTransforms(code: TransformHelpers) {
   const selectedLabelParts: ReadonlyArray<ReactTemplatePart & { scope: string }> = [
@@ -771,33 +771,29 @@ function createReactTemplatePartTransforms(code: TransformHelpers) {
     code.jsx
       .element('Template.Part')
       .replace(({ element }) =>
-        failTemplate(
+        templateError(
           element,
-          `No React transform is configured for <Template.Part name="${readRequiredName(element)}">.`
+          `No React transform is configured for <Template.Part name="${readTemplateName(element)}">.`
         )
       ),
   ];
 }
 
 function createReactTemplateTransforms(code: TransformHelpers) {
-  const templates: readonly ReactTemplate[] = [
-    {
-      name: 'chapter',
-      parent: 'TimeSliderPrimitive.Chapters',
+  const options = {
+    chapter: {
       prop: 'renderChapter',
       parameters: ['props'],
-      rootTag: 'div',
     },
-    { name: 'quality-option', parent: 'QualityRadioGroup', prop: 'renderItem', parameters: ['props', 'item'] },
-    { name: 'audio-track-option', parent: 'AudioTrackRadioGroup', prop: 'renderItem', parameters: ['props', 'item'] },
-    {
-      name: 'playback-rate-option',
-      parent: 'PlaybackRateRadioGroup',
-      prop: 'renderItem',
-      parameters: ['props', 'item'],
-    },
-    { name: 'captions-option', parent: 'CaptionsRadioGroup', prop: 'renderItem', parameters: ['props', 'item'] },
-  ];
+    'quality-option': { prop: 'renderItem', parameters: ['props', 'item'] },
+    'audio-track-option': { prop: 'renderItem', parameters: ['props', 'item'] },
+    'playback-rate-option': { prop: 'renderItem', parameters: ['props', 'item'] },
+    'captions-option': { prop: 'renderItem', parameters: ['props', 'item'] },
+  } as const satisfies Record<TemplateName, Pick<ReactTemplate, 'prop' | 'parameters'>>;
+  const templates: readonly ReactTemplate[] = templateDefinitions.map((template) => ({
+    ...template,
+    ...options[template.name],
+  }));
 
   return [
     ...templates.map((template) =>
@@ -808,14 +804,14 @@ function createReactTemplateTransforms(code: TransformHelpers) {
     code.jsx
       .element('Template')
       .replace(({ element }) =>
-        failTemplate(element, `No React transform is configured for <Template name="${readRequiredName(element)}">.`)
+        templateError(element, `No React transform is configured for <Template name="${readTemplateName(element)}">.`)
       ),
   ];
 }
 
 function lowerReactTemplatePart(element: JsxElementLike, part: ReactTemplatePart, factory: ts.NodeFactory): ts.Node {
   const jsx = createJsxEditor(factory);
-  if (readRequiredName(element) !== part.name) return element;
+  if (readTemplateName(element) !== part.name) return element;
   let rendered = jsx.children.onlyElement(element);
   if (part.tag) rendered = jsx.apply(rendered, jsx.tag.replace(part.tag));
   const root = factory.createIdentifier(part.root);
@@ -841,23 +837,21 @@ function lowerReactTemplatePart(element: JsxElementLike, part: ReactTemplatePart
 
 function lowerReactTemplate(parent: JsxElementLike, template: ReactTemplate, factory: ts.NodeFactory): JsxElementLike {
   const jsx = createJsxEditor(factory);
-  const extracted = jsx.children.extractOne(
-    parent,
-    (child) => jsx.tag.name(child) === 'Template' && readRequiredName(child) === template.name
-  );
+  const extracted = extractTemplate(parent, template.name, factory);
   if (!extracted) return parent;
   if (hasJsxAttribute(ts.isJsxElement(parent) ? parent.openingElement.attributes : parent.attributes, template.prop)) {
-    failTemplate(parent, `<${template.parent}> already declares \`${template.prop}\`.`);
+    templateError(parent, `<${template.parent}> already declares \`${template.prop}\`.`);
   }
   const authored = extracted.child;
-  const root = createReactTemplateRoot(authored, template, factory);
+  const root = createTemplateRoot(authored, template.rootTag, factory);
+  const rendered = jsx.apply(root, jsx.props.spread(factory.createIdentifier(template.parameters[0]!), 'start'));
   const callback = factory.createArrowFunction(
     undefined,
     undefined,
     template.parameters.map((name) => factory.createParameterDeclaration(undefined, undefined, name)),
     undefined,
     factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-    factory.createParenthesizedExpression(root)
+    factory.createParenthesizedExpression(rendered)
   );
   return jsx.apply(
     parent,
@@ -866,39 +860,6 @@ function lowerReactTemplate(parent: JsxElementLike, template: ReactTemplate, fac
     jsx.selfCloseIfEmpty()
   );
 }
-
-function createReactTemplateRoot(
-  authored: JsxElementLike,
-  template: ReactTemplate,
-  factory: ts.NodeFactory
-): JsxElementLike {
-  const jsx = createJsxEditor(factory);
-  let root: JsxElementLike;
-  if (template.rootTag) {
-    root = jsx.apply(authored, jsx.props.remove('name'), jsx.tag.replace(template.rootTag));
-  } else {
-    root = jsx.children.onlyElement(authored);
-  }
-  return jsx.apply(root, jsx.props.spread(factory.createIdentifier(template.parameters[0]!), 'start'));
-}
-
-function readRequiredName(element: JsxElementLike): string {
-  const jsx = createJsxEditor(ts.factory);
-  const name = jsx.props.staticString(element, 'name');
-  if (name === undefined) failTemplate(element, `<${jsx.tag.name(element)}> requires a static \`name\` prop.`);
-  if (name === null || name.length === 0)
-    failTemplate(element, `<${jsx.tag.name(element)} name> must be a string literal.`);
-  return name;
-}
-
-function failTemplate(node: ts.Node, message: string): never {
-  throw new DiagnosticError(message, {
-    ...diagnosticLocationFromNode(node),
-    diagnosticCode: 'jsx-template-invalid',
-  });
-}
-
-const textDescriptors = new Set(['settingsText', 'qualityText', 'audioText', 'speedText', 'captionsText']);
 
 function lowerReactText(element: JsxElementLike, factory: ts.NodeFactory): JsxElementLike {
   const jsx = createJsxEditor(factory);
@@ -914,11 +875,6 @@ function lowerReactText(element: JsxElementLike, factory: ts.NodeFactory): JsxEl
         ]
       : [])
   );
-}
-
-function readTextDescriptor(element: JsxElementLike): ts.Identifier | undefined {
-  const child = createJsxEditor(ts.factory).children.singleExpression(element);
-  return child && ts.isIdentifier(child) && textDescriptors.has(child.text) ? child : undefined;
 }
 
 function requiredReactImport(resolveImport: (reference: ImportRef) => ImportRef | false, name: string): ImportRef {

@@ -1,6 +1,7 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ImportRef } from '@videojs/compiler/ast';
+import { camelCase, kebabCase } from '@videojs/utils/string';
 import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
 import { emitShadcnRegistry } from '../build/emit/shadcn';
 import { emitFrameworkSkin, type FrameworkTarget } from '../build/targets';
@@ -197,11 +198,7 @@ const reactComponentModules: Readonly<Record<string, string>> = {
 };
 
 function reactComponentModule(name: string): string {
-  return reactComponentModules[name] ?? kebabCase(name);
-}
-
-function kebabCase(value: string): string {
-  return value.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+  return reactComponentModules[name] ?? kebabCase(camelCase(name));
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

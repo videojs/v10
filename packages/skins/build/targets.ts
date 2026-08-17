@@ -4,7 +4,13 @@ import { basename, posix, resolve } from 'node:path';
 import { type CatalogOutputFile, type CatalogStyleTransform, emitCatalog } from '@videojs/compiler/catalog';
 import { format } from 'oxfmt';
 
-import { type SkinCatalog, type SkinCatalogSkin, skinRootClassName, skinRootComponentName } from './catalog';
+import {
+  catalogSourcePath,
+  type SkinCatalog,
+  type SkinCatalogSkin,
+  skinRootClassName,
+  skinRootComponentName,
+} from './catalog';
 import { createCompilerHtmlConfig, resolveHtmlElementImports } from './transform/html';
 import { createCompilerReactConfig, type ReactImportResolver } from './transform/react';
 
@@ -74,7 +80,7 @@ async function emitReactTarget(
   styles: CatalogStyleTransform,
   target: Extract<FrameworkTarget, { framework: 'react' }>
 ): Promise<{ files: FrameworkSkinFile[]; styles: readonly CatalogOutputFile[] }> {
-  const entryPath = canonicalPath(skin.source);
+  const entryPath = catalogSourcePath(skin.source);
   const entryDir = posix.dirname(entryPath);
 
   const output = await emitCatalog(catalog, {
@@ -90,7 +96,7 @@ async function emitReactTarget(
     },
     files: {
       source: ({ sourceFile }) => {
-        const path = canonicalPath(sourceFile);
+        const path = catalogSourcePath(sourceFile);
 
         return path.startsWith(`${entryDir}/`) ? posix.relative(entryDir, path) : path;
       },
@@ -219,10 +225,6 @@ function uniqueTargets(targets: readonly FrameworkTarget[], skin: string): reado
   }
 
   return targets;
-}
-
-function canonicalPath(path: string): string {
-  return path.replace(/^\.\//, '');
 }
 
 function escapeTemplate(content: string): string {

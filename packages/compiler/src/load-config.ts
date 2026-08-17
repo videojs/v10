@@ -2,6 +2,8 @@ import { existsSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { isPlainObject } from '@videojs/utils/predicate';
+
 import type { CompilerBuildConfig, CompilerConfig } from './config';
 
 interface ConfigModule {
@@ -90,7 +92,7 @@ function parseBuildConfig(value: unknown, configPath: string): CompilerBuildConf
 }
 
 function validateCompilerConfig(value: unknown, location: string): asserts value is CompilerConfig {
-  if (!isRecord(value)) throw invalidConfig(location, 'expected an object');
+  if (!isPlainObject(value)) throw invalidConfig(location, 'expected an object');
 
   if (value.input !== undefined && !isCompilerInput(value.input)) {
     throw invalidConfig(location, '`input` must be a string, string array, or string record');
@@ -105,7 +107,7 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
   }
 
   if (value.output !== undefined) {
-    if (!isRecord(value.output)) throw invalidConfig(location, '`output` must be an object');
+    if (!isPlainObject(value.output)) throw invalidConfig(location, '`output` must be an object');
     for (const key of ['dir', 'file', 'entryFileNames', 'banner'] as const) {
       if (value.output[key] !== undefined && typeof value.output[key] !== 'string') {
         throw invalidConfig(location, `\`output.${key}\` must be a string`);
@@ -119,7 +121,7 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
   if (value.plugins !== undefined) {
     if (!Array.isArray(value.plugins)) throw invalidConfig(location, '`plugins` must be an array');
     value.plugins.forEach((plugin, index) => {
-      if (!isRecord(plugin) || typeof plugin.name !== 'string' || plugin.name.length === 0) {
+      if (!isPlainObject(plugin) || typeof plugin.name !== 'string' || plugin.name.length === 0) {
         throw invalidConfig(location, `\`plugins[${index}]\` must have a non-empty string name`);
       }
       if (plugin.enforce !== undefined && plugin.enforce !== 'pre' && plugin.enforce !== 'post') {
@@ -132,11 +134,11 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
   }
 
   if (value.target !== undefined) {
-    if (!isRecord(value.target) || (value.target.name !== 'jsx' && value.target.name !== 'html')) {
+    if (!isPlainObject(value.target) || (value.target.name !== 'jsx' && value.target.name !== 'html')) {
       throw invalidConfig(location, '`target.name` must be "jsx" or "html"');
     }
     if (value.target.imports !== undefined) {
-      if (!isRecord(value.target.imports)) throw invalidConfig(location, '`target.imports` must be an object');
+      if (!isPlainObject(value.target.imports)) throw invalidConfig(location, '`target.imports` must be an object');
       for (const [source, rule] of Object.entries(value.target.imports)) {
         if (typeof rule !== 'string' && typeof rule !== 'function') {
           throw invalidConfig(location, `import rule for ${JSON.stringify(source)} must be a string or function`);
@@ -155,11 +157,7 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
 function isCompilerInput(value: unknown): boolean {
   if (typeof value === 'string') return true;
   if (Array.isArray(value)) return value.every((item) => typeof item === 'string');
-  return isRecord(value) && Object.values(value).every((item) => typeof item === 'string');
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return isPlainObject(value) && Object.values(value).every((item) => typeof item === 'string');
 }
 
 function invalidConfig(location: string, message: string): Error {

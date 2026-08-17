@@ -1,4 +1,5 @@
 import ts from 'typescript';
+import { sourceScriptKind } from './source-module';
 
 export interface RewriteModuleSpecifiersOptions {
   filename: string;
@@ -11,7 +12,7 @@ export function rewriteModuleSpecifiers(source: string, options: RewriteModuleSp
     source,
     ts.ScriptTarget.Latest,
     true,
-    scriptKind(options.filename)
+    sourceScriptKind(options.filename)
   );
   const result = ts.transform(sourceFile, [moduleSpecifierTransform(options.resolve)]);
   try {
@@ -22,7 +23,7 @@ export function rewriteModuleSpecifiers(source: string, options: RewriteModuleSp
 }
 
 export function collectModuleSpecifiers(source: string, filename: string): string[] {
-  const sourceFile = ts.createSourceFile(filename, source, ts.ScriptTarget.Latest, true, scriptKind(filename));
+  const sourceFile = ts.createSourceFile(filename, source, ts.ScriptTarget.Latest, true, sourceScriptKind(filename));
   const specifiers: string[] = [];
   const visit = (node: ts.Node): void => {
     const specifier = moduleSpecifier(node);
@@ -86,11 +87,4 @@ function moduleSpecifier(node: ts.Node): ts.StringLiteralLike | undefined {
     return node.arguments[0];
   }
   return undefined;
-}
-
-function scriptKind(filename: string): ts.ScriptKind {
-  if (filename.endsWith('.tsx')) return ts.ScriptKind.TSX;
-  if (filename.endsWith('.jsx')) return ts.ScriptKind.JSX;
-  if (filename.endsWith('.js')) return ts.ScriptKind.JS;
-  return ts.ScriptKind.TS;
 }
