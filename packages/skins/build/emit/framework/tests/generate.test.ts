@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalRoot, loadSkinCatalog } from '../../catalog';
+import { canonicalRoot, loadSkinCatalog } from '../../../catalog';
 import { createFrameworkSkin } from '../generate';
 
 describe('createFrameworkSkin', () => {
@@ -7,7 +7,7 @@ describe('createFrameworkSkin', () => {
     const output = await createFrameworkSkin(await loadSkinCatalog(), {
       rootDir: canonicalRoot,
       skin: 'default-video',
-      projections: [{ framework: 'react' }, { framework: 'html' }],
+      targets: [{ framework: 'react' }, { framework: 'html' }],
     });
     const files = output.files.filter((candidate) => candidate.framework === 'react');
     const skin = content(output, 'react', 'skin.tsx');
@@ -164,7 +164,7 @@ describe('createFrameworkSkin', () => {
     const output = await createFrameworkSkin(await loadSkinCatalog(), {
       rootDir: canonicalRoot,
       skin: 'default-video',
-      projections: [{ framework: 'html' }],
+      targets: [{ framework: 'html' }],
     });
     const html = content(output, 'html', 'skin.ts');
 
@@ -233,7 +233,7 @@ describe('createFrameworkSkin', () => {
       rootDir: canonicalRoot,
       skin: 'minimal-video',
       iconSet: 'minimal',
-      projections: [{ framework: 'react' }, { framework: 'html' }],
+      targets: [{ framework: 'react' }, { framework: 'html' }],
     });
     const react = content(output, 'react', 'skin.tsx');
     const html = content(output, 'html', 'skin.ts');

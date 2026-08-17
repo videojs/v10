@@ -165,7 +165,7 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).toContain('interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, "children">');
   });
 
-  it('allows a projection to resolve generated React imports', async () => {
+  it('allows a target to resolve generated React imports', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {

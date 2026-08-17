@@ -59,7 +59,7 @@ const RADIO_GROUP_COMPONENTS = [
   ['CaptionsRadioGroup', 'CaptionsRadioGroupPrimitive', 'CaptionsRadioGroupPrimitive.Props'],
 ] as const;
 
-/** Create the compiler policy for a React Skin projection. */
+/** Create the compiler policy for a React Skin target. */
 export function createCompilerReactConfig(options: CreateCompilerReactConfigOptions) {
   const rootComponentName = options.rootComponentName ?? 'DefaultVideoSkin';
   const rootPropsName = `${rootComponentName}Props`;
@@ -75,12 +75,12 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
   const usePlaybackRateOptionsRef = requiredReactImport(resolveImport, 'usePlaybackRateOptions');
   const useCaptionsOptionsRef = requiredReactImport(resolveImport, 'useCaptionsOptions');
   const cnReference = resolveImport({ source: '@videojs/utils/style', name: 'cn' });
-  if (!cnReference) throw new Error('React Skin lowering requires a target import for `cn`.');
+  if (!cnReference) throw new Error('React Skin transform requires a target import for `cn`.');
   const resolveClassNameReference = options.extendComponents
     ? resolveImport({ source: '@videojs/skins/registry', name: 'resolveClassName' })
     : false;
   if (options.extendComponents && !resolveClassNameReference) {
-    throw new Error('React Skin lowering requires a target import for `resolveClassName`.');
+    throw new Error('React Skin transform requires a target import for `resolveClassName`.');
   }
   return defineConfig({
     target: jsx({
@@ -502,7 +502,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             rootSkin.jsx.element('Container').spreadProps('containerProps', { position: 'start' }),
             rootSkin.jsx.element('Container').addProp('className', () => {
               if (!options.rootClassName) {
-                throw new Error('React Skin root lowering requires `rootClassName`.');
+                throw new Error('React Skin root transform requires `rootClassName`.');
               }
               return code.value.array([code.value.string(options.rootClassName), 'className']);
             }),
@@ -558,7 +558,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                 component.jsx.element(primitive).selfClosing(),
               ];
             }),
-            // Runtime availability and settings state used by the React projection.
+            // Runtime availability and settings state used by the React target.
             volumePopover.prepend(() =>
               code.statement.const(
                 'volumeAvailability',
@@ -772,7 +772,7 @@ function createReactTemplatePartTransforms(code: TransformHelpers) {
       .replace(({ element }) =>
         failTemplate(
           element,
-          `No React lowering is configured for <Template.Part name="${readRequiredName(element)}">.`
+          `No React transform is configured for <Template.Part name="${readRequiredName(element)}">.`
         )
       ),
   ];
@@ -807,7 +807,7 @@ function createReactTemplateTransforms(code: TransformHelpers) {
     code.jsx
       .element('Template')
       .replace(({ element }) =>
-        failTemplate(element, `No React lowering is configured for <Template name="${readRequiredName(element)}">.`)
+        failTemplate(element, `No React transform is configured for <Template name="${readRequiredName(element)}">.`)
       ),
   ];
 }
@@ -922,6 +922,6 @@ function readTextDescriptor(element: JsxElementLike): ts.Identifier | undefined 
 
 function requiredReactImport(resolveImport: (reference: ImportRef) => ImportRef | false, name: string): ImportRef {
   const reference = resolveImport({ source: '@videojs/react', name });
-  if (!reference) throw new Error(`React Skin lowering requires a target import for \`${name}\`.`);
+  if (!reference) throw new Error(`React Skin transform requires a target import for \`${name}\`.`);
   return reference;
 }

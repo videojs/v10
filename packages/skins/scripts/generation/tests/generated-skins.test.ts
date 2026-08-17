@@ -2,8 +2,8 @@ import type { Dirent } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { posix, relative, resolve, sep } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { generateSkins } from '../../../scripts/generate-skins';
-import { skinsPackageRoot } from '../../catalog';
+import { skinsPackageRoot } from '../../../build/catalog';
+import { generateSkins } from '../../generate-skins';
 
 const generatedRoots = [
   resolve(skinsPackageRoot, '../html/src/__generated__/skins'),

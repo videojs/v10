@@ -79,6 +79,25 @@ describe('loadCatalog', () => {
       )
     ).rejects.toThrow('Catalog dependency cycle: a -> b -> a.');
   });
+
+  it('enforces allowed package imports across source and style modules', async () => {
+    const root = setup({
+      'entry.tsx': `import { allowed } from '@example/allowed'; import styles from './entry.styles'; export const Entry = allowed ?? styles;`,
+      'entry.styles.ts': `import { styles } from '@example/styles'; export default styles;`,
+    });
+    const definition = catalog({
+      allowedImports: ['@example/allowed', /^@example\/styles$/],
+      items: [{ name: 'entry', source: './entry.tsx' }],
+    });
+
+    await expect(loadCatalog(definition, { rootDir: root })).resolves.toBeDefined();
+
+    writeFileSync(join(root, 'entry.styles.ts'), `import '@example/not-allowed'; export default {};`);
+
+    await expect(loadCatalog(definition, { rootDir: root })).rejects.toThrow(
+      'imports package `@example/not-allowed`, which is not allowed'
+    );
+  });
 });
 
 describe('resolveCatalog', () => {

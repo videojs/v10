@@ -236,7 +236,7 @@ const SETTINGS_SUBMENUS = [
   ['CaptionsMenu', 'settings-captions-menu'],
 ] as const;
 
-/** Create the compiler policy for an HTML Skin projection. */
+/** Create the compiler policy for an HTML Skin target. */
 export function createCompilerHtmlConfig(options: CreateCompilerHtmlConfigOptions) {
   const rootComponentName = options.rootComponentName ?? 'DefaultVideoSkin';
   return defineConfig({
@@ -265,7 +265,7 @@ export function createCompilerHtmlConfig(options: CreateCompilerHtmlConfigOption
             // Establish the Skin root, component content slot, and Container API.
             rootContainer.addProp('className', () => {
               if (!options.rootClassName) {
-                throw new Error('HTML Skin root lowering requires `rootClassName`.');
+                throw new Error('HTML Skin root transform requires `rootClassName`.');
               }
               return options.rootClassName;
             }),
@@ -359,7 +359,10 @@ function createHtmlTemplatePartTransforms(code: TransformHelpers) {
     code.jsx
       .element('Template.Part')
       .replace(({ element }) =>
-        failTemplate(element, `No HTML lowering is configured for <Template.Part name="${readRequiredName(element)}">.`)
+        failTemplate(
+          element,
+          `No HTML transform is configured for <Template.Part name="${readRequiredName(element)}">.`
+        )
       ),
   ];
 }
@@ -380,7 +383,7 @@ function createHtmlTemplateTransforms(code: TransformHelpers) {
     code.jsx
       .element('Template')
       .replace(({ element }) =>
-        failTemplate(element, `No HTML lowering is configured for <Template name="${readRequiredName(element)}">.`)
+        failTemplate(element, `No HTML transform is configured for <Template name="${readRequiredName(element)}">.`)
       ),
   ];
 }

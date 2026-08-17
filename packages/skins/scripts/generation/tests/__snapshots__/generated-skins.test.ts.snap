@@ -14398,9 +14398,11 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 @import './themes/video.css';
 @import './themes/default.css';
 @import './themes/minimal.css';
+@import './tailwind.shared.css';
 
 @source "../**/*.{ts,tsx,html}";
 
+===== packages/skins/canonical/registry/default/styles/tailwind.shared.css =====
 @theme inline {
   --color-media-accent: var(--media-accent-color, oklch(1 0 0));
   --color-media-accent-text: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0 0 0))));
@@ -14519,6 +14521,11 @@ export function resolveClassName<State>(className: ClassName<State>, state: Stat
         {
           "path": "canonical/registry/default/styles/tailwind.css",
           "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.shared.css",
+          "target": "components/videojs/styles/tailwind.shared.css",
           "type": "registry:file"
         },
         {

@@ -3,17 +3,18 @@ import { fileURLToPath } from 'node:url';
 import type { ImportRef } from '@videojs/compiler/ast';
 import { resolveCatalog } from '@videojs/compiler/catalog';
 import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
-import type { ReactImportResolver } from '../build/compiler/react';
-import { createFrameworkSkin, type FrameworkProjection } from '../build/framework/generate';
-import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from '../build/output/files';
-import { createRegistryManifest } from '../build/registry/manifest';
-import { generateReactRegistry } from '../build/registry/source';
+import { createFrameworkSkin, type FrameworkTarget } from '../build/emit/framework/generate';
+import { createRegistryManifest } from '../build/emit/registry/manifest';
+import { generateReactRegistry } from '../build/emit/registry/source';
+import type { ReactImportResolver } from '../build/transform/react';
+import type { SkinItemName } from '../canonical/catalog';
 import { skinRegistry } from '../canonical/registry/config';
+import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from './generation/files';
 
 interface FrameworkSkinTargetBase {
   packageRoot: string;
   outputDir: string;
-  skin: string;
+  skin: SkinItemName;
   iconSet?: string | undefined;
 }
 
@@ -69,25 +70,31 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
       rootDir: canonicalRoot,
       skin: group.skin,
       ...(group.iconSet === 'default' ? {} : { iconSet: group.iconSet }),
-      projections: group.targets.map(toFrameworkProjection),
+      targets: group.targets.map(toFrameworkTarget),
     });
     const styles = await Promise.all(
       output.styles.map(
         async (style) => [style.fileName, await formatGeneratedFile(style.fileName, style.content)] as const
       )
     );
+
     for (const target of group.targets) {
       const generatedFiles = output.files.filter((file) => file.framework === target.framework);
+
       if (generatedFiles.length === 0) {
         throw new Error(`Framework Skin generation did not emit the ${target.framework} target.`);
       }
+
       const files = new Map<string, string>();
+
       for (const file of generatedFiles) {
         files.set(posix.join(target.outputDir, file.fileName), await formatGeneratedFile(file.fileName, file.content));
       }
+
       for (const [fileName, formatted] of styles) {
         files.set(posix.join(target.outputDir, fileName), formatted);
       }
+
       await syncGeneratedFiles({
         rootDir: target.packageRoot,
         files,
@@ -99,7 +106,9 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
 
   const resolved = resolveCatalog(catalog, [skinRegistry.skin]);
   const registrySkin = catalog.items.find((item) => item.type === 'skin' && item.name === skinRegistry.skin);
+
   if (registrySkin?.type !== 'skin') throw new Error(`Registry Skin \`${skinRegistry.skin}\` does not exist.`);
+
   const output = await generateReactRegistry(catalog, {
     rootDir: canonicalRoot,
     itemNames: [...new Set([...resolved.items.map((item) => item.name), ...skinRegistry.items])],
@@ -112,14 +121,17 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
       importSource: `@/${skinRegistry.installRoot}/${skinRegistry.utilityItem.target.replace(/\.ts$/, '')}`,
     },
   });
+
   const files = await collectGeneratedFiles(
     [...output.sharedFiles, ...output.utilityFiles, ...Object.values(output.items).flatMap((item) => item.files)],
     skinRegistry.outputDir
   );
+
   files.set(
     posix.join(skinRegistry.outputDir, 'registry.json'),
     await formatGeneratedFile('registry.json', JSON.stringify(createRegistryManifest(catalog, output, skinRegistry)))
   );
+
   await syncGeneratedFiles({
     rootDir: skinsPackageRoot,
     files,
@@ -128,7 +140,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
   });
 }
 
-function toFrameworkProjection(target: FrameworkSkinTarget): FrameworkProjection {
+function toFrameworkTarget(target: FrameworkSkinTarget): FrameworkTarget {
   return target.framework === 'html'
     ? {
         framework: 'html',
@@ -142,8 +154,9 @@ function toFrameworkProjection(target: FrameworkSkinTarget): FrameworkProjection
 
 function groupFrameworkTargets(
   targets: readonly FrameworkSkinTarget[]
-): Array<{ skin: string; iconSet: string; targets: FrameworkSkinTarget[] }> {
-  const groups = new Map<string, { skin: string; iconSet: string; targets: FrameworkSkinTarget[] }>();
+): Array<{ skin: SkinItemName; iconSet: string; targets: FrameworkSkinTarget[] }> {
+  const groups = new Map<string, { skin: SkinItemName; iconSet: string; targets: FrameworkSkinTarget[] }>();
+
   for (const target of targets) {
     const iconSet = target.iconSet ?? 'default';
     const key = `${target.skin}\0${iconSet}`;
@@ -152,13 +165,16 @@ function groupFrameworkTargets(
       group = { skin: target.skin, iconSet, targets: [] };
       groups.set(key, group);
     }
+
     if (group.targets.some((existing) => existing.framework === target.framework)) {
       throw new Error(
         `Framework Skin generation received multiple ${target.framework} outputs for Skin \`${target.skin}\`.`
       );
     }
+
     group.targets.push(target);
   }
+
   return [...groups.values()];
 }
 
@@ -172,14 +188,19 @@ function htmlPackageImportResolver(outputFile: string): (specifier: string) => s
 
 function htmlPackageModule(specifier: string): string {
   if (specifier === '@videojs/html/i18n') return 'src/define/i18n';
+
   const uiPrefix = '@videojs/html/ui/';
   if (specifier.startsWith(uiPrefix)) return posix.join('src/define/ui', specifier.slice(uiPrefix.length));
+
   const mediaPrefix = '@videojs/html/media/';
   if (specifier.startsWith(mediaPrefix)) return posix.join('src/define/media', specifier.slice(mediaPrefix.length));
+
   const iconsPrefix = '@videojs/html/icons/element';
   if (specifier === iconsPrefix) return 'src/icons/element';
+
   if (specifier.startsWith(`${iconsPrefix}/`))
     return posix.join('src/icons/element', specifier.slice(iconsPrefix.length + 1));
+
   throw new Error(`Cannot resolve HTML package import \`${specifier}\`.`);
 }
 

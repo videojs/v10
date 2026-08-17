@@ -6,10 +6,14 @@ export interface CatalogItemDefinition {
 /** Package import specifiers mapped to the reference group collected from them. */
 export type CatalogImports = Readonly<Record<string, string>>;
 
+/** Exact package specifiers or patterns accepted by catalog source modules. */
+export type CatalogImportPattern = string | RegExp;
+
 export interface CatalogDefinition {
   readonly items: readonly CatalogItemDefinition[];
   readonly resources?: object | undefined;
   readonly imports?: CatalogImports | undefined;
+  readonly allowedImports?: readonly CatalogImportPattern[] | undefined;
 }
 
 /** Preserve authored catalog metadata while checking the compiler contract. */

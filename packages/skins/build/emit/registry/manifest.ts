@@ -5,11 +5,11 @@ import {
   type ShadcnRegistryFile,
   type ShadcnRegistryFileType,
 } from '@videojs/compiler/registry';
-import type { SkinRegistryConfig } from '../../canonical/registry/config';
-import type { SkinCatalog } from '../catalog';
+import type { SkinRegistryConfig } from '../../../canonical/registry/config';
+import type { SkinCatalog } from '../../catalog';
 import type { RegistrySourceOutput, SkinRegistryFile } from './source';
 
-/** Create the shadcn manifest for the generated React/Tailwind projection. */
+/** Create the shadcn manifest for the emitted React/Tailwind source. */
 export function createRegistryManifest(
   catalog: SkinCatalog,
   output: RegistrySourceOutput,

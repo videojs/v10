@@ -1,3 +1,5 @@
+import type { SkinItemName } from '../catalog';
+
 export interface SkinRegistryConfig {
   name: string;
   homepage: string;
@@ -5,7 +7,7 @@ export interface SkinRegistryConfig {
   installRoot: string;
   outputDir: string;
   sourceRoot: string;
-  skin: string;
+  skin: SkinItemName;
   framework: 'react';
   style: 'tailwind';
   styleItem: {
@@ -21,7 +23,7 @@ export interface SkinRegistryConfig {
     target: string;
     dependencies: readonly string[];
   };
-  items: readonly string[];
+  items: readonly SkinItemName[];
 }
 
 /** React/Tailwind publication policy for the canonical Skin inventory. */
@@ -44,7 +46,7 @@ export const skinRegistry = {
     name: 'utils',
     title: 'Video.js Utilities',
     description: 'Class-name composition and state resolution utilities used by editable Video.js Skin components.',
-    source: '../build/registry/templates/utils.ts',
+    source: './registry/utils.ts',
     target: 'utils.ts',
     dependencies: ['clsx', 'tailwind-merge'],
   },

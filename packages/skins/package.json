@@ -29,11 +29,10 @@
     "build": "tsdown && pnpm run build:registry",
     "build:registry": "pnpm run generate:skins && shadcn build canonical/registry/registry.json --output dist/registry",
     "build:watch": "tsdown --watch ./src --no-clean",
-    "check:canonical": "node --import tsx ./scripts/check-canonical-imports.ts",
     "generate:skins": "node --import tsx ./scripts/generate-skins.ts",
-    "check:skins": "vitest run build/output/tests/generated-skins.test.ts",
+    "check:skins": "vitest run scripts/generation/tests/generated-skins.test.ts",
     "dev": "vite --host",
-    "test": "pnpm run check:canonical && pnpm run test:types && vitest run",
+    "test": "pnpm run test:types && vitest run",
     "test:types": "tsgo --project ./tsconfig.canonical.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },

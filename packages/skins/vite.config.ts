@@ -4,7 +4,7 @@ import compiler from '@videojs/compiler/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 
-import { createCompilerReactConfig } from './build/compiler/react';
+import { createCompilerReactConfig } from './build/transform/react';
 
 const packageDir = import.meta.dirname;
 

@@ -1,6 +1,6 @@
 # Canonical Skin source
 
-This directory contains the framework-neutral source for generated Video.js skins and components. The existing package skins under `../src` remain separate while the canonical projections reach parity.
+This directory contains the framework-neutral source for generated Video.js skins and components. The existing package skins under `../src` remain separate while the canonical outputs reach parity.
 
 Canonical source:
 
@@ -13,4 +13,4 @@ Canonical source:
 
 `catalog.ts` is the authoritative inventory of public skins, components, dependencies, and shared style resources. Supporting relative modules remain private to their importing catalog entry.
 
-Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. Registered source entries form catalog dependencies, while other relative modules remain private to the importing item and are emitted with it. The Tailwind v4 input maps semantic utilities to media variables, so the same source can produce editable registry utilities or role-based vanilla CSS. `registry/config.ts` owns the complete React/Tailwind publication target; generated projections are build artifacts and are not tracked.
+Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. Registered source entries form catalog dependencies, while other relative modules remain private to the importing item and are emitted with it. The Tailwind v4 inputs map shared semantic utilities to media variables while keeping compiler and registry scanning explicit. `registry/config.ts` owns the complete React/Tailwind publication target; generated outputs are build artifacts and are not tracked.

@@ -1,14 +1,14 @@
 import { type Registry, type RegistryItem, registrySchema } from 'shadcn/schema';
 import type { CatalogDefinition } from '../catalog/define';
+import type { CatalogOutputFile, EmittedCatalogItem } from '../catalog/emit';
 import type { Catalog, CatalogItem } from '../catalog/resolve';
-import type { EmittedRegistryItem, RegistrySourceFile } from './emit';
 
 type ShadcnRegistryItemType = RegistryItem['type'];
 export type ShadcnRegistry = Registry;
 export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
 export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
-interface ShadcnSharedItem<File extends RegistrySourceFile> {
+interface ShadcnSharedItem<File extends CatalogOutputFile> {
   readonly name: string;
   readonly type: Extract<ShadcnRegistryItemType, 'registry:lib' | 'registry:style'>;
   readonly title: string;
@@ -27,14 +27,14 @@ interface ShadcnItemDescription {
 
 export interface CreateShadcnRegistryOptions<
   Definition extends CatalogDefinition = CatalogDefinition,
-  File extends RegistrySourceFile = RegistrySourceFile,
+  File extends CatalogOutputFile = CatalogOutputFile,
 > {
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
   readonly items: {
     readonly published: readonly CatalogItem<Definition>['name'][];
-    readonly emitted: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedRegistryItem<File>>>>;
+    readonly emitted: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<File>>>>;
     readonly shared?: readonly ShadcnSharedItem<File>[] | undefined;
     describe(item: CatalogItem<Definition>): ShadcnItemDescription;
   };
@@ -49,7 +49,7 @@ export interface CreateShadcnRegistryOptions<
 }
 
 /** Create a shadcn manifest from emitted catalog sources and publication policy. */
-export function createShadcnRegistry<const Definition extends CatalogDefinition, File extends RegistrySourceFile>(
+export function createShadcnRegistry<const Definition extends CatalogDefinition, File extends CatalogOutputFile>(
   catalog: Catalog<Definition>,
   options: CreateShadcnRegistryOptions<Definition, File>
 ): ShadcnRegistry {

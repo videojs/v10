@@ -2,12 +2,11 @@ import { build } from '@videojs/compiler';
 import { resolveCatalog } from '@videojs/compiler/catalog';
 import type { StylePluginOptions } from '@videojs/compiler/styles';
 import { format } from 'oxfmt';
-import type { SkinCatalog } from '../catalog';
-import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../compiler/html';
-import { skinRootClassName, skinRootComponentName } from '../compiler/skin-root';
+import { type SkinCatalog, type SkinCatalogItem, skinRootClassName, skinRootComponentName } from '../../catalog';
+import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../../transform/html';
 
 interface GenerateHtmlSkinOptions {
-  skin: string;
+  skin: SkinCatalogItem['name'];
   entryFile: string;
   iconSet: string;
   styles: StylePluginOptions;
@@ -42,7 +41,7 @@ export async function generateHtmlSkin(catalog: SkinCatalog, options: GenerateHt
   return `${imports.map((specifier) => `import '${specifier}';`).join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
 }
 
-function htmlImports(catalog: SkinCatalog, skin: string, iconSet: string, markup: string): string[] {
+function htmlImports(catalog: SkinCatalog, skin: SkinCatalogItem['name'], iconSet: string, markup: string): string[] {
   const resolved = resolveCatalog(catalog, [skin]);
   const icons = resolved.references.icons;
   const components = resolved.references.components;

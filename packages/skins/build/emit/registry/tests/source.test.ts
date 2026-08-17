@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { catalog, loadCatalog } from '@videojs/compiler/catalog';
 import { afterEach, describe, expect, it } from 'vitest';
-import { canonicalRoot, loadSkinCatalog } from '../../catalog';
+import { canonicalRoot, loadSkinCatalog } from '../../../catalog';
 import { generateReactRegistry } from '../source';
 
 const roots: string[] = [];
@@ -19,7 +19,7 @@ describe('generateReactRegistry', () => {
       rootDir: canonicalRoot,
       itemNames: ['default-video', 'play-button'],
       utility: {
-        source: '../build/registry/templates/utils.ts',
+        source: './registry/utils.ts',
         target: 'utils.ts',
         importSource: '@/components/videojs/utils',
       },
@@ -35,6 +35,7 @@ describe('generateReactRegistry', () => {
     ).toBe(true);
     expect(output.sharedFiles.map((file) => file.path)).toEqual([
       'styles/tailwind.css',
+      'styles/tailwind.shared.css',
       'styles/base.css',
       'styles/captions.css',
       'styles/themes/video.css',
@@ -59,14 +60,20 @@ describe('generateReactRegistry', () => {
     const root = setup({
       'entry.tsx': `import { helper } from './helpers'; export function Entry(){ return <div>{helper}</div>; }`,
       'helpers/index.ts': `import { createElement } from 'react'; export const helper = createElement;`,
-      'styles/tailwind.css': `@layer theme, base, videojs.base, components, utilities;\n@import "tailwindcss" theme(inline);\n@theme inline {\n  --spacing: var(--media-spacing);\n  --color-test: red;\n}\n@source "../";\n`,
+      'styles/tailwind.css': `@import "tailwindcss" theme(inline);\n@theme inline { --spacing: var(--media-spacing); }\n`,
+      'styles/tailwind.registry.css': `@layer theme, base, components, utilities;\n@import "tailwindcss";\n@import "./tailwind.shared.css";\n@source "../**/*.{ts,tsx,html}";\n`,
+      'styles/tailwind.shared.css': `@theme inline { --color-test: red; }\n`,
       'styles/base.css': `@layer videojs.base {}`,
       'styles/theme.css': `@layer videojs.theme {}`,
     });
     const definition = catalog({
       resources: {
         styles: {
-          tailwind: './styles/tailwind.css',
+          tailwind: {
+            compiler: './styles/tailwind.css',
+            registry: './styles/tailwind.registry.css',
+            shared: './styles/tailwind.shared.css',
+          },
           base: './styles/base.css',
           themes: { default: './styles/theme.css' },
         },
@@ -96,7 +103,7 @@ describe('generateReactRegistry', () => {
     expect(output.items.entry?.dependencies).toEqual(['react']);
     expect(output.items.entry?.utilities).toBe(false);
     expect(output.sharedFiles.find((file) => file.path === 'styles/tailwind.css')?.content).toContain(
-      '@layer theme, base, videojs.base, components, utilities;'
+      '@layer theme, base, components, utilities;'
     );
     expect(output.sharedFiles.find((file) => file.path === 'styles/tailwind.css')?.content).not.toContain(
       '--spacing: var(--media-spacing)'

@@ -19,7 +19,11 @@ export interface SkinComponent extends SkinItemDefinition {
 }
 
 export interface SkinStyleResources {
-  tailwind: string;
+  tailwind: {
+    compiler: string;
+    registry: string;
+    shared: string;
+  };
   base: string;
   shared?: readonly string[] | undefined;
   themes: Readonly<Record<string, string>>;
@@ -40,7 +44,11 @@ export interface SkinCatalogDefinition extends CatalogDefinition {
 
 const resources = {
   styles: {
-    tailwind: './styles/tailwind.css',
+    tailwind: {
+      compiler: './styles/tailwind.css',
+      registry: './styles/tailwind.registry.css',
+      shared: './styles/tailwind.shared.css',
+    },
     base: './styles/base.css',
     shared: ['./styles/captions.css', './styles/themes/video.css'],
     themes: {
@@ -53,6 +61,7 @@ const resources = {
 /** Canonical Skin source catalog shared by package, registry, and future documentation outputs. */
 export const skinCatalog = catalog({
   resources,
+  allowedImports: ['@videojs/core', '@videojs/compiler/styles', '@videojs/jsx', /^@videojs\/core\/i18n\/text\//],
   imports: {
     '@videojs/core/components': 'components',
     '@videojs/icons/components': 'icons',
@@ -256,3 +265,5 @@ export const skinCatalog = catalog({
     },
   ],
 } as const satisfies SkinCatalogDefinition);
+
+export type SkinItemName = (typeof skinCatalog.items)[number]['name'];

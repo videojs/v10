@@ -1,8 +1,8 @@
 import { resolveCatalog } from '@videojs/compiler/catalog';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { skinRegistry } from '../../../canonical/registry/config';
-import { canonicalRoot, loadSkinCatalog } from '../../catalog';
+import { skinRegistry } from '../../../../canonical/registry/config';
+import { canonicalRoot, loadSkinCatalog } from '../../../catalog';
 import { createRegistryManifest } from '../manifest';
 import { generateReactRegistry } from '../source';
 
@@ -100,6 +100,7 @@ describe('generateReactRegistry', () => {
       'components/videojs/styles/base.css',
       'components/videojs/styles/captions.css',
       'components/videojs/styles/tailwind.css',
+      'components/videojs/styles/tailwind.shared.css',
       'components/videojs/styles/themes/default.css',
       'components/videojs/styles/themes/minimal.css',
       'components/videojs/styles/themes/video.css',
@@ -147,7 +148,8 @@ describe('generateReactRegistry', () => {
     expect(tailwind?.content).not.toContain('--spacing: var(--media-spacing)');
     expect(tailwind?.content).toContain('@import "tailwindcss";');
     expect(tailwind?.content).not.toContain('theme(inline)');
-    expect(tailwind?.content).toContain('@theme inline {');
+    const tailwindShared = output.sharedFiles.find((file) => file.path.endsWith('/styles/tailwind.shared.css'));
+    expect(tailwindShared?.content).toContain('@theme inline {');
   });
 });
 

@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import ts from 'typescript';
 import { collectModuleReferences, type ModuleReference } from '../utils/module-references';
-import type { CatalogDefinition, CatalogImports, CatalogItemDefinition } from './define';
+import type { CatalogDefinition, CatalogImportPattern, CatalogImports, CatalogItemDefinition } from './define';
 
 export interface CatalogFiles {
   readonly source: readonly string[];
@@ -64,7 +64,9 @@ interface AnalyzeCatalogItemContext<Definition extends CatalogDefinition> {
   files: { source: Set<string>; style: Set<string> };
   references: ReferenceGroups;
   imports: CatalogImports;
-  visited: Set<string>;
+  allowedImports: readonly CatalogImportPattern[] | undefined;
+  visitedSource: Set<string>;
+  visitedStyle: Set<string>;
 }
 
 /** Load and analyze every authored catalog item once. */
@@ -93,7 +95,9 @@ export async function loadCatalog<const Definition extends CatalogDefinition>(
         files,
         references,
         imports,
-        visited: new Set(),
+        allowedImports: definition.allowedImports,
+        visitedSource: new Set(),
+        visitedStyle: new Set(),
       },
       entry.sourceFile
     );
@@ -195,22 +199,16 @@ async function analyzeCatalogSourceFile<Definition extends CatalogDefinition>(
   context: AnalyzeCatalogItemContext<Definition>,
   fileName: string
 ): Promise<void> {
-  if (context.visited.has(fileName)) return;
-  context.visited.add(fileName);
+  if (context.visitedSource.has(fileName)) return;
+  context.visitedSource.add(fileName);
 
-  let sourceText: string;
-  try {
-    sourceText = await readFile(fileName, 'utf8');
-  } catch {
-    throw new Error(
-      `Catalog item \`${context.entry.item.name}\` cannot read \`${catalogPath(context.rootDir, fileName)}\`.`
-    );
-  }
+  const sourceText = await readCatalogSource(context, fileName);
   context.files.source.add(fileName);
 
   const sourceFile = ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.Latest, true, scriptKind(fileName));
   for (const reference of collectModuleReferences(sourceFile)) {
     if (!reference.source.startsWith('.')) {
+      validatePackageImport(context, sourceFile, reference);
       recordImportReferences(context, sourceFile, reference);
       continue;
     }
@@ -266,9 +264,82 @@ async function visitRelativeReference<Definition extends CatalogDefinition>(
   if (importedFile === sourceFile.fileName) return;
   if (isStyleDefinitionFile(importedFile)) {
     context.files.style.add(importedFile);
+    await validateStyleImports(context, importedFile);
     return;
   }
   await analyzeCatalogSourceFile(context, importedFile);
+}
+
+async function validateStyleImports<Definition extends CatalogDefinition>(
+  context: AnalyzeCatalogItemContext<Definition>,
+  fileName: string
+): Promise<void> {
+  if (context.visitedStyle.has(fileName)) return;
+  context.visitedStyle.add(fileName);
+
+  const sourceText = await readCatalogSource(context, fileName);
+  const sourceFile = ts.createSourceFile(fileName, sourceText, ts.ScriptTarget.Latest, true, scriptKind(fileName));
+
+  for (const reference of collectModuleReferences(sourceFile)) {
+    if (!reference.source.startsWith('.')) {
+      validatePackageImport(context, sourceFile, reference);
+      continue;
+    }
+
+    const importedFile = resolveImportedFile(fileName, reference.source);
+    if (!importedFile) {
+      throw nodeError(
+        sourceFile,
+        reference.node,
+        `Catalog item \`${context.entry.item.name}\` cannot resolve \`${reference.source}\`.`
+      );
+    }
+    if (!isWithinRoot(context.rootDir, importedFile)) {
+      throw nodeError(
+        sourceFile,
+        reference.node,
+        `Catalog item \`${context.entry.item.name}\` imports source outside the catalog root.`
+      );
+    }
+
+    await validateStyleImports(context, importedFile);
+  }
+}
+
+async function readCatalogSource<Definition extends CatalogDefinition>(
+  context: AnalyzeCatalogItemContext<Definition>,
+  fileName: string
+): Promise<string> {
+  try {
+    return await readFile(fileName, 'utf8');
+  } catch {
+    throw new Error(
+      `Catalog item \`${context.entry.item.name}\` cannot read \`${catalogPath(context.rootDir, fileName)}\`.`
+    );
+  }
+}
+
+function validatePackageImport<Definition extends CatalogDefinition>(
+  context: AnalyzeCatalogItemContext<Definition>,
+  sourceFile: ts.SourceFile,
+  reference: ModuleReference
+): void {
+  if (!context.allowedImports) return;
+  if (Object.hasOwn(context.imports, reference.source)) return;
+  if (context.allowedImports.some((pattern) => matchesImport(pattern, reference.source))) return;
+
+  throw nodeError(
+    sourceFile,
+    reference.node,
+    `Catalog item \`${context.entry.item.name}\` imports package \`${reference.source}\`, which is not allowed.`
+  );
+}
+
+function matchesImport(pattern: CatalogImportPattern, source: string): boolean {
+  if (typeof pattern === 'string') return pattern === source;
+
+  pattern.lastIndex = 0;
+  return pattern.test(source);
 }
 
 function diagnoseCycles<Definition extends CatalogDefinition>(items: readonly CatalogItem<Definition>[]): void {

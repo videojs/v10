@@ -2,18 +2,16 @@ import { readFile } from 'node:fs/promises';
 import { basename, posix, resolve, sep } from 'node:path';
 
 import { collectModuleSpecifiers } from '@videojs/compiler/ast';
-import { loadCatalogStyles } from '@videojs/compiler/catalog';
-import { emitRegistry, type RegistrySourceFile } from '@videojs/compiler/registry';
+import { type CatalogOutputFile, emitCatalog, loadCatalogStyles } from '@videojs/compiler/catalog';
 import type { StyleManifest } from '@videojs/compiler/styles';
-import type { SkinStyleResources } from '../../canonical/catalog';
-import type { SkinCatalog, SkinCatalogItem } from '../catalog';
-import { createCompilerReactConfig } from '../compiler/react';
-import { skinRootClassName } from '../compiler/skin-root';
+import type { SkinCatalogDefinition, SkinStyleResources } from '../../../canonical/catalog';
+import { type SkinCatalog, type SkinCatalogItem, skinRootClassName } from '../../catalog';
+import { createCompilerReactConfig } from '../../transform/react';
 
-type RegistrySourceFileKind = 'source' | 'style';
+type SkinRegistryFileKind = 'source' | 'style';
 
-export interface SkinRegistryFile extends RegistrySourceFile {
-  kind: RegistrySourceFileKind;
+export interface SkinRegistryFile extends CatalogOutputFile {
+  kind: SkinRegistryFileKind;
 }
 
 export interface RegistrySourceItem {
@@ -28,9 +26,9 @@ export interface RegistrySourceOutput {
   items: Readonly<Record<string, RegistrySourceItem>>;
 }
 
-interface GenerateReactRegistryOptions {
+interface GenerateReactRegistryOptions<ItemName extends string = SkinCatalogItem['name']> {
   rootDir: string;
-  itemNames?: readonly string[] | undefined;
+  itemNames?: readonly ItemName[] | undefined;
   variant?: string | undefined;
   iconSet?: string | undefined;
   sourceRoot?: string | undefined;
@@ -44,9 +42,9 @@ interface GenerateReactRegistryOptions {
     | undefined;
 }
 
-interface ResolvedRegistrySourceOptions {
+interface ResolvedRegistrySourceOptions<ItemName extends string = string> {
   rootDir: string;
-  itemNames?: readonly string[] | undefined;
+  itemNames?: readonly ItemName[] | undefined;
   variant: string;
   iconSet: string;
   sourceRoot: string;
@@ -59,16 +57,16 @@ interface ResolvedRegistrySourceOptions {
     | undefined;
 }
 
-/** Emit the editable React/Tailwind source projection consumed by the shadcn registry. */
-export async function generateReactRegistry(
-  catalog: SkinCatalog,
-  options: GenerateReactRegistryOptions
+/** Emit the editable React/Tailwind source consumed by the shadcn registry. */
+export async function generateReactRegistry<const Definition extends SkinCatalogDefinition>(
+  catalog: SkinCatalog<Definition>,
+  options: GenerateReactRegistryOptions<SkinCatalogItem<Definition>['name']>
 ): Promise<RegistrySourceOutput> {
   const { installAlias = '@/components/videojs', ...sourceOptions } = options;
   const resolved = resolveOptions(sourceOptions);
   const itemNames = resolved.itemNames ?? catalog.items.map((item) => item.name);
   const styles = await loadCatalogStyles(catalog, itemNames);
-  const emitted = await emitRegistry(catalog, {
+  const emitted = await emitCatalog(catalog, {
     items: itemNames,
     compiler: {
       config: (item) => createRegistryCompilerConfig(item, resolved, styles),
@@ -84,10 +82,14 @@ export async function generateReactRegistry(
       },
     },
   });
+
   const items: Record<string, RegistrySourceItem> = {};
 
-  for (const [name, item] of Object.entries(emitted.items)) {
+  for (const name of itemNames) {
+    const item = emitted.items[name];
+
     if (!item) continue;
+
     const files = item.files.map((file) => createRegistrySourceFile(file.path, file.content));
     items[name] = {
       files,
@@ -99,6 +101,7 @@ export async function generateReactRegistry(
         : false,
     };
   }
+
   return {
     sharedFiles: await createStyleResourceFiles(catalog.resources.styles, resolved),
     utilityFiles: await createUtilityFiles(resolved),
@@ -108,7 +111,9 @@ export async function generateReactRegistry(
 
 async function createUtilityFiles(options: ResolvedRegistrySourceOptions): Promise<SkinRegistryFile[]> {
   if (!options.utility) return [];
+
   const source = await readFile(absoluteSkinPath(options.rootDir, options.utility.source), 'utf8');
+
   return [createRegistrySourceFile(posix.join(options.sourceRoot, options.utility.target), source)];
 }
 
@@ -118,20 +123,23 @@ async function createStyleResourceFiles(
 ): Promise<SkinRegistryFile[]> {
   const files: SkinRegistryFile[] = [];
   const entries = [
-    { path: resources.tailwind, transform: rewriteTailwindInput },
-    { path: resources.base },
-    ...(resources.shared ?? []).map((path) => ({ path })),
+    { source: resources.tailwind.registry, target: resources.tailwind.compiler },
+    { source: resources.tailwind.shared, target: resources.tailwind.shared },
+    { source: resources.base, target: resources.base },
+    ...(resources.shared ?? []).map((path) => ({ source: path, target: path })),
     ...Object.entries(resources.themes)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, path]) => ({ path })),
+      .map(([, path]) => ({ source: path, target: path })),
   ];
+
   for (const entry of entries) {
-    const inputFile = absoluteSkinPath(options.rootDir, entry.path);
+    const inputFile = absoluteSkinPath(options.rootDir, entry.source);
     const source = await readFile(inputFile, 'utf8');
-    const target = posix.join(options.sourceRoot, toPosixPath(entry.path));
-    const content = entry.transform ? entry.transform(source, inputFile) : source;
-    files.push(createRegistrySourceFile(target, content));
+    const target = posix.join(options.sourceRoot, toPosixPath(entry.target));
+
+    files.push(createRegistrySourceFile(target, source));
   }
+
   return files;
 }
 
@@ -155,7 +163,9 @@ function toPosixPath(path: string): string {
   return path.split(sep).join('/');
 }
 
-function resolveOptions(options: GenerateReactRegistryOptions): ResolvedRegistrySourceOptions {
+function resolveOptions<ItemName extends string>(
+  options: GenerateReactRegistryOptions<ItemName>
+): ResolvedRegistrySourceOptions<ItemName> {
   return {
     rootDir: resolve(options.rootDir),
     ...(options.itemNames ? { itemNames: options.itemNames } : {}),
@@ -166,54 +176,12 @@ function resolveOptions(options: GenerateReactRegistryOptions): ResolvedRegistry
   };
 }
 
-function rewriteTailwindInput(source: string, inputFile: string): string {
-  // Tailwind directives are outside Lightning CSS's typed AST. Rewrite only
-  // anchored top-level directive headers and require each semantic marker once.
-  let output = replaceRequiredMarker(
-    source,
-    /^@import\s+(["'])tailwindcss\1\s+theme\(inline\)\s*;\s*$/m,
-    '@import "tailwindcss";',
-    inputFile,
-    'inline Tailwind import'
-  );
-  output = replaceRequiredMarker(output, /^@theme\s+inline\s*\{/m, '@theme inline {', inputFile, 'inline theme block');
-  output = replaceRequiredMarker(
-    output,
-    /^\s*--spacing:\s*var\(--media-spacing\);\s*$/m,
-    '',
-    inputFile,
-    'scoped Skin spacing bridge'
-  );
-  output = output.replace(/^@source\s+.+;\s*$/gm, '').trim();
-  const header = output.match(/^(?:(?:@layer\s+[^\n{]+|@import[^\n]+);\s*)+/)?.[0];
-  if (!header || !/^@import/m.test(header)) {
-    throw new Error(`Tailwind source entry \`${inputFile}\` must begin with a layer prelude and imports.`);
-  }
-  return `${header.trim()}\n\n@source "../**/*.{ts,tsx,html}";\n\n${output.slice(header.length).trimStart()}\n`;
-}
-
-function replaceRequiredMarker(
-  source: string,
-  pattern: RegExp,
-  replacement: string,
-  inputFile: string,
-  description: string
-): string {
-  const matches = source.match(
-    new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`)
-  );
-  if (matches?.length !== 1) {
-    throw new Error(`Tailwind source entry \`${inputFile}\` must contain exactly one ${description}.`);
-  }
-  return source.replace(pattern, replacement);
-}
-
 function absoluteSkinPath(rootDir: string, path: string): string {
   return resolve(rootDir, path);
 }
 
 function createRegistryCompilerConfig(
-  item: SkinCatalogItem,
+  item: SkinCatalogItem<SkinCatalogDefinition>,
   options: ResolvedRegistrySourceOptions,
   styles: StyleManifest
 ) {
@@ -240,24 +208,26 @@ function createRegistryCompilerConfig(
 }
 
 function registrySourceOutput(
-  item: SkinCatalogItem,
+  item: SkinCatalogItem<SkinCatalogDefinition>,
   sourceFile: string,
   options: ResolvedRegistrySourceOptions
 ): string {
   const itemDir = registryItemDir(item, options);
   const entrySource = canonicalPath(item.source);
   const source = canonicalPath(sourceFile);
+
   return source === entrySource
     ? posix.join(itemDir, sourceEntryName(item.source))
     : privateSourceOutput(itemDir, entrySource, source);
 }
 
-function registryItemDir(item: SkinCatalogItem, options: ResolvedRegistrySourceOptions): string {
+function registryItemDir(item: SkinCatalogItem<SkinCatalogDefinition>, options: ResolvedRegistrySourceOptions): string {
   return item.type === 'skin' ? options.sourceRoot : posix.join(options.sourceRoot, 'components', item.name);
 }
 
 function privateSourceOutput(itemDir: string, entrySource: string, source: string): string {
   const relative = posix.relative(posix.dirname(entrySource), source);
+
   return relative.startsWith('../') ? posix.join(itemDir, 'internal', source) : posix.join(itemDir, relative);
 }
 

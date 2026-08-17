@@ -2,10 +2,10 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { catalog } from '../../catalog/define';
-import { loadCatalog } from '../../catalog/resolve';
 import { defineConfig, jsx } from '../../config';
-import { emitRegistry } from '../emit';
+import { catalog } from '../define';
+import { emitCatalog } from '../emit';
+import { loadCatalog } from '../resolve';
 
 const roots: string[] = [];
 
@@ -13,7 +13,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('emitRegistry', () => {
+describe('emitCatalog', () => {
   it('transforms, relinks, and collects dependencies for selected catalog items', async () => {
     const root = setup({
       'entry.tsx': `import { dependency } from './dependency'; import { helper } from './private/helper'; import React from 'react'; export const entry = [dependency, helper, React];`,
@@ -30,7 +30,7 @@ describe('emitRegistry', () => {
     });
     const loaded = await loadCatalog(definition, { rootDir: root });
 
-    const output = await emitRegistry(loaded, {
+    const output = await emitCatalog(loaded, {
       items: ['entry', 'dependency'],
       compiler: {
         config: () => defineConfig({ target: jsx() }),
@@ -59,7 +59,7 @@ describe('emitRegistry', () => {
 });
 
 function setup(files: Readonly<Record<string, string>>): string {
-  const root = mkdtempSync(join(tmpdir(), 'videojs-compiler-registry-'));
+  const root = mkdtempSync(join(tmpdir(), 'videojs-compiler-catalog-output-'));
   roots.push(root);
   for (const [file, source] of Object.entries(files)) {
     const path = join(root, file);
