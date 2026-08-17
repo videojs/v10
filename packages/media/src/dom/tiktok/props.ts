@@ -3,9 +3,13 @@ import type { TikTokSource } from './source';
 
 /**
  * The `Video` members the TikTok host accepts, plus the source that names the
- * video. Three are stored and reported but never reach the embed: it always
- * plays inline, it decides for itself what to load ahead, and it draws the
- * video's own cover image, so `playsInline`, `preload`, and `poster` are inert.
+ * video. `playsInline` and `poster` are stored and reported but never reach the
+ * embed: it always plays inline and draws the video's own cover image.
+ *
+ * `preload` reaches no TikTok parameter either, but it is not inert: anything
+ * but `'none'` has the host bring TikTok's dormant player up with an `autoplay`
+ * it then parks (see `shouldBootstrapTikTokEmbed`). That buys commands the embed
+ * answers, not metadata — TikTok reports a duration of 0 until it plays.
  */
 export interface TikTokMediaProps
   extends Pick<

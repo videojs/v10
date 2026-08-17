@@ -1,4 +1,5 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
+import type { TikTokMediaProps } from '@videojs/media/dom/tiktok';
 import { buildTikTokIframeSrc, TikTokMedia } from '@videojs/media/dom/tiktok';
 import { escapeHtml } from '@videojs/utils/string';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
@@ -25,12 +26,13 @@ class TikTokCustomMediaElement extends CustomMediaElement('iframe', TikTokMedia)
           height: 100%;
           border: 0;
         }
-        /* Deliberately no pointer-events opt-out, unlike the sibling embed hosts.
-           Hiding TikTok's chrome already leaves the frame with nothing to click,
-           and the embed will not start from a play command alone unless the frame
-           has its own user activation — so taking pointer events away removes the
-           only thing that can start it. Upstream's element leaves the frame
-           interactive for the same reason. */
+        /* A cross-origin frame swallows every pointer event, so the skin above it
+           never sees the hover that reveals the controls. Kept out of hit-testing
+           unless preload="none" left TikTok's player dormant, where the frame's own
+           controls are the only thing that can still start it. */
+        :host(:not([controls]):not([preload="none"])) {
+          pointer-events: none;
+        }
       </style>
       <iframe
         part="iframe"
@@ -47,13 +49,15 @@ class TikTokCustomMediaElement extends CustomMediaElement('iframe', TikTokMedia)
   };
 }
 
-// Only the props the embed URL is built from: TikTok reads nothing else out of it.
-function templateAttrsToEmbedProps(attrs: Record<string, string>) {
+// Only the props the embed URL is built from. `preload` is not a TikTok parameter, but it decides whether the URL
+// carries a bootstrap autoplay, and a URL differing from the host's would have it rebuild the frame on mount.
+function templateAttrsToEmbedProps(attrs: Record<string, string>): Partial<TikTokMediaProps> {
   return {
     autoplay: attrs.autoplay !== undefined,
     defaultMuted: attrs.muted !== undefined,
     loop: attrs.loop !== undefined,
     controls: attrs.controls !== undefined,
+    preload: attrs.preload as TikTokMediaProps['preload'],
   };
 }
 

@@ -28,7 +28,7 @@ import {
   type TikTokPlayerError,
 } from './player-api';
 import { tiktokMediaDefaultProps } from './props';
-import { buildTikTokIframeSrc, type TikTokSource } from './source';
+import { buildTikTokIframeSrc, shouldBootstrapTikTokEmbed, type TikTokSource } from './source';
 
 const TikTokMediaBase = MediaPlayedRangesMixin(EventTarget);
 
@@ -61,6 +61,9 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   #srcUnsupported = false;
   // A play asked for before the embed could take one, replayed once it can.
   #playRequested = false;
+  // How far the bootstrap has got: `parking` until the autoplay nobody asked for is stopped, `parked` while the
+  // player waits for the caller's first command. Before `off`, what the embed reports is the bootstrap's own.
+  #bootstrap: 'off' | 'parking' | 'parked' = 'off';
   #playFired = false;
   #currentTime = 0;
   #duration = Number.NaN;
@@ -171,6 +174,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
       this.#post('pause');
       return;
     }
+    this.#bootstrap = shouldBootstrapTikTokEmbed(this.#snapshotProps()) ? 'parking' : 'off';
     // The new frame reports `onPlayerReady`, which is what settles this load.
     target.src = embedSrc;
   }
@@ -204,12 +208,16 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     if (!this.#hasSource) return;
     // Not deferred: only the embed's own report settles the load, so whichever lands first wins, this or the replay.
     this.#playRequested = true;
+    // A play posted mid-park races the pause and can land first; `#park` replays it.
+    if (this.#bootstrap === 'parking') return;
+    this.#takeOver();
     this.#post('play');
   }
 
   pause() {
     // A pause after a pending play is the later intent, so it cancels the replay rather than racing it.
     this.#playRequested = false;
+    this.#takeOver();
     this.#post('pause');
   }
 
@@ -218,6 +226,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   }
   set currentTime(value) {
     if (this.#currentTime === value) return;
+    this.#takeOver();
     this.#seeking = true;
     // Report the requested position now; the embed only reports one periodically, so the seek would look lost.
     this.#currentTime = value;
@@ -364,20 +373,24 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     const target = this.#target;
     if (!target) return false;
 
+    const props = this.#snapshotProps();
     // The `src` property resolves an empty attribute to the document URL; only the attribute tells embed from empty.
     if (target.getAttribute('src')) {
+      // A server-rendered URL was built from these props by the same rule, so it carries the same bootstrap.
+      this.#bootstrap = shouldBootstrapTikTokEmbed(props) ? 'parking' : 'off';
       // The frame is already fetching the embed and will report `onPlayerReady` like any other.
       this.dispatchEvent(new Event('loadstart'));
       return true;
     }
 
-    const initialSrc = buildTikTokIframeSrc(this.#src, this.#snapshotProps());
+    const initialSrc = buildTikTokIframeSrc(this.#src, props);
     // No embed means no `onPlayerReady` is coming to settle this load.
     if (!initialSrc) {
       this.#loadComplete.resolve();
       return false;
     }
 
+    this.#bootstrap = shouldBootstrapTikTokEmbed(props) ? 'parking' : 'off';
     target.src = initialSrc;
     this.dispatchEvent(new Event('loadstart'));
     return true;
@@ -421,6 +434,8 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
         // Nothing for a level to drive without a volume to write, and the reported mute comes through `onMute`.
         break;
       case 'onMute':
+        // The mute a bootstrap autoplay forces on the embed is TikTok's own; `#park` undoes it.
+        if (this.#bootstrap !== 'off') break;
         // Muting leaves the volume alone, the way it does on a media element.
         this.#muted = !!message.value;
         this.dispatchEvent(new Event('volumechange'));
@@ -474,6 +489,8 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
       defaultMuted: this.#nextMuted,
       loop: this.#loop,
       controls: this.#controls,
+      // Read only to decide on a bootstrap autoplay; TikTok has no preload parameter.
+      preload: this.#preload,
       source: this.#source,
     };
   }
@@ -490,6 +507,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     this.#loaded = false;
     this.#srcUnsupported = false;
     this.#playFired = false;
+    this.#bootstrap = 'off';
     this.#error = null;
     this.#isFullscreen = false;
   }
@@ -500,7 +518,11 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     this.#readyState = READY_STATE_HAVE_METADATA;
     // The frame's URL does not always mute the embed, so assert it over the protocol at the first moment it can.
     if (this.#muted) this.#post('mute');
-    if (this.#playRequested) {
+    if (this.#bootstrap === 'parking') {
+      // It came up playing on the bootstrap autoplay; put it where one that never autoplayed would have been.
+      this.#post('pause');
+      this.#post('seekTo', 0);
+    } else if (this.#playRequested) {
       this.#playRequested = false;
       this.#post('play');
     }
@@ -509,6 +531,29 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
       this.dispatchEvent(new Event(type));
     }
     this.#loadComplete.resolve();
+  }
+
+  // Settle the bootstrap's playback. Stays `parked` rather than `off` because TikTok keeps reporting the tail of
+  // that autoplay, and a player nobody has asked to start should report none of it.
+  #park() {
+    if (this.#bootstrap === 'parked') return;
+    this.#bootstrap = 'parked';
+    this.#currentTime = 0;
+    this.#paused = true;
+    this.#playFired = false;
+    // TikTok mutes itself to get the unasked-for autoplay past the browser, so that mute is its own to undo.
+    if (!this.#muted) this.#post('unMute');
+    // The play held back rather than raced against the park.
+    if (this.#playRequested) {
+      this.#playRequested = false;
+      this.#takeOver();
+      this.#post('play');
+    }
+  }
+
+  // Hand a parked player to the caller: what the embed reports next is theirs.
+  #takeOver() {
+    if (this.#bootstrap === 'parked') this.#bootstrap = 'off';
   }
 
   #onPlayerError({ errorCode, errorType }: TikTokPlayerError) {
@@ -538,6 +583,14 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
 
   #onStateChange(state: number) {
     const emit = (type: string) => this.dispatchEvent(new Event(type));
+
+    if (this.#bootstrap !== 'off') {
+      // The bootstrap's own playback. Its tail arrives well after the park is posted, and `loop` restarts it, so
+      // every start is put back down rather than only the first.
+      if (state === STATE_PLAYING || state === STATE_BUFFERING) this.#post('pause');
+      else if (state === STATE_PAUSED || state === STATE_ENDED) this.#park();
+      return;
+    }
 
     if (state === STATE_PLAYING || state === STATE_BUFFERING) {
       if (!this.#playFired) {
@@ -574,15 +627,19 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   }
 
   #onCurrentTime(currentTime: number, duration: number) {
-    if (currentTime !== this.#currentTime) {
-      this.#currentTime = currentTime;
-      this.dispatchEvent(new Event('timeupdate'));
-    }
+    // The positions a bootstrap runs through are not the caller's, and the park returns to 0 anyway. Duration below
+    // is worth keeping whenever the embed knows it.
+    if (this.#bootstrap === 'off') {
+      if (currentTime !== this.#currentTime) {
+        this.#currentTime = currentTime;
+        this.dispatchEvent(new Event('timeupdate'));
+      }
 
-    if (this.#seeking) {
-      // The embed announces no seeks, so its next position report is the only sign one landed, change or not.
-      this.#seeking = false;
-      this.dispatchEvent(new Event('seeked'));
+      if (this.#seeking) {
+        // The embed announces no seeks, so its next position report is the only sign one landed, change or not.
+        this.#seeking = false;
+        this.dispatchEvent(new Event('seeked'));
+      }
     }
 
     if (isNumber(duration) && duration > 0 && duration !== this.#duration) {

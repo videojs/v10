@@ -78,6 +78,17 @@ export function parseTikTokSource(src: string): ParsedTikTokSource | null {
   return id ? { id } : null;
 }
 
+/**
+ * Whether the embed has to carry an `autoplay` nobody asked for. TikTok builds its player lazily: without one it
+ * creates no media element, never reports `onPlayerReady`, and drops every command silently, until something is
+ * clicked inside the frame — which a frame under a player skin never gets. The host parks the player as soon as it
+ * is up, so this buys one that answers commands, not a video that plays.
+ */
+export function shouldBootstrapTikTokEmbed(props: Partial<TikTokMediaProps> = {}) {
+  // `preload="none"` trades those working controls back for an untouched network.
+  return !props.autoplay && props.preload !== 'none';
+}
+
 /** Build the iframe `src` URL for a TikTok embed from the given props. */
 export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProps> = {}) {
   const parsed = parseTikTokSource(src);
@@ -86,13 +97,12 @@ export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProp
   // something the player reads, so it never reaches the URL.
   const { referrerPolicy: _referrerPolicy, ...tiktok } = props.source?.engine?.tiktok ?? {};
   const params: Record<string, unknown> = {
-    // Hide TikTok chrome by default; pass nothing only when controls is explicitly true.
+    // Drops the progress bar and control buttons only: the centre play button, author header, and social rail all
+    // survive `controls=0`, and of those only the play button has a parameter of its own.
     controls: props.controls === true ? null : 0,
-    // Off is the player's default for all three, so an explicit `0` says nothing
-    // the embed does not already assume. Left out, the URL is the one upstream's
-    // element builds — worth matching exactly on an embed whose behavior can only
-    // be observed through a cross-origin frame.
-    autoplay: props.autoplay || null,
+    // Also carries a bootstrap autoplay, which the host parks once the player is up.
+    autoplay: props.autoplay || shouldBootstrapTikTokEmbed(props) || null,
+    // Off is the player's default for both, so an explicit `0` says nothing the embed does not already assume.
     muted: props.defaultMuted || null,
     loop: props.loop || null,
     // Keep what the player offers next inside the author's own videos rather
