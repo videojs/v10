@@ -63,13 +63,17 @@ type NavbarProps = {
  *   only appears for one of them.
  */
 function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
-  // The background presets are the same engine again, minus every error surface:
-  // they compose no `collectErrors`, put no capability constraints on their
-  // one-shot selection, and have no adapter mapping. Nothing reaches the media
-  // element either — MPEG-TS and encryption both leave `error === null`, measured
-  // on Chromium and WebKit — so the note promises a stall rather than a verdict.
+  // The background presets are the same engine again, error surface included:
+  // `collectErrors` is composed, the one-shot selection carries capability
+  // constraints, and the adapter promotes the first fatal condition. Nothing
+  // reaches the media element even so — MPEG-TS and encryption both leave
+  // `HTMLMediaElement.error` null, measured on Chromium and WebKit — so that
+  // promoted condition is the only signal there is. Kept separate from the plain
+  // HLS branch below because this composition's fatal set is wider: it is
+  // video-only, so an absent video type is fatal here too.
   if (preset === 'hls-background-video' || preset === 'mux-background-video') {
-    if (source.drm || (source.subType && source.subType !== 'mp4')) return 'expects silent stall, no error';
+    if (source.drm) return 'expects protected error';
+    if (source.subType && source.subType !== 'mp4') return 'expects unsupported-format error';
     return undefined;
   }
 
