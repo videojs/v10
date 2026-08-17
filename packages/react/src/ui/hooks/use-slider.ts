@@ -129,27 +129,27 @@ export function useSlider<State extends SliderState = SliderState>(
   // Adjust CSS var percents for edge thumb alignment using live DOM measurements.
   const cssVars = options.getCSSVars(slider.adjustForAlignment(state));
 
-  useLayoutEffect(() => {
-    const sync = () => {
-      const element = rootElementRef.current;
-      if (!element) return;
-      const next = optionsRef.current.computeState(slider.input.current);
-      applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
-    };
-
-    sync();
-    return slider.input.subscribe(sync);
-  }, [slider]);
-
-  // Ref callbacks for root and thumb elements.
-  const rootRef = useCallback(
-    (element: HTMLElement | null) => {
-      rootElementRef.current = element;
+  const syncStyles = useCallback(
+    (element = rootElementRef.current) => {
       if (!element) return;
       const next = optionsRef.current.computeState(slider.input.current);
       applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
     },
     [slider]
+  );
+
+  useLayoutEffect(() => {
+    syncStyles();
+    return slider.input.subscribe(syncStyles);
+  }, [slider, syncStyles]);
+
+  // Ref callbacks for root and thumb elements.
+  const rootRef = useCallback(
+    (element: HTMLElement | null) => {
+      rootElementRef.current = element;
+      syncStyles(element);
+    },
+    [syncStyles]
   );
 
   const thumbRef = useCallback((element: HTMLElement | null) => {
