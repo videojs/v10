@@ -25,7 +25,7 @@ function unchecked(selector: string): string {
 const menu = '[role="menu"]';
 const item = '[role="menuitem"]';
 const option = '[role="menuitemradio"]';
-const activeMenu = `${menu}[data-menu-view-state="active"]`;
+const activeSubmenu = `${menu}[data-submenu][data-open]:not([data-ending-style])`;
 const playbackRateOptions = [
   `#playback-rate-menu ${option}`,
   withinControls(`.media-menu--playback-rate ${option}`),
@@ -56,9 +56,9 @@ export const SELECTORS = {
     withinControls('button[aria-haspopup="menu"][aria-label^="Playback rate"]:not(.media-menu__item)'),
   ].join(', '),
   playbackRateUncheckedOptions: unchecked(playbackRateOptions),
-  activeMenuOptions: `${activeMenu} ${option}`,
-  activeMenuPanel: '.media-menu__panel[data-menu-view-state="active"]',
-  activeMenuUncheckedOptions: unchecked(`${activeMenu} ${option}`),
+  activeMenuOptions: `${activeSubmenu} ${option}`,
+  activeMenuPanel: `${activeSubmenu}.media-menu__panel`,
+  activeMenuUncheckedOptions: unchecked(`${activeSubmenu} ${option}`),
   settingsButton: [
     withinControls('.media-button--settings'),
     withinControls('button[commandfor="settings-menu"]'),

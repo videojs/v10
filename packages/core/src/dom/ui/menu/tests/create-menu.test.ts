@@ -406,6 +406,41 @@ describe('createMenu', () => {
       expect(focus).not.toHaveBeenCalled();
     });
 
+    it('does not restore focus when Tab moves focus outside', async () => {
+      const { menu } = createTestMenu();
+      const trigger = document.createElement('button');
+      const content = document.createElement('div');
+      const outside = document.createElement('button');
+      const focus = vi.spyOn(trigger, 'focus');
+
+      menu.setTriggerElement(trigger);
+      menu.setContentElement(content);
+      menu.open();
+      menu.contentProps.onFocusOut(makeFocusEvent(outside));
+
+      await vi.waitFor(() => {
+        expect(menu.input.current.active).toBe(false);
+      });
+
+      expect(focus).not.toHaveBeenCalled();
+    });
+
+    it('does not restore focus after an outside click', async () => {
+      const { menu } = createTestMenu();
+      const trigger = document.createElement('button');
+      const focus = vi.spyOn(trigger, 'focus');
+
+      menu.setTriggerElement(trigger);
+      menu.open();
+      menu.close('outside-click');
+
+      await vi.waitFor(() => {
+        expect(menu.input.current.active).toBe(false);
+      });
+
+      expect(focus).not.toHaveBeenCalled();
+    });
+
     it('does not restore focus when another grouped popup opens', async () => {
       const group = createPopupGroup();
       const first = createTestMenu({ group: () => group });
@@ -499,6 +534,18 @@ describe('createMenu', () => {
       expect(element.tabIndex).toBe(0);
     });
 
+    it('sets the highlight type for pointer highlights', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+      menu.registerItem(element);
+
+      menu.highlight(element, { focus: false, pointer: true });
+      expect(element.getAttribute(MenuItemDataAttrs.highlighted)).toBe('pointer');
+
+      menu.highlight(element);
+      expect(element.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('removes data-highlighted and resets tabIndex on previously highlighted item', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
@@ -512,6 +559,27 @@ describe('createMenu', () => {
       expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
       expect(a.tabIndex).toBe(-1);
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('lays out an earlier pointer highlight before removing the previous highlight', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.highlight(b, { focus: false, pointer: true });
+      const setHighlight = vi.spyOn(a, 'setAttribute');
+      const layout = vi.spyOn(document.body, 'getBoundingClientRect');
+      const removeHighlight = vi.spyOn(b, 'removeAttribute');
+
+      menu.highlight(a, { focus: false, pointer: true });
+
+      expect(setHighlight).toHaveBeenCalledWith(MenuItemDataAttrs.highlighted, 'pointer');
+      expect(layout).toHaveBeenCalledOnce();
+      expect(removeHighlight).toHaveBeenCalledWith(MenuItemDataAttrs.highlighted);
+      expect(setHighlight.mock.invocationCallOrder[0]).toBeLessThan(layout.mock.invocationCallOrder[0] ?? 0);
+      expect(layout.mock.invocationCallOrder[0]).toBeLessThan(removeHighlight.mock.invocationCallOrder[0] ?? 0);
+      layout.mockRestore();
     });
 
     it('calls onHighlightChange with the new element', () => {
@@ -658,6 +726,20 @@ describe('createMenu', () => {
 
       expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
       expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it.each(['unavailable', 'unsupported'])('ArrowDown skips %s items', (availability) => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Hidden');
+      const visible = addItem('Visible');
+      hidden.setAttribute('data-availability', availability);
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('ArrowDown preserves position when the highlighted item becomes hidden', () => {

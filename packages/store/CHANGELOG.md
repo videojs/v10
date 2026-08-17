@@ -1,5 +1,28 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.26...@videojs/store@10.0.0-beta.27) (2026-08-17)
+
+
+### Features
+
+* **packages:** resolve feature state from user and media values ([#1946](https://github.com/videojs/v10/issues/1946)) ([4751abb](https://github.com/videojs/v10/commit/4751abb75bd6febf5ccbccdd9061379c8f384430))
+
+
+### Bug Fixes
+
+* **store:** create abort controllers lazily ([#2099](https://github.com/videojs/v10/issues/2099)) ([530dde9](https://github.com/videojs/v10/commit/530dde968c5e71ac0613be517694703cfa997554))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.27
+  * devDependencies
+    * @videojs/element bumped to 10.0.0-beta.27
+  * peerDependencies
+    * @videojs/element bumped to 10.0.0-beta.27
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/store@10.0.0-beta.25...@videojs/store@10.0.0-beta.26) (2026-08-02)
 
 

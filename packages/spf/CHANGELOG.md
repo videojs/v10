@@ -1,5 +1,43 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.26...@videojs/spf@10.0.0-beta.27) (2026-08-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename the SPF background-video Media to hls-background-video ([#2097](https://github.com/videojs/v10/issues/2097))
+* **packages:** rename SimpleHls* to Hls* (video + audio) ([#2096](https://github.com/videojs/v10/issues/2096))
+* **packages:** add <mux-background-video> over the SPF background-video engine ([#2062](https://github.com/videojs/v10/issues/2062))
+* **spf:** add the SPF-backed Mux Media, elements, and components ([#2045](https://github.com/videojs/v10/issues/2045))
+* **packages:** relocate spf media facades ([#2033](https://github.com/videojs/v10/issues/2033))
+
+### Features
+
+* **packages:** add &lt;mux-background-video&gt; over the SPF background-video engine ([#2062](https://github.com/videojs/v10/issues/2062)) ([8dc9562](https://github.com/videojs/v10/commit/8dc9562906e9fb05a56267899a005882d3167d40))
+* **spf:** add the SPF-backed Mux Media, elements, and components ([#2045](https://github.com/videojs/v10/issues/2045)) ([d1d1673](https://github.com/videojs/v10/commit/d1d1673ecd17e1ca1492abc5b396296bb8c7b176))
+* **spf:** live hls playback on the presentation-timeline model ([#1884](https://github.com/videojs/v10/issues/1884)) ([0ebb073](https://github.com/videojs/v10/commit/0ebb073b87cbceb5459b7a32dc09ed5026647d37))
+* **spf:** surface unsupported-source errors ([#1936](https://github.com/videojs/v10/issues/1936)) ([fe47f85](https://github.com/videojs/v10/commit/fe47f85b7bf79a02403206095604683d661db3c1))
+
+
+### Bug Fixes
+
+* link to CML in SPF ([#1814](https://github.com/videojs/v10/issues/1814)) ([33aeafe](https://github.com/videojs/v10/commit/33aeafe80fba941397f71b49c489b4ecaffe81fa))
+
+
+### Code Refactoring
+
+* **packages:** relocate spf media facades ([#2033](https://github.com/videojs/v10/issues/2033)) ([7ee7fa5](https://github.com/videojs/v10/commit/7ee7fa549777378c5e30cc6c151ab0d501538b83))
+* **packages:** rename SimpleHls* to Hls* (video + audio) ([#2096](https://github.com/videojs/v10/issues/2096)) ([f1c22a5](https://github.com/videojs/v10/commit/f1c22a5bbfd90e3ce219b8ac5de441c8fba60b8d))
+* **packages:** rename the SPF background-video Media to hls-background-video ([#2097](https://github.com/videojs/v10/issues/2097)) ([729261a](https://github.com/videojs/v10/commit/729261abbfa1cbc9ac882cd8a2f4456b14e685a3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.27
+    * @videojs/utils bumped to 10.0.0-beta.27
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.25...@videojs/spf@10.0.0-beta.26) (2026-08-02)
 
 

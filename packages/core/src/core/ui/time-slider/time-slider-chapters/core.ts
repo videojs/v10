@@ -72,7 +72,6 @@ export class TimeSliderChaptersCore {
     chapters: TimeSliderChapterRange[];
     ranges: SliderSegmentRange[];
     max: number;
-    hasChapters: boolean;
   } {
     if (
       this.#result &&
@@ -83,17 +82,15 @@ export class TimeSliderChaptersCore {
       return this.#result;
     }
 
-    const chapters = normalizeChapterCues(cues, min, max);
-    const hasChapters = chapters.some((chapter) => chapter.cue !== null);
-    const rangeMax = max > min ? max : min + 1;
-    const ranges = hasChapters
-      ? chapters.map(({ key, start, end, cue }) => ({ key, start, end, highlight: cue !== null }))
-      : [{ key: 'fallback', start: min, end: rangeMax, highlight: false }];
+    const hasRange = max > min;
+    const rangeMax = hasRange ? max : min + 1;
+    const chapters = normalizeChapterCues(hasRange ? cues : [], min, rangeMax);
+    const ranges = chapters.map(({ key, start, end, cue }) => ({ key, start, end, highlight: cue !== null }));
 
     this.#cues = cues;
     this.#min = min;
     this.#max = max;
-    this.#result = { chapters, ranges, max: rangeMax, hasChapters };
+    this.#result = { chapters, ranges, max: rangeMax };
     return this.#result;
   }
 

@@ -31,8 +31,8 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    &[data-min] .media-volume-indicator__content,
-    &[data-max] .media-volume-indicator__content {
+    &[data-min]:not([data-starting-style], [data-ending-style]) .media-volume-indicator__content,
+    &[data-max]:not([data-starting-style], [data-ending-style]) .media-volume-indicator__content {
       transform: translateX(0.25px);
       transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
     }

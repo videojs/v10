@@ -6,8 +6,8 @@ export function TimeSlider() {
   return (
     <TimeSliderPrimitive.Root className="media-slider">
       <TimeSliderPrimitive.Track className="media-slider-track">
-        <TimeSliderPrimitive.Fill className="media-slider-fill" />
         <TimeSliderPrimitive.Buffer className="media-slider-buffer" />
+        <TimeSliderPrimitive.Fill className="media-slider-fill" />
       </TimeSliderPrimitive.Track>
       <TimeSliderPrimitive.Thumb className="media-slider-thumb" />
       <div className="media-surface media-thumbnail">

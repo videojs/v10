@@ -4,6 +4,7 @@ import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 const UI_VIDEO_PAGES = VIDEO_PAGES.filter(({ media }) => media === 'video');
+const KEYBOARD_MENU_PAGES = UI_VIDEO_PAGES.filter(({ path }) => path.endsWith('video-mp4.html'));
 const EJECTED_HTML_VIDEO_PATH = '/pages/ejected-html-video-mp4.html';
 
 function getMediaVolume(page: Page): Promise<number> {
@@ -199,6 +200,36 @@ test.describe('Video Controls — Ejected HTML registration', () => {
     expect(errors).toEqual([]);
   });
 });
+
+for (const { name, path } of KEYBOARD_MENU_PAGES) {
+  test(`${name} restores submenu focus and continues keyboard navigation`, async ({ page }) => {
+    const player = new PlayerPage(page);
+    await page.goto(path);
+    await player.waitForMediaReady();
+    await player.showControls();
+
+    await player.settingsButton.focus();
+    await page.keyboard.press('Enter');
+    await expect(player.settingsSpeedItem).toBeVisible();
+    await expect(player.settingsSpeedItem).toBeFocused();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(player.activeMenuPanel).toBeVisible();
+    await expect(player.activeMenuPanel.getByRole('menuitem').first()).toBeFocused();
+
+    await page.keyboard.press('ArrowLeft');
+    await expect(player.activeMenuPanel).not.toBeVisible();
+    await expect(player.settingsSpeedItem).toBeFocused();
+
+    await page.keyboard.press('ArrowDown');
+    await expect(page.locator('[role="menuitem"]:focus')).toHaveCount(1);
+
+    await page.keyboard.press('Tab');
+    await expect(player.settingsButton).toHaveAttribute('aria-expanded', 'false');
+    await expect(player.settingsSpeedItem).not.toBeFocused();
+    await expect(page.locator('body')).not.toBeFocused();
+  });
+}
 
 for (const { name, path } of UI_VIDEO_PAGES) {
   test.describe(`Video Controls — ${name} UI`, () => {

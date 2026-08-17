@@ -9,7 +9,8 @@ export const button = {
     'outline-2 outline-transparent -outline-offset-2',
     'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
     'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2',
-    'not-aria-disabled:active:scale-[0.98]',
+    'not-aria-disabled:active:scale-[0.97]',
+    'motion-reduce:scale-100 motion-reduce:transition-[background-color,outline-offset] motion-reduce:will-change-auto',
     'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
     'supports-[corner-shape:squircle]:rounded-[--spacing(4)]',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]'
@@ -21,7 +22,7 @@ export const button = {
     'not-aria-disabled:focus-visible:bg-(--accent-background-color) not-aria-disabled:focus-visible:text-(--accent-text-color)',
     'not-aria-disabled:aria-expanded:bg-(--accent-background-color) not-aria-disabled:aria-expanded:text-(--accent-text-color)'
   ),
-  icon: cn('grid aspect-square p-0!', 'not-aria-disabled:active:scale-90'),
+  icon: cn('grid aspect-square p-0!', 'not-aria-disabled:active:scale-[0.97]'),
   seek: hideAtSmall,
   cast: hideAtSmall,
   airplay: hideAtSmall,

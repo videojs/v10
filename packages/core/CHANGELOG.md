@@ -1,5 +1,68 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.26...@videojs/core@10.0.0-beta.27) (2026-08-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** normalize time slider chapters ([#2204](https://github.com/videojs/v10/issues/2204))
+* **packages:** simplify menus ([#2029](https://github.com/videojs/v10/issues/2029))
+* **packages:** rename SimpleHls* to Hls* (video + audio) ([#2096](https://github.com/videojs/v10/issues/2096))
+* **packages:** separate input indicator components ([#2046](https://github.com/videojs/v10/issues/2046))
+* **packages:** normalize radio group option state ([#2047](https://github.com/videojs/v10/issues/2047))
+* **core:** centralize popup positioning ([#1904](https://github.com/videojs/v10/issues/1904))
+
+### Features
+
+* **core:** add core jsx system ([#1986](https://github.com/videojs/v10/issues/1986)) ([d8ff01d](https://github.com/videojs/v10/commit/d8ff01dfce4effec184180ba3a1c985c95eb6e87))
+* **i18n:** add Lithuanian locale pack ([#1917](https://github.com/videojs/v10/issues/1917)) ([aa14c87](https://github.com/videojs/v10/commit/aa14c879aed88e3e95fef8a27067cab77c5c11ff))
+* **packages:** add chaptered time sliders ([#2043](https://github.com/videojs/v10/issues/2043)) ([6490051](https://github.com/videojs/v10/commit/6490051ac8b991f8c9c47e2cb424b9ffb676230c))
+* **packages:** add cloudflare stream media ([#2168](https://github.com/videojs/v10/issues/2168)) ([cfb4b65](https://github.com/videojs/v10/commit/cfb4b6571f0086c557c5b4683c4ced396067a0d2))
+* **packages:** add spotify audio media ([#2169](https://github.com/videojs/v10/issues/2169)) ([8993ab1](https://github.com/videojs/v10/commit/8993ab1db3cd4ff7569b29c197efdabd8fd18364))
+* **packages:** hide unavailable radio groups ([#2069](https://github.com/videojs/v10/issues/2069)) ([b7fe79e](https://github.com/videojs/v10/commit/b7fe79e2632cc1beda613944eec8bfbd15f9f8e8))
+* **packages:** normalize volume slider availability ([#2072](https://github.com/videojs/v10/issues/2072)) ([5704678](https://github.com/videojs/v10/commit/5704678b1daadcf73636047b2f3772d8c4780996))
+* **packages:** resolve feature state from user and media values ([#1946](https://github.com/videojs/v10/issues/1946)) ([4751abb](https://github.com/videojs/v10/commit/4751abb75bd6febf5ccbccdd9061379c8f384430))
+* **react:** add captions radio group ([#2127](https://github.com/videojs/v10/issues/2127)) ([979458f](https://github.com/videojs/v10/commit/979458fccd6127eff7da74cf528e2f4bc26d2297))
+* **react:** add quality radio group ([#2132](https://github.com/videojs/v10/issues/2132)) ([29171b7](https://github.com/videojs/v10/commit/29171b79ff282efe355864ea18d95382ae9bc9a6))
+* **skin:** add canonical container, poster, and overlay ([#2179](https://github.com/videojs/v10/issues/2179)) ([4f72ee7](https://github.com/videojs/v10/commit/4f72ee7092f7b909c8c892af1f94a10297c97338))
+* **spf:** surface unsupported-source errors ([#1936](https://github.com/videojs/v10/issues/1936)) ([fe47f85](https://github.com/videojs/v10/commit/fe47f85b7bf79a02403206095604683d661db3c1))
+* **utils:** extract getAnchorNames and addAnchorName ([#1935](https://github.com/videojs/v10/issues/1935)) ([d5f0cb6](https://github.com/videojs/v10/commit/d5f0cb6b92bfeeec828095a7d970e0b9610eb29d))
+
+
+### Bug Fixes
+
+* **build:** make cdn bundles self-contained ([#2121](https://github.com/videojs/v10/issues/2121)) ([45c43e9](https://github.com/videojs/v10/commit/45c43e9008875aa7daa7bba10c5842e91bbda2bd))
+* **core:** restore the last selected subtitles track on toggle ([#2102](https://github.com/videojs/v10/issues/2102)) ([965b36e](https://github.com/videojs/v10/commit/965b36e9517cee9c9962d19352f1ecb53a57b1d6))
+* **core:** skip hidden menu items ([#2071](https://github.com/videojs/v10/issues/2071)) ([ab1e048](https://github.com/videojs/v10/commit/ab1e048099f7ba663eecde875050fc1ea7205156))
+* **i18n:** improve locale translations ([#1914](https://github.com/videojs/v10/issues/1914)) ([12cc939](https://github.com/videojs/v10/commit/12cc939f58f4ad2db7218374d96c5aa690ca49e5))
+* **i18n:** improve time inversion labels ([#2028](https://github.com/videojs/v10/issues/2028)) ([eeb216a](https://github.com/videojs/v10/commit/eeb216ad2f7dbfe83ec214cb49fc7fb990ff1a7f))
+* **i18n:** use resolution wording for hindi quality menu ([#2098](https://github.com/videojs/v10/issues/2098)) ([8a1b15a](https://github.com/videojs/v10/commit/8a1b15ada00ea0f9364ba949b28ff86e47535cde))
+* **packages:** add settings tooltip ([#1915](https://github.com/videojs/v10/issues/1915)) ([96d2e05](https://github.com/videojs/v10/commit/96d2e05147cd973900bb88b5ac5abf8e93fdbe8d))
+* **packages:** improve ui motion ([#2208](https://github.com/videojs/v10/issues/2208)) ([42f934e](https://github.com/videojs/v10/commit/42f934e9bea4e4961d63d6de1e2eebcc520f8237))
+* **packages:** keep controls visible during active interactions ([#1900](https://github.com/videojs/v10/issues/1900)) ([35616db](https://github.com/videojs/v10/commit/35616db5a38d193f1fc114da4af68a79f08093f1))
+* **packages:** menu keyboard navigation ([#2214](https://github.com/videojs/v10/issues/2214)) ([15e3ba6](https://github.com/videojs/v10/commit/15e3ba6af98d104739904192afaacccd37014216))
+* **packages:** preserve shared popup anchors ([#1933](https://github.com/videojs/v10/issues/1933)) ([cd98428](https://github.com/videojs/v10/commit/cd9842869118bef284c063368710c00e8560f9de))
+* **packages:** stabilize popup positioning ([#1931](https://github.com/videojs/v10/issues/1931)) ([1fbccf0](https://github.com/videojs/v10/commit/1fbccf062f34f0cc8a5eb162a10991180363b052))
+
+
+### Code Refactoring
+
+* **core:** centralize popup positioning ([#1904](https://github.com/videojs/v10/issues/1904)) ([d27eda2](https://github.com/videojs/v10/commit/d27eda2a25bd90841d24da0a3fee67d7d3d586c7))
+* **packages:** normalize radio group option state ([#2047](https://github.com/videojs/v10/issues/2047)) ([e91f38c](https://github.com/videojs/v10/commit/e91f38cbcea36d2ab5f138fb178eb7a09b57be3b))
+* **packages:** normalize time slider chapters ([#2204](https://github.com/videojs/v10/issues/2204)) ([12656e0](https://github.com/videojs/v10/commit/12656e01e274c65dd9fd87b3e36ab4c47e9c0949))
+* **packages:** rename SimpleHls* to Hls* (video + audio) ([#2096](https://github.com/videojs/v10/issues/2096)) ([f1c22a5](https://github.com/videojs/v10/commit/f1c22a5bbfd90e3ce219b8ac5de441c8fba60b8d))
+* **packages:** separate input indicator components ([#2046](https://github.com/videojs/v10/issues/2046)) ([5bdb870](https://github.com/videojs/v10/commit/5bdb87088e6c60b1a4e6838ea38944a7cf125d12))
+* **packages:** simplify menus ([#2029](https://github.com/videojs/v10/issues/2029)) ([cf23269](https://github.com/videojs/v10/commit/cf23269f87250d7a2deadee5dad58b935f5e8c0f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.27
+    * @videojs/store bumped to 10.0.0-beta.27
+    * @videojs/utils bumped to 10.0.0-beta.27
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.25...@videojs/core@10.0.0-beta.26) (2026-08-02)
 
 

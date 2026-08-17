@@ -48,6 +48,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
 
   const {
     state,
+    input,
     cssVars,
     rootRef,
     thumbRef: sliderThumbRef,
@@ -78,6 +79,8 @@ export const SliderRoot = forwardRef(function SliderRoot(
       value={{
         state,
         pointerValue: core.valueFromPercent(state.pointerPercent),
+        input,
+        getPointerValue: (percent) => core.valueFromPercent(percent),
         thumbRef: sliderThumbRef,
         thumbProps,
         stateAttrMap: SliderDataAttrs,

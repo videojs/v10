@@ -21,14 +21,27 @@ describe('resolveSkinCatalog', () => {
         name: 'button-tooltip',
         dependencies: [],
       },
+      { name: 'container', dependencies: [] },
       {
         name: 'default-video',
         scopeClass: 'media-skin-video',
-        dependencies: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider', 'volume-popover'],
+        theme: 'default',
+        dependencies: [
+          'container',
+          'fullscreen-button',
+          'overlay',
+          'play-button',
+          'poster',
+          'seek-button',
+          'time-slider',
+          'volume-popover',
+        ],
       },
       { name: 'fullscreen-button', dependencies: ['button-tooltip'] },
       { name: 'mute-button', dependencies: [] },
+      { name: 'overlay', dependencies: [] },
       { name: 'play-button', dependencies: ['button-tooltip'] },
+      { name: 'poster', dependencies: [] },
       { name: 'seek-button', dependencies: ['button-tooltip'] },
       { name: 'time-slider', dependencies: [] },
       { name: 'volume-popover', dependencies: ['mute-button', 'volume-slider'] },
@@ -37,9 +50,12 @@ describe('resolveSkinCatalog', () => {
 
     const closure = resolveSkinClosure(resolved, 'default-video');
     expect(closure.items.map((item) => item.name)).toEqual([
+      'container',
       'button-tooltip',
       'fullscreen-button',
+      'overlay',
       'play-button',
+      'poster',
       'seek-button',
       'time-slider',
       'mute-button',
@@ -49,11 +65,14 @@ describe('resolveSkinCatalog', () => {
     ]);
     expect(closure.styleFiles).toEqual([
       './styles/components/button.tailwind.ts',
+      './styles/components/container.tailwind.ts',
+      './styles/components/overlay.tailwind.ts',
       './styles/components/popup.tailwind.ts',
+      './styles/components/poster.tailwind.ts',
       './styles/components/slider.tailwind.ts',
       './styles/skins/default-video.tailwind.ts',
     ]);
-    expect(closure.sourceFiles).toHaveLength(9);
+    expect(closure.sourceFiles).toHaveLength(12);
     expect(closure.sourceFiles).toContain('./skins/default-video/skin.tsx');
   });
 

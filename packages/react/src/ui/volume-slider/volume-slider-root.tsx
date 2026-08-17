@@ -18,6 +18,7 @@ const noopVolume = {
   volume: 0,
   muted: false,
   volumeAvailability: 'unsupported' as const,
+  mutedAvailability: 'unsupported' as const,
   setVolume: () => 0,
   toggleMuted: () => false,
 };
@@ -63,25 +64,26 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const getStepPercent = () => core.getStepPercent();
     const setVolume = (percent: number) => volumeRef.current?.setVolume(percent / 100);
 
-    const { state, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } = useSlider<VolumeSliderCore.State>({
-      computeState: (input) => {
-        core.setInput(input);
-        core.setMedia(volume ?? noopVolume);
-        return core.getState();
-      },
-      getPercent,
-      getStepPercent,
-      getLargeStepPercent: () => core.getLargeStepPercent(),
-      orientation,
-      disabled: isDisabled,
-      adjustPercent: (rawPercent, thumbSize, trackSize) =>
-        core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
-      getCSSVars: getSliderCSSVars,
-      onValueChange: setVolume,
-      onValueCommit: setVolume,
-      onDragStart,
-      onDragEnd,
-    });
+    const { state, input, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } =
+      useSlider<VolumeSliderCore.State>({
+        computeState: (input) => {
+          core.setInput(input);
+          core.setMedia(volume ?? noopVolume);
+          return core.getState();
+        },
+        getPercent,
+        getStepPercent,
+        getLargeStepPercent: () => core.getLargeStepPercent(),
+        orientation,
+        disabled: isDisabled,
+        adjustPercent: (rawPercent, thumbSize, trackSize) =>
+          core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
+        getCSSVars: getSliderCSSVars,
+        onValueChange: setVolume,
+        onValueCommit: setVolume,
+        onDragStart,
+        onDragEnd,
+      });
 
     const [wheelHandler] = useState(() =>
       createWheelStep({
@@ -118,6 +120,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
         value={{
           state,
           pointerValue: core.valueFromPercent(state.pointerPercent),
+          input,
+          getPointerValue: (percent) => core.valueFromPercent(percent),
           thumbRef,
           thumbProps,
           stateAttrMap: VolumeSliderDataAttrs,

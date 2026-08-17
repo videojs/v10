@@ -15,6 +15,7 @@ export const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>
   forwardedRef
 ) {
   const { core, popover, state, stateAttrMap, popupId } = usePopoverContext();
+  const controlledId = state.open ? popupId : undefined;
 
   const triggerRef = useCallback(
     (el: HTMLButtonElement | null) => {
@@ -38,7 +39,7 @@ export const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>
       props: [
         {
           type: 'button' as const,
-          ...core.getTriggerAttrs(state, popupId),
+          ...core.getTriggerAttrs(state, controlledId),
         },
         { ...restTriggerProps, onFocus: onFocusIn, onBlur: onFocusOut },
         elementProps,

@@ -55,6 +55,11 @@
     --error-dialog-transition-duration: 50ms;
     --error-dialog-transition-delay: 0ms;
     --popup-transition-duration: 0ms;
+
+    .media-error__dialog {
+      scale: 1;
+      transition-property: opacity;
+    }
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
@@ -136,7 +141,7 @@
 .media-default-skin--video .media-error[data-starting-style] .media-error__dialog,
 .media-default-skin--video .media-error[data-ending-style] .media-error__dialog {
   opacity: 0;
-  scale: 0.5;
+  scale: 0.95;
 }
 .media-default-skin--video .media-error[data-ending-style] .media-error__dialog {
   transition-delay: 0ms;

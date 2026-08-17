@@ -3,13 +3,16 @@ export type { ImportRef } from '../transforms/imports';
 export {
   accessPath,
   type JsxPropReference,
+  jsxAttributes,
   jsxExpression,
   propertyAccess,
   readAccessPath,
+  readJsxAttributeExpression,
   readJsxProp,
   readStringAttribute,
   replaceJsxPropValue,
   singleJsxElementChild,
+  updateJsxAttributes,
 } from '../utils/jsx';
 export { hasChild } from './matchers/has-child';
 export { anyTag, byTag, type JsxElementLike, type Matcher, tagName } from './matchers/tag';

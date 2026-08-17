@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.26...@videojs/icons@10.0.0-beta.27) (2026-08-17)
+
+
+### Features
+
+* **skin:** add canonical PlayButton source ([#1991](https://github.com/videojs/v10/issues/1991)) ([de5f2bb](https://github.com/videojs/v10/commit/de5f2bbcc153ac0da0b9969f693ee732a8e6f196))
+* **skin:** build pipeline ([#2021](https://github.com/videojs/v10/issues/2021)) ([9381a34](https://github.com/videojs/v10/commit/9381a34025848812325f47634c4e745ba9103f11))
+
+
+### Bug Fixes
+
+* **icons:** remove complex masks ([#2027](https://github.com/videojs/v10/issues/2027)) ([fd87b3e](https://github.com/videojs/v10/commit/fd87b3e9c291c4eb85c39c84a0c7e4e5c49c5aa0))
+* **packages:** improve ui motion ([#2208](https://github.com/videojs/v10/issues/2208)) ([42f934e](https://github.com/videojs/v10/commit/42f934e9bea4e4961d63d6de1e2eebcc520f8237))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * devDependencies
+    * @videojs/utils bumped to 10.0.0-beta.27
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/icons@10.0.0-beta.25...@videojs/icons@10.0.0-beta.26) (2026-08-02)
 
 

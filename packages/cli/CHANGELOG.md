@@ -1,5 +1,16 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.26...@videojs/cli@10.0.0-beta.27) (2026-08-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename SimpleHls* to Hls* (video + audio) ([#2096](https://github.com/videojs/v10/issues/2096))
+
+### Code Refactoring
+
+* **packages:** rename SimpleHls* to Hls* (video + audio) ([#2096](https://github.com/videojs/v10/issues/2096)) ([f1c22a5](https://github.com/videojs/v10/commit/f1c22a5bbfd90e3ce219b8ac5de441c8fba60b8d))
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.25...@videojs/cli@10.0.0-beta.26) (2026-08-02)
 
 

@@ -1,4 +1,4 @@
-import { PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
+import { EMBED_PRESETS, PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { DEFAULT_PRELOAD, PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
@@ -24,9 +24,6 @@ import { Preview } from './preview';
 
 function getPagePath(platform: Platform, preset: Preset): string {
   if (platform === 'cdn') return '/cdn/';
-  if (preset === 'background-video') return `/${platform}-background-video/`;
-  if (preset === 'vimeo-video') return `/${platform}-vimeo-video/`;
-  if (preset === 'youtube-video') return `/${platform}-youtube-video/`;
   return `/${platform}-${preset}/`;
 }
 
@@ -82,6 +79,7 @@ export function App() {
   // Every background preset renders a fixed source and has no Tailwind skin.
   const backgroundPreset =
     preset === 'background-video' || preset === 'hls-background-video' || preset === 'mux-background-video';
+  const embedPreset = (EMBED_PRESETS as readonly Preset[]).includes(preset);
   const availableSources =
     preset === 'audio'
       ? MP4_SOURCE_IDS
@@ -176,15 +174,12 @@ export function App() {
     }
   }, [availableSources, source]);
 
-  // CDN, background video, and embed (Vimeo/YouTube) videos do not have a Tailwind skin variant.
+  // CDN, background video, and third-party embeds do not have a Tailwind skin variant.
   useEffect(() => {
-    if (
-      (platform === 'cdn' || backgroundPreset || preset === 'vimeo-video' || preset === 'youtube-video') &&
-      styling === 'tailwind'
-    ) {
+    if ((platform === 'cdn' || backgroundPreset || embedPreset) && styling === 'tailwind') {
       setStyling('css');
     }
-  }, [platform, preset, backgroundPreset, styling]);
+  }, [platform, backgroundPreset, embedPreset, styling]);
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
@@ -218,8 +213,7 @@ export function App() {
         isSpfHls={spfHlsPreset}
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}
-        isVimeoVideo={preset === 'vimeo-video'}
-        isYouTubeVideo={preset === 'youtube-video'}
+        isEmbedMedia={embedPreset}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}

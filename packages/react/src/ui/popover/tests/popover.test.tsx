@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import * as Popover from '../index.parts';
@@ -13,6 +13,32 @@ afterEach(() => {
 });
 
 describe('Popover', () => {
+  it('only links the trigger to a rendered popup', async () => {
+    render(
+      <Popover.Root>
+        <Popover.Trigger data-testid="trigger">Open</Popover.Trigger>
+        <Popover.Popup data-testid="popup">Content</Popover.Popup>
+      </Popover.Root>
+    );
+
+    const trigger = screen.getByTestId('trigger');
+    expect(trigger.hasAttribute('aria-controls')).toBe(false);
+
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      const popup = screen.getByTestId('popup');
+      expect(trigger.getAttribute('aria-controls')).toBe(popup.id);
+    });
+
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('popup')).toBeNull();
+      expect(trigger.hasAttribute('aria-controls')).toBe(false);
+    });
+  });
+
   it('positions default-open and remounted popups before paint', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.dataset.testid === 'trigger')

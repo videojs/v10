@@ -18,8 +18,8 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    &[data-min],
-    &[data-max] {
+    &[data-min]:not([data-starting-style], [data-ending-style]),
+    &[data-max]:not([data-starting-style], [data-ending-style]) {
       transform: translateX(0.25px);
       transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
     }

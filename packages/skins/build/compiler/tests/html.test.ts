@@ -7,7 +7,9 @@ import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../html';
 
 const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 const styleFiles = [
+  resolve(canonicalRoot, 'styles/components/container.tailwind.ts'),
   resolve(canonicalRoot, 'styles/components/popup.tailwind.ts'),
+  resolve(canonicalRoot, 'styles/components/poster.tailwind.ts'),
   resolve(canonicalRoot, 'styles/components/slider.tailwind.ts'),
 ];
 
@@ -34,6 +36,38 @@ describe('createCompilerHtmlConfig', () => {
       '@videojs/html/ui/tooltip',
       '@videojs/html/ui/tooltip-group',
     ]);
+  });
+
+  it('maps Skin-owned container markup to exact element registration modules', () => {
+    expect(resolveHtmlElementImports([], '<media-container><media-poster></media-poster></media-container>')).toEqual([
+      '@videojs/html/media/container',
+      '@videojs/html/ui/poster',
+    ]);
+  });
+
+  it('lowers Container and Poster as independent HTML components', async () => {
+    const filename = resolve(canonicalRoot, 'components/layout/container.tsx');
+    const source = await readFile(filename, 'utf8');
+    const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
+    const posterSource = await readFile(posterFilename, 'utf8');
+    const config = createCompilerHtmlConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) });
+    const result = await transform(source, {
+      filename,
+      config,
+    });
+    const posterResult = await transform(posterSource, {
+      filename: posterFilename,
+      config,
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(posterResult.diagnostics).toEqual([]);
+    expect(result.code).toContain('<media-container');
+    expect(result.code).toContain('{children}');
+    expect(posterResult.code).toContain('<media-poster');
+    expect(posterResult.code).toContain('<slot name="poster"/>');
+    expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinContainer');
+    expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinPoster');
   });
 
   it('leaves adjacent popup identity wiring to the HTML runtime', async () => {

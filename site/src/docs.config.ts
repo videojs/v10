@@ -28,7 +28,11 @@ export const sidebar: Sidebar = [
         llmsDescription:
           'Guides for moving an existing player integration to Video.js v10, one per player you might be coming from.',
         defaultOpen: false,
-        contents: [{ slug: 'how-to/migrate-from-plyr', sidebarLabel: 'From Plyr' }],
+        contents: [
+          { slug: 'how-to/migrate-from-video-js-8', sidebarLabel: 'From Video.js 8' },
+          { slug: 'how-to/migrate-from-mux-player', sidebarLabel: 'From Mux Player' },
+          { slug: 'how-to/migrate-from-plyr', sidebarLabel: 'From Plyr' },
+        ],
       },
       { slug: 'concepts/why-videojs' },
       { slug: 'concepts/overview' },

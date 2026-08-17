@@ -3,6 +3,7 @@ import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import { createCompilerReactConfig, type ReactImportResolver } from '../compiler/react';
 import { emitReactModules } from '../compiler/react-modules';
+import { skinRootClassName } from '../compiler/skin-root';
 import type { GeneratedFile } from '../output/files';
 import type { SkinStyleManifest } from '../styles/manifest';
 
@@ -19,8 +20,8 @@ export async function generateReactSkins(
   catalog: ResolvedSkinCatalog,
   options: GenerateReactSkinsOptions
 ): Promise<GeneratedFile[]> {
-  const skin = catalog.items.find((item) => item.name === options.skin && item.type === 'skin');
-  if (!skin) throw new Error(`Skin \`${options.skin}\` does not exist.`);
+  const skin = catalog.items.find((item) => item.name === options.skin);
+  if (skin?.type !== 'skin') throw new Error(`Skin \`${options.skin}\` does not exist.`);
 
   const entryPath = canonicalPath(skin.source);
   const entryDir = posix.dirname(entryPath);
@@ -35,6 +36,7 @@ export async function generateReactSkins(
     style: 'vanilla',
     styles: options.styles,
     iconSet: options.iconSet,
+    rootClassName: skinRootClassName(skin),
     ...(options.resolveImport ? { resolveImport: options.resolveImport } : {}),
   });
 

@@ -15,14 +15,20 @@
   transition-property: opacity, scale;
 
   .media-icon {
-    display: none;
+    grid-area: 1 / 1;
     width: calc(var(--media-icon-size) * 2);
     height: calc(var(--media-icon-size) * 2);
+    opacity: 0;
+    scale: 0;
+    transition-timing-function: ease-out;
+    transition-duration: 150ms;
+    transition-property: opacity, scale;
   }
 
   &[data-status="pause"] .media-icon--pause,
   &[data-status="play"] .media-icon--play {
-    display: block;
+    opacity: 1;
+    scale: 1;
   }
 
   &[data-starting-style],
@@ -39,5 +45,16 @@
   @media (prefers-reduced-motion: reduce) {
     transition-duration: 50ms;
     transition-property: opacity;
+
+    &[data-starting-style],
+    &[data-ending-style],
+    .media-icon {
+      scale: 1;
+    }
+
+    .media-icon {
+      transition-duration: 50ms;
+      transition-property: opacity;
+    }
   }
 }

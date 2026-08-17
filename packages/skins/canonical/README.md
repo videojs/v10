@@ -20,6 +20,9 @@ The current authored paths are:
 - `components/buttons/play-button.tsx`
 - `components/buttons/seek-button.tsx`
 - `components/controls/volume-popover.tsx`
+- `components/layout/container.tsx`
+- `components/layout/overlay.tsx`
+- `components/layout/poster.tsx`
 - `components/sliders/volume-slider.tsx`
 - `components/sliders/time-slider.tsx`
 
