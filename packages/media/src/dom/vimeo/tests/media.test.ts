@@ -400,6 +400,20 @@ describe('VimeoMedia', () => {
     expect(player.unload).toHaveBeenCalled();
   });
 
+  it('announces the reset when the source is cleared', async () => {
+    const media = new VimeoMedia();
+    media.src = '76979871';
+    await attachAndLoad(media);
+
+    const emptied = vi.fn();
+    media.addEventListener('emptied', emptied);
+    media.source = null;
+
+    // The embed is unloaded and reports nothing further, so nothing else is
+    // coming to say the last video's duration and buffer are gone.
+    expect(emptied).toHaveBeenCalledTimes(1);
+  });
+
   it('unblocks a pending play() when the source is replaced mid-load', async () => {
     const media = new VimeoMedia();
     media.src = '76979871';

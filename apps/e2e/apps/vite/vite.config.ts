@@ -33,8 +33,14 @@ function getPageEntries(): Record<string, string> {
 export default defineConfig({
   root: 'src',
   appType: 'mpa',
+  define: {
+    __DEV__: 'true',
+  },
   plugins: [react()],
   resolve: {
+    alias: {
+      '@': resolve(__dirname, '../../../../packages/react/src'),
+    },
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {

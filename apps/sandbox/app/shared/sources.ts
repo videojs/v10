@@ -350,6 +350,18 @@ export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
 
 export const YOUTUBE_VIDEO_SRC = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
 
+export const CLOUDFLARE_VIDEO_SRC = 'https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4';
+
+// An episode rather than a track: Spotify plays episodes in full for a signed-out
+// listener, where a track is a 30 second preview.
+export const SPOTIFY_AUDIO_SRC = 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5';
+
+export const TIKTOK_VIDEO_SRC = 'https://www.tiktok.com/@_luwes/video/7527476667770522893';
+
+// A VOD rather than a channel: a channel embed only plays while its streamer is
+// live, so it would show an offline banner most of the time.
+export const TWITCH_VIDEO_SRC = 'https://www.twitch.tv/videos/106400740';
+
 /** Returns true when the given source represents a live stream and should use the live-video skin. */
 export function isLiveSource(id: SourceId): boolean {
   return SOURCES[id].live === true;

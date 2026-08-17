@@ -3,6 +3,7 @@ import type { MenuInput, MenuState } from '../../../core/ui/menu/menu-core';
 import { MenuCSSVars } from '../../../core/ui/menu/menu-css-vars';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
 import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
+import { forceLayout } from '../../utils/layout';
 import type { UIFocusEvent, UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
 import type { PositioningCSSVars, PositioningOptions } from '../popover/popover-positioning';
@@ -39,6 +40,7 @@ export interface MenuContentProps {
 export interface MenuHighlightOptions {
   focus?: boolean;
   preventScroll?: boolean;
+  pointer?: boolean;
 }
 
 export function isMenuNavigationKey(event: UIKeyboardEvent): boolean {
@@ -92,6 +94,8 @@ export interface MenuApi {
   highlight: (element: HTMLElement | null, options?: MenuHighlightOptions) => void;
   /** Programmatically highlight the first registered item. */
   highlightFirstItem: (options?: MenuHighlightOptions) => void;
+  /** Return focus to the trigger when the close reason requires it. */
+  restoreFocus: (options?: FocusOptions) => void;
   open: (reason?: MenuOpenChangeReason) => void;
   close: (reason?: MenuOpenChangeReason) => void;
   /** Commit the open state resolved by the platform adapter. */
@@ -117,7 +121,15 @@ export function createMenu(options: MenuOptions): MenuApi {
   let lastCloseReason: MenuOpenChangeReason | null = null;
 
   function isItemHidden(item: HTMLElement): boolean {
-    return Boolean(item.hidden || item.hasAttribute('data-hidden') || item.getAttribute('aria-hidden') === 'true');
+    const availability = item.getAttribute('data-availability');
+
+    return Boolean(
+      item.hidden ||
+        item.hasAttribute('data-hidden') ||
+        item.getAttribute('aria-hidden') === 'true' ||
+        availability === 'unavailable' ||
+        availability === 'unsupported'
+    );
   }
 
   function getNavigableItems(): HTMLElement[] {
@@ -144,18 +156,29 @@ export function createMenu(options: MenuOptions): MenuApi {
       if (element === highlightedItem) highlight(getAdjacentNavigableItem(1), highlightOptions);
       return;
     }
-    if (highlightedItem === element) return;
+    if (highlightedItem === element) {
+      element?.setAttribute(MenuItemDataAttrs.highlighted, highlightOptions?.pointer === true ? 'pointer' : '');
+      return;
+    }
 
-    if (highlightedItem) {
-      highlightedItem.tabIndex = -1;
-      highlightedItem.removeAttribute(MenuItemDataAttrs.highlighted);
+    const previousItem = highlightedItem;
+    if (previousItem) {
+      previousItem.tabIndex = -1;
     }
 
     highlightedItem = element;
 
     if (element) {
       element.tabIndex = 0;
-      element.setAttribute(MenuItemDataAttrs.highlighted, '');
+      element.setAttribute(MenuItemDataAttrs.highlighted, highlightOptions?.pointer === true ? 'pointer' : '');
+
+      // Keep the later anchor resolved for one layout before moving upward.
+      // Without a stable start inset, Chromium skips the anchor transition.
+      if (previousItem && compareItems(element, previousItem) < 0 && highlightOptions?.pointer) {
+        forceLayout(element.parentElement);
+      }
+      previousItem?.removeAttribute(MenuItemDataAttrs.highlighted);
+
       if (highlightOptions?.focus !== false) {
         if (highlightOptions?.preventScroll) {
           element.focus({ preventScroll: true });
@@ -163,6 +186,8 @@ export function createMenu(options: MenuOptions): MenuApi {
           element.focus();
         }
       }
+    } else {
+      previousItem?.removeAttribute(MenuItemDataAttrs.highlighted);
     }
 
     options.onHighlightChange?.(element);
@@ -179,6 +204,23 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function highlightFirstItem(options?: MenuHighlightOptions): void {
     highlight(getNavigableItems()[0] ?? null, options);
+  }
+
+  function restoreFocus(focusOptions?: FocusOptions): void {
+    if (
+      lastCloseReason === 'imperative-action' ||
+      lastCloseReason === 'group-open' ||
+      lastCloseReason === 'blur' ||
+      lastCloseReason === 'outside-click'
+    ) {
+      return;
+    }
+
+    if (focusOptions) {
+      triggerElement?.focus(focusOptions);
+    } else {
+      triggerElement?.focus();
+    }
   }
 
   function getInitialHighlightItem(): HTMLElement | null {
@@ -259,9 +301,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       options.onOpenChangeComplete?.(open);
       // Return focus to the trigger after the close animation completes
       // so screen readers hear the correct context.
-      if (!open && lastCloseReason !== 'imperative-action' && lastCloseReason !== 'group-open') {
-        triggerElement?.focus();
-      }
+      if (!open) restoreFocus();
     },
     closeOnEscape: options.closeOnEscape,
     closeOnOutsideClick: options.closeOnOutsideClick,
@@ -414,6 +454,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     registerSubmenu,
     highlight,
     highlightFirstItem,
+    restoreFocus,
     open: popover.open,
     close: popover.close,
     syncOpen,

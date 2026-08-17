@@ -124,7 +124,7 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions';
+  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions' | 'source-html' | 'source-react';
 }
 
 // ---------------------------------------------------------------------------
@@ -349,6 +349,76 @@ createRoot(document.getElementById('root')!).render(<App />);
 `;
 }
 
+function sourceHtmlPage(resource: string): string {
+  const generatedRoot = '../../../../../../packages/html/src/__generated__/skins/default-video';
+
+  return `import '@videojs/html/video/player';
+import { skin } from '${generatedRoot}/skin';
+import styles from '${generatedRoot}/styles/styles.css?inline';
+import { MEDIA } from '../resources';
+
+class SourceVideoSkinElement extends HTMLElement {
+  constructor() {
+    super();
+    const root = this.attachShadow({ mode: 'open' });
+    root.innerHTML = \`<style>\${styles}</style>\${skin}\`;
+  }
+}
+
+customElements.define('source-video-skin', SourceVideoSkinElement);
+
+const html = String.raw;
+
+document.getElementById('root')!.innerHTML = html\`
+  <video-player>
+    <source-video-skin
+      data-source-skin
+      style="display: block; max-width: 800px; aspect-ratio: 16/9; --media-poster-placeholder: url(\${MEDIA.${resource}.poster})"
+    >
+      <video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>
+      <img slot="poster" src="\${MEDIA.${resource}.poster}" alt="Video poster" />
+    </source-video-skin>
+  </video-player>
+\`;
+`;
+}
+
+function sourceReactPage(resource: string): string {
+  const generatedRoot = '../../../../../../packages/react/src/__generated__/skins/default-video';
+
+  return `import { createPlayer } from '@/player/create-player';
+import { Video } from '@/media/video';
+import { videoFeatures } from '@videojs/core/dom';
+import type { CSSProperties } from 'react';
+import { createRoot } from 'react-dom/client';
+import { DefaultVideoSkin } from '${generatedRoot}/skin';
+import '${generatedRoot}/styles/styles.css';
+import { MEDIA } from '../resources';
+
+const { Player } = createPlayer({ features: videoFeatures });
+
+function App() {
+  return (
+    <Player>
+      <DefaultVideoSkin
+        data-source-skin
+        poster={MEDIA.${resource}.poster}
+        style={{
+          maxWidth: 800,
+          aspectRatio: '16/9',
+          '--media-poster-placeholder': \`url(\${MEDIA.${resource}.poster})\`,
+        } as CSSProperties}
+      >
+        <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />
+      </DefaultVideoSkin>
+    </Player>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
+`;
+}
+
 // ---------------------------------------------------------------------------
 // Page definitions (drive generation from here)
 // ---------------------------------------------------------------------------
@@ -434,6 +504,24 @@ const PAGES: PageDef[] = [
     resource: 'mp4',
     category: 'ejected-react',
   },
+
+  // Generated canonical Skin fixtures for focused container/parity coverage.
+  {
+    name: 'Source HTML Video MP4',
+    path: 'source-html-video-mp4',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    category: 'source-html',
+  },
+  {
+    name: 'Source React Video MP4',
+    path: 'source-react-video-mp4',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+    category: 'source-react',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -472,6 +560,10 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
     ts = ejectedHtmlPage(page.resource);
   } else if (page.category === 'ejected-react') {
     ts = ejectedReactPage(page.resource);
+  } else if (page.category === 'source-html') {
+    ts = sourceHtmlPage(page.resource);
+  } else if (page.category === 'source-react') {
+    ts = sourceReactPage(page.resource);
   } else if (page.framework === 'react') {
     ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource, config);
   } else {
@@ -493,6 +585,7 @@ function generateIndexHtml(pages: PageDef[]): string {
   const cdn = pages.filter((p) => p.category === 'cdn');
   const ejected = pages.filter((p) => p.category?.startsWith('ejected'));
   const captions = pages.filter((p) => p.category === 'captions');
+  const source = pages.filter((p) => p.category?.startsWith('source-'));
 
   function list(entries: PageDef[]): string {
     return entries.map((p) => `        <li><a href="/pages/${p.path}.html">${p.name}</a></li>`).join('\n');
@@ -526,6 +619,10 @@ ${list(ejected)}
       <h2>CDN Bundles</h2>
       <ul>
 ${list(cdn)}
+      </ul>
+      <h2>Generated Canonical Skins</h2>
+      <ul>
+${list(source)}
       </ul>
     </nav>
   </body>

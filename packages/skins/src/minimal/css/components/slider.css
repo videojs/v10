@@ -1,4 +1,8 @@
 .media-minimal-skin .media-slider {
+  --thumb-size: calc(var(--spacing) * 3);
+  --thumb-active-size: calc(var(--spacing) * 3);
+  --track-border-radius: calc(Infinity * 1px);
+
   position: relative;
   display: flex;
   flex: 1;
@@ -6,7 +10,7 @@
   justify-content: center;
   cursor: pointer;
   outline: none;
-  border-radius: calc(Infinity * 1px);
+  border-radius: var(--track-border-radius);
 
   &[data-orientation="horizontal"] {
     width: var(--slider-width, 100%);
@@ -41,8 +45,8 @@
   .media-slider__thumb {
     position: absolute;
     z-index: 10;
-    width: calc(var(--spacing) * 3);
-    height: calc(var(--spacing) * 3);
+    width: var(--thumb-size);
+    height: var(--thumb-size);
     user-select: none;
     outline: 2px solid transparent;
     outline-offset: -2px;
@@ -74,11 +78,21 @@
     }
   }
 
-  &:hover .media-slider__thumb,
   &:focus-within .media-slider__thumb,
   .media-slider__thumb--persistent {
+    width: var(--thumb-active-size);
+    height: var(--thumb-active-size);
     opacity: 1;
     scale: 1;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover .media-slider__thumb {
+      width: var(--thumb-active-size);
+      height: var(--thumb-active-size);
+      opacity: 1;
+      scale: 1;
+    }
   }
 
   /* Shared track fills */
@@ -91,12 +105,14 @@
     &[data-orientation="horizontal"] {
       inset-block: 0;
       left: 0;
-      transition-property: width;
+      width: 100%;
+      transition-property: clip-path;
     }
     &[data-orientation="vertical"] {
       inset-inline: 0;
       bottom: 0;
-      transition-property: height;
+      height: 100%;
+      transition-property: clip-path;
     }
   }
 
@@ -105,10 +121,10 @@
     background-color: oklch(from currentColor l c h / 0.2);
 
     &[data-orientation="horizontal"] {
-      width: var(--media-slider-buffer);
+      clip-path: inset(0 calc(100% - var(--media-slider-buffer)) 0 0 round var(--track-border-radius));
     }
     &[data-orientation="vertical"] {
-      height: var(--media-slider-buffer);
+      clip-path: inset(calc(100% - var(--media-slider-buffer)) 0 0 0 round var(--track-border-radius));
     }
   }
 
@@ -117,10 +133,10 @@
     background-color: var(--accent-color);
 
     &[data-orientation="horizontal"] {
-      width: var(--media-slider-fill);
+      clip-path: inset(0 calc(100% - var(--media-slider-fill)) 0 0 round var(--track-border-radius));
     }
     &[data-orientation="vertical"] {
-      height: var(--media-slider-fill);
+      clip-path: inset(calc(100% - var(--media-slider-fill)) 0 0 0 round var(--track-border-radius));
     }
   }
 
@@ -167,8 +183,7 @@
     .media-slider__chapter-track {
       --chapter-track-size: calc(var(--spacing) * 0.75);
       --chapter-track-highlighted-size: calc(var(--spacing) * 1.25);
-      --chapter-track-border-radius: calc(Infinity * 1px);
-      border-radius: var(--chapter-track-border-radius);
+      border-radius: var(--track-border-radius);
 
       @media (prefers-reduced-motion: no-preference) {
         transition: 200ms ease-out;
@@ -184,7 +199,7 @@
         clip-path: inset(
           0 calc(100% - var(--media-slider-chapter-end) + var(--chapter-gap) * var(--chapter-inset-end)) 0
             calc(var(--media-slider-chapter-start) + var(--chapter-gap) * var(--chapter-inset-start)) round
-            var(--chapter-track-border-radius)
+            var(--track-border-radius)
         );
       }
 
@@ -201,7 +216,7 @@
         clip-path: inset(
           calc(100% - var(--media-slider-chapter-end) + var(--chapter-gap) * var(--chapter-inset-end)) 0
             calc(var(--media-slider-chapter-start) + var(--chapter-gap) * var(--chapter-inset-start)) 0 round
-            var(--chapter-track-border-radius)
+            var(--track-border-radius)
         );
       }
 
@@ -220,16 +235,16 @@
       top: calc(100% - var(--media-slider-pointer));
     }
     .media-slider__fill[data-orientation="horizontal"] {
-      width: var(--media-slider-pointer);
+      clip-path: inset(0 calc(100% - var(--media-slider-pointer)) 0 0 round var(--track-border-radius));
     }
     .media-slider__fill[data-orientation="vertical"] {
-      height: var(--media-slider-pointer);
+      clip-path: inset(calc(100% - var(--media-slider-pointer)) 0 0 0 round var(--track-border-radius));
     }
   }
 
   @media (prefers-reduced-motion: no-preference) {
     .media-slider__thumb {
-      transition-property: opacity, scale, outline-offset, left, top;
+      transition-property: opacity, scale, height, width, outline-offset, left, top;
     }
     .media-slider__fill {
       transition-timing-function: linear;

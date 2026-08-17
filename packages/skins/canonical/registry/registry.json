@@ -30,10 +30,13 @@
           "type": "registry:file"
         }
       ],
-      "dependencies": ["@videojs/react"],
+      "dependencies": ["@videojs/react", "@videojs/utils", "react"],
       "registryDependencies": [
+        "@videojs/container",
         "@videojs/fullscreen-button",
+        "@videojs/overlay",
         "@videojs/play-button",
+        "@videojs/poster",
         "@videojs/seek-button",
         "@videojs/time-slider",
         "@videojs/volume-popover"
@@ -76,6 +79,35 @@
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
     },
     {
+      "name": "overlay",
+      "type": "registry:component",
+      "title": "Overlay",
+      "description": "The inert video scrim rendered behind visible controls and feedback UI.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/overlay/overlay.tsx",
+          "target": "components/videojs/overlay/overlay.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
       "name": "play-button",
       "type": "registry:component",
       "title": "Play Button",
@@ -111,6 +143,36 @@
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
     },
     {
+      "name": "poster",
+      "type": "registry:component",
+      "title": "Poster",
+      "description": "The video poster and its presentation styling shared by Skin compositions.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/poster/poster.tsx",
+          "target": "components/videojs/poster/poster.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react", "@videojs/utils"],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
       "name": "seek-button",
       "type": "registry:component",
       "title": "Seek Button",
@@ -143,6 +205,36 @@
         }
       ],
       "dependencies": ["@videojs/core", "@videojs/react", "react"],
+      "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
+    },
+    {
+      "name": "container",
+      "type": "registry:component",
+      "title": "Container",
+      "description": "The player layout container shared by Skin compositions.",
+      "files": [
+        {
+          "path": "canonical/registry/default/components/container/container.tsx",
+          "target": "components/videojs/container/container.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "canonical/registry/default/styles/base.css",
+          "target": "components/videojs/styles/base.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/tailwind.css",
+          "target": "components/videojs/styles/tailwind.css",
+          "type": "registry:file"
+        },
+        {
+          "path": "canonical/registry/default/styles/themes/default.css",
+          "target": "components/videojs/styles/themes/default.css",
+          "type": "registry:file"
+        }
+      ],
+      "dependencies": ["@videojs/react", "@videojs/utils"],
       "meta": { "framework": "react", "style": "tailwind", "skin": "default-video" }
     },
     {

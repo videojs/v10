@@ -60,11 +60,11 @@
         filter: blur(8px);
         scale: 0.9;
       }
+    }
 
+    &[data-ending-style] {
       @media (prefers-reduced-motion: no-preference) {
-        &[data-ending-style] {
-          translate: 0 -25%;
-        }
+        translate: 0 -25%;
       }
     }
   }

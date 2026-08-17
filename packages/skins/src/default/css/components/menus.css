@@ -65,7 +65,11 @@
         content: "";
         background-color: var(--accent-background-color);
         border-radius: var(--menu-item-border-radius);
-        transition: inset ease-in-out 100ms;
+        transition: inset 100ms ease-in-out;
+      }
+
+      &:has([data-highlighted=""])::before {
+        transition-duration: 0ms;
       }
     }
   }
@@ -150,7 +154,6 @@
       display: none;
     }
 
-    &:hover,
     &[data-highlighted] {
       @supports (top: anchor(top)) {
         anchor-name: --menu-item-highlight-anchor;

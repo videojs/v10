@@ -1,0 +1,111 @@
+import { serializeEmbedParams } from '../utils';
+import type { TikTokMediaProps } from './props';
+
+/**
+ * TikTok engine options, spelled exactly as TikTok spells them
+ * (https://developers.tiktok.com/doc/embed-player). They are serialized onto the
+ * embed URL verbatim, so what you write here is what the player reads.
+ *
+ * Parameters the host owns are deliberately absent: `autoplay`, `controls`,
+ * `loop`, and `muted` come from the props of the same name, so configuring them
+ * here would give two ways to say one thing. The index signature still carries
+ * anything not listed here, so undocumented knobs and whatever TikTok adds next
+ * keep working.
+ */
+export interface TikTokEngineConfig extends Record<string, unknown> {
+  /** Show the closed-caption button. Defaults to `1`. */
+  closed_caption?: 0 | 1;
+  /** Show the video description. Defaults to `0`. */
+  description?: 0 | 1;
+  /** Show the fullscreen button. Defaults to `1`. */
+  fullscreen_button?: 0 | 1;
+  /** Show the track the video uses. Defaults to `0`. */
+  music_info?: 0 | 1;
+  /** Show the browser's native context menu. Defaults to `1`. */
+  native_context_menu?: 0 | 1;
+  /** Show the play button. Defaults to `1`. */
+  play_button?: 0 | 1;
+  /** Show the progress bar. Defaults to `1`. */
+  progress_bar?: 0 | 1;
+  /** Draw related videos from TikTok's recommendations (`1`) or the author's own videos (`0`). Defaults to `1`. */
+  rel?: 0 | 1;
+  /** Show the current playback time and duration. Defaults to `1`. */
+  timestamp?: 0 | 1;
+  /** Show the volume control. Defaults to `1`. */
+  volume_control?: 0 | 1;
+  /** `referrerpolicy` for the embed iframe. Not a TikTok player parameter. */
+  referrerPolicy?: ReferrerPolicy;
+}
+
+/** Structured TikTok source: which source to play, plus how to play it. */
+export interface TikTokSource {
+  /** TikTok URL or id. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /** Playback options, keyed by the engine that reads them. */
+  engine?: TikTokSourceEngineConfig | undefined;
+}
+
+/** The engines a TikTok source can configure. */
+export interface TikTokSourceEngineConfig {
+  /** TikTok's own player parameters, passed through untouched. */
+  tiktok?: TikTokEngineConfig | undefined;
+}
+
+/**
+ * Parsed pieces of a TikTok source URL. TikTok embeds one thing — a video named
+ * by a numeric id — so the id is all there is to take from a source.
+ */
+export interface ParsedTikTokSource {
+  /** Numeric video id. */
+  id: string;
+}
+
+/** Extract a TikTok video id from a raw numeric id or any recognized URL. */
+export function parseTikTokVideoId(src: string) {
+  return parseTikTokSource(src)?.id ?? null;
+}
+
+/**
+ * Parse a TikTok source string. Recognizes raw numeric ids, `player/v1/` embed
+ * URLs, `share/video/` links, and the `@user/video/` URLs the app hands out.
+ */
+export function parseTikTokSource(src: string): ParsedTikTokSource | null {
+  if (!src) return null;
+  // A bare numeric id is how the embed URL itself names a video, so it is taken
+  // as one.
+  if (MATCH_ID.test(src)) return { id: src };
+  const id = MATCH_SRC.exec(src)?.[1];
+  return id ? { id } : null;
+}
+
+/** Build the iframe `src` URL for a TikTok embed from the given props. */
+export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProps> = {}) {
+  const parsed = parseTikTokSource(src);
+  if (!parsed) return '';
+  // `referrerPolicy` is an attribute of the iframe hosting the embed rather than
+  // something the player reads, so it never reaches the URL.
+  const { referrerPolicy: _referrerPolicy, ...tiktok } = props.source?.engine?.tiktok ?? {};
+  const params: Record<string, unknown> = {
+    // Hide TikTok chrome by default; pass nothing only when controls is explicitly true.
+    controls: props.controls === true ? null : 0,
+    // Off is the player's default for all three, so an explicit `0` says nothing
+    // the embed does not already assume. Left out, the URL is the one upstream's
+    // element builds — worth matching exactly on an embed whose behavior can only
+    // be observed through a cross-origin frame.
+    autoplay: props.autoplay || null,
+    muted: props.defaultMuted || null,
+    loop: props.loop || null,
+    // Keep what the player offers next inside the author's own videos rather
+    // than TikTok's recommendations, which is what `1` (the player's default)
+    // would pull in.
+    rel: 0,
+    // TikTok-specific knobs (`description`, `music_info`, `timestamp`, …) flow
+    // through here.
+    ...tiktok,
+  };
+  return `${EMBED_BASE}/${parsed.id}?${serializeEmbedParams(params)}`;
+}
+
+const EMBED_BASE = 'https://www.tiktok.com/player/v1';
+const MATCH_ID = /^\d+$/;
+const MATCH_SRC = /tiktok\.com\/(?:player\/v1\/|share\/video\/|@[^/]+\/video\/)(\d+)/;

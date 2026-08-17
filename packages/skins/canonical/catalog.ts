@@ -8,6 +8,7 @@ export interface SkinItemDefinition {
 export interface SkinDefinition extends SkinItemDefinition {
   type: 'skin';
   scopeClass: string;
+  theme: keyof SkinStyleResources['themes'];
 }
 
 export interface SkinComponent extends SkinItemDefinition {
@@ -63,6 +64,7 @@ export const skinCatalog = {
       name: 'default-video',
       type: 'skin',
       scopeClass: 'media-skin-video',
+      theme: 'default',
       source: './skins/default-video/skin.tsx',
       title: 'Default Video Skin',
       description:
@@ -70,6 +72,27 @@ export const skinCatalog = {
     }),
   ],
   components: [
+    defineSkinComponent({
+      name: 'container',
+      type: 'component',
+      source: './components/layout/container.tsx',
+      title: 'Container',
+      description: 'The player layout container shared by Skin compositions.',
+    }),
+    defineSkinComponent({
+      name: 'overlay',
+      type: 'component',
+      source: './components/layout/overlay.tsx',
+      title: 'Overlay',
+      description: 'The inert video scrim rendered behind visible controls and feedback UI.',
+    }),
+    defineSkinComponent({
+      name: 'poster',
+      type: 'component',
+      source: './components/layout/poster.tsx',
+      title: 'Poster',
+      description: 'The video poster and its presentation styling shared by Skin compositions.',
+    }),
     defineSkinComponent({
       name: 'fullscreen-button',
       type: 'component',

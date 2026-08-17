@@ -1,5 +1,54 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.26...@videojs/skins@10.0.0-beta.27) (2026-08-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **skin:** css clean up and API stabilization ([#2094](https://github.com/videojs/v10/issues/2094))
+* **packages:** separate input indicator components ([#2046](https://github.com/videojs/v10/issues/2046))
+
+### Features
+
+* **compiler:** add artifact dependency graph ([#1990](https://github.com/videojs/v10/issues/1990)) ([91394ca](https://github.com/videojs/v10/commit/91394cad83f3cb24fa190a1cafe241ca0f52edf6))
+* **packages:** add canonical skin source boundary ([#1989](https://github.com/videojs/v10/issues/1989)) ([12c5a90](https://github.com/videojs/v10/commit/12c5a90e83cfcfe69ed9d18b4fb49307e682d407))
+* **packages:** add chaptered time sliders ([#2043](https://github.com/videojs/v10/issues/2043)) ([6490051](https://github.com/videojs/v10/commit/6490051ac8b991f8c9c47e2cb424b9ffb676230c))
+* **packages:** normalize volume slider availability ([#2072](https://github.com/videojs/v10/issues/2072)) ([5704678](https://github.com/videojs/v10/commit/5704678b1daadcf73636047b2f3772d8c4780996))
+* **skin:** add canonical container, poster, and overlay ([#2179](https://github.com/videojs/v10/issues/2179)) ([4f72ee7](https://github.com/videojs/v10/commit/4f72ee7092f7b909c8c892af1f94a10297c97338))
+* **skin:** add canonical default video controls ([#1992](https://github.com/videojs/v10/issues/1992)) ([feb86c8](https://github.com/videojs/v10/commit/feb86c8d0facf48051585c9bddcf335695477bc2))
+* **skin:** add canonical PlayButton source ([#1991](https://github.com/videojs/v10/issues/1991)) ([de5f2bb](https://github.com/videojs/v10/commit/de5f2bbcc153ac0da0b9969f693ee732a8e6f196))
+* **skin:** add canonical volume controls ([#1993](https://github.com/videojs/v10/issues/1993)) ([2aff94c](https://github.com/videojs/v10/commit/2aff94c7a073cebb2b3c4e06131e3b4cf8963051))
+* **skin:** add registry catalog adapter ([#2008](https://github.com/videojs/v10/issues/2008)) ([650d4c2](https://github.com/videojs/v10/commit/650d4c23021ea1b92277d853e3ab8d1d329c8d53))
+* **skin:** build pipeline ([#2021](https://github.com/videojs/v10/issues/2021)) ([9381a34](https://github.com/videojs/v10/commit/9381a34025848812325f47634c4e745ba9103f11))
+* **skin:** setup basic tailwind styles for new skin system ([#2005](https://github.com/videojs/v10/issues/2005)) ([48c8dff](https://github.com/videojs/v10/commit/48c8dff3b9a7f93c725ad16cfd7c5e7f38579125))
+
+
+### Bug Fixes
+
+* **packages:** improve ui motion ([#2208](https://github.com/videojs/v10/issues/2208)) ([42f934e](https://github.com/videojs/v10/commit/42f934e9bea4e4961d63d6de1e2eebcc520f8237))
+* **packages:** keep live edge indicator colored ([#1921](https://github.com/videojs/v10/issues/1921)) ([0e04454](https://github.com/videojs/v10/commit/0e04454518067ac54912602c862652e627184c8e))
+* **skin:** increase time hidden threshold in default skin ([#2030](https://github.com/videojs/v10/issues/2030)) ([79edd1f](https://github.com/videojs/v10/commit/79edd1f5d0a8eb1ec570791b1728ff2a6739ddbd))
+* **skin:** keep menu scroll position while hovering ([#2100](https://github.com/videojs/v10/issues/2100)) ([3fc0bcb](https://github.com/videojs/v10/commit/3fc0bcb4a08a8c20823d8e867cce4e61271730ec))
+* **skins:** update submenu transitions ([#2130](https://github.com/videojs/v10/issues/2130)) ([c3de3d4](https://github.com/videojs/v10/commit/c3de3d4ff368c2ea1626151a25ff143f3ddc528a))
+* **skin:** use pixels for default scale unit ([#2054](https://github.com/videojs/v10/issues/2054)) ([7657d3c](https://github.com/videojs/v10/commit/7657d3cd2e14f0d42055d0e482e20e781e239beb))
+* **test:** repair e2e regressions ([#2055](https://github.com/videojs/v10/issues/2055)) ([65c882b](https://github.com/videojs/v10/commit/65c882bf39c6cb70b2a46a7873d9057b42bffb3d))
+
+
+### Code Refactoring
+
+* **packages:** separate input indicator components ([#2046](https://github.com/videojs/v10/issues/2046)) ([5bdb870](https://github.com/videojs/v10/commit/5bdb87088e6c60b1a4e6838ea38944a7cf125d12))
+* **skin:** css clean up and API stabilization ([#2094](https://github.com/videojs/v10/issues/2094)) ([39a0291](https://github.com/videojs/v10/commit/39a0291be7cad177e09bf7b4c8e74592a17b3744))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.27
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.27
+    * @videojs/icons bumped to 10.0.0-beta.27
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.25...@videojs/skins@10.0.0-beta.26) (2026-08-02)
 
 

@@ -25,8 +25,11 @@ export const skinRegistry = {
   items: [
     'default-video',
     'fullscreen-button',
+    'overlay',
     'play-button',
+    'poster',
     'seek-button',
+    'container',
     'time-slider',
     'volume-popover',
     'volume-slider',

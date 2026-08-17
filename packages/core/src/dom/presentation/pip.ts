@@ -1,4 +1,5 @@
 import type { MediaPictureInPictureCapability } from '@videojs/media';
+import { isMediaPictureInPictureCapable } from '@videojs/media';
 import type { WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
 
@@ -11,6 +12,19 @@ export function isPictureInPictureEnabled() {
 
   const video = document.createElement('video') as WebKitVideoElement;
   return isFunction(video.webkitSetPresentationMode);
+}
+
+/**
+ * Whether this media can enter picture-in-picture at all, which is a separate
+ * question from whether the browser supports it. Mirrors the branches
+ * `requestPictureInPicture` takes below, so anything it would refuse to act on
+ * reports as incapable here — an iframe embed whose provider has no
+ * picture-in-picture can never enter it, however capable the browser is.
+ */
+export function isPictureInPictureCapable(media: EventTarget) {
+  const webkitVideo = media as WebKitVideoElement;
+  if (isFunction(webkitVideo.webkitSetPresentationMode)) return true;
+  return isMediaPictureInPictureCapable(media);
 }
 
 export function isPictureInPicture(media: EventTarget) {
