@@ -31,6 +31,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 ) {
   const { core, menu, parent, state, contentId } = useMenuContext();
   const isSubMenuTrigger = parent !== null;
+  const controlledId = state.open || state.status === 'ending' ? contentId : undefined;
 
   const elementRef = useRef<HTMLElement>(null);
   const triggerId = useSafeId('sub-trigger');
@@ -116,7 +117,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
         forwardedRef={forwardedRef}
         elementRef={elementRef}
         triggerId={triggerId}
-        triggerAttrs={core.getTriggerAttrs(state, contentId)}
+        triggerAttrs={core.getTriggerAttrs(state, controlledId)}
         state={state}
         onSubMenuClick={handleSubMenuClick}
         onSubMenuKeyDown={handleSubMenuKeyDown}
@@ -134,7 +135,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
           state,
           ref: [forwardedRef as React.Ref<HTMLButtonElement>, triggerRef],
           props: [
-            { type: 'button' as const, ...core.getTriggerAttrs(state, contentId) },
+            { type: 'button' as const, ...core.getTriggerAttrs(state, controlledId) },
             disabled ? { disabled: true, 'aria-disabled': 'true' as const } : undefined,
             state.open ? { onKeyDownCapture: preventMenuKeyDefault } : undefined,
             rootTriggerProps,

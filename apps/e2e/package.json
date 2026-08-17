@@ -15,6 +15,7 @@
     "test:ui": "playwright test --ui",
     "test:update": "playwright test --update-snapshots",
     "test:chromium": "playwright test --project=vite-chromium",
+    "test:a11y": "playwright test tests/accessibility.spec.ts --project=vite-chromium",
     "test:webkit": "playwright test --project=vite-webkit",
     "test:vite": "playwright test --project=vite-chromium",
     "test:sandbox": "playwright test --project=sandbox-chromium",
@@ -22,6 +23,7 @@
     "report": "playwright show-report"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.52.0",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

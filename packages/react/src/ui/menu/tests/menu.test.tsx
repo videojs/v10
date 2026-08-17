@@ -354,6 +354,43 @@ function DynamicMenuFixture({ showCaptions }: { showCaptions: boolean }) {
 }
 
 describe('MenuContent', () => {
+  it('only links triggers to rendered menu content', async () => {
+    render(<SubmenuFixture />);
+
+    const rootTrigger = screen.getByRole('button', { name: 'Settings' });
+    const rootContent = screen.getByTestId('root-content');
+    const submenuTrigger = screen.getByTestId('submenu-trigger');
+
+    expect(rootTrigger.getAttribute('aria-controls')).toBe(rootContent.id);
+    expect(submenuTrigger.hasAttribute('aria-controls')).toBe(false);
+
+    fireEvent.click(submenuTrigger);
+
+    await waitFor(() => {
+      const submenuContent = screen.getByTestId('submenu-content');
+      expect(submenuTrigger.getAttribute('aria-controls')).toBe(submenuContent.id);
+    });
+  });
+
+  it('omits aria-controls while root menu content is not rendered', async () => {
+    render(
+      <MenuRoot>
+        <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
+        <MenuContent data-testid="content">Settings</MenuContent>
+      </MenuRoot>
+    );
+
+    const trigger = screen.getByTestId('trigger');
+    expect(trigger.hasAttribute('aria-controls')).toBe(false);
+
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      const content = screen.getByTestId('content');
+      expect(trigger.getAttribute('aria-controls')).toBe(content.id);
+    });
+  });
+
   it('waits for a controlled owner to commit requested open changes', async () => {
     const onOpenChange = vi.fn();
     const renderMenu = (open: boolean) => (
