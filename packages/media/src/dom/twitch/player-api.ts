@@ -1,12 +1,9 @@
-// Minimal typings for the Twitch embed's postMessage protocol
-// (https://dev.twitch.tv/docs/embed/video-and-clips/).
-// Twitch publishes no SDK for `player.twitch.tv`, so there is nothing to load
-// and nothing to type against: the embed is driven entirely by messages, and
-// their shapes are transcribed here.
+// Minimal typings for the Twitch embed's postMessage protocol, transcribed because Twitch ships no SDK to type
+// against (https://dev.twitch.tv/docs/embed/video-and-clips/).
 
 import { isObject, isString } from '@videojs/utils/predicate';
 
-/** Embed origin. It is both where the embed is served from and where commands are posted. */
+/** Embed origin: where the embed is served from and where commands are posted. */
 export const TWITCH_PLAYER_ORIGIN = 'https://player.twitch.tv';
 
 /** Namespace on the commands the host posts, and on the state snapshots that come back. */
@@ -15,8 +12,7 @@ export const PLAYER_PROXY_NAMESPACE = 'twitch-embed-player-proxy';
 /** Namespace on the lifecycle events the embed emits. */
 export const EMBED_NAMESPACE = 'twitch-embed';
 
-// Commands the embed accepts, posted as the numeric `eventName` of a
-// `twitch-embed-player-proxy` message.
+// Commands the embed accepts, posted as the numeric `eventName` of a `twitch-embed-player-proxy` message.
 export const COMMAND_DISABLE_CAPTIONS = 0;
 export const COMMAND_ENABLE_CAPTIONS = 1;
 export const COMMAND_PAUSE = 2;
@@ -51,10 +47,7 @@ export interface TwitchVideoStats extends Record<string, unknown> {
   bufferSize?: number;
 }
 
-/**
- * Player state snapshot. The embed sends only what changed, so every field is
- * optional and a snapshot has to be read as a patch rather than a whole state.
- */
+/** Player state snapshot. The embed sends only what changed, so a snapshot reads as a patch, not a whole state. */
 export interface TwitchPlayerState {
   /** Length of the VOD in seconds. Live channels report no meaningful duration. */
   duration?: number;
@@ -90,11 +83,7 @@ export interface TwitchCommandMessage {
   params?: unknown;
 }
 
-/**
- * Narrow the payload of a `message` event to something the embed sent. Any page
- * can post to the host window, so the namespace is what separates the embed's
- * messages from everyone else's.
- */
+/** Narrow a `message` payload to something the embed sent; any page can post here, so the namespace is the filter. */
 export function isTwitchMessage(data: unknown): data is TwitchInboundMessage {
   if (!isObject(data)) return false;
   const { namespace, eventName } = data as { namespace?: unknown; eventName?: unknown };

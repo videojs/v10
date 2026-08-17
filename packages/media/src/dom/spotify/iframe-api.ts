@@ -1,6 +1,5 @@
-// Minimal typings and loader for the Spotify iframe API
-// (https://developer.spotify.com/documentation/embeds/tutorials/using-the-iframe-api).
-// The API arrives from a script tag, so there is no npm SDK to type against.
+// Minimal typings and loader for the Spotify iframe API, which arrives from a script tag with no npm SDK to type
+// against (https://developer.spotify.com/documentation/embeds/tutorials/using-the-iframe-api).
 
 import { loadScript } from '@videojs/utils/dom';
 
@@ -17,11 +16,7 @@ export interface SpotifyPlaybackUpdateEvent {
 }
 
 export interface SpotifyControllerApi {
-  /**
-   * The iframe the controller drives. `createController` never drives the element
-   * it is handed: it builds this one from its own attributes and replaces the
-   * target with it, so this is the embed from then on.
-   */
+  /** The iframe the controller drives, which it builds itself and swaps in for the target it was handed. */
   iframeElement: HTMLIFrameElement;
   /** Swap the embedded entity, named as a `spotify:<type>:<id>` URI. */
   loadUri(uri: string): void;
@@ -45,11 +40,7 @@ export interface SpotifyControllerOptions extends Record<string, unknown> {
 }
 
 export interface SpotifyIframeApi {
-  /**
-   * Build a controller. `target` is replaced by an iframe the controller builds
-   * for itself, so Spotify's own examples hand over a placeholder `<div>` rather
-   * than the embed.
-   */
+  /** Build a controller; `target` is replaced by an iframe of the controller's own, so hand it a placeholder. */
   createController(
     target: HTMLElement,
     options: SpotifyControllerOptions,
@@ -57,8 +48,7 @@ export interface SpotifyIframeApi {
   ): void;
 }
 
-// The URL Spotify's own tutorial tells pages to load. `spotify-audio-element`
-// still points at the older `embed-podcast` path, which serves the same loader.
+// The URL Spotify's own tutorial tells pages to load; the older `embed-podcast` path serves the same loader.
 const API_URL = 'https://open.spotify.com/embed/iframe-api/v1';
 
 interface SpotifyApiGlobals {
@@ -75,12 +65,8 @@ export function loadSpotifyIframeApi(): Promise<SpotifyIframeApi> {
   if (existing) return Promise.resolve(existing);
 
   apiPromise ??= new Promise<SpotifyIframeApi>((resolve, reject) => {
-    // The script hands the API to this global as it evaluates and exposes it no
-    // other way, so the callback has to be in place before the tag is added.
-    // A page that followed Spotify's own instructions has its callback there
-    // already, and the loader fires the global once and only once — a second
-    // script tag reports the API as initialized and does nothing — so taking the
-    // global over means passing the API on to whoever had it.
+    // The script exposes the API through this global as it evaluates and fires it exactly once, so the callback has to
+    // be in place before the tag is added, and taking the global over means passing the API on to whoever had it.
     const hostReady = globals.onSpotifyIframeApiReady;
     globals.onSpotifyIframeApiReady = (api) => {
       // Resolve first: a host callback that throws must not strand this load.
@@ -89,8 +75,7 @@ export function loadSpotifyIframeApi(): Promise<SpotifyIframeApi> {
     };
     loadScript(API_URL).catch(reject);
   }).catch((error: unknown) => {
-    // A failed load must not be the answer forever; drop it so the next host to
-    // ask can try again.
+    // A failed load must not be the answer forever; drop it so the next host to ask can try again.
     apiPromise = null;
     throw error;
   });

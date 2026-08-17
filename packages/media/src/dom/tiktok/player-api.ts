@@ -1,17 +1,12 @@
-// Minimal typings and constants for the TikTok embed player
-// (https://developers.tiktok.com/doc/embed-player).
-// TikTok ships no SDK: the embed is driven with `window.postMessage` in both
-// directions, so the message protocol is the whole API.
+// Minimal typings and constants for the TikTok embed player (https://developers.tiktok.com/doc/embed-player).
+// TikTok ships no SDK: the embed is driven with `window.postMessage` both ways, so the protocol is the whole API.
 
 import { isNumber, isObject, isString } from '@videojs/utils/predicate';
 
 /** Marker every player message carries, whichever way it travels. */
 export const PLAYER_MESSAGE_KEY = 'x-tiktok-player';
 
-/**
- * Target origin for outbound commands. The embed answers from whichever TikTok
- * origin served it and the commands carry nothing private, so they go to any.
- */
+/** Target origin for commands; `*` since the serving TikTok origin varies and commands carry nothing private. */
 export const PLAYER_TARGET_ORIGIN = '*';
 
 /** Commands the embed accepts. Only `seekTo` carries a value: seconds. */
@@ -35,10 +30,7 @@ export type TikTokPlayerEventType =
   /** Deprecated by TikTok in favor of `onPlayerError`; older embeds still report it. */
   | 'onError';
 
-/**
- * A message from the embed. `value` stays unknown: it arrives from another
- * origin, and what it holds depends on `type`.
- */
+/** A message from the embed. `value` stays unknown: it arrives from another origin and depends on `type`. */
 export interface TikTokPlayerEventMessage {
   [PLAYER_MESSAGE_KEY]: true;
   /** Widened past the known events, since the embed can report ones we don't handle. */
@@ -58,21 +50,14 @@ export interface TikTokPlayerError {
   errorType?: string;
 }
 
-// `onPlayerError` codes are grouped in thousand-wide categories: 1000s data and
-// validation (1001 invalid video), 2000s network and infrastructure (2001 server
-// error), 3000s player and runtime (3001 playback, 3002 autoplay). Only the
-// bounds and the one code that is not an error are named; the rest are read by
-// category, so codes TikTok adds later are read the same way.
+// `onPlayerError` codes group in thousand-wide categories: 1000s data and validation, 2000s network, 3000s player.
+// Only the bounds and the one code that is not an error are named, so codes TikTok adds later read by category too.
 export const ERROR_AUTOPLAY = 3002;
 export const ERROR_NETWORK_CATEGORY = 2000;
 export const ERROR_PLAYER_CATEGORY = 3000;
 export const ERROR_CATEGORY_END = 4000;
 
-/**
- * Whether a `message` event's data is one of the embed's messages. Every frame
- * on the page posts to the same window, so the marker is what tells this
- * protocol apart from everyone else's.
- */
+/** Whether a `message` event's data is one of the embed's; every frame posts here, so the marker tells them apart. */
 export function isTikTokPlayerMessage(data: unknown): data is TikTokPlayerEventMessage {
   if (!isObject(data)) return false;
   const message = data as Partial<TikTokPlayerEventMessage>;

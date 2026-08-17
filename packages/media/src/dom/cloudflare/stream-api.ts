@@ -1,14 +1,9 @@
-// Minimal typings and loader for the Cloudflare Stream player SDK
-// (https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/using-the-player-api/).
-// The SDK arrives from a script tag, so there is no npm SDK to type against.
+// Minimal typings and loader for the Cloudflare Stream player SDK, which arrives from a script tag rather than npm.
+// https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/using-the-player-api/
 
 import { loadScript } from '@videojs/utils/dom';
 
-/**
- * The Stream player mimics `HTMLVideoElement`, so its properties, methods, and
- * events are spelled the way the native element spells them. Only the parts of
- * that surface the SDK actually implements are typed here.
- */
+/** The Stream player mimics `HTMLVideoElement`, so only the parts of that surface the SDK implements are typed here. */
 export interface CloudflareStreamPlayerApi {
   play(): Promise<void> | void;
   pause(): void;
