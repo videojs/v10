@@ -406,6 +406,41 @@ describe('createMenu', () => {
       expect(focus).not.toHaveBeenCalled();
     });
 
+    it('does not restore focus when Tab moves focus outside', async () => {
+      const { menu } = createTestMenu();
+      const trigger = document.createElement('button');
+      const content = document.createElement('div');
+      const outside = document.createElement('button');
+      const focus = vi.spyOn(trigger, 'focus');
+
+      menu.setTriggerElement(trigger);
+      menu.setContentElement(content);
+      menu.open();
+      menu.contentProps.onFocusOut(makeFocusEvent(outside));
+
+      await vi.waitFor(() => {
+        expect(menu.input.current.active).toBe(false);
+      });
+
+      expect(focus).not.toHaveBeenCalled();
+    });
+
+    it('does not restore focus after an outside click', async () => {
+      const { menu } = createTestMenu();
+      const trigger = document.createElement('button');
+      const focus = vi.spyOn(trigger, 'focus');
+
+      menu.setTriggerElement(trigger);
+      menu.open();
+      menu.close('outside-click');
+
+      await vi.waitFor(() => {
+        expect(menu.input.current.active).toBe(false);
+      });
+
+      expect(focus).not.toHaveBeenCalled();
+    });
+
     it('does not restore focus when another grouped popup opens', async () => {
       const group = createPopupGroup();
       const first = createTestMenu({ group: () => group });
@@ -691,6 +726,20 @@ describe('createMenu', () => {
 
       expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
       expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it.each(['unavailable', 'unsupported'])('ArrowDown skips %s items', (availability) => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Hidden');
+      const visible = addItem('Visible');
+      hidden.setAttribute('data-availability', availability);
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('ArrowDown preserves position when the highlighted item becomes hidden', () => {

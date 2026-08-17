@@ -25,14 +25,20 @@ function makeDOMRect(x: number, y: number, width: number, height: number): DOMRe
   return new DOMRect(x, y, width, height);
 }
 
-function SubmenuFixture() {
+function SubmenuFixture({
+  onTriggerKeyDown,
+}: {
+  onTriggerKeyDown?: KeyboardEventHandler<HTMLButtonElement | HTMLDivElement>;
+}) {
   return (
     <MenuRoot defaultOpen>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content">
         <div data-testid="root-items">
           <MenuRoot>
-            <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+            <MenuTrigger data-testid="submenu-trigger" {...(onTriggerKeyDown ? { onKeyDown: onTriggerKeyDown } : {})}>
+              Quality
+            </MenuTrigger>
             <MenuContent data-testid="submenu-content">
               <MenuItem data-testid="submenu-back">Back</MenuItem>
               <MenuItem data-testid="submenu-item">Auto</MenuItem>
@@ -98,6 +104,33 @@ function SubmenuPreventDefaultFixture({
             </MenuContent>
           </MenuRoot>
         </div>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
+function NestedTriggerPreventDefaultFixture({
+  onTriggerKeyDown,
+}: {
+  onTriggerKeyDown: KeyboardEventHandler<HTMLButtonElement | HTMLDivElement>;
+}) {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent>
+        <MenuRoot defaultOpen>
+          <MenuTrigger>Quality</MenuTrigger>
+          <MenuContent data-testid="submenu-content">
+            <MenuRoot>
+              <MenuTrigger data-testid="nested-trigger" onKeyDown={onTriggerKeyDown}>
+                Resolution
+              </MenuTrigger>
+              <MenuContent>
+                <MenuItem>1080p</MenuItem>
+              </MenuContent>
+            </MenuRoot>
+          </MenuContent>
+        </MenuRoot>
       </MenuContent>
     </MenuRoot>
   );
@@ -720,6 +753,38 @@ describe('MenuContent', () => {
     expect(screen.getByTestId('root-item').hasAttribute('data-highlighted')).toBe(false);
   });
 
+  it('opens a submenu with ArrowRight', async () => {
+    render(<SubmenuFixture />);
+
+    const trigger = screen.getByTestId('submenu-trigger');
+    fireEvent.keyDown(trigger, { key: 'ArrowRight' });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('submenu-content')).not.toBeNull();
+      expect(screen.getByTestId('submenu-back').hasAttribute('data-highlighted')).toBe(true);
+    });
+  });
+
+  it('honors preventDefault from submenu trigger key handlers', () => {
+    const onKeyDown = vi.fn((event: ReactKeyboardEvent<HTMLElement>) => event.preventDefault());
+    render(<SubmenuFixture onTriggerKeyDown={onKeyDown} />);
+
+    fireEvent.keyDown(screen.getByTestId('submenu-trigger'), { key: 'ArrowRight' });
+
+    expect(onKeyDown).toHaveBeenCalledOnce();
+    expect(screen.queryByTestId('submenu-content')).toBeNull();
+  });
+
+  it('preserves trigger preventDefault while the event bubbles through nested menus', () => {
+    const onKeyDown = vi.fn((event: ReactKeyboardEvent<HTMLElement>) => event.preventDefault());
+    render(<NestedTriggerPreventDefaultFixture onTriggerKeyDown={onKeyDown} />);
+
+    fireEvent.keyDown(screen.getByTestId('nested-trigger'), { key: 'ArrowLeft' });
+
+    expect(onKeyDown).toHaveBeenCalledOnce();
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-ending-style')).toBe(false);
+  });
+
   it('highlights the first item when a submenu becomes active', async () => {
     render(<SubmenuFixture />);
 
@@ -785,6 +850,35 @@ describe('MenuContent', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(false);
+    });
+  });
+
+  it('returns focus after the submenu exit transition completes', async () => {
+    render(<SubmenuFixture />);
+
+    const trigger = screen.getByTestId('submenu-trigger');
+    const focus = vi.spyOn(trigger, 'focus').mockImplementation((options) => {
+      if (!screen.getByTestId('root-items').hasAttribute('inert')) {
+        HTMLElement.prototype.focus.call(trigger, options);
+      }
+    });
+
+    fireEvent.click(trigger);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('submenu-back').hasAttribute('data-highlighted')).toBe(true);
+    });
+
+    fireEvent.click(screen.getByTestId('submenu-back'));
+
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-ending-style')).toBe(true);
+    expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(true);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('submenu-content')).toBeNull();
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(false);
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+      expect(document.activeElement).toBe(trigger);
     });
   });
 

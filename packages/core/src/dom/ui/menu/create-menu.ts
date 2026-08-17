@@ -94,6 +94,8 @@ export interface MenuApi {
   highlight: (element: HTMLElement | null, options?: MenuHighlightOptions) => void;
   /** Programmatically highlight the first registered item. */
   highlightFirstItem: (options?: MenuHighlightOptions) => void;
+  /** Return focus to the trigger when the close reason requires it. */
+  restoreFocus: (options?: FocusOptions) => void;
   open: (reason?: MenuOpenChangeReason) => void;
   close: (reason?: MenuOpenChangeReason) => void;
   /** Commit the open state resolved by the platform adapter. */
@@ -119,7 +121,15 @@ export function createMenu(options: MenuOptions): MenuApi {
   let lastCloseReason: MenuOpenChangeReason | null = null;
 
   function isItemHidden(item: HTMLElement): boolean {
-    return Boolean(item.hidden || item.hasAttribute('data-hidden') || item.getAttribute('aria-hidden') === 'true');
+    const availability = item.getAttribute('data-availability');
+
+    return Boolean(
+      item.hidden ||
+        item.hasAttribute('data-hidden') ||
+        item.getAttribute('aria-hidden') === 'true' ||
+        availability === 'unavailable' ||
+        availability === 'unsupported'
+    );
   }
 
   function getNavigableItems(): HTMLElement[] {
@@ -194,6 +204,23 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function highlightFirstItem(options?: MenuHighlightOptions): void {
     highlight(getNavigableItems()[0] ?? null, options);
+  }
+
+  function restoreFocus(focusOptions?: FocusOptions): void {
+    if (
+      lastCloseReason === 'imperative-action' ||
+      lastCloseReason === 'group-open' ||
+      lastCloseReason === 'blur' ||
+      lastCloseReason === 'outside-click'
+    ) {
+      return;
+    }
+
+    if (focusOptions) {
+      triggerElement?.focus(focusOptions);
+    } else {
+      triggerElement?.focus();
+    }
   }
 
   function getInitialHighlightItem(): HTMLElement | null {
@@ -274,9 +301,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       options.onOpenChangeComplete?.(open);
       // Return focus to the trigger after the close animation completes
       // so screen readers hear the correct context.
-      if (!open && lastCloseReason !== 'imperative-action' && lastCloseReason !== 'group-open') {
-        triggerElement?.focus();
-      }
+      if (!open) restoreFocus();
     },
     closeOnEscape: options.closeOnEscape,
     closeOnOutsideClick: options.closeOnOutsideClick,
@@ -429,6 +454,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     registerSubmenu,
     highlight,
     highlightFirstItem,
+    restoreFocus,
     open: popover.open,
     close: popover.close,
     syncOpen,

@@ -502,9 +502,12 @@ describe('MenuElement', () => {
 
     root.open = true;
     trigger.id = 'child-trigger';
-    trigger.commandfor = 'child-menu';
+    trigger.setAttribute('commandfor', 'child-menu');
     child.id = 'child-menu';
     item.textContent = 'Auto';
+    const focus = vi.spyOn(trigger, 'focus').mockImplementation((options) => {
+      if (!rootItems.hasAttribute('inert')) HTMLElement.prototype.focus.call(trigger, options);
+    });
 
     item.addEventListener('select', onSelect);
     rootItems.append(trigger);
@@ -528,6 +531,7 @@ describe('MenuElement', () => {
     expect(rootItems.hasAttribute('inert')).toBe(true);
     expect(rootItems.getAttribute('aria-hidden')).toBe('true');
     expect(root.getAttribute('data-submenu-expanded')).toBe('true');
+    focus.mockClear();
 
     item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
@@ -544,6 +548,8 @@ describe('MenuElement', () => {
     });
     expect(rootItems.hasAttribute('inert')).toBe(false);
     expect(rootItems.hasAttribute('aria-hidden')).toBe(false);
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(document.activeElement).toBe(trigger);
   });
 
   it('keeps the menu open when a checkbox item is toggled', async () => {

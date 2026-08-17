@@ -16,41 +16,9 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { usePopupPosition } from '../popover/use-popup-position';
 import { useMenuContext } from './context';
+import { callKeyDownHandler, preventMenuKeyDefault } from './menu-keyboard';
 
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
-
-const menuPreventedNativeEvents = new WeakSet<Event>();
-
-function preventMenuKeyDefault(event: React.KeyboardEvent<HTMLDivElement>): void {
-  if (event.key !== 'Escape' && isMenuNavigationKey(event) && !event.defaultPrevented) {
-    event.preventDefault();
-    menuPreventedNativeEvents.add(event.nativeEvent);
-  }
-}
-
-function callKeyDownHandler(
-  handler: React.KeyboardEventHandler<HTMLDivElement> | undefined,
-  event: React.KeyboardEvent<HTMLDivElement>
-): boolean {
-  const defaultPreventedBeforeHandler = event.defaultPrevented && !menuPreventedNativeEvents.has(event.nativeEvent);
-
-  if (!handler) return defaultPreventedBeforeHandler;
-
-  let defaultPreventedByHandler = false;
-  const preventDefault = event.preventDefault;
-  event.preventDefault = () => {
-    defaultPreventedByHandler = true;
-    preventDefault.call(event);
-  };
-
-  try {
-    handler(event);
-  } finally {
-    event.preventDefault = preventDefault;
-  }
-
-  return defaultPreventedBeforeHandler || defaultPreventedByHandler;
-}
 
 /** Container for menu items. Positioned relative to the trigger at root level; renders in-place as a submenu panel when nested. */
 export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function MenuContent(
@@ -85,10 +53,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       return () => cancelAnimationFrame(frame);
     }
 
-    if (!isActive && wasActive) {
-      menu.triggerElement?.focus({ preventScroll: true });
-    }
-
     return undefined;
   }, [isActive, isSubmenu, menu]);
 
@@ -96,7 +60,10 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     (element: HTMLDivElement | null) => {
       menu.setContentElement(element);
       if (!element) {
-        requestAnimationFrame(() => syncMenuSizeChain(parent?.menu.contentElement ?? null));
+        requestAnimationFrame(() => {
+          syncMenuSizeChain(parent?.menu.contentElement ?? null);
+          if (!menu.input.current.active) menu.restoreFocus({ preventScroll: true });
+        });
       }
     },
     [menu, parent]

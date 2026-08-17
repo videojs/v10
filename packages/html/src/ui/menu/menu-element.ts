@@ -282,19 +282,20 @@ export class MenuElement extends MediaElement {
       tabIndex: -1,
     });
 
-    if (isActive && !this.#submenuActive) {
-      this.#menu?.highlightFirstItem({ preventScroll: true });
-    } else if (!isActive && this.#submenuActive) {
-      triggerElement?.focus({ preventScroll: true });
-    }
-
-    this.#submenuActive = isActive;
     this.#cleanupSizeObserver?.();
     const parentContentElement = parentCtx.menu.contentElement;
     const syncSize = () => syncMenuSizeChain(parentContentElement);
     syncSize();
     this.#cleanupSizeObserver =
       isActive && parentContentElement ? observeMenuSize(parentContentElement, syncSize) : null;
+
+    if (isActive && !this.#submenuActive) {
+      this.#menu?.highlightFirstItem({ preventScroll: true });
+    } else if (!isActive && this.#submenuActive) {
+      this.#menu?.restoreFocus({ preventScroll: true });
+    }
+
+    this.#submenuActive = isActive;
   }
 
   #handleContentKeyDown = (event: UIKeyboardEvent): void => {

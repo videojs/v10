@@ -8,16 +8,16 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSafeId } from '../../utils/use-safe-id';
 import { MenuTriggerChildContextProvider, useMenuContext } from './context';
+import { callKeyDownHandler, preventMenuKeyDefault } from './menu-keyboard';
 
-export interface MenuTriggerProps extends Omit<UIComponentProps<'button', MenuState>, 'type'> {
+type MenuTriggerElement = HTMLButtonElement | HTMLDivElement;
+
+export interface MenuTriggerProps
+  extends Omit<UIComponentProps<'button', MenuState>, 'type' | 'onClick' | 'onKeyDown'> {
   /** Disables the trigger. */
   disabled?: boolean;
-}
-
-function preventMenuKeyDefault(event: React.KeyboardEvent<HTMLElement>): void {
-  if (event.key !== 'Escape' && isMenuNavigationKey(event) && !event.defaultPrevented) {
-    event.preventDefault();
-  }
+  onClick?: React.MouseEventHandler<MenuTriggerElement>;
+  onKeyDown?: React.KeyboardEventHandler<MenuTriggerElement>;
 }
 
 /**
@@ -57,7 +57,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
   const handleSubMenuClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
-      (onClick as React.MouseEventHandler<HTMLDivElement> | undefined)?.(event);
+      onClick?.(event);
       if (event.defaultPrevented) return;
       openSubMenu();
     },
@@ -66,8 +66,8 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
   const handleSubMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      (onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined)?.(event);
-      if (disabled || event.defaultPrevented) return;
+      const defaultPreventedByUser = callKeyDownHandler(onKeyDown, event);
+      if (disabled || defaultPreventedByUser) return;
       if (event.key === 'ArrowRight') {
         event.preventDefault();
         openSubMenu();
