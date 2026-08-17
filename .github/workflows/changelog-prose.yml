@@ -87,6 +87,10 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          # The dispatch job relays the release with github.token, so the
+          # workflow_dispatch actor is the Actions bot. claude-code-action
+          # rejects bot actors unless they are listed here.
+          allowed_bots: 'github-actions[bot]'
           claude_args: |
             --model opus
             --max-turns 50
