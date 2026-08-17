@@ -1,11 +1,9 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ImportRef } from '@videojs/compiler/ast';
-import { resolveCatalog } from '@videojs/compiler/catalog';
 import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
 import { createFrameworkSkin, type FrameworkTarget } from '../build/emit/framework/generate';
-import { createShadcnManifest } from '../build/emit/shadcn/manifest';
-import { emitShadcnSources } from '../build/emit/shadcn/source';
+import { emitShadcnRegistry } from '../build/emit/shadcn';
 import type { ReactImportResolver } from '../build/transform/react';
 import type { SkinItemName } from '../canonical/catalog';
 import { skinRegistry } from '../canonical/registry/config';
@@ -104,32 +102,13 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     }
   }
 
-  const resolved = resolveCatalog(catalog, [skinRegistry.skin]);
-  const registrySkin = catalog.items.find((item) => item.type === 'skin' && item.name === skinRegistry.skin);
+  const shadcn = await emitShadcnRegistry(catalog, skinRegistry);
 
-  if (registrySkin?.type !== 'skin') throw new Error(`Registry Skin \`${skinRegistry.skin}\` does not exist.`);
-
-  const output = await emitShadcnSources(catalog, {
-    rootDir: canonicalRoot,
-    itemNames: [...new Set([...resolved.items.map((item) => item.name), ...skinRegistry.items])],
-    variant: registrySkin.style.variant,
-    sourceRoot: skinRegistry.sourceRoot,
-    installAlias: `@/${skinRegistry.installRoot}`,
-    utility: {
-      source: skinRegistry.utilityItem.source,
-      target: skinRegistry.utilityItem.target,
-      importSource: `@/${skinRegistry.installRoot}/${skinRegistry.utilityItem.target.replace(/\.ts$/, '')}`,
-    },
-  });
-
-  const files = await collectGeneratedFiles(
-    [...output.sharedFiles, ...output.utilityFiles, ...Object.values(output.items).flatMap((item) => item.files)],
-    skinRegistry.outputDir
-  );
+  const files = await collectGeneratedFiles(shadcn.files, skinRegistry.outputDir);
 
   files.set(
     posix.join(skinRegistry.outputDir, 'registry.json'),
-    await formatGeneratedFile('registry.json', JSON.stringify(createShadcnManifest(catalog, output, skinRegistry)))
+    await formatGeneratedFile('registry.json', JSON.stringify(shadcn.registry))
   );
 
   await syncGeneratedFiles({

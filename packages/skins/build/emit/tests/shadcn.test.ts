@@ -1,34 +1,19 @@
-import { resolveCatalog } from '@videojs/compiler/catalog';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { skinRegistry } from '../../../../canonical/registry/config';
-import { canonicalRoot, loadSkinCatalog } from '../../../catalog';
-import { createShadcnManifest } from '../manifest';
-import { emitShadcnSources } from '../source';
+import { skinRegistry } from '../../../canonical/registry/config';
+import { loadSkinCatalog } from '../../catalog';
+import { emitShadcnRegistry } from '../shadcn';
 
-describe('createShadcnManifest', () => {
+describe('emitShadcnRegistry', () => {
   it('emits individual React/Tailwind components and a shadcn source manifest', async () => {
     const catalog = await loadSkinCatalog();
-    const output = await emitShadcnSources(catalog, {
-      rootDir: canonicalRoot,
-      sourceRoot: skinRegistry.sourceRoot,
-      itemNames: [
-        ...new Set([
-          ...resolveCatalog(catalog, [skinRegistry.skin]).items.map((item) => item.name),
-          ...skinRegistry.items,
-        ]),
-      ],
-      utility: {
-        source: skinRegistry.utilityItem.source,
-        target: skinRegistry.utilityItem.target,
-        importSource: `@/${skinRegistry.installRoot}/utils`,
-      },
-    });
-    const entry = output.items['play-button']?.files.find((file) => file.path.endsWith('/play-button.tsx'));
-    const posterEntry = output.items.poster?.files.find((file) => file.path.endsWith('/poster.tsx'));
-    const containerEntry = output.items.container?.files.find((file) => file.path.endsWith('/container.tsx'));
-    const overlayEntry = output.items.overlay?.files.find((file) => file.path.endsWith('/overlay.tsx'));
-    const registry = createShadcnManifest(catalog, output, skinRegistry);
+    const output = await emitShadcnRegistry(catalog, skinRegistry);
+    const entry = output.files.find((file) => file.path.endsWith('/play-button/play-button.tsx'));
+    const posterEntry = output.files.find((file) => file.path.endsWith('/poster/poster.tsx'));
+    const containerEntry = output.files.find((file) => file.path.endsWith('/container/container.tsx'));
+    const overlayEntry = output.files.find((file) => file.path.endsWith('/overlay/overlay.tsx'));
+    const skinEntry = output.files.find((file) => file.path.endsWith('/skin.tsx'));
+    const registry = output.registry;
     const playButton = registry.items.find((item) => item.name === 'play-button');
     const publicComponentProps = {
       'airplay-button': 'AirPlayButtonProps',
@@ -53,6 +38,9 @@ describe('createShadcnManifest', () => {
     } as const;
 
     expect(entry?.content).not.toContain('styles/tailwind.css');
+    expect(skinEntry?.content).toContain(
+      'className={cn("media-skin media-skin-video media-theme-default", className)}'
+    );
     expect(posterEntry?.content).toMatch(/from ["']@videojs\/react["']/);
     expect(containerEntry?.content).toMatch(/from ["']@videojs\/react["']/);
     expect(containerEntry?.content).not.toContain('/poster/poster');
@@ -108,13 +96,15 @@ describe('createShadcnManifest', () => {
     const utilityItem = registry.items.find((item) => item.name === skinRegistry.utilityItem.name);
     expect(utilityItem?.type).toBe('registry:lib');
     expect(utilityItem?.files?.map((file) => file.target)).toEqual(['components/videojs/utils.ts']);
-    expect(output.utilityFiles[0]?.content).toContain('export function resolveClassName');
+    expect(output.files.find((file) => file.path.endsWith('/utils.ts'))?.content).toContain(
+      'export function resolveClassName'
+    );
     expect(utilityItem?.files?.[0]?.type).toBe('registry:lib');
     expect(utilityItem?.dependencies).toEqual(['clsx', 'tailwind-merge']);
     const errorDialog = registry.items.find((item) => item.name === 'error-dialog');
     expect(errorDialog?.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);
     for (const [itemName, propsName] of Object.entries(publicComponentProps)) {
-      const source = output.items[itemName]?.files.find((file) => file.path.endsWith(`/${itemName}.tsx`))?.content;
+      const source = output.files.find((file) => file.path.endsWith(`/${itemName}/${itemName}.tsx`))?.content;
       expect(source, itemName).toContain(`export interface ${propsName}`);
       expect(source, itemName).toContain('className');
       expect(registry.items.find((item) => item.name === itemName)?.registryDependencies, itemName).toContain(
@@ -122,9 +112,8 @@ describe('createShadcnManifest', () => {
       );
     }
     const generatedSources = new Map(
-      Object.values(output.items)
-        .flatMap((item) => item.files)
-        .filter((file) => file.kind === 'source')
+      output.files
+        .filter((file) => file.kind === 'source' && file.path.endsWith('.tsx'))
         .map((file) => [file.path, file.content])
     );
     for (const [fileName, content] of generatedSources) {
@@ -144,11 +133,11 @@ describe('createShadcnManifest', () => {
       }
     }
     expect(playButton?.files?.some((file) => file.target?.includes('/styles/'))).toBe(false);
-    const tailwind = output.sharedFiles.find((file) => file.path.endsWith('/styles/tailwind.css'));
+    const tailwind = output.files.find((file) => file.path.endsWith('/styles/tailwind.css'));
     expect(tailwind?.content).not.toContain('--spacing: var(--media-spacing)');
     expect(tailwind?.content).toContain('@import "tailwindcss";');
     expect(tailwind?.content).not.toContain('theme(inline)');
-    const tailwindShared = output.sharedFiles.find((file) => file.path.endsWith('/styles/tailwind.shared.css'));
+    const tailwindShared = output.files.find((file) => file.path.endsWith('/styles/tailwind.shared.css'));
     expect(tailwindShared?.content).toContain('@theme inline {');
   });
 });
