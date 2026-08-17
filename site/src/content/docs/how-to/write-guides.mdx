@@ -27,22 +27,38 @@ Oh hey by the way. A lot of this knowledge is encoded in the `docs` Claude skill
 
 ## 1. Understand our documentation structure
 
-First, read and understand [Diátaxis](https://diataxis.fr/). We organize documentation into three modes:
+There are two structures here, and they don't line up one-to-one. Learn both.
+
+### How readers navigate: three sidebar sections
+
+1. **Getting started**: One reading order, from "should I use this?" through to a player you understand. Most of the docs live here.
+2. **How to**: Recipes for a specific outcome, reached when you already have a player and want it to do one more thing.
+3. **API Reference**: Lookup for every public export.
+
+### How we author: three Diátaxis modes
+
+Read and understand [Diátaxis](https://diataxis.fr/). Each mode has its own directory:
 
 1. **Concept pages** (`src/content/docs/concepts/`): Explain how and why things work — design decisions, trade-offs, and context. General understanding, spanning multiple APIs, can be applied to multiple outcomes. As we write guides, what are things we need people to understand in multiple places and don’t want to duplicate the content? Diátaxis calls this mode "explanation."
 2. **How-to guides** (`src/content/docs/how-to/`): Spans multiple concepts in order to achieve a specific outcome with step-by-step instructions. Address a real user goal, assume competence, and link to concept pages instead of explaining inline.
 3. **Reference pages** (`src/content/docs/reference/`): Component API documentation. These are scaffolded using `write-api-reference` and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
 
 <Aside type="note">
-Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials section yet — something we've intentionally chosen to omit, for now. Learning-oriented content lives in the Getting started how-to guides instead.
+Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials directory, something we've intentionally chosen to omit for now. Learning-oriented content is carried by the order of the Getting started section instead.
 </Aside>
+
+### Where the two structures meet
+
+The Getting started section is deliberately mixed: it holds nearly every concept page plus the few how-to guides a first-time reader needs, in the order we want them read. Diátaxis is a tool for deciding **how to write a page**, not a label we hang over the sidebar — readers don't arrive wanting "explanation," they arrive wanting a player.
+
+So expect a concept page and a how-to guide to sit next to each other in Getting started, and don't let a page's directory decide its section. Sidebar placement is a separate call, made in `src/docs.config.ts`.
 
 To pick a mode, use the Diátaxis [compass](https://diataxis.fr/compass/). Ask two questions: does the content inform **action** (practical steps) or **cognition** (understanding)? And does it serve the reader's **study** (acquiring skills) or their **work** (applying them)?
 
 | | Informs action | Informs cognition |
 |---|---|---|
 | **Serves work** | How-to guide | Reference page |
-| **Serves study** | How-to guide (Getting started) | Concept page |
+| **Serves study** | How-to guide | Concept page |
 
 **When in doubt, write a concept page.** Most new documentation should be concept pages. Use this table to decide between the two:
 
@@ -80,7 +96,12 @@ Optional frontmatter fields:
 
 ## 3. Add that guide to the sidebar
 
-Next, open `src/docs.config.ts` and add your guide to the appropriate section of the sidebar. For example, to add a how-to guide on "Writing guides", you would add:
+Next, open `src/docs.config.ts` and add your guide to the sidebar. Pick the section by asking when a reader needs the page, not by which directory it lives in:
+
+- Would a reader want this on the way to their first working player, or shortly after? **Getting started** — and put it at the point in that list where they'd want it.
+- Is it a one-off task someone comes back for later? **How to**.
+
+For example, to add a how-to guide on "Writing guides", you would add:
 
 ```ts
 {

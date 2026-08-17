@@ -27,7 +27,7 @@ Treat implementation, types, tests, and content schemas as factual sources. Read
    - Code or error examples: the matching file in `patterns/`
    - New artifact scaffold: the matching file in `templates/`
 4. Lead with the user outcome or concept. Use complete, verified examples and explain only non-obvious parts.
-5. Add the sidebar entry and framework/style restrictions for new site pages.
+5. Add the sidebar entry and framework/style restrictions for new site pages. Choose the section by when the reader needs the page, not by the page's directory; `Getting started` holds both concept pages and early how-to guides in one reading order.
 6. Run examples or relevant tests where practical and render affected MDX for every supported variant.
 
 Do not duplicate signatures TypeScript already expresses. API-builder exports are the exception when its tests require structured JSDoc fields.

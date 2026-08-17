@@ -18,40 +18,40 @@ export const sidebar: Sidebar = [
     ],
   },
   {
+    // One reading order, top to bottom. The `concepts/` and `how-to/` directories are an
+    // authoring distinction (Diátaxis mode); they are deliberately not a reader-facing one.
     sidebarLabel: 'Getting started',
-    // May change when we revisit this section's boundary with Concepts (#1105)
-    llmsDescription: 'Installation, project setup, and introductory guides.',
+    llmsDescription:
+      'Read these in order to go from nothing to a player you understand: install it, learn how a player is put together, then learn each piece you are likely to reach for.',
     contents: [
-      { slug: 'how-to/installation' },
+      // Land and install.
       { slug: 'concepts/why-videojs' },
+      { slug: 'how-to/installation' },
       { slug: 'concepts/overview' },
+      // How a player is put together.
+      { slug: 'concepts/presets' },
+      { slug: 'concepts/skins' },
+      { slug: 'concepts/ui-components' },
+      { slug: 'concepts/features' },
+      { slug: 'concepts/media-sources' },
+      // Things every production player has to answer for.
+      { slug: 'concepts/accessibility' },
+      { slug: 'concepts/i18n', sidebarLabel: 'Internationalization' },
+      { slug: 'concepts/security' },
+      { slug: 'concepts/browser-support' },
+      // Optional integrations.
+      { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
+      { slug: 'concepts/mux-data' },
+      // Working with us.
       { slug: 'how-to/build-with-ai' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
       { href: '/changelog', sidebarLabel: 'Changelog' },
-      { slug: 'concepts/browser-support' },
-    ],
-  },
-  {
-    sidebarLabel: 'Concepts',
-    llmsDescription:
-      'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
-    contents: [
-      { slug: 'concepts/features' },
-      { slug: 'concepts/skins' },
-      { slug: 'concepts/presets' },
-      { slug: 'concepts/ui-components' },
-      { slug: 'concepts/accessibility' },
-      { slug: 'concepts/media-sources' },
-      { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
-      { slug: 'concepts/mux-data' },
-      { slug: 'concepts/security' },
-      { slug: 'concepts/i18n', sidebarLabel: 'Internationalization' },
     ],
   },
   {
     sidebarLabel: 'How to',
     llmsDescription:
-      'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
+      'Task-oriented guides with step-by-step instructions to achieve a specific outcome. Each guide may assume you have already read the relevant Getting started pages.',
     contents: [
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/build-your-own-component' },

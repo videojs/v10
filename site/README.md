@@ -118,7 +118,7 @@ You'll learn most of what you need to know about writing guides by reading [`src
 High-level primer?
 
 - Guides are written in MDX and stored in `src/content/docs/`
-- Guides are separated into how-to guides (focused on an outcome) and concept guides (focused on understanding) according to the [Diataxis](https://diataxis.fr) framework.
+- Guides are separated into how-to guides (focused on an outcome) and concept guides (focused on understanding) according to the [Diataxis](https://diataxis.fr) framework. That split is an authoring convention, expressed as directories — it is not what the reader sees. The sidebar sections in [docs.config.ts](src/docs.config.ts) are a separate, reader-facing call, and "Getting started" mixes both kinds of page into one reading order.
 - Astro's [Content Collections API](https://docs.astro.build/en/guides/content-collections/) transforms the MDX into data
 - That data is rendered in `src/pages/docs/framework/[framework]/[...slug].astro`
 - Standard MDX typography is defined in `src/components/typography/`
