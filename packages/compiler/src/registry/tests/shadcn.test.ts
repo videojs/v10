@@ -41,8 +41,15 @@ describe('createShadcnRegistry', () => {
       name: 'example',
       homepage: 'https://example.com',
       namespace: '@example',
-      publishedItems: ['root', 'public'],
-      emittedItems,
+      items: {
+        published: ['root', 'public'],
+        emitted: emittedItems,
+        describe: (item) => ({
+          type: item.type === 'block' ? 'registry:block' : 'registry:component',
+          title: item.title,
+          description: `${item.title}.`,
+        }),
+      },
       shared: [
         {
           name: 'styles',
@@ -52,13 +59,10 @@ describe('createShadcnRegistry', () => {
           files: [{ path: 'styles.css', content: '' }],
         },
       ],
-      describeItem: (item) => ({
-        type: item.type === 'block' ? 'registry:block' : 'registry:component',
-        title: item.title,
-        description: `${item.title}.`,
-      }),
-      registryDependencies: () => ['styles'],
-      mapFile: (file) => ({ path: file.path, target: file.path, type: 'registry:component' }),
+      resolve: {
+        dependencies: () => ['styles'],
+        file: (file) => ({ path: file.path, target: file.path, type: 'registry:component' }),
+      },
     });
 
     expect(registry.items.map((item) => item.name)).toEqual(['styles', 'root', 'public']);

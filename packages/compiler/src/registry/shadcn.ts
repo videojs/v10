@@ -32,15 +32,20 @@ export interface CreateShadcnRegistryOptions<
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
-  readonly publishedItems: readonly CatalogItem<Definition>['name'][];
-  readonly emittedItems: Readonly<Record<string, EmittedRegistryItem<File>>>;
+  readonly items: {
+    readonly published: readonly CatalogItem<Definition>['name'][];
+    readonly emitted: Readonly<Record<string, EmittedRegistryItem<File>>>;
+    describe(item: CatalogItem<Definition>): ShadcnItemDescription;
+  };
   readonly shared?: readonly ShadcnSharedItem<File>[] | undefined;
-  describeItem(item: CatalogItem<Definition>): ShadcnItemDescription;
-  registryDependencies?(context: {
-    readonly item: CatalogItem<Definition>;
-    readonly bundledItems: readonly CatalogItem<Definition>[];
-  }): readonly string[];
-  mapFile(file: File, owner: string): ShadcnRegistryFile;
+  readonly resolve: {
+    /** Add registry dependencies that are not represented by catalog edges. */
+    dependencies?(context: {
+      readonly item: CatalogItem<Definition>;
+      readonly bundledItems: readonly CatalogItem<Definition>[];
+    }): readonly string[];
+    file(file: File, owner: string): ShadcnRegistryFile;
+  };
 }
 
 /** Create a shadcn manifest from emitted catalog sources and publication policy. */
@@ -48,30 +53,31 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
   catalog: Catalog<Definition>,
   options: CreateShadcnRegistryOptions<Definition, File>
 ): ShadcnRegistry {
-  const items = new Map(catalog.items.map((item) => [item.name, item]));
-  const published = new Set<string>(options.publishedItems);
+  const itemsByName = new Map(catalog.items.map((item) => [item.name, item]));
+  const published = new Set<string>(options.items.published);
   const sharedNames = new Set<string>();
+
   for (const shared of options.shared ?? []) {
     if (sharedNames.has(shared.name)) throw new Error(`Registry shared item \`${shared.name}\` is declared twice.`);
     sharedNames.add(shared.name);
-    if (items.has(shared.name)) {
+    if (itemsByName.has(shared.name)) {
       throw new Error(`Registry shared item \`${shared.name}\` conflicts with a catalog item.`);
     }
   }
 
-  const catalogItems = options.publishedItems.map((name): RegistryItem => {
-    const item = items.get(name);
+  const catalogItems = options.items.published.map((name): RegistryItem => {
+    const item = itemsByName.get(name);
     if (!item) throw new Error(`Registry references missing catalog item \`${name}\`.`);
-    const partition = partitionItemDependencies(item, items, published);
+    const partition = partitionItemDependencies(item, itemsByName, published);
     const sources = partition.bundledItems.map((included) => {
-      const source = options.emittedItems[included.name];
+      const source = options.items.emitted[included.name];
       if (!source) throw new Error(`Registry output is missing catalog item \`${included.name}\`.`);
       return source;
     });
-    const { meta, ...metadata } = options.describeItem(item);
+    const { meta, ...metadata } = options.items.describe(item);
     const registryDependencies = [
       ...new Set([
-        ...(options.registryDependencies?.({ item, bundledItems: partition.bundledItems }) ?? []),
+        ...(options.resolve.dependencies?.({ item, bundledItems: partition.bundledItems }) ?? []),
         ...partition.registryItems.map((dependency) => dependency.name),
       ]),
     ]
@@ -81,7 +87,9 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
     return {
       name: item.name,
       ...metadata,
-      files: uniqueFiles(sources.flatMap((source) => source.files).map((file) => options.mapFile(file, item.name))),
+      files: uniqueFiles(
+        sources.flatMap((source) => source.files).map((file) => options.resolve.file(file, item.name))
+      ),
       ...uniqueDependencies(sources.flatMap((source) => source.packageDependencies)),
       registryDependencies,
       ...(meta ? { meta } : {}),
@@ -99,7 +107,7 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
           type: shared.type,
           title: shared.title,
           description: shared.description,
-          files: uniqueFiles(shared.files.map((file) => options.mapFile(file, shared.name))),
+          files: uniqueFiles(shared.files.map((file) => options.resolve.file(file, shared.name))),
           ...(shared.dependencies?.length ? { dependencies: [...shared.dependencies] } : {}),
           ...(shared.meta ? { meta: shared.meta } : {}),
         })

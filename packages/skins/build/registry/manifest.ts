@@ -20,13 +20,21 @@ export function createRegistryManifest(
     name: config.name,
     homepage: config.homepage,
     namespace: config.namespace,
-    publishedItems: config.items,
-    emittedItems: Object.fromEntries(
-      Object.entries(output.items).map(([name, files]) => [
-        name,
-        { files, packageDependencies: output.packageDependenciesByItem[name] ?? [] },
-      ])
-    ),
+    items: {
+      published: config.items,
+      emitted: Object.fromEntries(
+        Object.entries(output.items).map(([name, files]) => [
+          name,
+          { files, packageDependencies: output.packageDependenciesByItem[name] ?? [] },
+        ])
+      ),
+      describe: (item) => ({
+        type: item.type === 'skin' ? 'registry:block' : 'registry:component',
+        title: item.title,
+        description: item.description,
+        meta,
+      }),
+    },
     shared: [
       {
         ...config.styleItem,
@@ -41,18 +49,14 @@ export function createRegistryManifest(
         meta,
       },
     ],
-    describeItem: (item) => ({
-      type: item.type === 'skin' ? 'registry:block' : 'registry:component',
-      title: item.title,
-      description: item.description,
-      meta,
-    }),
-    registryDependencies: ({ bundledItems }) => [
-      config.styleItem.name,
-      ...(bundledItems.some((item) => output.utilityDependenciesByItem[item.name]) ? [config.utilityItem.name] : []),
-    ],
-    mapFile: (file, owner) =>
-      registryFile(file, owner, config, owner === config.utilityItem.name ? 'registry:lib' : undefined),
+    resolve: {
+      dependencies: ({ bundledItems }) => [
+        config.styleItem.name,
+        ...(bundledItems.some((item) => output.utilityDependenciesByItem[item.name]) ? [config.utilityItem.name] : []),
+      ],
+      file: (file, owner) =>
+        registryFile(file, owner, config, owner === config.utilityItem.name ? 'registry:lib' : undefined),
+    },
   });
 }
 
