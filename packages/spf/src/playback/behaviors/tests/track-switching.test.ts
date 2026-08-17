@@ -34,7 +34,9 @@ interface SwitchVideoTrackState {
   bandwidthState?: BandwidthState;
   selectedVideoTrackId?: string;
   userVideoTrackSelection?: Partial<VideoTrack>;
-  playerPixelArea?: number;
+  playerWidth?: number;
+  playerHeight?: number;
+  playerScale?: number;
 }
 
 function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<SwitchVideoTrackState> {
@@ -43,7 +45,9 @@ function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<S
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(initial.userVideoTrackSelection),
-    playerPixelArea: signal<number | undefined>(initial.playerPixelArea),
+    playerWidth: signal<number | undefined>(initial.playerWidth),
+    playerHeight: signal<number | undefined>(initial.playerHeight),
+    playerScale: signal<number | undefined>(initial.playerScale),
   };
 }
 
@@ -460,11 +464,12 @@ describe('switchVideoTrack', () => {
       reactor.destroy();
     });
 
-    it('is inert for a zero-area measurement', async () => {
+    it('is inert for a zero-sized measurement', async () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerPixelArea: 0,
+        playerWidth: 0,
+        playerHeight: 0,
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -478,7 +483,8 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerPixelArea: 1280 * 720,
+        playerWidth: 1280,
+        playerHeight: 720,
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -495,7 +501,8 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerPixelArea: 800 * 450,
+        playerWidth: 800,
+        playerHeight: 450,
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -509,7 +516,8 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerPixelArea: 160 * 90,
+        playerWidth: 160,
+        playerHeight: 90,
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -523,7 +531,8 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerPixelArea: 3840 * 2160,
+        playerWidth: 3840,
+        playerHeight: 2160,
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -537,18 +546,21 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerPixelArea: 1920 * 1080,
+        playerWidth: 1920,
+        playerHeight: 1080,
       });
 
       const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('1080p');
 
-      state.playerPixelArea.set(640 * 360);
+      state.playerWidth.set(640);
+      state.playerHeight.set(360);
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('360p');
 
-      state.playerPixelArea.set(1920 * 1080);
+      state.playerWidth.set(1920);
+      state.playerHeight.set(1080);
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('1080p');
 
@@ -562,7 +574,8 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerPixelArea: 160 * 90,
+        playerWidth: 160,
+        playerHeight: 90,
         userVideoTrackSelection: { width: 1920, height: 1080, bandwidth: 4_800_000 },
       });
 
@@ -578,7 +591,8 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: createBandwidthState(800_000),
-        playerPixelArea: 1280 * 720,
+        playerWidth: 1280,
+        playerHeight: 720,
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -596,12 +610,47 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(withUnsized),
         bandwidthState: ampleBandwidth,
-        playerPixelArea: 160 * 90,
+        playerWidth: 160,
+        playerHeight: 90,
       });
 
       const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('no-resolution');
+
+      reactor.destroy();
+    });
+
+    it('compares in device pixels, scaling the box by the measured ratio', async () => {
+      // A 640×360 CSS box on a 2x display is 1280×720 device pixels, so the
+      // covering tier is 720p rather than the 360p the CSS box alone implies.
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: ampleBandwidth,
+        playerWidth: 640,
+        playerHeight: 360,
+        playerScale: 2,
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      reactor.destroy();
+    });
+
+    it('ignores the measured ratio when useDevicePixelRatio is false', async () => {
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: ampleBandwidth,
+        playerWidth: 640,
+        playerHeight: 360,
+        playerScale: 2,
+      });
+
+      const reactor = switchVideoTrack.setup({ state, config: { playerSizeCap: { useDevicePixelRatio: false } } });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
 
       reactor.destroy();
     });

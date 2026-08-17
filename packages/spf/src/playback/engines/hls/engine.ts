@@ -47,7 +47,7 @@ import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
-import { observePlayerSize, type PlayerSizeCapConfig } from '../../behaviors/dom/observe-player-size';
+import { observePlayerSize } from '../../behaviors/dom/observe-player-size';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -72,7 +72,12 @@ import { type ParsePresentation, resolvePresentation } from '../../behaviors/res
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
-import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import {
+  type PlayerSizeCapConfig,
+  switchAudioTrack,
+  switchTextTrack,
+  switchVideoTrack,
+} from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,
@@ -150,12 +155,15 @@ export interface HlsVideoEngineState {
   errors?: SvtaError[];
   currentTime?: number;
   /**
-   * Rendered area of the attached media element, in device pixels. Owned by
-   * `observePlayerSize`, read by `track-switching`'s `capToPlayerSize`. Absent
-   * or `0` means no measurement — nothing attached, hidden, or not yet laid
-   * out — and the cap goes inert.
+   * Rendered box of the attached media element in CSS pixels, plus the
+   * `devicePixelRatio` it was measured at. Owned by `observePlayerSize`, read by
+   * `track-switching`'s `capToPlayerSize`. All three are absent together when
+   * there's no measurement — nothing attached, hidden, or not yet laid out — and
+   * the cap goes inert.
    */
-  playerPixelArea?: number;
+  playerWidth?: number;
+  playerHeight?: number;
+  playerScale?: number;
   loadActivated?: boolean;
   /**
    * One-shot command: start the current source at this position
@@ -312,10 +320,10 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   quality?: Partial<QualityConfig>;
   /**
-   * Player-size cap tuning, read by `observePlayerSize`: `enabled` stops the
-   * measurement (and with it the cap), `useDevicePixelRatio` switches between
-   * device and CSS pixels. Defaults: `DEFAULT_PLAYER_SIZE_CAP_CONFIG` (both
-   * `true`).
+   * Player-size cap tuning: `enabled` stops the measurement (and with it the
+   * cap), read by `observePlayerSize`; `useDevicePixelRatio` switches the cap
+   * between device and CSS pixels, read by `capToPlayerSize`. Defaults:
+   * `DEFAULT_PLAYER_SIZE_CAP_CONFIG` (both `true`).
    */
   playerSizeCap?: Partial<PlayerSizeCapConfig>;
   /**

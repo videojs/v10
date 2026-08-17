@@ -8,18 +8,12 @@ import {
   type PlayerSizeState,
 } from '../observe-player-size';
 
-// Device-pixel scaling is environment-dependent (headless Chromium reports 1,
-// a retina run reports 2), so every test that asserts an exact area opts out of
-// it. The two DPR tests below stub `devicePixelRatio` and assert the scaling
-// explicitly.
-const CSS_PIXELS: ObservePlayerSizeConfig = { playerSizeCap: { useDevicePixelRatio: false } };
-
 const elements: HTMLElement[] = [];
 
 /**
  * A laid-out `<video>`. Size has to come from a real box in a real document —
- * `clientWidth`/`clientHeight` are 0 on a detached element, which is exactly the
- * "no measurement" case one of the tests covers.
+ * an element that isn't being rendered never gets an observation, which is
+ * exactly the "no measurement" case one of the tests covers.
  */
 function makeVideo(width: number, height: number): HTMLVideoElement {
   const element = document.createElement('video');
@@ -33,7 +27,9 @@ function makeVideo(width: number, height: number): HTMLVideoElement {
 
 function makeState(initial: PlayerSizeState = {}): StateSignals<PlayerSizeState> {
   return {
-    playerPixelArea: signal<number | undefined>(initial.playerPixelArea),
+    playerWidth: signal<number | undefined>(initial.playerWidth),
+    playerHeight: signal<number | undefined>(initial.playerHeight),
+    playerScale: signal<number | undefined>(initial.playerScale),
   };
 }
 
@@ -50,30 +46,35 @@ function setupObservePlayerSize(initialContext: PlayerSizeContext = {}, config?:
   return { state, context, cleanup };
 }
 
+/** The measured box, ignoring the scale (which is environment-dependent). */
+function boxOf(state: StateSignals<PlayerSizeState>) {
+  return { width: state.playerWidth.get(), height: state.playerHeight.get() };
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
   for (const element of elements.splice(0)) element.remove();
 });
 
 describe('observePlayerSize', () => {
-  it('writes the rendered area of the attached media element', async () => {
+  it('writes the rendered box of the attached media element', async () => {
     const mediaElement = makeVideo(320, 180);
 
-    const { state, cleanup } = setupObservePlayerSize({ mediaElement }, CSS_PIXELS);
+    const { state, cleanup } = setupObservePlayerSize({ mediaElement });
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(320 * 180));
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 320, height: 180 }));
 
     cleanup();
   });
 
   it('starts measuring when a media element is attached later', async () => {
-    const { state, context, cleanup } = setupObservePlayerSize({}, CSS_PIXELS);
+    const { state, context, cleanup } = setupObservePlayerSize();
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBeUndefined());
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: undefined, height: undefined }));
 
     context.mediaElement.set(makeVideo(640, 360));
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(640 * 360));
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 640, height: 360 }));
 
     cleanup();
   });
@@ -81,25 +82,28 @@ describe('observePlayerSize', () => {
   it('re-measures when the element resizes', async () => {
     const mediaElement = makeVideo(320, 180);
 
-    const { state, cleanup } = setupObservePlayerSize({ mediaElement }, CSS_PIXELS);
+    const { state, cleanup } = setupObservePlayerSize({ mediaElement });
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(320 * 180));
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 320, height: 180 }));
 
     mediaElement.style.width = '1280px';
     mediaElement.style.height = '720px';
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(1280 * 720));
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 1280, height: 720 }));
 
     cleanup();
   });
 
-  it('writes undefined for a zero-size element so the cap stays inert', async () => {
+  it('leaves the measurement unset for an unrendered element so the cap stays inert', async () => {
     const mediaElement = makeVideo(320, 180);
     mediaElement.style.display = 'none';
 
-    const { state, cleanup } = setupObservePlayerSize({ mediaElement }, CSS_PIXELS);
+    const { state, cleanup } = setupObservePlayerSize({ mediaElement });
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBeUndefined());
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    expect(boxOf(state)).toEqual({ width: undefined, height: undefined });
+    expect(state.playerScale.get()).toBeUndefined();
 
     cleanup();
   });
@@ -107,13 +111,14 @@ describe('observePlayerSize', () => {
   it('clears the measurement when the media element is detached', async () => {
     const mediaElement = makeVideo(320, 180);
 
-    const { state, context, cleanup } = setupObservePlayerSize({ mediaElement }, CSS_PIXELS);
+    const { state, context, cleanup } = setupObservePlayerSize({ mediaElement });
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(320 * 180));
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 320, height: 180 }));
 
     context.mediaElement.set(undefined);
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBeUndefined());
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: undefined, height: undefined }));
+    expect(state.playerScale.get()).toBeUndefined();
 
     cleanup();
   });
@@ -122,41 +127,31 @@ describe('observePlayerSize', () => {
     const first = makeVideo(320, 180);
     const second = makeVideo(640, 360);
 
-    const { state, context, cleanup } = setupObservePlayerSize({ mediaElement: first }, CSS_PIXELS);
+    const { state, context, cleanup } = setupObservePlayerSize({ mediaElement: first });
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(320 * 180));
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 320, height: 180 }));
 
     context.mediaElement.set(second);
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(640 * 360));
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 640, height: 360 }));
 
     first.style.width = '1920px';
     first.style.height = '1080px';
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.playerPixelArea.get()).toBe(640 * 360);
+    expect(boxOf(state)).toEqual({ width: 640, height: 360 });
 
     cleanup();
   });
 
-  it('scales by devicePixelRatio squared by default', async () => {
+  it('records the device pixel ratio alongside the box, without applying it', async () => {
     vi.stubGlobal('devicePixelRatio', 2);
     const mediaElement = makeVideo(320, 180);
 
     const { state, cleanup } = setupObservePlayerSize({ mediaElement });
 
-    // Both axes scale, so the area scales by dpr².
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(320 * 2 * (180 * 2)));
-
-    cleanup();
-  });
-
-  it('ignores devicePixelRatio when useDevicePixelRatio is false', async () => {
-    vi.stubGlobal('devicePixelRatio', 2);
-    const mediaElement = makeVideo(320, 180);
-
-    const { state, cleanup } = setupObservePlayerSize({ mediaElement }, CSS_PIXELS);
-
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(320 * 180));
+    // The box stays in CSS pixels; scaling is the reader's call (capToPlayerSize).
+    await vi.waitFor(() => expect(state.playerScale.get()).toBe(2));
+    expect(boxOf(state)).toEqual({ width: 320, height: 180 });
 
     cleanup();
   });
@@ -168,7 +163,8 @@ describe('observePlayerSize', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.playerPixelArea.get()).toBeUndefined();
+    expect(boxOf(state)).toEqual({ width: undefined, height: undefined });
+    expect(state.playerScale.get()).toBeUndefined();
 
     cleanup();
   });
@@ -176,9 +172,9 @@ describe('observePlayerSize', () => {
   it('stops observing on cleanup', async () => {
     const mediaElement = makeVideo(320, 180);
 
-    const { state, cleanup } = setupObservePlayerSize({ mediaElement }, CSS_PIXELS);
+    const { state, cleanup } = setupObservePlayerSize({ mediaElement });
 
-    await vi.waitFor(() => expect(state.playerPixelArea.get()).toBe(320 * 180));
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 320, height: 180 }));
 
     cleanup();
 
@@ -186,6 +182,6 @@ describe('observePlayerSize', () => {
     mediaElement.style.height = '720px';
     await new Promise((resolve) => setTimeout(resolve, 30));
 
-    expect(state.playerPixelArea.get()).toBe(320 * 180);
+    expect(boxOf(state)).toEqual({ width: 320, height: 180 });
   });
 });
