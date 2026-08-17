@@ -1,8 +1,8 @@
 import { build } from '@videojs/compiler';
+import { resolveCatalog } from '@videojs/compiler/catalog';
 import type { StylePluginOptions } from '@videojs/compiler/styles';
 import { format } from 'oxfmt';
-import { resolveSkinClosure } from '../catalog/resolve';
-import type { ResolvedSkinCatalog } from '../catalog/types';
+import type { SkinCatalog } from '../catalog';
 import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../compiler/html';
 import { skinRootClassName, skinRootComponentName } from '../compiler/skin-root';
 
@@ -14,11 +14,8 @@ interface GenerateHtmlSkinOptions {
   resolveImport?: ((specifier: string) => string) | undefined;
 }
 
-/** Render the complete canonical Skin closure into one HTML template module. */
-export async function generateHtmlSkin(
-  catalog: ResolvedSkinCatalog,
-  options: GenerateHtmlSkinOptions
-): Promise<string> {
+/** Render the complete canonical Skin source graph into one HTML template module. */
+export async function generateHtmlSkin(catalog: SkinCatalog, options: GenerateHtmlSkinOptions): Promise<string> {
   const skin = catalog.items.find((item) => item.name === options.skin);
   if (skin?.type !== 'skin') throw new Error(`Skin \`${options.skin}\` does not exist.`);
   const result = await build({
@@ -45,10 +42,10 @@ export async function generateHtmlSkin(
   return `${imports.map((specifier) => `import '${specifier}';`).join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
 }
 
-function htmlImports(catalog: ResolvedSkinCatalog, skin: string, iconSet: string, markup: string): string[] {
-  const closure = resolveSkinClosure(catalog, skin);
-  const icons = closure.symbols.icons;
-  const components = closure.symbols.components;
+function htmlImports(catalog: SkinCatalog, skin: string, iconSet: string, markup: string): string[] {
+  const resolved = resolveCatalog(catalog, [skin]);
+  const icons = resolved.references.icons;
+  const components = resolved.references.components;
   return [
     ...(icons.length > 0 ? [htmlIconElementImport(iconSet)] : []),
     ...resolveHtmlElementImports(components, markup),

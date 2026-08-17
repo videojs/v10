@@ -29,6 +29,7 @@ describe('checkCanonicalImports', () => {
     const root = setup({
       'components/control.tsx': `
         import type { SeekButtonProps } from '@videojs/core';
+        import { catalog } from '@videojs/compiler/catalog';
         import { styles } from '@videojs/compiler/styles';
         import { Controls } from '@videojs/core/components';
         import { settingsText } from '@videojs/core/i18n/text/menu';
@@ -37,6 +38,7 @@ describe('checkCanonicalImports', () => {
         export { helper } from './helper';
         export type Props = SeekButtonProps;
         void styles;
+        void catalog;
         export const value: ComponentNode | typeof Controls | typeof PlayIcon = settingsText;
       `,
       'components/helper.ts': 'export const helper = true;',

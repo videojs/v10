@@ -1,9 +1,9 @@
 import { posix, resolve } from 'node:path';
 
+import { resolveCatalog } from '@videojs/compiler/catalog';
 import type { StylePluginOptions } from '@videojs/compiler/styles';
 
-import { resolveSkinClosure } from '../catalog/resolve';
-import type { ResolvedSkinCatalog } from '../catalog/types';
+import type { SkinCatalog } from '../catalog';
 import { createCompilerReactConfig, type ReactImportResolver } from '../compiler/react';
 import { emitReactModules } from '../compiler/react-modules';
 import { skinRootClassName, skinRootComponentName } from '../compiler/skin-root';
@@ -17,9 +17,9 @@ interface GenerateReactSkinsOptions {
   resolveImport?: ReactImportResolver | undefined;
 }
 
-/** Transform the complete canonical Skin closure into editable React modules. */
+/** Transform the complete canonical Skin source graph into editable React modules. */
 export async function generateReactSkins(
-  catalog: ResolvedSkinCatalog,
+  catalog: SkinCatalog,
   options: GenerateReactSkinsOptions
 ): Promise<GeneratedFile[]> {
   const skin = catalog.items.find((item) => item.name === options.skin);
@@ -27,8 +27,8 @@ export async function generateReactSkins(
 
   const entryPath = canonicalPath(skin.source);
   const entryDir = posix.dirname(entryPath);
-  const layouts = resolveSkinClosure(catalog, skin.name)
-    .sourceFiles.map(canonicalPath)
+  const layouts = resolveCatalog(catalog, [skin.name])
+    .files.source.map(canonicalPath)
     .map((path) => ({
       inputFile: resolve(options.rootDir, path),
       outputFile: path.startsWith(`${entryDir}/`) ? posix.relative(entryDir, path) : path,

@@ -19,6 +19,14 @@
       "types": "./dist/ast.d.ts",
       "default": "./dist/ast.js"
     },
+    "./catalog": {
+      "types": "./dist/catalog/index.d.ts",
+      "default": "./dist/catalog/index.js"
+    },
+    "./registry": {
+      "types": "./dist/registry/index.d.ts",
+      "default": "./dist/registry/index.js"
+    },
     "./styles": {
       "types": "./dist/styles/index.d.ts",
       "default": "./dist/styles/index.js"

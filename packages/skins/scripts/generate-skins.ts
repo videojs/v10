@@ -1,8 +1,8 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ImportRef } from '@videojs/compiler/ast';
-import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/catalog/load';
-import { resolveSkinClosure } from '../build/catalog/resolve';
+import { resolveCatalog } from '@videojs/compiler/catalog';
+import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
 import type { ReactImportResolver } from '../build/compiler/react';
 import { createFrameworkSkin, type FrameworkProjection } from '../build/framework/generate';
 import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from '../build/output/files';
@@ -97,13 +97,13 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     }
   }
 
-  const closure = resolveSkinClosure(catalog, skinRegistry.skin);
+  const resolved = resolveCatalog(catalog, [skinRegistry.skin]);
   const registrySkin = catalog.items.find((item) => item.type === 'skin' && item.name === skinRegistry.skin);
   if (registrySkin?.type !== 'skin') throw new Error(`Registry Skin \`${skinRegistry.skin}\` does not exist.`);
   const output = await generateReactRegistry(catalog, {
     rootDir: canonicalRoot,
-    itemNames: [...new Set([...closure.items.map((item) => item.name), ...skinRegistry.items])],
-    variant: registrySkin.variant,
+    itemNames: [...new Set([...resolved.items.map((item) => item.name), ...skinRegistry.items])],
+    variant: registrySkin.style.variant,
     sourceRoot: skinRegistry.sourceRoot,
     installAlias: `@/${skinRegistry.installRoot}`,
     utility: {

@@ -1,9 +1,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { catalog, loadCatalog } from '@videojs/compiler/catalog';
 import { afterEach, describe, expect, it } from 'vitest';
-import { canonicalRoot, loadSkinCatalog } from '../../catalog/load';
-import type { ResolvedSkinCatalog } from '../../catalog/types';
+import { canonicalRoot, loadSkinCatalog } from '../../catalog';
 import { generateReactRegistry } from '../source';
 
 const roots: string[] = [];
@@ -62,7 +62,7 @@ describe('generateReactRegistry', () => {
       'styles/base.css': `@layer videojs.base {}`,
       'styles/theme.css': `@layer videojs.theme {}`,
     });
-    const catalog: ResolvedSkinCatalog = {
+    const definition = catalog({
       resources: {
         styles: {
           tailwind: './styles/tailwind.css',
@@ -70,6 +70,7 @@ describe('generateReactRegistry', () => {
           themes: { default: './styles/theme.css' },
         },
       },
+      imports: { '@videojs/core/components': 'components', '@videojs/icons/components': 'icons' },
       items: [
         {
           name: 'entry',
@@ -77,15 +78,12 @@ describe('generateReactRegistry', () => {
           source: './entry.tsx',
           title: 'Entry',
           description: 'Entry.',
-          dependencies: [],
-          sourceFiles: ['./entry.tsx', './helpers/index.ts'],
-          styleFiles: [],
-          symbols: { components: [], icons: [] },
         },
       ],
-    };
+    });
+    const loaded = await loadCatalog(definition, { rootDir: root });
 
-    const output = await generateReactRegistry(catalog, { rootDir: root, itemNames: ['entry'] });
+    const output = await generateReactRegistry(loaded, { rootDir: root, itemNames: ['entry'] });
 
     expect(output.items.entry?.map((file) => file.path)).toEqual([
       'components/entry/entry.tsx',

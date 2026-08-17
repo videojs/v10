@@ -15,7 +15,7 @@ export interface CompileStylesOptions {
   readonly manifest: StyleManifest;
   readonly scope?: string | undefined;
   readonly variant?: string | undefined;
-  /** Restrict CSS emission to semantic class names referenced by the compiled source closure. */
+  /** Restrict CSS emission to semantic class names referenced by the compiled source graph. */
   readonly ruleClassNames?: ReadonlySet<string> | undefined;
 }
 

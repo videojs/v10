@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalRoot, loadSkinCatalog } from '../../catalog/load';
+import { canonicalRoot, loadSkinCatalog } from '../../catalog';
 import { createFrameworkSkin } from '../generate';
 
 describe('createFrameworkSkin', () => {

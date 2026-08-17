@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
-import type { SkinStyleResources } from '../catalog/types';
+import type { SkinStyleResources } from '../../canonical/catalog';
 
 export interface FrameworkStyleFile {
   fileName: string;

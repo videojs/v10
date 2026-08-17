@@ -1,8 +1,8 @@
+import { resolveCatalog } from '@videojs/compiler/catalog';
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { skinRegistry } from '../../../canonical/registry/config';
-import { canonicalRoot, loadSkinCatalog } from '../../catalog/load';
-import { resolveSkinClosure } from '../../catalog/resolve';
+import { canonicalRoot, loadSkinCatalog } from '../../catalog';
 import { createRegistryManifest } from '../manifest';
 import { generateReactRegistry } from '../source';
 
@@ -14,7 +14,7 @@ describe('generateReactRegistry', () => {
       sourceRoot: skinRegistry.sourceRoot,
       itemNames: [
         ...new Set([
-          ...resolveSkinClosure(catalog, skinRegistry.skin).items.map((item) => item.name),
+          ...resolveCatalog(catalog, [skinRegistry.skin]).items.map((item) => item.name),
           ...skinRegistry.items,
         ]),
       ],
