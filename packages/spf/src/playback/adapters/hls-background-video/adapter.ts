@@ -1,7 +1,12 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
+import {
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_VIDEO_FORMAT,
+  type SvtaError,
+} from '../../../media/errors';
 import {
   type BackgroundVideoEngineConfig,
   type BackgroundVideoEngineContext,
@@ -38,13 +43,28 @@ export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps
  * (§Approach: "impact varies with player implementation"), so it's decided at
  * this boundary rather than by the reporter.
  *
- * One code, where the video adapter's list has two: this engine composes video
- * selection alone, so the video verdict is the only verdict it can ever report.
- * The per-rendition causes (unsupported format, unsupported DRM) stay in the
- * sequence as context — one unplayable rendition doesn't fail a source that goes
- * on to play the rest.
+ * **Causes are fatal here, unlike on the other two adapters.** There, a cause is
+ * context — one unplayable rendition doesn't fail a source whose others still
+ * play, and a verdict follows if the type empties. In the pinned variant a cause
+ * *is* the verdict: only the pinned rendition's playlist is ever resolved, so a
+ * cause can only be about the pick itself, and dropping that pick is final —
+ * nothing here re-picks (that is what `switchVideoTrack` exists for, and this
+ * engine doesn't compose it). Measured on Chromium: an MPEG-TS source reports
+ * 1004 and an encrypted one 4008, each with no verdict behind it, and the element
+ * then sits at `readyState 0` with `error` null forever.
+ *
+ * The verdict is still listed, for the one shape that reports nothing else: a
+ * source offering no video renditions at all, which `reportAbsentTrackType`
+ * reports from the head of the constraint chain.
+ *
+ * First-fatal-wins then surfaces the cause rather than the verdict when both are
+ * present, which is the more specific of the two.
  */
-const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_VIDEO_FORMAT,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+]);
 
 /**
  * Mixin that adds the background-video SPF playback engine to any base class,
@@ -130,8 +150,9 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     /**
      * The current fatal condition, or `null`. Only *fatal* ones appear here — the
      * engine reports non-fatal ones too (they stay in `engine.state.errors`), and
-     * promoting them would say playback had failed when it hadn't. Resets per
-     * source. Fires `'error'` when set.
+     * promoting them would say playback had failed when it hadn't. Which ones are
+     * fatal is wider here than on the video and audio Medias; see
+     * {@link FATAL_SVTA_CODES}. Resets per source. Fires `'error'` when set.
      *
      * The reported {@link SvtaError} itself, unmapped: the video and audio Medias
      * translate a condition into an `ErrorLike` for the store's error feature and

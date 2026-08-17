@@ -245,7 +245,7 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 `hls-audio/adapter.ts`, and `hls-background-video/adapter.ts`. Each owns
 `FATAL_SVTA_CODES` (its fatality allow-list — the audio-only set is
 narrower, since it composes no video selection and so can never report
-2011; the background set is narrower still, at 2011 alone), the `error`
+2011; the background set is *wider*, and § below says why), the `error`
 getter, and the `'error'` dispatch. First fatal wins, latched so a later
 append doesn't re-fire, and clearing rides `collectErrors`' per-source
 reset rather than a source-change hook of its own.
@@ -269,6 +269,23 @@ appends into a `video/mp4` SourceBuffer, fires `update` (not `error`), and
 buffers nothing; WebKit demuxes the TS outright. No SourceBuffer error, no
 MediaSource error, no element error on either. The reported sequence, its console
 output, and this surface are the only failure signals that exist.
+
+**And in the pinned variant a cause *is* a verdict**, which is why 1004 and 4008
+join 2011 in its fatal set. Elsewhere a cause is context — one unplayable
+rendition doesn't fail a source whose others still play, and a verdict follows if
+the type empties. Here only the *pinned* rendition's playlist is ever resolved, so
+a cause can only be about the pick itself, and dropping that pick is final:
+`selectVideoTrack` never re-picks, and `switchVideoTrack` isn't composed. Measured
+in the sandbox on Chromium (2026-08-17): an MPEG-TS source reports 1004 alone and
+an encrypted one 4008 alone — no verdict behind either, because the *other*
+renditions were never resolved and so were never pruned, leaving the candidate set
+non-empty while the pick is gone. A verdict-only allow-list left both as silent
+stalls, which is exactly what this surface exists to prevent. First-fatal-wins then
+surfaces the cause over the verdict when a source produces both, which is the more
+specific of the two. Reporting a verdict from the deselect instead was the
+alternative; it stays rejected because selection there deliberately reports
+nothing (the cause is more specific and already logged), and because fatality is
+the adapter's to decide.
 
 Both platform components forward it, since a consumer of either holds the element
 rather than the Media. `<hls-background-video>` re-fires `'error'` on itself and
@@ -376,9 +393,11 @@ limitations*).
   - `packages/spf/src/playback/adapters/hls-background-video/tests/adapter.test.ts`
     → *error surface* — nothing before a report; the verdict surfaces as
     the reported `SvtaError` (no mapping, no `message` invented) and fires
-    `'error'`; a cause on its own stays in the sequence; fires once per
-    distinct condition; clears on per-source reset without announcing the
-    clear
+    `'error'`; a *cause* with no verdict behind it surfaces too, for
+    container and encryption alike (the pinned-variant rule above); 2039
+    stays out of it; the cause wins over the verdict when both are present;
+    fires once per distinct condition; clears on per-source reset without
+    announcing the clear
   - `packages/html/src/media/hls-background-video/tests/media.test.ts` and
     `packages/react/src/media/hls-background-video/tests/media.test.tsx`
     → the forward — the element re-fires `'error'` on itself and exposes
@@ -404,7 +423,15 @@ limitations*).
   source reachable there while the presets that *can* license DRM get the
   playable variants instead. The two SPF background presets
   (`hls-background-video`, `mux-background-video`) take the same source
-  list, so the same failing shapes reach the pinned variant.
+  list, so the same failing shapes reach the pinned variant. Walked on
+  Chromium 2026-08-17 against `html-hls-background-video` and
+  `react-hls-background-video`: `hls-4k` plays and pins 2558x1440 against a
+  3456x2234 screen with an empty sequence and `error` null; `hls-1` (TS)
+  surfaces 1004 and `hls-drm-unlicensed` surfaces 4008, each from a cause
+  with no verdict behind it; `hls-audio-only-cmaf` surfaces 2011; and the
+  event fires once, clears on a new `src`, and re-fires for the next bad
+  source. That walk is what found the verdict-only gap the fatal set now
+  covers.
 - **Out of scope / deferred:**
   - **No E2E for the encrypted path** — no encrypted source is wired into
     the e2e fixtures, so 4008 → 99001 is unit-verified plus manually

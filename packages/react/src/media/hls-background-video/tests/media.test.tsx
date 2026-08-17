@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /** SVTA 2011 — no video track this environment can play. */
 const NO_SUPPORTED_VIDEO_TRACK = 2011;
-/** SVTA 1004 — one rendition's container is unplayable; not a failed source. */
-const UNSUPPORTED_VIDEO_FORMAT = 1004;
+/** SVTA 2039 — a manifest feature went unhonored; degraded but still playable. */
+const MANIFEST_FEATURE_UNSUPPORTED = 2039;
 
 /**
  * The component owns its Media and hands out no reference to it, so the engine
@@ -69,8 +69,8 @@ describe('HlsBackgroundVideo', () => {
       const onError = vi.fn();
       render(<HlsBackgroundVideo src="https://example.com/v.m3u8" onError={onError} />);
 
-      // One unplayable rendition is context, not a failed source.
-      instances[0]?.engine.state.errors.set([{ code: UNSUPPORTED_VIDEO_FORMAT }]);
+      // A degraded-but-playable notice must not reach the surface.
+      instances[0]?.engine.state.errors.set([{ code: MANIFEST_FEATURE_UNSUPPORTED }]);
       await flush();
 
       expect(onError).not.toHaveBeenCalled();
