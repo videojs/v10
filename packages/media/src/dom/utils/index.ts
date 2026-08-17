@@ -8,4 +8,3 @@ export {
 } from './media-components';
 
 export { createTimeRange } from './time-ranges';
-export { tryCall } from './try-call';

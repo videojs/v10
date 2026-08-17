@@ -2,13 +2,13 @@
 // media host (mirrors `dom/youtube`).
 // Source: https://github.com/muxinc/media-elements
 
-import { createPublicPromise, type PublicPromise } from '@videojs/utils/function';
+import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import { MediaError } from '../../core/media-error';
 import type { TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
-import { createTimeRange, tryCall } from '../utils';
+import { createTimeRange } from '../utils';
 import { cloudflareMediaDefaultProps } from './props';
 import { buildCloudflareIframeSrc, type CloudflareSource, parseCloudflareSource } from './source';
 import { type CloudflareStreamApi, type CloudflareStreamPlayerApi, loadCloudflareStreamApi } from './stream-api';
