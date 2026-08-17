@@ -1,33 +1,12 @@
+import { type Registry, type RegistryItem, registrySchema } from 'shadcn/schema';
 import type { CatalogDefinition } from '../catalog/define';
 import type { Catalog, CatalogItem } from '../catalog/resolve';
 import type { EmittedRegistryItem, RegistrySourceFile } from './emit';
 
-type ShadcnRegistryItemType = 'registry:block' | 'registry:component' | 'registry:lib' | 'registry:style';
-export type ShadcnRegistryFileType = 'registry:component' | 'registry:file' | 'registry:lib';
-
-export interface ShadcnRegistryFile {
-  readonly path: string;
-  readonly type: ShadcnRegistryFileType;
-  readonly target: string;
-}
-
-interface ShadcnRegistryItem {
-  readonly name: string;
-  readonly type: ShadcnRegistryItemType;
-  readonly title: string;
-  readonly description: string;
-  readonly files: readonly ShadcnRegistryFile[];
-  readonly dependencies?: readonly string[] | undefined;
-  readonly registryDependencies?: readonly string[] | undefined;
-  readonly meta?: Readonly<Record<string, string>> | undefined;
-}
-
-export interface ShadcnRegistry {
-  readonly $schema: 'https://ui.shadcn.com/schema/registry.json';
-  readonly name: string;
-  readonly homepage: string;
-  readonly items: readonly ShadcnRegistryItem[];
-}
+type ShadcnRegistryItemType = RegistryItem['type'];
+export type ShadcnRegistry = Registry;
+export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
+export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
 interface ShadcnSharedItem<File extends RegistrySourceFile> {
   readonly name: string;
@@ -43,7 +22,7 @@ interface ShadcnItemDescription {
   readonly type: Extract<ShadcnRegistryItemType, 'registry:block' | 'registry:component'>;
   readonly title: string;
   readonly description: string;
-  readonly meta?: Readonly<Record<string, string>> | undefined;
+  readonly meta?: RegistryItem['meta'];
 }
 
 export interface CreateShadcnRegistryOptions<
@@ -80,7 +59,7 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
     }
   }
 
-  const catalogItems = options.publishedItems.map((name): ShadcnRegistryItem => {
+  const catalogItems = options.publishedItems.map((name): RegistryItem => {
     const item = items.get(name);
     if (!item) throw new Error(`Registry references missing catalog item \`${name}\`.`);
     const partition = partitionItemDependencies(item, items, published);
@@ -109,25 +88,28 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
     };
   });
 
-  return {
+  const registry = {
     $schema: 'https://ui.shadcn.com/schema/registry.json',
     name: options.name,
     homepage: options.homepage,
     items: [
       ...(options.shared ?? []).map(
-        (shared): ShadcnRegistryItem => ({
+        (shared): RegistryItem => ({
           name: shared.name,
           type: shared.type,
           title: shared.title,
           description: shared.description,
           files: uniqueFiles(shared.files.map((file) => options.mapFile(file, shared.name))),
-          ...(shared.dependencies?.length ? { dependencies: shared.dependencies } : {}),
+          ...(shared.dependencies?.length ? { dependencies: [...shared.dependencies] } : {}),
           ...(shared.meta ? { meta: shared.meta } : {}),
         })
       ),
       ...catalogItems,
     ],
-  };
+  } satisfies Registry;
+
+  registrySchema.parse(registry);
+  return registry;
 }
 
 function partitionItemDependencies<Definition extends CatalogDefinition>(
@@ -157,14 +139,14 @@ function partitionItemDependencies<Definition extends CatalogDefinition>(
   };
 }
 
-function uniqueDependencies(dependencies: readonly string[]): { dependencies?: readonly string[] } {
+function uniqueDependencies(dependencies: readonly string[]): { dependencies?: string[] } {
   const unique = [...new Set(dependencies)].sort();
   return unique.length > 0 ? { dependencies: unique } : {};
 }
 
 function uniqueFiles(files: readonly ShadcnRegistryFile[]): ShadcnRegistryFile[] {
   const unique = new Map<string, ShadcnRegistryFile>();
-  for (const file of files) unique.set(`${file.path}\0${file.target}`, file);
+  for (const file of files) unique.set(`${file.path}\0${file.target ?? ''}`, file);
   return [...unique.values()].sort((a, b) => a.path.localeCompare(b.path));
 }
 
