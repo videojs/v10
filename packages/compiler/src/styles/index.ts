@@ -19,9 +19,9 @@ export type { DesignSystem } from './design-system';
 
 export type { StyleManifest, StyleManifestRule } from './manifest';
 
-export type { StylePluginOptions, TailwindStyleOptions } from './plugin';
+export type { StyleEmitOptions, StylePluginOptions } from './plugin';
 
-export type { StyleOutput } from './transform';
+export type { StyleMode } from './transform';
 
 /** Create the compiler styles plugin without loading its Node-only backend into authored style modules. */
 export function plugin(options: StylePluginOptions): CompilerPlugin {

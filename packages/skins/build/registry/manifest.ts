@@ -22,12 +22,21 @@ export function createRegistryManifest(
     namespace: config.namespace,
     items: {
       published: config.items,
-      emitted: Object.fromEntries(
-        Object.entries(output.items).map(([name, files]) => [
-          name,
-          { files, packageDependencies: output.packageDependenciesByItem[name] ?? [] },
-        ])
-      ),
+      emitted: output.items,
+      shared: [
+        {
+          ...config.styleItem,
+          type: 'registry:style',
+          files: output.sharedFiles,
+          meta,
+        },
+        {
+          ...config.utilityItem,
+          type: 'registry:lib',
+          files: output.utilityFiles,
+          meta,
+        },
+      ],
       describe: (item) => ({
         type: item.type === 'skin' ? 'registry:block' : 'registry:component',
         title: item.title,
@@ -35,24 +44,10 @@ export function createRegistryManifest(
         meta,
       }),
     },
-    shared: [
-      {
-        ...config.styleItem,
-        type: 'registry:style',
-        files: output.sharedFiles,
-        meta,
-      },
-      {
-        ...config.utilityItem,
-        type: 'registry:lib',
-        files: output.utilityFiles,
-        meta,
-      },
-    ],
     resolve: {
-      dependencies: ({ bundledItems }) => [
+      dependencies: ({ includedItems }) => [
         config.styleItem.name,
-        ...(bundledItems.some((item) => output.utilityDependenciesByItem[item.name]) ? [config.utilityItem.name] : []),
+        ...(includedItems.some((item) => output.items[item.name]?.utilities) ? [config.utilityItem.name] : []),
       ],
       file: (file, owner) =>
         registryFile(file, owner, config, owner === config.utilityItem.name ? 'registry:lib' : undefined),

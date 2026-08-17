@@ -44,7 +44,7 @@ describe('plugin', () => {
   it('discovers style imports and projects the configured Tailwind variant', async () => {
     const result = await transform(component, {
       filename: componentFile,
-      config: { target: jsx(), plugins: [plugin({ output: 'tailwind', variant: 'compact' })] },
+      config: { target: jsx(), plugins: [plugin({ mode: 'tailwind', variant: 'compact' })] },
     });
 
     expect(result.code).toContain('className="grid border-0 p-1 hook"');
@@ -59,7 +59,7 @@ describe('plugin', () => {
     await expect(
       transform(component, {
         filename: componentFile,
-        config: { target: jsx(), plugins: [plugin({ output: 'tailwind', variant: 'unknown' })] },
+        config: { target: jsx(), plugins: [plugin({ mode: 'tailwind', variant: 'unknown' })] },
       })
     ).rejects.toThrow('does not define the `unknown` variant');
   });
@@ -71,10 +71,9 @@ describe('plugin', () => {
         target: jsx(),
         plugins: [
           plugin({
-            output: 'css',
+            mode: 'css',
             variant: 'compact',
-            scope: '.fixture-skin',
-            tailwind: { input: tailwindInput },
+            emit: { input: tailwindInput, scope: '.fixture-skin' },
           }),
         ],
       },

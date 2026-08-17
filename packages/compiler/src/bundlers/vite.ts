@@ -1,17 +1,22 @@
 import { createHash } from 'node:crypto';
-import type { Plugin } from 'vite';
+import { createFilter, type FilterPattern, type Plugin } from 'vite';
 import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../config';
 import { type LoadedCompilerConfig, loadConfig } from '../load-config';
 import { CompilerError, transform } from '../transform';
 
-export interface VideojsCompilerPluginOptions {
-  config?: CompilerConfig | undefined;
-  configFile?: string | undefined;
-  include?: readonly CompilerFilter[] | undefined;
-  exclude?: readonly CompilerFilter[] | undefined;
-}
-
-export type CompilerFilter = string | RegExp;
+export type VideojsCompilerPluginOptions = {
+  include?: FilterPattern | undefined;
+  exclude?: FilterPattern | undefined;
+} & (
+  | {
+      config?: CompilerConfig | undefined;
+      configFile?: never;
+    }
+  | {
+      config?: never;
+      configFile?: string | undefined;
+    }
+);
 
 type ViteHookContext<Hook> = Hook extends (this: infer Context, ...args: never[]) => unknown
   ? Context
@@ -25,8 +30,7 @@ type VitePluginDiagnostic = ViteTransformContext extends { error: (...args: infe
   : string;
 
 export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin {
-  const include = options.include ?? ['.tsx'];
-  const exclude = options.exclude ?? [];
+  const filter = createFilter(options.include ?? /\.tsx$/, options.exclude);
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
   let root = process.cwd();
@@ -60,8 +64,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       if (loadedConfig?.configPath === id) loadedConfig = undefined;
     },
     async transform(code, id) {
-      if (!include.some((filter) => matchesFilter(id, filter))) return null;
-      if (exclude.some((filter) => matchesFilter(id, filter))) return null;
+      if (!filter(id)) return null;
 
       const { config, configDir, configPath } = await getConfig();
       if (configPath) this.addWatchFile(configPath);
@@ -107,12 +110,6 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       };
     },
   };
-}
-
-function matchesFilter(id: string, filter: CompilerFilter): boolean {
-  if (typeof filter === 'string') return id.endsWith(filter);
-  filter.lastIndex = 0;
-  return filter.test(id);
 }
 
 function cssVirtualId(fileName: string, source: string): string {

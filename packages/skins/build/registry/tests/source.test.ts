@@ -26,13 +26,13 @@ describe('generateReactRegistry', () => {
     });
 
     expect(Object.keys(output.items)).toEqual(['default-video', 'play-button']);
-    expect(output.items['default-video']?.some((file) => file.path === 'skin.tsx')).toBe(true);
-    expect(output.items['default-video']?.find((file) => file.path === 'skin.tsx')?.content).toContain(
+    expect(output.items['default-video']?.files.some((file) => file.path === 'skin.tsx')).toBe(true);
+    expect(output.items['default-video']?.files.find((file) => file.path === 'skin.tsx')?.content).toContain(
       'className={cn("media-skin media-skin-video media-theme-default", className)}'
     );
-    expect(output.items['play-button']?.some((file) => file.path === 'components/play-button/play-button.tsx')).toBe(
-      true
-    );
+    expect(
+      output.items['play-button']?.files.some((file) => file.path === 'components/play-button/play-button.tsx')
+    ).toBe(true);
     expect(output.sharedFiles.map((file) => file.path)).toEqual([
       'styles/tailwind.css',
       'styles/base.css',
@@ -43,15 +43,16 @@ describe('generateReactRegistry', () => {
     ]);
     expect(output.utilityFiles.map((file) => file.path)).toEqual(['utils.ts']);
     expect(output.utilityFiles[0]?.content).toContain('twMerge(clsx(inputs))');
-    expect(output.items['default-video']?.find((file) => file.path === 'skin.tsx')?.content).toMatch(
+    expect(output.items['default-video']?.files.find((file) => file.path === 'skin.tsx')?.content).toMatch(
       /from ["']@\/components\/videojs\/utils["']/
     );
     expect(
       Object.values(output.items)
-        .flat()
+        .flatMap((item) => item.files)
         .every((file) => file.kind === 'source')
     ).toBe(true);
-    expect(output.packageDependenciesByItem['play-button']).toEqual(['@videojs/react']);
+    expect(output.items['play-button']?.dependencies).toEqual(['@videojs/react']);
+    expect(output.items['play-button']?.utilities).toBe(true);
   });
 
   it('emits private helper modules without promoting them to catalog items', async () => {
@@ -85,14 +86,15 @@ describe('generateReactRegistry', () => {
 
     const output = await generateReactRegistry(loaded, { rootDir: root, itemNames: ['entry'] });
 
-    expect(output.items.entry?.map((file) => file.path)).toEqual([
+    expect(output.items.entry?.files.map((file) => file.path)).toEqual([
       'components/entry/entry.tsx',
       'components/entry/helpers/index.ts',
     ]);
-    expect(output.items.entry?.find((file) => file.path.endsWith('entry.tsx'))?.content).toContain(
+    expect(output.items.entry?.files.find((file) => file.path.endsWith('entry.tsx'))?.content).toContain(
       'from "./helpers/index"'
     );
-    expect(output.packageDependenciesByItem.entry).toEqual(['react']);
+    expect(output.items.entry?.dependencies).toEqual(['react']);
+    expect(output.items.entry?.utilities).toBe(false);
     expect(output.sharedFiles.find((file) => file.path === 'styles/tailwind.css')?.content).toContain(
       '@layer theme, base, videojs.base, components, utilities;'
     );

@@ -16,14 +16,16 @@ export default defineConfig({
   root: resolve(packageDir, 'dev'),
   plugins: [
     compiler({
-      include: [new RegExp(`^${escapeRegExp(canonicalDir)}/.*\\.tsx$`)],
+      include: `${canonicalDir}/**/*.tsx`,
       config: createCompilerReactConfig({
         rootClassName: 'media-skin media-skin-video media-theme-default',
         styles: {
-          output: 'css',
+          mode: 'css',
           variant: 'default',
-          scope: '.media-skin-video',
-          tailwind: { input: resolve(canonicalDir, 'styles/tailwind.css') },
+          emit: {
+            input: resolve(canonicalDir, 'styles/tailwind.css'),
+            scope: '.media-skin-video',
+          },
         },
       }),
     }),
@@ -57,7 +59,3 @@ export default defineConfig({
     ],
   },
 });
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}

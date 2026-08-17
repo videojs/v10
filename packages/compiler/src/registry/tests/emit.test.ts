@@ -32,11 +32,17 @@ describe('emitRegistry', () => {
 
     const output = await emitRegistry(loaded, {
       items: ['entry', 'dependency'],
-      outputFile({ item, sourceFile }) {
-        return sourceFile === item.source ? `${item.name}/index.ts` : `${item.name}/${sourceFile.slice(2)}`;
+      compiler: {
+        config: () => defineConfig({ target: jsx() }),
       },
-      config: () => defineConfig({ target: jsx() }),
-      resolveImport: ({ dependency }) => `@/components/${dependency.name}`,
+      resolve: {
+        file({ item, sourceFile }) {
+          return sourceFile === item.source ? `${item.name}/index.ts` : `${item.name}/${sourceFile.slice(2)}`;
+        },
+        imports: {
+          dependency: ({ dependency }) => `@/components/${dependency.name}`,
+        },
+      },
     });
 
     expect(Object.keys(output.items)).toEqual(['dependency', 'entry']);
@@ -47,7 +53,7 @@ describe('emitRegistry', () => {
     expect(output.items.entry?.files.find((file) => file.path === 'entry/index.ts')?.content).toMatch(
       /from ["']\.\/private\/helper["']/
     );
-    expect(output.items.entry?.packageDependencies).toEqual(['react']);
+    expect(output.items.entry?.dependencies).toEqual(['react']);
     expect(output.items.unused).toBeUndefined();
   });
 });

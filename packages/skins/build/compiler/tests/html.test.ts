@@ -20,7 +20,7 @@ describe('createCompilerHtmlConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerHtmlConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
       }),
     });
 
@@ -54,7 +54,7 @@ describe('createCompilerHtmlConfig', () => {
     const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
     const posterSource = await readFile(posterFilename, 'utf8');
     const config = createCompilerHtmlConfig({
-      styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+      styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
     });
     const result = await transform(source, {
       filename,
@@ -83,7 +83,7 @@ describe('createCompilerHtmlConfig', () => {
 }`,
       {
         config: createCompilerHtmlConfig({
-          styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+          styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         }),
       }
     );

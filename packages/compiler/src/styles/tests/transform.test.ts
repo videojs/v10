@@ -49,7 +49,7 @@ describe('plugin static references', () => {
       filename,
       config: {
         target: jsx(),
-        plugins: [plugin({ manifest, output: 'tailwind', composeClassNames: true })],
+        plugins: [plugin({ manifest, mode: 'tailwind', compose: true })],
       },
     });
 
@@ -69,7 +69,7 @@ describe('plugin static references', () => {
         `import styles from './fixture.styles'; const button = styles.button; export const Example = () => <div className={button} />;`,
         {
           filename,
-          config: { target: jsx(), plugins: [plugin({ manifest, output: 'css' })] },
+          config: { target: jsx(), plugins: [plugin({ manifest, mode: 'css' })] },
         }
       )
     ).rejects.toThrow('must use static className references');
@@ -81,7 +81,7 @@ describe('plugin static references', () => {
         `import styles from './fixture.styles'; export const Example = ({ enabled }) => <div className={enabled && styles.button} />;`,
         {
           filename,
-          config: { target: jsx(), plugins: [plugin({ manifest, output: 'css' })] },
+          config: { target: jsx(), plugins: [plugin({ manifest, mode: 'css' })] },
         }
       )
     ).rejects.toThrow('must use static className references');
@@ -92,7 +92,7 @@ describe('plugin static references', () => {
       `import styles from './fixture.styles'; const value = { styles: true }; export const Example = () => <div className={styles.button}>{value.styles}</div>;`,
       {
         filename,
-        config: { target: jsx(), plugins: [plugin({ manifest, output: 'css' })] },
+        config: { target: jsx(), plugins: [plugin({ manifest, mode: 'css' })] },
       }
     );
 
@@ -101,12 +101,12 @@ describe('plugin static references', () => {
   });
 });
 
-function compileWithStyle(output: 'tailwind' | 'css') {
+function compileWithStyle(mode: 'tailwind' | 'css') {
   return transform(source, {
     filename,
     config: {
       target: jsx(),
-      plugins: [plugin({ manifest, output })],
+      plugins: [plugin({ manifest, mode })],
     },
   });
 }

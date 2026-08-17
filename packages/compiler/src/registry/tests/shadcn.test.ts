@@ -32,7 +32,7 @@ describe('createShadcnRegistry', () => {
         item.name,
         {
           files: [{ path: `${item.name}.ts`, content: '' }],
-          packageDependencies: item.name === 'private' ? ['private-package'] : [],
+          dependencies: item.name === 'private' ? ['private-package'] : [],
         },
       ])
     );
@@ -44,21 +44,21 @@ describe('createShadcnRegistry', () => {
       items: {
         published: ['root', 'public'],
         emitted: emittedItems,
+        shared: [
+          {
+            name: 'styles',
+            type: 'registry:style',
+            title: 'Styles',
+            description: 'Shared styles.',
+            files: [{ path: 'styles.css', content: '' }],
+          },
+        ],
         describe: (item) => ({
           type: item.type === 'block' ? 'registry:block' : 'registry:component',
           title: item.title,
           description: `${item.title}.`,
         }),
       },
-      shared: [
-        {
-          name: 'styles',
-          type: 'registry:style',
-          title: 'Styles',
-          description: 'Shared styles.',
-          files: [{ path: 'styles.css', content: '' }],
-        },
-      ],
       resolve: {
         dependencies: () => ['styles'],
         file: (file) => ({ path: file.path, target: file.path, type: 'registry:component' }),

@@ -60,7 +60,7 @@ export async function createFrameworkSkin(
           skin: skin.name,
           entryFile,
           iconSet,
-          styles: { output: 'css', manifest: styles, variant: skin.style.variant },
+          styles: { mode: 'css', manifest: styles, variant: skin.style.variant },
           ...(projection.resolveImport ? { resolveImport: projection.resolveImport } : {}),
         }),
       });
@@ -69,7 +69,7 @@ export async function createFrameworkSkin(
         rootDir: options.rootDir,
         skin: skin.name,
         iconSet,
-        styles: { output: 'css', manifest: styles, variant: skin.style.variant },
+        styles: { mode: 'css', manifest: styles, variant: skin.style.variant },
         ...(projection.resolveImport ? { resolveImport: projection.resolveImport } : {}),
       });
       for (const file of reactFiles) {

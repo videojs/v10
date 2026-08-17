@@ -38,6 +38,22 @@ const createCssPlugin = (source: string): CompilerPlugin => ({
 });
 
 describe('vjsCompiler', () => {
+  it('uses Vite filter patterns for included and excluded modules', async () => {
+    const plugin = createPlugin({
+      config: {},
+      include: '**/*.tsx',
+      exclude: '**/*.test.tsx',
+    });
+
+    expect(await plugin.transform.call(createContext(), 'export const value = 1;', '/workspace/value.ts')).toBeNull();
+    expect(
+      await plugin.transform.call(createContext(), 'export const View = <div/>;', '/workspace/view.test.tsx')
+    ).toBeNull();
+    expect(
+      await plugin.transform.call(createContext(), 'export const View = <div/>;', '/workspace/view.tsx')
+    ).not.toBeNull();
+  });
+
   it('imports emitted CSS assets as virtual modules', async () => {
     const plugin = createPlugin({ config: { plugins: [createCssPlugin('.foo{display:flex;}')] } });
 

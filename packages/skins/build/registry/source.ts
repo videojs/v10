@@ -16,12 +16,16 @@ export interface SkinRegistryFile extends RegistrySourceFile {
   kind: RegistrySourceFileKind;
 }
 
+export interface RegistrySourceItem {
+  files: readonly SkinRegistryFile[];
+  dependencies: readonly string[];
+  utilities: boolean;
+}
+
 export interface RegistrySourceOutput {
   sharedFiles: readonly SkinRegistryFile[];
   utilityFiles: readonly SkinRegistryFile[];
-  items: Readonly<Record<string, readonly SkinRegistryFile[]>>;
-  packageDependenciesByItem: Readonly<Record<string, readonly string[]>>;
-  utilityDependenciesByItem: Readonly<Record<string, boolean>>;
+  items: Readonly<Record<string, RegistrySourceItem>>;
 }
 
 interface GenerateReactRegistryOptions {
@@ -66,33 +70,39 @@ export async function generateReactRegistry(
   const styles = await loadCatalogStyles(catalog, itemNames);
   const emitted = await emitRegistry(catalog, {
     items: itemNames,
-    outputFile: ({ item, sourceFile }) => registrySourceOutput(item, sourceFile, resolved),
-    config: (item) => createRegistryCompilerConfig(item, resolved, styles),
-    configDir: (item) => resolve(resolved.rootDir, registryItemDir(item, resolved)),
-    resolveImport: ({ dependency }) => {
-      const entryFile = registrySourceOutput(dependency, dependency.source, resolved);
-      return `${installAlias}/${dependency.name}/${withoutTypeScriptExtension(posix.basename(entryFile))}`;
+    compiler: {
+      config: (item) => createRegistryCompilerConfig(item, resolved, styles),
+      configDir: (item) => resolve(resolved.rootDir, registryItemDir(item, resolved)),
+    },
+    resolve: {
+      file: ({ item, sourceFile }) => registrySourceOutput(item, sourceFile, resolved),
+      imports: {
+        dependency: ({ dependency }) => {
+          const entryFile = registrySourceOutput(dependency, dependency.source, resolved);
+          return `${installAlias}/${dependency.name}/${withoutTypeScriptExtension(posix.basename(entryFile))}`;
+        },
+      },
     },
   });
-  const items: Record<string, SkinRegistryFile[]> = {};
-  const packageDependenciesByItem: Record<string, string[]> = {};
-  const utilityDependenciesByItem: Record<string, boolean> = {};
+  const items: Record<string, RegistrySourceItem> = {};
 
   for (const [name, item] of Object.entries(emitted.items)) {
     if (!item) continue;
     const files = item.files.map((file) => createRegistrySourceFile(file.path, file.content));
-    items[name] = files;
-    packageDependenciesByItem[name] = [...item.packageDependencies];
-    utilityDependenciesByItem[name] = resolved.utility
-      ? files.some((file) => collectModuleSpecifiers(file.content, file.path).includes(resolved.utility!.importSource))
-      : false;
+    items[name] = {
+      files,
+      dependencies: item.dependencies,
+      utilities: resolved.utility
+        ? files.some((file) =>
+            collectModuleSpecifiers(file.content, file.path).includes(resolved.utility!.importSource)
+          )
+        : false,
+    };
   }
   return {
     sharedFiles: await createStyleResourceFiles(catalog.resources.styles, resolved),
     utilityFiles: await createUtilityFiles(resolved),
     items,
-    packageDependenciesByItem,
-    utilityDependenciesByItem,
   };
 }
 
@@ -209,10 +219,10 @@ function createRegistryCompilerConfig(
 ) {
   return createCompilerReactConfig({
     styles: {
-      output: 'tailwind',
+      mode: 'tailwind',
       manifest: styles,
       variant: options.variant,
-      composeClassNames: Boolean(options.utility),
+      compose: Boolean(options.utility),
     },
     iconSet: options.iconSet,
     extendComponents: Boolean(options.utility),

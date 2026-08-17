@@ -8,7 +8,7 @@ import { collectReferencedIdentifiers } from '../utils/references';
 import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';
 import { isGroupPeerMarker, ruleForToken, type StyleManifest, utilityGroupsForRule } from './manifest';
 
-export type StyleOutput = 'tailwind' | 'css';
+export type StyleMode = 'tailwind' | 'css';
 
 interface TokenReference {
   modulePath: string;
@@ -28,9 +28,9 @@ interface ResolvedClassName {
 
 export interface StyleTransformOptions {
   manifest: StyleManifest;
-  output: StyleOutput;
+  mode: StyleMode;
   variant?: string | undefined;
-  composeClassNames?: boolean | undefined;
+  compose?: boolean | undefined;
 }
 
 /** Project explicit style references to Tailwind utilities or semantic classes. */
@@ -87,7 +87,7 @@ function transformStyleAttribute(
     if (!whenTrue || !whenFalse || whenTrue.passThrough.length > 0 || whenFalse.passThrough.length > 0) {
       return info.element;
     }
-    const composition = options.composeClassNames
+    const composition = options.compose
       ? composeConditionalClasses(info.expression, whenTrue.classes, whenFalse.classes, factory)
       : undefined;
     const replacement = composition
@@ -106,7 +106,7 @@ function transformStyleAttribute(
 
   const resolved = resolveSegments(info.segments, bindings, options);
   if (!resolved || (resolved.classes.length === 0 && resolved.passThrough.length === 0)) return info.element;
-  if (options.composeClassNames && resolved.groups.length + resolved.passThrough.length > 1) {
+  if (options.compose && resolved.groups.length + resolved.passThrough.length > 1) {
     return replaceJsxPropValue(
       info,
       factory.createArrayLiteralExpression([
@@ -223,14 +223,14 @@ function resolveSegments(
       passThrough.push(segment.node);
       continue;
     }
-    if (options.output === 'css') {
+    if (options.mode === 'css') {
       addGroup([rule.className]);
     } else {
       for (const group of utilityGroupsForRule(rule, options.variant)) addGroup(splitClasses(group));
     }
   }
 
-  if (options.output === 'css') {
+  if (options.mode === 'css') {
     const outputClasses = classes.filter((className) => !isGroupPeerMarker(className));
     return { classes: outputClasses, groups: groups.filter((group) => !isGroupPeerMarker(group)), passThrough };
   }

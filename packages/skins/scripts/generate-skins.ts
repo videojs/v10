@@ -113,7 +113,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     },
   });
   const files = await collectGeneratedFiles(
-    [...output.sharedFiles, ...output.utilityFiles, ...Object.values(output.items).flat()],
+    [...output.sharedFiles, ...output.utilityFiles, ...Object.values(output.items).flatMap((item) => item.files)],
     skinRegistry.outputDir
   );
   files.set(

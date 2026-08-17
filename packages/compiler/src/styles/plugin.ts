@@ -8,26 +8,35 @@ import type { CompilerContext, CompilerPipelineStep, CompilerPlugin } from '../c
 import { compileStyles } from './compile';
 import { type DesignSystem, loadDesignSystem } from './design-system';
 import { loadStyleManifest, type StyleManifest } from './manifest';
-import { createStyleTransform, type StyleOutput } from './transform';
+import { createStyleTransform } from './transform';
 
-export interface TailwindStyleOptions {
+export interface StyleEmitOptions {
   /** Tailwind CSS entry used to resolve utilities, theme tokens, and variants. */
   readonly input: string;
-}
-
-export interface StylePluginOptions {
-  readonly output: StyleOutput;
-  /** Variant utilities to append to every rule's base utilities. */
-  readonly variant?: string | undefined;
-  /** Preserve authored utility groups as class-name arrays for editable source output. */
-  readonly composeClassNames?: boolean | undefined;
   /** Optional selector wrapped around emitted CSS with `@scope`. */
   readonly scope?: string | undefined;
-  /** Enables CSS asset generation for `output: 'css'`. */
-  readonly tailwind?: TailwindStyleOptions | undefined;
+}
+
+interface StylePluginBaseOptions {
+  /** Variant utilities to append to every rule's base utilities. */
+  readonly variant?: string | undefined;
   /** Preloaded definitions for programmatic builds; imports are discovered by default. */
   readonly manifest?: StyleManifest | undefined;
 }
+
+export type StylePluginOptions =
+  | (StylePluginBaseOptions & {
+      readonly mode: 'tailwind';
+      /** Preserve authored utility groups as class-name arrays for editable source output. */
+      readonly compose?: boolean | undefined;
+      readonly emit?: never;
+    })
+  | (StylePluginBaseOptions & {
+      readonly mode: 'css';
+      readonly compose?: never;
+      /** Emit vanilla CSS assets in addition to projecting semantic class names. */
+      readonly emit?: StyleEmitOptions | undefined;
+    });
 
 /** Project imported style references and optionally emit their vanilla CSS assets. */
 export function plugin(options: StylePluginOptions): CompilerPlugin {
@@ -47,14 +56,15 @@ export function plugin(options: StylePluginOptions): CompilerPlugin {
       const step: CompilerPipelineStep = {
         transform: createStyleTransform({
           manifest,
-          output: options.output,
+          mode: options.mode,
           ...(options.variant ? { variant: options.variant } : {}),
-          ...(options.composeClassNames ? { composeClassNames: true } : {}),
+          ...(options.mode === 'tailwind' && options.compose ? { compose: true } : {}),
         }),
       };
 
-      if (options.output === 'css' && options.tailwind) {
-        const input = configPath(options.tailwind.input, context.configDir);
+      if (options.mode === 'css' && options.emit) {
+        const emit = options.emit;
+        const input = configPath(emit.input, context.configDir);
 
         context.addWatchFile(input);
 
@@ -62,7 +72,7 @@ export function plugin(options: StylePluginOptions): CompilerPlugin {
           const assets = await compileStyles({
             design: await cachedDesignSystem(designs, input),
             manifest,
-            ...(options.scope ? { scope: options.scope } : {}),
+            ...(emit.scope ? { scope: emit.scope } : {}),
             ...(options.variant ? { variant: options.variant } : {}),
           });
 

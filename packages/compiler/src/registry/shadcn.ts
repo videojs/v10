@@ -34,17 +34,17 @@ export interface CreateShadcnRegistryOptions<
   readonly namespace: string;
   readonly items: {
     readonly published: readonly CatalogItem<Definition>['name'][];
-    readonly emitted: Readonly<Record<string, EmittedRegistryItem<File>>>;
+    readonly emitted: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedRegistryItem<File>>>>;
+    readonly shared?: readonly ShadcnSharedItem<File>[] | undefined;
     describe(item: CatalogItem<Definition>): ShadcnItemDescription;
   };
-  readonly shared?: readonly ShadcnSharedItem<File>[] | undefined;
   readonly resolve: {
     /** Add registry dependencies that are not represented by catalog edges. */
     dependencies?(context: {
       readonly item: CatalogItem<Definition>;
-      readonly bundledItems: readonly CatalogItem<Definition>[];
+      readonly includedItems: readonly CatalogItem<Definition>[];
     }): readonly string[];
-    file(file: File, owner: string): ShadcnRegistryFile;
+    file(file: File, itemName: string): ShadcnRegistryFile;
   };
 }
 
@@ -57,7 +57,7 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
   const published = new Set<string>(options.items.published);
   const sharedNames = new Set<string>();
 
-  for (const shared of options.shared ?? []) {
+  for (const shared of options.items.shared ?? []) {
     if (sharedNames.has(shared.name)) throw new Error(`Registry shared item \`${shared.name}\` is declared twice.`);
     sharedNames.add(shared.name);
     if (itemsByName.has(shared.name)) {
@@ -69,15 +69,15 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
     const item = itemsByName.get(name);
     if (!item) throw new Error(`Registry references missing catalog item \`${name}\`.`);
     const partition = partitionItemDependencies(item, itemsByName, published);
-    const sources = partition.bundledItems.map((included) => {
-      const source = options.items.emitted[included.name];
+    const sources = partition.includedItems.map((included) => {
+      const source = options.items.emitted[included.name as CatalogItem<Definition>['name']];
       if (!source) throw new Error(`Registry output is missing catalog item \`${included.name}\`.`);
       return source;
     });
     const { meta, ...metadata } = options.items.describe(item);
     const registryDependencies = [
       ...new Set([
-        ...(options.resolve.dependencies?.({ item, bundledItems: partition.bundledItems }) ?? []),
+        ...(options.resolve.dependencies?.({ item, includedItems: partition.includedItems }) ?? []),
         ...partition.registryItems.map((dependency) => dependency.name),
       ]),
     ]
@@ -90,7 +90,7 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
       files: uniqueFiles(
         sources.flatMap((source) => source.files).map((file) => options.resolve.file(file, item.name))
       ),
-      ...uniqueDependencies(sources.flatMap((source) => source.packageDependencies)),
+      ...uniqueDependencies(sources.flatMap((source) => source.dependencies)),
       registryDependencies,
       ...(meta ? { meta } : {}),
     };
@@ -101,7 +101,7 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
     name: options.name,
     homepage: options.homepage,
     items: [
-      ...(options.shared ?? []).map(
+      ...(options.items.shared ?? []).map(
         (shared): RegistryItem => ({
           name: shared.name,
           type: shared.type,
@@ -124,8 +124,8 @@ function partitionItemDependencies<Definition extends CatalogDefinition>(
   root: CatalogItem<Definition>,
   items: ReadonlyMap<string, CatalogItem<Definition>>,
   published: ReadonlySet<string>
-): { bundledItems: CatalogItem<Definition>[]; registryItems: CatalogItem<Definition>[] } {
-  const bundledItems = new Map<string, CatalogItem<Definition>>();
+): { includedItems: CatalogItem<Definition>[]; registryItems: CatalogItem<Definition>[] } {
+  const includedItems = new Map<string, CatalogItem<Definition>>();
   const registryItems = new Map<string, CatalogItem<Definition>>();
 
   const visit = (name: string): void => {
@@ -135,14 +135,14 @@ function partitionItemDependencies<Definition extends CatalogDefinition>(
       registryItems.set(name, item);
       return;
     }
-    if (bundledItems.has(name)) return;
-    bundledItems.set(name, item);
+    if (includedItems.has(name)) return;
+    includedItems.set(name, item);
     for (const dependency of item.dependencies) visit(dependency);
   };
 
   visit(root.name);
   return {
-    bundledItems: [...bundledItems.values()].sort(compareItems),
+    includedItems: [...includedItems.values()].sort(compareItems),
     registryItems: [...registryItems.values()].sort(compareItems),
   };
 }

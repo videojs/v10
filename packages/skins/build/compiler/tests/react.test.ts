@@ -20,7 +20,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
       configDir: dirname(filename),
@@ -42,7 +42,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
       }),
     });
 
@@ -60,7 +60,7 @@ describe('createCompilerReactConfig', () => {
       filename,
       config: createCompilerReactConfig({
         styles: {
-          output: 'tailwind',
+          mode: 'tailwind',
           manifest: await loadStyleManifest(statusStyleFiles),
           variant: 'minimal',
         },
@@ -81,7 +81,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
@@ -98,7 +98,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
@@ -116,7 +116,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
@@ -134,7 +134,7 @@ describe('createCompilerReactConfig', () => {
       filename,
       config: createCompilerReactConfig({
         styles: {
-          output: 'tailwind',
+          mode: 'tailwind',
           manifest: await loadStyleManifest([
             ...styleFiles,
             resolve(canonicalRoot, 'styles/components/menu.styles.ts'),
@@ -156,7 +156,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
@@ -171,7 +171,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         resolveImport(reference) {
           if (reference.source === '@videojs/react') return { ...reference, source: '@/ui/seek-button' };
           if (reference.source === '@videojs/react/icons') return { ...reference, source: '@/icons' };
@@ -190,7 +190,7 @@ describe('createCompilerReactConfig', () => {
     const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
     const posterSource = await readFile(posterFilename, 'utf8');
     const config = createCompilerReactConfig({
-      styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+      styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
     });
     const result = await transform(source, {
       filename,
@@ -228,7 +228,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         rootClassName: 'media-skin media-skin-video media-theme-default',
       }),
     });

@@ -14,7 +14,7 @@ export interface RegistrySourceFile {
 
 export interface EmittedRegistryItem<File extends RegistrySourceFile = RegistrySourceFile> {
   readonly files: readonly File[];
-  readonly packageDependencies: readonly string[];
+  readonly dependencies: readonly string[];
 }
 
 export interface RegistryOutput<Definition extends CatalogDefinition = CatalogDefinition> {
@@ -36,10 +36,16 @@ interface RegistryImportContext<Definition extends CatalogDefinition> {
 
 export interface EmitRegistryOptions<Definition extends CatalogDefinition = CatalogDefinition> {
   readonly items?: readonly CatalogItem<Definition>['name'][] | undefined;
-  outputFile(context: RegistrySourceContext<Definition>): string;
-  config(item: CatalogItem<Definition>): CompilerConfig;
-  configDir?(item: CatalogItem<Definition>): string | undefined;
-  resolveImport?(context: RegistryImportContext<Definition>): string | undefined;
+  readonly compiler: {
+    config(item: CatalogItem<Definition>): CompilerConfig;
+    configDir?(item: CatalogItem<Definition>): string | undefined;
+  };
+  readonly resolve: {
+    file(context: RegistrySourceContext<Definition>): string;
+    readonly imports?: {
+      dependency?(context: RegistryImportContext<Definition>): string | undefined;
+    };
+  };
 }
 
 interface RegistryLayout<Definition extends CatalogDefinition> extends RegistrySourceContext<Definition> {
@@ -65,8 +71,8 @@ export async function emitRegistry<const Definition extends CatalogDefinition>(
     const layouts = layoutsByItem.get(item.name)!;
     const layoutsByInput = new Map(layouts.map((layout) => [layout.inputFile, layout]));
     const files: RegistrySourceFile[] = [];
-    const config = options.config(item);
-    const configDir = options.configDir?.(item);
+    const config = options.compiler.config(item);
+    const configDir = options.compiler.configDir?.(item);
 
     for (const layout of layouts) {
       const source = await readFile(layout.inputFile, 'utf8');
@@ -88,7 +94,7 @@ export async function emitRegistry<const Definition extends CatalogDefinition>(
 
     output[item.name] = {
       files,
-      packageDependencies: collectPackageDependencies(files),
+      dependencies: collectPackageDependencies(files),
     };
   }
 
@@ -103,7 +109,7 @@ function createLayouts<Definition extends CatalogDefinition>(
   const outputs = new Set<string>();
   return item.files.source
     .map((sourceFile) => {
-      const outputFile = toPosixPath(options.outputFile({ item, sourceFile }));
+      const outputFile = toPosixPath(options.resolve.file({ item, sourceFile }));
       if (outputs.has(outputFile))
         throw new Error(`Registry item \`${item.name}\` output collision: \`${outputFile}\`.`);
       outputs.add(outputFile);
@@ -150,7 +156,7 @@ function rewriteRelativeImports<Definition extends CatalogDefinition>(
         throw new Error(`Registry output is missing catalog item \`${dependency.name}\`.`);
       }
 
-      const replacement = options.resolveImport?.({
+      const replacement = options.resolve.imports?.dependency?.({
         item: importer.item,
         dependency,
         importer,
