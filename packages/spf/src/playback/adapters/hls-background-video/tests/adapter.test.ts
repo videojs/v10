@@ -11,8 +11,9 @@
  * test asserts identity and leans on this file for behavior.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SVTA_NO_SUPPORTED_VIDEO_TRACK, SVTA_UNSUPPORTED_VIDEO_FORMAT } from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
-import { HlsBackgroundVideoMediaElement } from '../adapter';
+import { HlsBackgroundVideoMediaElement, HlsBackgroundVideoMediaMixin } from '../adapter';
 
 describe('HlsBackgroundVideoMediaElement', () => {
   beforeEach(() => {
@@ -243,6 +244,89 @@ describe('HlsBackgroundVideoMediaElement', () => {
       media.engine.state.presentation.set(presentationWithFourTracks());
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('360p');
+      media.destroy();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Error surface — error / 'error' event. The only signal an unplayable source
+  // produces here: the inner <video> stays at readyState 0 with `error` null.
+  // ---------------------------------------------------------------------------
+  describe('error surface', () => {
+    class TestMedia extends HlsBackgroundVideoMediaMixin(EventTarget) {}
+
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('exposes no error before anything is reported', () => {
+      const media = new TestMedia();
+      expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('surfaces a reported fatal condition and fires error', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      // The condition as reported: nothing here maps it onto a generic media
+      // error, since this Media has no dialog above it to localize copy for.
+      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
+      expect(fired).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('leaves the causes in the sequence — only the verdict is fatal', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      // One unplayable rendition doesn't fail a source whose others still play,
+      // so a cause on its own stays context.
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1' } },
+      ]);
+      await flush();
+
+      expect(media.error).toBeNull();
+      expect(fired).toHaveLength(0);
+      media.destroy();
+    });
+
+    it('fires once per distinct condition, not per re-report', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+      // A later append leaves the first fatal in place; the surface must not
+      // re-fire for the condition it already announced.
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }, { code: SVTA_UNSUPPORTED_VIDEO_FORMAT }]);
+      await flush();
+
+      expect(fired).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('clears when the sequence resets for a new source', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+      expect(media.error).not.toBeNull();
+
+      // collectErrors clears the slot on source change. Clearing is not itself a
+      // failure, so it announces nothing.
+      media.engine.state.errors.set(undefined);
+      await flush();
+
+      expect(media.error).toBeNull();
+      expect(fired).toHaveLength(1);
       media.destroy();
     });
   });

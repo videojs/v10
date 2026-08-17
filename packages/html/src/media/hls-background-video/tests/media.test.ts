@@ -1,7 +1,11 @@
+import type { HlsBackgroundVideoMedia } from '@videojs/spf/hls-background-video';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MuxBackgroundVideo } from '../../mux-background-video';
 import { HlsBackgroundVideo } from '../index';
+
+/** SVTA 2011 — no video track this environment can play. */
+const NO_SUPPORTED_VIDEO_TRACK = 2011;
 
 beforeEach(() => {
   // The engine seeds `loadActivated: true`, so assigning `src` starts fetching
@@ -36,6 +40,13 @@ function create(tag: string, attrs: Record<string, string> = {}): HlsBackgroundV
   container.innerHTML = `<${tag}${attrStr}></${tag}>`;
   return container.querySelector(tag) as HlsBackgroundVideo;
 }
+
+/** The Media the element registers, which is what the engine hangs off. */
+function mediaOf(element: HlsBackgroundVideo) {
+  return element.getMediaTarget() as unknown as HlsBackgroundVideoMedia;
+}
+
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('HlsBackgroundVideo', () => {
   it('renders a video into its shadow root', () => {
@@ -91,6 +102,43 @@ describe('HlsBackgroundVideo', () => {
     // loads immediately, and `audio` / `debug` from the package this replaces are
     // gone for good.
     expect(HlsBackgroundVideo.observedAttributes).toEqual(['src']);
+  });
+
+  // The engine's reported sequence is the only failure signal this composition
+  // has: an unplayable source leaves the inner <video> at readyState 0 with
+  // `error` null, so nothing here can be read off the element it renders into.
+  describe('error surface', () => {
+    it('exposes no error before anything is reported', () => {
+      expect(create(defineElement()).error).toBeNull();
+    });
+
+    it('re-fires the Media error as its own, and exposes the condition', async () => {
+      const element = create(defineElement());
+      const fired: Event[] = [];
+      element.addEventListener('error', (event) => fired.push(event));
+
+      mediaOf(element).engine.state.errors.set([{ code: NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(fired).toHaveLength(1);
+      expect(fired[0]?.target).toBe(element);
+      expect(element.error?.code).toBe(NO_SUPPORTED_VIDEO_TRACK);
+      // The condition never reached the inner video, which is why the element
+      // has a surface of its own.
+      expect(element.video?.error).toBeFalsy();
+    });
+
+    it('clears when a new source resets the sequence', async () => {
+      const element = create(defineElement());
+      mediaOf(element).engine.state.errors.set([{ code: NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      // collectErrors clears the slot on source change.
+      mediaOf(element).engine.state.errors.set(undefined);
+      await flush();
+
+      expect(element.error).toBeNull();
+    });
   });
 
   it('is what <mux-background-video> resolves to', () => {

@@ -238,30 +238,46 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 | `canPlayTrack` | `media/dom/capabilities.ts` | Prunes non-fMP4 containers and encrypted renditions, so every reported cause has a corresponding exclusion |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.encrypted` | `media/hls/parse-media-playlist.ts` | `EXT-X-KEY` detection. `METHOD=NONE` is not encryption; a clear lead followed by a real key is. Deliberately not a CMAF-HAM `Protection` model — set-level `defaultKid` can't express a clear lead or key rotation, and CML never populates it from HLS |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.lowLatency` | `media/hls/parse-media-playlist.ts` | LL-HLS detection for the phase-5 notice — any of `EXT-X-PART`, `EXT-X-PART-INF`, or `PART-HOLD-BACK`. Records that the publisher configured LL-HLS, not that we honour it; partial segments are still skipped |
-| `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of both adapters' promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter |
+| `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of the promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter. All three adapters share `firstFatal`; the `ErrorLike` mapping and its 99001 substitution are the video and audio ones only |
 | `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE` and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes |
 
-**Adapters** — `playback/adapters/hls-video/adapter.ts` and
-`hls-audio/adapter.ts`. Each owns `FATAL_SVTA_CODES` (its fatality
-allow-list — the audio-only set is narrower, since it composes no video
-selection and so can never report 2011), the `error` getter, and the
-`'error'` dispatch.
+**Adapters** — `playback/adapters/hls-video/adapter.ts`,
+`hls-audio/adapter.ts`, and `hls-background-video/adapter.ts`. Each owns
+`FATAL_SVTA_CODES` (its fatality allow-list — the audio-only set is
+narrower, since it composes no video selection and so can never report
+2011; the background set is narrower still, at 2011 alone), the `error`
+getter, and the `'error'` dispatch. First fatal wins, latched so a later
+append doesn't re-fire, and clearing rides `collectErrors`' per-source
+reset rather than a source-change hook of its own.
 
-**The background-video composition deliberately has no adapter surface.** It
-reports onto `state.errors` and logs, and stops there: `src` is that Media's whole
-surface, and every failure it can meet already reports a specific cause. Worth
-recording because the measurement says the stakes are real — on Chromium and
-WebKit (2026-08-14) every unplayable source there is a *silent stall* with
-`HTMLMediaElement.error` null at `readyState 0`, since nothing in MSE reports it
-either. Chromium accepts MPEG-TS appends into a `video/mp4` SourceBuffer, fires
-`update` (not `error`), and buffers nothing; WebKit demuxes the TS outright. No
-SourceBuffer error, no MediaSource error, no element error on either. So the
-reported sequence plus its console output is the only failure signal that exists
-for that composition. First fatal wins, latched on the *reported* code so a
-later append doesn't re-fire. Where the sequence holds an
+The two HLS adapters latch on the *reported* code rather than the
+surfaced one, because the two can differ: where the sequence holds an
 unimplemented-capability cause, the surfaced code becomes 99001 and the
 condition is logged with the sequence attached; the `message` stays
 empty either way.
+
+**The background-video adapter surfaces the reported `SvtaError` itself, with
+no mapping.** The `ErrorLike` translation the other two perform exists for the
+store's error feature and the dialog above it, and this composition has
+neither — no store features, no chrome, nothing to localize copy into — so the
+reported code is more use to a consumer than a translation of it, and 99001
+substitution would buy nothing. Having *a* surface at all matters more here than
+elsewhere: on Chromium and WebKit (2026-08-14) every unplayable source in this
+composition is a *silent stall* with `HTMLMediaElement.error` null at
+`readyState 0`, since nothing in MSE reports it either. Chromium accepts MPEG-TS
+appends into a `video/mp4` SourceBuffer, fires `update` (not `error`), and
+buffers nothing; WebKit demuxes the TS outright. No SourceBuffer error, no
+MediaSource error, no element error on either. The reported sequence, its console
+output, and this surface are the only failure signals that exist.
+
+Both platform components forward it, since a consumer of either holds the element
+rather than the Media. `<hls-background-video>` re-fires `'error'` on itself and
+delegates an `error` getter — one eager listener on a Media it owns for life,
+rather than `CustomMediaElement`'s bridge-on-first-`addEventListener`, which is
+more machinery than a single event is worth. The React component re-dispatches on
+the `<video>` node instead, so React's own event plumbing invokes `onError` with
+the synthetic event it is typed for; a handler there learns *that* the source
+won't play, and the console and `engine.state.errors` hold which condition it was.
 
 `alternativeMediaSuggestion` is a static seam on the video adapter: a
 Media with a better-equipped sibling to point at (a Mux Video whose
@@ -357,6 +373,18 @@ limitations*).
     once, with the conditions attached, silent for a verdict with no
     unsupported cause, and the alternative-Media sentence appended when
     the class names one
+  - `packages/spf/src/playback/adapters/hls-background-video/tests/adapter.test.ts`
+    → *error surface* — nothing before a report; the verdict surfaces as
+    the reported `SvtaError` (no mapping, no `message` invented) and fires
+    `'error'`; a cause on its own stays in the sequence; fires once per
+    distinct condition; clears on per-source reset without announcing the
+    clear
+  - `packages/html/src/media/hls-background-video/tests/media.test.ts` and
+    `packages/react/src/media/hls-background-video/tests/media.test.tsx`
+    → the forward — the element re-fires `'error'` on itself and exposes
+    the condition while the inner `<video>`'s own `error` stays null; the
+    React component's `onError` fires with the `<video>` as target, and
+    stays quiet for a non-fatal report
 - **E2E:**
   - `apps/e2e/tests/spf-unsupported-source.spec.ts` (Chromium and WebKit —
     the two the CI matrix and `test:all` run; a `vite-firefox` project

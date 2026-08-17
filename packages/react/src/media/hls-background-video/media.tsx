@@ -6,7 +6,7 @@ import {
   hlsBackgroundVideoMediaDefaultProps,
 } from '@videojs/spf/hls-background-video';
 import type { VideoHTMLAttributes } from 'react';
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
@@ -32,10 +32,13 @@ export interface HlsBackgroundVideoProps
  * storyboard belong to `MuxVideo`, since none of them mean anything without
  * controls to hang them on.
  *
- * `onError` on the underlying `<video>` will not fire for an unplayable source:
- * nothing about one reaches the media element on its own. The engine reports and
- * logs each condition instead, so a source that never appears is diagnosable from
- * the console without a prop for it.
+ * `onError` fires for an unplayable source, which it could not do on its own:
+ * nothing about one reaches the media element, so the `<video>`'s own `error`
+ * stays null at `readyState 0`. The engine reports the condition, the Media
+ * promotes the fatal one, and this component re-fires it on the `<video>` — where
+ * a handler already listening for a failed source receives it. Which condition it
+ * was is on the console and `engine.state.errors`; the handler gets "this source
+ * won't play", which is the decision a background video actually has to make.
  *
  * `MuxBackgroundVideo` is this same component under the name the package it
  * replaces used — an alias, not a variant.
@@ -45,9 +48,20 @@ export const HlsBackgroundVideo = forwardRef<HTMLVideoElement, HlsBackgroundVide
   ref
 ) {
   const media = useMediaInstance(HlsBackgroundVideoMedia);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const attachRef = useAttachMedia(media);
-  const composedRef = useComposedRefs(attachRef, ref);
+  const composedRef = useComposedRefs(attachRef, videoRef, ref);
   const htmlProps = useSyncProps(media, props, hlsBackgroundVideoMediaDefaultProps);
+
+  // Re-fired on the element rather than handed to `onError` directly, so React's
+  // own event plumbing delivers it: the handler gets the synthetic event it is
+  // typed for, and anything else listening on the node — the consumer's own
+  // `addEventListener`, a testing-library assertion — sees the same failure.
+  useEffect(() => {
+    const forward = () => videoRef.current?.dispatchEvent(new Event('error'));
+    media.addEventListener('error', forward);
+    return () => media.removeEventListener('error', forward);
+  }, [media]);
 
   return (
     // The same set `<hls-background-video>` forces onto its inner video, so the

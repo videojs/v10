@@ -1,11 +1,16 @@
 /**
  * The shared half of promoting reported conditions onto a media surface.
  *
- * Both HLS adapters do the same things: pick the first condition they treat as
- * fatal, latch it so a later append doesn't re-fire, and name a better-equipped
- * Media when their own class points at one. Only the *policy* differs — which
- * codes are fatal, which the video adapter and the audio-only adapter answer
- * differently — so that stays with each adapter and everything else lives here.
+ * Every adapter that has one does the same things: pick the first condition it
+ * treats as fatal, latch it so a later append doesn't re-fire, and name a
+ * better-equipped Media when its own class points at one. Only the *policy*
+ * differs — which codes are fatal, which the video, audio-only, and background
+ * adapters each answer differently — so that stays with each adapter and
+ * everything else lives here.
+ *
+ * `firstFatal` is the part all three share. The `ErrorLike` mapping below it is
+ * for the two that feed a store and a dialog; the background adapter surfaces the
+ * reported condition unmapped, so it takes the picker and nothing else.
  *
  * See `internal/design/spf/features/errors.md` for the causes-vs-verdicts split
  * this rests on.

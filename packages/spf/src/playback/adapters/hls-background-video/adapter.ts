@@ -1,5 +1,7 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
+import { effect } from '../../../core/signals/effect';
+import { SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import {
   type BackgroundVideoEngineConfig,
   type BackgroundVideoEngineContext,
@@ -7,6 +9,11 @@ import {
   type BackgroundVideoEngineState,
   createBackgroundVideoEngine,
 } from '../../engines/hls/engine-background-video';
+import { firstFatal } from '../hls-video/error-surface';
+
+// What `error` is: the reported condition itself, so a consumer can name the type
+// it reads without importing from an engine-level path.
+export type { SvtaError } from '../../../media/errors';
 
 export interface HlsBackgroundVideoMediaProps {
   src: string;
@@ -18,6 +25,7 @@ export const hlsBackgroundVideoMediaDefaultProps: HlsBackgroundVideoMediaProps =
 
 export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps {
   readonly engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
+  readonly error: SvtaError | null;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -25,16 +33,31 @@ export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps
 }
 
 /**
+ * Which reported conditions this composition treats as **fatal** — the ones that
+ * reach `error` and fire `'error'`. Severity isn't part of an SVTA code
+ * (§Approach: "impact varies with player implementation"), so it's decided at
+ * this boundary rather than by the reporter.
+ *
+ * One code, where the video adapter's list has two: this engine composes video
+ * selection alone, so the video verdict is the only verdict it can ever report.
+ * The per-rendition causes (unsupported format, unsupported DRM) stay in the
+ * sequence as context — one unplayable rendition doesn't fail a source that goes
+ * on to play the rest.
+ */
+const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+
+/**
  * Mixin that adds the background-video SPF playback engine to any base class,
  * for an HLS URL.
  *
- * `src` is the whole surface. Failures are deliberately not on it: nothing about
+ * `src` is the whole input surface, and `error` is the one output: nothing about
  * an unplayable source reaches the media element on its own here — an unsupported
  * container, encryption with no EME, and an undecodable codec all leave
  * `HTMLMediaElement.error` null with the element stalled at `readyState 0`
- * (measured on Chromium and WebKit) — so the engine reports them onto
- * `engine.state.errors` and logs each one instead. See
- * `internal/design/spf/features/errors.md`.
+ * (measured on Chromium and WebKit) — so a consumer that watched only the
+ * `<video>` would see a source that never appears and never says why. The engine
+ * reports each condition onto `engine.state.errors` and logs it; this adapter
+ * promotes the first fatal one. See `internal/design/spf/features/errors.md`.
  *
  * Selection pins the largest rendition that *fits the screen*, and holds it for
  * the session. The manifest is still the better place to narrow further: a
@@ -63,6 +86,8 @@ export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps
  * engine instance and the attached media element are both kept, so neither has to
  * be rewired.
  *
+ * @fires error - Fired when a fatal condition is reported. Read `error` for it.
+ *
  * @example
  * class HlsBackgroundVideoMedia extends HlsBackgroundVideoMediaMixin(BackgroundVideoHost) {}
  *
@@ -76,6 +101,8 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     #engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
     #config: BackgroundVideoEngineConfig;
     #signals!: BackgroundVideoEngineSignals;
+    #error: SvtaError | null = null;
+    #stopErrorSync: () => void;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -86,10 +113,52 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       const { config } = args?.[0] ?? {};
       this.#config = config;
       this.#engine = this.#createEngine();
+
+      // Promote the first fatal condition out of the engine's reported sequence
+      // onto this surface. Clearing rides the same signal: `collectErrors` resets
+      // the slot per source, so a new source starts with no error without this
+      // needing its own source-change hook.
+      this.#stopErrorSync = effect(() => {
+        this.#setError(firstFatal(this.#signals.state.errors.get(), FATAL_SVTA_CODES));
+      });
     }
 
     get engine(): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
       return this.#engine;
+    }
+
+    /**
+     * The current fatal condition, or `null`. Only *fatal* ones appear here — the
+     * engine reports non-fatal ones too (they stay in `engine.state.errors`), and
+     * promoting them would say playback had failed when it hadn't. Resets per
+     * source. Fires `'error'` when set.
+     *
+     * The reported {@link SvtaError} itself, unmapped: the video and audio Medias
+     * translate a condition into an `ErrorLike` for the store's error feature and
+     * the dialog above it, and a background video has neither — no store features,
+     * no chrome, nothing to localize copy into. So the code the engine reported is
+     * more use to a consumer here than a translation of it would be.
+     */
+    get error(): SvtaError | null {
+      return this.#error;
+    }
+
+    #setError(reported: SvtaError | undefined): void {
+      if (!reported) {
+        // Cleared (new source). No event: `'error'` announces a failure, and
+        // consumers reset their own copy on source change.
+        this.#error = null;
+        return;
+      }
+      // Keyed on the code, not the object: a later append re-runs this effect
+      // with an equal-but-new array, and re-firing `'error'` for a condition
+      // already surfaced would look like a second failure.
+      if (this.#error?.code === reported.code) return;
+
+      this.#error = reported;
+      // Optional-chained: with an EventTarget-less base (`HlsBackgroundVideoMediaElement`
+      // standalone) there's nowhere to dispatch.
+      this.dispatchEvent?.(new Event('error'));
     }
 
     // -------------------------------------------------------------------------
@@ -118,6 +187,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
 
     destroy(): void {
       this.#cancelPendingPlay();
+      this.#stopErrorSync();
       this.#engine.destroy();
     }
 

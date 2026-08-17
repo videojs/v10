@@ -16,6 +16,8 @@
 export type {
   HlsBackgroundVideoMediaAPI as MuxBackgroundVideoMediaAPI,
   HlsBackgroundVideoMediaProps as MuxBackgroundVideoMediaProps,
+  // Not renamed: the SVTA vocabulary is neither Mux- nor adapter-flavored.
+  SvtaError,
 } from '../hls-background-video/adapter';
 export {
   HlsBackgroundVideoMediaElement as MuxBackgroundVideoMediaElement,
