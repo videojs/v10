@@ -11,13 +11,14 @@ import { SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/er
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { CanPlayTrack, MaybeResolvedPresentation } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
-import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
-import type { SourceBufferActor } from '../../actors/dom/source-buffer';
+import type { BackgroundVideoBufferActor } from '../../actors/dom/background-video-buffer';
 import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
 import { collectErrors, reportAbsentTrackType } from '../../behaviors/collect-errors';
-import { endOfStream } from '../../behaviors/dom/end-of-stream';
-import { loadVideoSegments } from '../../behaviors/dom/load-segments';
-import { setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
+import {
+  endBackgroundVideoStream,
+  setupBackgroundVideoBuffer,
+  syncBackgroundVideoBuffer,
+} from '../../behaviors/dom/setup-background-video-buffer';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackScreenResolution } from '../../behaviors/dom/track-screen-resolution';
@@ -84,8 +85,12 @@ export interface BackgroundVideoEngineState {
 export interface BackgroundVideoEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
-  videoBufferActor?: SourceBufferActor;
-  videoSegmentLoaderActor?: SegmentLoaderActor;
+  /**
+   * The single actor that owns this composition's sequence-mode SourceBuffer,
+   * its append cursor, and its eviction — the general path's
+   * `videoBufferActor` + `videoSegmentLoaderActor` pair collapsed into one.
+   */
+  backgroundVideoBufferActor?: BackgroundVideoBufferActor;
 }
 
 /**
@@ -222,13 +227,13 @@ export function createBackgroundVideoEngine(
       selectVideoTrack,
       // Resolve selected video track (fetch its media playlist)
       resolveVideoTrack,
-      // Segment loading — video-only.
-      loadVideoSegments,
-
       // MSE setup — video-only.
       setupMediaSource,
       updateMediaSourceDuration,
-      setupVideoBufferActors,
+      // Buffering: one actor owns the sequence-mode SourceBuffer, the append
+      // cursor, and eviction; the dispatcher only reads it and sends.
+      setupBackgroundVideoBuffer,
+      syncBackgroundVideoBuffer,
 
       // Playback tracking
       trackCurrentTime,
@@ -238,8 +243,10 @@ export function createBackgroundVideoEngine(
       // resolve/select/load sequence above.
       trackScreenResolution,
 
-      // End of stream coordination
-      endOfStream,
+      // End of stream — the element cannot fire `ended`, and so cannot loop,
+      // until the MediaSource does. Driven by the actor's `complete` flag
+      // rather than the general path's segment inventory.
+      endBackgroundVideoStream,
 
       // Behavior whose sole purpose is to expose signal refs via a callback
       // (e.g. to an adapter). Listed last so initial signal setup has run

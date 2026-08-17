@@ -53,4 +53,42 @@ export const MEDIA = {
   dash: {
     url: 'https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd',
   },
+  /**
+   * A **short** HLS/CMAF VOD — 15s across 3 segments, cut from the Dancing Dude
+   * asset by Mux instant clip. Short on purpose: the background-video use case
+   * loops indefinitely, and pinning "loops without stalling" needs several wraps
+   * inside one test, which a full-length asset can't give.
+   *
+   * Clipping the **end** only leaves the media on its native 0-based timeline —
+   * measured `baseMediaDecodeTime` is exactly 0 — so this isolates looping from
+   * the timeline-origin question that {@link MEDIA.hlsShortNonZeroPts} asks.
+   *
+   * Mux rounds a clip out to segment boundaries, which is why a 12s request
+   * yields 15s.
+   */
+  hlsShortLoop: {
+    url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8?asset_end_time=12',
+    /** Measured from the manifest, not declared by it — see the spec's tolerance. */
+    durationSeconds: 15,
+  },
+  /**
+   * The same shape as {@link MEDIA.hlsShortLoop} — 12s, 3 segments, fMP4 VOD —
+   * but cut from 60s into the asset, so its media **encodes at a native PTS of
+   * ~60s** while its presentation timeline still starts at 0.
+   *
+   * Measured, not assumed: the first segment's `tfdt` carries
+   * `baseMediaDecodeTime = 5400090` at timescale 90000 → 60.001s. The unclipped
+   * asset reads 0.043s, so the offset is the clip's doing.
+   *
+   * A composition that appends this without relocating it lands the buffer at
+   * [60, 72] while the element's timeline expects [0, 12] — nothing at the
+   * playhead, and a silent stall. Same asset the sandbox offers as
+   * `hls-instant-clip`, shortened here for the same reason as above.
+   */
+  hlsShortNonZeroPts: {
+    url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8?asset_start_time=60&asset_end_time=72',
+    durationSeconds: 12,
+    /** Measured native start of the first segment, in seconds. */
+    nativeStartSeconds: 60.001,
+  },
 } as const;
