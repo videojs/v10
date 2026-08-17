@@ -239,7 +239,7 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.encrypted` | `media/hls/parse-media-playlist.ts` | `EXT-X-KEY` detection. `METHOD=NONE` is not encryption; a clear lead followed by a real key is. Deliberately not a CMAF-HAM `Protection` model — set-level `defaultKid` can't express a clear lead or key rotation, and CML never populates it from HLS |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.lowLatency` | `media/hls/parse-media-playlist.ts` | LL-HLS detection for the phase-5 notice — any of `EXT-X-PART`, `EXT-X-PART-INF`, or `PART-HOLD-BACK`. Records that the publisher configured LL-HLS, not that we honour it; partial segments are still skipped |
 | `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of the promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter. All three adapters share `firstFatal`; the `ErrorLike` mapping and its 99001 substitution are the video and audio ones only |
-| `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE` and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes |
+| `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE`, `UNPLAYABLE_SOURCE_MESSAGE`, and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes. The generic one exists for a composition whose failures don't all reduce to a missing feature — see the background adapter below |
 
 **Adapters** — `playback/adapters/hls-video/adapter.ts`,
 `hls-audio/adapter.ts`, and `hls-background-video/adapter.ts`. Each owns
@@ -265,6 +265,17 @@ actionable thing: this player has no pipeline for what the source needs, and no
 retry or CDN changes that. The one thing it doesn't take is
 `alternativeMediaSuggestion`; nothing in this repo plays an HLS background video
 that this engine can't, so there is no sibling to name.
+
+**The console half diverges, though: it logs on every fatal condition, not only
+a substituted one, and logs the generic sentence.** Both follow from causes being
+fatal here. The other two adapters log only when they substitute 99001, which is
+sound where every fatal condition *is* a verdict about a missing feature; here a
+verdict can instead mean the source carries no video at all, which would otherwise
+reach a developer as a bare 2011 with nothing said about it. And a message naming
+a missing feature would be wrong for exactly that case, so
+`UNPLAYABLE_SOURCE_MESSAGE` names none: the structured conditions logged beside it
+already carry track type, id, and container. One unconditional log also costs a
+branch less than one per case.
 
 Having *a* surface at all matters more here than
 elsewhere: on Chromium and WebKit (2026-08-14) every unplayable source in this
@@ -402,9 +413,9 @@ limitations*).
     verdict behind it surfaces too, for container and encryption alike (the
     pinned-variant rule above), substituted to 99001 with the reporter's
     context carried through; 2039 stays out of it; the explanation is logged
-    once, with the conditions attached and no prose on `message`; fires once
-    per distinct condition; clears on per-source reset without announcing
-    the clear
+    once, with the conditions attached and no prose on `message`, **including
+    for a verdict that substitutes nothing**; fires once per distinct
+    condition; clears on per-source reset without announcing the clear
   - `packages/html/src/media/hls-background-video/tests/media.test.ts` and
     `packages/react/src/media/hls-background-video/tests/media.test.tsx`
     → the forward — the element re-fires `'error'` on itself and exposes
