@@ -423,6 +423,22 @@ limitations*).
     and an fMP4 control reports nothing. Driven by the
     `html-hls-video-ts` page, deliberately absent from
     `fixtures/media.ts`'s page arrays
+  - `apps/e2e/tests/spf-background-video.spec.ts` (same two projects) —
+    the background composition against real manifests: a playable fMP4
+    source reports nothing; MPEG-TS surfaces 99001 with an empty
+    `message`; **the sequence holds 1004 with no 2011 behind it**, the
+    pinned-variant shape a `select-tracks` refactor would otherwise change
+    unnoticed; the *encrypted* source surfaces the same 99001 over a 4008;
+    an audio-only ladder keeps its own 2011 with no substitution; a source
+    change back to fMP4 clears the error and plays; and React's `onError`
+    fires. The load-bearing one is **the inner `<video>` staying at
+    `readyState 0` with `error` null** while all of that happens — the
+    measured premise the surface exists for, now asserted rather than
+    recorded. Driven by `html-` and `react-hls-background-video`, a
+    `background` category in `generate-pages.ts` whose template skips the
+    player shell every other page uses — this composition has no controls
+    to hang on a skin — and takes a `?src=` param, so one page per platform
+    serves every source shape
 - **Manual:** the sandbox offers both failing shapes to the plain HLS
   presets — `hls-audio-only-ts` (MPEG-TS) and `hls-drm-unlicensed` (the
   DRM asset with no license path), each labelled with the error it should
@@ -440,9 +456,11 @@ limitations*).
   source. That walk is what found the verdict-only gap the fatal set now
   covers.
 - **Out of scope / deferred:**
-  - **No E2E for the encrypted path** — no encrypted source is wired into
-    the e2e fixtures, so 4008 → 99001 is unit-verified plus manually
-    reachable in the sandbox, not automated
+  - **The encrypted path is E2E-covered on the background composition
+    only** — `MEDIA.hlsDrm` (the sandbox's unlicensed DRM asset, its token
+    signed to 2038 so it can't rot) proves 4008 → 99001 there. The same
+    path through `hls-video` and into the dialog is still unit-verified
+    plus manually reachable, since its pages take one source each
   - **The audio verdict (2012) is unit-covered only** — the e2e TS
     source has muxed audio and therefore no separate audio track
 

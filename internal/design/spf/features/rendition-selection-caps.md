@@ -135,6 +135,17 @@ from the config-driven ones above.
   and the `hls-background-video` adapter tests — the composed default.
   Note these write `screenResolution` explicitly; a test that leaves it
   ambient makes its expected pick depend on the runner's display.
+- `apps/e2e/tests/spf-background-video.spec.ts` → *screen-size cap* —
+  the same 4K ladder through a real browser on both projects: an
+  800x600 screen pins a rendition inside that area, and 1920x1080 at
+  `deviceScaleFactor: 2` pins one above 1080 lines, which also covers
+  `useDevicePixelRatio` (in CSS pixels alone that viewport could never
+  justify a 2160-line rendition). Bounded rather than pinned to an exact
+  rung, so a ladder change at the source doesn't break it. **Driven
+  through the viewport, not the `screen` context option:** measured in
+  both projects, `window.screen` follows the emulated viewport and the
+  `screen` option has no effect, so an e2e test cannot distinguish
+  "reads the screen" from "reads the window" — that stays unit-level.
 - Manual, Chromium on a 3456x2234 display against a 3840x2160 ladder:
   the pick moves from 3838x2160 (8.29 Mpx, over the 7.72 Mpx screen) to
   2558x1440. The sandbox page is `html-hls-background-video`, whose
