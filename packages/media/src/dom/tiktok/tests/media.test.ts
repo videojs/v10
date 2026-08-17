@@ -1072,6 +1072,36 @@ describe('TikTokMedia bootstrap', () => {
     media.detach();
   });
 
+  it('leaves the embed to drive itself when it is showing its own controls', async () => {
+    const media = new TikTokMedia();
+    media.controls = true;
+    const { iframe, commands } = await attachBootstrapped(media);
+
+    // TikTok's chrome is showing and the frame takes clicks, so a play started there is the caller's and putting
+    // it back down would fight the controls they are using.
+    report(iframe, 'onPlayerReady');
+    report(iframe, 'onStateChange', STATE.PLAYING);
+
+    expect(commands).not.toHaveBeenCalledWith({ 'x-tiktok-player': true, type: 'pause' }, '*');
+    expect(media.paused).toBe(false);
+    media.detach();
+  });
+
+  it('parks at a position the caller seeked to while it was still coming up', async () => {
+    const media = new TikTokMedia();
+    const { iframe, commands } = await attachBootstrapped(media);
+
+    report(iframe, 'onPlayerReady');
+    media.currentTime = 5;
+    await flushLoad();
+    report(iframe, 'onStateChange', STATE.PAUSED);
+
+    // The park returns the player to the start, but not over a position the caller has since asked for.
+    expect(commands).toHaveBeenCalledWith({ 'x-tiktok-player': true, type: 'seekTo', value: 5 }, '*');
+    expect(media.currentTime).toBe(5);
+    media.detach();
+  });
+
   it('leaves the player dormant under preload=none', async () => {
     const media = new TikTokMedia();
     media.preload = 'none';

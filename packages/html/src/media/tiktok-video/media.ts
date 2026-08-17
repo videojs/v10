@@ -28,8 +28,9 @@ class TikTokCustomMediaElement extends CustomMediaElement('iframe', TikTokMedia)
         }
         /* A cross-origin frame swallows every pointer event, so the skin above it
            never sees the hover that reveals the controls. Kept out of hit-testing
-           unless preload="none" left TikTok's player dormant, where the frame's own
-           controls are the only thing that can still start it. */
+           except where the host leaves TikTok's player dormant, which is the same
+           pair of cases shouldBootstrapTikTokEmbed opts out of: then the frame's
+           own controls are the only thing that can still start it. */
         :host(:not([controls]):not([preload="none"])) {
           pointer-events: none;
         }

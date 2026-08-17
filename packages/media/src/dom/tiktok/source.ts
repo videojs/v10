@@ -85,8 +85,9 @@ export function parseTikTokSource(src: string): ParsedTikTokSource | null {
  * is up, so this buys one that answers commands, not a video that plays.
  */
 export function shouldBootstrapTikTokEmbed(props: Partial<TikTokMediaProps> = {}) {
-  // `preload="none"` trades those working controls back for an untouched network.
-  return !props.autoplay && props.preload !== 'none';
+  // `preload="none"` trades those working controls back for an untouched network, and `controls` hands the player
+  // to TikTok's own chrome, which the host must not park playback out from under.
+  return !props.autoplay && props.preload !== 'none' && props.controls !== true;
 }
 
 /** Build the iframe `src` URL for a TikTok embed from the given props. */

@@ -64,6 +64,8 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   // How far the bootstrap has got: `parking` until the autoplay nobody asked for is stopped, `parked` while the
   // player waits for the caller's first command. Before `off`, what the embed reports is the bootstrap's own.
   #bootstrap: 'off' | 'parking' | 'parked' = 'off';
+  // Where the park leaves the player: the start, or a position the caller seeked to before it got there.
+  #parkPosition = 0;
   #playFired = false;
   #currentTime = 0;
   #duration = Number.NaN;
@@ -227,6 +229,9 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   set currentTime(value) {
     if (this.#currentTime === value) return;
     this.#takeOver();
+    // A seek while the bootstrap is still running is where it has to leave the player; parking to the start would
+    // rewind the caller, and the position they asked for would never be reported.
+    if (this.#bootstrap !== 'off') this.#parkPosition = value;
     this.#seeking = true;
     // Report the requested position now; the embed only reports one periodically, so the seek would look lost.
     this.#currentTime = value;
@@ -508,6 +513,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     this.#srcUnsupported = false;
     this.#playFired = false;
     this.#bootstrap = 'off';
+    this.#parkPosition = 0;
     this.#error = null;
     this.#isFullscreen = false;
   }
@@ -521,7 +527,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     if (this.#bootstrap === 'parking') {
       // It came up playing on the bootstrap autoplay; put it where one that never autoplayed would have been.
       this.#post('pause');
-      this.#post('seekTo', 0);
+      this.#post('seekTo', this.#parkPosition);
     } else if (this.#playRequested) {
       this.#playRequested = false;
       this.#post('play');
@@ -538,7 +544,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   #park() {
     if (this.#bootstrap === 'parked') return;
     this.#bootstrap = 'parked';
-    this.#currentTime = 0;
+    this.#currentTime = this.#parkPosition;
     this.#paused = true;
     this.#playFired = false;
     // TikTok mutes itself to get the unasked-for autoplay past the browser, so that mute is its own to undo.

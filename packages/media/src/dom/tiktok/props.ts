@@ -8,8 +8,9 @@ import type { TikTokSource } from './source';
  *
  * `preload` reaches no TikTok parameter either, but it is not inert: anything
  * but `'none'` has the host bring TikTok's dormant player up with an `autoplay`
- * it then parks (see `shouldBootstrapTikTokEmbed`). That buys commands the embed
- * answers, not metadata — TikTok reports a duration of 0 until it plays.
+ * it then parks (see `shouldBootstrapTikTokEmbed`), which `controls` also opts
+ * out of by handing playback to TikTok's own chrome. That buys commands the
+ * embed answers, not metadata — TikTok reports a duration of 0 until it plays.
  */
 export interface TikTokMediaProps
   extends Pick<
