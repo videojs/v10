@@ -1095,6 +1095,22 @@ describe('SpotifyMedia source', () => {
     media.detach();
   });
 
+  it('announces the reset when the source is cleared', async () => {
+    const media = new SpotifyMedia();
+    const { controller } = await attachAndLoad(media);
+    controller.update({ isPaused: false, position: 5_000, duration: 60_000 });
+
+    const emptied = vi.fn();
+    media.addEventListener('emptied', emptied);
+    media.source = null;
+    await Promise.resolve();
+
+    // The embed is paused and its updates are ignored from here, so nothing else
+    // is coming to say the last entity's duration and buffer are gone.
+    expect(emptied).toHaveBeenCalledTimes(1);
+    media.detach();
+  });
+
   it('does not let a cleared source come back through a playback update', async () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);

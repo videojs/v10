@@ -184,6 +184,11 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     // Reset before bailing on an empty src: a cleared source has nothing to load,
     // but what we report about the old video still has to go.
     this.#resetState();
+    // `emptied` is what announces that reset, so it comes before the empty-src
+    // bail rather than after it: clearing the source is the one case where the
+    // embed reports nothing further, leaving anything listening on the last
+    // video's duration and buffer forever.
+    this.dispatchEvent(new Event('emptied'));
     if (!this.#src) {
       // The embed has to go too. Left in place it keeps playing, and its progress
       // reports write the state just cleared straight back. There is no unload
@@ -192,7 +197,6 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
       target.removeAttribute('src');
       return;
     }
-    this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
     if (!embedSrc) {
       this.#srcUnsupported = true;

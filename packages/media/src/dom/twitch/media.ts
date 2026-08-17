@@ -191,6 +191,11 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     // Reset before bailing on an empty src: a cleared source has nothing to load,
     // but what we report about the old video still has to go.
     this.#resetState();
+    // `emptied` is what announces that reset, so it comes before the empty-src
+    // bail rather than after it: clearing the source is the one case where the
+    // embed reports nothing further, leaving anything listening on the last
+    // video's duration and buffer forever.
+    this.dispatchEvent(new Event('emptied'));
     if (!this.#src) {
       // The embed has to stop too. Left running it keeps playing, and its state
       // messages write what was just cleared straight back.
@@ -198,7 +203,6 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
       this.#sendCommand(COMMAND_PAUSE);
       return;
     }
-    this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
     const parsed = parseTwitchSource(this.#src);
     if (!parsed) {

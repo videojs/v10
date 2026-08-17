@@ -201,6 +201,11 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     // Reset before bailing on an empty src: a cleared source has nothing to load,
     // but what we report about the old video still has to go.
     this.#resetState();
+    // `emptied` is what announces that reset, so it comes before the empty-src
+    // bail rather than after it: clearing the source is the one case where the
+    // embed reports nothing further, leaving anything listening on the last
+    // video's duration and buffer forever.
+    this.dispatchEvent(new Event('emptied'));
     if (!this.#src) {
       // The embed has to stop too. Left running it keeps playing and writes the
       // state just cleared straight back through its own events.
@@ -208,7 +213,6 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
       await this.#player.unload().catch(() => {});
       return;
     }
-    this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
     const loadOptions = toLoadVideoOptions(this.#src, this.#source?.engine?.vimeo);
     // An unparsable src never reaches the player, so no `loaded` will ever settle

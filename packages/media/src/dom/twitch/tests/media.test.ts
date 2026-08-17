@@ -837,6 +837,22 @@ describe('TwitchMedia source', () => {
     media.detach();
   });
 
+  it('announces the reset when the source is cleared', async () => {
+    const media = new TwitchMedia();
+    const { iframe } = await attachAndLoad(media);
+    postPlayerState(iframe, { duration: 120, currentTime: 5, playback: 'Playing' });
+
+    const emptied = vi.fn();
+    media.addEventListener('emptied', emptied);
+    media.source = null;
+    await flushDeferredEmbed();
+
+    // The embed is paused and its messages are ignored from here, so nothing else
+    // is coming to say the last video's duration and buffer are gone.
+    expect(emptied).toHaveBeenCalledTimes(1);
+    media.detach();
+  });
+
   it('ignores what the stopped embed reports after the source is cleared', async () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);

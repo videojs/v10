@@ -959,4 +959,22 @@ describe('TikTokMedia source', () => {
     expect(commands).not.toHaveBeenCalled();
     media.detach();
   });
+
+  it('announces the reset when the source is cleared', async () => {
+    const media = new TikTokMedia();
+    media.src = VIDEO_ID;
+    const { iframe } = await attachAndLoad(media);
+    report(iframe, 'onStateChange', STATE.PLAYING);
+    report(iframe, 'onCurrentTime', { currentTime: 5, duration: 15 });
+
+    const emptied = vi.fn();
+    media.addEventListener('emptied', emptied);
+    media.source = null;
+    await flushLoad();
+
+    // The frame loses its URL and its reports are ignored from here, so nothing
+    // else is coming to say the last video's duration and buffer are gone.
+    expect(emptied).toHaveBeenCalledTimes(1);
+    media.detach();
+  });
 });

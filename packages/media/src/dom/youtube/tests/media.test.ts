@@ -819,6 +819,23 @@ describe('YouTubeMedia source', () => {
     media.detach();
   });
 
+  it('announces the reset when the source is cleared', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
+    const { player } = await attachAndLoad(media);
+    player.emit('onStateChange', STATE.PLAYING);
+
+    const emptied = vi.fn();
+    media.addEventListener('emptied', emptied);
+    media.source = null;
+    await Promise.resolve();
+
+    // The embed is stopped and the poll is off from here, so nothing else is
+    // coming to say the last video's duration and buffer are gone.
+    expect(emptied).toHaveBeenCalledTimes(1);
+    media.detach();
+  });
+
   it('does not let a cleared source come back through a state change', async () => {
     const media = new YouTubeMedia();
     media.src = 'aqz-KE-bpKQ';

@@ -177,6 +177,11 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
     // Reset before bailing on an empty src: a cleared source has nothing to load,
     // but what we report about the old entity still has to go.
     this.#resetState();
+    // `emptied` is what announces that reset, so it comes before the empty-src
+    // bail rather than after it: clearing the source is the one case where the
+    // embed reports nothing further, leaving anything listening on the last
+    // entity's duration and buffer forever.
+    this.dispatchEvent(new Event('emptied'));
     if (!this.#src) {
       // The embed has to stop too. Left running it keeps playing, and its updates
       // write the state just cleared straight back. Pausing is as far as the
@@ -189,7 +194,6 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
       }
       return;
     }
-    this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
     const parsed = parseSpotifySource(this.#src);
     if (!parsed) {
