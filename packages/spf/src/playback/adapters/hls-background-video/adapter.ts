@@ -15,7 +15,7 @@ import {
   type BackgroundVideoEngineState,
   createBackgroundVideoEngine,
 } from '../../engines/hls/engine-background-video';
-import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
+import { UNPLAYABLE_SOURCE_MESSAGE } from '../../primitives/error-messages';
 import { firstFatal, type HlsVideoMediaError, hasUnsupportedFeatureCause } from '../hls-video/error-surface';
 
 // The same error shape the video and audio Medias expose, under the name they
@@ -189,19 +189,18 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       if (this.#reportedCode === reported.code) return;
       this.#reportedCode = reported.code;
 
-      const unsupported = hasUnsupportedFeatureCause(errors);
-      if (unsupported) {
-        // The prose lives here rather than on `error.message`, matching the other
-        // two: viewer-facing copy is the consumer's to localize from the code, and
-        // a background video has no chrome to put it in anyway. No
-        // alternative-Media sentence, unlike the Mux Medias — nothing in this repo
-        // plays an HLS background video that this engine can't, so there is no
-        // sibling to name.
-        console.error(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE, { conditions: errors });
-      }
+      // Logged for every fatal condition, not just the substituted ones: a source
+      // with no video renditions is as dead as an unplayable container, and it
+      // would otherwise reach a developer as a bare code. One generic sentence
+      // rather than one per case — the conditions beside it carry the specifics.
+      //
+      // Prose stays here rather than on `error.message`, matching the other two:
+      // viewer-facing copy is the consumer's to localize, and a background video
+      // has no chrome to put it in anyway.
+      console.error(UNPLAYABLE_SOURCE_MESSAGE, { conditions: errors });
 
       this.#error = {
-        code: unsupported ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
+        code: hasUnsupportedFeatureCause(errors) ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
         message: reported.message ?? '',
         ...(reported.data === undefined ? {} : { data: reported.data }),
       };

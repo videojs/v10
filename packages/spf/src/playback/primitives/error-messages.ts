@@ -24,6 +24,20 @@ export const UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE =
   "Can't play this source: it requires an unsupported playback feature.";
 
 /**
+ * Logged for **any** fatal condition, by a composition whose failures don't all
+ * reduce to a missing feature.
+ *
+ * The background variant is the case: it treats a per-rendition cause as fatal on
+ * its own, so what reaches its surface can be an unsupported container, DRM it
+ * can't decrypt, or a source carrying no video at all. One sentence covers every
+ * one of those, and the conditions logged beside it — already structured, already
+ * carrying track type, id, and container — say which. Naming a feature instead
+ * would be wrong for the last case and would send a developer looking in the
+ * wrong place.
+ */
+export const UNPLAYABLE_SOURCE_MESSAGE = "Can't play this source. The conditions logged with this message say why.";
+
+/**
  * LL-HLS delivery, played as standard live. The parser ignores partial segments
  * and the loader fetches whole ones, so latency lands wherever `HOLD-BACK` puts
  * it — the stream plays, just not at the latency it was published for.

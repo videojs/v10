@@ -18,7 +18,7 @@ import {
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
 } from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
-import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
+import { UNPLAYABLE_SOURCE_MESSAGE } from '../../../primitives/error-messages';
 import { HlsBackgroundVideoMediaElement, HlsBackgroundVideoMediaMixin } from '../adapter';
 
 describe('HlsBackgroundVideoMediaElement', () => {
@@ -317,7 +317,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
       media.destroy();
     });
 
-    it('logs the unsupported-feature explanation once, with the conditions attached', async () => {
+    it('logs the explanation once, with the conditions attached', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
         const media = new TestMedia();
@@ -331,11 +331,28 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
         // The prose is console-only — `error.message` stays empty — and a later
         // append must not repeat it.
-        const logged = spy.mock.calls.filter(([message]) => message === UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE);
+        const logged = spy.mock.calls.filter(([message]) => message === UNPLAYABLE_SOURCE_MESSAGE);
         expect(logged).toHaveLength(1);
         expect(logged[0]?.[1]).toEqual({
           conditions: [{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } }],
         });
+        media.destroy();
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    it('explains a source with no video renditions too, not only a substituted code', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const media = new TestMedia();
+        // The shape that used to reach a developer as a bare 2011: a verdict with
+        // no cause behind it, so nothing was substituted and nothing was said.
+        media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+        await flush();
+
+        expect(spy.mock.calls.filter(([message]) => message === UNPLAYABLE_SOURCE_MESSAGE)).toHaveLength(1);
+        expect(media.error?.code).toBe(SVTA_NO_SUPPORTED_VIDEO_TRACK);
         media.destroy();
       } finally {
         spy.mockRestore();
