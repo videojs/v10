@@ -2,7 +2,7 @@ import { Text } from '@videojs/core/components';
 import { qualityText } from '@videojs/core/i18n/text/menu';
 import { SwitchesIcon } from '@videojs/icons/components';
 import { type FunctionComponent, Template } from '@videojs/jsx';
-import styles from '../../styles/components/menu.tailwind';
+import styles from '../../styles/components/menu.styles';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';

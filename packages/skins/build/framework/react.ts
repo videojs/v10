@@ -1,19 +1,19 @@
 import { posix, resolve } from 'node:path';
+
+import type { StylePluginOptions } from '@videojs/compiler/styles';
+
 import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import { createCompilerReactConfig, type ReactImportResolver } from '../compiler/react';
 import { emitReactModules } from '../compiler/react-modules';
 import { skinRootClassName, skinRootComponentName } from '../compiler/skin-root';
 import type { GeneratedFile } from '../output/files';
-import type { SkinStyleManifest } from '../styles/manifest';
-import type { SkinStyleTarget } from '../styles/transform';
 
 interface GenerateReactSkinsOptions {
   rootDir: string;
   skin: string;
   iconSet: string;
-  styles: SkinStyleManifest;
-  style?: SkinStyleTarget | undefined;
+  styles: StylePluginOptions;
   resolveImport?: ReactImportResolver | undefined;
 }
 
@@ -35,7 +35,6 @@ export async function generateReactSkins(
     }))
     .sort((a, b) => a.outputFile.localeCompare(b.outputFile));
   const config = createCompilerReactConfig({
-    style: options.style ?? 'vanilla',
     styles: options.styles,
     iconSet: options.iconSet,
     rootComponentName: skinRootComponentName(skin),

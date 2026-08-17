@@ -17,7 +17,7 @@ import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
 import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
-import styles from '../../styles/skins/default-video.tailwind';
+import styles from '../../styles/skins/default-video.styles';
 
 export function DefaultVideoSkin() {
   return (
@@ -30,25 +30,25 @@ export function DefaultVideoSkin() {
       <Controls.Root className={styles.controls.root}>
         <Tooltip.Provider>
           <Controls.Group className={styles.controls.primary}>
-            <Controls.Group className={styles.buttonGroup}>
+            <Controls.Group className={styles.buttons}>
               <PlayButton />
               <VolumePopover />
             </Controls.Group>
 
-            <Controls.Group className={styles.timeControls}>
+            <Controls.Group className={styles.timeline}>
               <TimePrimitive.Value className={styles.time.current} type="current" />
               <TimeSlider />
               <TimePrimitive.Value className={styles.time.remaining} type="remaining" toggle />
             </Controls.Group>
 
-            <Controls.Group className={styles.buttonGroup}>
+            <Controls.Group className={styles.buttons}>
               <CaptionsButton />
               <VideoSettingsMenu />
             </Controls.Group>
           </Controls.Group>
 
           <Controls.Group className={styles.controls.secondary}>
-            <Controls.Group className={styles.buttonGroup}>
+            <Controls.Group className={styles.buttons}>
               <CastButton />
               <AirPlayButton />
               <PiPButton />

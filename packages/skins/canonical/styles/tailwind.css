@@ -8,7 +8,7 @@
 @import "./themes/minimal.css";
 
 @source "../**/*.tsx";
-@source "./**/*.tailwind.ts";
+@source "./**/*.styles.ts";
 
 @theme inline {
   --spacing: var(--media-spacing);

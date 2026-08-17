@@ -1,12 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import { basename, posix, resolve, sep } from 'node:path';
+
 import { collectModuleSpecifiers } from '@videojs/compiler/ast';
+import type { StyleManifest } from '@videojs/compiler/styles';
+
+import { loadCatalogStyleManifest } from '../catalog/styles';
 import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinStyleResources } from '../catalog/types';
 import { createCompilerReactConfig } from '../compiler/react';
 import { emitReactModules, type ReactModuleLayout } from '../compiler/react-modules';
 import { skinRootClassName } from '../compiler/skin-root';
 import type { GeneratedFile } from '../output/files';
-import { loadCatalogStyleManifest, type SkinStyleManifest } from '../styles/manifest';
 
 type RegistrySourceFileKind = 'source' | 'style';
 
@@ -49,7 +52,7 @@ interface SkinItemLayout {
 interface SkinItemContext extends SkinItemLayout {
   layoutsByInput: ReadonlyMap<string, SkinItemLayout>;
   options: ResolvedRegistrySourceOptions;
-  styles: SkinStyleManifest;
+  styles: StyleManifest;
 }
 
 interface ResolvedRegistrySourceOptions {
@@ -86,7 +89,6 @@ export async function generateReactRegistry(
   const styles = await loadCatalogStyleManifest(catalog, {
     rootDir: resolved.rootDir,
     itemNames: selected.map((layout) => layout.item.name),
-    variant: resolved.variant,
   });
   const items: Record<string, RegistrySourceFile[]> = {};
   const packageDependenciesByItem: Record<string, string[]> = {};
@@ -257,10 +259,13 @@ async function emitReactItem(context: SkinItemContext, installAlias: string): Pr
     rootDir: context.options.rootDir,
     layouts: context.modules,
     config: createCompilerReactConfig({
-      style: 'tailwind',
-      styles: context.styles,
+      styles: {
+        output: 'tailwind',
+        manifest: context.styles,
+        variant: context.options.variant,
+        composeClassNames: Boolean(context.options.utility),
+      },
       iconSet: context.options.iconSet,
-      composeClassNames: Boolean(context.options.utility),
       extendComponents: Boolean(context.options.utility),
       resolveImport(reference) {
         if (reference.source === '@videojs/utils/style' && context.options.utility) {

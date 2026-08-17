@@ -12,8 +12,8 @@
     "scripts",
     "canonical/catalog.ts",
     "canonical/registry/config.ts",
-    "canonical/styles/define.ts",
-    "canonical/styles/tokens.ts"
+    "canonical/styles/tokens.ts",
+    "vite.config.ts"
   ],
   "exclude": ["canonical/registry/default"]
 }

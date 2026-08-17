@@ -30,6 +30,7 @@ export interface TransformResult {
   code: string;
   map: CompilerSourceMap;
   assets: readonly CompilerAsset[];
+  watchFiles: readonly string[];
   diagnostics: readonly CompilerDiagnostic[];
 }
 
@@ -66,13 +67,18 @@ export async function transform(source: string, options: TransformOptions = {}):
   const config = options.config ?? {};
   const target = config.target ?? jsx();
   const assets: CompilerAsset[] = [];
+  const watchFiles = new Set<string>();
   const diagnostics: CompilerDiagnostic[] = [];
   const context: CompilerContext = {
     filename,
+    sourceText: source,
     configDir: options.configDir ?? process.cwd(),
     ...(options.outputFile ? { outputFile: options.outputFile } : {}),
     addAsset(asset) {
       assets.push(asset);
+    },
+    addWatchFile(fileName) {
+      watchFiles.add(fileName);
     },
     report(diagnostic) {
       diagnostics.push(withDiagnosticSource(diagnostic, source, filename));
@@ -141,6 +147,7 @@ export async function transform(source: string, options: TransformOptions = {}):
       code: source,
       map: identitySourceMap(source, filename, options.outputFile),
       assets,
+      watchFiles: [...watchFiles],
       diagnostics,
     };
   }
@@ -156,7 +163,7 @@ export async function transform(source: string, options: TransformOptions = {}):
 
     await runFinishers(finishers, filename, source);
 
-    return { code: printed.code, map: printed.map, assets, diagnostics };
+    return { code: printed.code, map: printed.map, assets, watchFiles: [...watchFiles], diagnostics };
   } catch (error) {
     if (error instanceof CompilerError) throw error;
     throw new CompilerError([fatalDiagnosticFromError(error, { filename, sourceText: source })], { cause: error });

@@ -35,9 +35,11 @@ export interface CompilerSourceMap {
 
 export interface CompilerContext {
   filename: string;
+  sourceText: string;
   configDir: string;
   outputFile?: string | undefined;
   addAsset(asset: CompilerAsset): void;
+  addWatchFile(fileName: string): void;
   report(diagnostic: CompilerDiagnostic): void;
 }
 

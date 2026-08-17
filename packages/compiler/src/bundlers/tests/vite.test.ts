@@ -91,6 +91,39 @@ describe('vjsCompiler', () => {
     expect(plugin.load(`\0${secondCssId}`)).toBe(css);
   });
 
+  it('shares identical emitted assets between transformed modules', async () => {
+    let css = '.foo{color:red;}';
+    const plugin = createPlugin({
+      config: {
+        plugins: [
+          {
+            name: 'fixture-css',
+            setup(context) {
+              return {
+                finish() {
+                  context.addAsset({ type: 'css', fileName: 'shared.css', source: css });
+                },
+              };
+            },
+          },
+        ],
+      },
+    });
+    const first = await plugin.transform.call(createContext(), 'export const first = <Foo/>;', '/workspace/first.tsx');
+    const second = await plugin.transform.call(
+      createContext(),
+      'export const second = <Foo/>;',
+      '/workspace/second.tsx'
+    );
+    const firstCssId = first!.code.match(/^import "([^"]+)";/)![1]!;
+    const secondCssId = second!.code.match(/^import "([^"]+)";/)![1]!;
+
+    expect(secondCssId).toBe(firstCssId);
+    css = '.foo{color:blue;}';
+    await plugin.transform.call(createContext(), 'export const first = <Foo/>;', '/workspace/first.tsx');
+    expect(plugin.load(`\0${secondCssId}`)).toBe('.foo{color:red;}');
+  });
+
   it('forwards compiler warnings to Vite', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({

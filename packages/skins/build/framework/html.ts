@@ -1,18 +1,16 @@
 import { build } from '@videojs/compiler';
+import type { StylePluginOptions } from '@videojs/compiler/styles';
 import { format } from 'oxfmt';
 import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../compiler/html';
 import { skinRootClassName, skinRootComponentName } from '../compiler/skin-root';
-import type { SkinStyleManifest } from '../styles/manifest';
-import type { SkinStyleTarget } from '../styles/transform';
 
 interface GenerateHtmlSkinOptions {
   skin: string;
   entryFile: string;
   iconSet: string;
-  styles: SkinStyleManifest;
-  style?: SkinStyleTarget | undefined;
+  styles: StylePluginOptions;
   resolveImport?: ((specifier: string) => string) | undefined;
 }
 
@@ -25,7 +23,6 @@ export async function generateHtmlSkin(
   if (skin?.type !== 'skin') throw new Error(`Skin \`${options.skin}\` does not exist.`);
   const result = await build({
     ...createCompilerHtmlConfig({
-      style: options.style ?? 'vanilla',
       styles: options.styles,
       rootComponentName: skinRootComponentName(skin),
       rootClassName: skinRootClassName(skin),

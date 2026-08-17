@@ -1,5 +1,5 @@
 import type { FunctionComponent } from '@videojs/jsx';
-import styles from '../../styles/components/status-indicator-overlay.tailwind';
+import styles from '../../styles/components/status-indicator-overlay.styles';
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
@@ -11,7 +11,7 @@ export function VideoStatusIndicators() {
   return (
     <>
       <StatusAnnouncer />
-      <StatusIndicatorGroup className={styles.statusIndicatorOverlay}>
+      <StatusIndicatorGroup className={styles.root}>
         <VolumeIndicator />
         <StatusIndicator />
         <SeekIndicator />

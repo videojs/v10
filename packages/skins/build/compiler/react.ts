@@ -8,18 +8,15 @@ import {
   type TransformHelpers,
 } from '@videojs/compiler';
 import { anyTag, childAsProp, hasJsxAttribute, type ImportRef, type JsxElementLike } from '@videojs/compiler/ast';
+import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compiler/styles';
 import ts, { type Expression } from 'typescript';
-import type { SkinStyleManifest } from '../styles/manifest';
-import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
 interface CreateCompilerReactConfigOptions {
-  style: SkinStyleTarget;
-  styles: SkinStyleManifest;
+  styles: StylePluginOptions;
   rootComponentName?: string | undefined;
   rootClassName?: string | undefined;
   iconSet?: string | undefined;
   resolveImport?: ReactImportResolver | undefined;
-  composeClassNames?: boolean | undefined;
   /** Add editable target props and className forwarding to generated component boundaries. */
   extendComponents?: boolean | undefined;
 }
@@ -115,11 +112,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
       ],
     }),
     plugins: [
-      skinStyles({
-        manifest: options.styles,
-        target: options.style,
-        composeClassNames: options.composeClassNames,
-      }),
+      stylesPlugin(options.styles),
       rewrite(
         (code) => {
           const cn = code.import(cnReference.source, cnReference.name);

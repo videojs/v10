@@ -8,13 +8,11 @@ import {
   type TransformHelpers,
 } from '@videojs/compiler';
 import type { JsxElementLike } from '@videojs/compiler/ast';
+import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compiler/styles';
 import ts from 'typescript';
-import type { SkinStyleManifest } from '../styles/manifest';
-import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
 interface CreateCompilerHtmlConfigOptions {
-  style: SkinStyleTarget;
-  styles: SkinStyleManifest;
+  styles: StylePluginOptions;
   rootComponentName?: string | undefined;
   rootClassName?: string | undefined;
 }
@@ -239,8 +237,8 @@ const SETTINGS_SUBMENUS = [
 ] as const;
 
 /** Create the compiler policy for an HTML Skin projection. */
-export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOptions) {
-  const rootComponentName = styleTarget.rootComponentName ?? 'DefaultVideoSkin';
+export function createCompilerHtmlConfig(options: CreateCompilerHtmlConfigOptions) {
+  const rootComponentName = options.rootComponentName ?? 'DefaultVideoSkin';
   return defineConfig({
     target: html({
       imports: {
@@ -250,7 +248,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
       },
     }),
     plugins: [
-      skinStyles({ manifest: styleTarget.styles, target: styleTarget.style }),
+      stylesPlugin(options.styles),
       rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
@@ -266,10 +264,10 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
 
             // Establish the Skin root, component content slot, and Container API.
             rootContainer.addProp('className', () => {
-              if (!styleTarget.rootClassName) {
+              if (!options.rootClassName) {
                 throw new Error('HTML Skin root lowering requires `rootClassName`.');
               }
-              return styleTarget.rootClassName;
+              return options.rootClassName;
             }),
             containerPrimitiveClassName.replace(({ value }) => code.value.array([value, 'className'])),
             code.function('Container').setProps(['children', 'className']),

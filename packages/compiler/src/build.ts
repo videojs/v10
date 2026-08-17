@@ -147,6 +147,7 @@ function compilerPlugin(
       const result = await transform(source, { filename: id, config, configDir, outputFile });
       diagnostics.push(...result.diagnostics);
       assets.push(...result.assets);
+      for (const file of result.watchFiles) this.addWatchFile(file);
       return { code: result.code, map: result.map, moduleType: moduleType(id) };
     },
   };

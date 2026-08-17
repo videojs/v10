@@ -1,9 +1,11 @@
 import { resolve } from 'node:path';
+
+import { collectReferencedStyleRules, compileStyles, loadDesignSystem } from '@videojs/compiler/styles';
+
 import { resolveSkinClosure } from '../catalog/resolve';
+import { loadCatalogStyleManifest } from '../catalog/styles';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import type { ReactImportResolver } from '../compiler/react';
-import { compileSkinStyles, loadDesignSystem } from '../styles/compile';
-import { collectReferencedStyleRecipes, loadCatalogStyleManifest } from '../styles/manifest';
 import { generateHtmlSkin } from './html';
 import { generateReactSkins } from './react';
 import { createFrameworkStyles, type FrameworkStyleFile } from './styles';
@@ -42,10 +44,9 @@ export async function createFrameworkSkin(
   const styles = await loadCatalogStyleManifest(catalog, {
     rootDir: options.rootDir,
     itemNames: [skin.name],
-    variant: skin.variant,
   });
   const closure = resolveSkinClosure(catalog, skin.name);
-  const recipeNames = await collectReferencedStyleRecipes(
+  const ruleClassNames = await collectReferencedStyleRules(
     closure.sourceFiles.map((file) => resolve(options.rootDir, file)),
     styles
   );
@@ -63,7 +64,7 @@ export async function createFrameworkSkin(
           skin: skin.name,
           entryFile,
           iconSet,
-          styles,
+          styles: { output: 'css', manifest: styles, variant: skin.variant },
           ...(projection.resolveImport ? { resolveImport: projection.resolveImport } : {}),
         }),
       });
@@ -72,7 +73,7 @@ export async function createFrameworkSkin(
         rootDir: options.rootDir,
         skin: skin.name,
         iconSet,
-        styles,
+        styles: { output: 'css', manifest: styles, variant: skin.variant },
         ...(projection.resolveImport ? { resolveImport: projection.resolveImport } : {}),
       });
       for (const file of reactFiles) {
@@ -86,7 +87,13 @@ export async function createFrameworkSkin(
     styles: await createFrameworkStyles(
       catalog.resources.styles,
       options.rootDir,
-      await compileSkinStyles({ design, manifest: styles, scopeClass: skin.scopeClass, recipeNames }),
+      await compileStyles({
+        design,
+        manifest: styles,
+        scope: `.${skin.scopeClass}`,
+        variant: skin.variant,
+        ruleClassNames,
+      }),
       skin.theme
     ),
   };

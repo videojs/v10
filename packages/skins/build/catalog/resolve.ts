@@ -206,7 +206,7 @@ async function visitRelativeReference(
     return;
   }
   if (importedFile === sourceFile.fileName) return;
-  if (isTailwindStyleFile(importedFile)) {
+  if (isStyleDefinitionFile(importedFile)) {
     context.styleFiles.add(importedFile);
     return;
   }
@@ -288,8 +288,8 @@ async function resolveImportedFile(importer: string, source: string): Promise<st
   return null;
 }
 
-function isTailwindStyleFile(fileName: string): boolean {
-  return fileName.endsWith('.tailwind.ts');
+function isStyleDefinitionFile(fileName: string): boolean {
+  return fileName.endsWith('.styles.ts');
 }
 
 function skinPath(rootDir: string, fileName: string): string {

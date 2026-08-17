@@ -1,12 +1,12 @@
 import { SeekIndicator as SeekIndicatorPrimitive } from '@videojs/core/components';
 import { ChevronIcon } from '@videojs/icons/components';
-import styles from '../../styles/components/seek-indicator.tailwind';
+import styles from '../../styles/components/seek-indicator.styles';
 
 export function SeekIndicator() {
   return (
-    <SeekIndicatorPrimitive.Root className={styles.seekIndicator}>
-      <ChevronIcon className={styles.seekIndicatorIcon} />
-      <SeekIndicatorPrimitive.Value className={styles.seekIndicatorValue} />
+    <SeekIndicatorPrimitive.Root className={styles.root}>
+      <ChevronIcon className={styles.icon} />
+      <SeekIndicatorPrimitive.Value className={styles.value} />
     </SeekIndicatorPrimitive.Root>
   );
 }

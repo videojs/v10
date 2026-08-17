@@ -17,7 +17,7 @@ import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
 import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
-import styles from '../../styles/skins/minimal-video.tailwind';
+import styles from '../../styles/skins/minimal-video.styles';
 
 export function MinimalVideoSkin() {
   return (
@@ -34,7 +34,7 @@ export function MinimalVideoSkin() {
             <VolumePopover side="right" orientation="horizontal" />
           </Controls.Group>
 
-          <Controls.Group className={styles.timeControls}>
+          <Controls.Group className={styles.timeline}>
             <TimePrimitive.Group className={styles.time.group}>
               <TimePrimitive.Value className={styles.time.current} type="current" toggle />
               <TimePrimitive.Separator className={styles.time.separator} />

@@ -1,16 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { transform } from '@videojs/compiler';
+import { loadStyleManifest } from '@videojs/compiler/styles';
 import { describe, expect, it } from 'vitest';
-import { loadSkinStyleManifest } from '../../styles/manifest';
 import { createCompilerReactConfig } from '../react';
 
 const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 const styleFiles = [
-  resolve(canonicalRoot, 'styles/components/button.tailwind.ts'),
-  resolve(canonicalRoot, 'styles/components/container.tailwind.ts'),
-  resolve(canonicalRoot, 'styles/components/popup.tailwind.ts'),
-  resolve(canonicalRoot, 'styles/components/poster.tailwind.ts'),
+  resolve(canonicalRoot, 'styles/components/button.styles.ts'),
+  resolve(canonicalRoot, 'styles/components/container.styles.ts'),
+  resolve(canonicalRoot, 'styles/components/popup.styles.ts'),
+  resolve(canonicalRoot, 'styles/components/poster.styles.ts'),
 ];
 
 describe('createCompilerReactConfig', () => {
@@ -20,8 +20,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest(styleFiles),
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
       configDir: dirname(filename),
@@ -34,7 +33,7 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).toContain('resolveClassName(className, state)');
     expect(result.code).not.toContain("from '@videojs/core'");
     expect(result.code).toContain('<span className="tabular-nums">');
-    expect(result.code).not.toContain('button.tailwind');
+    expect(result.code).not.toContain('button.styles');
   });
 
   it('does not extend packaged preset components by default', async () => {
@@ -42,7 +41,9 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerReactConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) }),
+      config: createCompilerReactConfig({
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+      }),
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -54,12 +55,15 @@ describe('createCompilerReactConfig', () => {
   it('keeps selected style variants out of editable component props', async () => {
     const filename = resolve(canonicalRoot, 'components/feedback/status-indicator.tsx');
     const source = await readFile(filename, 'utf8');
-    const statusStyleFiles = [...styleFiles, resolve(canonicalRoot, 'styles/components/status-indicator.tailwind.ts')];
+    const statusStyleFiles = [...styleFiles, resolve(canonicalRoot, 'styles/components/status-indicator.styles.ts')];
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest(statusStyleFiles, { variant: 'minimal' }),
+        styles: {
+          output: 'tailwind',
+          manifest: await loadStyleManifest(statusStyleFiles),
+          variant: 'minimal',
+        },
         extendComponents: true,
       }),
     });
@@ -77,8 +81,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest(styleFiles),
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
@@ -95,8 +98,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest(styleFiles),
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
@@ -114,8 +116,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest(styleFiles),
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
@@ -132,11 +133,13 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest([
-          ...styleFiles,
-          resolve(canonicalRoot, 'styles/components/menu.tailwind.ts'),
-        ]),
+        styles: {
+          output: 'tailwind',
+          manifest: await loadStyleManifest([
+            ...styleFiles,
+            resolve(canonicalRoot, 'styles/components/menu.styles.ts'),
+          ]),
+        },
         extendComponents: true,
       }),
     });
@@ -153,8 +156,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest(styleFiles),
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         extendComponents: true,
       }),
     });
@@ -169,8 +171,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest(styleFiles),
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         resolveImport(reference) {
           if (reference.source === '@videojs/react') return { ...reference, source: '@/ui/seek-button' };
           if (reference.source === '@videojs/react/icons') return { ...reference, source: '@/icons' };
@@ -188,7 +189,9 @@ describe('createCompilerReactConfig', () => {
     const source = await readFile(filename, 'utf8');
     const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
     const posterSource = await readFile(posterFilename, 'utf8');
-    const config = createCompilerReactConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) });
+    const config = createCompilerReactConfig({
+      styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+    });
     const result = await transform(source, {
       filename,
       config,
@@ -225,8 +228,7 @@ describe('createCompilerReactConfig', () => {
     const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({
-        style: 'tailwind',
-        styles: await loadSkinStyleManifest(styleFiles),
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         rootClassName: 'media-skin media-skin-video media-theme-default',
       }),
     });

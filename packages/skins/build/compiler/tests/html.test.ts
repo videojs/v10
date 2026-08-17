@@ -1,16 +1,16 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { transform } from '@videojs/compiler';
+import { loadStyleManifest } from '@videojs/compiler/styles';
 import { describe, expect, it } from 'vitest';
-import { loadSkinStyleManifest } from '../../styles/manifest';
 import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../html';
 
 const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 const styleFiles = [
-  resolve(canonicalRoot, 'styles/components/container.tailwind.ts'),
-  resolve(canonicalRoot, 'styles/components/popup.tailwind.ts'),
-  resolve(canonicalRoot, 'styles/components/poster.tailwind.ts'),
-  resolve(canonicalRoot, 'styles/components/slider.tailwind.ts'),
+  resolve(canonicalRoot, 'styles/components/container.styles.ts'),
+  resolve(canonicalRoot, 'styles/components/popup.styles.ts'),
+  resolve(canonicalRoot, 'styles/components/poster.styles.ts'),
+  resolve(canonicalRoot, 'styles/components/slider.styles.ts'),
 ];
 
 describe('createCompilerHtmlConfig', () => {
@@ -19,7 +19,9 @@ describe('createCompilerHtmlConfig', () => {
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
-      config: createCompilerHtmlConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) }),
+      config: createCompilerHtmlConfig({
+        styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+      }),
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -51,7 +53,9 @@ describe('createCompilerHtmlConfig', () => {
     const source = await readFile(filename, 'utf8');
     const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
     const posterSource = await readFile(posterFilename, 'utf8');
-    const config = createCompilerHtmlConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) });
+    const config = createCompilerHtmlConfig({
+      styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
+    });
     const result = await transform(source, {
       filename,
       config,
@@ -79,8 +83,7 @@ describe('createCompilerHtmlConfig', () => {
 }`,
       {
         config: createCompilerHtmlConfig({
-          style: 'tailwind',
-          styles: await loadSkinStyleManifest(styleFiles),
+          styles: { output: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         }),
       }
     );

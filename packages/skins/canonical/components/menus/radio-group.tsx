@@ -4,7 +4,7 @@ import {
   PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive,
   QualityRadioGroup as QualityRadioGroupPrimitive,
 } from '@videojs/core/components';
-import styles from '../../styles/components/menu.tailwind';
+import styles from '../../styles/components/menu.styles';
 
 export function QualityRadioGroup({ children }: { children?: unknown }) {
   return <QualityRadioGroupPrimitive className={styles.radioGroup}>{children}</QualityRadioGroupPrimitive>;

@@ -7,9 +7,11 @@ import { CompilerError, transform } from '../transform';
 export interface VideojsCompilerPluginOptions {
   config?: CompilerConfig | undefined;
   configFile?: string | undefined;
-  include?: readonly string[] | undefined;
-  exclude?: readonly string[] | undefined;
+  include?: readonly CompilerFilter[] | undefined;
+  exclude?: readonly CompilerFilter[] | undefined;
 }
+
+export type CompilerFilter = string | RegExp;
 
 type ViteHookContext<Hook> = Hook extends (this: infer Context, ...args: never[]) => unknown
   ? Context
@@ -58,8 +60,8 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       if (loadedConfig?.configPath === id) loadedConfig = undefined;
     },
     async transform(code, id) {
-      if (!include.some((ext) => id.endsWith(ext))) return null;
-      if (exclude.some((ext) => id.endsWith(ext))) return null;
+      if (!include.some((filter) => matchesFilter(id, filter))) return null;
+      if (exclude.some((filter) => matchesFilter(id, filter))) return null;
 
       const { config, configDir, configPath } = await getConfig();
       if (configPath) this.addWatchFile(configPath);
@@ -75,19 +77,29 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
         if (diagnostic.level === 'warning') this.warn(viteLogFromDiagnostic(diagnostic));
         else this.error(viteLogFromDiagnostic(diagnostic));
       }
+      for (const file of result.watchFiles) this.addWatchFile(file);
 
-      for (const cssId of cssIdsByOwner.get(id) ?? []) cssById.delete(cssId);
+      const previousCssIds = cssIdsByOwner.get(id) ?? new Set<string>();
       const nextCssIds = new Set<string>();
       cssIdsByOwner.set(id, nextCssIds);
 
-      const imports = result.assets
-        .filter((asset) => asset.type === 'css')
-        .map((asset, index) => {
-          const publicId = cssVirtualId(id, asset.fileName, index, asset.source);
-          cssById.set(publicId, asset.source);
-          nextCssIds.add(publicId);
-          return `import ${JSON.stringify(publicId)};`;
-        });
+      const imports = [
+        ...new Set(
+          result.assets
+            .filter((asset) => asset.type === 'css')
+            .map((asset) => {
+              const publicId = cssVirtualId(asset.fileName, asset.source);
+              cssById.set(publicId, asset.source);
+              nextCssIds.add(publicId);
+              return `import ${JSON.stringify(publicId)};`;
+            })
+        ),
+      ];
+      for (const publicId of previousCssIds) {
+        if (nextCssIds.has(publicId)) continue;
+        const referenced = [...cssIdsByOwner.values()].some((ids) => ids.has(publicId));
+        if (!referenced) cssById.delete(publicId);
+      }
 
       return {
         code: imports.length > 0 ? `${imports.join('\n')}\n${result.code}` : result.code,
@@ -97,9 +109,15 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   };
 }
 
-function cssVirtualId(id: string, fileName: string, index: number, source: string): string {
-  const hash = createHash('sha256').update(source).digest('hex').slice(0, 12);
-  return `virtual:@videojs/compiler/css/${encodeURIComponent(id)}/${index}/${hash}/${encodeURIComponent(fileName)}`;
+function matchesFilter(id: string, filter: CompilerFilter): boolean {
+  if (typeof filter === 'string') return id.endsWith(filter);
+  filter.lastIndex = 0;
+  return filter.test(id);
+}
+
+function cssVirtualId(fileName: string, source: string): string {
+  const hash = createHash('sha256').update(fileName).update('\0').update(source).digest('hex').slice(0, 12);
+  return `virtual:@videojs/compiler/css/${hash}/${encodeURIComponent(fileName)}`;
 }
 
 function offsetSourceMap(map: CompilerSourceMap, lines: number): CompilerSourceMap {

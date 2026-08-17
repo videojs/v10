@@ -1,6 +1,5 @@
 import { readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
-import type { SkinStyleRole } from '../../canonical/styles/define';
 import type { SkinStyleResources } from '../catalog/types';
 
 export interface FrameworkStyleFile {
@@ -11,14 +10,14 @@ export interface FrameworkStyleFile {
 export async function createFrameworkStyles(
   resources: SkinStyleResources,
   rootDir: string,
-  styles: ReadonlyMap<SkinStyleRole, string>,
+  styles: ReadonlyMap<string, string>,
   theme = 'default'
 ): Promise<FrameworkStyleFile[]> {
   const themePath = resources.themes[theme];
   if (!themePath) throw new Error(`Framework Skin generation requires a \`${theme}\` theme resource.`);
 
-  const roleFiles = [...styles]
-    .map(([role, content]) => ({ fileName: `${role}.css`, content }))
+  const styleFiles = [...styles]
+    .map(([fileName, content]) => ({ fileName, content }))
     .sort((a, b) => a.fileName.localeCompare(b.fileName));
   const sharedFiles = [resources.base, ...(resources.shared ?? [])];
   const files: FrameworkStyleFile[] = [
@@ -29,7 +28,7 @@ export async function createFrameworkStyles(
       }))
     )),
     { fileName: 'styles/theme.css', content: await readFile(resolve(rootDir, themePath), 'utf8') },
-    ...roleFiles.map((file) => ({ ...file, fileName: `styles/${file.fileName}` })),
+    ...styleFiles.map((file) => ({ ...file, fileName: `styles/${file.fileName}` })),
   ];
   return [
     {

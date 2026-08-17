@@ -1,6 +1,6 @@
 import { Menu } from '@videojs/core/components';
 import type { FunctionComponent } from '@videojs/jsx';
-import styles from '../../styles/components/menu.tailwind';
+import styles from '../../styles/components/menu.styles';
 import { MenuChevron } from './menu-chevron';
 
 declare const SubmenuHint: FunctionComponent;
@@ -15,7 +15,7 @@ export interface SubmenuProps {
 export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) {
   return (
     <Menu.Root>
-      <Menu.Trigger className={[styles.menuItem, styles.item]}>
+      <Menu.Trigger className={[styles.item, styles.option]}>
         {icon}
         {label}
         <SubmenuHint className={styles.hint}>
@@ -23,8 +23,8 @@ export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) 
           <MenuChevron />
         </SubmenuHint>
       </Menu.Trigger>
-      <Menu.Content className={styles.submenuPanel}>
-        <Menu.Item className={[styles.menuItem, styles.back]}>
+      <Menu.Content className={styles.submenu}>
+        <Menu.Item className={[styles.item, styles.back]}>
           <MenuChevron flipped />
           {label}
         </Menu.Item>

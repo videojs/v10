@@ -9,30 +9,31 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@videojs/icons/components';
-import styles from '../../styles/components/status-indicator.tailwind';
+import styles from '../../styles/components/status-indicator.styles';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+
 const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export function StatusIndicator() {
   return (
-    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className={styles.statusIndicator}>
-      <CaptionsOnIcon className={[styles.statusIndicatorIcon, styles.statusCaptionsOnIcon]} />
-      <CaptionsOffIcon className={[styles.statusIndicatorIcon, styles.statusCaptionsOffIcon]} />
-      <FullscreenEnterIcon className={[styles.statusIndicatorIcon, styles.statusFullscreenEnterIcon]} />
-      <FullscreenExitIcon className={[styles.statusIndicatorIcon, styles.statusFullscreenExitIcon]} />
-      <PipEnterIcon className={[styles.statusIndicatorIcon, styles.statusPipEnterIcon]} />
-      <PipExitIcon className={[styles.statusIndicatorIcon, styles.statusPipExitIcon]} />
-      <StatusIndicatorPrimitive.Value className={styles.statusIndicatorValue} />
+    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className={styles.root}>
+      <CaptionsOnIcon className={[styles.icon, styles.icons.captionsOn]} />
+      <CaptionsOffIcon className={[styles.icon, styles.icons.captionsOff]} />
+      <FullscreenEnterIcon className={[styles.icon, styles.icons.fullscreenEnter]} />
+      <FullscreenExitIcon className={[styles.icon, styles.icons.fullscreenExit]} />
+      <PipEnterIcon className={[styles.icon, styles.icons.pipEnter]} />
+      <PipExitIcon className={[styles.icon, styles.icons.pipExit]} />
+      <StatusIndicatorPrimitive.Value className={styles.value} />
     </StatusIndicatorPrimitive.Root>
   );
 }
 
 export function PlaybackStatusIndicator() {
   return (
-    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className={styles.playbackStatusIndicator}>
-      <PlayIcon className={[styles.playbackStatusIcon, styles.statusPlayIcon]} />
-      <PauseIcon className={[styles.playbackStatusIcon, styles.statusPauseIcon]} />
+    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className={styles.playback.root}>
+      <PlayIcon className={[styles.playback.icon, styles.playback.play]} />
+      <PauseIcon className={[styles.playback.icon, styles.playback.pause]} />
     </StatusIndicatorPrimitive.Root>
   );
 }
