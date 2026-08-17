@@ -191,6 +191,13 @@ function main(): void {
     process.exit(1);
   }
 
+  // Preview releases (pkg.pr.new) pack straight from source, and building the
+  // site just to bundle docs into a throwaway tarball is not worth the CI time.
+  if (process.env.VIDEOJS_SKIP_PACKAGE_DOCS) {
+    console.log(`• Skipped packages/${target}/docs/ (VIDEOJS_SKIP_PACKAGE_DOCS is set)`);
+    return;
+  }
+
   try {
     const copiedFiles = packageDocumentation({ target, version: process.env.npm_package_version });
     console.log(`✓ Copied ${copiedFiles} doc files to packages/${target}/docs/`);
