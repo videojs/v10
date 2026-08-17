@@ -18,7 +18,7 @@ function App() {
 
   return (
     <VideoPlayer>
-      <VideoSkinComponent skin={skin} styling={styling} className="aspect-[9/16] max-w-sm mx-auto">
+      <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
         <TikTokVideo className="block w-full h-full" src={TIKTOK_VIDEO_SRC} playsInline />
       </VideoSkinComponent>
     </VideoPlayer>

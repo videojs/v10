@@ -17,8 +17,9 @@ async function render() {
 
   document.getElementById('root')!.innerHTML = html`
     <video-player>
-      <${tag} class="aspect-[9/16] max-w-sm mx-auto">
-        <tiktok-video class="block w-full h-full" src="${TIKTOK_VIDEO_SRC}" playsinline></tiktok-video>
+      <${tag} class="aspect-video max-w-4xl mx-auto">
+        <!-- The host element floors itself at TikTok's portrait 325x578; clear that so it fits a landscape box. -->
+        <tiktok-video class="block w-full h-full min-w-0 min-h-0" src="${TIKTOK_VIDEO_SRC}" playsinline></tiktok-video>
       </${tag}>
     </video-player>
   `;
