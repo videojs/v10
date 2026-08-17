@@ -23,9 +23,9 @@
       "types": "./dist/catalog/index.d.ts",
       "default": "./dist/catalog/index.js"
     },
-    "./registry": {
-      "types": "./dist/registry/index.d.ts",
-      "default": "./dist/registry/index.js"
+    "./shadcn": {
+      "types": "./dist/shadcn/index.d.ts",
+      "default": "./dist/shadcn/index.js"
     },
     "./styles": {
       "types": "./dist/styles/index.d.ts",

@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { catalog, loadCatalog } from '@videojs/compiler/catalog';
 import { afterEach, describe, expect, it } from 'vitest';
 import { canonicalRoot, loadSkinCatalog } from '../../../catalog';
-import { generateReactRegistry } from '../source';
+import { emitShadcnSources } from '../source';
 
 const roots: string[] = [];
 
@@ -12,10 +12,10 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('generateReactRegistry', () => {
+describe('emitShadcnSources', () => {
   it('derives source layouts from Skin item types', async () => {
     const catalog = await loadSkinCatalog();
-    const output = await generateReactRegistry(catalog, {
+    const output = await emitShadcnSources(catalog, {
       rootDir: canonicalRoot,
       itemNames: ['default-video', 'play-button'],
       utility: {
@@ -91,7 +91,7 @@ describe('generateReactRegistry', () => {
     });
     const loaded = await loadCatalog(definition, { rootDir: root });
 
-    const output = await generateReactRegistry(loaded, { rootDir: root, itemNames: ['entry'] });
+    const output = await emitShadcnSources(loaded, { rootDir: root, itemNames: ['entry'] });
 
     expect(output.items.entry?.files.map((file) => file.path)).toEqual([
       'components/entry/entry.tsx',

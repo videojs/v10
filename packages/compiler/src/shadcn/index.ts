@@ -1,16 +1,16 @@
-import { type Registry, type RegistryItem, registrySchema } from 'shadcn/schema';
+import { type RegistryItem, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
 import type { CatalogDefinition } from '../catalog/define';
 import type { CatalogOutputFile, EmittedCatalogItem } from '../catalog/emit';
 import type { Catalog, CatalogItem } from '../catalog/resolve';
 
-type ShadcnRegistryItemType = RegistryItem['type'];
-export type ShadcnRegistry = Registry;
-export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
-export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
+type RegistryItemType = RegistryItem['type'];
+export type Registry = ShadcnRegistry;
+export type RegistryFile = NonNullable<RegistryItem['files']>[number];
+export type RegistryFileType = RegistryFile['type'];
 
-interface ShadcnSharedItem<File extends CatalogOutputFile> {
+interface SharedItem<File extends CatalogOutputFile> {
   readonly name: string;
-  readonly type: Extract<ShadcnRegistryItemType, 'registry:lib' | 'registry:style'>;
+  readonly type: Extract<RegistryItemType, 'registry:lib' | 'registry:style'>;
   readonly title: string;
   readonly description: string;
   readonly files: readonly File[];
@@ -18,14 +18,14 @@ interface ShadcnSharedItem<File extends CatalogOutputFile> {
   readonly meta?: Readonly<Record<string, string>> | undefined;
 }
 
-interface ShadcnItemDescription {
-  readonly type: Extract<ShadcnRegistryItemType, 'registry:block' | 'registry:component'>;
+interface ItemDescription {
+  readonly type: Extract<RegistryItemType, 'registry:block' | 'registry:component'>;
   readonly title: string;
   readonly description: string;
   readonly meta?: RegistryItem['meta'];
 }
 
-export interface CreateShadcnRegistryOptions<
+export interface CreateRegistryOptions<
   Definition extends CatalogDefinition = CatalogDefinition,
   File extends CatalogOutputFile = CatalogOutputFile,
 > {
@@ -35,8 +35,8 @@ export interface CreateShadcnRegistryOptions<
   readonly items: {
     readonly published: readonly CatalogItem<Definition>['name'][];
     readonly emitted: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<File>>>>;
-    readonly shared?: readonly ShadcnSharedItem<File>[] | undefined;
-    describe(item: CatalogItem<Definition>): ShadcnItemDescription;
+    readonly shared?: readonly SharedItem<File>[] | undefined;
+    describe(item: CatalogItem<Definition>): ItemDescription;
   };
   readonly resolve: {
     /** Add registry dependencies that are not represented by catalog edges. */
@@ -44,22 +44,26 @@ export interface CreateShadcnRegistryOptions<
       readonly item: CatalogItem<Definition>;
       readonly includedItems: readonly CatalogItem<Definition>[];
     }): readonly string[];
-    file(file: File, itemName: string): ShadcnRegistryFile;
+    file(file: File, itemName: string): RegistryFile;
   };
 }
 
 /** Create a shadcn manifest from emitted catalog sources and publication policy. */
-export function createShadcnRegistry<const Definition extends CatalogDefinition, File extends CatalogOutputFile>(
+export function createRegistry<const Definition extends CatalogDefinition, File extends CatalogOutputFile>(
   catalog: Catalog<Definition>,
-  options: CreateShadcnRegistryOptions<Definition, File>
-): ShadcnRegistry {
+  options: CreateRegistryOptions<Definition, File>
+): Registry {
   const itemsByName = new Map(catalog.items.map((item) => [item.name, item]));
   const published = new Set<string>(options.items.published);
   const sharedNames = new Set<string>();
 
   for (const shared of options.items.shared ?? []) {
-    if (sharedNames.has(shared.name)) throw new Error(`Registry shared item \`${shared.name}\` is declared twice.`);
+    if (sharedNames.has(shared.name)) {
+      throw new Error(`Registry shared item \`${shared.name}\` is declared twice.`);
+    }
+
     sharedNames.add(shared.name);
+
     if (itemsByName.has(shared.name)) {
       throw new Error(`Registry shared item \`${shared.name}\` conflicts with a catalog item.`);
     }
@@ -67,11 +71,15 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
 
   const catalogItems = options.items.published.map((name): RegistryItem => {
     const item = itemsByName.get(name);
+
     if (!item) throw new Error(`Registry references missing catalog item \`${name}\`.`);
+
     const partition = partitionItemDependencies(item, itemsByName, published);
     const sources = partition.includedItems.map((included) => {
       const source = options.items.emitted[included.name as CatalogItem<Definition>['name']];
+
       if (!source) throw new Error(`Registry output is missing catalog item \`${included.name}\`.`);
+
       return source;
     });
     const { meta, ...metadata } = options.items.describe(item);
@@ -114,7 +122,7 @@ export function createShadcnRegistry<const Definition extends CatalogDefinition,
       ),
       ...catalogItems,
     ],
-  } satisfies Registry;
+  } satisfies ShadcnRegistry;
 
   registrySchema.parse(registry);
   return registry;
@@ -130,17 +138,23 @@ function partitionItemDependencies<Definition extends CatalogDefinition>(
 
   const visit = (name: string): void => {
     const item = items.get(name);
+
     if (!item) throw new Error(`Catalog item \`${root.name}\` depends on missing item \`${name}\`.`);
+
     if (name !== root.name && published.has(name)) {
       registryItems.set(name, item);
       return;
     }
+
     if (includedItems.has(name)) return;
+
     includedItems.set(name, item);
+
     for (const dependency of item.dependencies) visit(dependency);
   };
 
   visit(root.name);
+
   return {
     includedItems: [...includedItems.values()].sort(compareItems),
     registryItems: [...registryItems.values()].sort(compareItems),
@@ -149,12 +163,15 @@ function partitionItemDependencies<Definition extends CatalogDefinition>(
 
 function uniqueDependencies(dependencies: readonly string[]): { dependencies?: string[] } {
   const unique = [...new Set(dependencies)].sort();
+
   return unique.length > 0 ? { dependencies: unique } : {};
 }
 
-function uniqueFiles(files: readonly ShadcnRegistryFile[]): ShadcnRegistryFile[] {
-  const unique = new Map<string, ShadcnRegistryFile>();
+function uniqueFiles(files: readonly RegistryFile[]): RegistryFile[] {
+  const unique = new Map<string, RegistryFile>();
+
   for (const file of files) unique.set(`${file.path}\0${file.target ?? ''}`, file);
+
   return [...unique.values()].sort((a, b) => a.path.localeCompare(b.path));
 }
 

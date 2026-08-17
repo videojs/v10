@@ -3,13 +3,13 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { skinRegistry } from '../../../../canonical/registry/config';
 import { canonicalRoot, loadSkinCatalog } from '../../../catalog';
-import { createRegistryManifest } from '../manifest';
-import { generateReactRegistry } from '../source';
+import { createShadcnManifest } from '../manifest';
+import { emitShadcnSources } from '../source';
 
-describe('generateReactRegistry', () => {
+describe('createShadcnManifest', () => {
   it('emits individual React/Tailwind components and a shadcn source manifest', async () => {
     const catalog = await loadSkinCatalog();
-    const output = await generateReactRegistry(catalog, {
+    const output = await emitShadcnSources(catalog, {
       rootDir: canonicalRoot,
       sourceRoot: skinRegistry.sourceRoot,
       itemNames: [
@@ -28,7 +28,7 @@ describe('generateReactRegistry', () => {
     const posterEntry = output.items.poster?.files.find((file) => file.path.endsWith('/poster.tsx'));
     const containerEntry = output.items.container?.files.find((file) => file.path.endsWith('/container.tsx'));
     const overlayEntry = output.items.overlay?.files.find((file) => file.path.endsWith('/overlay.tsx'));
-    const registry = createRegistryManifest(catalog, output, skinRegistry);
+    const registry = createShadcnManifest(catalog, output, skinRegistry);
     const playButton = registry.items.find((item) => item.name === 'play-button');
     const publicComponentProps = {
       'airplay-button': 'AirPlayButtonProps',

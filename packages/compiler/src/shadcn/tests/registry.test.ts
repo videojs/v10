@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { catalog } from '../../catalog/define';
 import { loadCatalog } from '../../catalog/resolve';
-import { createShadcnRegistry } from '../shadcn';
+import { createRegistry } from '../index';
 
 const roots: string[] = [];
 
@@ -12,7 +12,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('createShadcnRegistry', () => {
+describe('createRegistry', () => {
   it('partitions published dependencies from bundled catalog items', async () => {
     const root = setup({
       'root.ts': `import { Public } from './public'; import { Private } from './private'; export const Root = [Public, Private];`,
@@ -37,7 +37,7 @@ describe('createShadcnRegistry', () => {
       ])
     );
 
-    const registry = createShadcnRegistry(loaded, {
+    const registry = createRegistry(loaded, {
       name: 'example',
       homepage: 'https://example.com',
       namespace: '@example',

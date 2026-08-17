@@ -1,22 +1,17 @@
 import { posix } from 'node:path';
-import {
-  createShadcnRegistry,
-  type ShadcnRegistry,
-  type ShadcnRegistryFile,
-  type ShadcnRegistryFileType,
-} from '@videojs/compiler/registry';
+import { createRegistry, type Registry, type RegistryFile, type RegistryFileType } from '@videojs/compiler/shadcn';
 import type { SkinRegistryConfig } from '../../../canonical/registry/config';
 import type { SkinCatalog } from '../../catalog';
-import type { RegistrySourceOutput, SkinRegistryFile } from './source';
+import type { ShadcnSourceFile, ShadcnSourceOutput } from './source';
 
 /** Create the shadcn manifest for the emitted React/Tailwind source. */
-export function createRegistryManifest(
+export function createShadcnManifest(
   catalog: SkinCatalog,
-  output: RegistrySourceOutput,
+  output: ShadcnSourceOutput,
   config: SkinRegistryConfig
-): ShadcnRegistry {
+): Registry {
   const meta = { framework: config.framework, style: config.style, skin: config.skin } as const;
-  return createShadcnRegistry(catalog, {
+  return createRegistry(catalog, {
     name: config.name,
     homepage: config.homepage,
     namespace: config.namespace,
@@ -50,33 +45,38 @@ export function createRegistryManifest(
         ...(includedItems.some((item) => output.items[item.name]?.utilities) ? [config.utilityItem.name] : []),
       ],
       file: (file, owner) =>
-        registryFile(file, owner, config, owner === config.utilityItem.name ? 'registry:lib' : undefined),
+        createRegistryFile(file, owner, config, owner === config.utilityItem.name ? 'registry:lib' : undefined),
     },
   });
 }
 
-function registryFile(
-  file: SkinRegistryFile,
+function createRegistryFile(
+  file: ShadcnSourceFile,
   owner: string,
   config: SkinRegistryConfig,
-  sourceType?: ShadcnRegistryFileType
-): ShadcnRegistryFile {
+  sourceType?: RegistryFileType
+): RegistryFile {
   return {
     path: posix.join(config.outputDir, file.path),
-    target: registryTarget(file.path, owner, config),
+    target: resolveRegistryTarget(file.path, owner, config),
     type: file.kind === 'source' ? (sourceType ?? 'registry:component') : 'registry:file',
   };
 }
 
-function registryTarget(path: string, owner: string, config: SkinRegistryConfig): string {
+function resolveRegistryTarget(path: string, owner: string, config: SkinRegistryConfig): string {
   const sourcePrefix = `${config.sourceRoot}/`;
+
   if (!path.startsWith(sourcePrefix)) {
     throw new Error(`Registry source file \`${path}\` must be inside \`${config.sourceRoot}\`.`);
   }
+
   const relativePath = path.slice(sourcePrefix.length);
+
   if (relativePath === 'skin.tsx') return posix.join(config.installRoot, owner, relativePath);
+
   if (relativePath.startsWith('components/')) {
     return posix.join(config.installRoot, relativePath.replace(/^components\//, ''));
   }
+
   return posix.join(config.installRoot, relativePath);
 }

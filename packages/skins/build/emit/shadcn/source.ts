@@ -8,25 +8,25 @@ import type { SkinCatalogDefinition, SkinStyleResources } from '../../../canonic
 import { type SkinCatalog, type SkinCatalogItem, skinRootClassName } from '../../catalog';
 import { createCompilerReactConfig } from '../../transform/react';
 
-type SkinRegistryFileKind = 'source' | 'style';
+type ShadcnSourceFileKind = 'source' | 'style';
 
-export interface SkinRegistryFile extends CatalogOutputFile {
-  kind: SkinRegistryFileKind;
+export interface ShadcnSourceFile extends CatalogOutputFile {
+  kind: ShadcnSourceFileKind;
 }
 
-export interface RegistrySourceItem {
-  files: readonly SkinRegistryFile[];
+export interface ShadcnSourceItem {
+  files: readonly ShadcnSourceFile[];
   dependencies: readonly string[];
   utilities: boolean;
 }
 
-export interface RegistrySourceOutput {
-  sharedFiles: readonly SkinRegistryFile[];
-  utilityFiles: readonly SkinRegistryFile[];
-  items: Readonly<Record<string, RegistrySourceItem>>;
+export interface ShadcnSourceOutput {
+  sharedFiles: readonly ShadcnSourceFile[];
+  utilityFiles: readonly ShadcnSourceFile[];
+  items: Readonly<Record<string, ShadcnSourceItem>>;
 }
 
-interface GenerateReactRegistryOptions<ItemName extends string = SkinCatalogItem['name']> {
+interface EmitShadcnSourcesOptions<ItemName extends string = SkinCatalogItem['name']> {
   rootDir: string;
   itemNames?: readonly ItemName[] | undefined;
   variant?: string | undefined;
@@ -42,7 +42,7 @@ interface GenerateReactRegistryOptions<ItemName extends string = SkinCatalogItem
     | undefined;
 }
 
-interface ResolvedRegistrySourceOptions<ItemName extends string = string> {
+interface ResolvedOptions<ItemName extends string = string> {
   rootDir: string;
   itemNames?: readonly ItemName[] | undefined;
   variant: string;
@@ -58,10 +58,10 @@ interface ResolvedRegistrySourceOptions<ItemName extends string = string> {
 }
 
 /** Emit the editable React/Tailwind source consumed by the shadcn registry. */
-export async function generateReactRegistry<const Definition extends SkinCatalogDefinition>(
+export async function emitShadcnSources<const Definition extends SkinCatalogDefinition>(
   catalog: SkinCatalog<Definition>,
-  options: GenerateReactRegistryOptions<SkinCatalogItem<Definition>['name']>
-): Promise<RegistrySourceOutput> {
+  options: EmitShadcnSourcesOptions<SkinCatalogItem<Definition>['name']>
+): Promise<ShadcnSourceOutput> {
   const { installAlias = '@/components/videojs', ...sourceOptions } = options;
   const resolved = resolveOptions(sourceOptions);
   const itemNames = resolved.itemNames ?? catalog.items.map((item) => item.name);
@@ -69,28 +69,28 @@ export async function generateReactRegistry<const Definition extends SkinCatalog
   const emitted = await emitCatalog(catalog, {
     items: itemNames,
     compiler: {
-      config: (item) => createRegistryCompilerConfig(item, resolved, styles),
-      configDir: (item) => resolve(resolved.rootDir, registryItemDir(item, resolved)),
+      config: (item) => createCompilerConfig(item, resolved, styles),
+      configDir: (item) => resolve(resolved.rootDir, itemOutputDir(item, resolved)),
     },
     resolve: {
-      file: ({ item, sourceFile }) => registrySourceOutput(item, sourceFile, resolved),
+      file: ({ item, sourceFile }) => sourceOutputPath(item, sourceFile, resolved),
       imports: {
         dependency: ({ dependency }) => {
-          const entryFile = registrySourceOutput(dependency, dependency.source, resolved);
+          const entryFile = sourceOutputPath(dependency, dependency.source, resolved);
           return `${installAlias}/${dependency.name}/${withoutTypeScriptExtension(posix.basename(entryFile))}`;
         },
       },
     },
   });
 
-  const items: Record<string, RegistrySourceItem> = {};
+  const items: Record<string, ShadcnSourceItem> = {};
 
   for (const name of itemNames) {
     const item = emitted.items[name];
 
     if (!item) continue;
 
-    const files = item.files.map((file) => createRegistrySourceFile(file.path, file.content));
+    const files = item.files.map((file) => createSourceFile(file.path, file.content));
     items[name] = {
       files,
       dependencies: item.dependencies,
@@ -109,19 +109,19 @@ export async function generateReactRegistry<const Definition extends SkinCatalog
   };
 }
 
-async function createUtilityFiles(options: ResolvedRegistrySourceOptions): Promise<SkinRegistryFile[]> {
+async function createUtilityFiles(options: ResolvedOptions): Promise<ShadcnSourceFile[]> {
   if (!options.utility) return [];
 
   const source = await readFile(absoluteSkinPath(options.rootDir, options.utility.source), 'utf8');
 
-  return [createRegistrySourceFile(posix.join(options.sourceRoot, options.utility.target), source)];
+  return [createSourceFile(posix.join(options.sourceRoot, options.utility.target), source)];
 }
 
 async function createStyleResourceFiles(
   resources: SkinStyleResources,
-  options: ResolvedRegistrySourceOptions
-): Promise<SkinRegistryFile[]> {
-  const files: SkinRegistryFile[] = [];
+  options: ResolvedOptions
+): Promise<ShadcnSourceFile[]> {
+  const files: ShadcnSourceFile[] = [];
   const entries = [
     { source: resources.tailwind.registry, target: resources.tailwind.compiler },
     { source: resources.tailwind.shared, target: resources.tailwind.shared },
@@ -137,13 +137,13 @@ async function createStyleResourceFiles(
     const source = await readFile(inputFile, 'utf8');
     const target = posix.join(options.sourceRoot, toPosixPath(entry.target));
 
-    files.push(createRegistrySourceFile(target, source));
+    files.push(createSourceFile(target, source));
   }
 
   return files;
 }
 
-function createRegistrySourceFile(path: string, content: string): SkinRegistryFile {
+function createSourceFile(path: string, content: string): ShadcnSourceFile {
   return {
     path,
     kind: path.endsWith('.css') ? 'style' : 'source',
@@ -164,8 +164,8 @@ function toPosixPath(path: string): string {
 }
 
 function resolveOptions<ItemName extends string>(
-  options: GenerateReactRegistryOptions<ItemName>
-): ResolvedRegistrySourceOptions<ItemName> {
+  options: EmitShadcnSourcesOptions<ItemName>
+): ResolvedOptions<ItemName> {
   return {
     rootDir: resolve(options.rootDir),
     ...(options.itemNames ? { itemNames: options.itemNames } : {}),
@@ -180,9 +180,9 @@ function absoluteSkinPath(rootDir: string, path: string): string {
   return resolve(rootDir, path);
 }
 
-function createRegistryCompilerConfig(
+function createCompilerConfig(
   item: SkinCatalogItem<SkinCatalogDefinition>,
-  options: ResolvedRegistrySourceOptions,
+  options: ResolvedOptions,
   styles: StyleManifest
 ) {
   return createCompilerReactConfig({
@@ -207,12 +207,12 @@ function createRegistryCompilerConfig(
   });
 }
 
-function registrySourceOutput(
+function sourceOutputPath(
   item: SkinCatalogItem<SkinCatalogDefinition>,
   sourceFile: string,
-  options: ResolvedRegistrySourceOptions
+  options: ResolvedOptions
 ): string {
-  const itemDir = registryItemDir(item, options);
+  const itemDir = itemOutputDir(item, options);
   const entrySource = canonicalPath(item.source);
   const source = canonicalPath(sourceFile);
 
@@ -221,7 +221,7 @@ function registrySourceOutput(
     : privateSourceOutput(itemDir, entrySource, source);
 }
 
-function registryItemDir(item: SkinCatalogItem<SkinCatalogDefinition>, options: ResolvedRegistrySourceOptions): string {
+function itemOutputDir(item: SkinCatalogItem<SkinCatalogDefinition>, options: ResolvedOptions): string {
   return item.type === 'skin' ? options.sourceRoot : posix.join(options.sourceRoot, 'components', item.name);
 }
 

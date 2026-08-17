@@ -7,7 +7,7 @@ export default defineConfig({
     index: './src/index.ts',
     ast: './src/ast.ts',
     'catalog/index': './src/catalog/index.ts',
-    'registry/index': './src/registry/index.ts',
+    'shadcn/index': './src/shadcn/index.ts',
     'styles/index': './src/styles/index.ts',
     'bundlers/vite': './src/bundlers/vite.ts',
   },

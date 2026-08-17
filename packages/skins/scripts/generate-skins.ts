@@ -4,8 +4,8 @@ import type { ImportRef } from '@videojs/compiler/ast';
 import { resolveCatalog } from '@videojs/compiler/catalog';
 import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
 import { createFrameworkSkin, type FrameworkTarget } from '../build/emit/framework/generate';
-import { createRegistryManifest } from '../build/emit/registry/manifest';
-import { generateReactRegistry } from '../build/emit/registry/source';
+import { createShadcnManifest } from '../build/emit/shadcn/manifest';
+import { emitShadcnSources } from '../build/emit/shadcn/source';
 import type { ReactImportResolver } from '../build/transform/react';
 import type { SkinItemName } from '../canonical/catalog';
 import { skinRegistry } from '../canonical/registry/config';
@@ -109,7 +109,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
 
   if (registrySkin?.type !== 'skin') throw new Error(`Registry Skin \`${skinRegistry.skin}\` does not exist.`);
 
-  const output = await generateReactRegistry(catalog, {
+  const output = await emitShadcnSources(catalog, {
     rootDir: canonicalRoot,
     itemNames: [...new Set([...resolved.items.map((item) => item.name), ...skinRegistry.items])],
     variant: registrySkin.style.variant,
@@ -129,7 +129,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
 
   files.set(
     posix.join(skinRegistry.outputDir, 'registry.json'),
-    await formatGeneratedFile('registry.json', JSON.stringify(createRegistryManifest(catalog, output, skinRegistry)))
+    await formatGeneratedFile('registry.json', JSON.stringify(createShadcnManifest(catalog, output, skinRegistry)))
   );
 
   await syncGeneratedFiles({
