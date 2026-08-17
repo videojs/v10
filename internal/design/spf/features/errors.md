@@ -250,18 +250,23 @@ getter, and the `'error'` dispatch. First fatal wins, latched so a later
 append doesn't re-fire, and clearing rides `collectErrors`' per-source
 reset rather than a source-change hook of its own.
 
-The two HLS adapters latch on the *reported* code rather than the
-surfaced one, because the two can differ: where the sequence holds an
+All three latch on the *reported* code rather than the surfaced one,
+because the two can differ: where the sequence holds an
 unimplemented-capability cause, the surfaced code becomes 99001 and the
 condition is logged with the sequence attached; the `message` stays
-empty either way.
+empty either way. One `HlsVideoMediaError` shape across all three, kept
+under the name `hls-video` publishes it as rather than copied per adapter.
 
-**The background-video adapter surfaces the reported `SvtaError` itself, with
-no mapping.** The `ErrorLike` translation the other two perform exists for the
-store's error feature and the dialog above it, and this composition has
-neither — no store features, no chrome, nothing to localize copy into — so the
-reported code is more use to a consumer than a translation of it, and 99001
-substitution would buy nothing. Having *a* surface at all matters more here than
+**The background-video adapter maps identically, and deliberately so.** It has
+no store feature or dialog above it to localize copy from a code — the argument
+for leaving the condition unmapped — but an SVTA code alone is something a
+consumer has to go and look up, where 99001 plus the logged sentence says the
+actionable thing: this player has no pipeline for what the source needs, and no
+retry or CDN changes that. The one thing it doesn't take is
+`alternativeMediaSuggestion`; nothing in this repo plays an HLS background video
+that this engine can't, so there is no sibling to name.
+
+Having *a* surface at all matters more here than
 elsewhere: on Chromium and WebKit (2026-08-14) every unplayable source in this
 composition is a *silent stall* with `HTMLMediaElement.error` null at
 `readyState 0`, since nothing in MSE reports it either. Chromium accepts MPEG-TS
@@ -280,9 +285,10 @@ in the sandbox on Chromium (2026-08-17): an MPEG-TS source reports 1004 alone an
 an encrypted one 4008 alone — no verdict behind either, because the *other*
 renditions were never resolved and so were never pruned, leaving the candidate set
 non-empty while the pick is gone. A verdict-only allow-list left both as silent
-stalls, which is exactly what this surface exists to prevent. First-fatal-wins then
-surfaces the cause over the verdict when a source produces both, which is the more
-specific of the two. Reporting a verdict from the deselect instead was the
+stalls, which is exactly what this surface exists to prevent. Both then map to
+99001 through the same substitution the other adapters use, so what a consumer
+reads is "unplayable here", with the container-vs-encryption specifics on the
+console. Reporting a verdict from the deselect instead was the
 alternative; it stays rejected because selection there deliberately reports
 nothing (the cause is more specific and already logged), and because fatality is
 the adapter's to decide.
@@ -391,13 +397,14 @@ limitations*).
     unsupported cause, and the alternative-Media sentence appended when
     the class names one
   - `packages/spf/src/playback/adapters/hls-background-video/tests/adapter.test.ts`
-    → *error surface* — nothing before a report; the verdict surfaces as
-    the reported `SvtaError` (no mapping, no `message` invented) and fires
-    `'error'`; a *cause* with no verdict behind it surfaces too, for
-    container and encryption alike (the pinned-variant rule above); 2039
-    stays out of it; the cause wins over the verdict when both are present;
-    fires once per distinct condition; clears on per-source reset without
-    announcing the clear
+    → *error surface* — nothing before a report; a verdict with no cause
+    behind it keeps its own code and fires `'error'`; a *cause* with no
+    verdict behind it surfaces too, for container and encryption alike (the
+    pinned-variant rule above), substituted to 99001 with the reporter's
+    context carried through; 2039 stays out of it; the explanation is logged
+    once, with the conditions attached and no prose on `message`; fires once
+    per distinct condition; clears on per-source reset without announcing
+    the clear
   - `packages/html/src/media/hls-background-video/tests/media.test.ts` and
     `packages/react/src/media/hls-background-video/tests/media.test.tsx`
     → the forward — the element re-fires `'error'` on itself and exposes

@@ -1,5 +1,5 @@
 import type { Media } from '@videojs/media/dom';
-import { HlsBackgroundVideoMedia, type SvtaError } from '@videojs/spf/hls-background-video';
+import { HlsBackgroundVideoMedia, type HlsVideoMediaError } from '@videojs/spf/hls-background-video';
 import { type CustomElement, namedNodeMapToObject } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
@@ -123,11 +123,12 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
   }
 
   /**
-   * The condition that made the current source unplayable, or `null` — the
-   * engine's reported {@link SvtaError}, not a `MediaError`. Reset by a new
-   * source. Not on the inner `<video>`, which never learns of it.
+   * What made the current source unplayable, or `null`. An SVTA code rather than
+   * a `MediaError` one — 99001 where this player has no pipeline for what the
+   * source needs, with the specifics logged. Reset by a new source, and not on
+   * the inner `<video>`, which never learns of it.
    */
-  get error(): SvtaError | null {
+  get error(): HlsVideoMediaError | null {
     return this.#media.error;
   }
 

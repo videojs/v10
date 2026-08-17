@@ -4,6 +4,7 @@ import { effect } from '../../../core/signals/effect';
 import {
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
   type SvtaError,
 } from '../../../media/errors';
@@ -14,11 +15,13 @@ import {
   type BackgroundVideoEngineState,
   createBackgroundVideoEngine,
 } from '../../engines/hls/engine-background-video';
-import { firstFatal } from '../hls-video/error-surface';
+import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
+import { firstFatal, type HlsVideoMediaError, hasUnsupportedFeatureCause } from '../hls-video/error-surface';
 
-// What `error` is: the reported condition itself, so a consumer can name the type
-// it reads without importing from an engine-level path.
-export type { SvtaError } from '../../../media/errors';
+// The same error shape the video and audio Medias expose, under the name they
+// publish it as — one type for all three surfaces rather than a background-flavored
+// copy of it.
+export type { HlsVideoMediaError } from '../hls-video/error-surface';
 
 export interface HlsBackgroundVideoMediaProps {
   src: string;
@@ -30,7 +33,7 @@ export const hlsBackgroundVideoMediaDefaultProps: HlsBackgroundVideoMediaProps =
 
 export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps {
   readonly engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
-  readonly error: SvtaError | null;
+  readonly error: HlsVideoMediaError | null;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -77,7 +80,8 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
  * (measured on Chromium and WebKit) — so a consumer that watched only the
  * `<video>` would see a source that never appears and never says why. The engine
  * reports each condition onto `engine.state.errors` and logs it; this adapter
- * promotes the first fatal one. See `internal/design/spf/features/errors.md`.
+ * promotes the first fatal one, mapping it the same way the video and audio Medias
+ * map theirs. See `internal/design/spf/features/errors.md`.
  *
  * Selection pins the largest rendition that *fits the screen*, and holds it for
  * the session. The manifest is still the better place to narrow further: a
@@ -121,7 +125,13 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     #engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
     #config: BackgroundVideoEngineConfig;
     #signals!: BackgroundVideoEngineSignals;
-    #error: SvtaError | null = null;
+    #error: HlsVideoMediaError | null = null;
+    /**
+     * The *reported* condition currently surfaced, which is what the re-fire latch
+     * keys on. Not `#error.code`: that's the code this adapter chose to surface,
+     * and the substitution below can make the two differ.
+     */
+    #reportedCode: number | null = null;
     #stopErrorSync: () => void;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
@@ -139,7 +149,8 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       // the slot per source, so a new source starts with no error without this
       // needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
-        this.#setError(firstFatal(this.#signals.state.errors.get(), FATAL_SVTA_CODES));
+        const errors = this.#signals.state.errors.get();
+        this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
     }
 
@@ -154,29 +165,46 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
      * fatal is wider here than on the video and audio Medias; see
      * {@link FATAL_SVTA_CODES}. Resets per source. Fires `'error'` when set.
      *
-     * The reported {@link SvtaError} itself, unmapped: the video and audio Medias
-     * translate a condition into an `ErrorLike` for the store's error feature and
-     * the dialog above it, and a background video has neither — no store features,
-     * no chrome, nothing to localize copy into. So the code the engine reported is
-     * more use to a consumer here than a translation of it would be.
+     * Mapped the same way theirs are: a sequence holding an
+     * unimplemented-capability cause surfaces as
+     * {@link SVTA_UNSUPPORTED_PLAYBACK_FEATURE} (99001) with the specifics logged,
+     * because "this player can't play this source" is what a consumer can act on,
+     * where a raw container or DRM code only says what to go and look up.
      */
-    get error(): SvtaError | null {
+    get error(): HlsVideoMediaError | null {
       return this.#error;
     }
 
-    #setError(reported: SvtaError | undefined): void {
+    #setError(reported: SvtaError | undefined, errors: readonly SvtaError[] | undefined): void {
       if (!reported) {
         // Cleared (new source). No event: `'error'` announces a failure, and
         // consumers reset their own copy on source change.
         this.#error = null;
+        this.#reportedCode = null;
         return;
       }
       // Keyed on the code, not the object: a later append re-runs this effect
       // with an equal-but-new array, and re-firing `'error'` for a condition
       // already surfaced would look like a second failure.
-      if (this.#error?.code === reported.code) return;
+      if (this.#reportedCode === reported.code) return;
+      this.#reportedCode = reported.code;
 
-      this.#error = reported;
+      const unsupported = hasUnsupportedFeatureCause(errors);
+      if (unsupported) {
+        // The prose lives here rather than on `error.message`, matching the other
+        // two: viewer-facing copy is the consumer's to localize from the code, and
+        // a background video has no chrome to put it in anyway. No
+        // alternative-Media sentence, unlike the Mux Medias — nothing in this repo
+        // plays an HLS background video that this engine can't, so there is no
+        // sibling to name.
+        console.error(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE, { conditions: errors });
+      }
+
+      this.#error = {
+        code: unsupported ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
+        message: reported.message ?? '',
+        ...(reported.data === undefined ? {} : { data: reported.data }),
+      };
       // Optional-chained: with an EventTarget-less base (`HlsBackgroundVideoMediaElement`
       // standalone) there's nowhere to dispatch.
       this.dispatchEvent?.(new Event('error'));

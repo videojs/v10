@@ -14,9 +14,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
 } from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
+import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
 import { HlsBackgroundVideoMediaElement, HlsBackgroundVideoMediaMixin } from '../adapter';
 
 describe('HlsBackgroundVideoMediaElement', () => {
@@ -275,9 +277,9 @@ describe('HlsBackgroundVideoMediaElement', () => {
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
       await flush();
 
-      // The condition as reported: nothing here maps it onto a generic media
-      // error, since this Media has no dialog above it to localize copy for.
-      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
+      // A verdict with nothing unsupported behind it keeps its own code. No
+      // message: viewer-facing copy is the consumer's to localize from the code.
+      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: '' });
       expect(fired).toHaveLength(1);
       media.destroy();
     });
@@ -291,25 +293,53 @@ describe('HlsBackgroundVideoMediaElement', () => {
       // cause against the pinned rendition and nothing else, because only the
       // pick's playlist resolves and dropping it is final. Verdict-only fatality
       // would leave this a silent stall.
-      media.engine.state.errors.set([
-        { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' } },
-      ]);
+      const data = { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' };
+      media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data }]);
       await flush();
 
-      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_VIDEO_FORMAT);
+      // Surfaced as the unimplemented-capability code, like the other two Medias:
+      // no retry, CDN, or rendition fixes it. The reporter's context rides along.
+      expect(media.error).toEqual({ code: SVTA_UNSUPPORTED_PLAYBACK_FEATURE, message: '', data });
       expect(fired).toHaveLength(1);
       media.destroy();
     });
 
-    it('surfaces the same way for an encrypted pick', async () => {
+    it('surfaces the same code for an encrypted pick', async () => {
       const media = new TestMedia();
       media.engine.state.errors.set([
         { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
       ]);
       await flush();
 
-      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_DRM_SYSTEM);
+      // One code for both: the consumer's situation is identical either way, and
+      // the specifics stay on `engine.state.errors` and the console.
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
       media.destroy();
+    });
+
+    it('logs the unsupported-feature explanation once, with the conditions attached', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const media = new TestMedia();
+        media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } }]);
+        await flush();
+        media.engine.state.errors.set([
+          { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } },
+          { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+        ]);
+        await flush();
+
+        // The prose is console-only — `error.message` stays empty — and a later
+        // append must not repeat it.
+        const logged = spy.mock.calls.filter(([message]) => message === UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE);
+        expect(logged).toHaveLength(1);
+        expect(logged[0]?.[1]).toEqual({
+          conditions: [{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } }],
+        });
+        media.destroy();
+      } finally {
+        spy.mockRestore();
+      }
     });
 
     it('ignores a condition outside the fatal set', async () => {
@@ -326,18 +356,18 @@ describe('HlsBackgroundVideoMediaElement', () => {
       media.destroy();
     });
 
-    it('surfaces the cause rather than the verdict when the sequence carries both', async () => {
+    it('carries the first fatal condition data even when the code is substituted', async () => {
       const media = new TestMedia();
-      // Sequence order is causal, and first-fatal-wins picks the more specific of
-      // the two — 1004 says what about the source is unplayable, 2011 only that
-      // nothing was selectable.
+      // Sequence order is causal, so the cause is the one whose context rides
+      // along, while both conditions collapse to the same surfaced code.
       media.engine.state.errors.set([
         { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1' } },
         { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
       ]);
       await flush();
 
-      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_VIDEO_FORMAT);
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+      expect(media.error?.data).toEqual({ trackType: 'video', trackId: 'v1' });
       media.destroy();
     });
 

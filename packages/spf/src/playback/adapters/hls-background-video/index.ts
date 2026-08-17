@@ -17,7 +17,7 @@
  * Mux-flavored names. Same classes, so the import path is a naming choice and
  * nothing more.
  */
-export type { HlsBackgroundVideoMediaAPI, HlsBackgroundVideoMediaProps, SvtaError } from './adapter';
+export type { HlsBackgroundVideoMediaAPI, HlsBackgroundVideoMediaProps, HlsVideoMediaError } from './adapter';
 export {
   HlsBackgroundVideoMediaElement,
   HlsBackgroundVideoMediaMixin,
