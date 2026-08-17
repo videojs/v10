@@ -232,9 +232,10 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedVideoTrackId.get()).toBeUndefined();
-    // No verdict without `requireVideoTrack`: this behavior reports only the
-    // condition no per-rendition cause covers, and it isn't this composition's
-    // place to say an absent type is fatal.
+    // No verdict from the behavior itself: reporting an absent type is a
+    // constraint a composition opts into — `reportAbsentTrackType`, as the
+    // background-video engine does — and the default video constraints are
+    // `excludeUnplayableTracks` alone.
     expect(state.errors.get()).toBeUndefined();
 
     reactor.destroy();
@@ -250,10 +251,7 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
     // The DOM probe's real answer: a non-fMP4 container is unplayable outright.
     const reactor = selectVideoTrack.setup({
       state,
-      config: {
-        canPlayTrack: (track: { mimeType?: string }) => track.mimeType !== 'video/mp2t',
-        requireVideoTrack: true,
-      },
+      config: { canPlayTrack: (track: { mimeType?: string }) => track.mimeType !== 'video/mp2t' },
     });
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(state.selectedVideoTrackId.get()).toBe('video-1');
