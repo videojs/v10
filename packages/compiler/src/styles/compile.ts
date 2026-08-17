@@ -113,5 +113,3 @@ function registerRelationshipOwner(owners: Map<string, string>, utility: string,
 
   owners.set(utility, rule.className);
 }
-
-export { type DesignSystem, loadDesignSystem } from './design-system';
