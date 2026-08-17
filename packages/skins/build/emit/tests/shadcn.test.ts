@@ -58,7 +58,7 @@ describe('emitShadcnRegistry', () => {
     expect(playButton?.meta).toEqual({
       framework: 'react',
       style: 'tailwind',
-      skin: skinRegistry.skin,
+      skin: skinRegistry.entry,
     });
     expect(registry.items.find((item) => item.name === 'default-video')?.registryDependencies).toContain(
       '@videojs/play-button'

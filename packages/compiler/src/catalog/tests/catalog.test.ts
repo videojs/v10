@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
-import { catalog } from '../define';
+import { defineCatalog } from '../define';
 import { loadCatalog, resolveCatalog } from '../resolve';
 
 const roots: string[] = [];
@@ -11,9 +11,9 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('catalog', () => {
+describe('defineCatalog', () => {
   it('preserves authored item metadata and literal names', () => {
-    const definition = catalog({
+    const definition = defineCatalog({
       resources: { styles: './styles.css' },
       imports: { '@example/components': 'components' },
       items: [{ name: 'player', source: './player.tsx', type: 'skin', style: { variant: 'default' } }],
@@ -32,7 +32,7 @@ describe('loadCatalog', () => {
       'private/helper.tsx': `import { Dependency } from '../dependency'; import { Controls } from '@example/components'; export const Helper = Dependency ?? Controls;`,
       'dependency.tsx': `export const Dependency = null;`,
     });
-    const definition = catalog({
+    const definition = defineCatalog({
       resources: { styles: './styles.css' },
       imports: { '@example/components': 'components' },
       items: [
@@ -60,7 +60,7 @@ describe('loadCatalog', () => {
   it('rejects missing imports and dependency cycles', async () => {
     const missingRoot = setup({ 'entry.tsx': `import './missing'; export const Entry = null;` });
     await expect(
-      loadCatalog(catalog({ items: [{ name: 'entry', source: './entry.tsx' }] }), { rootDir: missingRoot })
+      loadCatalog(defineCatalog({ items: [{ name: 'entry', source: './entry.tsx' }] }), { rootDir: missingRoot })
     ).rejects.toThrow('cannot resolve `./missing`');
 
     const cycleRoot = setup({
@@ -69,7 +69,7 @@ describe('loadCatalog', () => {
     });
     await expect(
       loadCatalog(
-        catalog({
+        defineCatalog({
           items: [
             { name: 'a', source: './a.tsx' },
             { name: 'b', source: './b.tsx' },
@@ -85,7 +85,7 @@ describe('loadCatalog', () => {
       'entry.tsx': `import { allowed } from '@example/allowed'; import styles from './entry.styles'; export const Entry = allowed ?? styles;`,
       'entry.styles.ts': `import { styles } from '@example/styles'; export default styles;`,
     });
-    const definition = catalog({
+    const definition = defineCatalog({
       allowedImports: ['@example/allowed', /^@example\/styles$/],
       items: [{ name: 'entry', source: './entry.tsx' }],
     });
@@ -108,7 +108,7 @@ describe('resolveCatalog', () => {
       'c.ts': `export const C = null;`,
       'unused.ts': `export const Unused = null;`,
     });
-    const definition = catalog({
+    const definition = defineCatalog({
       items: [
         { name: 'a', source: './a.ts' },
         { name: 'b', source: './b.ts' },

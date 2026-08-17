@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalRoot, loadSkinCatalog } from '../../../catalog';
-import { createFrameworkSkin } from '../generate';
+import { loadSkinCatalog } from '../catalog';
+import { emitFrameworkSkin } from '../targets';
 
-describe('createFrameworkSkin', () => {
+describe('emitFrameworkSkin', () => {
   it('emits editable React modules and role-based vanilla stylesheets', async () => {
-    const output = await createFrameworkSkin(await loadSkinCatalog(), {
-      rootDir: canonicalRoot,
+    const output = await emitFrameworkSkin(await loadSkinCatalog(), {
       skin: 'default-video',
       targets: [{ framework: 'react' }, { framework: 'html' }],
     });
@@ -26,7 +25,7 @@ describe('createFrameworkSkin', () => {
     const videoGestures = content(output, 'react', 'components/video-gestures.tsx');
     const videoHotkeys = content(output, 'react', 'components/video-hotkeys.tsx');
 
-    expect(files.map((file) => file.fileName)).toEqual([
+    expect(files.map((file) => file.path)).toEqual([
       'components/buttons/airplay-button.tsx',
       'components/buttons/button-tooltip.tsx',
       'components/buttons/captions-button.tsx',
@@ -112,7 +111,7 @@ describe('createFrameworkSkin', () => {
     expect(files.map((file) => file.content).join('\n')).not.toContain('Parameters<');
     expect(files.map((file) => file.content).join('\n')).not.toContain('@ts-nocheck');
     expect(files.map((file) => file.content).join('\n')).not.toContain('$1');
-    expect(output.styles.map((file) => file.fileName)).toEqual([
+    expect(output.styles.map((file) => file.path)).toEqual([
       'styles/styles.css',
       'styles/base.css',
       'styles/captions.css',
@@ -161,8 +160,7 @@ describe('createFrameworkSkin', () => {
   });
 
   it('bundles HTML registrations and markup into one Skin module', async () => {
-    const output = await createFrameworkSkin(await loadSkinCatalog(), {
-      rootDir: canonicalRoot,
+    const output = await emitFrameworkSkin(await loadSkinCatalog(), {
       skin: 'default-video',
       targets: [{ framework: 'html' }],
     });
@@ -229,8 +227,7 @@ describe('createFrameworkSkin', () => {
   });
 
   it('projects the minimal video composition and theme for both frameworks', async () => {
-    const output = await createFrameworkSkin(await loadSkinCatalog(), {
-      rootDir: canonicalRoot,
+    const output = await emitFrameworkSkin(await loadSkinCatalog(), {
       skin: 'minimal-video',
       iconSet: 'minimal',
       targets: [{ framework: 'react' }, { framework: 'html' }],
@@ -264,18 +261,18 @@ describe('createFrameworkSkin', () => {
   });
 });
 
-function style(output: Awaited<ReturnType<typeof createFrameworkSkin>>, fileName: string): string {
-  const file = output.styles.find((candidate) => candidate.fileName === fileName);
+function style(output: Awaited<ReturnType<typeof emitFrameworkSkin>>, fileName: string): string {
+  const file = output.styles.find((candidate) => candidate.path === fileName);
   if (!file) throw new Error(`Missing generated style file \`${fileName}\`.`);
   return file.content;
 }
 
 function content(
-  output: Awaited<ReturnType<typeof createFrameworkSkin>>,
+  output: Awaited<ReturnType<typeof emitFrameworkSkin>>,
   framework: 'html' | 'react',
   fileName: string
 ): string {
-  const file = output.files.find((candidate) => candidate.framework === framework && candidate.fileName === fileName);
+  const file = output.files.find((candidate) => candidate.framework === framework && candidate.path === fileName);
   if (!file) throw new Error(`Missing generated ${framework} file \`${fileName}\`.`);
   return file.content;
 }

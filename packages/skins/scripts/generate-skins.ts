@@ -1,30 +1,19 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ImportRef } from '@videojs/compiler/ast';
-import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
-import { createFrameworkSkin, type FrameworkTarget } from '../build/emit/framework/generate';
+import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
 import { emitShadcnRegistry } from '../build/emit/shadcn';
-import type { ReactImportResolver } from '../build/transform/react';
-import type { SkinItemName } from '../canonical/catalog';
+import { emitFrameworkSkin, type FrameworkTarget } from '../build/targets';
+import type { SkinName } from '../canonical/catalog';
 import { skinRegistry } from '../canonical/registry/config';
 import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from './generation/files';
 
-interface FrameworkSkinTargetBase {
+type FrameworkSkinTarget = FrameworkTarget & {
   packageRoot: string;
   outputDir: string;
-  skin: SkinItemName;
+  skin: SkinName;
   iconSet?: string | undefined;
-}
-
-type FrameworkSkinTarget =
-  | (FrameworkSkinTargetBase & {
-      framework: 'html';
-      resolveImport?: ((specifier: string) => string) | undefined;
-    })
-  | (FrameworkSkinTargetBase & {
-      framework: 'react';
-      resolveImport?: ReactImportResolver | undefined;
-    });
+};
 
 export interface GenerateSkinsOptions {
   check?: boolean | undefined;
@@ -64,16 +53,13 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
   const targets = options.frameworkTargets ?? defaultFrameworkTargets;
 
   for (const group of groupFrameworkTargets(targets)) {
-    const output = await createFrameworkSkin(catalog, {
-      rootDir: canonicalRoot,
+    const output = await emitFrameworkSkin(catalog, {
       skin: group.skin,
       ...(group.iconSet === 'default' ? {} : { iconSet: group.iconSet }),
-      targets: group.targets.map(toFrameworkTarget),
+      targets: group.targets,
     });
     const styles = await Promise.all(
-      output.styles.map(
-        async (style) => [style.fileName, await formatGeneratedFile(style.fileName, style.content)] as const
-      )
+      output.styles.map(async (style) => [style.path, await formatGeneratedFile(style.path, style.content)] as const)
     );
 
     for (const target of group.targets) {
@@ -86,7 +72,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
       const files = new Map<string, string>();
 
       for (const file of generatedFiles) {
-        files.set(posix.join(target.outputDir, file.fileName), await formatGeneratedFile(file.fileName, file.content));
+        files.set(posix.join(target.outputDir, file.path), await formatGeneratedFile(file.path, file.content));
       }
 
       for (const [fileName, formatted] of styles) {
@@ -119,22 +105,10 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
   });
 }
 
-function toFrameworkTarget(target: FrameworkSkinTarget): FrameworkTarget {
-  return target.framework === 'html'
-    ? {
-        framework: 'html',
-        ...(target.resolveImport ? { resolveImport: target.resolveImport } : {}),
-      }
-    : {
-        framework: 'react',
-        ...(target.resolveImport ? { resolveImport: target.resolveImport } : {}),
-      };
-}
-
 function groupFrameworkTargets(
   targets: readonly FrameworkSkinTarget[]
-): Array<{ skin: SkinItemName; iconSet: string; targets: FrameworkSkinTarget[] }> {
-  const groups = new Map<string, { skin: SkinItemName; iconSet: string; targets: FrameworkSkinTarget[] }>();
+): Array<{ skin: SkinName; iconSet: string; targets: FrameworkSkinTarget[] }> {
+  const groups = new Map<string, { skin: SkinName; iconSet: string; targets: FrameworkSkinTarget[] }>();
 
   for (const target of targets) {
     const iconSet = target.iconSet ?? 'default';

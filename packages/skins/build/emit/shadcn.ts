@@ -2,13 +2,19 @@ import { readFile } from 'node:fs/promises';
 import { basename, posix, resolve, sep } from 'node:path';
 
 import { collectModuleSpecifiers } from '@videojs/compiler/ast';
-import { type CatalogOutputFile, emitCatalog, loadCatalogStyles, resolveCatalog } from '@videojs/compiler/catalog';
-import { createRegistry, type Registry, type RegistryFile, type RegistryFileType } from '@videojs/compiler/shadcn';
-import type { StyleManifest } from '@videojs/compiler/styles';
-import type { SkinStyleResources } from '../../canonical/catalog';
-import type { SkinRegistryConfig } from '../../canonical/registry/config';
+import { type CatalogOutputFile, emitCatalog, resolveCatalog } from '@videojs/compiler/catalog';
+import {
+  emitRegistry,
+  type Registry,
+  type RegistryConfig,
+  type RegistryFile,
+  type RegistryFileType,
+} from '@videojs/compiler/shadcn';
+import type { skinCatalog } from '../../canonical/catalog';
 import { type SkinCatalog, type SkinCatalogItem, skinRootClassName } from '../catalog';
 import { createCompilerReactConfig } from '../transform/react';
+
+type CatalogRegistryConfig = RegistryConfig<typeof skinCatalog>;
 
 type ShadcnSourceFileKind = 'source' | 'style';
 
@@ -49,14 +55,15 @@ interface ShadcnRegistryOutput {
 /** Emit the editable React/Tailwind files and shadcn registry for canonical Skins. */
 export async function emitShadcnRegistry(
   catalog: SkinCatalog,
-  config: SkinRegistryConfig
+  config: CatalogRegistryConfig
 ): Promise<ShadcnRegistryOutput> {
-  const resolved = resolveCatalog(catalog, [config.skin]);
-  const skin = catalog.items.find((item) => item.name === config.skin);
+  const resolved = resolveCatalog(catalog, [config.entry]);
+  const skin = catalog.items.find((item) => item.name === config.entry);
 
-  if (skin?.type !== 'skin') throw new Error(`Registry Skin \`${config.skin}\` does not exist.`);
+  if (skin?.type !== 'skin') throw new Error(`Registry entry \`${config.entry}\` is not a Skin.`);
 
   const itemNames = [...new Set([...resolved.items.map((item) => item.name), ...config.items])];
+
   const sourceOptions: SourceOptions = {
     rootDir: catalog.rootDir,
     variant: skin.style.variant,
@@ -69,6 +76,7 @@ export async function emitShadcnRegistry(
       importSource: `@/${config.installRoot}/${config.utilityItem.target.replace(/\.ts$/, '')}`,
     },
   };
+
   const sources = await emitSources(catalog, itemNames, sourceOptions);
 
   return {
@@ -86,15 +94,21 @@ async function emitSources(
   itemNames: readonly SkinCatalogItem['name'][],
   options: SourceOptions
 ): Promise<ShadcnSources> {
-  const styles = await loadCatalogStyles(catalog, itemNames);
   const emitted = await emitCatalog(catalog, {
     items: itemNames,
-    compiler: {
-      config: (item) => createCompilerConfig(item, options, styles),
-      configDir: (item) => resolve(options.rootDir, itemOutputDir(item, options)),
+    transform: {
+      compiler: (catalogItem) => createCompilerConfig(catalogItem, options),
+      configDir: (catalogItem) => resolve(options.rootDir, itemOutputDir(catalogItem, options)),
+      styles: {
+        mode: 'tailwind',
+        variant: options.variant,
+        compose: true,
+      },
+    },
+    files: {
+      source: ({ catalogItem, sourceFile }) => sourceOutputPath(catalogItem, sourceFile, options),
     },
     resolve: {
-      file: ({ item, sourceFile }) => sourceOutputPath(item, sourceFile, options),
       imports: {
         dependency: ({ dependency }) => {
           const entryFile = sourceOutputPath(dependency, dependency.source, options);
@@ -136,7 +150,7 @@ async function createUtilityFiles(options: SourceOptions): Promise<ShadcnSourceF
 }
 
 async function createStyleResourceFiles(
-  resources: SkinStyleResources,
+  resources: SkinCatalog['resources']['styles'],
   options: SourceOptions
 ): Promise<ShadcnSourceFile[]> {
   const files: ShadcnSourceFile[] = [];
@@ -185,14 +199,8 @@ function absoluteSkinPath(rootDir: string, path: string): string {
   return resolve(rootDir, path);
 }
 
-function createCompilerConfig(item: SkinCatalogItem, options: SourceOptions, styles: StyleManifest) {
+function createCompilerConfig(item: SkinCatalogItem, options: SourceOptions) {
   return createCompilerReactConfig({
-    styles: {
-      mode: 'tailwind',
-      manifest: styles,
-      variant: options.variant,
-      compose: true,
-    },
     iconSet: options.iconSet,
     extendComponents: true,
     resolveImport(reference) {
@@ -228,10 +236,10 @@ function privateSourceOutput(itemDir: string, entrySource: string, source: strin
   return relative.startsWith('../') ? posix.join(itemDir, 'internal', source) : posix.join(itemDir, relative);
 }
 
-function createManifest(catalog: SkinCatalog, sources: ShadcnSources, config: SkinRegistryConfig): Registry {
-  const meta = { framework: config.framework, style: config.style, skin: config.skin } as const;
+function createManifest(catalog: SkinCatalog, sources: ShadcnSources, config: CatalogRegistryConfig): Registry {
+  const meta = { framework: config.framework, style: config.style, skin: config.entry } as const;
 
-  return createRegistry(catalog, {
+  return emitRegistry(catalog, {
     name: config.name,
     homepage: config.homepage,
     namespace: config.namespace,
@@ -273,7 +281,7 @@ function createManifest(catalog: SkinCatalog, sources: ShadcnSources, config: Sk
 function createRegistryFile(
   file: ShadcnSourceFile,
   owner: string,
-  config: SkinRegistryConfig,
+  config: CatalogRegistryConfig,
   sourceType?: RegistryFileType
 ): RegistryFile {
   return {
@@ -283,7 +291,7 @@ function createRegistryFile(
   };
 }
 
-function resolveRegistryTarget(path: string, owner: string, config: SkinRegistryConfig): string {
+function resolveRegistryTarget(path: string, owner: string, config: CatalogRegistryConfig): string {
   const sourcePrefix = `${config.sourceRoot}/`;
 
   if (!path.startsWith(sourcePrefix)) {

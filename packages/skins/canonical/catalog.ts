@@ -1,46 +1,4 @@
-import { type CatalogDefinition, type CatalogItemDefinition, catalog } from '@videojs/compiler/catalog';
-
-export interface SkinItemDefinition extends CatalogItemDefinition {
-  title: string;
-  description: string;
-}
-
-export interface SkinDefinition extends SkinItemDefinition {
-  type: 'skin';
-  style: {
-    scope: string;
-    theme: keyof SkinStyleResources['themes'];
-    variant: string;
-  };
-}
-
-export interface SkinComponent extends SkinItemDefinition {
-  type: 'component';
-}
-
-export interface SkinStyleResources {
-  tailwind: {
-    compiler: string;
-    registry: string;
-    shared: string;
-  };
-  base: string;
-  shared?: readonly string[] | undefined;
-  themes: Readonly<Record<string, string>>;
-}
-
-export interface SkinResources {
-  styles: SkinStyleResources;
-}
-
-export interface SkinCatalogDefinition extends CatalogDefinition {
-  resources: SkinResources;
-  imports: {
-    readonly '@videojs/core/components': 'components';
-    readonly '@videojs/icons/components': 'icons';
-  };
-  items: readonly (SkinDefinition | SkinComponent)[];
-}
+import { defineCatalog } from '@videojs/compiler/catalog';
 
 const resources = {
   styles: {
@@ -59,7 +17,7 @@ const resources = {
 } as const;
 
 /** Canonical Skin source catalog shared by package, registry, and future documentation outputs. */
-export const skinCatalog = catalog({
+export const skinCatalog = defineCatalog({
   resources,
   allowedImports: ['@videojs/core', '@videojs/compiler/styles', '@videojs/jsx', /^@videojs\/core\/i18n\/text\//],
   imports: {
@@ -264,6 +222,7 @@ export const skinCatalog = catalog({
       description: 'The standard pointer gestures for on-demand video playback.',
     },
   ],
-} as const satisfies SkinCatalogDefinition);
+});
 
 export type SkinItemName = (typeof skinCatalog.items)[number]['name'];
+export type SkinName = Extract<(typeof skinCatalog.items)[number], { readonly type: 'skin' }>['name'];

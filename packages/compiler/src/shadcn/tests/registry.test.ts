@@ -2,9 +2,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { catalog } from '../../catalog/define';
+import { defineCatalog } from '../../catalog/define';
 import { loadCatalog } from '../../catalog/resolve';
-import { createRegistry } from '../index';
+import { defineRegistry, emitRegistry } from '../index';
 
 const roots: string[] = [];
 
@@ -12,14 +12,47 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('createRegistry', () => {
+describe('defineRegistry', () => {
+  it('preserves publication metadata and catalog item names', () => {
+    const definition = defineCatalog({ items: [{ name: 'root', source: './root.ts' }] });
+    const registry = defineRegistry(definition, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      installRoot: 'components/example',
+      outputDir: 'registry',
+      sourceRoot: 'source',
+      entry: 'root',
+      framework: 'react',
+      style: 'tailwind',
+      styleItem: {
+        name: 'styles',
+        title: 'Styles',
+        description: 'Shared styles.',
+      },
+      utilityItem: {
+        name: 'utils',
+        title: 'Utilities',
+        description: 'Shared utilities.',
+        source: './utils.ts',
+        target: 'utils.ts',
+        dependencies: [],
+      },
+      items: ['root'],
+    });
+
+    expect(registry).toMatchObject({ entry: 'root', outputDir: 'registry' });
+  });
+});
+
+describe('emitRegistry', () => {
   it('partitions published dependencies from bundled catalog items', async () => {
     const root = setup({
       'root.ts': `import { Public } from './public'; import { Private } from './private'; export const Root = [Public, Private];`,
       'public.ts': `export const Public = true;`,
       'private.ts': `export const Private = true;`,
     });
-    const definition = catalog({
+    const definition = defineCatalog({
       items: [
         { name: 'root', source: './root.ts', title: 'Root', type: 'block' },
         { name: 'public', source: './public.ts', title: 'Public', type: 'component' },
@@ -37,7 +70,7 @@ describe('createRegistry', () => {
       ])
     );
 
-    const registry = createRegistry(loaded, {
+    const registry = emitRegistry(loaded, {
       name: 'example',
       homepage: 'https://example.com',
       namespace: '@example',

@@ -8,6 +8,42 @@ export type Registry = ShadcnRegistry;
 export type RegistryFile = NonNullable<RegistryItem['files']>[number];
 export type RegistryFileType = RegistryFile['type'];
 
+type CatalogItemName<Definition extends CatalogDefinition> = Definition['items'][number]['name'];
+
+export interface RegistryConfig<Definition extends CatalogDefinition = CatalogDefinition> {
+  readonly name: string;
+  readonly homepage: string;
+  readonly namespace: string;
+  readonly installRoot: string;
+  readonly outputDir: string;
+  readonly sourceRoot: string;
+  readonly entry: CatalogItemName<Definition>;
+  readonly framework: string;
+  readonly style: string;
+  readonly styleItem: {
+    readonly name: string;
+    readonly title: string;
+    readonly description: string;
+  };
+  readonly utilityItem: {
+    readonly name: string;
+    readonly title: string;
+    readonly description: string;
+    readonly source: string;
+    readonly target: string;
+    readonly dependencies: readonly string[];
+  };
+  readonly items: readonly CatalogItemName<Definition>[];
+}
+
+/** Preserve registry publication policy while checking it against an authored catalog. */
+export function defineRegistry<
+  const Definition extends CatalogDefinition,
+  const Config extends RegistryConfig<Definition>,
+>(_catalog: Definition, config: Config): Config {
+  return config;
+}
+
 interface SharedItem<File extends CatalogOutputFile> {
   readonly name: string;
   readonly type: Extract<RegistryItemType, 'registry:lib' | 'registry:style'>;
@@ -25,7 +61,7 @@ interface ItemDescription {
   readonly meta?: RegistryItem['meta'];
 }
 
-export interface CreateRegistryOptions<
+export interface RegistryEmitOptions<
   Definition extends CatalogDefinition = CatalogDefinition,
   File extends CatalogOutputFile = CatalogOutputFile,
 > {
@@ -49,9 +85,9 @@ export interface CreateRegistryOptions<
 }
 
 /** Create a shadcn manifest from emitted catalog sources and publication policy. */
-export function createRegistry<const Definition extends CatalogDefinition, File extends CatalogOutputFile>(
+export function emitRegistry<const Definition extends CatalogDefinition, File extends CatalogOutputFile>(
   catalog: Catalog<Definition>,
-  options: CreateRegistryOptions<Definition, File>
+  options: RegistryEmitOptions<Definition, File>
 ): Registry {
   const itemsByName = new Map(catalog.items.map((item) => [item.name, item]));
   const published = new Set<string>(options.items.published);
@@ -75,6 +111,7 @@ export function createRegistry<const Definition extends CatalogDefinition, File 
     if (!item) throw new Error(`Registry references missing catalog item \`${name}\`.`);
 
     const partition = partitionItemDependencies(item, itemsByName, published);
+
     const sources = partition.includedItems.map((included) => {
       const source = options.items.emitted[included.name as CatalogItem<Definition>['name']];
 
@@ -82,7 +119,9 @@ export function createRegistry<const Definition extends CatalogDefinition, File 
 
       return source;
     });
+
     const { meta, ...metadata } = options.items.describe(item);
+
     const registryDependencies = [
       ...new Set([
         ...(options.resolve.dependencies?.({ item, includedItems: partition.includedItems }) ?? []),

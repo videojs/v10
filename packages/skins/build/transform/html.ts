@@ -12,7 +12,7 @@ import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compil
 import ts from 'typescript';
 
 interface CreateCompilerHtmlConfigOptions {
-  styles: StylePluginOptions;
+  styles?: StylePluginOptions | undefined;
   rootComponentName?: string | undefined;
   rootClassName?: string | undefined;
 }
@@ -248,7 +248,8 @@ export function createCompilerHtmlConfig(options: CreateCompilerHtmlConfigOption
       },
     }),
     plugins: [
-      stylesPlugin(options.styles),
+      ...(options.styles ? [stylesPlugin(options.styles)] : []),
+
       rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');

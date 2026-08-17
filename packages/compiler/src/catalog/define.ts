@@ -17,6 +17,6 @@ export interface CatalogDefinition {
 }
 
 /** Preserve authored catalog metadata while checking the compiler contract. */
-export function catalog<const Definition extends CatalogDefinition>(definition: Definition): Definition {
+export function defineCatalog<const Definition extends CatalogDefinition>(definition: Definition): Definition {
   return definition;
 }

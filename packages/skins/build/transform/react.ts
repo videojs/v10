@@ -12,7 +12,7 @@ import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compil
 import ts, { type Expression } from 'typescript';
 
 interface CreateCompilerReactConfigOptions {
-  styles: StylePluginOptions;
+  styles?: StylePluginOptions | undefined;
   rootComponentName?: string | undefined;
   rootClassName?: string | undefined;
   iconSet?: string | undefined;
@@ -112,7 +112,8 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
       ],
     }),
     plugins: [
-      stylesPlugin(options.styles),
+      ...(options.styles ? [stylesPlugin(options.styles)] : []),
+
       rewrite(
         (code) => {
           const cn = code.import(cnReference.source, cnReference.name);

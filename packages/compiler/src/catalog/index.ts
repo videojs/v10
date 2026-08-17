@@ -3,12 +3,18 @@ export {
   type CatalogImportPattern,
   type CatalogImports,
   type CatalogItemDefinition,
-  catalog,
+  defineCatalog,
 } from './define';
 export {
+  type CatalogEmitOptions,
+  type CatalogImportContext,
   type CatalogOutput,
   type CatalogOutputFile,
-  type EmitCatalogOptions,
+  type CatalogOutputFiles,
+  type CatalogSourceContext,
+  type CatalogStyleContext,
+  type CatalogStyleTransform,
+  type CatalogTransformOptions,
   type EmittedCatalogItem,
   emitCatalog,
 } from './emit';
