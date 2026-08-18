@@ -65,7 +65,6 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
       ...(preferPlayback && { preferPlayback }),
       ...(engine && { engine }),
       ...(maxAutoResolution && { maxAutoResolution }),
-      // Definedness, not truthiness: `false` is the value worth naming here.
       ...(capRenditionToPlayerSize !== undefined && { capRenditionToPlayerSize }),
       ...(minAutoResolution && { minAutoResolution }),
       ...(parseMuxVideoURL(value) ?? (value ? { src: value } : null)),

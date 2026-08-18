@@ -25,9 +25,8 @@ export const defaultHlsConfig: Partial<HlsConfig> = {
   backBufferLength: 30,
   renderTextTracksNatively: false,
   liveDurationInfinity: true,
-  // Runs hls.js's capping loop, which every rendition cap is evaluated on — not
-  // only the one named after it. Whether the player size actually caps anything
-  // is `capRenditionToPlayerSize`, which moves without rebuilding the engine.
+  // Runs hls.js's capping loop, which every rendition cap is evaluated on, not
+  // only the one named after it. `capRenditionToPlayerSize` is the live switch.
   capLevelToPlayerSize: true,
   capLevelOnFPSDrop: true,
   autoStartLoad: false,

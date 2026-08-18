@@ -86,27 +86,22 @@ export interface HlsSource {
    * Whether the element's rendered size caps automatic selection. Defaults to
    * `true`.
    *
-   * A 400px-wide player has no use for a 4K rendition, so by default adaptive
-   * selection is held to the smallest rendition that still covers the element,
-   * measured in device pixels — a `2` device pixel ratio asks for twice the
-   * renditions a CSS measurement would. The cap follows the element as it is
-   * resized, and `minAutoResolution` bounds how far down it can go.
+   * A 400px-wide player has no use for a 4K rendition, so selection is held to
+   * the smallest rendition that still covers the element, measured in device
+   * pixels — a `2` device pixel ratio asks for twice what a CSS measurement
+   * would. The cap follows the element as it resizes, and `minAutoResolution`
+   * bounds how far down it can go. Set it to `false` for a player whose layout
+   * size understates what it needs, such as one that goes fullscreen without a
+   * resize.
    *
-   * Set it to `false` for a player whose layout size understates what it needs,
-   * such as one that goes fullscreen without a resize, or one being measured
-   * before layout settles.
-   *
-   * Which rendition covers the element is hls.js's own judgement, and it weighs
-   * a rendition's largest dimension rather than its pixel area — deliberately,
-   * so that a change in aspect ratio cannot make capping oscillate. That is a
-   * different heuristic from the one `maxAutoResolution` uses, so the two can
-   * land on different renditions for the same element and ladder.
+   * Which rendition covers the element is hls.js's own judgement, weighed on
+   * the largest dimension rather than pixel area, so it can land elsewhere than
+   * `maxAutoResolution` would for the same ladder.
    *
    * Applied live — changing it never rebuilds the playback engine. Requires the
-   * hls.js (MSE) engine; native HLS playback ignores it. Reaching past this to
-   * hls.js's own `capLevelToPlayerSize` through `source.engine.hlsJs` switches
-   * off the loop that evaluates *every* cap here, `maxAutoResolution` included,
-   * and takes an engine rebuild to change.
+   * hls.js (MSE) engine; native HLS playback ignores it. Setting hls.js's own
+   * `capLevelToPlayerSize` through `source.engine.hlsJs` is a different thing:
+   * it stops the loop *every* cap here is evaluated on, and takes a rebuild.
    */
   capRenditionToPlayerSize?: boolean | undefined;
   /**
@@ -255,8 +250,8 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       ...(drm && { drm }),
       ...(engine && { engine }),
       ...(maxAutoResolution && { maxAutoResolution }),
-      // Carried on definedness, not truthiness: `false` is the whole point of
-      // naming this one, and it is the falsy value.
+      // Definedness, not truthiness: `false` is the value worth naming, and the
+      // falsy one, so the neighbors' pattern would drop it.
       ...(capRenditionToPlayerSize !== undefined && { capRenditionToPlayerSize }),
       ...(minAutoResolution && { minAutoResolution }),
       ...(src && { src }),

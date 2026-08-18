@@ -14,11 +14,7 @@ export interface RenditionCapPolicy {
   maxAutoResolution: MediaResolution | undefined;
   /** Whether the element's rendered size caps automatic selection. */
   capToPlayerSize: boolean;
-  /**
-   * Lowest resolution {@link capToPlayerSize} may cap down to, or `undefined`
-   * for no floor. Bounds that one cap only — it never raises
-   * {@link maxAutoResolution}, and it is not a quality minimum.
-   */
+  /** Lowest resolution {@link capToPlayerSize} may cap down to, or `undefined` for no floor. */
   minAutoResolution: MediaResolution | undefined;
   /** Registered by the controller's own constructor. */
   controller?: RenditionCapController | undefined;
@@ -138,12 +134,6 @@ type CapLevelControllerClass = typeof Hls.DefaultConfig.capLevelController;
  * loop writes passes through. Overriding it makes the requested ceiling part of
  * the same single-writer computation.
  *
- * Every cap here rides that loop, which is why `capLevelToPlayerSize` stays on
- * in the engine config even when the player-size cap is switched off: the switch
- * belongs in the policy, since it has to move without a rebuild, and stopping
- * the loop would take one — and would strand the resolution cap, which depends
- * on the same re-evaluation.
- *
  * @param policy - Live cap inputs, re-read on every evaluation.
  * @param BaseController - Controller to layer on top of, so a controller passed
  *   through `source.engine.capLevelController` keeps its behavior.
@@ -211,12 +201,10 @@ export function createCapLevelController(
     }
 
     /**
-     * What `super` allows with player size out of the picture: the top of the
-     * ladder, minus whatever `capLevelOnFPSDrop` has restricted.
-     *
-     * Reached by running `super.getMaxLevel()` against an unbounded measurement,
-     * the same seam the toggle uses, because the restrictions are not readable
-     * any other way.
+     * What `super` allows with player size out of the picture — the ladder minus
+     * whatever `capLevelOnFPSDrop` has restricted. Reached through the same
+     * unbounded-measurement seam the toggle uses, since `restrictedLevels` is
+     * private and not readable any other way.
      */
     #topAllowedLevel(capLevelIndex: number): number {
       this.#measuringWithoutSize = true;
@@ -232,11 +220,6 @@ export function createCapLevelController(
      * to `super` first keeps the behavior it owns — notably the level
      * restrictions `capLevelOnFPSDrop` accumulates.
      *
-     * The order below is the whole semantics of the floor: it is applied to the
-     * size ceiling alone, before the requested one narrows the result. That is
-     * what makes `minAutoResolution` a bound on player-size capping rather than
-     * a quality minimum overriding what the caller asked for.
-     *
      * The translation from resolution to level index happens here, not when the
      * policy is set, because levels arrive after the option does and shift
      * whenever hls.js drops one.
@@ -245,16 +228,13 @@ export function createCapLevelController(
       const { levels } = this.#hls;
       let ceiling = super.getMaxLevel(capLevelIndex);
 
-      // The floor lifts the *size* ceiling, so it applies where there is one to
-      // lift. `super` reports `-1` when no level is available at all, and player
-      // size is no reason to overrule that.
+      // Only where there is a size ceiling to lift: `super` reports `-1` when no
+      // level is available at all, and player size is no reason to overrule that.
       if (policy.capToPlayerSize && ceiling >= 0) {
         const floor = levelIndexAtOrAbove(levels, policy.minAutoResolution);
 
-        // Lifted only as far as `super` would allow without the measurement.
-        // The floor answers "do not cap this small player that far down"; a
-        // level `capLevelOnFPSDrop` restricted is not down there, it is one the
-        // device could not decode, and re-admitting it would stutter.
+        // A floor says "do not cap this small player that far down", not "decode
+        // what this device can't", so it stops at the top allowed level.
         if (floor !== undefined) ceiling = Math.min(Math.max(ceiling, floor), this.#topAllowedLevel(capLevelIndex));
       }
 
@@ -263,8 +243,7 @@ export function createCapLevelController(
       const byResolution = levelIndexAtOrBelow(levels, policy.maxAutoResolution);
       if (byResolution !== undefined) ceiling = Math.min(ceiling, byResolution);
 
-      // A floor can also push past the top of the ladder, which `capLevelIndex`
-      // is the real bound on.
+      // A floor can push past the top of the ladder; `capLevelIndex` is the real bound.
       return Math.min(ceiling, capLevelIndex);
     }
 
@@ -277,9 +256,8 @@ export function createCapLevelController(
      */
     detectPlayerSize() {
       super.detectPlayerSize();
-      // Read through the base getters: the overrides above report an unbounded
-      // size while the player-size cap is off, which would otherwise pass for a
-      // measurable element and leave the resolution cap unapplied.
+      // Through the base getters: the overrides above report an unbounded size
+      // while the cap is off, which would pass for a measurable element.
       if (super.mediaWidth > 0 && super.mediaHeight > 0) return;
       this.#applyResolutionCap();
     }
