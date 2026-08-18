@@ -1,7 +1,3 @@
-background-video-player {
-  display: contents;
-}
-
 background-video-skin {
   --media-object-fit: cover;
   position: relative;

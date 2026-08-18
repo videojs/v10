@@ -95,6 +95,14 @@ export const CloudflareVideo = {
   },
 } as const;
 
+export const Container = {
+  tagName: 'media-container',
+  import: {
+    from: '@videojs/html/ui/container',
+    sideEffect: true,
+  },
+} as const;
+
 export const Controls = {
   tagName: 'media-controls',
   import: {
@@ -187,14 +195,6 @@ export const I18nProvider = {
   tagName: 'media-i18n',
   import: {
     from: '@videojs/html/i18n',
-    sideEffect: true,
-  },
-} as const;
-
-export const MediaContainer = {
-  tagName: 'media-container',
-  import: {
-    from: '@videojs/html/media/container',
     sideEffect: true,
   },
 } as const;
@@ -551,6 +551,14 @@ export const TimeSliderChapterTitle = {
   },
 } as const;
 
+export const Title = {
+  tagName: 'media-title',
+  import: {
+    from: '@videojs/html/ui/title',
+    sideEffect: true,
+  },
+} as const;
+
 export const Tooltip = {
   tagName: 'media-tooltip',
   import: {
@@ -652,6 +660,7 @@ export const entries = {
   CaptionsRadioGroup,
   CastButton,
   CloudflareVideo,
+  Container,
   Controls,
   ControlsGroup,
   DashVideo,
@@ -664,7 +673,6 @@ export const entries = {
   HlsVideo,
   Hotkey,
   I18nProvider,
-  MediaContainer,
   Menu,
   MenuCheckboxItem,
   MenuGroup,
@@ -709,6 +717,7 @@ export const entries = {
   TimeSlider,
   TimeSliderChapters,
   TimeSliderChapterTitle,
+  Title,
   Tooltip,
   TooltipGroup,
   TooltipLabel,

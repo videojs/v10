@@ -23,7 +23,7 @@ export const registry: ComponentRegistry = defineRegistry({
   entries: {
     ...$.entries,
 
-    Container: $.MediaContainer,
+    Container: $.Container,
     Controls: {
       parts: {
         Root: $.Controls,

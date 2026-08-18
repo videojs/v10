@@ -175,7 +175,7 @@ describe('Skin output', () => {
 
     expect(html).toContain("import '@videojs/html/icons/element'");
     expect(html).toContain("import '@videojs/html/ui/airplay-button'");
-    expect(html).toContain("import '@videojs/html/media/container'");
+    expect(html).toContain("import '@videojs/html/ui/container'");
     expect(html).toContain("import '@videojs/html/ui/poster'");
     expect(html).toContain("import '@videojs/html/ui/buffering-indicator'");
     expect(html).toContain("import '@videojs/html/ui/captions-button'");

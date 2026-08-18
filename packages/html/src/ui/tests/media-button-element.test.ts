@@ -52,7 +52,7 @@ class TestContainerProviderElement extends MediaElement {
     context: containerContext,
     initialValue: {
       container: this,
-      setContainer: () => {},
+      registerContainer: () => () => {},
     },
   });
 }

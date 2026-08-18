@@ -7,8 +7,8 @@ describe('resolvePackageImport', () => {
     expect(resolvePackageImport('@videojs/html/ui/play-button', 'src/__generated__/skins/default-video/skin.ts')).toBe(
       '../../../define/ui/play-button'
     );
-    expect(resolvePackageImport('@videojs/html/media/container', 'src/__generated__/skins/default-video/skin.ts')).toBe(
-      '../../../define/media/container'
+    expect(resolvePackageImport('@videojs/html/ui/container', 'src/__generated__/skins/default-video/skin.ts')).toBe(
+      '../../../define/ui/container'
     );
     expect(
       resolvePackageImport('@videojs/html/icons/element/minimal', 'src/__generated__/skins/default-video/skin.ts')

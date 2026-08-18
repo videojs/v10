@@ -64,13 +64,10 @@ export {
 export type { I18nContext as I18nLitContext } from './i18n/context';
 // i18n — `@videojs/html/i18n` registers `<media-i18n>` / `<media-text>`.
 export { i18nContext } from './i18n/context';
-// Media
-export { MediaContainerElement } from './media/container-element';
 // Player
 export * from './player/context';
 export * from './player/create-player';
 export * from './player/player-controller';
-export * from './store/container-mixin';
 export * from './store/media-attach-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
@@ -86,6 +83,7 @@ export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-in
 export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
 export { CaptionsRadioGroupElement } from './ui/captions-radio-group/captions-radio-group-element';
 export { CastButtonElement } from './ui/cast-button/cast-button-element';
+export { ContainerElement } from './ui/container/container-element';
 export { ContextPartElement, type PartContextValue } from './ui/context-part-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';

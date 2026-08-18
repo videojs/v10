@@ -4,7 +4,7 @@ exports[`generated skins > matches the reviewed output 1`] = `
 "===== packages/html/src/__generated__/skins/default-video/skin.ts =====
 import '../../../define/i18n';
 import '../../../icons/element';
-import '../../../define/media/container';
+import '../../../define/ui/container';
 import '../../../define/ui/airplay-button';
 import '../../../define/ui/alert-dialog-close';
 import '../../../define/ui/alert-dialog-description';
@@ -3160,7 +3160,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 ===== packages/html/src/__generated__/skins/minimal-video/skin.ts =====
 import '../../../define/i18n';
 import '../../../icons/element/minimal';
-import '../../../define/media/container';
+import '../../../define/ui/container';
 import '../../../define/ui/airplay-button';
 import '../../../define/ui/alert-dialog-close';
 import '../../../define/ui/alert-dialog-description';
