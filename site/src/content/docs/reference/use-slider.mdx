@@ -1,0 +1,53 @@
+---
+title: useSlider
+description: Hook for connecting slider input behavior to custom React elements
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useSlider` is the low-level hook behind the <DocsLink slug="reference/slider">Slider</DocsLink>, <DocsLink slug="reference/time-slider">TimeSlider</DocsLink>, and <DocsLink slug="reference/volume-slider">VolumeSlider</DocsLink> components. Use it when you need to build a new slider primitive with custom state calculations. For standard player controls, use the built-in components.
+
+## Import
+
+```tsx
+import { useSlider } from "@videojs/react";
+```
+
+## Usage
+
+Pass callbacks that convert raw slider input into your component state, values, and CSS variables. Attach the returned root props, ref, and styles to the pointer target. Attach the thumb props and ref to the focusable thumb.
+
+```tsx
+function CustomSlider({ options }: { options: useSlider.Options }) {
+  const {
+    state,
+    input,
+    cssVars,
+    rootRef,
+    thumbRef,
+    rootProps,
+    rootStyle,
+    thumbProps,
+  } = useSlider(options);
+
+  return (
+    <div
+      ref={rootRef}
+      {...rootProps}
+      style={{ ...cssVars, ...rootStyle }}
+      data-dragging={state.dragging || undefined}
+    >
+      <div
+        ref={thumbRef}
+        {...thumbProps}
+        data-focused={input.current.focused || undefined}
+      />
+    </div>
+  );
+}
+```
+
+`state` is the derived state for the current render. `input` is the underlying reactive state container. Read `input.current` for the latest raw input or call `input.subscribe(listener)` when another system needs to observe changes outside React rendering.
+
+<UtilReference util="useSlider" />
