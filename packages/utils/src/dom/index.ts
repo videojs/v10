@@ -14,6 +14,7 @@ export {
   followElementPath,
   getElementChildren,
 } from './children';
+export { getDevicePixelRatio, watchDevicePixelRatio } from './device-pixel-ratio';
 export { isRTL } from './direction';
 export { type OnEventOptions, onEvent, resolveEventTarget } from './event';
 export { getDeepActiveElement } from './focus';
@@ -51,8 +52,11 @@ export { subscribeAmbientLang } from './locale/subscribe-ambient-lang';
 export {
   type ObservedElements,
   type ObserveElementsOptions,
+  observeElementSize,
   observeElements,
+  observeRenderedSize,
   observeResize,
+  type RenderedSize,
 } from './observe-elements';
 export { isMacOS } from './platform';
 export {

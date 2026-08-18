@@ -639,16 +639,17 @@ describe('switchVideoTrack', () => {
       reactor.destroy();
     });
 
-    it('ignores the measured ratio when useDevicePixelRatio is false', async () => {
+    it('compares CSS pixels when the measurement carries no ratio', async () => {
+      // `observePlayerSize` leaves `playerScale` unset when it isn't tracking the
+      // ratio (`useDevicePixelRatio: false`), which the cap reads as 1x.
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
         playerWidth: 640,
         playerHeight: 360,
-        playerScale: 2,
       });
 
-      const reactor = switchVideoTrack.setup({ state, config: { playerSizeCap: { useDevicePixelRatio: false } } });
+      const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('360p');
 

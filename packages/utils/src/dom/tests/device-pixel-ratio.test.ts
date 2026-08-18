@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { getDevicePixelRatio, watchDevicePixelRatio } from '../device-pixel-ratio';
 
 /**
  * A `MediaQueryList` stand-in — `listen` only needs an `EventTarget`, and a real
  * one lets the test drive `change` through `dispatchEvent`. The ratio itself
- * can't be changed from a test, so `matchMedia` is stubbed to record which
- * query each arming built.
+ * can't be changed from a test, so `matchMedia` is stubbed to record which query
+ * each arming built.
  */
 class FakeMediaQueryList extends EventTarget {
   constructor(readonly media: string) {
@@ -46,11 +47,11 @@ describe('watchDevicePixelRatio', () => {
     vi.stubGlobal('devicePixelRatio', 2);
     const queries = stubMatchMedia();
 
-    const stop = watchDevicePixelRatio(() => {});
+    const cleanup = watchDevicePixelRatio(() => {});
 
     expect(queries.map((query) => query.media)).toEqual(['(resolution: 2dppx)']);
 
-    stop();
+    cleanup();
   });
 
   it('reports the new ratio and re-arms against it', () => {
@@ -58,7 +59,7 @@ describe('watchDevicePixelRatio', () => {
     const queries = stubMatchMedia();
     const onChange = vi.fn();
 
-    const stop = watchDevicePixelRatio(onChange);
+    const cleanup = watchDevicePixelRatio(onChange);
 
     vi.stubGlobal('devicePixelRatio', 3);
     queries[0]?.dispatchEvent(new Event('change'));
@@ -70,7 +71,7 @@ describe('watchDevicePixelRatio', () => {
     queries[0]?.dispatchEvent(new Event('change'));
     expect(onChange).toHaveBeenCalledTimes(1);
 
-    stop();
+    cleanup();
   });
 
   it('stops reporting after cleanup', () => {
@@ -78,15 +79,14 @@ describe('watchDevicePixelRatio', () => {
     const queries = stubMatchMedia();
     const onChange = vi.fn();
 
-    const stop = watchDevicePixelRatio(onChange);
-    stop();
+    watchDevicePixelRatio(onChange)();
 
     queries[0]?.dispatchEvent(new Event('change'));
 
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('no-ops where matchMedia is unavailable', () => {
+  it('does nothing when matchMedia is unavailable', () => {
     vi.stubGlobal('matchMedia', undefined);
 
     expect(() => watchDevicePixelRatio(() => {})()).not.toThrow();

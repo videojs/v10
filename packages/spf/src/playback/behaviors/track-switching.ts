@@ -125,8 +125,6 @@ export interface SwitchVideoTrackConfig {
   quality?: Partial<QualityConfig>;
   bandwidth?: Partial<BandwidthConfig>;
   initialBandwidth?: number;
-  /** Player-size cap policy read by `capToPlayerSize`. */
-  playerSizeCap?: Partial<PlayerSizeCapConfig>;
   /** Override CDN-id derivation (shared by the CDN scope + failover constraint). */
   getCdnId?: GetCdnId;
   /**
@@ -142,21 +140,6 @@ export interface SwitchVideoTrackConfig {
 
 /** Default initial-bandwidth value before bandwidth measurements arrive. */
 export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
-
-/**
- * Player-size cap policy. `enabled` gates the measurement (`observePlayerSize`,
- * `behaviors/dom/`), so `false` leaves the cap inert; `useDevicePixelRatio` gates
- * whether `capToPlayerSize` scales that measurement to device pixels.
- */
-export interface PlayerSizeCapConfig {
-  enabled: boolean;
-  useDevicePixelRatio: boolean;
-}
-
-export const DEFAULT_PLAYER_SIZE_CAP_CONFIG: PlayerSizeCapConfig = {
-  enabled: true,
-  useDevicePixelRatio: true,
-};
 
 // ============================================================================
 // Rule chain
@@ -356,15 +339,6 @@ type PlayerSizeCapStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> &
 };
 
 /**
- * Config the player-size cap reads: TrackSwitchingConfig plus the *optional*
- * `playerSizeCap` policy. Only `useDevicePixelRatio` is read here — `enabled`
- * belongs to the measurement side. See `capToPlayerSize`.
- */
-type PlayerSizeCapRuleConfig<S extends SelectionKey, T extends SwitchableTrack> = TrackSwitchingConfig<S, T> & {
-  playerSizeCap?: Partial<PlayerSizeCapConfig>;
-};
-
-/**
  * State the active-CDN scope reads: the lifecycle map plus an *optional*
  * `cdnPriority` — the manifest-ordered CDN list (most-preferred first). The
  * signal exists only when the composition includes `deriveCdnPriority` (which
@@ -439,23 +413,20 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  * a source whose renditions all omit it.
  *
  * The measurement arrives as a CSS-pixel box plus the ratio it was measured at,
- * and this rule is where the two combine: renditions are sized in device pixels,
- * so the player is compared in device pixels too unless
- * `playerSizeCap.useDevicePixelRatio` opts out — in which case `playerScale` is
- * never read, and a ratio change doesn't re-run selection.
+ * and this rule is where the two combine into the area renditions are compared
+ * against. An absent ratio — `observePlayerSize` not tracking it — compares CSS
+ * pixels.
  */
 function capToPlayerSize<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state, config }: SelectionRuleDeps<PlayerSizeCapStateMap<S>, AnySlotMap, PlayerSizeCapRuleConfig<S, T>>
+  { state }: SelectionRuleDeps<PlayerSizeCapStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
 ): readonly T[] {
   const width = state.playerWidth?.get();
   const height = state.playerHeight?.get();
   if (!width || !height) return tracks;
 
-  const useDevicePixelRatio =
-    config.playerSizeCap?.useDevicePixelRatio ?? DEFAULT_PLAYER_SIZE_CAP_CONFIG.useDevicePixelRatio;
   // Both axes scale, so the area scales by the ratio squared.
-  const scale = useDevicePixelRatio ? (state.playerScale?.get() ?? 1) : 1;
+  const scale = state.playerScale?.get() ?? 1;
   const playerPixelArea = width * scale * (height * scale);
 
   const covering = tracks.map((track) => resolutionArea(track)).filter((area) => area >= playerPixelArea);

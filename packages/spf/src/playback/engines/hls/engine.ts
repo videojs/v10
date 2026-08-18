@@ -47,7 +47,7 @@ import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
-import { observePlayerSize } from '../../behaviors/dom/observe-player-size';
+import { observePlayerSize, type PlayerSizeCapConfig } from '../../behaviors/dom/observe-player-size';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -72,12 +72,7 @@ import { type ParsePresentation, resolvePresentation } from '../../behaviors/res
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
-import {
-  type PlayerSizeCapConfig,
-  switchAudioTrack,
-  switchTextTrack,
-  switchVideoTrack,
-} from '../../behaviors/track-switching';
+import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
   type ReportUnsupportedTrackConditions,

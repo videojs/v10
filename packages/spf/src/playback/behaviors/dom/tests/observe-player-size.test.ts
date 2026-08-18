@@ -156,6 +156,21 @@ describe('observePlayerSize', () => {
     cleanup();
   });
 
+  it('leaves the ratio unset when useDevicePixelRatio is false', async () => {
+    vi.stubGlobal('devicePixelRatio', 2);
+    const mediaElement = makeVideo(320, 180);
+
+    const { state, cleanup } = setupObservePlayerSize(
+      { mediaElement },
+      { playerSizeCap: { useDevicePixelRatio: false } }
+    );
+
+    await vi.waitFor(() => expect(boxOf(state)).toEqual({ width: 320, height: 180 }));
+    expect(state.playerScale.get()).toBeUndefined();
+
+    cleanup();
+  });
+
   it('never measures when the cap is disabled', async () => {
     const mediaElement = makeVideo(320, 180);
 
