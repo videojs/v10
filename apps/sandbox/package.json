@@ -13,10 +13,8 @@
   "dependencies": {
     "@videojs/core": "workspace:*",
     "@videojs/html": "workspace:*",
-    "@videojs/icons": "workspace:*",
     "@videojs/media": "workspace:*",
     "@videojs/react": "workspace:*",
-    "@videojs/skins": "workspace:*",
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"

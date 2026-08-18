@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, resolve } from 'node:path';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
@@ -7,29 +8,40 @@ import { defineConfig, normalizePath, type Plugin } from 'vite';
 
 import { mirrorTemplatesToSrc } from './scripts/shared';
 
-const htmlCdnDir = resolve(__dirname, '../../packages/html/cdn');
-const htmlCdnI18nRegistry = normalizePath(resolve(htmlCdnDir, 'i18n.dev.js'));
+// Locate @videojs/html through Node resolution rather than a workspace-relative
+// path, so the sandbox also works when the package is installed from a registry.
+// The manifest is the anchor because cdn/ only exists after `pnpm build:cdn`.
+const htmlPackageDir = normalizePath(dirname(createRequire(__filename).resolve('@videojs/html/package.json')));
+const htmlCdnDir = `${htmlPackageDir}/cdn`;
+const htmlCdnI18nRegistry = `${htmlCdnDir}/i18n.dev.js`;
+const htmlCdnSourceI18n = `${htmlPackageDir}/src/cdn/i18n.ts`;
 const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
 
+/** True when the importer is one of the prebuilt @videojs/html CDN chunks. */
+function isHtmlCdnChunk(importer?: string): boolean {
+  return importer !== undefined && normalizePath(importer).startsWith(`${htmlCdnDir}/`);
+}
+
 /** True when this import should share the single CDN i18n registry module instance. */
 function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
+  const normalizedSource = normalizePath(source);
+
   if (
     source === '@videojs/html/cdn/i18n' ||
-    source === htmlCdnI18nRegistry ||
-    source.endsWith('/packages/html/cdn/i18n.dev.js') ||
-    source.endsWith('/packages/html/src/cdn/i18n.ts')
+    normalizedSource === htmlCdnI18nRegistry ||
+    normalizedSource === htmlCdnSourceI18n
   ) {
     return true;
   }
 
   const isRelativeI18nChunk =
     source === './i18n.dev.js' || source === '../i18n.dev.js' || source.endsWith('/i18n.dev.js');
-  if (isRelativeI18nChunk && importer?.includes('/packages/html/cdn/')) {
+  if (isRelativeI18nChunk && isHtmlCdnChunk(importer)) {
     return true;
   }
 
-  if (source === '@videojs/core/i18n' && importer?.includes('/packages/html/cdn/')) {
+  if (source === '@videojs/core/i18n' && isHtmlCdnChunk(importer)) {
     return true;
   }
 
@@ -48,7 +60,7 @@ function cdnSandboxI18nPlugin(): Plugin {
     enforce: 'pre',
     resolveId: {
       filter: {
-        id: /^@videojs\/(?:core\/i18n|html\/cdn(?:\/.*)?)$|(?:^|\/)i18n\.dev\.js$|\/packages\/html\/src\/cdn\/i18n\.ts|\/apps\/sandbox\/src\/cdn\/main\.ts$/,
+        id: /^@videojs\/(?:core\/i18n|html\/cdn(?:\/.*)?)$|(?:^|\/)i18n\.dev\.js$|\/src\/cdn\/(?:i18n\.ts|main\.ts)$/,
       },
       handler(source, importer) {
         if (source === cdnSandboxMainSrc && existsSync(cdnSandboxMainTemplate)) {
@@ -147,15 +159,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    exclude: [
-      '@videojs/core',
-      '@videojs/html',
-      '@videojs/icons',
-      '@videojs/react',
-      '@videojs/spf',
-      '@videojs/store',
-      '@videojs/utils',
-    ],
+    exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/spf', '@videojs/store', '@videojs/utils'],
   },
   build: {
     outDir: resolve(__dirname, 'dist'),
