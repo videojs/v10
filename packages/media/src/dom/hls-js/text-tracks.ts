@@ -4,6 +4,91 @@ import type { CuesParsedData, NonNativeTextTracksData } from 'hls.js';
 import Hls from 'hls.js';
 import type { HlsEngineHost } from './types';
 
+/** Marks the `<track>` elements created here for hls.js's own text tracks. */
+const HLS_TRACK_ATTR = 'data-removeondestroy';
+
+/** `HTMLTrackElement.LOADED` — the element parsed its resource and will not parse it again. */
+const TRACK_LOADED = 2;
+
+interface TextTrackSnapshot {
+  track: TextTrack;
+  mode: TextTrackMode;
+  cues: TextTrackCue[];
+}
+
+/**
+ * Runs an hls.js call that attaches, detaches, or loads a source, leaving the
+ * `<track>` children hls.js does not own the way it found them.
+ *
+ * hls.js resets *every* text track on the media element at those points: it
+ * clears the cues of all of them and disables the ones it takes for subtitles,
+ * without checking which tracks it created. Tracks sideloaded from `<track>`
+ * elements are collateral damage, and losing their cues is permanent — an
+ * element that finished loading is never parsed again, so the track keeps
+ * reporting `showing` while rendering nothing. It surfaces whenever a `<track>`
+ * outlives a source assignment, most visibly when `src` arrives after the
+ * element connected and its default track already loaded.
+ *
+ * Cues are the objects the browser parsed, so putting back the ones hls.js took
+ * restores the track without refetching its resource.
+ */
+export function withPreservedTextTracks<T>(media: HTMLMediaElement | null, action: () => T): T {
+  const snapshots = media ? snapshotTextTracks(media) : [];
+
+  try {
+    return action();
+  } finally {
+    for (const snapshot of snapshots) restoreTextTrack(snapshot);
+  }
+}
+
+function snapshotTextTracks(media: HTMLMediaElement): TextTrackSnapshot[] {
+  const snapshots: TextTrackSnapshot[] = [];
+
+  for (const trackEl of media.querySelectorAll('track')) {
+    // Tracks created for hls.js are rebuilt from the manifest on every load.
+    if (trackEl.hasAttribute(HLS_TRACK_ATTR)) continue;
+
+    const { track } = trackEl;
+    // A disabled track stays disabled through anything hls.js does, and only
+    // holds cues if it was enabled long enough to load them. Skipping the rest
+    // keeps the mode juggling below off the common path.
+    if (track.mode === 'disabled' && trackEl.readyState !== TRACK_LOADED) continue;
+
+    snapshots.push({
+      track,
+      mode: track.mode,
+      cues: withReadableCues(track, () => Array.from(track.cues ?? [])),
+    });
+  }
+
+  return snapshots;
+}
+
+function restoreTextTrack({ track, mode, cues }: TextTrackSnapshot): void {
+  if (track.mode !== mode) track.mode = mode;
+  if (!cues.length) return;
+
+  withReadableCues(track, () => {
+    const present = new Set<TextTrackCue>(track.cues ?? []);
+    for (const cue of cues) {
+      if (!present.has(cue)) track.addCue(cue);
+    }
+  });
+}
+
+/** Reads or writes cues through a mode that exposes them, leaving the track's own mode intact. */
+function withReadableCues<T>(track: TextTrack, action: () => T): T {
+  const { mode } = track;
+  if (mode === 'disabled') track.mode = 'hidden';
+
+  try {
+    return action();
+  } finally {
+    if (mode === 'disabled') track.mode = mode;
+  }
+}
+
 /**
  * Bridges hls.js non-native text tracks to native `<track>` elements so the
  * rest of the player can treat them like any other text track.
@@ -137,7 +222,7 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
     }
 
     #clearTracks(): void {
-      const trackEls = this.target?.querySelectorAll?.('track[data-removeondestroy]') ?? [];
+      const trackEls = this.target?.querySelectorAll?.(`track[${HLS_TRACK_ATTR}]`) ?? [];
       trackEls.forEach((trackEl) => trackEl.remove());
     }
   }
@@ -169,7 +254,7 @@ function addTextTrack(
   trackEl.track.mode = isCaptionOrSubtitleTrack({ kind }) ? 'disabled' : 'hidden';
 
   // Add data attribute to identify tracks that should be removed when switching sources/destroying hls.js instance.
-  trackEl.setAttribute('data-removeondestroy', '');
+  trackEl.setAttribute(HLS_TRACK_ATTR, '');
   mediaEl.append(trackEl);
 
   return trackEl.track as TextTrack;

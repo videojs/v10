@@ -30,7 +30,9 @@ export const YouTubeVideo = forwardRef<HTMLIFrameElement, YouTubeVideoProps>(fun
   return (
     <iframe
       title="YouTube video player"
-      src={initialSrc}
+      // Empty means there is no embed to point at yet; React warns about `src=""`,
+      // and the media builds the URL itself once a source resolves.
+      src={initialSrc || undefined}
       data-cross-origin-frame
       allow="accelerometer; fullscreen; autoplay; encrypted-media; gyroscope; picture-in-picture"
       allowFullScreen

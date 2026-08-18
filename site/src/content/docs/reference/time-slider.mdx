@@ -39,6 +39,7 @@ import withChaptersHtmlTs from "@/components/docs/demos/time-slider/html/css/Wit
     </TimeSlider.Track>
     <TimeSlider.Thumb />
     <TimeSlider.Preview>
+      <TimeSlider.ChapterTitle />
       <TimeSlider.Value type="pointer" />
     </TimeSlider.Preview>
   </TimeSlider.Root>
@@ -54,6 +55,7 @@ import withChaptersHtmlTs from "@/components/docs/demos/time-slider/html/css/Wit
     </media-slider-track>
     <media-slider-thumb></media-slider-thumb>
     <media-slider-preview>
+      <media-time-slider-chapter-title></media-time-slider-chapter-title>
       <media-slider-value type="pointer"></media-slider-value>
     </media-slider-preview>
   </media-time-slider>
@@ -73,15 +75,10 @@ Add `Chapters` to progressively divide the track when a default `kind="chapters"
         </TimeSlider.Track>
       </div>
     )}
-  >
-    <TimeSlider.Track>
-      <TimeSlider.Buffer />
-      <TimeSlider.Fill />
-    </TimeSlider.Track>
-  </TimeSlider.Chapters>
+  />
   ```
 
-  `children` render as the regular slider track until authored chapters are available. `renderChapter` receives the attributes, styles, and state for each normalized chapter.
+  `renderChapter` receives the attributes, styles, and state for each normalized chapter range. When no chapter cues are available, it renders once as a full-width, cue-less range.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -98,7 +95,7 @@ Add `Chapters` to progressively divide the track when a default `kind="chapters"
   </media-time-slider-chapters>
   ```
 
-  The template must contain exactly one HTML root element. It remains in the light DOM and is cloned for each normalized chapter, including a full-duration range while chapter cues are unavailable. If the template is missing or invalid, non-template fallback content remains in place.
+  The required template must contain exactly one HTML root element. It remains in the light DOM and is cloned for each normalized chapter range. When no chapter cues are available, it is cloned once as a full-width, cue-less range.
 </FrameworkCase>
 
 ## Behavior
@@ -107,7 +104,7 @@ Displays and controls the current playback position. Dragging the slider seeks t
 
 Value changes during drag are throttled via the `changeThrottle` prop (default 100ms) using a leading+trailing throttle to keep the UI responsive without overwhelming the media element.
 
-Chapter cues are normalized into contiguous ranges. Any uncovered time becomes a gap range, so track geometry still spans the full duration. Gap ranges receive the same geometry styles but cannot be highlighted and have no chapter title.
+Chapter cues are normalized into contiguous ranges. Any uncovered time becomes a gap range, so track geometry always spans the full duration. With no usable chapter cues, one gap range spans the entire slider. Gap ranges receive the same geometry styles but cannot be highlighted and have no chapter title.
 
 ## Styling
 

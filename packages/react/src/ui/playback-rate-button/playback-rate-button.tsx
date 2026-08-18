@@ -1,5 +1,3 @@
-'use client';
-
 import { PlaybackRateButtonCore, PlaybackRateButtonDataAttrs } from '@videojs/core';
 import { selectPlaybackRate } from '@videojs/core/dom';
 

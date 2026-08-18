@@ -1,5 +1,3 @@
-'use client';
-
 import type { AudioHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 

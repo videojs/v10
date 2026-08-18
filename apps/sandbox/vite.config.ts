@@ -11,7 +11,6 @@ const htmlCdnDir = resolve(__dirname, '../../packages/html/cdn');
 const htmlCdnI18nRegistry = normalizePath(resolve(htmlCdnDir, 'i18n.dev.js'));
 const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
-const jsdelivrCdnI18nPattern = /https:\/\/cdn\.jsdelivr\.net\/npm\/@videojs\/html@[^"']+\/cdn\/i18n\.js/g;
 
 /** True when this import should share the single CDN i18n registry module instance. */
 function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
@@ -67,18 +66,6 @@ function cdnSandboxI18nPlugin(): Plugin {
         }
 
         return null;
-      },
-    },
-    transform: {
-      filter: {
-        id: /\/packages\/html\/cdn\//,
-        code: /cdn\.jsdelivr\.net\/npm\/@videojs\/html/,
-      },
-      handler(code) {
-        return {
-          code: code.replace(jsdelivrCdnI18nPattern, htmlCdnI18nRegistry),
-          map: null,
-        };
       },
     },
   };

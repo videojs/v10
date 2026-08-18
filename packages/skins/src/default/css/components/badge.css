@@ -1,7 +1,3 @@
-/* ==========================================================================
-   Badge
-   ========================================================================== */
-
 .media-default-skin .media-badge {
   padding: calc(var(--spacing) * 0.5) calc(var(--spacing) * 1.5);
   font-size: var(--font-size-small);

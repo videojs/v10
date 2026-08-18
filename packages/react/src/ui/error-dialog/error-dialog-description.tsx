@@ -1,5 +1,3 @@
-'use client';
-
 import type { AlertDialogCore } from '@videojs/core';
 import { resolveErrorDialogDescription } from '@videojs/core';
 import { translateText } from '@videojs/core/i18n';

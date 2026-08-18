@@ -1,5 +1,3 @@
-'use client';
-
 import type { TooltipState } from '@videojs/core';
 import { forwardRef, useCallback } from 'react';
 

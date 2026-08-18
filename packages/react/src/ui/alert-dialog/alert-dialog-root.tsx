@@ -1,5 +1,3 @@
-'use client';
-
 import { AlertDialogCore, AlertDialogDataAttrs, type AlertDialogProps } from '@videojs/core';
 import { createAlertDialog, createTransition } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';

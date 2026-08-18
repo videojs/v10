@@ -1,5 +1,3 @@
-'use client';
-
 import { AudioTrackRadioGroupCore, type AudioTrackRadioGroupOption } from '@videojs/core';
 import { selectAudioTrack } from '@videojs/core/dom';
 
@@ -11,7 +9,9 @@ export type AudioTrackOption = TranslatedRadioOption<AudioTrackRadioGroupOption>
 
 export interface AudioTrackOptionsResult {
   state: AudioTrackRadioGroupCore.State;
+  label: string;
   value: string;
+  selectedLabel: string;
   options: AudioTrackOption[];
   disabled: boolean;
   hidden: boolean;

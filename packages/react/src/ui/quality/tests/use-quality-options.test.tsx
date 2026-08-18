@@ -1,5 +1,3 @@
-'use client';
-
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { MediaVideoRendition } from '@videojs/media';
@@ -54,18 +52,21 @@ function QualityRadioGroup({
   const quality = useQualityOptions(formatRendition ? { formatRendition } : undefined);
   if (!quality) return null;
 
-  const { options, setValue, value } = quality;
+  const { options, selectedLabel, setValue, value } = quality;
 
   return (
-    <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Quality">
-      {options.map((option) => (
-        <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
-          {option.label}
-          {option.tier ? <sup>{option.tier}</sup> : null}
-          {option.badge ? <span>{option.badge}</span> : null}
-        </Menu.RadioItem>
-      ))}
-    </Menu.RadioGroup>
+    <>
+      <span data-testid="selected-label">{selectedLabel}</span>
+      <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Quality">
+        {options.map((option) => (
+          <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+            {option.label}
+            {option.tier ? <sup>{option.tier}</sup> : null}
+            {option.badge ? <span>{option.badge}</span> : null}
+          </Menu.RadioItem>
+        ))}
+      </Menu.RadioGroup>
+    </>
   );
 }
 
@@ -76,6 +77,7 @@ describe('useQualityOptions', () => {
     expect(screen.getByRole('menuitemradio', { name: 'Auto' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('menuitemradio', { name: '1080p HD' }).getAttribute('aria-checked')).toBe('false');
     expect(screen.getByRole('menuitemradio', { name: '720p' }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByTestId('selected-label').textContent).toBe('Auto');
   });
 
   it('sets the selected rendition', () => {

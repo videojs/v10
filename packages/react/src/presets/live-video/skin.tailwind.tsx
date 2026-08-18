@@ -1,9 +1,12 @@
+'use client';
+
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import {
   bufferingIndicator,
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  container,
   controls,
   error,
   icon,
@@ -14,7 +17,6 @@ import {
   popup,
   poster,
   primaryControls,
-  root,
   slider,
   spacer,
   statusIndicator,
@@ -211,7 +213,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
     : style;
 
   return (
-    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
+    <Container className={cn(container(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (

@@ -1,5 +1,5 @@
 @import "./components/reset.css";
-@import "./components/root.css";
+@import "./components/container.css";
 @import "./components/surface.css";
 @import "./components/buffering.css";
 @import "./components/error.css";
@@ -14,50 +14,40 @@
 @import "./components/menus.css";
 @import "../../shared/css/audio/icon-state.css";
 
-/* ==========================================================================
-   Root
-   ========================================================================== */
+/* Container */
 
 .media-default-skin--audio {
-  --media-surface-background-color: oklch(1 0 0 / 0.5);
-  --media-surface-inner-border-color: oklch(1 0 0 / 0.1);
-  --media-surface-outer-border-color: oklch(0 0 0 / 0.05);
-  --media-surface-shadow-color: oklch(0 0 0 / 0.15);
-  --media-surface-backdrop-filter: blur(16px) saturate(1.5);
-  --media-text-color: var(--media-color-primary, oklch(0 0 0));
+  --default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --text-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --border-color: oklch(0 0 0 / 0.1);
+  --focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
 
-  --media-error-dialog-transition-duration: 250ms;
-  --media-error-dialog-transition-delay: 100ms;
+  --surface-background-color: light-dark(oklch(1 0 0 / 0.5), oklch(0 0 0 / 0.4));
+  --surface-inner-border-color: oklch(1 0 0 / 0.1);
+  --surface-outer-border-color: oklch(0 0 0 / 0.05);
+  --surface-shadow-color: oklch(0 0 0 / 0.15);
+  --surface-backdrop-filter: blur(16px) saturate(1.5);
 
-  --media-popup-transition-duration: 100ms;
-  --media-popup-transition-timing-function: ease-out;
+  --error-dialog-transition-duration: 250ms;
+  --error-dialog-transition-delay: 100ms;
+
+  --popup-transition-duration: 100ms;
+  --popup-transition-timing-function: ease-out;
 
   @media (prefers-reduced-motion: reduce) {
-    --media-error-dialog-transition-duration: 50ms;
-    --media-error-dialog-transition-delay: 0ms;
-    --media-popup-transition-duration: 0ms;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    --media-surface-background-color: oklch(0 0 0 / 0.4);
-    --media-text-color: var(--media-color-primary, oklch(1 0 0));
+    --error-dialog-transition-duration: 50ms;
+    --error-dialog-transition-delay: 0ms;
+    --popup-transition-duration: 0ms;
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
-    --media-surface-background-color: oklch(1 0 0);
-    --media-surface-outer-border-color: oklch(0 0 0 / 0.05);
-  }
-
-  @media (prefers-color-scheme: dark) and ((prefers-reduced-transparency: reduce) or (prefers-contrast: more)) {
-    --media-surface-background-color: oklch(0 0 0);
-    --media-surface-inner-border-color: oklch(1 0 0 / 0.2);
-    --media-surface-outer-border-color: transparent;
+    --surface-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
+    --surface-inner-border-color: light-dark(oklch(1 0 0 / 0.1), oklch(1 0 0 / 0.2));
+    --surface-outer-border-color: light-dark(oklch(0 0 0 / 0.05), transparent);
   }
 }
 
-/* ==========================================================================
-   Error Dialog
-   ========================================================================== */
+/* Error Dialog */
 
 .media-default-skin--audio .media-error__dialog {
   position: absolute;
@@ -67,13 +57,13 @@
   gap: calc(var(--spacing) * 3);
   align-items: center;
   padding-inline: calc(var(--spacing) * 5) calc(var(--spacing) * 0.5);
-  color: var(--media-text-color);
-  background-color: var(--media-surface-background-color);
+  color: var(--text-color);
+  background-color: var(--surface-background-color);
   border-radius: calc(infinity * 1px);
-  backdrop-filter: var(--media-surface-backdrop-filter);
-  transition-delay: var(--media-error-dialog-transition-delay);
+  backdrop-filter: var(--surface-backdrop-filter);
+  transition-delay: var(--error-dialog-transition-delay);
   transition-timing-function: ease-out;
-  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-duration: var(--error-dialog-transition-duration);
   transition-property: opacity, filter;
 }
 
@@ -93,28 +83,24 @@
   align-items: center;
 }
 
-/* ==========================================================================
-  Controls
-  ========================================================================== */
+/* Controls */
 
 .media-default-skin--audio .media-controls {
   --base-boundary-offset: 2;
-  color: var(--media-text-color);
+  color: var(--text-color);
 
-  & .media-time-controls {
+  .media-time-controls {
     padding-inline: calc(var(--spacing) * 3);
   }
 
-  & .media-button--seek {
+  .media-button--seek {
     @container media-root (width < 32rem) {
       display: none;
     }
   }
 }
 
-/* ==========================================================================
-   Buffering (spinner over play button — overlay only, no layout change)
-   ========================================================================== */
+/* Buffering (spinner over play button — overlay only, no layout change) */
 
 .media-default-skin--audio .media-button--play__wrapper {
   position: relative;
@@ -132,15 +118,9 @@
   opacity: 0;
 }
 
-/* ==========================================================================
-   Sliders
-   ========================================================================== */
+/* Sliders */
 
 .media-default-skin--audio .media-slider__track {
-  background-color: oklch(0 0 0 / 0.1);
-
-  @media (prefers-color-scheme: dark) {
-    background-color: oklch(1 0 0 / 0.2);
-    box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
-  }
+  background-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.2));
+  box-shadow: 0 0 0 1px light-dark(transparent, oklch(0 0 0 / 0.05));
 }

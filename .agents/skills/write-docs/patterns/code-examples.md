@@ -16,27 +16,29 @@ How to write effective code examples across documentation — site pages, README
 // ❌ Missing imports — won't work when copied
 function App() {
   return (
-    <Player.Container>
-      <Video src="video.mp4" />
-      <PlayButton />
-    </Player.Container>
+    <Player>
+      <Container>
+        <Video src="video.mp4" />
+        <PlayButton />
+      </Container>
+    </Player>
   );
 }
 
 // ✅ Complete — copy, paste, run
-import { createPlayer, PlayButton } from '@videojs/react';
+import { Container, createPlayer, PlayButton } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 function App() {
   return (
-    <Player.Provider>
-      <Player.Container>
+    <Player>
+      <Container>
         <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" />
         <PlayButton />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }
 ```
@@ -78,15 +80,15 @@ Site pages use `<FrameworkCase>` and `<StyleCase>` to show code per framework. N
 **React:**
 
 ```tsx
-import { createPlayer, PlayButton } from '@videojs/react';
+import { Container, createPlayer, PlayButton } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="player">
+    <Player>
+      <Container className="player">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
@@ -98,8 +100,8 @@ export default function BasicUsage() {
             <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>
           )}
         />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }
 ```
@@ -224,20 +226,20 @@ Show which file code belongs to when multiple files are involved:
 
 ````markdown
 ```tsx title="App.tsx"
-import { createPlayer, PlayButton } from '@videojs/react';
+import { Container, createPlayer, PlayButton } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import './App.css';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function App() {
   return (
-    <Player.Provider>
-      <Player.Container className="player">
+    <Player>
+      <Container className="player">
         <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" />
         <PlayButton />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }
 ```

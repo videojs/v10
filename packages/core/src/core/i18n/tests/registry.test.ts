@@ -95,3 +95,69 @@ describe('i18n registry', () => {
     expect(spy).toHaveBeenCalledOnce();
   });
 });
+
+/**
+ * A page can end up with more than one copy of this module — separately loaded CDN bundles, a
+ * pinned and an unpinned URL for the same file, or two bundlers' output. Registry state is
+ * realm-global so those copies still agree; these tests stand in for that duplication by loading
+ * the module twice through a reset module cache.
+ */
+describe('i18n registry shared across module instances', () => {
+  async function loadTwoInstances() {
+    vi.resetModules();
+    const first = await import('../registry');
+    vi.resetModules();
+    const second = await import('../registry');
+
+    // Guards the premise: same state through genuinely different module objects.
+    expect(first).not.toBe(second);
+
+    return { first, second };
+  }
+
+  beforeEach(() => {
+    resetI18nRegistry();
+  });
+
+  it('reads translations registered through another instance', async () => {
+    const { first, second } = await loadTwoInstances();
+
+    first.registerI18n('es', { buttons: { play: 'Reproducir' } });
+
+    expect(second.getI18nTranslations('es')['buttons.play']).toBe('Reproducir');
+    expect(second.hasRegisteredLocale('es')).toBe(true);
+  });
+
+  it('merges layers for one locale across instances', async () => {
+    const { first, second } = await loadTwoInstances();
+
+    first.registerI18n('es', { buttons: { play: 'Reproducir' } });
+    second.registerI18n('es', { buttons: { pause: 'Pausa' } });
+
+    const es = first.getI18nTranslations('es');
+    expect(es['buttons.play']).toBe('Reproducir');
+    expect(es['buttons.pause']).toBe('Pausa');
+  });
+
+  it('notifies subscribers of another instance', async () => {
+    const { first, second } = await loadTwoInstances();
+    const spy = vi.fn();
+
+    const off = first.onI18nRegistryChange(spy);
+    second.registerI18n('fr', { buttons: { play: 'Lire' } });
+    expect(spy).toHaveBeenCalledOnce();
+
+    off();
+    second.registerI18n('fr', { buttons: { pause: 'Pause' } });
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
+  it('resets every instance at once', async () => {
+    const { first, second } = await loadTwoInstances();
+
+    first.registerI18n('es', { buttons: { play: 'Reproducir' } });
+    second.resetI18nRegistry();
+
+    expect(first.hasRegisteredLocale('es')).toBe(false);
+  });
+});

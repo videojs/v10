@@ -1,5 +1,3 @@
-'use client';
-
 import type { HTMLMediaTargetLike, MediaComponent } from '@videojs/media/dom/media-host';
 import { addMediaComponent, HTMLMediaElementHost } from '@videojs/media/dom/media-host';
 import { useEffect, useState } from 'react';

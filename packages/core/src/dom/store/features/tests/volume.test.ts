@@ -26,6 +26,28 @@ describe('volumeFeature', () => {
 
       // Should be 'available' or 'unsupported' based on browser capability
       expect(['available', 'unsupported']).toContain(store.state.volumeAvailability);
+      expect(store.state.mutedAvailability).toBe('available');
+    });
+
+    it('reports mute available on media that has no volume level', () => {
+      // An embed that takes a mute command but offers no way to set a level.
+      // Reading one availability for both would hide a mute button that works.
+      const media = { muted: false, addEventListener() {}, removeEventListener() {} };
+      const store = createStore<PlayerTarget>()(volumeFeature);
+      store.attach({ media: media as unknown as HTMLVideoElement, container: null });
+
+      expect(store.state.mutedAvailability).toBe('available');
+      expect(store.state.volumeAvailability).toBe('unavailable');
+    });
+
+    it('reports both unavailable on media that has neither', () => {
+      // Spotify: the embed takes no volume or mute command and reports neither.
+      const media = { addEventListener() {}, removeEventListener() {} };
+      const store = createStore<PlayerTarget>()(volumeFeature);
+      store.attach({ media: media as unknown as HTMLVideoElement, container: null });
+
+      expect(store.state.mutedAvailability).toBe('unavailable');
+      expect(store.state.volumeAvailability).toBe('unavailable');
     });
 
     it('updates on volumechange event', () => {

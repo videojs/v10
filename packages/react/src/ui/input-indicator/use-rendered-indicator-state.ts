@@ -1,5 +1,3 @@
-'use client';
-
 import { getRenderedIndicatorState, type IndicatorLifecycleState, isIndicatorPresent } from '@videojs/core';
 import { createTransition } from '@videojs/core/dom';
 import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';

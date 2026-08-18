@@ -97,16 +97,30 @@ afterEach(() => {
 });
 
 describe('CaptionsRadioGroupElement', () => {
-  it('uses the stateful core label for aria-label', async () => {
+  it('uses the stable core group label for aria-label', async () => {
     const { options } = setup('en');
 
     await options.updateComplete;
-    expect(options.getAttribute('aria-label')).toBe('Enable captions');
+    expect(options.getAttribute('aria-label')).toBe('Captions');
 
     const enabled = setup('en', { subtitlesShowing: true }).options;
 
     await enabled.updateComplete;
-    expect(enabled.getAttribute('aria-label')).toBe('Disable captions');
+    expect(enabled.getAttribute('aria-label')).toBe('Captions');
+  });
+
+  it('preserves authored accessible names', async () => {
+    const explicit = setup('en').options;
+    explicit.setAttribute('aria-label', 'Subtitle tracks');
+
+    const labelled = setup('en').options;
+    labelled.setAttribute('aria-labelledby', 'captions-heading');
+
+    await Promise.all([explicit.updateComplete, labelled.updateComplete]);
+
+    expect(explicit.getAttribute('aria-label')).toBe('Subtitle tracks');
+    expect(labelled.getAttribute('aria-labelledby')).toBe('captions-heading');
+    expect(labelled.hasAttribute('aria-label')).toBe(false);
   });
 
   it('refreshes translated items when registry strings load for the active locale', async () => {

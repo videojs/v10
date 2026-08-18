@@ -23,6 +23,18 @@ export const sidebar: Sidebar = [
     llmsDescription: 'Installation, project setup, and introductory guides.',
     contents: [
       { slug: 'how-to/installation' },
+      {
+        sidebarLabel: 'Migrate to Video.js 10',
+        llmsDescription:
+          'Guides for moving an existing player integration to Video.js v10, one per player you might be coming from.',
+        defaultOpen: false,
+        contents: [
+          { slug: 'how-to/migrate-from-video-js-8', sidebarLabel: 'From Video.js 8' },
+          { slug: 'how-to/migrate-from-mux-player', sidebarLabel: 'From Mux Player' },
+          { slug: 'how-to/migrate-from-plyr', sidebarLabel: 'From Plyr' },
+          { slug: 'how-to/migrate-from-media-chrome', sidebarLabel: 'From Media Chrome' },
+        ],
+      },
       { slug: 'concepts/why-videojs' },
       { slug: 'concepts/overview' },
       { slug: 'how-to/build-with-ai' },

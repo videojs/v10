@@ -12,21 +12,21 @@ import Aside from '@/components/Aside.astro';
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
-import { createPlayer } from '@videojs/react';
+import { Container, createPlayer } from '@videojs/react';
 import { MuxData } from '@videojs/react/media/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function App() {
   return (
-    <Player.Provider>
-      <Player.Container>
+    <Player>
+      <Container>
         <MuxVideo source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }} playsInline />
         <MuxData /> {/* [!code focus] */}
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }
 ```

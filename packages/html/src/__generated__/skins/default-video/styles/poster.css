@@ -1,0 +1,47 @@
+@layer videojs.components {
+  @scope (.media-skin-video) {
+    .media-poster {
+      pointer-events: none;
+      border-radius: inherit;
+      object-fit: var(--media-object-fit, contain);
+      object-position: var(--media-object-position, center);
+      width: 100%;
+      height: 100%;
+      transition-property: opacity;
+      transition-duration: 0.25s;
+      transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+      position: absolute;
+      inset: 0;
+    }
+
+    .media-poster:not([data-visible]) {
+      opacity: 0;
+    }
+
+    .media-poster:before {
+      pointer-events: none;
+      background-image: var(--media-poster-placeholder, none);
+      background-size: var(--media-object-fit, contain);
+      background-position: var(--media-object-position, center);
+      content: '';
+      filter: blur(var(--media-poster-placeholder-blur, 20px));
+      background-repeat: no-repeat;
+      position: absolute;
+      inset: 0;
+    }
+
+    .media-poster ::slotted(img) {
+      border-radius: inherit;
+      object-fit: var(--media-object-fit, contain);
+      object-position: var(--media-object-position, center);
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+    }
+
+    .media-poster[data-visible]:not([data-loaded]) {
+      opacity: 0;
+    }
+  }
+}

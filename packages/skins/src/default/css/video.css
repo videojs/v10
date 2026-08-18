@@ -1,5 +1,5 @@
 @import "./components/reset.css";
-@import "./components/root.css";
+@import "./components/container.css";
 @import "./components/surface.css";
 @import "./components/media.css";
 @import "./components/overlay.css";
@@ -23,75 +23,61 @@
 @import "./components/status-indicator.css";
 @import "./components/seek-indicator.css";
 @import "../../shared/css/video/icon-state.css";
-@import "../../shared/global/video/keyframes.css";
-@import "../../shared/global/video/properties.css";
 
-/* ==========================================================================
-   Root
-   ========================================================================== */
+/* Video-specific container styles */
 
 .media-default-skin--video {
-  --media-spring-timing-function: linear(
-    0,
-    0.034 1.5%,
-    0.763 9.7%,
-    1.066 13.9%,
-    1.198 19.9%,
-    1.184 21.8%,
-    0.963 37.5%,
-    0.997 50.9%,
-    1
-  );
-  --media-border-color: oklch(0 0 0 / 0.1);
-  --media-surface-background-color: oklch(1 0 0 / 0.1);
-  --media-surface-inner-border-color: oklch(1 0 0 / 0.1);
-  --media-surface-outer-border-color: oklch(0 0 0 / 0.1);
-  --media-surface-shadow-color: oklch(0 0 0 / 0.15);
-  --media-surface-backdrop-filter: blur(16px) saturate(1.5);
+  --default-accent-color: oklch(1 0 0);
+  --border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
+  --focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-video-border-radius: var(--container-border-radius);
 
-  /* We have to create an alias so that the shadow DOM can inherit the custom property value */
-  --media-video-border-radius: var(--media-border-radius, 1.75rem);
+  --surface-background-color: oklch(1 0 0 / 0.1);
+  --surface-inner-border-color: oklch(1 0 0 / 0.1);
+  --surface-outer-border-color: oklch(0 0 0 / 0.1);
+  --surface-shadow-color: oklch(0 0 0 / 0.15);
+  --surface-backdrop-filter: blur(16px) saturate(1.5);
 
-  --media-controls-transition-duration: 100ms;
-  --media-controls-transition-timing-function: ease-out;
+  --controls-transition-duration: 100ms;
+  --controls-transition-timing-function: ease-out;
 
-  --media-error-dialog-transition-duration: 350ms;
-  --media-error-dialog-transition-delay: 100ms;
-  --media-error-dialog-transition-timing-function: var(--media-spring-timing-function);
+  --error-dialog-transition-duration: 350ms;
+  --error-dialog-transition-delay: 100ms;
+  --error-dialog-transition-timing-function: ease-out;
 
-  --media-popup-transition-duration: 100ms;
-  --media-popup-transition-timing-function: ease-out;
+  --popup-transition-duration: 100ms;
+  --popup-transition-timing-function: ease-out;
 
   overflow: clip;
   background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
-    --media-error-dialog-transition-duration: 50ms;
-    --media-error-dialog-transition-delay: 0ms;
-    --media-error-dialog-transition-timing-function: ease-out;
-    --media-popup-transition-duration: 0ms;
-  }
+    --error-dialog-transition-duration: 50ms;
+    --error-dialog-transition-delay: 0ms;
+    --popup-transition-duration: 0ms;
 
-  @media (prefers-color-scheme: dark) {
-    --media-border-color: oklch(1 0 0 / 0.15);
+    .media-error__dialog {
+      scale: 1;
+      transition-property: opacity;
+    }
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
-    --media-surface-background-color: oklch(0 0 0);
-    --media-surface-inner-border-color: oklch(1 0 0 / 0.25);
-    --media-surface-outer-border-color: transparent;
+    --surface-background-color: oklch(0 0 0);
+    --surface-inner-border-color: oklch(1 0 0 / 0.25);
+    --surface-outer-border-color: transparent;
   }
 
   &:has(.media-controls--root:not([data-visible])) {
     /* Slight delay to hide controls on non-touch devices after interaction */
     @media (pointer: fine) {
-      --media-controls-transition-duration: 300ms;
+      --controls-transition-duration: 300ms;
     }
     @media (pointer: coarse) {
-      --media-controls-transition-duration: 150ms;
+      --controls-transition-duration: 150ms;
     }
     @media (prefers-reduced-motion: reduce) {
-      --media-controls-transition-duration: 50ms;
+      --controls-transition-duration: 50ms;
     }
   }
 
@@ -103,11 +89,11 @@
     pointer-events: none;
     content: "";
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1px var(--media-border-color);
+    box-shadow: inset 0 0 0 1px var(--border-color);
   }
 
   &:fullscreen {
-    --media-border-radius: 0;
+    --container-border-radius: 0;
 
     &::after {
       display: none;
@@ -123,11 +109,13 @@
       --scale: 1.75;
     }
   }
+
+  * {
+    --focus-ring-color: oklch(1 0 0);
+  }
 }
 
-/* ==========================================================================
-   Error Dialog
-   ========================================================================== */
+/* Error Dialog  */
 
 .media-default-skin--video .media-error {
   position: absolute;
@@ -148,16 +136,16 @@
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
   border-radius: calc(var(--spacing) * 7);
-  transition-delay: var(--media-error-dialog-transition-delay);
-  transition-timing-function: var(--media-error-dialog-transition-timing-function);
-  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-delay: var(--error-dialog-transition-delay);
+  transition-timing-function: var(--error-dialog-transition-timing-function);
+  transition-duration: var(--error-dialog-transition-duration);
   transition-property: opacity, scale;
 }
 
 .media-default-skin--video .media-error[data-starting-style] .media-error__dialog,
 .media-default-skin--video .media-error[data-ending-style] .media-error__dialog {
   opacity: 0;
-  scale: 0.5;
+  scale: 0.95;
 }
 .media-default-skin--video .media-error[data-ending-style] .media-error__dialog {
   transition-delay: 0ms;
@@ -175,9 +163,7 @@
   font-size: var(--font-size-medium);
 }
 
-/* ==========================================================================
-   Controls (hide/show behavior)
-   ========================================================================== */
+/* Controls (hide/show behavior) */
 
 .media-default-skin--video .media-controls--root {
   --inset-factor: 2;
@@ -186,24 +172,24 @@
 
   z-index: 10;
   display: contents;
-  color: var(--media-color-primary, oklch(1 0 0));
-  transition-timing-function: var(--media-controls-transition-timing-function);
+  color: oklch(1 0 0);
+  transition-timing-function: var(--controls-transition-timing-function);
   /* Speed up the entry transition */
-  transition-duration: calc(var(--media-controls-transition-duration) / 2);
+  transition-duration: calc(var(--controls-transition-duration) / 2);
 
-  & .media-controls--primary,
-  & .media-controls--secondary {
+  .media-controls--primary,
+  .media-controls--secondary {
     position: absolute;
     z-index: 10;
   }
 
-  & .media-controls--primary {
+  .media-controls--primary {
     inset-inline: var(--inset);
     bottom: var(--inset);
     transform-origin: bottom;
   }
 
-  & .media-controls--secondary {
+  .media-controls--secondary {
     top: var(--inset);
     right: var(--inset);
     container-type: normal;
@@ -211,8 +197,8 @@
   }
 
   @container media-root (width < 32rem) {
-    & .media-controls--primary,
-    & .media-controls--secondary {
+    .media-controls--primary,
+    .media-controls--secondary {
       transition-timing-function: inherit;
       transition-duration: inherit;
 
@@ -232,12 +218,12 @@
     }
 
     &:not([data-visible]) {
-      & .media-controls--primary,
-      & .media-controls--secondary {
+      .media-controls--primary,
+      .media-controls--secondary {
         pointer-events: none;
         opacity: 0;
         scale: 0.95;
-        transition-duration: var(--media-controls-transition-duration);
+        transition-duration: var(--controls-transition-duration);
 
         @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
           filter: blur(8px);
@@ -248,13 +234,13 @@
         }
       }
 
-      & .media-controls--primary {
+      .media-controls--primary {
         @media (prefers-reduced-motion: no-preference) {
           translate: 0 4px;
         }
       }
 
-      & .media-controls--secondary {
+      .media-controls--secondary {
         @media (prefers-reduced-motion: no-preference) {
           translate: 0 -4px;
         }
@@ -269,8 +255,8 @@
     display: flex;
     transform-origin: bottom;
 
-    & .media-controls--primary,
-    & .media-controls--secondary {
+    .media-controls--primary,
+    .media-controls--secondary {
       display: contents;
 
       &::after {
@@ -282,7 +268,7 @@
       pointer-events: none;
       opacity: 0;
       scale: 0.95;
-      transition-duration: var(--media-controls-transition-duration);
+      transition-duration: var(--controls-transition-duration);
 
       @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
         filter: blur(8px);
@@ -298,7 +284,7 @@
     }
   }
 
-  & .media-time-controls {
+  .media-time-controls {
     flex: 1;
     padding-inline: calc(var(--spacing) * 3);
   }
@@ -327,9 +313,7 @@
   cursor: none;
 }
 
-/* ==========================================================================
-   Sliders
-   ========================================================================== */
+/* Sliders */
 
 .media-default-skin--video .media-slider__track {
   background-color: oklch(1 0 0 / 0.2);

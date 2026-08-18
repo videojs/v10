@@ -1,9 +1,12 @@
+'use client';
+
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import {
   bufferingIndicator,
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  container,
   controls,
   error,
   icon,
@@ -13,7 +16,6 @@ import {
   overlay,
   popup,
   poster,
-  root,
   slider,
   spacer,
   statusIndicator,
@@ -210,7 +212,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
     : style;
 
   return (
-    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
+    <Container className={cn(container(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (

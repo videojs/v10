@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 export const topIndicatorRoot = cn(
   'group/input-indicator',
-  '[--media-surface-background-color:oklch(0_0_0/0.25)]',
+  '[--surface-background-color:oklch(0_0_0/0.25)]',
   'absolute top-3 rounded-full origin-top pointer-events-none',
   'text-inherit font-medium',
   'duration-100 ease-out',
@@ -21,8 +21,8 @@ export const topIndicatorRoot = cn(
   'pointer-fine:motion-safe:data-ending-style:blur-sm',
   'pointer-fine:motion-safe:data-ending-style:scale-90',
   'motion-safe:data-ending-style:-translate-y-1/4',
-  '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
-  'contrast-more:[--media-surface-background-color:oklch(0_0_0)]'
+  '[@media(prefers-reduced-transparency:reduce)]:[--surface-background-color:oklch(0_0_0)]',
+  'contrast-more:[--surface-background-color:oklch(0_0_0)]'
 );
 
 export const topIndicatorContent = cn(

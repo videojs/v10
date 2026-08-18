@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const CI = !!process.env.CI;
-const SANDBOX_SPEC = /sandbox-.*i18n\.spec\.ts/;
+const SANDBOX_SPEC = /sandbox-(?:.*i18n|skin-styling)\.spec\.ts/;
 const VALUE_OPTIONS = new Set([
   '-c',
   '-g',

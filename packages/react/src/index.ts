@@ -73,7 +73,7 @@ export {
   type CreatePlayerConfig,
   type CreatePlayerResult,
   createPlayer,
-  type ProviderProps,
+  type PlayerProps,
 } from './player/create-player';
 // UI
 export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
@@ -84,12 +84,22 @@ export {
   type AudioTrackOptionsResult,
   useAudioTrackOptions,
 } from './ui/audio-track';
+export {
+  AudioTrackRadioGroup,
+  type AudioTrackRadioGroupItemProps,
+  type AudioTrackRadioGroupItemState,
+  type AudioTrackRadioGroupProps,
+} from './ui/audio-track-radio-group';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
 export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/captions-button';
 export {
   type CaptionsOption,
   type CaptionsOptionsProps,
   type CaptionsOptionsResult,
+  CaptionsRadioGroup,
+  type CaptionsRadioGroupItemProps,
+  type CaptionsRadioGroupItemState,
+  type CaptionsRadioGroupProps,
   useCaptionsOptions,
 } from './ui/captions-radio-group';
 export { CastButton, type CastButtonProps } from './ui/cast-button/cast-button';
@@ -118,6 +128,12 @@ export {
   usePlaybackRateOptions,
 } from './ui/playback-rate';
 export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
+export {
+  PlaybackRateRadioGroup,
+  type PlaybackRateRadioGroupItemProps,
+  type PlaybackRateRadioGroupItemState,
+  type PlaybackRateRadioGroupProps,
+} from './ui/playback-rate-radio-group';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export {
@@ -126,6 +142,12 @@ export {
   type QualityOptionsResult,
   useQualityOptions,
 } from './ui/quality';
+export {
+  QualityRadioGroup,
+  type QualityRadioGroupItemProps,
+  type QualityRadioGroupItemState,
+  type QualityRadioGroupProps,
+} from './ui/quality-radio-group';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';
 export { SeekIndicator } from './ui/seek-indicator';
 export type { SeekIndicatorRootProps } from './ui/seek-indicator/seek-indicator-root';

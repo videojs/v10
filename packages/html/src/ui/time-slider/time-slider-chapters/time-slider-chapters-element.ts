@@ -17,8 +17,8 @@ import { sliderContext } from '../../slider/context';
 /**
  * Clones a light-DOM template once per normalized chapter range.
  *
- * The template must contain exactly one HTML root element. Non-template children remain visible when the template is
- * missing or invalid, allowing consumers to provide a regular slider track as a fallback.
+ * The required template must contain exactly one HTML root element. When no chapter cues are available, the template
+ * is cloned once for a full-duration range.
  */
 export class TimeSliderChaptersElement extends MediaElement {
   static readonly tagName = 'media-time-slider-chapters';
@@ -101,10 +101,16 @@ export class TimeSliderChaptersElement extends MediaElement {
     if (this.#templateChecked) return this.#templateRoot;
 
     const template = getTemplateElement(this);
-    if (!template) return null;
+    if (!template) {
+      for (const node of [...this.childNodes]) node.remove();
+      return null;
+    }
 
     this.#templateChecked = true;
     const root = getTemplateRoot(template);
+    for (const node of [...this.childNodes]) {
+      if (node !== template) node.remove();
+    }
     if (root?.namespaceURI !== 'http://www.w3.org/1999/xhtml') {
       if (__DEV__) {
         console.warn(`[${this.localName}] template must contain exactly one HTML root element.`);
@@ -113,10 +119,6 @@ export class TimeSliderChaptersElement extends MediaElement {
     }
 
     this.#templateRoot = root as HTMLElement;
-    for (const node of [...this.childNodes]) {
-      if (node !== template) node.remove();
-    }
-
     return this.#templateRoot;
   }
 

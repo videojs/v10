@@ -89,7 +89,7 @@ describe('createComponentReferenceModel', () => {
           },
         },
       },
-    };
+    } satisfies ComponentReference;
 
     const model = createComponentReferenceModel('Controls', apiReference);
 
@@ -223,7 +223,7 @@ describe('buildComponentReferenceTocHeadings', () => {
         trigger: {
           name: 'Trigger',
           props: {
-            onClick: { type: '() => void' },
+            onClick: { type: '() => void', frameworks: ['react'] },
           },
           state: {},
           dataAttributes: {},
@@ -233,7 +233,7 @@ describe('buildComponentReferenceTocHeadings', () => {
           },
         },
       },
-    };
+    } satisfies ComponentReference;
 
     const model = createComponentReferenceModel('Popover', apiReference);
     const headings = buildComponentReferenceTocHeadings(model);
@@ -258,5 +258,47 @@ describe('buildComponentReferenceTocHeadings', () => {
         frameworks: ['react'],
       },
     ]);
+  });
+
+  it('restricts a shared part props section to its prop frameworks', () => {
+    const apiReference = {
+      name: 'TimeSlider',
+      props: {},
+      state: {},
+      dataAttributes: {},
+      cssCustomProperties: {},
+      platforms: {},
+      parts: {
+        chapters: {
+          name: 'Chapters',
+          props: {
+            renderChapter: { type: '() => ReactElement', frameworks: ['react'] },
+          },
+          state: {},
+          dataAttributes: {},
+          cssCustomProperties: {},
+          platforms: {
+            html: { tagName: 'media-time-slider-chapters' },
+            react: {},
+          },
+        },
+      },
+    } satisfies ComponentReference;
+
+    const model = createComponentReferenceModel('TimeSlider', apiReference);
+
+    expect(model?.parts[0]?.sections).toMatchObject([
+      {
+        key: 'props',
+        frameworks: ['react'],
+      },
+    ]);
+    expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
+      depth: 4,
+      text: 'Props',
+      slug: 'chapters-props',
+      tocKind: 'api-reference-subsection',
+      frameworks: ['react'],
+    });
   });
 });

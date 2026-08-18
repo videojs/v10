@@ -22,6 +22,7 @@ function createEngine(): Hls {
       for (const fn of listeners.get(event) ?? []) fn(event, ...args);
     },
     startLoad: vi.fn(),
+    resumeBuffering: vi.fn(),
     media: null,
   } as unknown as Hls;
 }
@@ -114,7 +115,9 @@ describe('HlsJsMediaPreloadMixin', () => {
     expect(engine.config.maxBufferSize).toBe(1);
   });
 
-  it('defers full load to play event when preload=metadata', () => {
+  it('raises buffer limits in place on play when preload=metadata', () => {
+    // A second `startLoad()` would abort the in-flight segment and leave hls.js
+    // cancelling and re-requesting on every tick, forever. See #1979.
     const engine = createEngine();
     const host = new PreloadHost(engine);
 
@@ -128,9 +131,61 @@ describe('HlsJsMediaPreloadMixin', () => {
 
     video.dispatchEvent(new Event('play'));
 
-    expect(engine.startLoad).toHaveBeenCalled();
+    expect(engine.startLoad).not.toHaveBeenCalled();
+    expect(engine.resumeBuffering).toHaveBeenCalled();
     expect(engine.config.maxBufferLength).toBe(30);
     expect(engine.config.maxBufferSize).toBe(60_000_000);
+  });
+
+  it('starts loading on play when preload=none', () => {
+    const engine = createEngine();
+    const host = new PreloadHost(engine);
+
+    host.preload = 'none';
+
+    const video = document.createElement('video');
+    host.attach(video);
+    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+    expect(engine.startLoad).not.toHaveBeenCalled();
+
+    video.dispatchEvent(new Event('play'));
+
+    expect(engine.startLoad).toHaveBeenCalledTimes(1);
+    expect(engine.config.maxBufferLength).toBe(30);
+    expect(engine.config.maxBufferSize).toBe(60_000_000);
+  });
+
+  it('starts loading once across repeated engine events', () => {
+    const engine = createEngine();
+    const host = new PreloadHost(engine);
+
+    host.preload = 'metadata';
+
+    const video = document.createElement('video');
+    host.attach(video);
+    (engine as any).emit(Hls.Events.MANIFEST_LOADING);
+    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+    expect(engine.startLoad).toHaveBeenCalledTimes(1);
+    expect(engine.config.maxBufferLength).toBe(1);
+  });
+
+  it('starts loading again for a new source', () => {
+    const engine = createEngine();
+    const host = new PreloadHost(engine);
+
+    host.preload = 'metadata';
+
+    const video = document.createElement('video');
+    host.attach(video);
+    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+    (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
+
+    // `loadSource()` stops loading before announcing the manifest.
+    (engine as any).emit(Hls.Events.MANIFEST_LOADING);
+
+    expect(engine.startLoad).toHaveBeenCalledTimes(1);
   });
 
   it('applies preload to native element immediately when target exists', () => {

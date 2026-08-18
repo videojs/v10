@@ -7,19 +7,20 @@ export const button = {
     'flex items-center justify-center shrink-0 border-none cursor-pointer select-none text-center touch-manipulation min-h-0 h-9',
     'py-2 px-4 rounded-full',
     'outline-2 outline-transparent -outline-offset-2',
-    'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
-    'not-aria-disabled:active:scale-[0.98]',
+    'transition-[background-color,color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
+    'not-aria-disabled:active:scale-[0.97]',
+    'motion-reduce:scale-100 motion-reduce:transition-[background-color,color,outline-offset] motion-reduce:will-change-auto',
     'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
-    'focus-visible:outline-current focus-visible:outline-offset-2'
+    'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2'
   ),
-  primary: 'bg-white text-black font-medium text-shadow-none',
+  primary: 'bg-(--accent-color) text-(--accent-contrast-color) font-medium text-shadow-none',
   subtle: cn(
     'bg-transparent text-inherit text-shadow-inherit',
-    'hover:bg-current/10 hover:no-underline',
-    'focus-visible:bg-current/10',
-    'aria-expanded:bg-current/10'
+    'not-aria-disabled:hover:bg-(--accent-background-color) not-aria-disabled:hover:text-(--accent-text-color) not-aria-disabled:hover:no-underline',
+    'not-aria-disabled:focus-visible:bg-(--accent-background-color) not-aria-disabled:focus-visible:text-(--accent-text-color)',
+    'not-aria-disabled:aria-expanded:bg-(--accent-background-color) not-aria-disabled:aria-expanded:text-(--accent-text-color)'
   ),
-  icon: cn('grid aspect-square p-0!', 'not-aria-disabled:active:scale-90'),
+  icon: cn('grid aspect-square p-0!', 'not-aria-disabled:active:scale-[0.97]'),
   seek: hideAtSmall,
   /**
    * Live variant: wide pill button with a status dot rendered via `::before`

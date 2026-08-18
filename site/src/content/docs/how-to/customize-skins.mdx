@@ -4,6 +4,7 @@ description: Learn how to customize Video.js v10 skins by copying and modifying 
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
 import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 
 Video.js v10 comes with two pre-built skins; Default and Minimal. Basic customization is possible with CSS custom properties, but if you want more control over the design and functionality of your player, you can copy the skin's code into your project and modify it as needed. We call this "ejecting" the skin, since you're taking the internal code that makes up the skin and making it your own.
@@ -12,8 +13,38 @@ Video.js v10 comes with two pre-built skins; Default and Minimal. Basic customiz
 
 | Property Name | Description | Type | Example |
 | ------------- | ----------- | ---- | ------- |
+| `--media-accent-color` | The color of slider fills and accented controls | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#f5c518` |
+| `--media-accent-text-color` | The color of text and icons shown on the accent color | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `black` |
 | `--media-border-radius` | The border radius of the media player | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
-| `--media-color-primary` | The color of icons and text in media controls | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `red` |
+| `--media-scale-unit` | The base sizing unit for Vanilla CSS skins | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1rem` |
+
+If you omit `--media-accent-text-color`, the skins choose a contrasting text color from `--media-accent-color` using [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/contrast-color). You only need to set it when you want to override that result.
+
+### Set the audio color scheme
+
+The audio skins adapt their main palette for light and dark mode using [`light-dark()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/light-dark). It uses the inherited [`color-scheme`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/color-scheme), so set `color-scheme` on the player or an ancestor:
+
+```css
+:root {
+  color-scheme: light dark;
+}
+```
+
+The video skins keep their dark control presentation in both color schemes.
+
+<StyleCase styles={["css"]}>
+
+### Scale with the document font size
+
+Vanilla CSS skins use `--media-scale-unit` as the base for control spacing, icon sizes, and font sizes. It defaults to `16px`, so the player UI does not change with the document root font size. Set it to `1rem` on the player or an ancestor to make the UI scale with the document root font size:
+
+```css
+.player {
+  --media-scale-unit: 1rem;
+}
+```
+
+</StyleCase>
 
 You can of course also add your own classnames to the skins themselves.
 

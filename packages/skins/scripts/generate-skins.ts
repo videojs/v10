@@ -158,6 +158,8 @@ function htmlPackageImportResolver(outputFile: string): (specifier: string) => s
 function htmlPackageModule(specifier: string): string {
   const uiPrefix = '@videojs/html/ui/';
   if (specifier.startsWith(uiPrefix)) return posix.join('src/define/ui', specifier.slice(uiPrefix.length));
+  const mediaPrefix = '@videojs/html/media/';
+  if (specifier.startsWith(mediaPrefix)) return posix.join('src/define/media', specifier.slice(mediaPrefix.length));
   const iconsPrefix = '@videojs/html/icons/element';
   if (specifier === iconsPrefix) return 'src/icons/element';
   if (specifier.startsWith(`${iconsPrefix}/`))
@@ -168,6 +170,13 @@ function htmlPackageModule(specifier: string): string {
 function reactPackageImportResolver(reference: ImportRef): ImportRef | false {
   if (reference.source === '@videojs/react') {
     if (reference.name === 'Text') return false;
+    if (reference.name === 'Container' || reference.name === 'ContainerProps') {
+      return { ...reference, source: '@/player/container' };
+    }
+    if (reference.name === 'Poster' || reference.name === 'PosterProps') {
+      return { ...reference, source: '@/ui/poster' };
+    }
+    if (reference.name === 'RenderProp') return { ...reference, source: '@/utils/types' };
     return { ...reference, source: `@/ui/${kebabCase(reference.name)}` };
   }
   const iconsPrefix = '@videojs/react/icons';

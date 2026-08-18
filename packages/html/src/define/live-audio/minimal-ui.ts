@@ -4,6 +4,7 @@
 // HLS / DASH streams.
 import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
+import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
@@ -28,6 +29,7 @@ defineTooltip();
 
 // Standalone elements.
 safeDefine(BufferingIndicatorElement);
+safeDefine(HotkeyElement);
 safeDefine(LiveButtonElement);
 safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);

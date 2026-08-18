@@ -1,5 +1,5 @@
 import '@app/styles.css';
-import { VideoProvider } from '@app/shared/react/providers';
+import { VideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
@@ -30,7 +30,7 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <VideoProvider>
+      <VideoPlayer>
         <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <DashVideo
             src={SOURCES[source].url ?? ''}
@@ -45,7 +45,7 @@ function App() {
               sandbox env key is what attributes the views. */}
           <MuxData playerSoftwareName="dash-video" envKey="o9b7ge20gji31ao0rub18505f" />
         </VideoSkinComponent>
-      </VideoProvider>
+      </VideoPlayer>
     </SandboxI18nProvider>
   );
 }

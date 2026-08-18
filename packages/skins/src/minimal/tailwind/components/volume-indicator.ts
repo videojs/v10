@@ -6,16 +6,16 @@ export const volumeIndicator = {
   content: cn(
     topIndicatorContent,
     'w-[min(80%,--spacing(56))]',
-    'group-data-min/input-indicator:animate-media-shake',
-    'group-data-max/input-indicator:animate-media-shake',
-    'motion-reduce:group-data-min/input-indicator:animate-none',
-    'motion-reduce:group-data-max/input-indicator:animate-none'
+    '[transform:translateX(0)]',
+    'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/input-indicator:[transform:translateX(0.25px)]',
+    'motion-safe:group-[:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]/input-indicator:[transition:transform_300ms_linear(0,-24_20%,16_40%,-8_60%,4_80%,1)]'
   ),
   progress: cn(
-    '[--media-progress-fill:var(--media-volume-fill)]',
-    'w-full h-0.75 rounded-full',
-    '[background-image:linear-gradient(to_right,currentColor_0%,currentColor_var(--media-progress-fill),oklch(from_currentColor_l_c_h/0.2)_var(--media-progress-fill),oklch(from_currentColor_l_c_h/0.2)_100%)]',
-    'shadow-[0_1px_0_var(--media-current-shadow-color-subtle)]'
+    'relative w-full h-0.75 rounded-full bg-current/20',
+    'before:absolute before:inset-y-0 before:left-0 before:w-(--media-volume-fill,0%) before:content-[""]',
+    'before:bg-(--accent-color) before:rounded-[inherit]',
+    'before:transition-[width] before:duration-200 before:ease-linear',
+    'shadow-[0_1px_0_var(--shadow-subtle-current-color)]'
   ),
   value: 'ml-auto',
   icon: {

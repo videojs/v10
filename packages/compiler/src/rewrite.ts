@@ -6,6 +6,13 @@ import { moveJsxChildToProp, replaceJsxElementTag, setJsxAttribute } from './jsx
 import { addNamedImport } from './transforms/add-import';
 import { type ImportRewriteOptions, type ImportRule, transformImports } from './transforms/imports';
 import {
+  createIndexedAccessType,
+  createInterfaceDeclaration,
+  createLiteralType,
+  createNamedType,
+  type InterfaceDeclarationOptions,
+} from './utils/declarations';
+import {
   hasJsxSpreadAttribute,
   isJsxElementLike as isJsxNodeLike,
   readAccessPath,
@@ -31,6 +38,8 @@ export interface RefHelpers {
 
 export type ValueReference = string | ImportReference | ts.Expression;
 export type JsxPropValue = string | ImportReference | ts.Expression | undefined;
+export type JsxPropValueFactory = (context: JsxElementContext) => JsxPropValue;
+export type JsxPropInput = JsxPropValue | JsxPropValueFactory;
 export type JsxPropsSpec = readonly (ts.JsxAttribute | ts.JsxSpreadAttribute)[] | Record<string, JsxPropValue>;
 
 export interface ValueOnlyIfOptions {
@@ -64,12 +73,16 @@ export interface CreateHelpers {
     and(left: ValueReference, right: ts.Expression): ts.BinaryExpression;
     array(items: readonly ValueReference[], options?: ValueArrayOptions): ts.ArrayLiteralExpression | ts.AsExpression;
     arrayItems(value: ts.Expression): ts.Expression[];
+    arrow(parameters: readonly string[], body: ts.ConciseBody): ts.ArrowFunction;
     call(callee: ValueReference, args: readonly ValueReference[]): ts.CallExpression;
     conditional(test: ts.Expression, whenTrue: ts.Expression, whenFalse: ts.Expression): ts.ConditionalExpression;
+    equal(left: ValueReference, right: ValueReference): ts.BinaryExpression;
     identifier(value: string | ImportReference): ts.Identifier;
     number(value: number): ts.NumericLiteral;
+    object(properties?: readonly ts.ObjectLiteralElementLike[]): ts.ObjectLiteralExpression;
     onlyIf(options: ValueOnlyIfOptions): ts.ConditionalExpression;
     string(value: string): ts.StringLiteral;
+    typeOf(value: ValueReference): ts.TypeOfExpression;
     undefined(): ts.Identifier;
   };
   jsx: {
@@ -80,7 +93,10 @@ export interface CreateHelpers {
     spreadProps(value: ValueReference): ts.JsxSpreadAttribute;
   };
   type: {
-    named(value: string | ImportReference): ts.TypeReferenceNode;
+    indexed(object: ts.TypeNode, index: ts.TypeNode): ts.IndexedAccessTypeNode;
+    literal(value: string | number | boolean): ts.LiteralTypeNode;
+    named(value: string | ImportReference, typeArguments?: readonly ts.TypeNode[]): ts.TypeReferenceNode;
+    string(): ts.KeywordTypeNode;
     union(...types: readonly ts.TypeNode[]): ts.UnionTypeNode;
     unknown(): ts.KeywordTypeNode;
     undefined(): ts.KeywordTypeNode;
@@ -94,8 +110,9 @@ export interface EditHelpers {
   jsx: {
     element(options: JsxElementEditOptions): CompilerTransform;
     prop(options: JsxPropEditOptions): CompilerTransform;
-    addProp(name: string, value?: JsxPropValue): JsxElementEdit;
-    addPropsSpread(value: ValueReference): JsxElementEdit;
+    addProp(name: string, value?: JsxPropInput): JsxElementEdit;
+    addPropsSpread(value: ValueReference, options?: JsxSpreadPropsOptions): JsxElementEdit;
+    makeSelfClosing(): JsxElementEdit;
     moveChildToProp(prop: string): JsxElementEdit;
     replaceTag(tag: string | ImportReference): JsxElementEdit;
   };
@@ -109,6 +126,7 @@ export interface EditHelpers {
   function: {
     declaration(options: FunctionDeclarationEditOptions): CompilerTransform;
     addProps(props: readonly FunctionPropSpec[], parameterIndex?: number): FunctionDeclarationEdit;
+    setProps(props: readonly FunctionPropSpec[], options?: FunctionPropsOptions): FunctionDeclarationEdit;
   };
 }
 
@@ -116,12 +134,16 @@ export interface ValueHelpers {
   and(left: ValueReference, right: ts.Expression): ts.BinaryExpression;
   array(items: readonly ValueReference[], options?: ValueArrayOptions): ts.ArrayLiteralExpression | ts.AsExpression;
   arrayItems(value: ts.Expression): ts.Expression[];
+  arrow(parameters: readonly string[], body: ts.ConciseBody): ts.ArrowFunction;
   call(callee: ValueReference, args: readonly ValueReference[]): ts.CallExpression;
   conditional(test: ts.Expression, whenTrue: ts.Expression, whenFalse: ts.Expression): ts.ConditionalExpression;
+  equal(left: ValueReference, right: ValueReference): ts.BinaryExpression;
   identifier(value: string | ImportReference): ts.Identifier;
   isArray(): MatchPredicate;
   number(value: number): ts.NumericLiteral;
+  object(properties?: readonly ts.ObjectLiteralElementLike[]): ts.ObjectLiteralExpression;
   string(value: string): ts.StringLiteral;
+  typeOf(value: ValueReference): ts.TypeOfExpression;
   when(
     value: ValueReference,
     condition: ValueReference,
@@ -133,7 +155,13 @@ export interface ValueHelpers {
 export interface JsxHelpers {
   create(tag: string | ImportReference, props?: JsxPropsSpec): ts.JsxSelfClosingElement;
   element(tag: string | RegExp): JsxElementSelection;
+  expression(value: ts.Expression): ts.JsxExpression;
   if(test: ValueReference, element: ts.Expression): ts.JsxExpression;
+  props(name: string): JsxPropsSelection;
+}
+
+export interface ScopedJsxHelpers {
+  element(tag: string | RegExp): ScopedJsxElementSelection;
   props(name: string): JsxPropsSelection;
 }
 
@@ -142,11 +170,19 @@ export interface ValueArrayOptions {
 }
 
 export interface JsxElementSelection {
-  addProp(name: string, value?: JsxPropValue): CompilerTransform;
+  addProp(name: string, value?: JsxPropInput): CompilerTransform;
   childToProp(prop: string): CompilerTransform;
+  remove(): CompilerTransform;
   replace(replacement: string | ImportReference | JsxElementReplacement): CompilerTransform;
-  spreadProps(value: ValueReference): CompilerTransform;
+  selfClosing(): CompilerTransform;
+  spreadProps(value: ValueReference, options?: JsxSpreadPropsOptions): CompilerTransform;
   unwrap(options?: JsxElementUnwrapOptions): CompilerTransform;
+}
+
+export type ScopedJsxElementSelection = Omit<JsxElementSelection, 'unwrap'>;
+
+export interface JsxSpreadPropsOptions {
+  position?: 'start' | 'end' | undefined;
 }
 
 export interface JsxElementUnwrapOptions {
@@ -157,13 +193,17 @@ export interface JsxElementUnwrapOptions {
 export type JsxElementReplacement = (context: JsxElementContext) => ts.Node | undefined;
 
 export interface JsxPropsSelection {
+  on(tag: string | RegExp): JsxPropsSelection;
   rename(name: string): CompilerTransform;
   replace(transform: (context: JsxPropContext) => ts.Expression | undefined): CompilerTransform;
   where(predicate: MatchPredicate): JsxPropsSelection;
 }
 
 export interface TypeHelpers {
-  named(value: string | ImportReference): ts.TypeReferenceNode;
+  indexed(object: ts.TypeNode, index: ts.TypeNode): ts.IndexedAccessTypeNode;
+  literal(value: string | number | boolean): ts.LiteralTypeNode;
+  named(value: string | ImportReference, typeArguments?: readonly ts.TypeNode[]): ts.TypeReferenceNode;
+  string(): ts.KeywordTypeNode;
   union(...types: readonly ts.TypeNode[]): ts.UnionTypeNode;
   unknown(): ts.KeywordTypeNode;
   undefined(): ts.KeywordTypeNode;
@@ -180,7 +220,10 @@ export interface InterfacePropertySelection {
 }
 
 export interface FunctionSelection {
+  readonly jsx: ScopedJsxHelpers;
   addProps(props: readonly FunctionPropSpec[], parameterIndex?: number): CompilerTransform;
+  insertBefore(statements: FunctionSiblingStatementSpec): CompilerTransform;
+  setProps(props: readonly FunctionPropSpec[], options?: FunctionPropsOptions): CompilerTransform;
   append(statements: StatementSpec): CompilerTransform;
   beforeReturn(statements: StatementSpec): CompilerTransform;
   prepend(statements: StatementSpec): CompilerTransform;
@@ -191,8 +234,13 @@ export interface ModuleSelection {
   prepend(statements: StatementSpec): CompilerTransform;
 }
 
+export interface VariableSelection {
+  remove(): CompilerTransform;
+}
+
 export interface StatementHelpers {
   const(name: string, initializer: ValueReference, options?: ConstStatementOptions): ts.VariableStatement;
+  interface(options: InterfaceDeclarationOptions): ts.InterfaceDeclaration;
 }
 
 export interface ConstStatementOptions {
@@ -202,6 +250,7 @@ export interface ConstStatementOptions {
 }
 
 export type StatementSpec = ts.Statement | readonly ts.Statement[];
+export type FunctionSiblingStatementSpec = StatementSpec | ((context: FunctionDeclarationContext) => StatementSpec);
 
 export interface TransformHelpers {
   import(source: string, name: string, options?: ImportOptions): ImportReference;
@@ -213,6 +262,7 @@ export interface TransformHelpers {
   statement: StatementHelpers;
   type: TypeHelpers;
   value: ValueHelpers;
+  variable(name: string | RegExp): VariableSelection;
 }
 
 export type TransformStep = CompilerTransform | CompilerPlugin | null | undefined | false;
@@ -233,6 +283,8 @@ export type JsxElementEdit = (element: JsxElementLike, context: JsxElementContex
 
 export interface JsxElementEditOptions {
   when: MatchPredicate;
+  remove?: boolean | undefined;
+  withinFunction?: MatchPredicate | undefined;
   transform: JsxElementEdit;
 }
 
@@ -245,6 +297,7 @@ export interface JsxPropContext {
 
 export interface JsxPropEditOptions {
   when: MatchPredicate;
+  withinFunction?: MatchPredicate | undefined;
   transform(context: JsxPropContext): ts.Expression | undefined;
 }
 
@@ -286,6 +339,12 @@ export interface FunctionDeclarationEditOptions {
 }
 
 export type FunctionPropSpec = string | { name: string; spread?: boolean | undefined };
+
+export interface FunctionPropsOptions {
+  parameterIndex?: number | undefined;
+  type?: string | ImportReference | ts.TypeNode | undefined;
+  initializer?: ts.Expression | undefined;
+}
 
 interface MutableImportReference extends ImportReference {
   used: boolean;
@@ -361,6 +420,7 @@ function createTransformHelpers(refs: MutableImportReference[], context: Compile
     statement,
     type: create.type,
     value,
+    variable: (name) => ({ remove: () => removeVariableDeclarations(name) }),
   };
 }
 
@@ -369,12 +429,16 @@ function createValueHelpers(match: MatchHelpers, create: CreateHelpers): ValueHe
     and: create.value.and,
     array: create.value.array,
     arrayItems: create.value.arrayItems,
+    arrow: create.value.arrow,
     call: create.value.call,
     conditional: create.value.conditional,
+    equal: create.value.equal,
     identifier: create.value.identifier,
     isArray: match.value.array,
     number: create.value.number,
+    object: create.value.object,
     string: create.value.string,
+    typeOf: create.value.typeOf,
     when(value, condition, fallback) {
       return create.value.onlyIf({ value, condition, ...(fallback === undefined ? {} : { fallback }) });
     },
@@ -403,6 +467,7 @@ function createStatementHelpers(): StatementHelpers {
         )
       );
     },
+    interface: (options) => createInterfaceDeclaration(options),
   };
 }
 
@@ -417,29 +482,51 @@ function createJsxHelpers(match: MatchHelpers, create: CreateHelpers, edit: Edit
   return {
     create: create.jsx.element,
     element: (tag) => createJsxElementSelection(tag, match, edit),
+    expression: create.jsx.expression,
     if: create.jsx.renderIf,
     props: (name) => createJsxPropsSelection(name, match, edit),
   };
 }
 
-function createJsxElementSelection(tag: string | RegExp, match: MatchHelpers, edit: EditHelpers): JsxElementSelection {
+function createScopedJsxHelpers(
+  match: MatchHelpers,
+  edit: EditHelpers,
+  withinFunction: MatchPredicate
+): ScopedJsxHelpers {
+  return {
+    element: (tag) => createJsxElementSelection(tag, match, edit, withinFunction),
+    props: (name) => createJsxPropsSelection(name, match, edit, [], withinFunction),
+  };
+}
+
+function createJsxElementSelection(
+  tag: string | RegExp,
+  match: MatchHelpers,
+  edit: EditHelpers,
+  withinFunction?: MatchPredicate
+): JsxElementSelection {
   const when = match.jsx.tag(tag);
   return {
-    addProp: (name, value) => edit.jsx.element({ when, transform: edit.jsx.addProp(name, value) }),
-    childToProp: (prop) => edit.jsx.element({ when, transform: edit.jsx.moveChildToProp(prop) }),
+    addProp: (name, value) => edit.jsx.element({ when, transform: edit.jsx.addProp(name, value), withinFunction }),
+    childToProp: (prop) => edit.jsx.element({ when, transform: edit.jsx.moveChildToProp(prop), withinFunction }),
+    remove: () => edit.jsx.element({ when, transform: () => undefined, remove: true, withinFunction }),
     replace(replacement) {
       const transform: JsxElementEdit =
         typeof replacement === 'function'
           ? (_element, context) => replacement(context)
           : edit.jsx.replaceTag(replacement);
-      return edit.jsx.element({ when, transform });
+      return edit.jsx.element({ when, transform, withinFunction });
     },
-    spreadProps: (value) => edit.jsx.element({ when, transform: edit.jsx.addPropsSpread(value) }),
-    unwrap: (options = {}) =>
-      unwrapJsxElement({
+    selfClosing: () => edit.jsx.element({ when, transform: edit.jsx.makeSelfClosing(), withinFunction }),
+    spreadProps: (value, options) =>
+      edit.jsx.element({ when, transform: edit.jsx.addPropsSpread(value, options), withinFunction }),
+    unwrap(options = {}) {
+      if (withinFunction) throw new Error('Function-scoped JSX unwrap is not supported.');
+      return unwrapJsxElement({
         match: when,
         ...(options.forwardPropsTo ? { forwardPropsTo: match.jsx.tag(options.forwardPropsTo) } : {}),
-      }),
+      });
+    },
   };
 }
 
@@ -447,22 +534,26 @@ function createJsxPropsSelection(
   name: string,
   match: MatchHelpers,
   edit: EditHelpers,
-  predicates: readonly MatchPredicate[] = []
+  predicates: readonly MatchPredicate[] = [],
+  withinFunction?: MatchPredicate
 ): JsxPropsSelection {
   const when = match.all(match.jsx.prop(name), ...predicates);
   return {
-    rename: (nextName) => renameJsxProps(when, nextName),
-    replace: (transform) => edit.jsx.prop({ when, transform }),
-    where: (predicate) => createJsxPropsSelection(name, match, edit, [...predicates, predicate]),
+    on: (tag) => createJsxPropsSelection(name, match, edit, [...predicates, match.jsx.tag(tag)], withinFunction),
+    rename: (nextName) => renameJsxProps(when, nextName, withinFunction),
+    replace: (transform) => edit.jsx.prop({ when, transform, withinFunction }),
+    where: (predicate) => createJsxPropsSelection(name, match, edit, [...predicates, predicate], withinFunction),
   };
 }
 
-function renameJsxProps(when: MatchPredicate, name: string): CompilerTransform {
+function renameJsxProps(when: MatchPredicate, name: string, withinFunction?: MatchPredicate): CompilerTransform {
   return (context) => {
     const factory = context.factory;
 
-    const visit = (node: ts.Node): ts.Node => {
-      const next = ts.visitEachChild(node, visit, context);
+    const visit = (node: ts.Node, active: boolean): ts.VisitResult<ts.Node | undefined> => {
+      const scoped = functionScope(node, active, withinFunction, factory);
+      const next = ts.visitEachChild(node, (child) => visit(child, scoped), context);
+      if (!scoped) return next;
       if (!isJsxNodeLike(next)) return next;
 
       const attrs = ts.isJsxElement(next) ? next.openingElement.attributes : next.attributes;
@@ -492,7 +583,7 @@ function renameJsxProps(when: MatchPredicate, name: string): CompilerTransform {
       return factory.updateJsxSelfClosingElement(next, next.tagName, next.typeArguments, nextAttrs);
     };
 
-    return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
+    return (sourceFile) => ts.visitEachChild(sourceFile, (node) => visit(node, withinFunction === undefined), context);
   };
 }
 
@@ -515,8 +606,12 @@ function createInterfaceSelection(name: string | RegExp, match: MatchHelpers, ed
 function createFunctionSelection(name: string | RegExp, match: MatchHelpers, edit: EditHelpers): FunctionSelection {
   const when = match.function.name(name);
   return {
+    jsx: createScopedJsxHelpers(match, edit, when),
     addProps: (props, parameterIndex) =>
       edit.function.declaration({ when, transform: edit.function.addProps(props, parameterIndex) }),
+    insertBefore: (statements) => insertStatementsBeforeFunction(when, statements),
+    setProps: (props, options) =>
+      edit.function.declaration({ when, transform: edit.function.setProps(props, options) }),
     append: (statements) =>
       edit.function.declaration({
         when,
@@ -600,6 +695,16 @@ function createCreateHelpers(): CreateHelpers {
         if (!ts.isArrayLiteralExpression(value)) return [];
         return value.elements.filter((item): item is ts.Expression => !ts.isSpreadElement(item));
       },
+      arrow(parameters, body) {
+        return ts.factory.createArrowFunction(
+          undefined,
+          undefined,
+          parameters.map((name) => ts.factory.createParameterDeclaration(undefined, undefined, name)),
+          undefined,
+          ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+          body
+        );
+      },
       call(callee, args) {
         return ts.factory.createCallExpression(valueFromReference(callee), undefined, args.map(valueFromReference));
       },
@@ -612,12 +717,22 @@ function createCreateHelpers(): CreateHelpers {
           whenFalse
         );
       },
+      equal(left, right) {
+        return ts.factory.createBinaryExpression(
+          valueFromReference(left),
+          ts.factory.createToken(ts.SyntaxKind.EqualsEqualsEqualsToken),
+          valueFromReference(right)
+        );
+      },
       identifier(value) {
         if (isImportReference(value)) value.used = true;
         return ts.factory.createIdentifier(typeof value === 'string' ? value : value.name);
       },
       number(value) {
         return ts.factory.createNumericLiteral(value);
+      },
+      object(properties = []) {
+        return ts.factory.createObjectLiteralExpression([...properties]);
       },
       onlyIf(options) {
         const value = valueFromReference(options.value);
@@ -633,6 +748,9 @@ function createCreateHelpers(): CreateHelpers {
       },
       string(value) {
         return ts.factory.createStringLiteral(value);
+      },
+      typeOf(value) {
+        return ts.factory.createTypeOfExpression(valueFromReference(value));
       },
       undefined() {
         return ts.factory.createIdentifier('undefined');
@@ -667,9 +785,18 @@ function createCreateHelpers(): CreateHelpers {
       },
     },
     type: {
-      named(value) {
+      indexed(object, index) {
+        return createIndexedAccessType(object, index);
+      },
+      literal(value) {
+        return createLiteralType(value);
+      },
+      named(value, typeArguments = []) {
         if (isImportReference(value)) value.used = true;
-        return ts.factory.createTypeReferenceNode(typeof value === 'string' ? value : value.name);
+        return createNamedType(typeof value === 'string' ? value : value.name, typeArguments);
+      },
+      string() {
+        return ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
       },
       union(...types) {
         return ts.factory.createUnionTypeNode([...types]);
@@ -699,14 +826,23 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
     jsx: {
       element: editJsxElement,
       prop: editJsxProp,
-      addProp:
-        (name, value) =>
-        (element, { factory }) =>
-          setJsxAttribute(element, name, createJsxProp(name, value, factory), factory),
+      addProp: (name, value) => (element, elementContext) => {
+        const nextValue = typeof value === 'function' ? value(elementContext) : value;
+        return setJsxAttribute(
+          element,
+          name,
+          createJsxProp(name, nextValue, elementContext.factory),
+          elementContext.factory
+        );
+      },
       addPropsSpread:
-        (value) =>
+        (value, options) =>
         (element, { factory }) =>
-          addJsxPropsSpread(element, value, factory),
+          addJsxPropsSpread(element, value, factory, options),
+      makeSelfClosing:
+        () =>
+        (element, { factory }) =>
+          makeJsxElementSelfClosing(element, factory),
       moveChildToProp:
         (prop) =>
         (element, { factory }) =>
@@ -740,6 +876,10 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
         (props, parameterIndex = 0) =>
         (functionContext) =>
           addFunctionProps(functionContext.function, parameterIndex, props, functionContext.factory),
+      setProps:
+        (props, options = {}) =>
+        (functionContext) =>
+          setFunctionProps(functionContext.function, props, options, functionContext.factory),
     },
   };
 }
@@ -772,15 +912,20 @@ function expressionFromReference(value: string | ImportReference): ts.Expression
 
 function editJsxElement(options: JsxElementEditOptions): CompilerTransform {
   return (context) => {
-    const visit = (node: ts.Node): ts.Node => {
-      const next = ts.visitEachChild(node, visit, context);
+    const factory = context.factory;
+    const visit = (node: ts.Node, active: boolean): ts.VisitResult<ts.Node | undefined> => {
+      const scoped = functionScope(node, active, options.withinFunction, factory);
+      const next = ts.visitEachChild(node, (child) => visit(child, scoped), context);
+      if (!scoped) return next;
       if (!isJsxNodeLike(next)) return next;
-      const elementContext: JsxElementContext = { element: next, factory: context.factory, tagName: tagName(next) };
+      const elementContext: JsxElementContext = { element: next, factory, tagName: tagName(next) };
       if (!options.when(next, elementContext)) return next;
+      if (options.remove) return undefined;
       return options.transform(next, elementContext) ?? next;
     };
 
-    return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
+    return (sourceFile) =>
+      ts.visitEachChild(sourceFile, (node) => visit(node, options.withinFunction === undefined), context);
   };
 }
 
@@ -788,8 +933,10 @@ function editJsxProp(options: JsxPropEditOptions): CompilerTransform {
   return (context) => {
     const factory = context.factory;
 
-    const visit = (node: ts.Node): ts.Node => {
-      const next = ts.visitEachChild(node, visit, context);
+    const visit = (node: ts.Node, active: boolean): ts.VisitResult<ts.Node> => {
+      const scoped = functionScope(node, active, options.withinFunction, factory);
+      const next = ts.visitEachChild(node, (child) => visit(child, scoped), context);
+      if (!scoped) return next;
       if (!isJsxNodeLike(next)) return next;
 
       const attrs = ts.isJsxElement(next) ? next.openingElement.attributes : next.attributes;
@@ -830,8 +977,19 @@ function editJsxProp(options: JsxPropEditOptions): CompilerTransform {
       return factory.updateJsxSelfClosingElement(next, next.tagName, next.typeArguments, nextAttrs);
     };
 
-    return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
+    return (sourceFile) =>
+      ts.visitEachChild(sourceFile, (node) => visit(node, options.withinFunction === undefined), context);
   };
+}
+
+function functionScope(
+  node: ts.Node,
+  active: boolean,
+  withinFunction: MatchPredicate | undefined,
+  factory: ts.NodeFactory
+): boolean {
+  if (!withinFunction || !ts.isFunctionDeclaration(node)) return active;
+  return withinFunction(node, { function: node, factory });
 }
 
 function editInterfaceProperty(options: InterfacePropertyEditOptions): CompilerTransform {
@@ -950,6 +1108,52 @@ function editModuleStatements(position: 'prepend' | 'append', statements: Statem
   };
 }
 
+function insertStatementsBeforeFunction(
+  when: MatchPredicate,
+  statements: FunctionSiblingStatementSpec
+): CompilerTransform {
+  return (context) => {
+    const factory = context.factory;
+    return (sourceFile) => {
+      const nextStatements: ts.Statement[] = [];
+      for (const statement of sourceFile.statements) {
+        if (ts.isFunctionDeclaration(statement)) {
+          const functionContext: FunctionDeclarationContext = { function: statement, factory };
+          if (when(statement, functionContext)) {
+            const siblings = typeof statements === 'function' ? statements(functionContext) : statements;
+            nextStatements.push(...normalizeStatements(siblings));
+          }
+        }
+        nextStatements.push(statement);
+      }
+      return factory.updateSourceFile(sourceFile, nextStatements);
+    };
+  };
+}
+
+function removeVariableDeclarations(name: string | RegExp): CompilerTransform {
+  return (context) => {
+    const factory = context.factory;
+    const visit = (node: ts.Node): ts.VisitResult<ts.Node | undefined> => {
+      const next = ts.visitEachChild(node, visit, context);
+      if (!ts.isVariableStatement(next)) return next;
+
+      const declarations = next.declarationList.declarations.filter((declaration) => {
+        if (!ts.isIdentifier(declaration.name)) return true;
+        return typeof name === 'string' ? declaration.name.text !== name : !name.test(declaration.name.text);
+      });
+      if (declarations.length === next.declarationList.declarations.length) return next;
+      if (declarations.length === 0) return undefined;
+      return factory.updateVariableStatement(
+        next,
+        next.modifiers,
+        factory.updateVariableDeclarationList(next.declarationList, declarations)
+      );
+    };
+    return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
+  };
+}
+
 function editFunctionBody(
   declaration: ts.FunctionDeclaration,
   position: 'prepend' | 'append' | 'beforeReturn',
@@ -1003,14 +1207,17 @@ function asConst(expression: ts.Expression): ts.AsExpression {
 function addJsxPropsSpread(
   element: JsxElementLike,
   value: ValueReference,
-  factory: ts.NodeFactory
+  factory: ts.NodeFactory,
+  options: JsxSpreadPropsOptions = {}
 ): JsxElementLike | undefined {
   const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
   const expression = valueFromReference(value);
 
   if (typeof value === 'string' && hasJsxSpreadAttribute(attrs, value)) return undefined;
 
-  const nextAttrs = factory.createJsxAttributes([...attrs.properties, factory.createJsxSpreadAttribute(expression)]);
+  const spread = factory.createJsxSpreadAttribute(expression);
+  const properties = options.position === 'start' ? [spread, ...attrs.properties] : [...attrs.properties, spread];
+  const nextAttrs = factory.createJsxAttributes(properties);
 
   if (ts.isJsxElement(element)) {
     return factory.updateJsxElement(
@@ -1027,6 +1234,15 @@ function addJsxPropsSpread(
   }
 
   return factory.updateJsxSelfClosingElement(element, element.tagName, element.typeArguments, nextAttrs);
+}
+
+function makeJsxElementSelfClosing(element: JsxElementLike, factory: ts.NodeFactory): JsxElementLike | undefined {
+  if (ts.isJsxSelfClosingElement(element)) return undefined;
+  return factory.createJsxSelfClosingElement(
+    element.openingElement.tagName,
+    element.openingElement.typeArguments,
+    element.openingElement.attributes
+  );
 }
 
 function addInterfaceExtends(
@@ -1193,6 +1409,67 @@ function addFunctionProps(
     declaration.type,
     declaration.body
   );
+}
+
+function setFunctionProps(
+  declaration: ts.FunctionDeclaration,
+  props: readonly FunctionPropSpec[],
+  options: FunctionPropsOptions,
+  factory: ts.NodeFactory
+): ts.FunctionDeclaration | undefined {
+  const parameterIndex = options.parameterIndex ?? 0;
+  const parameter = declaration.parameters[parameterIndex];
+  if (!parameter && parameterIndex !== declaration.parameters.length) return undefined;
+
+  const binding = factory.createObjectBindingPattern(
+    props.map((spec) =>
+      factory.createBindingElement(
+        typeof spec === 'object' && spec.spread === true
+          ? factory.createToken(ts.SyntaxKind.DotDotDotToken)
+          : undefined,
+        undefined,
+        factory.createIdentifier(typeof spec === 'string' ? spec : spec.name),
+        undefined
+      )
+    )
+  );
+  const type = options.type === undefined ? parameter?.type : typeNodeFromReference(options.type, factory);
+  const initializer = options.initializer === undefined ? parameter?.initializer : options.initializer;
+  const nextParameter = parameter
+    ? factory.updateParameterDeclaration(
+        parameter,
+        parameter.modifiers,
+        parameter.dotDotDotToken,
+        binding,
+        parameter.questionToken,
+        type,
+        initializer
+      )
+    : factory.createParameterDeclaration(undefined, undefined, binding, undefined, type, initializer);
+  const parameters = parameter
+    ? declaration.parameters.map((item, index) => (index === parameterIndex ? nextParameter : item))
+    : [...declaration.parameters, nextParameter];
+
+  return factory.updateFunctionDeclaration(
+    declaration,
+    declaration.modifiers,
+    declaration.asteriskToken,
+    declaration.name,
+    declaration.typeParameters,
+    parameters,
+    declaration.type,
+    declaration.body
+  );
+}
+
+function typeNodeFromReference(value: string | ImportReference | ts.TypeNode, factory: ts.NodeFactory): ts.TypeNode {
+  if (typeof value === 'string') return factory.createTypeReferenceNode(value);
+  if (isImportReference(value)) {
+    value.used = true;
+    return factory.createTypeReferenceNode(value.name);
+  }
+  if (isNode(value) && ts.isTypeNode(value)) return value;
+  throw new TypeError('Expected a type node or import reference.');
 }
 
 function createJsxProp(name: string, value: JsxPropValue, factory: ts.NodeFactory): ts.JsxAttribute {

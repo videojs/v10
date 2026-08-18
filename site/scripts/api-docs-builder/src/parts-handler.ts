@@ -88,25 +88,27 @@ export function extractSubPartProps(filePath: string, program: ts.Program, local
   const checker = program.getTypeChecker();
   const props: Record<string, PropDef> = {};
 
-  const SKIP_PROPS = new Set(['children']);
-
   function collectFromMembers(members: ts.NodeArray<ts.TypeElement>) {
     for (const member of members) {
       if (!ts.isPropertySignature(member) || !member.name || !ts.isIdentifier(member.name)) continue;
       const name = member.name.text;
-      if (SKIP_PROPS.has(name) || !member.type) continue;
-
-      let typeStr = checker.typeToString(checker.getTypeFromTypeNode(member.type));
-      if (member.questionToken) typeStr = typeStr.replace(/ \| undefined$/, '');
-
-      const propDef: PropDef = { type: typeStr };
+      if (!member.type) continue;
 
       const symbol = checker.getSymbolAtLocation(member.name);
-      if (symbol) {
-        const docs = symbol.getDocumentationComment(checker);
-        const desc = docs.map((d) => d.text).join('');
-        if (desc) propDef.description = desc;
-      }
+      const docs =
+        symbol
+          ?.getDocumentationComment(checker)
+          .map((part) => part.text)
+          .join('') ?? '';
+      if (name === 'children' && !docs) continue;
+
+      let typeStr = ts.isFunctionTypeNode(member.type)
+        ? member.type.getText(sourceFile)
+        : checker.typeToString(checker.getTypeFromTypeNode(member.type));
+      if (member.questionToken) typeStr = typeStr.replace(/ \| undefined$/, '');
+
+      const propDef: PropDef = { type: typeStr, frameworks: ['react'] };
+      if (docs) propDef.description = docs;
 
       props[name] = propDef;
     }

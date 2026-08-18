@@ -1,0 +1,59 @@
+'use client';
+
+import type { TwitchMediaProps } from '@videojs/media/dom/twitch';
+import { buildTwitchIframeSrc, TwitchMedia, twitchMediaDefaultProps } from '@videojs/media/dom/twitch';
+import type { ReactNode } from 'react';
+import { forwardRef, useState } from 'react';
+import { useAttachIframe } from '../../utils/use-attach-iframe';
+import { useComposedRefs } from '../../utils/use-composed-refs';
+import { useMediaInstance } from '../../utils/use-media-instance';
+import { useSyncProps } from '../../utils/use-sync-props';
+
+export interface TwitchVideoProps extends Partial<TwitchMediaProps> {
+  children?: ReactNode;
+}
+
+export const TwitchVideo = forwardRef<HTMLIFrameElement, TwitchVideoProps>(function TwitchVideo(
+  { children, ...rawProps },
+  ref
+) {
+  const media = useMediaInstance(TwitchMedia);
+  const props: Partial<TwitchMediaProps> & Record<string, unknown> = { ...rawProps };
+  const attachRef = useAttachIframe(media);
+  const composedRef = useComposedRefs(attachRef, ref);
+  const [initialSrc] = useState(() =>
+    // Server rendering has no `location` to name as the embed's parent, and Twitch
+    // refuses to play in a page its URL never named. Rendering no `src` leaves the
+    // URL to `attach()`, which builds it where there is a hostname to name.
+    globalThis.location
+      ? // `source.src` is the only other way to name a video, so honor it when `src` is absent.
+        buildTwitchIframeSrc(props.src || props.source?.src || '', { ...twitchMediaDefaultProps, ...props })
+      : ''
+  );
+  const iframeProps = useSyncProps<TwitchMediaProps, Record<string, unknown>>(media, props, twitchMediaDefaultProps);
+
+  return (
+    <iframe
+      title="Twitch video player"
+      // Empty means there is no embed to point at yet; React warns about `src=""`,
+      // and the media builds the URL itself once a source resolves.
+      src={initialSrc || undefined}
+      data-cross-origin-frame
+      allow="accelerometer; fullscreen; autoplay; encrypted-media; picture-in-picture;"
+      sandbox="allow-modals allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+      scrolling="no"
+      frameBorder={0}
+      width="100%"
+      height="100%"
+      referrerPolicy={props.source?.engine?.twitch?.referrerPolicy}
+      {...iframeProps}
+      ref={composedRef}
+    >
+      {children}
+    </iframe>
+  );
+});
+
+export namespace TwitchVideo {
+  export type Props = TwitchVideoProps;
+}

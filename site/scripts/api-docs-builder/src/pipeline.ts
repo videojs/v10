@@ -496,6 +496,11 @@ function buildMultiPartReference(
           : null;
 
       const subPartProps = part.reactPath ? extractSubPartProps(part.reactPath, program, part.localName) : {};
+      if (htmlData) {
+        for (const [name, prop] of Object.entries(subPartProps)) {
+          if (htmlData.properties.includes(name)) prop.frameworks = ['html', 'react'];
+        }
+      }
 
       const partRef: PartReference = {
         name: part.name,

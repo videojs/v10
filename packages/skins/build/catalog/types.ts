@@ -16,12 +16,14 @@ export interface SkinSymbols {
 
 export type SkinItem = SkinDefinition | SkinComponent;
 
-export type ResolvedSkinItem = SkinItem & {
+interface ResolvedSkinMetadata {
   dependencies: readonly string[];
   sourceFiles: readonly string[];
   styleFiles: readonly string[];
   symbols: SkinSymbols;
-};
+}
+
+export type ResolvedSkinItem = (SkinDefinition & ResolvedSkinMetadata) | (SkinComponent & ResolvedSkinMetadata);
 
 /** Authored Skin metadata enriched with source and dependency analysis. */
 export interface ResolvedSkinCatalog {

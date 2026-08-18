@@ -1,7 +1,3 @@
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
 /* Base button */
 .media-minimal-skin .media-button {
   display: flex;
@@ -26,12 +22,12 @@
   will-change: scale;
 
   &:focus-visible {
-    outline-color: currentColor;
+    outline-color: var(--focus-ring-color);
     outline-offset: 2px;
   }
 
   &:active:not([aria-disabled="true"]) {
-    scale: 0.98;
+    scale: 0.97;
   }
 
   &[aria-disabled="true"] {
@@ -50,9 +46,9 @@
 /* Primary button variant */
 .media-minimal-skin .media-button--primary {
   font-weight: 500;
-  color: oklch(0 0 0);
+  color: var(--accent-contrast-color);
   text-shadow: none;
-  background: oklch(1 0 0);
+  background: var(--accent-color);
 }
 
 /* Subtle button variant */
@@ -61,10 +57,14 @@
   text-shadow: inherit;
   background: transparent;
 
-  &:hover,
-  &:focus-visible,
-  &[aria-expanded="true"] {
-    background: oklch(from currentColor l c h / 0.1);
+  &:not([aria-disabled="true"]) {
+    &:hover,
+    &:focus-visible,
+    &[aria-expanded="true"] {
+      color: var(--accent-text-color);
+      text-decoration: none;
+      background-color: var(--accent-background-color);
+    }
   }
 }
 
@@ -75,26 +75,25 @@
   padding: 0;
 
   &:active:not([aria-disabled="true"]) {
-    scale: 0.9;
+    scale: 0.97;
   }
 
-  & .media-icon__container {
+  .media-icon__container {
     display: grid;
   }
 
-  & .media-icon {
+  .media-icon {
     grid-area: 1 / 1;
-    transition-behavior: allow-discrete;
-    transition-property: display, opacity;
-    transition-duration: 150ms;
+    filter: drop-shadow(0 1px 0 var(--shadow-current-color));
     transition-timing-function: ease-out;
-    filter: drop-shadow(0 1px 0 var(--media-current-shadow-color));
+    transition-duration: 150ms;
+    transition-property: opacity, scale;
   }
 }
 
 /* Seek button */
 .media-minimal-skin .media-button--seek {
-  & .media-icon__label {
+  .media-icon__label {
     position: absolute;
     right: -1px;
     bottom: -3px;
@@ -127,7 +126,7 @@
 
 /* Settings button */
 .media-minimal-skin .media-button--settings {
-  & .media-icon--settings {
+  .media-icon--settings {
     transition: transform 150ms ease-in-out;
 
     @media (prefers-reduced-motion: reduce) {
@@ -169,5 +168,13 @@
 
   &[data-live-edge]::before {
     background-color: oklch(0.65 0.22 27);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-minimal-skin .media-button {
+    scale: 1;
+    transition-property: background-color, outline-offset;
+    will-change: auto;
   }
 }

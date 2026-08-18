@@ -44,15 +44,15 @@ Pass `translations` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</
 
 ```tsx
 import { I18nProvider } from '@videojs/react/i18n';
-import { Provider, VideoSkin, Video } from '@videojs/react/video';
+import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video';
 
-<Provider>
+<VideoPlayer>
   <I18nProvider locale="es" translations={{ buttons: { play: 'Comenzar' } }}>
     <VideoSkin>
       <Video src="..." playsInline />
     </VideoSkin>
   </I18nProvider>
-</Provider>
+</VideoPlayer>
 ```
 
 Nested providers inherit the parent locale when you only pass `translations`:

@@ -1,5 +1,3 @@
-'use client';
-
 import { CaptionsRadioGroupCore, type CaptionsRadioGroupOption } from '@videojs/core';
 import { selectTextTrack } from '@videojs/core/dom';
 
@@ -11,7 +9,9 @@ export type CaptionsOption = TranslatedRadioOption<CaptionsRadioGroupOption>;
 
 export interface CaptionsOptionsResult {
   state: CaptionsRadioGroupCore.State;
+  label: string;
   value: string;
+  selectedLabel: string;
   options: CaptionsOption[];
   disabled: boolean;
   hidden: boolean;

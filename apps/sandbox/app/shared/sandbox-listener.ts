@@ -69,6 +69,22 @@ const initialMinAutoResolution = readResolution('minAutoResolution');
 const initialCapRenditionToPlayerSize = readOptionalBoolean('capRenditionToPlayerSize');
 const initialPreferPlayback = readPreferPlayback();
 
+function applyAccentColor(value: string) {
+  if (value) {
+    document.documentElement.style.setProperty('--media-accent-color', value);
+  } else {
+    document.documentElement.style.removeProperty('--media-accent-color');
+  }
+}
+
+applyAccentColor(params.get('accent')?.trim() ?? '');
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type !== 'accent-color-change' || typeof event.data.accentColor !== 'string') return;
+
+  applyAccentColor(event.data.accentColor.trim());
+});
+
 function readLocale(): SandboxLocaleTag {
   const value = params.get('locale');
   return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag) ? (value as SandboxLocaleTag) : DEFAULT_SANDBOX_LOCALE;

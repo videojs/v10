@@ -1,3 +1,5 @@
+'use client';
+
 import { cn } from '@videojs/utils/style';
 import type { BaseSkinProps } from '../types';
 

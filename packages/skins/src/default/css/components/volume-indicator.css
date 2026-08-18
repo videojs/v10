@@ -1,17 +1,14 @@
 .media-default-skin .media-volume-indicator {
   width: min(80%, calc(var(--spacing) * 48));
+  transform: translateX(0);
 
   .media-volume-indicator__content {
-    --media-progress-fill: var(--media-volume-fill);
-    background-image: linear-gradient(
-      to right,
-      currentColor 0%,
-      currentColor var(--media-progress-fill),
-      transparent var(--media-progress-fill),
-      transparent 100%
-    );
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: left;
+    background-size: var(--media-volume-fill, 0%) 100%;
     border-radius: inherit;
-    transition: --media-progress-fill 200ms linear;
+    transition: background-size 200ms linear;
   }
 
   &[data-level="high"] .media-icon--volume-high,
@@ -21,9 +18,10 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    &[data-min],
-    &[data-max] {
-      animation: media-shake 300ms ease-in-out;
+    &[data-min]:not([data-starting-style], [data-ending-style]),
+    &[data-max]:not([data-starting-style], [data-ending-style]) {
+      transform: translateX(0.25px);
+      transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
     }
   }
 }

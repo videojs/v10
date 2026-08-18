@@ -1,5 +1,3 @@
-'use client';
-
 import { createHotkey } from '@videojs/core/dom';
 import { useEffect } from 'react';
 

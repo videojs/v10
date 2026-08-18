@@ -14,6 +14,7 @@ function getImportStatementText(source: string, node: ts.ImportDeclaration): str
 
 export function normalizeImports(source: string): string {
   const sourceFile = createSourceFile('imports.tsx', source);
+  const directives: string[] = [];
   const sideEffectImports = new Set<string>();
   // Map<module, Map<identifierName, { isType, alias? }>>
   const namedImports = new Map<string, Map<string, { isType: boolean; alias: string | undefined }>>();
@@ -22,6 +23,7 @@ export function normalizeImports(source: string): string {
 
   for (const statement of sourceFile.statements) {
     if (isDirectivePrologueStatement(statement)) {
+      directives.push(source.slice(statement.getFullStart(), statement.getEnd()).trim());
       bodyStart = statement.getEnd();
       continue;
     }
@@ -48,7 +50,7 @@ export function normalizeImports(source: string): string {
     if (!namedBindings || !ts.isNamedImports(namedBindings)) continue;
 
     const names = namedImports.get(specifier) ?? new Map<string, { isType: boolean; alias: string | undefined }>();
-    const isStatementTypeOnly = Boolean(importClause.isTypeOnly);
+    const isStatementTypeOnly = importClause.phaseModifier === ts.SyntaxKind.TypeKeyword;
 
     for (const element of namedBindings.elements) {
       const isType = element.isTypeOnly || isStatementTypeOnly;
@@ -77,10 +79,11 @@ export function normalizeImports(source: string): string {
     }),
   ];
   const body = source.slice(bodyStart).replace(/^\s+/, '');
+  const header = [directives.join('\n'), importLines.join('\n')].filter(Boolean).join('\n\n');
 
-  if (importLines.length === 0) {
+  if (!header) {
     return body;
   }
 
-  return `${importLines.join('\n')}\n\n${body}`;
+  return `${header}\n\n${body}`;
 }

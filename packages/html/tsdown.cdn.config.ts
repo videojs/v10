@@ -7,7 +7,6 @@ import { cdnI18nExternalPlugin } from '../../build/plugins/cdn-i18n-external-plu
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { baseConfig } from '../../build/tsdown.ts';
-import pkg from './package.json' with { type: 'json' };
 
 type BuildMode = 'dev' | 'prod';
 
@@ -33,6 +32,7 @@ const presets = [
 const media = [
   'google-cast',
   'hls-audio',
+  'hls-background-video',
   'hls-video',
   'hlsjs-video',
   'mux-audio',
@@ -75,7 +75,14 @@ const localeEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
   name: `locales/${basename(file, '.ts')}`,
 }));
 
-const entries = [
+/**
+ * Every CDN bundle the build emits, as `{ src, name }` where `name` is the output path without
+ * its extension. Exported so the distribution archive can take its entry points from the build
+ * definition rather than guessing which built files are entries and which are shared chunks.
+ *
+ * The `src` paths are relative to this package, so importers must run from the package root.
+ */
+export const entries = [
   { src: 'src/cdn/i18n.ts', name: 'i18n' },
   ...localeEntries,
   ...presets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
@@ -147,7 +154,7 @@ for (const mode of buildModes) {
       __DEV__: isProd ? 'false' : 'true',
     },
     plugins: [
-      cdnI18nExternalPlugin({ prod: isProd, version: pkg.version }),
+      cdnI18nExternalPlugin({ prod: isProd }),
       inlineCssPlugin({ skinsDir, minify: isProd }),
       inlineTemplatePlugin({ minify: isProd }),
       ...(!isProd ? [dtsStubsPlugin(outDir)] : []),

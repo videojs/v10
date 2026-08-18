@@ -2,7 +2,7 @@
 
 Use this guidance when migrating vanilla CSS, CSS modules, SCSS, or styled-components to Tailwind class names.
 
-Video.js 10 targets **Tailwind CSS v4** (CSS-first config: **`@import "tailwindcss"`**, **`@theme`**, **`@utility`**, **`@custom-variant`**). Skin packages extend shared theme and keyframes via **`packages/skins/src/shared/tailwind.css`**.
+Video.js 10 targets **Tailwind CSS v4** (CSS-first config: **`@import "tailwindcss"`**, **`@theme`**, **`@utility`**, **`@custom-variant`**).
 
 ## Goal
 

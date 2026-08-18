@@ -147,6 +147,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
       else await import('@videojs/html/cdn/audio');
       break;
     case 'background-video':
+    case 'hls-background-video':
     case 'mux-background-video':
       // Player and skin are shared; the element each one renders is what differs,
       // and that arrives from `loadCdnMedia`.
@@ -176,8 +177,12 @@ async function loadCdnMedia(preset: Preset) {
       await import('@videojs/html/cdn/media/mux-audio/spf');
       break;
     // `<background-video>` rides along inside the `background` bundle above; the
-    // Mux flavor is its own, so the page loads it the way it loads every other
-    // media element.
+    // SPF-backed tags are their own bundles, so the page loads them the way it
+    // loads every other media element. Both tags are one element, and a CDN page
+    // loads bundles at runtime — so it loads only the one the preset names.
+    case 'hls-background-video':
+      await import('@videojs/html/cdn/media/hls-background-video');
+      break;
     case 'mux-background-video':
       await import('@videojs/html/cdn/media/mux-background-video');
       break;
@@ -205,7 +210,7 @@ function isAudioPreset(preset: Preset): boolean {
 }
 
 function isBackgroundPreset(preset: Preset): boolean {
-  return preset === 'background-video' || preset === 'mux-background-video';
+  return preset === 'background-video' || preset === 'hls-background-video' || preset === 'mux-background-video';
 }
 
 function getPlayerTag(preset: Preset, live: boolean): string {
@@ -234,6 +239,7 @@ function getMediaTag(preset: Preset): string {
     'dash-video': 'dash-video',
     audio: 'audio',
     'background-video': 'background-video',
+    'hls-background-video': 'hls-background-video',
     'mux-background-video': 'mux-background-video',
   };
 
@@ -295,10 +301,15 @@ async function render() {
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
   // Each background preset renders its own fixed source: the native element takes
-  // a progressive MP4, the SPF-backed one needs CMAF/fMP4 over HLS, capped by a
-  // Mux URL param rather than an attribute.
+  // a progressive MP4, the SPF-backed tags need CMAF/fMP4 over HLS. The Mux tag
+  // gets the capped URL, which is the whole reason that name is worth keeping —
+  // `hls-background-video` is the same element pinning the top rendition on offer.
   const backgroundSrc =
-    preset === 'mux-background-video' ? `${HLS_BACKGROUND_VIDEO_SRC}?max_resolution=720p` : BACKGROUND_VIDEO_SRC;
+    preset === 'mux-background-video'
+      ? `${HLS_BACKGROUND_VIDEO_SRC}?max_resolution=720p`
+      : preset === 'hls-background-video'
+        ? HLS_BACKGROUND_VIDEO_SRC
+        : BACKGROUND_VIDEO_SRC;
   const sourceAttr = isBackgroundPreset(preset) ? `src="${backgroundSrc}"` : `src="${source.url}"`;
   const mediaAttrs = renderMediaAttrs(state);
 

@@ -27,13 +27,22 @@ export const statusIndicator = {
       'data-starting-style:scale-[0.85]',
       'data-ending-style:scale-[0.85]',
       'data-ending-style:duration-100',
-      'data-ending-style:ease-in'
+      'data-ending-style:ease-in',
+      'motion-reduce:data-starting-style:scale-100',
+      'motion-reduce:data-ending-style:scale-100'
     ),
     icon: {
-      base: 'hidden size-[calc(var(--media-icon-size)*1.5)]',
-      pause: 'group-data-[status=pause]/input-indicator:block',
+      base: cn(
+        'col-start-1 row-start-1 size-[calc(var(--media-icon-size)*1.5)]',
+        'opacity-0 scale-0',
+        '[transition-property:opacity,scale] duration-150 ease-out',
+        'motion-reduce:scale-100 motion-reduce:transition-opacity motion-reduce:duration-50'
+      ),
+      pause:
+        'group-data-[status=pause]/input-indicator:opacity-100 group-data-[status=pause]/input-indicator:scale-100',
       play: cn(
-        'group-data-[status=play]/input-indicator:block',
+        'group-data-[status=play]/input-indicator:opacity-100',
+        'group-data-[status=play]/input-indicator:scale-100',
         'group-data-[status=play]/input-indicator:translate-x-px'
       ),
     },

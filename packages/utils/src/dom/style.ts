@@ -1,5 +1,17 @@
 import { kebabCase } from '../string/casing';
 
+export interface InlineStyleSnapshotEntry {
+  property: string;
+  value: string;
+  priority: string;
+}
+
+export type InlineStyleSnapshot = readonly InlineStyleSnapshotEntry[];
+
+function normalizeStyleProperty(property: string): string {
+  return property.startsWith('--') ? property : kebabCase(property);
+}
+
 export function getAnchorNames(element: HTMLElement): string[] {
   const value = element.style.getPropertyValue('anchor-name').trim();
 
@@ -36,11 +48,68 @@ export function addAnchorName(element: HTMLElement, name: string): () => void {
 export function applyStyles(element: HTMLElement, styles: Record<string, string | undefined>): void {
   for (const [prop, value] of Object.entries(styles)) {
     if (typeof value === 'string') {
-      // CSS custom properties (--*) are already in the correct format.
-      const key = prop.startsWith('--') ? prop : kebabCase(prop);
-      element.style.setProperty(key, value);
+      element.style.setProperty(normalizeStyleProperty(prop), value);
     }
   }
+}
+
+/** Capture authored inline values and priorities for the selected properties. */
+export function snapshotInlineStyles(element: HTMLElement, properties: Iterable<string>): InlineStyleSnapshot {
+  return [...properties].map((property) => {
+    const normalizedProperty = normalizeStyleProperty(property);
+
+    return {
+      property: normalizedProperty,
+      value: element.style.getPropertyValue(normalizedProperty),
+      priority: element.style.getPropertyPriority(normalizedProperty),
+    };
+  });
+}
+
+/** Restore a snapshot created by `snapshotInlineStyles`. */
+export function restoreInlineStyles(element: HTMLElement, snapshot: InlineStyleSnapshot): void {
+  for (const { property, value, priority } of snapshot) {
+    if (value) {
+      element.style.setProperty(property, value, priority);
+    } else {
+      element.style.removeProperty(property);
+    }
+  }
+}
+
+/** Apply inline styles for a synchronous callback and restore authored styles afterward. */
+export function withInlineStyles<Result>(
+  element: HTMLElement,
+  styles: Readonly<Record<string, string | undefined>>,
+  callback: () => Result
+): Result {
+  const snapshot = snapshotInlineStyles(element, Object.keys(styles));
+
+  try {
+    applyStyles(element, styles);
+    return callback();
+  } finally {
+    restoreInlineStyles(element, snapshot);
+  }
+}
+
+export interface ReadCSSLengthOptions {
+  source?: 'inline' | 'computed' | 'inline-or-computed' | undefined;
+}
+
+/** Read and resolve a CSS property as a pixel length. */
+export function readCSSLength(
+  element: Element,
+  property: string,
+  { source = 'inline-or-computed' }: ReadCSSLengthOptions = {}
+): number | null {
+  const normalizedProperty = normalizeStyleProperty(property);
+  let value =
+    source !== 'computed' && element instanceof HTMLElement ? element.style.getPropertyValue(normalizedProperty) : '';
+
+  if (!value && source !== 'inline') value = getComputedStyle(element).getPropertyValue(normalizedProperty);
+
+  return value.trim() ? resolveCSSLength(element, value) : null;
 }
 
 export function resolveCSSLength(el: Element, value: string): number {

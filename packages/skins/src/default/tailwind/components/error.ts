@@ -6,11 +6,12 @@ export const error = {
     'flex flex-col gap-3 max-w-72 p-3 rounded-[--spacing(7)] text-white',
     // Animation
     'transition-[opacity,scale,transform]',
-    'duration-(--media-error-dialog-transition-duration)',
-    'delay-(--media-error-dialog-transition-delay)',
-    'ease-(--media-error-dialog-transition-timing-function)',
-    'group-data-starting-style/error:opacity-0 group-data-starting-style/error:scale-50',
-    'group-data-ending-style/error:opacity-0 group-data-ending-style/error:scale-50',
+    'duration-(--error-dialog-transition-duration)',
+    'delay-(--error-dialog-transition-delay)',
+    'ease-(--error-dialog-transition-timing-function)',
+    'group-data-starting-style/error:opacity-0 group-data-starting-style/error:scale-95',
+    'group-data-ending-style/error:opacity-0 group-data-ending-style/error:scale-95',
+    'motion-reduce:scale-100 motion-reduce:transition-opacity',
     'group-data-ending-style/error:delay-0'
   ),
   content: 'flex flex-col gap-2 px-2 pt-2 pb-1.5',

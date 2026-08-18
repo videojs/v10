@@ -6,17 +6,17 @@ export const volumeIndicator = {
     topIndicatorRoot,
     'w-[min(80%,--spacing(48))]',
     'data-open:duration-100',
-    'data-min:animate-media-shake',
-    'data-max:animate-media-shake',
-    'motion-reduce:data-min:animate-none',
-    'motion-reduce:data-max:animate-none'
+    '[transform:translateX(0)]',
+    'motion-safe:[&:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]:[transform:translateX(0.25px)]',
+    'motion-safe:[&:is([data-min],[data-max]):not([data-starting-style],[data-ending-style])]:[transition:transform_300ms_linear(0,-24_20%,16_40%,-8_60%,4_80%,1)]'
   ),
   content: cn(
     topIndicatorContent,
-    '[--media-progress-fill:var(--media-volume-fill)]',
     'rounded-[inherit]',
-    '[background-image:linear-gradient(to_right,currentColor_0%,currentColor_var(--media-progress-fill),transparent_var(--media-progress-fill),transparent_100%)]',
-    '[transition:--media-progress-fill_200ms_linear]'
+    'bg-left bg-no-repeat',
+    '[background-image:linear-gradient(currentColor,currentColor)]',
+    '[background-size:var(--media-volume-fill,0%)_100%]',
+    'transition-[background-size] duration-200 ease-linear'
   ),
   value: 'ml-auto',
   icon: {

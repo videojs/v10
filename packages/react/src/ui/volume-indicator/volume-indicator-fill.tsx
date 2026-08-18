@@ -1,5 +1,3 @@
-'use client';
-
 import { type VolumeIndicatorCore, VolumeIndicatorCSSVars } from '@videojs/core';
 import { isFunction } from '@videojs/utils/predicate';
 import type { CSSProperties, ForwardedRef } from 'react';

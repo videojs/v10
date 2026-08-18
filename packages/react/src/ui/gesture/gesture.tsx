@@ -1,5 +1,3 @@
-'use client';
-
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import {
   createDoubleTapGesture,

@@ -2,7 +2,7 @@ import type { SliderPreviewOverflow } from '@videojs/core/dom';
 import { applyStateDataAttrs, getSliderPreviewStyle } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
-import { applyStyles } from '@videojs/utils/dom';
+import { applyStyles, observeResize } from '@videojs/utils/dom';
 
 import { MediaElement } from '../media-element';
 import { sliderContext } from './context';
@@ -21,24 +21,22 @@ export class SliderPreviewElement extends MediaElement {
     subscribe: true,
   });
 
-  #resizeObserver: ResizeObserver | null = null;
+  #stopObservingResize: (() => void) | null = null;
   #width = 0;
 
   override connectedCallback(): void {
     super.connectedCallback();
 
-    this.#resizeObserver = new ResizeObserver(([entry]) => {
+    this.#stopObservingResize = observeResize(this, ([entry]) => {
       this.#width = entry!.contentRect.width;
       this.#applyPosition();
     });
-
-    this.#resizeObserver.observe(this);
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#resizeObserver?.disconnect();
-    this.#resizeObserver = null;
+    this.#stopObservingResize?.();
+    this.#stopObservingResize = null;
   }
 
   #applyPosition(): void {

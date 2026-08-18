@@ -1,5 +1,3 @@
-'use client';
-
 import { getStateDataAttrs, type StateAttrMap } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { CSSProperties, ReactElement, Ref } from 'react';

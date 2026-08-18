@@ -1,5 +1,3 @@
-'use client';
-
 import { TimeSliderChaptersCore } from '@videojs/core';
 import { selectTextTrack, selectTime } from '@videojs/core/dom';
 import type { MediaTextCue } from '@videojs/media';
@@ -8,7 +6,7 @@ import { forwardRef, useMemo, useState } from 'react';
 import { usePlayer } from '../../../player/context';
 import type { UIComponentProps } from '../../../utils/types';
 import { renderElement } from '../../../utils/use-render';
-import { useSliderContext } from '../../slider/context';
+import { useSliderContext, useSliderPointerValue } from '../../slider/context';
 
 export interface TimeSliderChapterTitleState {
   /** Chapter at the current interaction value. */
@@ -24,6 +22,7 @@ export const TimeSliderChapterTitle = forwardRef<HTMLSpanElement, TimeSliderChap
   function TimeSliderChapterTitle(componentProps, ref) {
     const { render, className, style, ...elementProps } = componentProps;
     const slider = useSliderContext();
+    const pointerValue = useSliderPointerValue();
     const textTrack = usePlayer(selectTextTrack);
     const time = usePlayer(selectTime);
     const [core] = useState(() => new TimeSliderChaptersCore());
@@ -32,7 +31,7 @@ export const TimeSliderChapterTitle = forwardRef<HTMLSpanElement, TimeSliderChap
       [core, textTrack?.chaptersCues, time?.duration]
     );
     const keyboard = slider.state.interactive && !slider.state.pointing && !slider.state.dragging;
-    const value = slider.state.pointing || slider.state.dragging ? slider.pointerValue : slider.state.value;
+    const value = slider.state.pointing || slider.state.dragging ? pointerValue : slider.state.value;
     const chapter = core.findChapter(chapters, value);
     const cue = chapter?.cue ?? null;
     const state = { cue, text: cue?.text ?? '' };

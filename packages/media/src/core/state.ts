@@ -61,6 +61,15 @@ export interface MediaVolumeState {
    */
   volumeAvailability: MediaFeatureAvailability;
   /**
+   * Whether the media can be muted. Separate from `volumeAvailability` because
+   * the two come apart: an embed can take a mute command while offering no way
+   * to set a level, and iOS Safari refuses a volume write on media that mutes
+   * perfectly well.
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted
+   */
+  mutedAvailability: MediaFeatureAvailability;
+  /**
    * Set volume (clamped 0-1). Returns the clamped value.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume
@@ -323,7 +332,11 @@ export interface MediaTextTrackState {
   textTrackList: MediaTextTrack[];
   /** Whether captions/subtitles are currently enabled. */
   subtitlesShowing: boolean;
-  /** Toggle captions/subtitles visibility. Returns the new enabled value. */
+  /**
+   * Toggle captions/subtitles visibility. Showing restores the track that was
+   * last showing, or the first caption/subtitle track when there is none.
+   * Returns the new enabled value.
+   */
   toggleSubtitles(forceShow?: boolean): boolean;
   /** Select a captions/subtitles track by menu value, or disable with `"off"`. */
   selectSubtitlesTrack(value: string): void;

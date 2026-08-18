@@ -36,17 +36,17 @@ import '@videojs/react/video/skin.css';
 import { createPlayer } from '@videojs/react';
 import { videoFeatures, VideoSkin, Video } from '@videojs/react/video';
 
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: videoFeatures,
 });
 
 function App() {
   return (
-    <Player.Provider>
+    <Player>
       <VideoSkin>
         <Video src="video.mp4" />
       </VideoSkin>
-    </Player.Provider>
+    </Player>
   );
 }
 ```
@@ -120,26 +120,26 @@ With v10 the file size story doesn't actually start with the baseline builds. Th
 For example here's a simple React "hello world" with just a video and play button, weighing in at **\<5 kB** **gzipped**.
 
 ```tsx
-import { createPlayer, features } from '@videojs/react';
+import { Container, createPlayer, features } from '@videojs/react';
 import { Video } from '@videojs/react/video';
 
-const Player = createPlayer({
+const { Player, usePlayer } = createPlayer({
   features: [features.playback],
 });
 
 function App() {
-  const store = Player.usePlayer();
-  const paused = Player.usePlayer((s) => s.paused);
+  const store = usePlayer();
+  const paused = usePlayer((s) => s.paused);
 
   return (
-    <Player.Provider>
-      <Player.Container>
+    <Player>
+      <Container>
         <Video src="video.mp4" />
         <button onClick={() => (paused ? store.play() : store.pause())}>
           {paused ? 'Play' : 'Pause'}
         </button>
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }
 ```
@@ -265,17 +265,17 @@ A default video preset (general website video, the kind of thing you might other
 ```
 
 ```jsx
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: videoFeatures,
 });
 
 function App() {
   return (
-    <Player.Provider>
+    <Player>
       <VideoSkin>
         <Video src="video.mp4" />
       </VideoSkin>
-    </Player.Provider>
+    </Player>
   );
 }
 ```
@@ -291,17 +291,17 @@ A default audio preset (same idea but for the audio tag)
 ```
 
 ```jsx
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: audioFeatures,
 });
 
 function App() {
   return (
-    <Player.Provider>
+    <Player>
       <AudioSkin>
         <Audio src="audio.mp3" />
       </AudioSkin>
-    </Player.Provider>
+    </Player>
   );
 }
 ```
@@ -317,17 +317,17 @@ And a background video preset. Background video is where this concept really sta
 ```
 
 ```jsx
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: backgroundVideoFeatures,
 });
 
 function App() {
   return (
-    <Player.Provider>
+    <Player>
       <BackgroundVideoSkin>
         <BackgroundVideo src="video.mp4" />
       </BackgroundVideoSkin>
-    </Player.Provider>
+    </Player>
   );
 }
 ```

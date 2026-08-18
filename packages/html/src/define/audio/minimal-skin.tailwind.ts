@@ -2,6 +2,7 @@ import { renderIcon } from '@videojs/icons/render/minimal';
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
@@ -12,7 +13,6 @@ import {
   playButton,
   playbackRate,
   popup,
-  root,
   seek,
   slider,
   time,
@@ -29,7 +29,7 @@ const SEEK_TIME = 10;
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="${root}">
+    <media-container class="${container}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
@@ -96,8 +96,8 @@ function getTemplateHTML() {
 
             <media-time-slider class="${slider.root}">
               <media-slider-track class="${slider.track}">
-                <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
                 <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
+                <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
               <media-slider-preview class="${slider.preview}">
@@ -140,6 +140,22 @@ function getTemplateHTML() {
           </div>
         </media-tooltip-group>
       </div>
+
+      <!-- Hotkeys -->
+      <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
+      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
+      <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
+      <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
+      <media-hotkey keys=">" action="speedUp"></media-hotkey>
+      <media-hotkey keys="<" action="speedDown"></media-hotkey>
     </media-container>
   `;
 }

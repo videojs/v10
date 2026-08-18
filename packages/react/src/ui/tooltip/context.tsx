@@ -1,5 +1,3 @@
-'use client';
-
 import type { StateAttrMap, TooltipCore } from '@videojs/core';
 import type { MediaContainer, PositioningBoundary, TooltipApi } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';

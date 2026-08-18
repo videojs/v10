@@ -1,3 +1,5 @@
+'use client';
+
 import {
   audioText,
   captionsText,
@@ -12,6 +14,7 @@ import {
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  container,
   controls,
   error,
   icon,
@@ -23,7 +26,6 @@ import {
   popup,
   poster,
   primaryControls,
-  root,
   secondaryControls,
   seekIndicator,
   slider,
@@ -65,9 +67,10 @@ import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { useAudioTrackOptions } from '@/ui/audio-track';
+import { AudioTrackRadioGroup } from '@/ui/audio-track-radio-group';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
-import { useCaptionsOptions } from '@/ui/captions-radio-group';
+import { CaptionsRadioGroup, useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -79,9 +82,11 @@ import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
+import { PlaybackRateRadioGroup } from '@/ui/playback-rate-radio-group';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { useQualityOptions } from '@/ui/quality';
+import { QualityRadioGroup } from '@/ui/quality-radio-group';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
 import { StatusAnnouncer } from '@/ui/status-announcer';
@@ -206,213 +211,159 @@ function SettingsMenu(): ReactNode {
         </Tooltip.Popup>
       </Tooltip.Root>
       <Menu.Content className={menu.settings}>
-        <Menu.View className={menu.rootView}>
-          <div className={menu.group}>
-            {hasQuality ? (
-              <Menu.Root>
-                <Menu.Trigger
-                  type="quality"
-                  className={menu.item}
-                  render={(props) => (
-                    <div {...props}>
-                      <QualityIcon className={cn(icon, menu.icon)} />
-                      <span>{t(qualityText)}</span>
-                      <span className={menu.hint}>
-                        <Menu.ItemValue className={menu.hintLabel} />
-                        <MenuChevron />
+        <div className={menu.group}>
+          {hasQuality ? (
+            <Menu.Root>
+              <Menu.Trigger
+                className={menu.item}
+                render={(props) => (
+                  <div {...props}>
+                    <QualityIcon className={cn(icon, menu.icon)} />
+                    <span>{t(qualityText)}</span>
+                    <span className={menu.hint}>
+                      <span className={menu.hintLabel}>{quality.selectedLabel}</span>
+                      <MenuChevron />
+                    </span>
+                  </div>
+                )}
+              />
+              <Menu.Content className={menu.submenuPanel}>
+                <Menu.Item className={menu.back}>
+                  <MenuChevron flipped />
+                  {t(qualityText)}
+                </Menu.Item>
+                <Menu.Separator className={menu.separator} />
+                <QualityRadioGroup
+                  className={menu.group}
+                  aria-label={t(qualityText)}
+                  renderItem={(props, item) => (
+                    <Menu.RadioItem {...props} className={menu.item}>
+                      <span>
+                        {item.label}
+                        {item.tier ? <sup className={menu.tier}>{item.tier}</sup> : null}
                       </span>
-                    </div>
+                      {item.badge ? <span className={badge}>{item.badge}</span> : null}
+                      <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
+                        <CheckIcon className={cn(icon, menu.icon)} />
+                      </Menu.ItemIndicator>
+                    </Menu.RadioItem>
                   )}
                 />
-                <Menu.Content className={menu.submenuPanel}>
-                  <Menu.Back className={menu.back}>
-                    <MenuChevron flipped />
-                    {t(qualityText)}
-                  </Menu.Back>
-                  <Menu.Separator className={menu.separator} />
-                  <Menu.RadioGroup
-                    className={menu.group}
-                    value={quality.value}
-                    onValueChange={quality.setValue}
-                    aria-label={t(qualityText)}
-                  >
-                    {quality.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className={menu.item}
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        <span>
-                          {option.label}
-                          {option.tier ? <sup className={menu.tier}>{option.tier}</sup> : null}
-                        </span>
-                        {option.badge ? <span className={badge}>{option.badge}</span> : null}
-                        <Menu.ItemIndicator
-                          checked={option.value === quality.value}
-                          forceMount
-                          className={menu.indicator}
-                        >
-                          <CheckIcon className={cn(icon, menu.icon)} />
-                        </Menu.ItemIndicator>
-                      </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
-                </Menu.Content>
-              </Menu.Root>
-            ) : null}
+              </Menu.Content>
+            </Menu.Root>
+          ) : null}
 
-            {hasAudioTrack ? (
-              <Menu.Root>
-                <Menu.Trigger
-                  type="audio-track"
-                  className={menu.item}
-                  render={(props) => (
-                    <div {...props}>
-                      <SpeechIcon className={icon} />
-                      <span>{t(audioText)}</span>
-                      <span className={menu.hint}>
-                        <Menu.ItemValue className={menu.hintLabel} />
-                        <MenuChevron />
-                      </span>
-                    </div>
+          {hasAudioTrack ? (
+            <Menu.Root>
+              <Menu.Trigger
+                className={menu.item}
+                render={(props) => (
+                  <div {...props}>
+                    <SpeechIcon className={icon} />
+                    <span>{t(audioText)}</span>
+                    <span className={menu.hint}>
+                      <span className={menu.hintLabel}>{audioTrack.selectedLabel}</span>
+                      <MenuChevron />
+                    </span>
+                  </div>
+                )}
+              />
+              <Menu.Content className={menu.submenuPanel}>
+                <Menu.Item className={menu.back}>
+                  <MenuChevron flipped />
+                  {t(audioText)}
+                </Menu.Item>
+                <Menu.Separator className={menu.separator} />
+                <AudioTrackRadioGroup
+                  className={menu.group}
+                  aria-label={t(audioText)}
+                  renderItem={(props, item) => (
+                    <Menu.RadioItem {...props} className={menu.item}>
+                      <span>{item.label}</span>
+                      <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
+                        <CheckIcon className={icon} />
+                      </Menu.ItemIndicator>
+                    </Menu.RadioItem>
                   )}
                 />
-                <Menu.Content className={menu.submenuPanel}>
-                  <Menu.Back className={menu.back}>
-                    <MenuChevron flipped />
-                    {t(audioText)}
-                  </Menu.Back>
-                  <Menu.Separator className={menu.separator} />
-                  <Menu.RadioGroup
-                    className={menu.group}
-                    value={audioTrack.value}
-                    onValueChange={audioTrack.setValue}
-                    aria-label={t(audioText)}
-                  >
-                    {audioTrack.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className={menu.item}
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        <span>{option.label}</span>
-                        <Menu.ItemIndicator
-                          checked={option.value === audioTrack.value}
-                          forceMount
-                          className={menu.indicator}
-                        >
-                          <CheckIcon className={icon} />
-                        </Menu.ItemIndicator>
-                      </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
-                </Menu.Content>
-              </Menu.Root>
-            ) : null}
+              </Menu.Content>
+            </Menu.Root>
+          ) : null}
 
-            {hasPlaybackRate ? (
-              <Menu.Root>
-                <Menu.Trigger
-                  type="playback-rate"
-                  className={menu.item}
-                  render={(props) => (
-                    <div {...props}>
-                      <SpeedIcon className={cn(icon, menu.icon)} />
-                      <span>{t(speedText)}</span>
-                      <span className={menu.hint}>
-                        <Menu.ItemValue className={menu.hintLabel} />
-                        <MenuChevron />
-                      </span>
-                    </div>
+          {hasPlaybackRate ? (
+            <Menu.Root>
+              <Menu.Trigger
+                className={menu.item}
+                render={(props) => (
+                  <div {...props}>
+                    <SpeedIcon className={cn(icon, menu.icon)} />
+                    <span>{t(speedText)}</span>
+                    <span className={menu.hint}>
+                      <span className={menu.hintLabel}>{playbackRate.selectedLabel}</span>
+                      <MenuChevron />
+                    </span>
+                  </div>
+                )}
+              />
+              <Menu.Content className={menu.submenuPanel}>
+                <Menu.Item className={menu.back}>
+                  <MenuChevron flipped />
+                  {t(speedText)}
+                </Menu.Item>
+                <Menu.Separator className={menu.separator} />
+                <PlaybackRateRadioGroup
+                  className={menu.group}
+                  aria-label={t(playbackRateText)}
+                  renderItem={(props, item) => (
+                    <Menu.RadioItem {...props} className={menu.item}>
+                      <span>{item.label}</span>
+                      <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
+                        <CheckIcon className={cn(icon, menu.icon)} />
+                      </Menu.ItemIndicator>
+                    </Menu.RadioItem>
                   )}
                 />
-                <Menu.Content className={menu.submenuPanel}>
-                  <Menu.Back className={menu.back}>
-                    <MenuChevron flipped />
-                    {t(speedText)}
-                  </Menu.Back>
-                  <Menu.Separator className={menu.separator} />
-                  <Menu.RadioGroup
-                    className={menu.group}
-                    value={playbackRate.value}
-                    onValueChange={playbackRate.setValue}
-                    aria-label={t(playbackRateText)}
-                  >
-                    {playbackRate.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className={menu.item}
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        <span>{option.label}</span>
-                        <Menu.ItemIndicator
-                          checked={option.value === playbackRate.value}
-                          forceMount
-                          className={menu.indicator}
-                        >
-                          <CheckIcon className={cn(icon, menu.icon)} />
-                        </Menu.ItemIndicator>
-                      </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
-                </Menu.Content>
-              </Menu.Root>
-            ) : null}
+              </Menu.Content>
+            </Menu.Root>
+          ) : null}
 
-            {hasCaptions ? (
-              <Menu.Root>
-                <Menu.Trigger
-                  type="captions"
-                  className={menu.item}
-                  render={(props) => (
-                    <div {...props}>
-                      <CaptionsOffIcon className={cn(icon, menu.icon)} />
-                      <span>{t(captionsText)}</span>
-                      <span className={menu.hint}>
-                        <Menu.ItemValue className={menu.hintLabel} />
-                        <MenuChevron />
-                      </span>
-                    </div>
+          {hasCaptions ? (
+            <Menu.Root>
+              <Menu.Trigger
+                className={menu.item}
+                render={(props) => (
+                  <div {...props}>
+                    <CaptionsOffIcon className={cn(icon, menu.icon)} />
+                    <span>{t(captionsText)}</span>
+                    <span className={menu.hint}>
+                      <span className={menu.hintLabel}>{captions.selectedLabel}</span>
+                      <MenuChevron />
+                    </span>
+                  </div>
+                )}
+              />
+              <Menu.Content className={menu.submenuPanel}>
+                <Menu.Item className={menu.back}>
+                  <MenuChevron flipped />
+                  {t(captionsText)}
+                </Menu.Item>
+                <Menu.Separator className={menu.separator} />
+                <CaptionsRadioGroup
+                  className={menu.group}
+                  aria-label={t(captionsText)}
+                  renderItem={(props, item) => (
+                    <Menu.RadioItem {...props} className={menu.item}>
+                      <span>{item.label}</span>
+                      <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
+                        <CheckIcon className={cn(icon, menu.icon)} />
+                      </Menu.ItemIndicator>
+                    </Menu.RadioItem>
                   )}
                 />
-                <Menu.Content className={menu.submenuPanel}>
-                  <Menu.Back className={menu.back}>
-                    <MenuChevron flipped />
-                    {t(captionsText)}
-                  </Menu.Back>
-                  <Menu.Separator className={menu.separator} />
-                  <Menu.RadioGroup
-                    className={menu.group}
-                    value={captions.value}
-                    onValueChange={captions.setValue}
-                    aria-label={t(captionsText)}
-                  >
-                    {captions.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className={menu.item}
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        <span>{option.label}</span>
-                        <Menu.ItemIndicator
-                          checked={option.value === captions.value}
-                          forceMount
-                          className={menu.indicator}
-                        >
-                          <CheckIcon className={cn(icon, menu.icon)} />
-                        </Menu.ItemIndicator>
-                      </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
-                </Menu.Content>
-              </Menu.Root>
-            ) : null}
-          </div>
-        </Menu.View>
+              </Menu.Content>
+            </Menu.Root>
+          ) : null}
+        </div>
       </Menu.Content>
     </Menu.Root>
   );
@@ -428,7 +379,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
     : style;
 
   return (
-    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
+    <Container className={cn(container(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (
@@ -500,12 +451,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                       </TimeSlider.Track>
                     </div>
                   )}
-                >
-                  <TimeSlider.Track render={<div className={slider.track} />}>
-                    <TimeSlider.Buffer render={<div className={cn(slider.fill.base, slider.fill.buffer)} />} />
-                    <TimeSlider.Fill render={<div className={cn(slider.fill.base, slider.fill.fill)} />} />
-                  </TimeSlider.Track>
-                </TimeSlider.Chapters>
+                />
                 <TimeSlider.Thumb render={<SliderThumb />} />
                 <TimeSlider.Preview overflow="visible" className={slider.preview}>
                   <div className={cn(thumbnail.root, slider.thumbnail)}>

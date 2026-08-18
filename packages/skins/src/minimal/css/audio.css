@@ -1,5 +1,5 @@
 @import "./components/reset.css";
-@import "./components/root.css";
+@import "./components/container.css";
 @import "./components/buffering.css";
 @import "./components/error.css";
 @import "./components/controls.css";
@@ -13,56 +13,45 @@
 @import "./components/menus.css";
 @import "../../shared/css/audio/icon-state.css";
 
-/* ==========================================================================
-  Root
-  ========================================================================== */
+/* Container */
 
 .media-minimal-skin--audio {
-  --media-controls-background-color: oklch(1 0 0);
-  --media-controls-backdrop-filter: blur(16px) saturate(1.5);
-  --media-controls-border-color: oklch(0 0 0 / 0.1);
-  --media-controls-text-color: var(--media-color-primary, oklch(0 0 0));
+  --default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
 
-  --media-error-dialog-transition-duration: 250ms;
-  --media-error-dialog-transition-delay: 100ms;
+  --controls-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
+  --controls-backdrop-filter: blur(16px) saturate(1.5);
+  --controls-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.1));
+  --controls-text-color: light-dark(oklch(0 0 0), oklch(1 0 0));
 
-  --media-popup-transition-duration: 100ms;
-  --media-popup-transition-timing-function: ease-out;
+  --error-dialog-transition-duration: 250ms;
+  --error-dialog-transition-delay: 100ms;
 
-  --media-popover-backdrop-filter: blur(16px) saturate(1.5);
-  --media-popover-background-color: oklch(1 0 0);
-  --media-popover-border-color: oklch(0 0 0 / 0.1);
+  --popup-transition-duration: 100ms;
+  --popup-transition-timing-function: ease-out;
 
-  --media-tooltip-backdrop-filter: var(--media-popover-backdrop-filter);
-  --media-tooltip-background-color: var(--media-popover-background-color);
-  --media-tooltip-border-color: var(--media-popover-border-color);
+  --popover-backdrop-filter: blur(16px) saturate(1.5);
+  --popover-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
+  --popover-border-color: oklch(0 0 0 / 0.1);
 
-  --media-tooltip-text-color: currentColor;
+  --tooltip-backdrop-filter: var(--popover-backdrop-filter);
+  --tooltip-background-color: var(--popover-background-color);
+  --tooltip-border-color: var(--popover-border-color);
+
+  --tooltip-text-color: currentColor;
 
   @media (prefers-reduced-motion: reduce) {
-    --media-error-dialog-transition-duration: 50ms;
-    --media-error-dialog-transition-delay: 0ms;
-    --media-popup-transition-duration: 0ms;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    --media-controls-background-color: oklch(0 0 0);
-    --media-controls-border-color: oklch(1 0 0 / 0.1);
-    --media-controls-text-color: var(--media-color-primary, oklch(1 0 0));
+    --error-dialog-transition-duration: 50ms;
+    --error-dialog-transition-delay: 0ms;
+    --popup-transition-duration: 0ms;
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
-    --media-tooltip-background-color: oklch(1 0 0);
-  }
-
-  @media (prefers-color-scheme: dark) and ((prefers-reduced-transparency: reduce) or (prefers-contrast: more)) {
-    --media-tooltip-background-color: oklch(0 0 0);
+    --tooltip-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
   }
 }
 
-/* ==========================================================================
-   Error Dialog
-   ========================================================================== */
+/* Error Dialog */
 
 .media-minimal-skin--audio .media-error__dialog {
   position: absolute;
@@ -72,11 +61,11 @@
   gap: calc(var(--spacing) * 4);
   align-items: center;
   padding-inline: calc(var(--spacing) * 5) calc(var(--spacing) * 2);
-  background-color: oklch(from var(--media-controls-background-color) l c h / 1);
+  background-color: oklch(from var(--controls-background-color) l c h / 1);
   border-radius: calc(Infinity * 1px);
-  transition-delay: var(--media-error-dialog-transition-delay);
+  transition-delay: var(--error-dialog-transition-delay);
   transition-timing-function: ease-out;
-  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-duration: var(--error-dialog-transition-duration);
   transition-property: opacity, filter, scale;
 }
 
@@ -97,23 +86,19 @@
   align-items: center;
 }
 
-/* ==========================================================================
-  Controls
-  ========================================================================== */
+/* Controls */
 
 .media-minimal-skin--audio .media-controls {
   --base-side-offset: 2;
   --base-boundary-offset: 2;
 
   gap: calc(var(--spacing) * 2);
-  color: var(--media-controls-text-color);
+  color: var(--controls-text-color);
   border-radius: var(--media-border-radius, calc(var(--spacing) * 3.5));
-  box-shadow: 0 0 0 1px var(--media-controls-border-color);
+  box-shadow: 0 0 0 1px var(--controls-border-color);
 }
 
-/* ==========================================================================
-   Buffering (spinner over play button — overlay only, no layout change)
-   ========================================================================== */
+/* Buffering (spinner over play button — overlay only, no layout change) */
 
 .media-minimal-skin--audio .media-button--play__wrapper {
   position: relative;
@@ -131,14 +116,12 @@
   opacity: 0;
 }
 
-/* ==========================================================================
-   Popups & Animations
-   ========================================================================== */
+/* Popups & Animations */
 
 .media-minimal-skin--audio .media-popover--volume {
   --media-popover-side-offset: 0rem;
   padding: 0 calc(var(--spacing) * 2) 0 calc(var(--spacing) * 16);
-  background: linear-gradient(to left, var(--media-controls-background-color) 80%, transparent 100%);
+  background: linear-gradient(to left, var(--controls-background-color) 80%, transparent 100%);
 }
 
 .media-minimal-skin--audio .media-slider .media-slider__preview .media-slider__value {

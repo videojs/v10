@@ -17,7 +17,7 @@ export {
 } from '../../behaviors/establish-start-media-time';
 // The Medias over these engines are not here: they live behind
 // `@videojs/spf/hls-video`, `@videojs/spf/hls-audio`, and
-// `@videojs/spf/background-video` so that driving an engine directly doesn't pull
+// `@videojs/spf/hls-background-video` so that driving an engine directly doesn't pull
 // a Media (and `@videojs/media`) in with it — and so this entry stays the
 // engines' own size budget.
 export type {

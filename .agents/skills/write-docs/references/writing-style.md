@@ -14,7 +14,7 @@ createPlayer function and pass in a configuration object.
 // ✅ Direct
 Create a player:
 
-const player = createPlayer({ src: 'video.mp4' });
+const { Player } = createPlayer({ features: videoFeatures });
 ```
 
 ## Quick Rules
@@ -162,10 +162,10 @@ For more information about events, please refer to the Events page.
 
 ```markdown
 // ✅ Linked
-Within a player provider, <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> is usually simpler.
+Within a `Player`, <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> is usually simpler.
 
 // ❌ Unlinked
-Within a player provider, `usePlayer` is usually simpler.
+Within a `Player`, `usePlayer` is usually simpler.
 ```
 
 ## Length guidelines

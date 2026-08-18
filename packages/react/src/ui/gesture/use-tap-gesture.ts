@@ -1,5 +1,3 @@
-'use client';
-
 import { createTapGesture, type GesturePointerType, type GestureRegion } from '@videojs/core/dom';
 import type { RefObject } from 'react';
 import { useEffect } from 'react';

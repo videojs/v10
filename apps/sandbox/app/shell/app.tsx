@@ -1,4 +1,4 @@
-import { PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
+import { EMBED_PRESETS, PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { DEFAULT_PRELOAD, PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
@@ -24,9 +24,6 @@ import { Preview } from './preview';
 
 function getPagePath(platform: Platform, preset: Preset): string {
   if (platform === 'cdn') return '/cdn/';
-  if (preset === 'background-video') return `/${platform}-background-video/`;
-  if (preset === 'vimeo-video') return `/${platform}-vimeo-video/`;
-  if (preset === 'youtube-video') return `/${platform}-youtube-video/`;
   return `/${platform}-${preset}/`;
 }
 
@@ -43,6 +40,7 @@ function readParams() {
     muted: params.get('muted') === '1',
     loop: params.get('loop') === '1',
     preload: PRELOAD_VALUES.includes(preload as PreloadValue) ? (preload as PreloadValue) : DEFAULT_PRELOAD,
+    accentColor: params.get('accent')?.trim() ?? '',
     locale: (() => {
       const value = params.get('locale');
       return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag)
@@ -63,6 +61,7 @@ export function App() {
   const [muted, setMuted] = useState(initial.muted);
   const [loop, setLoop] = useState(initial.loop);
   const [preload, setPreload] = useState<PreloadValue>(initial.preload);
+  const [accentColor, setAccentColor] = useState(initial.accentColor);
   const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -77,8 +76,10 @@ export function App() {
   const muxPreset = preset === 'mux-video' || preset === 'mux-audio';
   const muxSpfPreset = preset === 'mux-video-spf' || preset === 'mux-audio-spf';
   const spfHlsPreset = preset === 'hls-video' || preset === 'hls-audio';
-  // Both background presets render a fixed source and have no Tailwind skin.
-  const backgroundPreset = preset === 'background-video' || preset === 'mux-background-video';
+  // Every background preset renders a fixed source and has no Tailwind skin.
+  const backgroundPreset =
+    preset === 'background-video' || preset === 'hls-background-video' || preset === 'mux-background-video';
+  const embedPreset = (EMBED_PRESETS as readonly Preset[]).includes(preset);
   const availableSources =
     preset === 'audio'
       ? MP4_SOURCE_IDS
@@ -108,8 +109,9 @@ export function App() {
       preload,
       locale,
     });
+    if (accentColor) params.set('accent', accentColor);
     history.replaceState(null, '', `/?${params}`);
-  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, locale]);
+  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, accentColor, locale]);
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
@@ -138,6 +140,10 @@ export function App() {
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'locale-change', locale }, '*');
   }, [locale]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'accent-color-change', accentColor }, '*');
+  }, [accentColor]);
 
   // Constrain source to MP4 when switching to audio
   useEffect(() => {
@@ -168,15 +174,12 @@ export function App() {
     }
   }, [availableSources, source]);
 
-  // CDN, background video, and embed (Vimeo/YouTube) videos do not have a Tailwind skin variant.
+  // CDN, background video, and third-party embeds do not have a Tailwind skin variant.
   useEffect(() => {
-    if (
-      (platform === 'cdn' || backgroundPreset || preset === 'vimeo-video' || preset === 'youtube-video') &&
-      styling === 'tailwind'
-    ) {
+    if ((platform === 'cdn' || backgroundPreset || embedPreset) && styling === 'tailwind') {
       setStyling('css');
     }
-  }, [platform, preset, backgroundPreset, styling]);
+  }, [platform, backgroundPreset, embedPreset, styling]);
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
@@ -203,13 +206,14 @@ export function App() {
         onPreloadChange={setPreload}
         locale={locale}
         onLocaleChange={setLocale}
+        accentColor={accentColor}
+        onAccentColorChange={setAccentColor}
         availableSources={availableSources}
         isBackgroundVideo={backgroundPreset}
         isSpfHls={spfHlsPreset}
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}
-        isVimeoVideo={preset === 'vimeo-video'}
-        isYouTubeVideo={preset === 'youtube-video'}
+        isEmbedMedia={embedPreset}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}
@@ -228,6 +232,10 @@ export function App() {
         loop={loop}
         preload={preload}
         locale={locale}
+        accentColor={accentColor}
+        onLoad={() => {
+          iframeRef.current?.contentWindow?.postMessage({ type: 'accent-color-change', accentColor }, '*');
+        }}
       />
     </div>
   );

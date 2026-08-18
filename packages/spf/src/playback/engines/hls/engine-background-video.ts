@@ -83,7 +83,7 @@ export interface BackgroundVideoEngineConfig
    * presentation resolve and pins it for the session. Override for
    * mobile-aware or content-aware caps.
    *
-   * Adapters (e.g. `BackgroundVideoMediaElement`) install their own
+   * Adapters (e.g. `HlsBackgroundVideoMediaElement`) install their own
    * picker; this default applies when the engine is constructed directly.
    */
   picker?: TrackPicker<SelectVideoTrackConfig>;
@@ -113,7 +113,7 @@ const shareSignals = makeShareSignals<BackgroundVideoEngineState, BackgroundVide
  * surfaces that should start loading the moment a src is set.
  *
  * Native `loop` / `muted` / `autoplay` are adapter concerns and live on
- * `BackgroundVideoMediaElement` rather than the engine.
+ * `HlsBackgroundVideoMediaElement` rather than the engine.
  *
  * @example
  * ```ts

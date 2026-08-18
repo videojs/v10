@@ -1,5 +1,3 @@
-'use client';
-
 import { CastButtonCore, CastButtonDataAttrs } from '@videojs/core';
 import { selectRemotePlayback } from '@videojs/core/dom';
 

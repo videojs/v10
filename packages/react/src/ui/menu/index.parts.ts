@@ -1,4 +1,3 @@
-export { MenuBack as Back, type MenuBackProps as BackProps } from './menu-back';
 export {
   MenuCheckboxItem as CheckboxItem,
   type MenuCheckboxItemProps as CheckboxItemProps,
@@ -11,10 +10,8 @@ export {
   MenuItemIndicator as ItemIndicator,
   type MenuItemIndicatorProps as ItemIndicatorProps,
 } from './menu-item-indicator';
-export { MenuItemValue as ItemValue, type MenuItemValueProps as ItemValueProps } from './menu-item-value';
 export { MenuRadioGroup as RadioGroup, type MenuRadioGroupProps as RadioGroupProps } from './menu-radio-group';
 export { MenuRadioItem as RadioItem, type MenuRadioItemProps as RadioItemProps } from './menu-radio-item';
 export { MenuRoot as Root, type MenuRootProps as RootProps } from './menu-root';
 export { MenuSeparator as Separator, type MenuSeparatorProps as SeparatorProps } from './menu-separator';
 export { MenuTrigger as Trigger, type MenuTriggerProps as TriggerProps } from './menu-trigger';
-export { MenuView as View, type MenuViewProps as ViewProps } from './menu-view';

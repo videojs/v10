@@ -7,7 +7,7 @@ export const time = {
     'transition-[outline-color,outline-offset] duration-100 ease-out',
     'supports-[corner-shape:squircle]:rounded-[--spacing(4)]',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]',
-    'focus-visible:outline-current focus-visible:outline-offset-2',
+    'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2',
     '@2xl/media-root:inline'
   ),
   separator: cn('hidden', '@2xl/media-root:inline @2xl/media-root:text-current/60'),
