@@ -83,6 +83,7 @@ export class MenuCore {
 
   getTriggerAttrs(state: MenuState, contentId?: string) {
     return {
+      ...(!state.isSubmenu && { tabIndex: 0 }),
       'aria-haspopup': 'menu' as const,
       'aria-expanded': state.open && state.status !== 'ending' ? 'true' : 'false',
       'aria-controls': contentId,

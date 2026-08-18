@@ -185,6 +185,7 @@ describe('MenuElement', () => {
     document.body.append(trigger, root);
     await root.updateComplete;
 
+    expect(trigger.getAttribute('tabindex')).toBe('0');
     expect(root.getAttribute('data-side')).toBe('bottom');
   });
 

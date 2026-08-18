@@ -387,6 +387,17 @@ function DynamicMenuFixture({ showCaptions }: { showCaptions: boolean }) {
 }
 
 describe('MenuContent', () => {
+  it('includes the root trigger in sequential focus', () => {
+    render(
+      <MenuRoot>
+        <MenuTrigger>Settings</MenuTrigger>
+        <MenuContent>Playback speed</MenuContent>
+      </MenuRoot>
+    );
+
+    expect(screen.getByRole('button', { name: 'Settings' }).getAttribute('tabindex')).toBe('0');
+  });
+
   it('only links triggers to rendered menu content', async () => {
     render(<SubmenuFixture />);
 

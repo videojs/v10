@@ -77,8 +77,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
         await expect(player.volumeSlider).toBeVisible();
         await expectTabFocus(page, player.volumeSliderThumb);
       } else {
-        // WebKit follows Safari's default keyboard-access policy for native buttons.
-        if (browserName !== 'webkit') await expectTabFocus(page, player.settingsButton);
+        await expectTabFocus(page, player.settingsButton);
         for (const control of [player.castButton, player.airPlayButton, player.pipButton, player.fullscreenButton]) {
           if (await control.isVisible()) await expectTabFocus(page, control);
         }
