@@ -99,7 +99,7 @@ async function buildEntry(entry: BuildEntry, config: CompilerConfig, configDir: 
     ...(external ? { external } : {}),
     plugins: [compilerPlugin(config, configDir, entry.outputFile, diagnostics, assets, isHtml)],
     transform: {
-      jsx: isHtml ? { runtime: 'automatic', importSource: '@videojs/compiler/html-runtime' } : 'preserve',
+      jsx: isHtml ? { runtime: 'automatic', importSource: 'vjsc/html-runtime' } : 'preserve',
     },
     experimental: { attachDebugInfo: 'none' },
   });
@@ -146,7 +146,7 @@ function compilerPlugin(
   html: boolean
 ): Plugin {
   return {
-    name: '@videojs/compiler:build',
+    name: 'vjsc:build',
     resolveId(source) {
       if (html && source === HTML_RUNTIME_IMPORT) return HTML_RUNTIME_ID;
       return null;

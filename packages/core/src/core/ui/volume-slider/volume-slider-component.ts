@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler/components';
+import { defineComponent } from 'vjsc/components';
 import type { SliderValueProps } from '../slider/slider-component';
 import type { SliderPreviewProps } from '../slider/slider-core';
 import type { VolumeSliderProps } from './volume-slider-core';

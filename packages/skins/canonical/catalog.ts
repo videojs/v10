@@ -1,5 +1,5 @@
-import { defineCatalog } from '@videojs/compiler/catalog';
 import { components } from '@videojs/core/components';
+import { defineCatalog } from 'vjsc/catalog';
 
 const resources = {
   styles: {
@@ -21,12 +21,7 @@ const resources = {
 export const skinCatalog = defineCatalog({
   components: [components.source],
   resources,
-  allowedImports: [
-    '@videojs/core',
-    '@videojs/compiler/styles',
-    '@videojs/compiler/components',
-    /^@videojs\/core\/i18n\/text\//,
-  ],
+  allowedImports: ['@videojs/core', 'vjsc/styles', 'vjsc/components', /^@videojs\/core\/i18n\/text\//],
   imports: {
     '@videojs/core/components': 'components',
     '@videojs/icons/components': 'icons',

@@ -1,7 +1,7 @@
-import { Text } from '@videojs/compiler/components';
 import type { SeekButtonProps } from '@videojs/core';
 import * as $ from '@videojs/core/components';
 import { SeekIcon } from '@videojs/icons/components';
+import { Text } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';
 

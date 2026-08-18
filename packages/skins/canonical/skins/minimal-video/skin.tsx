@@ -1,5 +1,5 @@
-import { Slot } from '@videojs/compiler/components';
 import * as $ from '@videojs/core/components';
+import { Slot } from 'vjsc/components';
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';

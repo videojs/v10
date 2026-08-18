@@ -86,7 +86,7 @@ jobs:
       matrix:
         package:
           - '@videojs/cli'
-          - '@videojs/compiler'
+          - 'vjsc'
           - '@videojs/core'
           - '@videojs/icons'
           - '@videojs/jsx'

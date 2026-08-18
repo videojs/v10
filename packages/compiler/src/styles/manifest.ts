@@ -13,7 +13,7 @@ import { type ClassNameInfo, type ClassNameSegment, readClassName } from './jsx-
 import { resolveManifestStyleModule } from './modules';
 import { visitStyleRules } from './tree';
 
-const STYLE_RUNTIME_ID = '\0@videojs/compiler:styles-runtime';
+const STYLE_RUNTIME_ID = '\0vjsc:styles-runtime';
 
 export interface StyleManifestRule {
   readonly modulePath: string;
@@ -316,9 +316,9 @@ async function evaluateStyleModule(
     experimental: { attachDebugInfo: 'none' },
     plugins: [
       {
-        name: '@videojs/compiler:styles-runtime',
+        name: 'vjsc:styles-runtime',
         resolveId(source) {
-          return source === '@videojs/compiler/styles' ? STYLE_RUNTIME_ID : null;
+          return source === 'vjsc/styles' ? STYLE_RUNTIME_ID : null;
         },
         load(id) {
           return id === STYLE_RUNTIME_ID ? styleRuntimeSource() : null;
@@ -348,7 +348,7 @@ async function evaluateStyleModule(
 
 function styleRuntimeSource(): string {
   return `
-    const styleDefinition = Symbol.for('@videojs/compiler/styles/definition');
+    const styleDefinition = Symbol.for('vjsc/styles/definition');
     const isRule = (value) => value && typeof value === 'object' && 'className' in value && 'utilities' in value;
     const references = (tree) => Object.fromEntries(
       Object.entries(tree).map(([name, value]) => [name, isRule(value) ? value.className : references(value)])

@@ -1,4 +1,4 @@
-import { styles } from '@videojs/compiler/styles';
+import { styles } from 'vjsc/styles';
 
 const buttonStyles = [
   'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',

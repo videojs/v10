@@ -1,4 +1,4 @@
-import { styles } from '@videojs/compiler/styles';
+import { styles } from 'vjsc/styles';
 
 const menuItem = [
   'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left',

@@ -21,10 +21,10 @@ import {
   type TargetReference,
 } from './registry';
 
-const COMPILER_COMPONENT_SOURCE = '@videojs/compiler/components';
-const SOURCE_VALUE = Symbol('@videojs/compiler/source-value');
-const SOURCE_CHILDREN = Symbol('@videojs/compiler/source-children');
-const SOURCE_EXPRESSION = Symbol('@videojs/compiler/source-expression');
+const COMPILER_COMPONENT_SOURCE = 'vjsc/components';
+const SOURCE_VALUE = Symbol('vjsc/source-value');
+const SOURCE_CHILDREN = Symbol('vjsc/source-children');
+const SOURCE_EXPRESSION = Symbol('vjsc/source-expression');
 
 interface SourceValue {
   readonly [SOURCE_VALUE]: true;
@@ -87,7 +87,7 @@ interface TemplateScope {
 /** Lower canonical component JSX through a framework-owned component registry. */
 export function plugin(registry: ComponentRegistry): CompilerPlugin {
   return {
-    name: '@videojs/compiler:components',
+    name: 'vjsc:components',
     enforce: 'post',
     setup({ target }) {
       return {

@@ -132,7 +132,7 @@ describe('emitCatalog', () => {
     const root = setup({
       'entry.tsx': `import styles from './button.styles'; export const entry = <button className={styles.root}/>;`,
       'button.styles.ts': `
-        import { styles } from '@videojs/compiler/styles';
+        import { styles } from 'vjsc/styles';
         export default styles({
           file: 'button.css',
           layer: 'fixture.components',
@@ -149,7 +149,7 @@ describe('emitCatalog', () => {
     });
     const loaded = await loadCatalog(
       defineCatalog({
-        allowedImports: ['@videojs/compiler/styles'],
+        allowedImports: ['vjsc/styles'],
         items: [{ name: 'entry', source: './entry.tsx' }],
       }),
       { rootDir: root }

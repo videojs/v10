@@ -14,7 +14,7 @@ export interface MutableImportReference extends ImportReference {
   used: boolean;
 }
 
-const importReference = Symbol('@videojs/compiler/import-ref');
+const importReference = Symbol('vjsc/import-ref');
 
 export function createImportReference(source: string, name: string, options: ImportOptions): MutableImportReference {
   return {

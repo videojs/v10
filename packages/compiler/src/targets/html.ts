@@ -1,8 +1,8 @@
 import { basename } from 'node:path';
 import { runInNewContext } from 'node:vm';
 
-export const HTML_RUNTIME_ID = '\0@videojs/compiler:html-runtime';
-export const HTML_RUNTIME_IMPORT = '@videojs/compiler/html-runtime/jsx-runtime';
+export const HTML_RUNTIME_ID = '\0vjsc:html-runtime';
+export const HTML_RUNTIME_IMPORT = 'vjsc/html-runtime/jsx-runtime';
 
 /** Evaluate a bundled entry against the static JSX runtime and return its HTML. */
 export function renderHtmlChunk(code: string, entryFile: string, imports: readonly string[] = []): string {

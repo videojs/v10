@@ -45,7 +45,7 @@ export function plugin(options: StylePluginOptions): CompilerPlugin {
   const manifests = new Map<string, CachedManifest>();
 
   return {
-    name: '@videojs/compiler:styles',
+    name: 'vjsc:styles',
     enforce: 'pre',
     async setup(context) {
       const manifest = options.manifest ?? (await loadImportedManifest(context, manifests));

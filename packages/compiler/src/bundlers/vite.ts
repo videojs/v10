@@ -48,7 +48,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   };
 
   return {
-    name: '@videojs/compiler',
+    name: 'vjsc',
     enforce: 'pre',
     configResolved(config) {
       root = config.root;
@@ -114,7 +114,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
 
 function cssVirtualId(fileName: string, source: string): string {
   const hash = createHash('sha256').update(fileName).update('\0').update(source).digest('hex').slice(0, 12);
-  return `virtual:@videojs/compiler/css/${hash}/${encodeURIComponent(fileName)}`;
+  return `virtual:vjsc/css/${hash}/${encodeURIComponent(fileName)}`;
 }
 
 function offsetSourceMap(map: CompilerSourceMap, lines: number): CompilerSourceMap {

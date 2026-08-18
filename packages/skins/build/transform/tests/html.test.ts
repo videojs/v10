@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { type CompilerConfig, transform } from '@videojs/compiler';
-import { plugin as componentsPlugin } from '@videojs/compiler/components';
-import { loadStyleManifest } from '@videojs/compiler/styles';
 import { describe, expect, it } from 'vitest';
+import { type CompilerConfig, transform } from 'vjsc';
+import { plugin as componentsPlugin } from 'vjsc/components';
+import { loadStyleManifest } from 'vjsc/styles';
 import { registry } from '../../../../html/compiler';
 import { createCompilerHtmlConfig } from '../html';
 

@@ -1,4 +1,4 @@
-import { styles } from '@videojs/compiler/styles';
+import { styles } from 'vjsc/styles';
 
 const fillBase = [
   'absolute inset-y-0 left-0 rounded-[inherit]',

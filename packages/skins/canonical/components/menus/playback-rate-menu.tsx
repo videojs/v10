@@ -1,6 +1,6 @@
-import { type FunctionComponent, Template, Text } from '@videojs/compiler/components';
 import { speedText } from '@videojs/core/i18n/text/menu';
 import { SpeedIcon } from '@videojs/icons/components';
+import { type FunctionComponent, Template, Text } from 'vjsc/components';
 import styles from '../../styles/components/menu.styles';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';

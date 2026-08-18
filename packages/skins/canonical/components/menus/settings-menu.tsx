@@ -1,7 +1,7 @@
-import { Text } from '@videojs/compiler/components';
 import * as $ from '@videojs/core/components';
 import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@videojs/icons/components';
+import { Text } from 'vjsc/components';
 import buttonStyles from '../../styles/components/button.styles';
 import styles from '../../styles/components/menu.styles';
 import popupStyles from '../../styles/components/popup.styles';

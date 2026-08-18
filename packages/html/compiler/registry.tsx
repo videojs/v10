@@ -1,8 +1,8 @@
 /** @jsxRuntime automatic */
-/** @jsxImportSource @videojs/compiler/components/registry */
+/** @jsxImportSource vjsc/components/registry */
 
-import { type ComponentRegistry, defineRegistry, defineTarget, Fragment } from '@videojs/compiler/components';
 import { components } from '@videojs/core/components';
+import { type ComponentRegistry, defineRegistry, defineTarget, Fragment } from 'vjsc/components';
 import * as Element from './components.generated';
 
 const Div = defineTarget({ tagName: 'div' });

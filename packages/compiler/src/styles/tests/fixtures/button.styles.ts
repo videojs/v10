@@ -1,4 +1,4 @@
-import { styles } from '@videojs/compiler/styles';
+import { styles } from 'vjsc/styles';
 
 const base = ['grid border-0', 'p-3'];
 

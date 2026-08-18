@@ -76,7 +76,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@videojs/compiler": "workspace:*",
+    "vjsc": "workspace:*",
     "jsdom": "^26.1.0",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.2",

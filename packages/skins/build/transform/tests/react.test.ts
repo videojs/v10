@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { type CompilerConfig, transform } from '@videojs/compiler';
-import { plugin as componentsPlugin } from '@videojs/compiler/components';
-import { loadStyleManifest } from '@videojs/compiler/styles';
 import { describe, expect, it } from 'vitest';
+import { type CompilerConfig, transform } from 'vjsc';
+import { plugin as componentsPlugin } from 'vjsc/components';
+import { loadStyleManifest } from 'vjsc/styles';
 import { registry } from '../../../../react/compiler';
 import { createCompilerReactConfig } from '../react';
 

@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler/components';
+import { defineComponent } from 'vjsc/components';
 
 import type { CastButtonProps } from './cast-button-core';
 import { CastButtonDataAttrs } from './cast-button-data-attrs';

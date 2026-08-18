@@ -1,4 +1,4 @@
-import { styles } from '@videojs/compiler/styles';
+import { styles } from 'vjsc/styles';
 
 export default styles({
   file: 'controls.css',

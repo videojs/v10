@@ -257,7 +257,7 @@ describe('plugin', () => {
     });
     const result = await transform(
       `
-        import { Slot, Text } from '@videojs/compiler/components';
+        import { Slot, Text } from 'vjsc/components';
 
         export const view = <div><Text className="label">Hello</Text><Slot>{content}</Slot></div>;
       `,
@@ -266,7 +266,7 @@ describe('plugin', () => {
 
     expect(result.code).toContain('<span className="label">Hello</span>');
     expect(result.code).toContain('{content}');
-    expect(result.code).not.toContain('@videojs/compiler/components');
+    expect(result.code).not.toContain('vjsc/components');
   });
 
   it('attaches named templates with template-local part targets', async () => {
@@ -288,7 +288,7 @@ describe('plugin', () => {
     });
     const result = await transform(
       `
-        import { Template } from '@videojs/compiler/components';
+        import { Template } from 'vjsc/components';
 
         export const view = (
           <List>

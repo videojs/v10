@@ -84,9 +84,7 @@ export type CreateComponentResult<M> =
 
 function createRuntimeComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
   const component = (_props: BaseProps & Props): ComponentNode => {
-    throw new Error(
-      `@videojs/compiler/components: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`
-    );
+    throw new Error(`vjsc/components: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
   };
 
   Object.assign(component, { $$component: { name, part } });

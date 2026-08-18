@@ -1,6 +1,6 @@
-import { type FunctionComponent, Template } from '@videojs/compiler/components';
 import * as $ from '@videojs/core/components';
 import { SpinnerIcon } from '@videojs/icons/components';
+import { type FunctionComponent, Template } from 'vjsc/components';
 import popupStyles from '../../styles/components/popup.styles';
 import styles from '../../styles/components/slider.styles';
 

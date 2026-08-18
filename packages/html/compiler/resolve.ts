@@ -1,12 +1,12 @@
 import { basename, relative, resolve } from 'node:path';
 
-import type { ResolvedTarget, SourceTargetContext } from '@videojs/compiler';
+import type { ResolvedTarget, SourceTargetContext } from 'vjsc';
 import {
   collectClassDeclarations,
   collectModuleReferences,
   findClassDeclaration,
   readStaticStringProperty,
-} from '@videojs/compiler/ast';
+} from 'vjsc/ast';
 
 const packageDir = resolve(import.meta.dirname, '..');
 const elementSuffix = 'Element';

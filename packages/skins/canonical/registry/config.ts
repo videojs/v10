@@ -1,4 +1,4 @@
-import { defineRegistry } from '@videojs/compiler/shadcn';
+import { defineRegistry } from 'vjsc/shadcn';
 import { skinCatalog } from '../catalog';
 
 /** React/Tailwind publication policy for the canonical Skin inventory. */

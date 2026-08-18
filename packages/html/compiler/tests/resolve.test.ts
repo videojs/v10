@@ -1,7 +1,6 @@
 import { resolve } from 'node:path';
-
-import { parse } from '@videojs/compiler/ast';
 import { describe, expect, it } from 'vitest';
+import { parse } from 'vjsc/ast';
 
 import { resolveHtmlTargets } from '../resolve';
 

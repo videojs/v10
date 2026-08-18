@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler/components';
+import { defineComponent } from 'vjsc/components';
 import { ControlsDataAttrs } from './controls-data-attrs';
 
 export default defineComponent({

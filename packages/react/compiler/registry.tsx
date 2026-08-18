@@ -1,6 +1,7 @@
 /** @jsxRuntime automatic */
-/** @jsxImportSource @videojs/compiler/components/registry */
+/** @jsxImportSource vjsc/components/registry */
 
+import { components } from '@videojs/core/components';
 import {
   type ComponentRegistry,
   defineRegistry,
@@ -10,8 +11,7 @@ import {
   type SlotProps,
   type TemplatePartProps,
   type TextProps,
-} from '@videojs/compiler/components';
-import { components } from '@videojs/core/components';
+} from 'vjsc/components';
 import { targets } from './components.generated';
 
 const Div = defineTarget({ tagName: 'div' });

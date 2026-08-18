@@ -1,9 +1,9 @@
 import type { ComponentDefinition, ComponentRecord, ComponentSet, EmptyProps, InferProps } from '../definition';
 import type { Fragment, SlotProps, TextProps } from '../jsx-runtime';
 
-export const REGISTRY_NODE = Symbol.for('@videojs/compiler/registry-node');
-export const REGISTRY_TARGET = Symbol.for('@videojs/compiler/registry-target');
-export const REGISTRY_HOST = Symbol.for('@videojs/compiler/registry-host');
+export const REGISTRY_NODE = Symbol.for('vjsc/registry-node');
+export const REGISTRY_TARGET = Symbol.for('vjsc/registry-target');
+export const REGISTRY_HOST = Symbol.for('vjsc/registry-host');
 
 export interface TargetNamedImport {
   readonly from: string;
@@ -59,7 +59,7 @@ export interface HostComponent extends RegistryHost {
 
 export const Host = Object.assign(
   (_props: Record<string, unknown>): RegistryNode => {
-    throw new Error('@videojs/compiler/components: <Host> can only be evaluated by the registry JSX runtime.');
+    throw new Error('vjsc/components: <Host> can only be evaluated by the registry JSX runtime.');
   },
   { [REGISTRY_HOST]: true as const }
 );
@@ -209,9 +209,7 @@ export function defineTarget<Props extends object = Record<string, unknown>>(
   definition: TargetDefinition<Props>
 ): TargetComponent<Props> {
   const target = (_props: Props & { children?: unknown }): RegistryNode => {
-    throw new Error(
-      '@videojs/compiler/components: target components can only be evaluated by the registry JSX runtime.'
-    );
+    throw new Error('vjsc/components: target components can only be evaluated by the registry JSX runtime.');
   };
 
   return Object.assign(target, { [REGISTRY_TARGET]: definition });

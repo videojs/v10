@@ -1,4 +1,4 @@
-import type { FunctionComponent } from '@videojs/compiler/components';
+import type { FunctionComponent } from 'vjsc/components';
 import styles from '../../styles/components/status-indicator-overlay.styles';
 import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';

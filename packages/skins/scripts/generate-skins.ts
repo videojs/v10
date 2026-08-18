@@ -1,7 +1,7 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { ImportRef } from '@videojs/compiler/ast';
 import { camelCase, kebabCase } from '@videojs/utils/string';
+import type { ImportRef } from 'vjsc/ast';
 import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
 import { emitShadcnRegistry } from '../build/emit/shadcn';
 import { emitFrameworkSkin, type FrameworkTarget } from '../build/targets';

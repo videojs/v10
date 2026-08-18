@@ -68,7 +68,7 @@ describe('vjsCompiler', () => {
     expect(match).not.toBeNull();
 
     const id = match![1]!;
-    expect(id).toContain('virtual:@videojs/compiler/css/');
+    expect(id).toContain('virtual:vjsc/css/');
     expect(plugin.resolveId(id)).toBe(`\0${id}`);
     expect(plugin.load(`\0${id}`)).toBe('.foo{display:flex;}');
     expect(result!.code).toContain('function App');

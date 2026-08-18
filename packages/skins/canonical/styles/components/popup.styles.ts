@@ -1,4 +1,4 @@
-import { styles } from '@videojs/compiler/styles';
+import { styles } from 'vjsc/styles';
 
 const popupBase = [
   'm-0 overflow-visible border-0 text-inherit',

@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler/components';
+import { defineComponent } from 'vjsc/components';
 
 import type { VolumeIndicatorProps } from './volume-indicator-core';
 import { VolumeIndicatorDataAttrs } from './volume-indicator-data-attrs';

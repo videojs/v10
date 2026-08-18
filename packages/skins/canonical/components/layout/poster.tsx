@@ -1,5 +1,5 @@
-import { Slot } from '@videojs/compiler/components';
 import * as $ from '@videojs/core/components';
+import { Slot } from 'vjsc/components';
 import styles from '../../styles/components/poster.styles';
 
 export function Poster() {

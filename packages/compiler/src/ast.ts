@@ -2,7 +2,7 @@
  * Advanced TypeScript-AST primitives for compiler plugin authors.
  *
  * Most compiler configurations should use the high-level `rewrite()` DSL
- * from `@videojs/compiler`. This subpath is the explicit escape hatch for
+ * from `vjsc`. This subpath is the explicit escape hatch for
  * transforms that need direct access to TypeScript nodes and factories.
  */
 export type { CompilerTransform } from './config';

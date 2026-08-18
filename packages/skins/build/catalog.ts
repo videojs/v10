@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
-import { type Catalog, loadCatalog } from '@videojs/compiler/catalog';
 import { pascalCase } from '@videojs/utils/string';
+import { type Catalog, loadCatalog } from 'vjsc/catalog';
 import { skinCatalog } from '../canonical/catalog';
 
 export type SkinCatalog = Catalog<typeof skinCatalog>;

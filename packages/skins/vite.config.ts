@@ -1,8 +1,7 @@
 import { resolve } from 'node:path';
-
-import compiler from '@videojs/compiler/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
+import compiler from 'vjsc/vite';
 
 import { createCompilerReactConfig } from './build/transform/react';
 
@@ -49,13 +48,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
-    exclude: [
-      '@videojs/compiler',
-      '@videojs/compiler/styles',
-      '@videojs/core',
-      '@videojs/icons',
-      '@videojs/react',
-      '@videojs/utils',
-    ],
+    exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
   },
 });

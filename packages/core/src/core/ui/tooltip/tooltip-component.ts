@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler/components';
+import { defineComponent } from 'vjsc/components';
 import type { TooltipProps } from './tooltip-core';
 import { TooltipDataAttrs } from './tooltip-data-attrs';
 import type { TooltipGroupProps } from './tooltip-group-core';

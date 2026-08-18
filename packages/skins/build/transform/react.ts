@@ -1,7 +1,7 @@
-import { createJsxEditor, defineConfig, jsx, rewrite } from '@videojs/compiler';
-import type { ImportRef } from '@videojs/compiler/ast';
-import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compiler/styles';
 import type { Expression } from 'typescript';
+import { createJsxEditor, defineConfig, jsx, rewrite } from 'vjsc';
+import type { ImportRef } from 'vjsc/ast';
+import { type StylePluginOptions, plugin as stylesPlugin } from 'vjsc/styles';
 
 interface CreateCompilerReactConfigOptions {
   styles?: StylePluginOptions | undefined;
@@ -82,9 +82,9 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             source: iconSet === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${iconSet}`,
             name,
           }),
-        '@videojs/compiler/components': (name) =>
+        'vjsc/components': (name) =>
           name === 'Slot' || name === 'Template' || name === 'Text'
-            ? { source: '@videojs/compiler/components', name }
+            ? { source: 'vjsc/components', name }
             : resolveImport({
                 source: 'react',
                 name: name === 'ComponentNode' ? 'ReactElement' : name,

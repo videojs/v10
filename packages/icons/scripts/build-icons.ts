@@ -89,7 +89,7 @@ function buildCanonicalComponents(icons: { varName: string }[]): string {
     return `export const ${name} = createComponent({ name: '${name}' });`;
   });
 
-  return [`import { createComponent } from '@videojs/compiler/components';`, ``, ...components, ``].join('\n');
+  return [`import { createComponent } from 'vjsc/components';`, ``, ...components, ``].join('\n');
 }
 
 function buildCanonicalComponentTypes(icons: { varName: string }[]): string {
@@ -98,9 +98,7 @@ function buildCanonicalComponentTypes(icons: { varName: string }[]): string {
     return `export declare const ${name}: Component<EmptyProps>;`;
   });
 
-  return [`import type { Component, EmptyProps } from '@videojs/compiler/components';`, ``, ...components, ``].join(
-    '\n'
-  );
+  return [`import type { Component, EmptyProps } from 'vjsc/components';`, ``, ...components, ``].join('\n');
 }
 
 function buildElementIndex(sets: string[]): string {

@@ -1,5 +1,5 @@
-import type { FunctionComponent } from '@videojs/compiler/components';
 import * as $ from '@videojs/core/components';
+import type { FunctionComponent } from 'vjsc/components';
 import styles from '../../styles/components/menu.styles';
 import { MenuChevron } from './menu-chevron';
 

@@ -1,5 +1,5 @@
-import { defineConfig, html, rewrite } from '@videojs/compiler';
-import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compiler/styles';
+import { defineConfig, html, rewrite } from 'vjsc';
+import { type StylePluginOptions, plugin as stylesPlugin } from 'vjsc/styles';
 
 interface CreateCompilerHtmlConfigOptions {
   styles?: StylePluginOptions | undefined;

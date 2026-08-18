@@ -1,4 +1,4 @@
-import { defineConfig } from '@videojs/compiler';
+import { defineConfig } from 'vjsc';
 
 import { resolveHtmlTargets } from './compiler/resolve.ts';
 

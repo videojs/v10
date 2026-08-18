@@ -1,6 +1,6 @@
-import type { ComponentNode } from '@videojs/compiler/components';
 import type { TooltipProps } from '@videojs/core';
 import * as $ from '@videojs/core/components';
+import type { ComponentNode } from 'vjsc/components';
 import styles from '../../styles/components/popup.styles';
 
 export interface ButtonTooltipProps extends TooltipProps {

@@ -1,6 +1,6 @@
 import { isStyleRule, visitStyleRules } from './tree';
 
-const styleDefinition = Symbol.for('@videojs/compiler/styles/definition');
+const styleDefinition = Symbol.for('vjsc/styles/definition');
 
 export type StyleValue = string | readonly string[];
 

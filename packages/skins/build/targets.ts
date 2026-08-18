@@ -1,8 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, posix, resolve } from 'node:path';
-
-import { type CatalogOutputFile, type CatalogStyleTransform, emitCatalog } from '@videojs/compiler/catalog';
 import { format } from 'oxfmt';
+import { type CatalogOutputFile, type CatalogStyleTransform, emitCatalog } from 'vjsc/catalog';
 import { registry as htmlRegistry } from '../../html/compiler';
 import { registry as reactRegistry } from '../../react/compiler';
 

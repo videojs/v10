@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
-import { loadCatalogStyles, resolveCatalog } from '@videojs/compiler/catalog';
 import { describe, expect, it } from 'vitest';
+import { loadCatalogStyles, resolveCatalog } from 'vjsc/catalog';
 import { canonicalRoot, loadSkinCatalog } from '../catalog';
 
 describe('skinCatalog', () => {

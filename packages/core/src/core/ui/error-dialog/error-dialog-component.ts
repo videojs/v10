@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler/components';
+import { defineComponent } from 'vjsc/components';
 
 import { ErrorDialogDataAttrs } from './error-dialog-data-attrs';
 

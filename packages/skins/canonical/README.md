@@ -4,7 +4,7 @@ This directory contains the framework-neutral source for generated Video.js skin
 
 Canonical source:
 
-- Uses constrained JSX from `@videojs/compiler/components`.
+- Uses constrained JSX from `vjsc/components`.
 - Imports Video.js primitives only through stable package exports.
 - Keeps independently installable components in role-based directories.
 - Contains semantic structure without React- or HTML-specific markup.

@@ -1,4 +1,4 @@
-import { styles } from '@videojs/compiler/styles';
+import { styles } from 'vjsc/styles';
 import { defaultSurface, minimalSurfaceFrameOnly } from './popup.styles';
 
 export default styles({

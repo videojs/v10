@@ -1,7 +1,7 @@
-/** @jsxImportSource @videojs/compiler/components */
+/** @jsxImportSource vjsc/components */
 
-import { Slot, Text } from '@videojs/compiler/components';
 import { describe, it } from 'vitest';
+import { Slot, Text } from 'vjsc/components';
 import {
   Controls,
   FullscreenButton,

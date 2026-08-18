@@ -1,15 +1,15 @@
 import { readFile } from 'node:fs/promises';
 import { posix, resolve } from 'node:path';
 
-import { collectModuleSpecifiers } from '@videojs/compiler/ast';
-import { type CatalogOutputFile, emitCatalog, resolveCatalog } from '@videojs/compiler/catalog';
+import { collectModuleSpecifiers } from 'vjsc/ast';
+import { type CatalogOutputFile, emitCatalog, resolveCatalog } from 'vjsc/catalog';
 import {
   emitRegistry,
   type Registry,
   type RegistryConfig,
   type RegistryFile,
   type RegistryFileType,
-} from '@videojs/compiler/shadcn';
+} from 'vjsc/shadcn';
 import { registry as reactRegistry } from '../../../react/compiler';
 import type { skinCatalog } from '../../canonical/catalog';
 import { catalogSourcePath, type SkinCatalog, type SkinCatalogItem, skinRootClassName } from '../catalog';

@@ -1,5 +1,5 @@
-import { defineConfig } from '@videojs/compiler';
 import { components } from '@videojs/core/components';
+import { defineConfig } from 'vjsc';
 
 export default defineConfig({
   generate: {
