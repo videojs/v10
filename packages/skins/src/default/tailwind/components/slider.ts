@@ -4,11 +4,10 @@ const previewContent = cn(
   'absolute left-1/2 max-w-(--max-width)',
   '-translate-x-1/2 translate-y-2 scale-80 opacity-0 blur-lg origin-bottom',
   'transition-[filter,opacity,scale] duration-150 ease-out',
-  'group-data-pointing/preview:scale-100 group-data-pointing/preview:opacity-100',
-  'group-data-pointing/preview:blur-none',
-  'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:scale-100',
-  'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:opacity-100',
-  'group-data-interactive/preview:group-not-data-pointing/preview:group-not-data-dragging/preview:blur-none'
+  'group-data-pointing/slider:scale-100 group-data-pointing/slider:opacity-100',
+  'group-data-pointing/slider:blur-none',
+  'group-has-focus-visible/slider:scale-100 group-has-focus-visible/slider:opacity-100',
+  'group-has-focus-visible/slider:blur-none'
 );
 
 export const slider = {
@@ -105,7 +104,7 @@ export const slider = {
     ),
   },
   preview: cn(
-    'group/preview [--max-width:min(--spacing(48),100cqi)] [--max-height:--spacing(32)] min-w-(--max-width) h-1',
+    '[--max-width:min(--spacing(48),100cqi)] [--max-height:--spacing(32)] min-w-(--max-width) h-1',
     'before:absolute before:z-1 before:top-1/2 before:left-1/2 before:size-1 before:bg-current before:rounded-full before:pointer-events-none',
     'before:shadow-[0_0_0_1px_var(--shadow-current-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
@@ -118,5 +117,5 @@ export const slider = {
     '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums',
     'text-shadow-2xs text-shadow-(color:--shadow-current-color)'
   ),
-  chapterTitle: 'min-w-0 max-w-(--max-width) px-3 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
+  chapterTitle: 'min-w-0 max-w-(--max-width) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };

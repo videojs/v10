@@ -109,6 +109,10 @@
       --scale: 1.75;
     }
   }
+
+  * {
+    --focus-ring-color: oklch(1 0 0);
+  }
 }
 
 /* Error Dialog  */

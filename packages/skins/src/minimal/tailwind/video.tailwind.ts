@@ -30,6 +30,7 @@ export const container = (isShadowDOM: boolean) =>
     '[--default-accent-color:oklch(1_0_0)]',
     '[--border-color:light-dark(oklch(0_0_0/0.15),oklch(1_0_0/0.15))]',
     '[--focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
+    '**:[--focus-ring-color:oklch(1_0_0)]',
     '[--container-border-radius:var(--media-border-radius,0.75rem)]',
     '[--media-video-border-radius:var(--container-border-radius)]',
     '[--controls-background-color:transparent]',

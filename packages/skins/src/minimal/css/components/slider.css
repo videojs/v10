@@ -328,15 +328,6 @@
       transition-property: opacity, scale;
     }
 
-    &[data-pointing] .media-slider__value,
-    &[data-pointing] .media-slider__thumbnail,
-    &[data-interactive]:not([data-pointing]):not([data-dragging]) .media-slider__value,
-    &[data-interactive]:not([data-pointing]):not([data-dragging]) .media-slider__thumbnail {
-      opacity: 1;
-      filter: blur(0);
-      scale: 1;
-    }
-
     &[data-orientation="horizontal"]::before {
       top: 50%;
       left: var(--media-slider-pointer);
@@ -354,5 +345,13 @@
       opacity: 1;
       scale: 1;
     }
+  }
+
+  &:is([data-pointing], :has(:focus-visible))
+    .media-slider__preview
+    :is(.media-slider__value, .media-slider__thumbnail) {
+    opacity: 1;
+    filter: blur(0);
+    scale: 1;
   }
 }
