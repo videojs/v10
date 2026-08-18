@@ -10,7 +10,7 @@
     "directory": "packages/compiler"
   },
   "bin": {
-    "vjsc": "./dist/cli.js"
+    "vjsc": "./bin/vjsc.js"
   },
   "sideEffects": false,
   "exports": {
@@ -64,6 +64,7 @@
     }
   },
   "files": [
+    "bin",
     "dist"
   ],
   "scripts": {
