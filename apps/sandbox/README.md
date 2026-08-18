@@ -73,6 +73,7 @@ Every pull request publishes this directory as a StackBlitz template through [pk
 
 - **Nothing may reference a path outside this directory.** `vite.config.ts` locates the prebuilt `@videojs/html` CDN bundle through Node resolution rather than `../../packages/html`, and `tsconfig.json` is self-contained instead of extending `../../tsconfig.base.json` — Vite fails to start if that `extends` cannot be resolved.
 - **Only published packages may be dependencies.** Private workspace packages such as `@videojs/icons` and `@videojs/skins` cannot be installed outside the monorepo; their code already ships inlined inside `@videojs/html` and `@videojs/react`.
+- **The package manager has to be declared here.** Only the repo root says pnpm, and the root is never uploaded, so StackBlitz would otherwise default to npm. The `stackblitz` field in `package.json` turns off its automatic install and boots with pnpm instead. `--ignore-scripts` is there because pnpm refuses to silently skip dependency build scripts and fails the install if it has to; the sandbox needs none of them, esbuild's native binary included.
 
 `src/` is gitignored and so never part of the upload. That is fine: the `dev` script runs `setup.ts` first, which recreates `src/` from `templates/` on boot.
 

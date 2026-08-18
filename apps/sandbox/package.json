@@ -38,5 +38,9 @@
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.1",
     "vite": "^8.1.5"
+  },
+  "stackblitz": {
+    "installDependencies": false,
+    "startCommand": "pnpm install --ignore-scripts && pnpm dev"
   }
 }
