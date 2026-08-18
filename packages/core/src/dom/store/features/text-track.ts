@@ -7,6 +7,7 @@ import type {
 } from '@videojs/media';
 import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '@videojs/media';
 import { findTrackElement, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
+import { DEFAULT_LOCALE, findLocaleKeys, getCanonicalLocaleKey } from '../../../core/i18n';
 import { definePlayerFeature } from '../../feature';
 
 interface IdentifiedTrack {
@@ -35,6 +36,24 @@ function showOnly(tracks: IdentifiedTrack[], active: TextTrackLike | null): void
     const mode = track === active ? 'showing' : 'disabled';
     if (track.mode !== mode) track.mode = mode;
   }
+}
+
+function findLocaleTrack(tracks: IdentifiedTrack[], locale: string): IdentifiedTrack | undefined {
+  const localeKey = getCanonicalLocaleKey(locale);
+  const keys = findLocaleKeys(locale);
+
+  // Translation lookup falls back to English; caption selection should not.
+  if (localeKey !== DEFAULT_LOCALE && !localeKey.startsWith(`${DEFAULT_LOCALE}-`)) keys.pop();
+
+  for (const key of keys) {
+    const exact = tracks.find(({ track }) => getCanonicalLocaleKey(track.language) === key);
+    if (exact) return exact;
+
+    const regional = tracks.find(({ track }) => getCanonicalLocaleKey(track.language).startsWith(`${key}-`));
+    if (regional) return regional;
+  }
+
+  return undefined;
 }
 
 export const textTrackFeature = definePlayerFeature({
@@ -67,9 +86,13 @@ export const textTrackFeature = definePlayerFeature({
           return false;
         }
 
-        // Restore the remembered track, falling back to the first one the
-        // captions menu offers when there is nothing to restore.
-        const next = showing ?? subtitlesTracks.find(({ id }) => id === lastShownId) ?? subtitlesTracks[0]!;
+        // Restore the remembered track, then prefer the browser locale before
+        // falling back to the first track the captions menu offers.
+        const next =
+          showing ??
+          subtitlesTracks.find(({ id }) => id === lastShownId) ??
+          findLocaleTrack(subtitlesTracks, globalThis.navigator?.language ?? '') ??
+          subtitlesTracks[0]!;
         lastShownId = next.id;
         showOnly(subtitlesTracks, next.track);
 
