@@ -1,19 +1,6 @@
 import { defineComponent } from 'vjsc/components';
-import type { MenuProps } from './menu-core';
+import type { MenuItemIndicatorProps, MenuItemProps, MenuProps, MenuTriggerProps } from './menu-core';
 import { MenuDataAttrs } from './menu-data-attrs';
-
-export interface MenuTriggerProps {
-  disabled?: boolean | undefined;
-}
-
-export interface MenuItemProps {
-  disabled?: boolean | undefined;
-}
-
-export interface MenuItemIndicatorProps {
-  checked?: boolean | undefined;
-  forceMount?: boolean | undefined;
-}
 
 export default defineComponent({
   name: 'Menu',

@@ -23,6 +23,19 @@ export interface MenuProps {
   isSubmenu?: boolean | undefined;
 }
 
+export interface MenuTriggerProps {
+  disabled?: boolean | undefined;
+}
+
+export interface MenuItemProps {
+  disabled?: boolean | undefined;
+}
+
+export interface MenuItemIndicatorProps {
+  checked?: boolean | undefined;
+  forceMount?: boolean | undefined;
+}
+
 /** Raw transition state provided by `createTransition`. */
 export interface MenuInput extends TransitionState {}
 

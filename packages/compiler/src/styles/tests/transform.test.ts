@@ -28,9 +28,7 @@ const source = `
   import styles from './fixture.styles';
   export function Example({ reverse }) {
     return <button className={[styles.button, styles.seekButton, 'hook']}>
-      <span className={reverse
-        ? [styles.buttonIcon, styles.seekBackwardIcon]
-        : styles.buttonIcon} />
+      <span className={[styles.buttonIcon, reverse && styles.seekBackwardIcon]} />
     </button>;
   }
 `;
@@ -39,28 +37,16 @@ describe('plugin static references', () => {
   it('projects default-exported style references to Tailwind utilities', async () => {
     const result = await compileWithStyle('tailwind');
 
-    expect(result.code).toContain('className="grid p-0 hook"');
-    expect(result.code).toContain('? "size-4 -scale-x-100" : "size-4"');
+    expect(result.code).toContain(`className={["grid", "p-0", 'hook']}`);
+    expect(result.code).toContain('className={["size-4", reverse && "-scale-x-100"]}');
     expect(result.code).not.toContain('fixture.styles');
-  });
-
-  it('preserves authored groups when composing editable class names', async () => {
-    const result = await transform(source, {
-      filename,
-      config: {
-        target: jsx(),
-        plugins: [plugin({ manifest, mode: 'tailwind', compose: true })],
-      },
-    });
-
-    expect(result.code).toContain('["size-4", reverse && "-scale-x-100"]');
   });
 
   it('projects the same references to semantic classes', async () => {
     const result = await compileWithStyle('css');
 
-    expect(result.code).toContain('className="media-button media-seek-button hook"');
-    expect(result.code).toContain('? "media-button-icon media-seek-backward-icon" : "media-button-icon"');
+    expect(result.code).toContain(`className="media-button media-seek-button hook"`);
+    expect(result.code).toContain('className={["media-button-icon", reverse && "media-seek-backward-icon"]}');
   });
 
   it('rejects aliases for style references', async () => {

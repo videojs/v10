@@ -13,6 +13,7 @@ import {
   type InterfaceDeclarationOptions,
   type InterfacePropertySpec,
 } from '../utils/declarations';
+import { createArrowFunction } from '../utils/functions';
 import {
   hasJsxSpreadAttribute,
   isJsxElementLike as isJsxNodeLike,
@@ -105,6 +106,7 @@ export interface CreateHelpers {
     literal(value: string | number | boolean): ts.LiteralTypeNode;
     named(value: string | ImportReference, typeArguments?: readonly ts.TypeNode[]): ts.TypeReferenceNode;
     string(): ts.KeywordTypeNode;
+    typeOf(value: string | ImportReference): ts.TypeQueryNode;
     union(...types: readonly ts.TypeNode[]): ts.UnionTypeNode;
     unknown(): ts.KeywordTypeNode;
     undefined(): ts.KeywordTypeNode;
@@ -135,6 +137,7 @@ export interface EditHelpers {
   function: {
     declaration(options: FunctionDeclarationEditOptions): CompilerTransform;
     addProps(props: readonly FunctionPropSpec[], parameterIndex?: number): FunctionDeclarationEdit;
+    setParameterType(type: string | ImportReference | ts.TypeNode, parameterIndex?: number): FunctionDeclarationEdit;
     setProps(props: readonly FunctionPropSpec[], options?: FunctionPropsOptions): FunctionDeclarationEdit;
   };
 }
@@ -218,6 +221,7 @@ export interface TypeHelpers {
   literal(value: string | number | boolean): ts.LiteralTypeNode;
   named(value: string | ImportReference, typeArguments?: readonly ts.TypeNode[]): ts.TypeReferenceNode;
   string(): ts.KeywordTypeNode;
+  typeOf(value: string | ImportReference): ts.TypeQueryNode;
   union(...types: readonly ts.TypeNode[]): ts.UnionTypeNode;
   unknown(): ts.KeywordTypeNode;
   undefined(): ts.KeywordTypeNode;
@@ -238,6 +242,7 @@ export interface FunctionSelection {
   readonly jsx: ScopedJsxHelpers;
   addProps(props: readonly FunctionPropSpec[], parameterIndex?: number): CompilerTransform;
   insertBefore(statements: FunctionSiblingStatementSpec): CompilerTransform;
+  setParameterType(type: string | ImportReference | ts.TypeNode, parameterIndex?: number): CompilerTransform;
   setProps(props: readonly FunctionPropSpec[], options?: FunctionPropsOptions): CompilerTransform;
   append(statements: FunctionStatementSpec): CompilerTransform;
   beforeReturn(statements: FunctionStatementSpec): CompilerTransform;
@@ -283,11 +288,6 @@ export interface TransformHelpers {
 
 export type TransformStep = CompilerTransform | CompilerPlugin | null | undefined | false;
 export type RewriteCallback = (helpers: TransformHelpers) => readonly TransformStep[];
-
-export interface RewriteOptions {
-  name?: string | undefined;
-  enforce?: 'pre' | 'post' | undefined;
-}
 
 export interface JsxElementContext {
   element: JsxElementLike;
@@ -364,10 +364,9 @@ export interface FunctionPropsOptions {
   initializer?: ts.Expression | undefined;
 }
 
-export function rewrite(callback: RewriteCallback, options: RewriteOptions = {}): CompilerPlugin {
+export function rewrite(callback: RewriteCallback): CompilerPlugin {
   return {
-    name: options.name ?? 'transform',
-    ...(options.enforce ? { enforce: options.enforce } : {}),
+    name: 'vjsc:rewrite',
     async setup(context) {
       const refs: MutableImportReference[] = [];
       const helpers = createTransformHelpers(refs, context);
@@ -628,6 +627,8 @@ function createFunctionSelection(name: string | RegExp, match: MatchHelpers, edi
     addProps: (props, parameterIndex) =>
       edit.function.declaration({ when, transform: edit.function.addProps(props, parameterIndex) }),
     insertBefore: (statements) => insertStatementsBeforeFunction(when, statements),
+    setParameterType: (type, parameterIndex) =>
+      edit.function.declaration({ when, transform: edit.function.setParameterType(type, parameterIndex) }),
     setProps: (props, options) =>
       edit.function.declaration({ when, transform: edit.function.setProps(props, options) }),
     append: (statements) =>
@@ -714,14 +715,7 @@ function createCreateHelpers(): CreateHelpers {
         return value.elements.filter((item): item is ts.Expression => !ts.isSpreadElement(item));
       },
       arrow(parameters, body) {
-        return ts.factory.createArrowFunction(
-          undefined,
-          undefined,
-          parameters.map((name) => ts.factory.createParameterDeclaration(undefined, undefined, name)),
-          undefined,
-          ts.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-          body
-        );
+        return createArrowFunction(parameters, body);
       },
       boolean(value) {
         return value ? ts.factory.createTrue() : ts.factory.createFalse();
@@ -842,6 +836,10 @@ function createCreateHelpers(): CreateHelpers {
       string() {
         return ts.factory.createKeywordTypeNode(ts.SyntaxKind.StringKeyword);
       },
+      typeOf(value) {
+        if (isImportReference(value)) value.used = true;
+        return ts.factory.createTypeQueryNode(entityNameFromPath(typeof value === 'string' ? value : value.name));
+      },
       union(...types) {
         return ts.factory.createUnionTypeNode([...types]);
       },
@@ -922,6 +920,10 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
         (props, parameterIndex = 0) =>
         (functionContext) =>
           addFunctionProps(functionContext.function, parameterIndex, props, functionContext.factory),
+      setParameterType:
+        (type, parameterIndex = 0) =>
+        (functionContext) =>
+          setFunctionParameterType(functionContext.function, parameterIndex, type, functionContext.factory),
       setProps:
         (props, options = {}) =>
         (functionContext) =>
@@ -1117,7 +1119,7 @@ function materializeImportRefs(refs: readonly MutableImportReference[], context:
           result,
           { source: ref.source, name: ref.name, default: ref.default, type: ref.type },
           factory,
-          context
+          ref.relativeTo === 'module' ? {} : context
         );
       }
       return result;
@@ -1553,6 +1555,38 @@ function setFunctionProps(
   );
 }
 
+function setFunctionParameterType(
+  declaration: ts.FunctionDeclaration,
+  parameterIndex: number,
+  type: string | ImportReference | ts.TypeNode,
+  factory: ts.NodeFactory
+): ts.FunctionDeclaration | undefined {
+  const parameter = declaration.parameters[parameterIndex];
+  if (!parameter) return undefined;
+
+  const nextParameter = factory.updateParameterDeclaration(
+    parameter,
+    parameter.modifiers,
+    parameter.dotDotDotToken,
+    parameter.name,
+    parameter.questionToken,
+    typeNodeFromReference(type, factory),
+    parameter.initializer
+  );
+  const parameters = declaration.parameters.map((item, index) => (index === parameterIndex ? nextParameter : item));
+
+  return factory.updateFunctionDeclaration(
+    declaration,
+    declaration.modifiers,
+    declaration.asteriskToken,
+    declaration.name,
+    declaration.typeParameters,
+    parameters,
+    declaration.type,
+    declaration.body
+  );
+}
+
 function typeNodeFromReference(value: string | ImportReference | ts.TypeNode, factory: ts.NodeFactory): ts.TypeNode {
   if (typeof value === 'string') return factory.createTypeReferenceNode(value);
   if (isImportReference(value)) {
@@ -1561,6 +1595,17 @@ function typeNodeFromReference(value: string | ImportReference | ts.TypeNode, fa
   }
   if (isNode(value) && ts.isTypeNode(value)) return value;
   throw new TypeError('Expected a type node or import reference.');
+}
+
+function entityNameFromPath(path: string): ts.EntityName {
+  const [root, ...parts] = path.split('.');
+  let name: ts.EntityName = ts.factory.createIdentifier(root!);
+
+  for (const part of parts) {
+    name = ts.factory.createQualifiedName(name, part);
+  }
+
+  return name;
 }
 
 function createJsxProp(name: string, value: JsxPropValue, factory: ts.NodeFactory): ts.JsxAttribute {

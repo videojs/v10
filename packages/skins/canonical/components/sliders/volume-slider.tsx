@@ -1,10 +1,11 @@
-import type { VolumeSliderProps } from '@videojs/core';
+import type { VolumeSliderProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/components';
+import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/slider.styles';
 
-export function VolumeSlider(props: VolumeSliderProps = {}) {
+export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <$.VolumeSlider.Root className={styles.root} thumbAlignment="edge" {...props}>
+    <$.VolumeSlider.Root className={[styles.root, className]} thumbAlignment="edge" {...props}>
       <$.VolumeSlider.Track className={styles.track}>
         <$.VolumeSlider.Fill className={styles.fill} />
       </$.VolumeSlider.Track>

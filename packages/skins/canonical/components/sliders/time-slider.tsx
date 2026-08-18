@@ -1,14 +1,13 @@
+import type { TimeSliderProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/components';
 import { SpinnerIcon } from '@videojs/icons/components';
-import { type FunctionComponent, Template } from 'vjsc/components';
+import { Group as PreviewValue, type Props, Template } from 'vjsc/components';
 import popupStyles from '../../styles/components/popup.styles';
 import styles from '../../styles/components/slider.styles';
 
-declare const PreviewValue: FunctionComponent;
-
-export function TimeSlider() {
+export function TimeSlider({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <$.TimeSlider.Root className={styles.root}>
+    <$.TimeSlider.Root className={[styles.root, className]} {...props}>
       <$.TimeSlider.Chapters className={styles.chapters}>
         <Template name="chapter" className={styles.chapter}>
           <$.TimeSlider.Track className={styles.chapterTrack}>

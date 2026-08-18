@@ -35,7 +35,7 @@ describe('emitCatalog', () => {
     );
 
     const output = await emitCatalog(loaded, {
-      transform: { registry },
+      output: { registry },
       files: { source: ({ sourceFile }) => sourceFile },
     });
 
@@ -61,7 +61,7 @@ describe('emitCatalog', () => {
 
     const output = await emitCatalog(loaded, {
       items: ['entry'],
-      transform: {
+      output: {
         compiler: defineConfig({ target: jsx() }),
       },
       files: {
@@ -113,7 +113,7 @@ describe('emitCatalog', () => {
 
     const output = await emitCatalog(loaded, {
       items: ['entry'],
-      transform: {
+      output: {
         mode: 'bundle',
         compiler: defineConfig({ target: jsx() }),
       },
@@ -157,14 +157,14 @@ describe('emitCatalog', () => {
 
     const output = await emitCatalog(loaded, {
       items: ['entry'],
-      transform: {
+      output: {
         compiler: defineConfig({ target: jsx() }),
-        styles: {
-          mode: 'css',
-          input: resolve(import.meta.dirname, '../../styles/tests/fixtures/tailwind.css'),
-          scope: '.fixture-skin',
-          variant: 'compact',
-        },
+      },
+      styles: {
+        mode: 'css',
+        input: resolve(import.meta.dirname, '../../styles/tests/fixtures/tailwind.css'),
+        scope: '.fixture-skin',
+        variant: 'compact',
       },
       files: {
         source: ({ sourceFile }) => sourceFile,

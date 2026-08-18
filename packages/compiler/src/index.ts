@@ -105,7 +105,6 @@ export {
   type MatchPredicate,
   type ModuleSelection,
   type RewriteCallback,
-  type RewriteOptions,
   rewrite,
   type ScopedJsxElementSelection,
   type ScopedJsxHelpers,

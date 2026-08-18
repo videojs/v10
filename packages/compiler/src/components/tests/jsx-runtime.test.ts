@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 import { defineComponent } from '../definition';
-import { createComponent, jsx, VIDEOJS_NODE } from '../jsx-runtime';
+import { createComponent, jsx, type Props, VIDEOJS_NODE } from '../jsx-runtime';
 
 describe('createComponent', () => {
   it('creates nested component parts with dotted part paths', () => {
@@ -34,6 +34,17 @@ describe('createComponent', () => {
       props: { className: 'play' },
       key: 'control',
     });
+  });
+
+  it('keeps class lists local to compiler component attributes', () => {
+    type ClassNamePart = string | false | null | undefined;
+
+    const PlayButton = createComponent(defineComponent({ name: 'PlayButton' }));
+
+    expectTypeOf<Props['className']>().toEqualTypeOf<string | undefined>();
+    expectTypeOf<Parameters<typeof PlayButton>[0]['className']>().toEqualTypeOf<
+      ClassNamePart | readonly ClassNamePart[]
+    >();
   });
 
   it('fails when a canonical component is evaluated outside the compiler runtime', () => {

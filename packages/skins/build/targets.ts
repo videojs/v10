@@ -2,18 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { basename, posix, resolve } from 'node:path';
 import { format } from 'oxfmt';
 import { type CatalogOutputFile, type CatalogStyleTransform, emitCatalog } from 'vjsc/catalog';
-import { registry as htmlRegistry } from '../../html/compiler';
-import { registry as reactRegistry } from '../../react/compiler';
 
-import {
-  catalogSourcePath,
-  type SkinCatalog,
-  type SkinCatalogSkin,
-  skinRootClassName,
-  skinRootComponentName,
-} from './catalog';
-import { createCompilerHtmlConfig } from './transform/html';
-import { createCompilerReactConfig, type ReactImportResolver } from './transform/react';
+import { catalogSourcePath, type SkinCatalog, type SkinCatalogSkin, skinRootComponentName } from './catalog';
+import { htmlOutput } from './output/html';
+import { type ReactImportResolver, reactOutput } from './output/react';
 
 export type FrameworkTarget =
   | { framework: 'html'; resolveImport?: ((specifier: string) => string) | undefined }
@@ -86,16 +78,12 @@ async function emitReactTarget(
 
   const output = await emitCatalog(catalog, {
     items: [skin.name],
-    transform: {
-      registry: reactRegistry,
-      compiler: createCompilerReactConfig({
-        iconSet,
-        rootComponentName: skinRootComponentName(skin),
-        rootClassName: skinRootClassName(skin),
-        ...(target.resolveImport ? { resolveImport: target.resolveImport } : {}),
-      }),
-      styles,
-    },
+    output: reactOutput({
+      iconSet,
+      rootComponentName: skinRootComponentName(skin),
+      ...(target.resolveImport ? { resolveImport: target.resolveImport } : {}),
+    }),
+    styles,
     files: {
       source: ({ sourceFile }) => {
         const path = catalogSourcePath(sourceFile);
@@ -124,15 +112,10 @@ async function emitHtmlTarget(
 ): Promise<{ files: FrameworkSkinFile[]; styles: readonly CatalogOutputFile[] }> {
   const output = await emitCatalog(catalog, {
     items: [skin.name],
-    transform: {
-      mode: 'bundle',
-      registry: htmlRegistry,
-      compiler: createCompilerHtmlConfig({
-        rootComponentName: skinRootComponentName(skin),
-        rootClassName: skinRootClassName(skin),
-      }),
-      styles,
-    },
+    output: htmlOutput({
+      iconSet,
+    }),
+    styles,
     files: {
       source: () => 'skin.html',
     },
@@ -151,9 +134,7 @@ async function emitHtmlTarget(
 
   if (html.errors.length > 0) throw new Error(html.errors.map((error) => error.message).join('\n'));
 
-  const imports = htmlImports(output.references, iconSet, bundled.imports ?? []).map(
-    target.resolveImport ?? ((specifier) => specifier)
-  );
+  const imports = [...new Set(bundled.imports ?? [])].map(target.resolveImport ?? ((specifier) => specifier));
   const content = `${imports.map((specifier) => `import '${specifier}';`).join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
 
   return {
@@ -199,18 +180,6 @@ async function packageStyles(
     },
     ...files,
   ];
-}
-
-function htmlImports(
-  references: SkinCatalog['references'],
-  iconSet: string,
-  componentImports: readonly string[]
-): string[] {
-  return [...(references.icons.length > 0 ? [htmlIconElementImport(iconSet)] : []), ...componentImports];
-}
-
-function htmlIconElementImport(iconSet: string): string {
-  return iconSet === 'default' ? '@videojs/html/icons/element' : `@videojs/html/icons/element/${iconSet}`;
 }
 
 function uniqueTargets(targets: readonly FrameworkTarget[], skin: string): readonly FrameworkTarget[] {

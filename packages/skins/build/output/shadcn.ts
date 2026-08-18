@@ -2,7 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { posix, resolve } from 'node:path';
 
 import { collectModuleSpecifiers } from 'vjsc/ast';
-import { type CatalogOutputFile, emitCatalog, resolveCatalog } from 'vjsc/catalog';
+import {
+  type CatalogOutputAdapter,
+  type CatalogOutputFile,
+  defineOutput,
+  emitCatalog,
+  resolveCatalog,
+} from 'vjsc/catalog';
 import {
   emitRegistry,
   type Registry,
@@ -10,10 +16,9 @@ import {
   type RegistryFile,
   type RegistryFileType,
 } from 'vjsc/shadcn';
-import { registry as reactRegistry } from '../../../react/compiler';
 import type { skinCatalog } from '../../canonical/catalog';
-import { catalogSourcePath, type SkinCatalog, type SkinCatalogItem, skinRootClassName } from '../catalog';
-import { createCompilerReactConfig } from '../transform/react';
+import { catalogSourcePath, type SkinCatalog, type SkinCatalogItem } from '../catalog';
+import { reactOutput } from './react';
 
 type CatalogRegistryConfig = RegistryConfig<typeof skinCatalog>;
 
@@ -97,15 +102,10 @@ async function emitSources(
 ): Promise<ShadcnSources> {
   const emitted = await emitCatalog(catalog, {
     items: itemNames,
-    transform: {
-      registry: reactRegistry,
-      compiler: (catalogItem) => createCompilerConfig(catalogItem, options),
-      configDir: (catalogItem) => resolve(options.rootDir, itemOutputDir(catalogItem, options)),
-      styles: {
-        mode: 'tailwind',
-        variant: options.variant,
-        compose: true,
-      },
+    output: shadcnOutput(options),
+    styles: {
+      mode: 'tailwind',
+      variant: options.variant,
     },
     files: {
       source: ({ catalogItem, sourceFile }) => sourceOutputPath(catalogItem, sourceFile, options),
@@ -185,20 +185,26 @@ function createSourceFile(path: string, content: string): ShadcnSourceFile {
   };
 }
 
-function createCompilerConfig(item: SkinCatalogItem, options: SourceOptions) {
-  return createCompilerReactConfig({
-    iconSet: options.iconSet,
-    extendComponents: true,
-    resolveImport(reference) {
-      if (reference.source === '@videojs/utils/style') {
-        return { ...reference, source: options.utility.importSource };
-      }
-      if (reference.source === '@videojs/skins/registry') {
-        return { ...reference, source: options.utility.importSource };
-      }
-      return reference;
-    },
-    ...(item.type === 'skin' ? { rootClassName: skinRootClassName(item) } : {}),
+function shadcnOutput(options: SourceOptions): CatalogOutputAdapter<typeof skinCatalog> {
+  const baseOutput = reactOutput();
+
+  return defineOutput<typeof skinCatalog>({
+    registry: baseOutput.registry,
+    compiler: () =>
+      reactOutput({
+        iconSet: options.iconSet,
+        components: { editable: true },
+        resolveImport(reference) {
+          if (reference.source === '@videojs/utils/style') {
+            return { ...reference, source: options.utility.importSource };
+          }
+          if (reference.source === '@videojs/skins/registry') {
+            return { ...reference, source: options.utility.importSource };
+          }
+          return reference;
+        },
+      }).compiler,
+    configDir: (item: SkinCatalogItem) => resolve(options.rootDir, itemOutputDir(item, options)),
   });
 }
 

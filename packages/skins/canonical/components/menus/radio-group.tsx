@@ -1,18 +1,25 @@
+import type {
+  AudioTrackRadioGroupProps as CoreAudioTrackRadioGroupProps,
+  CaptionsRadioGroupProps as CoreCaptionsRadioGroupProps,
+  PlaybackRateRadioGroupProps as CorePlaybackRateRadioGroupProps,
+  QualityRadioGroupProps as CoreQualityRadioGroupProps,
+} from '@videojs/core';
 import * as $ from '@videojs/core/components';
+import type { PropsWithChildren } from 'vjsc/components';
 import styles from '../../styles/components/menu.styles';
 
-export function QualityRadioGroup({ children }: { children?: unknown }) {
-  return <$.QualityRadioGroup className={styles.radioGroup}>{children}</$.QualityRadioGroup>;
+export function QualityRadioGroup({ className, ...props }: PropsWithChildren<CoreQualityRadioGroupProps>) {
+  return <$.QualityRadioGroup className={[styles.radioGroup, className]} {...props} />;
 }
 
-export function AudioTrackRadioGroup({ children }: { children?: unknown }) {
-  return <$.AudioTrackRadioGroup className={styles.radioGroup}>{children}</$.AudioTrackRadioGroup>;
+export function AudioTrackRadioGroup({ className, ...props }: PropsWithChildren<CoreAudioTrackRadioGroupProps>) {
+  return <$.AudioTrackRadioGroup className={[styles.radioGroup, className]} {...props} />;
 }
 
-export function PlaybackRateRadioGroup({ children }: { children?: unknown }) {
-  return <$.PlaybackRateRadioGroup className={styles.radioGroup}>{children}</$.PlaybackRateRadioGroup>;
+export function PlaybackRateRadioGroup({ className, ...props }: PropsWithChildren<CorePlaybackRateRadioGroupProps>) {
+  return <$.PlaybackRateRadioGroup className={[styles.radioGroup, className]} {...props} />;
 }
 
-export function CaptionsRadioGroup({ children }: { children?: unknown }) {
-  return <$.CaptionsRadioGroup className={styles.radioGroup}>{children}</$.CaptionsRadioGroup>;
+export function CaptionsRadioGroup({ className, ...props }: PropsWithChildren<CoreCaptionsRadioGroupProps>) {
+  return <$.CaptionsRadioGroup className={[styles.radioGroup, className]} {...props} />;
 }

@@ -21,6 +21,8 @@
 
     { "path": "packages/compiler" },
 
+    { "path": "packages/icons" },
+
     { "path": "packages/skins" },
 
     { "path": "packages/spf" },

@@ -2,6 +2,7 @@
 /** @jsxImportSource vjsc/components/registry */
 
 import { components } from '@videojs/core/components';
+import { createArrowFunction } from 'vjsc/ast';
 import {
   type ComponentRegistry,
   defineRegistry,
@@ -20,11 +21,15 @@ const Sup = defineTarget({ tagName: 'sup' });
 const Slot = defineTarget<SlotProps>({
   render: ({ props }) => props.children,
 });
-const Text = defineTarget<TextProps>({
+const I18nText = defineTarget<TextProps>({
   import: {
     from: '@videojs/react',
     name: 'Text',
   },
+});
+const Text = defineTarget<TextProps>({
+  render: ({ props }) =>
+    props.token ? <I18nText {...props}>{props.children}</I18nText> : <Span {...props}>{props.children}</Span>,
 });
 const SliderThumbnail = defineTarget({
   import: {
@@ -33,6 +38,8 @@ const SliderThumbnail = defineTarget({
     path: ['Thumbnail'],
   },
 });
+const RenderChapter = renderCallback(['props']);
+const RenderItem = renderCallback(['props', 'item']);
 
 interface OptionPartProps extends TemplatePartProps {
   readonly item: {
@@ -85,53 +92,51 @@ export const registry: ComponentRegistry = defineRegistry(
     },
   },
   {
-    Slot,
-    Text,
-    Template: {
-      chapter: {
-        root: Div,
-        attach: {
-          prop: 'renderChapter',
-          parameters: ['props'],
-          spread: 'props',
+    types: (name) => (name === 'ComponentNode' ? { from: 'react', name: 'ReactElement' } : false),
+    primitives: {
+      Group: Div,
+      Slot,
+      Text,
+      Template: {
+        chapter: {
+          render: ({ props }) => (
+            <Host
+              renderChapter={
+                <RenderChapter>
+                  <Div {...props}>{props.children}</Div>
+                </RenderChapter>
+              }
+            />
+          ),
         },
-      },
-      'quality-option': {
-        attach: {
-          prop: 'renderItem',
-          parameters: ['props', 'item'],
-          spread: 'props',
+        'quality-option': {
+          render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
+          parts: {
+            label: Label,
+            tier: Tier,
+            badge: Badge,
+          },
         },
-        parts: {
-          label: Label,
-          tier: Tier,
-          badge: Badge,
+        'audio-track-option': {
+          render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
+          parts: { label: Label },
         },
-      },
-      'audio-track-option': {
-        attach: {
-          prop: 'renderItem',
-          parameters: ['props', 'item'],
-          spread: 'props',
+        'playback-rate-option': {
+          render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
+          parts: { label: Label },
         },
-        parts: { label: Label },
-      },
-      'playback-rate-option': {
-        attach: {
-          prop: 'renderItem',
-          parameters: ['props', 'item'],
-          spread: 'props',
+        'captions-option': {
+          render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
+          parts: { label: Label },
         },
-        parts: { label: Label },
-      },
-      'captions-option': {
-        attach: {
-          prop: 'renderItem',
-          parameters: ['props', 'item'],
-          spread: 'props',
-        },
-        parts: { label: Label },
       },
     },
   }
 );
+
+function renderCallback(parameters: readonly string[]) {
+  return defineTarget({
+    transform: ({ factory, render }) =>
+      createArrowFunction(parameters, render({ parameters, spreadProps: 'props' }), factory),
+  });
+}

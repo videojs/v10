@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "vjsc/components/registry",
     "lib": ["ES2022"],
     "types": ["node"],
     "declarationDir": "types"

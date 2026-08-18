@@ -1,18 +1,15 @@
+import type { MenuProps } from '@videojs/core';
 import * as $ from '@videojs/core/components';
 import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@videojs/icons/components';
-import { Text } from 'vjsc/components';
+import { type PropsWithChildren, Text } from 'vjsc/components';
 import buttonStyles from '../../styles/components/button.styles';
 import styles from '../../styles/components/menu.styles';
 import popupStyles from '../../styles/components/popup.styles';
 
-export interface SettingsMenuProps {
-  children?: unknown;
-}
-
-export function SettingsMenu({ children }: SettingsMenuProps) {
+export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
-    <$.Menu.Root side="top" align="center">
+    <$.Menu.Root side="top" align="center" {...props}>
       <$.Tooltip.Root side="top">
         <$.Tooltip.Trigger>
           <$.Menu.Trigger className={[buttonStyles.root, styles.trigger]}>
@@ -26,7 +23,7 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
           <Text token={settingsText.key}>{settingsText.text}</Text>
         </$.Tooltip.Popup>
       </$.Tooltip.Root>
-      <$.Menu.Content className={[popupStyles.surface, popupStyles.popover, styles.root, styles.group]}>
+      <$.Menu.Content className={[popupStyles.surface, popupStyles.popover, styles.root, styles.group, className]}>
         <$.Menu.Group className={styles.group}>{children}</$.Menu.Group>
       </$.Menu.Content>
     </$.Menu.Root>

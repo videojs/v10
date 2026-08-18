@@ -2,14 +2,14 @@
 /** @jsxImportSource vjsc/components/registry */
 
 import { components } from '@videojs/core/components';
-import { type ComponentRegistry, defineRegistry, defineTarget, Fragment } from 'vjsc/components';
+import { type ComponentRegistry, defineRegistry, defineTarget, Fragment, type TextProps } from 'vjsc/components';
 import * as Element from './components.generated';
 
 const Div = defineTarget({ tagName: 'div' });
 const Slot = defineTarget({ tagName: 'slot' });
 const Span = defineTarget({ tagName: 'span' });
 const Sup = defineTarget({ tagName: 'sup' });
-const Template = defineTarget({ tagName: 'template' });
+const HtmlTemplate = defineTarget({ tagName: 'template' });
 
 const Label = defineTarget<Record<string, unknown>>({
   render: ({ props }) => <Span {...props} data-part="label" />,
@@ -19,6 +19,10 @@ const Tier = defineTarget<Record<string, unknown>>({
 });
 const Badge = defineTarget<Record<string, unknown>>({
   render: ({ props }) => <Span {...props} data-part="badge" />,
+});
+const Text = defineTarget<TextProps>({
+  render: ({ props }) =>
+    props.token ? <Element.Text {...props}>{props.children}</Element.Text> : <Span {...props}>{props.children}</Span>,
 });
 
 /** Canonical core components rendered through registered Video.js custom elements. */
@@ -139,32 +143,39 @@ export const registry: ComponentRegistry = defineRegistry(
     },
   },
   {
-    Slot,
-    Text: Element.Text,
-    Template: {
-      chapter: {
-        target: Template,
-        root: Div,
-      },
-      'quality-option': {
-        target: Template,
-        parts: {
-          label: Label,
-          tier: Tier,
-          badge: Badge,
+    types: () => false,
+    primitives: {
+      Group: Div,
+      Slot,
+      Text,
+      Template: {
+        chapter: {
+          render: ({ props }) => (
+            <HtmlTemplate>
+              <Div {...props}>{props.children}</Div>
+            </HtmlTemplate>
+          ),
         },
-      },
-      'audio-track-option': {
-        target: Template,
-        parts: { label: Label },
-      },
-      'playback-rate-option': {
-        target: Template,
-        parts: { label: Label },
-      },
-      'captions-option': {
-        target: Template,
-        parts: { label: Label },
+        'quality-option': {
+          render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
+          parts: {
+            label: Label,
+            tier: Tier,
+            badge: Badge,
+          },
+        },
+        'audio-track-option': {
+          render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
+          parts: { label: Label },
+        },
+        'playback-rate-option': {
+          render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
+          parts: { label: Label },
+        },
+        'captions-option': {
+          render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
+          parts: { label: Label },
+        },
       },
     },
   }

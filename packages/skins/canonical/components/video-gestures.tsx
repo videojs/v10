@@ -1,13 +1,17 @@
 import * as $ from '@videojs/core/components';
 
-export function VideoGestures() {
+export interface VideoGesturesProps {
+  disabled?: boolean | undefined;
+}
+
+export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
   return (
     <>
-      <$.Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <$.Gesture type="tap" action="toggleControls" pointer="touch" />
-      <$.Gesture type="doubletap" action="seekStep" value={-10} region="left" />
-      <$.Gesture type="doubletap" action="toggleFullscreen" region="center" />
-      <$.Gesture type="doubletap" action="seekStep" value={10} region="right" />
+      <$.Gesture disabled={disabled} type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <$.Gesture disabled={disabled} type="tap" action="toggleControls" pointer="touch" />
+      <$.Gesture disabled={disabled} type="doubletap" action="seekStep" value={-10} region="left" />
+      <$.Gesture disabled={disabled} type="doubletap" action="toggleFullscreen" region="center" />
+      <$.Gesture disabled={disabled} type="doubletap" action="seekStep" value={10} region="right" />
     </>
   );
 }

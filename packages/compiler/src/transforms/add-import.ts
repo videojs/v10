@@ -174,7 +174,7 @@ function addToExistingImport(
       return replaceStatement(sourceFile, stmt, updated, factory);
     }
 
-    if (clause.isTypeOnly !== Boolean(ref.type)) continue;
+    if (!ref.type && clause.isTypeOnly) continue;
     if (!clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) continue;
 
     const updated = factory.updateImportDeclaration(
@@ -186,7 +186,11 @@ function addToExistingImport(
         clause.name,
         factory.createNamedImports([
           ...clause.namedBindings.elements,
-          factory.createImportSpecifier(false, undefined, factory.createIdentifier(ref.name)),
+          factory.createImportSpecifier(
+            Boolean(ref.type) && !clause.isTypeOnly,
+            undefined,
+            factory.createIdentifier(ref.name)
+          ),
         ])
       ),
       stmt.moduleSpecifier,

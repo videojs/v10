@@ -1,11 +1,12 @@
 /** @jsxImportSource ../registry */
 
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { html, jsx as target } from '../../config';
 import { transform } from '../../transform';
 import { defineComponent, defineComponents } from '../definition';
 import { plugin } from '../plugin';
-import { defineRegistry, defineTarget, Host } from '../registry';
+import { defineRegistry, defineTarget, extendRegistry, Host } from '../registry';
 
 const components = defineComponents('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),
@@ -59,6 +60,29 @@ describe('plugin', () => {
     expect(result.code).not.toContain('@fixture/components');
   });
 
+  it('lowers component sources added by an extended registry', async () => {
+    const skinComponents = defineComponents('@fixture/skin-components', {
+      Overlay: defineComponent({ name: 'Overlay' }),
+    });
+    const registry = extendRegistry(defineRegistry(components, fixtureTargets()), skinComponents, {
+      Overlay: defineTarget({ import: { from: '@fixture/react', name: 'Overlay' } }),
+    });
+    const result = await transform(
+      `
+        import * as $ from '@fixture/components';
+        import { Overlay } from '@fixture/skin-components';
+
+        export const view = <><$.PlayButton /><Overlay /></>;
+      `,
+      { config: { target: target(), plugins: [plugin(registry)] } }
+    );
+
+    expect(result.code).toContain('<PlayButtonPrimitive />');
+    expect(result.code).toContain('<Overlay />');
+    expect(result.code).not.toContain('@fixture/components');
+    expect(result.code).not.toContain('@fixture/skin-components');
+  });
+
   it('applies target import rules to registry bindings', async () => {
     const registry = defineRegistry(components, fixtureTargets());
     const compilerTarget = target({ imports: { '@fixture/react': '@fixture/preact' } });
@@ -71,6 +95,29 @@ describe('plugin', () => {
 
     expect(result.code).toContain('import { PlayButton } from "@fixture/preact";');
     expect(result.code).toContain('<PlayButton />');
+  });
+
+  it('preserves framework-neutral canonical prop helpers', async () => {
+    const registry = defineRegistry(components, fixtureTargets(), {
+      types: (name) => (name === 'ComponentNode' ? { from: 'react', name: 'ReactElement' } : false),
+    });
+    const result = await transform(
+      `
+        import type { PlayButtonProps } from '@fixture/core';
+        import * as $ from '@fixture/components';
+        import type { Props } from 'vjsc/components';
+
+        export function PlayButton(props: Props<PlayButtonProps>) {
+          return <$.PlayButton {...props} />;
+        }
+      `,
+      { config: { target: target(), plugins: [plugin(registry)] } }
+    );
+
+    expect(result.code).toContain("import type { PlayButtonProps } from '@fixture/core';");
+    expect(result.code).toContain("import type { Props } from 'vjsc/components';");
+    expect(result.code).toContain('PlayButton(props: Props<PlayButtonProps>)');
+    expect(result.code).toContain('<PlayButtonPrimitive {...props}/>');
   });
 
   it('rewrites canonical JSX nested in target props', async () => {
@@ -202,6 +249,26 @@ describe('plugin', () => {
     expect(result.code).not.toContain('Tooltip.Root');
   });
 
+  it('supports leaf components rendered through registry JSX', async () => {
+    const Icon = defineTarget({
+      tagName: 'media-icon',
+      import: { from: '@fixture/html/icon', sideEffect: true },
+    });
+    const registry = defineRegistry(components, {
+      ...fixtureTargets(),
+      PlayButton: defineTarget<Record<string, unknown>>({
+        render: ({ props }) => <Icon {...props} name="play" />,
+      }),
+    });
+    const result = await transform(
+      `import { PlayButton } from '@fixture/components'; <PlayButton className="button" />;`,
+      { config: { target: html(), plugins: [plugin(registry)] } }
+    );
+
+    expect(result.code).toContain('import "@fixture/html/icon";');
+    expect(result.code).toContain('<media-icon class="button" name="play"/>');
+  });
+
   it('keeps nested instances out of a parent component part collection', async () => {
     const TooltipElement = defineTarget({
       tagName: 'media-tooltip',
@@ -244,6 +311,7 @@ describe('plugin', () => {
   });
 
   it('lowers compiler primitives through framework targets', async () => {
+    const Div = defineTarget({ tagName: 'div' });
     const Span = defineTarget({ tagName: 'span' });
     const SlotTarget = defineTarget<{ children?: unknown }>({
       render: ({ props }) => props.children,
@@ -252,37 +320,54 @@ describe('plugin', () => {
       render: ({ props }) => <Span {...props}>{props.children}</Span>,
     });
     const registry = defineRegistry(components, fixtureTargets(), {
-      Slot: SlotTarget,
-      Text: TextTarget,
+      types: (name) => ({ from: 'react', name: name === 'ComponentNode' ? 'ReactElement' : name }),
+      primitives: {
+        Group: Div,
+        Slot: SlotTarget,
+        Text: TextTarget,
+      },
     });
     const result = await transform(
       `
-        import { Slot, Text } from 'vjsc/components';
+        import { type ComponentNode, Group, Slot, Text } from 'vjsc/components';
 
-        export const view = <div><Text className="label">Hello</Text><Slot>{content}</Slot></div>;
+        export const view: ComponentNode = <Group><Text className="label">Hello</Text><Slot>{content}</Slot></Group>;
       `,
       { config: { target: target(), plugins: [plugin(registry)] } }
     );
 
+    expect(result.code).toContain('<div>');
     expect(result.code).toContain('<span className="label">Hello</span>');
     expect(result.code).toContain('{content}');
+    expect(result.code).toContain('import type { ReactElement as ComponentNode } from "react"');
     expect(result.code).not.toContain('vjsc/components');
   });
 
-  it('attaches named templates with template-local part targets', async () => {
+  it('renders named templates into JSX callback props', async () => {
     const Span = defineTarget({ tagName: 'span' });
+    const RenderItem = defineTarget({
+      transform: ({ factory, render }) =>
+        factory.createArrowFunction(
+          undefined,
+          undefined,
+          ['props', 'item'].map((name) =>
+            factory.createParameterDeclaration(undefined, undefined, factory.createIdentifier(name))
+          ),
+          undefined,
+          factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
+          render({ parameters: ['props', 'item'], spreadProps: 'props' })
+        ),
+    });
     const Label = defineTarget<Record<string, unknown> & { item: { label: unknown } }>({
       render: ({ props }) => <Span {...props}>{props.item.label}</Span>,
     });
     const registry = defineRegistry(components, fixtureTargets(), {
-      Template: {
-        item: {
-          attach: {
-            prop: 'renderItem',
-            parameters: ['props', 'item'],
-            spread: 'props',
+      primitives: {
+        Template: {
+          item: {
+            render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
+            parts: { label: Label },
           },
-          parts: { label: Label },
         },
       },
     });

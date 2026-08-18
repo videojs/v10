@@ -1,3 +1,4 @@
+import type { StatusIndicatorProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/components';
 import {
   CaptionsOffIcon,
@@ -9,15 +10,16 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@videojs/icons/components';
+import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/status-indicator.styles';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 
 const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
-export function StatusIndicator() {
+export function StatusIndicator({ className, ...props }: Props<Omit<CoreProps, 'actions'>> = {}) {
   return (
-    <$.StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={styles.root}>
+    <$.StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={[styles.root, className]} {...props}>
       <CaptionsOnIcon className={[styles.icon, styles.icons.captionsOn]} />
       <CaptionsOffIcon className={[styles.icon, styles.icons.captionsOff]} />
       <FullscreenEnterIcon className={[styles.icon, styles.icons.fullscreenEnter]} />
@@ -29,9 +31,9 @@ export function StatusIndicator() {
   );
 }
 
-export function PlaybackStatusIndicator() {
+export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<CoreProps, 'actions'>> = {}) {
   return (
-    <$.StatusIndicator.Root actions={PLAYBACK_STATUS_ACTIONS} className={styles.playback.root}>
+    <$.StatusIndicator.Root actions={PLAYBACK_STATUS_ACTIONS} className={[styles.playback.root, className]} {...props}>
       <PlayIcon className={[styles.playback.icon, styles.playback.play]} />
       <PauseIcon className={[styles.playback.icon, styles.playback.pause]} />
     </$.StatusIndicator.Root>

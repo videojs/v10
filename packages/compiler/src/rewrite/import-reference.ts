@@ -3,11 +3,14 @@ export interface ImportReference {
   readonly name: string;
   readonly default?: boolean | undefined;
   readonly type?: boolean | undefined;
+  readonly relativeTo?: 'config' | 'module' | undefined;
 }
 
 export interface ImportOptions {
   default?: boolean | undefined;
   type?: boolean | undefined;
+  /** Resolve relative imports from compiler config by default, or preserve a module-relative specifier. */
+  relativeTo?: 'config' | 'module' | undefined;
 }
 
 export interface MutableImportReference extends ImportReference {
@@ -23,6 +26,7 @@ export function createImportReference(source: string, name: string, options: Imp
     name,
     default: options.default,
     type: options.type,
+    relativeTo: options.relativeTo,
     used: false,
   } as MutableImportReference;
 }

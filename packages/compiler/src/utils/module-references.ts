@@ -93,6 +93,8 @@ function collectNamespaceReferences(
 
       if (ts.isPropertyAccessExpression(parent) && parent.expression === node) {
         names.add(parent.name.text);
+      } else if (ts.isQualifiedName(parent) && parent.left === node) {
+        names.add(parent.right.text);
       } else {
         ambiguous = true;
       }

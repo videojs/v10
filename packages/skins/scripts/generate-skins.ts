@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { camelCase, kebabCase } from '@videojs/utils/string';
 import type { ImportRef } from 'vjsc/ast';
 import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
-import { emitShadcnRegistry } from '../build/emit/shadcn';
+import { emitShadcnRegistry } from '../build/output/shadcn';
 import { emitFrameworkSkin, type FrameworkTarget } from '../build/targets';
 import type { SkinName } from '../canonical/catalog';
 import { skinRegistry } from '../canonical/registry/config';

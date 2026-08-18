@@ -1,16 +1,15 @@
-import type { SeekButtonProps } from '@videojs/core';
+import type { SeekButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/components';
 import { SeekIcon } from '@videojs/icons/components';
-import { Text } from 'vjsc/components';
+import { type Props, Text } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';
 
-export function SeekButton(props: SeekButtonProps = {}) {
-  const seconds = props.seconds ?? 10;
+export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProps> = {}) {
   return (
     <ButtonTooltip side="top">
-      <$.SeekButton className={[styles.root, styles.seek]} {...props} seconds={seconds}>
-        <SeekIcon className={seconds < 0 ? [styles.icon, styles.icons.seekBackward] : styles.icon} />
+      <$.SeekButton className={[styles.root, styles.seek, className]} seconds={seconds} {...props}>
+        <SeekIcon className={[styles.icon, seconds < 0 ? styles.icons.seekBackward : undefined]} />
         <Text className={styles.label}>{Math.abs(seconds)}</Text>
       </$.SeekButton>
     </ButtonTooltip>

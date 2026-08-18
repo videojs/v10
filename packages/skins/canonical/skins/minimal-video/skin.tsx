@@ -21,7 +21,7 @@ import styles from '../../styles/skins/minimal-video.styles';
 
 export function MinimalVideoSkin({ children }: { children?: unknown }) {
   return (
-    <Container>
+    <Container className="media-skin media-skin-video-minimal media-theme-minimal">
       <Slot>{children}</Slot>
       <Poster />
       <BufferingIndicator />

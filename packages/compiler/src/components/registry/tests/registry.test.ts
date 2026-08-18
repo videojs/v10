@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { defineComponent, defineComponents } from '../../definition';
-import { defineRegistry, defineTarget, Host, isHost, isTargetComponent, REGISTRY_TARGET } from '../index';
+import {
+  defineRegistry,
+  defineTarget,
+  extendRegistry,
+  Host,
+  isHost,
+  isTargetComponent,
+  REGISTRY_TARGET,
+} from '../index';
 
 const components = defineComponents('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),
@@ -30,9 +38,12 @@ describe('defineRegistry', () => {
       },
     });
 
-    expect(registry.components).toBe(components);
-    expect(isTargetComponent(registry.entries.PlayButton)).toBe(true);
-    expect('parts' in registry.entries.Tooltip && isHost(registry.entries.Tooltip.parts.Root)).toBe(true);
+    const binding = registry.bindings[0]!;
+    const tooltip = binding.entries.Tooltip as { parts: { Root: unknown } };
+
+    expect(binding.components).toBe(components);
+    expect(isTargetComponent(binding.entries.PlayButton)).toBe(true);
+    expect(isHost(tooltip.parts.Root)).toBe(true);
     expect(targets.Tooltip.Popup[REGISTRY_TARGET]).toEqual({
       import: {
         from: '@fixture/react',
@@ -40,6 +51,21 @@ describe('defineRegistry', () => {
         path: ['Popup'],
       },
     });
+  });
+
+  it('extends a registry with another typed component binding', () => {
+    const skinComponents = defineComponents('@fixture/skin-components', {
+      Overlay: defineComponent({ name: 'Overlay' }),
+    });
+    const registry = extendRegistry(defineRegistry(components, fixtureTargets()), skinComponents, {
+      Overlay: defineTarget({ import: { from: '@fixture/react', name: 'Overlay' } }),
+    });
+
+    expect(registry.bindings.map(({ components }) => components.source)).toEqual([
+      '@fixture/components',
+      '@fixture/skin-components',
+    ]);
+    expect(registry.primitives).toEqual({});
   });
 });
 

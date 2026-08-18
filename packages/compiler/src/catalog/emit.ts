@@ -61,7 +61,6 @@ export type CatalogStyleTransform =
   | {
       readonly mode: 'tailwind';
       readonly variant?: string | undefined;
-      readonly compose?: boolean | undefined;
     }
   | {
       readonly mode: 'css';
@@ -71,19 +70,24 @@ export type CatalogStyleTransform =
       readonly variant?: string | undefined;
     };
 
-export interface CatalogTransformOptions<Definition extends CatalogDefinition = CatalogDefinition> {
+export interface CatalogOutputAdapter<Definition extends CatalogDefinition = CatalogDefinition> {
   /** Preserve editable modules by default, or bundle each requested catalog entry. */
   readonly mode?: 'modules' | 'bundle' | undefined;
   readonly registry?: ComponentRegistry | undefined;
   readonly compiler?: CompilerConfig | ((catalogItem: CatalogItem<Definition>) => CompilerConfig) | undefined;
   readonly configDir?: string | ((catalogItem: CatalogItem<Definition>) => string | undefined) | undefined;
-  readonly styles?: CatalogStyleTransform | undefined;
+}
+
+export interface StaticCatalogOutputAdapter<Definition extends CatalogDefinition = CatalogDefinition>
+  extends CatalogOutputAdapter<Definition> {
+  readonly compiler: CompilerConfig;
 }
 
 export interface CatalogEmitOptions<Definition extends CatalogDefinition = CatalogDefinition> {
   /** Entry items. Module emission includes their transitive catalog dependencies. */
   readonly items?: readonly CatalogItem<Definition>['name'][] | undefined;
-  readonly transform: CatalogTransformOptions<Definition>;
+  readonly output: CatalogOutputAdapter<Definition>;
+  readonly styles?: CatalogStyleTransform | undefined;
   readonly files: {
     source(context: CatalogSourceContext<Definition>): string;
     style?(context: CatalogStyleContext): string;
@@ -92,6 +96,29 @@ export interface CatalogEmitOptions<Definition extends CatalogDefinition = Catal
     readonly imports?: {
       dependency?(context: CatalogImportContext<Definition>): string | undefined;
     };
+  };
+}
+
+export function defineOutput<const Adapter extends StaticCatalogOutputAdapter>(adapter: Adapter): Adapter;
+export function defineOutput<const Definition extends CatalogDefinition>(
+  adapter: CatalogOutputAdapter<Definition>
+): CatalogOutputAdapter<Definition>;
+export function defineOutput(adapter: CatalogOutputAdapter<any>): CatalogOutputAdapter<any> {
+  return adapter;
+}
+
+export function resolveOutputConfig<Definition extends CatalogDefinition>(
+  output: CatalogOutputAdapter<Definition>,
+  catalogItem?: CatalogItem<Definition>
+): CompilerConfig {
+  const compiler = output.compiler;
+  const config =
+    typeof compiler === 'function' ? (catalogItem ? compiler(catalogItem) : missingOutputItem()) : (compiler ?? {});
+  const plugins = [...(output.registry ? [componentsPlugin(output.registry)] : []), ...(config.plugins ?? [])];
+
+  return {
+    ...config,
+    ...(plugins.length > 0 ? { plugins } : {}),
   };
 }
 
@@ -115,18 +142,16 @@ export async function emitCatalog<const Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   options: CatalogEmitOptions<Definition>
 ): Promise<CatalogOutput<Definition>> {
-  assertRegistryCompatibility(catalog, options.transform.registry);
+  assertRegistryCompatibility(catalog, options.output.registry);
 
   const requestedNames = options.items ?? catalog.items.map((catalogItem) => catalogItem.name);
   const requested = requestedCatalogItems(catalog, requestedNames);
   const resolved = resolveCatalog(catalog, requestedNames);
 
-  const styles = options.transform.styles
-    ? await loadStyles(catalog, resolved.items, options.transform.styles, options)
-    : undefined;
+  const styles = options.styles ? await loadStyles(catalog, resolved.items, options.styles, options) : undefined;
 
   const emitted =
-    options.transform.mode === 'bundle'
+    options.output.mode === 'bundle'
       ? await emitBundles(catalog, requested, options, styles?.manifest)
       : await emitModules(catalog, resolved.items, options, styles?.manifest);
 
@@ -154,9 +179,13 @@ function assertRegistryCompatibility(catalog: Catalog, registry: ComponentRegist
   if (!registry || catalog.components.length === 0) return;
 
   const componentSources = new Set(catalog.components);
-  if (!componentSources.has(registry.components.source)) {
+  const undeclared = registry.bindings
+    .map(({ components }) => components.source)
+    .filter((source) => !componentSources.has(source));
+
+  if (undeclared.length > 0) {
     throw new Error(
-      `Component registry for ${JSON.stringify(registry.components.source)} is not declared by this catalog.`
+      `Component registry sources are not declared by this catalog: ${undeclared.map((source) => JSON.stringify(source)).join(', ')}.`
     );
   }
 }
@@ -180,8 +209,8 @@ async function emitModules<Definition extends CatalogDefinition>(
     const layouts = layoutsByItem.get(catalogItem.name)!;
     const layoutsByInput = new Map(layouts.map((layout) => [layout.inputFile, layout]));
     const files: CatalogOutputFile[] = [];
-    const config = compilerConfig(options.transform, catalogItem, styles);
-    const configDir = compilerConfigDir(options.transform.configDir, catalogItem) ?? catalog.rootDir;
+    const config = compilerConfig(options.output, options.styles, catalogItem, styles);
+    const configDir = compilerConfigDir(options.output.configDir, catalogItem) ?? catalog.rootDir;
 
     for (const layout of layouts) {
       const source = await readFile(layout.inputFile, 'utf8');
@@ -232,8 +261,8 @@ async function emitBundles<Definition extends CatalogDefinition>(
 
   for (const catalogItem of catalogItems) {
     const outputFile = toPosixPath(options.files.source({ catalogItem, sourceFile: catalogItem.source }));
-    const configDir = compilerConfigDir(options.transform.configDir, catalogItem) ?? catalog.rootDir;
-    const config = compilerConfig(options.transform, catalogItem, styles);
+    const configDir = compilerConfigDir(options.output.configDir, catalogItem) ?? catalog.rootDir;
+    const config = compilerConfig(options.output, options.styles, catalogItem, styles);
     const result = await build(
       {
         ...config,
@@ -323,17 +352,14 @@ async function loadStyles<Definition extends CatalogDefinition>(
 }
 
 function compilerConfig<Definition extends CatalogDefinition>(
-  transform: CatalogTransformOptions<Definition>,
+  output: CatalogOutputAdapter<Definition>,
+  styles: CatalogStyleTransform | undefined,
   catalogItem: CatalogItem<Definition>,
   manifest: StyleManifest | undefined
 ): CompilerConfig {
-  const compiler = transform.compiler;
-  const config = (typeof compiler === 'function' ? compiler(catalogItem) : compiler) ?? {};
-  const plugins = [...(transform.registry ? [componentsPlugin(transform.registry)] : []), ...(config.plugins ?? [])];
+  const config = resolveOutputConfig(output, catalogItem);
 
-  if (!manifest || !transform.styles) return { ...config, ...(plugins.length > 0 ? { plugins } : {}) };
-
-  const styles = transform.styles;
+  if (!manifest || !styles) return config;
 
   const styleOptions =
     styles.mode === 'tailwind'
@@ -341,7 +367,6 @@ function compilerConfig<Definition extends CatalogDefinition>(
           mode: 'tailwind' as const,
           manifest,
           ...(styles.variant ? { variant: styles.variant } : {}),
-          ...(styles.compose ? { compose: true } : {}),
         }
       : {
           mode: 'css' as const,
@@ -351,12 +376,16 @@ function compilerConfig<Definition extends CatalogDefinition>(
 
   return {
     ...config,
-    plugins: [stylesPlugin(styleOptions), ...plugins],
+    plugins: [stylesPlugin(styleOptions), ...(config.plugins ?? [])],
   };
 }
 
+function missingOutputItem(): never {
+  throw new Error('Catalog output adapters with dynamic compiler configuration require a catalog item.');
+}
+
 function compilerConfigDir<Definition extends CatalogDefinition>(
-  configDir: CatalogTransformOptions<Definition>['configDir'],
+  configDir: CatalogOutputAdapter<Definition>['configDir'],
   catalogItem: CatalogItem<Definition>
 ): string | undefined {
   return typeof configDir === 'function' ? configDir(catalogItem) : configDir;

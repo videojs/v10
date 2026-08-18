@@ -82,6 +82,7 @@ export {
   type InterfaceDeclarationOptions,
   type InterfacePropertySpec,
 } from './utils/declarations';
+export { createArrowFunction } from './utils/functions';
 export { collectModuleReferences, type ModuleReference } from './utils/module-references';
 export {
   collectModuleSpecifiers,

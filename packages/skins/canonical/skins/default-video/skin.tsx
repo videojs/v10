@@ -21,7 +21,7 @@ import styles from '../../styles/skins/default-video.styles';
 
 export function DefaultVideoSkin({ children }: { children?: unknown }) {
   return (
-    <Container>
+    <Container className="media-skin media-skin-video media-theme-default">
       <Slot>{children}</Slot>
       <Poster />
       <BufferingIndicator />

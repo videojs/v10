@@ -15,11 +15,6 @@ export function loadSkinCatalog(): Promise<SkinCatalog> {
   return loadCatalog(skinCatalog, { rootDir: canonicalRoot });
 }
 
-/** Derive the classes that identify a generated Skin root. */
-export function skinRootClassName(skin: SkinCatalogSkin): string {
-  return ['media-skin', skin.style.scope, `media-theme-${skin.style.theme}`].join(' ');
-}
-
 /** Derive the canonical root component export from a catalog Skin name. */
 export function skinRootComponentName(skin: SkinCatalogSkin): string {
   return `${pascalCase(skin.name)}Skin`;

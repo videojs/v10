@@ -1,9 +1,11 @@
 import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
+import { resolveOutputConfig } from 'vjsc/catalog';
+import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
 
-import { createCompilerReactConfig } from './build/transform/react';
+import { reactOutput } from './build/output/react';
 
 const packageDir = import.meta.dirname;
 
@@ -11,22 +13,27 @@ const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
 
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 
+const output = resolveOutputConfig(reactOutput());
+
 export default defineConfig({
   root: resolve(packageDir, 'dev'),
   plugins: [
     compiler({
       include: `${canonicalDir}/**/*.tsx`,
-      config: createCompilerReactConfig({
-        rootClassName: 'media-skin media-skin-video media-theme-default',
-        styles: {
-          mode: 'css',
-          variant: 'default',
-          emit: {
-            input: resolve(canonicalDir, 'styles/tailwind.css'),
-            scope: '.media-skin-video',
-          },
-        },
-      }),
+      config: {
+        ...output,
+        plugins: [
+          stylesPlugin({
+            mode: 'css',
+            variant: 'default',
+            emit: {
+              input: resolve(canonicalDir, 'styles/tailwind.css'),
+              scope: '.media-skin-video',
+            },
+          }),
+          ...(output.plugins ?? []),
+        ],
+      },
     }),
     react(),
   ],

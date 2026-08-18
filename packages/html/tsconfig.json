@@ -11,5 +11,6 @@
     "useDefineForClassFields": false
   },
   "include": ["src", "compiler"],
-  "exclude": ["src/cdn/locales"]
+  "exclude": ["src/cdn/locales"],
+  "references": [{ "path": "../icons" }]
 }

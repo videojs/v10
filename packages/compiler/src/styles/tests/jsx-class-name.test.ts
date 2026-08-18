@@ -21,7 +21,8 @@ describe('readClassName', () => {
     expect(info).toMatchObject({ kind: 'segments', segments: [{ kind: 'literal', value: 'one two' }] });
   });
 
-  it('keeps conditionals and array spreads opaque', () => {
+  it('keeps class composition, conditionals, and array spreads opaque', () => {
+    expect(read(`<div className={cn(styles.base, className)} />`).kind).toBe('opaque');
     expect(read(`<div className={enabled ? styles.on : styles.off} />`).kind).toBe('opaque');
     expect(read(`<div className={[styles.base, ...extra]} />`).kind).toBe('opaque');
   });

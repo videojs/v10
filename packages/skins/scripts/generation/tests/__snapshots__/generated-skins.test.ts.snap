@@ -2,8 +2,8 @@
 
 exports[`generated skins > matches the reviewed output 1`] = `
 "===== packages/html/src/__generated__/skins/default-video/skin.ts =====
-import '../../../icons/element';
 import '../../../define/i18n';
+import '../../../icons/element';
 import '../../../define/media/container';
 import '../../../define/ui/airplay-button';
 import '../../../define/ui/alert-dialog-close';
@@ -148,7 +148,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               <media-icon class="media-icon" name="switches"></media-icon>
               <media-text token="menu.quality">Quality</media-text>
               <span class="media-hint">
-                <span class="media-hint-label" data-part="hint"></span>
+                <span data-part="hint" class="media-hint-label"></span>
                 <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
               </span>
             </media-menu-item>
@@ -177,7 +177,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               <media-icon class="media-icon" name="speech"></media-icon>
               <media-text token="menu.audio">Audio</media-text>
               <span class="media-hint">
-                <span class="media-hint-label" data-part="hint"></span>
+                <span data-part="hint" class="media-hint-label"></span>
                 <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
               </span>
             </media-menu-item>
@@ -202,7 +202,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               <media-icon class="media-icon" name="speed"></media-icon>
               <media-text token="menu.speed">Speed</media-text>
               <span class="media-hint">
-                <span class="media-hint-label" data-part="hint"></span>
+                <span data-part="hint" class="media-hint-label"></span>
                 <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
               </span>
             </media-menu-item>
@@ -227,7 +227,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
               <media-icon class="media-icon" name="captions-off"></media-icon>
               <media-text token="menu.captions">Captions</media-text>
               <span class="media-hint">
-                <span class="media-hint-label" data-part="hint"></span>
+                <span data-part="hint" class="media-hint-label"></span>
                 <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
               </span>
             </media-menu-item>
@@ -3138,8 +3138,8 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 }
 
 ===== packages/html/src/__generated__/skins/minimal-video/skin.ts =====
-import '../../../icons/element/minimal';
 import '../../../define/i18n';
+import '../../../icons/element/minimal';
 import '../../../define/media/container';
 import '../../../define/ui/airplay-button';
 import '../../../define/ui/alert-dialog-close';
@@ -3193,7 +3193,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
   <slot></slot>
   <media-poster class="media-poster"><slot name="poster"></slot></media-poster>
   <media-buffering-indicator class="media-buffering-indicator">
-    <media-icon class="media-buffering-spinner-icon" name="spinner"></media-icon>
+    <media-icon class="media-buffering-spinner-icon" family="minimal" name="spinner"></media-icon>
   </media-buffering-indicator>
   <media-error-dialog class="media-error-dialog">
     <media-alert-dialog-title class="media-error-dialog-title"></media-alert-dialog-title>
@@ -3204,18 +3204,18 @@ export const skin = /* html */ \`<media-container class="media-container media-s
     <media-tooltip-group>
       <media-controls-group class="media-controls-start">
         <media-play-button class="media-button media-play-button">
-          <media-icon class="media-button-icon media-restart-icon" name="restart"></media-icon>
-          <media-icon class="media-button-icon media-play-icon" name="play"></media-icon>
-          <media-icon class="media-button-icon media-pause-icon" name="pause"></media-icon>
+          <media-icon class="media-button-icon media-restart-icon" family="minimal" name="restart"></media-icon>
+          <media-icon class="media-button-icon media-play-icon" family="minimal" name="play"></media-icon>
+          <media-icon class="media-button-icon media-pause-icon" family="minimal" name="pause"></media-icon>
         </media-play-button>
         <media-tooltip side="top" class="media-surface media-tooltip">
           <media-tooltip-label></media-tooltip-label>
           <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
         </media-tooltip>
         <media-mute-button class="media-button media-mute-button">
-          <media-icon class="media-button-icon media-volume-off-icon" name="volume-off"></media-icon>
-          <media-icon class="media-button-icon media-volume-low-icon" name="volume-low"></media-icon>
-          <media-icon class="media-button-icon media-volume-high-icon" name="volume-high"></media-icon>
+          <media-icon class="media-button-icon media-volume-off-icon" family="minimal" name="volume-off"></media-icon>
+          <media-icon class="media-button-icon media-volume-low-icon" family="minimal" name="volume-low"></media-icon>
+          <media-icon class="media-button-icon media-volume-high-icon" family="minimal" name="volume-high"></media-icon>
         </media-mute-button>
         <media-popover
           open-on-hover
@@ -3253,7 +3253,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
           <media-slider-preview class="media-slider-preview" overflow="visible">
             <div class="media-surface media-thumbnail">
               <media-slider-thumbnail class="media-thumbnail-image"></media-slider-thumbnail>
-              <media-icon class="media-spinner-icon" name="spinner"></media-icon>
+              <media-icon class="media-spinner-icon" family="minimal" name="spinner"></media-icon>
             </div>
             <div class="media-preview-value">
               <media-time-slider-chapter-title class="media-chapter-title"></media-time-slider-chapter-title>
@@ -3264,15 +3264,19 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       </media-controls-group>
       <media-controls-group class="media-controls-end">
         <media-captions-button class="media-button media-captions-button">
-          <media-icon class="media-button-icon media-captions-off-icon" name="captions-off"></media-icon>
-          <media-icon class="media-button-icon media-captions-on-icon" name="captions-on"></media-icon>
+          <media-icon
+            class="media-button-icon media-captions-off-icon"
+            family="minimal"
+            name="captions-off"
+          ></media-icon>
+          <media-icon class="media-button-icon media-captions-on-icon" family="minimal" name="captions-on"></media-icon>
         </media-captions-button>
         <media-tooltip side="top" class="media-surface media-tooltip">
           <media-tooltip-label></media-tooltip-label>
           <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
         </media-tooltip>
         <button class="media-button media-settings-trigger" commandfor="settings-menu" id="settings-trigger">
-          <media-icon class="media-button-icon media-settings-icon" name="gear"></media-icon>
+          <media-icon class="media-button-icon media-settings-icon" family="minimal" name="gear"></media-icon>
           <media-text class="media-sr-only" token="menu.settings">Settings</media-text>
         </button>
         <media-tooltip side="top" class="media-surface media-tooltip" trigger="settings-trigger">
@@ -3285,16 +3289,20 @@ export const skin = /* html */ \`<media-container class="media-container media-s
           id="settings-menu"
         >
           <media-menu-item class="media-menu-item media-item" commandfor="settings-quality-menu">
-            <media-icon class="media-icon" name="switches"></media-icon>
+            <media-icon class="media-icon" family="minimal" name="switches"></media-icon>
             <media-text token="menu.quality">Quality</media-text>
             <span class="media-hint">
-              <span class="media-hint-label" data-part="hint"></span>
-              <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
+              <span data-part="hint" class="media-hint-label"></span>
+              <media-icon class="media-icon media-chevron" family="minimal" name="chevron"></media-icon>
             </span>
           </media-menu-item>
           <media-menu class="media-submenu-panel" id="settings-quality-menu">
             <media-menu-item class="media-menu-item media-back">
-              <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
+              <media-icon
+                class="media-icon media-chevron media-chevron-flipped"
+                family="minimal"
+                name="chevron"
+              ></media-icon>
               <media-text token="menu.quality">Quality</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
@@ -3307,23 +3315,27 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                   </span>
                   <span class="media-badge" data-part="badge"></span>
                   <media-menu-item-indicator force-mount class="media-indicator">
-                    <media-icon class="media-icon" name="check"></media-icon>
+                    <media-icon class="media-icon" family="minimal" name="check"></media-icon>
                   </media-menu-item-indicator>
                 </media-menu-radio-item>
               </template>
             </media-quality-radio-group>
           </media-menu>
           <media-menu-item class="media-menu-item media-item" commandfor="settings-audio-menu">
-            <media-icon class="media-icon" name="speech"></media-icon>
+            <media-icon class="media-icon" family="minimal" name="speech"></media-icon>
             <media-text token="menu.audio">Audio</media-text>
             <span class="media-hint">
-              <span class="media-hint-label" data-part="hint"></span>
-              <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
+              <span data-part="hint" class="media-hint-label"></span>
+              <media-icon class="media-icon media-chevron" family="minimal" name="chevron"></media-icon>
             </span>
           </media-menu-item>
           <media-menu class="media-submenu-panel" id="settings-audio-menu">
             <media-menu-item class="media-menu-item media-back">
-              <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
+              <media-icon
+                class="media-icon media-chevron media-chevron-flipped"
+                family="minimal"
+                name="chevron"
+              ></media-icon>
               <media-text token="menu.audio">Audio</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
@@ -3332,23 +3344,27 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                 <media-menu-radio-item class="media-menu-item media-item">
                   <span data-part="label"></span>
                   <media-menu-item-indicator force-mount class="media-indicator">
-                    <media-icon class="media-icon" name="check"></media-icon>
+                    <media-icon class="media-icon" family="minimal" name="check"></media-icon>
                   </media-menu-item-indicator>
                 </media-menu-radio-item>
               </template>
             </media-audio-track-radio-group>
           </media-menu>
           <media-menu-item class="media-menu-item media-item" commandfor="settings-speed-menu">
-            <media-icon class="media-icon" name="speed"></media-icon>
+            <media-icon class="media-icon" family="minimal" name="speed"></media-icon>
             <media-text token="menu.speed">Speed</media-text>
             <span class="media-hint">
-              <span class="media-hint-label" data-part="hint"></span>
-              <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
+              <span data-part="hint" class="media-hint-label"></span>
+              <media-icon class="media-icon media-chevron" family="minimal" name="chevron"></media-icon>
             </span>
           </media-menu-item>
           <media-menu class="media-submenu-panel" id="settings-speed-menu">
             <media-menu-item class="media-menu-item media-back">
-              <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
+              <media-icon
+                class="media-icon media-chevron media-chevron-flipped"
+                family="minimal"
+                name="chevron"
+              ></media-icon>
               <media-text token="menu.speed">Speed</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
@@ -3357,23 +3373,27 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                 <media-menu-radio-item class="media-menu-item media-item">
                   <span data-part="label"></span>
                   <media-menu-item-indicator force-mount class="media-indicator">
-                    <media-icon class="media-icon" name="check"></media-icon>
+                    <media-icon class="media-icon" family="minimal" name="check"></media-icon>
                   </media-menu-item-indicator>
                 </media-menu-radio-item>
               </template>
             </media-playback-rate-radio-group>
           </media-menu>
           <media-menu-item class="media-menu-item media-item" commandfor="settings-captions-menu">
-            <media-icon class="media-icon" name="captions-off"></media-icon>
+            <media-icon class="media-icon" family="minimal" name="captions-off"></media-icon>
             <media-text token="menu.captions">Captions</media-text>
             <span class="media-hint">
-              <span class="media-hint-label" data-part="hint"></span>
-              <media-icon class="media-icon media-chevron" name="chevron"></media-icon>
+              <span data-part="hint" class="media-hint-label"></span>
+              <media-icon class="media-icon media-chevron" family="minimal" name="chevron"></media-icon>
             </span>
           </media-menu-item>
           <media-menu class="media-submenu-panel" id="settings-captions-menu">
             <media-menu-item class="media-menu-item media-back">
-              <media-icon class="media-icon media-chevron media-chevron-flipped" name="chevron"></media-icon>
+              <media-icon
+                class="media-icon media-chevron media-chevron-flipped"
+                family="minimal"
+                name="chevron"
+              ></media-icon>
               <media-text token="menu.captions">Captions</media-text>
             </media-menu-item>
             <div class="media-separator"></div>
@@ -3382,7 +3402,7 @@ export const skin = /* html */ \`<media-container class="media-container media-s
                 <media-menu-radio-item class="media-menu-item media-item">
                   <span data-part="label"></span>
                   <media-menu-item-indicator force-mount class="media-indicator">
-                    <media-icon class="media-icon" name="check"></media-icon>
+                    <media-icon class="media-icon" family="minimal" name="check"></media-icon>
                   </media-menu-item-indicator>
                 </media-menu-radio-item>
               </template>
@@ -3391,32 +3411,48 @@ export const skin = /* html */ \`<media-container class="media-container media-s
         </media-menu>
         <media-controls-group class="media-controls-remote">
           <media-cast-button class="media-button media-cast-button">
-            <media-icon class="media-button-icon media-cast-enter-icon" name="cast-enter"></media-icon>
-            <media-icon class="media-button-icon media-cast-exit-icon" name="cast-exit"></media-icon>
+            <media-icon class="media-button-icon media-cast-enter-icon" family="minimal" name="cast-enter"></media-icon>
+            <media-icon class="media-button-icon media-cast-exit-icon" family="minimal" name="cast-exit"></media-icon>
           </media-cast-button>
           <media-tooltip side="top" class="media-surface media-tooltip">
             <media-tooltip-label></media-tooltip-label>
             <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
           </media-tooltip>
           <media-airplay-button class="media-button media-airplay-button">
-            <media-icon class="media-button-icon media-airplay-enter-icon" name="airplay-enter"></media-icon>
-            <media-icon class="media-button-icon media-airplay-exit-icon" name="airplay-exit"></media-icon>
+            <media-icon
+              class="media-button-icon media-airplay-enter-icon"
+              family="minimal"
+              name="airplay-enter"
+            ></media-icon>
+            <media-icon
+              class="media-button-icon media-airplay-exit-icon"
+              family="minimal"
+              name="airplay-exit"
+            ></media-icon>
           </media-airplay-button>
           <media-tooltip side="top" class="media-surface media-tooltip">
             <media-tooltip-label></media-tooltip-label>
             <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
           </media-tooltip>
           <media-pip-button class="media-button media-pip-button">
-            <media-icon class="media-button-icon media-pip-enter-icon" name="pip-enter"></media-icon>
-            <media-icon class="media-button-icon media-pip-exit-icon" name="pip-exit"></media-icon>
+            <media-icon class="media-button-icon media-pip-enter-icon" family="minimal" name="pip-enter"></media-icon>
+            <media-icon class="media-button-icon media-pip-exit-icon" family="minimal" name="pip-exit"></media-icon>
           </media-pip-button>
           <media-tooltip side="top" class="media-surface media-tooltip">
             <media-tooltip-label></media-tooltip-label>
             <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
           </media-tooltip>
           <media-fullscreen-button class="media-button media-fullscreen-button">
-            <media-icon class="media-button-icon media-fullscreen-enter-icon" name="fullscreen-enter"></media-icon>
-            <media-icon class="media-button-icon media-fullscreen-exit-icon" name="fullscreen-exit"></media-icon>
+            <media-icon
+              class="media-button-icon media-fullscreen-enter-icon"
+              family="minimal"
+              name="fullscreen-enter"
+            ></media-icon>
+            <media-icon
+              class="media-button-icon media-fullscreen-exit-icon"
+              family="minimal"
+              name="fullscreen-exit"
+            ></media-icon>
           </media-fullscreen-button>
           <media-tooltip side="top" class="media-surface media-tooltip">
             <media-tooltip-label></media-tooltip-label>
@@ -3455,10 +3491,19 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       <media-volume-indicator-fill class="media-volume-indicator-fill">
         <media-icon
           class="media-volume-indicator-icon media-volume-high-indicator-icon"
+          family="minimal"
           name="volume-high"
         ></media-icon>
-        <media-icon class="media-volume-indicator-icon media-volume-low-indicator-icon" name="volume-low"></media-icon>
-        <media-icon class="media-volume-indicator-icon media-volume-off-indicator-icon" name="volume-off"></media-icon>
+        <media-icon
+          class="media-volume-indicator-icon media-volume-low-indicator-icon"
+          family="minimal"
+          name="volume-low"
+        ></media-icon>
+        <media-icon
+          class="media-volume-indicator-icon media-volume-off-indicator-icon"
+          family="minimal"
+          name="volume-off"
+        ></media-icon>
         <media-volume-indicator-value class="media-volume-indicator-value"></media-volume-indicator-value>
       </media-volume-indicator-fill>
     </media-volume-indicator>
@@ -3466,27 +3511,45 @@ export const skin = /* html */ \`<media-container class="media-container media-s
       actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"
       class="media-status-indicator"
     >
-      <media-icon class="media-status-indicator-icon media-status-captions-on-icon" name="captions-on"></media-icon>
-      <media-icon class="media-status-indicator-icon media-status-captions-off-icon" name="captions-off"></media-icon>
+      <media-icon
+        class="media-status-indicator-icon media-status-captions-on-icon"
+        family="minimal"
+        name="captions-on"
+      ></media-icon>
+      <media-icon
+        class="media-status-indicator-icon media-status-captions-off-icon"
+        family="minimal"
+        name="captions-off"
+      ></media-icon>
       <media-icon
         class="media-status-indicator-icon media-status-fullscreen-enter-icon"
+        family="minimal"
         name="fullscreen-enter"
       ></media-icon>
       <media-icon
         class="media-status-indicator-icon media-status-fullscreen-exit-icon"
+        family="minimal"
         name="fullscreen-exit"
       ></media-icon>
-      <media-icon class="media-status-indicator-icon media-status-pip-enter-icon" name="pip-enter"></media-icon>
-      <media-icon class="media-status-indicator-icon media-status-pip-exit-icon" name="pip-exit"></media-icon>
+      <media-icon
+        class="media-status-indicator-icon media-status-pip-enter-icon"
+        family="minimal"
+        name="pip-enter"
+      ></media-icon>
+      <media-icon
+        class="media-status-indicator-icon media-status-pip-exit-icon"
+        family="minimal"
+        name="pip-exit"
+      ></media-icon>
       <media-status-indicator-value class="media-status-indicator-value"></media-status-indicator-value>
     </media-status-indicator>
     <media-seek-indicator class="media-seek-indicator">
-      <media-icon class="media-seek-indicator-icon" name="chevron"></media-icon>
+      <media-icon class="media-seek-indicator-icon" family="minimal" name="chevron"></media-icon>
       <media-seek-indicator-value class="media-seek-indicator-value"></media-seek-indicator-value>
     </media-seek-indicator>
     <media-status-indicator actions="togglePaused" class="media-playback-status-indicator">
-      <media-icon class="media-playback-status-icon media-status-play-icon" name="play"></media-icon>
-      <media-icon class="media-playback-status-icon media-status-pause-icon" name="pause"></media-icon>
+      <media-icon class="media-playback-status-icon media-status-play-icon" family="minimal" name="play"></media-icon>
+      <media-icon class="media-playback-status-icon media-status-pause-icon" family="minimal" name="pause"></media-icon>
     </media-status-indicator>
   </div>
 </media-container>\`;
@@ -5768,14 +5831,20 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/airplay-button.tsx =====
-import { AirPlayEnterIcon, AirPlayExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { AirPlayEnterIcon, AirPlayExitIcon } from '@/icons';
 import { AirPlayButton as AirPlayButtonPrimitive } from '@/ui/airplay-button';
 
-export function AirPlayButton() {
+export interface AirPlayButtonProps extends Omit<AirPlayButtonPrimitive.Props, 'children'> {}
+
+export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <AirPlayButtonPrimitive className="media-button media-airplay-button">
+      <AirPlayButtonPrimitive
+        className={(state) => cn('media-button', 'media-airplay-button', resolveClassName(className, state))}
+        {...props}
+      >
         <AirPlayEnterIcon className="media-button-icon media-airplay-enter-icon" />
         <AirPlayExitIcon className="media-button-icon media-airplay-exit-icon" />
       </AirPlayButtonPrimitive>
@@ -5804,14 +5873,20 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/captions-button.tsx =====
-import { CaptionsOffIcon, CaptionsOnIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { CaptionsOffIcon, CaptionsOnIcon } from '@/icons';
 import { CaptionsButton as CaptionsButtonPrimitive } from '@/ui/captions-button';
 
-export function CaptionsButton() {
+export interface CaptionsButtonProps extends Omit<CaptionsButtonPrimitive.Props, 'children'> {}
+
+export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <CaptionsButtonPrimitive className="media-button media-captions-button">
+      <CaptionsButtonPrimitive
+        className={(state) => cn('media-button', 'media-captions-button', resolveClassName(className, state))}
+        {...props}
+      >
         <CaptionsOffIcon className="media-button-icon media-captions-off-icon" />
         <CaptionsOnIcon className="media-button-icon media-captions-on-icon" />
       </CaptionsButtonPrimitive>
@@ -5820,14 +5895,20 @@ export function CaptionsButton() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/cast-button.tsx =====
-import { CastEnterIcon, CastExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { CastEnterIcon, CastExitIcon } from '@/icons';
 import { CastButton as CastButtonPrimitive } from '@/ui/cast-button';
 
-export function CastButton() {
+export interface CastButtonProps extends Omit<CastButtonPrimitive.Props, 'children'> {}
+
+export function CastButton({ className, ...props }: CastButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <CastButtonPrimitive className="media-button media-cast-button">
+      <CastButtonPrimitive
+        className={(state) => cn('media-button', 'media-cast-button', resolveClassName(className, state))}
+        {...props}
+      >
         <CastEnterIcon className="media-button-icon media-cast-enter-icon" />
         <CastExitIcon className="media-button-icon media-cast-exit-icon" />
       </CastButtonPrimitive>
@@ -5836,14 +5917,20 @@ export function CastButton() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/fullscreen-button.tsx =====
-import { FullscreenEnterIcon, FullscreenExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { FullscreenEnterIcon, FullscreenExitIcon } from '@/icons';
 import { FullscreenButton as FullscreenButtonPrimitive } from '@/ui/fullscreen-button';
 
-export function FullscreenButton() {
+export interface FullscreenButtonProps extends Omit<FullscreenButtonPrimitive.Props, 'children'> {}
+
+export function FullscreenButton({ className, ...props }: FullscreenButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <FullscreenButtonPrimitive className="media-button media-fullscreen-button">
+      <FullscreenButtonPrimitive
+        className={(state) => cn('media-button', 'media-fullscreen-button', resolveClassName(className, state))}
+        {...props}
+      >
         <FullscreenEnterIcon className="media-button-icon media-fullscreen-enter-icon" />
         <FullscreenExitIcon className="media-button-icon media-fullscreen-exit-icon" />
       </FullscreenButtonPrimitive>
@@ -5852,12 +5939,18 @@ export function FullscreenButton() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/mute-button.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { MuteButton as MuteButtonPrimitive } from '@/ui/mute-button';
 
-export function MuteButton() {
+export interface MuteButtonProps extends Omit<MuteButtonPrimitive.Props, 'children'> {}
+
+export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
   return (
-    <MuteButtonPrimitive className="media-button media-mute-button">
+    <MuteButtonPrimitive
+      className={(state) => cn('media-button', 'media-mute-button', resolveClassName(className, state))}
+      {...props}
+    >
       <VolumeOffIcon className="media-button-icon media-volume-off-icon" />
       <VolumeLowIcon className="media-button-icon media-volume-low-icon" />
       <VolumeHighIcon className="media-button-icon media-volume-high-icon" />
@@ -5866,14 +5959,20 @@ export function MuteButton() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/pip-button.tsx =====
-import { PipEnterIcon, PipExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { PipEnterIcon, PipExitIcon } from '@/icons';
 import { PiPButton as PiPButtonPrimitive } from '@/ui/pip-button';
 
-export function PiPButton() {
+export interface PiPButtonProps extends Omit<PiPButtonPrimitive.Props, 'children'> {}
+
+export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <PiPButtonPrimitive className="media-button media-pip-button">
+      <PiPButtonPrimitive
+        className={(state) => cn('media-button', 'media-pip-button', resolveClassName(className, state))}
+        {...props}
+      >
         <PipEnterIcon className="media-button-icon media-pip-enter-icon" />
         <PipExitIcon className="media-button-icon media-pip-exit-icon" />
       </PiPButtonPrimitive>
@@ -5882,14 +5981,20 @@ export function PiPButton() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/play-button.tsx =====
-import { PauseIcon, PlayIcon, RestartIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { PauseIcon, PlayIcon, RestartIcon } from '@/icons';
 import { PlayButton as PlayButtonPrimitive } from '@/ui/play-button';
 
-export function PlayButton() {
+export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props, 'children'> {}
+
+export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <PlayButtonPrimitive className="media-button media-play-button">
+      <PlayButtonPrimitive
+        className={(state) => cn('media-button', 'media-play-button', resolveClassName(className, state))}
+        {...props}
+      >
         <RestartIcon className="media-button-icon media-restart-icon" />
         <PlayIcon className="media-button-icon media-play-icon" />
         <PauseIcon className="media-button-icon media-pause-icon" />
@@ -5899,23 +6004,30 @@ export function PlayButton() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/controls/volume-popover.tsx =====
-import type { PopoverProps, VolumeSliderProps } from '@videojs/core';
 import { MuteButton } from '../buttons/mute-button';
-import { VolumeSlider } from '../sliders/volume-slider';
+import { VolumeSlider, type VolumeSliderProps } from '../sliders/volume-slider';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { usePlayer } from '@/player/context';
 import { Popover as PopoverPrimitive } from '@/ui/popover';
 
-export interface VolumePopoverProps {
-  side?: PopoverProps['side'];
+export interface VolumePopoverProps extends Omit<PopoverPrimitive.RootProps, 'children'> {
+  className?: PopoverPrimitive.PopupProps['className'];
   orientation?: VolumeSliderProps['orientation'];
 }
 
-export function VolumePopover({ side = 'top', orientation = 'vertical' }: VolumePopoverProps = {}) {
+export function VolumePopover({
+  className,
+  side = 'top',
+  orientation = 'vertical',
+  ...props
+}: VolumePopoverProps = {}) {
   const volumeAvailability = usePlayer((state) => state.volumeAvailability);
   return volumeAvailability === 'available' ? (
-    <PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side}>
+    <PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>
       <PopoverPrimitive.Trigger render={<MuteButton />} />
-      <PopoverPrimitive.Popup className="media-surface media-volume-popover">
+      <PopoverPrimitive.Popup
+        className={(state) => cn('media-surface', 'media-volume-popover', resolveClassName(className, state))}
+      >
         <VolumeSlider orientation={orientation} />
       </PopoverPrimitive.Popup>
     </PopoverPrimitive.Root>
@@ -5925,24 +6037,36 @@ export function VolumePopover({ side = 'top', orientation = 'vertical' }: Volume
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/buffering-indicator.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { SpinnerIcon } from '@/icons';
 import { BufferingIndicator as BufferingIndicatorPrimitive } from '@/ui/buffering-indicator';
 
-export function BufferingIndicator() {
+export interface BufferingIndicatorProps extends Omit<BufferingIndicatorPrimitive.Props, 'children'> {}
+
+export function BufferingIndicator({ className, ...props }: BufferingIndicatorProps = {}) {
   return (
-    <BufferingIndicatorPrimitive className="media-buffering-indicator">
+    <BufferingIndicatorPrimitive
+      className={(state) => cn('media-buffering-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <SpinnerIcon className="media-buffering-spinner-icon" />
     </BufferingIndicatorPrimitive>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/error-dialog.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { ErrorDialog as ErrorDialogPrimitive } from '@/ui/error-dialog';
 
-export function ErrorDialog() {
+export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.PopupProps, 'children'> {}
+
+export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <ErrorDialogPrimitive.Popup className="media-error-dialog">
+      <ErrorDialogPrimitive.Popup
+        className={(state) => cn('media-error-dialog', resolveClassName(className, state))}
+        {...props}
+      >
         <ErrorDialogPrimitive.Title className="media-error-dialog-title" />
         <ErrorDialogPrimitive.Description className="media-error-dialog-description" />
         <ErrorDialogPrimitive.Close className="media-button media-error-dialog-close" />
@@ -5952,12 +6076,18 @@ export function ErrorDialog() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/seek-indicator.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { ChevronIcon } from '@/icons';
 import { SeekIndicator as SeekIndicatorPrimitive } from '@/ui/seek-indicator';
 
-export function SeekIndicator() {
+export interface SeekIndicatorProps extends Omit<SeekIndicatorPrimitive.RootProps, 'children'> {}
+
+export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) {
   return (
-    <SeekIndicatorPrimitive.Root className="media-seek-indicator">
+    <SeekIndicatorPrimitive.Root
+      className={(state) => cn('media-seek-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <ChevronIcon className="media-seek-indicator-icon" />
       <SeekIndicatorPrimitive.Value className="media-seek-indicator-value" />
     </SeekIndicatorPrimitive.Root>
@@ -5965,13 +6095,22 @@ export function SeekIndicator() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/status-announcer.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from '@/ui/status-announcer';
 
-export function StatusAnnouncer() {
-  return <StatusAnnouncerPrimitive className="media-status-announcer" />;
+export interface StatusAnnouncerProps extends Omit<StatusAnnouncerPrimitive.Props, 'children'> {}
+
+export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = {}) {
+  return (
+    <StatusAnnouncerPrimitive
+      className={(state) => cn('media-status-announcer', resolveClassName(className, state))}
+      {...props}
+    />
+  );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/status-indicator.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -5988,9 +6127,15 @@ const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictur
 
 const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
-export function StatusIndicator() {
+export interface StatusIndicatorProps extends Omit<StatusIndicatorPrimitive.RootProps, 'children' | 'actions'> {}
+
+export function StatusIndicator({ className, ...props }: StatusIndicatorProps = {}) {
   return (
-    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className="media-status-indicator">
+    <StatusIndicatorPrimitive.Root
+      actions={TOP_STATUS_ACTIONS}
+      className={(state) => cn('media-status-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <CaptionsOnIcon className="media-status-indicator-icon media-status-captions-on-icon" />
       <CaptionsOffIcon className="media-status-indicator-icon media-status-captions-off-icon" />
       <FullscreenEnterIcon className="media-status-indicator-icon media-status-fullscreen-enter-icon" />
@@ -6002,9 +6147,18 @@ export function StatusIndicator() {
   );
 }
 
-export function PlaybackStatusIndicator() {
+export interface PlaybackStatusIndicatorProps extends Omit<
+  StatusIndicatorPrimitive.RootProps,
+  'children' | 'actions'
+> {}
+
+export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusIndicatorProps = {}) {
   return (
-    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className="media-playback-status-indicator">
+    <StatusIndicatorPrimitive.Root
+      actions={PLAYBACK_STATUS_ACTIONS}
+      className={(state) => cn('media-playback-status-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <PlayIcon className="media-playback-status-icon media-status-play-icon" />
       <PauseIcon className="media-playback-status-icon media-status-pause-icon" />
     </StatusIndicatorPrimitive.Root>
@@ -6016,12 +6170,16 @@ import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
+import { cn } from '@videojs/utils/style';
+import type { ComponentProps } from 'react';
 
-export function VideoStatusIndicators() {
+export interface VideoStatusIndicatorsProps extends Omit<ComponentProps<'div'>, 'children'> {}
+
+export function VideoStatusIndicators({ className, ...props }: VideoStatusIndicatorsProps = {}) {
   return (
     <>
       <StatusAnnouncer />
-      <div className="media-status-indicator-overlay">
+      <div className={cn('media-status-indicator-overlay', className)} {...props}>
         <VolumeIndicator />
         <StatusIndicator />
         <SeekIndicator />
@@ -6032,12 +6190,18 @@ export function VideoStatusIndicators() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/volume-indicator.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { VolumeIndicator as VolumeIndicatorPrimitive } from '@/ui/volume-indicator';
 
-export function VolumeIndicator() {
+export interface VolumeIndicatorProps extends Omit<VolumeIndicatorPrimitive.RootProps, 'children'> {}
+
+export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = {}) {
   return (
-    <VolumeIndicatorPrimitive.Root className="media-volume-indicator">
+    <VolumeIndicatorPrimitive.Root
+      className={(state) => cn('media-volume-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <VolumeIndicatorPrimitive.Fill className="media-volume-indicator-fill">
         <VolumeHighIcon className="media-volume-indicator-icon media-volume-high-indicator-icon" />
         <VolumeLowIcon className="media-volume-indicator-icon media-volume-low-indicator-icon" />
@@ -6056,42 +6220,44 @@ export interface ContainerProps extends ContainerPrimitive.Props {}
 
 export function Container({ children, className, ...props }: ContainerProps) {
   return (
-    <ContainerPrimitive {...props} className={cn('media-container', className)}>
+    <ContainerPrimitive className={cn('media-container', className)} {...props}>
       {children}
     </ContainerPrimitive>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/layout/overlay.tsx =====
-export function Overlay() {
-  return <div className="media-overlay" />;
+import { cn } from '@videojs/utils/style';
+import type { ComponentProps } from 'react';
+
+export interface OverlayProps extends Omit<ComponentProps<'div'>, 'children'> {}
+
+export function Overlay({ className, ...props }: OverlayProps = {}) {
+  return <div className={cn('media-overlay', className)} {...props} />;
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/layout/poster.tsx =====
-import { cn } from '@videojs/utils/style';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { Poster as PosterPrimitive } from '@/ui/poster';
 
 export interface PosterProps extends PosterPrimitive.Props {}
 
-export function Poster({ className, ...props }: PosterProps) {
-  return (
-    <PosterPrimitive
-      {...props}
-      className={(state) => cn('media-poster', typeof className === 'function' ? className(state) : className)}
-    />
-  );
+export function Poster({ className, ...props }: PosterProps = {}) {
+  return <PosterPrimitive className={(state) => cn('media-poster', resolveClassName(className, state))} {...props} />;
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/audio-track-menu.tsx =====
 import { audioText } from '@videojs/core/i18n/text/menu';
-import { SpeechIcon } from '@/icons';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { useAudioTrackOptions } from '@/ui/audio-track/use-audio-track-options';
 import { Text } from '@/i18n';
+import { SpeechIcon } from '@/icons';
 
-export function AudioTrackMenu() {
+export interface AudioTrackMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   const audioTrack = useAudioTrackOptions();
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   return (
@@ -6099,7 +6265,12 @@ export function AudioTrackMenu() {
       <Submenu
         icon={<SpeechIcon className="media-icon" />}
         label={<Text token={audioText.key}>{audioText.text}</Text>}
-        selectedLabel={<span className="media-hint-label">{audioTrack?.selectedLabel}</span>}
+        selectedLabel={
+          <span data-part="hint" className="media-hint-label">
+            {audioTrack?.selectedLabel}
+          </span>
+        }
+        {...props}
       >
         <AudioTrackRadioGroup
           renderItem={(props, item) => (
@@ -6115,14 +6286,16 @@ export function AudioTrackMenu() {
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/captions-menu.tsx =====
 import { captionsText } from '@videojs/core/i18n/text/menu';
-import { CaptionsOffIcon } from '@/icons';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { useCaptionsOptions } from '@/ui/captions-radio-group/use-captions-options';
 import { Text } from '@/i18n';
+import { CaptionsOffIcon } from '@/icons';
 
-export function CaptionsMenu() {
+export interface CaptionsMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function CaptionsMenu(props: CaptionsMenuProps = {}) {
   const captions = useCaptionsOptions();
   const hasCaptions = captions?.state.availability === 'available';
   return (
@@ -6130,7 +6303,12 @@ export function CaptionsMenu() {
       <Submenu
         icon={<CaptionsOffIcon className="media-icon" />}
         label={<Text token={captionsText.key}>{captionsText.text}</Text>}
-        selectedLabel={<span className="media-hint-label">{captions?.selectedLabel}</span>}
+        selectedLabel={
+          <span data-part="hint" className="media-hint-label">
+            {captions?.selectedLabel}
+          </span>
+        }
+        {...props}
       >
         <CaptionsRadioGroup
           renderItem={(props, item) => (
@@ -6145,6 +6323,7 @@ export function CaptionsMenu() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/menu-chevron.tsx =====
+import { cn } from '@videojs/utils/style';
 import { ChevronIcon } from '@/icons';
 
 export function MenuChevron({
@@ -6152,21 +6331,21 @@ export function MenuChevron({
 }: {
   flipped?: boolean;
 } = {}) {
-  return (
-    <ChevronIcon className={flipped ? 'media-icon media-chevron media-chevron-flipped' : 'media-icon media-chevron'} />
-  );
+  return <ChevronIcon className={cn('media-icon', 'media-chevron', flipped ? 'media-chevron-flipped' : undefined)} />;
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/playback-rate-menu.tsx =====
 import { speedText } from '@videojs/core/i18n/text/menu';
-import { SpeedIcon } from '@/icons';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { usePlaybackRateOptions } from '@/ui/playback-rate/use-playback-rate-options';
 import { Text } from '@/i18n';
+import { SpeedIcon } from '@/icons';
 
-export function PlaybackRateMenu() {
+export interface PlaybackRateMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   const playbackRate = usePlaybackRateOptions();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
   return (
@@ -6174,7 +6353,12 @@ export function PlaybackRateMenu() {
       <Submenu
         icon={<SpeedIcon className="media-icon" />}
         label={<Text token={speedText.key}>{speedText.text}</Text>}
-        selectedLabel={<span className="media-hint-label">{playbackRate?.selectedLabel}</span>}
+        selectedLabel={
+          <span data-part="hint" className="media-hint-label">
+            {playbackRate?.selectedLabel}
+          </span>
+        }
+        {...props}
       >
         <PlaybackRateRadioGroup
           renderItem={(props, item) => (
@@ -6190,14 +6374,16 @@ export function PlaybackRateMenu() {
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/quality-menu.tsx =====
 import { qualityText } from '@videojs/core/i18n/text/menu';
-import { SwitchesIcon } from '@/icons';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { useQualityOptions } from '@/ui/quality/use-quality-options';
 import { Text } from '@/i18n';
+import { SwitchesIcon } from '@/icons';
 
-export function QualityMenu() {
+export interface QualityMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function QualityMenu(props: QualityMenuProps = {}) {
   const quality = useQualityOptions();
   const hasQuality = quality?.state.availability === 'available';
   return (
@@ -6205,7 +6391,12 @@ export function QualityMenu() {
       <Submenu
         icon={<SwitchesIcon className="media-icon" />}
         label={<Text token={qualityText.key}>{qualityText.text}</Text>}
-        selectedLabel={<span className="media-hint-label">{quality?.selectedLabel}</span>}
+        selectedLabel={
+          <span data-part="hint" className="media-hint-label">
+            {quality?.selectedLabel}
+          </span>
+        }
+        {...props}
       >
         <QualityRadioGroup
           renderItem={(props, item) => (
@@ -6224,7 +6415,7 @@ export function QualityMenu() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/radio-group.tsx =====
-import { cn } from '@videojs/utils/style';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive } from '@/ui/audio-track-radio-group';
 import { CaptionsRadioGroup as CaptionsRadioGroupPrimitive } from '@/ui/captions-radio-group';
 import { PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive } from '@/ui/playback-rate-radio-group';
@@ -6235,8 +6426,8 @@ export interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props
 export function QualityRadioGroup({ className, ...props }: QualityRadioGroupProps) {
   return (
     <QualityRadioGroupPrimitive
+      className={(state) => cn('media-radio-group', resolveClassName(className, state))}
       {...props}
-      className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
@@ -6246,8 +6437,8 @@ export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupPrimitive
 export function AudioTrackRadioGroup({ className, ...props }: AudioTrackRadioGroupProps) {
   return (
     <AudioTrackRadioGroupPrimitive
+      className={(state) => cn('media-radio-group', resolveClassName(className, state))}
       {...props}
-      className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
@@ -6257,8 +6448,8 @@ export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupPrimi
 export function PlaybackRateRadioGroup({ className, ...props }: PlaybackRateRadioGroupProps) {
   return (
     <PlaybackRateRadioGroupPrimitive
+      className={(state) => cn('media-radio-group', resolveClassName(className, state))}
       {...props}
-      className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
@@ -6268,33 +6459,31 @@ export interface CaptionsRadioGroupProps extends CaptionsRadioGroupPrimitive.Pro
 export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupProps) {
   return (
     <CaptionsRadioGroupPrimitive
+      className={(state) => cn('media-radio-group', resolveClassName(className, state))}
       {...props}
-      className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/radio-item.tsx =====
-import { CheckIcon } from '@/icons';
-import { cn } from '@videojs/utils/style';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
+import { CheckIcon } from '@/icons';
 import { Menu as MenuPrimitive } from '@/ui/menu';
 
 export interface RadioItemProps extends MenuPrimitive.RadioItemProps {
   children?: ReactNode;
-  checked: boolean;
+  checked?: boolean | undefined;
 }
 
 export function RadioItem({ checked, children, className, ...props }: RadioItemProps) {
   return (
     <MenuPrimitive.RadioItem
+      className={(state) => cn('media-menu-item', 'media-item', resolveClassName(className, state))}
       {...props}
-      className={(state) =>
-        cn('media-menu-item media-item', typeof className === 'function' ? className(state) : className)
-      }
     >
       {children}
-      <MenuPrimitive.ItemIndicator forceMount className="media-indicator" checked={checked}>
+      <MenuPrimitive.ItemIndicator checked={checked === true} forceMount className="media-indicator">
         <CheckIcon className="media-icon" />
       </MenuPrimitive.ItemIndicator>
     </MenuPrimitive.RadioItem>
@@ -6303,19 +6492,21 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/settings-menu.tsx =====
 import { settingsText } from '@videojs/core/i18n/text/menu';
-import { GearIcon } from '@/icons';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
 import { Text } from '@/i18n';
+import { GearIcon } from '@/icons';
 import { Menu as MenuPrimitive } from '@/ui/menu';
 import { Tooltip as TooltipPrimitive } from '@/ui/tooltip';
 
-export interface SettingsMenuProps {
+export interface SettingsMenuProps extends MenuPrimitive.RootProps {
   children?: ReactNode;
+  className?: MenuPrimitive.ContentProps['className'];
 }
 
-export function SettingsMenu({ children }: SettingsMenuProps) {
+export function SettingsMenu({ children, className, ...props }: SettingsMenuProps) {
   return (
-    <MenuPrimitive.Root side="top" align="center">
+    <MenuPrimitive.Root side="top" align="center" {...props}>
       <TooltipPrimitive.Root side="top">
         <TooltipPrimitive.Trigger
           render={
@@ -6331,7 +6522,11 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
           <Text token={settingsText.key}>{settingsText.text}</Text>
         </TooltipPrimitive.Popup>
       </TooltipPrimitive.Root>
-      <MenuPrimitive.Content className="media-surface media-popover media-settings media-menu-group">
+      <MenuPrimitive.Content
+        className={(state) =>
+          cn('media-surface', 'media-popover', 'media-settings', 'media-menu-group', resolveClassName(className, state))
+        }
+      >
         <MenuPrimitive.Group className="media-menu-group">{children}</MenuPrimitive.Group>
       </MenuPrimitive.Content>
     </MenuPrimitive.Root>
@@ -6339,20 +6534,22 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/submenu.tsx =====
-import type { ReactNode } from 'react';
 import { MenuChevron } from './menu-chevron';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import type { ReactNode } from 'react';
 import { Menu as MenuPrimitive } from '@/ui/menu';
 
-export interface SubmenuProps {
+export interface SubmenuProps extends MenuPrimitive.RootProps {
   children?: ReactNode;
   icon: ReactNode;
   label: ReactNode;
   selectedLabel: ReactNode;
+  className?: MenuPrimitive.ContentProps['className'];
 }
 
-export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) {
+export function Submenu({ children, icon, label, selectedLabel, className, ...props }: SubmenuProps) {
   return (
-    <MenuPrimitive.Root>
+    <MenuPrimitive.Root {...props}>
       <MenuPrimitive.Trigger className="media-menu-item media-item">
         {icon}
         {label}
@@ -6361,7 +6558,7 @@ export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) 
           <MenuChevron />
         </span>
       </MenuPrimitive.Trigger>
-      <MenuPrimitive.Content className="media-submenu-panel">
+      <MenuPrimitive.Content className={(state) => cn('media-submenu-panel', resolveClassName(className, state))}>
         <MenuPrimitive.Item className="media-menu-item media-back">
           <MenuChevron flipped />
           {label}
@@ -6378,13 +6575,15 @@ import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
 import { PlaybackRateMenu } from './playback-rate-menu';
 import { QualityMenu } from './quality-menu';
-import { SettingsMenu } from './settings-menu';
+import { SettingsMenu, type SettingsMenuProps } from './settings-menu';
 import { useQualityOptions } from '@/ui/quality/use-quality-options';
 import { useAudioTrackOptions } from '@/ui/audio-track/use-audio-track-options';
 import { usePlaybackRateOptions } from '@/ui/playback-rate/use-playback-rate-options';
 import { useCaptionsOptions } from '@/ui/captions-radio-group/use-captions-options';
 
-export function VideoSettingsMenu() {
+export interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, 'children'> {}
+
+export function VideoSettingsMenu(props: VideoSettingsMenuProps = {}) {
   const quality = useQualityOptions();
   const audioTrack = useAudioTrackOptions();
   const playbackRate = usePlaybackRateOptions();
@@ -6396,7 +6595,7 @@ export function VideoSettingsMenu() {
     captions?.state.availability === 'available';
   return (
     hasSettings && (
-      <SettingsMenu>
+      <SettingsMenu {...props}>
         <QualityMenu />
         <AudioTrackMenu />
         <PlaybackRateMenu />
@@ -6407,17 +6606,20 @@ export function VideoSettingsMenu() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/sliders/time-slider.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { SpinnerIcon } from '@/icons';
 import { Slider as SliderPrimitive } from '@/ui/slider';
 import { TimeSlider as TimeSliderPrimitive } from '@/ui/time-slider';
 
-export function TimeSlider() {
+export interface TimeSliderProps extends Omit<TimeSliderPrimitive.RootProps, 'children'> {}
+
+export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
   return (
-    <TimeSliderPrimitive.Root className="media-slider">
+    <TimeSliderPrimitive.Root className={(state) => cn('media-slider', resolveClassName(className, state))} {...props}>
       <TimeSliderPrimitive.Chapters
         className="media-slider-chapters"
         renderChapter={(props) => (
-          <div className="media-slider-chapter" {...props}>
+          <div {...props} className="media-slider-chapter">
             <TimeSliderPrimitive.Track className="media-slider-chapter-track">
               <TimeSliderPrimitive.Buffer className="media-slider-buffer" />
               <TimeSliderPrimitive.Fill className="media-slider-fill" />
@@ -6441,12 +6643,18 @@ export function TimeSlider() {
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/sliders/volume-slider.tsx =====
-import type { VolumeSliderProps } from '@videojs/core';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { VolumeSlider as VolumeSliderPrimitive } from '@/ui/volume-slider';
 
-export function VolumeSlider(props: VolumeSliderProps = {}) {
+export interface VolumeSliderProps extends Omit<VolumeSliderPrimitive.RootProps, 'children'> {}
+
+export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
   return (
-    <VolumeSliderPrimitive.Root className="media-slider" thumbAlignment="edge" {...props}>
+    <VolumeSliderPrimitive.Root
+      className={(state) => cn('media-slider', resolveClassName(className, state))}
+      thumbAlignment="edge"
+      {...props}
+    >
       <VolumeSliderPrimitive.Track className="media-slider-track">
         <VolumeSliderPrimitive.Fill className="media-slider-fill" />
       </VolumeSliderPrimitive.Track>
@@ -6458,14 +6666,18 @@ export function VolumeSlider(props: VolumeSliderProps = {}) {
 ===== packages/react/src/__generated__/skins/default-video/components/video-gestures.tsx =====
 import { Gesture as GesturePrimitive } from '@/ui/gesture';
 
-export function VideoGestures() {
+export interface VideoGesturesProps {
+  disabled?: boolean | undefined;
+}
+
+export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
   return (
     <>
-      <GesturePrimitive type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <GesturePrimitive type="tap" action="toggleControls" pointer="touch" />
-      <GesturePrimitive type="doubletap" action="seekStep" value={-10} region="left" />
-      <GesturePrimitive type="doubletap" action="toggleFullscreen" region="center" />
-      <GesturePrimitive type="doubletap" action="seekStep" value={10} region="right" />
+      <GesturePrimitive disabled={disabled} type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <GesturePrimitive disabled={disabled} type="tap" action="toggleControls" pointer="touch" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="seekStep" value={-10} region="left" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="toggleFullscreen" region="center" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="seekStep" value={10} region="right" />
     </>
   );
 }
@@ -6473,26 +6685,30 @@ export function VideoGestures() {
 ===== packages/react/src/__generated__/skins/default-video/components/video-hotkeys.tsx =====
 import { Hotkey as HotkeyPrimitive } from '@/ui/hotkey';
 
-export function VideoHotkeys() {
+export interface VideoHotkeysProps {
+  disabled?: boolean | undefined;
+}
+
+export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
   return (
     <>
-      <HotkeyPrimitive keys="Space" action="togglePaused" />
-      <HotkeyPrimitive keys="k" action="togglePaused" />
-      <HotkeyPrimitive keys="m" action="toggleMuted" />
-      <HotkeyPrimitive keys="f" action="toggleFullscreen" />
-      <HotkeyPrimitive keys="c" action="toggleSubtitles" />
-      <HotkeyPrimitive keys="i" action="togglePictureInPicture" />
-      <HotkeyPrimitive keys="ArrowRight" action="seekStep" value={5} />
-      <HotkeyPrimitive keys="ArrowLeft" action="seekStep" value={-5} />
-      <HotkeyPrimitive keys="l" action="seekStep" value={10} />
-      <HotkeyPrimitive keys="j" action="seekStep" value={-10} />
-      <HotkeyPrimitive keys="ArrowUp" action="volumeStep" value={0.05} />
-      <HotkeyPrimitive keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <HotkeyPrimitive keys="0-9" action="seekToPercent" />
-      <HotkeyPrimitive keys="Home" action="seekToPercent" value={0} />
-      <HotkeyPrimitive keys="End" action="seekToPercent" value={100} />
-      <HotkeyPrimitive keys=">" action="speedUp" />
-      <HotkeyPrimitive keys="<" action="speedDown" />
+      <HotkeyPrimitive disabled={disabled} keys="Space" action="togglePaused" />
+      <HotkeyPrimitive disabled={disabled} keys="k" action="togglePaused" />
+      <HotkeyPrimitive disabled={disabled} keys="m" action="toggleMuted" />
+      <HotkeyPrimitive disabled={disabled} keys="f" action="toggleFullscreen" />
+      <HotkeyPrimitive disabled={disabled} keys="c" action="toggleSubtitles" />
+      <HotkeyPrimitive disabled={disabled} keys="i" action="togglePictureInPicture" />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowRight" action="seekStep" value={5} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowLeft" action="seekStep" value={-5} />
+      <HotkeyPrimitive disabled={disabled} keys="l" action="seekStep" value={10} />
+      <HotkeyPrimitive disabled={disabled} keys="j" action="seekStep" value={-10} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowUp" action="volumeStep" value={0.05} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <HotkeyPrimitive disabled={disabled} keys="0-9" action="seekToPercent" />
+      <HotkeyPrimitive disabled={disabled} keys="Home" action="seekToPercent" value={0} />
+      <HotkeyPrimitive disabled={disabled} keys="End" action="seekToPercent" value={100} />
+      <HotkeyPrimitive disabled={disabled} keys=">" action="speedUp" />
+      <HotkeyPrimitive disabled={disabled} keys="<" action="speedDown" />
     </>
   );
 }
@@ -6530,7 +6746,7 @@ export interface DefaultVideoSkinProps extends Omit<ContainerProps, 'children'> 
 
 export function DefaultVideoSkin({ children, className, poster, ...containerProps }: DefaultVideoSkinProps = {}) {
   return (
-    <Container {...containerProps} className={cn('media-skin media-skin-video media-theme-default', className)}>
+    <Container className={cn('media-skin media-skin-video media-theme-default', className)} {...containerProps}>
       {children}
       {poster && (
         <Poster
@@ -9364,14 +9580,20 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/airplay-button.tsx =====
-import { AirPlayEnterIcon, AirPlayExitIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { AirPlayEnterIcon, AirPlayExitIcon } from '@/icons/minimal';
 import { AirPlayButton as AirPlayButtonPrimitive } from '@/ui/airplay-button';
 
-export function AirPlayButton() {
+export interface AirPlayButtonProps extends Omit<AirPlayButtonPrimitive.Props, 'children'> {}
+
+export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <AirPlayButtonPrimitive className="media-button media-airplay-button">
+      <AirPlayButtonPrimitive
+        className={(state) => cn('media-button', 'media-airplay-button', resolveClassName(className, state))}
+        {...props}
+      >
         <AirPlayEnterIcon className="media-button-icon media-airplay-enter-icon" />
         <AirPlayExitIcon className="media-button-icon media-airplay-exit-icon" />
       </AirPlayButtonPrimitive>
@@ -9400,14 +9622,20 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/captions-button.tsx =====
-import { CaptionsOffIcon, CaptionsOnIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { CaptionsOffIcon, CaptionsOnIcon } from '@/icons/minimal';
 import { CaptionsButton as CaptionsButtonPrimitive } from '@/ui/captions-button';
 
-export function CaptionsButton() {
+export interface CaptionsButtonProps extends Omit<CaptionsButtonPrimitive.Props, 'children'> {}
+
+export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <CaptionsButtonPrimitive className="media-button media-captions-button">
+      <CaptionsButtonPrimitive
+        className={(state) => cn('media-button', 'media-captions-button', resolveClassName(className, state))}
+        {...props}
+      >
         <CaptionsOffIcon className="media-button-icon media-captions-off-icon" />
         <CaptionsOnIcon className="media-button-icon media-captions-on-icon" />
       </CaptionsButtonPrimitive>
@@ -9416,14 +9644,20 @@ export function CaptionsButton() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/cast-button.tsx =====
-import { CastEnterIcon, CastExitIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { CastEnterIcon, CastExitIcon } from '@/icons/minimal';
 import { CastButton as CastButtonPrimitive } from '@/ui/cast-button';
 
-export function CastButton() {
+export interface CastButtonProps extends Omit<CastButtonPrimitive.Props, 'children'> {}
+
+export function CastButton({ className, ...props }: CastButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <CastButtonPrimitive className="media-button media-cast-button">
+      <CastButtonPrimitive
+        className={(state) => cn('media-button', 'media-cast-button', resolveClassName(className, state))}
+        {...props}
+      >
         <CastEnterIcon className="media-button-icon media-cast-enter-icon" />
         <CastExitIcon className="media-button-icon media-cast-exit-icon" />
       </CastButtonPrimitive>
@@ -9432,14 +9666,20 @@ export function CastButton() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/fullscreen-button.tsx =====
-import { FullscreenEnterIcon, FullscreenExitIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { FullscreenEnterIcon, FullscreenExitIcon } from '@/icons/minimal';
 import { FullscreenButton as FullscreenButtonPrimitive } from '@/ui/fullscreen-button';
 
-export function FullscreenButton() {
+export interface FullscreenButtonProps extends Omit<FullscreenButtonPrimitive.Props, 'children'> {}
+
+export function FullscreenButton({ className, ...props }: FullscreenButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <FullscreenButtonPrimitive className="media-button media-fullscreen-button">
+      <FullscreenButtonPrimitive
+        className={(state) => cn('media-button', 'media-fullscreen-button', resolveClassName(className, state))}
+        {...props}
+      >
         <FullscreenEnterIcon className="media-button-icon media-fullscreen-enter-icon" />
         <FullscreenExitIcon className="media-button-icon media-fullscreen-exit-icon" />
       </FullscreenButtonPrimitive>
@@ -9448,12 +9688,18 @@ export function FullscreenButton() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/mute-button.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons/minimal';
 import { MuteButton as MuteButtonPrimitive } from '@/ui/mute-button';
 
-export function MuteButton() {
+export interface MuteButtonProps extends Omit<MuteButtonPrimitive.Props, 'children'> {}
+
+export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
   return (
-    <MuteButtonPrimitive className="media-button media-mute-button">
+    <MuteButtonPrimitive
+      className={(state) => cn('media-button', 'media-mute-button', resolveClassName(className, state))}
+      {...props}
+    >
       <VolumeOffIcon className="media-button-icon media-volume-off-icon" />
       <VolumeLowIcon className="media-button-icon media-volume-low-icon" />
       <VolumeHighIcon className="media-button-icon media-volume-high-icon" />
@@ -9462,14 +9708,20 @@ export function MuteButton() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/pip-button.tsx =====
-import { PipEnterIcon, PipExitIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { PipEnterIcon, PipExitIcon } from '@/icons/minimal';
 import { PiPButton as PiPButtonPrimitive } from '@/ui/pip-button';
 
-export function PiPButton() {
+export interface PiPButtonProps extends Omit<PiPButtonPrimitive.Props, 'children'> {}
+
+export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <PiPButtonPrimitive className="media-button media-pip-button">
+      <PiPButtonPrimitive
+        className={(state) => cn('media-button', 'media-pip-button', resolveClassName(className, state))}
+        {...props}
+      >
         <PipEnterIcon className="media-button-icon media-pip-enter-icon" />
         <PipExitIcon className="media-button-icon media-pip-exit-icon" />
       </PiPButtonPrimitive>
@@ -9478,14 +9730,20 @@ export function PiPButton() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/play-button.tsx =====
-import { PauseIcon, PlayIcon, RestartIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import { PauseIcon, PlayIcon, RestartIcon } from '@/icons/minimal';
 import { PlayButton as PlayButtonPrimitive } from '@/ui/play-button';
 
-export function PlayButton() {
+export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props, 'children'> {}
+
+export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
-      <PlayButtonPrimitive className="media-button media-play-button">
+      <PlayButtonPrimitive
+        className={(state) => cn('media-button', 'media-play-button', resolveClassName(className, state))}
+        {...props}
+      >
         <RestartIcon className="media-button-icon media-restart-icon" />
         <PlayIcon className="media-button-icon media-play-icon" />
         <PauseIcon className="media-button-icon media-pause-icon" />
@@ -9495,23 +9753,30 @@ export function PlayButton() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/controls/volume-popover.tsx =====
-import type { PopoverProps, VolumeSliderProps } from '@videojs/core';
 import { MuteButton } from '../buttons/mute-button';
-import { VolumeSlider } from '../sliders/volume-slider';
+import { VolumeSlider, type VolumeSliderProps } from '../sliders/volume-slider';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { usePlayer } from '@/player/context';
 import { Popover as PopoverPrimitive } from '@/ui/popover';
 
-export interface VolumePopoverProps {
-  side?: PopoverProps['side'];
+export interface VolumePopoverProps extends Omit<PopoverPrimitive.RootProps, 'children'> {
+  className?: PopoverPrimitive.PopupProps['className'];
   orientation?: VolumeSliderProps['orientation'];
 }
 
-export function VolumePopover({ side = 'top', orientation = 'vertical' }: VolumePopoverProps = {}) {
+export function VolumePopover({
+  className,
+  side = 'top',
+  orientation = 'vertical',
+  ...props
+}: VolumePopoverProps = {}) {
   const volumeAvailability = usePlayer((state) => state.volumeAvailability);
   return volumeAvailability === 'available' ? (
-    <PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side}>
+    <PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>
       <PopoverPrimitive.Trigger render={<MuteButton />} />
-      <PopoverPrimitive.Popup className="media-surface media-volume-popover">
+      <PopoverPrimitive.Popup
+        className={(state) => cn('media-surface', 'media-volume-popover', resolveClassName(className, state))}
+      >
         <VolumeSlider orientation={orientation} />
       </PopoverPrimitive.Popup>
     </PopoverPrimitive.Root>
@@ -9521,24 +9786,36 @@ export function VolumePopover({ side = 'top', orientation = 'vertical' }: Volume
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/buffering-indicator.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { SpinnerIcon } from '@/icons/minimal';
 import { BufferingIndicator as BufferingIndicatorPrimitive } from '@/ui/buffering-indicator';
 
-export function BufferingIndicator() {
+export interface BufferingIndicatorProps extends Omit<BufferingIndicatorPrimitive.Props, 'children'> {}
+
+export function BufferingIndicator({ className, ...props }: BufferingIndicatorProps = {}) {
   return (
-    <BufferingIndicatorPrimitive className="media-buffering-indicator">
+    <BufferingIndicatorPrimitive
+      className={(state) => cn('media-buffering-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <SpinnerIcon className="media-buffering-spinner-icon" />
     </BufferingIndicatorPrimitive>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/error-dialog.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { ErrorDialog as ErrorDialogPrimitive } from '@/ui/error-dialog';
 
-export function ErrorDialog() {
+export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.PopupProps, 'children'> {}
+
+export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <ErrorDialogPrimitive.Popup className="media-error-dialog">
+      <ErrorDialogPrimitive.Popup
+        className={(state) => cn('media-error-dialog', resolveClassName(className, state))}
+        {...props}
+      >
         <ErrorDialogPrimitive.Title className="media-error-dialog-title" />
         <ErrorDialogPrimitive.Description className="media-error-dialog-description" />
         <ErrorDialogPrimitive.Close className="media-button media-error-dialog-close" />
@@ -9548,12 +9825,18 @@ export function ErrorDialog() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/seek-indicator.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { ChevronIcon } from '@/icons/minimal';
 import { SeekIndicator as SeekIndicatorPrimitive } from '@/ui/seek-indicator';
 
-export function SeekIndicator() {
+export interface SeekIndicatorProps extends Omit<SeekIndicatorPrimitive.RootProps, 'children'> {}
+
+export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) {
   return (
-    <SeekIndicatorPrimitive.Root className="media-seek-indicator">
+    <SeekIndicatorPrimitive.Root
+      className={(state) => cn('media-seek-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <ChevronIcon className="media-seek-indicator-icon" />
       <SeekIndicatorPrimitive.Value className="media-seek-indicator-value" />
     </SeekIndicatorPrimitive.Root>
@@ -9561,13 +9844,22 @@ export function SeekIndicator() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/status-announcer.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { StatusAnnouncer as StatusAnnouncerPrimitive } from '@/ui/status-announcer';
 
-export function StatusAnnouncer() {
-  return <StatusAnnouncerPrimitive className="media-status-announcer" />;
+export interface StatusAnnouncerProps extends Omit<StatusAnnouncerPrimitive.Props, 'children'> {}
+
+export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = {}) {
+  return (
+    <StatusAnnouncerPrimitive
+      className={(state) => cn('media-status-announcer', resolveClassName(className, state))}
+      {...props}
+    />
+  );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/status-indicator.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -9584,9 +9876,15 @@ const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictur
 
 const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
-export function StatusIndicator() {
+export interface StatusIndicatorProps extends Omit<StatusIndicatorPrimitive.RootProps, 'children' | 'actions'> {}
+
+export function StatusIndicator({ className, ...props }: StatusIndicatorProps = {}) {
   return (
-    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className="media-status-indicator">
+    <StatusIndicatorPrimitive.Root
+      actions={TOP_STATUS_ACTIONS}
+      className={(state) => cn('media-status-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <CaptionsOnIcon className="media-status-indicator-icon media-status-captions-on-icon" />
       <CaptionsOffIcon className="media-status-indicator-icon media-status-captions-off-icon" />
       <FullscreenEnterIcon className="media-status-indicator-icon media-status-fullscreen-enter-icon" />
@@ -9598,9 +9896,18 @@ export function StatusIndicator() {
   );
 }
 
-export function PlaybackStatusIndicator() {
+export interface PlaybackStatusIndicatorProps extends Omit<
+  StatusIndicatorPrimitive.RootProps,
+  'children' | 'actions'
+> {}
+
+export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusIndicatorProps = {}) {
   return (
-    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className="media-playback-status-indicator">
+    <StatusIndicatorPrimitive.Root
+      actions={PLAYBACK_STATUS_ACTIONS}
+      className={(state) => cn('media-playback-status-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <PlayIcon className="media-playback-status-icon media-status-play-icon" />
       <PauseIcon className="media-playback-status-icon media-status-pause-icon" />
     </StatusIndicatorPrimitive.Root>
@@ -9612,12 +9919,16 @@ import { SeekIndicator } from './seek-indicator';
 import { StatusAnnouncer } from './status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from './status-indicator';
 import { VolumeIndicator } from './volume-indicator';
+import { cn } from '@videojs/utils/style';
+import type { ComponentProps } from 'react';
 
-export function VideoStatusIndicators() {
+export interface VideoStatusIndicatorsProps extends Omit<ComponentProps<'div'>, 'children'> {}
+
+export function VideoStatusIndicators({ className, ...props }: VideoStatusIndicatorsProps = {}) {
   return (
     <>
       <StatusAnnouncer />
-      <div className="media-status-indicator-overlay">
+      <div className={cn('media-status-indicator-overlay', className)} {...props}>
         <VolumeIndicator />
         <StatusIndicator />
         <SeekIndicator />
@@ -9628,12 +9939,18 @@ export function VideoStatusIndicators() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/volume-indicator.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons/minimal';
 import { VolumeIndicator as VolumeIndicatorPrimitive } from '@/ui/volume-indicator';
 
-export function VolumeIndicator() {
+export interface VolumeIndicatorProps extends Omit<VolumeIndicatorPrimitive.RootProps, 'children'> {}
+
+export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = {}) {
   return (
-    <VolumeIndicatorPrimitive.Root className="media-volume-indicator">
+    <VolumeIndicatorPrimitive.Root
+      className={(state) => cn('media-volume-indicator', resolveClassName(className, state))}
+      {...props}
+    >
       <VolumeIndicatorPrimitive.Fill className="media-volume-indicator-fill">
         <VolumeHighIcon className="media-volume-indicator-icon media-volume-high-indicator-icon" />
         <VolumeLowIcon className="media-volume-indicator-icon media-volume-low-indicator-icon" />
@@ -9652,42 +9969,44 @@ export interface ContainerProps extends ContainerPrimitive.Props {}
 
 export function Container({ children, className, ...props }: ContainerProps) {
   return (
-    <ContainerPrimitive {...props} className={cn('media-container', className)}>
+    <ContainerPrimitive className={cn('media-container', className)} {...props}>
       {children}
     </ContainerPrimitive>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/layout/overlay.tsx =====
-export function Overlay() {
-  return <div className="media-overlay" />;
+import { cn } from '@videojs/utils/style';
+import type { ComponentProps } from 'react';
+
+export interface OverlayProps extends Omit<ComponentProps<'div'>, 'children'> {}
+
+export function Overlay({ className, ...props }: OverlayProps = {}) {
+  return <div className={cn('media-overlay', className)} {...props} />;
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/layout/poster.tsx =====
-import { cn } from '@videojs/utils/style';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { Poster as PosterPrimitive } from '@/ui/poster';
 
 export interface PosterProps extends PosterPrimitive.Props {}
 
-export function Poster({ className, ...props }: PosterProps) {
-  return (
-    <PosterPrimitive
-      {...props}
-      className={(state) => cn('media-poster', typeof className === 'function' ? className(state) : className)}
-    />
-  );
+export function Poster({ className, ...props }: PosterProps = {}) {
+  return <PosterPrimitive className={(state) => cn('media-poster', resolveClassName(className, state))} {...props} />;
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/audio-track-menu.tsx =====
 import { audioText } from '@videojs/core/i18n/text/menu';
-import { SpeechIcon } from '@/icons/minimal';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { useAudioTrackOptions } from '@/ui/audio-track/use-audio-track-options';
 import { Text } from '@/i18n';
+import { SpeechIcon } from '@/icons/minimal';
 
-export function AudioTrackMenu() {
+export interface AudioTrackMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   const audioTrack = useAudioTrackOptions();
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   return (
@@ -9695,7 +10014,12 @@ export function AudioTrackMenu() {
       <Submenu
         icon={<SpeechIcon className="media-icon" />}
         label={<Text token={audioText.key}>{audioText.text}</Text>}
-        selectedLabel={<span className="media-hint-label">{audioTrack?.selectedLabel}</span>}
+        selectedLabel={
+          <span data-part="hint" className="media-hint-label">
+            {audioTrack?.selectedLabel}
+          </span>
+        }
+        {...props}
       >
         <AudioTrackRadioGroup
           renderItem={(props, item) => (
@@ -9711,14 +10035,16 @@ export function AudioTrackMenu() {
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/captions-menu.tsx =====
 import { captionsText } from '@videojs/core/i18n/text/menu';
-import { CaptionsOffIcon } from '@/icons/minimal';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { useCaptionsOptions } from '@/ui/captions-radio-group/use-captions-options';
 import { Text } from '@/i18n';
+import { CaptionsOffIcon } from '@/icons/minimal';
 
-export function CaptionsMenu() {
+export interface CaptionsMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function CaptionsMenu(props: CaptionsMenuProps = {}) {
   const captions = useCaptionsOptions();
   const hasCaptions = captions?.state.availability === 'available';
   return (
@@ -9726,7 +10052,12 @@ export function CaptionsMenu() {
       <Submenu
         icon={<CaptionsOffIcon className="media-icon" />}
         label={<Text token={captionsText.key}>{captionsText.text}</Text>}
-        selectedLabel={<span className="media-hint-label">{captions?.selectedLabel}</span>}
+        selectedLabel={
+          <span data-part="hint" className="media-hint-label">
+            {captions?.selectedLabel}
+          </span>
+        }
+        {...props}
       >
         <CaptionsRadioGroup
           renderItem={(props, item) => (
@@ -9741,6 +10072,7 @@ export function CaptionsMenu() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/menu-chevron.tsx =====
+import { cn } from '@videojs/utils/style';
 import { ChevronIcon } from '@/icons/minimal';
 
 export function MenuChevron({
@@ -9748,21 +10080,21 @@ export function MenuChevron({
 }: {
   flipped?: boolean;
 } = {}) {
-  return (
-    <ChevronIcon className={flipped ? 'media-icon media-chevron media-chevron-flipped' : 'media-icon media-chevron'} />
-  );
+  return <ChevronIcon className={cn('media-icon', 'media-chevron', flipped ? 'media-chevron-flipped' : undefined)} />;
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/playback-rate-menu.tsx =====
 import { speedText } from '@videojs/core/i18n/text/menu';
-import { SpeedIcon } from '@/icons/minimal';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { usePlaybackRateOptions } from '@/ui/playback-rate/use-playback-rate-options';
 import { Text } from '@/i18n';
+import { SpeedIcon } from '@/icons/minimal';
 
-export function PlaybackRateMenu() {
+export interface PlaybackRateMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   const playbackRate = usePlaybackRateOptions();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
   return (
@@ -9770,7 +10102,12 @@ export function PlaybackRateMenu() {
       <Submenu
         icon={<SpeedIcon className="media-icon" />}
         label={<Text token={speedText.key}>{speedText.text}</Text>}
-        selectedLabel={<span className="media-hint-label">{playbackRate?.selectedLabel}</span>}
+        selectedLabel={
+          <span data-part="hint" className="media-hint-label">
+            {playbackRate?.selectedLabel}
+          </span>
+        }
+        {...props}
       >
         <PlaybackRateRadioGroup
           renderItem={(props, item) => (
@@ -9786,14 +10123,16 @@ export function PlaybackRateMenu() {
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/quality-menu.tsx =====
 import { qualityText } from '@videojs/core/i18n/text/menu';
-import { SwitchesIcon } from '@/icons/minimal';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { useQualityOptions } from '@/ui/quality/use-quality-options';
 import { Text } from '@/i18n';
+import { SwitchesIcon } from '@/icons/minimal';
 
-export function QualityMenu() {
+export interface QualityMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function QualityMenu(props: QualityMenuProps = {}) {
   const quality = useQualityOptions();
   const hasQuality = quality?.state.availability === 'available';
   return (
@@ -9801,7 +10140,12 @@ export function QualityMenu() {
       <Submenu
         icon={<SwitchesIcon className="media-icon" />}
         label={<Text token={qualityText.key}>{qualityText.text}</Text>}
-        selectedLabel={<span className="media-hint-label">{quality?.selectedLabel}</span>}
+        selectedLabel={
+          <span data-part="hint" className="media-hint-label">
+            {quality?.selectedLabel}
+          </span>
+        }
+        {...props}
       >
         <QualityRadioGroup
           renderItem={(props, item) => (
@@ -9820,7 +10164,7 @@ export function QualityMenu() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/radio-group.tsx =====
-import { cn } from '@videojs/utils/style';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive } from '@/ui/audio-track-radio-group';
 import { CaptionsRadioGroup as CaptionsRadioGroupPrimitive } from '@/ui/captions-radio-group';
 import { PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive } from '@/ui/playback-rate-radio-group';
@@ -9831,8 +10175,8 @@ export interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props
 export function QualityRadioGroup({ className, ...props }: QualityRadioGroupProps) {
   return (
     <QualityRadioGroupPrimitive
+      className={(state) => cn('media-radio-group', resolveClassName(className, state))}
       {...props}
-      className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
@@ -9842,8 +10186,8 @@ export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupPrimitive
 export function AudioTrackRadioGroup({ className, ...props }: AudioTrackRadioGroupProps) {
   return (
     <AudioTrackRadioGroupPrimitive
+      className={(state) => cn('media-radio-group', resolveClassName(className, state))}
       {...props}
-      className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
@@ -9853,8 +10197,8 @@ export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupPrimi
 export function PlaybackRateRadioGroup({ className, ...props }: PlaybackRateRadioGroupProps) {
   return (
     <PlaybackRateRadioGroupPrimitive
+      className={(state) => cn('media-radio-group', resolveClassName(className, state))}
       {...props}
-      className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
@@ -9864,33 +10208,31 @@ export interface CaptionsRadioGroupProps extends CaptionsRadioGroupPrimitive.Pro
 export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupProps) {
   return (
     <CaptionsRadioGroupPrimitive
+      className={(state) => cn('media-radio-group', resolveClassName(className, state))}
       {...props}
-      className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/radio-item.tsx =====
-import { CheckIcon } from '@/icons/minimal';
-import { cn } from '@videojs/utils/style';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
+import { CheckIcon } from '@/icons/minimal';
 import { Menu as MenuPrimitive } from '@/ui/menu';
 
 export interface RadioItemProps extends MenuPrimitive.RadioItemProps {
   children?: ReactNode;
-  checked: boolean;
+  checked?: boolean | undefined;
 }
 
 export function RadioItem({ checked, children, className, ...props }: RadioItemProps) {
   return (
     <MenuPrimitive.RadioItem
+      className={(state) => cn('media-menu-item', 'media-item', resolveClassName(className, state))}
       {...props}
-      className={(state) =>
-        cn('media-menu-item media-item', typeof className === 'function' ? className(state) : className)
-      }
     >
       {children}
-      <MenuPrimitive.ItemIndicator forceMount className="media-indicator" checked={checked}>
+      <MenuPrimitive.ItemIndicator checked={checked === true} forceMount className="media-indicator">
         <CheckIcon className="media-icon" />
       </MenuPrimitive.ItemIndicator>
     </MenuPrimitive.RadioItem>
@@ -9899,19 +10241,21 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/settings-menu.tsx =====
 import { settingsText } from '@videojs/core/i18n/text/menu';
-import { GearIcon } from '@/icons/minimal';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
 import { Text } from '@/i18n';
+import { GearIcon } from '@/icons/minimal';
 import { Menu as MenuPrimitive } from '@/ui/menu';
 import { Tooltip as TooltipPrimitive } from '@/ui/tooltip';
 
-export interface SettingsMenuProps {
+export interface SettingsMenuProps extends MenuPrimitive.RootProps {
   children?: ReactNode;
+  className?: MenuPrimitive.ContentProps['className'];
 }
 
-export function SettingsMenu({ children }: SettingsMenuProps) {
+export function SettingsMenu({ children, className, ...props }: SettingsMenuProps) {
   return (
-    <MenuPrimitive.Root side="top" align="center">
+    <MenuPrimitive.Root side="top" align="center" {...props}>
       <TooltipPrimitive.Root side="top">
         <TooltipPrimitive.Trigger
           render={
@@ -9927,7 +10271,11 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
           <Text token={settingsText.key}>{settingsText.text}</Text>
         </TooltipPrimitive.Popup>
       </TooltipPrimitive.Root>
-      <MenuPrimitive.Content className="media-surface media-popover media-settings media-menu-group">
+      <MenuPrimitive.Content
+        className={(state) =>
+          cn('media-surface', 'media-popover', 'media-settings', 'media-menu-group', resolveClassName(className, state))
+        }
+      >
         <MenuPrimitive.Group className="media-menu-group">{children}</MenuPrimitive.Group>
       </MenuPrimitive.Content>
     </MenuPrimitive.Root>
@@ -9935,20 +10283,22 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/submenu.tsx =====
-import type { ReactNode } from 'react';
 import { MenuChevron } from './menu-chevron';
+import { cn, resolveClassName } from '@videojs/utils/style';
+import type { ReactNode } from 'react';
 import { Menu as MenuPrimitive } from '@/ui/menu';
 
-export interface SubmenuProps {
+export interface SubmenuProps extends MenuPrimitive.RootProps {
   children?: ReactNode;
   icon: ReactNode;
   label: ReactNode;
   selectedLabel: ReactNode;
+  className?: MenuPrimitive.ContentProps['className'];
 }
 
-export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) {
+export function Submenu({ children, icon, label, selectedLabel, className, ...props }: SubmenuProps) {
   return (
-    <MenuPrimitive.Root>
+    <MenuPrimitive.Root {...props}>
       <MenuPrimitive.Trigger className="media-menu-item media-item">
         {icon}
         {label}
@@ -9957,7 +10307,7 @@ export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) 
           <MenuChevron />
         </span>
       </MenuPrimitive.Trigger>
-      <MenuPrimitive.Content className="media-submenu-panel">
+      <MenuPrimitive.Content className={(state) => cn('media-submenu-panel', resolveClassName(className, state))}>
         <MenuPrimitive.Item className="media-menu-item media-back">
           <MenuChevron flipped />
           {label}
@@ -9974,13 +10324,15 @@ import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
 import { PlaybackRateMenu } from './playback-rate-menu';
 import { QualityMenu } from './quality-menu';
-import { SettingsMenu } from './settings-menu';
+import { SettingsMenu, type SettingsMenuProps } from './settings-menu';
 import { useQualityOptions } from '@/ui/quality/use-quality-options';
 import { useAudioTrackOptions } from '@/ui/audio-track/use-audio-track-options';
 import { usePlaybackRateOptions } from '@/ui/playback-rate/use-playback-rate-options';
 import { useCaptionsOptions } from '@/ui/captions-radio-group/use-captions-options';
 
-export function VideoSettingsMenu() {
+export interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, 'children'> {}
+
+export function VideoSettingsMenu(props: VideoSettingsMenuProps = {}) {
   const quality = useQualityOptions();
   const audioTrack = useAudioTrackOptions();
   const playbackRate = usePlaybackRateOptions();
@@ -9992,7 +10344,7 @@ export function VideoSettingsMenu() {
     captions?.state.availability === 'available';
   return (
     hasSettings && (
-      <SettingsMenu>
+      <SettingsMenu {...props}>
         <QualityMenu />
         <AudioTrackMenu />
         <PlaybackRateMenu />
@@ -10003,17 +10355,20 @@ export function VideoSettingsMenu() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/sliders/time-slider.tsx =====
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { SpinnerIcon } from '@/icons/minimal';
 import { Slider as SliderPrimitive } from '@/ui/slider';
 import { TimeSlider as TimeSliderPrimitive } from '@/ui/time-slider';
 
-export function TimeSlider() {
+export interface TimeSliderProps extends Omit<TimeSliderPrimitive.RootProps, 'children'> {}
+
+export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
   return (
-    <TimeSliderPrimitive.Root className="media-slider">
+    <TimeSliderPrimitive.Root className={(state) => cn('media-slider', resolveClassName(className, state))} {...props}>
       <TimeSliderPrimitive.Chapters
         className="media-slider-chapters"
         renderChapter={(props) => (
-          <div className="media-slider-chapter" {...props}>
+          <div {...props} className="media-slider-chapter">
             <TimeSliderPrimitive.Track className="media-slider-chapter-track">
               <TimeSliderPrimitive.Buffer className="media-slider-buffer" />
               <TimeSliderPrimitive.Fill className="media-slider-fill" />
@@ -10037,12 +10392,18 @@ export function TimeSlider() {
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/sliders/volume-slider.tsx =====
-import type { VolumeSliderProps } from '@videojs/core';
+import { cn, resolveClassName } from '@videojs/utils/style';
 import { VolumeSlider as VolumeSliderPrimitive } from '@/ui/volume-slider';
 
-export function VolumeSlider(props: VolumeSliderProps = {}) {
+export interface VolumeSliderProps extends Omit<VolumeSliderPrimitive.RootProps, 'children'> {}
+
+export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
   return (
-    <VolumeSliderPrimitive.Root className="media-slider" thumbAlignment="edge" {...props}>
+    <VolumeSliderPrimitive.Root
+      className={(state) => cn('media-slider', resolveClassName(className, state))}
+      thumbAlignment="edge"
+      {...props}
+    >
       <VolumeSliderPrimitive.Track className="media-slider-track">
         <VolumeSliderPrimitive.Fill className="media-slider-fill" />
       </VolumeSliderPrimitive.Track>
@@ -10054,14 +10415,18 @@ export function VolumeSlider(props: VolumeSliderProps = {}) {
 ===== packages/react/src/__generated__/skins/minimal-video/components/video-gestures.tsx =====
 import { Gesture as GesturePrimitive } from '@/ui/gesture';
 
-export function VideoGestures() {
+export interface VideoGesturesProps {
+  disabled?: boolean | undefined;
+}
+
+export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
   return (
     <>
-      <GesturePrimitive type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <GesturePrimitive type="tap" action="toggleControls" pointer="touch" />
-      <GesturePrimitive type="doubletap" action="seekStep" value={-10} region="left" />
-      <GesturePrimitive type="doubletap" action="toggleFullscreen" region="center" />
-      <GesturePrimitive type="doubletap" action="seekStep" value={10} region="right" />
+      <GesturePrimitive disabled={disabled} type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <GesturePrimitive disabled={disabled} type="tap" action="toggleControls" pointer="touch" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="seekStep" value={-10} region="left" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="toggleFullscreen" region="center" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="seekStep" value={10} region="right" />
     </>
   );
 }
@@ -10069,26 +10434,30 @@ export function VideoGestures() {
 ===== packages/react/src/__generated__/skins/minimal-video/components/video-hotkeys.tsx =====
 import { Hotkey as HotkeyPrimitive } from '@/ui/hotkey';
 
-export function VideoHotkeys() {
+export interface VideoHotkeysProps {
+  disabled?: boolean | undefined;
+}
+
+export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
   return (
     <>
-      <HotkeyPrimitive keys="Space" action="togglePaused" />
-      <HotkeyPrimitive keys="k" action="togglePaused" />
-      <HotkeyPrimitive keys="m" action="toggleMuted" />
-      <HotkeyPrimitive keys="f" action="toggleFullscreen" />
-      <HotkeyPrimitive keys="c" action="toggleSubtitles" />
-      <HotkeyPrimitive keys="i" action="togglePictureInPicture" />
-      <HotkeyPrimitive keys="ArrowRight" action="seekStep" value={5} />
-      <HotkeyPrimitive keys="ArrowLeft" action="seekStep" value={-5} />
-      <HotkeyPrimitive keys="l" action="seekStep" value={10} />
-      <HotkeyPrimitive keys="j" action="seekStep" value={-10} />
-      <HotkeyPrimitive keys="ArrowUp" action="volumeStep" value={0.05} />
-      <HotkeyPrimitive keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <HotkeyPrimitive keys="0-9" action="seekToPercent" />
-      <HotkeyPrimitive keys="Home" action="seekToPercent" value={0} />
-      <HotkeyPrimitive keys="End" action="seekToPercent" value={100} />
-      <HotkeyPrimitive keys=">" action="speedUp" />
-      <HotkeyPrimitive keys="<" action="speedDown" />
+      <HotkeyPrimitive disabled={disabled} keys="Space" action="togglePaused" />
+      <HotkeyPrimitive disabled={disabled} keys="k" action="togglePaused" />
+      <HotkeyPrimitive disabled={disabled} keys="m" action="toggleMuted" />
+      <HotkeyPrimitive disabled={disabled} keys="f" action="toggleFullscreen" />
+      <HotkeyPrimitive disabled={disabled} keys="c" action="toggleSubtitles" />
+      <HotkeyPrimitive disabled={disabled} keys="i" action="togglePictureInPicture" />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowRight" action="seekStep" value={5} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowLeft" action="seekStep" value={-5} />
+      <HotkeyPrimitive disabled={disabled} keys="l" action="seekStep" value={10} />
+      <HotkeyPrimitive disabled={disabled} keys="j" action="seekStep" value={-10} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowUp" action="volumeStep" value={0.05} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <HotkeyPrimitive disabled={disabled} keys="0-9" action="seekToPercent" />
+      <HotkeyPrimitive disabled={disabled} keys="Home" action="seekToPercent" value={0} />
+      <HotkeyPrimitive disabled={disabled} keys="End" action="seekToPercent" value={100} />
+      <HotkeyPrimitive disabled={disabled} keys=">" action="speedUp" />
+      <HotkeyPrimitive disabled={disabled} keys="<" action="speedDown" />
     </>
   );
 }
@@ -10126,7 +10495,7 @@ export interface MinimalVideoSkinProps extends Omit<ContainerProps, 'children'> 
 
 export function MinimalVideoSkin({ children, className, poster, ...containerProps }: MinimalVideoSkinProps = {}) {
   return (
-    <Container {...containerProps} className={cn('media-skin media-skin-video-minimal media-theme-minimal', className)}>
+    <Container className={cn('media-skin media-skin-video-minimal media-theme-minimal', className)} {...containerProps}>
       {children}
       {poster && (
         <Poster
@@ -12451,18 +12820,17 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 }
 
 ===== packages/skins/canonical/registry/default/components/airplay-button/airplay-button.tsx =====
-import { AirPlayEnterIcon, AirPlayExitIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { AirPlayButton as AirPlayButtonPrimitive } from '@videojs/react';
+import { AirPlayEnterIcon, AirPlayExitIcon } from '@videojs/react/icons';
 
 export interface AirPlayButtonProps extends Omit<AirPlayButtonPrimitive.Props, 'children'> {}
 
-export function AirPlayButton({ className, ...props }: AirPlayButtonProps) {
+export function AirPlayButton({ className, ...props }: AirPlayButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
       <AirPlayButtonPrimitive
-        {...props}
         className={(state) =>
           cn(
             'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
@@ -12479,6 +12847,7 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps) {
             resolveClassName(className, state),
           )
         }
+        {...props}
       >
         <AirPlayEnterIcon
           className={cn(
@@ -12502,16 +12871,15 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps) {
 }
 
 ===== packages/skins/canonical/registry/default/components/buffering-indicator/buffering-indicator.tsx =====
-import { SpinnerIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { BufferingIndicator as BufferingIndicatorPrimitive } from '@videojs/react';
+import { SpinnerIcon } from '@videojs/react/icons';
 
 export interface BufferingIndicatorProps extends Omit<BufferingIndicatorPrimitive.Props, 'children'> {}
 
-export function BufferingIndicator({ className, ...props }: BufferingIndicatorProps) {
+export function BufferingIndicator({ className, ...props }: BufferingIndicatorProps = {}) {
   return (
     <BufferingIndicatorPrimitive
-      {...props}
       className={(state) =>
         cn(
           'peer/buffering pointer-events-none absolute inset-0 z-10 hidden place-content-center text-white',
@@ -12519,6 +12887,7 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
           resolveClassName(className, state),
         )
       }
+      {...props}
     >
       <SpinnerIcon className={cn('size-media-icon', 'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]')} />
     </BufferingIndicatorPrimitive>
@@ -12526,8 +12895,8 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 }
 
 ===== packages/skins/canonical/registry/default/components/button-tooltip/button-tooltip.tsx =====
-import type { ReactElement } from 'react';
 import { cn } from '@/components/videojs/utils';
+import type { ReactElement } from 'react';
 import { Tooltip as TooltipPrimitive } from '@videojs/react';
 
 export interface ButtonTooltipProps extends TooltipPrimitive.RootProps {
@@ -12566,7 +12935,7 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
           'data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full',
           'data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full',
           'data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full',
-          'whitespace-nowrap rounded-media-control px-2.5 py-[0.35rem]',
+          'm-0 whitespace-nowrap rounded-media-control border-0 px-2.5 py-[0.35rem]',
           'data-open:flex data-open:items-center data-open:gap-1',
           'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
           'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)',
@@ -12580,18 +12949,17 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 }
 
 ===== packages/skins/canonical/registry/default/components/captions-button/captions-button.tsx =====
-import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { CaptionsButton as CaptionsButtonPrimitive } from '@videojs/react';
+import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/react/icons';
 
 export interface CaptionsButtonProps extends Omit<CaptionsButtonPrimitive.Props, 'children'> {}
 
-export function CaptionsButton({ className, ...props }: CaptionsButtonProps) {
+export function CaptionsButton({ className, ...props }: CaptionsButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
       <CaptionsButtonPrimitive
-        {...props}
         className={(state) =>
           cn(
             'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
@@ -12606,6 +12974,7 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps) {
             resolveClassName(className, state),
           )
         }
+        {...props}
       >
         <CaptionsOffIcon
           className={cn(
@@ -12627,18 +12996,17 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps) {
 }
 
 ===== packages/skins/canonical/registry/default/components/cast-button/cast-button.tsx =====
-import { CastEnterIcon, CastExitIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { CastButton as CastButtonPrimitive } from '@videojs/react';
+import { CastEnterIcon, CastExitIcon } from '@videojs/react/icons';
 
 export interface CastButtonProps extends Omit<CastButtonPrimitive.Props, 'children'> {}
 
-export function CastButton({ className, ...props }: CastButtonProps) {
+export function CastButton({ className, ...props }: CastButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
       <CastButtonPrimitive
-        {...props}
         className={(state) =>
           cn(
             'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
@@ -12653,6 +13021,7 @@ export function CastButton({ className, ...props }: CastButtonProps) {
             resolveClassName(className, state),
           )
         }
+        {...props}
       >
         <CastEnterIcon
           className={cn(
@@ -12684,7 +13053,6 @@ export interface ContainerProps extends ContainerPrimitive.Props {}
 export function Container({ children, className, ...props }: ContainerProps) {
   return (
     <ContainerPrimitive
-      {...props}
       className={cn(
         'relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root',
         '[--spacing:var(--media-spacing)] font-sans text-media leading-normal subpixel-antialiased',
@@ -12709,6 +13077,7 @@ export function Container({ children, className, ...props }: ContainerProps) {
         'after:shadow-[inset_0_0_0_1px_light-dark(rgb(0_0_0/0.1),rgb(255_255_255/0.15))]',
         className,
       )}
+      {...props}
     >
       {children}
     </ContainerPrimitive>
@@ -12721,11 +13090,10 @@ import { ErrorDialog as ErrorDialogPrimitive } from '@videojs/react';
 
 export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.PopupProps, 'children'> {}
 
-export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
+export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
       <ErrorDialogPrimitive.Popup
-        {...props}
         className={(state) =>
           cn(
             'peer/error z-20 flex flex-col gap-3 outline-none',
@@ -12753,6 +13121,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
             resolveClassName(className, state),
           )
         }
+        {...props}
       >
         <ErrorDialogPrimitive.Title className={cn('font-semibold leading-tight', 'px-2 pt-2 text-media')} />
         <ErrorDialogPrimitive.Description className={cn('pb-1.5 opacity-70 wrap-anywhere', 'px-2')} />
@@ -12775,18 +13144,17 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
 }
 
 ===== packages/skins/canonical/registry/default/components/fullscreen-button/fullscreen-button.tsx =====
-import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { FullscreenButton as FullscreenButtonPrimitive } from '@videojs/react';
+import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/react/icons';
 
 export interface FullscreenButtonProps extends Omit<FullscreenButtonPrimitive.Props, 'children'> {}
 
-export function FullscreenButton({ className, ...props }: FullscreenButtonProps) {
+export function FullscreenButton({ className, ...props }: FullscreenButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
       <FullscreenButtonPrimitive
-        {...props}
         className={(state) =>
           cn(
             'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
@@ -12801,6 +13169,7 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps)
             resolveClassName(className, state),
           )
         }
+        {...props}
       >
         <FullscreenEnterIcon
           className={cn(
@@ -12822,16 +13191,15 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps)
 }
 
 ===== packages/skins/canonical/registry/default/components/mute-button/mute-button.tsx =====
-import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { MuteButton as MuteButtonPrimitive } from '@videojs/react';
+import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
 
 export interface MuteButtonProps extends Omit<MuteButtonPrimitive.Props, 'children'> {}
 
-export function MuteButton({ className, ...props }: MuteButtonProps) {
+export function MuteButton({ className, ...props }: MuteButtonProps = {}) {
   return (
     <MuteButtonPrimitive
-      {...props}
       className={(state) =>
         cn(
           'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
@@ -12846,6 +13214,7 @@ export function MuteButton({ className, ...props }: MuteButtonProps) {
           resolveClassName(className, state),
         )
       }
+      {...props}
     >
       <VolumeOffIcon
         className={cn(
@@ -12875,15 +13244,14 @@ export function MuteButton({ className, ...props }: MuteButtonProps) {
 }
 
 ===== packages/skins/canonical/registry/default/components/overlay/overlay.tsx =====
-import type { ComponentProps } from 'react';
 import { cn } from '@/components/videojs/utils';
+import type { ComponentProps } from 'react';
 
 export interface OverlayProps extends Omit<ComponentProps<'div'>, 'children'> {}
 
-export function Overlay({ className, ...props }: OverlayProps) {
+export function Overlay({ className, ...props }: OverlayProps = {}) {
   return (
     <div
-      {...props}
       className={cn(
         'pointer-events-none absolute inset-0 rounded-[inherit] opacity-0',
         'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
@@ -12893,23 +13261,23 @@ export function Overlay({ className, ...props }: OverlayProps) {
         'peer-data-open/error:opacity-100 peer-data-open/error:backdrop-blur-lg peer-data-open/error:backdrop-saturate-150',
         className,
       )}
+      {...props}
     />
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/pip-button/pip-button.tsx =====
-import { PipEnterIcon, PipExitIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { PiPButton as PiPButtonPrimitive } from '@videojs/react';
+import { PipEnterIcon, PipExitIcon } from '@videojs/react/icons';
 
 export interface PiPButtonProps extends Omit<PiPButtonPrimitive.Props, 'children'> {}
 
-export function PiPButton({ className, ...props }: PiPButtonProps) {
+export function PiPButton({ className, ...props }: PiPButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
       <PiPButtonPrimitive
-        {...props}
         className={(state) =>
           cn(
             'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
@@ -12924,6 +13292,7 @@ export function PiPButton({ className, ...props }: PiPButtonProps) {
             resolveClassName(className, state),
           )
         }
+        {...props}
       >
         <PipEnterIcon
           className={cn(
@@ -12945,18 +13314,17 @@ export function PiPButton({ className, ...props }: PiPButtonProps) {
 }
 
 ===== packages/skins/canonical/registry/default/components/play-button/play-button.tsx =====
-import { PauseIcon, PlayIcon, RestartIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { PlayButton as PlayButtonPrimitive } from '@videojs/react';
+import { PauseIcon, PlayIcon, RestartIcon } from '@videojs/react/icons';
 
 export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props, 'children'> {}
 
-export function PlayButton({ className, ...props }: PlayButtonProps) {
+export function PlayButton({ className, ...props }: PlayButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
       <PlayButtonPrimitive
-        {...props}
         className={(state) =>
           cn(
             'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
@@ -12971,6 +13339,7 @@ export function PlayButton({ className, ...props }: PlayButtonProps) {
             resolveClassName(className, state),
           )
         }
+        {...props}
       >
         <RestartIcon
           className={cn(
@@ -13008,10 +13377,9 @@ import { Poster as PosterPrimitive } from '@videojs/react';
 
 export interface PosterProps extends PosterPrimitive.Props {}
 
-export function Poster({ className, ...props }: PosterProps) {
+export function Poster({ className, ...props }: PosterProps = {}) {
   return (
     <PosterPrimitive
-      {...props}
       className={(state) =>
         cn(
           'pointer-events-none absolute inset-0 h-full w-full rounded-[inherit]',
@@ -13030,20 +13398,20 @@ export function Poster({ className, ...props }: PosterProps) {
           resolveClassName(className, state),
         )
       }
+      {...props}
     />
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/seek-button/seek-button.tsx =====
-import { SeekIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { SeekButton as SeekButtonPrimitive, Text } from '@videojs/react';
+import { SeekButton as SeekButtonPrimitive } from '@videojs/react';
+import { SeekIcon } from '@videojs/react/icons';
 
 export interface SeekButtonProps extends Omit<SeekButtonPrimitive.Props, 'children'> {}
 
-export function SeekButton({ className, ...props }: SeekButtonProps = {}) {
-  const seconds = props.seconds ?? 10;
+export function SeekButton({ className, seconds = 10, ...props }: SeekButtonProps = {}) {
   return (
     <ButtonTooltip side="top">
       <SeekButtonPrimitive
@@ -13060,29 +13428,32 @@ export function SeekButton({ className, ...props }: SeekButtonProps = {}) {
             resolveClassName(className, state),
           )
         }
-        {...props}
         seconds={seconds}
+        {...props}
       >
         <SeekIcon
-          className={cn('size-media-icon drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]', seconds < 0 && '-scale-x-100')}
+          className={cn(
+            'size-media-icon',
+            'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
+            seconds < 0 ? '-scale-x-100' : undefined,
+          )}
         />
-        <Text className="tabular-nums">{Math.abs(seconds)}</Text>
+        <span className="tabular-nums">{Math.abs(seconds)}</span>
       </SeekButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/seek-indicator/seek-indicator.tsx =====
-import { ChevronIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { SeekIndicator as SeekIndicatorPrimitive } from '@videojs/react';
+import { ChevronIcon } from '@videojs/react/icons';
 
 export interface SeekIndicatorProps extends Omit<SeekIndicatorPrimitive.RootProps, 'children'> {}
 
-export function SeekIndicator({ className, ...props }: SeekIndicatorProps) {
+export function SeekIndicator({ className, ...props }: SeekIndicatorProps = {}) {
   return (
     <SeekIndicatorPrimitive.Root
-      {...props}
       className={(state) =>
         cn(
           'group/seek-status col-start-2 row-start-1 grid place-content-center gap-1 p-4 text-center',
@@ -13091,6 +13462,7 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps) {
           resolveClassName(className, state),
         )
       }
+      {...props}
     >
       <ChevronIcon
         className={cn(
@@ -13111,13 +13483,15 @@ import { StatusAnnouncer as StatusAnnouncerPrimitive } from '@videojs/react';
 
 export interface StatusAnnouncerProps extends Omit<StatusAnnouncerPrimitive.Props, 'children'> {}
 
-export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps) {
+export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps = {}) {
   return (
-    <StatusAnnouncerPrimitive {...props} className={(state) => cn('sr-only', resolveClassName(className, state))} />
+    <StatusAnnouncerPrimitive className={(state) => cn('sr-only', resolveClassName(className, state))} {...props} />
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/status-indicator/status-indicator.tsx =====
+import { cn, resolveClassName } from '@/components/videojs/utils';
+import { StatusIndicator as StatusIndicatorPrimitive } from '@videojs/react';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -13128,8 +13502,6 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@videojs/react/icons';
-import { cn, resolveClassName } from '@/components/videojs/utils';
-import { StatusIndicator as StatusIndicatorPrimitive } from '@videojs/react';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 
@@ -13137,10 +13509,9 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export interface StatusIndicatorProps extends Omit<StatusIndicatorPrimitive.RootProps, 'children' | 'actions'> {}
 
-export function StatusIndicator({ className, ...props }: StatusIndicatorProps) {
+export function StatusIndicator({ className, ...props }: StatusIndicatorProps = {}) {
   return (
     <StatusIndicatorPrimitive.Root
-      {...props}
       actions={TOP_STATUS_ACTIONS}
       className={(state) =>
         cn(
@@ -13167,6 +13538,7 @@ export function StatusIndicator({ className, ...props }: StatusIndicatorProps) {
           resolveClassName(className, state),
         )
       }
+      {...props}
     >
       <CaptionsOnIcon className={cn('hidden shrink-0', 'group-data-[status=captions-on]/input-status:block')} />
       <CaptionsOffIcon className={cn('hidden shrink-0', 'group-data-[status=captions-off]/input-status:block')} />
@@ -13184,10 +13556,9 @@ export interface PlaybackStatusIndicatorProps extends Omit<
   'children' | 'actions'
 > {}
 
-export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusIndicatorProps) {
+export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusIndicatorProps = {}) {
   return (
     <StatusIndicatorPrimitive.Root
-      {...props}
       actions={PLAYBACK_STATUS_ACTIONS}
       className={(state) =>
         cn(
@@ -13198,6 +13569,7 @@ export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusI
           resolveClassName(className, state),
         )
       }
+      {...props}
     >
       <PlayIcon
         className={cn(
@@ -13211,16 +13583,15 @@ export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusI
 }
 
 ===== packages/skins/canonical/registry/default/components/time-slider/time-slider.tsx =====
-import { SpinnerIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { Slider as SliderPrimitive, TimeSlider as TimeSliderPrimitive } from '@videojs/react';
+import { SpinnerIcon } from '@videojs/react/icons';
 
 export interface TimeSliderProps extends Omit<TimeSliderPrimitive.RootProps, 'children'> {}
 
-export function TimeSlider({ className, ...props }: TimeSliderProps) {
+export function TimeSlider({ className, ...props }: TimeSliderProps = {}) {
   return (
     <TimeSliderPrimitive.Root
-      {...props}
       className={(state) =>
         cn(
           'group/slider relative flex flex-1 cursor-pointer items-center justify-center rounded-media-control outline-none',
@@ -13229,11 +13600,13 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           resolveClassName(className, state),
         )
       }
+      {...props}
     >
       <TimeSliderPrimitive.Chapters
         className="relative flex size-full min-h-0 min-w-0 flex-1 items-center rounded-[inherit]"
         renderChapter={(props) => (
           <div
+            {...props}
             className={cn(
               'group/chapter absolute inset-0 flex min-h-0 min-w-0 items-center justify-center',
               '[--media-chapter-inset-start:0.5] [--media-chapter-inset-end:0.5]',
@@ -13241,7 +13614,6 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
               'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start))]',
               'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start)_0)]',
             )}
-            {...props}
           >
             <TimeSliderPrimitive.Track
               className={cn(
@@ -13368,17 +13740,17 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
 import { Gesture as GesturePrimitive } from '@videojs/react';
 
 export interface VideoGesturesProps {
-  disabled?: boolean;
+  disabled?: boolean | undefined;
 }
 
 export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
   return (
     <>
-      <GesturePrimitive type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <GesturePrimitive type="tap" action="toggleControls" pointer="touch" />
-      <GesturePrimitive type="doubletap" action="seekStep" value={-10} region="left" />
-      <GesturePrimitive type="doubletap" action="toggleFullscreen" region="center" />
-      <GesturePrimitive type="doubletap" action="seekStep" value={10} region="right" />
+      <GesturePrimitive disabled={disabled} type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <GesturePrimitive disabled={disabled} type="tap" action="toggleControls" pointer="touch" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="seekStep" value={-10} region="left" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="toggleFullscreen" region="center" />
+      <GesturePrimitive disabled={disabled} type="doubletap" action="seekStep" value={10} region="right" />
     </>
   );
 }
@@ -13387,53 +13759,51 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
 import { Hotkey as HotkeyPrimitive } from '@videojs/react';
 
 export interface VideoHotkeysProps {
-  disabled?: boolean;
+  disabled?: boolean | undefined;
 }
 
 export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
   return (
     <>
-      <HotkeyPrimitive keys="Space" action="togglePaused" />
-      <HotkeyPrimitive keys="k" action="togglePaused" />
-      <HotkeyPrimitive keys="m" action="toggleMuted" />
-      <HotkeyPrimitive keys="f" action="toggleFullscreen" />
-      <HotkeyPrimitive keys="c" action="toggleSubtitles" />
-      <HotkeyPrimitive keys="i" action="togglePictureInPicture" />
-      <HotkeyPrimitive keys="ArrowRight" action="seekStep" value={5} />
-      <HotkeyPrimitive keys="ArrowLeft" action="seekStep" value={-5} />
-      <HotkeyPrimitive keys="l" action="seekStep" value={10} />
-      <HotkeyPrimitive keys="j" action="seekStep" value={-10} />
-      <HotkeyPrimitive keys="ArrowUp" action="volumeStep" value={0.05} />
-      <HotkeyPrimitive keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <HotkeyPrimitive keys="0-9" action="seekToPercent" />
-      <HotkeyPrimitive keys="Home" action="seekToPercent" value={0} />
-      <HotkeyPrimitive keys="End" action="seekToPercent" value={100} />
-      <HotkeyPrimitive keys=">" action="speedUp" />
-      <HotkeyPrimitive keys="<" action="speedDown" />
+      <HotkeyPrimitive disabled={disabled} keys="Space" action="togglePaused" />
+      <HotkeyPrimitive disabled={disabled} keys="k" action="togglePaused" />
+      <HotkeyPrimitive disabled={disabled} keys="m" action="toggleMuted" />
+      <HotkeyPrimitive disabled={disabled} keys="f" action="toggleFullscreen" />
+      <HotkeyPrimitive disabled={disabled} keys="c" action="toggleSubtitles" />
+      <HotkeyPrimitive disabled={disabled} keys="i" action="togglePictureInPicture" />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowRight" action="seekStep" value={5} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowLeft" action="seekStep" value={-5} />
+      <HotkeyPrimitive disabled={disabled} keys="l" action="seekStep" value={10} />
+      <HotkeyPrimitive disabled={disabled} keys="j" action="seekStep" value={-10} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowUp" action="volumeStep" value={0.05} />
+      <HotkeyPrimitive disabled={disabled} keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <HotkeyPrimitive disabled={disabled} keys="0-9" action="seekToPercent" />
+      <HotkeyPrimitive disabled={disabled} keys="Home" action="seekToPercent" value={0} />
+      <HotkeyPrimitive disabled={disabled} keys="End" action="seekToPercent" value={100} />
+      <HotkeyPrimitive disabled={disabled} keys=">" action="speedUp" />
+      <HotkeyPrimitive disabled={disabled} keys="<" action="speedDown" />
     </>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/audio-track-menu.tsx =====
 import { audioText } from '@videojs/core/i18n/text/menu';
-import { SpeechIcon } from '@videojs/react/icons';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { cn } from '@/components/videojs/utils';
 import { useAudioTrackOptions } from '@videojs/react';
-import type { SubmenuProps } from './submenu';
 import { Text } from '@videojs/react';
+import { SpeechIcon } from '@videojs/react/icons';
 
 export interface AudioTrackMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
 
-export function AudioTrackMenu({ ...props }: AudioTrackMenuProps = {}) {
+export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   const audioTrack = useAudioTrackOptions();
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   return (
     hasAudioTrack && (
       <Submenu
-        {...props}
         icon={
           <SpeechIcon
             className={cn(
@@ -13444,8 +13814,11 @@ export function AudioTrackMenu({ ...props }: AudioTrackMenuProps = {}) {
         }
         label={<Text token={audioText.key}>{audioText.text}</Text>}
         selectedLabel={
-          <span className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">{audioTrack?.selectedLabel}</span>
+          <span data-part="hint" className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">
+            {audioTrack?.selectedLabel}
+          </span>
         }
+        {...props}
       >
         <AudioTrackRadioGroup
           renderItem={(props, item) => (
@@ -13461,24 +13834,22 @@ export function AudioTrackMenu({ ...props }: AudioTrackMenuProps = {}) {
 
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/captions-menu.tsx =====
 import { captionsText } from '@videojs/core/i18n/text/menu';
-import { CaptionsOffIcon } from '@videojs/react/icons';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { cn } from '@/components/videojs/utils';
 import { useCaptionsOptions } from '@videojs/react';
-import type { SubmenuProps } from './submenu';
 import { Text } from '@videojs/react';
+import { CaptionsOffIcon } from '@videojs/react/icons';
 
 export interface CaptionsMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
 
-export function CaptionsMenu({ ...props }: CaptionsMenuProps = {}) {
+export function CaptionsMenu(props: CaptionsMenuProps = {}) {
   const captions = useCaptionsOptions();
   const hasCaptions = captions?.state.availability === 'available';
   return (
     hasCaptions && (
       <Submenu
-        {...props}
         icon={
           <CaptionsOffIcon
             className={cn(
@@ -13489,8 +13860,11 @@ export function CaptionsMenu({ ...props }: CaptionsMenuProps = {}) {
         }
         label={<Text token={captionsText.key}>{captionsText.text}</Text>}
         selectedLabel={
-          <span className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">{captions?.selectedLabel}</span>
+          <span data-part="hint" className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">
+            {captions?.selectedLabel}
+          </span>
         }
+        {...props}
       >
         <CaptionsRadioGroup
           renderItem={(props, item) => (
@@ -13505,9 +13879,9 @@ export function CaptionsMenu({ ...props }: CaptionsMenuProps = {}) {
 }
 
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/menu-chevron.tsx =====
-import { ChevronIcon } from '@videojs/react/icons';
 import { cn } from '@/components/videojs/utils';
 import type { ComponentProps } from 'react';
+import { ChevronIcon } from '@videojs/react/icons';
 
 export interface MenuChevronProps extends Omit<ComponentProps<'svg'>, 'children'> {
   flipped?: boolean;
@@ -13518,10 +13892,10 @@ export function MenuChevron({ flipped = false, className, ...props }: MenuChevro
     <ChevronIcon
       {...props}
       className={cn(
-        [
-          'size-media-icon shrink-0 opacity-70 group-hover/menu-item:opacity-100 drop-shadow-[0_1px_0_rgb(0_0_0/0.15)] size-3.5',
-          flipped && 'rotate-180',
-        ],
+        'size-media-icon shrink-0 opacity-70 group-hover/menu-item:opacity-100',
+        'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
+        'size-3.5',
+        flipped ? 'rotate-180' : undefined,
         className,
       )}
     />
@@ -13530,24 +13904,22 @@ export function MenuChevron({ flipped = false, className, ...props }: MenuChevro
 
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/playback-rate-menu.tsx =====
 import { speedText } from '@videojs/core/i18n/text/menu';
-import { SpeedIcon } from '@videojs/react/icons';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { cn } from '@/components/videojs/utils';
 import { usePlaybackRateOptions } from '@videojs/react';
-import type { SubmenuProps } from './submenu';
 import { Text } from '@videojs/react';
+import { SpeedIcon } from '@videojs/react/icons';
 
 export interface PlaybackRateMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
 
-export function PlaybackRateMenu({ ...props }: PlaybackRateMenuProps = {}) {
+export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   const playbackRate = usePlaybackRateOptions();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
   return (
     hasPlaybackRate && (
       <Submenu
-        {...props}
         icon={
           <SpeedIcon
             className={cn(
@@ -13558,10 +13930,11 @@ export function PlaybackRateMenu({ ...props }: PlaybackRateMenuProps = {}) {
         }
         label={<Text token={speedText.key}>{speedText.text}</Text>}
         selectedLabel={
-          <span className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">
+          <span data-part="hint" className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">
             {playbackRate?.selectedLabel}
           </span>
         }
+        {...props}
       >
         <PlaybackRateRadioGroup
           renderItem={(props, item) => (
@@ -13577,24 +13950,22 @@ export function PlaybackRateMenu({ ...props }: PlaybackRateMenuProps = {}) {
 
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/quality-menu.tsx =====
 import { qualityText } from '@videojs/core/i18n/text/menu';
-import { SwitchesIcon } from '@videojs/react/icons';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
-import { Submenu } from './submenu';
+import { Submenu, type SubmenuProps } from './submenu';
 import { cn } from '@/components/videojs/utils';
 import { useQualityOptions } from '@videojs/react';
-import type { SubmenuProps } from './submenu';
 import { Text } from '@videojs/react';
+import { SwitchesIcon } from '@videojs/react/icons';
 
 export interface QualityMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
 
-export function QualityMenu({ ...props }: QualityMenuProps = {}) {
+export function QualityMenu(props: QualityMenuProps = {}) {
   const quality = useQualityOptions();
   const hasQuality = quality?.state.availability === 'available';
   return (
     hasQuality && (
       <Submenu
-        {...props}
         icon={
           <SwitchesIcon
             className={cn(
@@ -13605,8 +13976,11 @@ export function QualityMenu({ ...props }: QualityMenuProps = {}) {
         }
         label={<Text token={qualityText.key}>{qualityText.text}</Text>}
         selectedLabel={
-          <span className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">{quality?.selectedLabel}</span>
+          <span data-part="hint" className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">
+            {quality?.selectedLabel}
+          </span>
         }
+        {...props}
       >
         <QualityRadioGroup
           renderItem={(props, item) => (
@@ -13644,13 +14018,13 @@ export interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props
 export function QualityRadioGroup({ className, ...props }: QualityRadioGroupProps) {
   return (
     <QualityRadioGroupPrimitive
-      {...props}
       className={(state) =>
         cn(
           'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
           resolveClassName(className, state),
         )
       }
+      {...props}
     />
   );
 }
@@ -13660,13 +14034,13 @@ export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupPrimitive
 export function AudioTrackRadioGroup({ className, ...props }: AudioTrackRadioGroupProps) {
   return (
     <AudioTrackRadioGroupPrimitive
-      {...props}
       className={(state) =>
         cn(
           'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
           resolveClassName(className, state),
         )
       }
+      {...props}
     />
   );
 }
@@ -13676,13 +14050,13 @@ export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupPrimi
 export function PlaybackRateRadioGroup({ className, ...props }: PlaybackRateRadioGroupProps) {
   return (
     <PlaybackRateRadioGroupPrimitive
-      {...props}
       className={(state) =>
         cn(
           'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
           resolveClassName(className, state),
         )
       }
+      {...props}
     />
   );
 }
@@ -13692,32 +14066,31 @@ export interface CaptionsRadioGroupProps extends CaptionsRadioGroupPrimitive.Pro
 export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupProps) {
   return (
     <CaptionsRadioGroupPrimitive
-      {...props}
       className={(state) =>
         cn(
           'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
           resolveClassName(className, state),
         )
       }
+      {...props}
     />
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/radio-item.tsx =====
-import { CheckIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import type { ReactNode } from 'react';
 import { Menu as MenuPrimitive } from '@videojs/react';
+import { CheckIcon } from '@videojs/react/icons';
 
 export interface RadioItemProps extends MenuPrimitive.RadioItemProps {
   children?: ReactNode;
-  checked: boolean;
+  checked?: boolean | undefined;
 }
 
 export function RadioItem({ checked, children, className, ...props }: RadioItemProps) {
   return (
     <MenuPrimitive.RadioItem
-      {...props}
       className={(state) =>
         cn(
           'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left',
@@ -13731,12 +14104,13 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
           resolveClassName(className, state),
         )
       }
+      {...props}
     >
       {children}
       <MenuPrimitive.ItemIndicator
+        checked={checked === true}
         forceMount
         className="ml-auto -mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100"
-        checked={checked}
       >
         <CheckIcon
           className={cn(
@@ -13751,10 +14125,10 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
 
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/settings-menu.tsx =====
 import { settingsText } from '@videojs/core/i18n/text/menu';
-import { GearIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import type { ReactNode } from 'react';
 import { Menu as MenuPrimitive, Text, Tooltip as TooltipPrimitive } from '@videojs/react';
+import { GearIcon } from '@videojs/react/icons';
 
 export interface SettingsMenuProps extends MenuPrimitive.RootProps {
   children?: ReactNode;
@@ -13822,7 +14196,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'data-[side=bottom]:before:inset-x-0 data-[side=bottom]:before:bottom-full',
             'data-[side=left]:before:inset-y-0 data-[side=left]:before:left-full',
             'data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full',
-            'whitespace-nowrap rounded-media-control px-2.5 py-[0.35rem]',
+            'm-0 whitespace-nowrap rounded-media-control border-0 px-2.5 py-[0.35rem]',
             'data-open:flex data-open:items-center data-open:gap-1',
             'data-[side=top]:before:h-(--media-tooltip-side-offset) data-[side=bottom]:before:h-(--media-tooltip-side-offset)',
             'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)',
@@ -13862,13 +14236,13 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'data-[side=right]:before:inset-y-0 data-[side=right]:before:right-full',
             'data-[side=top]:before:h-(--media-popover-side-offset) data-[side=bottom]:before:h-(--media-popover-side-offset)',
             'data-[side=left]:before:w-(--media-popover-side-offset) data-[side=right]:before:w-(--media-popover-side-offset)',
-            'min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl p-1',
+            'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden rounded-xl border-0 p-1',
             'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
             'h-(--media-menu-height) w-(--media-menu-width)',
             'transition-settings-menu',
             '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
             '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur-sm',
-            'flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
+            'relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]',
             resolveClassName(className, state),
           )
         }
@@ -13882,9 +14256,9 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
 }
 
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/submenu.tsx =====
-import type { ReactNode } from 'react';
 import { MenuChevron } from './menu-chevron';
 import { cn, resolveClassName } from '@/components/videojs/utils';
+import type { ReactNode } from 'react';
 import { Menu as MenuPrimitive } from '@videojs/react';
 
 export interface SubmenuProps extends MenuPrimitive.RootProps {
@@ -13960,13 +14334,12 @@ import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
 import { PlaybackRateMenu } from './playback-rate-menu';
 import { QualityMenu } from './quality-menu';
-import { SettingsMenu } from './settings-menu';
-import type { SettingsMenuProps } from './settings-menu';
+import { SettingsMenu, type SettingsMenuProps } from './settings-menu';
 import { useQualityOptions, useAudioTrackOptions, usePlaybackRateOptions, useCaptionsOptions } from '@videojs/react';
 
 export interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, 'children'> {}
 
-export function VideoSettingsMenu({ ...props }: VideoSettingsMenuProps = {}) {
+export function VideoSettingsMenu(props: VideoSettingsMenuProps = {}) {
   const quality = useQualityOptions();
   const audioTrack = useAudioTrackOptions();
   const playbackRate = usePlaybackRateOptions();
@@ -13989,16 +14362,15 @@ export function VideoSettingsMenu({ ...props }: VideoSettingsMenuProps = {}) {
 }
 
 ===== packages/skins/canonical/registry/default/components/volume-indicator/volume-indicator.tsx =====
-import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { VolumeIndicator as VolumeIndicatorPrimitive } from '@videojs/react';
+import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
 
 export interface VolumeIndicatorProps extends Omit<VolumeIndicatorPrimitive.RootProps, 'children'> {}
 
-export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps) {
+export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps = {}) {
   return (
     <VolumeIndicatorPrimitive.Root
-      {...props}
       className={(state) =>
         cn(
           'group/volume-status pointer-events-none font-medium',
@@ -14024,6 +14396,7 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps) {
           resolveClassName(className, state),
         )
       }
+      {...props}
     >
       <VolumeIndicatorPrimitive.Fill
         className={cn(
@@ -14044,21 +14417,20 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps) {
 
 ===== packages/skins/canonical/registry/default/components/volume-popover/volume-popover.tsx =====
 import { MuteButton } from '@/components/videojs/mute-button/mute-button';
-import { VolumeSlider } from '@/components/videojs/volume-slider/volume-slider';
+import { VolumeSlider, type VolumeSliderProps } from '@/components/videojs/volume-slider/volume-slider';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { usePlayer } from '@videojs/react';
 import { Popover as PopoverPrimitive } from '@videojs/react';
 
-export interface VolumePopoverProps extends PopoverPrimitive.RootProps {
-  side?: PopoverPrimitive.RootProps['side'];
-  orientation?: 'horizontal' | 'vertical';
+export interface VolumePopoverProps extends Omit<PopoverPrimitive.RootProps, 'children'> {
   className?: PopoverPrimitive.PopupProps['className'];
+  orientation?: VolumeSliderProps['orientation'];
 }
 
 export function VolumePopover({
+  className,
   side = 'top',
   orientation = 'vertical',
-  className,
   ...props
 }: VolumePopoverProps = {}) {
   const volumeAvailability = usePlayer((state) => state.volumeAvailability);
@@ -14165,12 +14537,12 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
 }
 
 ===== packages/skins/canonical/registry/default/internal/components/feedback/video-status-indicators.tsx =====
-import type { ComponentProps } from 'react';
 import { SeekIndicator } from '@/components/videojs/seek-indicator/seek-indicator';
 import { StatusAnnouncer } from '@/components/videojs/status-announcer/status-announcer';
 import { PlaybackStatusIndicator, StatusIndicator } from '@/components/videojs/status-indicator/status-indicator';
 import { VolumeIndicator } from '@/components/videojs/volume-indicator/volume-indicator';
 import { cn } from '@/components/videojs/utils';
+import type { ComponentProps } from 'react';
 
 export interface VideoStatusIndicatorsProps extends Omit<ComponentProps<'div'>, 'children'> {}
 
@@ -14179,11 +14551,11 @@ export function VideoStatusIndicators({ className, ...props }: VideoStatusIndica
     <>
       <StatusAnnouncer />
       <div
-        {...props}
         className={cn(
           'pointer-events-none absolute inset-0 grid grid-cols-3 items-center justify-items-center text-white',
           className,
         )}
+        {...props}
       >
         <VolumeIndicator />
         <StatusIndicator />
@@ -14224,7 +14596,7 @@ export interface DefaultVideoSkinProps extends Omit<ContainerProps, 'children'> 
 
 export function DefaultVideoSkin({ children, className, poster, ...containerProps }: DefaultVideoSkinProps = {}) {
   return (
-    <Container {...containerProps} className={cn('media-skin media-skin-video media-theme-default', className)}>
+    <Container className={cn('media-skin media-skin-video media-theme-default', className)} {...containerProps}>
       {children}
       {poster && (
         <Poster

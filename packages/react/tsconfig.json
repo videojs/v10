@@ -9,5 +9,6 @@
     },
     "declarationDir": "types"
   },
-  "include": ["src", "compiler"]
+  "include": ["src", "compiler"],
+  "references": [{ "path": "../icons" }]
 }

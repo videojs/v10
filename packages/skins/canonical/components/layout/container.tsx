@@ -1,6 +1,11 @@
 import * as $ from '@videojs/core/components';
+import type { PropsWithChildren } from 'vjsc/components';
 import styles from '../../styles/components/container.styles';
 
-export function Container({ children }: { children?: unknown }) {
-  return <$.Container className={styles.root}>{children}</$.Container>;
+export function Container({ children, className, ...props }: PropsWithChildren) {
+  return (
+    <$.Container className={[styles.root, className]} {...props}>
+      {children}
+    </$.Container>
+  );
 }

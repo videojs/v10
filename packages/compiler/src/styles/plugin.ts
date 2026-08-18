@@ -27,14 +27,12 @@ interface StylePluginBaseOptions {
 
 export type StylePluginOptions =
   | (StylePluginBaseOptions & {
+      /** Project style references to editable Tailwind utility groups. */
       readonly mode: 'tailwind';
-      /** Preserve authored utility groups as class-name arrays for editable source output. */
-      readonly compose?: boolean | undefined;
       readonly emit?: never;
     })
   | (StylePluginBaseOptions & {
       readonly mode: 'css';
-      readonly compose?: never;
       /** Emit vanilla CSS assets in addition to projecting semantic class names. */
       readonly emit?: StyleEmitOptions | undefined;
     });
@@ -59,7 +57,6 @@ export function plugin(options: StylePluginOptions): CompilerPlugin {
           manifest,
           mode: options.mode,
           ...(options.variant ? { variant: options.variant } : {}),
-          ...(options.mode === 'tailwind' && options.compose ? { compose: true } : {}),
         }),
       };
 

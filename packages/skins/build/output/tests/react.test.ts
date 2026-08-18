@@ -2,10 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { type CompilerConfig, transform } from 'vjsc';
-import { plugin as componentsPlugin } from 'vjsc/components';
-import { loadStyleManifest } from 'vjsc/styles';
-import { registry } from '../../../../react/compiler';
-import { createCompilerReactConfig } from '../react';
+import { resolveOutputConfig } from 'vjsc/catalog';
+import { loadStyleManifest, type StylePluginOptions, plugin as stylesPlugin } from 'vjsc/styles';
+import { reactOutput } from '../react';
 
 const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 const styleFiles = [
@@ -15,16 +14,21 @@ const styleFiles = [
   resolve(canonicalRoot, 'styles/components/poster.styles.ts'),
 ];
 
-function reactConfig(options: Parameters<typeof createCompilerReactConfig>[0]): CompilerConfig {
-  const config = createCompilerReactConfig(options);
+type ReactTestOptions = NonNullable<Parameters<typeof reactOutput>[0]> & {
+  styles: StylePluginOptions;
+};
+
+function reactConfig({ styles, ...options }: ReactTestOptions): CompilerConfig {
+  const output = reactOutput(options);
+  const config = resolveOutputConfig(output);
 
   return {
     ...config,
-    plugins: [...(config.plugins ?? []), componentsPlugin(registry)],
+    plugins: [stylesPlugin(styles), ...(config.plugins ?? [])],
   };
 }
 
-describe('createCompilerReactConfig', () => {
+describe('reactOutput', () => {
   it('opts registry components into forwarded React props', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
     const source = await readFile(filename, 'utf8');
@@ -32,7 +36,7 @@ describe('createCompilerReactConfig', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        extendComponents: true,
+        components: { editable: true },
       }),
       configDir: dirname(filename),
     });
@@ -43,11 +47,11 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).toContain('export interface SeekButtonProps extends Omit<SeekButtonPrimitive.Props');
     expect(result.code).toContain('resolveClassName(className, state)');
     expect(result.code).not.toContain("from '@videojs/core'");
-    expect(result.code).toContain('<Text className="tabular-nums">');
+    expect(result.code).toContain('<span className="tabular-nums">');
     expect(result.code).not.toContain('button.styles');
   });
 
-  it('does not extend packaged preset components by default', async () => {
+  it('preserves canonical component props in packaged output', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/play-button.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
@@ -58,9 +62,11 @@ describe('createCompilerReactConfig', () => {
     });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain('export function PlayButton()');
-    expect(result.code).not.toContain('PlayButtonProps');
-    expect(result.code).not.toContain('resolveClassName');
+    expect(result.code).toContain('export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props');
+    expect(result.code).not.toContain('ComponentProps');
+    expect(result.code).toContain('export function PlayButton({ className, ...props }: PlayButtonProps = {})');
+    expect(result.code).toContain('resolveClassName(className, state)');
+    expect(result.code).not.toContain('typeof className');
   });
 
   it('keeps selected style variants out of editable component props', async () => {
@@ -75,7 +81,7 @@ describe('createCompilerReactConfig', () => {
           manifest: await loadStyleManifest(statusStyleFiles),
           variant: 'minimal',
         },
-        extendComponents: true,
+        components: { editable: true },
       }),
     });
 
@@ -93,7 +99,7 @@ describe('createCompilerReactConfig', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        extendComponents: true,
+        components: { editable: true },
       }),
     });
 
@@ -110,12 +116,13 @@ describe('createCompilerReactConfig', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        extendComponents: true,
+        components: { editable: true },
       }),
     });
 
-    expect(result.code).toContain('interface VolumePopoverProps extends PopoverPrimitive.RootProps');
+    expect(result.code).toContain('interface VolumePopoverProps extends Omit<PopoverPrimitive.RootProps, "children">');
     expect(result.code).toContain('className?: PopoverPrimitive.PopupProps["className"]');
+    expect(result.code).toContain('orientation?: VolumeSliderProps["orientation"]');
     expect(result.code).toContain('...props');
     expect(result.code).toContain(
       '<PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>'
@@ -130,13 +137,13 @@ describe('createCompilerReactConfig', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        extendComponents: true,
+        components: { editable: true },
       }),
     });
 
     expect(result.code).toContain('interface AudioTrackMenuProps extends Omit<SubmenuProps');
-    expect(result.code).toContain('...props }: AudioTrackMenuProps = {}');
-    expect(result.code).toContain('<Submenu {...props} icon=');
+    expect(result.code).toContain('AudioTrackMenu(props: AudioTrackMenuProps = {})');
+    expect(result.code).toMatch(/<Submenu icon=.*\{\.\.\.props\}>/s);
     expect(result.code).not.toContain('AudioTrackSettingsMenu');
   });
 
@@ -153,29 +160,54 @@ describe('createCompilerReactConfig', () => {
             resolve(canonicalRoot, 'styles/components/menu.styles.ts'),
           ]),
         },
-        extendComponents: true,
+        components: { editable: true },
       }),
     });
 
     expect(result.code).toContain('interface SubmenuProps extends MenuPrimitive.RootProps');
+    expect(result.code).toContain('children?: ReactNode');
+    expect(result.code).toContain('icon: ReactNode');
+    expect(result.code).toContain('label: ReactNode');
+    expect(result.code).toContain('selectedLabel: ReactNode');
+    expect(result.code).not.toContain('MenuPrimitive.TriggerProps["children"]');
     expect(result.code).toContain('className?: MenuPrimitive.ContentProps["className"]');
     expect(result.code).toContain('<MenuPrimitive.Root {...props}>');
     expect(result.code).toContain('resolveClassName(className, state)');
   });
 
-  it('imports the settings menu props used by the editable video composition', async () => {
+  it('derives the settings menu props used by the editable video composition', async () => {
     const filename = resolve(canonicalRoot, 'components/menus/video-settings-menu.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        extendComponents: true,
+        components: { editable: true },
       }),
     });
 
-    expect(result.code).toContain('import type { SettingsMenuProps } from "./settings-menu"');
     expect(result.code).toContain('interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, "children">');
+  });
+
+  it('allows settings menu props to override canonical positioning defaults', async () => {
+    const filename = resolve(canonicalRoot, 'components/menus/settings-menu.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await transform(source, {
+      filename,
+      config: reactConfig({
+        styles: {
+          mode: 'tailwind',
+          manifest: await loadStyleManifest([
+            ...styleFiles,
+            resolve(canonicalRoot, 'styles/components/menu.styles.ts'),
+          ]),
+        },
+      }),
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain('children?: ReactNode');
+    expect(result.code).toContain('<MenuPrimitive.Root side="top" align="center" {...props}>');
   });
 
   it('allows a target to resolve generated React imports', async () => {
@@ -216,21 +248,19 @@ describe('createCompilerReactConfig', () => {
       config,
     });
 
-    expect(source).toContain('export function Container({ children }: { children?: unknown })');
-    expect(source).not.toContain('{ children, className');
-    expect(source).not.toContain('...props');
-    expect(posterSource).toContain('export function Poster()');
-    expect(posterSource).not.toContain('...props');
+    expect(source).toContain('Container({ children, className, ...props }: PropsWithChildren)');
+    expect(posterSource).toContain('Poster({ className, ...props }: Props = {})');
+    expect(`${source}\n${posterSource}`).not.toContain('TargetProps');
     expect(result.diagnostics).toEqual([]);
     expect(posterResult.diagnostics).toEqual([]);
     expect(result.code).toContain('export function Container(');
     expect(result.code).toContain('ContainerProps');
     expect(result.code).not.toContain('Parameters<');
-    expect(result.code).toContain('<ContainerPrimitive {...props}');
+    expect(result.code).toMatch(/<ContainerPrimitive className=.*\{\.\.\.props\}>/s);
     expect(posterResult.code).toContain('export function Poster(');
     expect(posterResult.code).toContain('PosterProps');
     expect(posterResult.code).not.toContain('Parameters<');
-    expect(posterResult.code).toContain('<PosterPrimitive {...props}');
+    expect(posterResult.code).toMatch(/<PosterPrimitive className=.*\{\.\.\.props\}\/>/s);
     expect(posterResult.code).toContain('[&[data-visible][src]:not([data-loaded])]:opacity-0');
     expect(posterResult.code).not.toContain('Slot');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinContainer');
@@ -244,7 +274,6 @@ describe('createCompilerReactConfig', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        rootClassName: 'media-skin media-skin-video media-theme-default',
       }),
     });
 
@@ -252,7 +281,7 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).toContain('export interface DefaultVideoSkinProps extends Omit<ContainerProps');
     expect(result.code).toContain('children?: ReactNode');
     expect(result.code).toContain('poster?: string | PosterProps["render"] | undefined');
-    expect(result.code).toContain('<Container {...containerProps}');
+    expect(result.code).toMatch(/<Container className=.*\{\.\.\.containerProps\}>/s);
     expect(result.code).toContain('{children}');
     expect(result.code).toContain('poster && <Poster');
     expect(result.code).not.toContain('SeekButton');

@@ -39,4 +39,16 @@ describe('collectModuleReferences', () => {
 
     expect(reference).toMatchObject({ names: [], ambiguous: true });
   });
+
+  it('collects namespace members referenced by type queries', () => {
+    const [reference] = collectModuleReferences(
+      parse(`
+        import * as $ from '@fixture/components';
+
+        type Props = ComponentProps<typeof $.PlayButton>;
+      `)
+    );
+
+    expect(reference).toMatchObject({ names: ['PlayButton'], ambiguous: false });
+  });
 });

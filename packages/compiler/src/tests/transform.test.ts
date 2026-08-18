@@ -52,6 +52,43 @@ describe('transform', () => {
     );
   });
 
+  it('adds a type reference to an existing value import', async () => {
+    const result = await transform(
+      `import { Submenu } from './submenu'; export interface MenuProps {} export const Menu = Submenu;`,
+      {
+        filename: '/project/src/menu.tsx',
+        outputFile: '/project/dist/menu.tsx',
+        configDir: '/project/config',
+        config: {
+          plugins: [
+            rewrite((code) => {
+              const SubmenuProps = code.import('./submenu', 'SubmenuProps', {
+                type: true,
+                relativeTo: 'module',
+              });
+
+              return [code.interface('MenuProps').extends(SubmenuProps)];
+            }),
+          ],
+        },
+      }
+    );
+
+    expect(result.code).toContain("import { Submenu, type SubmenuProps } from './submenu'");
+    expect(result.code).toContain('export interface MenuProps extends SubmenuProps');
+  });
+
+  it('replaces a function parameter type without changing its binding', async () => {
+    const result = await transform(`export function Button(props: SourceProps = {}) { return <Root {...props}/>; }`, {
+      config: {
+        plugins: [rewrite((code) => [code.function('Button').setParameterType(code.type.named('ButtonProps'))])],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(compact(result.code)).toContain(compact('function Button(props: ButtonProps = {})'));
+  });
+
   it('composes generic import, JSX attribute, JSX element, and interface edits', async () => {
     const source = `import { Action, Backdrop, Frame, Hint, Range, Toolbar } from '@fixture/core';
 import { styles } from './tokens';
@@ -296,7 +333,7 @@ export function Target(){ return <Root />; }`;
               code.variable('Placeholder').remove(),
               code.function('Target').insertBefore(() =>
                 code.statement.interface({
-                  name: 'TargetProps',
+                  name: 'RenderedProps',
                   export: true,
                   extends: [code.type.named('Omit', [code.type.named(BaseProps), code.type.literal('hidden')])],
                   properties: [
@@ -321,10 +358,10 @@ export function Target(){ return <Root />; }`;
     expect(result.code).toContain('import type { BaseProps } from "@fixture/react"');
     expect(compact(result.code)).toContain(
       compact(
-        'export interface TargetProps extends Omit<BaseProps, "hidden"> { disabled?: boolean; value?: string; render?: BaseProps["render"]; }'
+        'export interface RenderedProps extends Omit<BaseProps, "hidden"> { disabled?: boolean; value?: string; render?: BaseProps["render"]; }'
       )
     );
-    expect(result.code.indexOf('interface TargetProps')).toBeLessThan(result.code.indexOf('function Target'));
+    expect(result.code.indexOf('interface RenderedProps')).toBeLessThan(result.code.indexOf('function Target'));
   });
 
   it('adds missing properties to an existing interface', async () => {

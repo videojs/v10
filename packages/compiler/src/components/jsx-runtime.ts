@@ -20,20 +20,20 @@ export interface ComponentNode {
   readonly key: string | number | null;
 }
 
-export type ClassNameValue = string | false | null | undefined | readonly ClassNameValue[];
-
-export interface ComponentProps {
-  className?: ClassNameValue;
-}
-
-export interface BaseProps extends ComponentProps {
+export interface BaseProps {
+  className?: string | undefined;
   children?: unknown;
 }
 
-export type PropsWithChildren<Props extends object = ComponentProps> = Props & Pick<BaseProps, 'children'>;
+export type Props<CoreProps extends object = EmptyProps> = CoreProps & Pick<BaseProps, 'className'>;
 
-/** An authored JSX component without compiler component metadata. */
-export type FunctionComponent<Props extends object = BaseProps> = (props: Props) => ComponentNode;
+export type PropsWithChildren<CoreProps extends object = EmptyProps> = Props<CoreProps> & Pick<BaseProps, 'children'>;
+
+type ComponentClassNamePart = string | false | null | undefined;
+
+type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> & {
+  className?: ComponentClassNamePart | readonly ComponentClassNamePart[];
+};
 
 export interface SlotProps {
   name?: string | undefined;
@@ -53,10 +53,14 @@ export interface TemplatePartProps extends BaseProps {
 export interface TextProps extends BaseProps {
   /** Translation key used by framework targets when the children provide fallback text. */
   token?: string | undefined;
+  /** Optional data-part marker consumed by generated component behavior. */
+  'data-part'?: string | undefined;
 }
 
+export type GroupProps = BaseProps;
+
 export interface Component<Props extends object> {
-  (props: BaseProps & Props): ComponentNode;
+  (props: ComponentAttributes<Props>): ComponentNode;
   readonly $$component: { name: string; part: string | null };
 }
 
@@ -83,7 +87,7 @@ export type CreateComponentResult<M> =
     : Component<InferProps<M>>;
 
 function createRuntimeComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
-  const component = (_props: BaseProps & Props): ComponentNode => {
+  const component = (_props: ComponentAttributes<Props>): ComponentNode => {
     throw new Error(`vjsc/components: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
   };
 
@@ -93,6 +97,7 @@ function createRuntimeComponentPart<Props extends object>(name: string, part: st
 }
 
 export const Slot = createRuntimeComponentPart<SlotProps>('Slot', null);
+export const Group = createRuntimeComponentPart<GroupProps>('Group', null);
 export const Template = Object.assign(createRuntimeComponentPart<TemplateProps>('Template', null), {
   Part: createRuntimeComponentPart<TemplatePartProps>('Template', 'Part'),
 });

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { transform } from '@svgr/core';
 import { transformSync } from 'oxc-transform';
 import { iconNames } from './internal/icon-names.js';
-import { ASSETS_DIR, DIST_DIR, getIconSets, getSvgFiles } from './internal/paths.js';
+import { ASSETS_DIR, COMPILER_DIR, DIST_DIR, getIconSets, getSvgFiles } from './internal/paths.js';
 import { optimizeSvg } from './internal/svg.js';
 
 const FRAMEWORKS = ['react', 'html'] as const;
@@ -99,6 +99,34 @@ function buildCanonicalComponentTypes(icons: { varName: string }[]): string {
   });
 
   return [`import type { Component, EmptyProps } from 'vjsc/components';`, ``, ...components, ``].join('\n');
+}
+
+function buildCompilerComponents(icons: { name: string; varName: string }[]): string {
+  const definitions = icons.map(({ varName }) => {
+    const name = `${iconNames(varName).pascal}Icon`;
+    return `  ${name}: defineComponent({ name: '${name}' }),`;
+  });
+  const targets = icons.map(({ name, varName }) => {
+    const component = `${iconNames(varName).pascal}Icon`;
+    return `    ${component}: resolve('${component}', '${name}'),`;
+  });
+
+  return [
+    `import { defineComponent, defineComponents, type RegistryTarget } from 'vjsc/components';`,
+    ``,
+    `const DEFINITIONS = {`,
+    ...definitions,
+    `} as const;`,
+    ``,
+    `export const components = defineComponents('@videojs/icons/components', DEFINITIONS);`,
+    ``,
+    `export function resolveTargets(resolve: (component: keyof typeof DEFINITIONS, name: string) => RegistryTarget) {`,
+    `  return {`,
+    ...targets,
+    `  };`,
+    `}`,
+    ``,
+  ].join('\n');
 }
 
 function buildElementIndex(sets: string[]): string {
@@ -308,6 +336,11 @@ async function buildIconSet(setName: string): Promise<void> {
     varName: file.replace('.svg', ''),
     content: readFileSync(join(ASSETS_DIR, setName, file), 'utf8'),
   }));
+
+  if (setName === 'default') {
+    ensureDir(COMPILER_DIR);
+    writeFileSync(join(COMPILER_DIR, 'components.generated.ts'), buildCompilerComponents(icons));
+  }
 
   const componentsDir = join(DIST_DIR, 'components', setName);
   ensureDir(componentsDir);

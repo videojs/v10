@@ -9,7 +9,7 @@ import { readAccessPath } from '../utils/jsx';
 import { sourceScriptKind } from '../utils/source-module';
 import { splitClassNames } from './class-names';
 import { getStyleDefinition, type StyleDefinition, type StyleValue, validateStyleDefinition } from './define';
-import { type ClassNameInfo, type ClassNameSegment, readClassName } from './jsx-class-name';
+import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';
 import { resolveManifestStyleModule } from './modules';
 import { visitStyleRules } from './tree';
 
@@ -201,11 +201,6 @@ function collectClassNameRules(
   manifest: StyleManifest,
   referenced: Set<string>
 ): void {
-  if (info.kind === 'segments') {
-    for (const segment of info.segments) collectSegmentRule(segment, bindings, manifest, referenced);
-    return;
-  }
-
   collectExpressionRules(info.expression, bindings, manifest, referenced);
 }
 
@@ -215,20 +210,12 @@ function collectExpressionRules(
   manifest: StyleManifest,
   referenced: Set<string>
 ): void {
-  if (ts.isConditionalExpression(expression)) {
-    collectExpressionRules(expression.whenTrue, bindings, manifest, referenced);
-    collectExpressionRules(expression.whenFalse, bindings, manifest, referenced);
-    return;
-  }
+  const visit = (node: ts.Node): void => {
+    if (ts.isExpression(node)) collectSegmentRule(classNameSegment(node), bindings, manifest, referenced);
+    ts.forEachChild(node, visit);
+  };
 
-  if (ts.isArrayLiteralExpression(expression)) {
-    for (const element of expression.elements) {
-      if (!ts.isSpreadElement(element)) collectExpressionRules(element, bindings, manifest, referenced);
-    }
-    return;
-  }
-
-  collectSegmentRule({ kind: 'opaque', node: expression }, bindings, manifest, referenced);
+  visit(expression);
 }
 
 function collectSegmentRule(

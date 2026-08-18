@@ -1,25 +1,29 @@
 import * as $ from '@videojs/core/components';
 
-export function VideoHotkeys() {
+export interface VideoHotkeysProps {
+  disabled?: boolean | undefined;
+}
+
+export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
   return (
     <>
-      <$.Hotkey keys="Space" action="togglePaused" />
-      <$.Hotkey keys="k" action="togglePaused" />
-      <$.Hotkey keys="m" action="toggleMuted" />
-      <$.Hotkey keys="f" action="toggleFullscreen" />
-      <$.Hotkey keys="c" action="toggleSubtitles" />
-      <$.Hotkey keys="i" action="togglePictureInPicture" />
-      <$.Hotkey keys="ArrowRight" action="seekStep" value={5} />
-      <$.Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
-      <$.Hotkey keys="l" action="seekStep" value={10} />
-      <$.Hotkey keys="j" action="seekStep" value={-10} />
-      <$.Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
-      <$.Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <$.Hotkey keys="0-9" action="seekToPercent" />
-      <$.Hotkey keys="Home" action="seekToPercent" value={0} />
-      <$.Hotkey keys="End" action="seekToPercent" value={100} />
-      <$.Hotkey keys=">" action="speedUp" />
-      <$.Hotkey keys="<" action="speedDown" />
+      <$.Hotkey disabled={disabled} keys="Space" action="togglePaused" />
+      <$.Hotkey disabled={disabled} keys="k" action="togglePaused" />
+      <$.Hotkey disabled={disabled} keys="m" action="toggleMuted" />
+      <$.Hotkey disabled={disabled} keys="f" action="toggleFullscreen" />
+      <$.Hotkey disabled={disabled} keys="c" action="toggleSubtitles" />
+      <$.Hotkey disabled={disabled} keys="i" action="togglePictureInPicture" />
+      <$.Hotkey disabled={disabled} keys="ArrowRight" action="seekStep" value={5} />
+      <$.Hotkey disabled={disabled} keys="ArrowLeft" action="seekStep" value={-5} />
+      <$.Hotkey disabled={disabled} keys="l" action="seekStep" value={10} />
+      <$.Hotkey disabled={disabled} keys="j" action="seekStep" value={-10} />
+      <$.Hotkey disabled={disabled} keys="ArrowUp" action="volumeStep" value={0.05} />
+      <$.Hotkey disabled={disabled} keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <$.Hotkey disabled={disabled} keys="0-9" action="seekToPercent" />
+      <$.Hotkey disabled={disabled} keys="Home" action="seekToPercent" value={0} />
+      <$.Hotkey disabled={disabled} keys="End" action="seekToPercent" value={100} />
+      <$.Hotkey disabled={disabled} keys=">" action="speedUp" />
+      <$.Hotkey disabled={disabled} keys="<" action="speedDown" />
     </>
   );
 }

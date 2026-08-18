@@ -2,10 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { type CompilerConfig, transform } from 'vjsc';
-import { plugin as componentsPlugin } from 'vjsc/components';
-import { loadStyleManifest } from 'vjsc/styles';
-import { registry } from '../../../../html/compiler';
-import { createCompilerHtmlConfig } from '../html';
+import { resolveOutputConfig } from 'vjsc/catalog';
+import { loadStyleManifest, type StylePluginOptions, plugin as stylesPlugin } from 'vjsc/styles';
+import { htmlOutput } from '../html';
 
 const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 const styleFiles = [
@@ -15,16 +14,21 @@ const styleFiles = [
   resolve(canonicalRoot, 'styles/components/slider.styles.ts'),
 ];
 
-function htmlConfig(options: Parameters<typeof createCompilerHtmlConfig>[0]): CompilerConfig {
-  const config = createCompilerHtmlConfig(options);
+type HtmlTestOptions = NonNullable<Parameters<typeof htmlOutput>[0]> & {
+  styles: StylePluginOptions;
+};
+
+function htmlConfig({ styles, ...options }: HtmlTestOptions): CompilerConfig {
+  const output = htmlOutput(options);
+  const config = resolveOutputConfig(output);
 
   return {
     ...config,
-    plugins: [...(config.plugins ?? []), componentsPlugin(registry)],
+    plugins: [stylesPlugin(styles), ...(config.plugins ?? [])],
   };
 }
 
-describe('createCompilerHtmlConfig', () => {
+describe('htmlOutput', () => {
   it('emits idiomatic light-DOM elements', async () => {
     const filename = resolve(canonicalRoot, 'components/sliders/time-slider.tsx');
     const source = await readFile(filename, 'utf8');
@@ -36,7 +40,8 @@ describe('createCompilerHtmlConfig', () => {
     });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain('<media-time-slider class="group/slider relative flex');
+    expect(result.code).toContain('<media-time-slider class={["group/slider relative flex');
+    expect(result.code).toContain('{...props}>');
     expect(result.code).toContain('<media-slider-thumbnail');
     expect(result.code).not.toContain('className=');
   });
@@ -83,7 +88,7 @@ export function VolumePopover() {
       }
     );
 
-    expect(result.code).toContain('<media-mute-button {...props}/>');
+    expect(result.code).toContain('<media-mute-button />');
     expect(result.code).toContain('<media-popover />');
     expect(result.code.indexOf('<media-mute-button')).toBeLessThan(result.code.indexOf('<media-popover'));
     expect(result.code).not.toContain('commandfor');

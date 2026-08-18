@@ -45,12 +45,14 @@ describe('emitShadcnRegistry', () => {
     expect(containerEntry?.content).toMatch(/from ["']@videojs\/react["']/);
     expect(containerEntry?.content).not.toContain('/poster/poster');
     expect(overlayEntry?.content).toContain('export interface OverlayProps extends Omit<ComponentProps<"div">');
-    expect(overlayEntry?.content).toContain('<div {...props} className={cn(');
+    expect(overlayEntry?.content).toContain('<div className={cn(');
+    expect(overlayEntry?.content).toContain('{...props}/>');
     expect(entry?.content).toMatch(/from ["']@\/components\/videojs\/button-tooltip\/button-tooltip["']/);
     expect(entry?.content).toContain('grid min-h-0');
     expect(entry?.content).toContain('size-9');
     expect(entry?.content).toContain('export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props');
-    expect(entry?.content).toContain('<PlayButtonPrimitive {...props}');
+    expect(entry?.content).toContain('<PlayButtonPrimitive className=');
+    expect(entry?.content).toContain('{...props}>');
     expect(entry?.content).toContain('resolveClassName(className, state)');
     expect(playButton?.files?.some((file) => file.path.endsWith('/play-button/play-button.tsx'))).toBe(true);
     expect(playButton?.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);

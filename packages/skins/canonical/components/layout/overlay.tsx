@@ -1,8 +1,6 @@
-import type { ComponentProps, FunctionComponent } from 'vjsc/components';
+import { Group, type Props } from 'vjsc/components';
 import styles from '../../styles/components/overlay.styles';
 
-declare const OverlayRoot: FunctionComponent<ComponentProps>;
-
-export function Overlay() {
-  return <OverlayRoot className={styles.root} />;
+export function Overlay({ className, ...props }: Props = {}) {
+  return <Group className={[styles.root, className]} {...props} />;
 }

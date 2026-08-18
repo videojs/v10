@@ -57,6 +57,7 @@ interface RequestedImport {
   readonly source: string;
   readonly imported: string;
   readonly local: string;
+  typeOnly: boolean;
 }
 
 interface RegistryConfigEntry {
@@ -103,7 +104,8 @@ function transformComponents(
   target: CompilerTarget | undefined,
   context: ts.TransformationContext
 ): ts.SourceFile {
-  const canonical = collectCanonicalImports(sourceFile, [registry.components.source, COMPILER_COMPONENT_SOURCE]);
+  const componentSources = registry.bindings.map(({ components }) => components.source);
+  const canonical = collectCanonicalImports(sourceFile, [...componentSources, COMPILER_COMPONENT_SOURCE]);
   if (canonical.named.size === 0 && canonical.namespaces.size === 0) return sourceFile;
 
   const state: TransformState = {
@@ -132,7 +134,7 @@ function transformComponents(
   };
 
   const transformed = ts.visitEachChild(sourceFile, state.visitor, context);
-  return updateImports(transformed, new Set([registry.components.source, COMPILER_COMPONENT_SOURCE]), state);
+  return updateImports(transformed, new Set([...componentSources, COMPILER_COMPONENT_SOURCE]), state);
 }
 
 function transformPrimitive(
@@ -153,11 +155,13 @@ function transformPrimitive(
   }
 
   const transform =
-    reference.component === 'Slot'
-      ? state.registry.primitives.Slot
-      : reference.component === 'Text'
-        ? state.registry.primitives.Text
-        : undefined;
+    reference.component === 'Group'
+      ? state.registry.primitives.Group
+      : reference.component === 'Slot'
+        ? state.registry.primitives.Slot
+        : reference.component === 'Text'
+          ? state.registry.primitives.Text
+          : undefined;
 
   if (!transform) {
     throw new Error(`Component registry does not define the <${reference.component}> compiler primitive.`);
@@ -171,7 +175,7 @@ function transformTemplates(node: ts.JsxElement, state: TransformState): ts.JsxE
   if (!templates) return node;
 
   let attributes = node.openingElement.attributes;
-  let attached = false;
+  let hasHostAttributes = false;
   let changed = false;
   const children: ts.JsxChild[] = [];
 
@@ -190,33 +194,31 @@ function transformTemplates(node: ts.JsxElement, state: TransformState): ts.JsxE
 
     changed = true;
 
-    if (template.attach) {
-      if (hasJsxAttribute(attributes, template.attach.prop)) {
-        templateError(node, `Template parent already declares "${template.attach.prop}".`);
+    const rendered = renderTemplate(child, template, state);
+
+    if (rendered.hostAttributes) {
+      for (const attribute of rendered.hostAttributes) {
+        if (ts.isJsxAttribute(attribute) && hasJsxAttribute(attributes, jsxAttributeNameText(attribute.name))) {
+          templateError(node, `Template parent already declares "${jsxAttributeNameText(attribute.name)}".`);
+        }
       }
 
       attributes = state.factory.updateJsxAttributes(attributes, [
         ...attributes.properties,
-        createTemplateAttribute(child, template, state),
+        ...rendered.hostAttributes,
       ]);
-      attached = true;
+      hasHostAttributes = true;
       continue;
     }
 
-    children.push(renderTemplate(child, template, state));
+    children.push(rendered.child!);
   }
 
   if (!changed) return node;
 
-  const nextChildren = attached
-    ? children.filter(
-        (child) =>
-          (!ts.isJsxText(child) || child.text.trim().length > 0) &&
-          (!ts.isJsxExpression(child) || child.expression !== undefined)
-      )
-    : children;
+  const nextChildren = hasHostAttributes ? meaningfulJsxChildren(children) : children;
 
-  if (attached && nextChildren.length === 0) {
+  if (hasHostAttributes && nextChildren.length === 0) {
     return state.factory.createJsxSelfClosingElement(
       node.openingElement.tagName,
       node.openingElement.typeArguments,
@@ -241,67 +243,44 @@ function renderTemplate(
   node: ts.JsxElement | ts.JsxSelfClosingElement,
   template: RegistryTemplate,
   state: TransformState
-): ts.JsxChild {
-  const parameters = Object.fromEntries(
-    (template.attach?.parameters ?? []).map((name) => [
-      name,
-      createSourceExpression(state.factory.createIdentifier(name), state.factory),
-    ])
-  );
+): { hostAttributes?: readonly ts.JsxAttributeLike[]; child?: ts.JsxChild } {
   const previous = state.template;
 
   state.template = {
     parts: template.parts ?? {},
-    parameters,
+    parameters: {},
   };
 
   try {
-    let output: unknown;
+    const output = materializeTemplateOutput(
+      template.render({ props: sourceRenderProps(node, new Set(['name'])) }),
+      state
+    );
 
-    if (template.root) {
-      const props = sourceRenderProps(node, new Set(['name']));
-      addTemplateSpread(props, template, state);
-
-      output = registryNode(template.root, props);
-    } else {
-      const root = singleTemplateRoot(node);
-      const content = template.attach?.spread ? addRootSpread(root, template.attach.spread, state.factory) : root;
-
-      output = sourceChildren([content]);
+    if (isRegistryNode(output) && isHost(output.type)) {
+      return { hostAttributes: registryAttributes(output.props, state).properties };
     }
 
-    if (template.target) {
-      output = registryNode(template.target, { children: output });
-    }
-
-    return registryOutputToJsx(output, undefined, 'TemplatePrimitive', state);
+    return { child: registryOutputToJsx(output, undefined, 'TemplatePrimitive', state) };
   } finally {
     state.template = previous;
   }
 }
 
-function createTemplateAttribute(
-  node: ts.JsxElement | ts.JsxSelfClosingElement,
-  template: RegistryTemplate,
-  state: TransformState
-): ts.JsxAttribute {
-  const attachment = template.attach!;
-  const rendered = renderTemplate(node, template, state);
-  const callback = state.factory.createArrowFunction(
-    undefined,
-    undefined,
-    attachment.parameters.map((name) =>
-      state.factory.createParameterDeclaration(undefined, undefined, state.factory.createIdentifier(name))
-    ),
-    undefined,
-    state.factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
-    state.factory.createParenthesizedExpression(jsxChildExpression(rendered, state.factory))
-  );
+function materializeTemplateOutput(output: unknown, state: TransformState): unknown {
+  if (Array.isArray(output)) return output.map((value) => materializeTemplateOutput(value, state));
+  if (!isRegistryNode(output)) return output;
 
-  return state.factory.createJsxAttribute(
-    state.factory.createIdentifier(attachment.prop),
-    state.factory.createJsxExpression(undefined, callback)
-  );
+  if (isTargetComponent(output.type) && isTransformTargetDefinition(output.type[REGISTRY_TARGET])) {
+    return transformTargetOutput(output, output.type[REGISTRY_TARGET], state);
+  }
+
+  return {
+    ...output,
+    props: Object.fromEntries(
+      Object.entries(output.props).map(([name, value]) => [name, materializeTemplateOutput(value, state)])
+    ),
+  } satisfies RegistryNode;
 }
 
 function transformTemplatePart(node: ts.JsxElement | ts.JsxSelfClosingElement, state: TransformState): ts.Node {
@@ -355,25 +334,6 @@ function applyPartTransform(
   return registryOutputToJsx(transform({ props }), host, preferredLocal, state);
 }
 
-function registryNode(type: TargetComponent, props: Record<string, unknown>): RegistryNode {
-  return {
-    [REGISTRY_NODE]: true,
-    type,
-    props,
-    key: null,
-  };
-}
-
-function addTemplateSpread(props: Record<string, unknown>, template: RegistryTemplate, state: TransformState): void {
-  const name = template.attach?.spread;
-  if (!name) return;
-
-  props.__template_spread = {
-    [SOURCE_VALUE]: true,
-    attribute: state.factory.createJsxSpreadAttribute(state.factory.createIdentifier(name)),
-  } satisfies SourceValue;
-}
-
 function addRootSpread(
   root: ts.JsxChild,
   name: string,
@@ -404,16 +364,6 @@ function addRootSpread(
     root.children,
     root.closingElement
   );
-}
-
-function singleTemplateRoot(node: ts.JsxElement | ts.JsxSelfClosingElement): ts.JsxChild {
-  const children = childrenOf(node).filter((child) => !ts.isJsxText(child) || child.text.trim().length > 0);
-
-  if (children.length !== 1) {
-    return templateError(node, `<Template> requires exactly one JSX root, received ${children.length}.`);
-  }
-
-  return children[0]!;
 }
 
 function isCompilerTemplate(node: ts.JsxChild, imports: CanonicalImports): node is ts.JsxElement {
@@ -468,15 +418,16 @@ function transformCanonicalElement(
     return transformPrimitive(node, reference, state);
   }
 
-  const definition = state.registry.components.definitions[reference.component];
-  const entry = state.registry.entries[reference.component] as RegistryEntry<
+  const binding = registryBinding(state.registry, reference.source);
+  const definition = binding?.components.definitions[reference.component];
+  const entry = binding?.entries[reference.component] as RegistryEntry<
     ComponentDefinition<object, ComponentRecord | undefined>
   >;
 
   if (!definition) {
     throw new Error(
       `Unknown canonical component <${reference.component}${reference.part ? `.${reference.part}` : ''}> from ` +
-        `\`${state.registry.components.source}\`.`
+        `\`${reference.source}\`.`
     );
   }
 
@@ -503,7 +454,7 @@ function transformCanonicalElement(
       );
     }
 
-    return replaceHost(node, host, reference.local, state);
+    return applyTarget(node, host, undefined, reference.local, state);
   }
 
   if (transform === Fragment) {
@@ -528,6 +479,15 @@ function transformCanonicalElement(
   });
 
   return registryOutputToJsx(output, host, reference.local, state);
+}
+
+function registryBinding(registry: ComponentRegistry, source: string) {
+  for (let index = registry.bindings.length - 1; index >= 0; index--) {
+    const binding = registry.bindings[index]!;
+    if (binding.components.source === source) return binding;
+  }
+
+  return undefined;
 }
 
 function executeComponentRender(
@@ -697,6 +657,10 @@ function registryOutputToJsx(
 
   const definition = target[REGISTRY_TARGET];
 
+  if (isTransformTargetDefinition(definition)) {
+    return state.factory.createJsxExpression(undefined, transformTargetOutput(node, definition, state).expression);
+  }
+
   if (isRenderTargetDefinition(definition)) {
     const context = { props: node.props };
     const rendered = registryOutputToJsx(definition.render(context), currentHost, preferredLocal, state);
@@ -718,6 +682,55 @@ function registryOutputToJsx(
     children,
     state.factory.createJsxClosingElement(tag)
   );
+}
+
+function transformTargetOutput(
+  node: RegistryNode,
+  definition: Extract<TargetDefinition<any>, { readonly transform: unknown }>,
+  state: TransformState
+): SourceExpression {
+  const expression = definition.transform({
+    props: node.props,
+    factory: state.factory,
+    render(options = {}) {
+      const scope = state.template;
+      const parameters = options.parameters ?? [];
+      const previous = state.template;
+
+      if (parameters.length > 0 && !scope) {
+        throw new Error('Target transform parameters require a configured <Template>.');
+      }
+
+      if (scope) {
+        state.template = {
+          parts: scope.parts,
+          parameters: Object.fromEntries(
+            parameters.map((name) => [
+              name,
+              createSourceExpression(state.factory.createIdentifier(name), state.factory),
+            ])
+          ),
+        };
+      }
+
+      let rendered: ts.JsxChild;
+
+      try {
+        const output = materializeTemplateOutput(node.props.children, state);
+        const content = isSourceChildren(output) ? sourceChildren(meaningfulJsxChildren(output.children)) : output;
+
+        rendered = registryOutputToJsx(content, undefined, 'TargetTransform', state);
+      } finally {
+        state.template = previous;
+      }
+
+      const content = options.spreadProps ? addRootSpread(rendered, options.spreadProps, state.factory) : rendered;
+
+      return state.factory.createParenthesizedExpression(jsxChildExpression(content, state.factory));
+    },
+  });
+
+  return createSourceExpression(expression, state.factory);
 }
 
 function fragmentOrChild(children: readonly ts.JsxChild[], factory: ts.NodeFactory): ts.JsxChild {
@@ -822,7 +835,7 @@ function registryChildren(
 }
 
 function childrenExpression(children: readonly ts.JsxChild[], state: TransformState): ts.Expression {
-  const meaningful = children.filter((child) => !ts.isJsxText(child) || child.text.trim().length > 0);
+  const meaningful = meaningfulJsxChildren(children);
   if (meaningful.length === 0) return state.factory.createNull();
 
   if (meaningful.length === 1) {
@@ -840,6 +853,14 @@ function childrenExpression(children: readonly ts.JsxChild[], state: TransformSt
   );
 }
 
+function meaningfulJsxChildren(children: readonly ts.JsxChild[]): ts.JsxChild[] {
+  return children.filter(
+    (child) =>
+      (!ts.isJsxText(child) || !child.containsOnlyTriviaWhiteSpaces) &&
+      (!ts.isJsxExpression(child) || child.expression !== undefined)
+  );
+}
+
 function applyTarget(
   node: ts.JsxElement | ts.JsxSelfClosingElement,
   target: TargetComponent,
@@ -848,7 +869,7 @@ function applyTarget(
   state: TransformState,
   props = sourceRenderProps(node)
 ): ts.Node {
-  if (!isRenderTargetDefinition(target[REGISTRY_TARGET])) {
+  if (!isRenderTargetDefinition(target[REGISTRY_TARGET]) && !isTransformTargetDefinition(target[REGISTRY_TARGET])) {
     return replaceHost(node, target, preferredLocal, state);
   }
 
@@ -895,7 +916,7 @@ function replaceHost(
 function targetTag(target: TargetComponent, preferredLocal: string, state: TransformState): ts.JsxTagNameExpression {
   const reference = target[REGISTRY_TARGET];
 
-  if (isRenderTargetDefinition(reference)) {
+  if (isRenderTargetDefinition(reference) || isTransformTargetDefinition(reference)) {
     throw new Error('Rendered targets do not have an output tag.');
   }
 
@@ -917,16 +938,29 @@ function targetTag(target: TargetComponent, preferredLocal: string, state: Trans
 function requestImport(reference: TargetReference, preferredLocal: string, state: TransformState): string {
   if (!isModuleTarget(reference)) throw new Error('HTML element targets do not request named imports.');
 
-  const resolved = resolveNamedImport(reference.import.from, reference.import.name, state);
+  return requestNamedImport(reference.import.from, reference.import.name, preferredLocal, false, state);
+}
+
+function requestNamedImport(
+  source: string,
+  name: string,
+  preferredLocal: string,
+  typeOnly: boolean,
+  state: TransformState
+): string {
+  const resolved = resolveNamedImport(source, name, state);
 
   if (!resolved) {
-    throw new Error(`Target import \`${reference.import.name}\` from \`${reference.import.from}\` cannot be removed.`);
+    throw new Error(`Target import \`${name}\` from \`${source}\` cannot be removed.`);
   }
 
   const imported = resolved.name;
   const key = `${resolved.source}\0${imported}`;
   const existing = state.requestedImports.get(key);
-  if (existing) return existing.local;
+  if (existing) {
+    if (!typeOnly) existing.typeOnly = false;
+    return existing.local;
+  }
 
   let local = preferredLocal || imported;
   if (state.usedNames.has(local) && !isCanonicalLocal(state.canonical, local)) {
@@ -936,7 +970,7 @@ function requestImport(reference: TargetReference, preferredLocal: string, state
   }
 
   state.usedNames.add(local);
-  state.requestedImports.set(key, { source: resolved.source, imported, local });
+  state.requestedImports.set(key, { source: resolved.source, imported, local, typeOnly });
   return local;
 }
 
@@ -1003,7 +1037,9 @@ function updateImports(
     if (!source || !canonicalSources.has(source)) return [statement];
 
     const retained = retainCanonicalImport(statement, state.factory);
-    return retained ? [retained] : [];
+    if (!retained) return [];
+
+    return source === COMPILER_COMPONENT_SOURCE ? resolveCompilerTypeImports(retained, state) : [retained];
   });
   const imports: ts.ImportDeclaration[] = [];
 
@@ -1031,7 +1067,7 @@ function updateImports(
               .sort((a, b) => a.imported.localeCompare(b.imported))
               .map((request) =>
                 state.factory.createImportSpecifier(
-                  false,
+                  request.typeOnly,
                   request.imported === request.local ? undefined : state.factory.createIdentifier(request.imported),
                   state.factory.createIdentifier(request.local)
                 )
@@ -1050,6 +1086,72 @@ function updateImports(
     ...imports,
     ...statements.slice(index),
   ]);
+}
+
+function resolveCompilerTypeImports(declaration: ts.ImportDeclaration, state: TransformState): ts.ImportDeclaration[] {
+  const resolveType = state.registry.types;
+  const clause = declaration.importClause;
+  const bindings = clause?.namedBindings;
+
+  if (!resolveType || !clause || !bindings || !ts.isNamedImports(bindings)) return [declaration];
+
+  const grouped = new Map<string, ts.ImportSpecifier[]>();
+  const retained: ts.ImportSpecifier[] = [];
+
+  for (const element of bindings.elements) {
+    if (!clause.isTypeOnly && !element.isTypeOnly) continue;
+
+    const sourceName = element.propertyName?.text ?? element.name.text;
+    const target = resolveType(sourceName);
+
+    if (!target) {
+      retained.push(state.factory.updateImportSpecifier(element, false, element.propertyName, element.name));
+      continue;
+    }
+    if (target.path?.length) throw new Error(`Registry type target \`${sourceName}\` cannot declare an import path.`);
+
+    const resolved = resolveNamedImport(target.from, target.name, state);
+    if (!resolved) {
+      retained.push(state.factory.updateImportSpecifier(element, false, element.propertyName, element.name));
+      continue;
+    }
+
+    const imports = grouped.get(resolved.source) ?? [];
+    imports.push(
+      state.factory.createImportSpecifier(
+        false,
+        resolved.name === element.name.text ? undefined : state.factory.createIdentifier(resolved.name),
+        element.name
+      )
+    );
+    grouped.set(resolved.source, imports);
+  }
+
+  const resolved = [...grouped]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([source, imports]) =>
+      state.factory.createImportDeclaration(
+        undefined,
+        state.factory.createImportClause(true, undefined, state.factory.createNamedImports(imports)),
+        state.factory.createStringLiteral(source)
+      )
+    );
+
+  if (clause.name || retained.length > 0) {
+    resolved.unshift(
+      state.factory.createImportDeclaration(
+        undefined,
+        state.factory.createImportClause(
+          true,
+          clause.name,
+          retained.length > 0 ? state.factory.createNamedImports(retained) : undefined
+        ),
+        declaration.moduleSpecifier
+      )
+    );
+  }
+
+  return resolved;
 }
 
 function retainCanonicalImport(
@@ -1092,7 +1194,6 @@ function collectCanonicalImports(sourceFile: ts.SourceFile, sources: readonly st
     if (!source || !accepted.has(source)) continue;
 
     const clause = statement.importClause;
-    if (clause?.isTypeOnly) continue;
 
     const bindings = clause?.namedBindings;
     if (!bindings) continue;
@@ -1103,7 +1204,6 @@ function collectCanonicalImports(sourceFile: ts.SourceFile, sources: readonly st
     }
 
     for (const element of bindings.elements) {
-      if (element.isTypeOnly) continue;
       named.set(element.name.text, {
         source,
         component: element.propertyName?.text ?? element.name.text,
@@ -1119,6 +1219,13 @@ function canonicalReference(
   imports: CanonicalImports
 ): CanonicalReference | undefined {
   const path = tagPath(ts.isJsxElement(node) ? node.openingElement.tagName : node.tagName);
+  return canonicalReferenceFromPath(path, imports);
+}
+
+function canonicalReferenceFromPath(
+  path: readonly string[],
+  imports: CanonicalImports
+): CanonicalReference | undefined {
   if (path.length === 0) return undefined;
   const root = path[0]!;
   const named = imports.named.get(root);
@@ -1221,6 +1328,12 @@ function isRenderTargetDefinition(
   definition: TargetDefinition<any>
 ): definition is Extract<TargetDefinition<any>, { readonly render: unknown }> {
   return 'render' in definition;
+}
+
+function isTransformTargetDefinition(
+  definition: TargetDefinition<any>
+): definition is Extract<TargetDefinition<any>, { readonly transform: unknown }> {
+  return 'transform' in definition;
 }
 
 function attributeInitializerExpression(

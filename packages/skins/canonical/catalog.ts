@@ -19,9 +19,15 @@ const resources = {
 
 /** Canonical Skin source catalog shared by package, registry, and future documentation outputs. */
 export const skinCatalog = defineCatalog({
-  components: [components.source],
+  components: [components.source, '@videojs/icons/components'],
   resources,
-  allowedImports: ['@videojs/core', 'vjsc/styles', 'vjsc/components', /^@videojs\/core\/i18n\/text\//],
+  allowedImports: [
+    '@videojs/core',
+    '@videojs/utils/style',
+    'vjsc/styles',
+    'vjsc/components',
+    /^@videojs\/core\/i18n\/text\//,
+  ],
   imports: {
     '@videojs/core/components': 'components',
     '@videojs/icons/components': 'icons',
