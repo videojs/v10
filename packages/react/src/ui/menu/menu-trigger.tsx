@@ -101,7 +101,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        menu.triggerProps.onClick(event);
+        menu.triggerProps.onClick(event.nativeEvent);
         return;
       }
 
