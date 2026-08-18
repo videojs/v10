@@ -54,8 +54,8 @@ describe('plugin', () => {
       { config: { target: target(), plugins: [plugin(registry)] } }
     );
 
-    expect(result.code).toContain('import { PlayButton as PlayButtonTarget } from "@fixture/react";');
-    expect(result.code).toContain('<PlayButtonTarget />');
+    expect(result.code).toContain('import { PlayButton as PlayButtonPrimitive } from "@fixture/react";');
+    expect(result.code).toContain('<PlayButtonPrimitive />');
     expect(result.code).not.toContain('@fixture/components');
   });
 
@@ -84,7 +84,7 @@ describe('plugin', () => {
       { config: { target: target(), plugins: [plugin(registry)] } }
     );
 
-    expect(result.code).toContain('<TooltipTarget.Root render={<PlayButtonTarget />}/>');
+    expect(result.code).toContain('<TooltipPrimitive.Root render={<PlayButtonPrimitive />}/>');
     expect(result.code).not.toContain('$.');
   });
 

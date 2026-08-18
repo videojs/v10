@@ -274,7 +274,7 @@ function renderTemplate(
       output = registryNode(template.target, { children: output });
     }
 
-    return registryOutputToJsx(output, undefined, 'TemplateTarget', state);
+    return registryOutputToJsx(output, undefined, 'TemplatePrimitive', state);
   } finally {
     state.template = previous;
   }
@@ -324,7 +324,7 @@ function transformTemplatePart(node: ts.JsxElement | ts.JsxSelfClosingElement, s
     });
   }
 
-  return applyPartTransform(node, transform, undefined, `${pascalCase(name)}Target`, state, props);
+  return applyPartTransform(node, transform, undefined, `${pascalCase(name)}Primitive`, state, props);
 }
 
 function applyPartTransform(
@@ -931,8 +931,8 @@ function requestImport(reference: TargetReference, preferredLocal: string, state
   let local = preferredLocal || imported;
   if (state.usedNames.has(local) && !isCanonicalLocal(state.canonical, local)) {
     let suffix = 2;
-    local = `${imported}Target`;
-    while (state.usedNames.has(local)) local = `${imported}Target${suffix++}`;
+    local = `${imported}Primitive`;
+    while (state.usedNames.has(local)) local = `${imported}Primitive${suffix++}`;
   }
 
   state.usedNames.add(local);
@@ -1138,7 +1138,7 @@ function canonicalReference(
   return {
     source,
     component: path[1]!,
-    local: `${path[1]}Target`,
+    local: `${path[1]}Primitive`,
     part: path.length > 2 ? path.slice(2).join('.') : null,
   };
 }

@@ -18,32 +18,32 @@ export type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
 const SETTINGS_SUBMENU_FUNCTIONS = ['QualityMenu', 'AudioTrackMenu', 'PlaybackRateMenu', 'CaptionsMenu'] as const;
 
 const DIRECT_COMPONENTS = [
-  ['AirPlayButton', '$.AirPlayButton', 'AirPlayButtonTarget.Props'],
-  ['BufferingIndicator', '$.BufferingIndicator', 'BufferingIndicatorTarget.Props'],
-  ['CaptionsButton', '$.CaptionsButton', 'CaptionsButtonTarget.Props'],
-  ['CastButton', '$.CastButton', 'CastButtonTarget.Props'],
-  ['FullscreenButton', '$.FullscreenButton', 'FullscreenButtonTarget.Props'],
-  ['MuteButton', '$.MuteButton', 'MuteButtonTarget.Props'],
-  ['PiPButton', '$.PiPButton', 'PiPButtonTarget.Props'],
-  ['PlayButton', '$.PlayButton', 'PlayButtonTarget.Props'],
-  ['SeekButton', '$.SeekButton', 'SeekButtonTarget.Props'],
-  ['SeekIndicator', '$.SeekIndicator.Root', 'SeekIndicatorTarget.RootProps'],
-  ['StatusAnnouncer', '$.StatusAnnouncer', 'StatusAnnouncerTarget.Props'],
-  ['TimeSlider', '$.TimeSlider.Root', 'TimeSliderTarget.RootProps'],
-  ['VolumeSlider', '$.VolumeSlider.Root', 'VolumeSliderTarget.RootProps'],
+  ['AirPlayButton', '$.AirPlayButton', 'AirPlayButtonPrimitive.Props'],
+  ['BufferingIndicator', '$.BufferingIndicator', 'BufferingIndicatorPrimitive.Props'],
+  ['CaptionsButton', '$.CaptionsButton', 'CaptionsButtonPrimitive.Props'],
+  ['CastButton', '$.CastButton', 'CastButtonPrimitive.Props'],
+  ['FullscreenButton', '$.FullscreenButton', 'FullscreenButtonPrimitive.Props'],
+  ['MuteButton', '$.MuteButton', 'MuteButtonPrimitive.Props'],
+  ['PiPButton', '$.PiPButton', 'PiPButtonPrimitive.Props'],
+  ['PlayButton', '$.PlayButton', 'PlayButtonPrimitive.Props'],
+  ['SeekButton', '$.SeekButton', 'SeekButtonPrimitive.Props'],
+  ['SeekIndicator', '$.SeekIndicator.Root', 'SeekIndicatorPrimitive.RootProps'],
+  ['StatusAnnouncer', '$.StatusAnnouncer', 'StatusAnnouncerPrimitive.Props'],
+  ['TimeSlider', '$.TimeSlider.Root', 'TimeSliderPrimitive.RootProps'],
+  ['VolumeSlider', '$.VolumeSlider.Root', 'VolumeSliderPrimitive.RootProps'],
 ] as const;
 
 const COMPOSED_COMPONENTS = [
-  ['StatusIndicator', '$.StatusIndicator.Root', 'StatusIndicatorTarget.RootProps', ['children', 'actions']],
-  ['PlaybackStatusIndicator', '$.StatusIndicator.Root', 'StatusIndicatorTarget.RootProps', ['children', 'actions']],
-  ['VolumeIndicator', '$.VolumeIndicator.Root', 'VolumeIndicatorTarget.RootProps', ['children']],
+  ['StatusIndicator', '$.StatusIndicator.Root', 'StatusIndicatorPrimitive.RootProps', ['children', 'actions']],
+  ['PlaybackStatusIndicator', '$.StatusIndicator.Root', 'StatusIndicatorPrimitive.RootProps', ['children', 'actions']],
+  ['VolumeIndicator', '$.VolumeIndicator.Root', 'VolumeIndicatorPrimitive.RootProps', ['children']],
 ] as const;
 
 const RADIO_GROUP_COMPONENTS = [
-  ['QualityRadioGroup', '$.QualityRadioGroup', 'QualityRadioGroupTarget.Props'],
-  ['AudioTrackRadioGroup', '$.AudioTrackRadioGroup', 'AudioTrackRadioGroupTarget.Props'],
-  ['PlaybackRateRadioGroup', '$.PlaybackRateRadioGroup', 'PlaybackRateRadioGroupTarget.Props'],
-  ['CaptionsRadioGroup', '$.CaptionsRadioGroup', 'CaptionsRadioGroupTarget.Props'],
+  ['QualityRadioGroup', '$.QualityRadioGroup', 'QualityRadioGroupPrimitive.Props'],
+  ['AudioTrackRadioGroup', '$.AudioTrackRadioGroup', 'AudioTrackRadioGroupPrimitive.Props'],
+  ['PlaybackRateRadioGroup', '$.PlaybackRateRadioGroup', 'PlaybackRateRadioGroupPrimitive.Props'],
+  ['CaptionsRadioGroup', '$.CaptionsRadioGroup', 'CaptionsRadioGroupPrimitive.Props'],
 ] as const;
 
 /** Create the compiler policy for a React Skin target. */
@@ -222,7 +222,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                     code.statement.interface({
                       name: 'ErrorDialogProps',
                       export: true,
-                      extends: [omitProps('ErrorDialogTarget.PopupProps', ['children'])],
+                      extends: [omitProps('ErrorDialogPrimitive.PopupProps', ['children'])],
                       properties: [],
                     })
                   ),
@@ -243,17 +243,17 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                       name: 'className',
                       optional: true,
                       type: code.type.indexed(
-                        code.type.named('PopoverTarget.PopupProps'),
+                        code.type.named('PopoverPrimitive.PopupProps'),
                         code.type.literal('className')
                       ),
                     },
                   ]),
-                  code.interface('VolumePopoverProps').extends('PopoverTarget.RootProps'),
+                  code.interface('VolumePopoverProps').extends('PopoverPrimitive.RootProps'),
                   code
                     .interface('VolumePopoverProps')
                     .property('side')
                     .setType(() =>
-                      code.type.indexed(code.type.named('PopoverTarget.RootProps'), code.type.literal('side'))
+                      code.type.indexed(code.type.named('PopoverPrimitive.RootProps'), code.type.literal('side'))
                     ),
                   code
                     .interface('VolumePopoverProps')
@@ -300,12 +300,12 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                       name: 'className',
                       optional: true,
                       type: code.type.indexed(
-                        code.type.named('MenuTarget.ContentProps'),
+                        code.type.named('MenuPrimitive.ContentProps'),
                         code.type.literal('className')
                       ),
                     },
                   ]),
-                  code.interface('SubmenuProps').extends('MenuTarget.RootProps'),
+                  code.interface('SubmenuProps').extends('MenuPrimitive.RootProps'),
                   code.function('Submenu').addProps(['className', { name: 'props', spread: true }]),
                   code.function('Submenu').jsx.element('$.Menu.Root').spreadProps('props'),
                   code
@@ -318,12 +318,12 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                       name: 'className',
                       optional: true,
                       type: code.type.indexed(
-                        code.type.named('MenuTarget.ContentProps'),
+                        code.type.named('MenuPrimitive.ContentProps'),
                         code.type.literal('className')
                       ),
                     },
                   ]),
-                  code.interface('SettingsMenuProps').extends('MenuTarget.RootProps'),
+                  code.interface('SettingsMenuProps').extends('MenuPrimitive.RootProps'),
                   code.function('SettingsMenu').addProps(['className', { name: 'props', spread: true }]),
                   code.function('SettingsMenu').jsx.element('$.Menu.Root').spreadProps('props'),
                   code
@@ -495,7 +495,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               code.statement.interface({
                 name: 'ContainerProps',
                 export: true,
-                extends: [code.type.named('ContainerTarget.Props')],
+                extends: [code.type.named('ContainerPrimitive.Props')],
                 properties: [],
               })
             ),
@@ -511,7 +511,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               code.statement.interface({
                 name: 'PosterProps',
                 export: true,
-                extends: [code.type.named('PosterTarget.Props')],
+                extends: [code.type.named('PosterPrimitive.Props')],
                 properties: [],
               })
             ),
@@ -624,7 +624,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             ...SETTINGS_SUBMENU_FUNCTIONS.map((name) =>
               code.function(name).jsx.element('RadioItem').addProp('checked', code.value.property('item', 'checked'))
             ),
-            code.interface('RadioItemProps').extends('MenuTarget.RadioItemProps'),
+            code.interface('RadioItemProps').extends('MenuPrimitive.RadioItemProps'),
             code.interface('RadioItemProps').addProperties([{ name: 'checked', type: code.type.boolean() }]),
             code.function('RadioItem').setProps(['checked', 'children', 'className', { name: 'props', spread: true }], {
               type: 'RadioItemProps',
@@ -677,7 +677,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               .props('className')
               .where(code.value.isArray())
               .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
-            code.interface('ButtonTooltipProps').replaceExtends('TooltipProps', 'TooltipTarget.RootProps'),
+            code.interface('ButtonTooltipProps').replaceExtends('TooltipProps', 'TooltipPrimitive.RootProps'),
             code
               .interface('SettingsMenuProps')
               .property('children')

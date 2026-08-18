@@ -5770,51 +5770,51 @@ export const skin = /* html */ \`<media-container class="media-container media-s
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/airplay-button.tsx =====
 import { AirPlayEnterIcon, AirPlayExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
-import { AirPlayButton as AirPlayButtonTarget } from '@/ui/airplay-button';
+import { AirPlayButton as AirPlayButtonPrimitive } from '@/ui/airplay-button';
 
 export function AirPlayButton() {
   return (
     <ButtonTooltip side="top">
-      <AirPlayButtonTarget className="media-button media-airplay-button">
+      <AirPlayButtonPrimitive className="media-button media-airplay-button">
         <AirPlayEnterIcon className="media-button-icon media-airplay-enter-icon" />
         <AirPlayExitIcon className="media-button-icon media-airplay-exit-icon" />
-      </AirPlayButtonTarget>
+      </AirPlayButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/button-tooltip.tsx =====
 import type { ReactElement } from 'react';
-import { Tooltip as TooltipTarget } from '@/ui/tooltip';
+import { Tooltip as TooltipPrimitive } from '@/ui/tooltip';
 
-export interface ButtonTooltipProps extends TooltipTarget.RootProps {
+export interface ButtonTooltipProps extends TooltipPrimitive.RootProps {
   children: ReactElement;
 }
 
 export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
   return (
-    <TooltipTarget.Root {...props}>
-      <TooltipTarget.Trigger render={children} />
-      <TooltipTarget.Popup className="media-surface media-tooltip">
-        <TooltipTarget.Label />
-        <TooltipTarget.Shortcut className="media-tooltip-shortcut" />
-      </TooltipTarget.Popup>
-    </TooltipTarget.Root>
+    <TooltipPrimitive.Root {...props}>
+      <TooltipPrimitive.Trigger render={children} />
+      <TooltipPrimitive.Popup className="media-surface media-tooltip">
+        <TooltipPrimitive.Label />
+        <TooltipPrimitive.Shortcut className="media-tooltip-shortcut" />
+      </TooltipPrimitive.Popup>
+    </TooltipPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/captions-button.tsx =====
 import { CaptionsOffIcon, CaptionsOnIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
-import { CaptionsButton as CaptionsButtonTarget } from '@/ui/captions-button';
+import { CaptionsButton as CaptionsButtonPrimitive } from '@/ui/captions-button';
 
 export function CaptionsButton() {
   return (
     <ButtonTooltip side="top">
-      <CaptionsButtonTarget className="media-button media-captions-button">
+      <CaptionsButtonPrimitive className="media-button media-captions-button">
         <CaptionsOffIcon className="media-button-icon media-captions-off-icon" />
         <CaptionsOnIcon className="media-button-icon media-captions-on-icon" />
-      </CaptionsButtonTarget>
+      </CaptionsButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -5822,15 +5822,15 @@ export function CaptionsButton() {
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/cast-button.tsx =====
 import { CastEnterIcon, CastExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
-import { CastButton as CastButtonTarget } from '@/ui/cast-button';
+import { CastButton as CastButtonPrimitive } from '@/ui/cast-button';
 
 export function CastButton() {
   return (
     <ButtonTooltip side="top">
-      <CastButtonTarget className="media-button media-cast-button">
+      <CastButtonPrimitive className="media-button media-cast-button">
         <CastEnterIcon className="media-button-icon media-cast-enter-icon" />
         <CastExitIcon className="media-button-icon media-cast-exit-icon" />
-      </CastButtonTarget>
+      </CastButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -5838,45 +5838,45 @@ export function CastButton() {
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/fullscreen-button.tsx =====
 import { FullscreenEnterIcon, FullscreenExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
-import { FullscreenButton as FullscreenButtonTarget } from '@/ui/fullscreen-button';
+import { FullscreenButton as FullscreenButtonPrimitive } from '@/ui/fullscreen-button';
 
 export function FullscreenButton() {
   return (
     <ButtonTooltip side="top">
-      <FullscreenButtonTarget className="media-button media-fullscreen-button">
+      <FullscreenButtonPrimitive className="media-button media-fullscreen-button">
         <FullscreenEnterIcon className="media-button-icon media-fullscreen-enter-icon" />
         <FullscreenExitIcon className="media-button-icon media-fullscreen-exit-icon" />
-      </FullscreenButtonTarget>
+      </FullscreenButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/mute-button.tsx =====
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
-import { MuteButton as MuteButtonTarget } from '@/ui/mute-button';
+import { MuteButton as MuteButtonPrimitive } from '@/ui/mute-button';
 
 export function MuteButton() {
   return (
-    <MuteButtonTarget className="media-button media-mute-button">
+    <MuteButtonPrimitive className="media-button media-mute-button">
       <VolumeOffIcon className="media-button-icon media-volume-off-icon" />
       <VolumeLowIcon className="media-button-icon media-volume-low-icon" />
       <VolumeHighIcon className="media-button-icon media-volume-high-icon" />
-    </MuteButtonTarget>
+    </MuteButtonPrimitive>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/pip-button.tsx =====
 import { PipEnterIcon, PipExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
-import { PiPButton as PiPButtonTarget } from '@/ui/pip-button';
+import { PiPButton as PiPButtonPrimitive } from '@/ui/pip-button';
 
 export function PiPButton() {
   return (
     <ButtonTooltip side="top">
-      <PiPButtonTarget className="media-button media-pip-button">
+      <PiPButtonPrimitive className="media-button media-pip-button">
         <PipEnterIcon className="media-button-icon media-pip-enter-icon" />
         <PipExitIcon className="media-button-icon media-pip-exit-icon" />
-      </PiPButtonTarget>
+      </PiPButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -5884,16 +5884,16 @@ export function PiPButton() {
 ===== packages/react/src/__generated__/skins/default-video/components/buttons/play-button.tsx =====
 import { PauseIcon, PlayIcon, RestartIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
-import { PlayButton as PlayButtonTarget } from '@/ui/play-button';
+import { PlayButton as PlayButtonPrimitive } from '@/ui/play-button';
 
 export function PlayButton() {
   return (
     <ButtonTooltip side="top">
-      <PlayButtonTarget className="media-button media-play-button">
+      <PlayButtonPrimitive className="media-button media-play-button">
         <RestartIcon className="media-button-icon media-restart-icon" />
         <PlayIcon className="media-button-icon media-play-icon" />
         <PauseIcon className="media-button-icon media-pause-icon" />
-      </PlayButtonTarget>
+      </PlayButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -5903,7 +5903,7 @@ import type { PopoverProps, VolumeSliderProps } from '@videojs/core';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
 import { usePlayer } from '@/player/context';
-import { Popover as PopoverTarget } from '@/ui/popover';
+import { Popover as PopoverPrimitive } from '@/ui/popover';
 
 export interface VolumePopoverProps {
   side?: PopoverProps['side'];
@@ -5913,12 +5913,12 @@ export interface VolumePopoverProps {
 export function VolumePopover({ side = 'top', orientation = 'vertical' }: VolumePopoverProps = {}) {
   const volumeAvailability = usePlayer((state) => state.volumeAvailability);
   return volumeAvailability === 'available' ? (
-    <PopoverTarget.Root openOnHover delay={200} closeDelay={100} side={side}>
-      <PopoverTarget.Trigger render={<MuteButton />} />
-      <PopoverTarget.Popup className="media-surface media-volume-popover">
+    <PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side}>
+      <PopoverPrimitive.Trigger render={<MuteButton />} />
+      <PopoverPrimitive.Popup className="media-surface media-volume-popover">
         <VolumeSlider orientation={orientation} />
-      </PopoverTarget.Popup>
-    </PopoverTarget.Root>
+      </PopoverPrimitive.Popup>
+    </PopoverPrimitive.Root>
   ) : (
     <MuteButton />
   );
@@ -5926,49 +5926,49 @@ export function VolumePopover({ side = 'top', orientation = 'vertical' }: Volume
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/buffering-indicator.tsx =====
 import { SpinnerIcon } from '@/icons';
-import { BufferingIndicator as BufferingIndicatorTarget } from '@/ui/buffering-indicator';
+import { BufferingIndicator as BufferingIndicatorPrimitive } from '@/ui/buffering-indicator';
 
 export function BufferingIndicator() {
   return (
-    <BufferingIndicatorTarget className="media-buffering-indicator">
+    <BufferingIndicatorPrimitive className="media-buffering-indicator">
       <SpinnerIcon className="media-buffering-spinner-icon" />
-    </BufferingIndicatorTarget>
+    </BufferingIndicatorPrimitive>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/error-dialog.tsx =====
-import { ErrorDialog as ErrorDialogTarget } from '@/ui/error-dialog';
+import { ErrorDialog as ErrorDialogPrimitive } from '@/ui/error-dialog';
 
 export function ErrorDialog() {
   return (
-    <ErrorDialogTarget.Root>
-      <ErrorDialogTarget.Popup className="media-error-dialog">
-        <ErrorDialogTarget.Title className="media-error-dialog-title" />
-        <ErrorDialogTarget.Description className="media-error-dialog-description" />
-        <ErrorDialogTarget.Close className="media-button media-error-dialog-close" />
-      </ErrorDialogTarget.Popup>
-    </ErrorDialogTarget.Root>
+    <ErrorDialogPrimitive.Root>
+      <ErrorDialogPrimitive.Popup className="media-error-dialog">
+        <ErrorDialogPrimitive.Title className="media-error-dialog-title" />
+        <ErrorDialogPrimitive.Description className="media-error-dialog-description" />
+        <ErrorDialogPrimitive.Close className="media-button media-error-dialog-close" />
+      </ErrorDialogPrimitive.Popup>
+    </ErrorDialogPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/seek-indicator.tsx =====
 import { ChevronIcon } from '@/icons';
-import { SeekIndicator as SeekIndicatorTarget } from '@/ui/seek-indicator';
+import { SeekIndicator as SeekIndicatorPrimitive } from '@/ui/seek-indicator';
 
 export function SeekIndicator() {
   return (
-    <SeekIndicatorTarget.Root className="media-seek-indicator">
+    <SeekIndicatorPrimitive.Root className="media-seek-indicator">
       <ChevronIcon className="media-seek-indicator-icon" />
-      <SeekIndicatorTarget.Value className="media-seek-indicator-value" />
-    </SeekIndicatorTarget.Root>
+      <SeekIndicatorPrimitive.Value className="media-seek-indicator-value" />
+    </SeekIndicatorPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/status-announcer.tsx =====
-import { StatusAnnouncer as StatusAnnouncerTarget } from '@/ui/status-announcer';
+import { StatusAnnouncer as StatusAnnouncerPrimitive } from '@/ui/status-announcer';
 
 export function StatusAnnouncer() {
-  return <StatusAnnouncerTarget className="media-status-announcer" />;
+  return <StatusAnnouncerPrimitive className="media-status-announcer" />;
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/status-indicator.tsx =====
@@ -5982,7 +5982,7 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@/icons';
-import { StatusIndicator as StatusIndicatorTarget } from '@/ui/status-indicator';
+import { StatusIndicator as StatusIndicatorPrimitive } from '@/ui/status-indicator';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 
@@ -5990,24 +5990,24 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export function StatusIndicator() {
   return (
-    <StatusIndicatorTarget.Root actions={TOP_STATUS_ACTIONS} className="media-status-indicator">
+    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className="media-status-indicator">
       <CaptionsOnIcon className="media-status-indicator-icon media-status-captions-on-icon" />
       <CaptionsOffIcon className="media-status-indicator-icon media-status-captions-off-icon" />
       <FullscreenEnterIcon className="media-status-indicator-icon media-status-fullscreen-enter-icon" />
       <FullscreenExitIcon className="media-status-indicator-icon media-status-fullscreen-exit-icon" />
       <PipEnterIcon className="media-status-indicator-icon media-status-pip-enter-icon" />
       <PipExitIcon className="media-status-indicator-icon media-status-pip-exit-icon" />
-      <StatusIndicatorTarget.Value className="media-status-indicator-value" />
-    </StatusIndicatorTarget.Root>
+      <StatusIndicatorPrimitive.Value className="media-status-indicator-value" />
+    </StatusIndicatorPrimitive.Root>
   );
 }
 
 export function PlaybackStatusIndicator() {
   return (
-    <StatusIndicatorTarget.Root actions={PLAYBACK_STATUS_ACTIONS} className="media-playback-status-indicator">
+    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className="media-playback-status-indicator">
       <PlayIcon className="media-playback-status-icon media-status-play-icon" />
       <PauseIcon className="media-playback-status-icon media-status-pause-icon" />
-    </StatusIndicatorTarget.Root>
+    </StatusIndicatorPrimitive.Root>
   );
 }
 
@@ -6033,32 +6033,32 @@ export function VideoStatusIndicators() {
 
 ===== packages/react/src/__generated__/skins/default-video/components/feedback/volume-indicator.tsx =====
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
-import { VolumeIndicator as VolumeIndicatorTarget } from '@/ui/volume-indicator';
+import { VolumeIndicator as VolumeIndicatorPrimitive } from '@/ui/volume-indicator';
 
 export function VolumeIndicator() {
   return (
-    <VolumeIndicatorTarget.Root className="media-volume-indicator">
-      <VolumeIndicatorTarget.Fill className="media-volume-indicator-fill">
+    <VolumeIndicatorPrimitive.Root className="media-volume-indicator">
+      <VolumeIndicatorPrimitive.Fill className="media-volume-indicator-fill">
         <VolumeHighIcon className="media-volume-indicator-icon media-volume-high-indicator-icon" />
         <VolumeLowIcon className="media-volume-indicator-icon media-volume-low-indicator-icon" />
         <VolumeOffIcon className="media-volume-indicator-icon media-volume-off-indicator-icon" />
-        <VolumeIndicatorTarget.Value className="media-volume-indicator-value" />
-      </VolumeIndicatorTarget.Fill>
-    </VolumeIndicatorTarget.Root>
+        <VolumeIndicatorPrimitive.Value className="media-volume-indicator-value" />
+      </VolumeIndicatorPrimitive.Fill>
+    </VolumeIndicatorPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/layout/container.tsx =====
 import { cn } from '@videojs/utils/style';
-import { Container as ContainerTarget } from '@/player/container';
+import { Container as ContainerPrimitive } from '@/player/container';
 
-export interface ContainerProps extends ContainerTarget.Props {}
+export interface ContainerProps extends ContainerPrimitive.Props {}
 
 export function Container({ children, className, ...props }: ContainerProps) {
   return (
-    <ContainerTarget {...props} className={cn('media-container', className)}>
+    <ContainerPrimitive {...props} className={cn('media-container', className)}>
       {children}
-    </ContainerTarget>
+    </ContainerPrimitive>
   );
 }
 
@@ -6069,13 +6069,13 @@ export function Overlay() {
 
 ===== packages/react/src/__generated__/skins/default-video/components/layout/poster.tsx =====
 import { cn } from '@videojs/utils/style';
-import { Poster as PosterTarget } from '@/ui/poster';
+import { Poster as PosterPrimitive } from '@/ui/poster';
 
-export interface PosterProps extends PosterTarget.Props {}
+export interface PosterProps extends PosterPrimitive.Props {}
 
 export function Poster({ className, ...props }: PosterProps) {
   return (
-    <PosterTarget
+    <PosterPrimitive
       {...props}
       className={(state) => cn('media-poster', typeof className === 'function' ? className(state) : className)}
     />
@@ -6225,49 +6225,49 @@ export function QualityMenu() {
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/radio-group.tsx =====
 import { cn } from '@videojs/utils/style';
-import { AudioTrackRadioGroup as AudioTrackRadioGroupTarget } from '@/ui/audio-track-radio-group';
-import { CaptionsRadioGroup as CaptionsRadioGroupTarget } from '@/ui/captions-radio-group';
-import { PlaybackRateRadioGroup as PlaybackRateRadioGroupTarget } from '@/ui/playback-rate-radio-group';
-import { QualityRadioGroup as QualityRadioGroupTarget } from '@/ui/quality-radio-group';
+import { AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive } from '@/ui/audio-track-radio-group';
+import { CaptionsRadioGroup as CaptionsRadioGroupPrimitive } from '@/ui/captions-radio-group';
+import { PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive } from '@/ui/playback-rate-radio-group';
+import { QualityRadioGroup as QualityRadioGroupPrimitive } from '@/ui/quality-radio-group';
 
-export interface QualityRadioGroupProps extends QualityRadioGroupTarget.Props {}
+export interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props {}
 
 export function QualityRadioGroup({ className, ...props }: QualityRadioGroupProps) {
   return (
-    <QualityRadioGroupTarget
+    <QualityRadioGroupPrimitive
       {...props}
       className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
 
-export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupTarget.Props {}
+export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupPrimitive.Props {}
 
 export function AudioTrackRadioGroup({ className, ...props }: AudioTrackRadioGroupProps) {
   return (
-    <AudioTrackRadioGroupTarget
+    <AudioTrackRadioGroupPrimitive
       {...props}
       className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
 
-export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupTarget.Props {}
+export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupPrimitive.Props {}
 
 export function PlaybackRateRadioGroup({ className, ...props }: PlaybackRateRadioGroupProps) {
   return (
-    <PlaybackRateRadioGroupTarget
+    <PlaybackRateRadioGroupPrimitive
       {...props}
       className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
 
-export interface CaptionsRadioGroupProps extends CaptionsRadioGroupTarget.Props {}
+export interface CaptionsRadioGroupProps extends CaptionsRadioGroupPrimitive.Props {}
 
 export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupProps) {
   return (
-    <CaptionsRadioGroupTarget
+    <CaptionsRadioGroupPrimitive
       {...props}
       className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
@@ -6278,26 +6278,26 @@ export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupPr
 import { CheckIcon } from '@/icons';
 import { cn } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
-import { Menu as MenuTarget } from '@/ui/menu';
+import { Menu as MenuPrimitive } from '@/ui/menu';
 
-export interface RadioItemProps extends MenuTarget.RadioItemProps {
+export interface RadioItemProps extends MenuPrimitive.RadioItemProps {
   children?: ReactNode;
   checked: boolean;
 }
 
 export function RadioItem({ checked, children, className, ...props }: RadioItemProps) {
   return (
-    <MenuTarget.RadioItem
+    <MenuPrimitive.RadioItem
       {...props}
       className={(state) =>
         cn('media-menu-item media-item', typeof className === 'function' ? className(state) : className)
       }
     >
       {children}
-      <MenuTarget.ItemIndicator forceMount className="media-indicator" checked={checked}>
+      <MenuPrimitive.ItemIndicator forceMount className="media-indicator" checked={checked}>
         <CheckIcon className="media-icon" />
-      </MenuTarget.ItemIndicator>
-    </MenuTarget.RadioItem>
+      </MenuPrimitive.ItemIndicator>
+    </MenuPrimitive.RadioItem>
   );
 }
 
@@ -6306,8 +6306,8 @@ import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@/icons';
 import type { ReactNode } from 'react';
 import { Text } from '@/i18n';
-import { Menu as MenuTarget } from '@/ui/menu';
-import { Tooltip as TooltipTarget } from '@/ui/tooltip';
+import { Menu as MenuPrimitive } from '@/ui/menu';
+import { Tooltip as TooltipPrimitive } from '@/ui/tooltip';
 
 export interface SettingsMenuProps {
   children?: ReactNode;
@@ -6315,33 +6315,33 @@ export interface SettingsMenuProps {
 
 export function SettingsMenu({ children }: SettingsMenuProps) {
   return (
-    <MenuTarget.Root side="top" align="center">
-      <TooltipTarget.Root side="top">
-        <TooltipTarget.Trigger
+    <MenuPrimitive.Root side="top" align="center">
+      <TooltipPrimitive.Root side="top">
+        <TooltipPrimitive.Trigger
           render={
-            <MenuTarget.Trigger className="media-button media-settings-trigger">
+            <MenuPrimitive.Trigger className="media-button media-settings-trigger">
               <GearIcon className="media-button-icon media-settings-icon" />
               <Text className="media-sr-only" token={settingsText.key}>
                 {settingsText.text}
               </Text>
-            </MenuTarget.Trigger>
+            </MenuPrimitive.Trigger>
           }
         />
-        <TooltipTarget.Popup className="media-surface media-tooltip">
+        <TooltipPrimitive.Popup className="media-surface media-tooltip">
           <Text token={settingsText.key}>{settingsText.text}</Text>
-        </TooltipTarget.Popup>
-      </TooltipTarget.Root>
-      <MenuTarget.Content className="media-surface media-popover media-settings media-menu-group">
-        <MenuTarget.Group className="media-menu-group">{children}</MenuTarget.Group>
-      </MenuTarget.Content>
-    </MenuTarget.Root>
+        </TooltipPrimitive.Popup>
+      </TooltipPrimitive.Root>
+      <MenuPrimitive.Content className="media-surface media-popover media-settings media-menu-group">
+        <MenuPrimitive.Group className="media-menu-group">{children}</MenuPrimitive.Group>
+      </MenuPrimitive.Content>
+    </MenuPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/menus/submenu.tsx =====
 import type { ReactNode } from 'react';
 import { MenuChevron } from './menu-chevron';
-import { Menu as MenuTarget } from '@/ui/menu';
+import { Menu as MenuPrimitive } from '@/ui/menu';
 
 export interface SubmenuProps {
   children?: ReactNode;
@@ -6352,24 +6352,24 @@ export interface SubmenuProps {
 
 export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) {
   return (
-    <MenuTarget.Root>
-      <MenuTarget.Trigger className="media-menu-item media-item">
+    <MenuPrimitive.Root>
+      <MenuPrimitive.Trigger className="media-menu-item media-item">
         {icon}
         {label}
         <span className="media-hint">
           {selectedLabel}
           <MenuChevron />
         </span>
-      </MenuTarget.Trigger>
-      <MenuTarget.Content className="media-submenu-panel">
-        <MenuTarget.Item className="media-menu-item media-back">
+      </MenuPrimitive.Trigger>
+      <MenuPrimitive.Content className="media-submenu-panel">
+        <MenuPrimitive.Item className="media-menu-item media-back">
           <MenuChevron flipped />
           {label}
-        </MenuTarget.Item>
-        <MenuTarget.Separator className="media-separator" />
+        </MenuPrimitive.Item>
+        <MenuPrimitive.Separator className="media-separator" />
         {children}
-      </MenuTarget.Content>
-    </MenuTarget.Root>
+      </MenuPrimitive.Content>
+    </MenuPrimitive.Root>
   );
 }
 
@@ -6408,91 +6408,91 @@ export function VideoSettingsMenu() {
 
 ===== packages/react/src/__generated__/skins/default-video/components/sliders/time-slider.tsx =====
 import { SpinnerIcon } from '@/icons';
-import { Slider as SliderTarget } from '@/ui/slider';
-import { TimeSlider as TimeSliderTarget } from '@/ui/time-slider';
+import { Slider as SliderPrimitive } from '@/ui/slider';
+import { TimeSlider as TimeSliderPrimitive } from '@/ui/time-slider';
 
 export function TimeSlider() {
   return (
-    <TimeSliderTarget.Root className="media-slider">
-      <TimeSliderTarget.Chapters
+    <TimeSliderPrimitive.Root className="media-slider">
+      <TimeSliderPrimitive.Chapters
         className="media-slider-chapters"
         renderChapter={(props) => (
           <div className="media-slider-chapter" {...props}>
-            <TimeSliderTarget.Track className="media-slider-chapter-track">
-              <TimeSliderTarget.Buffer className="media-slider-buffer" />
-              <TimeSliderTarget.Fill className="media-slider-fill" />
-            </TimeSliderTarget.Track>
+            <TimeSliderPrimitive.Track className="media-slider-chapter-track">
+              <TimeSliderPrimitive.Buffer className="media-slider-buffer" />
+              <TimeSliderPrimitive.Fill className="media-slider-fill" />
+            </TimeSliderPrimitive.Track>
           </div>
         )}
       />
-      <TimeSliderTarget.Thumb className="media-slider-thumb media-slider-thumb-interactive" />
-      <TimeSliderTarget.Preview className="media-slider-preview" overflow="visible">
+      <TimeSliderPrimitive.Thumb className="media-slider-thumb media-slider-thumb-interactive" />
+      <TimeSliderPrimitive.Preview className="media-slider-preview" overflow="visible">
         <div className="media-surface media-thumbnail">
-          <SliderTarget.Thumbnail className="media-thumbnail-image" />
+          <SliderPrimitive.Thumbnail className="media-thumbnail-image" />
           <SpinnerIcon className="media-spinner-icon" />
         </div>
         <div className="media-preview-value">
-          <TimeSliderTarget.ChapterTitle className="media-chapter-title" />
-          <TimeSliderTarget.Value className="media-slider-value" type="pointer" />
+          <TimeSliderPrimitive.ChapterTitle className="media-chapter-title" />
+          <TimeSliderPrimitive.Value className="media-slider-value" type="pointer" />
         </div>
-      </TimeSliderTarget.Preview>
-    </TimeSliderTarget.Root>
+      </TimeSliderPrimitive.Preview>
+    </TimeSliderPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/sliders/volume-slider.tsx =====
 import type { VolumeSliderProps } from '@videojs/core';
-import { VolumeSlider as VolumeSliderTarget } from '@/ui/volume-slider';
+import { VolumeSlider as VolumeSliderPrimitive } from '@/ui/volume-slider';
 
 export function VolumeSlider(props: VolumeSliderProps = {}) {
   return (
-    <VolumeSliderTarget.Root className="media-slider" thumbAlignment="edge" {...props}>
-      <VolumeSliderTarget.Track className="media-slider-track">
-        <VolumeSliderTarget.Fill className="media-slider-fill" />
-      </VolumeSliderTarget.Track>
-      <VolumeSliderTarget.Thumb className="media-slider-thumb media-slider-thumb-persistent" />
-    </VolumeSliderTarget.Root>
+    <VolumeSliderPrimitive.Root className="media-slider" thumbAlignment="edge" {...props}>
+      <VolumeSliderPrimitive.Track className="media-slider-track">
+        <VolumeSliderPrimitive.Fill className="media-slider-fill" />
+      </VolumeSliderPrimitive.Track>
+      <VolumeSliderPrimitive.Thumb className="media-slider-thumb media-slider-thumb-persistent" />
+    </VolumeSliderPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/video-gestures.tsx =====
-import { Gesture as GestureTarget } from '@/ui/gesture';
+import { Gesture as GesturePrimitive } from '@/ui/gesture';
 
 export function VideoGestures() {
   return (
     <>
-      <GestureTarget type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <GestureTarget type="tap" action="toggleControls" pointer="touch" />
-      <GestureTarget type="doubletap" action="seekStep" value={-10} region="left" />
-      <GestureTarget type="doubletap" action="toggleFullscreen" region="center" />
-      <GestureTarget type="doubletap" action="seekStep" value={10} region="right" />
+      <GesturePrimitive type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <GesturePrimitive type="tap" action="toggleControls" pointer="touch" />
+      <GesturePrimitive type="doubletap" action="seekStep" value={-10} region="left" />
+      <GesturePrimitive type="doubletap" action="toggleFullscreen" region="center" />
+      <GesturePrimitive type="doubletap" action="seekStep" value={10} region="right" />
     </>
   );
 }
 
 ===== packages/react/src/__generated__/skins/default-video/components/video-hotkeys.tsx =====
-import { Hotkey as HotkeyTarget } from '@/ui/hotkey';
+import { Hotkey as HotkeyPrimitive } from '@/ui/hotkey';
 
 export function VideoHotkeys() {
   return (
     <>
-      <HotkeyTarget keys="Space" action="togglePaused" />
-      <HotkeyTarget keys="k" action="togglePaused" />
-      <HotkeyTarget keys="m" action="toggleMuted" />
-      <HotkeyTarget keys="f" action="toggleFullscreen" />
-      <HotkeyTarget keys="c" action="toggleSubtitles" />
-      <HotkeyTarget keys="i" action="togglePictureInPicture" />
-      <HotkeyTarget keys="ArrowRight" action="seekStep" value={5} />
-      <HotkeyTarget keys="ArrowLeft" action="seekStep" value={-5} />
-      <HotkeyTarget keys="l" action="seekStep" value={10} />
-      <HotkeyTarget keys="j" action="seekStep" value={-10} />
-      <HotkeyTarget keys="ArrowUp" action="volumeStep" value={0.05} />
-      <HotkeyTarget keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <HotkeyTarget keys="0-9" action="seekToPercent" />
-      <HotkeyTarget keys="Home" action="seekToPercent" value={0} />
-      <HotkeyTarget keys="End" action="seekToPercent" value={100} />
-      <HotkeyTarget keys=">" action="speedUp" />
-      <HotkeyTarget keys="<" action="speedDown" />
+      <HotkeyPrimitive keys="Space" action="togglePaused" />
+      <HotkeyPrimitive keys="k" action="togglePaused" />
+      <HotkeyPrimitive keys="m" action="toggleMuted" />
+      <HotkeyPrimitive keys="f" action="toggleFullscreen" />
+      <HotkeyPrimitive keys="c" action="toggleSubtitles" />
+      <HotkeyPrimitive keys="i" action="togglePictureInPicture" />
+      <HotkeyPrimitive keys="ArrowRight" action="seekStep" value={5} />
+      <HotkeyPrimitive keys="ArrowLeft" action="seekStep" value={-5} />
+      <HotkeyPrimitive keys="l" action="seekStep" value={10} />
+      <HotkeyPrimitive keys="j" action="seekStep" value={-10} />
+      <HotkeyPrimitive keys="ArrowUp" action="volumeStep" value={0.05} />
+      <HotkeyPrimitive keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <HotkeyPrimitive keys="0-9" action="seekToPercent" />
+      <HotkeyPrimitive keys="Home" action="seekToPercent" value={0} />
+      <HotkeyPrimitive keys="End" action="seekToPercent" value={100} />
+      <HotkeyPrimitive keys=">" action="speedUp" />
+      <HotkeyPrimitive keys="<" action="speedDown" />
     </>
   );
 }
@@ -6519,9 +6519,9 @@ import { cn } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
 import type { ContainerProps } from '@/player/container';
 import type { PosterProps } from '@/ui/poster';
-import { Controls as ControlsTarget } from '@/ui/controls';
-import { Time as TimeTarget } from '@/ui/time';
-import { Tooltip as TooltipTarget } from '@/ui/tooltip';
+import { Controls as ControlsPrimitive } from '@/ui/controls';
+import { Time as TimePrimitive } from '@/ui/time';
+import { Tooltip as TooltipPrimitive } from '@/ui/tooltip';
 
 export interface DefaultVideoSkinProps extends Omit<ContainerProps, 'children'> {
   children?: ReactNode;
@@ -6541,36 +6541,36 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       <BufferingIndicator />
       <ErrorDialog />
 
-      <ControlsTarget.Root className="media-controls-root">
-        <TooltipTarget.Provider>
-          <ControlsTarget.Group className="media-controls-primary">
-            <ControlsTarget.Group className="media-button-group">
+      <ControlsPrimitive.Root className="media-controls-root">
+        <TooltipPrimitive.Provider>
+          <ControlsPrimitive.Group className="media-controls-primary">
+            <ControlsPrimitive.Group className="media-button-group">
               <PlayButton />
               <VolumePopover />
-            </ControlsTarget.Group>
+            </ControlsPrimitive.Group>
 
-            <ControlsTarget.Group className="media-time-controls">
-              <TimeTarget.Value className="media-time-current" type="current" />
+            <ControlsPrimitive.Group className="media-time-controls">
+              <TimePrimitive.Value className="media-time-current" type="current" />
               <TimeSlider />
-              <TimeTarget.Value className="media-time-remaining" type="remaining" toggle />
-            </ControlsTarget.Group>
+              <TimePrimitive.Value className="media-time-remaining" type="remaining" toggle />
+            </ControlsPrimitive.Group>
 
-            <ControlsTarget.Group className="media-button-group">
+            <ControlsPrimitive.Group className="media-button-group">
               <CaptionsButton />
               <VideoSettingsMenu />
-            </ControlsTarget.Group>
-          </ControlsTarget.Group>
+            </ControlsPrimitive.Group>
+          </ControlsPrimitive.Group>
 
-          <ControlsTarget.Group className="media-controls-secondary">
-            <ControlsTarget.Group className="media-button-group">
+          <ControlsPrimitive.Group className="media-controls-secondary">
+            <ControlsPrimitive.Group className="media-button-group">
               <CastButton />
               <AirPlayButton />
               <PiPButton />
               <FullscreenButton />
-            </ControlsTarget.Group>
-          </ControlsTarget.Group>
-        </TooltipTarget.Provider>
-      </ControlsTarget.Root>
+            </ControlsPrimitive.Group>
+          </ControlsPrimitive.Group>
+        </TooltipPrimitive.Provider>
+      </ControlsPrimitive.Root>
 
       <Overlay />
       <VideoHotkeys />
@@ -9366,51 +9366,51 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/airplay-button.tsx =====
 import { AirPlayEnterIcon, AirPlayExitIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
-import { AirPlayButton as AirPlayButtonTarget } from '@/ui/airplay-button';
+import { AirPlayButton as AirPlayButtonPrimitive } from '@/ui/airplay-button';
 
 export function AirPlayButton() {
   return (
     <ButtonTooltip side="top">
-      <AirPlayButtonTarget className="media-button media-airplay-button">
+      <AirPlayButtonPrimitive className="media-button media-airplay-button">
         <AirPlayEnterIcon className="media-button-icon media-airplay-enter-icon" />
         <AirPlayExitIcon className="media-button-icon media-airplay-exit-icon" />
-      </AirPlayButtonTarget>
+      </AirPlayButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/button-tooltip.tsx =====
 import type { ReactElement } from 'react';
-import { Tooltip as TooltipTarget } from '@/ui/tooltip';
+import { Tooltip as TooltipPrimitive } from '@/ui/tooltip';
 
-export interface ButtonTooltipProps extends TooltipTarget.RootProps {
+export interface ButtonTooltipProps extends TooltipPrimitive.RootProps {
   children: ReactElement;
 }
 
 export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
   return (
-    <TooltipTarget.Root {...props}>
-      <TooltipTarget.Trigger render={children} />
-      <TooltipTarget.Popup className="media-surface media-tooltip">
-        <TooltipTarget.Label />
-        <TooltipTarget.Shortcut className="media-tooltip-shortcut" />
-      </TooltipTarget.Popup>
-    </TooltipTarget.Root>
+    <TooltipPrimitive.Root {...props}>
+      <TooltipPrimitive.Trigger render={children} />
+      <TooltipPrimitive.Popup className="media-surface media-tooltip">
+        <TooltipPrimitive.Label />
+        <TooltipPrimitive.Shortcut className="media-tooltip-shortcut" />
+      </TooltipPrimitive.Popup>
+    </TooltipPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/captions-button.tsx =====
 import { CaptionsOffIcon, CaptionsOnIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
-import { CaptionsButton as CaptionsButtonTarget } from '@/ui/captions-button';
+import { CaptionsButton as CaptionsButtonPrimitive } from '@/ui/captions-button';
 
 export function CaptionsButton() {
   return (
     <ButtonTooltip side="top">
-      <CaptionsButtonTarget className="media-button media-captions-button">
+      <CaptionsButtonPrimitive className="media-button media-captions-button">
         <CaptionsOffIcon className="media-button-icon media-captions-off-icon" />
         <CaptionsOnIcon className="media-button-icon media-captions-on-icon" />
-      </CaptionsButtonTarget>
+      </CaptionsButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -9418,15 +9418,15 @@ export function CaptionsButton() {
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/cast-button.tsx =====
 import { CastEnterIcon, CastExitIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
-import { CastButton as CastButtonTarget } from '@/ui/cast-button';
+import { CastButton as CastButtonPrimitive } from '@/ui/cast-button';
 
 export function CastButton() {
   return (
     <ButtonTooltip side="top">
-      <CastButtonTarget className="media-button media-cast-button">
+      <CastButtonPrimitive className="media-button media-cast-button">
         <CastEnterIcon className="media-button-icon media-cast-enter-icon" />
         <CastExitIcon className="media-button-icon media-cast-exit-icon" />
-      </CastButtonTarget>
+      </CastButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -9434,45 +9434,45 @@ export function CastButton() {
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/fullscreen-button.tsx =====
 import { FullscreenEnterIcon, FullscreenExitIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
-import { FullscreenButton as FullscreenButtonTarget } from '@/ui/fullscreen-button';
+import { FullscreenButton as FullscreenButtonPrimitive } from '@/ui/fullscreen-button';
 
 export function FullscreenButton() {
   return (
     <ButtonTooltip side="top">
-      <FullscreenButtonTarget className="media-button media-fullscreen-button">
+      <FullscreenButtonPrimitive className="media-button media-fullscreen-button">
         <FullscreenEnterIcon className="media-button-icon media-fullscreen-enter-icon" />
         <FullscreenExitIcon className="media-button-icon media-fullscreen-exit-icon" />
-      </FullscreenButtonTarget>
+      </FullscreenButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/mute-button.tsx =====
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons/minimal';
-import { MuteButton as MuteButtonTarget } from '@/ui/mute-button';
+import { MuteButton as MuteButtonPrimitive } from '@/ui/mute-button';
 
 export function MuteButton() {
   return (
-    <MuteButtonTarget className="media-button media-mute-button">
+    <MuteButtonPrimitive className="media-button media-mute-button">
       <VolumeOffIcon className="media-button-icon media-volume-off-icon" />
       <VolumeLowIcon className="media-button-icon media-volume-low-icon" />
       <VolumeHighIcon className="media-button-icon media-volume-high-icon" />
-    </MuteButtonTarget>
+    </MuteButtonPrimitive>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/pip-button.tsx =====
 import { PipEnterIcon, PipExitIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
-import { PiPButton as PiPButtonTarget } from '@/ui/pip-button';
+import { PiPButton as PiPButtonPrimitive } from '@/ui/pip-button';
 
 export function PiPButton() {
   return (
     <ButtonTooltip side="top">
-      <PiPButtonTarget className="media-button media-pip-button">
+      <PiPButtonPrimitive className="media-button media-pip-button">
         <PipEnterIcon className="media-button-icon media-pip-enter-icon" />
         <PipExitIcon className="media-button-icon media-pip-exit-icon" />
-      </PiPButtonTarget>
+      </PiPButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -9480,16 +9480,16 @@ export function PiPButton() {
 ===== packages/react/src/__generated__/skins/minimal-video/components/buttons/play-button.tsx =====
 import { PauseIcon, PlayIcon, RestartIcon } from '@/icons/minimal';
 import { ButtonTooltip } from './button-tooltip';
-import { PlayButton as PlayButtonTarget } from '@/ui/play-button';
+import { PlayButton as PlayButtonPrimitive } from '@/ui/play-button';
 
 export function PlayButton() {
   return (
     <ButtonTooltip side="top">
-      <PlayButtonTarget className="media-button media-play-button">
+      <PlayButtonPrimitive className="media-button media-play-button">
         <RestartIcon className="media-button-icon media-restart-icon" />
         <PlayIcon className="media-button-icon media-play-icon" />
         <PauseIcon className="media-button-icon media-pause-icon" />
-      </PlayButtonTarget>
+      </PlayButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -9499,7 +9499,7 @@ import type { PopoverProps, VolumeSliderProps } from '@videojs/core';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
 import { usePlayer } from '@/player/context';
-import { Popover as PopoverTarget } from '@/ui/popover';
+import { Popover as PopoverPrimitive } from '@/ui/popover';
 
 export interface VolumePopoverProps {
   side?: PopoverProps['side'];
@@ -9509,12 +9509,12 @@ export interface VolumePopoverProps {
 export function VolumePopover({ side = 'top', orientation = 'vertical' }: VolumePopoverProps = {}) {
   const volumeAvailability = usePlayer((state) => state.volumeAvailability);
   return volumeAvailability === 'available' ? (
-    <PopoverTarget.Root openOnHover delay={200} closeDelay={100} side={side}>
-      <PopoverTarget.Trigger render={<MuteButton />} />
-      <PopoverTarget.Popup className="media-surface media-volume-popover">
+    <PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side}>
+      <PopoverPrimitive.Trigger render={<MuteButton />} />
+      <PopoverPrimitive.Popup className="media-surface media-volume-popover">
         <VolumeSlider orientation={orientation} />
-      </PopoverTarget.Popup>
-    </PopoverTarget.Root>
+      </PopoverPrimitive.Popup>
+    </PopoverPrimitive.Root>
   ) : (
     <MuteButton />
   );
@@ -9522,49 +9522,49 @@ export function VolumePopover({ side = 'top', orientation = 'vertical' }: Volume
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/buffering-indicator.tsx =====
 import { SpinnerIcon } from '@/icons/minimal';
-import { BufferingIndicator as BufferingIndicatorTarget } from '@/ui/buffering-indicator';
+import { BufferingIndicator as BufferingIndicatorPrimitive } from '@/ui/buffering-indicator';
 
 export function BufferingIndicator() {
   return (
-    <BufferingIndicatorTarget className="media-buffering-indicator">
+    <BufferingIndicatorPrimitive className="media-buffering-indicator">
       <SpinnerIcon className="media-buffering-spinner-icon" />
-    </BufferingIndicatorTarget>
+    </BufferingIndicatorPrimitive>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/error-dialog.tsx =====
-import { ErrorDialog as ErrorDialogTarget } from '@/ui/error-dialog';
+import { ErrorDialog as ErrorDialogPrimitive } from '@/ui/error-dialog';
 
 export function ErrorDialog() {
   return (
-    <ErrorDialogTarget.Root>
-      <ErrorDialogTarget.Popup className="media-error-dialog">
-        <ErrorDialogTarget.Title className="media-error-dialog-title" />
-        <ErrorDialogTarget.Description className="media-error-dialog-description" />
-        <ErrorDialogTarget.Close className="media-button media-error-dialog-close" />
-      </ErrorDialogTarget.Popup>
-    </ErrorDialogTarget.Root>
+    <ErrorDialogPrimitive.Root>
+      <ErrorDialogPrimitive.Popup className="media-error-dialog">
+        <ErrorDialogPrimitive.Title className="media-error-dialog-title" />
+        <ErrorDialogPrimitive.Description className="media-error-dialog-description" />
+        <ErrorDialogPrimitive.Close className="media-button media-error-dialog-close" />
+      </ErrorDialogPrimitive.Popup>
+    </ErrorDialogPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/seek-indicator.tsx =====
 import { ChevronIcon } from '@/icons/minimal';
-import { SeekIndicator as SeekIndicatorTarget } from '@/ui/seek-indicator';
+import { SeekIndicator as SeekIndicatorPrimitive } from '@/ui/seek-indicator';
 
 export function SeekIndicator() {
   return (
-    <SeekIndicatorTarget.Root className="media-seek-indicator">
+    <SeekIndicatorPrimitive.Root className="media-seek-indicator">
       <ChevronIcon className="media-seek-indicator-icon" />
-      <SeekIndicatorTarget.Value className="media-seek-indicator-value" />
-    </SeekIndicatorTarget.Root>
+      <SeekIndicatorPrimitive.Value className="media-seek-indicator-value" />
+    </SeekIndicatorPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/status-announcer.tsx =====
-import { StatusAnnouncer as StatusAnnouncerTarget } from '@/ui/status-announcer';
+import { StatusAnnouncer as StatusAnnouncerPrimitive } from '@/ui/status-announcer';
 
 export function StatusAnnouncer() {
-  return <StatusAnnouncerTarget className="media-status-announcer" />;
+  return <StatusAnnouncerPrimitive className="media-status-announcer" />;
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/status-indicator.tsx =====
@@ -9578,7 +9578,7 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@/icons/minimal';
-import { StatusIndicator as StatusIndicatorTarget } from '@/ui/status-indicator';
+import { StatusIndicator as StatusIndicatorPrimitive } from '@/ui/status-indicator';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 
@@ -9586,24 +9586,24 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
 export function StatusIndicator() {
   return (
-    <StatusIndicatorTarget.Root actions={TOP_STATUS_ACTIONS} className="media-status-indicator">
+    <StatusIndicatorPrimitive.Root actions={TOP_STATUS_ACTIONS} className="media-status-indicator">
       <CaptionsOnIcon className="media-status-indicator-icon media-status-captions-on-icon" />
       <CaptionsOffIcon className="media-status-indicator-icon media-status-captions-off-icon" />
       <FullscreenEnterIcon className="media-status-indicator-icon media-status-fullscreen-enter-icon" />
       <FullscreenExitIcon className="media-status-indicator-icon media-status-fullscreen-exit-icon" />
       <PipEnterIcon className="media-status-indicator-icon media-status-pip-enter-icon" />
       <PipExitIcon className="media-status-indicator-icon media-status-pip-exit-icon" />
-      <StatusIndicatorTarget.Value className="media-status-indicator-value" />
-    </StatusIndicatorTarget.Root>
+      <StatusIndicatorPrimitive.Value className="media-status-indicator-value" />
+    </StatusIndicatorPrimitive.Root>
   );
 }
 
 export function PlaybackStatusIndicator() {
   return (
-    <StatusIndicatorTarget.Root actions={PLAYBACK_STATUS_ACTIONS} className="media-playback-status-indicator">
+    <StatusIndicatorPrimitive.Root actions={PLAYBACK_STATUS_ACTIONS} className="media-playback-status-indicator">
       <PlayIcon className="media-playback-status-icon media-status-play-icon" />
       <PauseIcon className="media-playback-status-icon media-status-pause-icon" />
-    </StatusIndicatorTarget.Root>
+    </StatusIndicatorPrimitive.Root>
   );
 }
 
@@ -9629,32 +9629,32 @@ export function VideoStatusIndicators() {
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/feedback/volume-indicator.tsx =====
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons/minimal';
-import { VolumeIndicator as VolumeIndicatorTarget } from '@/ui/volume-indicator';
+import { VolumeIndicator as VolumeIndicatorPrimitive } from '@/ui/volume-indicator';
 
 export function VolumeIndicator() {
   return (
-    <VolumeIndicatorTarget.Root className="media-volume-indicator">
-      <VolumeIndicatorTarget.Fill className="media-volume-indicator-fill">
+    <VolumeIndicatorPrimitive.Root className="media-volume-indicator">
+      <VolumeIndicatorPrimitive.Fill className="media-volume-indicator-fill">
         <VolumeHighIcon className="media-volume-indicator-icon media-volume-high-indicator-icon" />
         <VolumeLowIcon className="media-volume-indicator-icon media-volume-low-indicator-icon" />
         <VolumeOffIcon className="media-volume-indicator-icon media-volume-off-indicator-icon" />
-        <VolumeIndicatorTarget.Value className="media-volume-indicator-value" />
-      </VolumeIndicatorTarget.Fill>
-    </VolumeIndicatorTarget.Root>
+        <VolumeIndicatorPrimitive.Value className="media-volume-indicator-value" />
+      </VolumeIndicatorPrimitive.Fill>
+    </VolumeIndicatorPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/layout/container.tsx =====
 import { cn } from '@videojs/utils/style';
-import { Container as ContainerTarget } from '@/player/container';
+import { Container as ContainerPrimitive } from '@/player/container';
 
-export interface ContainerProps extends ContainerTarget.Props {}
+export interface ContainerProps extends ContainerPrimitive.Props {}
 
 export function Container({ children, className, ...props }: ContainerProps) {
   return (
-    <ContainerTarget {...props} className={cn('media-container', className)}>
+    <ContainerPrimitive {...props} className={cn('media-container', className)}>
       {children}
-    </ContainerTarget>
+    </ContainerPrimitive>
   );
 }
 
@@ -9665,13 +9665,13 @@ export function Overlay() {
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/layout/poster.tsx =====
 import { cn } from '@videojs/utils/style';
-import { Poster as PosterTarget } from '@/ui/poster';
+import { Poster as PosterPrimitive } from '@/ui/poster';
 
-export interface PosterProps extends PosterTarget.Props {}
+export interface PosterProps extends PosterPrimitive.Props {}
 
 export function Poster({ className, ...props }: PosterProps) {
   return (
-    <PosterTarget
+    <PosterPrimitive
       {...props}
       className={(state) => cn('media-poster', typeof className === 'function' ? className(state) : className)}
     />
@@ -9821,49 +9821,49 @@ export function QualityMenu() {
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/radio-group.tsx =====
 import { cn } from '@videojs/utils/style';
-import { AudioTrackRadioGroup as AudioTrackRadioGroupTarget } from '@/ui/audio-track-radio-group';
-import { CaptionsRadioGroup as CaptionsRadioGroupTarget } from '@/ui/captions-radio-group';
-import { PlaybackRateRadioGroup as PlaybackRateRadioGroupTarget } from '@/ui/playback-rate-radio-group';
-import { QualityRadioGroup as QualityRadioGroupTarget } from '@/ui/quality-radio-group';
+import { AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive } from '@/ui/audio-track-radio-group';
+import { CaptionsRadioGroup as CaptionsRadioGroupPrimitive } from '@/ui/captions-radio-group';
+import { PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive } from '@/ui/playback-rate-radio-group';
+import { QualityRadioGroup as QualityRadioGroupPrimitive } from '@/ui/quality-radio-group';
 
-export interface QualityRadioGroupProps extends QualityRadioGroupTarget.Props {}
+export interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props {}
 
 export function QualityRadioGroup({ className, ...props }: QualityRadioGroupProps) {
   return (
-    <QualityRadioGroupTarget
+    <QualityRadioGroupPrimitive
       {...props}
       className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
 
-export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupTarget.Props {}
+export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupPrimitive.Props {}
 
 export function AudioTrackRadioGroup({ className, ...props }: AudioTrackRadioGroupProps) {
   return (
-    <AudioTrackRadioGroupTarget
+    <AudioTrackRadioGroupPrimitive
       {...props}
       className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
 
-export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupTarget.Props {}
+export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupPrimitive.Props {}
 
 export function PlaybackRateRadioGroup({ className, ...props }: PlaybackRateRadioGroupProps) {
   return (
-    <PlaybackRateRadioGroupTarget
+    <PlaybackRateRadioGroupPrimitive
       {...props}
       className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
   );
 }
 
-export interface CaptionsRadioGroupProps extends CaptionsRadioGroupTarget.Props {}
+export interface CaptionsRadioGroupProps extends CaptionsRadioGroupPrimitive.Props {}
 
 export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupProps) {
   return (
-    <CaptionsRadioGroupTarget
+    <CaptionsRadioGroupPrimitive
       {...props}
       className={(state) => cn('media-radio-group', typeof className === 'function' ? className(state) : className)}
     />
@@ -9874,26 +9874,26 @@ export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupPr
 import { CheckIcon } from '@/icons/minimal';
 import { cn } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
-import { Menu as MenuTarget } from '@/ui/menu';
+import { Menu as MenuPrimitive } from '@/ui/menu';
 
-export interface RadioItemProps extends MenuTarget.RadioItemProps {
+export interface RadioItemProps extends MenuPrimitive.RadioItemProps {
   children?: ReactNode;
   checked: boolean;
 }
 
 export function RadioItem({ checked, children, className, ...props }: RadioItemProps) {
   return (
-    <MenuTarget.RadioItem
+    <MenuPrimitive.RadioItem
       {...props}
       className={(state) =>
         cn('media-menu-item media-item', typeof className === 'function' ? className(state) : className)
       }
     >
       {children}
-      <MenuTarget.ItemIndicator forceMount className="media-indicator" checked={checked}>
+      <MenuPrimitive.ItemIndicator forceMount className="media-indicator" checked={checked}>
         <CheckIcon className="media-icon" />
-      </MenuTarget.ItemIndicator>
-    </MenuTarget.RadioItem>
+      </MenuPrimitive.ItemIndicator>
+    </MenuPrimitive.RadioItem>
   );
 }
 
@@ -9902,8 +9902,8 @@ import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@/icons/minimal';
 import type { ReactNode } from 'react';
 import { Text } from '@/i18n';
-import { Menu as MenuTarget } from '@/ui/menu';
-import { Tooltip as TooltipTarget } from '@/ui/tooltip';
+import { Menu as MenuPrimitive } from '@/ui/menu';
+import { Tooltip as TooltipPrimitive } from '@/ui/tooltip';
 
 export interface SettingsMenuProps {
   children?: ReactNode;
@@ -9911,33 +9911,33 @@ export interface SettingsMenuProps {
 
 export function SettingsMenu({ children }: SettingsMenuProps) {
   return (
-    <MenuTarget.Root side="top" align="center">
-      <TooltipTarget.Root side="top">
-        <TooltipTarget.Trigger
+    <MenuPrimitive.Root side="top" align="center">
+      <TooltipPrimitive.Root side="top">
+        <TooltipPrimitive.Trigger
           render={
-            <MenuTarget.Trigger className="media-button media-settings-trigger">
+            <MenuPrimitive.Trigger className="media-button media-settings-trigger">
               <GearIcon className="media-button-icon media-settings-icon" />
               <Text className="media-sr-only" token={settingsText.key}>
                 {settingsText.text}
               </Text>
-            </MenuTarget.Trigger>
+            </MenuPrimitive.Trigger>
           }
         />
-        <TooltipTarget.Popup className="media-surface media-tooltip">
+        <TooltipPrimitive.Popup className="media-surface media-tooltip">
           <Text token={settingsText.key}>{settingsText.text}</Text>
-        </TooltipTarget.Popup>
-      </TooltipTarget.Root>
-      <MenuTarget.Content className="media-surface media-popover media-settings media-menu-group">
-        <MenuTarget.Group className="media-menu-group">{children}</MenuTarget.Group>
-      </MenuTarget.Content>
-    </MenuTarget.Root>
+        </TooltipPrimitive.Popup>
+      </TooltipPrimitive.Root>
+      <MenuPrimitive.Content className="media-surface media-popover media-settings media-menu-group">
+        <MenuPrimitive.Group className="media-menu-group">{children}</MenuPrimitive.Group>
+      </MenuPrimitive.Content>
+    </MenuPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/menus/submenu.tsx =====
 import type { ReactNode } from 'react';
 import { MenuChevron } from './menu-chevron';
-import { Menu as MenuTarget } from '@/ui/menu';
+import { Menu as MenuPrimitive } from '@/ui/menu';
 
 export interface SubmenuProps {
   children?: ReactNode;
@@ -9948,24 +9948,24 @@ export interface SubmenuProps {
 
 export function Submenu({ children, icon, label, selectedLabel }: SubmenuProps) {
   return (
-    <MenuTarget.Root>
-      <MenuTarget.Trigger className="media-menu-item media-item">
+    <MenuPrimitive.Root>
+      <MenuPrimitive.Trigger className="media-menu-item media-item">
         {icon}
         {label}
         <span className="media-hint">
           {selectedLabel}
           <MenuChevron />
         </span>
-      </MenuTarget.Trigger>
-      <MenuTarget.Content className="media-submenu-panel">
-        <MenuTarget.Item className="media-menu-item media-back">
+      </MenuPrimitive.Trigger>
+      <MenuPrimitive.Content className="media-submenu-panel">
+        <MenuPrimitive.Item className="media-menu-item media-back">
           <MenuChevron flipped />
           {label}
-        </MenuTarget.Item>
-        <MenuTarget.Separator className="media-separator" />
+        </MenuPrimitive.Item>
+        <MenuPrimitive.Separator className="media-separator" />
         {children}
-      </MenuTarget.Content>
-    </MenuTarget.Root>
+      </MenuPrimitive.Content>
+    </MenuPrimitive.Root>
   );
 }
 
@@ -10004,91 +10004,91 @@ export function VideoSettingsMenu() {
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/sliders/time-slider.tsx =====
 import { SpinnerIcon } from '@/icons/minimal';
-import { Slider as SliderTarget } from '@/ui/slider';
-import { TimeSlider as TimeSliderTarget } from '@/ui/time-slider';
+import { Slider as SliderPrimitive } from '@/ui/slider';
+import { TimeSlider as TimeSliderPrimitive } from '@/ui/time-slider';
 
 export function TimeSlider() {
   return (
-    <TimeSliderTarget.Root className="media-slider">
-      <TimeSliderTarget.Chapters
+    <TimeSliderPrimitive.Root className="media-slider">
+      <TimeSliderPrimitive.Chapters
         className="media-slider-chapters"
         renderChapter={(props) => (
           <div className="media-slider-chapter" {...props}>
-            <TimeSliderTarget.Track className="media-slider-chapter-track">
-              <TimeSliderTarget.Buffer className="media-slider-buffer" />
-              <TimeSliderTarget.Fill className="media-slider-fill" />
-            </TimeSliderTarget.Track>
+            <TimeSliderPrimitive.Track className="media-slider-chapter-track">
+              <TimeSliderPrimitive.Buffer className="media-slider-buffer" />
+              <TimeSliderPrimitive.Fill className="media-slider-fill" />
+            </TimeSliderPrimitive.Track>
           </div>
         )}
       />
-      <TimeSliderTarget.Thumb className="media-slider-thumb media-slider-thumb-interactive" />
-      <TimeSliderTarget.Preview className="media-slider-preview" overflow="visible">
+      <TimeSliderPrimitive.Thumb className="media-slider-thumb media-slider-thumb-interactive" />
+      <TimeSliderPrimitive.Preview className="media-slider-preview" overflow="visible">
         <div className="media-surface media-thumbnail">
-          <SliderTarget.Thumbnail className="media-thumbnail-image" />
+          <SliderPrimitive.Thumbnail className="media-thumbnail-image" />
           <SpinnerIcon className="media-spinner-icon" />
         </div>
         <div className="media-preview-value">
-          <TimeSliderTarget.ChapterTitle className="media-chapter-title" />
-          <TimeSliderTarget.Value className="media-slider-value" type="pointer" />
+          <TimeSliderPrimitive.ChapterTitle className="media-chapter-title" />
+          <TimeSliderPrimitive.Value className="media-slider-value" type="pointer" />
         </div>
-      </TimeSliderTarget.Preview>
-    </TimeSliderTarget.Root>
+      </TimeSliderPrimitive.Preview>
+    </TimeSliderPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/sliders/volume-slider.tsx =====
 import type { VolumeSliderProps } from '@videojs/core';
-import { VolumeSlider as VolumeSliderTarget } from '@/ui/volume-slider';
+import { VolumeSlider as VolumeSliderPrimitive } from '@/ui/volume-slider';
 
 export function VolumeSlider(props: VolumeSliderProps = {}) {
   return (
-    <VolumeSliderTarget.Root className="media-slider" thumbAlignment="edge" {...props}>
-      <VolumeSliderTarget.Track className="media-slider-track">
-        <VolumeSliderTarget.Fill className="media-slider-fill" />
-      </VolumeSliderTarget.Track>
-      <VolumeSliderTarget.Thumb className="media-slider-thumb media-slider-thumb-persistent" />
-    </VolumeSliderTarget.Root>
+    <VolumeSliderPrimitive.Root className="media-slider" thumbAlignment="edge" {...props}>
+      <VolumeSliderPrimitive.Track className="media-slider-track">
+        <VolumeSliderPrimitive.Fill className="media-slider-fill" />
+      </VolumeSliderPrimitive.Track>
+      <VolumeSliderPrimitive.Thumb className="media-slider-thumb media-slider-thumb-persistent" />
+    </VolumeSliderPrimitive.Root>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/video-gestures.tsx =====
-import { Gesture as GestureTarget } from '@/ui/gesture';
+import { Gesture as GesturePrimitive } from '@/ui/gesture';
 
 export function VideoGestures() {
   return (
     <>
-      <GestureTarget type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <GestureTarget type="tap" action="toggleControls" pointer="touch" />
-      <GestureTarget type="doubletap" action="seekStep" value={-10} region="left" />
-      <GestureTarget type="doubletap" action="toggleFullscreen" region="center" />
-      <GestureTarget type="doubletap" action="seekStep" value={10} region="right" />
+      <GesturePrimitive type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <GesturePrimitive type="tap" action="toggleControls" pointer="touch" />
+      <GesturePrimitive type="doubletap" action="seekStep" value={-10} region="left" />
+      <GesturePrimitive type="doubletap" action="toggleFullscreen" region="center" />
+      <GesturePrimitive type="doubletap" action="seekStep" value={10} region="right" />
     </>
   );
 }
 
 ===== packages/react/src/__generated__/skins/minimal-video/components/video-hotkeys.tsx =====
-import { Hotkey as HotkeyTarget } from '@/ui/hotkey';
+import { Hotkey as HotkeyPrimitive } from '@/ui/hotkey';
 
 export function VideoHotkeys() {
   return (
     <>
-      <HotkeyTarget keys="Space" action="togglePaused" />
-      <HotkeyTarget keys="k" action="togglePaused" />
-      <HotkeyTarget keys="m" action="toggleMuted" />
-      <HotkeyTarget keys="f" action="toggleFullscreen" />
-      <HotkeyTarget keys="c" action="toggleSubtitles" />
-      <HotkeyTarget keys="i" action="togglePictureInPicture" />
-      <HotkeyTarget keys="ArrowRight" action="seekStep" value={5} />
-      <HotkeyTarget keys="ArrowLeft" action="seekStep" value={-5} />
-      <HotkeyTarget keys="l" action="seekStep" value={10} />
-      <HotkeyTarget keys="j" action="seekStep" value={-10} />
-      <HotkeyTarget keys="ArrowUp" action="volumeStep" value={0.05} />
-      <HotkeyTarget keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <HotkeyTarget keys="0-9" action="seekToPercent" />
-      <HotkeyTarget keys="Home" action="seekToPercent" value={0} />
-      <HotkeyTarget keys="End" action="seekToPercent" value={100} />
-      <HotkeyTarget keys=">" action="speedUp" />
-      <HotkeyTarget keys="<" action="speedDown" />
+      <HotkeyPrimitive keys="Space" action="togglePaused" />
+      <HotkeyPrimitive keys="k" action="togglePaused" />
+      <HotkeyPrimitive keys="m" action="toggleMuted" />
+      <HotkeyPrimitive keys="f" action="toggleFullscreen" />
+      <HotkeyPrimitive keys="c" action="toggleSubtitles" />
+      <HotkeyPrimitive keys="i" action="togglePictureInPicture" />
+      <HotkeyPrimitive keys="ArrowRight" action="seekStep" value={5} />
+      <HotkeyPrimitive keys="ArrowLeft" action="seekStep" value={-5} />
+      <HotkeyPrimitive keys="l" action="seekStep" value={10} />
+      <HotkeyPrimitive keys="j" action="seekStep" value={-10} />
+      <HotkeyPrimitive keys="ArrowUp" action="volumeStep" value={0.05} />
+      <HotkeyPrimitive keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <HotkeyPrimitive keys="0-9" action="seekToPercent" />
+      <HotkeyPrimitive keys="Home" action="seekToPercent" value={0} />
+      <HotkeyPrimitive keys="End" action="seekToPercent" value={100} />
+      <HotkeyPrimitive keys=">" action="speedUp" />
+      <HotkeyPrimitive keys="<" action="speedDown" />
     </>
   );
 }
@@ -10115,9 +10115,9 @@ import { cn } from '@videojs/utils/style';
 import type { ReactNode } from 'react';
 import type { ContainerProps } from '@/player/container';
 import type { PosterProps } from '@/ui/poster';
-import { Controls as ControlsTarget } from '@/ui/controls';
-import { Time as TimeTarget } from '@/ui/time';
-import { Tooltip as TooltipTarget } from '@/ui/tooltip';
+import { Controls as ControlsPrimitive } from '@/ui/controls';
+import { Time as TimePrimitive } from '@/ui/time';
+import { Tooltip as TooltipPrimitive } from '@/ui/tooltip';
 
 export interface MinimalVideoSkinProps extends Omit<ContainerProps, 'children'> {
   children?: ReactNode;
@@ -10137,34 +10137,34 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
       <BufferingIndicator />
       <ErrorDialog />
 
-      <ControlsTarget.Root className="media-controls-root">
-        <TooltipTarget.Provider>
-          <ControlsTarget.Group className="media-controls-start">
+      <ControlsPrimitive.Root className="media-controls-root">
+        <TooltipPrimitive.Provider>
+          <ControlsPrimitive.Group className="media-controls-start">
             <PlayButton />
             <VolumePopover side="right" orientation="horizontal" />
-          </ControlsTarget.Group>
+          </ControlsPrimitive.Group>
 
-          <ControlsTarget.Group className="media-time-controls">
-            <TimeTarget.Group className="media-time-group">
-              <TimeTarget.Value className="media-time-current" type="current" toggle />
-              <TimeTarget.Separator className="media-time-separator" />
-              <TimeTarget.Value className="media-time-duration" type="duration" />
-            </TimeTarget.Group>
+          <ControlsPrimitive.Group className="media-time-controls">
+            <TimePrimitive.Group className="media-time-group">
+              <TimePrimitive.Value className="media-time-current" type="current" toggle />
+              <TimePrimitive.Separator className="media-time-separator" />
+              <TimePrimitive.Value className="media-time-duration" type="duration" />
+            </TimePrimitive.Group>
             <TimeSlider />
-          </ControlsTarget.Group>
+          </ControlsPrimitive.Group>
 
-          <ControlsTarget.Group className="media-controls-end">
+          <ControlsPrimitive.Group className="media-controls-end">
             <CaptionsButton />
             <VideoSettingsMenu />
-            <ControlsTarget.Group className="media-controls-remote">
+            <ControlsPrimitive.Group className="media-controls-remote">
               <CastButton />
               <AirPlayButton />
               <PiPButton />
               <FullscreenButton />
-            </ControlsTarget.Group>
-          </ControlsTarget.Group>
-        </TooltipTarget.Provider>
-      </ControlsTarget.Root>
+            </ControlsPrimitive.Group>
+          </ControlsPrimitive.Group>
+        </TooltipPrimitive.Provider>
+      </ControlsPrimitive.Root>
 
       <Overlay />
       <VideoHotkeys />
@@ -12454,14 +12454,14 @@ export function MinimalVideoSkin({ children, className, poster, ...containerProp
 import { AirPlayEnterIcon, AirPlayExitIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { AirPlayButton as AirPlayButtonTarget } from '@videojs/react';
+import { AirPlayButton as AirPlayButtonPrimitive } from '@videojs/react';
 
-export interface AirPlayButtonProps extends Omit<AirPlayButtonTarget.Props, 'children'> {}
+export interface AirPlayButtonProps extends Omit<AirPlayButtonPrimitive.Props, 'children'> {}
 
 export function AirPlayButton({ className, ...props }: AirPlayButtonProps) {
   return (
     <ButtonTooltip side="top">
-      <AirPlayButtonTarget
+      <AirPlayButtonPrimitive
         {...props}
         className={(state) =>
           cn(
@@ -12496,7 +12496,7 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps) {
             'group-data-[airplay-state=connected]/airplay:opacity-100',
           )}
         />
-      </AirPlayButtonTarget>
+      </AirPlayButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -12504,13 +12504,13 @@ export function AirPlayButton({ className, ...props }: AirPlayButtonProps) {
 ===== packages/skins/canonical/registry/default/components/buffering-indicator/buffering-indicator.tsx =====
 import { SpinnerIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { BufferingIndicator as BufferingIndicatorTarget } from '@videojs/react';
+import { BufferingIndicator as BufferingIndicatorPrimitive } from '@videojs/react';
 
-export interface BufferingIndicatorProps extends Omit<BufferingIndicatorTarget.Props, 'children'> {}
+export interface BufferingIndicatorProps extends Omit<BufferingIndicatorPrimitive.Props, 'children'> {}
 
 export function BufferingIndicator({ className, ...props }: BufferingIndicatorProps) {
   return (
-    <BufferingIndicatorTarget
+    <BufferingIndicatorPrimitive
       {...props}
       className={(state) =>
         cn(
@@ -12521,24 +12521,24 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
       }
     >
       <SpinnerIcon className={cn('size-media-icon', 'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]')} />
-    </BufferingIndicatorTarget>
+    </BufferingIndicatorPrimitive>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/button-tooltip/button-tooltip.tsx =====
 import type { ReactElement } from 'react';
 import { cn } from '@/components/videojs/utils';
-import { Tooltip as TooltipTarget } from '@videojs/react';
+import { Tooltip as TooltipPrimitive } from '@videojs/react';
 
-export interface ButtonTooltipProps extends TooltipTarget.RootProps {
+export interface ButtonTooltipProps extends TooltipPrimitive.RootProps {
   children: ReactElement;
 }
 
 export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
   return (
-    <TooltipTarget.Root {...props}>
-      <TooltipTarget.Trigger render={children} />
-      <TooltipTarget.Popup
+    <TooltipPrimitive.Root {...props}>
+      <TooltipPrimitive.Trigger render={children} />
+      <TooltipPrimitive.Popup
         className={cn(
           'relative',
           'text-white backdrop-blur-lg backdrop-saturate-150',
@@ -12572,10 +12572,10 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
           'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)',
         )}
       >
-        <TooltipTarget.Label />
-        <TooltipTarget.Shortcut className="min-w-6 rounded-sm bg-current/30 p-[0.1em] text-center text-[0.75em] font-semibold leading-tight" />
-      </TooltipTarget.Popup>
-    </TooltipTarget.Root>
+        <TooltipPrimitive.Label />
+        <TooltipPrimitive.Shortcut className="min-w-6 rounded-sm bg-current/30 p-[0.1em] text-center text-[0.75em] font-semibold leading-tight" />
+      </TooltipPrimitive.Popup>
+    </TooltipPrimitive.Root>
   );
 }
 
@@ -12583,14 +12583,14 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
 import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { CaptionsButton as CaptionsButtonTarget } from '@videojs/react';
+import { CaptionsButton as CaptionsButtonPrimitive } from '@videojs/react';
 
-export interface CaptionsButtonProps extends Omit<CaptionsButtonTarget.Props, 'children'> {}
+export interface CaptionsButtonProps extends Omit<CaptionsButtonPrimitive.Props, 'children'> {}
 
 export function CaptionsButton({ className, ...props }: CaptionsButtonProps) {
   return (
     <ButtonTooltip side="top">
-      <CaptionsButtonTarget
+      <CaptionsButtonPrimitive
         {...props}
         className={(state) =>
           cn(
@@ -12621,7 +12621,7 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps) {
             'hidden opacity-0 group-data-active/captions:block group-data-active/captions:opacity-100',
           )}
         />
-      </CaptionsButtonTarget>
+      </CaptionsButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -12630,14 +12630,14 @@ export function CaptionsButton({ className, ...props }: CaptionsButtonProps) {
 import { CastEnterIcon, CastExitIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { CastButton as CastButtonTarget } from '@videojs/react';
+import { CastButton as CastButtonPrimitive } from '@videojs/react';
 
-export interface CastButtonProps extends Omit<CastButtonTarget.Props, 'children'> {}
+export interface CastButtonProps extends Omit<CastButtonPrimitive.Props, 'children'> {}
 
 export function CastButton({ className, ...props }: CastButtonProps) {
   return (
     <ButtonTooltip side="top">
-      <CastButtonTarget
+      <CastButtonPrimitive
         {...props}
         className={(state) =>
           cn(
@@ -12670,20 +12670,20 @@ export function CastButton({ className, ...props }: CastButtonProps) {
             'group-data-[cast-state=connected]/cast:opacity-100',
           )}
         />
-      </CastButtonTarget>
+      </CastButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/container/container.tsx =====
 import { cn } from '@/components/videojs/utils';
-import { Container as ContainerTarget } from '@videojs/react';
+import { Container as ContainerPrimitive } from '@videojs/react';
 
-export interface ContainerProps extends ContainerTarget.Props {}
+export interface ContainerProps extends ContainerPrimitive.Props {}
 
 export function Container({ children, className, ...props }: ContainerProps) {
   return (
-    <ContainerTarget
+    <ContainerPrimitive
       {...props}
       className={cn(
         'relative isolate block h-full w-full overflow-hidden rounded-[var(--media-video-border-radius)] bg-black @container/media-root',
@@ -12711,20 +12711,20 @@ export function Container({ children, className, ...props }: ContainerProps) {
       )}
     >
       {children}
-    </ContainerTarget>
+    </ContainerPrimitive>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/error-dialog/error-dialog.tsx =====
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { ErrorDialog as ErrorDialogTarget } from '@videojs/react';
+import { ErrorDialog as ErrorDialogPrimitive } from '@videojs/react';
 
-export interface ErrorDialogProps extends Omit<ErrorDialogTarget.PopupProps, 'children'> {}
+export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.PopupProps, 'children'> {}
 
 export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
   return (
-    <ErrorDialogTarget.Root>
-      <ErrorDialogTarget.Popup
+    <ErrorDialogPrimitive.Root>
+      <ErrorDialogPrimitive.Popup
         {...props}
         className={(state) =>
           cn(
@@ -12754,9 +12754,9 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
           )
         }
       >
-        <ErrorDialogTarget.Title className={cn('font-semibold leading-tight', 'px-2 pt-2 text-media')} />
-        <ErrorDialogTarget.Description className={cn('pb-1.5 opacity-70 wrap-anywhere', 'px-2')} />
-        <ErrorDialogTarget.Close
+        <ErrorDialogPrimitive.Title className={cn('font-semibold leading-tight', 'px-2 pt-2 text-media')} />
+        <ErrorDialogPrimitive.Description className={cn('pb-1.5 opacity-70 wrap-anywhere', 'px-2')} />
+        <ErrorDialogPrimitive.Close
           className={cn(
             'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
             'cursor-pointer outline-2 outline-transparent -outline-offset-2',
@@ -12769,8 +12769,8 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
             'h-9 w-full bg-media-accent px-4 font-medium text-media-accent-text',
           )}
         />
-      </ErrorDialogTarget.Popup>
-    </ErrorDialogTarget.Root>
+      </ErrorDialogPrimitive.Popup>
+    </ErrorDialogPrimitive.Root>
   );
 }
 
@@ -12778,14 +12778,14 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps) {
 import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { FullscreenButton as FullscreenButtonTarget } from '@videojs/react';
+import { FullscreenButton as FullscreenButtonPrimitive } from '@videojs/react';
 
-export interface FullscreenButtonProps extends Omit<FullscreenButtonTarget.Props, 'children'> {}
+export interface FullscreenButtonProps extends Omit<FullscreenButtonPrimitive.Props, 'children'> {}
 
 export function FullscreenButton({ className, ...props }: FullscreenButtonProps) {
   return (
     <ButtonTooltip side="top">
-      <FullscreenButtonTarget
+      <FullscreenButtonPrimitive
         {...props}
         className={(state) =>
           cn(
@@ -12816,7 +12816,7 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps)
             'hidden opacity-0 group-data-fullscreen/fullscreen:block group-data-fullscreen/fullscreen:opacity-100',
           )}
         />
-      </FullscreenButtonTarget>
+      </FullscreenButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -12824,13 +12824,13 @@ export function FullscreenButton({ className, ...props }: FullscreenButtonProps)
 ===== packages/skins/canonical/registry/default/components/mute-button/mute-button.tsx =====
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { MuteButton as MuteButtonTarget } from '@videojs/react';
+import { MuteButton as MuteButtonPrimitive } from '@videojs/react';
 
-export interface MuteButtonProps extends Omit<MuteButtonTarget.Props, 'children'> {}
+export interface MuteButtonProps extends Omit<MuteButtonPrimitive.Props, 'children'> {}
 
 export function MuteButton({ className, ...props }: MuteButtonProps) {
   return (
-    <MuteButtonTarget
+    <MuteButtonPrimitive
       {...props}
       className={(state) =>
         cn(
@@ -12870,7 +12870,7 @@ export function MuteButton({ className, ...props }: MuteButtonProps) {
           'group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:opacity-100',
         )}
       />
-    </MuteButtonTarget>
+    </MuteButtonPrimitive>
   );
 }
 
@@ -12901,14 +12901,14 @@ export function Overlay({ className, ...props }: OverlayProps) {
 import { PipEnterIcon, PipExitIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { PiPButton as PiPButtonTarget } from '@videojs/react';
+import { PiPButton as PiPButtonPrimitive } from '@videojs/react';
 
-export interface PiPButtonProps extends Omit<PiPButtonTarget.Props, 'children'> {}
+export interface PiPButtonProps extends Omit<PiPButtonPrimitive.Props, 'children'> {}
 
 export function PiPButton({ className, ...props }: PiPButtonProps) {
   return (
     <ButtonTooltip side="top">
-      <PiPButtonTarget
+      <PiPButtonPrimitive
         {...props}
         className={(state) =>
           cn(
@@ -12939,7 +12939,7 @@ export function PiPButton({ className, ...props }: PiPButtonProps) {
             'hidden opacity-0 group-data-pip/pip:block group-data-pip/pip:opacity-100',
           )}
         />
-      </PiPButtonTarget>
+      </PiPButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -12948,14 +12948,14 @@ export function PiPButton({ className, ...props }: PiPButtonProps) {
 import { PauseIcon, PlayIcon, RestartIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { PlayButton as PlayButtonTarget } from '@videojs/react';
+import { PlayButton as PlayButtonPrimitive } from '@videojs/react';
 
-export interface PlayButtonProps extends Omit<PlayButtonTarget.Props, 'children'> {}
+export interface PlayButtonProps extends Omit<PlayButtonPrimitive.Props, 'children'> {}
 
 export function PlayButton({ className, ...props }: PlayButtonProps) {
   return (
     <ButtonTooltip side="top">
-      <PlayButtonTarget
+      <PlayButtonPrimitive
         {...props}
         className={(state) =>
           cn(
@@ -12997,20 +12997,20 @@ export function PlayButton({ className, ...props }: PlayButtonProps) {
             'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:opacity-100',
           )}
         />
-      </PlayButtonTarget>
+      </PlayButtonPrimitive>
     </ButtonTooltip>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/poster/poster.tsx =====
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { Poster as PosterTarget } from '@videojs/react';
+import { Poster as PosterPrimitive } from '@videojs/react';
 
-export interface PosterProps extends PosterTarget.Props {}
+export interface PosterProps extends PosterPrimitive.Props {}
 
 export function Poster({ className, ...props }: PosterProps) {
   return (
-    <PosterTarget
+    <PosterPrimitive
       {...props}
       className={(state) =>
         cn(
@@ -13038,15 +13038,15 @@ export function Poster({ className, ...props }: PosterProps) {
 import { SeekIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { SeekButton as SeekButtonTarget, Text } from '@videojs/react';
+import { SeekButton as SeekButtonPrimitive, Text } from '@videojs/react';
 
-export interface SeekButtonProps extends Omit<SeekButtonTarget.Props, 'children'> {}
+export interface SeekButtonProps extends Omit<SeekButtonPrimitive.Props, 'children'> {}
 
 export function SeekButton({ className, ...props }: SeekButtonProps = {}) {
   const seconds = props.seconds ?? 10;
   return (
     <ButtonTooltip side="top">
-      <SeekButtonTarget
+      <SeekButtonPrimitive
         className={(state) =>
           cn(
             'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
@@ -13067,7 +13067,7 @@ export function SeekButton({ className, ...props }: SeekButtonProps = {}) {
           className={cn('size-media-icon drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]', seconds < 0 && '-scale-x-100')}
         />
         <Text className="tabular-nums">{Math.abs(seconds)}</Text>
-      </SeekButtonTarget>
+      </SeekButtonPrimitive>
     </ButtonTooltip>
   );
 }
@@ -13075,13 +13075,13 @@ export function SeekButton({ className, ...props }: SeekButtonProps = {}) {
 ===== packages/skins/canonical/registry/default/components/seek-indicator/seek-indicator.tsx =====
 import { ChevronIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { SeekIndicator as SeekIndicatorTarget } from '@videojs/react';
+import { SeekIndicator as SeekIndicatorPrimitive } from '@videojs/react';
 
-export interface SeekIndicatorProps extends Omit<SeekIndicatorTarget.RootProps, 'children'> {}
+export interface SeekIndicatorProps extends Omit<SeekIndicatorPrimitive.RootProps, 'children'> {}
 
 export function SeekIndicator({ className, ...props }: SeekIndicatorProps) {
   return (
-    <SeekIndicatorTarget.Root
+    <SeekIndicatorPrimitive.Root
       {...props}
       className={(state) =>
         cn(
@@ -13100,19 +13100,21 @@ export function SeekIndicator({ className, ...props }: SeekIndicatorProps) {
           'group-data-starting-style/seek-status:opacity-0 group-data-ending-style/seek-status:opacity-0',
         )}
       />
-      <SeekIndicatorTarget.Value className="tabular-nums" />
-    </SeekIndicatorTarget.Root>
+      <SeekIndicatorPrimitive.Value className="tabular-nums" />
+    </SeekIndicatorPrimitive.Root>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/status-announcer/status-announcer.tsx =====
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { StatusAnnouncer as StatusAnnouncerTarget } from '@videojs/react';
+import { StatusAnnouncer as StatusAnnouncerPrimitive } from '@videojs/react';
 
-export interface StatusAnnouncerProps extends Omit<StatusAnnouncerTarget.Props, 'children'> {}
+export interface StatusAnnouncerProps extends Omit<StatusAnnouncerPrimitive.Props, 'children'> {}
 
 export function StatusAnnouncer({ className, ...props }: StatusAnnouncerProps) {
-  return <StatusAnnouncerTarget {...props} className={(state) => cn('sr-only', resolveClassName(className, state))} />;
+  return (
+    <StatusAnnouncerPrimitive {...props} className={(state) => cn('sr-only', resolveClassName(className, state))} />
+  );
 }
 
 ===== packages/skins/canonical/registry/default/components/status-indicator/status-indicator.tsx =====
@@ -13127,17 +13129,17 @@ import {
   PlayIcon,
 } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { StatusIndicator as StatusIndicatorTarget } from '@videojs/react';
+import { StatusIndicator as StatusIndicatorPrimitive } from '@videojs/react';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 
 const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 
-export interface StatusIndicatorProps extends Omit<StatusIndicatorTarget.RootProps, 'children' | 'actions'> {}
+export interface StatusIndicatorProps extends Omit<StatusIndicatorPrimitive.RootProps, 'children' | 'actions'> {}
 
 export function StatusIndicator({ className, ...props }: StatusIndicatorProps) {
   return (
-    <StatusIndicatorTarget.Root
+    <StatusIndicatorPrimitive.Root
       {...props}
       actions={TOP_STATUS_ACTIONS}
       className={(state) =>
@@ -13172,16 +13174,19 @@ export function StatusIndicator({ className, ...props }: StatusIndicatorProps) {
       <FullscreenExitIcon className={cn('hidden shrink-0', 'group-data-[status=exit-fullscreen]/input-status:block')} />
       <PipEnterIcon className={cn('hidden shrink-0', 'group-data-[status=pip]/input-status:block')} />
       <PipExitIcon className={cn('hidden shrink-0', 'group-data-[status=exit-pip]/input-status:block')} />
-      <StatusIndicatorTarget.Value className="ml-auto" />
-    </StatusIndicatorTarget.Root>
+      <StatusIndicatorPrimitive.Value className="ml-auto" />
+    </StatusIndicatorPrimitive.Root>
   );
 }
 
-export interface PlaybackStatusIndicatorProps extends Omit<StatusIndicatorTarget.RootProps, 'children' | 'actions'> {}
+export interface PlaybackStatusIndicatorProps extends Omit<
+  StatusIndicatorPrimitive.RootProps,
+  'children' | 'actions'
+> {}
 
 export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusIndicatorProps) {
   return (
-    <StatusIndicatorTarget.Root
+    <StatusIndicatorPrimitive.Root
       {...props}
       actions={PLAYBACK_STATUS_ACTIONS}
       className={(state) =>
@@ -13201,20 +13206,20 @@ export function PlaybackStatusIndicator({ className, ...props }: PlaybackStatusI
         )}
       />
       <PauseIcon className={cn('hidden size-media-icon-lg', 'group-data-[status=pause]/playback-status:block')} />
-    </StatusIndicatorTarget.Root>
+    </StatusIndicatorPrimitive.Root>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/time-slider/time-slider.tsx =====
 import { SpinnerIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { Slider as SliderTarget, TimeSlider as TimeSliderTarget } from '@videojs/react';
+import { Slider as SliderPrimitive, TimeSlider as TimeSliderPrimitive } from '@videojs/react';
 
-export interface TimeSliderProps extends Omit<TimeSliderTarget.RootProps, 'children'> {}
+export interface TimeSliderProps extends Omit<TimeSliderPrimitive.RootProps, 'children'> {}
 
 export function TimeSlider({ className, ...props }: TimeSliderProps) {
   return (
-    <TimeSliderTarget.Root
+    <TimeSliderPrimitive.Root
       {...props}
       className={(state) =>
         cn(
@@ -13225,7 +13230,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
         )
       }
     >
-      <TimeSliderTarget.Chapters
+      <TimeSliderPrimitive.Chapters
         className="relative flex size-full min-h-0 min-w-0 flex-1 items-center rounded-[inherit]"
         renderChapter={(props) => (
           <div
@@ -13238,7 +13243,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
             )}
             {...props}
           >
-            <TimeSliderTarget.Track
+            <TimeSliderPrimitive.Track
               className={cn(
                 'relative isolate overflow-hidden rounded-media-control bg-current/20 select-none',
                 'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
@@ -13251,7 +13256,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
                 'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
               )}
             >
-              <TimeSliderTarget.Buffer
+              <TimeSliderPrimitive.Buffer
                 className={cn(
                   'absolute inset-y-0 left-0 rounded-[inherit]',
                   'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto',
@@ -13259,7 +13264,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
                   'data-[orientation=vertical]:h-(--media-slider-buffer)',
                 )}
               />
-              <TimeSliderTarget.Fill
+              <TimeSliderPrimitive.Fill
                 className={cn(
                   'absolute inset-y-0 left-0 rounded-[inherit]',
                   'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto',
@@ -13268,11 +13273,11 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
                   'group-data-dragging/slider:data-[orientation=vertical]:h-(--media-slider-pointer)',
                 )}
               />
-            </TimeSliderTarget.Track>
+            </TimeSliderPrimitive.Track>
           </div>
         )}
       />
-      <TimeSliderTarget.Thumb
+      <TimeSliderPrimitive.Thumb
         className={cn(
           'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
           'outline-4 -outline-offset-4 outline-transparent hover:outline-current/15 hover:outline-offset-0',
@@ -13285,7 +13290,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
           'group-active/slider:size-3 group-focus-within/slider:size-3',
         )}
       />
-      <TimeSliderTarget.Preview
+      <TimeSliderPrimitive.Preview
         className={cn(
           'group/preview relative h-1 min-w-(--media-slider-preview-max-width)',
           '[--media-slider-preview-max-width:min(--spacing(48),100cqi)] [--media-slider-preview-max-height:--spacing(32)]',
@@ -13324,7 +13329,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
             'has-[[data-loading]]:aspect-video has-[[data-loading]]:w-(--media-slider-preview-max-width)',
           )}
         >
-          <SliderTarget.Thumbnail
+          <SliderPrimitive.Thumbnail
             className={cn(
               'relative block max-h-(--media-slider-preview-max-height) max-w-(--media-slider-preview-max-width) overflow-clip rounded-[inherit]',
               'transition-opacity duration-150 ease-out motion-reduce:duration-50',
@@ -13351,16 +13356,16 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
             'bottom-[calc(100%+2.625rem)] flex flex-col items-center tabular-nums',
           )}
         >
-          <TimeSliderTarget.ChapterTitle className="max-w-(--media-slider-preview-max-width) min-w-0 overflow-hidden text-ellipsis whitespace-nowrap px-3 empty:hidden" />
-          <TimeSliderTarget.Value className="tabular-nums" type="pointer" />
+          <TimeSliderPrimitive.ChapterTitle className="max-w-(--media-slider-preview-max-width) min-w-0 overflow-hidden text-ellipsis whitespace-nowrap px-3 empty:hidden" />
+          <TimeSliderPrimitive.Value className="tabular-nums" type="pointer" />
         </div>
-      </TimeSliderTarget.Preview>
-    </TimeSliderTarget.Root>
+      </TimeSliderPrimitive.Preview>
+    </TimeSliderPrimitive.Root>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/video-gestures/video-gestures.tsx =====
-import { Gesture as GestureTarget } from '@videojs/react';
+import { Gesture as GesturePrimitive } from '@videojs/react';
 
 export interface VideoGesturesProps {
   disabled?: boolean;
@@ -13369,17 +13374,17 @@ export interface VideoGesturesProps {
 export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
   return (
     <>
-      <GestureTarget type="tap" action="togglePaused" pointer="mouse" region="center" />
-      <GestureTarget type="tap" action="toggleControls" pointer="touch" />
-      <GestureTarget type="doubletap" action="seekStep" value={-10} region="left" />
-      <GestureTarget type="doubletap" action="toggleFullscreen" region="center" />
-      <GestureTarget type="doubletap" action="seekStep" value={10} region="right" />
+      <GesturePrimitive type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <GesturePrimitive type="tap" action="toggleControls" pointer="touch" />
+      <GesturePrimitive type="doubletap" action="seekStep" value={-10} region="left" />
+      <GesturePrimitive type="doubletap" action="toggleFullscreen" region="center" />
+      <GesturePrimitive type="doubletap" action="seekStep" value={10} region="right" />
     </>
   );
 }
 
 ===== packages/skins/canonical/registry/default/components/video-hotkeys/video-hotkeys.tsx =====
-import { Hotkey as HotkeyTarget } from '@videojs/react';
+import { Hotkey as HotkeyPrimitive } from '@videojs/react';
 
 export interface VideoHotkeysProps {
   disabled?: boolean;
@@ -13388,23 +13393,23 @@ export interface VideoHotkeysProps {
 export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
   return (
     <>
-      <HotkeyTarget keys="Space" action="togglePaused" />
-      <HotkeyTarget keys="k" action="togglePaused" />
-      <HotkeyTarget keys="m" action="toggleMuted" />
-      <HotkeyTarget keys="f" action="toggleFullscreen" />
-      <HotkeyTarget keys="c" action="toggleSubtitles" />
-      <HotkeyTarget keys="i" action="togglePictureInPicture" />
-      <HotkeyTarget keys="ArrowRight" action="seekStep" value={5} />
-      <HotkeyTarget keys="ArrowLeft" action="seekStep" value={-5} />
-      <HotkeyTarget keys="l" action="seekStep" value={10} />
-      <HotkeyTarget keys="j" action="seekStep" value={-10} />
-      <HotkeyTarget keys="ArrowUp" action="volumeStep" value={0.05} />
-      <HotkeyTarget keys="ArrowDown" action="volumeStep" value={-0.05} />
-      <HotkeyTarget keys="0-9" action="seekToPercent" />
-      <HotkeyTarget keys="Home" action="seekToPercent" value={0} />
-      <HotkeyTarget keys="End" action="seekToPercent" value={100} />
-      <HotkeyTarget keys=">" action="speedUp" />
-      <HotkeyTarget keys="<" action="speedDown" />
+      <HotkeyPrimitive keys="Space" action="togglePaused" />
+      <HotkeyPrimitive keys="k" action="togglePaused" />
+      <HotkeyPrimitive keys="m" action="toggleMuted" />
+      <HotkeyPrimitive keys="f" action="toggleFullscreen" />
+      <HotkeyPrimitive keys="c" action="toggleSubtitles" />
+      <HotkeyPrimitive keys="i" action="togglePictureInPicture" />
+      <HotkeyPrimitive keys="ArrowRight" action="seekStep" value={5} />
+      <HotkeyPrimitive keys="ArrowLeft" action="seekStep" value={-5} />
+      <HotkeyPrimitive keys="l" action="seekStep" value={10} />
+      <HotkeyPrimitive keys="j" action="seekStep" value={-10} />
+      <HotkeyPrimitive keys="ArrowUp" action="volumeStep" value={0.05} />
+      <HotkeyPrimitive keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <HotkeyPrimitive keys="0-9" action="seekToPercent" />
+      <HotkeyPrimitive keys="Home" action="seekToPercent" value={0} />
+      <HotkeyPrimitive keys="End" action="seekToPercent" value={100} />
+      <HotkeyPrimitive keys=">" action="speedUp" />
+      <HotkeyPrimitive keys="<" action="speedDown" />
     </>
   );
 }
@@ -13628,17 +13633,17 @@ export function QualityMenu({ ...props }: QualityMenuProps = {}) {
 ===== packages/skins/canonical/registry/default/components/video-settings-menu/radio-group.tsx =====
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import {
-  AudioTrackRadioGroup as AudioTrackRadioGroupTarget,
-  CaptionsRadioGroup as CaptionsRadioGroupTarget,
-  PlaybackRateRadioGroup as PlaybackRateRadioGroupTarget,
-  QualityRadioGroup as QualityRadioGroupTarget,
+  AudioTrackRadioGroup as AudioTrackRadioGroupPrimitive,
+  CaptionsRadioGroup as CaptionsRadioGroupPrimitive,
+  PlaybackRateRadioGroup as PlaybackRateRadioGroupPrimitive,
+  QualityRadioGroup as QualityRadioGroupPrimitive,
 } from '@videojs/react';
 
-export interface QualityRadioGroupProps extends QualityRadioGroupTarget.Props {}
+export interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props {}
 
 export function QualityRadioGroup({ className, ...props }: QualityRadioGroupProps) {
   return (
-    <QualityRadioGroupTarget
+    <QualityRadioGroupPrimitive
       {...props}
       className={(state) =>
         cn(
@@ -13650,11 +13655,11 @@ export function QualityRadioGroup({ className, ...props }: QualityRadioGroupProp
   );
 }
 
-export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupTarget.Props {}
+export interface AudioTrackRadioGroupProps extends AudioTrackRadioGroupPrimitive.Props {}
 
 export function AudioTrackRadioGroup({ className, ...props }: AudioTrackRadioGroupProps) {
   return (
-    <AudioTrackRadioGroupTarget
+    <AudioTrackRadioGroupPrimitive
       {...props}
       className={(state) =>
         cn(
@@ -13666,11 +13671,11 @@ export function AudioTrackRadioGroup({ className, ...props }: AudioTrackRadioGro
   );
 }
 
-export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupTarget.Props {}
+export interface PlaybackRateRadioGroupProps extends PlaybackRateRadioGroupPrimitive.Props {}
 
 export function PlaybackRateRadioGroup({ className, ...props }: PlaybackRateRadioGroupProps) {
   return (
-    <PlaybackRateRadioGroupTarget
+    <PlaybackRateRadioGroupPrimitive
       {...props}
       className={(state) =>
         cn(
@@ -13682,11 +13687,11 @@ export function PlaybackRateRadioGroup({ className, ...props }: PlaybackRateRadi
   );
 }
 
-export interface CaptionsRadioGroupProps extends CaptionsRadioGroupTarget.Props {}
+export interface CaptionsRadioGroupProps extends CaptionsRadioGroupPrimitive.Props {}
 
 export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupProps) {
   return (
-    <CaptionsRadioGroupTarget
+    <CaptionsRadioGroupPrimitive
       {...props}
       className={(state) =>
         cn(
@@ -13702,16 +13707,16 @@ export function CaptionsRadioGroup({ className, ...props }: CaptionsRadioGroupPr
 import { CheckIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import type { ReactNode } from 'react';
-import { Menu as MenuTarget } from '@videojs/react';
+import { Menu as MenuPrimitive } from '@videojs/react';
 
-export interface RadioItemProps extends MenuTarget.RadioItemProps {
+export interface RadioItemProps extends MenuPrimitive.RadioItemProps {
   children?: ReactNode;
   checked: boolean;
 }
 
 export function RadioItem({ checked, children, className, ...props }: RadioItemProps) {
   return (
-    <MenuTarget.RadioItem
+    <MenuPrimitive.RadioItem
       {...props}
       className={(state) =>
         cn(
@@ -13728,7 +13733,7 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
       }
     >
       {children}
-      <MenuTarget.ItemIndicator
+      <MenuPrimitive.ItemIndicator
         forceMount
         className="ml-auto -mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100"
         checked={checked}
@@ -13739,8 +13744,8 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
             'drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
           )}
         />
-      </MenuTarget.ItemIndicator>
-    </MenuTarget.RadioItem>
+      </MenuPrimitive.ItemIndicator>
+    </MenuPrimitive.RadioItem>
   );
 }
 
@@ -13749,20 +13754,20 @@ import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import type { ReactNode } from 'react';
-import { Menu as MenuTarget, Text, Tooltip as TooltipTarget } from '@videojs/react';
+import { Menu as MenuPrimitive, Text, Tooltip as TooltipPrimitive } from '@videojs/react';
 
-export interface SettingsMenuProps extends MenuTarget.RootProps {
+export interface SettingsMenuProps extends MenuPrimitive.RootProps {
   children?: ReactNode;
-  className?: MenuTarget.ContentProps['className'];
+  className?: MenuPrimitive.ContentProps['className'];
 }
 
 export function SettingsMenu({ children, className, ...props }: SettingsMenuProps) {
   return (
-    <MenuTarget.Root side="top" align="center" {...props}>
-      <TooltipTarget.Root side="top">
-        <TooltipTarget.Trigger
+    <MenuPrimitive.Root side="top" align="center" {...props}>
+      <TooltipPrimitive.Root side="top">
+        <TooltipPrimitive.Trigger
           render={
-            <MenuTarget.Trigger
+            <MenuPrimitive.Trigger
               className={cn(
                 'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
                 'cursor-pointer outline-2 outline-transparent -outline-offset-2',
@@ -13786,10 +13791,10 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
               <Text className="sr-only" token={settingsText.key}>
                 {settingsText.text}
               </Text>
-            </MenuTarget.Trigger>
+            </MenuPrimitive.Trigger>
           }
         />
-        <TooltipTarget.Popup
+        <TooltipPrimitive.Popup
           className={cn(
             'relative',
             'text-white backdrop-blur-lg backdrop-saturate-150',
@@ -13824,9 +13829,9 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
           )}
         >
           <Text token={settingsText.key}>{settingsText.text}</Text>
-        </TooltipTarget.Popup>
-      </TooltipTarget.Root>
-      <MenuTarget.Content
+        </TooltipPrimitive.Popup>
+      </TooltipPrimitive.Root>
+      <MenuPrimitive.Content
         className={(state) =>
           cn(
             'relative',
@@ -13868,11 +13873,11 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
           )
         }
       >
-        <MenuTarget.Group className="relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]">
+        <MenuPrimitive.Group className="relative flex flex-col gap-0.5 [anchor-scope:--media-menu-item-highlight-anchor]">
           {children}
-        </MenuTarget.Group>
-      </MenuTarget.Content>
-    </MenuTarget.Root>
+        </MenuPrimitive.Group>
+      </MenuPrimitive.Content>
+    </MenuPrimitive.Root>
   );
 }
 
@@ -13880,20 +13885,20 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
 import type { ReactNode } from 'react';
 import { MenuChevron } from './menu-chevron';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { Menu as MenuTarget } from '@videojs/react';
+import { Menu as MenuPrimitive } from '@videojs/react';
 
-export interface SubmenuProps extends MenuTarget.RootProps {
+export interface SubmenuProps extends MenuPrimitive.RootProps {
   children?: ReactNode;
   icon: ReactNode;
   label: ReactNode;
   selectedLabel: ReactNode;
-  className?: MenuTarget.ContentProps['className'];
+  className?: MenuPrimitive.ContentProps['className'];
 }
 
 export function Submenu({ children, icon, label, selectedLabel, className, ...props }: SubmenuProps) {
   return (
-    <MenuTarget.Root {...props}>
-      <MenuTarget.Trigger
+    <MenuPrimitive.Root {...props}>
+      <MenuPrimitive.Trigger
         className={cn(
           'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left',
           'outline-2 -outline-offset-2 outline-transparent',
@@ -13911,8 +13916,8 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
           {selectedLabel}
           <MenuChevron />
         </span>
-      </MenuTarget.Trigger>
-      <MenuTarget.Content
+      </MenuPrimitive.Trigger>
+      <MenuPrimitive.Content
         className={(state) =>
           cn(
             'absolute inset-x-0 top-0 z-10 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
@@ -13924,7 +13929,7 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
           )
         }
       >
-        <MenuTarget.Item
+        <MenuPrimitive.Item
           className={cn(
             'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-media-surface px-2 py-1.5 text-left',
             'outline-2 -outline-offset-2 outline-transparent',
@@ -13936,8 +13941,8 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
         >
           <MenuChevron flipped />
           {label}
-        </MenuTarget.Item>
-        <MenuTarget.Separator
+        </MenuPrimitive.Item>
+        <MenuPrimitive.Separator
           className={cn(
             'my-1 border-b border-white/10',
             '[@media(prefers-reduced-transparency:reduce)]:border-white/25 contrast-more:border-white/25',
@@ -13945,8 +13950,8 @@ export function Submenu({ children, icon, label, selectedLabel, className, ...pr
           )}
         />
         {children}
-      </MenuTarget.Content>
-    </MenuTarget.Root>
+      </MenuPrimitive.Content>
+    </MenuPrimitive.Root>
   );
 }
 
@@ -13986,13 +13991,13 @@ export function VideoSettingsMenu({ ...props }: VideoSettingsMenuProps = {}) {
 ===== packages/skins/canonical/registry/default/components/volume-indicator/volume-indicator.tsx =====
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { VolumeIndicator as VolumeIndicatorTarget } from '@videojs/react';
+import { VolumeIndicator as VolumeIndicatorPrimitive } from '@videojs/react';
 
-export interface VolumeIndicatorProps extends Omit<VolumeIndicatorTarget.RootProps, 'children'> {}
+export interface VolumeIndicatorProps extends Omit<VolumeIndicatorPrimitive.RootProps, 'children'> {}
 
 export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps) {
   return (
-    <VolumeIndicatorTarget.Root
+    <VolumeIndicatorPrimitive.Root
       {...props}
       className={(state) =>
         cn(
@@ -14020,7 +14025,7 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps) {
         )
       }
     >
-      <VolumeIndicatorTarget.Fill
+      <VolumeIndicatorPrimitive.Fill
         className={cn(
           'flex items-center justify-between gap-2 rounded-[inherit] px-2.5 py-1',
           'bg-left bg-no-repeat [background-image:linear-gradient(var(--media-accent-color,white),var(--media-accent-color,white))]',
@@ -14031,9 +14036,9 @@ export function VolumeIndicator({ className, ...props }: VolumeIndicatorProps) {
         <VolumeHighIcon className={cn('hidden shrink-0', 'group-data-[level=high]/volume-status:block')} />
         <VolumeLowIcon className={cn('hidden shrink-0', 'group-data-[level=low]/volume-status:block')} />
         <VolumeOffIcon className={cn('hidden shrink-0', 'group-data-[level=off]/volume-status:block')} />
-        <VolumeIndicatorTarget.Value className="ml-auto" />
-      </VolumeIndicatorTarget.Fill>
-    </VolumeIndicatorTarget.Root>
+        <VolumeIndicatorPrimitive.Value className="ml-auto" />
+      </VolumeIndicatorPrimitive.Fill>
+    </VolumeIndicatorPrimitive.Root>
   );
 }
 
@@ -14042,12 +14047,12 @@ import { MuteButton } from '@/components/videojs/mute-button/mute-button';
 import { VolumeSlider } from '@/components/videojs/volume-slider/volume-slider';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import { usePlayer } from '@videojs/react';
-import { Popover as PopoverTarget } from '@videojs/react';
+import { Popover as PopoverPrimitive } from '@videojs/react';
 
-export interface VolumePopoverProps extends PopoverTarget.RootProps {
-  side?: PopoverTarget.RootProps['side'];
+export interface VolumePopoverProps extends PopoverPrimitive.RootProps {
+  side?: PopoverPrimitive.RootProps['side'];
   orientation?: 'horizontal' | 'vertical';
-  className?: PopoverTarget.PopupProps['className'];
+  className?: PopoverPrimitive.PopupProps['className'];
 }
 
 export function VolumePopover({
@@ -14058,9 +14063,9 @@ export function VolumePopover({
 }: VolumePopoverProps = {}) {
   const volumeAvailability = usePlayer((state) => state.volumeAvailability);
   return volumeAvailability === 'available' ? (
-    <PopoverTarget.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>
-      <PopoverTarget.Trigger render={<MuteButton />} />
-      <PopoverTarget.Popup
+    <PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>
+      <PopoverPrimitive.Trigger render={<MuteButton />} />
+      <PopoverPrimitive.Popup
         className={(state) =>
           cn(
             'relative',
@@ -14099,8 +14104,8 @@ export function VolumePopover({
         }
       >
         <VolumeSlider orientation={orientation} />
-      </PopoverTarget.Popup>
-    </PopoverTarget.Root>
+      </PopoverPrimitive.Popup>
+    </PopoverPrimitive.Root>
   ) : (
     <MuteButton />
   );
@@ -14108,13 +14113,13 @@ export function VolumePopover({
 
 ===== packages/skins/canonical/registry/default/components/volume-slider/volume-slider.tsx =====
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { VolumeSlider as VolumeSliderTarget } from '@videojs/react';
+import { VolumeSlider as VolumeSliderPrimitive } from '@videojs/react';
 
-export interface VolumeSliderProps extends Omit<VolumeSliderTarget.RootProps, 'children'> {}
+export interface VolumeSliderProps extends Omit<VolumeSliderPrimitive.RootProps, 'children'> {}
 
 export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
   return (
-    <VolumeSliderTarget.Root
+    <VolumeSliderPrimitive.Root
       className={(state) =>
         cn(
           'group/slider relative flex flex-1 cursor-pointer items-center justify-center rounded-media-control outline-none',
@@ -14126,14 +14131,14 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
       thumbAlignment="edge"
       {...props}
     >
-      <VolumeSliderTarget.Track
+      <VolumeSliderPrimitive.Track
         className={cn(
           'relative isolate w-full select-none overflow-hidden rounded-media-control bg-current/20',
           'data-[orientation=vertical]:h-full',
           'data-[orientation=horizontal]:h-1 data-[orientation=vertical]:w-1',
         )}
       >
-        <VolumeSliderTarget.Fill
+        <VolumeSliderPrimitive.Fill
           className={cn(
             'absolute inset-y-0 left-0 rounded-[inherit]',
             'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto',
@@ -14142,8 +14147,8 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
             'group-data-dragging/slider:data-[orientation=vertical]:h-(--media-slider-pointer)',
           )}
         />
-      </VolumeSliderTarget.Track>
-      <VolumeSliderTarget.Thumb
+      </VolumeSliderPrimitive.Track>
+      <VolumeSliderPrimitive.Thumb
         className={cn(
           'absolute z-10 top-1/2 left-(--media-slider-fill) -translate-x-1/2 -translate-y-1/2 rounded-media-control bg-current',
           'outline-4 -outline-offset-4 outline-transparent hover:outline-current/15 hover:outline-offset-0',
@@ -14155,7 +14160,7 @@ export function VolumeSlider({ className, ...props }: VolumeSliderProps = {}) {
           'size-3',
         )}
       />
-    </VolumeSliderTarget.Root>
+    </VolumeSliderPrimitive.Root>
   );
 }
 
@@ -14210,7 +14215,7 @@ import { VideoHotkeys } from '@/components/videojs/video-hotkeys/video-hotkeys';
 import { cn } from '@/components/videojs/utils';
 import type { ReactNode } from 'react';
 import type { ContainerProps, PosterProps } from '@videojs/react';
-import { Controls as ControlsTarget, Time as TimeTarget, Tooltip as TooltipTarget } from '@videojs/react';
+import { Controls as ControlsPrimitive, Time as TimePrimitive, Tooltip as TooltipPrimitive } from '@videojs/react';
 
 export interface DefaultVideoSkinProps extends Omit<ContainerProps, 'children'> {
   children?: ReactNode;
@@ -14230,7 +14235,7 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
       <BufferingIndicator />
       <ErrorDialog />
 
-      <ControlsTarget.Root
+      <ControlsPrimitive.Root
         className={cn(
           'peer/controls group/controls contents text-white',
           '[--media-popover-side-offset:--spacing(3)]',
@@ -14261,8 +14266,8 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
           'peer-data-open/error:hidden!',
         )}
       >
-        <TooltipTarget.Provider>
-          <ControlsTarget.Group
+        <TooltipPrimitive.Provider>
+          <ControlsPrimitive.Group
             className={cn(
               'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control',
               'text-white backdrop-blur-lg backdrop-saturate-150',
@@ -14289,20 +14294,20 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
               'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
             )}
           >
-            <ControlsTarget.Group className="flex items-center gap-px">
+            <ControlsPrimitive.Group className="flex items-center gap-px">
               <PlayButton />
               <VolumePopover />
-            </ControlsTarget.Group>
+            </ControlsPrimitive.Group>
 
-            <ControlsTarget.Group
+            <ControlsPrimitive.Group
               className={cn(
                 '@container/media-time flex flex-1 items-center gap-2.5 px-3',
                 '@max-[16rem]/media-time:[&>*:last-child]:hidden',
               )}
             >
-              <TimeTarget.Value className="tabular-nums" type="current" />
+              <TimePrimitive.Value className="tabular-nums" type="current" />
               <TimeSlider />
-              <TimeTarget.Value
+              <TimePrimitive.Value
                 className={cn(
                   'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
                   'focus-visible:outline-current focus-visible:outline-offset-2',
@@ -14310,15 +14315,15 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
                 type="remaining"
                 toggle
               />
-            </ControlsTarget.Group>
+            </ControlsPrimitive.Group>
 
-            <ControlsTarget.Group className="flex items-center gap-px">
+            <ControlsPrimitive.Group className="flex items-center gap-px">
               <CaptionsButton />
               <VideoSettingsMenu />
-            </ControlsTarget.Group>
-          </ControlsTarget.Group>
+            </ControlsPrimitive.Group>
+          </ControlsPrimitive.Group>
 
-          <ControlsTarget.Group
+          <ControlsPrimitive.Group
             className={cn(
               'absolute top-2 right-2 z-10 flex origin-top items-center rounded-media-control',
               'text-white backdrop-blur-lg backdrop-saturate-150',
@@ -14345,15 +14350,15 @@ export function DefaultVideoSkin({ children, className, poster, ...containerProp
               'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
             )}
           >
-            <ControlsTarget.Group className="flex items-center gap-px">
+            <ControlsPrimitive.Group className="flex items-center gap-px">
               <CastButton />
               <AirPlayButton />
               <PiPButton />
               <FullscreenButton />
-            </ControlsTarget.Group>
-          </ControlsTarget.Group>
-        </TooltipTarget.Provider>
-      </ControlsTarget.Root>
+            </ControlsPrimitive.Group>
+          </ControlsPrimitive.Group>
+        </TooltipPrimitive.Provider>
+      </ControlsPrimitive.Root>
 
       <Overlay />
       <VideoHotkeys />

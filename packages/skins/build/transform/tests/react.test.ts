@@ -38,9 +38,9 @@ describe('createCompilerReactConfig', () => {
     });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain('SeekButton as SeekButtonTarget');
+    expect(result.code).toContain('SeekButton as SeekButtonPrimitive');
     expect(result.code).toContain('import { SeekIcon } from "@videojs/react/icons"');
-    expect(result.code).toContain('export interface SeekButtonProps extends Omit<SeekButtonTarget.Props');
+    expect(result.code).toContain('export interface SeekButtonProps extends Omit<SeekButtonPrimitive.Props');
     expect(result.code).toContain('resolveClassName(className, state)');
     expect(result.code).not.toContain("from '@videojs/core'");
     expect(result.code).toContain('<Text className="tabular-nums">');
@@ -97,10 +97,10 @@ describe('createCompilerReactConfig', () => {
       }),
     });
 
-    expect(result.code).toContain('interface ButtonTooltipProps extends TooltipTarget.RootProps');
+    expect(result.code).toContain('interface ButtonTooltipProps extends TooltipPrimitive.RootProps');
     expect(result.code).toContain('children: ReactElement');
-    expect(result.code).toMatch(/<TooltipTarget\.Trigger render=\{children\}\s*\/>/);
-    expect(result.code).not.toContain('Parameters<typeof TooltipTarget.Root>');
+    expect(result.code).toMatch(/<TooltipPrimitive\.Trigger render=\{children\}\s*\/>/);
+    expect(result.code).not.toContain('Parameters<typeof TooltipPrimitive.Root>');
   });
 
   it('forwards VolumePopover props directly to Popover.Root', async () => {
@@ -114,11 +114,11 @@ describe('createCompilerReactConfig', () => {
       }),
     });
 
-    expect(result.code).toContain('interface VolumePopoverProps extends PopoverTarget.RootProps');
-    expect(result.code).toContain('className?: PopoverTarget.PopupProps["className"]');
+    expect(result.code).toContain('interface VolumePopoverProps extends PopoverPrimitive.RootProps');
+    expect(result.code).toContain('className?: PopoverPrimitive.PopupProps["className"]');
     expect(result.code).toContain('...props');
     expect(result.code).toContain(
-      '<PopoverTarget.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>'
+      '<PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>'
     );
     expect(result.code).not.toContain('popoverProps');
   });
@@ -157,9 +157,9 @@ describe('createCompilerReactConfig', () => {
       }),
     });
 
-    expect(result.code).toContain('interface SubmenuProps extends MenuTarget.RootProps');
-    expect(result.code).toContain('className?: MenuTarget.ContentProps["className"]');
-    expect(result.code).toContain('<MenuTarget.Root {...props}>');
+    expect(result.code).toContain('interface SubmenuProps extends MenuPrimitive.RootProps');
+    expect(result.code).toContain('className?: MenuPrimitive.ContentProps["className"]');
+    expect(result.code).toContain('<MenuPrimitive.Root {...props}>');
     expect(result.code).toContain('resolveClassName(className, state)');
   });
 
@@ -195,7 +195,7 @@ describe('createCompilerReactConfig', () => {
       }),
     });
 
-    expect(result.code).toContain('import { SeekButton as SeekButtonTarget } from "@/ui/seek-button"');
+    expect(result.code).toContain('import { SeekButton as SeekButtonPrimitive } from "@/ui/seek-button"');
     expect(result.code).toContain('import { SeekIcon } from "@/icons"');
   });
 
@@ -226,11 +226,11 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).toContain('export function Container(');
     expect(result.code).toContain('ContainerProps');
     expect(result.code).not.toContain('Parameters<');
-    expect(result.code).toContain('<ContainerTarget {...props}');
+    expect(result.code).toContain('<ContainerPrimitive {...props}');
     expect(posterResult.code).toContain('export function Poster(');
     expect(posterResult.code).toContain('PosterProps');
     expect(posterResult.code).not.toContain('Parameters<');
-    expect(posterResult.code).toContain('<PosterTarget {...props}');
+    expect(posterResult.code).toContain('<PosterPrimitive {...props}');
     expect(posterResult.code).toContain('[&[data-visible][src]:not([data-loaded])]:opacity-0');
     expect(posterResult.code).not.toContain('Slot');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinContainer');
