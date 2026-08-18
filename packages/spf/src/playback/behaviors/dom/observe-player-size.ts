@@ -1,19 +1,11 @@
 /**
  * **Player-size measurement.** Mirrors the rendered box of the attached media
  * element into `state.playerWidth` / `playerHeight` (CSS pixels) and
- * `state.playerScale` (`devicePixelRatio`). Measurement is the whole job — the
- * policy built on it is `track-switching`'s `capToPlayerSize` rule, which is
- * what decides whether the scale applies.
- *
- * The box and the ratio move independently (`media/dom/element-size.ts`
- * composes both watchers), so both are watched: a DPR change from browser zoom
- * or a move to another display doesn't necessarily resize the element.
- *
- * The three values are written together and cleared together: an unmeasurable
- * element — detached, `display: none`, not yet laid out — leaves all three
- * unset rather than reporting a `0` box.
+ * `state.playerScale` (`devicePixelRatio`), over `@videojs/utils/dom`'s
+ * `observeRenderedSize`. Measurement is the whole job — the policy built on it is
+ * `track-switching`'s `capToPlayerSize` rule, which is what decides whether the
+ * scale applies.
  */
-
 import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';

@@ -156,10 +156,8 @@ export interface HlsVideoEngineState {
   currentTime?: number;
   /**
    * Rendered box of the attached media element in CSS pixels, plus the
-   * `devicePixelRatio` it was measured at. Owned by `observePlayerSize`, read by
-   * `track-switching`'s `capToPlayerSize`. All three are absent together when
-   * there's no measurement — nothing attached, hidden, or not yet laid out — and
-   * the cap goes inert.
+   * `devicePixelRatio` it was measured at. Owned by `observePlayerSize`; absent
+   * together when there's nothing to measure.
    */
   playerWidth?: number;
   playerHeight?: number;
@@ -320,9 +318,7 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   quality?: Partial<QualityConfig>;
   /**
-   * Player-size cap tuning: `enabled` stops the measurement (and with it the
-   * cap), read by `observePlayerSize`; `useDevicePixelRatio` switches the cap
-   * between device and CSS pixels, read by `capToPlayerSize`. Defaults:
+   * Player-size cap tuning (see `PlayerSizeCapConfig`). Defaults:
    * `DEFAULT_PLAYER_SIZE_CAP_CONFIG` (both `true`).
    */
   playerSizeCap?: Partial<PlayerSizeCapConfig>;

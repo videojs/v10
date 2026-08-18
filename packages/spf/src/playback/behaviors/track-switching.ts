@@ -144,12 +144,9 @@ export interface SwitchVideoTrackConfig {
 export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
 
 /**
- * Player-size cap policy, split across the two halves of the feature: `enabled`
- * gates the measurement (`observePlayerSize`, `behaviors/dom/`), so `false`
- * leaves the player slots unset and the cap inert; `useDevicePixelRatio` gates
- * whether `capToPlayerSize` reads the measurement in device pixels. A 640-CSS-px
- * player on a 2x display is really 1280 device pixels, so capping in CSS pixels
- * would cap it to 720p and under-serve the display.
+ * Player-size cap policy. `enabled` gates the measurement (`observePlayerSize`,
+ * `behaviors/dom/`), so `false` leaves the cap inert; `useDevicePixelRatio` gates
+ * whether `capToPlayerSize` scales that measurement to device pixels.
  */
 export interface PlayerSizeCapConfig {
   enabled: boolean;
@@ -347,12 +344,10 @@ type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = 
   SwitchVideoTrackConfig;
 
 /**
- * State the player-size cap reads: the lifecycle map plus the *optional* player
- * measurement — its CSS-pixel box (`playerWidth` / `playerHeight`) and the
- * device-pixel ratio it was measured at (`playerScale`). The signals exist only
- * when the composition includes `observePlayerSize` (which materializes + owns
- * them); the cap reads them defensively and passes everything through when the
- * box is absent or zero.
+ * State the player-size cap reads: TrackSwitchingStateMap plus the *optional*
+ * player measurement — its CSS-pixel box (`playerWidth` / `playerHeight`) and the
+ * device-pixel ratio it was measured at (`playerScale`), manifested by
+ * `observePlayerSize`.
  */
 type PlayerSizeCapStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
   playerWidth?: ReadonlySignal<number | undefined>;
@@ -361,9 +356,9 @@ type PlayerSizeCapStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> &
 };
 
 /**
- * Config the player-size cap reads: the base config plus the *optional*
+ * Config the player-size cap reads: TrackSwitchingConfig plus the *optional*
  * `playerSizeCap` policy. Only `useDevicePixelRatio` is read here — `enabled`
- * belongs to the measurement side.
+ * belongs to the measurement side. See `capToPlayerSize`.
  */
 type PlayerSizeCapRuleConfig<S extends SelectionKey, T extends SwitchableTrack> = TrackSwitchingConfig<S, T> & {
   playerSizeCap?: Partial<PlayerSizeCapConfig>;
@@ -432,19 +427,16 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  * delivering at the player's rendered size, so a small embed doesn't pull
  * segments nobody can perceive.
  *
- * The cap is the *smallest tier that still covers the player*, and everything
- * at or below it survives — not "everything at or below the player's area,"
- * which under-serves: an 800×450 player against a 360p/720p/1080p ladder has no
- * rendition at or below it, and the honest answer is 720p, not 360p.
+ * The cap is the *smallest tier that still covers the player*, and everything at
+ * or below it survives — not "everything at or below the player's area," which
+ * under-serves a player falling between two tiers. Take an 800×450 player
+ * against a 360p/720p/1080p ladder: only 360p is below it, so capping at the
+ * player's area would hold an 800-px-wide box to a 640-px-wide picture. The
+ * honest answer is the tier above, 720p, with 360p left in for the ranker.
  *
- * Narrowing to a set rather than a pick leaves `rankByBandwidth` to choose
- * within the cap, so the two compose instead of competing. Running after
- * `filterByUserSelection` means a manual rendition pick outranks the cap.
- *
- * Renditions declaring no RESOLUTION compare as area `0` and are never capped
+ * Renditions declaring no width or height compare as area `0` and are never capped
  * out — they can't be judged against the player, and dropping them could strand
- * a source whose variants all omit it. Passes through entirely when there's no
- * measurement (see `PlayerSizeCapStateMap`).
+ * a source whose renditions all omit it.
  *
  * The measurement arrives as a CSS-pixel box plus the ratio it was measured at,
  * and this rule is where the two combine: renditions are sized in device pixels,
