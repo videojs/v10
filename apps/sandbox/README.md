@@ -67,6 +67,15 @@ pnpm -F @videojs/sandbox reset
 
 This previews every change first and prompts before doing anything. It overwrites modified files, deletes files that exist only in `src/`, and restores any missing template files. **Cannot be undone**, so commit or `sync` anything you want to keep first.
 
+## Running outside the monorepo
+
+Every pull request publishes this directory as a StackBlitz template through [pkg.pr.new](https://github.com/stackblitz-labs/pkg.pr.new), booting it against that commit's preview packages. That makes the sandbox the one app here that must also run as a standalone project, which constrains it in two ways:
+
+- **Nothing may reference a path outside this directory.** `vite.config.ts` locates the prebuilt `@videojs/html` CDN bundle through Node resolution rather than `../../packages/html`, and `tsconfig.json` is self-contained instead of extending `../../tsconfig.base.json` — Vite fails to start if that `extends` cannot be resolved.
+- **Only published packages may be dependencies.** Private workspace packages such as `@videojs/icons` and `@videojs/skins` cannot be installed outside the monorepo; their code already ships inlined inside `@videojs/html` and `@videojs/react`.
+
+`src/` is gitignored and so never part of the upload. That is fine: the `dev` script runs `setup.ts` first, which recreates `src/` from `templates/` on boot.
+
 ## Adding a new sandbox
 
 1. Create a directory in `templates/` (e.g. `templates/my-feature/`).
