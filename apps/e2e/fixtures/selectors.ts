@@ -49,6 +49,8 @@ export const SELECTORS = {
   muteButton: 'media-mute-button, .media-button--mute',
   fullscreenButton: 'media-fullscreen-button, .media-button--fullscreen',
   pipButton: 'media-pip-button, .media-button--pip',
+  castButton: 'media-cast-button, .media-button--cast',
+  airPlayButton: 'media-airplay-button, .media-button--airplay',
   captionsButton: 'media-captions-button, .media-button--captions',
   playbackRateButton: [
     withinControls('media-playback-rate-button'),
@@ -82,6 +84,7 @@ export const SELECTORS = {
     '[data-type="duration"].media-time',
     '[data-type="remaining"].media-time',
   ].join(', '),
+  timeToggle: 'media-time[toggle], time.media-time[role="button"]',
   poster: 'media-poster, img[data-loaded]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
   thumbnail: 'media-slider-thumbnail, .media-thumbnail__image',

@@ -233,6 +233,7 @@ describe('PlaybackRateButtonElement', () => {
 
     await waitForAssertion(() => {
       expect(menu.open).toBe(true);
+      expect(menu.querySelector('[role="menuitemradio"][aria-checked="true"]')).toBe(document.activeElement);
     });
   });
 
@@ -246,6 +247,7 @@ describe('PlaybackRateButtonElement', () => {
 
     await waitForAssertion(() => {
       expect(menu.open).toBe(true);
+      expect(menu.querySelector('[role="menuitemradio"][aria-checked="true"]')).toBe(document.activeElement);
     });
   });
 

@@ -90,20 +90,33 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
     [menu]
   );
 
-  const rootTriggerProps = useMemo(() => {
-    if (!disabled) return menu.triggerProps;
+  const handleRootKeyDown = useCallback(
+    (event: React.KeyboardEvent<MenuTriggerElement>) => {
+      const defaultPreventedByUser = callKeyDownHandler(onKeyDown, event);
 
-    return {
-      onClick: (event: React.MouseEvent<HTMLElement>) => {
+      if (disabled || defaultPreventedByUser) {
+        if (disabled && isMenuNavigationKey(event)) event.preventDefault();
+        return;
+      }
+
+      if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-      },
-      onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => {
-        if (event.key === 'Enter' || event.key === ' ' || isMenuNavigationKey(event)) {
-          event.preventDefault();
-        }
-      },
-    };
-  }, [disabled, menu.triggerProps]);
+        menu.triggerProps.onClick(event);
+        return;
+      }
+
+      menu.triggerProps.onKeyDown(event);
+    },
+    [disabled, menu.triggerProps, onKeyDown]
+  );
+
+  const rootTriggerProps = useMemo(
+    () => ({
+      onClick: disabled ? (event: React.MouseEvent<HTMLElement>) => event.preventDefault() : menu.triggerProps.onClick,
+      onKeyDown: handleRootKeyDown,
+    }),
+    [disabled, handleRootKeyDown, menu.triggerProps]
+  );
 
   // Submenu trigger mode — renders as a div with role="menuitem"
   if (isSubMenuTrigger) {

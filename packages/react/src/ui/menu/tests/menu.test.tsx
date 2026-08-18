@@ -424,6 +424,39 @@ describe('MenuContent', () => {
     });
   });
 
+  it.each(['Enter', ' '])('opens a root menu with %j', async (key) => {
+    render(
+      <MenuRoot>
+        <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
+        <MenuContent data-testid="content">Settings</MenuContent>
+      </MenuRoot>
+    );
+
+    const trigger = screen.getByTestId('trigger');
+    fireEvent.keyDown(trigger, { key });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('content')).not.toBeNull();
+    });
+  });
+
+  it('honors preventDefault from root trigger key handlers', () => {
+    const onKeyDown = vi.fn((event: ReactKeyboardEvent<HTMLElement>) => event.preventDefault());
+    render(
+      <MenuRoot>
+        <MenuTrigger data-testid="trigger" onKeyDown={onKeyDown}>
+          Settings
+        </MenuTrigger>
+        <MenuContent data-testid="content">Settings</MenuContent>
+      </MenuRoot>
+    );
+
+    fireEvent.keyDown(screen.getByTestId('trigger'), { key: 'Enter' });
+
+    expect(onKeyDown).toHaveBeenCalledOnce();
+    expect(screen.queryByTestId('content')).toBeNull();
+  });
+
   it('waits for a controlled owner to commit requested open changes', async () => {
     const onOpenChange = vi.fn();
     const renderMenu = (open: boolean) => (

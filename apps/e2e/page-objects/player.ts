@@ -38,6 +38,10 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.timeSlider).first();
   }
 
+  get timeSliderThumb(): Locator {
+    return this.timeSlider.getByRole('slider');
+  }
+
   get muteButton(): Locator {
     return this.page.locator(SELECTORS.muteButton).first();
   }
@@ -46,12 +50,24 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.volumeSlider).first();
   }
 
+  get volumeSliderThumb(): Locator {
+    return this.volumeSlider.getByRole('slider');
+  }
+
   get fullscreenButton(): Locator {
     return this.page.locator(SELECTORS.fullscreenButton).first();
   }
 
   get pipButton(): Locator {
     return this.page.locator(SELECTORS.pipButton).first();
+  }
+
+  get castButton(): Locator {
+    return this.page.locator(SELECTORS.castButton).first();
+  }
+
+  get airPlayButton(): Locator {
+    return this.page.locator(SELECTORS.airPlayButton).first();
   }
 
   get captionsButton(): Locator {
@@ -97,6 +113,10 @@ export class PlayerPage {
 
   get duration(): Locator {
     return this.page.locator(SELECTORS.duration).first();
+  }
+
+  get timeToggle(): Locator {
+    return this.page.locator(SELECTORS.timeToggle).first();
   }
 
   get thumbnail(): Locator {

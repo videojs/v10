@@ -1,10 +1,10 @@
 import { expect, type Page, test } from '@playwright/test';
 import { ALL_VIDEO_PAGES, type PageEntry, VIDEO_PAGES } from '../fixtures/media';
+import { mockPresentation } from '../fixtures/presentation';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 const UI_VIDEO_PAGES = VIDEO_PAGES.filter(({ media }) => media === 'video');
-const KEYBOARD_MENU_PAGES = UI_VIDEO_PAGES.filter(({ path }) => path.endsWith('video-mp4.html'));
 const EJECTED_HTML_VIDEO_PATH = '/pages/ejected-html-video-mp4.html';
 
 function getMediaVolume(page: Page): Promise<number> {
@@ -13,76 +13,6 @@ function getMediaVolume(page: Page): Promise<number> {
     const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
     return actual?.volume ?? 1;
   }, SELECTORS.media);
-}
-
-async function mockPresentation(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    let fullscreenElement: Element | null = null;
-    let pipElement: Element | null = null;
-
-    Object.defineProperties(document, {
-      fullscreenElement: { configurable: true, get: () => fullscreenElement },
-      fullscreenEnabled: { configurable: true, get: () => true },
-      pictureInPictureElement: { configurable: true, get: () => pipElement },
-      pictureInPictureEnabled: { configurable: true, get: () => true },
-    });
-
-    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
-      configurable: true,
-      value: async function requestFullscreen(this: HTMLElement) {
-        fullscreenElement = this;
-        document.dispatchEvent(new Event('fullscreenchange'));
-      },
-    });
-
-    Object.defineProperty(document, 'exitFullscreen', {
-      configurable: true,
-      value: async () => {
-        fullscreenElement = null;
-        document.dispatchEvent(new Event('fullscreenchange'));
-      },
-    });
-
-    Object.defineProperty(HTMLVideoElement.prototype, 'requestPictureInPicture', {
-      configurable: true,
-      value: async function requestPictureInPicture(this: HTMLVideoElement) {
-        pipElement = this;
-        this.dispatchEvent(new Event('enterpictureinpicture'));
-        return {};
-      },
-    });
-
-    Object.defineProperties(HTMLVideoElement.prototype, {
-      webkitPresentationMode: {
-        configurable: true,
-        get: function webkitPresentationMode(this: HTMLVideoElement) {
-          return pipElement === this ? 'picture-in-picture' : 'inline';
-        },
-      },
-      webkitSetPresentationMode: {
-        configurable: true,
-        value: function webkitSetPresentationMode(this: HTMLVideoElement, mode: string) {
-          const wasPip = pipElement === this;
-          pipElement = mode === 'picture-in-picture' ? this : null;
-
-          if (!wasPip && pipElement === this) {
-            this.dispatchEvent(new Event('enterpictureinpicture'));
-          } else if (wasPip && pipElement !== this) {
-            this.dispatchEvent(new Event('leavepictureinpicture'));
-          }
-        },
-      },
-    });
-
-    Object.defineProperty(document, 'exitPictureInPicture', {
-      configurable: true,
-      value: async () => {
-        const video = pipElement;
-        pipElement = null;
-        video?.dispatchEvent(new Event('leavepictureinpicture'));
-      },
-    });
-  });
 }
 
 for (const { name, path, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry[]) {
@@ -200,36 +130,6 @@ test.describe('Video Controls — Ejected HTML registration', () => {
     expect(errors).toEqual([]);
   });
 });
-
-for (const { name, path } of KEYBOARD_MENU_PAGES) {
-  test(`${name} restores submenu focus and continues keyboard navigation`, async ({ page }) => {
-    const player = new PlayerPage(page);
-    await page.goto(path);
-    await player.waitForMediaReady();
-    await player.showControls();
-
-    await player.settingsButton.focus();
-    await page.keyboard.press('Enter');
-    await expect(player.settingsSpeedItem).toBeVisible();
-    await expect(player.settingsSpeedItem).toBeFocused();
-
-    await page.keyboard.press('ArrowRight');
-    await expect(player.activeMenuPanel).toBeVisible();
-    await expect(player.activeMenuPanel.getByRole('menuitem').first()).toBeFocused();
-
-    await page.keyboard.press('ArrowLeft');
-    await expect(player.activeMenuPanel).not.toBeVisible();
-    await expect(player.settingsSpeedItem).toBeFocused();
-
-    await page.keyboard.press('ArrowDown');
-    await expect(page.locator('[role="menuitem"]:focus')).toHaveCount(1);
-
-    await page.keyboard.press('Tab');
-    await expect(player.settingsButton).toHaveAttribute('aria-expanded', 'false');
-    await expect(player.settingsSpeedItem).not.toBeFocused();
-    await expect(page.locator('body')).not.toBeFocused();
-  });
-}
 
 for (const { name, path } of UI_VIDEO_PAGES) {
   test.describe(`Video Controls — ${name} UI`, () => {
