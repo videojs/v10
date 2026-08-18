@@ -2,8 +2,8 @@
 // elements used by the minimal skin without creating a skin element. Use
 // this entry when building an ejected (light DOM) player layout for live
 // HLS / DASH streams.
-import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
+import { ContainerElement } from '../../ui/container/container-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
@@ -18,7 +18,7 @@ import { LiveAudioPlayerElement } from './player';
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(LiveAudioPlayerElement);
-safeDefine(MediaContainerElement);
+safeDefine(ContainerElement);
 
 // Compound groups.
 defineErrorDialog();

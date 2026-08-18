@@ -1,6 +1,6 @@
 import { videoFeatures } from '@videojs/core/dom';
-import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
+import { ContainerElement } from '../../ui/container/container-element';
 import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
@@ -14,7 +14,7 @@ export class VideoPlayerElement extends ProviderMixin(MediaElement) {
 
 // Provider must be defined before consumer for context handshake during upgrade.
 safeDefine(VideoPlayerElement);
-safeDefine(MediaContainerElement);
+safeDefine(ContainerElement);
 
 declare global {
   interface HTMLElementTagNameMap {

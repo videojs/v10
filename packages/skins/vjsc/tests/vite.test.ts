@@ -72,6 +72,7 @@ describe('Skins Vite workflow', () => {
     expect(reactSkin?.code).toContain('DefaultVideoSkin');
     expect(htmlSkin?.code).toContain('MinimalVideoSkin');
     expect(htmlSkin?.code).toContain('media-skin-video-minimal');
+    expect(htmlSkin?.code).toContain('@videojs/html/ui/container');
     expect(htmlSkin?.code).not.toContain('@videojs/core/vjsc');
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
     expect(resolved?.id).toContain('/vjsc/skins/default-video/skin.tsx');
