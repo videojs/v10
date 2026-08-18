@@ -2,6 +2,7 @@
 
 import type { MenuCore, MenuState } from '@videojs/core';
 import { isMenuNavigationKey } from '@videojs/core/dom';
+import { isInteractiveActivation } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -99,7 +100,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
         return;
       }
 
-      if (event.key === 'Enter' || event.key === ' ') {
+      if (isInteractiveActivation(event.nativeEvent)) {
         event.preventDefault();
         menu.triggerProps.onClick(event.nativeEvent);
         return;
