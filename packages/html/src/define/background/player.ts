@@ -1,15 +1,16 @@
 import { backgroundFeatures } from '@videojs/core/dom';
-
 import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
-import { UIElement } from '../../ui/ui-element';
 import { safeDefine } from '../safe-define';
 
-const { ProviderMixin } = createPlayer({
+const { PlayerElement, PlayerController: ConfiguredPlayerController } = createPlayer({
   features: backgroundFeatures,
 });
 
-export class BackgroundVideoPlayerElement extends ProviderMixin(UIElement) {
+/** Player controller bound to the background video player store. */
+export const PlayerController = ConfiguredPlayerController;
+
+export class BackgroundVideoPlayerElement extends PlayerElement {
   static readonly tagName = 'background-video-player';
 }
 

@@ -1,15 +1,16 @@
 import { videoFeatures } from '@videojs/core/dom';
-
 import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
-import { UIElement } from '../../ui/ui-element';
 import { safeDefine } from '../safe-define';
 
-const { ProviderMixin } = createPlayer({
+const { PlayerElement, PlayerController: ConfiguredPlayerController } = createPlayer({
   features: videoFeatures,
 });
 
-export class VideoPlayerElement extends ProviderMixin(UIElement) {
+/** Player controller bound to the standard video player store. */
+export const PlayerController = ConfiguredPlayerController;
+
+export class VideoPlayerElement extends PlayerElement {
   static readonly tagName = 'video-player';
 }
 
