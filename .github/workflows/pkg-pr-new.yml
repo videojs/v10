@@ -95,11 +95,16 @@ jobs:
       # prepack scripts pack without site-generated markdown; previews don't need
       # bundled docs. --previewVersion rewrites versions to 0.0.0-preview-<sha>
       # so a preview can never satisfy a semver range for a real npm release.
+      #
+      # --peerDeps matters because @videojs/store peer-depends on @videojs/element:
+      # `pnpm pack` resolves that `workspace:*` to the current release, so without
+      # it an install pulls a published @videojs/element alongside the preview one
+      # and ends up with two copies of the custom-element base.
       - name: Publish preview packages
         env:
           VIDEOJS_SKIP_PACKAGE_DOCS: '1'
         run: >
-          pnpm exec pkg-pr-new publish --pnpm --previewVersion --packageManager=pnpm
+          pnpm exec pkg-pr-new publish --pnpm --previewVersion --peerDeps --packageManager=pnpm
           './packages/core'
           './packages/element'
           './packages/html'
