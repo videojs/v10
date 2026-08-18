@@ -41,6 +41,6 @@
   },
   "stackblitz": {
     "installDependencies": false,
-    "startCommand": "pnpm install --ignore-scripts && pnpm dev"
+    "startCommand": "pnpm install --ignore-scripts --config.nodeLinker=hoisted && pnpm dev"
   }
 }
