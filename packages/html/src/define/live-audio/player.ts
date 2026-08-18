@@ -1,14 +1,16 @@
 import { liveAudioFeatures } from '@videojs/core/dom';
 import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
-import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
-const { ProviderMixin } = createPlayer({
+const { PlayerElement, PlayerController: ConfiguredPlayerController } = createPlayer({
   features: liveAudioFeatures,
 });
 
-export class LiveAudioPlayerElement extends ProviderMixin(MediaElement) {
+/** Player controller bound to the live audio player store. */
+export const PlayerController = ConfiguredPlayerController;
+
+export class LiveAudioPlayerElement extends PlayerElement {
   static readonly tagName = 'live-audio-player';
 }
 

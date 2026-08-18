@@ -14,7 +14,7 @@ import {
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 
-import { MediaElement } from '../../ui/media-element';
+import type { MediaElement } from '../../ui/media-element';
 import { type CreatePlayerResult, createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
@@ -24,6 +24,12 @@ describe('createPlayer', () => {
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
     // @ts-expect-error ContainerMixin is no longer part of the HTML API.
     result.ContainerMixin;
+    // @ts-expect-error createPlayer returns a PlayerElement class directly.
+    result.ProviderMixin;
+    // @ts-expect-error Use playerContext.
+    result.context;
+    // @ts-expect-error The player element owns its store.
+    result.create;
   });
 
   it('resolves audio features to AudioPlayerStore', () => {
@@ -31,7 +37,7 @@ describe('createPlayer', () => {
 
     assertType<CreatePlayerResult<AudioPlayerStore>>(result);
 
-    const store = result.create();
+    const store = new result.PlayerElement().store;
 
     assertType<number | undefined>(store.error?.code);
     assertType<string | undefined>(store.error?.message);
@@ -61,16 +67,24 @@ describe('createPlayer', () => {
   it('infers config properties from selected features', () => {
     const withMetadata = createPlayer({ features: [metadataFeature] });
     const withoutMetadata = createPlayer({ features: [features.playback] });
-    const MetadataProvider = withMetadata.ProviderMixin(MediaElement);
-    const PlainProvider = withoutMetadata.ProviderMixin(MediaElement);
-    const metadataProvider = new MetadataProvider();
-    const plainProvider = new PlainProvider();
+    const metadataPlayer = new withMetadata.PlayerElement();
+    const plainPlayer = new withoutMetadata.PlayerElement();
 
     // The store calls this `title`; on an element that name is the tooltip.
-    assertType<string | null | undefined>(metadataProvider.contentTitle);
+    assertType<string | null | undefined>(metadataPlayer.contentTitle);
 
     // @ts-expect-error metadata properties are absent when the feature is absent.
-    plainProvider.contentTitle;
+    plainPlayer.contentTitle;
+  });
+
+  it('returns a controller already bound to the player context', () => {
+    const { PlayerController } = createPlayer({ features: videoFeatures });
+    const host = null as unknown as MediaElement;
+
+    assertType<import('../player-controller').PlayerController<VideoPlayerStore>>(new PlayerController(host));
+    assertType<import('../player-controller').PlayerController<VideoPlayerStore, boolean>>(
+      new PlayerController(host, (state) => state.paused)
+    );
   });
 
   it('exposes orientation lock configuration as a provider property', () => {
@@ -105,7 +119,7 @@ describe('createPlayer', () => {
     assertType<CreatePlayerResult<PlayerStore<[...typeof videoFeatures, typeof analyticsFeature]>>>(result);
 
     // The store has both video and analytics state
-    const store = result.create();
+    const store = new result.PlayerElement().store;
 
     assertType<boolean>(store.paused);
     assertType<number>(store.volume);
@@ -131,7 +145,7 @@ describe('createPlayer', () => {
       features: [...audioFeatures, analyticsFeature],
     });
 
-    const store = result.create();
+    const store = new result.PlayerElement().store;
 
     assertType<boolean>(store.paused);
     assertType<number>(store.volume);
