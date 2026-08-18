@@ -58,9 +58,8 @@ class DashMediaBase
   }
 
   destroy() {
-    this.detach();
-    this.#engine.destroy();
     super.destroy();
+    this.#engine.destroy();
   }
 
   /**
