@@ -25,12 +25,8 @@ export interface RenditionCapPolicy {
  *
  * The low rungs of a ladder are there for bad network conditions, and at that
  * end the relationship between resolution and perceived quality stops holding:
- * a small player capped to 360p looks worse than the size alone suggests. There
- * is no reliable signal to key that on — bitrate tracks entropy rather than
- * quality, and the HLS `SCORE` attribute that would say it outright is an
- * unfinalized draft that Mux does not emit — so a fixed floor stands in for one.
- *
- * @see https://github.com/muxinc/elements/pull/1263
+ * a small player capped to 360p looks worse than its size alone suggests. No
+ * reliable signal exists to key that on, so a fixed floor stands in for one.
  */
 export const DEFAULT_MIN_AUTO_RESOLUTION: MediaResolution = '720p';
 
