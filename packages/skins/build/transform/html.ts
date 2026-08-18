@@ -1,6 +1,5 @@
 import { defineConfig, html, rewrite } from '@videojs/compiler';
 import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compiler/styles';
-import { createComponentTransforms as createHtmlComponentTransforms } from '../../../html/compiler';
 
 interface CreateCompilerHtmlConfigOptions {
   styles?: StylePluginOptions | undefined;
@@ -50,7 +49,6 @@ export function createCompilerHtmlConfig(options: CreateCompilerHtmlConfigOption
     target: html({
       imports: {
         '@videojs/icons/components': false,
-        '@videojs/compiler/components': false,
       },
     }),
     plugins: [
@@ -62,9 +60,6 @@ export function createCompilerHtmlConfig(options: CreateCompilerHtmlConfigOption
           const rootContainer = code.function(rootComponentName).jsx.element('Container');
           const containerTargetClassName = code.function('Container').jsx.props('className').on('$.Container');
           return [
-            // Lower constrained canonical JSX before target element rewrites.
-            ...createHtmlComponentTransforms(code),
-
             // Establish the Skin root, component content slot, and Container API.
             rootContainer.addProp('className', () => {
               if (!options.rootClassName) {
@@ -74,14 +69,14 @@ export function createCompilerHtmlConfig(options: CreateCompilerHtmlConfigOption
             }),
             containerTargetClassName.replace(({ value }) => code.value.array([value, 'className'])),
             code.function('Container').setProps(['children', 'className']),
-            code.jsx.element('Slot').replace('slot'),
-
             // Target-neutral presentational roles become native HTML elements.
             code.jsx.element('OverlayRoot').replace('div'),
             code.jsx.element('StatusIndicatorGroup').replace('div'),
             code.jsx.element('PreviewValue').replace('div'),
             code.jsx.element('SubmenuHint').replace('span'),
             code.jsx.element('QualityOptionLabel').replace('span'),
+            code.jsx.element('SelectedLabel').addProp('data-part', 'hint'),
+            code.jsx.element('SelectedLabel').replace('span'),
 
             // Apply Skin-specific menu behavior before registry component lowering.
             code.jsx.element('$.Menu.Root').unwrap({ forwardPropsTo: '$.Menu.Content' }),

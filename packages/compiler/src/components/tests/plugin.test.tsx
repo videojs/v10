@@ -131,7 +131,7 @@ describe('plugin', () => {
         host: targets.Tooltip,
         parts: {
           Root: Host,
-          Trigger: ({ props, children }) => <Host {...props} render={children} />,
+          Trigger: ({ props }) => <Host {...props} render={props.children} />,
           Popup: Host,
         },
       },
@@ -172,8 +172,8 @@ describe('plugin', () => {
       Tooltip: {
         render: ({ root, parts }) => (
           <TooltipElement {...root.props}>
-            {parts.Trigger.one().children}
-            {parts.Popup.one().children}
+            {parts.Trigger.one().props.children}
+            {parts.Popup.one().props.children}
           </TooltipElement>
         ),
       },
@@ -215,8 +215,8 @@ describe('plugin', () => {
       Tooltip: {
         render: ({ root, parts }) => (
           <TooltipElement {...root.props}>
-            {parts.Trigger.one().children}
-            {parts.Popup.one().children}
+            {parts.Trigger.one().props.children}
+            {parts.Popup.one().props.children}
           </TooltipElement>
         ),
       },
@@ -241,5 +241,69 @@ describe('plugin', () => {
     );
 
     expect(result.code.match(/<media-tooltip/g)).toHaveLength(2);
+  });
+
+  it('lowers compiler primitives through framework targets', async () => {
+    const Span = defineTarget({ tagName: 'span' });
+    const SlotTarget = defineTarget<{ children?: unknown }>({
+      render: ({ props }) => props.children,
+    });
+    const TextTarget = defineTarget<Record<string, unknown>>({
+      render: ({ props }) => <Span {...props}>{props.children}</Span>,
+    });
+    const registry = defineRegistry(components, fixtureTargets(), {
+      Slot: SlotTarget,
+      Text: TextTarget,
+    });
+    const result = await transform(
+      `
+        import { Slot, Text } from '@videojs/compiler/components';
+
+        export const view = <div><Text className="label">Hello</Text><Slot>{content}</Slot></div>;
+      `,
+      { config: { target: target(), plugins: [plugin(registry)] } }
+    );
+
+    expect(result.code).toContain('<span className="label">Hello</span>');
+    expect(result.code).toContain('{content}');
+    expect(result.code).not.toContain('@videojs/compiler/components');
+  });
+
+  it('attaches named templates with template-local part targets', async () => {
+    const Span = defineTarget({ tagName: 'span' });
+    const Label = defineTarget<Record<string, unknown> & { item: { label: unknown } }>({
+      render: ({ props }) => <Span {...props}>{props.item.label}</Span>,
+    });
+    const registry = defineRegistry(components, fixtureTargets(), {
+      Template: {
+        item: {
+          attach: {
+            prop: 'renderItem',
+            parameters: ['props', 'item'],
+            spread: 'props',
+          },
+          parts: { label: Label },
+        },
+      },
+    });
+    const result = await transform(
+      `
+        import { Template } from '@videojs/compiler/components';
+
+        export const view = (
+          <List>
+            <Template name="item">
+              <Row><Template.Part name="label" className="label" /></Row>
+            </Template>
+          </List>
+        );
+      `,
+      { config: { target: target(), plugins: [plugin(registry)] } }
+    );
+
+    expect(result.code).toContain('renderItem={(props, item) => (<Row {...props}>');
+    expect(result.code).toContain('<span className="label">{item.label}</span>');
+    expect(result.code).not.toContain('<Template');
+    expect(result.code).not.toContain('</List>');
   });
 });

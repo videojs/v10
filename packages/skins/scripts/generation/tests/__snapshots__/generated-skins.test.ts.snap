@@ -6088,18 +6088,17 @@ import { SpeechIcon } from '@/icons';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import { useTranslator } from '@/i18n';
 import { useAudioTrackOptions } from '@/ui/audio-track/use-audio-track-options';
+import { Text } from '@/i18n';
 
 export function AudioTrackMenu() {
   const audioTrack = useAudioTrackOptions();
-  const t = useTranslator();
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   return (
     hasAudioTrack && (
       <Submenu
         icon={<SpeechIcon className="media-icon" />}
-        label={<span>{t(audioText)}</span>}
+        label={<Text token={audioText.key}>{audioText.text}</Text>}
         selectedLabel={<span className="media-hint-label">{audioTrack?.selectedLabel}</span>}
       >
         <AudioTrackRadioGroup
@@ -6120,18 +6119,17 @@ import { CaptionsOffIcon } from '@/icons';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import { useTranslator } from '@/i18n';
 import { useCaptionsOptions } from '@/ui/captions-radio-group/use-captions-options';
+import { Text } from '@/i18n';
 
 export function CaptionsMenu() {
   const captions = useCaptionsOptions();
-  const t = useTranslator();
   const hasCaptions = captions?.state.availability === 'available';
   return (
     hasCaptions && (
       <Submenu
         icon={<CaptionsOffIcon className="media-icon" />}
-        label={<span>{t(captionsText)}</span>}
+        label={<Text token={captionsText.key}>{captionsText.text}</Text>}
         selectedLabel={<span className="media-hint-label">{captions?.selectedLabel}</span>}
       >
         <CaptionsRadioGroup
@@ -6165,18 +6163,17 @@ import { SpeedIcon } from '@/icons';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import { useTranslator } from '@/i18n';
 import { usePlaybackRateOptions } from '@/ui/playback-rate/use-playback-rate-options';
+import { Text } from '@/i18n';
 
 export function PlaybackRateMenu() {
   const playbackRate = usePlaybackRateOptions();
-  const t = useTranslator();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
   return (
     hasPlaybackRate && (
       <Submenu
         icon={<SpeedIcon className="media-icon" />}
-        label={<span>{t(speedText)}</span>}
+        label={<Text token={speedText.key}>{speedText.text}</Text>}
         selectedLabel={<span className="media-hint-label">{playbackRate?.selectedLabel}</span>}
       >
         <PlaybackRateRadioGroup
@@ -6197,18 +6194,17 @@ import { SwitchesIcon } from '@/icons';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import { useTranslator } from '@/i18n';
 import { useQualityOptions } from '@/ui/quality/use-quality-options';
+import { Text } from '@/i18n';
 
 export function QualityMenu() {
   const quality = useQualityOptions();
-  const t = useTranslator();
   const hasQuality = quality?.state.availability === 'available';
   return (
     hasQuality && (
       <Submenu
         icon={<SwitchesIcon className="media-icon" />}
-        label={<span>{t(qualityText)}</span>}
+        label={<Text token={qualityText.key}>{qualityText.text}</Text>}
         selectedLabel={<span className="media-hint-label">{quality?.selectedLabel}</span>}
       >
         <QualityRadioGroup
@@ -6309,7 +6305,7 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
 import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@/icons';
 import type { ReactNode } from 'react';
-import { useTranslator } from '@/i18n';
+import { Text } from '@/i18n';
 import { Menu as MenuTarget } from '@/ui/menu';
 import { Tooltip as TooltipTarget } from '@/ui/tooltip';
 
@@ -6318,7 +6314,6 @@ export interface SettingsMenuProps {
 }
 
 export function SettingsMenu({ children }: SettingsMenuProps) {
-  const t = useTranslator();
   return (
     <MenuTarget.Root side="top" align="center">
       <TooltipTarget.Root side="top">
@@ -6326,12 +6321,14 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
           render={
             <MenuTarget.Trigger className="media-button media-settings-trigger">
               <GearIcon className="media-button-icon media-settings-icon" />
-              <span className="media-sr-only">{t(settingsText)}</span>
+              <Text className="media-sr-only" token={settingsText.key}>
+                {settingsText.text}
+              </Text>
             </MenuTarget.Trigger>
           }
         />
         <TooltipTarget.Popup className="media-surface media-tooltip">
-          <span>{t(settingsText)}</span>
+          <Text token={settingsText.key}>{settingsText.text}</Text>
         </TooltipTarget.Popup>
       </TooltipTarget.Root>
       <MenuTarget.Content className="media-surface media-popover media-settings media-menu-group">
@@ -6420,7 +6417,7 @@ export function TimeSlider() {
       <TimeSliderTarget.Chapters
         className="media-slider-chapters"
         renderChapter={(props) => (
-          <div {...props} className="media-slider-chapter">
+          <div className="media-slider-chapter" {...props}>
             <TimeSliderTarget.Track className="media-slider-chapter-track">
               <TimeSliderTarget.Buffer className="media-slider-buffer" />
               <TimeSliderTarget.Fill className="media-slider-fill" />
@@ -9687,18 +9684,17 @@ import { SpeechIcon } from '@/icons/minimal';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import { useTranslator } from '@/i18n';
 import { useAudioTrackOptions } from '@/ui/audio-track/use-audio-track-options';
+import { Text } from '@/i18n';
 
 export function AudioTrackMenu() {
   const audioTrack = useAudioTrackOptions();
-  const t = useTranslator();
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   return (
     hasAudioTrack && (
       <Submenu
         icon={<SpeechIcon className="media-icon" />}
-        label={<span>{t(audioText)}</span>}
+        label={<Text token={audioText.key}>{audioText.text}</Text>}
         selectedLabel={<span className="media-hint-label">{audioTrack?.selectedLabel}</span>}
       >
         <AudioTrackRadioGroup
@@ -9719,18 +9715,17 @@ import { CaptionsOffIcon } from '@/icons/minimal';
 import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import { useTranslator } from '@/i18n';
 import { useCaptionsOptions } from '@/ui/captions-radio-group/use-captions-options';
+import { Text } from '@/i18n';
 
 export function CaptionsMenu() {
   const captions = useCaptionsOptions();
-  const t = useTranslator();
   const hasCaptions = captions?.state.availability === 'available';
   return (
     hasCaptions && (
       <Submenu
         icon={<CaptionsOffIcon className="media-icon" />}
-        label={<span>{t(captionsText)}</span>}
+        label={<Text token={captionsText.key}>{captionsText.text}</Text>}
         selectedLabel={<span className="media-hint-label">{captions?.selectedLabel}</span>}
       >
         <CaptionsRadioGroup
@@ -9764,18 +9759,17 @@ import { SpeedIcon } from '@/icons/minimal';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import { useTranslator } from '@/i18n';
 import { usePlaybackRateOptions } from '@/ui/playback-rate/use-playback-rate-options';
+import { Text } from '@/i18n';
 
 export function PlaybackRateMenu() {
   const playbackRate = usePlaybackRateOptions();
-  const t = useTranslator();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
   return (
     hasPlaybackRate && (
       <Submenu
         icon={<SpeedIcon className="media-icon" />}
-        label={<span>{t(speedText)}</span>}
+        label={<Text token={speedText.key}>{speedText.text}</Text>}
         selectedLabel={<span className="media-hint-label">{playbackRate?.selectedLabel}</span>}
       >
         <PlaybackRateRadioGroup
@@ -9796,18 +9790,17 @@ import { SwitchesIcon } from '@/icons/minimal';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
-import { useTranslator } from '@/i18n';
 import { useQualityOptions } from '@/ui/quality/use-quality-options';
+import { Text } from '@/i18n';
 
 export function QualityMenu() {
   const quality = useQualityOptions();
-  const t = useTranslator();
   const hasQuality = quality?.state.availability === 'available';
   return (
     hasQuality && (
       <Submenu
         icon={<SwitchesIcon className="media-icon" />}
-        label={<span>{t(qualityText)}</span>}
+        label={<Text token={qualityText.key}>{qualityText.text}</Text>}
         selectedLabel={<span className="media-hint-label">{quality?.selectedLabel}</span>}
       >
         <QualityRadioGroup
@@ -9908,7 +9901,7 @@ export function RadioItem({ checked, children, className, ...props }: RadioItemP
 import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@/icons/minimal';
 import type { ReactNode } from 'react';
-import { useTranslator } from '@/i18n';
+import { Text } from '@/i18n';
 import { Menu as MenuTarget } from '@/ui/menu';
 import { Tooltip as TooltipTarget } from '@/ui/tooltip';
 
@@ -9917,7 +9910,6 @@ export interface SettingsMenuProps {
 }
 
 export function SettingsMenu({ children }: SettingsMenuProps) {
-  const t = useTranslator();
   return (
     <MenuTarget.Root side="top" align="center">
       <TooltipTarget.Root side="top">
@@ -9925,12 +9917,14 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
           render={
             <MenuTarget.Trigger className="media-button media-settings-trigger">
               <GearIcon className="media-button-icon media-settings-icon" />
-              <span className="media-sr-only">{t(settingsText)}</span>
+              <Text className="media-sr-only" token={settingsText.key}>
+                {settingsText.text}
+              </Text>
             </MenuTarget.Trigger>
           }
         />
         <TooltipTarget.Popup className="media-surface media-tooltip">
-          <span>{t(settingsText)}</span>
+          <Text token={settingsText.key}>{settingsText.text}</Text>
         </TooltipTarget.Popup>
       </TooltipTarget.Root>
       <MenuTarget.Content className="media-surface media-popover media-settings media-menu-group">
@@ -10019,7 +10013,7 @@ export function TimeSlider() {
       <TimeSliderTarget.Chapters
         className="media-slider-chapters"
         renderChapter={(props) => (
-          <div {...props} className="media-slider-chapter">
+          <div className="media-slider-chapter" {...props}>
             <TimeSliderTarget.Track className="media-slider-chapter-track">
               <TimeSliderTarget.Buffer className="media-slider-buffer" />
               <TimeSliderTarget.Fill className="media-slider-fill" />
@@ -13044,7 +13038,7 @@ export function Poster({ className, ...props }: PosterProps) {
 import { SeekIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
 import { cn, resolveClassName } from '@/components/videojs/utils';
-import { SeekButton as SeekButtonTarget } from '@videojs/react';
+import { SeekButton as SeekButtonTarget, Text } from '@videojs/react';
 
 export interface SeekButtonProps extends Omit<SeekButtonTarget.Props, 'children'> {}
 
@@ -13072,7 +13066,7 @@ export function SeekButton({ className, ...props }: SeekButtonProps = {}) {
         <SeekIcon
           className={cn('size-media-icon drop-shadow-[0_1px_0_rgb(0_0_0/0.15)]', seconds < 0 && '-scale-x-100')}
         />
-        <span className="tabular-nums">{Math.abs(seconds)}</span>
+        <Text className="tabular-nums">{Math.abs(seconds)}</Text>
       </SeekButtonTarget>
     </ButtonTooltip>
   );
@@ -13235,7 +13229,6 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
         className="relative flex size-full min-h-0 min-w-0 flex-1 items-center rounded-[inherit]"
         renderChapter={(props) => (
           <div
-            {...props}
             className={cn(
               'group/chapter absolute inset-0 flex min-h-0 min-w-0 items-center justify-center',
               '[--media-chapter-inset-start:0.5] [--media-chapter-inset-end:0.5]',
@@ -13243,6 +13236,7 @@ export function TimeSlider({ className, ...props }: TimeSliderProps) {
               'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start))]',
               'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start)_0)]',
             )}
+            {...props}
           >
             <TimeSliderTarget.Track
               className={cn(
@@ -13422,14 +13416,14 @@ import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import { cn } from '@/components/videojs/utils';
-import { useTranslator, useAudioTrackOptions } from '@videojs/react';
+import { useAudioTrackOptions } from '@videojs/react';
 import type { SubmenuProps } from './submenu';
+import { Text } from '@videojs/react';
 
 export interface AudioTrackMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
 
 export function AudioTrackMenu({ ...props }: AudioTrackMenuProps = {}) {
   const audioTrack = useAudioTrackOptions();
-  const t = useTranslator();
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   return (
     hasAudioTrack && (
@@ -13443,7 +13437,7 @@ export function AudioTrackMenu({ ...props }: AudioTrackMenuProps = {}) {
             )}
           />
         }
-        label={<span>{t(audioText)}</span>}
+        label={<Text token={audioText.key}>{audioText.text}</Text>}
         selectedLabel={
           <span className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">{audioTrack?.selectedLabel}</span>
         }
@@ -13467,14 +13461,14 @@ import { CaptionsRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import { cn } from '@/components/videojs/utils';
-import { useTranslator, useCaptionsOptions } from '@videojs/react';
+import { useCaptionsOptions } from '@videojs/react';
 import type { SubmenuProps } from './submenu';
+import { Text } from '@videojs/react';
 
 export interface CaptionsMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
 
 export function CaptionsMenu({ ...props }: CaptionsMenuProps = {}) {
   const captions = useCaptionsOptions();
-  const t = useTranslator();
   const hasCaptions = captions?.state.availability === 'available';
   return (
     hasCaptions && (
@@ -13488,7 +13482,7 @@ export function CaptionsMenu({ ...props }: CaptionsMenuProps = {}) {
             )}
           />
         }
-        label={<span>{t(captionsText)}</span>}
+        label={<Text token={captionsText.key}>{captionsText.text}</Text>}
         selectedLabel={
           <span className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">{captions?.selectedLabel}</span>
         }
@@ -13536,14 +13530,14 @@ import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import { cn } from '@/components/videojs/utils';
-import { useTranslator, usePlaybackRateOptions } from '@videojs/react';
+import { usePlaybackRateOptions } from '@videojs/react';
 import type { SubmenuProps } from './submenu';
+import { Text } from '@videojs/react';
 
 export interface PlaybackRateMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
 
 export function PlaybackRateMenu({ ...props }: PlaybackRateMenuProps = {}) {
   const playbackRate = usePlaybackRateOptions();
-  const t = useTranslator();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
   return (
     hasPlaybackRate && (
@@ -13557,7 +13551,7 @@ export function PlaybackRateMenu({ ...props }: PlaybackRateMenuProps = {}) {
             )}
           />
         }
-        label={<span>{t(speedText)}</span>}
+        label={<Text token={speedText.key}>{speedText.text}</Text>}
         selectedLabel={
           <span className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">
             {playbackRate?.selectedLabel}
@@ -13583,14 +13577,14 @@ import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 import { cn } from '@/components/videojs/utils';
-import { useTranslator, useQualityOptions } from '@videojs/react';
+import { useQualityOptions } from '@videojs/react';
 import type { SubmenuProps } from './submenu';
+import { Text } from '@videojs/react';
 
 export interface QualityMenuProps extends Omit<SubmenuProps, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
 
 export function QualityMenu({ ...props }: QualityMenuProps = {}) {
   const quality = useQualityOptions();
-  const t = useTranslator();
   const hasQuality = quality?.state.availability === 'available';
   return (
     hasQuality && (
@@ -13604,7 +13598,7 @@ export function QualityMenu({ ...props }: QualityMenuProps = {}) {
             )}
           />
         }
-        label={<span>{t(qualityText)}</span>}
+        label={<Text token={qualityText.key}>{qualityText.text}</Text>}
         selectedLabel={
           <span className="max-w-24 overflow-hidden text-ellipsis whitespace-nowrap">{quality?.selectedLabel}</span>
         }
@@ -13755,8 +13749,7 @@ import { settingsText } from '@videojs/core/i18n/text/menu';
 import { GearIcon } from '@videojs/react/icons';
 import { cn, resolveClassName } from '@/components/videojs/utils';
 import type { ReactNode } from 'react';
-import { useTranslator } from '@videojs/react';
-import { Menu as MenuTarget, Tooltip as TooltipTarget } from '@videojs/react';
+import { Menu as MenuTarget, Text, Tooltip as TooltipTarget } from '@videojs/react';
 
 export interface SettingsMenuProps extends MenuTarget.RootProps {
   children?: ReactNode;
@@ -13764,7 +13757,6 @@ export interface SettingsMenuProps extends MenuTarget.RootProps {
 }
 
 export function SettingsMenu({ children, className, ...props }: SettingsMenuProps) {
-  const t = useTranslator();
   return (
     <MenuTarget.Root side="top" align="center" {...props}>
       <TooltipTarget.Root side="top">
@@ -13791,7 +13783,9 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
                   'group-aria-expanded/settings:rotate-90 motion-reduce:duration-0',
                 )}
               />
-              <span className="sr-only">{t(settingsText)}</span>
+              <Text className="sr-only" token={settingsText.key}>
+                {settingsText.text}
+              </Text>
             </MenuTarget.Trigger>
           }
         />
@@ -13829,7 +13823,7 @@ export function SettingsMenu({ children, className, ...props }: SettingsMenuProp
             'data-[side=left]:before:w-(--media-tooltip-side-offset) data-[side=right]:before:w-(--media-tooltip-side-offset)',
           )}
         >
-          <span>{t(settingsText)}</span>
+          <Text token={settingsText.key}>{settingsText.text}</Text>
         </TooltipTarget.Popup>
       </TooltipTarget.Root>
       <MenuTarget.Content

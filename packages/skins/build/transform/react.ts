@@ -1,8 +1,7 @@
-import { defineConfig, jsx, rewrite } from '@videojs/compiler';
+import { createJsxEditor, defineConfig, jsx, rewrite } from '@videojs/compiler';
 import type { ImportRef } from '@videojs/compiler/ast';
 import { type StylePluginOptions, plugin as stylesPlugin } from '@videojs/compiler/styles';
 import type { Expression } from 'typescript';
-import { createComponentTransforms as createReactComponentTransforms } from '../../../react/compiler';
 
 interface CreateCompilerReactConfigOptions {
   styles?: StylePluginOptions | undefined;
@@ -57,7 +56,6 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
   const containerProps = requiredReactImport(resolveImport, 'ContainerProps');
   const posterProps = requiredReactImport(resolveImport, 'PosterProps');
   const usePlayerRef = requiredReactImport(resolveImport, 'usePlayer');
-  const useTranslatorRef = requiredReactImport(resolveImport, 'useTranslator');
   const useQualityOptionsRef = requiredReactImport(resolveImport, 'useQualityOptions');
   const useAudioTrackOptionsRef = requiredReactImport(resolveImport, 'useAudioTrackOptions');
   const usePlaybackRateOptionsRef = requiredReactImport(resolveImport, 'usePlaybackRateOptions');
@@ -86,7 +84,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           }),
         '@videojs/compiler/components': (name) =>
           name === 'Slot' || name === 'Template' || name === 'Text'
-            ? false
+            ? { source: '@videojs/compiler/components', name }
             : resolveImport({
                 source: 'react',
                 name: name === 'ComponentNode' ? 'ReactElement' : name,
@@ -113,8 +111,6 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const container = code.function('Container');
           const poster = code.function('Poster');
           const volumePopover = code.function('VolumePopover');
-          const settingsFunctions = ['SettingsMenu', ...SETTINGS_SUBMENU_FUNCTIONS];
-          const useTranslator = code.import(useTranslatorRef.source, useTranslatorRef.name);
           const useQualityOptions = code.import(useQualityOptionsRef.source, useQualityOptionsRef.name);
           const useAudioTrackOptions = code.import(useAudioTrackOptionsRef.source, useAudioTrackOptionsRef.name);
           const usePlaybackRateOptions = code.import(usePlaybackRateOptionsRef.source, usePlaybackRateOptionsRef.name);
@@ -150,9 +146,6 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               code.type.union(...omitted.map((name) => code.type.literal(name))),
             ]);
           return [
-            // Lower constrained canonical JSX before target component rewrites.
-            ...createReactComponentTransforms(code),
-
             // Registry output opts into editable props on every component boundary.
             ...(options.extendComponents
               ? [
@@ -474,7 +467,6 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
               type: rootPropsName,
               initializer: code.value.object(),
             }),
-            rootSkin.jsx.element('Slot').replace(() => code.jsx.expression(code.value.identifier('children'))),
             rootSkin.jsx.element('Poster').replace(() =>
               code.jsx.if(
                 'poster',
@@ -569,9 +561,6 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                   code.jsx.create('MuteButton')
                 )
               ),
-            ...settingsFunctions.map((name) =>
-              code.function(name).prepend(() => code.statement.const('t', code.value.call(useTranslator, [])))
-            ),
             code
               .function('QualityMenu')
               .prepend(() => code.statement.const('quality', code.value.call(useQualityOptions, []))),
@@ -661,6 +650,28 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
             code.jsx.element('SubmenuHint').replace('span'),
             code.variable('QualityOptionLabel').remove(),
             code.jsx.element('QualityOptionLabel').replace('span'),
+            code.variable('SelectedLabel').remove(),
+            ...[
+              ['QualityMenu', 'quality'],
+              ['AudioTrackMenu', 'audioTrack'],
+              ['PlaybackRateMenu', 'playbackRate'],
+              ['CaptionsMenu', 'captions'],
+            ].map(([component, value]) =>
+              code
+                .function(component!)
+                .jsx.element('SelectedLabel')
+                .replace(({ element, factory }) => {
+                  const jsxEditor = createJsxEditor(factory);
+
+                  return jsxEditor.apply(
+                    element,
+                    jsxEditor.tag.replace('span'),
+                    jsxEditor.children.set([
+                      jsxEditor.create.expression(code.value.optionalProperty(value!, 'selectedLabel')),
+                    ])
+                  );
+                })
+            ),
             // Normalize canonical class arrays and target-facing prop types last.
             code.jsx
               .props('className')

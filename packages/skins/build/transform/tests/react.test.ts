@@ -38,12 +38,12 @@ describe('createCompilerReactConfig', () => {
     });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain('import { SeekButton as SeekButtonTarget } from "@videojs/react"');
+    expect(result.code).toContain('SeekButton as SeekButtonTarget');
     expect(result.code).toContain('import { SeekIcon } from "@videojs/react/icons"');
     expect(result.code).toContain('export interface SeekButtonProps extends Omit<SeekButtonTarget.Props');
     expect(result.code).toContain('resolveClassName(className, state)');
     expect(result.code).not.toContain("from '@videojs/core'");
-    expect(result.code).toContain('<span className="tabular-nums">');
+    expect(result.code).toContain('<Text className="tabular-nums">');
     expect(result.code).not.toContain('button.styles');
   });
 
@@ -186,7 +186,9 @@ describe('createCompilerReactConfig', () => {
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
         resolveImport(reference) {
-          if (reference.source === '@videojs/react') return { ...reference, source: '@/ui/seek-button' };
+          if (reference.source === '@videojs/react' && reference.name === 'SeekButton') {
+            return { ...reference, source: '@/ui/seek-button' };
+          }
           if (reference.source === '@videojs/react/icons') return { ...reference, source: '@/icons' };
           return reference;
         },

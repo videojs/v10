@@ -37,8 +37,4 @@ export namespace JSX {
   export interface IntrinsicAttributes {
     key?: string | number | undefined;
   }
-
-  export interface IntrinsicElements {
-    readonly [intrinsicElement: string]: Record<string, unknown>;
-  }
 }

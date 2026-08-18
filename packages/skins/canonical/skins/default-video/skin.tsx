@@ -19,10 +19,10 @@ import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
 import styles from '../../styles/skins/default-video.styles';
 
-export function DefaultVideoSkin() {
+export function DefaultVideoSkin({ children }: { children?: unknown }) {
   return (
     <Container>
-      <Slot />
+      <Slot>{children}</Slot>
       <Poster />
       <BufferingIndicator />
       <ErrorDialog />

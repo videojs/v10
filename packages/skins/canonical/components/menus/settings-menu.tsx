@@ -17,11 +17,13 @@ export function SettingsMenu({ children }: SettingsMenuProps) {
         <$.Tooltip.Trigger>
           <$.Menu.Trigger className={[buttonStyles.root, styles.trigger]}>
             <GearIcon className={[buttonStyles.icon, styles.triggerIcon]} />
-            <Text className={styles.srOnly}>{settingsText}</Text>
+            <Text className={styles.srOnly} token={settingsText.key}>
+              {settingsText.text}
+            </Text>
           </$.Menu.Trigger>
         </$.Tooltip.Trigger>
         <$.Tooltip.Popup className={[popupStyles.surface, popupStyles.tooltip]}>
-          <Text>{settingsText}</Text>
+          <Text token={settingsText.key}>{settingsText.text}</Text>
         </$.Tooltip.Popup>
       </$.Tooltip.Root>
       <$.Menu.Content className={[popupStyles.surface, popupStyles.popover, styles.root, styles.group]}>

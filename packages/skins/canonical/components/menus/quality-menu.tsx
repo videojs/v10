@@ -7,32 +7,23 @@ import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 
 declare const QualityOptionLabel: FunctionComponent;
+declare const SelectedLabel: FunctionComponent;
 
 export function QualityMenu() {
   return (
     <Submenu
       icon={<SwitchesIcon className={styles.icon} />}
-      label={<Text>{qualityText}</Text>}
-      selectedLabel={
-        <Template.Part name="selected-label">
-          <Text className={styles.hintLabel} />
-        </Template.Part>
-      }
+      label={<Text token={qualityText.key}>{qualityText.text}</Text>}
+      selectedLabel={<SelectedLabel className={styles.hintLabel} />}
     >
       <QualityRadioGroup>
         <Template name="quality-option">
           <RadioItem>
             <QualityOptionLabel>
-              <Template.Part name="label">
-                <Text />
-              </Template.Part>
-              <Template.Part name="tier">
-                <Text className={styles.tier} />
-              </Template.Part>
+              <Template.Part name="label" />
+              <Template.Part name="tier" className={styles.tier} />
             </QualityOptionLabel>
-            <Template.Part name="badge">
-              <Text className={styles.badge} />
-            </Template.Part>
+            <Template.Part name="badge" className={styles.badge} />
           </RadioItem>
         </Template>
       </QualityRadioGroup>

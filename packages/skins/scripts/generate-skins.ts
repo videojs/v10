@@ -160,7 +160,7 @@ function htmlPackageModule(specifier: string): string {
 
 function reactPackageImportResolver(reference: ImportRef): ImportRef | false {
   if (reference.source === '@videojs/react') {
-    if (reference.name === 'Text') return false;
+    if (reference.name === 'Text') return { ...reference, source: '@/i18n' };
     if (reference.name === 'Container' || reference.name === 'ContainerProps') {
       return { ...reference, source: '@/player/container' };
     }

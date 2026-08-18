@@ -78,7 +78,7 @@ describe('emitFrameworkSkin', () => {
     expect(timeSlider).toContain('renderChapter={props =>');
     expect(timeSlider).toContain('<TimeSliderTarget.ChapterTitle');
     expect(timeSlider).not.toContain('<Template');
-    expect(settingsMenu).toContain('const t = useTranslator()');
+    expect(settingsMenu).toContain('<Text className="media-sr-only" token={settingsText.key}>');
     expect(qualityMenu).toContain('renderItem={(props, item) =>');
     expect(qualityMenu).toContain('{item.tier ? <sup');
     expect(qualityMenu).not.toContain('<Template');

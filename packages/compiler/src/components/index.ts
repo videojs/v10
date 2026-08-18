@@ -36,16 +36,14 @@ export {
   type RegistryNode,
   type RegistryPart,
   type RegistryPartCollection,
+  type RegistryPrimitives,
   type RegistryRenderContext,
+  type RegistryTemplate,
+  type RegistryTemplateAttachment,
   type TargetComponent,
+  type TargetDefinition,
   type TargetNamedImport,
   type TargetReference,
+  type TargetRenderDefinition,
   type TargetSideEffectImport,
 } from './registry';
-export {
-  createTemplateRoot,
-  extractTemplate,
-  readTemplateName,
-  type TemplateDefinition,
-  templateError,
-} from './template';

@@ -45,13 +45,15 @@ export interface TemplateProps extends BaseProps {
   name: string;
 }
 
-export interface TemplatePartProps {
+export interface TemplatePartProps extends BaseProps {
   /** Static compiler key identifying this value outlet within its containing template or component. */
   name: string;
-  children: unknown;
 }
 
-export interface TextProps extends BaseProps {}
+export interface TextProps extends BaseProps {
+  /** Translation key used by framework targets when the children provide fallback text. */
+  token?: string | undefined;
+}
 
 export interface Component<Props extends object> {
   (props: BaseProps & Props): ComponentNode;
