@@ -1,5 +1,3 @@
-'use client';
-
 import { AudioTrackRadioGroupCore, type AudioTrackRadioGroupOption } from '@videojs/core';
 import { selectAudioTrack } from '@videojs/core/dom';
 

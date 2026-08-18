@@ -1,5 +1,3 @@
-'use client';
-
 import type { MenuCore, MenuState, StateAttrMap } from '@videojs/core';
 import type { MediaContainer, MenuApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';

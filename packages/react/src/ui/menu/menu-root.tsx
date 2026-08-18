@@ -1,5 +1,3 @@
-'use client';
-
 import { MenuCore, MenuDataAttrs } from '@videojs/core';
 import {
   createMenu,

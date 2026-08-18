@@ -1,5 +1,3 @@
-'use client';
-
 import type { AlertDialogCore, StateAttrMap } from '@videojs/core';
 import type { AlertDialogApi } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';

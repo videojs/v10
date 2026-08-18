@@ -1,5 +1,3 @@
-'use client';
-
 import type { MediaContainer } from '@videojs/core/dom';
 import type { Media } from '@videojs/media';
 import type { UnknownState, UnknownStore } from '@videojs/store';

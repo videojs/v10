@@ -1,5 +1,3 @@
-'use client';
-
 import { SliderCore, SliderDataAttrs } from '@videojs/core';
 import { getSliderCSSVars } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';

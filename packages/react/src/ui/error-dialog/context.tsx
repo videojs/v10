@@ -1,5 +1,3 @@
-'use client';
-
 import type { ErrorLike } from '@videojs/media';
 import { createContext, useContext } from 'react';
 

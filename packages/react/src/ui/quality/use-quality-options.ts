@@ -1,5 +1,3 @@
-'use client';
-
 import { QualityRadioGroupCore, type QualityRadioGroupOption } from '@videojs/core';
 import { selectQuality } from '@videojs/core/dom';
 

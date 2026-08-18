@@ -1,5 +1,3 @@
-'use client';
-
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
 import { isText, translateText } from '@videojs/core/i18n';

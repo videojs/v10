@@ -1,5 +1,3 @@
-'use client';
-
 import type { SliderState } from '@videojs/core';
 import type { SliderPreviewOverflow } from '@videojs/core/dom';
 import { getSliderPreviewStyle } from '@videojs/core/dom';

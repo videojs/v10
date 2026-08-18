@@ -1,3 +1,5 @@
+'use client';
+
 import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import {
   button,

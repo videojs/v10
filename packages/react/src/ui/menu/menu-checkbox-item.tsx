@@ -1,5 +1,3 @@
-'use client';
-
 import type { MenuState } from '@videojs/core';
 import { forwardRef, useCallback, useEffect, useRef } from 'react';
 

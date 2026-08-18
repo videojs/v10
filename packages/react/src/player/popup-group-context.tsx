@@ -1,5 +1,3 @@
-'use client';
-
 import type { PopupGroup } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { createContext, useContext } from 'react';

@@ -1,5 +1,3 @@
-'use client';
-
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';

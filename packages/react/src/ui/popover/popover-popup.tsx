@@ -1,5 +1,3 @@
-'use client';
-
 import type { PopoverState } from '@videojs/core';
 import { forwardRef, useCallback, useMemo, useRef } from 'react';
 

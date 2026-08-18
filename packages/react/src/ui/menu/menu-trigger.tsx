@@ -1,5 +1,3 @@
-'use client';
-
 import type { MenuCore, MenuState } from '@videojs/core';
 import { isMenuNavigationKey } from '@videojs/core/dom';
 import { forwardRef, useCallback, useEffect, useMemo, useRef } from 'react';

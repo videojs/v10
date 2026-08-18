@@ -1,5 +1,3 @@
-'use client';
-
 import { TimeSliderChaptersCore } from '@videojs/core';
 import { selectTextTrack, selectTime } from '@videojs/core/dom';
 import type { MediaTextCue } from '@videojs/media';

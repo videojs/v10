@@ -1,5 +1,3 @@
-'use client';
-
 import { type TooltipProps as CoreTooltipProps, TooltipCore, TooltipDataAttrs } from '@videojs/core';
 import {
   createTooltip,

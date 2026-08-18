@@ -1,5 +1,3 @@
-'use client';
-
 import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectControls } from '@videojs/core/dom';
 import type { ForwardedRef, ReactNode } from 'react';

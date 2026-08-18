@@ -1,3 +1,5 @@
+'use client';
+
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';

@@ -1,5 +1,3 @@
-'use client';
-
 import { AirPlayButtonCore, AirPlayButtonDataAttrs } from '@videojs/core';
 import { selectRemotePlayback } from '@videojs/core/dom';
 

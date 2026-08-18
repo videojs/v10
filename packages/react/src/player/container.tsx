@@ -1,5 +1,3 @@
-'use client';
-
 import {
   createPopupGroup,
   DEFAULT_CONTAINER_ROLE,

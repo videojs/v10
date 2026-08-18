@@ -1,5 +1,3 @@
-'use client';
-
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { MediaVideoRendition } from '@videojs/media';

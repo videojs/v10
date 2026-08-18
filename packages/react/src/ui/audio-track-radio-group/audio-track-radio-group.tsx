@@ -1,5 +1,3 @@
-'use client';
-
 import { type AudioTrackRadioGroupCore, AudioTrackRadioGroupDataAttrs } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';

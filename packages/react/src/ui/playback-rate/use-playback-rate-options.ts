@@ -1,5 +1,3 @@
-'use client';
-
 import {
   type PlaybackRateRadioGroupCore,
   PlaybackRateRadioGroupCore as PlaybackRateRadioGroupCoreClass,

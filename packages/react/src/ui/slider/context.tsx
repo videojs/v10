@@ -1,5 +1,3 @@
-'use client';
-
 import type { SliderInput, SliderState, StateAttrMap } from '@videojs/core';
 import type { SliderThumbProps } from '@videojs/core/dom';
 import type { State } from '@videojs/store';

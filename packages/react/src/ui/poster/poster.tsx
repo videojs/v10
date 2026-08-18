@@ -1,5 +1,3 @@
-'use client';
-
 import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef, SyntheticEvent } from 'react';
