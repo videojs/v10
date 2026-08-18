@@ -1,7 +1,7 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HlsJsMediaAirPlayMixin } from '../airplay-bridge';
+import { HlsJsMediaAirPlayMixin, setAuthorDisableRemotePlayback } from '../airplay-bridge';
 import type { HlsEngineHost } from '../types';
 
 function createEngine(url = ''): Hls {
@@ -98,7 +98,7 @@ describe('HlsJsMediaAirPlayMixin', () => {
     video.disableRemotePlayback = true;
     host.target = video;
     // HlsJsMedia captured the author's intent before hls.js ran.
-    (host as unknown as { authorDisableRemotePlayback: boolean }).authorDisableRemotePlayback = true;
+    setAuthorDisableRemotePlayback(host, true);
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 

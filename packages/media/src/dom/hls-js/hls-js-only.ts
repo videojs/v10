@@ -72,8 +72,6 @@ interface HlsJsMediaCapabilities
     MediaLiveCapability,
     Pick<MediaSourceCapability, 'preload'> {
   readonly error: MediaError | null;
-  /** Author's `disableRemotePlayback` intent, set by `HlsJsMedia` for the AirPlay bridge. */
-  authorDisableRemotePlayback: boolean;
 }
 
 const HlsJsOnlyMediaComposed = HlsJsMediaAirPlayMixin(
