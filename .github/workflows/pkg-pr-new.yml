@@ -87,6 +87,14 @@ jobs:
       - name: Build packages
         run: pnpm build:packages
 
+      # `build:packages` runs the `build` task, which does not produce
+      # @videojs/html's `cdn/` tree; `build:cdn` is a separate task. `cdn` is in
+      # that package's `files`, and the sandbox resolves its CDN demos through
+      # the published export map, so skipping this leaves `./cdn/*` pointing at
+      # nothing in the preview tarball.
+      - name: Build CDN bundles
+        run: pnpm build:cdn
+
       # Keep this list in sync with the public packages built by `build:packages`.
       # @videojs/cli is excluded because it is built separately and depends on a
       # full site build, which is too slow for a per-commit preview.
