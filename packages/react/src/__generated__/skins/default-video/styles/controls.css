@@ -1,0 +1,45 @@
+@layer videojs.components {
+  @scope (.media-skin-video) {
+    .media-controls {
+      inset-inline: var(--media-controls-gap);
+      bottom: var(--media-controls-gap);
+      z-index: 10;
+      align-items: center;
+      gap: var(--media-controls-gap);
+      border-radius: var(--media-radius-pill);
+      background-color: var(--media-surface-background);
+      padding: var(--media-controls-padding);
+      font-family: var(--media-font-family);
+      font-size: var(--media-font-size);
+      color: var(--media-controls-color);
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 0 1px var(--media-surface-border),
+        0 2px 8px var(--media-shadow-color);
+      backdrop-filter: blur(var(--media-surface-backdrop-blur));
+      line-height: 1;
+      display: flex;
+      position: absolute;
+    }
+
+    .media-controls-group-primary {
+      align-items: center;
+      gap: var(--media-controls-gap);
+      display: flex;
+    }
+
+    .media-controls-group-time {
+      align-items: center;
+      gap: var(--media-controls-gap);
+      flex: 1;
+      display: flex;
+    }
+
+    .media-time {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}

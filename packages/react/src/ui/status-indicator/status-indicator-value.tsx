@@ -1,5 +1,3 @@
-'use client';
-
 import { getStatusIndicatorDisplayValue, type StatusIndicatorCore } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';

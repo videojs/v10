@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["chromecast-caf-sender"],
+    "useDefineForClassFields": false
+  },
+  "include": ["src/**/*.ts"]
+}

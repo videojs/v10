@@ -1,0 +1,8 @@
+.react-i18n-source {
+  padding: 16px;
+}
+
+.react-i18n-source__player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}

@@ -14,7 +14,7 @@ Open the printed URL. The root route renders an interactive shell — a navbar w
 
 **Language** is in **Player settings** (gear icon) for every preset (HTML, React, and CDN). **CDN** registers copy through `@videojs/html/cdn/i18n` (the same registry as the CDN player bundle), not source `@videojs/html/i18n`. After pulling template changes, restart `pnpm dev:sandbox` so `scripts/setup.ts` refreshes `src/` from `templates/`.
 
-The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `simple-hls-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
+The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `hls-video-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
 
 ## How it works
 

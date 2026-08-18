@@ -1,5 +1,4 @@
 import {
-  type MediaTextTrackState,
   mapCuesToThumbnails,
   ThumbnailCore,
   ThumbnailDataAttrs,
@@ -9,6 +8,7 @@ import {
 import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { MediaTextTrackState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

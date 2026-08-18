@@ -1,10 +1,9 @@
-'use client';
-
 import { SliderCore, SliderDataAttrs } from '@videojs/core';
 import { getSliderCSSVars } from '@videojs/core/dom';
+import { translateText } from '@videojs/core/i18n';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState } from 'react';
-
+import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSlider } from '../hooks/use-slider';
@@ -42,10 +41,12 @@ export const SliderRoot = forwardRef(function SliderRoot(
   } = componentProps;
 
   const [core] = useState(() => new SliderCore());
+  const translator = useTranslator();
   core.setProps({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
 
   const {
     state,
+    input,
     cssVars,
     rootRef,
     thumbRef: sliderThumbRef,
@@ -76,10 +77,15 @@ export const SliderRoot = forwardRef(function SliderRoot(
       value={{
         state,
         pointerValue: core.valueFromPercent(state.pointerPercent),
+        input,
+        getPointerValue: (percent) => core.valueFromPercent(percent),
         thumbRef: sliderThumbRef,
         thumbProps,
         stateAttrMap: SliderDataAttrs,
-        getAttrs: (sliderState) => core.getAttrs(sliderState),
+        getAttrs: (sliderState) => {
+          const attrs = core.getAttrs(sliderState);
+          return { ...attrs, 'aria-label': translateText(attrs['aria-label'], translator) };
+        },
         formatValue: undefined,
       }}
     >

@@ -25,7 +25,7 @@ bandwidth conditions).
 
 ## Status
 
-- **Composition:** not implemented in `createSimpleHlsEngine`. Today
+- **Composition:** not implemented in `createHlsVideoEngine`. Today
   [`audio-playback`](./audio-playback.md) is the single-rendition
   baseline; `setupAudioBufferActors`
   (`packages/spf/src/playback/behaviors/dom/setup-buffer-actors.ts`)
@@ -124,7 +124,7 @@ Things this feature probably forces decisions on, not just additions:
   shape would need a small extension either way.
 - **`selectedAudioTrackId` writer characterization.** As of multi-
   language-audio Tier 2 landing, the slot stays **single-writer** —
-  `switchAudioTrack` (in `playback/behaviors/dom/switch-audio-track.ts`)
+  `switchAudioTrack` (in `playback/behaviors/track-switching.ts`)
   is the sole writer. Consumer intent flows through the
   `userAudioTrackSelection` constraint+filter slot. Mid-stream flush is
   dispatched from `switchAudioTrack` itself (slot owner = flush dispatcher

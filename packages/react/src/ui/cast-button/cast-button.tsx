@@ -1,5 +1,3 @@
-'use client';
-
 import { CastButtonCore, CastButtonDataAttrs } from '@videojs/core';
 import { selectRemotePlayback } from '@videojs/core/dom';
 
@@ -15,6 +13,7 @@ export const CastButton = createMediaButton<CastButtonCore, CastButtonProps>({
   stateAttrMap: CastButtonDataAttrs,
   selector: selectRemotePlayback,
   action: (core, state) => core.toggle(state),
+  isSupported: (state) => !state.hidden,
 });
 
 export namespace CastButton {

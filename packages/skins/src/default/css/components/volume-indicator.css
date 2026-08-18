@@ -1,0 +1,27 @@
+.media-default-skin .media-volume-indicator {
+  width: min(80%, calc(var(--spacing) * 48));
+  transform: translateX(0);
+
+  .media-volume-indicator__content {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: left;
+    background-size: var(--media-volume-fill, 0%) 100%;
+    border-radius: inherit;
+    transition: background-size 200ms linear;
+  }
+
+  &[data-level="high"] .media-icon--volume-high,
+  &[data-level="low"] .media-icon--volume-low,
+  &[data-level="off"] .media-icon--volume-off {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-min]:not([data-starting-style], [data-ending-style]),
+    &[data-max]:not([data-starting-style], [data-ending-style]) {
+      transform: translateX(0.25px);
+      transition: transform 300ms linear(0, -24 20%, 16 40%, -8 60%, 4 80%, 1);
+    }
+  }
+}

@@ -18,6 +18,7 @@
         "@videojs/element",
         "@videojs/html",
         "@videojs/icons",
+        "@videojs/media",
         "@videojs/react",
         "@videojs/skins",
         "@videojs/spf",
@@ -47,6 +48,12 @@
     },
     "packages/html": {
       "component": "@videojs/html",
+      "prerelease": true,
+      "prerelease-type": "beta",
+      "versioning": "prerelease"
+    },
+    "packages/media": {
+      "component": "@videojs/media",
       "prerelease": true,
       "prerelease-type": "beta",
       "versioning": "prerelease"

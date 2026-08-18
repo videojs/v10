@@ -1,10 +1,7 @@
 
 import { VJS10_DEMO_VIDEO } from '@/consts';
-import { createPlayer } from '@videojs/react';
-import { VideoSkin, Video, videoFeatures } from '@videojs/react/video';
+import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video';
 import '@videojs/react/video/skin.css';
-
-const Player = createPlayer({ features: videoFeatures });
 
 /**
  * Live demo of the (default) frosted video skin design.
@@ -18,10 +15,10 @@ const Player = createPlayer({ features: videoFeatures });
  */
 export function FrostedSkinDemo() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <VideoSkin className="aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
         <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
       </VideoSkin>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }

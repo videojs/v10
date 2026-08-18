@@ -1,6 +1,5 @@
+import type { MediaVolumeState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaVolumeState } from '../../../media/state';
 import type { MuteButtonState } from '../mute-button-core';
 import { MuteButtonCore } from '../mute-button-core';
 
@@ -9,6 +8,7 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
     volume: 1,
     muted: false,
     volumeAvailability: 'available',
+    mutedAvailability: 'available',
     setVolume: vi.fn((v: number) => v),
     toggleMuted: vi.fn(() => false),
     ...overrides,
@@ -19,12 +19,23 @@ function createState(overrides: Partial<MuteButtonState> = {}): MuteButtonState 
   return {
     muted: false,
     volumeLevel: 'high',
+    availability: 'available',
+    hidden: false,
     label: '',
     ...overrides,
   };
 }
 
 describe('MuteButtonCore', () => {
+  describe('toggle', () => {
+    it('does nothing when the media has no mute to toggle', () => {
+      const core = new MuteButtonCore();
+      const media = createMediaState({ mutedAvailability: 'unsupported' });
+      core.toggle(media);
+
+      expect(media.toggleMuted).not.toHaveBeenCalled();
+    });
+  });
   describe('getState', () => {
     it('projects muted and volumeLevel', () => {
       const core = new MuteButtonCore();
@@ -34,6 +45,26 @@ describe('MuteButtonCore', () => {
 
       expect(state.muted).toBe(false);
       expect(state.volumeLevel).toBe('high');
+    });
+
+    it('hides itself when the media has no mute to toggle', () => {
+      // An embed whose provider takes no volume or mute command — Spotify — leaves
+      // this button with nothing to do, so it is removed rather than rendered
+      // and inert.
+      const core = new MuteButtonCore();
+      core.setMedia(createMediaState({ mutedAvailability: 'unavailable' }));
+      const state = core.getState();
+
+      expect(state.availability).toBe('unavailable');
+      expect(state.hidden).toBe(true);
+    });
+
+    it('shows itself when the media can be muted', () => {
+      const core = new MuteButtonCore();
+      core.setMedia(createMediaState({ mutedAvailability: 'available' }));
+      const state = core.getState();
+
+      expect(state.hidden).toBe(false);
     });
 
     it('returns off when muted', () => {
@@ -82,12 +113,12 @@ describe('MuteButtonCore', () => {
   describe('getLabel', () => {
     it('returns mute when unmuted', () => {
       const core = new MuteButtonCore();
-      expect(core.getLabel(createState({ muted: false }))).toBe('Mute');
+      expect(core.getLabel(createState({ muted: false }))).toMatchObject({ key: 'buttons.mute', text: 'Mute' });
     });
 
     it('returns unmute when muted', () => {
       const core = new MuteButtonCore();
-      expect(core.getLabel(createState({ muted: true }))).toBe('Unmute');
+      expect(core.getLabel(createState({ muted: true }))).toMatchObject({ key: 'buttons.unmute', text: 'Unmute' });
     });
 
     it('returns custom string label', () => {
@@ -107,7 +138,7 @@ describe('MuteButtonCore', () => {
     it('returns aria-label', () => {
       const core = new MuteButtonCore();
       const attrs = core.getAttrs(createState({ muted: false }));
-      expect(attrs['aria-label']).toBe('Mute');
+      expect(attrs['aria-label']).toMatchObject({ key: 'buttons.mute', text: 'Mute' });
     });
 
     it('sets aria-disabled when disabled', () => {

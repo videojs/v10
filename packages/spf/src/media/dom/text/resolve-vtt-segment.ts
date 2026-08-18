@@ -5,6 +5,8 @@
  * the browser's optimized VTT parsing. Returns parsed VTTCue objects.
  */
 
+import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../text/resolve-vtt-metadata';
+
 // Singleton dummy video (reused across all parsing)
 let dummyVideo: HTMLVideoElement | null = null;
 
@@ -23,7 +25,6 @@ export function resolveVttSegment(url: string): Promise<VTTCue[]> {
   const video = ensureDummyVideo();
   const track = document.createElement('track');
   track.kind = 'subtitles';
-  track.default = true;
 
   return new Promise((resolve, reject) => {
     const onLoad = (): void => {
@@ -57,10 +58,41 @@ export function resolveVttSegment(url: string): Promise<VTTCue[]> {
     track.addEventListener('load', onLoad);
     track.addEventListener('error', onError);
     video.appendChild(track);
+    // Force the browser to load and parse THIS track's resource by activating
+    // it explicitly. Relying on `default = true` only works for the first track
+    // appended to the reused dummy video: the media element's automatic
+    // text-track selection runs once, so on Firefox every subsequent `<track>`
+    // stays inactive, its resource is never fetched, and `load` never fires —
+    // stranding all cues past the first segment. Setting `mode = 'hidden'`
+    // (active but not rendered — this video is never shown) loads each segment
+    // on every browser.
+    track.track.mode = 'hidden';
     track.src = url;
   });
 }
 
 export function destroyVttResolver(): void {
   dummyVideo = null;
+}
+
+/**
+ * A resolved VTT segment paired with its header metadata — the shape used when a
+ * caller needs the `X-TIMESTAMP-MAP` correlation (e.g. non-zero-PTS sources),
+ * not just the cues.
+ */
+export interface ResolvedVttSegment {
+  cues: VTTCue[];
+  metadata: TextSegmentMetadata;
+}
+
+/**
+ * Resolve a VTT segment's cues and header metadata together. Cues still come
+ * from the browser's native parser ({@link resolveVttSegment}); the header is
+ * scraped in parallel ({@link resolveVttSegmentMetadata}).
+ */
+export function resolveVttSegmentWithMetadata(url: string): Promise<ResolvedVttSegment> {
+  return Promise.all([resolveVttSegment(url), resolveVttSegmentMetadata(url)]).then(([cues, metadata]) => ({
+    cues,
+    metadata,
+  }));
 }

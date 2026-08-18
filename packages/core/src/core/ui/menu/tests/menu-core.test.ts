@@ -100,6 +100,7 @@ describe('MenuCore', () => {
       const state = core.getState();
       const attrs = core.getTriggerAttrs(state);
 
+      expect(attrs.tabIndex).toBe(0);
       expect(attrs['aria-haspopup']).toBe('menu');
       expect(attrs['aria-expanded']).toBe('false');
       expect(attrs['aria-controls']).toBeUndefined();
@@ -131,6 +132,16 @@ describe('MenuCore', () => {
       const attrs = core.getTriggerAttrs(state, 'my-menu');
 
       expect(attrs['aria-controls']).toBe('my-menu');
+    });
+
+    it('leaves submenu tabindex to roving focus management', () => {
+      const core = new MenuCore();
+      core.setProps({ isSubmenu: true });
+      core.setInput(createInput());
+      const state = core.getState();
+      const attrs = core.getTriggerAttrs(state);
+
+      expect('tabIndex' in attrs).toBe(false);
     });
   });
 

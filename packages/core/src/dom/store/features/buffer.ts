@@ -1,6 +1,6 @@
+import type { MediaBufferState } from '@videojs/media';
+import { isMediaBufferCapable } from '@videojs/media';
 import { listen, serializeTimeRanges } from '@videojs/utils/dom';
-import { isMediaBufferCapable } from '../../../core/media/predicate';
-import type { MediaBufferState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 export const bufferFeature = definePlayerFeature({

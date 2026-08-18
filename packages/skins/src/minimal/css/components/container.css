@@ -1,0 +1,72 @@
+.media-minimal-skin {
+  /* Colors */
+  --accent-color: var(--media-accent-color, var(--default-accent-color));
+  --accent-contrast-color: contrast-color(var(--accent-color));
+  --accent-background-color: var(
+    --media-accent-color,
+    oklch(from var(--default-accent-color) l c h / calc(alpha * 0.1))
+  );
+  --accent-text-color: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0 0 0))));
+  --shadow-current-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
+  --shadow-subtle-current-color: oklch(from var(--shadow-current-color) l c h / calc(alpha * 0.4));
+  --scrollbar-thumb-color: oklch(from currentColor l c h / 0.3);
+
+  /* Scaling - used in video fullscreen to scale the UI. */
+  --scale: 1;
+  /* Fixed scaling unit to avoid inheriting the document's root font size. This must be a CSS <length>. */
+  --scale-unit: var(--media-scale-unit, 16px);
+  --size: calc(var(--scale-unit) * var(--scale));
+  /* Create a Tailwind-like spacing unit where 1 equals 4px with default scaling. */
+  --spacing: calc(var(--size) / 4);
+
+  /* Font sizes */
+  --font-size-medium: calc(0.9375 * var(--size)); /* 15px */
+  --font-size-base: calc(0.8125 * var(--size)); /* 13px */
+  --font-size-small: calc(0.6875 * var(--size)); /* 11px */
+  --font-size-tiny: calc(0.5625 * var(--size)); /* 9px */
+  --media-icon-size: calc(1.125 * var(--size)); /* 18px */
+
+  /* Radii */
+  --container-border-radius: var(--media-border-radius, 0.75rem);
+
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  container: media-root / inline-size;
+  font-family:
+    Inter Variable,
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  font-size: var(--font-size-base);
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  line-height: 1.5;
+  letter-spacing: normal;
+  outline: 2px solid transparent;
+  outline-offset: -4px;
+  scrollbar-color: var(--scrollbar-thumb-color) transparent;
+  scrollbar-width: thin;
+  border-radius: var(--container-border-radius);
+  isolation: isolate;
+  transition-timing-function: ease-out;
+  transition-duration: 100ms;
+  transition-property: outline-offset, outline-color;
+
+  &:focus-visible {
+    outline-color: var(--focus-ring-color);
+    outline-offset: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb-color);
+    border-radius: 9999px;
+  }
+
+  @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
+    --scrollbar-thumb-color: oklch(from currentColor l c h / 0.8);
+    scrollbar-width: auto;
+  }
+}

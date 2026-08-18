@@ -2,6 +2,7 @@ import { renderIcon } from '@videojs/icons/render/minimal';
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
@@ -12,7 +13,6 @@ import {
   playButton,
   playbackRate,
   popup,
-  root,
   seek,
   slider,
   time,
@@ -29,7 +29,7 @@ const SEEK_TIME = 10;
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="${root}">
+    <media-container class="${container}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
@@ -96,8 +96,8 @@ function getTemplateHTML() {
 
             <media-time-slider class="${slider.root}">
               <media-slider-track class="${slider.track}">
-                <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
                 <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
+                <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
               <media-slider-preview class="${slider.preview}">
@@ -107,6 +107,21 @@ function getTemplateHTML() {
           </div>
 
           <div class="${buttonGroup}">
+            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
+              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
+              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
+            </media-mute-button>
+
+            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
+              <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
+                <media-slider-track class="${slider.track}">
+                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
+                </media-slider-track>
+                <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
+              </media-volume-slider>
+            </media-popover>
+
             <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
             </media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
@@ -122,23 +137,25 @@ function getTemplateHTML() {
               </media-playback-rate-radio-group>
             </media-menu>
 
-            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
-              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
-              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
-              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
-            </media-mute-button>
-
-            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
-              <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
-                <media-slider-track class="${slider.track}">
-                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
-                </media-slider-track>
-                <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
-              </media-volume-slider>
-            </media-popover>
           </div>
         </media-tooltip-group>
       </div>
+
+      <!-- Hotkeys -->
+      <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
+      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
+      <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
+      <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
+      <media-hotkey keys=">" action="speedUp"></media-hotkey>
+      <media-hotkey keys="<" action="speedDown"></media-hotkey>
     </media-container>
   `;
 }

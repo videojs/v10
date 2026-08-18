@@ -1,31 +1,23 @@
 /* ==========================================================================
    Icon State Visibility for Video Skins
 
-   Data-attribute-driven visibility rules for multi-state icon buttons.
-   Uses :is() with both element selectors (for HTML custom element wrappers)
-   and class selectors (for React rendered SVG elements).
+   Data-attribute-driven visibility rules for multi-state icon buttons shared
+   by the HTML and React skins.
    ========================================================================== */
 
 /* --- All icons hidden by default --- */
 
-.media-button--play .media-icon--restart,
-.media-button--play .media-icon--play,
-.media-button--play .media-icon--pause,
-.media-button--mute .media-icon--volume-off,
-.media-button--mute .media-icon--volume-low,
-.media-button--mute .media-icon--volume-high,
-.media-button--fullscreen .media-icon--fullscreen-enter,
-.media-button--fullscreen .media-icon--fullscreen-exit,
-.media-button--pip .media-icon--pip-enter,
-.media-button--pip .media-icon--pip-exit,
-.media-button--cast .media-icon--cast-enter,
-.media-button--cast .media-icon--cast-exit,
-.media-button--airplay .media-icon--airplay-enter,
-.media-button--airplay .media-icon--airplay-exit,
-.media-button--captions .media-icon--captions-off,
-.media-button--captions .media-icon--captions-on {
-  display: none;
+.media-button--play .media-icon,
+.media-button--mute .media-icon,
+.media-button--fullscreen .media-icon,
+.media-button--pip .media-icon,
+.media-button--cast .media-icon,
+.media-button--airplay .media-icon,
+.media-button--captions .media-icon {
   opacity: 0;
+}
+.media-button--play .media-icon {
+  scale: 0;
 }
 
 /* --- Active icon per state --- */
@@ -63,8 +55,8 @@
 .media-button--captions:not([data-active]) .media-icon--captions-off,
 /* Captions: active → captions on */
 .media-button--captions[data-active] .media-icon--captions-on {
-  display: block;
   opacity: 1;
+  scale: 1;
 }
 
 /* --- Pause keyframe animations on inactive icons --- */
@@ -76,4 +68,11 @@
 .media-button--airplay:not([data-airplay-state="connected"]) {
   --media-icon--airplay__fill-animation: none;
   --media-icon--airplay__triangle-animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-button--airplay {
+    --media-icon--airplay__fill-animation: none;
+    --media-icon--airplay__triangle-animation: none;
+  }
 }

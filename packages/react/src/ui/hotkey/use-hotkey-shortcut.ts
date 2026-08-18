@@ -1,5 +1,3 @@
-'use client';
-
 import { getHotkeyCoordinator, type HotkeyShortcutDetails } from '@videojs/core/dom';
 import { useEffect, useState } from 'react';
 

@@ -1,0 +1,20 @@
+.react-i18n-language {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.react-i18n-language label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.react-i18n-language select {
+  padding: 4px 8px;
+}
+
+.react-i18n-language__player {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}

@@ -16,8 +16,8 @@ describe('video/ui ejected registration', () => {
 
           <media-time-slider>
             <media-slider-track>
-              <media-slider-fill></media-slider-fill>
               <media-slider-buffer></media-slider-buffer>
+              <media-slider-fill></media-slider-fill>
             </media-slider-track>
             <media-slider-thumb></media-slider-thumb>
           </media-time-slider>

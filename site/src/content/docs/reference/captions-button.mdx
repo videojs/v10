@@ -37,9 +37,9 @@ import basicUsageHtmlTs from "@/components/docs/demos/captions-button/html/css/B
 
 ## Behavior
 
-Toggles captions and subtitles on and off. The button checks the media's text track list for tracks with `kind="captions"` or `kind="subtitles"` and reflects availability via `data-availability`.
+Toggles captions and subtitles on and off. The button checks the media's text track list for tracks with `kind="captions"` or `kind="subtitles"`. When none are present, the HTML custom element receives the native `hidden` attribute and the React component returns `null`. The raw state remains available as `data-availability`.
 
-When no caption or subtitle tracks are present, `data-availability="unavailable"` is set. Use this to hide the button when there are no tracks to toggle.
+An explicitly disabled button with caption tracks stays visible and focusable with `aria-disabled="true"` and `data-disabled`, but does not toggle captions.
 
 When `menuTrigger` is enabled and multiple caption or subtitle tracks are available, activation opens the linked captions menu instead of toggling captions directly. React enables `menuTrigger` automatically when a `CaptionsButton` is rendered inside `Menu.Trigger`.
 
@@ -52,13 +52,16 @@ media-captions-button[data-active] .icon-on { display: inline; }
 media-captions-button:not([data-active]) .icon-off { display: inline; }
 ```
 
-Hide when no caption tracks are available:
+Style an explicitly disabled, available button:
 
 ```css
-media-captions-button[data-availability="unavailable"] {
-  display: none;
+media-captions-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 ```
+
+The button hides automatically when no caption tracks are available. No availability selector or extra hiding CSS is required.
 
 ## Accessibility
 

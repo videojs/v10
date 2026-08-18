@@ -1,37 +1,56 @@
 /**
- * Creates symlink aliases so that AI coding tools other than Claude Code
- * (e.g., OpenCode, Cursor) can discover project instructions.
+ * Exposes the checked-in, host-neutral skill catalog through client-specific
+ * discovery paths:
  *
- * Aliases created:
- *   .opencode  → .claude       (directory)
- *   .agents    → .claude       (directory)
- *   AGENTS.md  → CLAUDE.md     (file)
+ *   .agents/skills/<skill-name>/SKILL.md  (source)
+ *   .claude/skills                (generated junction)
+ *   .claude/plans                 (generated junction)
+ *   .opencode                     (generated junction)
  *
- * Cross-platform notes:
- * - Directory symlinks use 'junction' type, which works on Windows without
- *   elevated privileges or Developer Mode.
- * - File symlinks ('file' type) require elevated privileges or Developer Mode
- *   on Windows. If creation fails, we log a warning instead of crashing
- *   `pnpm install`. The alias is optional — the canonical files still work.
+ * Directory junctions work on Windows without elevated privileges. Failures
+ * warn instead of breaking `pnpm install`.
  */
-import { existsSync, symlinkSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { lstatSync, mkdirSync, readlinkSync, symlinkSync, unlinkSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../..');
+const agentsDir = join(root, '.agents');
+const skillsDir = join(agentsDir, 'skills');
 
-const aliases = [
-  { target: '.claude', path: '.opencode', type: 'junction' },
-  { target: '.claude', path: '.agents', type: 'junction' },
-  { target: 'CLAUDE.md', path: 'AGENTS.md', type: 'file' },
-];
-
-for (const alias of aliases) {
-  const fullPath = resolve(root, alias.path);
-  if (existsSync(fullPath)) continue;
-
+function linkState(path) {
   try {
-    symlinkSync(alias.target, fullPath, alias.type);
+    return lstatSync(path);
   } catch {
-    console.warn(`warning: could not create symlink ${alias.path} → ${alias.target}`);
+    return undefined;
   }
 }
+
+function ensureAlias(relativePath, target) {
+  const path = resolve(root, relativePath);
+  const state = linkState(path);
+
+  if (state?.isSymbolicLink()) {
+    try {
+      if (resolve(dirname(path), readlinkSync(path)) === resolve(target)) return;
+    } catch {
+      // Replace a dangling generated link below.
+    }
+    unlinkSync(path);
+  } else if (state) {
+    console.warn(`warning: refusing to replace non-generated ${relativePath}`);
+    return;
+  }
+
+  mkdirSync(dirname(path), { recursive: true });
+  try {
+    symlinkSync(target, path, 'junction');
+  } catch {
+    console.warn(`warning: could not create alias ${relativePath} → ${target}`);
+  }
+}
+
+mkdirSync(join(agentsDir, 'plans'), { recursive: true });
+
+ensureAlias('.claude/skills', skillsDir);
+ensureAlias('.claude/plans', join(agentsDir, 'plans'));
+ensureAlias('.opencode', agentsDir);

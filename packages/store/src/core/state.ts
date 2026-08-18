@@ -1,4 +1,5 @@
 import { noop } from '@videojs/utils/function';
+import { shallowEqual } from '@videojs/utils/object';
 
 export type StateChange = () => void;
 
@@ -15,6 +16,7 @@ export interface State<T> {
 
 export interface WritableState<T> extends State<T> {
   patch: (partial: Partial<T>) => void;
+  replace: (next: T) => void;
 }
 
 let isFlushScheduled = false;
@@ -52,7 +54,7 @@ class StateContainer<T> implements WritableState<T> {
 
     let changed = false;
 
-    for (const key in partial) {
+    for (const key of Reflect.ownKeys(partial as object) as (keyof T)[]) {
       if (!hasOwnProp.call(partial, key)) continue;
 
       const value = partial[key];
@@ -67,6 +69,15 @@ class StateContainer<T> implements WritableState<T> {
       this.#current = Object.freeze(next);
       this.#markPending();
     }
+  }
+
+  replace(next: T): void {
+    // Example: media metadata can change under a user override while the
+    // resolved title stays the same. Preserve the public snapshot in that case.
+    if (shallowEqual(this.#current, next)) return;
+
+    this.#current = Object.freeze({ ...next });
+    this.#markPending();
   }
 
   subscribe(callback: StateChange, options?: SubscribeOptions): () => void {

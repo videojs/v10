@@ -5,11 +5,16 @@ import {
   createSlider,
   getSliderCSSVars,
   type SliderApi,
+  selectControls,
 } from '@videojs/core/dom';
+import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
-
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
+import { playerContext } from '../../player/context';
+import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 import { sliderContext } from './context';
 
@@ -28,7 +33,7 @@ export class SliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<keyof SliderCore.Props>;
 
-  label = SliderCore.defaultProps.label;
+  label: Text | string = '';
   value = SliderCore.defaultProps.value;
   min = SliderCore.defaultProps.min;
   max = SliderCore.defaultProps.max;
@@ -39,10 +44,13 @@ export class SliderElement extends MediaElement {
   thumbAlignment = SliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new SliderCore();
+  readonly #controlsState = new PlayerController(this, playerContext, selectControls);
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #provider = new ContextProvider(this, { context: sliderContext });
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
+  #releaseControlsLock: (() => void) | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -69,9 +77,11 @@ export class SliderElement extends MediaElement {
         this.dispatchEvent(new CustomEvent('value-commit', { detail: { value: this.value }, bubbles: true }));
       },
       onDragStart: () => {
+        this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
+        this.#releaseControlsVisibilityLock();
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
@@ -84,14 +94,21 @@ export class SliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
+    this.#releaseControlsVisibilityLock();
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
+    this.#releaseControlsVisibilityLock();
     this.#slider?.destroy();
     super.destroyCallback();
+  }
+
+  #releaseControlsVisibilityLock(): void {
+    this.#releaseControlsLock?.();
+    this.#releaseControlsLock = null;
   }
 
   protected override willUpdate(_changed: PropertyValues): void {
@@ -118,7 +135,10 @@ export class SliderElement extends MediaElement {
       state,
       stateAttrMap: SliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
-      thumbAttrs: this.#core.getAttrs(state),
+      thumbAttrs: (() => {
+        const attrs = this.#core.getAttrs(state);
+        return { ...attrs, 'aria-label': translateText(attrs['aria-label'], this.#i18n.value) };
+      })(),
       thumbProps: this.#slider.thumbProps,
     });
   }

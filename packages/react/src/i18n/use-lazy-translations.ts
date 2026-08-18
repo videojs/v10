@@ -1,18 +1,18 @@
 import {
+  type FlatTranslations,
   findLocaleKeys,
   getBrowserTranslations,
   type Locale,
   registerI18n,
   shouldAttemptBrowserTranslation,
-  type Translations,
 } from '@videojs/core/i18n';
 import { mergeLocaleOverlays } from '@videojs/utils/dom';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-export type LocaleLoader = (tag: string) => Promise<Partial<Translations> | undefined>;
+export type LocaleLoader = (tag: string) => Promise<Partial<FlatTranslations> | undefined>;
 
-export function useLazyTranslations(resolvedLocale: Locale, loader: LocaleLoader): Partial<Translations> {
-  const [lazyLayer, setLazyLayer] = useState<Partial<Translations>>({});
+export function useLazyTranslations(resolvedLocale: Locale, loader: LocaleLoader): Partial<FlatTranslations> {
+  const [lazyLayer, setLazyLayer] = useState<Partial<FlatTranslations>>({});
   const lazySeqRef = useRef(0);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rerun when `resolvedLocale` changes even though the reset callback does not reference it.

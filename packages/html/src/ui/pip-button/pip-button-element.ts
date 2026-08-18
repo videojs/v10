@@ -1,5 +1,6 @@
-import { type MediaPictureInPictureState, PiPButtonCore, PiPButtonDataAttrs } from '@videojs/core';
+import { PiPButtonCore, PiPButtonDataAttrs } from '@videojs/core';
 import { selectPiP } from '@videojs/core/dom';
+import type { MediaPictureInPictureState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -13,7 +14,7 @@ export class PiPButtonElement extends MediaButtonElement<PiPButtonCore> {
   protected readonly mediaState = new PlayerController(this, playerContext, selectPiP);
   protected override readonly hotkeyAction = 'togglePictureInPicture';
 
-  protected activate(state: MediaPictureInPictureState): void {
-    this.core.toggle(state);
+  protected activate(state: MediaPictureInPictureState): Promise<void> {
+    return this.core.toggle(state);
   }
 }

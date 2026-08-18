@@ -1,6 +1,5 @@
+import type { MediaTextTrackState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaTextTrackState } from '../../../media/state';
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, type CaptionsRadioGroupState } from '../captions-radio-group-core';
 
 function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTextTrackState {
@@ -18,10 +17,11 @@ function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTe
 
 function createState(overrides: Partial<CaptionsRadioGroupState> = {}): CaptionsRadioGroupState {
   return {
-    tracks: [],
+    options: [{ value: CAPTIONS_OFF_VALUE, label: 'Off', disabled: false }],
     value: CAPTIONS_OFF_VALUE,
     subtitlesShowing: false,
     disabled: false,
+    hidden: false,
     availability: 'unavailable',
     label: '',
     ...overrides,
@@ -43,10 +43,11 @@ describe('CaptionsRadioGroupCore', () => {
       core.setMedia(media);
       const state = core.getState();
 
-      expect(state.tracks).toEqual([
-        { value: 'captions-en', label: 'CC' },
-        { value: 'subtitles-en', label: 'English' },
-        { value: 'subtitles-es', label: 'Spanish' },
+      expect(state.options).toEqual([
+        { value: CAPTIONS_OFF_VALUE, label: { key: 'menu.off', text: 'Off' }, disabled: false },
+        { value: 'captions-en', label: 'CC', disabled: false },
+        { value: 'subtitles-en', label: 'English', disabled: false },
+        { value: 'subtitles-es', label: 'Spanish', disabled: false },
       ]);
       expect(state.value).toBe('subtitles-en');
       expect(state.subtitlesShowing).toBe(true);
@@ -66,7 +67,7 @@ describe('CaptionsRadioGroupCore', () => {
       const core = new CaptionsRadioGroupCore();
       core.setMedia(createMediaState());
 
-      expect(core.getState().availability).toBe('unavailable');
+      expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
     });
 
     it('marks availability available when caption tracks exist', () => {
@@ -76,7 +77,7 @@ describe('CaptionsRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().availability).toBe('available');
+      expect(core.getState()).toMatchObject({ availability: 'available', hidden: false });
     });
 
     it('uses off when no track is showing', () => {
@@ -94,10 +95,16 @@ describe('CaptionsRadioGroupCore', () => {
   });
 
   describe('getLabel', () => {
-    it('returns default labels based on showing state', () => {
+    it('returns a stable default group label', () => {
       const core = new CaptionsRadioGroupCore();
-      expect(core.getLabel(createState({ subtitlesShowing: false }))).toBe('Enable captions');
-      expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('Disable captions');
+      expect(core.getLabel(createState({ subtitlesShowing: false }))).toMatchObject({
+        key: 'menu.captions',
+        text: 'Captions',
+      });
+      expect(core.getLabel(createState({ subtitlesShowing: true }))).toMatchObject({
+        key: 'menu.captions',
+        text: 'Captions',
+      });
     });
 
     it('returns custom string label', () => {
@@ -125,7 +132,10 @@ describe('CaptionsRadioGroupCore', () => {
         })
       ).toBe('English');
       expect(core.getTrackLabel({ kind: 'subtitles', label: '', language: 'es', mode: 'disabled' })).toBe('es');
-      expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toBe('Captions');
+      expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toMatchObject({
+        key: 'menu.captions',
+        text: 'Captions',
+      });
     });
 
     it('adds default labels for unlabeled tracks', () => {
@@ -139,9 +149,10 @@ describe('CaptionsRadioGroupCore', () => {
 
       core.setMedia(media);
 
-      expect(core.getState().tracks).toEqual([
-        { value: 'captions-en', label: 'Captions' },
-        { value: 'subtitles-en', label: 'Subtitles' },
+      expect(core.getState().options).toEqual([
+        { value: CAPTIONS_OFF_VALUE, label: { key: 'menu.off', text: 'Off' }, disabled: false },
+        { value: 'captions-en', label: { key: 'menu.captions', text: 'Captions' }, disabled: false },
+        { value: 'subtitles-en', label: { key: 'menu.subtitles', text: 'Subtitles' }, disabled: false },
       ]);
     });
 

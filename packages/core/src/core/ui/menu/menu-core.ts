@@ -7,7 +7,7 @@ import { getTransitionFlags } from '../transition';
 export type { PopoverAlign, PopoverSide };
 
 export interface MenuProps {
-  /** Which side of the trigger the menu appears on. Root menus only. */
+  /** Preferred side of the trigger for the menu. Root menus only. */
   side?: PopoverSide | undefined;
   /** Alignment along the trigger's edge. Root menus only. */
   align?: PopoverAlign | undefined;
@@ -29,6 +29,7 @@ export interface MenuInput extends TransitionState {}
 export interface MenuState extends TransitionFlags {
   open: boolean;
   status: TransitionStatus;
+  /** Preferred side of the trigger for the menu. Root menus only. */
   side: PopoverSide | undefined;
   align: PopoverAlign | undefined;
   /** Whether this menu is nested inside another menu's content. */
@@ -82,6 +83,7 @@ export class MenuCore {
 
   getTriggerAttrs(state: MenuState, contentId?: string) {
     return {
+      ...(!state.isSubmenu && { tabIndex: 0 }),
       'aria-haspopup': 'menu' as const,
       'aria-expanded': state.open && state.status !== 'ending' ? 'true' : 'false',
       'aria-controls': contentId,
@@ -93,7 +95,7 @@ export class MenuCore {
       role: 'menu' as const,
       tabIndex: -1,
       // Root menus use the Popover API for dismiss and focus handling.
-      // Submenus render inline inside the parent viewport — no popover.
+      // Submenus render inline inside their parent menu — no popover.
       ...(!state.isSubmenu && { popover: 'manual' as const }),
     };
   }

@@ -1,9 +1,17 @@
 import { render, waitFor } from '@testing-library/react';
 import { popup } from '@videojs/skins/default/tailwind/video.tailwind';
 import { useLayoutEffect } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { Tooltip, useOptionalTooltipContext } from '..';
+
+function makeDOMRect(x: number, y: number, width: number, height: number): DOMRect {
+  return new DOMRect(x, y, width, height);
+}
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 function TooltipContent({ label, shortcut }: { label?: string; shortcut?: string }) {
   const tooltip = useOptionalTooltipContext();
@@ -18,6 +26,37 @@ function TooltipContent({ label, shortcut }: { label?: string; shortcut?: string
 }
 
 describe('Tooltip', () => {
+  it('exposes the positioned side on every part', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.dataset.testid === 'trigger') return makeDOMRect(100, 10, 40, 20);
+      if (this.dataset.testid === 'popup') return makeDOMRect(0, 0, 100, 60);
+      return makeDOMRect(0, 0, 300, 200);
+    });
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.dataset.testid === 'popup' ? 100 : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.dataset.testid === 'popup' ? 60 : 0;
+    });
+
+    const { container } = render(
+      <Tooltip.Root defaultOpen side="top" boundary="viewport">
+        <Tooltip.Trigger data-testid="trigger">Play</Tooltip.Trigger>
+        <Tooltip.Popup data-testid="popup">
+          <Tooltip.Label data-testid="label">Play</Tooltip.Label>
+          <Tooltip.Shortcut data-testid="shortcut">K</Tooltip.Shortcut>
+          <Tooltip.Arrow data-testid="arrow" />
+        </Tooltip.Popup>
+      </Tooltip.Root>
+    );
+
+    await waitFor(() => {
+      for (const part of ['trigger', 'popup', 'label', 'shortcut', 'arrow']) {
+        expect(container.querySelector(`[data-testid="${part}"]`)?.getAttribute('data-side')).toBe('bottom');
+      }
+    });
+  });
+
   it('renders label and kbd shortcut with skin popup.tooltipShortcut from context', async () => {
     const { container } = render(
       <Tooltip.Root defaultOpen>

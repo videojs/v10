@@ -15,18 +15,18 @@ For the reasoning behind this design, see <DocsLink slug="concepts/why-videojs">
 
 ## 1. State management
 <FrameworkCase frameworks={["react"]}>
-State is handled by a `Player.Provider`, which creates a central state store that all components can access. When you wrap your player in a `Player.Provider`, the components automatically connect to the state.
+State is handled by a preset player component, which creates a central state store that all components can access. When you wrap your player in `VideoPlayer`, the components automatically connect to the state.
 
 ```tsx
 {/* All components inside automatically connect to state */} {/* [!code focus] */}
-<Player.Provider> {/* [!code focus] */}
+<VideoPlayer> {/* [!code focus] */}
   <VideoSkin>
     <Video src="video.mp4" />
   </VideoSkin>
-</Player.Provider> {/* [!code focus] */}
+</VideoPlayer> {/* [!code focus] */}
 ```
 
-You can access state and actions from anywhere within the provider with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
+You can access state and actions from anywhere within `VideoPlayer` with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -55,11 +55,11 @@ Skins are complete, pre-designed player UIs that package components and styles t
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Player.Provider>
+<VideoPlayer>
   <VideoSkin> {/* [!code focus] */}
     <Video src="video.mp4" />
   </VideoSkin> {/* [!code focus] */}
-</Player.Provider>
+</VideoPlayer>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -80,15 +80,15 @@ If you want more control than skins offer you, you can build your own UI from ou
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Player.Provider>
-  <Player.Container> {/* [!code focus] */}
+<VideoPlayer>
+  <Container> {/* [!code focus] */}
     <Video src="video.mp4" />
     <Controls.Root> {/* [!code focus] */}
       <PlayButton /> {/* [!code focus] */}
       {/* ... */} {/* [!code focus] */}
     </Controls.Root> {/* [!code focus] */}
-  </Player.Container> {/* [!code focus] */}
-</Player.Provider>
+  </Container> {/* [!code focus] */}
+</VideoPlayer>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -126,11 +126,11 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Player.Provider>
+<VideoPlayer>
   <VideoSkin>
     <HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" /> {/* [!code focus] */}
   </VideoSkin>
-</Player.Provider>
+</VideoPlayer>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -159,18 +159,15 @@ Beyond the defaults, presets target more specific use cases. For example, `/back
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer } from '@videojs/react';
-import { backgroundFeatures, BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background';
-
-const Player = createPlayer({ features: backgroundFeatures });
+import { BackgroundVideo, BackgroundVideoPlayer, BackgroundVideoSkin } from '@videojs/react/background';
 
 function Hero() {
   return (
-    <Player.Provider>
+    <BackgroundVideoPlayer>
       <BackgroundVideoSkin>
         <BackgroundVideo src="hero.mp4" />
       </BackgroundVideoSkin>
-    </Player.Provider>
+    </BackgroundVideoPlayer>
   );
 }
 ```

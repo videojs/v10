@@ -1,10 +1,10 @@
 import type { ButtonState } from '@videojs/core';
 import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom';
-import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry, resolveText, type Text } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createState, createStore } from '@videojs/store';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
@@ -54,7 +54,7 @@ class TestTriggerElement extends HTMLElement {
   shortcut: string | undefined = 'K';
 
   getLabel(): string | undefined {
-    return this.$state.current.label;
+    return this.$state.current.label ? resolveText(this.$state.current.label) : undefined;
   }
 
   getShortcut(): string | undefined {
@@ -97,11 +97,44 @@ function setup() {
 defineElement(TestPlayerProviderElement.tagName, TestPlayerProviderElement);
 
 afterEach(() => {
+  vi.restoreAllMocks();
   resetI18nRegistry();
   document.body.innerHTML = '';
 });
 
 describe('TooltipElement', () => {
+  it('uses an explicit trigger that already controls another popup', async () => {
+    defineTestElements();
+    const trigger = document.createElement('test-tooltip-trigger') as TestTriggerElement;
+    const tooltip = createElement(TooltipElement);
+    trigger.id = 'settings-trigger';
+    trigger.setAttribute('commandfor', 'settings-menu');
+    tooltip.trigger = trigger.id;
+    document.body.append(trigger, tooltip);
+
+    await tooltip.updateComplete;
+
+    expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Play');
+  });
+
+  it('exposes the positioned side on the popup', async () => {
+    const { tooltip, trigger } = setup();
+
+    tooltip.open = true;
+    tooltip.side = 'top';
+    tooltip.boundary = 'viewport';
+
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 10, 40, 20));
+    vi.spyOn(tooltip, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 60));
+    vi.spyOn(document.documentElement, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 200));
+    Object.defineProperty(tooltip, 'offsetWidth', { configurable: true, value: 100 });
+    Object.defineProperty(tooltip, 'offsetHeight', { configurable: true, value: 60 });
+
+    await tooltip.updateComplete;
+
+    expect(tooltip.getAttribute('data-side')).toBe('bottom');
+  });
+
   it('creates default label and shortcut elements for empty tooltips', async () => {
     const { tooltip } = setup();
 
@@ -177,7 +210,7 @@ describe('TooltipElement', () => {
   });
 
   it('shows translated label from the trigger control', async () => {
-    registerI18n('es', { Play: 'Reproducir' });
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
 
     ensureDefined(TestPlayerProviderElement);
     ensureDefined(PlayButtonElement);
@@ -206,8 +239,8 @@ describe('TooltipElement', () => {
   });
 
   it('updates tooltip text when provider locale changes', async () => {
-    registerI18n('es', { Play: 'Reproducir' });
-    registerI18n('fr', { Play: 'Lire' });
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
+    registerI18n('fr', { 'buttons.play': 'Lire' });
 
     ensureDefined(TestPlayerProviderElement);
     ensureDefined(PlayButtonElement);
@@ -241,16 +274,16 @@ describe('TooltipElement', () => {
     expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Lire');
   });
 
-  it('falls back to translating getLabel when getResolvedLabel is undefined', async () => {
-    registerI18n('es', { Play: 'Reproducir' });
+  it('falls back to translating Text from getLabel when getResolvedLabel is undefined', async () => {
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
 
     class StubTrigger extends HTMLElement {
       static readonly tagName = 'stub-tooltip-trigger';
 
       readonly $state = { subscribe: () => () => {} };
 
-      getLabel(): string {
-        return 'Play';
+      getLabel(): Text {
+        return { key: 'buttons.play', text: 'Play' };
       }
 
       getResolvedLabel(): undefined {

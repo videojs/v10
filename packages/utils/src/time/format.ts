@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE } from '../i18n';
 import { isNumber } from '../predicate/predicate';
 
 export type TimeFormatOptions = {
@@ -11,14 +12,61 @@ export type TimeFormatOptions = {
 
 type DurationRecord = Partial<{ hours: number; minutes: number; seconds: number }>;
 
+type DurationFormatOptions = {
+  style?: TimeFormatOptions['style'];
+  hoursDisplay?: 'auto' | 'always';
+  secondsDisplay?: 'auto' | 'always';
+};
+
 type DurationFormatConstructor = new (
   locales?: string | string[],
-  options?: { style?: TimeFormatOptions['style']; hoursDisplay?: 'auto' | 'always' }
+  options?: DurationFormatOptions
 ) => { format: (duration: DurationRecord) => string };
 
-const DurationFormat = (Intl as typeof Intl & { DurationFormat: DurationFormatConstructor }).DurationFormat;
+const DurationFormat = (Intl as typeof Intl & { DurationFormat?: DurationFormatConstructor }).DurationFormat;
 
-const durationFormatters = new Map<string, InstanceType<typeof DurationFormat>>();
+type DurationFormatter = { format: (duration: DurationRecord) => string };
+
+const durationFormatters = new Map<string, DurationFormatter>();
+
+/**
+ * `Intl.DurationFormat` is unavailable on Node < 23 (SSR/prerender) and pre-2024 evergreen
+ * browsers, so degrade gracefully per the documented browser-support fallback policy.
+ * Digital output stays exact; localized phrase styles fall back to English.
+ */
+function createFallbackFormatter(
+  style: NonNullable<TimeFormatOptions['style']>,
+  hoursDisplay?: 'auto' | 'always',
+  locale?: string | string[]
+): DurationFormatter {
+  if (style === 'digital') {
+    const number = new Intl.NumberFormat(locale, { useGrouping: false });
+    const padded = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false });
+    return {
+      format: (duration) => {
+        const body = `${padded.format(duration.minutes ?? 0)}:${padded.format(duration.seconds ?? 0)}`;
+        const showHours = hoursDisplay === 'always' || duration.hours !== undefined;
+        return showHours ? `${number.format(duration.hours ?? 0)}:${body}` : body;
+      },
+    };
+  }
+
+  const units: Array<[keyof DurationRecord, string]> = [
+    ['hours', 'hour'],
+    ['minutes', 'minute'],
+    ['seconds', 'second'],
+  ];
+  return {
+    format: (duration) =>
+      units
+        .filter(([unit]) => duration[unit] !== undefined)
+        .map(([unit, label]) => {
+          const value = duration[unit] ?? 0;
+          return `${value} ${label}${value === 1 ? '' : 's'}`;
+        })
+        .join(', '),
+  };
+}
 
 function localeCacheKey(locale?: string | string[]): string {
   if (locale === undefined) return '';
@@ -28,19 +76,26 @@ function localeCacheKey(locale?: string | string[]): string {
 function isEnglishLocale(locale?: string | string[]): boolean {
   const tag = Array.isArray(locale) ? locale[0] : locale;
   if (!tag) return true;
-  return tag === 'en' || tag.startsWith('en-');
+  return tag === DEFAULT_LOCALE || tag.startsWith(`${DEFAULT_LOCALE}-`);
 }
 
 function getDurationFormatter(
   locale?: string | string[],
   style: NonNullable<TimeFormatOptions['style']> = 'long',
-  hoursDisplay?: 'auto' | 'always'
-): InstanceType<typeof DurationFormat> {
-  const key = `${localeCacheKey(locale)}:${style}:${hoursDisplay ?? ''}`;
+  hoursDisplay?: 'auto' | 'always',
+  secondsDisplay?: 'auto' | 'always'
+): DurationFormatter {
+  const key = `${localeCacheKey(locale)}:${style}:${hoursDisplay ?? ''}:${secondsDisplay ?? ''}`;
   let formatter = durationFormatters.get(key);
   if (!formatter) {
-    const options = hoursDisplay === undefined ? { style } : { style, hoursDisplay };
-    formatter = new DurationFormat(locale, options);
+    if (DurationFormat) {
+      const options: DurationFormatOptions = { style };
+      if (hoursDisplay !== undefined) options.hoursDisplay = hoursDisplay;
+      if (secondsDisplay !== undefined) options.secondsDisplay = secondsDisplay;
+      formatter = new DurationFormat(locale, options);
+    } else {
+      formatter = createFallbackFormatter(style, hoursDisplay, locale);
+    }
     durationFormatters.set(key, formatter);
   }
   return formatter;
@@ -55,6 +110,7 @@ function isValidTime(value: number): boolean {
  *
  * @param seconds - Time in seconds (can be negative)
  * @param guide - Guide time (typically duration) to determine display format
+ * @param options - Digital formatting options
  * @returns Formatted string like "1:30" or "1:05:30"
  *
  * @example
@@ -63,7 +119,7 @@ function isValidTime(value: number): boolean {
  * formatTime(35, 3600) // "0:00:35" (guided by 1-hour duration)
  * formatTime(35, 600) // "00:35" (guided by 10-minute duration)
  */
-export function formatTime(seconds: number, guide?: number): string {
+export function formatTime(seconds: number, guide?: number, options?: Pick<TimeFormatOptions, 'locale'>): string {
   if (!isValidTime(seconds)) {
     return '0:00';
   }
@@ -83,10 +139,12 @@ export function formatTime(seconds: number, guide?: number): string {
   const padMinutes = showHours || guideMinutes >= 10;
 
   const duration = showHours ? { hours, minutes, seconds: secondsPart } : { minutes, seconds: secondsPart };
-  let body = getDurationFormatter('en', 'digital', showHours ? 'always' : 'auto').format(duration);
+  const { locale = DEFAULT_LOCALE } = options ?? {};
+  let body = getDurationFormatter(locale, 'digital', showHours ? 'always' : 'auto').format(duration);
 
   if (!padMinutes) {
-    body = body.replace(/^0(?=\d:)/, '');
+    const zero = new Intl.NumberFormat(locale, { useGrouping: false }).format(0);
+    body = body.replace(new RegExp(`^${zero}(?=\\p{Nd}\\D)`, 'u'), '');
   }
 
   return `${negative ? '-' : ''}${body}`;
@@ -144,7 +202,10 @@ export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions)
   if (minutes > 0) record.minutes = minutes;
   if (secondsPart > 0 || (hours === 0 && minutes === 0)) record.seconds = secondsPart;
 
-  const body = getDurationFormatter(options?.locale, options?.style ?? 'long').format(record);
+  const secondsDisplay = totalSeconds === 0 ? 'always' : undefined;
+  const body = getDurationFormatter(options?.locale, options?.style ?? 'long', undefined, secondsDisplay).format(
+    record
+  );
 
   if (negative) {
     const formatRemaining = options?.formatRemaining;

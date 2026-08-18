@@ -2,8 +2,8 @@ import { getSeekIndicatorDisplayValue, SeekIndicatorCore, SeekIndicatorDataAttrs
 import { createTransition } from '@videojs/core/dom';
 import type { PropertyDeclarationMap } from '@videojs/element';
 
-import { InputIndicatorElement } from '../input-indicators/input-indicator-element';
-import { LiveIndicator } from '../input-indicators/live-indicator';
+import { InputIndicatorElement } from '../input-indicator/input-indicator-element';
+import { LiveIndicator } from '../input-indicator/live-indicator';
 
 export class SeekIndicatorElement extends InputIndicatorElement<SeekIndicatorCore.State> {
   static readonly tagName = 'media-seek-indicator';

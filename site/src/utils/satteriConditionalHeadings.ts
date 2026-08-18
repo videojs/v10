@@ -135,7 +135,7 @@ function getStringAttr(node: MdxJsxFlowElement, name: string): string | null {
 /** Parse a JSX expression attribute like `frameworks={["react", "html"]}`. */
 function extractArrayAttr(node: MdxJsxFlowElement, name: string): string[] | null {
   const attr = node.attributes?.find((a) => a.type === 'mdxJsxAttribute' && a.name === name);
-  if (!attr || !attr.value || typeof attr.value === 'string') return null;
+  if (!attr?.value || typeof attr.value === 'string') return null;
   if (attr.value.type !== 'mdxJsxAttributeValueExpression') return null;
   try {
     return JSON.parse(attr.value.value.trim());

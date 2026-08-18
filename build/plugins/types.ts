@@ -5,7 +5,7 @@
  */
 export interface BuildPlugin {
   name: string;
-  transform?: (this: void, code: string, id: string) => { code: string } | null;
+  transform?: (this: void, code: string, id: string) => { code: string; map?: object } | null;
   resolveId?: (
     this: void,
     source: string,
@@ -13,5 +13,7 @@ export interface BuildPlugin {
   ) => { id: string; moduleSideEffects: boolean } | null;
   load?: (this: void, id: string) => { code: string; moduleSideEffects: boolean } | null;
   buildStart?: (this: { addWatchFile: (file: string) => void }) => void;
+  renderChunk?: (this: void, code: string, chunk: { fileName: string }) => { code: string; map: object } | null;
   writeBundle?: (this: void) => void;
+  closeWatcher?: (this: void) => void;
 }

@@ -1,13 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { PopoverCSSVars } from '../../../../core/ui/popover/popover-css-vars';
 import {
-  getAnchorNameStyle,
   getAnchorPositionStyle,
   getManualPositionStyle,
-  getPopoverCSSVars,
   getPopupPositionRect,
   getPositioningCSSVars,
-  type ManualOffsets,
+  type PositioningOffsets,
   resolveOffsets,
 } from '../popover-positioning';
 
@@ -41,8 +39,8 @@ describe('getManualPositionStyle', () => {
   it('positions above trigger for side=top', () => {
     const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'center' });
 
-    // top = trigger.top - popup.height = 200 - 80 = 120
-    expect(style.top).toBe('120px');
+    expect(style.bottom).toBe('calc(100% - 200px + 0px)');
+    expect(style.top).toBe('auto');
     // left = trigger.left + (trigger.width - popup.width)/2 = 100 + (120-200)/2 = 60
     expect(style.left).toBe('60px');
   });
@@ -57,8 +55,8 @@ describe('getManualPositionStyle', () => {
   it('positions to the left of trigger for side=left', () => {
     const style = getManualPositionStyle(trigger, popup, { side: 'left', align: 'center' });
 
-    // left = trigger.left - popup.width = 100 - 200 = -100
-    expect(style.left).toBe('-100px');
+    expect(style.right).toBe('calc(100% - 100px + 0px)');
+    expect(style.left).toBe('auto');
   });
 
   it('positions to the right of trigger for side=right', () => {
@@ -68,16 +66,27 @@ describe('getManualPositionStyle', () => {
     expect(style.left).toBe('220px');
   });
 
+  it('positions top and left popups independently of their side-axis size', () => {
+    const shortPopup = makeDOMRect(0, 0, popup.width, 20);
+    const narrowPopup = makeDOMRect(0, 0, 20, popup.height);
+
+    expect(getManualPositionStyle(trigger, shortPopup, { side: 'top', align: 'center' }).bottom).toBe(
+      'calc(100% - 200px + 0px)'
+    );
+    expect(getManualPositionStyle(trigger, narrowPopup, { side: 'left', align: 'center' }).right).toBe(
+      'calc(100% - 100px + 0px)'
+    );
+  });
+
   it('applies sideOffset from resolved CSS vars', () => {
-    const offsets: ManualOffsets = { sideOffset: 8, alignOffset: 0 };
+    const offsets: PositioningOffsets = { sideOffset: 8, alignOffset: 0 };
     const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'center' }, offsets);
 
-    // top = 200 - 80 - 8 = 112
-    expect(style.top).toBe('112px');
+    expect(style.bottom).toBe('calc(100% - 200px + 8px)');
   });
 
   it('applies sideOffset for bottom side', () => {
-    const offsets: ManualOffsets = { sideOffset: 8, alignOffset: 0 };
+    const offsets: PositioningOffsets = { sideOffset: 8, alignOffset: 0 };
     const style = getManualPositionStyle(trigger, popup, { side: 'bottom', align: 'center' }, offsets);
 
     // top = 240 + 8 = 248
@@ -99,7 +108,7 @@ describe('getManualPositionStyle', () => {
   });
 
   it('applies alignOffset from resolved CSS vars', () => {
-    const offsets: ManualOffsets = { sideOffset: 0, alignOffset: 10 };
+    const offsets: PositioningOffsets = { sideOffset: 0, alignOffset: 10 };
     const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'start' }, offsets);
 
     // left = trigger.left + alignOffset = 100 + 10 = 110
@@ -134,7 +143,7 @@ describe('getManualPositionStyle', () => {
       boundary
     );
 
-    expect(topStyle.top).toBe('50px');
+    expect(topStyle.bottom).toBe('calc(100% - 100px + 0px)');
     expect(topStyle.left).toBe('200px');
     expect(bottomStyle.top).toBe('120px');
     expect(bottomStyle.left).toBe('0px');
@@ -164,14 +173,14 @@ describe('getManualPositionStyle', () => {
     expect(rightStyle.top).toBe('120px');
     expect(rightStyle.left).toBe('140px');
     expect(leftStyle.top).toBe('0px');
-    expect(leftStyle.left).toBe('20px');
+    expect(leftStyle.right).toBe('calc(100% - 100px + 0px)');
   });
 
   it('respects boundary offset when shifting cross-axis overflow', () => {
     const boundary = makeDOMRect(0, 0, 300, 200);
     const edgeTrigger = makeDOMRect(250, 100, 40, 20);
     const edgePopup = makeDOMRect(0, 0, 100, 50);
-    const offsets: ManualOffsets = { sideOffset: 0, alignOffset: 0, boundaryOffset: 12 };
+    const offsets: PositioningOffsets = { sideOffset: 0, alignOffset: 0, boundaryOffset: 12 };
 
     const style = getManualPositionStyle(
       edgeTrigger,
@@ -181,6 +190,7 @@ describe('getManualPositionStyle', () => {
       boundary
     );
 
+    expect(style.bottom).toBe('auto');
     expect(style.top).toBe('120px');
     expect(style.left).toBe('188px');
   });
@@ -203,52 +213,10 @@ describe('getManualPositionStyle', () => {
   });
 });
 
-describe('getPopoverCSSVars', () => {
-  const boundary = makeDOMRect(0, 0, 800, 600);
-  const trigger = makeDOMRect(100, 200, 120, 40);
-
-  it('includes anchor dimensions', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'top');
-
-    expect(vars[PopoverCSSVars.anchorWidth]).toBe('120px');
-    expect(vars[PopoverCSSVars.anchorHeight]).toBe('40px');
-  });
-
-  it('computes available height for top side', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'top');
-
-    // availableHeight = trigger.top - boundary.top = 200
-    expect(vars[PopoverCSSVars.availableHeight]).toBe('200px');
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('800px');
-  });
-
-  it('computes available height for bottom side', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'bottom');
-
-    // availableHeight = boundary.bottom - trigger.bottom = 600 - 240 = 360
-    expect(vars[PopoverCSSVars.availableHeight]).toBe('360px');
-  });
-
-  it('computes available width for left side', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'left');
-
-    // availableWidth = trigger.left - boundary.left = 100
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('100px');
-    expect(vars[PopoverCSSVars.availableHeight]).toBe('600px');
-  });
-
-  it('computes available width for right side', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'right');
-
-    // availableWidth = boundary.right - trigger.right = 800 - 220 = 580
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('580px');
-  });
-});
-
 describe('getPositioningCSSVars', () => {
   const boundary = makeDOMRect(0, 0, 300, 200);
 
-  it('computes available size for center-aligned top and bottom popups', () => {
+  it('uses the boundary width for top and bottom popups', () => {
     const trigger = makeDOMRect(250, 150, 40, 20);
     const vars = getPositioningCSSVars(
       trigger,
@@ -258,22 +226,22 @@ describe('getPositioningCSSVars', () => {
     );
 
     expect(vars[PopoverCSSVars.availableHeight]).toBe('22px');
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('60px');
+    expect(vars[PopoverCSSVars.availableWidth]).toBe('300px');
   });
 
-  it('applies align offset to start-aligned cross-axis size', () => {
+  it.each(['start', 'center', 'end'] as const)('does not reduce cross-axis size for %s alignment', (align) => {
     const trigger = makeDOMRect(250, 150, 40, 20);
     const vars = getPositioningCSSVars(
       trigger,
       boundary,
-      { side: 'bottom', align: 'start' },
+      { side: 'bottom', align },
       { sideOffset: 0, alignOffset: 10 }
     );
 
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('40px');
+    expect(vars[PopoverCSSVars.availableWidth]).toBe('300px');
   });
 
-  it('computes available size for center-aligned left and right popups', () => {
+  it('uses the boundary height for left and right popups', () => {
     const trigger = makeDOMRect(120, 160, 40, 20);
     const vars = getPositioningCSSVars(
       trigger,
@@ -283,7 +251,7 @@ describe('getPositioningCSSVars', () => {
     );
 
     expect(vars[PopoverCSSVars.availableWidth]).toBe('128px');
-    expect(vars[PopoverCSSVars.availableHeight]).toBe('60px');
+    expect(vars[PopoverCSSVars.availableHeight]).toBe('200px');
   });
 
   it('subtracts boundary offset from side-axis and cross-axis sizes', () => {
@@ -296,14 +264,7 @@ describe('getPositioningCSSVars', () => {
     );
 
     expect(vars[PopoverCSSVars.availableHeight]).toBe('12px');
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('40px');
-  });
-});
-
-describe('getAnchorNameStyle', () => {
-  it('returns empty object when anchor positioning is not supported', () => {
-    const style = getAnchorNameStyle('my-anchor');
-    expect(style).toEqual({});
+    expect(vars[PopoverCSSVars.availableWidth]).toBe('280px');
   });
 });
 
@@ -321,7 +282,8 @@ describe('getAnchorPositionStyle', () => {
 
     const style = getAnchorPositionStyle('my-anchor', { side: 'top', align: 'center' }, trigger, positioner, boundary);
 
-    expect(style.top).toBe('120px');
+    expect(style.bottom).toBe('calc(100% - 200px + 0px)');
+    expect(style.top).toBe('auto');
     expect(style.left).toBe('60px');
     expect(style.position).toBe('fixed');
     // Also includes sizing CSS vars
@@ -359,7 +321,7 @@ describe('getPopupPositionRect', () => {
     Object.defineProperty(el, 'offsetHeight', { configurable: true, value: 80 });
     vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => makeDOMRect(20, 40, 100, 40));
 
-    const rect = getPopupPositionRect(el);
+    const rect = getPopupPositionRect(el, 'top');
 
     expect(rect.left).toBe(20);
     expect(rect.top).toBe(40);
@@ -376,7 +338,7 @@ describe('getPopupPositionRect', () => {
     Object.defineProperty(el, 'offsetHeight', { configurable: true, value: 80 });
     vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => makeDOMRect(20, 40, 100, 40));
 
-    const rect = getPopupPositionRect(el);
+    const rect = getPopupPositionRect(el, 'top');
 
     expect(rect.toJSON()).toEqual(
       expect.objectContaining({
@@ -388,6 +350,37 @@ describe('getPopupPositionRect', () => {
         bottom: 120,
       })
     );
+  });
+
+  it.each([
+    ['top', 100, 80],
+    ['left', 120, 60],
+  ] as const)('includes overflow on the %s side axis', (side, expectedWidth, expectedHeight) => {
+    const el = document.createElement('div');
+    vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => makeDOMRect(20, 40, 100, 60));
+    Object.defineProperty(el, 'offsetWidth', { configurable: true, value: 100 });
+    Object.defineProperty(el, 'offsetHeight', { configurable: true, value: 60 });
+    Object.defineProperty(el, 'scrollWidth', { configurable: true, value: 120 });
+    Object.defineProperty(el, 'scrollHeight', { configurable: true, value: 80 });
+
+    const rect = getPopupPositionRect(el, side);
+    expect(rect.width).toBe(expectedWidth);
+    expect(rect.height).toBe(expectedHeight);
+  });
+
+  it('does not change available-size styles while measuring', () => {
+    const el = document.createElement('div');
+    el.style.setProperty(PopoverCSSVars.availableHeight, '20px');
+    vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => {
+      expect(el.style.getPropertyValue(PopoverCSSVars.availableHeight)).toBe('20px');
+      return makeDOMRect(20, 40, 100, 60);
+    });
+    Object.defineProperty(el, 'offsetWidth', { configurable: true, value: 100 });
+    Object.defineProperty(el, 'offsetHeight', { configurable: true, value: 20 });
+    Object.defineProperty(el, 'scrollHeight', { configurable: true, value: 60 });
+
+    expect(getPopupPositionRect(el, 'top').height).toBe(60);
+    expect(el.style.getPropertyValue(PopoverCSSVars.availableHeight)).toBe('20px');
   });
 });
 

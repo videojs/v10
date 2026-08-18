@@ -1,7 +1,7 @@
 {
   "name": "@videojs/html",
   "type": "module",
-  "version": "10.0.0-beta.25",
+  "version": "10.0.0-beta.27",
   "description": "HTML library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -106,6 +106,16 @@
       "development": "./dist/dev/define/feature/*.js",
       "default": "./dist/default/define/feature/*.js"
     },
+    "./media/mux-video": {
+      "types": "./dist/dev/define/media/mux-video/index.d.ts",
+      "development": "./dist/dev/define/media/mux-video/index.js",
+      "default": "./dist/default/define/media/mux-video/index.js"
+    },
+    "./media/mux-audio": {
+      "types": "./dist/dev/define/media/mux-audio/index.d.ts",
+      "development": "./dist/dev/define/media/mux-audio/index.js",
+      "default": "./dist/default/define/media/mux-audio/index.js"
+    },
     "./media/*": {
       "types": "./dist/dev/define/media/*.d.ts",
       "development": "./dist/dev/define/media/*.js",
@@ -156,26 +166,30 @@
   "scripts": {
     "build": "tsdown",
     "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
+    "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts",
+    "build:archive": "node --import tsx ./scripts/build-dist-archive.ts",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",
-    "clean": "rimraf --glob dist cdn docs types '*.tsbuildinfo'",
+    "clean": "rimraf --glob dist cdn archive docs types '*.tsbuildinfo'",
     "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts html"
   },
   "dependencies": {
     "@videojs/core": "workspace:*",
     "@videojs/element": "workspace:*",
+    "@videojs/media": "workspace:*",
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@testing-library/dom": "^10.4.0",
+    "@testing-library/dom": "^10.4.1",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
-    "happy-dom": "^18.0.1",
-    "tsdown": "^0.21.9",
-    "vitest": "^4.1.0"
+    "happy-dom": "^20.11.1",
+    "tsdown": "^0.22.14",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"

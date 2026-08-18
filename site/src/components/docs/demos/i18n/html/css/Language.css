@@ -1,0 +1,26 @@
+.html-i18n-language {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.html-i18n-language label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.html-i18n-language select {
+  padding: 4px 8px;
+}
+
+.html-i18n-language video-player,
+.html-i18n-language video-skin,
+.html-i18n-language video {
+  display: block;
+  width: 100%;
+}
+
+.html-i18n-language video-skin {
+  aspect-ratio: 16 / 9;
+}

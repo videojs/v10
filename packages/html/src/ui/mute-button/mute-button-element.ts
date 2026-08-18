@@ -1,5 +1,6 @@
-import { type MediaVolumeState, MuteButtonCore, MuteButtonDataAttrs } from '@videojs/core';
+import { MuteButtonCore, MuteButtonDataAttrs } from '@videojs/core';
 import { selectVolume } from '@videojs/core/dom';
+import type { MediaVolumeState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

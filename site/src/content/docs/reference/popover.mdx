@@ -50,7 +50,7 @@ Displays contextual content anchored to a trigger element. By default, opens on 
 
 Set `openOnHover` to open on pointer hover instead of click. Use `delay` and `closeDelay` to control timing for hover interactions.
 
-The `side` and `align` props control popup placement relative to the trigger. The popup repositions automatically to stay within viewport bounds.
+The `side` and `align` props control the preferred popup placement relative to the trigger. When the preferred side overflows the positioning boundary, the popup uses the opposite side if it has more space.
 
 <FrameworkCase frameworks={["react"]}>
   In React, the component is composed from four parts: `Root` manages state,
@@ -90,7 +90,7 @@ React renders standard DOM elements. Add a `className` to style them:
 ```
 </FrameworkCase>
 
-Style based on open state and transition phases:
+Style based on open state, rendered side, and transition phases. `data-side` reflects the rendered side and can differ from the preferred `side` prop after collision handling:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
@@ -102,6 +102,12 @@ media-popover[data-starting-style] .popup {
 }
 media-popover[data-ending-style] .popup {
   opacity: 0;
+}
+media-popover[data-side="top"] {
+  transform-origin: bottom center;
+}
+media-popover[data-side="bottom"] {
+  transform-origin: top center;
 }
 ```
 </FrameworkCase>
@@ -116,6 +122,12 @@ media-popover[data-ending-style] .popup {
 }
 .popover[data-ending-style] .popup {
   opacity: 0;
+}
+.popover[data-side="top"] {
+  transform-origin: bottom center;
+}
+.popover[data-side="bottom"] {
+  transform-origin: top center;
 }
 ```
 </FrameworkCase>

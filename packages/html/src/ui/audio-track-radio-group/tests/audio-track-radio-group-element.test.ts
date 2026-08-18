@@ -1,7 +1,7 @@
-import type { MediaAudioTrackState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaAudioTrackState } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -194,7 +194,7 @@ describe('AudioTrackRadioGroupElement', () => {
 
     await waitForMenu(menu, options);
 
-    registerI18n('x-test-audio', { Audio: 'Sound' });
+    registerI18n('x-test-audio', { 'menu.audio': 'Sound' });
 
     await waitForAssertion(() => {
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
@@ -202,7 +202,7 @@ describe('AudioTrackRadioGroupElement', () => {
     });
   });
 
-  it('renders translated Default track labels', async () => {
+  it('keeps authored track labels literal', async () => {
     const { menu, options } = setup({
       locale: 'x-test-audio',
       audioTrackList: [
@@ -213,11 +213,9 @@ describe('AudioTrackRadioGroupElement', () => {
 
     await waitForMenu(menu, options);
 
-    registerI18n('x-test-audio', { Default: 'Standard' });
-
     await waitForAssertion(() => {
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
-      expect(items.map((item) => item.textContent)).toEqual(['Standard', 'English']);
+      expect(items.map((item) => item.textContent)).toEqual(['Default', 'English']);
     });
   });
 

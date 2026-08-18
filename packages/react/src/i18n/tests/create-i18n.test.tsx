@@ -1,6 +1,6 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import * as coreI18n from '@videojs/core/i18n';
-import { registerI18n, resetI18nRegistry, type Translations } from '@videojs/core/i18n';
+import { type FlatTranslations, registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { createRef, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -479,8 +479,8 @@ describe('createI18n', () => {
   });
 
   it('does not apply stale lazy locale overlays after locale switch', async () => {
-    let resolveDe: ((value: Partial<Translations>) => void) | undefined;
-    const deLoad = new Promise<Partial<Translations>>((resolve) => {
+    let resolveDe: ((value: Partial<FlatTranslations>) => void) | undefined;
+    const deLoad = new Promise<Partial<FlatTranslations>>((resolve) => {
       resolveDe = resolve;
     });
 
@@ -721,7 +721,7 @@ describe('createI18n', () => {
   it('registers browser translations when no locale pack exists', async () => {
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({
       Play: 'BrowserPlay',
-    } satisfies Partial<Translations>);
+    } satisfies Partial<FlatTranslations>);
 
     const { I18nProvider, useTranslator } = createI18n();
 
@@ -745,7 +745,7 @@ describe('createI18n', () => {
   it('registers browser translations when a shipped locale pack is missing keys', async () => {
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({
       Settings: 'Paramètres',
-    } satisfies Partial<Translations>);
+    } satisfies Partial<FlatTranslations>);
 
     const { I18nProvider, useTranslator } = createI18n({
       loader: async (tag) => (tag === 'fr' ? { Play: 'Lire' } : undefined),
@@ -792,7 +792,7 @@ describe('createI18n', () => {
   });
 
   it('does not register browser translations after locale changes', async () => {
-    let resolveBrowser: ((value: Partial<Translations>) => void) | undefined;
+    let resolveBrowser: ((value: Partial<FlatTranslations>) => void) | undefined;
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -820,7 +820,7 @@ describe('createI18n', () => {
   });
 
   it('does not register browser translations after unmount', async () => {
-    let resolveBrowser: ((value: Partial<Translations>) => void) | undefined;
+    let resolveBrowser: ((value: Partial<FlatTranslations>) => void) | undefined;
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockImplementation(
       () =>
         new Promise((resolve) => {

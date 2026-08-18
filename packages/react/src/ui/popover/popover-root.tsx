@@ -1,5 +1,3 @@
-'use client';
-
 import { type PopoverProps as CorePopoverProps, PopoverCore, PopoverDataAttrs } from '@videojs/core';
 import {
   createPopover,
@@ -11,11 +9,13 @@ import { useSnapshot } from '@videojs/store/react';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { useOptionalContainer, useOptionalPopupGroup } from '../../player/context';
+import { useOptionalContainer } from '../../player/context';
+import { useOptionalPopupGroup } from '../../player/popup-group-context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
+import { usePositionedState } from '../hooks/use-positioned-state';
 import { PopoverContextProvider } from './context';
 
 export interface PopoverRootProps extends CorePopoverProps {
@@ -112,11 +112,22 @@ export function PopoverRoot({
 
   const input = useSnapshot(popover.input);
   core.setInput(input);
-  const state = core.getState();
+  const { state, preferredSide, setPositionedSide } = usePositionedState(core.getState());
 
   return (
     <PopoverContextProvider
-      value={{ core, popover, state, stateAttrMap: PopoverDataAttrs, anchorName, popupId, boundary, container }}
+      value={{
+        core,
+        popover,
+        state,
+        preferredSide,
+        setPositionedSide,
+        stateAttrMap: PopoverDataAttrs,
+        anchorName,
+        popupId,
+        boundary,
+        container,
+      }}
     >
       {children}
     </PopoverContextProvider>

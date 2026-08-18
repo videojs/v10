@@ -51,9 +51,9 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
     hasPoster: true,
     isAudio: false,
   },
-  'simple-hls-video': {
-    element: 'simple-hls-video',
-    imports: ['@videojs/html/media/simple-hls-video'],
+  'hls-video': {
+    element: 'hls-video',
+    imports: ['@videojs/html/media/hls-video'],
     attrs: 'playsinline crossorigin="anonymous" preload="metadata"',
     hasStoryboard: true,
     hasPoster: true,
@@ -124,7 +124,7 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions';
+  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions' | 'source-html' | 'source-react';
 }
 
 // ---------------------------------------------------------------------------
@@ -201,30 +201,27 @@ function reactVideoPage(media: string, resource: string, config: MediaTypeConfig
 
   const isDefaultVideo = media === 'video';
   const mediaImport = isDefaultVideo
-    ? `import { Video, VideoSkin, videoFeatures } from '@videojs/react/video';`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoSkin, videoFeatures } from '@videojs/react/video';`;
+    ? `import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { VideoPlayer, VideoSkin } from '@videojs/react/video';`;
 
   const posterProp = config.hasPoster ? ` poster={MEDIA.${resource}.poster}` : '';
   const storyboardTrack = config.hasStoryboard
     ? `\n          <track kind="metadata" label="thumbnails" src={MEDIA.${resource}.storyboard} default />`
     : '';
 
-  return `import { createPlayer } from '@videojs/react';
-${mediaImport}
+  return `${mediaImport}
 import '@videojs/react/video/skin.css';
 import { createRoot } from 'react-dom/client';
 import { MEDIA } from '../resources';
 
-const Player = createPlayer({ features: videoFeatures });
-
 function App() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <VideoSkin${posterProp} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} playsInline crossOrigin="anonymous">${storyboardTrack}
         </${reactMedia.component}>
       </VideoSkin>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }
 
@@ -238,24 +235,21 @@ function reactAudioPage(media: string, resource: string): string {
 
   const isDefaultAudio = media === 'audio';
   const mediaImport = isDefaultAudio
-    ? `import { Audio, AudioSkin, audioFeatures } from '@videojs/react/audio';`
-    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioSkin, audioFeatures } from '@videojs/react/audio';`;
+    ? `import { Audio, AudioPlayer, AudioSkin } from '@videojs/react/audio';`
+    : `import { ${reactMedia.component} } from '${reactMedia.importPath}';\nimport { AudioPlayer, AudioSkin } from '@videojs/react/audio';`;
 
-  return `import { createPlayer } from '@videojs/react';
-${mediaImport}
+  return `${mediaImport}
 import '@videojs/react/audio/skin.css';
 import { createRoot } from 'react-dom/client';
 import { MEDIA } from '../resources';
 
-const Player = createPlayer({ features: audioFeatures });
-
 function App() {
   return (
-    <Player.Provider>
+    <AudioPlayer>
       <AudioSkin style={{ maxWidth: 600, margin: '0 auto' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} />
       </AudioSkin>
-    </Player.Provider>
+    </AudioPlayer>
   );
 }
 
@@ -292,13 +286,13 @@ document.getElementById('root')!.innerHTML = html\`
 `;
 }
 
-function ejectedHtmlPage(): string {
+function ejectedHtmlPage(resource: string): string {
   // Path from pages/ to the site content
   const jsonPath = '../../../../../../site/src/content/ejected-skins.json';
 
   return `import '@videojs/html/icons/element';
-import '@videojs/html/video/ui';
 import ejectedSkins from '${jsonPath}';
+import { MEDIA } from '../resources';
 
 interface EjectedSkinEntry {
   id: string;
@@ -324,6 +318,21 @@ if (!playerMatch) {
 
 const root = document.getElementById('root')!;
 root.innerHTML = \`<div style="max-width: 800px; aspect-ratio: 16/9">\${playerMatch[0]}</div>\`;
+
+const video = root.querySelector('video');
+const poster = root.querySelector('media-poster img');
+
+if (!video || !poster) {
+  throw new Error('Ejected skin "default-video" is missing video media.');
+}
+
+video.src = MEDIA.${resource}.url;
+video.crossOrigin = 'anonymous';
+video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />\`;
+poster.src = MEDIA.${resource}.poster;
+poster.alt = 'Video poster';
+
+await import('@videojs/html/video/ui');
 `;
 }
 
@@ -340,6 +349,76 @@ createRoot(document.getElementById('root')!).render(<App />);
 `;
 }
 
+function sourceHtmlPage(resource: string): string {
+  const generatedRoot = '../../../../../../packages/html/src/__generated__/skins/default-video';
+
+  return `import '@videojs/html/video/player';
+import { skin } from '${generatedRoot}/skin';
+import styles from '${generatedRoot}/styles/styles.css?inline';
+import { MEDIA } from '../resources';
+
+class SourceVideoSkinElement extends HTMLElement {
+  constructor() {
+    super();
+    const root = this.attachShadow({ mode: 'open' });
+    root.innerHTML = \`<style>\${styles}</style>\${skin}\`;
+  }
+}
+
+customElements.define('source-video-skin', SourceVideoSkinElement);
+
+const html = String.raw;
+
+document.getElementById('root')!.innerHTML = html\`
+  <video-player>
+    <source-video-skin
+      data-source-skin
+      style="display: block; max-width: 800px; aspect-ratio: 16/9; --media-poster-placeholder: url(\${MEDIA.${resource}.poster})"
+    >
+      <video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>
+      <img slot="poster" src="\${MEDIA.${resource}.poster}" alt="Video poster" />
+    </source-video-skin>
+  </video-player>
+\`;
+`;
+}
+
+function sourceReactPage(resource: string): string {
+  const generatedRoot = '../../../../../../packages/react/src/__generated__/skins/default-video';
+
+  return `import { createPlayer } from '@/player/create-player';
+import { Video } from '@/media/video';
+import { videoFeatures } from '@videojs/core/dom';
+import type { CSSProperties } from 'react';
+import { createRoot } from 'react-dom/client';
+import { DefaultVideoSkin } from '${generatedRoot}/skin';
+import '${generatedRoot}/styles/styles.css';
+import { MEDIA } from '../resources';
+
+const { Player } = createPlayer({ features: videoFeatures });
+
+function App() {
+  return (
+    <Player>
+      <DefaultVideoSkin
+        data-source-skin
+        poster={MEDIA.${resource}.poster}
+        style={{
+          maxWidth: 800,
+          aspectRatio: '16/9',
+          '--media-poster-placeholder': \`url(\${MEDIA.${resource}.poster})\`,
+        } as CSSProperties}
+      >
+        <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />
+      </DefaultVideoSkin>
+    </Player>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
+`;
+}
+
 // ---------------------------------------------------------------------------
 // Page definitions (drive generation from here)
 // ---------------------------------------------------------------------------
@@ -349,11 +428,22 @@ const PAGES: PageDef[] = [
   { name: 'HTML Video MP4', path: 'html-video-mp4', framework: 'html', media: 'video', resource: 'mp4' },
   { name: 'HTML Video HLS', path: 'html-video-hls', framework: 'html', media: 'hlsjs-video', resource: 'hlsTs' },
   {
-    name: 'HTML Simple HLS Video fMP4',
-    path: 'html-simple-hls-video-fmp4',
+    name: 'HTML HLS Video fMP4',
+    path: 'html-hls-video-fmp4',
     framework: 'html',
-    media: 'simple-hls-video',
+    media: 'hls-video',
     resource: 'hlsFmp4',
+  },
+  // A source the SPF engine cannot play: MPEG-TS segments, with no fMP4
+  // rendition to fall back to. Deliberately absent from `fixtures/media.ts`'s
+  // page arrays — the parameterized playback suites would all fail on it. Only
+  // `spf-unsupported-source.spec.ts` uses it.
+  {
+    name: 'HTML HLS Video TS',
+    path: 'html-hls-video-ts',
+    framework: 'html',
+    media: 'hls-video',
+    resource: 'hlsTs',
   },
   { name: 'HTML DASH Video', path: 'html-dash-video', framework: 'html', media: 'dash-video', resource: 'dash' },
   {
@@ -414,6 +504,24 @@ const PAGES: PageDef[] = [
     resource: 'mp4',
     category: 'ejected-react',
   },
+
+  // Generated canonical Skin fixtures for focused container/parity coverage.
+  {
+    name: 'Source HTML Video MP4',
+    path: 'source-html-video-mp4',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    category: 'source-html',
+  },
+  {
+    name: 'Source React Video MP4',
+    path: 'source-react-video-mp4',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+    category: 'source-react',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -449,9 +557,13 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
   if (page.category === 'captions') {
     ts = captionsPage(page.resource);
   } else if (page.category === 'ejected-html') {
-    ts = ejectedHtmlPage();
+    ts = ejectedHtmlPage(page.resource);
   } else if (page.category === 'ejected-react') {
     ts = ejectedReactPage(page.resource);
+  } else if (page.category === 'source-html') {
+    ts = sourceHtmlPage(page.resource);
+  } else if (page.category === 'source-react') {
+    ts = sourceReactPage(page.resource);
   } else if (page.framework === 'react') {
     ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource, config);
   } else {
@@ -473,6 +585,7 @@ function generateIndexHtml(pages: PageDef[]): string {
   const cdn = pages.filter((p) => p.category === 'cdn');
   const ejected = pages.filter((p) => p.category?.startsWith('ejected'));
   const captions = pages.filter((p) => p.category === 'captions');
+  const source = pages.filter((p) => p.category?.startsWith('source-'));
 
   function list(entries: PageDef[]): string {
     return entries.map((p) => `        <li><a href="/pages/${p.path}.html">${p.name}</a></li>`).join('\n');
@@ -506,6 +619,10 @@ ${list(ejected)}
       <h2>CDN Bundles</h2>
       <ul>
 ${list(cdn)}
+      </ul>
+      <h2>Generated Canonical Skins</h2>
+      <ul>
+${list(source)}
       </ul>
     </nav>
   </body>

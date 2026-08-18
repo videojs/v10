@@ -1,6 +1,4 @@
-'use client';
-
-import type { Media } from '@videojs/core';
+import type { Media } from '@videojs/media';
 import { useState } from 'react';
 
 import { useMediaAttach } from '../player/context';
@@ -14,7 +12,7 @@ import { useDestroy } from './use-destroy';
  * conditions when swapping media components (e.g. DashVideo → HlsJsVideo).
  *
  * An optional `setup` callback runs once on mount — e.g. to add media
- * components via `addComponent`. Components registered there are destroyed
+ * components via `addMediaComponent`. Components registered there are destroyed
  * together with the media instance on unmount (`media.destroy()` destroys
  * all of its registered components).
  */

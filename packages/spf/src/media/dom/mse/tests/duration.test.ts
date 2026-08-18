@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Presentation } from '../../../types';
-import { canUpdateDuration, getMaxBufferedEnd, shouldUpdateDuration, waitForSourceBuffersReady } from '../duration';
+import {
+  canUpdateDuration,
+  getMaxBufferedEnd,
+  getMinBufferedEnd,
+  shouldUpdateDuration,
+  waitForSourceBuffersReady,
+} from '../duration';
 
 function makeUpdatingSourceBuffer() {
   const updateEndListeners: Array<() => void> = [];
@@ -128,6 +134,51 @@ describe('getMaxBufferedEnd', () => {
     } as unknown as SourceBuffer;
 
     expect(getMaxBufferedEnd([audio])).toBe(25);
+  });
+});
+
+describe('getMinBufferedEnd', () => {
+  it('returns 0 when the buffer list is empty', () => {
+    expect(getMinBufferedEnd([])).toBe(0);
+  });
+
+  it('returns the min last-range end across buffers (the reachable/intersection end)', () => {
+    // Skewed A/V: video buffered slightly past audio; reachable end is the audio (min).
+    const video = {
+      buffered: { length: 1, start: () => 0, end: () => 600.044 } as TimeRanges,
+    } as unknown as SourceBuffer;
+    const audio = {
+      buffered: { length: 1, start: () => 0, end: () => 600.0 } as TimeRanges,
+    } as unknown as SourceBuffer;
+
+    expect(getMinBufferedEnd([video, audio])).toBe(600.0);
+  });
+
+  it('skips buffers with no ranges (min across the buffers that have ranges)', () => {
+    const empty = {
+      buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
+    } as unknown as SourceBuffer;
+    const buffered = {
+      buffered: { length: 1, start: () => 0, end: () => 30 } as TimeRanges,
+    } as unknown as SourceBuffer;
+
+    expect(getMinBufferedEnd([empty, buffered])).toBe(30);
+  });
+
+  it('uses the last range end when a buffer has multiple (gapped) ranges', () => {
+    const gapped = {
+      buffered: { length: 2, start: (i: number) => (i === 0 ? 0 : 12), end: (i: number) => (i === 0 ? 10 : 30) },
+    } as unknown as SourceBuffer;
+
+    expect(getMinBufferedEnd([gapped])).toBe(30);
+  });
+
+  it('works against a single-buffer audio-only configuration', () => {
+    const audio = {
+      buffered: { length: 1, start: () => 0, end: () => 42 } as TimeRanges,
+    } as unknown as SourceBuffer;
+
+    expect(getMinBufferedEnd([audio])).toBe(42);
   });
 });
 

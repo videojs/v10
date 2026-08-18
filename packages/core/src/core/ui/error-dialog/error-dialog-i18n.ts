@@ -1,25 +1,55 @@
-import type { TranslationParams } from '../../i18n/types';
-import { MediaError } from '../../media/media-error';
+import { MediaError } from '@videojs/media';
+import type { TranslationParams } from '../../i18n/params';
+import type { Text } from '../../i18n/text';
+import { emptyText, okText } from '../../i18n/text/common';
+import {
+  abortedText,
+  decodeText,
+  encryptedText,
+  networkText,
+  sourceText,
+  titleText,
+  unexpectedText,
+  unplayableText,
+} from '../../i18n/text/errors';
+
+/**
+ * SVTA 99 [Custom] 001 — an engine reporting that it has no pipeline for
+ * something the source requires. Not a `MediaError.MEDIA_ERR_*` value: engines
+ * that report SVTA codes surface them on `error.code` directly.
+ *
+ * The literal rather than an import. `@videojs/spf` defines this as
+ * `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` and owns its meaning, but core doesn't
+ * depend on spf, and reaching it through `@videojs/media` would pull an engine
+ * entry point into a barrel that has no other reason to load one. Same trade
+ * `HlsVideoMediaStreamType` makes in the other direction — compatibility by
+ * value, stated in a comment, instead of a dependency edge neither package
+ * wants.
+ */
+const SVTA_UNSUPPORTED_PLAYBACK_FEATURE = 99001;
 
 export type MediaErrorTranslationKey = Extract<
   keyof TranslationParams,
-  | 'You stopped media playback before it finished.'
-  | 'This media could not be loaded due to a network or server issue.'
-  | 'This media could not be played. It may be corrupted, or your browser may not support its format.'
-  | 'This media could not be loaded. It may be unavailable, or your browser may not support its format.'
-  | 'This media could not be played because it could not be decrypted.'
-  | ''
+  | 'errors.aborted'
+  | 'errors.network'
+  | 'errors.decode'
+  | 'errors.source'
+  | 'errors.encrypted'
+  | 'errors.unplayable'
+  | 'common.empty'
 >;
 
-const MEDIA_ERROR_CODE_TO_KEY: Record<number, MediaErrorTranslationKey | undefined> = {
-  [MediaError.MEDIA_ERR_ABORTED]: 'You stopped media playback before it finished.',
-  [MediaError.MEDIA_ERR_NETWORK]: 'This media could not be loaded due to a network or server issue.',
-  [MediaError.MEDIA_ERR_DECODE]:
-    'This media could not be played. It may be corrupted, or your browser may not support its format.',
-  [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]:
-    'This media could not be loaded. It may be unavailable, or your browser may not support its format.',
-  [MediaError.MEDIA_ERR_ENCRYPTED]: 'This media could not be played because it could not be decrypted.',
-  [MediaError.MEDIA_ERR_CUSTOM]: '',
+const MEDIA_ERROR_TRANSLATIONS: Record<number, Text | undefined> = {
+  [MediaError.MEDIA_ERR_ABORTED]: abortedText,
+  [MediaError.MEDIA_ERR_NETWORK]: networkText,
+  [MediaError.MEDIA_ERR_DECODE]: decodeText,
+  [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]: sourceText,
+  [MediaError.MEDIA_ERR_ENCRYPTED]: encryptedText,
+  [MediaError.MEDIA_ERR_CUSTOM]: emptyText,
+  // Distinct copy from `errors.source`: that one tells a viewer the media may be
+  // unavailable or unsupported by their *browser*, which is wrong here. The
+  // browser is fine; this player can't play the source.
+  [SVTA_UNSUPPORTED_PLAYBACK_FEATURE]: unplayableText,
 };
 
 const STANDARD_CODE_UA_MESSAGES: Partial<Record<number, readonly string[]>> = {
@@ -31,15 +61,19 @@ function isStandardMediaErrorCode(code: number): boolean {
 }
 
 export function getMediaErrorTranslationKey(code: number): MediaErrorTranslationKey | undefined {
-  return MEDIA_ERROR_CODE_TO_KEY[code];
+  return MEDIA_ERROR_TRANSLATIONS[code]?.key as MediaErrorTranslationKey | undefined;
 }
 
-export function getErrorDialogTitleLabel(): string {
-  return 'Something went wrong.';
+export function getErrorDialogTitleText(): Text {
+  return titleText;
 }
 
-export function getErrorDialogDismissLabel(): string {
-  return 'OK';
+export function getErrorDialogDismissText(): Text {
+  return okText;
+}
+
+export function getErrorDialogUnexpectedText(): Text {
+  return unexpectedText;
 }
 
 /**
@@ -49,26 +83,26 @@ export function getErrorDialogDismissLabel(): string {
 export function resolveErrorDialogDescription(
   error: (Pick<MediaError, 'code' | 'message'> & { context?: MediaError['context'] }) | null | undefined,
   cachedMessage?: string | null
-): string {
+): Text | string {
   if (error) {
-    const key = getMediaErrorTranslationKey(error.code);
+    const text = MEDIA_ERROR_TRANSLATIONS[error.code];
     const message = error.message?.trim();
     if (message) {
       const defaultForCode = MediaError.defaultMessages[error.code];
-      if (key && defaultForCode && message === defaultForCode) {
-        return key;
+      if (text && defaultForCode && message === defaultForCode) {
+        return text;
       }
       const uaVariants = STANDARD_CODE_UA_MESSAGES[error.code];
-      if (key && isStandardMediaErrorCode(error.code) && !error.context && uaVariants?.includes(message)) {
-        return key;
+      if (text && isStandardMediaErrorCode(error.code) && !error.context && uaVariants?.includes(message)) {
+        return text;
       }
       return message;
     }
-    if (key) return key;
+    if (text) return text;
   }
 
   const cached = cachedMessage?.trim();
   if (cached) return cached;
 
-  return 'An unexpected error occurred.';
+  return unexpectedText;
 }

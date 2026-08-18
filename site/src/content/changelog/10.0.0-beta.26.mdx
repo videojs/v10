@@ -1,0 +1,65 @@
+---
+description: "Adds an i18n system with 40+ locales, media components as markup, reworked Mux media, and responsive skins."
+date: 2026-08-02
+version: "10.0.0-beta.26"
+prerelease: true
+breaking: true
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.25...@videojs/core@10.0.0-beta.26"
+---
+
+The player speaks other languages now. That's the headline of beta.26, but it isn't the only rearranging: Mux Data and Google Cast became markup you write instead of config you pass, media moved out of core into a package of its own, and the shipped skins learned to fit a phone.
+
+## Speak your user's language
+
+Internationalization landed as a complete system ([#1708](https://github.com/videojs/v10/pull/1708)): a translation registry, translators, lazy locale loading, a BCP 47 fallback chain, and shipped locale packs covering more than 40 languages. Every string in the shipped skins runs through it, so a player set to Spanish says "Reproducir" without you maintaining a lookup table.
+
+Keys are opaque rather than English ([#1848](https://github.com/videojs/v10/pull/1848)). You write `<media-text token="buttons.play">Play</media-text>`, and the inline text stays as the default, so rewording the English copy doesn't invalidate every translation of it. The copy itself got attention too: error messages were rewritten to be consistent and end-user friendly ([#1822](https://github.com/videojs/v10/pull/1822)), and the "Audio" settings label picked up the translations it was missing across every locale ([#1817](https://github.com/videojs/v10/pull/1817)).
+
+All of it is documented — a concept page plus guides for registering a locale, overriding keys, switching at runtime, and server rendering ([#1600](https://github.com/videojs/v10/pull/1600)). Start with the i18n concept for [HTML](/docs/framework/html/concepts/i18n/) and [React](/docs/framework/react/concepts/i18n/).
+
+## Media you can see in your markup
+
+Mux Data and Google Cast used to be invisible. They were composed into the media element at construction and configured through a nested `config` namespace, which meant reading the docs to find out what was attached. They're components now ([#1883](https://github.com/videojs/v10/pull/1883)): `<mux-data>` and `<google-cast>` in HTML, `MuxData` and `GoogleCast` in React. Each one sits beside the media element, registers against whatever player surrounds it, and takes its options as attributes or props. Media elements compose nothing by default, so what's attached is what you wrote. Upgrading takes a change; see [Breaking changes](#breaking-changes).
+
+Mux media got reworked alongside it ([#1850](https://github.com/videojs/v10/pull/1850)). Point `<mux-video>` at a stream URL and the playback ID, domain, and params are parsed out for you, or set a structured `source` object with a custom domain, playback options, or signed tokens. Thumbnail and storyboard URLs derive from that same source, so the storyboard `<track>` configures itself on VOD and stays out of the way on live. `<mux-audio>` follows the same rules.
+
+Media itself moved out of `@videojs/core` into a new `@videojs/media` package ([#1879](https://github.com/videojs/v10/pull/1879)), taking hls.js, dash.js, mux-embed, and the Vimeo player with it. Core no longer pulls a streaming stack in behind you. That one moves import paths; see [Breaking changes](#breaking-changes) too.
+
+New reference pages cover the components and the source API ([#1902](https://github.com/videojs/v10/pull/1902)): Mux Data for [HTML](/docs/framework/html/reference/mux-data/) and [React](/docs/framework/react/reference/mux-data/), Google Cast for [HTML](/docs/framework/html/reference/google-cast/) and [React](/docs/framework/react/reference/google-cast/), and `mux-video` for [HTML](/docs/framework/html/reference/mux-video/) and [React](/docs/framework/react/reference/mux-video/).
+
+## Controls that fit the screen
+
+The shipped skins got a real responsive pass ([#1832](https://github.com/videojs/v10/pull/1832)). On small screens, Default moves fullscreen, PiP, and cast into a secondary group in the top right, freeing the control bar for everything else, and fullscreen on large displays now scales the chrome up instead of leaving it marooned. Volume moved next to play in both skins, and the ±10s seek buttons stepped aside to make room for a standalone captions toggle.
+
+Tooltips at the top of a player used to overflow it. Popovers, tooltips, and menus are collision-aware now ([#1857](https://github.com/videojs/v10/pull/1857)): `side` is the side you prefer, and when there isn't room, the popup flips to the opposite side and reports where it actually landed via `data-side`. Read the details in the popover reference for [HTML](/docs/framework/html/reference/popover/) and [React](/docs/framework/react/reference/popover/).
+
+Screen readers hear more of what the player is doing. The status announcer is driven by store snapshots rather than raw input events ([#1659](https://github.com/videojs/v10/pull/1659)), so it announces confirmed changes to playback, captions, fullscreen, PiP, playback rate, volume, and completed seeks, and it keeps quiet when a focused slider is already announcing the same thing. See the accessibility concept for [HTML](/docs/framework/html/concepts/accessibility/) and [React](/docs/framework/react/concepts/accessibility/).
+
+Buttons also stopped hiding themselves through skin CSS. They expose derived `disabled` and `hidden` state that follows standard ARIA patterns ([#1474](https://github.com/videojs/v10/pull/1474)) — another one to read in [Breaking changes](#breaking-changes).
+
+A batch of fixes rounds out the controls work:
+
+- Clicking the control bar no longer bubbles into the container tap gesture and toggles playback ([#1885](https://github.com/videojs/v10/pull/1885)).
+- On iOS Safari, tapping controls counts as activity again, so they stop vanishing mid-tap ([#1704](https://github.com/videojs/v10/pull/1704)).
+- Live skins register the tooltip label and shortcut elements they use, so hovering a control renders a tooltip instead of throwing ([#1881](https://github.com/videojs/v10/pull/1881)).
+- Opening a settings menu batches its viewport measurements instead of interleaving reads and writes per submenu ([#1823](https://github.com/videojs/v10/pull/1823)).
+
+## Under the hood: SPF
+
+Our in-house streaming engine picked up a few things player users will feel. Sources whose decode timeline doesn't start at zero — instant clips, un-rebased VOD — are relocated onto a 0-based timeline, so `currentTime` and `seekable` behave ([#1847](https://github.com/videojs/v10/pull/1847)). `autoplay` works on its own now, without needing `preload` set alongside it ([#1880](https://github.com/videojs/v10/pull/1880)). Video renditions and audio tracks are projected onto the standard DOM track surface, so a quality menu binds to an SPF-backed element with no special casing ([#1826](https://github.com/videojs/v10/pull/1826)). MSE-backed playback can hand off to AirPlay and rebuild its MediaSource when Safari closes the attachment ([#1888](https://github.com/videojs/v10/pull/1888)). Seeking to the exact end loads the final segment instead of stalling ([#1828](https://github.com/videojs/v10/pull/1828), [#1852](https://github.com/videojs/v10/pull/1852)), and changing `src` recycles the existing engine rather than tearing it down ([#1813](https://github.com/videojs/v10/pull/1813)).
+
+## Site and docs
+
+The docs site gained a security concept page covering CSP requirements ([#1559](https://github.com/videojs/v10/pull/1559)), a rewritten Google Cast concept page ([#1806](https://github.com/videojs/v10/pull/1806)), and completed menu radio group references with demos and options hooks ([#1807](https://github.com/videojs/v10/pull/1807)). Element reference pages now list the native media properties each element inherits, generated from source rather than hand-maintained ([#1722](https://github.com/videojs/v10/pull/1722)), and live React demos are back on the six media element pages that never had an SSR problem ([#1867](https://github.com/videojs/v10/pull/1867)).
+
+Smaller passes: a table of contents rail replaces the mobile select ([#1858](https://github.com/videojs/v10/pull/1858)), the changelog is searchable from anywhere with Cmd+K ([#1796](https://github.com/videojs/v10/pull/1796)), the ejected React skin sample splits into a player file and a component file so Fast Refresh works when you paste it ([#1588](https://github.com/videojs/v10/pull/1588)), code block styling is fixed ([#1887](https://github.com/videojs/v10/pull/1887)), and the tooltip, popup, and localized label pages caught up with the code ([#1819](https://github.com/videojs/v10/pull/1819), [#1818](https://github.com/videojs/v10/pull/1818), [#1820](https://github.com/videojs/v10/pull/1820), [#1876](https://github.com/videojs/v10/pull/1876)).
+
+## Breaking changes
+
+Three changes need attention when you upgrade:
+
+- **Mux Data and Google Cast are components, not config** ([#1883](https://github.com/videojs/v10/pull/1883)). Media elements no longer compose them implicitly: add `<mux-data>` / `<google-cast>` or `MuxData` / `GoogleCast` next to your media element, and move options onto that component. `video.config = { googleCast: { receiver: 'ID' } }` becomes a `receiver` attribute on `<google-cast>`; `<MuxVideo config={{ muxData: { envKey: 'KEY' } }} />` becomes `<MuxData envKey="KEY" />`. `MediaComponentConfig` and `MediaComponentConstructor.configKey` are gone, and `config` now carries only host and engine settings such as `preferPlayback`, `contentType`, and `hlsJs`. Import the new components from `@videojs/html/media/mux-data`, `@videojs/html/media/google-cast`, and the matching `@videojs/react/media/*` paths.
+- **Media moved to `@videojs/media`** ([#1879](https://github.com/videojs/v10/pull/1879)). `@videojs/core` drops its `./dom/media/*` and `./media/predicate` exports. Import contracts and state from `@videojs/media`, and browser hosts and engines (HLS, DASH, Mux, Vimeo, Simple HLS, Google Cast) from `@videojs/media/dom/*`. Host helpers are renamed too: `addComponent` to `addMediaComponent`, and `getProp` / `setProp` / `getOwner` to `getMediaProp` / `setMediaProp` / `getMediaOwner`.
+- **Button availability is now `disabled` and `hidden`** ([#1474](https://github.com/videojs/v10/pull/1474)). The `available` boolean is replaced by derived `disabled` and `hidden` state, exposed as `data-disabled` and `data-hidden`. Non-interactive controls use `aria-disabled`; unsupported ones use the native `hidden` attribute in HTML and render `null` in React. If you styled `data-availability` to hide controls, drop that CSS and style `aria-disabled` instead. `CastButton` renames its `castState` to `connection`, and the cast button stays visible but disabled when casting is supported with no device nearby.
+
+Thanks to [@mmcc](https://github.com/mmcc) for their first contribution to Video.js.

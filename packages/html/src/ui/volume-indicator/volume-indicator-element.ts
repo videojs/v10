@@ -10,8 +10,8 @@ import type { PropertyDeclarationMap } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
-import { InputIndicatorElement, type InputIndicatorOptions } from '../input-indicators/input-indicator-element';
-import { LiveIndicator } from '../input-indicators/live-indicator';
+import { InputIndicatorElement, type InputIndicatorOptions } from '../input-indicator/input-indicator-element';
+import { LiveIndicator } from '../input-indicator/live-indicator';
 
 export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicatorCore.State> {
   static readonly tagName = 'media-volume-indicator';

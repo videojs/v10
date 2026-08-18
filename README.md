@@ -3,6 +3,7 @@
 [![package-badge]][package]
 [![discord-badge]][discord]
 [![pnpm](https://img.shields.io/badge/maintained%20with-pnpm-cc00ff.svg)](https://pnpm.io/)
+[![preview-badge]][preview]
 
 Modern, modular, and composable media player framework for Web and React.
 
@@ -64,3 +65,5 @@ participating in this project you agree to abide by its terms.
 [discord]: https://discord.gg/JBqHh485uF
 [discord-badge]: https://img.shields.io/discord/507627062434070529?color=%235865F2&label=%20&logo=discord&logoColor=white
 [gh-discussions]: https://github.com/videojs/v10/discussions
+[preview]: https://pkg.pr.new/~/videojs/v10
+[preview-badge]: https://pkg.pr.new/badge/videojs/v10

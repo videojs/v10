@@ -1,5 +1,3 @@
-'use client';
-
 import { PiPButtonCore, PiPButtonDataAttrs } from '@videojs/core';
 import { selectPiP } from '@videojs/core/dom';
 
@@ -16,6 +14,7 @@ export const PiPButton = createMediaButton<PiPButtonCore, PiPButtonProps>({
   selector: selectPiP,
   action: (core, state) => core.toggle(state),
   hotkeyAction: 'togglePictureInPicture',
+  isSupported: (state) => !state.hidden,
 });
 
 export namespace PiPButton {

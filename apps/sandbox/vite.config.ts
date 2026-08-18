@@ -1,17 +1,16 @@
 import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath, type Plugin } from 'vite';
 
+import { mirrorTemplatesToSrc } from './scripts/shared';
+
 const htmlCdnDir = resolve(__dirname, '../../packages/html/cdn');
 const htmlCdnI18nRegistry = normalizePath(resolve(htmlCdnDir, 'i18n.dev.js'));
 const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
-const htmlSourceI18nStub = '\0sandbox-cdn-html-i18n-stub';
-const jsdelivrCdnI18nPattern = /https:\/\/cdn\.jsdelivr\.net\/npm\/@videojs\/html@[^"']+\/cdn\/i18n\.js/g;
 
 /** True when this import should share the single CDN i18n registry module instance. */
 function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
@@ -37,68 +36,37 @@ function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
   return false;
 }
 
-function isCdnSandboxModule(id: string): boolean {
-  return (
-    id.includes('/apps/sandbox/src/cdn/') ||
-    id.includes('/apps/sandbox/templates/cdn/') ||
-    id.includes('/apps/sandbox/app/shared/i18n/cdn-')
-  );
-}
-
 function resolveHtmlCdnDevEntry(subpath: string): string | null {
   const devPath = resolve(htmlCdnDir, `${subpath}.dev.js`);
   return existsSync(devPath) ? devPath : null;
 }
 
-/** CDN sandbox must use the CDN registry only — never source `@videojs/html/i18n`. */
+/** Resolve CDN sandbox imports to the prebuilt development entries and registry. */
 function cdnSandboxI18nPlugin(): Plugin {
   return {
     name: 'cdn-sandbox-i18n',
     enforce: 'pre',
-    resolveId(source, importer) {
-      if (source === cdnSandboxMainSrc && existsSync(cdnSandboxMainTemplate)) {
-        return cdnSandboxMainTemplate;
-      }
+    resolveId: {
+      filter: {
+        id: /^@videojs\/(?:core\/i18n|html\/cdn(?:\/.*)?)$|(?:^|\/)i18n\.dev\.js$|\/packages\/html\/src\/cdn\/i18n\.ts|\/apps\/sandbox\/src\/cdn\/main\.ts$/,
+      },
+      handler(source, importer) {
+        if (source === cdnSandboxMainSrc && existsSync(cdnSandboxMainTemplate)) {
+          return cdnSandboxMainTemplate;
+        }
 
-      if (resolvesToCdnI18nRegistry(source, importer)) {
-        return htmlCdnI18nRegistry;
-      }
+        if (resolvesToCdnI18nRegistry(source, importer)) {
+          return htmlCdnI18nRegistry;
+        }
 
-      const cdnEntryMatch = source.match(/^@videojs\/html\/cdn\/(.+)$/);
-      if (cdnEntryMatch && cdnEntryMatch[1] !== 'i18n') {
-        const devEntry = resolveHtmlCdnDevEntry(cdnEntryMatch[1]);
-        if (devEntry) return devEntry;
-      }
+        const cdnEntryMatch = source.match(/^@videojs\/html\/cdn\/(.+)$/);
+        if (cdnEntryMatch && cdnEntryMatch[1] !== 'i18n') {
+          const devEntry = resolveHtmlCdnDevEntry(cdnEntryMatch[1]);
+          if (devEntry) return devEntry;
+        }
 
-      if (!importer || !isCdnSandboxModule(importer)) {
         return null;
-      }
-
-      if (
-        source === '@videojs/html/i18n' ||
-        source.startsWith('@videojs/html/i18n/') ||
-        source.includes('/packages/html/dist/dev/i18n/')
-      ) {
-        return htmlSourceI18nStub;
-      }
-
-      return null;
-    },
-    load(id) {
-      if (id === htmlSourceI18nStub) {
-        return 'export function registerI18n() {}';
-      }
-      return null;
-    },
-    transform(code, id) {
-      if (!id.includes('/packages/html/cdn/') || !code.includes('cdn.jsdelivr.net/npm/@videojs/html')) {
-        return null;
-      }
-
-      return {
-        code: code.replace(jsdelivrCdnI18nPattern, htmlCdnI18nRegistry),
-        map: null,
-      };
+      },
     },
   };
 }
@@ -108,7 +76,6 @@ function sandboxTemplateSyncPlugin(): Plugin {
   return {
     name: 'sandbox-template-sync',
     async buildStart() {
-      const { mirrorTemplatesToSrc } = await import(pathToFileURL(resolve(__dirname, 'scripts/shared.ts')).href);
       await mirrorTemplatesToSrc();
     },
   };
@@ -193,7 +160,12 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
+      // This resolver substitutes the prebuilt CDN graph, whose downstream
+      // processing time is attributed to the plugin rather than its fast hooks.
+      checks: {
+        pluginTimings: false,
+      },
       input: {
         main: resolve(__dirname, 'src/index.html'),
         ...getSandboxEntries(),

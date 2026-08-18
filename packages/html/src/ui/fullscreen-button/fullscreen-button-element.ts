@@ -1,5 +1,6 @@
-import { FullscreenButtonCore, FullscreenButtonDataAttrs, type MediaFullscreenState } from '@videojs/core';
+import { FullscreenButtonCore, FullscreenButtonDataAttrs } from '@videojs/core';
 import { selectFullscreen } from '@videojs/core/dom';
+import type { MediaFullscreenState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -13,7 +14,7 @@ export class FullscreenButtonElement extends MediaButtonElement<FullscreenButton
   protected readonly mediaState = new PlayerController(this, playerContext, selectFullscreen);
   protected override readonly hotkeyAction = 'toggleFullscreen';
 
-  protected activate(state: MediaFullscreenState): void {
-    this.core.toggle(state);
+  protected activate(state: MediaFullscreenState): Promise<void> {
+    return this.core.toggle(state);
   }
 }

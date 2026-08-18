@@ -1,7 +1,8 @@
-import type { MediaContainer, PlayerStore } from '@videojs/core/dom';
-import { ContextConsumer } from '@videojs/element/context';
+import { type AnyPlayerStore, createPopupGroup, type MediaContainer, type PlayerStore } from '@videojs/core/dom';
+import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import type { MediaElementConstructor } from '@/ui/media-element';
-import type { ContainerContext, PlayerContext } from '../player/context';
+import { type ContainerContext, containerContext, type PlayerContext, playerContext } from '../player/context';
+import { popupGroupContext } from '../player/popup-group-context';
 import type { PlayerConsumer, PlayerConsumerConstructor } from './types';
 
 export interface ContainerMixinConfig<Store extends PlayerStore> {
@@ -26,6 +27,11 @@ export function createContainerMixin<Store extends PlayerStore>(
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #contextStore: Store | null = null;
       #setContainer: ((container: MediaContainer | null) => void) | null = null;
+      #popupGroup = createPopupGroup();
+      #popupGroupProvider = new ContextProvider(this, {
+        context: popupGroupContext,
+        initialValue: this.#popupGroup,
+      });
 
       constructor(...args: any[]) {
         super(...args);
@@ -54,6 +60,7 @@ export function createContainerMixin<Store extends PlayerStore>(
 
       override connectedCallback() {
         super.connectedCallback();
+        this.#popupGroupProvider.setValue(this.#popupGroup);
         this.#setContainer?.(this);
       }
 
@@ -66,3 +73,13 @@ export function createContainerMixin<Store extends PlayerStore>(
     return PlayerContainerElement;
   };
 }
+
+/**
+ * Player container mixin configured for the default player contexts.
+ *
+ * Import this convenience mixin directly when composing a custom container.
+ */
+export const ContainerMixin = createContainerMixin<AnyPlayerStore>({
+  playerContext,
+  containerContext,
+});

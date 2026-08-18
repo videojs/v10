@@ -1,1 +1,1 @@
-export { clamp, roundToStep } from './number';
+export { clamp, roundToStep, toPercent } from './number';

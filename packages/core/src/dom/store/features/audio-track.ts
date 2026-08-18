@@ -1,7 +1,6 @@
+import type { AudioTrackLike, AudioTrackListLike, MediaAudioTrack, MediaAudioTrackState } from '@videojs/media';
+import { isMediaAudioTrackCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
-import { isMediaAudioTrackCapable } from '../../../core/media/predicate';
-import type { MediaAudioTrack, MediaAudioTrackState } from '../../../core/media/state';
-import type { AudioTrackLike, AudioTrackListLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
 
 function getTrackValue(track: AudioTrackLike, index: number): string {

@@ -1,9 +1,12 @@
 /**
  * **Drive each `open → ended` transition of the MediaSource.** Calls
- * `MediaSource.endOfStream()` once the temporally last segments of every
- * active buffer actor's currently-loading track are fully appended and
+ * `MediaSource.endOfStream()` once every active buffer actor's
+ * currently-loading track is *complete* (finite `Track.duration` — the parser's
+ * completeness signal), its temporally last segments are fully appended, and
  * the user has reached them — letting the browser finalize duration and
- * fire `ended` on the media element.
+ * fire `ended` on the media element. The completeness gate keeps it inert for
+ * ongoing live (`Track.duration === Infinity`), whose "last segment" is only
+ * the rolling edge; a live stream opts in when its duration turns finite.
  *
  * Re-fires on every subsequent `open → ended → open` cycle. Per the MSE
  * spec, `appendBuffer()` after `endOfStream()` transitions the MediaSource
@@ -58,11 +61,12 @@
  *
  * # currentTime gate
  *
- * `currentTime` must have reached at least one active track's last
- * segment startTime. Prevents `'eos-ready'` entry when a back-buffer
- * `remove()` / `appendBuffer()` briefly re-opens the MediaSource while
- * the user is mid-stream. HLS rendition time-alignment means any active
- * track works as the reference.
+ * `currentTime` must have reached (within {@link LAST_SEGMENT_REACHED_SLACK})
+ * at least one active track's last segment startTime. Prevents `'eos-ready'`
+ * entry when a back-buffer `remove()` / `appendBuffer()` briefly re-opens the
+ * MediaSource while the user is mid-stream. HLS rendition time-alignment means
+ * any active track works as the reference. The slack absorbs the near-end
+ * playhead freeze (see the constant) so a tiny final segment doesn't deadlock.
  *
  * # MS readyState — local subscription
  *
@@ -116,6 +120,18 @@ export interface EndOfStreamContext {
 
 type EndOfStreamFsmState = 'preconditions-unmet' | 'eos-ready';
 
+/**
+ * Slack (seconds) on the "playhead has reached the last segment" gate. A tiny final
+ * segment (e.g. Apple's ~44ms last segment) starts right at the buffered end, and the
+ * browser freezes the playhead ~50–70ms short of that end (its render horizon), so a
+ * strict `currentTime >= lastSegStart` would never open — deadlocking `endOfStream`
+ * (the MediaSource stays `'open'`, so the browser keeps the playhead frozen waiting for
+ * data/EOS that never comes). This slack lets a playhead stalled just short of the final
+ * segment still finalize. Firing slightly early is harmless: the last segment is already
+ * appended (the gate above), so no more data is expected.
+ */
+const LAST_SEGMENT_REACHED_SLACK = 0.5;
+
 function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
   mediaSource: MediaSource | undefined,
@@ -144,6 +160,12 @@ function deriveState(
 
     const track = findTrackById(presentation, initTrackId);
     if (!track || !isResolvedTrack(track)) return 'preconditions-unmet';
+    // Only a complete playlist has a true last segment: firing on an ongoing
+    // live window would pin a finite (live-edge) duration and end the stream,
+    // only for the next reload's appends to reopen it and re-fire on a loop.
+    // Independent of the currentTime slack below — this asks "is there an end at
+    // all," the slack asks "has the playhead effectively reached it."
+    if (!Number.isFinite(track.duration)) return 'preconditions-unmet';
     if (!isLastSegmentAppended(track.segments, appended)) return 'preconditions-unmet';
 
     if (track.segments.length > 0) {
@@ -152,7 +174,8 @@ function deriveState(
     }
   }
 
-  if (lastSegStart !== undefined && (currentTime ?? 0) < lastSegStart) {
+  // Slack absorbs the near-end playhead freeze so a tiny final segment doesn't deadlock.
+  if (lastSegStart !== undefined && (currentTime ?? 0) < lastSegStart - LAST_SEGMENT_REACHED_SLACK) {
     return 'preconditions-unmet';
   }
 

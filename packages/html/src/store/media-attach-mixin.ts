@@ -1,5 +1,5 @@
-import type { Media } from '@videojs/core/dom';
 import { ContextEvent } from '@videojs/element/context';
+import type { Media } from '@videojs/media/dom';
 import type { CustomElement } from '@videojs/utils/dom';
 import type { AnyConstructor, Constructor } from '@videojs/utils/types';
 import { type MediaContext, mediaContext } from '../player/context';

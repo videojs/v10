@@ -6,6 +6,7 @@ export interface ApiReferenceSection {
   title: string;
   id: string;
   depth: number;
+  frameworks?: SupportedFramework[];
   tocKind?: string;
 }
 
@@ -84,6 +85,14 @@ function createSections(
       return [];
     }
 
+    const frameworks: SupportedFramework[] | undefined =
+      definition.key === 'props'
+        ? ([
+            ...new Set(Object.values(source.props).flatMap((prop) => prop.frameworks ?? (['html', 'react'] as const))),
+          ] as SupportedFramework[])
+        : undefined;
+    const frameworkRestriction = frameworks?.length === 1 ? { frameworks } : {};
+
     if (options.forPart) {
       return [
         {
@@ -92,6 +101,7 @@ function createSections(
           id: `${options.partId}-${definition.suffix}`,
           depth: 4,
           tocKind: 'api-reference-subsection',
+          ...frameworkRestriction,
         },
       ];
     }
@@ -102,6 +112,7 @@ function createSections(
         title: definition.title,
         id: definition.singleId,
         depth: 3,
+        ...frameworkRestriction,
       },
     ];
   });
@@ -209,12 +220,15 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
       }
 
       for (const section of part.sections) {
+        const frameworks = section.frameworks
+          ? part.frameworks.filter((framework) => section.frameworks!.includes(framework))
+          : part.frameworks;
         headings.push({
           depth: section.depth,
           text: section.title,
           slug: section.id,
           tocKind: section.tocKind,
-          ...(part.frameworks.length < 2 ? { frameworks: part.frameworks } : {}),
+          ...(frameworks.length < 2 ? { frameworks } : {}),
         });
       }
     }
@@ -227,6 +241,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
       depth: section.depth,
       text: section.title,
       slug: section.id,
+      ...(section.frameworks ? { frameworks: section.frameworks } : {}),
     });
   }
 

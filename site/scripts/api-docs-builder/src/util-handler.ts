@@ -36,25 +36,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
-import {
-  type ParamDef,
-  type ReturnValue,
-  type UtilOverload,
-  type UtilReference,
-  UtilReferenceSchema,
-} from '../../../src/types/util-reference.js';
+import type { ParamDef, ReturnValue, UtilOverload, UtilReference } from '../../../src/types/util-reference.js';
 import { utilReferenceSlug } from '../../../src/utils/utilReferenceSlug.js';
 import { abbreviateType, formatDetailedType, formatType } from './formatter.js';
-import { getJSDocTagValue, hasJSDocTag } from './utils.js';
-
-const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';
-
-const log = {
-  info: (...args: unknown[]) => console.log(PREFIX, ...args),
-  warn: (...args: unknown[]) => console.warn(PREFIX, '\x1b[33mwarn:\x1b[0m', ...args),
-  error: (...args: unknown[]) => console.error(PREFIX, '\x1b[31merror:\x1b[0m', ...args),
-  success: (...args: unknown[]) => console.log(PREFIX, ...args),
-};
+import { createTypeScriptProgram } from './typescript.js';
+import { getJSDocDescription, getJSDocNodes, getJSDocTagValue, hasJSDocTag, log } from './utils.js';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -519,7 +505,7 @@ function extractControllerOverloads(filePath: string, program: ts.Program, class
     // Get overload-specific JSDoc
     const label = getJSDocTagValue(decl, 'label');
     if (label) overload.label = label;
-    const jsDoc = getNodeJSDoc(decl);
+    const jsDoc = getJSDocDescription(decl);
     if (jsDoc) overload.description = jsDoc;
 
     return overload;
@@ -558,7 +544,7 @@ function extractPublicMembers(
     if (ts.isGetAccessorDeclaration(member)) {
       const typeStr = member.type ? member.type.getText(sourceFile) : 'unknown';
       const abbreviated = abbreviateType(name, typeStr);
-      const description = getNodeJSDoc(member);
+      const description = getJSDocDescription(member);
 
       const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
       if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
@@ -578,7 +564,7 @@ function extractPublicMembers(
       const retType = member.type ? member.type.getText(sourceFile) : 'void';
       const typeStr = `(${params}) => ${retType}`;
       const abbreviated = abbreviateType(name, typeStr);
-      const description = getNodeJSDoc(member);
+      const description = getJSDocDescription(member);
 
       const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
       if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
@@ -624,7 +610,7 @@ function getOverloadDocs(filePath: string, program: ts.Program, funcName: string
     if (ts.isFunctionDeclaration(node) && node.name?.text === funcName && !node.body) {
       // This is an overload declaration
       docs.push({
-        description: getNodeJSDoc(node),
+        description: getJSDocDescription(node),
         label: getJSDocTagValue(node, 'label'),
       });
     }
@@ -635,22 +621,8 @@ function getOverloadDocs(filePath: string, program: ts.Program, funcName: string
   return docs;
 }
 
-function getNodeJSDoc(node: ts.Node): string | undefined {
-  const jsDocNodes = (node as any).jsDoc as ts.JSDoc[] | undefined;
-  if (!jsDocNodes?.length) return undefined;
-
-  const doc = jsDocNodes[0]!;
-  if (!doc.comment) return undefined;
-
-  if (typeof doc.comment === 'string') return doc.comment;
-
-  // Handle JSDocComment array
-  return doc.comment.map((c: ts.JSDocComment) => ('text' in c ? c.text : '')).join('');
-}
-
 function getJSDocParamDescription(node: ts.Node, paramName: string): string | undefined {
-  const jsDocNodes = (node as any).jsDoc as ts.JSDoc[] | undefined;
-  if (!jsDocNodes?.length) return undefined;
+  const jsDocNodes = getJSDocNodes(node);
 
   for (const doc of jsDocNodes) {
     if (!doc.tags) continue;
@@ -723,7 +695,7 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
       !node.body // overload declaration
     ) {
       const name = node.name.text;
-      const jsDoc = getNodeJSDoc(node);
+      const jsDoc = getJSDocDescription(node);
       const hasPublicTag = hasJSDocTag(node, 'public');
 
       // Only add if not already in results (first overload wins for the name)
@@ -748,7 +720,7 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
       !results.some((r) => r.name === node.name!.text)
     ) {
       const name = node.name.text;
-      const jsDoc = getNodeJSDoc(node);
+      const jsDoc = getJSDocDescription(node);
       const hasPublicTag = hasJSDocTag(node, 'public');
 
       results.push({
@@ -768,7 +740,7 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
       node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
     ) {
       const name = node.name.text;
-      const jsDoc = getNodeJSDoc(node);
+      const jsDoc = getJSDocDescription(node);
 
       results.push({
         name,
@@ -784,7 +756,7 @@ function discoverExportsFromRawAST(modulePath: string, program: ts.Program): Raw
     if (ts.isVariableStatement(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
       for (const decl of node.declarationList.declarations) {
         if (ts.isIdentifier(decl.name)) {
-          const jsDoc = getNodeJSDoc(node);
+          const jsDoc = getJSDocDescription(node);
           const hasPublicTag = hasJSDocTag(node, 'public');
 
           results.push({
@@ -871,7 +843,7 @@ function buildOverloadFromAST(decl: ts.FunctionDeclaration, sourceFile: ts.Sourc
 
   const label = getJSDocTagValue(decl, 'label');
   if (label) overload.label = label;
-  const doc = getNodeJSDoc(decl);
+  const doc = getJSDocDescription(decl);
   if (doc) overload.description = doc;
 
   return overload;
@@ -905,7 +877,7 @@ function extractReturnTypeFields(
     const name = member.name.text;
     const typeStr = member.type ? member.type.getText(sourceFile) : 'unknown';
     const abbreviated = abbreviateType(name, typeStr);
-    const description = getNodeJSDoc(member);
+    const description = getJSDocDescription(member);
 
     const field: { type: string; detailedType?: string; description?: string } = { type: abbreviated ?? typeStr };
     if (abbreviated && typeStr !== abbreviated) field.detailedType = typeStr;
@@ -1165,11 +1137,7 @@ function createUtilProgram(monorepoRoot: string): ts.Program {
     }
   }
 
-  const tsconfigPath = path.join(monorepoRoot, 'tsconfig.base.json');
-  const config = tae.loadConfig(tsconfigPath);
-  config.options.rootDir = monorepoRoot;
-
-  return ts.createProgram(files, config.options);
+  return createTypeScriptProgram(monorepoRoot, files);
 }
 
 // ─── Public API ────────────────────────────────────────────────────
@@ -1177,43 +1145,4 @@ function createUtilProgram(monorepoRoot: string): ts.Program {
 export function getUtilEntries(monorepoRoot: string): UtilEntry[] {
   const program = createUtilProgram(monorepoRoot);
   return discoverUtilExports(monorepoRoot, program);
-}
-
-export function generateUtilReferences(outputPath: string, monorepoRoot: string): { success: number; errors: number } {
-  if (!fs.existsSync(outputPath)) {
-    fs.mkdirSync(outputPath, { recursive: true });
-  }
-
-  const entries = getUtilEntries(monorepoRoot);
-  let success = 0;
-  let errors = 0;
-
-  log.info(`Found ${entries.length} util APIs. Processing...`);
-
-  for (const entry of entries) {
-    const dataToValidate: Record<string, unknown> = { ...entry.data };
-    if (entry.framework !== null) {
-      dataToValidate.frameworks = [entry.framework];
-    }
-
-    const validated = UtilReferenceSchema.safeParse(dataToValidate);
-
-    if (!validated.success) {
-      log.error(`Schema validation failed for ${entry.data.name} (${entry.slug}):`);
-      for (const issue of validated.error.issues) {
-        log.error(`  - ${issue.path.join('.')}: ${issue.message}`);
-      }
-      errors++;
-      continue;
-    }
-
-    const outputFile = path.join(outputPath, `${entry.slug}.json`);
-    const json = `${JSON.stringify(validated.data, null, 2)}\n`;
-    fs.writeFileSync(outputFile, json);
-
-    log.success(`\u2705 Generated ${path.basename(outputFile)} (${entry.framework ?? 'all'})`);
-    success++;
-  }
-
-  return { success, errors };
 }

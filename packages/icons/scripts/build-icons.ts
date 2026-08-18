@@ -1,0 +1,411 @@
+import { existsSync, mkdirSync, readFileSync, rmSync, watch, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+import { transform } from '@svgr/core';
+import { transformSync } from 'oxc-transform';
+import { iconNames } from './internal/icon-names.js';
+import { ASSETS_DIR, DIST_DIR, getIconSets, getSvgFiles } from './internal/paths.js';
+import { optimizeSvg } from './internal/svg.js';
+
+const FRAMEWORKS = ['react', 'html'] as const;
+const isWatch = process.argv.includes('--watch');
+
+async function buildReactIconModule(svgContent: string, componentName: string): Promise<{ js: string; tsx: string }> {
+  const optimized = optimizeSvg(svgContent);
+  const transformOptions: Parameters<typeof transform>[1] = {
+    plugins: ['@svgr/plugin-jsx'],
+    jsxRuntime: 'automatic',
+  };
+  const tsx = await transform(optimized, { ...transformOptions, typescript: true }, { componentName });
+  const jsx = await transform(optimized, transformOptions, { componentName });
+  const result = transformSync(`${componentName}.jsx`, jsx, {
+    lang: 'jsx',
+    sourceType: 'module',
+    jsx: { runtime: 'automatic' },
+  });
+  if (result.errors.length > 0) {
+    throw new Error(
+      `Could not transpile ${componentName}:\n${result.errors.map((error) => error.codeframe ?? error.message).join('\n')}`
+    );
+  }
+  const js = result.code;
+  if (!js) throw new Error(`No generated module was produced for ${componentName}.`);
+  return { js, tsx };
+}
+
+function buildHtmlIconModule(svgContent: string, variableName: string): string {
+  return `export const ${variableName} = \`${optimizeSvg(svgContent)}\`;\n`;
+}
+
+function ensureDir(path: string): void {
+  if (!existsSync(path)) mkdirSync(path, { recursive: true });
+}
+
+function cleanDist(): void {
+  if (existsSync(DIST_DIR)) rmSync(DIST_DIR, { recursive: true, force: true });
+}
+
+function buildRenderModule(icons: { name: string; content: string }[]): string {
+  const entries = icons.map(({ name, content }) => `  "${name}": \`${optimizeSvg(content)}\``).join(',\n');
+  return [
+    `const icons = {\n${entries},\n};`,
+    ``,
+    `function esc(v) { return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }`,
+    ``,
+    `export function renderIcon(name, attrs) {`,
+    `  const svg = icons[name];`,
+    `  if (!svg) return '';`,
+    `  if (!attrs) return svg;`,
+    `  const attrStr = Object.entries(attrs)`,
+    `    .map(([k, v]) => \` \${k}="\${esc(v)}"\`)`,
+    `    .join('');`,
+    `  return svg.replace('<svg', \`<svg\${attrStr}\`);`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+function buildRenderTypes(iconNames: string[]): string {
+  const union = iconNames.map((name) => `'${name}'`).join(' | ');
+  return [
+    `export type IconName = ${union};`,
+    ``,
+    `export declare function renderIcon(`,
+    `  name: IconName,`,
+    `  attrs?: Record<string, string>,`,
+    `): string;`,
+    ``,
+  ].join('\n');
+}
+
+function buildIconMap(icons: { name: string; content: string }[]): string {
+  const entries = icons.map(({ name, content }) => `  "${name}": \`${optimizeSvg(content)}\``).join(',\n');
+  return `export const icons = {\n${entries},\n};\n`;
+}
+
+function buildCanonicalComponents(icons: { varName: string }[]): string {
+  const components = icons.map(({ varName }) => {
+    const name = `${iconNames(varName).pascal}Icon`;
+    return `export const ${name} = createComponent({ name: '${name}' });`;
+  });
+
+  return [`import { createComponent } from '@videojs/jsx';`, ``, ...components, ``].join('\n');
+}
+
+function buildCanonicalComponentTypes(icons: { varName: string }[]): string {
+  const components = icons.map(({ varName }) => {
+    const name = `${iconNames(varName).pascal}Icon`;
+    return `export declare const ${name}: Component<EmptyProps>;`;
+  });
+
+  return [`import type { Component, EmptyProps } from '@videojs/jsx';`, ``, ...components, ``].join('\n');
+}
+
+function buildElementIndex(sets: string[]): string {
+  const loaders = sets
+    .map(
+      (set) =>
+        `  mediaIconElement.registerLoader?.('${set}', () => import('./${set}/icons.js').then((module) => module.icons));`
+    )
+    .join('\n');
+
+  return [
+    `import { MediaIconElement } from './base.js';`,
+    ``,
+    `if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {`,
+    `  const mediaIconElement = customElements.get('media-icon') || MediaIconElement;`,
+    ``,
+    loaders,
+    ``,
+    `  if (!customElements.get('media-icon')) {`,
+    `    customElements.define('media-icon', MediaIconElement);`,
+    `  }`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+function buildElementFamilyIndex(set: string): string {
+  return [
+    `import { MediaIconElement } from '../base.js';`,
+    `import { icons } from './icons.js';`,
+    ``,
+    `if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {`,
+    `  const mediaIconElement = customElements.get('media-icon') || MediaIconElement;`,
+    ``,
+    `  mediaIconElement.register?.('${set}', icons);`,
+    ``,
+    `  if (!customElements.get('media-icon')) {`,
+    `    customElements.define('media-icon', MediaIconElement);`,
+    `  }`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+function buildElementBase(): string {
+  return [
+    `export class MediaIconElement extends HTMLElement {`,
+    `  static #families = new Map();`,
+    `  static #loaders = new Map();`,
+    `  static #loading = new Map();`,
+    `  static #instances = new Set();`,
+    ``,
+    `  static register(family, icons) {`,
+    `    const map = MediaIconElement.#families.get(family) ?? new Map();`,
+    `    for (const [name, svg] of Object.entries(icons)) {`,
+    `      map.set(name, svg);`,
+    `    }`,
+    `    MediaIconElement.#families.set(family, map);`,
+    `    MediaIconElement.#renderFamily(family);`,
+    `  }`,
+    ``,
+    `  static registerLoader(family, load) {`,
+    `    MediaIconElement.#loaders.set(family, load);`,
+    `  }`,
+    ``,
+    `  static load(family) {`,
+    `    if (MediaIconElement.#families.has(family)) return Promise.resolve();`,
+    ``,
+    `    const pending = MediaIconElement.#loading.get(family);`,
+    `    if (pending) return pending;`,
+    ``,
+    `    const loader = MediaIconElement.#loaders.get(family);`,
+    `    if (!loader) return Promise.resolve();`,
+    ``,
+    `    const loading = Promise.resolve()`,
+    `      .then(() => loader())`,
+    `      .then((icons) => {`,
+    `        if (icons) MediaIconElement.register(family, icons);`,
+    `      })`,
+    `      .finally(() => MediaIconElement.#loading.delete(family));`,
+    ``,
+    `    MediaIconElement.#loading.set(family, loading);`,
+    `    return loading;`,
+    `  }`,
+    ``,
+    `  static #renderFamily(family) {`,
+    `    for (const icon of MediaIconElement.#instances) {`,
+    `      if (icon.#family === family) icon.#render();`,
+    `    }`,
+    `  }`,
+    ``,
+    `  static get observedAttributes() {`,
+    `    return ['name', 'family'];`,
+    `  }`,
+    ``,
+    `  attributeChangedCallback() {`,
+    `    this.#render();`,
+    `  }`,
+    ``,
+    `  connectedCallback() {`,
+    `    MediaIconElement.#instances.add(this);`,
+    `    this.#render();`,
+    `  }`,
+    ``,
+    `  disconnectedCallback() {`,
+    `    MediaIconElement.#instances.delete(this);`,
+    `  }`,
+    ``,
+    `  get #family() {`,
+    `    return this.getAttribute('family') || 'default';`,
+    `  }`,
+    ``,
+    `  #render() {`,
+    `    const name = this.getAttribute('name');`,
+    `    if (!name) return;`,
+    ``,
+    `    const family = this.#family;`,
+    `    const icons = MediaIconElement.#families.get(family);`,
+    `    const svg = icons?.get(name);`,
+    `    if (!svg) {`,
+    `      if (MediaIconElement.#families.has(family)) return;`,
+    ``,
+    `      MediaIconElement.load(family).then(() => {`,
+    `        if (`,
+    `          !this.isConnected ||`,
+    `          this.getAttribute('name') !== name ||`,
+    `          this.#family !== family ||`,
+    `          !MediaIconElement.#families.has(family)`,
+    `        ) {`,
+    `          return;`,
+    `        }`,
+    `        this.#render();`,
+    `      }, () => {});`,
+    `      return;`,
+    `    }`,
+    ``,
+    `    this.innerHTML = svg;`,
+    `  }`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+function buildElementBaseTypes(): string {
+  return [
+    `export type IconMap = Record<string, string>;`,
+    `export type IconLoader = () => IconMap | Promise<IconMap>;`,
+    ``,
+    `export declare class MediaIconElement extends HTMLElement {`,
+    `  static register(family: string, icons: IconMap): void;`,
+    `  static registerLoader(family: string, load: IconLoader): void;`,
+    `  static load(family: string): Promise<void>;`,
+    `  connectedCallback(): void;`,
+    `  disconnectedCallback(): void;`,
+    `  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;`,
+    `}`,
+    ``,
+    `declare global {`,
+    `  interface HTMLElementTagNameMap {`,
+    `    'media-icon': MediaIconElement;`,
+    `  }`,
+    `}`,
+    ``,
+  ].join('\n');
+}
+
+function buildIndexExports(icons: { name: string; varName: string }[], framework: 'react' | 'html'): string {
+  return icons
+    .map(({ name, varName }) => {
+      const { pascal, camel } = iconNames(varName);
+      if (framework === 'react') {
+        return `export { default as ${pascal}Icon } from './${name}.js';`;
+      }
+
+      return `export { ${camel}Icon } from './${name}.js';`;
+    })
+    .join('\n');
+}
+
+function buildIndexTypes(icons: { name: string; varName: string }[], framework: 'react' | 'html'): string {
+  const types = icons.map(({ varName }) => {
+    const { pascal, camel } = iconNames(varName);
+    return framework === 'react'
+      ? `export declare const ${pascal}Icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & React.RefAttributes<SVGSVGElement>>;`
+      : `export declare const ${camel}Icon: string;`;
+  });
+  return `/// <reference types="react" />\n${types.join('\n')}\n`;
+}
+
+function ensureElementBase(): void {
+  const baseDir = join(DIST_DIR, 'element');
+  ensureDir(baseDir);
+
+  const basePath = join(baseDir, 'base.js');
+  if (!existsSync(basePath)) {
+    writeFileSync(basePath, buildElementBase());
+    writeFileSync(join(baseDir, 'base.d.ts'), buildElementBaseTypes());
+  }
+}
+
+async function buildIconSet(setName: string): Promise<void> {
+  const svgFiles = getSvgFiles(setName);
+  console.log(`Building set: ${setName} (${svgFiles.length} icons)`);
+
+  const icons = svgFiles.map((file) => ({
+    name: file.replace('.svg', ''),
+    varName: file.replace('.svg', ''),
+    content: readFileSync(join(ASSETS_DIR, setName, file), 'utf8'),
+  }));
+
+  const componentsDir = join(DIST_DIR, 'components', setName);
+  ensureDir(componentsDir);
+  writeFileSync(join(componentsDir, 'index.js'), buildCanonicalComponents(icons));
+  writeFileSync(join(componentsDir, 'index.d.ts'), buildCanonicalComponentTypes(icons));
+
+  // Build react and html per-icon modules
+  for (const framework of FRAMEWORKS) {
+    const outDir = join(DIST_DIR, framework, setName);
+    ensureDir(outDir);
+
+    for (const icon of icons) {
+      const { name, varName, content } = icon;
+
+      const { pascal, camel } = iconNames(varName);
+
+      if (framework === 'react') {
+        const componentName = `${pascal}Icon`;
+        const { js, tsx } = await buildReactIconModule(content, componentName);
+        writeFileSync(join(outDir, `${name}.js`), js);
+        writeFileSync(join(outDir, `${name}.tsx`), tsx);
+        writeFileSync(
+          join(outDir, `${name}.d.ts`),
+          `import * as React from 'react';\ndeclare const ${componentName}: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & React.RefAttributes<SVGSVGElement>>;\nexport default ${componentName};\n`
+        );
+      } else {
+        const constName = `${camel}Icon`;
+        writeFileSync(join(outDir, `${name}.js`), buildHtmlIconModule(content, constName));
+        writeFileSync(join(outDir, `${name}.d.ts`), `export declare const ${constName}: string;\n`);
+      }
+    }
+
+    writeFileSync(join(outDir, 'index.js'), buildIndexExports(icons, framework));
+    writeFileSync(join(outDir, 'index.d.ts'), buildIndexTypes(icons, framework));
+  }
+
+  // Build render module
+  const renderDir = join(DIST_DIR, 'render', setName);
+  ensureDir(renderDir);
+  writeFileSync(join(renderDir, 'index.js'), buildRenderModule(icons));
+  writeFileSync(join(renderDir, 'index.d.ts'), buildRenderTypes(icons.map((i) => i.name)));
+
+  // Build element: icon map per family (no per-set index)
+  ensureElementBase();
+  const elementDir = join(DIST_DIR, 'element', setName);
+  ensureDir(elementDir);
+
+  writeFileSync(join(elementDir, 'icons.js'), buildIconMap(icons));
+  writeFileSync(join(elementDir, 'icons.d.ts'), `export declare const icons: Record<string, string>;\n`);
+  writeFileSync(join(elementDir, 'index.js'), buildElementFamilyIndex(setName));
+  writeFileSync(join(elementDir, 'index.d.ts'), `export {};\n`);
+}
+
+async function build(): Promise<void> {
+  const sets = getIconSets();
+  console.log(`Found ${sets.length} icon sets: ${sets.join(', ')}\n`);
+
+  for (const set of sets) {
+    await buildIconSet(set);
+  }
+
+  // Build unified element index that registers all families
+  const elementDir = join(DIST_DIR, 'element');
+  writeFileSync(join(elementDir, 'index.js'), buildElementIndex(sets));
+  writeFileSync(join(elementDir, 'index.d.ts'), `export {};\n`);
+}
+
+function debounce(fn: () => void, ms: number): () => void {
+  let timer: ReturnType<typeof setTimeout>;
+  return () => {
+    clearTimeout(timer);
+    timer = setTimeout(fn, ms);
+  };
+}
+
+async function main(): Promise<void> {
+  if (isWatch) {
+    console.log('Watching icons for changes...\n');
+
+    const rebuild = debounce(() => {
+      console.log('\nRebuilding icons...\n');
+      build()
+        .then(() => console.log('\nRebuild complete!'))
+        .catch(console.error);
+    }, 200);
+
+    watch(ASSETS_DIR, { recursive: true }, (_event, filename) => {
+      if (filename?.endsWith('.svg')) {
+        console.log(`Changed: ${filename}`);
+        rebuild();
+      }
+    });
+  } else {
+    console.log('Building icons...\n');
+    cleanDist();
+    await build();
+    console.log('\nBuild complete!');
+  }
+}
+
+main().catch(console.error);

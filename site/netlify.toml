@@ -55,6 +55,17 @@
   force = true
 
 
+# SimpleHls* was renamed to Hls*, taking the reference slugs with it
+[[redirects]]
+  from = "/docs/framework/:framework/reference/simple-hls-video"
+  to = "/docs/framework/:framework/reference/hls-video"
+  status = 301
+
+[[redirects]]
+  from = "/docs/framework/:framework/reference/simple-hls-audio-only"
+  to = "/docs/framework/:framework/reference/hls-audio"
+  status = 301
+
 # Redirect old theme demo pages to home
 [[redirects]]
   from = "/city"

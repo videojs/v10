@@ -1,5 +1,3 @@
-'use client';
-
 import { AlertDialogDataAttrs, ErrorDialogCore } from '@videojs/core';
 import { createAlertDialog, createTransition, selectError } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';

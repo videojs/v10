@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { namedNodeMapToObject, serializeAttributes } from '../attributes';
+import { namedNodeMapToObject, restoreAttributes, serializeAttributes, snapshotAttributes } from '../attributes';
 
 describe('serializeAttributes', () => {
   it('serializes a boolean (empty-string) attribute without a value', () => {
@@ -43,6 +43,21 @@ describe('serializeAttributes', () => {
 
   it('returns an empty string for an empty object', () => {
     expect(serializeAttributes({})).toBe('');
+  });
+});
+
+describe('attribute snapshots', () => {
+  it('restores present and absent attributes', () => {
+    const element = document.createElement('div');
+    element.setAttribute('aria-hidden', 'false');
+    const snapshot = snapshotAttributes(element, ['aria-hidden', 'inert']);
+
+    element.setAttribute('aria-hidden', 'true');
+    element.setAttribute('inert', '');
+    restoreAttributes(element, snapshot);
+
+    expect(element.getAttribute('aria-hidden')).toBe('false');
+    expect(element.hasAttribute('inert')).toBe(false);
   });
 });
 

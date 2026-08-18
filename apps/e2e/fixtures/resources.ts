@@ -22,3 +22,12 @@ export const MEDIA = {
     url: 'https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd',
   },
 } as const;
+
+/**
+ * Caption files the Vite app serves from `apps/vite/src/public`. Real requests
+ * over HTTP, unlike a `data:text/vtt` URL, which WebKit treats differently.
+ */
+export const CAPTIONS = {
+  /** One cue spanning 0–30s. */
+  english: '/captions/english.vtt',
+} as const;

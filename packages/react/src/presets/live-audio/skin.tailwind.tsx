@@ -1,14 +1,17 @@
+'use client';
+
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
   iconState,
   playButton,
   popup,
-  root,
   slider,
+  spacer,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
@@ -71,7 +74,7 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
 });
 
 function VolumePopover(): ReactNode {
-  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
+  const volumeUnavailable = usePlayer((s) => s.volumeAvailability !== 'available');
 
   const muteButton = (
     <MuteButton className={iconState.mute.button} render={<Button />}>
@@ -81,7 +84,7 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnsupported) return muteButton;
+  if (volumeUnavailable) return muteButton;
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
@@ -102,7 +105,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn(root, className)} {...rest}>
+    <Container className={cn(container, className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>
@@ -150,7 +153,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
 
-          <div className="grow" aria-hidden="true" />
+          <div className={spacer} aria-hidden="true" />
 
           <div className={buttonGroup}>
             <VolumePopover />
@@ -166,7 +169,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
       <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
 
       {/* Input Feedback */}
-      <StatusAnnouncer />
+      <StatusAnnouncer className="sr-only" />
     </Container>
   );
 }

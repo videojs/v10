@@ -5,7 +5,7 @@ description: Hook to register a custom container element with the player context
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 
-`useContainerAttach` returns a setter function for registering a DOM element as the player's container. The built-in `Player.Container` uses this internally; you only need it when building a custom container element.
+`useContainerAttach` returns a setter function for registering a DOM element as the player's container. The built-in `Container` uses this internally; you only need it when building a custom container element.
 
 ```tsx title="CustomContainer.tsx"
 import { useContainerAttach } from "@videojs/react";
@@ -18,12 +18,12 @@ function CustomContainer({ children }: { children: React.ReactNode }) {
 
 ## Who needs this
 
-You only need `useContainerAttach` if you're replacing the built-in `Player.Container` with a custom element. For example, if you're building a container with custom fullscreen behavior or a non-standard layout boundary.
+You only need `useContainerAttach` if you're replacing the built-in `Container` with a custom element. For example, if you're building a container with custom fullscreen behavior or a non-standard layout boundary.
 
-For standard player layouts, use the built-in `Player.Container`.
+For standard player layouts, use the built-in `Container`.
 
-## Safe outside Provider
+## Safe outside Player
 
-Returns `undefined` when called outside a Player `Provider`. Passing `undefined` to `ref` is harmless in React. Check the return value if your component needs to know whether it's inside a provider.
+Returns `undefined` when called outside `Player`. Passing `undefined` to `ref` is harmless in React. Check the return value if your component needs to know whether it's inside a player.
 
 <UtilReference util="useContainerAttach" />

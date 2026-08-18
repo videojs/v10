@@ -1,0 +1,44 @@
+---
+title: registerI18n
+description: Register or merge translation strings for a BCP 47 locale tag in the global i18n registry
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+`registerI18n` merges a partial translation map into the process-wide registry for a locale tag. Components carry their own English fallback text. Built-in non-English packs lazy-load automatically; call `registerI18n` for custom locales, CDN locale modules, or patched shipped packs before the provider renders.
+
+Keys are nested semantic names such as `buttons.play` and `buttons.pause`. See <DocsLink slug="reference/translation-phrases">Translation keys</DocsLink> for the complete catalog.
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { registerI18n } from '@videojs/html/i18n';
+
+registerI18n('es', {
+  buttons: {
+    play: 'Reproducir',
+    pause: 'Pausar',
+  },
+});
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { registerI18n } from '@videojs/react/i18n';
+
+registerI18n('es', {
+  buttons: {
+    play: 'Reproducir',
+    pause: 'Pausar',
+  },
+});
+```
+
+</FrameworkCase>
+
+<UtilReference util="registerI18n" />

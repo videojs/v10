@@ -7,9 +7,10 @@ import {
   getSliderCSSVars,
   logMissingFeature,
   type SliderApi,
+  selectControls,
   selectVolume,
 } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
@@ -34,7 +35,7 @@ export class VolumeSliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<Exclude<keyof VolumeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
-  label = VolumeSliderCore.defaultProps.label;
+  label: Text | string = '';
   step = VolumeSliderCore.defaultProps.step;
   largeStep = VolumeSliderCore.defaultProps.largeStep;
   wheelStep = VolumeSliderCore.defaultProps.wheelStep;
@@ -43,12 +44,14 @@ export class VolumeSliderElement extends MediaElement {
   thumbAlignment = VolumeSliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new VolumeSliderCore();
+  readonly #controlsState = new PlayerController(this, playerContext, selectControls);
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #volumeState = new PlayerController(this, playerContext, selectVolume);
   readonly #i18n = new I18nController(this, i18nContext);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
+  #releaseControlsLock: (() => void) | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -57,7 +60,10 @@ export class VolumeSliderElement extends MediaElement {
     this.#disconnect = new AbortController();
     const signal = this.#disconnect.signal;
 
-    const isDisabled = () => this.disabled || !this.#volumeState.value;
+    const isDisabled = () => {
+      const volume = this.#volumeState.value;
+      return this.disabled || !volume || volume.volumeAvailability !== 'available';
+    };
     const getPercent = () => (this.#volumeState.value?.volume ?? 0) * 100;
     const getStepPercent = () => this.#core.getStepPercent();
     const setVolume = (percent: number) => this.#setVolume(percent);
@@ -74,9 +80,11 @@ export class VolumeSliderElement extends MediaElement {
       onValueChange: setVolume,
       onValueCommit: setVolume,
       onDragStart: () => {
+        this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
+        this.#releaseControlsVisibilityLock();
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
@@ -101,14 +109,21 @@ export class VolumeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
+    this.#releaseControlsVisibilityLock();
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
+    this.#releaseControlsVisibilityLock();
     this.#slider?.destroy();
     super.destroyCallback();
+  }
+
+  #releaseControlsVisibilityLock(): void {
+    this.#releaseControlsLock?.();
+    this.#releaseControlsLock = null;
   }
 
   protected override willUpdate(_changed: PropertyValues): void {
@@ -135,6 +150,7 @@ export class VolumeSliderElement extends MediaElement {
 
     // Apply data attributes to root.
     applyStateDataAttrs(this, state, VolumeSliderDataAttrs);
+    applyElementProps(this, { hidden: state.hidden ? '' : undefined });
 
     // Provide context to child elements.
     this.#provider.setValue({
@@ -143,10 +159,10 @@ export class VolumeSliderElement extends MediaElement {
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: {
         ...thumbAttrs,
-        'aria-label': resolveTranslation(this.#i18n.value, thumbAttrs['aria-label']),
-        'aria-valuetext': resolveTranslation(
-          this.#i18n.value,
+        'aria-label': translateText(thumbAttrs['aria-label'], this.#i18n.value),
+        'aria-valuetext': translateText(
           thumbAttrs['aria-valuetext'],
+          this.#i18n.value,
           this.#core.getValueTextParams(state)
         ),
       },

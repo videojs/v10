@@ -1,7 +1,6 @@
+import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '@videojs/media';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../../media/state';
 import type { SliderInput } from '../../slider/slider-core';
 import { TimeSliderCore } from '../time-slider-core';
 
@@ -158,8 +157,8 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('Seek');
-      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
+      expect(attrs['aria-label']).toMatchObject({ key: 'slider.seek', text: 'Seek' });
+      expect(attrs['aria-valuetext']).toMatchObject({ key: 'time.position', text: '{current} of {duration}' });
       expect(core.getValueTextParams(state)).toEqual({
         current: formatTimeAsPhrase(90),
         duration: formatTimeAsPhrase(300),
@@ -184,7 +183,7 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
+      expect(attrs['aria-valuetext']).toMatchObject({ key: 'time.position', text: '{current} of {duration}' });
       expect(core.getValueTextParams(state)).toEqual({
         current: formatTimeAsPhrase(0),
         duration: formatTimeAsPhrase(0),
@@ -199,7 +198,7 @@ describe('TimeSliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuenow']).toBe(150);
-      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
+      expect(attrs['aria-valuetext']).toMatchObject({ key: 'time.position', text: '{current} of {duration}' });
       expect(core.getValueTextParams(state)).toEqual({
         current: formatTimeAsPhrase(150),
         duration: formatTimeAsPhrase(300),

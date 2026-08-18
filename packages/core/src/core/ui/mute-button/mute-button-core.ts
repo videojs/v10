@@ -1,8 +1,9 @@
+import type { MediaFeatureAvailability, MediaVolumeState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
-import type { MediaVolumeState } from '../../media/state';
+import { resolveText, type Text } from '../../i18n';
+import { muteText, unmuteText } from '../../i18n/text/buttons';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
@@ -10,7 +11,7 @@ export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
 export interface MuteButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: MuteButtonState) => string) | undefined;
+  label?: Text | string | ((state: MuteButtonState) => Text | string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -24,6 +25,10 @@ export interface MuteButtonState extends Pick<MediaVolumeState, 'muted'>, Button
    * - `high`: volume >= 0.75
    */
   volumeLevel: VolumeLevel;
+  /** Whether the media can be muted at all. */
+  availability: MediaFeatureAvailability;
+  /** Whether the button is hidden because the media has no mute to toggle. */
+  hidden: boolean;
 }
 
 export class MuteButtonCore {
@@ -35,6 +40,8 @@ export class MuteButtonCore {
   readonly state = createState<MuteButtonState>({
     muted: false,
     volumeLevel: 'off',
+    availability: 'unavailable',
+    hidden: true,
     label: '',
   });
 
@@ -49,11 +56,11 @@ export class MuteButtonCore {
     this.#props = defaults(props, MuteButtonCore.defaultProps);
   }
 
-  getLabel(state: MuteButtonState): string {
+  getLabel(state: MuteButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    return state.muted ? 'Unmute' : 'Mute';
+    return state.muted ? unmuteText : muteText;
   }
 
   getAttrs(state: MuteButtonState) {
@@ -69,14 +76,23 @@ export class MuteButtonCore {
 
   getState(): MuteButtonState {
     const media = this.#media!;
-    this.state.patch({ muted: media.muted || media.volume === 0, volumeLevel: getVolumeLevel(media) });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    // Mute has an availability of its own: a media can take a mute command while
+    // offering no way to set a level, so reading the volume slider's would hide
+    // a button that works.
+    const availability = media.mutedAvailability;
+    this.state.patch({
+      muted: media.muted || media.volume === 0,
+      volumeLevel: getVolumeLevel(media),
+      availability,
+      hidden: availability !== 'available',
+    });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }
 
   toggle(media: MediaVolumeState): void {
-    if (this.#props.disabled) return;
+    if (this.#props.disabled || media.mutedAvailability !== 'available') return;
     media.toggleMuted();
   }
 }

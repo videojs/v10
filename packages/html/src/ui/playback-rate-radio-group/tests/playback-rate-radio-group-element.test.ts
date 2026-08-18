@@ -1,6 +1,6 @@
-import type { MediaPlaybackRateState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaPlaybackRateState } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -165,7 +165,7 @@ describe('PlaybackRateRadioGroupElement', () => {
     await waitForAssertion(() => {
       expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
     });
-    expect(options.getAttribute('aria-label')).toBe('Playback rate 1.25');
+    expect(options.getAttribute('aria-label')).toBe('Playback rate');
     expect(options.getAttribute('data-rate')).toBe('1.25');
   });
 
@@ -233,6 +233,7 @@ describe('PlaybackRateButtonElement', () => {
 
     await waitForAssertion(() => {
       expect(menu.open).toBe(true);
+      expect(menu.querySelector('[role="menuitemradio"][aria-checked="true"]')).toBe(document.activeElement);
     });
   });
 
@@ -246,6 +247,7 @@ describe('PlaybackRateButtonElement', () => {
 
     await waitForAssertion(() => {
       expect(menu.open).toBe(true);
+      expect(menu.querySelector('[role="menuitemradio"][aria-checked="true"]')).toBe(document.activeElement);
     });
   });
 

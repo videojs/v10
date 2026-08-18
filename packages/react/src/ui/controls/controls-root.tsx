@@ -1,5 +1,3 @@
-'use client';
-
 import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectControls } from '@videojs/core/dom';
 import type { ForwardedRef, ReactNode } from 'react';
@@ -42,7 +40,7 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
           state,
           stateAttrMap: ControlsDataAttrs,
           ref: [forwardedRef],
-          props: [{ children }, elementProps],
+          props: [{ children }, elementProps, { 'data-interactive': '' }],
         }
       )}
     </ControlsContextProvider>

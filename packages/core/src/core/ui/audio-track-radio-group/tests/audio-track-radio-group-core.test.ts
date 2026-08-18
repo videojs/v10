@@ -1,6 +1,5 @@
+import type { MediaAudioTrackState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaAudioTrackState } from '../../../media/state';
 import type { AudioTrackRadioGroupState } from '../audio-track-radio-group-core';
 import { AudioTrackRadioGroupCore } from '../audio-track-radio-group-core';
 
@@ -17,12 +16,13 @@ function createMediaState(overrides: Partial<MediaAudioTrackState> = {}): MediaA
 
 function createState(overrides: Partial<AudioTrackRadioGroupState> = {}): AudioTrackRadioGroupState {
   return {
-    tracks: [
-      { value: '0', label: 'English' },
-      { value: '1', label: 'Spanish' },
+    options: [
+      { value: '0', label: 'English', disabled: false },
+      { value: '1', label: 'Spanish', disabled: false },
     ],
     value: '0',
     disabled: false,
+    hidden: false,
     availability: 'available',
     label: '',
     ...overrides,
@@ -38,9 +38,9 @@ describe('AudioTrackRadioGroupCore', () => {
 
       const state = core.getState();
 
-      expect(state.tracks).toEqual([
-        { value: '0', label: 'English' },
-        { value: '1', label: 'Spanish' },
+      expect(state.options).toEqual([
+        { value: '0', label: 'English', disabled: false },
+        { value: '1', label: 'Spanish', disabled: false },
       ]);
       expect(state.value).toBe('0');
     });
@@ -56,10 +56,10 @@ describe('AudioTrackRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().tracks).toEqual([
-        { value: '0', label: 'en' },
-        { value: '1', label: 'commentary' },
-        { value: '2', label: 'Audio' },
+      expect(core.getState().options).toEqual([
+        { value: '0', label: 'en', disabled: false },
+        { value: '1', label: 'commentary', disabled: false },
+        { value: '2', label: { key: 'menu.audio', text: 'Audio' }, disabled: false },
       ]);
     });
 
@@ -73,7 +73,7 @@ describe('AudioTrackRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().tracks.map((track) => track.value)).toEqual(['0', '1']);
+      expect(core.getState().options.map((track) => track.value)).toEqual(['0', '1']);
       expect(core.getState().value).toBe('1');
     });
 
@@ -83,15 +83,14 @@ describe('AudioTrackRadioGroupCore', () => {
         createMediaState({ audioTrackList: [{ id: '0', label: 'English', language: 'en', enabled: true }] })
       );
 
-      expect(core.getState().availability).toBe('unavailable');
-      expect(core.getState().disabled).toBe(true);
+      expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
     });
   });
 
   describe('getLabel', () => {
     it('returns the default label', () => {
       const core = new AudioTrackRadioGroupCore();
-      expect(core.getLabel(createState())).toBe('Audio');
+      expect(core.getLabel(createState())).toMatchObject({ key: 'menu.audio', text: 'Audio' });
     });
 
     it('returns a custom string label', () => {

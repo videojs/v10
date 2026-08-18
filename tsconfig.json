@@ -13,8 +13,15 @@
     { "path": "packages/store/src/html" },
     { "path": "packages/store/src/react" },
 
+    { "path": "packages/media" },
+    { "path": "packages/media/src/dom" },
+
     { "path": "packages/core" },
     { "path": "packages/core/src/dom" },
+
+    { "path": "packages/compiler" },
+
+    { "path": "packages/jsx" },
 
     { "path": "packages/skins" },
 
@@ -29,6 +36,7 @@
     { "path": "packages/spf/src/playback/actors" },
     { "path": "packages/spf/src/playback/actors/dom" },
     { "path": "packages/spf/src/playback/engines/hls" },
+    { "path": "packages/spf/src/playback/adapters" },
 
     { "path": "packages/html" },
     { "path": "packages/react" },

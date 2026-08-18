@@ -1,6 +1,10 @@
+'use client';
+
+import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
@@ -11,7 +15,6 @@ import {
   playButton,
   playbackRate,
   popup,
-  root,
   seek,
   slider,
   time,
@@ -34,13 +37,16 @@ import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { PlaybackRateRadioGroup as PlaybackRateRadioGroupComponent } from '@/ui/playback-rate-radio-group';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
@@ -99,7 +105,7 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
 });
 
 function VolumePopover(): ReactNode {
-  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
+  const volumeUnavailable = usePlayer((s) => s.volumeAvailability !== 'available');
 
   const muteButton = (
     <MuteButton className={iconState.mute.button} render={<Button />}>
@@ -109,7 +115,7 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnsupported) return muteButton;
+  if (volumeUnavailable) return muteButton;
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="left" boundary="viewport">
@@ -128,22 +134,20 @@ function VolumePopover(): ReactNode {
 
 function PlaybackRateRadioGroup(): ReactNode {
   const t = useTranslator();
-  const state = usePlaybackRateOptions();
-  if (!state) return null;
-
-  const { options, setValue, value } = state;
 
   return (
-    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} aria-label={t('Playback rate')}>
-      {options.map((option) => (
-        <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
-          <span>{option.label}</span>
-          <Menu.ItemIndicator checked={option.value === value} forceMount className={menu.indicator}>
+    <PlaybackRateRadioGroupComponent
+      className={menu.group}
+      aria-label={t(playbackRateText)}
+      renderItem={(props, item) => (
+        <Menu.RadioItem {...props} className={menu.item}>
+          <span>{item.label}</span>
+          <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
             <CheckIcon className={cn(icon, menu.icon)} />
           </Menu.ItemIndicator>
         </Menu.RadioItem>
-      ))}
-    </Menu.RadioGroup>
+      )}
+    />
   );
 }
 
@@ -165,7 +169,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn(root, className)} {...rest}>
+    <Container className={cn(container, className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>
@@ -254,8 +258,8 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
 
             <TimeSlider.Root render={<SliderRoot />}>
               <TimeSlider.Track render={<SliderTrack />}>
-                <TimeSlider.Fill render={<SliderFill />} />
                 <TimeSlider.Buffer render={<SliderBuffer />} />
+                <TimeSlider.Fill render={<SliderFill />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
               <TimeSlider.Preview className={slider.preview}>
@@ -265,17 +269,36 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
           </div>
 
           <div className={buttonGroup}>
+            <VolumePopover />
+
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
               <Menu.Content className={cn(popup.popover, menu.root)}>
                 <PlaybackRateRadioGroup />
               </Menu.Content>
             </Menu.Root>
-
-            <VolumePopover />
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+      <Hotkey keys="l" action="seekStep" value={10} />
+      <Hotkey keys="j" action="seekStep" value={-10} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer className="sr-only" />
     </Container>
   );
 }

@@ -1,0 +1,70 @@
+---
+title: MuxData
+frameworkTitle:
+  html: mux-data
+description: Options for the Mux Data component that monitors playback quality
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+
+Adds [Mux Data](https://data.mux.com) monitoring to the player's media. It renders nothing — place it inside the player as a sibling of the media element. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> for how monitoring works.
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { MuxData } from '@videojs/react/media/mux-data';
+
+<MuxData />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<mux-data></mux-data>
+```
+
+Register the element by importing `@videojs/html/media/mux-data`.
+</FrameworkCase>
+
+## Options
+
+<FrameworkCase frameworks={["react"]}>
+| Prop | Type | Description |
+|---|---|---|
+| `envKey` | `string` | Mux Data environment key the beacons are sent to. Optional for Mux-hosted playback |
+| `metadata` | `object` | Mux Data metadata for the view |
+| `playerSoftwareName` | `string` | Player name reported to Mux Data |
+| `playerSoftwareVersion` | `string` | Player version reported to Mux Data. Defaults to the Video.js version |
+| `playerInitTime` | `number` | Epoch milliseconds the player was initialized. Defaults to when the component was created |
+| `beaconCollectionDomain` | `string` | Custom domain the beacons are sent to |
+| `disableCookies` | `boolean` | Stops the SDK from setting cookies |
+| `debug` | `boolean` | Turns on SDK debug logging |
+| `MuxDataSdk` | `object` | SDK used for monitoring. Set it to `undefined` to switch monitoring off |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+| Attribute | Property | Description |
+|---|---|---|
+| `env-key` | `envKey` | Mux Data environment key the beacons are sent to. Optional for Mux-hosted playback |
+| — | `metadata` | Mux Data metadata for the view |
+| `player-software-name` | `playerSoftwareName` | Player name reported to Mux Data |
+| `player-software-version` | `playerSoftwareVersion` | Player version reported to Mux Data. Defaults to the Video.js version |
+| `player-init-time` | `playerInitTime` | Epoch milliseconds the player was initialized. Defaults to when the element was created |
+| `beacon-collection-domain` | `beaconCollectionDomain` | Custom domain the beacons are sent to |
+| `disable-cookies` | `disableCookies` | Stops the SDK from setting cookies |
+| `debug` | `debug` | Turns on SDK debug logging |
+| — | `MuxDataSdk` | SDK used for monitoring. Set it to `undefined` to switch monitoring off |
+
+`metadata` and `MuxDataSdk` take objects, so they're properties only, with no matching attribute.
+</FrameworkCase>
+
+Changing `MuxDataSdk`, `beaconCollectionDomain`, `debug`, or `disableCookies` restarts monitoring, which ends the current view and starts a new one. The rest update the view in place.
+
+## See also
+
+<DocsLinkCard slug="concepts/mux-data" description="How monitoring works">Mux Data</DocsLinkCard>
+<DocsLinkCard slug="reference/mux-video">MuxVideo element reference</DocsLinkCard>
+<DocsLinkCard slug="reference/mux-audio">MuxAudio element reference</DocsLinkCard>

@@ -22,7 +22,7 @@ other consumer-side reasons.
 
 ## Status
 
-- **Composition:** not implemented in `createSimpleHlsEngine`. Today
+- **Composition:** not implemented in `createHlsVideoEngine`. Today
   `selectQuality` operates over all `presentation.videoTracks` with
   no candidate-set narrowing beyond `userVideoTrackSelection`
   (single-track manual override) and bandwidth-driven safety

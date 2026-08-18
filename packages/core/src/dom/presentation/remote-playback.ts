@@ -1,6 +1,5 @@
+import type { MediaRemotePlaybackCapability } from '@videojs/media';
 import { isObject } from '@videojs/utils/predicate';
-
-import type { MediaRemotePlaybackCapability } from '../../core/media/types';
 
 function resolveRemote(media: EventTarget): MediaRemotePlaybackCapability['remote'] | undefined {
   const target = media as EventTarget & { remote?: unknown };

@@ -34,25 +34,46 @@ export function canUpdateDuration(
   return !!(mediaSource && presentation && hasPresentationDuration(presentation));
 }
 
+export function getBufferedEnd(
+  buffers: SourceBufferIterable,
+  isEndMatch: (next: number, current: number) => boolean
+): number {
+  return (
+    ([...buffers].reduce((endMatch: number | undefined, buffer) => {
+      const { buffered } = buffer;
+      if (!buffered.length) return endMatch;
+      const end = buffered.end(buffered.length - 1);
+      if (!endMatch) return end;
+      return isEndMatch(end, endMatch) ? end : endMatch;
+    }, undefined) as number) ?? 0
+  );
+}
+
+const isGreaterThan = (x: number, y: number) => x > y;
+const isLessThan = (x: number, y: number) => x < y;
+
 /**
  * Get the maximum buffered end time across an iterable of SourceBuffers
  * (typically `mediaSource.sourceBuffers`). Returns `0` when the collection is
  * empty or no buffer has any buffered ranges.
  */
 export function getMaxBufferedEnd(buffers: SourceBufferIterable): number {
-  let maxEnd = 0;
+  return getBufferedEnd(buffers, isGreaterThan);
+}
 
-  for (const buffer of buffers) {
-    const { buffered } = buffer;
-    if (buffered.length > 0) {
-      const end = buffered.end(buffered.length - 1);
-      if (end > maxEnd) {
-        maxEnd = end;
-      }
-    }
-  }
-
-  return maxEnd;
+/**
+ * Get the reachable buffered end across an iterable of SourceBuffers (typically
+ * `mediaSource.sourceBuffers`): the `min` of each buffer's last buffered-range end
+ * — the furthest point every track can play to (the intersection end). Buffers with
+ * no buffered ranges are skipped. Returns `0` when the collection is empty or no
+ * buffer has any buffered ranges.
+ *
+ * Counterpart to {@link getMaxBufferedEnd}: `max` bounds the overall presentation
+ * end (e.g. for setting `duration`), `min` bounds where playback can actually reach
+ * when tracks end at slightly different times (e.g. skewed A/V near end-of-stream).
+ */
+export function getMinBufferedEnd(buffers: SourceBufferIterable): number {
+  return getBufferedEnd(buffers, isLessThan);
 }
 
 /**

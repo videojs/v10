@@ -1,15 +1,17 @@
-import { resolveCSSLength, supportsAnchorPositioning } from '@videojs/utils/dom';
+import { getElementSize, resolveCSSLength, supportsAnchorPositioning } from '@videojs/utils/dom';
 import { clamp } from '@videojs/utils/number';
 import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/popover-core';
-import { type PopoverCSSVarKey, PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
+import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 import { createDOMRect } from '../../utils/layout';
+
+export { getPositionedSide } from '@videojs/utils/dom';
 
 export interface PositioningOptions {
   side: PopoverSide;
   align: PopoverAlign;
 }
 
-export interface ManualOffsets {
+export interface PositioningOffsets {
   sideOffset: number;
   alignOffset: number;
   boundaryOffset?: number;
@@ -43,7 +45,7 @@ export interface PopoverPositionStyle {
   right?: string;
 }
 
-const ZERO_OFFSETS: ManualOffsets = { sideOffset: 0, alignOffset: 0, boundaryOffset: 0 };
+const ZERO_OFFSETS: PositioningOffsets = { sideOffset: 0, alignOffset: 0, boundaryOffset: 0 };
 
 const OPPOSITE_SIDE: Record<PopoverSide, PopoverSide> = {
   top: 'bottom',
@@ -54,22 +56,6 @@ const OPPOSITE_SIDE: Record<PopoverSide, PopoverSide> = {
 
 function formatPixels(value: number): string {
   return `${clamp(value, 0, Infinity)}px`;
-}
-
-function getCrossAxisAvailable(
-  start: number,
-  end: number,
-  size: number,
-  boundaryStart: number,
-  boundaryEnd: number,
-  align: PopoverAlign,
-  alignOffset: number
-): number {
-  if (align === 'start') return boundaryEnd - (start + alignOffset);
-  if (align === 'end') return end + alignOffset - boundaryStart;
-
-  const center = start + size / 2 + alignOffset;
-  return Math.min(center - boundaryStart, boundaryEnd - center) * 2;
 }
 
 function shiftCrossAxis(value: number, boundaryStart: number, boundaryEnd: number, size: number): number {
@@ -120,7 +106,7 @@ export function getAnchorPositionStyle(
   triggerRect?: DOMRect,
   popupRect?: DOMRect,
   boundaryRect?: DOMRect,
-  offsets?: ManualOffsets,
+  offsets?: PositioningOffsets,
   cssVars: PositioningCSSVars = PopoverCSSVars
 ): PopoverPositionStyle & Record<string, string | undefined> {
   if (supportsAnchorPositioning()) {
@@ -132,25 +118,16 @@ export function getAnchorPositionStyle(
 
   // JS fallback when CSS Anchor Positioning is not supported.
   if (triggerRect && popupRect) {
-    const resolved: ManualOffsets = offsets ?? ZERO_OFFSETS;
+    const resolved: PositioningOffsets = offsets ?? ZERO_OFFSETS;
     return {
+      position: 'fixed',
+      margin: '0',
       ...getManualPositionStyle(triggerRect, popupRect, opts, resolved, boundaryRect),
       ...(boundaryRect ? getPositioningCSSVars(triggerRect, boundaryRect, opts, resolved, cssVars) : {}),
-      position: 'fixed',
-      // Reset UA [popover] defaults (inset: 0; margin: auto) which would
-      // otherwise conflict with computed positioning.
-      inset: 'auto',
-      margin: '0',
     };
   }
 
   return {};
-}
-
-/** Generate style to set on the trigger for CSS Anchor Positioning. */
-export function getAnchorNameStyle(anchorName: string) {
-  if (!supportsAnchorPositioning()) return {};
-  return { anchorName: `--${anchorName}` };
 }
 
 function getAnchorPositionCSS(
@@ -159,7 +136,7 @@ function getAnchorPositionCSS(
   cssVars: PositioningCSSVars = PopoverCSSVars,
   triggerRect?: DOMRect,
   boundaryRect?: DOMRect,
-  offsets: ManualOffsets = ZERO_OFFSETS
+  offsets: PositioningOffsets = ZERO_OFFSETS
 ): PopoverPositionStyle {
   const SIDE_OFFSET_VAR = `var(${cssVars.sideOffset}, 0px)`;
   const ALIGN_OFFSET_VAR = `var(${cssVars.alignOffset}, 0px)`;
@@ -262,11 +239,11 @@ export function getPositioningCSSVars(
   triggerRect: DOMRect,
   boundaryRect: DOMRect,
   opts: PositioningOptions,
-  offsets: ManualOffsets = ZERO_OFFSETS,
+  offsets: PositioningOffsets = ZERO_OFFSETS,
   cssVars: PositioningCSSVars = PopoverCSSVars
 ): Record<string, string> {
   const vars: Record<string, string> = {};
-  const { side, align } = opts;
+  const { side } = opts;
   const boundaryOffset = offsets.boundaryOffset ?? 0;
   const boundaryStartX = boundaryRect.left + boundaryOffset;
   const boundaryEndX = boundaryRect.right - boundaryOffset;
@@ -280,56 +257,12 @@ export function getPositioningCSSVars(
     const sideSpace = side === 'top' ? triggerRect.top - boundaryStartY : boundaryEndY - triggerRect.bottom;
 
     vars[cssVars.availableHeight] = formatPixels(sideSpace - offsets.sideOffset);
-    vars[cssVars.availableWidth] = formatPixels(
-      getCrossAxisAvailable(
-        triggerRect.left,
-        triggerRect.right,
-        triggerRect.width,
-        boundaryStartX,
-        boundaryEndX,
-        align,
-        offsets.alignOffset
-      )
-    );
+    vars[cssVars.availableWidth] = formatPixels(boundaryEndX - boundaryStartX);
   } else {
     const sideSpace = side === 'left' ? triggerRect.left - boundaryStartX : boundaryEndX - triggerRect.right;
 
     vars[cssVars.availableWidth] = formatPixels(sideSpace - offsets.sideOffset);
-    vars[cssVars.availableHeight] = formatPixels(
-      getCrossAxisAvailable(
-        triggerRect.top,
-        triggerRect.bottom,
-        triggerRect.height,
-        boundaryStartY,
-        boundaryEndY,
-        align,
-        offsets.alignOffset
-      )
-    );
-  }
-
-  return vars;
-}
-
-/** @deprecated Use `getPositioningCSSVars` instead. */
-export function getPopoverCSSVars(
-  triggerRect: DOMRect,
-  boundaryRect: DOMRect,
-  side: PopoverSide
-): Partial<Record<PopoverCSSVarKey, string>> {
-  const vars: Partial<Record<PopoverCSSVarKey, string>> = {
-    [PopoverCSSVars.anchorWidth]: `${triggerRect.width}px`,
-    [PopoverCSSVars.anchorHeight]: `${triggerRect.height}px`,
-  };
-
-  if (side === 'top' || side === 'bottom') {
-    vars[PopoverCSSVars.availableHeight] =
-      side === 'top' ? `${triggerRect.top - boundaryRect.top}px` : `${boundaryRect.bottom - triggerRect.bottom}px`;
-    vars[PopoverCSSVars.availableWidth] = `${boundaryRect.width}px`;
-  } else {
-    vars[PopoverCSSVars.availableWidth] =
-      side === 'left' ? `${triggerRect.left - boundaryRect.left}px` : `${boundaryRect.right - triggerRect.right}px`;
-    vars[PopoverCSSVars.availableHeight] = `${boundaryRect.height}px`;
+    vars[cssVars.availableHeight] = formatPixels(boundaryEndY - boundaryStartY);
   }
 
   return vars;
@@ -349,22 +282,24 @@ export function getManualPositionStyle(
   triggerRect: DOMRect,
   popupRect: DOMRect,
   opts: PositioningOptions,
-  offsets: ManualOffsets = { sideOffset: 0, alignOffset: 0 },
+  offsets: PositioningOffsets = { sideOffset: 0, alignOffset: 0 },
   boundaryRect?: DOMRect
 ) {
   const { side, align } = opts;
   const { sideOffset, alignOffset } = offsets;
   let top = 0;
+  let bottom: string | undefined;
   let left = 0;
+  let right: string | undefined;
 
   // Side positioning in viewport coordinates.
   // Positive sideOffset always increases distance from the trigger.
   if (side === 'top') {
-    top = triggerRect.top - popupRect.height - sideOffset;
+    bottom = `calc(100% - ${triggerRect.top}px + ${sideOffset}px)`;
   } else if (side === 'bottom') {
     top = triggerRect.bottom + sideOffset;
   } else if (side === 'left') {
-    left = triggerRect.left - popupRect.width - sideOffset;
+    right = `calc(100% - ${triggerRect.left}px + ${sideOffset}px)`;
   } else {
     left = triggerRect.right + sideOffset;
   }
@@ -409,8 +344,10 @@ export function getManualPositionStyle(
   }
 
   return {
-    top: `${top}px`,
-    left: `${left}px`,
+    top: side === 'top' ? 'auto' : `${top}px`,
+    bottom: bottom ?? 'auto',
+    left: side === 'left' ? 'auto' : `${left}px`,
+    right: right ?? 'auto',
   };
 }
 
@@ -418,7 +355,7 @@ export function getManualPositionStyle(
  * Read positioning offset CSS custom properties from the
  * popup element's computed style, returning numeric pixel values.
  */
-export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = PopoverCSSVars): ManualOffsets {
+export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = PopoverCSSVars): PositioningOffsets {
   const computed = getComputedStyle(el);
   return {
     sideOffset: resolveCSSLength(el, computed.getPropertyValue(cssVars.sideOffset)),
@@ -432,12 +369,15 @@ export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = Popove
  *
  * `getBoundingClientRect()` includes active transforms, which causes the
  * fallback position to drift while opening/closing animations scale the popup.
- * Using `offsetWidth`/`offsetHeight` preserves the untransformed size.
+ * Using layout dimensions preserves the untransformed size, while the
+ * side-axis scroll dimension includes content clipped by size constraints.
  */
-export function getPopupPositionRect(el: HTMLElement): DOMRect {
+export function getPopupPositionRect(el: HTMLElement, side: PopoverSide): DOMRect {
   const rect = el.getBoundingClientRect();
-  const width = el.offsetWidth || rect.width;
-  const height = el.offsetHeight || rect.height;
+  const size = getElementSize(el, {
+    box: 'layout',
+    overflow: side === 'left' || side === 'right' ? 'width' : 'height',
+  });
 
-  return createDOMRect(rect.left, rect.top, width, height);
+  return createDOMRect(rect.left, rect.top, size.width, size.height);
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  hasMethods,
   isAbortError,
   isBoolean,
   isFunction,
@@ -208,6 +209,38 @@ describe('predicate', () => {
     it('returns false for functions', () => {
       expect(isPlainObject(() => {})).toBe(false);
       expect(isPlainObject(() => {})).toBe(false);
+    });
+  });
+
+  describe('hasMethods', () => {
+    it('returns true when every name is a callable method', () => {
+      expect(hasMethods({ play: () => {}, pause: () => {} }, ['play', 'pause'])).toBe(true);
+      expect(hasMethods(new Map(), ['get', 'set'])).toBe(true);
+    });
+
+    it('finds methods inherited from a prototype', () => {
+      class Engine {
+        on() {}
+        off() {}
+      }
+      expect(hasMethods(new Engine(), ['on', 'off'])).toBe(true);
+    });
+
+    it('returns true for an empty list of methods', () => {
+      expect(hasMethods({}, [])).toBe(true);
+    });
+
+    it('returns false when a name is missing or not callable', () => {
+      expect(hasMethods({ play: () => {} }, ['play', 'pause'])).toBe(false);
+      expect(hasMethods({ play: 'nope' }, ['play'])).toBe(false);
+    });
+
+    it('returns false for non-objects', () => {
+      expect(hasMethods(null, ['play'])).toBe(false);
+      expect(hasMethods(undefined, ['play'])).toBe(false);
+      expect(hasMethods('play', ['play'])).toBe(false);
+      // A function can carry methods, but callers here are matching object shapes.
+      expect(hasMethods(() => {}, [])).toBe(false);
     });
   });
 

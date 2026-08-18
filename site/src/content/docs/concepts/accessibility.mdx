@@ -30,6 +30,14 @@ All interactive components support keyboard control. For example, buttons activa
 
 Interactive elements are focusable when enabled and leave the [tab order](https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/tabindex) when disabled. Popover triggers link to their popups with `aria-controls` and `aria-expanded`.
 
+The player container is focusable and labeled: it takes `role="group"`, `tabindex="0"`, and an `aria-label` you can override. Keyboard users can tab to the player as a whole, and screen readers announce it as a named group.
+
+## Status announcements
+
+The player announces confirmed state changes through a visually hidden live region (`role="status"`), so screen reader users hear when playback starts or pauses, captions turn on or off, fullscreen, picture-in-picture, playback rate, or volume change, and where a seek lands.
+
+Announcements follow confirmed state from the player store rather than requested changes, so routine time updates never reach the live region. Rapid volume and seek changes are grouped into a single announcement, and the player stays quiet while one of its sliders has focus, since the slider already announces its own value. State the store tracks is covered for you; a custom control that tracks its own state needs its own live region.
+
 ## Captions and subtitles
 
 The <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> supports captions and subtitles. Closed captions in the U.S. are governed by the [FCC](https://www.fcc.gov/) under the [CVAA](https://www.fcc.gov/consumers/guides/21st-century-communications-and-video-accessibility-act-cvaa), which requires both captioning and viewer control over caption appearance (font, size, color, opacity, and edge style). Non-compliance carries legal risk. The [WebKit Caption Display Settings explainer](https://github.com/WebKit/explainers/tree/main/CaptionDisplaySettings) tracks how browsers are bringing these customization preferences into the web platform natively.

@@ -1,8 +1,19 @@
-import type { AudioPlayerStore, PlayerStore, PlayerTarget, VideoPlayerStore } from '@videojs/core/dom';
-import { audioFeatures, backgroundFeatures, definePlayerFeature, features, videoFeatures } from '@videojs/core/dom';
+import {
+  type AudioPlayerStore,
+  audioFeatures,
+  backgroundFeatures,
+  definePlayerFeature,
+  features,
+  metadataFeature,
+  type PlayerStore,
+  type PlayerTarget,
+  type VideoPlayerStore,
+  videoFeatures,
+} from '@videojs/core/dom';
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 
+import { MediaElement } from '../../ui/media-element';
 import { type CreatePlayerResult, createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
@@ -10,6 +21,8 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: videoFeatures });
 
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
+    // @ts-expect-error ContainerMixin is imported from the package root, not created per player.
+    result.ContainerMixin;
   });
 
   it('resolves audio features to AudioPlayerStore', () => {
@@ -42,6 +55,21 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: [customFeature] });
 
     assertType<CreatePlayerResult<PlayerStore<[Slice<PlayerTarget, CustomState>]>>>(result);
+  });
+
+  it('infers config properties from selected features', () => {
+    const withMetadata = createPlayer({ features: [metadataFeature] });
+    const withoutMetadata = createPlayer({ features: [features.playback] });
+    const MetadataProvider = withMetadata.ProviderMixin(MediaElement);
+    const PlainProvider = withoutMetadata.ProviderMixin(MediaElement);
+    const metadataProvider = new MetadataProvider();
+    const plainProvider = new PlainProvider();
+
+    assertType<string | null | undefined>(metadataProvider.contentTitle);
+    assertType<string | null | undefined>(metadataProvider.defaultContentTitle);
+
+    // @ts-expect-error metadata properties are absent when the feature is absent.
+    plainProvider.contentTitle;
   });
 
   it('accepts the orientation lock feature alias with and without config', () => {

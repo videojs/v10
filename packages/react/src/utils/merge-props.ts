@@ -1,5 +1,3 @@
-'use client';
-
 import type { ComponentPropsWithRef, CSSProperties, ElementType, SyntheticEvent } from 'react';
 
 type Props<T extends ElementType = ElementType> = ComponentPropsWithRef<T>;

@@ -1,0 +1,48 @@
+import { formatTimeAsPhrase } from '@videojs/utils/time';
+import { describe, expect, it } from 'vitest';
+import { createTranslator, type FlatTranslations } from '../../../i18n';
+
+import { createStatusAnnouncerLabels } from '../../status-announcer/status-announcer-labels';
+import { createInputIndicatorLabels } from '../indicator-labels';
+
+describe('createInputIndicatorLabels', () => {
+  it('maps indicator phrases to input feedback labels', () => {
+    const labels = createInputIndicatorLabels(createFrenchTranslator());
+
+    expect(labels.captionsOn).toBe('Sous-titres activés');
+    expect(labels.captionsOff).toBe('Sous-titres désactivés');
+    expect(labels.paused).toBe('En pause');
+    expect(labels.volume).toBe('Volume');
+  });
+});
+
+describe('createStatusAnnouncerLabels', () => {
+  it('maps parameterized announcement phrases', () => {
+    const labels = createStatusAnnouncerLabels(createFrenchTranslator(), 'fr');
+
+    expect(labels.volumeWithValue('80%')).toBe('Volume : 80%');
+    expect(labels.seekedTo(90)).toBe(`Position de lecture : ${formatTimeAsPhrase(90, { locale: 'fr' })}`);
+    expect(labels.playbackRate('1.5×')).toBe('Vitesse de lecture 1.5×');
+  });
+});
+
+function createFrenchTranslator() {
+  return createTranslator(
+    {
+      'volume.muted': 'Muet',
+      'volume.label': 'Volume',
+      'volume.value': 'Volume : {value}',
+      'status.captionsOn': 'Sous-titres activés',
+      'status.captionsOff': 'Sous-titres désactivés',
+      'status.paused': 'En pause',
+      'status.playing': 'Lecture en cours',
+      'status.fullscreen': 'Plein écran',
+      'fullscreen.exit': 'Quitter le plein écran',
+      'status.pip': 'Image dans l’image',
+      'status.exitPip': 'Quitter l’image dans l’image',
+      'status.seekedTo': 'Position de lecture : {time}',
+      'playback.rate': 'Vitesse de lecture {rate}',
+    } satisfies FlatTranslations,
+    'fr'
+  );
+}

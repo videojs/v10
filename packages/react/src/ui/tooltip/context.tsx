@@ -1,5 +1,3 @@
-'use client';
-
 import type { StateAttrMap, TooltipCore } from '@videojs/core';
 import type { MediaContainer, PositioningBoundary, TooltipApi } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
@@ -13,6 +11,8 @@ export interface TooltipContextValue {
   core: TooltipCore;
   tooltip: TooltipApi;
   state: TooltipCore.State;
+  preferredSide: TooltipCore.State['side'];
+  setPositionedSide: (side: TooltipCore.State['side']) => void;
   stateAttrMap: StateAttrMap<TooltipCore.State>;
   anchorName: string;
   popupId: string;

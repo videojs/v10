@@ -5,44 +5,79 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import { delayedReschedule } from '../../../core/tasks/delayed-reschedule';
+import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { canPlayTrack } from '../../../media/dom/capabilities';
+import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
   addSubtitlesTracksToMedia,
   getShowingSubtitlesTrackFromMedia,
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
+import type { SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
+import { mediaPlaylistReloadDelay, resolveLiveLatency } from '../../../media/hls/reload-policy';
+import type {
+  AudioTrack,
+  CanPlayTrack,
+  MaybeResolvedPresentation,
+  MediaContainerData,
+  ResolvedTrack,
+  TextTrack,
+  VideoTrack,
+} from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
-import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
+import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
 import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
+import { collectErrors } from '../../behaviors/collect-errors';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
+import { setupAirPlay } from '../../behaviors/dom/airplay';
+import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
+import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
+import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-range';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
+// Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
+// `video/audio/textMessagePipelines` finalConfig entries, the `mediaContainerData`
+// state slot, and the `deriveStartMediaTime` config field to drop relocation entirely
+// (text then falls back to the plain `resolveVttSegment` resolver).
+import {
+  type DeriveStartMediaTime,
+  deriveSharedMinStartMediaTime,
+  establishStartMediaTime,
+  gateFirstParseOnAnchor,
+} from '../../behaviors/establish-start-media-time';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
+import {
+  type ReportUnsupportedTrackConditions,
+  reportUnsupportedTrackConditions,
+} from '../../primitives/report-track-conditions';
+import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -55,7 +90,7 @@ import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behav
  * the HLS engine. Each behavior declares its own state interface; this
  * type satisfies all of them.
  */
-export interface SimpleHlsEngineState {
+export interface HlsVideoEngineState {
   /**
    * The presentation being played. A caller writes `{ url }`;
    * `resolvePresentation` parses the manifest and populates the rest.
@@ -66,6 +101,9 @@ export interface SimpleHlsEngineState {
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
   bandwidthState?: BandwidthState;
+  // Non-zero-PTS relocation (spike): transient per-track container data owned by
+  // `establishStartMediaTime`. Remove with the composed reactor.
+  mediaContainerData?: Record<string, MediaContainerData>;
   userVideoTrackSelection?: Partial<VideoTrack>;
   /**
    * Consumer-driven constraint narrowing the audio candidate set. Sibling
@@ -101,8 +139,42 @@ export interface SimpleHlsEngineState {
    * means all CDNs are eligible.
    */
   failedCdns?: string[];
+  /**
+   * Conditions reported during playback, in the order encountered — appended by
+   * whichever behavior detects one (`emitError`), owned and cleared per source by
+   * `collectErrors`. Carries no severity: which of these is fatal is decided
+   * above the engine, at the adapter. See
+   * `internal/design/spf/features/errors.md`.
+   */
+  errors?: SvtaError[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * One-shot command: start the current source at this position
+   * (presentation-timeline seconds). Written by consumers or by
+   * `setupAirPlay`'s session-end snapshot; consumed (cleared) by
+   * `applyStartPosition` once the element seeks. See
+   * `behaviors/dom/apply-start-position.ts`.
+   */
+  startPosition?: number;
+  /**
+   * Intent-level loading policy: initiate no new loading work while `true`.
+   * Written by `setupAirPlay` (the only behavior declaring the key) while a
+   * remote-playback session owns presentation; observed by the
+   * `loadXSegments` dispatchers (park in `'dormant'`) and by
+   * `setupMediaSource` (a pending rebuild waits). See
+   * `SegmentLoadingState['loadingSuspended']`.
+   */
+  loadingSuspended?: boolean;
+  /**
+   * Author intent for the AirPlay/remote-playback picker, written by the media
+   * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
+   * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
+   * element's remote playback disabled. Distinct from the underlying
+   * `<video>.disableRemotePlayback`, which stays programmatically managed
+   * (ManagedMediaSource / AirPlay).
+   */
+  disableRemotePlayback?: boolean;
 }
 
 /**
@@ -110,7 +182,7 @@ export interface SimpleHlsEngineState {
  *
  * Platform objects and actor references managed by HLS behaviors.
  */
-export interface SimpleHlsEngineContext {
+export interface HlsVideoEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   videoBufferActor?: SourceBufferActor;
@@ -127,9 +199,9 @@ export interface SimpleHlsEngineContext {
  * state (reads) without touching `composition.state` / `composition.context`
  * directly.
  */
-export type SimpleHlsEngineSignals = {
-  state: StateSignals<SimpleHlsEngineState>;
-  context: ContextSignals<SimpleHlsEngineContext>;
+export type HlsVideoEngineSignals = {
+  state: StateSignals<HlsVideoEngineState>;
+  context: ContextSignals<HlsVideoEngineContext>;
 };
 
 /**
@@ -138,7 +210,7 @@ export type SimpleHlsEngineSignals = {
  * Each option is consumed by the appropriate behavior — the engine itself
  * has no config beyond what its behaviors read.
  */
-export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {
+export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineState, HlsVideoEngineContext> {
   /**
    * Bandwidth estimate in bps to use before enough samples have been
    * collected. Default: `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
@@ -152,6 +224,14 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * codec).
    */
   canPlayTrack?: CanPlayTrack;
+  /**
+   * Conditions reported about each rendition as it resolves — the *causes* behind
+   * a later verdict, and the copy a verdict reuses when they agree. Defaults to
+   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
+   * and encryption; supply your own to report a different set (a provider that
+   * never ships MPEG-TS can drop that check) or `() => []` to report nothing.
+   */
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
   includeForcedTracks?: boolean;
@@ -238,6 +318,31 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * key on something else (e.g. Mux's `cdn=` query param).
    */
   getCdnId?: GetCdnId;
+  /**
+   * Non-zero-PTS relocation (spike): the reduce seam consumed by the
+   * `establishStartMediaTime` reactor. Defaults to per-track own origin (Tier 1);
+   * a Tier-2 variant returns the shared `min` across selected A/V. Relocation is
+   * composed into the standard engine below — see the marked block — so this only
+   * needs setting to swap the tier policy. See
+   * `internal/design/spf/presentation-timeline-model.md`.
+   */
+  deriveStartMediaTime?: DeriveStartMediaTime;
+  /**
+   * Proximity window (seconds) for the `recoverEndStall` behavior — how close the
+   * playhead must be to the reachable buffered end for a `waiting` to be treated as the
+   * end-of-stream freeze and nudged to `ended`. Defaults to `0.2`. See
+   * `behaviors/dom/recover-end-stall`.
+   */
+  endStallNudgeWindow?: number;
+  /**
+   * Live media-playlist re-run policy for the resolve* loaders' `RecurringRunner`:
+   * returns a promise that resolves when the playlist should reload, or `null` to
+   * stop. Defaults to `mediaPlaylistReloadDelay` (target-duration cadence, half on
+   * an unchanged window, stop on `#EXT-X-ENDLIST`) composed with a cancellable
+   * `sleep`. Inert for VoD (a complete playlist stops it after the first resolve).
+   * Override to tune live reload timing.
+   */
+  reschedule?: Reschedule<ResolvedTrack>;
 }
 
 // ============================================================================
@@ -253,10 +358,11 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
  * materialized and reachable on the `onSignalsReady` refs without being listed
  * here.
  */
-const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
+const shareSignals = makeShareSignals<HlsVideoEngineState, HlsVideoEngineContext>([
   'userVideoTrackSelection',
   'userAudioTrackSelection',
   'userTextTrackSelection',
+  'disableRemotePlayback',
 ]);
 
 /**
@@ -268,8 +374,8 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
  *
  * @example
  * ```ts
- * let signals: SimpleHlsEngineSignals;
- * const engine = createSimpleHlsEngine({
+ * let signals: HlsVideoEngineSignals;
+ * const engine = createHlsVideoEngine({
  *   initialBandwidth: 2_000_000,
  *   preferredAudioLanguage: 'en',
  *   onSignalsReady: (refs) => {
@@ -285,18 +391,48 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
  * await engine.destroy();
  * ```
  */
-export function createSimpleHlsEngine(
-  config: SimpleHlsEngineConfig = {}
-): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+export function createHlsVideoEngine(
+  config: HlsVideoEngineConfig = {}
+): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
+  // Non-zero-PTS relocation (spike): resolve the coordination seam once so the reactor
+  // (model `startMediaTime`) and the loader stamps (buffer `timestampOffset`) apply the
+  // SAME derive. Default is shared-`min` across selected A/V (subsumes per-type).
+  const deriveStartMediaTime = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
   const finalConfig = {
     ...config,
+    deriveStartMediaTime,
+    // Baked (not user-overridable): this engine composes `setupAirPlay`,
+    // whose native fallback `<source>` requires the MSE attachment to keep
+    // sibling source alternatives part of resource selection.
+    attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
+    reportUnsupportedTrackConditions: config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditions,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
+    // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
+    // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.
+    textMessagePipelines: relocatingTextPipelines,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
+    // Non-zero-PTS relocation (spike): the discover/stamp steps `establishStartMediaTime`
+    // pairs with. They apply the same `deriveStartMediaTime` seam as the reactor. Remove
+    // these two lines with the reactor.
+    videoMessagePipelines: relocationPipelinesFor('video', deriveStartMediaTime),
+    audioMessagePipelines: relocationPipelinesFor('audio', deriveStartMediaTime),
+    // Live-anchor establishment order: each non-reference track's first parse
+    // waits for the reference track to settle the wall-clock anchor question
+    // (see `gate-first-parse.ts`); pairs with the reactor's anchor stamp.
+    gateFirstParse: gateFirstParseOnAnchor,
+    // Format-neutral live-latency seam for `seekToLiveEdge` — the HLS resolver
+    // (HOLD-BACK); a DASH engine would inject `suggestedPresentationDelay`.
+    resolveLiveLatency,
+    // The resolve* loaders' RecurringRunner re-runs on this `reschedule`: the pure
+    // target-duration cadence, start-anchored + made awaitable by `delayedReschedule`.
+    // Inert for VoD (the cadence returns null once a playlist is complete), so it
+    // composes always.
+    reschedule: config.reschedule ?? delayedReschedule(mediaPlaylistReloadDelay),
   };
 
   return createComposition(
@@ -326,6 +462,11 @@ export function createSimpleHlsEngine(
       // media-playlist fetch) and removes each CDN once its cooldown lapses.
       setupFailoverMonitor,
 
+      // Owns `errors` and its per-source lifecycle. Composed before the
+      // behaviors that report into it so the slot exists when they first run;
+      // reporting no-ops if it isn't composed at all.
+      collectErrors,
+
       // Resolve selected tracks (fetch media playlists). Composed before the
       // switch* slot owners; selection is reactive, so a resolve* re-fires once
       // its switch* sets the id (same convergence for all three types).
@@ -343,11 +484,28 @@ export function createSimpleHlsEngine(
       // in setup-buffer-actors.ts.
       setupMediaSource,
       updateMediaSourceDuration,
+
+      // ── Non-zero-PTS relocation (spike) ──────────────────────────────────
+      // Establishes per-track `startMediaTime` and publishes the relocating
+      // segment-loader pipelines to context. MUST precede `setup*BufferActors`
+      // so the pipelines are published before the loaders read them. Remove this
+      // one line (+ the import, the `mediaContainerData`/`*MessagePipelines`
+      // slots including `textMessagePipelines`, and the `deriveStartMediaTime`
+      // config) to drop relocation and test the Tier-0 baseline / bundle size.
+      establishStartMediaTime,
+      // ─────────────────────────────────────────────────────────────────────
+
       setupVideoBufferActors,
       setupAudioBufferActors,
 
+      // AirPlay/MSE bridge (WebKit only; no-op elsewhere).
+      setupAirPlay,
+
       // Playback tracking
       trackCurrentTime,
+      // After trackCurrentTime: the one-shot currentTime seed must land after
+      // the mirror's attach-time sync (see apply-start-position.ts).
+      applyStartPosition,
       switchVideoTrack,
       switchAudioTrack,
       // Mid-stream audio-buffer flush on language switch is handled in
@@ -364,8 +522,18 @@ export function createSimpleHlsEngine(
       loadVideoSegments,
       loadAudioSegments,
 
+      // Live: declare the seekable window, then command the live-edge start
+      // position + keep the playhead in-window. No-op for complete playlists
+      // (VoD / ended). `seekToLiveEdge` commands `state.startPosition`;
+      // `applyStartPosition` (composed above) performs the seek.
+      syncLiveSeekableRange,
+      seekToLiveEdge,
+
       // End of stream coordination
       endOfStream,
+      // Force native `ended` when Chrome freezes the playhead a few frames short of a
+      // skewed-A/V end after `endOfStream` (audio-clock stall). Inert otherwise.
+      recoverEndStall,
 
       // Text tracks
       syncTextTracks,

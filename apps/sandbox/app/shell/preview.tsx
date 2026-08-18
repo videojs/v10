@@ -15,10 +15,12 @@ type PreviewProps = {
   loop: boolean;
   preload: PreloadValue;
   locale: SandboxLocaleTag;
+  accentColor: string;
+  onLoad: () => void;
 };
 
 export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
-  { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload, locale },
+  { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload, locale, accentColor, onLoad },
   ref
 ) {
   const buildUrl = (base: string, bustCache = false) => {
@@ -33,6 +35,7 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
       preload,
       locale,
     });
+    if (accentColor) params.set('accent', accentColor);
     if (bustCache) params.set('_', String(Date.now()));
     return `${base}?${params}`;
   };
@@ -78,7 +81,13 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
           <line x1="10" x2="21" y1="14" y2="3" />
         </svg>
       </a>
-      <iframe ref={ref} src={iframeUrl} className="absolute inset-0 w-full h-full border-0" title="player demo" />
+      <iframe
+        ref={ref}
+        src={iframeUrl}
+        onLoad={onLoad}
+        className="absolute inset-0 w-full h-full border-0"
+        title="player demo"
+      />
     </main>
   );
 });

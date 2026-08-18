@@ -3,12 +3,14 @@ import { anyAbortSignal } from '@videojs/utils/events';
 export type SignalKey = PropertyKey;
 
 export class AbortControllerRegistry {
-  #base = new AbortController();
+  // Created on first read. Runtimes such as Cloudflare Workers forbid constructing I/O-bound
+  // objects during module evaluation, and registries can be created at module scope.
+  #base: AbortController | undefined;
   #keys = new Map<SignalKey, AbortController>();
 
   /** The attach-scoped signal. Aborts on detach or reattach. */
   get base(): AbortSignal {
-    return this.#base.signal;
+    return (this.#base ??= new AbortController()).signal;
   }
 
   /** Clears all keyed signals, leaving base intact. */
@@ -22,8 +24,8 @@ export class AbortControllerRegistry {
   /** Resets base and clears all keyed signals. */
   reset(): void {
     this.clear();
-    this.#base.abort();
-    this.#base = new AbortController();
+    this.#base?.abort();
+    this.#base = undefined;
   }
 
   /** Creates a new signal for the key, superseding any previous signal. */
@@ -31,6 +33,6 @@ export class AbortControllerRegistry {
     this.#keys.get(key)?.abort();
     const controller = new AbortController();
     this.#keys.set(key, controller);
-    return anyAbortSignal([this.#base.signal, controller.signal]);
+    return anyAbortSignal([this.base, controller.signal]);
   }
 }

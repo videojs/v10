@@ -13,9 +13,9 @@ describe('SSR-safe define imports', () => {
     await expect(import('../video/skin')).resolves.toBeDefined();
   });
 
-  it('imports simple-hls-video without customElements', async () => {
+  it('imports hls-video without customElements', async () => {
     vi.stubGlobal('customElements', undefined);
 
-    await expect(import('../media/simple-hls-video')).resolves.toBeDefined();
+    await expect(import('../media/hls-video')).resolves.toBeDefined();
   });
 });

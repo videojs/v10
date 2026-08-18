@@ -88,6 +88,24 @@ describe('normalizeImports', () => {
     expect(normalizeImports(input)).toBe("import * as React from 'react';\n\nconst x = 1;");
   });
 
+  it('preserves directives before normalized imports', () => {
+    const input = [
+      "'use client';",
+      "import { Foo } from 'mod';",
+      "import { Bar } from 'mod';",
+      '',
+      'const x = 1;',
+    ].join('\n');
+
+    expect(normalizeImports(input)).toBe("'use client';\n\nimport { Foo, Bar } from 'mod';\n\nconst x = 1;");
+  });
+
+  it('preserves multiple directives without imports', () => {
+    const input = ["'use strict';", "'use client';", '', 'const x = 1;'].join('\n');
+
+    expect(normalizeImports(input)).toBe("'use strict';\n'use client';\n\nconst x = 1;");
+  });
+
   it('orders: side-effect, raw, then named imports', () => {
     const input = [
       "import { useState } from 'react';",

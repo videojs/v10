@@ -22,7 +22,7 @@ export function readConfig(): CliConfig {
 function writeConfig(config: CliConfig): void {
   const dir = dirname(CONFIG_FILE);
   mkdirSync(dir, { recursive: true });
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n', 'utf-8');
+  writeFileSync(CONFIG_FILE, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
 }
 
 const VALID_CONFIG: Record<keyof CliConfig, readonly string[]> = {

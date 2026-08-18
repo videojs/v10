@@ -1,5 +1,3 @@
-'use client';
-
 import type { MenuState } from '@videojs/core';
 import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
@@ -42,7 +40,7 @@ export const MenuCheckboxItem = forwardRef<HTMLDivElement, MenuCheckboxItemProps
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
     if (!element || disabled) return;
-    menu.highlight(element, { focus: false });
+    menu.highlight(element, { focus: false, pointer: true });
   }, [menu, disabled]);
 
   return renderElement(

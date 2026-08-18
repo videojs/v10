@@ -80,6 +80,18 @@ afterEach(() => {
 });
 
 describe('MediaButtonElement', () => {
+  it('resolves its label before the first update', () => {
+    ensureDefined(PlayButtonElement);
+
+    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+
+    document.body.append(player);
+    player.append(button);
+
+    expect(button.getResolvedLabel()).toBe('Play');
+  });
+
   it('emits shortcut changes before media is attached', async () => {
     const provider = createElement(TestContainerProviderElement);
     const button = createElement(PlayButtonElement);
@@ -104,8 +116,8 @@ describe('MediaButtonElement', () => {
   });
 
   it('applies translated aria-label and updates on locale change', async () => {
-    registerI18n('es', { Play: 'Reproducir' });
-    registerI18n('fr', { Play: 'Lire' });
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
+    registerI18n('fr', { 'buttons.play': 'Lire' });
 
     ensureDefined(PlayButtonElement);
     ensureDefined(MediaI18nProviderElement);
@@ -131,8 +143,8 @@ describe('MediaButtonElement', () => {
   });
 
   it('updates aria-label when html lang changes and provider has no explicit lang', async () => {
-    registerI18n('de', { Play: 'Los' });
-    registerI18n('fr', { Play: 'Lire' });
+    registerI18n('de', { 'buttons.play': 'Los' });
+    registerI18n('fr', { 'buttons.play': 'Lire' });
     document.documentElement.lang = 'de';
 
     ensureDefined(PlayButtonElement);

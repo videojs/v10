@@ -1,37 +1,30 @@
+import type { MediaAudioTrack, MediaAudioTrackState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
-import type { MediaAudioTrack, MediaAudioTrackState } from '../../media/state';
-import type { ButtonState } from '../types';
+import { resolveText, type Text } from '../../i18n';
+import { audioText } from '../../i18n/text/menu';
+import type { RadioOption, RadioOptionsState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface AudioTrackRadioGroupProps {
   /** Custom label for the options group. */
-  label?: string | ((state: AudioTrackRadioGroupState) => string) | undefined;
+  label?: Text | string | ((state: AudioTrackRadioGroupState) => Text | string) | undefined;
   /** Custom formatter for visible track labels. */
-  formatTrack?: ((track: MediaAudioTrack) => string) | undefined;
+  formatTrack?: ((track: MediaAudioTrack) => Text | string) | undefined;
   /** Whether audio track selection is disabled. */
   disabled?: boolean | undefined;
 }
 
-export interface AudioTrackRadioGroupTrack {
-  value: string;
-  label: string;
-}
+export interface AudioTrackRadioGroupOption extends RadioOption {}
 
-export interface AudioTrackRadioGroupState extends ButtonState {
-  tracks: readonly AudioTrackRadioGroupTrack[];
-  value: string;
-  disabled: boolean;
-  availability: 'available' | 'unavailable';
-}
+export interface AudioTrackRadioGroupState extends RadioOptionsState<AudioTrackRadioGroupOption> {}
 
-function formatTrackLabel(track: MediaAudioTrack): string {
+function formatTrackLabel(track: MediaAudioTrack): Text | string {
   if (track.label) return track.label;
   if (track.language) return track.language;
   if (track.kind) return track.kind;
-  return 'Audio';
+  return audioText;
 }
 
 function getTrackValue(track: MediaAudioTrack, index: number): string {
@@ -46,9 +39,10 @@ export class AudioTrackRadioGroupCore {
   };
 
   readonly state = createState<AudioTrackRadioGroupState>({
-    tracks: [],
+    options: [],
     value: '',
-    disabled: false,
+    disabled: true,
+    hidden: true,
     availability: 'unavailable',
     label: '',
   });
@@ -64,14 +58,14 @@ export class AudioTrackRadioGroupCore {
     this.#props = defaults(props, AudioTrackRadioGroupCore.defaultProps);
   }
 
-  getLabel(state: AudioTrackRadioGroupState): string {
+  getLabel(state: AudioTrackRadioGroupState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    return 'Audio';
+    return audioText;
   }
 
-  getTrackLabel(track: MediaAudioTrack): string {
+  getTrackLabel(track: MediaAudioTrack): Text | string {
     return this.#props.formatTrack(track);
   }
 
@@ -79,6 +73,7 @@ export class AudioTrackRadioGroupCore {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -89,19 +84,21 @@ export class AudioTrackRadioGroupCore {
   getState(): AudioTrackRadioGroupState {
     const media = this.#media!;
     const enabledIndex = media.audioTrackList.findIndex((track) => track.enabled);
-    const tracks = media.audioTrackList.map((track, index) => ({
+    const options = media.audioTrackList.map((track, index) => ({
       value: getTrackValue(track, index),
       label: this.getTrackLabel(track),
+      disabled: false,
     }));
-    const availability: AudioTrackRadioGroupState['availability'] = tracks.length > 1 ? 'available' : 'unavailable';
+    const availability: AudioTrackRadioGroupState['availability'] = options.length > 1 ? 'available' : 'unavailable';
 
     this.state.patch({
-      tracks,
+      options,
       value: enabledIndex === -1 ? '' : getTrackValue(media.audioTrackList[enabledIndex]!, enabledIndex),
       disabled: this.#props.disabled || availability === 'unavailable',
+      hidden: availability === 'unavailable',
       availability,
     });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }

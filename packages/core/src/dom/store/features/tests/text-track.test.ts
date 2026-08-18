@@ -1,7 +1,6 @@
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
-
-import type { PlayerTarget } from '../../../media/types';
+import { describe, expect, it, vi } from 'vitest';
+import type { PlayerTarget } from '../../../player';
 import { textTrackFeature } from '../text-track';
 
 /**
@@ -184,7 +183,7 @@ describe('textTrackFeature', () => {
       ]);
     });
 
-    it('toggleSubtitles() enables and disables caption/subtitle tracks', () => {
+    it('toggleSubtitles() enables a single caption/subtitle track and disables them all', () => {
       const video = createVideo();
       const subtitlesTrack = createMockTrack('subtitles');
       const captionsTrack = createMockTrack('captions');
@@ -195,13 +194,139 @@ describe('textTrackFeature', () => {
 
       const enabled = store.state.toggleSubtitles();
       expect(enabled).toBe(true);
-      expect(subtitlesTrack.mode).toBe('showing');
+      // Captions sort before subtitles, matching the captions menu order.
       expect(captionsTrack.mode).toBe('showing');
+      expect(subtitlesTrack.mode).toBe('disabled');
 
       const disabled = store.state.toggleSubtitles(false);
       expect(disabled).toBe(false);
       expect(subtitlesTrack.mode).toBe('disabled');
       expect(captionsTrack.mode).toBe('disabled');
+    });
+
+    it('toggleSubtitles() prefers an exact browser locale match', () => {
+      const language = vi.spyOn(navigator, 'language', 'get').mockReturnValue('fr-CA');
+      const video = createVideo();
+      const frenchTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-fr', language: 'fr-FR' });
+      const canadianTrack = createMockTrack('subtitles', 'disabled', {
+        id: 'subtitles-fr-ca',
+        language: 'fr-CA',
+      });
+      mockTextTracks(video, [frenchTrack, canadianTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.toggleSubtitles()).toBe(true);
+      expect(frenchTrack.mode).toBe('disabled');
+      expect(canadianTrack.mode).toBe('showing');
+
+      language.mockRestore();
+    });
+
+    it('toggleSubtitles() falls back from a regional browser locale to its language', () => {
+      const language = vi.spyOn(navigator, 'language', 'get').mockReturnValue('fr-BE');
+      const video = createVideo();
+      const canadianTrack = createMockTrack('subtitles', 'disabled', {
+        id: 'subtitles-fr-ca',
+        language: 'fr-CA',
+      });
+      const frenchTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-fr', language: 'fr' });
+      mockTextTracks(video, [canadianTrack, frenchTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.toggleSubtitles()).toBe(true);
+      expect(canadianTrack.mode).toBe('disabled');
+      expect(frenchTrack.mode).toBe('showing');
+
+      language.mockRestore();
+    });
+
+    it('toggleSubtitles() uses the first track when the browser locale does not match', () => {
+      const language = vi.spyOn(navigator, 'language', 'get').mockReturnValue('fr-BE');
+      const video = createVideo();
+      const spanishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-es', language: 'es' });
+      const englishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-en', language: 'en' });
+      mockTextTracks(video, [spanishTrack, englishTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.toggleSubtitles()).toBe(true);
+      expect(spanishTrack.mode).toBe('showing');
+      expect(englishTrack.mode).toBe('disabled');
+
+      language.mockRestore();
+    });
+
+    it('toggleSubtitles() restores the track that was showing', () => {
+      const video = createVideo();
+      const englishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-en', language: 'en' });
+      const germanTrack = createMockTrack('subtitles', 'showing', { id: 'subtitles-de', language: 'de' });
+      mockTextTracks(video, [englishTrack, germanTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.toggleSubtitles()).toBe(false);
+      expect(englishTrack.mode).toBe('disabled');
+      expect(germanTrack.mode).toBe('disabled');
+
+      expect(store.state.toggleSubtitles()).toBe(true);
+      expect(englishTrack.mode).toBe('disabled');
+      expect(germanTrack.mode).toBe('showing');
+    });
+
+    it('toggleSubtitles() restores the track selected through selectSubtitlesTrack()', () => {
+      const video = createVideo();
+      const englishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-en', language: 'en' });
+      const germanTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-de', language: 'de' });
+      mockTextTracks(video, [englishTrack, germanTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      store.state.selectSubtitlesTrack('subtitles-de');
+      store.state.selectSubtitlesTrack('off');
+
+      expect(store.state.toggleSubtitles()).toBe(true);
+      expect(englishTrack.mode).toBe('disabled');
+      expect(germanTrack.mode).toBe('showing');
+    });
+
+    it('toggleSubtitles(true) keeps the showing track instead of enabling every track', () => {
+      const video = createVideo();
+      const englishTrack = createMockTrack('subtitles', 'showing', { id: 'subtitles-en', language: 'en' });
+      const germanTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-de', language: 'de' });
+      mockTextTracks(video, [englishTrack, germanTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(store.state.toggleSubtitles(true)).toBe(true);
+      expect(englishTrack.mode).toBe('showing');
+      expect(germanTrack.mode).toBe('disabled');
+    });
+
+    it('toggleSubtitles() falls back to the first track when the remembered track is gone', () => {
+      const video = createVideo();
+      const germanTrack = createMockTrack('subtitles', 'showing', { id: 'subtitles-de', language: 'de' });
+      mockTextTracks(video, [germanTrack]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      store.state.toggleSubtitles(false);
+
+      const frenchTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-fr', language: 'fr' });
+      const spanishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-es', language: 'es' });
+      mockTextTracks(video, [frenchTrack, spanishTrack]);
+
+      expect(store.state.toggleSubtitles()).toBe(true);
+      expect(frenchTrack.mode).toBe('showing');
+      expect(spanishTrack.mode).toBe('disabled');
     });
 
     it('toggleSubtitles() returns false when no subtitle tracks exist', () => {

@@ -1,7 +1,5 @@
-'use client';
-
+import type { AnyPlayerStore } from '@videojs/core/dom';
 import {
-  type AnyPlayerStore,
   createDoubleTapGesture,
   createTapGesture,
   type GestureActionName,

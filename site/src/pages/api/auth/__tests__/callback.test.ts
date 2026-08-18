@@ -129,19 +129,19 @@ describe('callback endpoint', () => {
     });
   });
   describe('configuration validation', () => {
-    it.each([
-      'OAUTH_CLIENT_ID',
-      'OAUTH_CLIENT_SECRET',
-    ])('should redirect to error when %s is missing', async (envVar) => {
-      env[envVar as keyof typeof env] = undefined;
+    it.each(['OAUTH_CLIENT_ID', 'OAUTH_CLIENT_SECRET'])(
+      'should redirect to error when %s is missing',
+      async (envVar) => {
+        env[envVar as keyof typeof env] = undefined;
 
-      const mockContext = createMockContext({ code: '123', state: 'abc', storedState: 'abc' });
-      await callbackHandler(mockContext);
+        const mockContext = createMockContext({ code: '123', state: 'abc', storedState: 'abc' });
+        await callbackHandler(mockContext);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('OAuth configuration missing');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('OAuth configuration missing');
 
-      expect(mockContext.redirect).toHaveBeenCalledWith('/auth/error');
-    });
+        expect(mockContext.redirect).toHaveBeenCalledWith('/auth/error');
+      }
+    );
   });
 
   describe('csrf protection', () => {

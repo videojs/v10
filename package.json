@@ -2,7 +2,7 @@
   "name": "video.js",
   "type": "module",
   "version": "0.1.0",
-  "packageManager": "pnpm@10.17.0",
+  "packageManager": "pnpm@11.17.0",
   "description": "Video.js 10 Monorepo",
   "author": "Video.js Contributors",
   "license": "Apache-2.0",
@@ -28,7 +28,7 @@
     "dev:site": "turbo run dev --filter=site...",
     "dev": "turbo run dev",
     "dev:packages": "turbo run dev --filter='./packages/*'",
-    "dev:sandbox": "turbo run dev --filter=@videojs/sandbox...",
+    "dev:sandbox": "turbo run build --filter=@videojs/sandbox^... && turbo run dev --filter=@videojs/sandbox... --only",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
     "lint:fix:file": "biome check --write",
@@ -41,7 +41,10 @@
     "test:e2e:sandbox": "pnpm --dir apps/e2e test:sandbox",
     "test:e2e:update": "pnpm --dir apps/e2e test:update",
     "test:e2e:install": "pnpm --dir apps/e2e run install:browsers && pnpm --dir apps/e2e run install:deps",
+    "test:size": "node --test .github/scripts/tests/*.test.js",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
+    "generate:skins": "pnpm -F @videojs/skins generate:skins",
+    "check:skins": "pnpm -F @videojs/skins check:skins",
     "typecheck": "tsgo --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md",
     "check:workspace": "node build/scripts/check-workspace.mjs"
@@ -49,42 +52,35 @@
   "devDependencies": {
     "@actions/core": "^3.0.0",
     "@actions/github": "^9.0.0",
-    "@biomejs/biome": "^2.4.2",
+    "@biomejs/biome": "^2.5.5",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@commitlint/format": "^20.0.0",
     "@types/node": "^22.18.6",
-    "esbuild": "^0.27.3",
+    "esbuild": "^0.28.1",
     "git-cliff": "^2.12.0",
     "lightningcss": "^1.32.0",
     "lint-staged": "^16.2.3",
+    "magic-string": "^0.30.21",
+    "pkg-pr-new": "^0.0.88",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",
-    "prettier-plugin-tailwindcss": "^0.7.2",
-    "react": "^18.0.0",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "react": "^18.3.1",
     "rimraf": "^6.1.3",
     "react-compiler-runtime": "^1.0.0",
-    "react-dom": "^18.0.0",
+    "react-dom": "^18.3.1",
     "simple-git-hooks": "^2.13.1",
-    "tsx": "^4.21.0",
-    "turbo": "^2.9.0",
+    "tsx": "^4.23.1",
+    "turbo": "^2.10.6",
     "@typescript/native-preview": "beta"
-  },
-  "pnpm": {
-    "peerDependencyRules": {
-      "allowedVersions": {
-        "@svta/cml-cta": "1.0.1",
-        "@svta/cml-structured-field-values": "1.0.1",
-        "@svta/cml-utils": "1.0.1"
-      }
-    }
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged",
     "commit-msg": "pnpm commitlint"
   },
   "lint-staged": {
-    "packages/icons/src/assets/**/*.svg": "node --import tsx packages/icons/scripts/format.ts",
+    "packages/icons/src/assets/**/*.svg": "node --import tsx packages/icons/scripts/format-icons.ts",
     "*.astro": "prettier --write",
     "*": "biome check --write --no-errors-on-unmatched"
   }

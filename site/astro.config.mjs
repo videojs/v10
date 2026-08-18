@@ -56,11 +56,10 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
   adapter: netlify({
-    devFeatures: { images: false, environmentVariables: false },
+    devFeatures: { edgeFunctions: false, images: false, environmentVariables: false },
   }),
   // Server-only secrets read at runtime (not inlined at build time).
   // All optional — the site degrades gracefully without auth/Mux configured.
-  // See site/CLAUDE.md "Environment Variables" for full documentation.
   env: {
     schema: {
       // OAuth — powers the video uploader login flow

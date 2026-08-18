@@ -63,7 +63,7 @@ import groupingHtmlTs from "@/components/docs/demos/tooltip/html/css/Grouping.ts
 
 Displays a short label anchored to a trigger element. Opens after a configurable `delay` (default 600ms) on hover or immediately on focus. Closes when the pointer leaves or focus moves away, with an optional `closeDelay`.
 
-The `side` and `align` props control placement relative to the trigger. Positioning uses CSS Anchor Positioning where supported, with a JavaScript measurement fallback.
+The `side` and `align` props control the preferred placement relative to the trigger. When the preferred side overflows the positioning boundary, the tooltip uses the opposite side if it has more space. Positioning uses CSS Anchor Positioning where supported, with a JavaScript measurement fallback.
 
 <FrameworkCase frameworks={["react"]}>
   The component is composed from six parts: `Root` manages state and context,
@@ -109,7 +109,7 @@ React renders standard DOM elements. Add a `className` to style them:
 ```
 </FrameworkCase>
 
-Style based on open state and transition phases:
+Style based on open state, rendered side, and transition phases. `data-side` reflects the rendered side and can differ from the preferred `side` prop after collision handling:
 
 <FrameworkCase frameworks={["html"]}>
 ```css

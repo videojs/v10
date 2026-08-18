@@ -48,26 +48,26 @@ function getTemplateHTML() {
             </media-tooltip>
 
             <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
-          </div>
 
-          <div class="media-time-controls" aria-hidden="true"></div>
-
-          <div class="media-button-group">
             <media-mute-button commandfor="live-video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
 
-            <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-popover media-popover--volume">
-              <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
+            <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="media-popover media-popover--volume">
+              <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
                 <media-slider-track class="media-slider__track">
                   <media-slider-fill class="media-slider__fill"></media-slider-fill>
                 </media-slider-track>
                 <media-slider-thumb class="media-slider__thumb media-slider__thumb--persistent"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
+          </div>
 
+          <div class="media-time-controls" aria-hidden="true"></div>
+
+          <div class="media-button-group">
             <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
               ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
               ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
@@ -145,34 +145,34 @@ function getTemplateHTML() {
       <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
 
-      <!-- Input Feedback -->
-      <media-status-announcer></media-status-announcer>
-      <div class="media-input-feedback">
-        <media-volume-indicator hidden class="media-input-feedback-island media-input-feedback-island--volume">
-          <media-volume-indicator-fill class="media-input-feedback-island__content">
+      <!-- Input Indicators -->
+      <media-status-announcer class="media-sr-only"></media-status-announcer>
+      <div class="media-input-indicator-overlay">
+        <media-volume-indicator hidden class="media-volume-indicator">
+          <media-volume-indicator-fill class="media-volume-indicator__content">
             ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
             ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
-            <div class="media-input-feedback-island__progress" aria-hidden="true"></div>
-            <media-volume-indicator-value class="media-input-feedback-island__value"></media-volume-indicator-value>
+            <div class="media-volume-indicator__progress" aria-hidden="true"></div>
+            <media-volume-indicator-value class="media-volume-indicator__value"></media-volume-indicator-value>
           </media-volume-indicator-fill>
         </media-volume-indicator>
         <media-status-indicator
           hidden
           actions="toggleSubtitles toggleFullscreen togglePictureInPicture"
-          class="media-input-feedback-island media-input-feedback-island--status"
+          class="media-status-indicator media-status-indicator--state"
         >
-          <div class="media-input-feedback-island__content">
+          <div class="media-status-indicator__content">
             ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
             ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
             ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
             ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
             ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
-            <media-status-indicator-value class="media-input-feedback-island__value"></media-status-indicator-value>
+            <media-status-indicator-value class="media-status-indicator__value"></media-status-indicator-value>
           </div>
         </media-status-indicator>
-        <media-status-indicator hidden actions="togglePaused" class="media-input-feedback-bubble">
+        <media-status-indicator hidden actions="togglePaused" class="media-status-indicator media-status-indicator--playback">
           ${renderIcon('play', { class: 'media-icon media-icon--play' })}
           ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
         </media-status-indicator>

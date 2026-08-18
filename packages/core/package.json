@@ -1,7 +1,7 @@
 {
   "name": "@videojs/core",
   "type": "module",
-  "version": "10.0.0-beta.25",
+  "version": "10.0.0-beta.27",
   "description": "Core components and utilities for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -11,7 +11,6 @@
   },
   "keywords": [
     "core",
-    "media",
     "player",
     "videojs"
   ],
@@ -30,15 +29,10 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
-    "./dom/media/*": {
-      "types": "./dist/dev/dom/media/*/index.d.ts",
-      "development": "./dist/dev/dom/media/*/index.js",
-      "default": "./dist/default/dom/media/*/index.js"
-    },
-    "./media/predicate": {
-      "types": "./dist/dev/media/predicate.d.ts",
-      "development": "./dist/dev/media/predicate.js",
-      "default": "./dist/default/media/predicate.js"
+    "./components": {
+      "types": "./dist/dev/components.d.ts",
+      "development": "./dist/dev/components.js",
+      "default": "./dist/default/components.js"
     },
     "./i18n": {
       "types": "./dist/dev/i18n.d.ts",
@@ -49,6 +43,11 @@
       "types": "./dist/dev/i18n/locales/*.d.ts",
       "development": "./dist/dev/i18n/locales/*.js",
       "default": "./dist/default/i18n/locales/*.js"
+    },
+    "./i18n/text/*": {
+      "types": "./dist/dev/i18n/text/*.d.ts",
+      "development": "./dist/dev/i18n/text/*.js",
+      "default": "./dist/default/i18n/text/*.js"
     }
   },
   "main": "dist/default/index.js",
@@ -58,32 +57,59 @@
     "dist"
   ],
   "scripts": {
+    "generate:components": "node --import tsx ./scripts/generate-components.ts --config components.config.js",
+    "check:components": "node --import tsx ./scripts/generate-components.ts --config components.config.js --check",
     "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
-    "prebuild": "pnpm run generate:locales",
+    "generate:i18n-types": "node --import tsx ./scripts/generate-i18n-types.ts",
+    "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types && pnpm run generate:components",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
+    "test": "pnpm run check:components && pnpm run test:types && vitest run",
+    "test:types": "tsgo --project ./src/core/ui/tests/tsconfig.json",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/spf": "workspace:*",
+    "@videojs/media": "workspace:*",
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*",
-    "@vimeo/player": "^2.30.3",
-    "dashjs": "^5.2.0",
-    "hls.js": "^1.6.7",
-    "mux-embed": "^5.17.10"
+    "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@types/chrome": "^0.1.40",
-    "@types/chromecast-caf-sender": "^1.0.11",
+    "@videojs/jsx": "workspace:*",
     "jsdom": "^26.1.0",
-    "tsdown": "^0.21.9",
-    "vitest": "^4.1.0"
+    "tsdown": "^0.22.14",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/dev/index.d.ts",
+        "development": "./dist/dev/index.js",
+        "default": "./dist/default/index.js"
+      },
+      "./dom": {
+        "types": "./dist/dev/dom.d.ts",
+        "development": "./dist/dev/dom.js",
+        "default": "./dist/default/dom.js"
+      },
+      "./i18n": {
+        "types": "./dist/dev/i18n.d.ts",
+        "development": "./dist/dev/i18n.js",
+        "default": "./dist/default/i18n.js"
+      },
+      "./i18n/locales/*": {
+        "types": "./dist/dev/i18n/locales/*.d.ts",
+        "development": "./dist/dev/i18n/locales/*.js",
+        "default": "./dist/default/i18n/locales/*.js"
+      },
+      "./i18n/text/*": {
+        "types": "./dist/dev/i18n/text/*.d.ts",
+        "development": "./dist/dev/i18n/text/*.js",
+        "default": "./dist/default/i18n/text/*.js"
+      }
+    }
   }
 }

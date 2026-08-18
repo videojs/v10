@@ -4,7 +4,7 @@
  * Exercises: simple boolean state properties, void and Promise<void> action methods,
  * JSDoc description extraction from the state interface.
  */
-import type { MediaPlaybackState } from '../../../core/media/state';
+import type { MediaPlaybackState } from '../../../../../media/src/core/state';
 import { definePlayerFeature } from '../../feature';
 
 export const playbackFeature = definePlayerFeature({

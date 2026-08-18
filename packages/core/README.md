@@ -12,23 +12,26 @@ packages. These are foundational building blocks used by platform-specific imple
 
 ## Update i18n copy
 
-The i18n source of truth lives in `src/core/i18n`. Translation keys are the default English
-phrases, so changing English copy also changes the typed key consumers use.
+The i18n source of truth lives in `src/core/i18n/locales`. Translation keys are opaque semantic
+paths such as `buttons.play`; English copy is stored separately, so it can change without renaming
+the key.
 
 When you add, rename, or remove player copy:
 
-1. Update `src/core/i18n/types.ts`.
-   Add the new phrase to `TranslationParams`, include any placeholder params, and remove replaced
-   phrases so stale keys fail typecheck.
-2. Update `src/core/i18n/locales/en.ts`.
-   Keep the English locale complete. It must satisfy `Translations`, not `Partial<Translations>`.
-3. Update every non-English file in `src/core/i18n/locales`.
-   Move existing translations to the new phrase keys when the meaning is unchanged, add translations
-   for new phrases, and remove replaced phrase keys.
-4. Update call sites and tests.
-   Any helper that returns a translation key, such as error-dialog copy, must return the new phrase.
-5. Run `pnpm -F @videojs/core run generate:locales`.
-   This refreshes `locales/all.ts`, `load-locale.ts`, and the HTML/React locale re-export files.
+1. Update `src/core/i18n/locales/en.ts`.
+   Add the English value under a short semantic path. Keep required `{placeholder}` tokens in the
+   value.
+2. Update every non-English file in `src/core/i18n/locales`.
+   Use the same nested path, move an existing translation when the meaning is unchanged, and add or
+   remove values with the English source.
+3. Run `pnpm -F @videojs/core run generate:locales`.
+   This validates locale completeness and refreshes text descriptors, locale loaders, CDN
+   registration modules, and HTML/React re-exports.
+4. Run `pnpm -F @videojs/core run generate:i18n-types`.
+   This refreshes `TranslationParams` from the English keys and placeholders.
+5. Update call sites and tests.
+   Import the generated text descriptor from `src/core/i18n/text/<group>.ts`; do not duplicate the
+   key and English fallback at each call site.
 6. Run focused tests and typecheck.
    At minimum, run the package tests that cover the changed copy and `pnpm typecheck`.
 

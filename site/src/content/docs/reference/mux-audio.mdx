@@ -9,10 +9,11 @@ import MediaReference from "@/components/docs/api-reference/MediaReference.astro
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import DocsLinkCard from "@/components/docs/DocsLinkCard.astro";
 
-{/* React live demo disabled until #1343 (SSR-breaking media imports) is fixed; show source instead. */}
-import { TabsRoot, TabsList, Tab, TabsPanel } from "@/components/Tabs";
-import ServerCode from "@/components/Code/ServerCode.astro";
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/mux-audio/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/mux-audio/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/mux-audio/react/css/BasicUsage.css?raw";
 
@@ -24,25 +25,47 @@ import basicUsageHtmlTs from "@/components/docs/demos/mux-audio/html/css/BasicUs
 
 Audio element for playing Mux-hosted HLS streams. Built on hls.js with Mux-specific optimizations.
 
+## Analytics and casting
+
+MuxAudio plays Mux streams. It doesn't monitor them or cast them — <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> and <DocsLink slug="concepts/cast">Google Cast</DocsLink> are separate components you add to the player alongside it. Mux Data needs no environment key here, since Mux attributes the views to the environment that owns the playback ID:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { GoogleCast } from '@videojs/react/media/google-cast';
+import { MuxAudio } from '@videojs/react/media/mux-audio';
+import { MuxData } from '@videojs/react/media/mux-data';
+
+<MuxAudio source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }} />
+<MuxData playerSoftwareName="mux-audio" />
+<GoogleCast />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<mux-audio src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></mux-audio>
+<mux-data player-software-name="mux-audio"></mux-data>
+<google-cast></google-cast>
+```
+
+Register the elements by importing `@videojs/html/media/mux-data` and `@videojs/html/media/google-cast`.
+</FrameworkCase>
+
+<DocsLinkCard slug="concepts/mux-data">Mux Data — metadata, options, and configuration</DocsLinkCard>
+<DocsLinkCard slug="concepts/cast">Google Cast — receivers, load requests, and session state</DocsLinkCard>
+
 ## Examples
 
 ### Basic Usage
 
-{/* React: source-only until #1343 is fixed. Restore <Demo> with <BasicUsageDemoReact client:idle /> afterward. */}
 <FrameworkCase frameworks={["react"]}>
   <StyleCase styles={["css"]}>
-    <TabsRoot client:idle>
-      <TabsList client:idle label="Basic usage source code">
-        <Tab client:idle value="App.tsx" initial>App.tsx</Tab>
-        <Tab client:idle value="App.css">App.css</Tab>
-      </TabsList>
-      <TabsPanel client:idle value="App.tsx" initial>
-        <ServerCode code={basicUsageReactTsx} lang="tsx" />
-      </TabsPanel>
-      <TabsPanel client:idle value="App.css">
-        <ServerCode code={basicUsageReactCss} lang="css" />
-      </TabsPanel>
-    </TabsRoot>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
   </StyleCase>
 </FrameworkCase>
 

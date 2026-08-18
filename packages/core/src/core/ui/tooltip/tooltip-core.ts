@@ -6,7 +6,7 @@ import type { TransitionFlags, TransitionState, TransitionStatus } from '../tran
 import { getTransitionFlags } from '../transition';
 
 export interface TooltipProps {
-  /** Which side of the trigger the tooltip appears on. */
+  /** Preferred side of the trigger for the tooltip. */
   side?: PopoverSide | undefined;
   /** Alignment of the tooltip along the trigger's edge. */
   align?: PopoverAlign | undefined;
@@ -31,7 +31,7 @@ export interface TooltipState extends TransitionFlags {
   open: boolean;
   /** Current phase of the transition lifecycle. */
   status: TransitionStatus;
-  /** Which side of the trigger the tooltip is positioned on. */
+  /** Preferred side of the trigger for the tooltip. */
   side: PopoverSide;
   /** How the tooltip is aligned relative to the specified side. */
   align: PopoverAlign;

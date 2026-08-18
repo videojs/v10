@@ -14,10 +14,10 @@ afterEach(() => {
 describe('ErrorDialog', () => {
   it('shows translated title, description, and dismiss label when locale is es', () => {
     registerI18n('es', {
-      'Something went wrong.': 'Algo salió mal.',
-      OK: 'Aceptar',
-      'This media could not be loaded due to a network or server issue.': 'Error de red.',
-      'An unexpected error occurred.': 'Ocurrió un error inesperado.',
+      'errors.title': 'Algo salió mal.',
+      'common.ok': 'Aceptar',
+      'errors.network': 'Error de red.',
+      'errors.unexpected': 'Ocurrió un error inesperado.',
     });
 
     const error = {

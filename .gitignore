@@ -152,12 +152,11 @@ bun.lockb
 # -------------------------
 # AI Agent Config (Generated)
 # -------------------------
-.claude/settings.local.json
-.claude/worktrees/
-.opencode
-AGENTS.md
-.agents
-agents
+/.claude/settings.local.json
+/.claude/worktrees/
+/.claude/skills
+/.claude/plans
+/.opencode
 
 # Playwright
 test-results/

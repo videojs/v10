@@ -1,8 +1,11 @@
+import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '@videojs/media';
+import { toPercent } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
-
-import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../media/state';
+import type { Text } from '../../i18n';
+import { seekText } from '../../i18n/text/slider';
+import { positionText } from '../../i18n/text/time';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
 export interface TimeSliderProps extends SliderProps {
@@ -70,7 +73,7 @@ export class TimeSliderCore extends SliderCore {
 
     // Use end of the furthest buffered range
     const bufferedEnd = buffered.length > 0 ? buffered[buffered.length - 1]![1] : 0;
-    const bufferPercent = duration > 0 ? (bufferedEnd / duration) * 100 : 0;
+    const bufferPercent = toPercent(bufferedEnd, 0, duration);
 
     return {
       ...base,
@@ -81,8 +84,8 @@ export class TimeSliderCore extends SliderCore {
     };
   }
 
-  override getLabel(state: SliderState): string {
-    return super.getLabel(state) || 'Seek';
+  override getLabel(state: SliderState): Text | string {
+    return super.getLabel(state) || seekText;
   }
 
   #announceValue(state: TimeSliderState): number {
@@ -95,8 +98,8 @@ export class TimeSliderCore extends SliderCore {
       : formatTimeAsPhrase(seconds, { locale: this.#formatLocale });
   }
 
-  getValueText(state: TimeSliderState): string {
-    return Number.isFinite(state.duration) ? '{current} of {duration}' : this.getValueTextParams(state).current;
+  getValueText(state: TimeSliderState): Text | string {
+    return Number.isFinite(state.duration) ? positionText : this.getValueTextParams(state).current;
   }
 
   getValueTextParams(state: TimeSliderState): { current: string; duration: string } | { current: string } {

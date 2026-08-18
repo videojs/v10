@@ -1,6 +1,8 @@
 import {
   createTranslator,
+  DEFAULT_LOCALE,
   loadLocale as defaultLoader,
+  type FlatTranslations,
   findLocaleKeys,
   getBrowserTranslations,
   getI18nTranslations,
@@ -8,7 +10,6 @@ import {
   onI18nRegistryChange,
   registerI18n,
   shouldAttemptBrowserTranslation,
-  type Translations,
 } from '@videojs/core/i18n';
 import type { PropertyValues, ReactiveElement } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
@@ -19,8 +20,6 @@ import type { I18nContext, I18nContextValue } from './context';
 import { getFallbackTranslator } from './controller';
 import { resolveProviderLocale } from './locale';
 import type { LocaleLoader, ReactiveElementMixinBase } from './types';
-
-const DEFAULT_LOCALE = 'en';
 
 export interface I18nProviderConfig {
   context: I18nContext;
@@ -53,7 +52,7 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
       #registryUnsubscribe: (() => void) | undefined;
       #ambientUnsubscribe: (() => void) | undefined;
       #registryEpoch = 0;
-      #lazyLayer: Partial<Translations> = {};
+      #lazyLayer: Partial<FlatTranslations> = {};
       #lazySeq = 0;
       /** Tracks locale used for `#lazyLayer`; ambient `lang` can change without the `lang` property. */
       #resolvedLocaleForLazy: Locale | undefined;
@@ -65,7 +64,7 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
       };
       #publishedLocale: Locale | undefined;
       #publishedRegistryEpoch = -1;
-      #publishedLazyLayer: Partial<Translations> | undefined;
+      #publishedLazyLayer: Partial<FlatTranslations> | undefined;
 
       protected get i18nValue(): I18nContextValue {
         return this.#i18nValue;
@@ -144,7 +143,7 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
           return;
         }
         const registryLayer = getI18nTranslations(locale);
-        const translations: Translations = {
+        const translations: FlatTranslations = {
           ...registryLayer,
           ...this.#lazyLayer,
         };

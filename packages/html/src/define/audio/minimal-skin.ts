@@ -78,8 +78,8 @@ function getTemplateHTML() {
 
             <media-time-slider class="media-slider">
               <media-slider-track class="media-slider__track">
-                <media-slider-fill class="media-slider__fill"></media-slider-fill>
                 <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
+                <media-slider-fill class="media-slider__fill"></media-slider-fill>
               </media-slider-track>
               <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
               <media-slider-preview class="media-slider__preview">
@@ -89,20 +89,6 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-button-group">
-            <media-playback-rate-button commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
-            <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="media-popover media-menu">
-              <media-playback-rate-radio-group class="media-menu__group">
-                <template>
-                  <media-menu-radio-item class="media-menu__item">
-                    <span data-part="label"></span>
-                    <media-menu-item-indicator force-mount class="media-menu__indicator">
-                      ${renderIcon('check', { class: 'media-icon' })}
-                    </media-menu-item-indicator>
-                  </media-menu-radio-item>
-                </template>
-              </media-playback-rate-radio-group>
-            </media-menu>
-
             <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
@@ -117,9 +103,40 @@ function getTemplateHTML() {
                 <media-slider-thumb class="media-slider__thumb media-slider__thumb--persistent"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
+
+            <media-playback-rate-button commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
+            <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="media-popover media-menu">
+              <media-playback-rate-radio-group class="media-menu__group">
+                <template>
+                  <media-menu-radio-item class="media-menu__item">
+                    <span data-part="label"></span>
+                    <media-menu-item-indicator force-mount class="media-menu__indicator">
+                      ${renderIcon('check', { class: 'media-icon' })}
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-playback-rate-radio-group>
+            </media-menu>
+
           </div>
         </media-tooltip-group>
       </div>
+
+      <!-- Hotkeys -->
+      <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+      <media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+      <media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+      <media-hotkey keys="l" action="seekStep" value="10"></media-hotkey>
+      <media-hotkey keys="j" action="seekStep" value="-10"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
+      <media-hotkey keys="0-9" action="seekToPercent"></media-hotkey>
+      <media-hotkey keys="Home" action="seekToPercent" value="0"></media-hotkey>
+      <media-hotkey keys="End" action="seekToPercent" value="100"></media-hotkey>
+      <media-hotkey keys=">" action="speedUp"></media-hotkey>
+      <media-hotkey keys="<" action="speedDown"></media-hotkey>
     </media-container>
   `;
 }

@@ -12,7 +12,7 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 import { usePlayerContext } from "@videojs/react";
 
 function DebugPanel() {
-  const { store, media, container, popupGroup } = usePlayerContext();
+  const { store, media, container } = usePlayerContext();
 
   return (
     <pre>
@@ -21,7 +21,6 @@ function DebugPanel() {
           hasStore: !!store,
           hasMedia: !!media,
           hasContainer: !!container,
-          hasPopupGroup: !!popupGroup,
           tagName: media?.tagName,
         },
         null,

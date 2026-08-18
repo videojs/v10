@@ -1,5 +1,6 @@
-import { AirPlayButtonCore, AirPlayButtonDataAttrs, type MediaRemotePlaybackState } from '@videojs/core';
+import { AirPlayButtonCore, AirPlayButtonDataAttrs } from '@videojs/core';
 import { selectRemotePlayback } from '@videojs/core/dom';
+import type { MediaRemotePlaybackState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

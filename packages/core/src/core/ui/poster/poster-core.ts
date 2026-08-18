@@ -1,4 +1,4 @@
-import type { MediaPlaybackState } from '../../media/state';
+import type { MediaPlaybackState } from '@videojs/media';
 
 export interface PosterState {
   visible: boolean;

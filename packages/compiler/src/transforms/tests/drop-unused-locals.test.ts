@@ -1,0 +1,49 @@
+import { describe, expect, it } from 'vitest';
+import { jsx } from '../../config';
+import { transform } from '../../transform';
+import { dropUnusedLocals } from '../drop-unused-locals';
+
+const wrap = async (source: string): Promise<string> =>
+  (await transform(source, { config: { target: jsx({ transforms: [dropUnusedLocals()] }) } })).code;
+
+describe('dropUnusedLocals', () => {
+  it('drops an unused className array local', async () => {
+    const code = await wrap(`const x = ['a', 'b'];\nfunction App(){ return <Foo/>; }`);
+    expect(code).not.toContain('const x =');
+  });
+
+  it('keeps a referenced className array local', async () => {
+    const code = await wrap(`const x = ['a', 'b'];\nfunction App(){ return <Foo className={x}/>; }`);
+    expect(code).toContain('const x =');
+  });
+
+  it('keeps an unused non-array local (conservative)', async () => {
+    const code = await wrap(`const x = computeSomething();\nfunction App(){ return <Foo/>; }`);
+    expect(code).toContain('const x =');
+  });
+
+  it('keeps an unused array with non-pure args (conservative)', async () => {
+    const code = await wrap(`const x = ['a', sideEffect()];\nfunction App(){ return <Foo/>; }`);
+    expect(code).toContain('const x =');
+  });
+
+  it('keeps property access because it may invoke a getter', async () => {
+    const code = await wrap(`const x = [theme.dynamic];\nfunction App(){ return <Foo/>; }`);
+    expect(code).toContain('const x =');
+  });
+
+  it('does not treat intrinsic JSX tag names as local references', async () => {
+    const code = await wrap(`const div = ['root'];\nfunction App(){ return <div/>; }`);
+    expect(code).not.toContain('const div');
+  });
+
+  it('keeps exported declarations untouched', async () => {
+    const code = await wrap(`export const x = ['a', 'b'];\nfunction App(){ return <Foo/>; }`);
+    expect(code).toContain('export const x');
+  });
+
+  it('drops nested array patterns too', async () => {
+    const code = await wrap(`const x = ['a', ['b', 'c']];\nfunction App(){ return <Foo/>; }`);
+    expect(code).not.toContain('const x =');
+  });
+});

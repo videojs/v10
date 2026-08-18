@@ -1,12 +1,10 @@
-'use client';
-
 import { SeekIndicatorCore, SeekIndicatorDataAttrs } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useInputIndicatorRoot } from '../input-indicators/use-input-indicator-root';
+import { useInputIndicatorRoot } from '../input-indicator/use-input-indicator-root';
 import { SeekIndicatorProvider } from './context';
 
 export interface SeekIndicatorRootProps

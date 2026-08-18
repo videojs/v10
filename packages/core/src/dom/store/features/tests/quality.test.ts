@@ -1,8 +1,7 @@
+import type { VideoRenditionLike } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
-
-import type { VideoRenditionLike } from '../../../../core/media/types';
-import type { PlayerTarget } from '../../../media/types';
+import type { PlayerTarget } from '../../../player';
 import { qualityFeature } from '../quality';
 
 class TestRenditionList extends EventTarget {

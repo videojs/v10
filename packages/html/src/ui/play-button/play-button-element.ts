@@ -1,5 +1,6 @@
-import { type MediaPlaybackState, PlayButtonCore, PlayButtonDataAttrs } from '@videojs/core';
+import { PlayButtonCore, PlayButtonDataAttrs } from '@videojs/core';
 import { selectPlayback } from '@videojs/core/dom';
+import type { MediaPlaybackState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

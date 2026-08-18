@@ -1,7 +1,7 @@
 {
   "name": "@videojs/utils",
   "type": "module",
-  "version": "10.0.0-beta.25",
+  "version": "10.0.0-beta.27",
   "description": "Utility functions and helpers for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -26,6 +26,14 @@
     "./function": {
       "types": "./dist/function.d.ts",
       "default": "./dist/function.js"
+    },
+    "./i18n": {
+      "types": "./dist/i18n.d.ts",
+      "default": "./dist/i18n.js"
+    },
+    "./jwt": {
+      "types": "./dist/jwt.d.ts",
+      "default": "./dist/jwt.js"
     },
     "./object": {
       "types": "./dist/object.d.ts",
@@ -72,8 +80,8 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "devDependencies": {
-    "tsdown": "^0.21.9",
-    "vitest": "^4.1.0"
+    "tsdown": "^0.22.14",
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"

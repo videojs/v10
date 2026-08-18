@@ -1,6 +1,5 @@
+import type { MediaControlsState } from '@videojs/media';
 import { describe, expect, it } from 'vitest';
-
-import type { MediaControlsState } from '../../../media/state';
 import { ControlsCore } from '../controls-core';
 
 describe('ControlsCore', () => {
@@ -73,6 +72,7 @@ function createControlsState(overrides: Partial<MediaControlsState> = {}): Media
   return {
     userActive: true,
     controlsVisible: true,
+    requestControlsLock: () => () => {},
     toggleControls: () => true,
     ...overrides,
   };

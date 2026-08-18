@@ -1,22 +1,28 @@
+import type { MediaFeatureAvailability, MediaRemotePlaybackState, RemotePlaybackConnectionState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
-import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../media/state';
-import type { MediaFeatureAvailability } from '../../media/types';
+import { resolveText, type Text } from '../../i18n';
+import { connectingText, startText, stopText } from '../../i18n/text/cast';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface CastButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: CastButtonState) => string) | undefined;
+  label?: Text | string | ((state: CastButtonState) => Text | string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
 
 export interface CastButtonState extends ButtonState {
-  castState: RemotePlaybackConnectionState;
+  /** Current cast connection state (`disconnected`, `connecting`, or `connected`). */
+  connection: RemotePlaybackConnectionState;
+  /** Whether casting is `available` (a device is reachable), `unavailable` (no device), or `unsupported`. */
   availability: MediaFeatureAvailability;
+  /** Non-interactive but still focusable (mirrors `aria-disabled`). */
+  disabled: boolean;
+  /** Whether the button is hidden because the feature is unsupported. */
+  hidden: boolean;
 }
 
 export class CastButtonCore {
@@ -26,8 +32,10 @@ export class CastButtonCore {
   };
 
   readonly state = createState<CastButtonState>({
-    castState: 'disconnected',
+    connection: 'disconnected',
     availability: 'unsupported',
+    disabled: true,
+    hidden: true,
     label: '',
   });
 
@@ -42,19 +50,20 @@ export class CastButtonCore {
     this.#props = defaults(props, CastButtonCore.defaultProps);
   }
 
-  getLabel(state: CastButtonState): string {
+  getLabel(state: CastButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    if (state.castState === 'connected') return 'Stop casting';
-    if (state.castState === 'connecting') return 'Connecting';
-    return 'Start casting';
+    if (state.connection === 'connected') return stopText;
+    if (state.connection === 'connecting') return connectingText;
+    return startText;
   }
 
   getAttrs(state: CastButtonState) {
     return {
       'aria-label': this.getLabel(state),
-      'aria-disabled': this.#props.disabled ? 'true' : undefined,
+      'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -65,25 +74,23 @@ export class CastButtonCore {
   getState(): CastButtonState {
     const media = this.#media!;
     const castSupported = !!(globalThis as any).chrome;
+    const availability = castSupported ? media.remotePlaybackAvailability : 'unsupported';
 
     this.state.patch({
-      castState: media.remotePlaybackState,
-      availability: castSupported ? media.remotePlaybackAvailability : 'unsupported',
+      connection: media.remotePlaybackState,
+      availability,
+      disabled: this.#props.disabled || availability !== 'available',
+      hidden: availability === 'unsupported',
     });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }
 
   async toggle(media: MediaRemotePlaybackState): Promise<void> {
-    if (this.#props.disabled) return;
-    if (media.remotePlaybackAvailability !== 'available') return;
-
-    try {
-      await media.toggleRemotePlayback();
-    } catch {
-      // Cast requests can fail (user cancelled, permissions, etc.)
-    }
+    this.setMedia(media);
+    if (this.getState().disabled) return;
+    return media.toggleRemotePlayback();
   }
 }
 

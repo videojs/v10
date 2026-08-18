@@ -1,0 +1,53 @@
+{
+  "name": "@videojs/jsx",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Target-neutral JSX authoring runtime for Video.js source UI",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/jsx"
+  },
+  "keywords": [
+    "components",
+    "jsx",
+    "videojs"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/jsx-runtime.d.ts",
+      "default": "./dist/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/jsx-dev-runtime.d.ts",
+      "default": "./dist/jsx-dev-runtime.js"
+    }
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch ./src --no-clean",
+    "dev": "pnpm run build:watch",
+    "test": "pnpm run test:types && vitest run",
+    "test:types": "tsgo --project ./src/tests/tsconfig.json",
+    "test:watch": "vitest",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+  },
+  "devDependencies": {
+    "tsdown": "^0.22.14",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.10"
+  }
+}

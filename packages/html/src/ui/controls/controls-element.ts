@@ -20,6 +20,8 @@ export class ControlsElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
 
+    this.setAttribute('data-interactive', '');
+
     if (__DEV__ && !this.#mediaState.value && this.#mediaState.displayName) {
       logMissingFeature(this.localName, this.#mediaState.displayName);
     }

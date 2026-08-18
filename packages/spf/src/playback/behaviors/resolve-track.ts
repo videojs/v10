@@ -1,15 +1,19 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
-import { ConcurrentRunner, Task } from '../../core/tasks/task';
+import { when } from '../../core/signals/when';
+import { RecurringRunner, type Reschedule, runOnce, Task } from '../../core/tasks/task';
 import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
-import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
+import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
 import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
 import { failoverFetch } from '../primitives/failover-fetch';
+import type { GateFirstParse } from '../primitives/gate-first-parse';
+import type { ReportUnsupportedTrackConditions } from '../primitives/report-track-conditions';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
+import { type ErrorEmitterState, emitError } from './collect-errors';
 
 // ============================================================================
 // Specialization helper
@@ -40,6 +44,17 @@ type ResolveTrackStateMap<K extends SelectedTrackKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
+/**
+ * Sibling-owned A/V selection signals, present at runtime iff a sibling
+ * behavior owns them. Deliberately not in the typed slice / `stateKeys`
+ * (declaring them would force every composition to carry both selections);
+ * read only to build the injected first-parse gate's selection context.
+ */
+type SiblingSelectionSignals = {
+  selectedVideoTrackId?: ReadonlySignal<ResolveTrackState['selectedVideoTrackId']>;
+  selectedAudioTrackId?: ReadonlySignal<ResolveTrackState['selectedAudioTrackId']>;
+};
+
 interface TrackResolutionConfig<K extends SelectedTrackKey> {
   selectedKey: K;
   findTrackToResolve: (
@@ -48,6 +63,15 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
   ) => PartiallyResolvedTrack | ResolvedTrack | undefined;
   /** Fetch a track's media-playlist text — already failover-decorated by the behavior. */
   fetchResolvableText?: FetchText;
+  /** Holds a track's first parse until its placement inputs settle (live anchor); absent → parse immediately. */
+  gateFirstParse?: GateFirstParse;
+  /** Live re-run policy for the `RecurringRunner`; absent → resolve once (VOD). */
+  reschedule?: Reschedule<ResolvedTrack>;
+  /**
+   * Report conditions found in the parsed playlist (see
+   * `primitives/report-track-conditions`); absent → report nothing.
+   */
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
 }
 
 /**
@@ -57,19 +81,35 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
 interface ResolveTrackConfig {
   /** CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
   getCdnId?: GetCdnId;
+  /** First-parse placement gate (see `primitives/gate-first-parse`); absent → parse immediately. */
+  gateFirstParse?: GateFirstParse;
+  /** Live media-playlist re-run policy; absent → resolve once. */
+  reschedule?: Reschedule<ResolvedTrack>;
+  /** Playlist-derived condition reporting (see `primitives/report-track-conditions`). */
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
+  config: {
+    selectedKey,
+    findTrackToResolve,
+    fetchResolvableText = defaultFetchResolvableText,
+    gateFirstParse,
+    reschedule,
+    reportUnsupportedTrackConditions,
+  },
 }: {
-  state: ResolveTrackStateMap<K>;
+  // Widened with the optional `errors` slot: reporting writes through it without
+  // the behavior declaring ownership, and no-ops when `collectErrors` isn't
+  // composed. Same contract as `failedCdns` / `failoverFetch`.
+  state: ResolveTrackStateMap<K> & ErrorEmitterState;
   config: TrackResolutionConfig<K>;
 }) {
-  // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
-  // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
-  // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
-  const runner = new ConcurrentRunner();
+  // Recurrence lives in the runner: with a `reschedule` (live) it re-runs the
+  // task until the policy stops; `runOnce` (VOD) runs it exactly once. Single-
+  // slot — a selection change re-schedules (abort-and-replace).
+  const runner = new RecurringRunner<ResolvedTrack>(reschedule ?? runOnce);
 
   // Reactor states model the FSM the previous effect-based body was
   // hand-rolling. 'presentation-resolved' is entered when the
@@ -104,26 +144,86 @@ function setupTrackResolution<K extends SelectedTrackKey>({
             // The reactor's state transitions handle relevant presentation
             // changes (presentation-resolved ↔ presentation-unresolved);
             // within 'presentation-resolved' we peek (untracked read) so
-            // internal updates (segments added by sibling tasks) don't
-            // re-fire the effect.
+            // internal updates (segments added by sibling tasks, or by this
+            // behavior's own reload cycles) don't re-fire the effect.
             const presentation = peek(state.presentation);
             const trackId = state[selectedKey].get();
             if (!presentation || !trackId) return;
 
             const track = findTrackToResolve(presentation, trackId);
-            if (!track || isResolvedTrack(track)) return;
+            // Skip a complete or missing track; a resolved-but-incomplete (live)
+            // window still reloads — its window may have slid past the playhead.
+            if (!track || (isResolvedTrack(track) && Number.isFinite(track.duration))) return;
 
-            runner.schedule(
+            // Abort (selection/source change) settles quietly; a genuine resolve
+            // failure rejects — swallowed for now (TODO: surface to state).
+            const scheduled = runner.schedule(
               // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
               // likely eventually passed down via config or a new "definitions" argument (CJP).
+              //
+              // Re-runs (clones) on each reload, so the body re-reads the live
+              // snapshot (via `trackId`) rather than capturing the gate-time
+              // `track` — a reload carries the prior window's timeline forward.
               new Task(
                 async (signal) => {
+                  const snapshot = peek(state.presentation);
+                  const current = snapshot ? findTrackToResolve(snapshot, trackId) : undefined;
+                  if (!current) throw new Error('resolve-track: selected track not found');
+
                   // `fetchResolvableText` is the behavior's failover-decorated
                   // fetch: it trips the CDN on a failed fetch (network error or
                   // non-OK status). A parse failure is a content issue, not a
-                  // CDN-availability one, so it doesn't trip.
-                  const text = await fetchResolvableText(track, { signal });
-                  const mediaTrack = parseMediaPlaylist(text, track);
+                  // CDN-availability one, so it doesn't trip. The run-time
+                  // `current` supplies only the playlist URL (stable across the
+                  // fetch).
+                  const text = await fetchResolvableText(current, { signal });
+
+                  // Hold placement — never the fetch — until this track's
+                  // first-parse placement inputs settle (for live, the
+                  // wall-clock anchor; see `primitives/gate-first-parse`).
+                  // First parses only — a reload's window is already on the
+                  // established timeline. Aborting rejects the wait, so a
+                  // source change can't strand a gated task.
+                  if (gateFirstParse && !isResolvedTrack(current)) {
+                    const { selectedVideoTrackId, selectedAudioTrackId } = state as SiblingSelectionSignals;
+                    await when(
+                      () =>
+                        gateFirstParse(
+                          state.presentation.get(),
+                          {
+                            selectedVideoTrackId: selectedVideoTrackId?.get(),
+                            selectedAudioTrackId: selectedAudioTrackId?.get(),
+                          },
+                          trackId
+                        ),
+                      { signal }
+                    );
+                  }
+
+                  // Re-read `previous` after the awaits: a concurrent write
+                  // during them — notably the establishment reactor stamping
+                  // the anchor `startDate` onto this track's shell — must feed
+                  // the parse, not be clobbered (anchoring is establish-once;
+                  // parsing the pre-fetch snapshot would strand the track off
+                  // the anchor for good). Correctness rests on a
+                  // run-to-completion invariant: NOTHING may yield (await)
+                  // between this re-read and the write below, so no writer can
+                  // interleave. `parseMediaPlaylist` is synchronous — keep it
+                  // that way, or move the read into the updater.
+                  const live = peek(state.presentation);
+                  const previous = live ? findTrackToResolve(live, trackId) : undefined;
+                  if (!previous) throw new Error('resolve-track: selected track not found');
+                  const mediaTrack = parseMediaPlaylist(text, previous);
+
+                  // Report what the parse revealed about this rendition, before
+                  // committing it. Causes only — one unplayable rendition doesn't
+                  // make the source unplayable, so the verdict stays with
+                  // track-switching's empty-candidate branch.
+                  if (reportUnsupportedTrackConditions) {
+                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack)) {
+                      emitError(state, condition);
+                    }
+                  }
 
                   // Updater handles undefined inputs by returning current
                   // unchanged; isResolvedPresentation narrows for the patch.
@@ -143,14 +243,24 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                     // audio↔video (mixed-container sources exist, e.g. muxed-TS
                     // video + raw-.aac audio), which also keeps per-type
                     // resolutions' writes disjoint (no race).
-                    return NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
+                    const relabeled = NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
                       ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
                       : patched;
+                    // Stream nature (live vs on-demand), rewritten from whichever
+                    // track just parsed — every type's resolve and every live
+                    // reload takes this path. Idempotent in practice rather than
+                    // by construction: `PLAYLIST-TYPE` is a per-source constant
+                    // that a source's renditions agree on, so each write lands
+                    // the same value. Renditions that disagreed would make the
+                    // winner resolve-order-dependent.
+                    return { ...relabeled, streamType: deriveStreamType(getMediaPlaylistMetadata(mediaTrack)) };
                   });
+                  return mediaTrack;
                 },
                 { id: track.id }
               )
             );
+            scheduled.catch(() => {});
           },
         ],
       },

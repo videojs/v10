@@ -1,15 +1,16 @@
+import type { MediaTextTrackState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
-import type { MediaTextTrackState } from '../../media/state';
+import { resolveText, type Text } from '../../i18n';
+import { disableText, enableText } from '../../i18n/text/captions';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface CaptionsButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: CaptionsButtonState) => string) | undefined;
+  label?: Text | string | ((state: CaptionsButtonState) => Text | string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
   /** When true with multiple tracks, pointer activation opens a menu instead of toggling. React sets this automatically inside `Menu.Trigger`. */
@@ -17,7 +18,12 @@ export interface CaptionsButtonProps {
 }
 
 export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
+  /** Whether caption/subtitle tracks are present. */
   availability: 'available' | 'unavailable';
+  /** Non-interactive but still focusable (mirrors `aria-disabled`). */
+  disabled: boolean;
+  /** Whether the button is hidden because no caption tracks are present. */
+  hidden: boolean;
 }
 
 export class CaptionsButtonCore {
@@ -30,6 +36,11 @@ export class CaptionsButtonCore {
   readonly state = createState<CaptionsButtonState>({
     subtitlesShowing: false,
     availability: 'unavailable',
+    // Hidden by default until tracks are reported; matches the derivation
+    // invariants (`disabled = props.disabled || availability !== 'available'`,
+    // `hidden = availability === 'unavailable'`).
+    disabled: true,
+    hidden: true,
     label: '',
   });
 
@@ -44,17 +55,18 @@ export class CaptionsButtonCore {
     this.#props = defaults(props, CaptionsButtonCore.defaultProps);
   }
 
-  getLabel(state: CaptionsButtonState): string {
+  getLabel(state: CaptionsButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    return state.subtitlesShowing ? 'Disable captions' : 'Enable captions';
+    return state.subtitlesShowing ? disableText : enableText;
   }
 
   getAttrs(state: CaptionsButtonState) {
     return {
       'aria-label': this.getLabel(state),
-      'aria-disabled': this.#props.disabled ? 'true' : undefined,
+      'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -68,14 +80,20 @@ export class CaptionsButtonCore {
       ? 'available'
       : 'unavailable';
 
-    this.state.patch({ subtitlesShowing: media.subtitlesShowing, availability });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({
+      subtitlesShowing: media.subtitlesShowing,
+      availability,
+      disabled: this.#props.disabled || availability !== 'available',
+      hidden: availability === 'unavailable',
+    });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }
 
   toggle(media: MediaTextTrackState): void {
-    if (this.#props.disabled) return;
+    this.setMedia(media);
+    if (this.getState().disabled) return;
     if (this.#props.menuTrigger && getCaptionTrackCount(media) > 1) return;
     media.toggleSubtitles();
   }

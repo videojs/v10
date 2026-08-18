@@ -1,12 +1,12 @@
-import { createPlayer } from '@videojs/react';
+import { Container, createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({
+const { Player, usePlayer } = createPlayer({
   features: videoFeatures,
 });
 
 function StateDisplay() {
-  const state = Player.usePlayer((s) => ({
+  const state = usePlayer((s) => ({
     paused: s.paused,
     currentTime: s.currentTime,
     duration: s.duration,
@@ -30,11 +30,11 @@ function StateDisplay() {
 
 export default function Selector() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
         <StateDisplay />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

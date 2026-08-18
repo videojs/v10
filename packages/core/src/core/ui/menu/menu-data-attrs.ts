@@ -6,7 +6,7 @@ import type { MenuState } from './menu-core';
 export const MenuDataAttrs = {
   /** Present when the menu is open. */
   open: 'data-open',
-  /** Popover positioning side. Absent on submenus. */
+  /** Rendered positioning side after collision handling. Absent on submenus. */
   side: 'data-side',
   /** Popover positioning alignment. Absent on submenus. */
   align: 'data-align',

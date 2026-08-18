@@ -1,6 +1,6 @@
-import type { MediaTextTrackState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaTextTrackState } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

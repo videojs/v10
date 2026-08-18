@@ -1,7 +1,6 @@
+import type { MediaPlaybackState } from '@videojs/media';
 import { flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import type { MediaPlaybackState } from '../../../media/state';
 import { BufferingIndicatorCore } from '../buffering-indicator-core';
 
 function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {

@@ -1,6 +1,6 @@
+import type { MediaLiveState } from '@videojs/media';
+import { isMediaLiveCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
-import { isMediaLiveCapable } from '../../../core/media/predicate';
-import type { MediaLiveState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 
 /**

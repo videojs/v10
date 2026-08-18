@@ -1,0 +1,45 @@
+@layer videojs.components {
+  @scope (.media-skin-video) {
+    .media-surface {
+      background-color: var(--media-surface-background);
+      color: var(--media-controls-color);
+      box-shadow:
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 #0000,
+        0 0 0 1px var(--media-surface-border),
+        0 2px 8px var(--media-shadow-color);
+      backdrop-filter: blur(var(--media-surface-backdrop-blur));
+    }
+
+    .media-tooltip {
+      border-radius: var(--media-radius-pill);
+      white-space: nowrap;
+      border-style: solid;
+      border-width: 0;
+      margin: 0;
+      padding-block: 0.35rem;
+      padding-inline: 0.625rem;
+    }
+
+    .media-tooltip[data-open] {
+      align-items: center;
+      gap: 0.25rem;
+      display: flex;
+    }
+
+    .media-tooltip-shortcut {
+      font-size: 0.75em;
+      font-weight: 600;
+    }
+
+    .media-volume-popover {
+      border-radius: var(--media-radius-pill);
+      border-style: solid;
+      border-width: 0;
+      margin: 0;
+      padding-block: 0.75rem;
+    }
+  }
+}

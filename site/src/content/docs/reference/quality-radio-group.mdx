@@ -28,12 +28,14 @@ Creates radio items from the player video rendition state and selects automatic 
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <Menu.RadioGroup>
-    <Menu.GroupLabel />
-    <Menu.RadioItem>
-      <Menu.ItemIndicator />
-    </Menu.RadioItem>
-  </Menu.RadioGroup>
+  <QualityRadioGroup
+    renderItem={(props, item) => (
+      <Menu.RadioItem {...props}>
+        {item.label}
+        <Menu.ItemIndicator checked={item.checked} />
+      </Menu.RadioItem>
+    )}
+  />
   ```
 </FrameworkCase>
 
@@ -57,7 +59,7 @@ Creates radio items from the player video rendition state and selects automatic 
 The group is available when the configured media exposes more than one video rendition. The first generated option is `Auto`; selecting it returns control to adaptive bitrate selection. Pass `formatRendition` to customize visible rendition labels.
 
 <FrameworkCase frameworks={["react"]}>
-<DocsLink slug="reference/use-quality-options">`useQualityOptions`</DocsLink> returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured. Use the returned options with <DocsLink slug="reference/menu">`Menu.RadioGroup`</DocsLink>.
+`QualityRadioGroup` uses <DocsLink slug="reference/use-quality-options">`useQualityOptions`</DocsLink> to own selection and generate each item. Its required `renderItem` callback renders the <DocsLink slug="reference/menu">`Menu.RadioItem`</DocsLink> root and receives item state containing the translated `label`, optional `tier` and `badge`, and current `checked` value. It returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -70,22 +72,17 @@ The group is available when the configured media exposes more than one video ren
 | --- | --- | --- |
 | `data-quality` | `string` | Current quality value. |
 | `data-disabled` | Present / absent | Present when quality selection is disabled. |
+| `data-hidden` | Present / absent | Present when multiple renditions are unavailable. |
 | `data-availability` | `"available"` / `"unavailable"` | Whether multiple renditions are available. |
 
-<FrameworkCase frameworks={["html"]}>
-  ```css
-  media-quality-radio-group[data-availability="unavailable"] {
-    display: none;
-  }
-  ```
-</FrameworkCase>
+Unavailable groups receive the native `hidden` attribute.
 
 ## Accessibility
 
 The group uses the menu radio group pattern.
 
 <FrameworkCase frameworks={["react"]}>
-Give `Menu.RadioGroup` an accessible name with `aria-label` or a nested `Menu.GroupLabel`.
+The component receives an accessible label from the `label` prop or defaults to `Quality`. Override it with `aria-label` or `aria-labelledby`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -119,6 +116,4 @@ The element receives an accessible label from the `label` property or defaults t
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
-  <ComponentReference component="QualityRadioGroup" />
-</FrameworkCase>
+<ComponentReference component="QualityRadioGroup" />

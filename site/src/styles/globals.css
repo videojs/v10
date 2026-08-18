@@ -185,8 +185,7 @@
   }
 }
 
-@custom-variant intent (&:hover,
-&:focus-within);
+@custom-variant intent (&:hover, &:focus-within);
 @custom-variant supports-container {
   @supports (container: size) {
     @slot;

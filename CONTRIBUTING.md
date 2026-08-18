@@ -57,10 +57,10 @@ git pull upstream main
 pnpm install
 ```
 
-This also creates symlink aliases (`.opencode`, `agents`, `AGENTS.md`) so that AI coding tools other than Claude Code can discover project instructions.
+This also exposes the checked-in `.agents/skills/` catalog through generated `.claude/skills/` and `.opencode/skills/` directory aliases. `AGENTS.md` is the canonical project guide; Claude's `CLAUDE.md` imports it.
 
 > [!NOTE]
-> **Windows users:** Directory symlinks use junctions and work automatically. File symlinks (e.g., `AGENTS.md → CLAUDE.md`) require [Developer Mode](https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development) enabled. If symlink creation fails, `pnpm install` will log a warning but continue normally — the canonical files (`.claude/`, `CLAUDE.md`) still work fine.
+> **Windows users:** Directory aliases use junctions and work without Developer Mode. If alias creation fails, `pnpm install` logs a warning and continues; the checked-in domain folders remain available.
 
 Then build all workspace packages:
 
@@ -199,6 +199,18 @@ On `pnpm dev:sandbox`, `setup.ts` copies any file from `templates/` that doesn't
 
 See [`apps/sandbox/README.md`](./apps/sandbox/README.md) for the full model, including the `app/` shell, the `@app/*` alias for shared code, and how to add a new sandbox entry point.
 
+### 🚚 Preview Releases
+
+Pull requests and commits on `main` publish an installable preview of the public packages to [pkg.pr.new][pkg-pr-new] — nothing is published to npm. A bot comment on the PR lists the install commands, and the same URLs work by commit SHA:
+
+```sh
+pnpm add https://pkg.pr.new/@videojs/html@<pr-number-or-sha>
+```
+
+Use this to try a change in a real project before it is released. Previews are versioned `0.0.0-preview-<sha>` so they can never satisfy a semver range for a real release, and they ship without the bundled markdown docs that real releases include.
+
+Because a preview is an installable artifact carrying the Video.js name, it is only published for code someone with repository access pushed or vouched for. Pull requests from a branch in this repo publish automatically; **pull requests from a fork publish only once a maintainer approves them**. The approval has to be written against the pull request's latest commit, so any new commit needs a fresh approval before it is published.
+
 ### ✅ Workspace Consistency
 
 Before opening a PR, run the workspace consistency check to catch common mistakes (CI coverage, scope mismatches, broken define imports, etc.):
@@ -227,10 +239,11 @@ pnpm up <package>@<version> -r
 > We try to be very intentional with any dependencies we add to this project. This is true of both developer/tooling dependencies and especially package-level (source) dependencies. If you find yourself needing to add a dependency, we strongly encourage you to check in with the core maintainers before proceeding to avoid wasted time and effort for everyone involved (yourself included!).
 
 [pnpm-filtering]: https://pnpm.io/filtering
+[pkg-pr-new]: https://github.com/stackblitz-labs/pkg.pr.new
 
 ## Using AI
 
-Video.js 10 includes tooling for AI-assisted development with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Read [`CLAUDE.md`](./CLAUDE.md) for repo-wide conventions, package layout, and development workflow.
+Video.js 10 includes portable tooling for AI-assisted development. Read [`AGENTS.md`](./AGENTS.md) for repo-wide conventions and source routing; Claude Code imports it through [`CLAUDE.md`](./CLAUDE.md).
 
 ### Slash Commands
 
@@ -238,44 +251,57 @@ Video.js 10 includes tooling for AI-assisted development with [Claude Code](http
 | ---------------- | ------------------------------------------------- |
 | `/commit-pr`     | Commit changes and create/update a PR             |
 | `/review-branch` | Review changes in the current branch              |
-| `/gh-issue <n>`  | Analyze an issue and generate a plan              |
+| `/investigate-issue <n>` | Analyze an issue and generate a plan       |
 | `/create-issue`  | Create a GitHub issue following repo conventions  |
-| `/claude-update` | Update `CLAUDE.md` and skills for new patterns    |
+| `/maintain-agent-docs` | Update agent guidance and skills             |
 | `/create-skill`  | Scaffold a new skill                              |
 
 ### Skills
 
-Domain-specific knowledge lives in `.claude/skills/`. A few of the most-used skills:
+Focused workflows live as direct children of `.agents/skills/`; host-specific discovery paths are generated aliases. A few of the most-used skills:
 
-| Skill           | Use When                                                 |
-| --------------- | -------------------------------------------------------- |
-| `api`           | Designing APIs, reviewing architecture                   |
-| `component`     | Building HTML or React components                        |
-| `aria`          | Accessibility implementation and review                  |
-| `docs`          | Writing concept guides, how-tos, and READMEs             |
-| `api-reference` | Scaffolding component/util reference pages               |
-| `design`        | Writing internal Design Docs                             |
-| `rfc`           | Writing RFCs for proposals that need buy-in              |
-| `git`           | Commit messages, PR conventions                          |
-
-See [`.claude/skills/README.md`](./.claude/skills/README.md) for the full list and workflow mappings.
+| Skill                    | Use When                                                |
+| ------------------------ | ------------------------------------------------------- |
+| `design-api`             | Designing public APIs and TypeScript contracts          |
+| `review-api`             | Auditing API and architecture changes                   |
+| `create-html-component`  | Building custom-element UI components                   |
+| `create-react-component` | Building React UI components                            |
+| `implement-ui-transition`| Implementing UI transition and rendered-presence logic  |
+| `review-html-component`  | Reviewing custom-element component architecture         |
+| `review-react-component` | Reviewing React component architecture                  |
+| `write-html-component-design`  | Writing custom-element component design records    |
+| `write-react-component-design` | Writing React component design records             |
+| `review-html-component-design` | Reviewing proposed custom-element designs           |
+| `review-react-component-design`| Reviewing proposed React component designs           |
+| `implement-accessible-ui`| Implementing accessible interaction                     |
+| `review-accessibility`   | Auditing accessibility                                  |
+| `write-docs`             | Writing guides, READMEs, and JSDoc                      |
+| `review-docs`            | Reviewing documentation                                 |
+| `write-api-reference`    | Building generated component or utility references      |
+| `create-spf-behavior`    | Creating one SPF behavior                               |
+| `change-spf-behavior`    | Updating, refactoring, splitting, or merging a behavior |
+| `document-spf-feature`   | Maintaining an SPF feature registry entry               |
+| `document-spf-use-case`  | Maintaining an SPF use-case composition                 |
+| `implement-spf-feature`  | Implementing an SPF feature                             |
+| `implement-spf-use-case` | Implementing an SPF use-case composition                |
 
 ### Maintaining AI Docs
 
 When your changes introduce new patterns:
 
-- **Code conventions** → Update `CLAUDE.md` Code Rules section
-- **Domain patterns** → Update relevant skill in `.claude/skills/`
+- **Repo-wide recurring facts** → Update the nearest `AGENTS.md`
+- **Repeatable domain workflows** → Update the relevant skill under `.agents/skills/`
+- **Mechanically enforceable rules** → Update code, tests, lint, hooks, or `check:workspace`
 
 ## Design Docs and RFCs
 
 We use two types of design documents:
 
-**Design Docs** (`internal/design/`) — Decisions you own, documented for posterity. Write one when making significant decisions in your area, choosing between approaches, or documenting architecture. See [`internal/design/README.md`](./internal/design/README.md).
+**Design Docs** (`internal/design/`) — Compact records of architecture or feature rationale that cannot be inferred from code and tests. Create one only when a maintainer explicitly requests it. See [`internal/design/README.md`](./internal/design/README.md).
 
 **RFCs** (`rfc/`) — Proposals needing buy-in from others. Write one when the decision affects multiple areas, changes shared API surface, or is hard to reverse. See [`rfc/README.md`](./rfc/README.md).
 
-**Rule of thumb:** If you need someone else's approval, it's an RFC. If you're documenting your own decision, it's a Design Doc.
+**Rule of thumb:** If you need someone else's approval, explicitly request an RFC. If you intentionally want durable rationale for a decision you own, explicitly request a Design Doc or decision record.
 
 **Skip both for:** Bug fixes, small contained features, implementation details.
 
@@ -311,7 +337,7 @@ You want to do your work in a separate branch. In general, you want to make sure
 git checkout -b my-branch
 ```
 
-One helpful naming convention approximates [conventional commits](conventional-commit-style), e.g.:
+One helpful naming convention approximates [conventional commits][conventional-commit-style], e.g.:
 
 - `fix/some-issue`
 - `feat/my-media-store-feature`

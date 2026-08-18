@@ -1,5 +1,3 @@
-'use client';
-
 import { AirPlayButtonCore, AirPlayButtonDataAttrs } from '@videojs/core';
 import { selectRemotePlayback } from '@videojs/core/dom';
 
@@ -17,6 +15,7 @@ export const AirPlayButton = createMediaButton<AirPlayButtonCore, AirPlayButtonP
   stateAttrMap: AirPlayButtonDataAttrs,
   selector: selectRemotePlayback,
   action: (core, state) => core.toggle(state),
+  isSupported: (state) => !state.hidden,
 });
 
 export namespace AirPlayButton {

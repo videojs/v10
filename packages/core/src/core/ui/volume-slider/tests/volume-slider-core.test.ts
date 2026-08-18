@@ -1,7 +1,6 @@
+import type { MediaVolumeState } from '@videojs/media';
 import { formatPercent } from '@videojs/utils/percent';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaVolumeState } from '../../../media/state';
 import type { SliderInput } from '../../slider/slider-core';
 import { VolumeSliderCore } from '../volume-slider-core';
 
@@ -21,6 +20,7 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
     volume: 1,
     muted: false,
     volumeAvailability: 'available',
+    mutedAvailability: 'available',
     setVolume: vi.fn((v: number) => v),
     toggleMuted: vi.fn(() => false),
     ...overrides,
@@ -122,14 +122,19 @@ describe('VolumeSliderCore', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
       core.setMedia(createMediaState({ volumeAvailability: 'unsupported' }));
-      expect(core.getState().availability).toBe('unsupported');
+      const state = core.getState();
+
+      expect(state.availability).toBe('unsupported');
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(true);
+      expect(core.getAttrs(state)).toMatchObject({ 'aria-disabled': 'true', tabIndex: -1 });
     });
 
     it('reflects available availability', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
       core.setMedia(createMediaState({ volumeAvailability: 'available' }));
-      expect(core.getState().availability).toBe('available');
+      expect(core.getState()).toMatchObject({ availability: 'available', disabled: false, hidden: false });
     });
   });
 
@@ -141,7 +146,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('Volume');
+      expect(attrs['aria-label']).toMatchObject({ key: 'volume.label', text: 'Volume' });
       expect(attrs['aria-valuetext']).toBe(formatPercent(0.75));
       expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0.75) });
       expect(attrs.role).toBe('slider');
@@ -154,7 +159,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('{percent}, muted');
+      expect(attrs['aria-valuetext']).toMatchObject({ key: 'volume.mutedValue', text: '{percent}, muted' });
       expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0.5) });
     });
 
@@ -186,7 +191,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('{percent}, muted');
+      expect(attrs['aria-valuetext']).toMatchObject({ key: 'volume.mutedValue', text: '{percent}, muted' });
       expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0) });
     });
   });

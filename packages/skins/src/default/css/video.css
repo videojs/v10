@@ -1,5 +1,5 @@
 @import "./components/reset.css";
-@import "./components/root.css";
+@import "./components/container.css";
 @import "./components/surface.css";
 @import "./components/media.css";
 @import "./components/overlay.css";
@@ -17,75 +17,67 @@
 @import "./components/popup.css";
 @import "./components/menus.css";
 @import "./components/captions.css";
-@import "./components/input-feedback.css";
+@import "./components/input-indicator-overlay.css";
+@import "./components/input-indicator.css";
+@import "./components/volume-indicator.css";
+@import "./components/status-indicator.css";
+@import "./components/seek-indicator.css";
 @import "../../shared/css/video/icon-state.css";
-@import "../../shared/global/video/keyframes.css";
-@import "../../shared/global/video/properties.css";
 
-/* ==========================================================================
-   Root
-   ========================================================================== */
+/* Video-specific container styles */
 
 .media-default-skin--video {
-  --media-spring-timing-function: linear(
-    0,
-    0.034 1.5%,
-    0.763 9.7%,
-    1.066 13.9%,
-    1.198 19.9%,
-    1.184 21.8%,
-    0.963 37.5%,
-    0.997 50.9%,
-    1
-  );
-  --media-border-color: oklch(0 0 0 / 0.1);
-  --media-surface-background-color: oklch(1 0 0 / 0.1);
-  --media-surface-inner-border-color: oklch(1 0 0 / 0.05);
-  --media-surface-outer-border-color: oklch(0 0 0 / 0.1);
-  --media-surface-shadow-color: oklch(0 0 0 / 0.15);
-  --media-surface-backdrop-filter: blur(16px) saturate(1.5);
-  --media-video-border-radius: var(--media-border-radius, 2rem);
-  --media-controls-transition-duration: 100ms;
-  --media-controls-transition-timing-function: ease-out;
-  --media-error-dialog-transition-duration: 350ms;
-  --media-error-dialog-transition-delay: 100ms;
-  --media-error-dialog-transition-timing-function: var(--media-spring-timing-function);
-  --media-popup-transition-duration: 100ms;
-  --media-popup-transition-timing-function: ease-out;
-  --media-tooltip-side-offset: 0.75rem;
-  --media-tooltip-boundary-offset: 0.5rem;
-  --media-popover-side-offset: 0.5rem;
-  --media-popover-boundary-offset: 0.5rem;
+  --default-accent-color: oklch(1 0 0);
+  --border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
+  --focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-video-border-radius: var(--container-border-radius);
+
+  --surface-background-color: oklch(1 0 0 / 0.1);
+  --surface-inner-border-color: oklch(1 0 0 / 0.1);
+  --surface-outer-border-color: oklch(0 0 0 / 0.1);
+  --surface-shadow-color: oklch(0 0 0 / 0.15);
+  --surface-backdrop-filter: blur(16px) saturate(1.5);
+
+  --controls-transition-duration: 100ms;
+  --controls-transition-timing-function: ease-out;
+
+  --error-dialog-transition-duration: 350ms;
+  --error-dialog-transition-delay: 100ms;
+  --error-dialog-transition-timing-function: ease-out;
+
+  --popup-transition-duration: 100ms;
+  --popup-transition-timing-function: ease-out;
+
   overflow: clip;
   background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
-    --media-error-dialog-transition-duration: 50ms;
-    --media-error-dialog-transition-delay: 0ms;
-    --media-error-dialog-transition-timing-function: ease-out;
-    --media-popup-transition-duration: 0ms;
-  }
+    --error-dialog-transition-duration: 50ms;
+    --error-dialog-transition-delay: 0ms;
+    --popup-transition-duration: 0ms;
 
-  @media (prefers-color-scheme: dark) {
-    --media-border-color: oklch(1 0 0 / 0.15);
+    .media-error__dialog {
+      scale: 1;
+      transition-property: opacity;
+    }
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
-    --media-surface-background-color: oklch(0 0 0);
-    --media-surface-inner-border-color: oklch(1 0 0 / 0.25);
-    --media-surface-outer-border-color: transparent;
+    --surface-background-color: oklch(0 0 0);
+    --surface-inner-border-color: oklch(1 0 0 / 0.25);
+    --surface-outer-border-color: transparent;
   }
 
-  &:has(.media-controls:not([data-visible])) {
+  &:has(.media-controls--root:not([data-visible])) {
     /* Slight delay to hide controls on non-touch devices after interaction */
     @media (pointer: fine) {
-      --media-controls-transition-duration: 300ms;
+      --controls-transition-duration: 300ms;
     }
     @media (pointer: coarse) {
-      --media-controls-transition-duration: 150ms;
+      --controls-transition-duration: 150ms;
     }
     @media (prefers-reduced-motion: reduce) {
-      --media-controls-transition-duration: 50ms;
+      --controls-transition-duration: 50ms;
     }
   }
 
@@ -97,17 +89,33 @@
     pointer-events: none;
     content: "";
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1px var(--media-border-color);
+    box-shadow: inset 0 0 0 1px var(--border-color);
   }
 
   &:fullscreen {
-    --media-border-radius: 0;
+    --container-border-radius: 0;
+
+    &::after {
+      display: none;
+    }
+
+    @media (width >= 1280px) {
+      --scale: 1.25;
+    }
+    @media (width >= 1536px) {
+      --scale: 1.5;
+    }
+    @media (width >= 1920px) {
+      --scale: 1.75;
+    }
+  }
+
+  * {
+    --focus-ring-color: oklch(1 0 0);
   }
 }
 
-/* ==========================================================================
-   Error Dialog
-   ========================================================================== */
+/* Error Dialog  */
 
 .media-default-skin--video .media-error {
   position: absolute;
@@ -121,22 +129,23 @@
 .media-default-skin--video .media-error__dialog {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 18rem;
-  padding: 0.75rem;
+  gap: calc(var(--spacing) * 3);
+  width: 100%;
+  max-width: calc(var(--spacing) * 72);
+  padding: calc(var(--spacing) * 3);
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
-  border-radius: 1.75rem;
-  transition-delay: var(--media-error-dialog-transition-delay);
-  transition-timing-function: var(--media-error-dialog-transition-timing-function);
-  transition-duration: var(--media-error-dialog-transition-duration);
+  border-radius: calc(var(--spacing) * 7);
+  transition-delay: var(--error-dialog-transition-delay);
+  transition-timing-function: var(--error-dialog-transition-timing-function);
+  transition-duration: var(--error-dialog-transition-duration);
   transition-property: opacity, scale;
 }
 
 .media-default-skin--video .media-error[data-starting-style] .media-error__dialog,
 .media-default-skin--video .media-error[data-ending-style] .media-error__dialog {
   opacity: 0;
-  scale: 0.5;
+  scale: 0.95;
 }
 .media-default-skin--video .media-error[data-ending-style] .media-error__dialog {
   transition-delay: 0ms;
@@ -145,86 +154,153 @@
 .media-default-skin--video .media-error__content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.5rem 0.5rem 0.375rem;
+  gap: calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2) calc(var(--spacing) * 1.5);
   text-shadow: inherit;
 }
 
 .media-default-skin--video .media-error__title {
-  font-size: 1rem;
+  font-size: var(--font-size-medium);
 }
 
-/* ==========================================================================
-   Controls (hide/show behavior)
-   ========================================================================== */
+/* Controls (hide/show behavior) */
 
-.media-default-skin--video .media-controls {
-  position: absolute;
-  inset-inline: 0.5rem;
-  bottom: 0.5rem;
+.media-default-skin--video .media-controls--root {
+  --inset-factor: 2;
+  --inset: calc(var(--spacing) * var(--inset-factor));
+  --base-boundary-offset: var(--inset-factor);
+
   z-index: 10;
-  flex-wrap: wrap;
-  color: var(--media-color-primary, oklch(1 0 0));
-  transform-origin: bottom;
-  transition-timing-function: var(--media-controls-transition-timing-function);
-  transition-duration: var(--media-controls-transition-duration);
+  display: contents;
+  color: oklch(1 0 0);
+  transition-timing-function: var(--controls-transition-timing-function);
+  /* Speed up the entry transition */
+  transition-duration: calc(var(--controls-transition-duration) / 2);
+
+  .media-controls--primary,
+  .media-controls--secondary {
+    position: absolute;
+    z-index: 10;
+  }
+
+  .media-controls--primary {
+    inset-inline: var(--inset);
+    bottom: var(--inset);
+    transform-origin: bottom;
+  }
+
+  .media-controls--secondary {
+    top: var(--inset);
+    right: var(--inset);
+    container-type: normal;
+    transform-origin: top;
+  }
+
+  @container media-root (width < 32rem) {
+    .media-controls--primary,
+    .media-controls--secondary {
+      transition-timing-function: inherit;
+      transition-duration: inherit;
+
+      @media (pointer: fine) {
+        transition-property: filter, opacity, scale, translate;
+        will-change: filter, opacity, scale, translate;
+      }
+
+      @media (pointer: coarse) {
+        transition-property: opacity, scale, translate;
+        will-change: opacity, scale, translate;
+      }
+    }
+
+    &:after {
+      display: none;
+    }
+
+    &:not([data-visible]) {
+      .media-controls--primary,
+      .media-controls--secondary {
+        pointer-events: none;
+        opacity: 0;
+        scale: 0.95;
+        transition-duration: var(--controls-transition-duration);
+
+        @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+          filter: blur(8px);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          scale: 1;
+        }
+      }
+
+      .media-controls--primary {
+        @media (prefers-reduced-motion: no-preference) {
+          translate: 0 4px;
+        }
+      }
+
+      .media-controls--secondary {
+        @media (prefers-reduced-motion: no-preference) {
+          translate: 0 -4px;
+        }
+      }
+    }
+  }
+
+  @container media-root (width >= 32rem) {
+    position: absolute;
+    inset-inline: var(--inset);
+    bottom: var(--inset);
+    display: flex;
+    transform-origin: bottom;
+
+    .media-controls--primary,
+    .media-controls--secondary {
+      display: contents;
+
+      &::after {
+        display: none;
+      }
+    }
+
+    &:not([data-visible]) {
+      pointer-events: none;
+      opacity: 0;
+      scale: 0.95;
+      transition-duration: var(--controls-transition-duration);
+
+      @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+        filter: blur(8px);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        scale: 1;
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        translate: 0 4px;
+      }
+    }
+  }
+
+  .media-time-controls {
+    flex: 1;
+    padding-inline: calc(var(--spacing) * 3);
+  }
 
   @media (pointer: fine) {
-    transition-property: scale, filter, opacity;
-    will-change: scale, filter, opacity;
+    transition-property: filter, opacity, scale, translate;
+    will-change: filter, opacity, scale, translate;
   }
 
   @media (pointer: coarse) {
-    transition-property: scale, opacity;
-    will-change: scale, opacity;
-  }
-
-  &:not([data-visible]) {
-    pointer-events: none;
-    opacity: 0;
-    scale: 0.95;
-
-    @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-      filter: blur(8px);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      scale: 1;
-    }
-  }
-
-  & .media-time-controls {
-    flex: 0 0 100%;
-    order: -1;
-    padding-inline: 0.625rem;
-  }
-
-  & .media-button-group:first-child {
-    flex: 1;
-    text-align: left;
-  }
-
-  & .media-button-group:last-child {
-    flex: 1;
-    justify-content: end;
+    transition-property: opacity, scale, translate;
+    will-change: opacity, scale, translate;
   }
 
   @container media-root (width > 42rem) {
-    inset-inline: 0.75rem;
-    bottom: 0.75rem;
-    flex-wrap: nowrap;
-    column-gap: 0.125rem;
-    padding: 0.25rem;
-
-    & .media-time-controls {
-      flex: 1;
-      order: unset;
-    }
-
-    & .media-button-group:first-child,
-    & .media-button-group:last-child {
-      flex: 0 0 auto;
-    }
+    --inset-factor: 3;
   }
 }
 
@@ -233,70 +309,12 @@
 }
 
 /* Hide cursor when controls are hidden */
-.media-default-skin--video:has(.media-controls:not([data-visible])) {
+.media-default-skin--video:has(.media-controls--root:not([data-visible])) {
   cursor: none;
 }
 
-/* ==========================================================================
-   Sliders
-   ========================================================================== */
+/* Sliders */
 
 .media-default-skin--video .media-slider__track {
   background-color: oklch(1 0 0 / 0.2);
-  box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
-}
-
-.media-default-skin--video .media-slider__thumbnail {
-  --media-slider-thumbnail-max-width: 11rem;
-  --media-slider-thumbnail-max-height: 8rem;
-  --media-slider-thumbnail-padding: -1.125rem;
-  /**
-    Inset is the difference between the container width and the slider (100%) width.
-    Divided by 2 as we render the time on both sides.
-  */
-  --media-slider-thumbnail-inset: calc((100cqi - 100%) / 2);
-
-  position: absolute;
-  bottom: calc(100% + 1.2rem);
-  left: clamp(
-    calc(
-      var(--media-slider-thumbnail-max-width) /
-      2 +
-      var(--media-slider-thumbnail-padding) -
-      var(--media-slider-thumbnail-inset)
-    ),
-    var(--media-slider-pointer),
-    calc(
-      100% -
-      var(--media-slider-thumbnail-max-width) /
-      2 -
-      var(--media-slider-thumbnail-padding) +
-      var(--media-slider-thumbnail-inset)
-    )
-  );
-  pointer-events: none;
-  opacity: 0;
-  filter: blur(8px);
-  transform-origin: bottom;
-  scale: 0.8;
-  translate: -50%;
-  transition-timing-function: ease-out;
-  transition-duration: 150ms;
-  transition-property: scale, opacity, filter;
-
-  & .media-thumbnail__image {
-    max-width: var(--media-slider-thumbnail-max-width);
-    max-height: var(--media-slider-thumbnail-max-height);
-  }
-}
-.media-default-skin--video .media-slider[data-pointing] .media-slider__thumbnail:has([role="img"]:not([data-hidden])) {
-  opacity: 1;
-  filter: blur(0);
-  scale: 1;
-}
-.media-default-skin--video
-  .media-slider__thumbnail:has([role="img"]:not([data-hidden]))
-  + .media-slider__preview
-  .media-slider__value {
-  display: none;
 }

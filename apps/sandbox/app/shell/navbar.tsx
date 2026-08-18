@@ -1,7 +1,7 @@
 import type { SKINS } from '@app/constants';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
-import type { SourceId } from '@app/shared/sources';
+import type { SandboxSource, SourceId } from '@app/shared/sources';
 import type { Platform, Preset, Skin, Styling } from '@app/types';
 import { useEffect, useId, useRef, useState } from 'react';
 
@@ -26,17 +26,53 @@ type NavbarProps = {
   onPreloadChange: (value: PreloadValue) => void;
   locale: SandboxLocaleTag;
   onLocaleChange: (value: SandboxLocaleTag) => void;
+  accentColor: string;
+  onAccentColorChange: (value: string) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
-  isSimpleHls: boolean;
+  isSpfHls: boolean;
   isMuxVideo: boolean;
   isMuxAudio: boolean;
-  isVimeoVideo: boolean;
+  isEmbedMedia: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
-  sources: Record<SourceId, { label: string; url: string; type: string; subType?: string }>;
+  sources: Record<SourceId, SandboxSource>;
 };
+
+/**
+ * What the selected media will do with a source, when that's worth labelling for
+ * someone smoke-testing. The plain HLS presets are the SPF engine: no TS transmux pipeline
+ * and no EME, so it refuses MPEG-TS on format and encrypted renditions on
+ * protection. Derived from the pair rather than stored on the source, since every
+ * source here plays fine under some other media.
+ *
+ * Keyed on the *preset*, not a single is-SPF-HLS flag, because the two
+ * variants answer differently and a note promising the wrong outcome is worse
+ * than none — a reviewer would file the difference as a bug:
+ *
+ * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only
+ *   engine resolves only the audio rendition, so it never fetches an encrypted
+ *   playlist and plays the source instead of refusing it.
+ * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the
+ *   source carries an audio rendition of its own or muxes audio into its video
+ *   renditions — an absent type reports nothing and stalls silently rather than
+ *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean
+ *   nothing plays, so the note stops at that rather than naming a verdict that
+ *   only appears for one of them.
+ */
+function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
+  if (preset !== 'hls-video' && preset !== 'hls-audio') return undefined;
+  const audioOnlyPreset = preset === 'hls-audio';
+
+  if (source.drm) {
+    return audioOnlyPreset ? 'plays — Mux leaves audio clear' : 'expects protected error';
+  }
+  if (source.subType && source.subType !== 'mp4') {
+    return audioOnlyPreset ? 'expects no playback' : 'expects unsupported-format error';
+  }
+  return undefined;
+}
 
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
 
@@ -48,16 +84,25 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 
 const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
-  'hlsjs-video': 'HLS Video',
+  'hlsjs-video': 'HLS Video (hls.js)',
   'native-hls-video': 'Native HLS Video',
   'mux-video': 'Mux Video',
+  'mux-video-spf': 'Mux Video (SPF)',
   'mux-audio': 'Mux Audio',
-  'simple-hls-video': 'Simple HLS Video',
-  'simple-hls-audio-only': 'Simple HLS Audio-Only',
+  'mux-audio-spf': 'Mux Audio (SPF)',
+  'hls-video': 'HLS Video',
+  'hls-audio': 'HLS Audio',
   'dash-video': 'DASH Video',
   audio: 'Audio',
   'background-video': 'Background Video',
+  'hls-background-video': 'HLS Background Video (SPF)',
+  'mux-background-video': 'Mux Background Video (SPF)',
   'vimeo-video': 'Vimeo Video',
+  'youtube-video': 'YouTube Video',
+  'cloudflare-video': 'Cloudflare Stream Video',
+  'spotify-audio': 'Spotify Audio',
+  'tiktok-video': 'TikTok Video',
+  'twitch-video': 'Twitch Video',
 };
 
 export function Navbar({
@@ -81,12 +126,14 @@ export function Navbar({
   onPreloadChange,
   locale,
   onLocaleChange,
+  accentColor,
+  onAccentColorChange,
   availableSources,
   isBackgroundVideo,
-  isSimpleHls,
+  isSpfHls,
   isMuxVideo,
   isMuxAudio,
-  isVimeoVideo,
+  isEmbedMedia,
   platforms,
   stylings,
   presets,
@@ -115,7 +162,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && (isBackgroundVideo || isVimeoVideo || platform === 'cdn'),
+            disabled: s === 'tailwind' && (isBackgroundVideo || isEmbedMedia || platform === 'cdn'),
           }))}
         />
 
@@ -140,12 +187,20 @@ export function Navbar({
           onChange={onSourceChange}
           options={availableSources
             .filter((id) => {
-              if (isSimpleHls) return sources[id].subType === 'mp4';
+              // The empty-src entry carries no media, so it's offered wherever
+              // the preset can render one rather than being filtered by format.
+              if (sources[id].type === 'none') return true;
+              // Any HLS source, including formats the SPF engine can't play — reaching
+              // those failures on purpose is how the error paths get smoke-tested.
+              if (isSpfHls) return sources[id].type === 'hls';
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
               return true;
             })
-            .map((id) => ({ value: id, label: sources[id].label }))}
-          disabled={isBackgroundVideo || isVimeoVideo}
+            .map((id) => {
+              const note = expectedOutcomeNote(sources[id], preset);
+              return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
+            })}
+          disabled={isBackgroundVideo || isEmbedMedia}
         />
       </div>
 
@@ -161,6 +216,8 @@ export function Navbar({
           onPreloadChange={onPreloadChange}
           locale={locale}
           onLocaleChange={onLocaleChange}
+          accentColor={accentColor}
+          onAccentColorChange={onAccentColorChange}
         />
         <a
           href="https://github.com/videojs/v10"
@@ -199,6 +256,8 @@ type SettingsMenuProps = {
   onPreloadChange: (value: PreloadValue) => void;
   locale: SandboxLocaleTag;
   onLocaleChange: (value: SandboxLocaleTag) => void;
+  accentColor: string;
+  onAccentColorChange: (value: string) => void;
 };
 
 function SettingsMenu({
@@ -212,6 +271,8 @@ function SettingsMenu({
   onPreloadChange,
   locale,
   onLocaleChange,
+  accentColor,
+  onAccentColorChange,
 }: SettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -221,6 +282,7 @@ function SettingsMenu({
   const loopId = useId();
   const preloadId = useId();
   const localeId = useId();
+  const accentColorId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -286,6 +348,7 @@ function SettingsMenu({
             onChange={(value) => onLocaleChange(value as SandboxLocaleTag)}
             optionGroups={SANDBOX_LOCALE_OPTION_GROUPS}
           />
+          <ColorItem id={accentColorId} value={accentColor} onChange={onAccentColorChange} />
           <CheckboxItem id={autoplayId} label="Autoplay" checked={autoplay} onChange={onAutoplayChange} />
           <CheckboxItem id={mutedId} label="Muted" checked={muted} onChange={onMutedChange} />
           <CheckboxItem id={loopId} label="Loop" checked={loop} onChange={onLoopChange} />
@@ -299,6 +362,42 @@ function SettingsMenu({
         </div>
       )}
     </div>
+  );
+}
+
+type ColorItemProps = {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function ColorItem({ id, value, onChange }: ColorItemProps) {
+  const pickerValue = /^#[\da-f]{6}$/i.test(value) ? value : '#ff0000';
+
+  return (
+    <>
+      <label htmlFor={id} className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 cursor-pointer">
+        Accent color
+      </label>
+      <div className="flex items-center gap-1.5 justify-self-start">
+        <input
+          id={id}
+          type="text"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Default"
+          spellCheck={false}
+          className="h-7 w-28 rounded border-none bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-900 px-2 text-[13px] font-medium text-zinc-950 dark:text-zinc-50 shadow-xs shadow-black/20 focus:outline-2 focus:outline-zinc-950 dark:focus:outline-zinc-50 focus:outline-offset-2"
+        />
+        <input
+          type="color"
+          value={pickerValue}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label="Choose accent color"
+          className="size-7 rounded border-none bg-transparent p-0 cursor-pointer"
+        />
+      </div>
+    </>
   );
 }
 

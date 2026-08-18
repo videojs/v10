@@ -1,5 +1,3 @@
-'use client';
-
 import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef, SyntheticEvent } from 'react';
@@ -69,7 +67,7 @@ export const Poster = forwardRef(function Poster(
       state: core.getState(),
       stateAttrMap: PosterDataAttrs,
       ref: [forwardedRef, imgRef],
-      props: [elementProps, { 'data-loaded': loaded ? '' : undefined, onLoad: handleLoad }],
+      props: [{ alt: '' }, elementProps, { 'data-loaded': loaded ? '' : undefined, onLoad: handleLoad }],
     }
   );
 });

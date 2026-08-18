@@ -4,14 +4,13 @@
 // HLS / DASH streams.
 import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
+import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
-import { TooltipElement } from '../../ui/tooltip/tooltip-element';
-import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { safeDefine } from '../safe-define';
-import { defineErrorDialog, defineTime, defineTimeSlider, defineVolumeSlider } from '../ui/compounds';
+import { defineErrorDialog, defineTime, defineTimeSlider, defineTooltip, defineVolumeSlider } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
 import { LiveAudioPlayerElement } from './player';
@@ -26,12 +25,12 @@ defineErrorDialog();
 defineTimeSlider();
 defineVolumeSlider();
 defineTime();
+defineTooltip();
 
 // Standalone elements.
 safeDefine(BufferingIndicatorElement);
+safeDefine(HotkeyElement);
 safeDefine(LiveButtonElement);
 safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);
 safeDefine(PopoverElement);
-safeDefine(TooltipElement);
-safeDefine(TooltipGroupElement);

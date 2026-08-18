@@ -24,6 +24,7 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
     preload: signal<string | undefined>(initial.preload),
     currentTime: signal<number | undefined>(initial.currentTime),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
+    loadingSuspended: signal<boolean | undefined>(initial.loadingSuspended),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
@@ -1397,5 +1398,96 @@ describe('loadSegments load-mode FSM', () => {
     expect(fetchedUrls.length).toBe(callsAfterInitial);
 
     cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// loadingSuspended — observed policy 'dormant' gate (uniform across variants)
+// ---------------------------------------------------------------------------
+
+describe('loadSegments orchestration (loadingSuspended)', () => {
+  function makePresentation(segments: Segment[]) {
+    return {
+      id: 'p1',
+      url: 'http://example.com/playlist.m3u8',
+      startTime: 0,
+      duration: segments.reduce((acc, s) => acc + s.duration, 0),
+      selectionSets: [
+        {
+          id: 'ss1',
+          type: 'video' as const,
+          switchingSets: [{ id: 'sw1', type: 'video' as const, tracks: [makeResolvedVideoTrack(segments)] }],
+        },
+      ],
+    };
+  }
+
+  it('goes dormant while suspended, even with preload="auto"', async () => {
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const state = makeState({
+      preload: 'auto',
+      loadingSuspended: true,
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    // Give the (dormant) dispatcher ample time to prove it stays quiet.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(send).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('parks while suspended and re-dispatches when the policy lifts', async () => {
+    // Parking the dispatcher is a policy 'dormant', not a distinct state:
+    // no stop message is sent — already-queued loader work drains (v/a
+    // actors are torn down by sourceclose moments later anyway; text
+    // fetches are small and bounded).
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const state = makeState({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    // preload:'auto' → 'full-range' → an initial load dispatch.
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+    send.mockClear();
+
+    state.loadingSuspended.set(true);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(send).not.toHaveBeenCalled();
+
+    state.loadingSuspended.set(false);
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+
+    reactor.destroy();
+  });
+
+  it('treats an absent loadingSuspended slot as never suspended', async () => {
+    // No variant declares the key, so compositions without a writer have no
+    // slot at all — the dispatcher must behave exactly as if unsuspended.
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const { loadingSuspended: _omitted, ...state } = makeState({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state: state as ReturnType<typeof makeState>, context });
+
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+
+    reactor.destroy();
   });
 });

@@ -1,12 +1,11 @@
-import { createInputIndicatorLabels, StatusAnnouncerCore } from '@videojs/core';
-import { getMediaSnapshot, subscribeToInputActions } from '@videojs/core/dom';
+import { createStatusAnnouncerLabels, StatusAnnouncerCore } from '@videojs/core';
+import { type StatusAnnouncerStore, shouldAnnounceStatusChange, subscribeToStatusAnnouncer } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { containerContext, playerContext } from '../../player/context';
-import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
 export class StatusAnnouncerElement extends MediaElement {
@@ -20,21 +19,24 @@ export class StatusAnnouncerElement extends MediaElement {
 
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #core = new StatusAnnouncerCore();
-  readonly #player = new PlayerController(this, playerContext);
-  readonly #container = new ContextConsumer(this, {
-    context: containerContext,
-    callback: () => this.#reconnect(),
+  // Context can resolve while connected markup is still upgrading.
+  #storeUnsubscribe: (() => void) | null = null;
+  readonly #player = new ContextConsumer(this, {
+    context: playerContext,
+    callback: (store) => this.#reconnect(store),
     subscribe: true,
   });
+  readonly #container = new ContextConsumer(this, { context: containerContext, subscribe: true });
 
   #disconnect: AbortController | null = null;
-  #inputActionUnsubscribe: (() => void) | null = null;
+  #liveText: HTMLElement | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
 
     this.setAttribute('role', 'status');
+    this.#ensureLiveText();
 
     this.#disconnect = new AbortController();
     this.#core.state.subscribe(() => this.requestUpdate(), { signal: this.#disconnect.signal });
@@ -43,14 +45,14 @@ export class StatusAnnouncerElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#inputActionUnsubscribe?.();
-    this.#inputActionUnsubscribe = null;
+    this.#storeUnsubscribe?.();
+    this.#storeUnsubscribe = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
-    this.#inputActionUnsubscribe?.();
+    this.#storeUnsubscribe?.();
     this.#core.destroy();
     super.destroyCallback();
   }
@@ -59,7 +61,8 @@ export class StatusAnnouncerElement extends MediaElement {
     super.willUpdate(changed);
     this.#core.setProps({
       closeDelay: this.closeDelay,
-      labels: createInputIndicatorLabels(this.#i18n.value),
+      labels: createStatusAnnouncerLabels(this.#i18n.value, this.#i18n.locale),
+      shouldAnnounce: () => shouldAnnounceStatusChange(this.#container.value?.container),
     });
   }
 
@@ -67,22 +70,35 @@ export class StatusAnnouncerElement extends MediaElement {
     super.update(changed);
 
     const label = this.#core.state.current.label;
-    if (label) {
-      this.setAttribute('aria-label', label);
+    const liveText = this.#ensureLiveText();
+
+    if (label === null) {
+      liveText.replaceChildren();
     } else {
-      this.removeAttribute('aria-label');
+      liveText.replaceChildren(document.createTextNode(label));
     }
   }
 
-  #reconnect(): void {
-    this.#inputActionUnsubscribe?.();
-    this.#inputActionUnsubscribe = null;
+  #reconnect(store: StatusAnnouncerStore | undefined = this.#player.value): void {
+    this.#storeUnsubscribe?.();
+    this.#storeUnsubscribe = null;
+    if (!store) {
+      this.#core.resetSnapshot();
+      return;
+    }
 
-    const container = this.#container.value?.container;
-    if (!container) return;
+    this.#storeUnsubscribe = subscribeToStatusAnnouncer(store, this.#core);
+  }
 
-    this.#inputActionUnsubscribe = subscribeToInputActions(container, (event) => {
-      this.#core.processEvent(event, getMediaSnapshot(this.#player.value));
-    });
+  #ensureLiveText(): HTMLElement {
+    if (this.#liveText?.isConnected) return this.#liveText;
+
+    const existing = this.querySelector<HTMLElement>('[data-status-announcer-content]');
+    this.#liveText = existing ?? document.createElement('span');
+    this.#liveText.setAttribute('data-status-announcer-content', '');
+
+    if (!existing) this.append(this.#liveText);
+
+    return this.#liveText;
   }
 }

@@ -20,8 +20,9 @@ the **canonical "middle pattern" example** per
 Sister to [pseudo-ended-detection](./pseudo-ended-detection.md) (just
 landed) and `[buffer-stall-recovery]` in the Borderline sub-cluster.
 Builds on [non-zero-pts-support](./non-zero-pts-support.md)'s offset-
-application mechanism — both features face the same `timestampOffset`-
-vs-simulated-translation question.
+application mechanism, now resolved to `SourceBuffer.timestampOffset`
+relocation — this feature inherits it (the open part is how the two
+offsets *compose*, not which mechanism).
 
 A **Borderline feature** per
 [clusters.md § Feature classification axes](./clusters.md#media-src-vs-player-vs-borderline):
@@ -38,13 +39,13 @@ spec-clean way); this feature compensates client-side until then.
   lists. Result varies by browser (Safari tends to honor; Chrome /
   Firefox have known quirks).
 - **Definition depth:** coarse — scope from Notion + Borderline
-  framing + middle-pattern classification. Mechanism specifics open
-  (shares non-zero-pts-support's mechanism choice).
+  framing + middle-pattern classification. The application mechanism is
+  settled (inherited from non-zero-pts-support); composition specifics open.
 - **Foundation dependency:** [non-zero-pts-support](./non-zero-pts-support.md)
-  provides the offset-application mechanism this feature plugs into.
-  Either both features choose the same mechanism (timestampOffset OR
-  simulated translation) or they coordinate offset composition at the
-  application point.
+  provides the offset-application mechanism this feature plugs into —
+  resolved to `SourceBuffer.timestampOffset` relocation. This feature
+  inherits that mechanism; what remains is how its edit-list offset
+  *composes* with the non-zero-PTS offset at the application point.
 
 ## Phases of complexity
 
@@ -57,7 +58,7 @@ shifts.
 | Edit-list parsing | **Naive** | Don't parse. Rely on browser-native edit-list handling (variable per browser). The current state | Status quo; ≈ what most engines do without explicit edit-list awareness |
 | | **Full** | Parse `elst` box from MP4 init segments. Extract edit-list entries — each entry has `media_time` (where to start in the source media), `segment_duration` (how long this segment of presentation is), `media_rate` (playback rate, usually 1.0). Shares the targeted MP4 box parser with [non-zero-pts-support](./non-zero-pts-support.md)'s `tfdt` extraction | Init-segment parsing extension. The same small targeted MP4 box extractor handles both `tfdt` (non-zero-pts-support) and `elst` (this feature) |
 | Offset application | **Naive** | Rely on browser to interpret edit-list correctly. Some sources play correctly on some browsers; same source plays wrong on others | The variance is the problem this feature solves |
-| | **Full** | Engine-side compensation: compute the effective offset from edit-list entries (typically the first entry's `media_time` shift) and apply via the offset-application mechanism. Two open mechanism options (shared with non-zero-pts-support): (a) `SourceBuffer.timestampOffset`, (b) simulated translation via adapter + behavior math. Both face the same A/V sync trade-off documented in non-zero-pts-support | Same mechanism choice as non-zero-pts-support — these two features should converge on the same answer. Composition with non-zero-pts-support's offset is the load-bearing question (additive? multiplicative? at which layer?) |
+| | **Full** | Engine-side compensation: compute the effective offset from edit-list entries (typically the first entry's `media_time` shift) and apply via the inherited `SourceBuffer.timestampOffset` relocation (non-zero-pts-support resolved the mechanism) | Mechanism settled; composition with non-zero-pts-support's offset is the load-bearing open question (additive? multiplicative? at which layer?) |
 | Multi-entry edit lists | **Naive** (deferred default) | Handle only single-entry edit lists (just shifts source start time). Multi-entry edit lists ignored or fallback-to-browser | Most real-world Mux content has single-entry or no edit lists. Multi-entry support deferred unless customer demand surfaces |
 | | **Full** (deferred) | Handle multi-entry edit lists: multiple consecutive segments with different `media_time` / `segment_duration` / `media_rate` values. Can express loops, freeze-frames, speed changes, gap insertions | Real complexity. Browser support also varies for multi-entry. Defer until concrete customer use case emerges |
 
@@ -109,12 +110,12 @@ Things this feature probably forces decisions on, not just additions:
   vs single computed `effectiveOffset: number`). Lean: (a) additive,
   with the slot exposing both components for debugging / telemetry;
   consumer-facing engine state exposes only `effectiveOffset`.
-- **Shared mechanism choice with non-zero-pts-support.**
-  `SourceBuffer.timestampOffset` vs simulated translation. The two
-  features should converge on the same mechanism — split mechanism
-  would mean different code paths for different offset sources
-  composing into the same SourceBuffer, which is brittle. Open
-  question that resolves jointly across both features.
+- **Inherited application mechanism.** non-zero-pts-support resolved
+  the offset-application mechanism to `SourceBuffer.timestampOffset`
+  relocation; this feature inherits it (a split mechanism composing
+  into the same SourceBuffer would be brittle). What's left is *how*
+  the edit-list offset composes with the non-zero-PTS offset — see the
+  composition bullet above.
 - **Browser-variance gate.** Different browsers honor edit lists
   differently: Safari tends to honor faithfully; Chrome / Firefox
   may interpret the entry-by-entry edit list as samples-to-skip but
@@ -149,8 +150,10 @@ Things this feature probably forces decisions on, not just additions:
 
 - **Offset composition with non-zero-pts-support.** Additive vs
   sequential vs override. Lean: additive with debug exposure.
-- **Shared mechanism choice with non-zero-pts-support.** Resolves
-  jointly; this feature can't independently choose a mechanism.
+- ~~**Shared mechanism choice with non-zero-pts-support.**~~
+  *Resolved* — non-zero-pts-support chose `SourceBuffer.timestampOffset`
+  relocation; this feature inherits it. The open part is offset
+  *composition* (above), not the mechanism.
 - **Browser-variance gate.** Run compensation unconditionally
   (defensive, risk double-shift) vs detect browser behavior and
   gate (safer, more code). Empirical testing needed.
@@ -177,8 +180,9 @@ Things this feature probably forces decisions on, not just additions:
 
 - **[non-zero-pts-support](./non-zero-pts-support.md)** — cluster B
   foundation; the offset-application mechanism this feature plugs
-  into. Mechanism choice (timestampOffset vs simulated translation)
-  resolves jointly across both features.
+  into. non-zero-pts-support resolved the application mechanism to
+  `SourceBuffer.timestampOffset` relocation; this feature inherits it,
+  leaving only offset composition open.
 - **[pseudo-ended-detection](./pseudo-ended-detection.md)** — sister
   Borderline; edit-list offsets affect the perceived duration
   boundary that pseudo-ended-detection checks against. Cross-

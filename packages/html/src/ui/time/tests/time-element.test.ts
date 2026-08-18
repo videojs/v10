@@ -1,9 +1,12 @@
-import type { MediaTimeState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaTimeState } from '@videojs/media';
 import { createStore } from '@videojs/store';
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { TimeElement } from '../time-element';
@@ -46,7 +49,7 @@ async function waitForAssertion(assertion: () => void): Promise<void> {
   throw error;
 }
 
-function createTimeStore(): AnyPlayerStore {
+function createTimeStore(overrides: Partial<MediaTimeState> = {}): AnyPlayerStore {
   return createStore<unknown>()<MediaTimeState>({
     name: 'time',
     state: () => ({
@@ -54,6 +57,7 @@ function createTimeStore(): AnyPlayerStore {
       duration: 300,
       seeking: false,
       seek: vi.fn(),
+      ...overrides,
     }),
   }) as unknown as AnyPlayerStore;
 }
@@ -79,13 +83,22 @@ class TestPlayerProviderElement extends MediaElement {
 }
 
 defineElement('test-time-player', TestPlayerProviderElement);
+defineElement(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
 
-async function setup(props: Partial<TimeElement> = {}) {
+async function setup(props: Partial<TimeElement> = {}, locale?: string, state?: Partial<MediaTimeState>) {
   const provider = document.createElement('test-time-player') as TestPlayerProviderElement;
   const time = createElement(TimeElement);
 
+  if (state) provider.store = createTimeStore(state);
   Object.assign(time, props);
-  document.body.append(provider);
+  if (locale) {
+    const i18n = new MediaI18nProviderElement();
+    i18n.setAttribute('lang', locale);
+    i18n.append(provider);
+    document.body.append(i18n);
+  } else {
+    document.body.append(provider);
+  }
   provider.append(time);
   await time.updateComplete;
   await waitForAssertion(() => expect(time.textContent).toBeTruthy());
@@ -94,6 +107,7 @@ async function setup(props: Partial<TimeElement> = {}) {
 }
 
 afterEach(() => {
+  resetI18nRegistry();
   document.body.innerHTML = '';
 });
 
@@ -111,20 +125,64 @@ describe('TimeElement', () => {
     const { time } = await setup({ toggle: true });
 
     expect(time.getAttribute('role')).toBe('button');
+    expect(time.getAttribute('tabindex')).toBe('0');
+    expect(time.getAttribute('aria-label')).toBe('Show remaining time, 1 minute, 30 seconds elapsed.');
+    expect(time.getAttribute('aria-description')).toBe('Toggle between elapsed and remaining time.');
 
     time.click();
     await time.updateComplete;
 
     expect(time.textContent).toBe('-3:30');
     expect(time.getAttribute('data-type')).toBe('remaining');
-    expect(time.getAttribute('aria-label')).toBe('3 minutes, 30 seconds remaining. Show elapsed time.');
+    expect(time.getAttribute('aria-label')).toBe('Show elapsed time, 3 minutes, 30 seconds remaining.');
 
     time.click();
     await time.updateComplete;
 
     expect(time.textContent).toBe('1:30');
     expect(time.getAttribute('data-type')).toBe('current');
-    expect(time.getAttribute('aria-label')).toBe('1 minute, 30 seconds. Show remaining time.');
+    expect(time.getAttribute('aria-label')).toBe('Show remaining time, 1 minute, 30 seconds elapsed.');
+  });
+
+  it('includes zero in the toggle label', async () => {
+    const { time } = await setup({ toggle: true }, undefined, { currentTime: 0 });
+
+    expect(time.getAttribute('aria-label')).toBe('Show remaining time, 0 seconds elapsed.');
+  });
+
+  it('formats toggle labels with the active locale', async () => {
+    registerI18n('fr', {
+      'time.showRemaining': 'Afficher restant, {duration}.',
+      'time.elapsedSuffix': '{duration} écoulé',
+      'time.durationSuffix': '{duration} durée',
+    });
+
+    const { time } = await setup({ toggle: true }, 'fr');
+
+    expect(time.getAttribute('aria-label')).toBe(
+      `Afficher restant, ${formatTimeAsPhrase(90, { locale: 'fr' })} écoulé.`
+    );
+
+    time.type = 'duration';
+    await time.updateComplete;
+
+    expect(time.getAttribute('aria-label')).toBe(
+      `Afficher restant, ${formatTimeAsPhrase(300, { locale: 'fr' })} durée.`
+    );
+  });
+
+  it('formats digital time with locale digits', async () => {
+    const { time } = await setup({}, 'fa');
+
+    expect(time.textContent).toBe('۱:۳۰');
+  });
+
+  it('exposes static time semantics', async () => {
+    const { time } = await setup();
+
+    expect(time.getAttribute('role')).toBe('time');
+    expect(time.getAttribute('datetime')).toBe('PT1M30S');
+    expect(time.querySelector('button')).toBeNull();
   });
 
   it('does not toggle before media state is available', async () => {
@@ -149,15 +207,15 @@ describe('TimeElement', () => {
   it('toggles remaining time to duration on click', async () => {
     const { time } = await setup({ toggle: true, type: 'remaining' });
 
-    expect(time.getAttribute('aria-label')).toBe('3 minutes, 30 seconds remaining. Show duration.');
+    expect(time.getAttribute('aria-label')).toBe('Show duration, 3 minutes, 30 seconds remaining.');
+    expect(time.getAttribute('aria-description')).toBe('Toggle between duration and remaining time.');
 
     time.click();
     await time.updateComplete;
 
     expect(time.textContent).toBe('5:00');
     expect(time.getAttribute('data-type')).toBe('duration');
-    expect(time.getAttribute('role')).toBe('button');
-    expect(time.getAttribute('aria-label')).toBe('5 minutes. Show remaining time.');
+    expect(time.getAttribute('aria-label')).toBe('Show remaining time, 5 minutes duration.');
 
     time.click();
     await time.updateComplete;
@@ -213,6 +271,7 @@ describe('TimeElement', () => {
     expect(time.getAttribute('role')).toBe('button');
     expect(time.getAttribute('tabindex')).toBe('0');
     expect(time.hasAttribute('aria-label')).toBe(true);
+    expect(time.hasAttribute('aria-description')).toBe(true);
     expect(time.getAttribute('data-type')).toBe('current');
 
     provider.clearStore();
@@ -222,6 +281,7 @@ describe('TimeElement', () => {
     expect(time.hasAttribute('role')).toBe(false);
     expect(time.hasAttribute('tabindex')).toBe(false);
     expect(time.hasAttribute('aria-label')).toBe(false);
+    expect(time.hasAttribute('aria-description')).toBe(false);
     expect(time.hasAttribute('data-type')).toBe(false);
   });
 

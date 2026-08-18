@@ -1,8 +1,9 @@
+import type { MediaFeatureAvailability, MediaVolumeState } from '@videojs/media';
 import { defaults } from '@videojs/utils/object';
 import { formatPercent } from '@videojs/utils/percent';
 import type { NonNullableObject } from '@videojs/utils/types';
-import type { MediaVolumeState } from '../../media/state';
-import type { MediaFeatureAvailability } from '../../media/types';
+import type { Text } from '../../i18n';
+import { labelText, mutedValueText } from '../../i18n/text/volume';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
 export interface VolumeSliderProps extends SliderProps {
@@ -18,6 +19,7 @@ export interface VolumeSliderProps extends SliderProps {
 
 export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {
   availability: MediaFeatureAvailability;
+  hidden: boolean;
 }
 
 /** Volume-domain slider: maps media volume/mute state to slider state. */
@@ -57,13 +59,16 @@ export class VolumeSliderCore extends SliderCore {
     const volumePercent = volume * 100;
     const value = dragging ? this.valueFromPercent(dragPercent) : volumePercent;
     const base = super.getSliderState(value);
+    const availability = media.volumeAvailability;
 
     return {
       ...base,
+      disabled: base.disabled || availability !== 'available',
       fillPercent: effectivelyMuted ? 0 : base.fillPercent,
       volume,
       muted: effectivelyMuted,
-      availability: media.volumeAvailability,
+      availability,
+      hidden: availability !== 'available',
     };
   }
 
@@ -74,12 +79,12 @@ export class VolumeSliderCore extends SliderCore {
     return range > 0 ? (props.wheelStep / range) * 100 : 0;
   }
 
-  override getLabel(state: SliderState): string {
-    return super.getLabel(state) || 'Volume';
+  override getLabel(state: SliderState): Text | string {
+    return super.getLabel(state) || labelText;
   }
 
-  getValueText(state: VolumeSliderState): string {
-    return state.muted ? '{percent}, muted' : this.getValueTextParams(state).percent;
+  getValueText(state: VolumeSliderState): Text | string {
+    return state.muted ? mutedValueText : this.getValueTextParams(state).percent;
   }
 
   getValueTextParams(state: VolumeSliderState): { percent: string } {

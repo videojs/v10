@@ -47,11 +47,13 @@
  * *constraint* is the failover half — prune the cooled-down CDN, the scope falls
  * to the next.)
  *
- * When the pre-pass prunes a type's candidates to empty, the behavior leaves any
- * prior pick in place and makes no new pick; the late `createSourceBuffer` check
- * stays as the structural backstop for an unplayable rendition reaching the
- * pipeline. Surfacing "nothing playable" as observable state is deferred until a
- * consumer (error mapping) needs it.
+ * When the pre-pass prunes a type that *has* tracks to empty, the behavior
+ * clears the selection (so a now-unplayable pick can't linger and stall) and
+ * reports the type's `noSupportedTrackCode`. Which constraint emptied the set is
+ * deliberately not consulted — the behavior reads no constraint's state, so the
+ * chain stays composable. A type with no tracks at all is left alone; that's a
+ * legitimate source shape, not a failure. The late `createSourceBuffer` check
+ * stays as the structural backstop.
  *
  * Deferred: audio's preferred-language / default-track selection as standing
  * soft-filter rules (previously the empty-slot picker, dropped in the move to
@@ -62,6 +64,7 @@ import { type AnySlotMap, defineBehavior } from '../../core/composition/create-c
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { DEFAULT_QUALITY_CONFIG, type QualityConfig, resolutionArea } from '../../media/abr/quality-selection';
+import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../media/errors';
 import {
   matchesPartialTrack,
   pickTextTrackFromTracks,
@@ -82,6 +85,7 @@ import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cd
 import { getTracksByType } from '../../media/utils/tracks';
 import type { BandwidthConfig, BandwidthState } from '../../network/bandwidth-estimator';
 import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../network/bandwidth-estimator';
+import { type ErrorEmitterState, emitError } from './collect-errors';
 
 // ============================================================================
 // State + Config
@@ -298,6 +302,14 @@ export type TrackSwitchingStateMap<S extends SelectionKey> = {
 } & { [P in S]: Signal<TrackSwitchingState[P]> };
 
 /**
+ * The lifecycle map plus the *optional* `errors` slot reporters append to. Owned
+ * by `collectErrors`; optional so a composition without it still type-checks and
+ * emission no-ops. The behavior reads no constraint's state — see
+ * `noSupportedTrackCode`.
+ */
+type TrackSwitchingReporterStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & ErrorEmitterState;
+
+/**
  * Config `setupTrackSwitching` itself reads — its own wiring: which selection
  * slot to write and clear (`selectionKey`), how to enumerate candidate tracks
  * (`getTracks`), the optional **hard-constraints pre-pass** (`constraints`,
@@ -322,6 +334,15 @@ interface TrackSwitchingConfig<S extends SelectionKey, T extends SwitchableTrack
    * may return `undefined`.
    */
   resolveSelection?: ResolveSelection<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>;
+  /**
+   * SVTA code to report when this type *has* tracks but the constraints pruned
+   * every one. Per-variant because the condition isn't universally an error:
+   * video and audio supply {@link SVTA_NO_SUPPORTED_VIDEO_TRACK} /
+   * {@link SVTA_NO_SUPPORTED_AUDIO_TRACK}, while text supplies none — an
+   * unavailable subtitle track is a legitimate outcome, not a playback failure.
+   * Absent → the selection still clears, nothing is reported.
+   */
+  noSupportedTrackCode?: number;
 }
 
 /**
@@ -643,9 +664,9 @@ export function setupTrackSwitching<
   S extends SelectionKey,
   T extends SwitchableTrack,
   C extends TrackSwitchingConfig<S, T>,
->(deps: { state: TrackSwitchingStateMap<S>; context?: AnySlotMap; config: C }) {
+>(deps: { state: TrackSwitchingReporterStateMap<S>; context?: AnySlotMap; config: C }) {
   const { state, config } = deps;
-  const { selectionKey, getTracks, rules, resolveSelection = selectChainHead } = config;
+  const { selectionKey, getTracks, rules, resolveSelection = selectChainHead, noSupportedTrackCode } = config;
 
   const derivedStateSignal = computed(() =>
     isResolvedPresentation(state.presentation.get())
@@ -706,15 +727,21 @@ export function setupTrackSwitching<
             //     before resolve-track relabeled the type to a non-fMP4
             //     container — can't linger as a now-unplayable selection and
             //     silently stall the pipeline.
-            // The `console.error` is a placeholder until the planned error
-            // behaviors surface "nothing playable" as observable state.
             if (!tracks.length) {
               const presentation = peek(state.presentation);
               const hasTracksOfType = isResolvedPresentation(presentation) && getTracks(presentation).length > 0;
               if (hasTracksOfType) {
-                console.error(
-                  `[track-switching] every ${selectionKey} candidate was filtered out by constraints; clearing selection`
-                );
+                // Reported generically: *why* the set emptied is the constraints'
+                // business, not this behavior's, so no constraint's state is read
+                // here and no cause is distinguished. Whatever the reason, a type
+                // that has renditions but none selectable can't play — a codec
+                // this environment can't decode, or every CDN failed, which is
+                // itself fatal-or-nearly so. Finer causes (container vs codec)
+                // would need `CanPlayTrack` to report a reason; see
+                // `internal/design/spf/features/errors.md`.
+                if (noSupportedTrackCode !== undefined) {
+                  emitError(state, { code: noSupportedTrackCode, data: { selectionKey } });
+                }
                 state[selectionKey].set(undefined);
               }
               return;
@@ -786,6 +813,7 @@ export const switchVideoTrack = defineBehavior({
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks],
         rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
+        noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
     }),
 });
@@ -837,6 +865,7 @@ export const switchAudioTrack = defineBehavior({
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks],
         rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
+        noSupportedTrackCode: SVTA_NO_SUPPORTED_AUDIO_TRACK,
       },
     }),
 });

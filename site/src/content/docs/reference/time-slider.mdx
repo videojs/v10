@@ -14,25 +14,88 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import WithPartsDemoReact from "@/components/docs/demos/time-slider/react/css/WithParts";
 import withPartsReactTsx from "@/components/docs/demos/time-slider/react/css/WithParts.tsx?raw";
 import withPartsReactCss from "@/components/docs/demos/time-slider/react/css/WithParts.css?raw";
+import WithChaptersDemoReact from "@/components/docs/demos/time-slider/react/css/WithChapters";
+import withChaptersReactTsx from "@/components/docs/demos/time-slider/react/css/WithChapters.tsx?raw";
+import withChaptersReactCss from "@/components/docs/demos/time-slider/react/css/WithChapters.css?raw";
 
 {/* HTML demos */}
 import WithPartsDemoHtml from "@/components/docs/demos/time-slider/html/css/WithParts.astro";
 import withPartsHtml from "@/components/docs/demos/time-slider/html/css/WithParts.html?raw";
 import withPartsHtmlCss from "@/components/docs/demos/time-slider/html/css/WithParts.css?raw";
 import withPartsHtmlTs from "@/components/docs/demos/time-slider/html/css/WithParts.ts?raw";
+import WithChaptersDemoHtml from "@/components/docs/demos/time-slider/html/css/WithChapters.astro";
+import withChaptersHtml from "@/components/docs/demos/time-slider/html/css/WithChapters.html?raw";
+import withChaptersHtmlCss from "@/components/docs/demos/time-slider/html/css/WithChapters.css?raw";
+import withChaptersHtmlTs from "@/components/docs/demos/time-slider/html/css/WithChapters.ts?raw";
 
 ## Anatomy
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <TimeSlider.Root />
+  <TimeSlider.Root>
+    <TimeSlider.Track>
+      <TimeSlider.Buffer />
+      <TimeSlider.Fill />
+    </TimeSlider.Track>
+    <TimeSlider.Thumb />
+    <TimeSlider.Preview>
+      <TimeSlider.ChapterTitle />
+      <TimeSlider.Value type="pointer" />
+    </TimeSlider.Preview>
+  </TimeSlider.Root>
   ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   ```html
-  <media-time-slider></media-time-slider>
+  <media-time-slider>
+    <media-slider-track>
+      <media-slider-buffer></media-slider-buffer>
+      <media-slider-fill></media-slider-fill>
+    </media-slider-track>
+    <media-slider-thumb></media-slider-thumb>
+    <media-slider-preview>
+      <media-time-slider-chapter-title></media-time-slider-chapter-title>
+      <media-slider-value type="pointer"></media-slider-value>
+    </media-slider-preview>
+  </media-time-slider>
   ```
+</FrameworkCase>
+
+Add `Chapters` to progressively divide the track when a default `kind="chapters"` text track is available.
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <TimeSlider.Chapters
+    renderChapter={(props, state) => (
+      <div {...props}>
+        <TimeSlider.Track>
+          <TimeSlider.Buffer />
+          <TimeSlider.Fill />
+        </TimeSlider.Track>
+      </div>
+    )}
+  />
+  ```
+
+  `renderChapter` receives the attributes, styles, and state for each normalized chapter range. When no chapter cues are available, it renders once as a full-width, cue-less range.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-time-slider-chapters>
+    <template>
+      <div>
+        <media-slider-track>
+          <media-slider-buffer></media-slider-buffer>
+          <media-slider-fill></media-slider-fill>
+        </media-slider-track>
+      </div>
+    </template>
+  </media-time-slider-chapters>
+  ```
+
+  The required template must contain exactly one HTML root element. It remains in the light DOM and is cloned for each normalized chapter range. When no chapter cues are available, it is cloned once as a full-width, cue-less range.
 </FrameworkCase>
 
 ## Behavior
@@ -40,6 +103,8 @@ import withPartsHtmlTs from "@/components/docs/demos/time-slider/html/css/WithPa
 Displays and controls the current playback position. Dragging the slider seeks the media. The fill level reflects `currentTime / duration` as a percentage, and the buffer level shows how much media has been buffered.
 
 Value changes during drag are throttled via the `changeThrottle` prop (default 100ms) using a leading+trailing throttle to keep the UI responsive without overwhelming the media element.
+
+Chapter cues are normalized into contiguous ranges. Any uncovered time becomes a gap range, so track geometry always spans the full duration. With no usable chapter cues, one gap range spans the entire slider. Gap ranges receive the same geometry styles but cannot be highlighted and have no chapter title.
 
 ## Styling
 
@@ -81,6 +146,16 @@ media-time-slider[data-seeking] {
 ```
 </FrameworkCase>
 
+Each rendered chapter receives `data-active` while playback is inside it and `data-highlighted` while the pointer is inside an authored chapter. Its geometry and local progress are exposed through:
+
+- `--media-slider-chapter-start`
+- `--media-slider-chapter-end`
+- `--media-slider-chapter-width`
+- `--media-slider-chapter-fill`
+- `--media-slider-chapter-buffer`
+
+The generated fill and buffer parts also inherit the slider-level `--media-slider-fill` and `--media-slider-buffer` values. This allows every chapter to render full-width progress planes and use its chapter bounds as a clip, keeping progress transitions continuous across segments.
+
 ## Accessibility
 
 Renders with `role="slider"` and an automatic `aria-label` that resolves to "Seek" from the active locale. Override with the `label` prop. Keyboard controls:
@@ -89,6 +164,8 @@ Renders with `role="slider"` and an automatic `aria-label` that resolves to "See
 - <kbd>Page Up</kbd> / <kbd>Page Down</kbd>: step by `largeStep` increment
 - <kbd>Home</kbd>: seek to start
 - <kbd>End</kbd>: seek to end
+
+`ChapterTitle` follows the pointer during pointer interaction. While the slider has keyboard focus, it follows the current playback position and announces chapter changes.
 
 ## Examples
 
@@ -117,6 +194,37 @@ Nest sub-components for full control over the slider's DOM structure. This examp
       ]}
     >
       <WithPartsDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+### With chapters
+
+Add a default chapters track, then provide the markup used for each chapter. The deliberate one-minute gap in this example remains visible as an unlabelled, non-highlightable segment.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: withChaptersReactTsx, lang: "tsx" },
+        { title: "App.css", code: withChaptersReactCss, lang: "css" },
+      ]}
+    >
+      <WithChaptersDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: withChaptersHtml, lang: "html" },
+        { title: "index.css", code: withChaptersHtmlCss, lang: "css" },
+        { title: "index.ts", code: withChaptersHtmlTs, lang: "ts" },
+      ]}
+    >
+      <WithChaptersDemoHtml />
     </Demo>
   </StyleCase>
 </FrameworkCase>

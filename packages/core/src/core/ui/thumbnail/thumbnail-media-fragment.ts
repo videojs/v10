@@ -1,6 +1,5 @@
+import type { MediaTextCue } from '@videojs/media';
 import { isNumber } from '@videojs/utils/predicate';
-
-import type { MediaTextCue } from '../../media/state';
 import type { ThumbnailCoords, ThumbnailImage } from './types';
 
 /** Parse `url#xywh=x,y,w,h` into a URL and optional sprite coordinates. */

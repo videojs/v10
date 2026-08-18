@@ -1,7 +1,3 @@
-/* ==========================================================================
-   Media Element
-   ========================================================================== */
-
 .media-minimal-skin ::slotted(video),
 .media-minimal-skin video {
   display: block;
@@ -11,7 +7,7 @@
   object-position: var(--media-object-position, center);
 }
 .media-minimal-skin ::slotted(video) {
-  border-radius: var(--media-video-border-radius);
+  border-radius: var(--container-border-radius);
 }
 .media-minimal-skin video {
   border-radius: inherit;

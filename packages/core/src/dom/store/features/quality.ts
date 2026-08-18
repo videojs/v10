@@ -1,7 +1,11 @@
+import type {
+  MediaQualityState,
+  MediaVideoRendition,
+  VideoRenditionLike,
+  VideoRenditionListLike,
+} from '@videojs/media';
+import { isMediaVideoDimensionsCapable, isMediaVideoRenditionCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
-import { isMediaVideoDimensionsCapable, isMediaVideoRenditionCapable } from '../../../core/media/predicate';
-import type { MediaQualityState, MediaVideoRendition } from '../../../core/media/state';
-import type { VideoRenditionLike, VideoRenditionListLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
 
 const QUALITY_AUTO_VALUE = 'auto';

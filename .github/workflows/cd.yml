@@ -74,6 +74,16 @@ jobs:
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:cdn
 
+      # Fail before publishing rather than ship bundles that reach out to a public
+      # CDN at runtime, which would break self-hosted and archive installs.
+      - name: Check CDN bundles are self-contained
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: pnpm -F @videojs/html check:cdn
+
+      - name: Build distribution archive
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: pnpm -F @videojs/html build:archive
+
       # The site build emits per-framework markdown to site/dist/docs/framework/{html,react}/.
       # The @videojs/html and @videojs/react packages' prepack scripts (fired by `pnpm publish`
       # below) copy that subtree into each package's docs/ directory so it ships in the tarball.
@@ -90,6 +100,23 @@ jobs:
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm -r publish --filter "./packages/*" --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Attach the archive to the @videojs/html release so installers outside npm
+      # (Composer, Drupal) have a stable, versioned download. The version comes from
+      # the manifest release-please just bumped, matching release-pr.yml.
+      - name: Upload distribution archive to the release
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
+        run: |
+          VERSION=$(jq -r '."packages/html"' .github/release-please/.release-please-manifest.json)
+          gh release upload "@videojs/html@${VERSION}" \
+            "packages/html/archive/videojs-html-${VERSION}.zip" \
+            "packages/html/archive/videojs-html-${VERSION}.tar.gz" \
+            packages/html/archive/SHA256SUMS \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update site/v10 branch
         if: ${{ steps.release.outputs.releases_created == 'true' }}

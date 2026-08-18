@@ -41,14 +41,46 @@ for (const { name, path } of VISUAL_PAGES) {
       await player.hoverTimeSlider(50);
 
       // Wait for thumbnail to finish loading (deterministic, no fixed timeout)
-      const thumbnail = page.locator(SELECTORS.thumbnail).first();
-      await expect(thumbnail).toBeAttached({ timeout: 10_000 });
-      await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 10_000 });
+      await expect(player.thumbnail).toBeAttached({ timeout: 10_000 });
+      await expect(player.thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 10_000 });
 
       await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-storyboard.png`);
     });
   });
 }
+
+test.describe('Visual — Live Button', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/pages/html-video-mp4.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => customElements.get('video-skin'));
+  });
+
+  test('keeps the live-edge indicator colored when aria-disabled', async ({ page }) => {
+    const styles = await page.evaluate(() => {
+      const container = document.querySelector('video-skin')?.shadowRoot?.querySelector('media-container');
+      const liveButton = document.createElement('button');
+      liveButton.className = 'media-button media-button--live';
+      liveButton.setAttribute('aria-disabled', 'true');
+      liveButton.setAttribute('data-live-edge', '');
+
+      const disabledButton = document.createElement('button');
+      disabledButton.className = 'media-button';
+      disabledButton.setAttribute('aria-disabled', 'true');
+
+      container?.append(liveButton, disabledButton);
+
+      const liveStyle = getComputedStyle(liveButton);
+      const disabledStyle = getComputedStyle(disabledButton);
+      return {
+        live: { filter: liveStyle.filter, opacity: liveStyle.opacity },
+        disabled: { filter: disabledStyle.filter, opacity: disabledStyle.opacity },
+      };
+    });
+
+    expect(styles.live).toEqual({ filter: 'none', opacity: '0.5' });
+    expect(styles.disabled).toEqual({ filter: 'none', opacity: '0.5' });
+  });
+});
 
 // --- Portrait media layout ---
 
@@ -113,7 +145,7 @@ test.describe('Visual — HTML Portrait Layout', () => {
       const thumbnail = document.querySelector('video-skin')!.shadowRoot!.querySelector('media-slider-thumbnail')!;
       const style = getComputedStyle(thumbnail);
       const probe = document.createElement('div');
-      probe.style.height = style.getPropertyValue('--media-slider-thumbnail-max-height');
+      probe.style.height = style.getPropertyValue('--max-height');
       document.body.append(probe);
 
       const configuredMaxHeight = parseFloat(getComputedStyle(probe).height);

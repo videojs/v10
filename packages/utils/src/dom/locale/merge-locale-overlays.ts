@@ -1,13 +1,13 @@
 /**
- * Loads overlay layers for each tag in {@link localeLookupChain}, least-specific first, then merges
+ * Loads overlay layers for each resolved locale key, least-specific first, then merges
  * most-specific-last (same semantics as the core i18n registry).
  */
 export async function mergeLocaleOverlays<Overlay extends object>(
   locale: string,
   load: (tag: string) => Promise<Partial<Overlay> | undefined>,
-  localeLookupChain: (locale: string) => string[]
+  findKeys: (locale: string) => string[]
 ): Promise<{ merged: Partial<Overlay>; loadedTags: string[] }> {
-  const chain = localeLookupChain(locale);
+  const chain = findKeys(locale);
   const layers = await Promise.all(chain.map((tag) => load(tag)));
   const loadedTags: string[] = [];
   const merged: Partial<Overlay> = {};

@@ -2,7 +2,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 
-const testDir = join(tmpdir(), 'videojs-cli-test-' + Date.now());
+const testDir = join(tmpdir(), `videojs-cli-test-${Date.now()}`);
 
 vi.mock('node:os', async () => {
   const actual = await vi.importActual<typeof import('node:os')>('node:os');

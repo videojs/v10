@@ -28,12 +28,14 @@ Creates radio items from the player playback rate state and selects the playback
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <Menu.RadioGroup>
-    <Menu.GroupLabel />
-    <Menu.RadioItem>
-      <Menu.ItemIndicator />
-    </Menu.RadioItem>
-  </Menu.RadioGroup>
+  <PlaybackRateRadioGroup
+    renderItem={(props, item) => (
+      <Menu.RadioItem {...props}>
+        {item.label}
+        <Menu.ItemIndicator checked={item.checked} />
+      </Menu.RadioItem>
+    )}
+  />
   ```
 </FrameworkCase>
 
@@ -55,7 +57,7 @@ Creates radio items from the player playback rate state and selects the playback
 The group is available when the configured media exposes playback rates. Option labels default to the rate followed by a multiplication sign (e.g. `1.5×`); pass `formatRate` to customize them.
 
 <FrameworkCase frameworks={["react"]}>
-<DocsLink slug="reference/use-playback-rate-options">`usePlaybackRateOptions`</DocsLink> returns `null` when the <DocsLink slug="reference/feature-playback-rate">playback rate feature</DocsLink> is not configured. Use the returned options with <DocsLink slug="reference/menu">`Menu.RadioGroup`</DocsLink>.
+`PlaybackRateRadioGroup` uses <DocsLink slug="reference/use-playback-rate-options">`usePlaybackRateOptions`</DocsLink> to own selection and generate each item. Its required `renderItem` callback renders the <DocsLink slug="reference/menu">`Menu.RadioItem`</DocsLink> root and receives item state containing the translated `label` and current `checked` value. It returns `null` when the <DocsLink slug="reference/feature-playback-rate">playback rate feature</DocsLink> is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -68,26 +70,21 @@ The group is available when the configured media exposes playback rates. Option 
 | --- | --- | --- |
 | `data-rate` | `number` | Current playback rate. |
 | `data-disabled` | Present / absent | Present when playback rate selection is disabled. |
+| `data-hidden` | Present / absent | Present when playback-rate selection is unavailable. |
 | `data-availability` | `"available"` / `"unavailable"` | Whether playback rates are available. |
 
-<FrameworkCase frameworks={["html"]}>
-  ```css
-  media-playback-rate-radio-group[data-availability="unavailable"] {
-    display: none;
-  }
-  ```
-</FrameworkCase>
+Unavailable groups receive the native `hidden` attribute.
 
 ## Accessibility
 
 The group uses the menu radio group pattern.
 
 <FrameworkCase frameworks={["react"]}>
-Give `Menu.RadioGroup` an accessible name with `aria-label` or a nested `Menu.GroupLabel`.
+The component receives an accessible label from the `label` prop or defaults to `Playback rate`. Override it with `aria-label` or `aria-labelledby`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-The element defaults to `Playback rate {rate}` (e.g. `Playback rate 1.5`). Override its accessible name with `aria-label` or `aria-labelledby`.
+The element receives an accessible label from the `label` property or defaults to `Playback rate`. Override it with `aria-label` or `aria-labelledby`.
 </FrameworkCase>
 
 ## Examples
@@ -117,6 +114,4 @@ The element defaults to `Playback rate {rate}` (e.g. `Playback rate 1.5`). Overr
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
-  <ComponentReference component="PlaybackRateRadioGroup" />
-</FrameworkCase>
+<ComponentReference component="PlaybackRateRadioGroup" />

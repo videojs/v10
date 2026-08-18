@@ -1,13 +1,115 @@
 import { kebabCase } from '../string/casing';
 
+export interface InlineStyleSnapshotEntry {
+  property: string;
+  value: string;
+  priority: string;
+}
+
+export type InlineStyleSnapshot = readonly InlineStyleSnapshotEntry[];
+
+function normalizeStyleProperty(property: string): string {
+  return property.startsWith('--') ? property : kebabCase(property);
+}
+
+export function getAnchorNames(element: HTMLElement): string[] {
+  const value = element.style.getPropertyValue('anchor-name').trim();
+
+  if (!value || value === 'none') return [];
+
+  return value
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+export function addAnchorName(element: HTMLElement, name: string): () => void {
+  const anchor = `--${name}`;
+  const anchors = getAnchorNames(element);
+  const added = !anchors.includes(anchor);
+
+  if (added) {
+    element.style.setProperty('anchor-name', [...anchors, anchor].join(', '));
+  }
+
+  return () => {
+    if (!added) return;
+
+    const next = getAnchorNames(element).filter((name) => name !== anchor);
+
+    if (next.length) {
+      element.style.setProperty('anchor-name', next.join(', '));
+    } else {
+      element.style.removeProperty('anchor-name');
+    }
+  };
+}
+
 export function applyStyles(element: HTMLElement, styles: Record<string, string | undefined>): void {
   for (const [prop, value] of Object.entries(styles)) {
     if (typeof value === 'string') {
-      // CSS custom properties (--*) are already in the correct format.
-      const key = prop.startsWith('--') ? prop : kebabCase(prop);
-      element.style.setProperty(key, value);
+      element.style.setProperty(normalizeStyleProperty(prop), value);
     }
   }
+}
+
+/** Capture authored inline values and priorities for the selected properties. */
+export function snapshotInlineStyles(element: HTMLElement, properties: Iterable<string>): InlineStyleSnapshot {
+  return [...properties].map((property) => {
+    const normalizedProperty = normalizeStyleProperty(property);
+
+    return {
+      property: normalizedProperty,
+      value: element.style.getPropertyValue(normalizedProperty),
+      priority: element.style.getPropertyPriority(normalizedProperty),
+    };
+  });
+}
+
+/** Restore a snapshot created by `snapshotInlineStyles`. */
+export function restoreInlineStyles(element: HTMLElement, snapshot: InlineStyleSnapshot): void {
+  for (const { property, value, priority } of snapshot) {
+    if (value) {
+      element.style.setProperty(property, value, priority);
+    } else {
+      element.style.removeProperty(property);
+    }
+  }
+}
+
+/** Apply inline styles for a synchronous callback and restore authored styles afterward. */
+export function withInlineStyles<Result>(
+  element: HTMLElement,
+  styles: Readonly<Record<string, string | undefined>>,
+  callback: () => Result
+): Result {
+  const snapshot = snapshotInlineStyles(element, Object.keys(styles));
+
+  try {
+    applyStyles(element, styles);
+    return callback();
+  } finally {
+    restoreInlineStyles(element, snapshot);
+  }
+}
+
+export interface ReadCSSLengthOptions {
+  source?: 'inline' | 'computed' | 'inline-or-computed' | undefined;
+}
+
+/** Read and resolve a CSS property as a pixel length. */
+export function readCSSLength(
+  element: Element,
+  property: string,
+  { source = 'inline-or-computed' }: ReadCSSLengthOptions = {}
+): number | null {
+  const normalizedProperty = normalizeStyleProperty(property);
+  let value =
+    source !== 'computed' && element instanceof HTMLElement ? element.style.getPropertyValue(normalizedProperty) : '';
+
+  if (!value && source !== 'inline') value = getComputedStyle(element).getPropertyValue(normalizedProperty);
+
+  return value.trim() ? resolveCSSLength(element, value) : null;
 }
 
 export function resolveCSSLength(el: Element, value: string): number {
@@ -17,42 +119,62 @@ export function resolveCSSLength(el: Element, value: string): number {
 
   const parsed = Number.parseFloat(trimmed);
 
-  if (Number.isNaN(parsed)) return 0;
-  if (/^-?\d*\.?\d+$/.test(trimmed) || trimmed.endsWith('px')) return parsed;
+  if (!Number.isNaN(parsed) && (/^-?\d*\.?\d+$/.test(trimmed) || trimmed.endsWith('px'))) return parsed;
 
   const doc = el.ownerDocument;
   const root = doc?.documentElement;
 
-  if (trimmed.endsWith('rem')) {
+  if (!Number.isNaN(parsed) && trimmed.endsWith('rem')) {
     const rootFontSize = root ? Number.parseFloat(getComputedStyle(root).fontSize) || 16 : 16;
     return parsed * rootFontSize;
   }
 
-  if (trimmed.endsWith('em')) {
+  if (!Number.isNaN(parsed) && trimmed.endsWith('em')) {
     const fontSize = el instanceof HTMLElement ? Number.parseFloat(getComputedStyle(el).fontSize) || 16 : 16;
     return parsed * fontSize;
   }
 
-  if (!doc) return parsed;
+  if (!doc) return Number.isNaN(parsed) ? 0 : parsed;
 
   const measurementEl = doc.createElement('div');
   measurementEl.style.position = 'absolute';
   measurementEl.style.visibility = 'hidden';
   measurementEl.style.pointerEvents = 'none';
   measurementEl.style.inlineSize = trimmed;
+
+  if (!measurementEl.style.inlineSize) return 0;
+
   measurementEl.style.blockSize = '0';
   measurementEl.style.padding = '0';
   measurementEl.style.border = '0';
   measurementEl.style.inset = '0';
 
+  const computed = getComputedStyle(el);
+  measurementEl.style.fontSize = computed.fontSize;
+
+  for (let i = 0; i < computed.length; i++) {
+    const name = computed.item(i);
+
+    if (name.startsWith('--')) {
+      measurementEl.style.setProperty(name, computed.getPropertyValue(name));
+    }
+  }
+
   const parent = doc.body ?? doc.documentElement;
 
-  if (!parent) return parsed;
+  if (!parent) return Number.isNaN(parsed) ? 0 : parsed;
 
   parent.appendChild(measurementEl);
+
+  if (getComputedStyle(measurementEl).inlineSize === 'auto') {
+    measurementEl.remove();
+    return 0;
+  }
 
   const pixels = measurementEl.getBoundingClientRect().width;
   measurementEl.remove();
 
-  return Number.isFinite(pixels) ? pixels : parsed;
+  if (Number.isFinite(pixels)) return pixels;
+
+  return Number.isNaN(parsed) ? 0 : parsed;
 }

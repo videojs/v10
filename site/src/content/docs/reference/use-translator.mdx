@@ -1,0 +1,38 @@
+---
+title: useTranslator
+description: React hook that returns the typed translator for the nearest I18nProvider
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import BasicUsageDemoReact from "@/components/docs/demos/use-translator/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/use-translator/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/use-translator/react/css/BasicUsage.css?raw";
+
+<FrameworkCase frameworks={["react"]}>
+
+`useTranslator` returns the translator from the nearest <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>. Control components pass text descriptors from core `getLabel()`. Custom UI can pass an opaque key with its English fallback.
+
+When no provider is mounted, the hook falls back to English registry strings so standalone demos do not throw.
+
+## Example
+
+Switch the provider locale to see `useTranslator` resolve a simple key and a parameterized key from the nearest provider.
+
+<StyleCase styles={["css"]}>
+  <Demo
+    files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}
+  >
+    <BasicUsageDemoReact client:idle />
+  </Demo>
+</StyleCase>
+
+<UtilReference util="useTranslator" />
+
+</FrameworkCase>

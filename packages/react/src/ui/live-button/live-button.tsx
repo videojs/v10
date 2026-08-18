@@ -1,8 +1,6 @@
-'use client';
-
 import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
 import { logMissingFeature, selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useLayoutEffect, useState } from 'react';
 
 import { useTranslator } from '../../i18n/context';
@@ -26,8 +24,7 @@ export interface LiveButtonProps extends UIComponentProps<'button', LiveButtonCo
  * itself rather than going through `createMediaButton`, since the LiveButton
  * needs three feature slices to detect the live edge and seek.
  *
- * Falls back to `LiveButtonCore.defaultText` (`'Live'` by default) when no
- * children are provided. Override the static field globally for i18n.
+ * Displays the translated live badge when no children are provided.
  *
  * @example
  * ```tsx
@@ -70,7 +67,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     if (media) core.setMedia(media);
     const state = media ? core.getState() : null;
-    const labelText = state ? resolveTranslation(translator, core.getLabel(state)) : undefined;
+    const labelText = state ? translateText(core.getLabel(state), translator) : undefined;
 
     useLayoutEffect(() => {
       if (!tooltipCtx) return;
@@ -85,7 +82,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     const attrs = core.getAttrs(state);
     const labelAttr = attrs['aria-label'];
-    const content = children ?? LiveButtonCore.defaultText;
+    const content = children ?? translateText(LiveButtonCore.defaultText, translator);
 
     return renderElement(
       'button',
@@ -99,7 +96,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
           {
             children: content,
             ...elementProps,
-            'aria-label': labelAttr ? resolveTranslation(translator, labelAttr) : labelAttr,
+            'aria-label': labelAttr ? translateText(labelAttr, translator) : labelAttr,
           },
           getButtonProps(),
         ],

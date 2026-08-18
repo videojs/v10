@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../../event';
 import { createPopupGroup } from '../../popover/popup-group';
-import { completeMenuItemSelection, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
+import { getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
 // ---------------------------------------------------------------------------
@@ -64,6 +64,29 @@ describe('createMenu', () => {
   // -------------------------------------------------------------------------
 
   describe('open/close', () => {
+    it('separates requested and committed open state', () => {
+      const onOpenChange = vi.fn();
+      const { menu } = createTestMenu({ onOpenChange });
+
+      menu.open();
+
+      expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+      expect(menu.input.current).toEqual({ active: false, status: 'idle' });
+
+      menu.syncOpen(true);
+
+      expect(menu.input.current).toEqual({ active: true, status: 'starting' });
+
+      menu.close();
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
+      expect(menu.input.current).toEqual({ active: true, status: 'starting' });
+
+      menu.syncOpen(false);
+
+      expect(menu.input.current).toEqual({ active: true, status: 'ending' });
+    });
+
     it('opens and calls onOpenChange', () => {
       const { menu, onOpenChange } = createTestMenu();
 
@@ -110,6 +133,24 @@ describe('createMenu', () => {
       menu.close();
 
       expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
+    it('resets registered descendant menus when a parent close is committed', () => {
+      const parent = createTestMenu();
+      const child = createTestMenu();
+      const grandchild = createTestMenu();
+      parent.menu.registerSubmenu(child.menu);
+      child.menu.registerSubmenu(grandchild.menu);
+      parent.menu.open();
+      child.menu.open();
+      grandchild.menu.open();
+      child.onOpenChange.mockClear();
+      grandchild.onOpenChange.mockClear();
+
+      parent.menu.close();
+
+      expect(child.onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
+      expect(grandchild.onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
     });
 
     it('closes the previously open grouped menu when another opens', () => {
@@ -280,34 +321,6 @@ describe('createMenu', () => {
     });
   });
 
-  describe('completeMenuItemSelection', () => {
-    it('closes the menu when selection happens in a root menu', () => {
-      const { menu, onOpenChange } = createTestMenu();
-
-      menu.open();
-      onOpenChange.mockClear();
-
-      completeMenuItemSelection(menu);
-
-      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
-    });
-
-    it('pops the parent menu when selection happens in a submenu', () => {
-      const { menu } = createTestMenu();
-      const { menu: parentMenu, onOpenChange: parentOpenChange } = createTestMenu();
-
-      parentMenu.open();
-      parentOpenChange.mockClear();
-      parentMenu.push('quality-menu', 'quality-trigger');
-
-      completeMenuItemSelection(menu, parentMenu);
-
-      expect(parentMenu.navigationInput.current.stack).toEqual([]);
-      expect(parentMenu.navigationInput.current.direction).toBe('back');
-      expect(parentOpenChange).not.toHaveBeenCalled();
-    });
-  });
-
   // -------------------------------------------------------------------------
   // triggerProps
   // -------------------------------------------------------------------------
@@ -385,6 +398,41 @@ describe('createMenu', () => {
       menu.setTriggerElement(trigger);
       menu.open();
       menu.close('imperative-action');
+
+      await vi.waitFor(() => {
+        expect(menu.input.current.active).toBe(false);
+      });
+
+      expect(focus).not.toHaveBeenCalled();
+    });
+
+    it('does not restore focus when Tab moves focus outside', async () => {
+      const { menu } = createTestMenu();
+      const trigger = document.createElement('button');
+      const content = document.createElement('div');
+      const outside = document.createElement('button');
+      const focus = vi.spyOn(trigger, 'focus');
+
+      menu.setTriggerElement(trigger);
+      menu.setContentElement(content);
+      menu.open();
+      menu.contentProps.onFocusOut(makeFocusEvent(outside));
+
+      await vi.waitFor(() => {
+        expect(menu.input.current.active).toBe(false);
+      });
+
+      expect(focus).not.toHaveBeenCalled();
+    });
+
+    it('does not restore focus after an outside click', async () => {
+      const { menu } = createTestMenu();
+      const trigger = document.createElement('button');
+      const focus = vi.spyOn(trigger, 'focus');
+
+      menu.setTriggerElement(trigger);
+      menu.open();
+      menu.close('outside-click');
 
       await vi.waitFor(() => {
         expect(menu.input.current.active).toBe(false);
@@ -486,6 +534,18 @@ describe('createMenu', () => {
       expect(element.tabIndex).toBe(0);
     });
 
+    it('sets the highlight type for pointer highlights', () => {
+      const { menu } = createTestMenu();
+      const element = addItem('Alpha');
+      menu.registerItem(element);
+
+      menu.highlight(element, { focus: false, pointer: true });
+      expect(element.getAttribute(MenuItemDataAttrs.highlighted)).toBe('pointer');
+
+      menu.highlight(element);
+      expect(element.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('removes data-highlighted and resets tabIndex on previously highlighted item', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
@@ -499,6 +559,27 @@ describe('createMenu', () => {
       expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
       expect(a.tabIndex).toBe(-1);
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('lays out an earlier pointer highlight before removing the previous highlight', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.highlight(b, { focus: false, pointer: true });
+      const setHighlight = vi.spyOn(a, 'setAttribute');
+      const layout = vi.spyOn(document.body, 'getBoundingClientRect');
+      const removeHighlight = vi.spyOn(b, 'removeAttribute');
+
+      menu.highlight(a, { focus: false, pointer: true });
+
+      expect(setHighlight).toHaveBeenCalledWith(MenuItemDataAttrs.highlighted, 'pointer');
+      expect(layout).toHaveBeenCalledOnce();
+      expect(removeHighlight).toHaveBeenCalledWith(MenuItemDataAttrs.highlighted);
+      expect(setHighlight.mock.invocationCallOrder[0]).toBeLessThan(layout.mock.invocationCallOrder[0] ?? 0);
+      expect(layout.mock.invocationCallOrder[0]).toBeLessThan(removeHighlight.mock.invocationCallOrder[0] ?? 0);
+      layout.mockRestore();
     });
 
     it('calls onHighlightChange with the new element', () => {
@@ -548,6 +629,20 @@ describe('createMenu', () => {
 
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
       expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+    });
+
+    it('skips a hidden first item', () => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Hidden');
+      const visible = addItem('Visible');
+      hidden.hidden = true;
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.highlightFirstItem();
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('can highlight the first item without scrolling it into view', () => {
@@ -616,6 +711,53 @@ describe('createMenu', () => {
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
+    it('ArrowDown skips items marked data-hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const hidden = addItem('Beta');
+      const c = addItem('Gamma');
+      hidden.setAttribute('data-hidden', '');
+      menu.registerItem(a);
+      menu.registerItem(hidden);
+      menu.registerItem(c);
+      menu.highlight(a);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it.each(['unavailable', 'unsupported'])('ArrowDown skips %s items', (availability) => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Hidden');
+      const visible = addItem('Visible');
+      hidden.setAttribute('data-availability', availability);
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ArrowDown preserves position when the highlighted item becomes hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(b);
+      b.setAttribute('data-hidden', '');
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('ArrowDown wraps from last to first', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
@@ -648,6 +790,22 @@ describe('createMenu', () => {
       menu.registerItem(a);
       menu.registerItem(b);
       menu.highlight(b);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowUp'));
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ArrowUp preserves position when the highlighted item becomes hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(b);
+      b.hidden = true;
 
       menu.contentProps.onKeyDown(makeKeyEvent('ArrowUp'));
 
@@ -742,42 +900,6 @@ describe('createMenu', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Submenu navigation
-  // -------------------------------------------------------------------------
-
-  describe('submenu navigation', () => {
-    it('pushes and pops submenu entries', () => {
-      const { menu } = createTestMenu();
-
-      menu.push('quality-menu', 'quality-trigger');
-      menu.pop();
-
-      expect(menu.navigationInput.current).toEqual({ stack: [], direction: 'back' });
-    });
-
-    it('ignores duplicate pushes for the active submenu', () => {
-      const { menu } = createTestMenu();
-
-      menu.push('quality-menu', 'quality-trigger');
-      menu.push('quality-menu', 'quality-trigger');
-      menu.pop();
-
-      expect(menu.navigationInput.current.stack).toEqual([]);
-    });
-
-    it('does not emit a navigation update when popping at root', () => {
-      const { menu } = createTestMenu();
-      const listener = vi.fn();
-      const cleanup = menu.navigationInput.subscribe(listener);
-
-      menu.pop();
-
-      expect(listener).not.toHaveBeenCalled();
-      cleanup();
-    });
-  });
-
-  // -------------------------------------------------------------------------
   // Type-ahead
   // -------------------------------------------------------------------------
 
@@ -800,6 +922,20 @@ describe('createMenu', () => {
       menu.contentProps.onKeyDown(makeKeyEvent('b'));
 
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ignores aria-hidden type-ahead matches', () => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Beta');
+      const visible = addItem('Bravo');
+      hidden.setAttribute('aria-hidden', 'true');
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('b'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('cycles through matching items when the same character is pressed repeatedly', () => {

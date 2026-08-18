@@ -24,10 +24,10 @@ export const VIDEO_PAGES = [
     resource: 'hlsTs',
   },
   {
-    name: 'HTML Simple HLS Video fMP4',
-    path: '/pages/html-simple-hls-video-fmp4.html',
+    name: 'HTML HLS Video fMP4',
+    path: '/pages/html-hls-video-fmp4.html',
     framework: 'html',
-    media: 'simple-hls-video',
+    media: 'hls-video',
     resource: 'hlsFmp4',
   },
   {

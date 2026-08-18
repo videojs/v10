@@ -1,12 +1,5 @@
-'use client';
-
-import {
-  type AnyPlayerStore,
-  createHotkey,
-  type HotkeyActionName,
-  isHotkeyToggleAction,
-  resolveHotkeyAction,
-} from '@videojs/core/dom';
+import type { AnyPlayerStore } from '@videojs/core/dom';
+import { createHotkey, type HotkeyActionName, isHotkeyToggleAction, resolveHotkeyAction } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 

@@ -5,7 +5,46 @@
  * V1 uses simple fixed-duration strategy (buffer N seconds ahead).
  */
 
-import type { Segment } from '../types';
+import { SEGMENT_TIME_EPSILON, type Segment } from '../types';
+
+/** A half-open `[start, end)` interval on the presentation timeline. */
+export interface TimeRange {
+  start: number;
+  end: number;
+}
+
+/**
+ * Merge intervals into sorted, disjoint ranges; touching or overlapping ranges
+ * (gap ≤ `epsilon`) are joined. Empty/inverted ranges are dropped.
+ */
+export function mergeTimeRanges(ranges: readonly TimeRange[], epsilon = SEGMENT_TIME_EPSILON): TimeRange[] {
+  const sorted = ranges.filter((r) => r.end > r.start).sort((a, b) => a.start - b.start);
+  const merged: TimeRange[] = [];
+  for (const r of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && r.start <= last.end + epsilon) {
+      last.end = Math.max(last.end, r.end);
+    } else {
+      merged.push({ start: r.start, end: r.end });
+    }
+  }
+  return merged;
+}
+
+/**
+ * Whether `[start, end)` is fully covered by the union of `merged` ranges,
+ * tolerating `epsilon` of overhang at each edge. `merged` must be disjoint and
+ * sorted (as returned by `mergeTimeRanges`), so full coverage means a single
+ * merged range contains the interval.
+ */
+export function isTimeRangeCovered(
+  start: number,
+  end: number,
+  merged: readonly TimeRange[],
+  epsilon = SEGMENT_TIME_EPSILON
+): boolean {
+  return merged.some((r) => r.start <= start + epsilon && r.end >= end - epsilon);
+}
 
 /**
  * Forward buffer configuration.
@@ -129,10 +168,25 @@ export function getSegmentsToLoad(
   // Find segments to load:
   // - Overlaps buffer window [currentTime, targetTime)
   // - Not already buffered at that time position
-  const toLoad = segments.filter((seg) => {
-    // Segment must overlap the buffer window
+  const toLoad = segments.filter((seg, i) => {
     const segmentEnd = seg.startTime + seg.duration;
-    const isInRange = seg.startTime < targetTime && segmentEnd > currentTime;
+    const isLast = i === segments.length - 1;
+    // Interior segments use strict `>` so a segment the playhead just finished
+    // (endTime === currentTime at a boundary) isn't reloaded. The terminal
+    // segment has no successor and no reachable position past it — the playhead
+    // is clamped to the presentation's range — so it needs no upper bound: it's
+    // loadable whenever the forward window reaches it. That resolves the
+    // exact-end seek (#1828) and the post-loop re-seek — where
+    // `MediaSource.duration`, clamped by `endOfStream()` to the true buffered
+    // end, has grown a hair past the model's EXTINF-derived end — with no
+    // dependency on any duration value.
+    //
+    // LIVE: for an un-ended live/DVR presentation `isLast` is the sliding edge
+    // segment; loading it eagerly here is benign today (forward-window-bounded,
+    // deduped by the buffered check), but the live effort should confirm the
+    // edge / end-of-stream interaction when it lands.
+    const overlapsPlayhead = isLast || segmentEnd > currentTime;
+    const isInRange = seg.startTime < targetTime && overlapsPlayhead;
 
     // Must not have a segment buffered at this time position
     const isNotBuffered = !bufferedStartTimes.has(seg.startTime);

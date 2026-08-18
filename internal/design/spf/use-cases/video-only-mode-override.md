@@ -32,7 +32,7 @@ for product context.
 
 - **Composition:** not implemented. The use case requires a parallel
   engine-factory + adapter pair, neither of which exists today.
-  `createSimpleHlsEngine` composes the full video + audio pipeline; this
+  `createHlsVideoEngine` composes the full video + audio pipeline; this
   variant would compose a subset.
 - **Definition depth:** coarse — variant shape sketched, engine-factory and
   adapter shapes named at the level of "parallel siblings to the existing
@@ -85,7 +85,7 @@ identically across both source shapes; what differs is the
 
 | Phase | What |
 |---|---|
-| **1 — Basic functionality** | Parallel engine-factory + adapter pair. The engine factory (`createHlsVideoOnlyEngine` or similar — mirroring the audio-axis sibling's `createHlsAudioOnlyEngine`) composes the video-side subset of `createSimpleHlsEngine`'s behavior list, subtracting audio-side behaviors entirely. The adapter (`SimpleHlsVideoOnlyMediaElement` or similar) wraps that engine. Includes empirical verification of Firefox `mozHasAudio` behavior under subtractive-audio composition — both for genuinely-no-audio sources and for mixed-source manifests with audio subtractively-composed-out (the latter behavior is less established and may differ from the former) |
+| **1 — Basic functionality** | Parallel engine-factory + adapter pair. The engine factory (`createHlsVideoOnlyEngine` or similar — mirroring the audio-axis sibling's `createHlsAudioEngine`) composes the video-side subset of `createHlsVideoEngine`'s behavior list, subtracting audio-side behaviors entirely. The adapter (`HlsVideoOnlyMediaElement` or similar) wraps that engine. Includes empirical verification of Firefox `mozHasAudio` behavior under subtractive-audio composition — both for genuinely-no-audio sources and for mixed-source manifests with audio subtractively-composed-out (the latter behavior is less established and may differ from the former) |
 | **2 — Features/functionality relevant to the use case** | Compose constituent feature behaviors as they land: [`subtitles`](../features/subtitles.md) for muted-video + captions a11y delivery pattern (a canonical video-only consumption shape). [`multi-language-audio`](../features/multi-language-audio.md) is *not* relevant here (audio subtracted), and Phase 2's "audio-abr-equivalent" doesn't apply on the video axis (video-abr is already Phase 1 baseline) |
 | **3 — Optimizations** | Alternative default configurations for video-only delivery: possibly muted-by-default playback (browser autoplay policies often allow muted-autoplay), GPU/thermal-aware quality caps when the consumer surface is known low-attention (ambient/background video), simpler `endOfStream` paths (single SourceBuffer to coordinate). Per [`README.md` § Implementation note](./README.md#implementation-note-customizing-behaviors-for-use-cases), the Path-A vs Path-B judgment applies for any behavior whose Phase 3 customization significantly diverges from the default |
 
@@ -95,7 +95,7 @@ Phase 1 is subtractive-only; Phases 2 and 3 surface the other mechanisms.
 
 ### Behaviors subtracted (Phase 1)
 
-From `createSimpleHlsEngine`'s composition, omit:
+From `createHlsVideoEngine`'s composition, omit:
 
 - `selectAudioTrack` — no audio rendition selection
 - `resolveAudioTrack` — no audio media playlist fetch
@@ -108,7 +108,7 @@ From `createSimpleHlsEngine`'s composition, omit:
 
 **None.** This use case ships as an *independent adapter* paired with its own
 engine factory. The variant-decision is encoded in the adapter choice itself —
-consumers instantiate `SimpleHlsVideoOnlyMediaElement` to opt in. No runtime
+consumers instantiate `HlsVideoOnlyMediaElement` to opt in. No runtime
 variant-decision behavior is needed.
 
 ### Alternative implementations (Phase 3 candidates)
@@ -140,8 +140,8 @@ Phase 1 baseline:
   plays video.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
   used with an alternative adapter shape. The variant ships its own
-  `SimpleHlsVideoOnlyMediaElement`-style adapter parallel to
-  `SimpleHlsMediaElement`. The `shareSignals` mechanism + mixin pattern
+  `HlsVideoOnlyMediaElement`-style adapter parallel to
+  `HlsVideoMediaElement`. The `shareSignals` mechanism + mixin pattern
   compose unchanged.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is.
   `MediaSource` + `endOfStream` gate compose unchanged across variants. The
@@ -166,15 +166,15 @@ Phase 2 (when relevant):
 ## Customer-policy surface
 
 The variant ships as an **independent adapter** parallel to
-`SimpleHlsMediaElement`:
+`HlsVideoMediaElement`:
 
 ```ts
 // Default (mixed AV delivery)
-const player = new SimpleHlsMediaElement();
+const player = new HlsVideoMediaElement();
 player.src = mixedSourceUrl;
 
 // Video-only mode override
-const videoPlayer = new SimpleHlsVideoOnlyMediaElement();
+const videoPlayer = new HlsVideoOnlyMediaElement();
 videoPlayer.src = sameMixedSourceUrl;
 ```
 
@@ -193,13 +193,13 @@ The variant composes identically regardless of signal source. Two paths
 exist; both target the same engine factory:
 
 **1. Adapter-upfront (target Phase 1).** Selecting
-`SimpleHlsVideoOnlyMediaElement` over `SimpleHlsMediaElement` *is* the
+`HlsVideoOnlyMediaElement` over `HlsVideoMediaElement` *is* the
 variant choice. No detect-from-parser logic, no runtime config branch.
 Used by consumers that know they want video-only delivery (the
 delivery-mode-choice scenarios in *Target delivery context*).
 
 **2. Detect-from-parser (future).** A routing-from-default-adapter path
-where `SimpleHlsMediaElement` (or a higher-level adapter) detects a
+where `HlsVideoMediaElement` (or a higher-level adapter) detects a
 video-only source shape from the parsed presentation
 (`presentation.audioTracks` empty) and switches its internal engine
 factory to the video-only variant for that source. Targets the
@@ -242,15 +242,15 @@ implementation pass landed the shared-factory pattern (see that doc's
 ## Open questions
 
 - **Empirical verification of video-only tolerance.** Does the current
-  `createSimpleHlsEngine` handle video-only manifests cleanly, or does
+  `createHlsVideoEngine` handle video-only manifests cleanly, or does
   `setupAudioBufferActors` / `loadAudioSegments` fail or no-op
   inconsistently when `presentation.audioTracks` is empty? Test fixture
   work needed before scoping the variant implementation in detail. Phase
   1 of this variant supplants the implicit tolerance entirely by
   composing the audio-side behaviors out, so the answer informs the
   rollout plan more than the variant's correctness.
-- **Adapter naming.** Lean: `SimpleHlsVideoOnlyMediaElement` to mirror the
-  audio-axis sibling's `SimpleHlsAudioOnlyMediaElement` (which landed in
+- **Adapter naming.** Lean: `HlsVideoOnlyMediaElement` to mirror the
+  audio-axis sibling's `HlsAudioMediaElement` (which landed in
   Phase 1 of that use case). Aligns with the existing
   `Simple{Variant}HlsMediaElement` naming pattern in
   `packages/spf/src/playback/engines/hls/`.
@@ -279,7 +279,7 @@ implementation pass landed the shared-factory pattern (see that doc's
 
 - **[`video-abr`](../features/video-abr.md)** — constituent baseline.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
-  constituent; variant adapter parallels `SimpleHlsMediaElement`.
+  constituent; variant adapter parallels `HlsVideoMediaElement`.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — constituent;
   composes unchanged. Firefox `mozHasAudio` cross-type invariant verification
   is Phase 1 scope.

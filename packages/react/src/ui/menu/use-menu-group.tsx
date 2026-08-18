@@ -1,5 +1,3 @@
-'use client';
-
 import { type ReactElement, useCallback, useMemo, useState } from 'react';
 
 import { MenuGroupContextProvider } from './context';

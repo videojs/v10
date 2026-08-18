@@ -1,31 +1,30 @@
-/* ==========================================================================
-   Media thumbnail
-   ========================================================================== */
-
 .media-minimal-skin .media-thumbnail {
+  position: relative;
   pointer-events: none;
+  background-color: oklch(0 0 0 / 0.9);
+  border-radius: calc(var(--spacing) * 2);
 
-  & .media-thumbnail__image-wrapper {
-    position: relative;
-    background-color: oklch(0 0 0 / 0.9);
-    border-radius: 0.5rem;
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    border-radius: inherit;
+    box-shadow:
+      0 0 0 1px oklch(0 0 0 / 0.05),
+      0 1px 3px 0 oklch(0 0 0 / 0.2),
+      0 1px 2px -1px oklch(0 0 0 / 0.2);
   }
-  & .media-thumbnail__image {
+
+  .media-thumbnail__image {
+    position: relative;
     display: block;
+    max-width: var(--thumbnail-max-width);
+    max-height: var(--max-height);
+    overflow: clip;
     border-radius: inherit;
   }
 
-  & .media-thumbnail__time {
-    display: block;
-    margin-top: 0.5rem;
-    text-align: center;
-  }
-
-  & .media-overlay {
-    opacity: 1;
-  }
-
-  & .media-thumbnail__spinner {
+  .media-thumbnail__spinner {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -33,22 +32,31 @@
     translate: -50% -50%;
   }
 
-  & .media-thumbnail__image,
-  & .media-thumbnail__spinner {
+  .media-thumbnail__image,
+  .media-thumbnail__spinner {
     transition: opacity 150ms ease-out;
   }
 
   &:not(:has(.media-thumbnail__image[data-loading])) {
-    & .media-thumbnail__spinner {
+    .media-thumbnail__spinner {
       --media-spinner-animation: none;
     }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    --media-spinner-animation: none;
+  }
+
   &:has(.media-thumbnail__image[data-loading]) {
-    & .media-thumbnail__image {
+    width: var(--thumbnail-max-width);
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+
+    .media-thumbnail__image {
       opacity: 0;
     }
-    & .media-thumbnail__spinner {
+    .media-thumbnail__spinner {
       opacity: 1;
     }
   }

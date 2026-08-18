@@ -1,6 +1,8 @@
+import { DEFAULT_LOCALE } from '@videojs/utils/i18n';
 import en from './locales/en';
-import { findLocaleKeys, getI18nTranslations, hasRegisteredLocale } from './registry';
-import type { Locale, Translations } from './types';
+import type { FlatTranslations, Locale } from './params';
+import { findLocaleKeys, hasRegisteredLocale } from './registry';
+import { flattenTranslations } from './utils';
 
 type BrowserTranslatorAvailability = 'available' | 'downloadable' | 'downloading' | 'unavailable';
 
@@ -66,10 +68,10 @@ async function translateProtectingPlaceholders(translator: BrowserTranslatorInst
   return restoreNamedPlaceholders(translated, slots);
 }
 
-const cache = new Map<string, Partial<Translations>>();
+const cache = new Map<string, Partial<FlatTranslations>>();
 
 function isEnglishLocaleTag(tag: string): boolean {
-  return tag === 'en' || tag.startsWith('en-');
+  return tag === DEFAULT_LOCALE || tag.startsWith(`${DEFAULT_LOCALE}-`);
 }
 
 function getBrowserTranslator(): BrowserTranslatorConstructor | undefined {
@@ -89,7 +91,7 @@ export function resolveBrowserTranslationTarget(locale: string): string | undefi
 export function shouldAttemptBrowserTranslation(
   locale: Locale,
   loadedLazyTags: readonly string[],
-  translations?: Partial<Translations>
+  translations?: Partial<FlatTranslations>
 ): boolean {
   const target = resolveBrowserTranslationTarget(locale);
   if (!target) return false;
@@ -100,8 +102,9 @@ export function shouldAttemptBrowserTranslation(
   return !findLocaleKeys(locale).some((tag) => !isEnglishLocaleTag(tag) && hasRegisteredLocale(tag));
 }
 
-function hasMissingEnglishTranslations(translations: Partial<Translations>): boolean {
-  return (Object.keys(en) as (keyof Translations)[]).some((key) => translations[key] === undefined);
+function hasMissingEnglishTranslations(translations: Partial<FlatTranslations>): boolean {
+  const english = flattenTranslations(en);
+  return (Object.keys(english) as (keyof FlatTranslations)[]).some((key) => translations[key] === undefined);
 }
 
 /**
@@ -111,7 +114,7 @@ function hasMissingEnglishTranslations(translations: Partial<Translations>): boo
 export async function getBrowserTranslations(
   locale: string,
   options?: GetBrowserTranslationsOptions
-): Promise<Partial<Translations>> {
+): Promise<Partial<FlatTranslations>> {
   const target = resolveBrowserTranslationTarget(locale);
   if (!target) return {};
 
@@ -124,7 +127,7 @@ export async function getBrowserTranslations(
   const downloadIfNeeded = options?.downloadIfNeeded ?? false;
 
   const availability = await Translator.availability({
-    sourceLanguage: 'en',
+    sourceLanguage: DEFAULT_LOCALE,
     targetLanguage: target,
   });
   if (availability === 'unavailable') return {};
@@ -140,10 +143,10 @@ export async function getBrowserTranslations(
 
   notifyDownloadStart();
 
-  const english = getI18nTranslations('en');
-  const keys = Object.keys(en) as (keyof Translations)[];
+  const english = flattenTranslations(en);
+  const keys = Object.keys(english) as (keyof FlatTranslations)[];
   const translator = await Translator.create({
-    sourceLanguage: 'en',
+    sourceLanguage: DEFAULT_LOCALE,
     targetLanguage: target,
     ...(downloadIfNeeded
       ? {
@@ -160,14 +163,14 @@ export async function getBrowserTranslations(
 
   const entries = await Promise.all(
     keys.map(async (key) => {
-      const value = english[key] ?? en[key];
+      const value = english[key];
       if (!value) return [key, ''] as const;
       const translated = await translateProtectingPlaceholders(translator, value);
       return [key, translated] as const;
     })
   );
 
-  const result = Object.fromEntries(entries) as Partial<Translations>;
+  const result = Object.fromEntries(entries) as Partial<FlatTranslations>;
   cache.set(target, result);
   return result;
 }

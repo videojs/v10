@@ -1,0 +1,15 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "..",
+    "lib": ["ES2022"],
+    "noEmit": true,
+    "isolatedDeclarations": false,
+    "composite": false,
+    "incremental": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["**/*.test-d.tsx"]
+}

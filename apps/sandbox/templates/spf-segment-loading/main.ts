@@ -6,15 +6,19 @@ import '@app/styles.css';
 //   src=<url>            Stream URL (overrides TEST_STREAM default)
 //   muted=true           Start muted
 //   autoplay=true        Start with autoplay enabled
+//   loop=true            Loop playback
 //   preload=auto|metadata|none  Initial preload mode
+//   avcOnly=true         Filter out HEVC renditions (avoids changeType; see the toggle)
 
+import { SOURCE_IDS, SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
-import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
-import { createSimpleHlsEngine } from '@videojs/spf/hls';
+import type { HlsVideoEngineSignals, HlsVideoEngineState } from '@videojs/spf/hls';
+import { createHlsVideoEngine, getMediaPlaylistMetadata } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
+const liveStatusDiv = document.getElementById('live-status') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
 const audioTrackButtonsDiv = document.getElementById('audio-track-buttons') as HTMLDivElement;
@@ -22,26 +26,85 @@ const textTrackButtonsDiv = document.getElementById('text-track-buttons') as HTM
 const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
 const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
 const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
+const srcPreset = document.getElementById('src-preset') as HTMLSelectElement;
 const srcInput = document.getElementById('src-input') as HTMLInputElement;
 const setSrcBtn = document.getElementById('set-src') as HTMLButtonElement;
+const avcOnlyToggle = document.getElementById('avc-only-toggle') as HTMLInputElement;
 const mutedToggle = document.getElementById('muted-toggle') as HTMLInputElement;
 const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLInputElement;
+const loopToggle = document.getElementById('loop-toggle') as HTMLInputElement;
 const preloadSelect = document.getElementById('preload-select') as HTMLSelectElement;
 const shareLink = document.getElementById('share-link') as HTMLAnchorElement;
 
 // ── Query params ──────────────────────────────────────────────────────────────
 const DEFAULT_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
+
+// Preset sources. The non-zero-PTS examples exercise `timestampOffset` relocation
+// (A/V encodes at native PTS ≠ 0, but currentTime/seekable stay 0-based). Apple's
+// example muxes HEVC + AVC renditions, so it needs AVC-only (see `avcOnly`).
+// `unsupported`, when set, is the reason SPF can't play the source; such presets
+// are shown disabled (see the picker population) rather than hidden.
+type Preset = { label: string; url: string; avcOnly?: boolean; unsupported?: string };
+
+// Harness-specific sources not in the shared registry. The Apple bipbop example
+// muxes HEVC + AVC, so it needs AVC-only — engine-limitation metadata that
+// doesn't belong in shared SOURCES (no other template needs it).
+const HARNESS_PRESETS: Preset[] = [
+  {
+    label: 'Apple bipbop HEVC (44ms A/V skew + VTT X-TIMESTAMP-MAP · needs AVC-only)',
+    url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
+    avcOnly: true,
+  },
+];
+
+// Dropdown = every HLS source from the shared registry (DASH/raw-mp4 filtered out
+// since the raw SPF HLS engine can't play them) plus the harness-specific extras.
+// SPF only demuxes fmp4/CMAF segments, not MPEG-TS, so TS sources are kept visible
+// but flagged unsupported (disabled in the picker) rather than silently dropped.
+// Unsupported presets sort to the end (stable sort preserves registry order otherwise).
+const PRESETS: Preset[] = [
+  // A source with no plain `url` needs a structured source this harness has no
+  // way to hand over — DRM, for one, which SPF cannot play anyway.
+  ...SOURCE_IDS.filter((id) => SOURCES[id].type === 'hls' && SOURCES[id].url).map((id) => {
+    const source = SOURCES[id];
+    const preset: Preset = { label: source.label, url: source.url ?? '' };
+    if (source.subType === 'ts') preset.unsupported = 'TS — unsupported';
+    return preset;
+  }),
+  ...HARNESS_PRESETS,
+].sort((a, b) => Number(!!a.unsupported) - Number(!!b.unsupported));
+
+// Apple's bipbop example muxes HEVC (`hvc1`/`hev1`) + AVC renditions of the same content;
+// cross-codec ABR would need `SourceBuffer.changeType()` (not yet implemented), so filtering
+// to AVC keeps ABR within one codec family. Harmless for single-codec Mux sources.
+const avcOnly = (track: { codecs?: string[] }) =>
+  !track.codecs?.some((codec) => codec.startsWith('hvc1') || codec.startsWith('hev1'));
+
 const params = new URLSearchParams(window.location.search);
 const INITIAL_SRC = params.get('src') ?? DEFAULT_STREAM;
 const INITIAL_MUTED = params.get('muted') === 'true';
 const INITIAL_AUTOPLAY = params.get('autoplay') === 'true';
+const INITIAL_LOOP = params.get('loop') === 'true';
 const INITIAL_PRELOAD = (params.get('preload') as 'auto' | 'metadata' | 'none') ?? 'none';
+const INITIAL_AVC_ONLY = params.get('avcOnly') === 'true';
+
+// Populate the preset picker; selecting one loads it (and enables AVC-only if the
+// preset needs it). Reflects the current src when it matches a preset.
+for (const preset of PRESETS) {
+  const label = preset.unsupported ? `${preset.label} (${preset.unsupported})` : preset.label;
+  const option = new Option(label, preset.url);
+  option.disabled = !!preset.unsupported;
+  srcPreset.add(option);
+}
 
 // Apply initial query-param values to UI
 srcInput.value = INITIAL_SRC;
+srcPreset.value = PRESETS.some((preset) => preset.url === INITIAL_SRC) ? INITIAL_SRC : '';
 mutedToggle.checked = INITIAL_MUTED;
 autoplayToggle.checked = INITIAL_AUTOPLAY;
+loopToggle.checked = INITIAL_LOOP;
 preloadSelect.value = INITIAL_PRELOAD;
+avcOnlyToggle.checked = INITIAL_AVC_ONLY;
 updateShareUrl();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -60,15 +123,21 @@ function formatBandwidth(bps: number): string {
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
-function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
+function formatFrameRate(frameRate: { frameRateNumerator: number; frameRateDenominator?: number }): string {
+  const fps = frameRate.frameRateNumerator / (frameRate.frameRateDenominator ?? 1);
+  // Trim to two decimals then drop trailing zeros so 30 shows as "30" and 29.97 stays "29.97".
+  return `${Number.parseFloat(fps.toFixed(2))} fps`;
+}
+
+function getVideoTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
 }
 
-function getAudioTracks(presentation: SimpleHlsEngineState['presentation']) {
+function getAudioTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ?? [];
 }
 
-function getTextTracks(presentation: SimpleHlsEngineState['presentation']) {
+function getTextTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks ?? [];
 }
 
@@ -92,7 +161,9 @@ function updateShareUrl() {
   if (src && src !== DEFAULT_STREAM) p.set('src', src);
   if (mutedToggle.checked) p.set('muted', 'true');
   if (autoplayToggle.checked) p.set('autoplay', 'true');
+  if (loopToggle.checked) p.set('loop', 'true');
   if (preloadSelect.value !== 'none') p.set('preload', preloadSelect.value);
+  if (avcOnlyToggle.checked) p.set('avcOnly', 'true');
   const url = `${window.location.origin}${window.location.pathname}${p.size > 0 ? `?${p}` : ''}`;
   shareLink.href = url;
   shareLink.textContent = url;
@@ -202,10 +273,11 @@ function getVideoSelectionGroups(tracks: ReturnType<typeof getVideoTracks>): Vid
       const width = 'width' in track ? track.width : undefined;
       const height = 'height' in track ? track.height : undefined;
       const res = width && height ? `${width}×${height} @ ` : '';
+      const fps = 'frameRate' in track && track.frameRate ? ` · ${formatFrameRate(track.frameRate)}` : '';
       const filter: VideoSelectionGroup['filter'] = { bandwidth: track.bandwidth };
       if (width) filter.width = width;
       if (height) filter.height = height;
-      group = { key, label: `${res}${formatBandwidth(track.bandwidth)}`, filter, members: [] };
+      group = { key, label: `${res}${formatBandwidth(track.bandwidth)}${fps}`, filter, members: [] };
       groups.set(key, group);
     }
     // Member ids (one per CDN for redundant streams) are surfaced in the
@@ -246,7 +318,7 @@ function buildVideoTrackButtons(groups: VideoSelectionGroup[]) {
 function updateVideoTrackSelection(
   tracks: ReturnType<typeof getVideoTracks>,
   selectedVideoTrackId: string | undefined,
-  userFilter: SimpleHlsEngineState['userVideoTrackSelection']
+  userFilter: HlsVideoEngineState['userVideoTrackSelection']
 ) {
   const isManual = userFilter !== undefined;
 
@@ -381,7 +453,7 @@ function buildAudioTrackButtons(groups: AudioSelectionGroup[]) {
 function updateAudioTrackSelection(
   tracks: ReturnType<typeof getAudioTracks>,
   selectedAudioTrackId: string | undefined,
-  userFilter: SimpleHlsEngineState['userAudioTrackSelection']
+  userFilter: HlsVideoEngineState['userAudioTrackSelection']
 ) {
   const isPinned = userFilter !== undefined;
 
@@ -527,6 +599,68 @@ function renderResolutionStatus() {
   }
 }
 
+// ── Live status ───────────────────────────────────────────────────────────────
+
+/** The selected timeline-bearing track (video ?? audio) from the live state. */
+function selectedTimelineTrack() {
+  if (!signals) return undefined;
+  const state = snapshot(signals.state);
+  const trackId = state.selectedVideoTrackId ?? state.selectedAudioTrackId;
+  if (!state.presentation?.selectionSets || !trackId) return undefined;
+  for (const selectionSet of state.presentation.selectionSets) {
+    for (const switchingSet of selectionSet.switchingSets) {
+      const track = switchingSet.tracks.find((t) => t.id === trackId);
+      if (track) return track;
+    }
+  }
+  return undefined;
+}
+
+/** HOLD-BACK live latency for the current source: 3 × targetDuration (the engine's rule, incl. its 6s fallback). */
+function liveHoldBack(): number {
+  const track = selectedTimelineTrack();
+  const targetDuration = track ? getMediaPlaylistMetadata(track)?.targetDuration : undefined;
+  return (targetDuration || 6) * 3;
+}
+
+/** The live-edge seek target: seekable end − HOLD-BACK, clamped into the window. */
+function liveEdgeTarget(): number | undefined {
+  const { seekable } = video;
+  if (!seekable.length) return undefined;
+  const end = seekable.end(seekable.length - 1);
+  return Math.max(seekable.start(0), end - liveHoldBack());
+}
+
+/**
+ * Live status strip: stream type, the seekable (live) window as declared to
+ * the element, and how far the playhead trails the edge. Interval-driven (not
+ * an effect) because the window slides via reloads *and* the playhead moves —
+ * both need reflecting even while nothing signal-shaped changes.
+ */
+function updateLiveStatus() {
+  const streamType = signals ? snapshot(signals.state).presentation?.streamType : undefined;
+  if (streamType !== 'live') {
+    liveStatusDiv.className = '';
+    liveStatusDiv.textContent = streamType === 'on-demand' ? 'stream: on-demand' : '';
+    return;
+  }
+
+  const track = selectedTimelineTrack();
+  const playlistType = track ? getMediaPlaylistMetadata(track)?.playlistType : undefined;
+  const { seekable } = video;
+  const window = seekable.length
+    ? `[${seekable.start(0).toFixed(2)} … ${seekable.end(seekable.length - 1).toFixed(2)}]`
+    : '(none yet)';
+  const behindEdge = seekable.length ? (seekable.end(seekable.length - 1) - video.currentTime).toFixed(2) : '—';
+
+  liveStatusDiv.className = 'is-live';
+  liveStatusDiv.textContent =
+    `stream: live${playlistType === 'EVENT' ? ' (EVENT/DVR)' : ''} · ` +
+    `window: ${window} · behind edge: ${behindEdge}s · hold-back: ${liveHoldBack().toFixed(1)}s`;
+}
+
+setInterval(updateLiveStatus, 500);
+
 function inspectState() {
   if (!engine) {
     stateDiv.innerHTML = '<h2>State Inspector</h2><div class="error">Engine not initialized</div>';
@@ -602,16 +736,19 @@ function inspectState() {
 log('=== SPF Segment Loading POC Test ===');
 log(`Stream: ${INITIAL_SRC}`);
 
-let engine: ReturnType<typeof createSimpleHlsEngine>;
-let signals: SimpleHlsEngineSignals;
+let engine: ReturnType<typeof createHlsVideoEngine>;
+let signals: HlsVideoEngineSignals;
 let cleanupEffects: () => void = () => {};
 
 function startEngine(src: string) {
   cleanupEffects();
   if (engine) engine.destroy();
 
-  engine = createSimpleHlsEngine({
+  engine = createHlsVideoEngine({
     initialBandwidth: 1_000_000,
+    // AVC-only filters HEVC so ABR never crosses codec families (no changeType).
+    // Omitted (not set to undefined) when off, per exactOptionalPropertyTypes.
+    ...(avcOnlyToggle.checked ? { canPlayTrack: avcOnly } : {}),
     onSignalsReady: (refs) => {
       signals = refs;
     },
@@ -758,6 +895,7 @@ function startEngine(src: string) {
 try {
   video.muted = INITIAL_MUTED;
   video.autoplay = INITIAL_AUTOPLAY;
+  video.loop = INITIAL_LOOP;
   startEngine(INITIAL_SRC);
 } catch (error) {
   log(`✗ Error creating engine: ${(error as Error).message}`, 'error');
@@ -775,6 +913,22 @@ document.getElementById('pause')!.addEventListener('click', () => {
   video.pause();
   log('Video paused');
 });
+document.getElementById('seek-to-edge')!.addEventListener('click', () => {
+  const target = liveEdgeTarget();
+  if (target === undefined) return log('Seek to live edge: no seekable window', 'warning');
+  video.currentTime = target;
+  log(`Seek to live edge: ${target.toFixed(2)}s`, 'success');
+});
+document.getElementById('seek-behind-window')!.addEventListener('click', () => {
+  const { seekable } = video;
+  if (!seekable.length) return log('Seek out of window: no seekable window', 'warning');
+  // 30s behind the window start. The browser clamps the seek to `seekable`, so
+  // while playing this exercises the window-exit rescue as the window slides
+  // past — watch the playhead snap back to the edge on the next reload.
+  const target = Math.max(0, seekable.start(0) - 30);
+  video.currentTime = target;
+  log(`Seek out of window: requested ${target.toFixed(2)}s (browser may clamp to seekable)`, 'warning');
+});
 document.getElementById('inspect')!.addEventListener('click', inspectState);
 document.getElementById('clearLogs')!.addEventListener('click', () => {
   logsDiv.innerHTML = '';
@@ -784,11 +938,28 @@ setSrcBtn.addEventListener('click', () => {
   const url = srcInput.value.trim();
   if (!url) return;
   log(`Setting src: ${url}`, 'info');
+  srcPreset.value = PRESETS.some((preset) => preset.url === url) ? url : '';
   startEngine(url);
   updateShareUrl();
 });
 
 srcInput.addEventListener('input', updateShareUrl);
+
+srcPreset.addEventListener('change', () => {
+  const preset = PRESETS.find((p) => p.url === srcPreset.value);
+  if (!preset) return;
+  srcInput.value = preset.url;
+  if (preset.avcOnly) avcOnlyToggle.checked = true;
+  log(`Preset: ${preset.label}${preset.avcOnly ? ' (AVC-only enabled)' : ''}`, 'info');
+  startEngine(preset.url);
+  updateShareUrl();
+});
+
+avcOnlyToggle.addEventListener('change', () => {
+  log(`AVC-only: ${avcOnlyToggle.checked} — re-creating engine`, 'warning');
+  startEngine(srcInput.value.trim() || DEFAULT_STREAM);
+  updateShareUrl();
+});
 
 mutedToggle.addEventListener('change', () => {
   video.muted = mutedToggle.checked;
@@ -799,6 +970,12 @@ mutedToggle.addEventListener('change', () => {
 autoplayToggle.addEventListener('change', () => {
   video.autoplay = autoplayToggle.checked;
   log(`Autoplay: ${autoplayToggle.checked}`);
+  updateShareUrl();
+});
+
+loopToggle.addEventListener('change', () => {
+  video.loop = loopToggle.checked;
+  log(`Loop: ${loopToggle.checked}`);
   updateShareUrl();
 });
 
@@ -823,5 +1000,7 @@ video.addEventListener('canplaythrough', () => log('📺 Video: canplaythrough',
 video.addEventListener('playing', () => log('📺 Video: playing', 'success'));
 video.addEventListener('pause', () => log('📺 Video: pause'));
 video.addEventListener('waiting', () => log('📺 Video: waiting', 'warning'));
+video.addEventListener('seeking', () => log(`📺 Video: seeking → ${video.currentTime.toFixed(2)}s`));
+video.addEventListener('seeked', () => log(`📺 Video: seeked @ ${video.currentTime.toFixed(2)}s`, 'success'));
 video.addEventListener('ended', () => log('📺 Video: ended ✅ endOfStream() worked!', 'success'));
 video.addEventListener('error', () => log(`📺 Video: error - ${video.error?.message}`, 'error'));

@@ -1,0 +1,27 @@
+@import "tailwindcss" theme(inline);
+@import "./base.css";
+@import "./themes/default.css";
+
+@source "../**/*.tsx";
+@source "./**/*.tailwind.ts";
+
+@theme inline {
+  --color-media-controls: var(--media-controls-color);
+  --color-media-control-hover: var(--media-control-hover-background);
+  --color-media-slider-buffer: var(--media-slider-buffer-background);
+  --color-media-slider-track: var(--media-slider-track-background);
+  --color-media-surface: var(--media-surface-background);
+  --font-media: var(--media-font-family);
+  --text-media: var(--media-font-size);
+  --spacing-media-control: var(--media-control-size);
+  --spacing-media-controls-gap: var(--media-controls-gap);
+  --spacing-media-controls-padding: var(--media-controls-padding);
+  --spacing-media-icon: var(--media-icon-size);
+  --spacing-media-slider-thumb: var(--media-slider-thumb-size);
+  --spacing-media-slider-track: var(--media-slider-track-size);
+  --radius-media-pill: var(--media-radius-pill);
+  --radius-media-surface: var(--media-radius-surface);
+  --shadow-media-surface: 0 0 0 1px var(--media-surface-border), 0 2px 8px var(--media-shadow-color);
+  --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-color);
+  --blur-media-surface: var(--media-surface-backdrop-blur);
+}

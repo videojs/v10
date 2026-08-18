@@ -1,5 +1,3 @@
-'use client';
-
 import { CaptionsButtonCore, CaptionsButtonDataAttrs } from '@videojs/core';
 import { selectTextTrack } from '@videojs/core/dom';
 
@@ -18,6 +16,7 @@ export const CaptionsButton = createMediaButton<CaptionsButtonCore, CaptionsButt
   selector: selectTextTrack,
   action: (core, state) => core.toggle(state),
   hotkeyAction: 'toggleSubtitles',
+  isSupported: (state) => !state.hidden,
 });
 
 export namespace CaptionsButton {

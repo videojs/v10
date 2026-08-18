@@ -66,9 +66,9 @@ function deriveState(
  *
  * Writes `state.loadActivated = true` the first time a `play` or `seeking`
  * event fires on the attached media element for the current source — or
- * immediately on entry if the element is already in such a state
- * (`!el.paused` or `el.seeking`), mirroring autoplay / native-controls /
- * direct-DOM-`play()` scenarios.
+ * immediately on entry if the element is already committed to loading
+ * (`el.autoplay`, `!el.paused`, or `el.seeking`), covering autoplay,
+ * native-controls, and direct-DOM-`play()` scenarios.
  *
  * Sticky-true *within a source identity*: subsequent play/pause/seek
  * cycles don't flip back. Source identity = (mediaElement, presentation
@@ -125,7 +125,7 @@ function trackLoadTriggersSetup({
           const el = context.mediaElement.get()!;
 
           const setLoadActivated = () => state.loadActivated.set(true);
-          if (!el.paused || el.seeking) {
+          if (el.autoplay || !el.paused || el.seeking) {
             setLoadActivated();
             return;
           }

@@ -40,7 +40,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/airplay-button/html/css/Ba
 
 Opens the WebKit AirPlay playback target picker and reflects session state. AirPlay is a WebKit-only feature, so the button reports `availability: "unsupported"` outside Safari (macOS and iOS). On supported platforms availability flips to `"available"` once Safari discovers at least one AirPlay receiver on the local network, and `"unavailable"` otherwise.
 
-The toggle is a no-op unless `availability` is `"available"` — clicking the button while `"unsupported"` or `"unavailable"` will not open the picker. Style the button accordingly (see [Styling](#styling) below) so its appearance matches its actual behavior.
+The button is hidden until `availability` is `"available"`: the HTML custom element receives the native `hidden` attribute, and the React component returns `null`. An explicitly disabled, otherwise available button stays visible and focusable with `aria-disabled="true"` and `data-disabled`, but does not open the picker.
 
 The component consumes the unified <DocsLink slug="reference/feature-remote-playback">`remotePlayback`</DocsLink> store feature alongside `CastButton`: both buttons drive their state from the same feature, but each only surfaces on its supported platform (WebKit for AirPlay, Chromium for Cast).
 
@@ -52,6 +52,8 @@ WebKit does not expose a `"connecting"` intermediate state — the `state` slice
 |-----------|--------|-------------|
 | `data-airplay-state` | `"disconnected"` \| `"connecting"` \| `"connected"` | Current AirPlay session state |
 | `data-availability` | `"available"` \| `"unavailable"` \| `"unsupported"` | Whether AirPlay is reachable on the current platform |
+| `data-disabled` | Present / absent | Present when the button is non-interactive |
+| `data-hidden` | Present / absent | Present on the HTML element while AirPlay is unavailable or unsupported |
 
 Use `data-airplay-state` to swap icons or labels based on the session state:
 
@@ -75,23 +77,27 @@ React renders a `<button>` element. Add a `className` and use it as the selector
 ```
 </FrameworkCase>
 
-Consider hiding the button on platforms where AirPlay isn't supported:
+Use `data-disabled` to style an explicitly disabled, available button:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
-media-airplay-button[data-availability="unsupported"] {
-  display: none;
+media-airplay-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```css
-.airplay-button[data-availability="unsupported"] {
-  display: none;
+.airplay-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 ```
 </FrameworkCase>
+
+Unavailable and unsupported buttons are hidden automatically. No availability selector or extra hiding CSS is required.
 
 ## Accessibility
 

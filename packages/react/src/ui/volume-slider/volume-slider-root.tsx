@@ -1,8 +1,6 @@
-'use client';
-
 import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import { listen } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useRef, useState } from 'react';
 
@@ -18,6 +16,7 @@ const noopVolume = {
   volume: 0,
   muted: false,
   volumeAvailability: 'unsupported' as const,
+  mutedAvailability: 'unsupported' as const,
   setVolume: () => 0,
   toggleMuted: () => false,
 };
@@ -48,6 +47,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const volume = usePlayer(selectVolume);
     const translator = useTranslator();
     const locale = useLocale();
+    const isUnavailable = volume?.volumeAvailability !== 'available';
+    const isDisabled = Boolean(disabled) || isUnavailable;
 
     const [core] = useState(() => new VolumeSliderCore());
     core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
@@ -55,35 +56,36 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
 
     // Keep refs to the latest dynamic values for stable closures.
     const volumeRef = useLatestRef(volume);
-    const disabledRef = useLatestRef(disabled);
+    const disabledRef = useLatestRef(isDisabled);
 
     const getPercent = () => (volumeRef.current?.volume ?? 0) * 100;
     const getStepPercent = () => core.getStepPercent();
     const setVolume = (percent: number) => volumeRef.current?.setVolume(percent / 100);
 
-    const { state, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } = useSlider<VolumeSliderCore.State>({
-      computeState: (input) => {
-        core.setInput(input);
-        core.setMedia(volume ?? noopVolume);
-        return core.getState();
-      },
-      getPercent,
-      getStepPercent,
-      getLargeStepPercent: () => core.getLargeStepPercent(),
-      orientation,
-      disabled,
-      adjustPercent: (rawPercent, thumbSize, trackSize) =>
-        core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
-      getCSSVars: getSliderCSSVars,
-      onValueChange: setVolume,
-      onValueCommit: setVolume,
-      onDragStart,
-      onDragEnd,
-    });
+    const { state, input, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } =
+      useSlider<VolumeSliderCore.State>({
+        computeState: (input) => {
+          core.setInput(input);
+          core.setMedia(volume ?? noopVolume);
+          return core.getState();
+        },
+        getPercent,
+        getStepPercent,
+        getLargeStepPercent: () => core.getLargeStepPercent(),
+        orientation,
+        disabled: isDisabled,
+        adjustPercent: (rawPercent, thumbSize, trackSize) =>
+          core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
+        getCSSVars: getSliderCSSVars,
+        onValueChange: setVolume,
+        onValueCommit: setVolume,
+        onDragStart,
+        onDragEnd,
+      });
 
     const [wheelHandler] = useState(() =>
       createWheelStep({
-        isDisabled: () => !!disabledRef.current || !volumeRef.current,
+        isDisabled: () => disabledRef.current,
         getPercent: () => (volumeRef.current?.volume ?? 0) * 100,
         getStepPercent: () => core.getWheelStepPercent(),
         onValueChange: (percent) => volumeRef.current?.setVolume(percent / 100),
@@ -109,11 +111,15 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       return null;
     }
 
+    if (state.hidden) return null;
+
     return (
       <SliderProvider
         value={{
           state,
           pointerValue: core.valueFromPercent(state.pointerPercent),
+          input,
+          getPointerValue: (percent) => core.valueFromPercent(percent),
           thumbRef,
           thumbProps,
           stateAttrMap: VolumeSliderDataAttrs,
@@ -121,10 +127,10 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
             const attrs = core.getAttrs(sliderState as VolumeSliderCore.State);
             return {
               ...attrs,
-              'aria-label': resolveTranslation(translator, attrs['aria-label']),
-              'aria-valuetext': resolveTranslation(
-                translator,
+              'aria-label': translateText(attrs['aria-label'], translator),
+              'aria-valuetext': translateText(
                 attrs['aria-valuetext'],
+                translator,
                 core.getValueTextParams(sliderState as VolumeSliderCore.State)
               ),
             };

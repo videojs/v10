@@ -1,4 +1,4 @@
-import type { MediaControlsState } from '../../media/state';
+import type { MediaControlsState } from '@videojs/media';
 
 export interface ControlsState {
   visible: boolean;

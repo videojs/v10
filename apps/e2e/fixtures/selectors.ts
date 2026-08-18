@@ -25,7 +25,7 @@ function unchecked(selector: string): string {
 const menu = '[role="menu"]';
 const item = '[role="menuitem"]';
 const option = '[role="menuitemradio"]';
-const activeMenu = `${menu}[data-menu-view-state="active"]`;
+const activeSubmenu = `${menu}[data-submenu][data-open]:not([data-ending-style])`;
 const playbackRateOptions = [
   `#playback-rate-menu ${option}`,
   withinControls(`.media-menu--playback-rate ${option}`),
@@ -49,6 +49,8 @@ export const SELECTORS = {
   muteButton: 'media-mute-button, .media-button--mute',
   fullscreenButton: 'media-fullscreen-button, .media-button--fullscreen',
   pipButton: 'media-pip-button, .media-button--pip',
+  castButton: 'media-cast-button, .media-button--cast',
+  airPlayButton: 'media-airplay-button, .media-button--airplay',
   captionsButton: 'media-captions-button, .media-button--captions',
   playbackRateButton: [
     withinControls('media-playback-rate-button'),
@@ -56,8 +58,9 @@ export const SELECTORS = {
     withinControls('button[aria-haspopup="menu"][aria-label^="Playback rate"]:not(.media-menu__item)'),
   ].join(', '),
   playbackRateUncheckedOptions: unchecked(playbackRateOptions),
-  activeMenuOptions: `${activeMenu} ${option}`,
-  activeMenuUncheckedOptions: unchecked(`${activeMenu} ${option}`),
+  activeMenuOptions: `${activeSubmenu} ${option}`,
+  activeMenuPanel: `${activeSubmenu}.media-menu__panel`,
+  activeMenuUncheckedOptions: unchecked(`${activeSubmenu} ${option}`),
   settingsButton: [
     withinControls('.media-button--settings'),
     withinControls('button[commandfor="settings-menu"]'),
@@ -69,7 +72,7 @@ export const SELECTORS = {
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls
   timeSlider: 'media-time-slider, .media-time-controls .media-slider',
-  volumeSlider: 'media-volume-slider, .media-slider[data-orientation="vertical"]',
+  volumeSlider: 'media-volume-slider, .media-popover--volume .media-slider',
   sliderThumb: 'media-slider-thumb, .media-slider__thumb',
 
   // Display elements
@@ -81,17 +84,17 @@ export const SELECTORS = {
     '[data-type="duration"].media-time',
     '[data-type="remaining"].media-time',
   ].join(', '),
-  poster: 'media-poster, img[data-visible]',
+  timeToggle: 'media-time[toggle], time.media-time[role="button"]',
+  poster: 'media-poster, img[data-loaded]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
   thumbnail: 'media-slider-thumbnail, .media-thumbnail__image',
 
-  // Popover & tooltip
   tooltip: 'media-tooltip, .media-tooltip',
   popover: 'media-popover, .media-popover',
   errorDialog: 'media-error-dialog, .media-error',
 
   // Media element — matches all renderer custom elements and native media
-  media: 'video, audio, hlsjs-video, simple-hls-video, native-hls-video, dash-video, mux-video, mux-audio',
+  media: 'video, audio, hlsjs-video, hls-video, native-hls-video, dash-video, mux-video, mux-audio',
 } as const;
 
 /** Data attributes used for player state (same across both renderers). */

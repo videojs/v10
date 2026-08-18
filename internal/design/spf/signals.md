@@ -321,7 +321,7 @@ happened, in what order, relative to other events.
 
 `trackPlaybackInitiated` is the clearest current example. Its logic is:
 
-> *When not initiated:* listen for the next `play` event on the current element.  
+> *When not initiated:* listen for the next `play` event on the current element.
 > *When initiated:* listen for the next qualifying reset — url changes, or element swaps
 > while paused.
 
