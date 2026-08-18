@@ -26,6 +26,7 @@
     "docs"
   ],
   "exports": {
+    "./package.json": "./package.json",
     ".": {
       "types": "./dist/dev/index.d.ts",
       "development": "./dist/dev/index.js",
