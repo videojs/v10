@@ -100,6 +100,11 @@ jobs:
       # `pnpm pack` resolves that `workspace:*` to the current release, so without
       # it an install pulls a published @videojs/element alongside the preview one
       # and ends up with two copies of the custom-element base.
+      #
+      # --template uploads apps/sandbox as a StackBlitz project, so a reviewer can
+      # open a running player built from the pull request. Its `dev` script
+      # regenerates the gitignored src/ from templates/ on boot, so the sandbox
+      # still works even though src/ is never part of the upload.
       - name: Publish preview packages
         env:
           VIDEOJS_SKIP_PACKAGE_DOCS: '1'
@@ -113,3 +118,4 @@ jobs:
           './packages/spf'
           './packages/store'
           './packages/utils'
+          --template './apps/sandbox'
