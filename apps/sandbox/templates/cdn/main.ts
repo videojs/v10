@@ -440,7 +440,7 @@ async function render() {
         ${isVideoPreset(preset) ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}
       </${mediaTag}>
-      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin="anonymous" />` : ''}
     </${skinTag}>
   `;
 

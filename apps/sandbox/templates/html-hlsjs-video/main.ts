@@ -50,7 +50,7 @@ async function render() {
           ${renderChapters(getChapters(state.source))}
           ${renderStoryboard(storyboard)}
         </hlsjs-video>
-        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin="anonymous" />` : ''}
       </${tag}>
     </${playerTag}>
   `);
