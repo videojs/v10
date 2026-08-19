@@ -3,15 +3,6 @@ import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import type { HlsEngineHost } from './types';
 
-// Internal channel for `HlsJsMedia` to hand the delegate bridge the author's
-// `disableRemotePlayback` intent, kept off every class's public surface.
-const authorPreference = new WeakMap<object, boolean>();
-
-/** Record the author's `disableRemotePlayback` intent for a delegate's AirPlay bridge. */
-export function setAuthorDisableRemotePlayback(delegate: object, disabled: boolean): void {
-  authorPreference.set(delegate, disabled);
-}
-
 /**
  * Adds an AirPlay-capable fallback `<source>` to the attached video element so
  * Safari can hand the original HLS manifest off to AirPlay receivers while
@@ -28,6 +19,8 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
   class HlsJsMediaAirPlay extends (BaseClass as Constructor<HlsEngineHost>) {
     #sourceEl: HTMLSourceElement | null = null;
     #disconnect: AbortController | null = null;
+    /** Whether disableRemotePlayback was set on the media element */
+    #authorDisableRemotePlayback = false;
 
     constructor(...args: any[]) {
       super(...args);
@@ -40,6 +33,13 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       });
     }
 
+    override attach(target: HTMLVideoElement): void {
+      // Snapshot the author's intent before `super.attach` runs hls.js's
+      // `attachMedia`, which forces `disableRemotePlayback` on for MMS.
+      this.#authorDisableRemotePlayback = target.disableRemotePlayback ?? false;
+      super.attach(target);
+    }
+
     #init(): void {
       this.#destroy();
 
@@ -47,8 +47,8 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       if (!target || !isWebKitAirPlayCapable(target)) return;
 
       // Counter the `disableRemotePlayback = true` hls.js sets for MMS; AirPlay
-      // requires the picker on this element.
-      if (!authorPreference.get(this)) {
+      // requires the picker on this element. The author's intent wins.
+      if (!this.#authorDisableRemotePlayback) {
         target.disableRemotePlayback = false;
       }
       this.#attachSource(target);

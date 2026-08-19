@@ -5,7 +5,6 @@ import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import type { MediaConfig } from '../media-host';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
-import { setAuthorDisableRemotePlayback } from './airplay-bridge';
 import { HlsJsOnlyMedia } from './hls-js-only';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
@@ -212,13 +211,6 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
         Hls.isSupported() && contentType === ContentTypes.M3U8 && this.config.preferPlayback !== PlaybackTypes.NATIVE;
 
       this.#delegate = useMse ? new HlsJsOnlyMedia({ config: { ...this.config?.hlsJs } }) : new NativeHlsMedia();
-
-      // The AirPlay bridge lives on the delegate; read the author's current
-      // intent now, before the delegate attaches and hls.js forces the flag on
-      // for MMS. Reading here (not once at `attach`) picks up a later write.
-      if (this.#delegate instanceof HlsJsOnlyMedia) {
-        setAuthorDisableRemotePlayback(this.#delegate, this.#mediaElement?.disableRemotePlayback ?? false);
-      }
 
       bridgeEvents(this.#delegate, this);
 

@@ -1,7 +1,7 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HlsJsMediaAirPlayMixin, setAuthorDisableRemotePlayback } from '../airplay-bridge';
+import { HlsJsMediaAirPlayMixin } from '../airplay-bridge';
 import type { HlsEngineHost } from '../types';
 
 function createEngine(url = ''): Hls {
@@ -33,6 +33,10 @@ class FakeHost extends EventTarget {
   constructor(engine: Hls | null = null) {
     super();
     this.engine = engine;
+  }
+
+  attach(target: HTMLMediaElement) {
+    this.target = target;
   }
 }
 
@@ -79,12 +83,12 @@ describe('HlsJsMediaAirPlayMixin', () => {
     expect(source?.src).toContain('master.m3u8');
   });
 
-  it('sets disableRemotePlayback = false on the target', () => {
+  it('sets disableRemotePlayback = false when the author has not disabled it', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
-    video.disableRemotePlayback = true;
-    host.target = video;
+    host.attach(video); // captures the author value (false) before hls.js runs
+    video.disableRemotePlayback = true; // hls.js forces it on for MMS
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -96,26 +100,11 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const host = new AirPlayHost(engine);
     const video = createVideo();
     video.disableRemotePlayback = true;
-    host.target = video;
-    // HlsJsMedia captured the author's intent before hls.js ran.
-    setAuthorDisableRemotePlayback(host, true);
+    host.attach(video); // captures the author value (true) before hls.js runs
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
     expect(video.disableRemotePlayback).toBe(true);
-  });
-
-  it('enables AirPlay when disableRemotePlayback was set programmatically (no author intent)', () => {
-    const engine = createEngine();
-    const host = new AirPlayHost(engine);
-    const video = createVideo();
-    // hls.js sets this directly on the element; no author intent was captured.
-    video.disableRemotePlayback = true;
-    host.target = video;
-
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-
-    expect(video.disableRemotePlayback).toBe(false);
   });
 
   it('updates the <source> src on MANIFEST_LOADING', () => {
