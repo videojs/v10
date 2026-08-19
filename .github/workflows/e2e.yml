@@ -8,6 +8,10 @@ on:
   pull_request:
     types: [opened, labeled, synchronize]
 
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   e2e:
     name: E2E (${{ matrix.browser }})
