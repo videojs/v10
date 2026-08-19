@@ -93,7 +93,6 @@ export function observeRenderedSize(element: Element, onResize: (size: RenderedS
     size = next;
     emit();
   });
-
   const stopWatchingDevicePixelRatio = watchDevicePixelRatio(emit);
 
   return () => {

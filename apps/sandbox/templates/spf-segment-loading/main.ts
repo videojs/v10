@@ -184,20 +184,19 @@ function updateNowPlayingQuality() {
   }
 }
 
-// The measurement `observePlayerSize` writes — the CSS box and the device pixel
-// ratio — plus the cap it implies: the smallest rendition tier covering the
-// player in device pixels, which is what capToPlayerSize narrows the candidate
-// set to. Drag the video frame's corner to move it.
+// The reading `trackPlayerResolution` writes — the element's rendered size in
+// device pixels — plus the cap it implies: the smallest rendition tier covering
+// it, which is what playerResolutionCap narrows the candidate set to. Drag the
+// video frame's corner to move it.
 function updatePlayerSizeDisplay() {
   if (!engine) return;
-  const width = engine.state.playerWidth.get();
-  const height = engine.state.playerHeight.get();
-  const scale = engine.state.playerScale.get() ?? 1;
-  if (!width || !height) {
+  const playerResolution = engine.state.playerResolution.get();
+  if (!playerResolution) {
     playerSizeDiv.textContent = '📐 Player size: not measured (cap inert)';
     return;
   }
-  const area = width * scale * (height * scale);
+  const { width, height } = playerResolution;
+  const area = width * height;
   const covering = getVideoTracks(engine.state.presentation.get())
     .map((track) => {
       const trackWidth = 'width' in track ? (track.width ?? 0) : 0;
@@ -210,7 +209,7 @@ function updatePlayerSizeDisplay() {
     .filter((tier) => tier.area >= area)
     .sort((a, b) => a.area - b.area);
   const cap = covering[0]?.label ?? 'none — player exceeds every rendition';
-  playerSizeDiv.textContent = `📐 Player: ${width}×${height} CSS px @ ${scale}x  ·  ${Math.round(area).toLocaleString()} device px²  ·  cap: ${cap}`;
+  playerSizeDiv.textContent = `📐 Player: ${width}×${height} device px  ·  cap: ${cap}`;
 }
 
 // Mirrors getBandwidthEstimate logic from bandwidth-estimator.ts.

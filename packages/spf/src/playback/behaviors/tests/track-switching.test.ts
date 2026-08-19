@@ -34,9 +34,7 @@ interface SwitchVideoTrackState {
   bandwidthState?: BandwidthState;
   selectedVideoTrackId?: string;
   userVideoTrackSelection?: Partial<VideoTrack>;
-  playerWidth?: number;
-  playerHeight?: number;
-  playerScale?: number;
+  playerResolution?: { readonly width: number; readonly height: number };
 }
 
 function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<SwitchVideoTrackState> {
@@ -45,9 +43,7 @@ function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<S
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(initial.userVideoTrackSelection),
-    playerWidth: signal<number | undefined>(initial.playerWidth),
-    playerHeight: signal<number | undefined>(initial.playerHeight),
-    playerScale: signal<number | undefined>(initial.playerScale),
+    playerResolution: signal<SwitchVideoTrackState['playerResolution']>(initial.playerResolution),
   };
 }
 
@@ -436,7 +432,7 @@ describe('switchVideoTrack', () => {
     });
   });
 
-  describe('capToPlayerSize (player-size cap)', () => {
+  describe('playerResolutionCap (player-resolution cap)', () => {
     const sized = (id: string, bandwidth: number, width: number, height: number): PartiallyResolvedVideoTrack => ({
       ...createVideoTrack(id, bandwidth),
       width,
@@ -464,27 +460,11 @@ describe('switchVideoTrack', () => {
       reactor.destroy();
     });
 
-    it('is inert for a zero-sized measurement', async () => {
-      const state = makeState({
-        presentation: createPresentation(ladder),
-        bandwidthState: ampleBandwidth,
-        playerWidth: 0,
-        playerHeight: 0,
-      });
-
-      const reactor = switchVideoTrack.setup({ state });
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('1080p');
-
-      reactor.destroy();
-    });
-
     it('caps to the tier matching the player exactly', async () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerWidth: 1280,
-        playerHeight: 720,
+        playerResolution: { width: 1280, height: 720 },
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -501,8 +481,7 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerWidth: 800,
-        playerHeight: 450,
+        playerResolution: { width: 800, height: 450 },
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -516,8 +495,7 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerWidth: 160,
-        playerHeight: 90,
+        playerResolution: { width: 160, height: 90 },
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -531,8 +509,7 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerWidth: 3840,
-        playerHeight: 2160,
+        playerResolution: { width: 3840, height: 2160 },
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -546,21 +523,18 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerWidth: 1920,
-        playerHeight: 1080,
+        playerResolution: { width: 1920, height: 1080 },
       });
 
       const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('1080p');
 
-      state.playerWidth.set(640);
-      state.playerHeight.set(360);
+      state.playerResolution.set({ width: 640, height: 360 });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('360p');
 
-      state.playerWidth.set(1920);
-      state.playerHeight.set(1080);
+      state.playerResolution.set({ width: 1920, height: 1080 });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('1080p');
 
@@ -574,8 +548,7 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: ampleBandwidth,
-        playerWidth: 160,
-        playerHeight: 90,
+        playerResolution: { width: 160, height: 90 },
         userVideoTrackSelection: { width: 1920, height: 1080, bandwidth: 4_800_000 },
       });
 
@@ -591,8 +564,7 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(ladder),
         bandwidthState: createBandwidthState(800_000),
-        playerWidth: 1280,
-        playerHeight: 720,
+        playerResolution: { width: 1280, height: 720 },
       });
 
       const reactor = switchVideoTrack.setup({ state });
@@ -610,48 +582,12 @@ describe('switchVideoTrack', () => {
       const state = makeState({
         presentation: createPresentation(withUnsized),
         bandwidthState: ampleBandwidth,
-        playerWidth: 160,
-        playerHeight: 90,
+        playerResolution: { width: 160, height: 90 },
       });
 
       const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('no-resolution');
-
-      reactor.destroy();
-    });
-
-    it('compares in device pixels, scaling the box by the measured ratio', async () => {
-      // A 640×360 CSS box on a 2x display is 1280×720 device pixels, so the
-      // covering tier is 720p rather than the 360p the CSS box alone implies.
-      const state = makeState({
-        presentation: createPresentation(ladder),
-        bandwidthState: ampleBandwidth,
-        playerWidth: 640,
-        playerHeight: 360,
-        playerScale: 2,
-      });
-
-      const reactor = switchVideoTrack.setup({ state });
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('720p');
-
-      reactor.destroy();
-    });
-
-    it('compares CSS pixels when the measurement carries no ratio', async () => {
-      // `observePlayerSize` leaves `playerScale` unset when it isn't tracking the
-      // ratio (`useDevicePixelRatio: false`), which the cap reads as 1x.
-      const state = makeState({
-        presentation: createPresentation(ladder),
-        bandwidthState: ampleBandwidth,
-        playerWidth: 640,
-        playerHeight: 360,
-      });
-
-      const reactor = switchVideoTrack.setup({ state });
-      await flush();
-      expect(state.selectedVideoTrackId.get()).toBe('360p');
 
       reactor.destroy();
     });

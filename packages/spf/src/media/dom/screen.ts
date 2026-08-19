@@ -16,7 +16,7 @@
  * reacting on top rather than the reader holding state of its own.
  */
 
-import { listen } from '@videojs/utils/dom';
+import { getDevicePixelRatio, listen, watchDevicePixelRatio } from '@videojs/utils/dom';
 import { shallowEqual } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 
@@ -64,9 +64,10 @@ export function getScreenResolution(
   const screen = globalThis.screen;
   if (!screen) return undefined;
 
-  // `|| 1` covers a missing or nonsense ratio: a CSS-pixel reading is still true
-  // and still cappable, so it isn't worth failing the whole answer over.
-  const ratio = useDevicePixelRatio ? globalThis.devicePixelRatio || 1 : 1;
+  // A missing or nonsense ratio falls back to 1 (see `getDevicePixelRatio`): a
+  // CSS-pixel reading is still true and still cappable, so it isn't worth failing
+  // the whole answer over.
+  const ratio = useDevicePixelRatio ? getDevicePixelRatio() : 1;
 
   // Rounded because device pixels are whole and a fractional ratio doesn't divide
   // a screen evenly. `NaN` from a nonsense dimension fails the check below, since
@@ -105,10 +106,9 @@ export function getScreenResolution(
  *   when the display it was on goes away.
  * - **`screen.orientation` change** — rotation, which swaps the axes without
  *   necessarily resizing the window.
- * - **a `(resolution: <ratio>dppx)` media query** — the device pixel ratio
- *   changing under a window that kept its size, which is the cross-display drag
- *   between displays of different density. Each query only answers about the ratio
- *   it was built for, so it reports one change and its handler arms the next.
+ * - **a `(resolution: <ratio>dppx)` media query** (`watchDevicePixelRatio`) — the
+ *   device pixel ratio changing under a window that kept its size, which is the
+ *   cross-display drag between displays of different density.
  *
  *   Worth keeping despite looking redundant, because it is the only coverage that
  *   case has in WebKit and Firefox: neither implements `screen`'s change event,
@@ -128,7 +128,7 @@ export function watchScreenResolution(
   options: ScreenResolutionOptions = { useDevicePixelRatio: true }
 ): () => void {
   // One signal for every listener, so stopping is one call rather than a handle
-  // per subscription. Also makes a late `watchRatio` inert: `addEventListener`
+  // per subscription. Also makes a late ratio re-arm inert: `addEventListener`
   // drops a listener whose signal has already aborted.
   const disconnect = new AbortController();
   const { signal } = disconnect;
@@ -152,27 +152,7 @@ export function watchScreenResolution(
   // nothing with it — there is no subscription yet to strand.
   onChange(current);
 
-  // A `dppx` query only answers about the ratio it was built for, so each one
-  // reports a single change and the handler builds the next. `once: true` is what
-  // keeps that from accumulating listeners: the fired one is gone before the
-  // replacement is armed, with no handle to track. Same shape as MDN's snippet
-  // for this, whose earlier non-re-arming version fired exactly once and stopped.
-  const watchRatio = () => {
-    const query = globalThis.matchMedia?.(`(resolution: ${globalThis.devicePixelRatio}dppx)`);
-    if (!query) return;
-
-    listen(
-      query,
-      'change',
-      () => {
-        watchRatio();
-        check();
-      },
-      { once: true, signal }
-    );
-  };
-
-  watchRatio();
+  watchDevicePixelRatio(check, signal);
 
   // Each signal is optional for the same reason the reading is: an environment
   // missing one has nothing to report from it, which is not a reason to fail.

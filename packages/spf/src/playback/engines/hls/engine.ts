@@ -47,7 +47,6 @@ import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
-import { observePlayerSize, type PlayerSizeCapConfig } from '../../behaviors/dom/observe-player-size';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -57,6 +56,7 @@ import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-ra
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
+import { type PlayerResolution, trackPlayerResolution } from '../../behaviors/dom/track-player-resolution';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 // Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
 // `video/audio/textMessagePipelines` finalConfig entries, the `mediaContainerData`
@@ -150,13 +150,12 @@ export interface HlsVideoEngineState {
   errors?: SvtaError[];
   currentTime?: number;
   /**
-   * Rendered box of the attached media element in CSS pixels, plus the
-   * `devicePixelRatio` it was measured at. Owned by `observePlayerSize`; absent
-   * together when there's nothing to measure.
+   * The player element's rendered pixel dimensions, or `undefined` where there
+   * is nothing to measure. Written by `trackPlayerResolution`, read by the
+   * `playerResolutionCap` selection rule — which treats `undefined` as
+   * "don't cap".
    */
-  playerWidth?: number;
-  playerHeight?: number;
-  playerScale?: number;
+  playerResolution?: PlayerResolution;
   loadActivated?: boolean;
   /**
    * One-shot command: start the current source at this position
@@ -313,10 +312,16 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   quality?: Partial<QualityConfig>;
   /**
-   * Player-size cap tuning (see `PlayerSizeCapConfig`). Defaults:
-   * `DEFAULT_PLAYER_SIZE_CAP_CONFIG` (both `true`).
+   * Whether video renditions are capped to the player element's rendered size.
+   * Read by `trackPlayerResolution`; `false` measures nothing, which leaves the
+   * `playerResolutionCap` rule inert. Defaults to `true`.
    */
-  playerSizeCap?: Partial<PlayerSizeCapConfig>;
+  capRenditionToPlayerSize?: boolean;
+  /**
+   * Whether `state.playerResolution` is reported in device pixels. Read by
+   * `trackPlayerResolution`; defaults to `true`.
+   */
+  useDevicePixelRatio?: boolean;
   /**
    * Multi-CDN failover monitor tuning. `cooldownMs` is how long a CDN stays
    * excluded after a failed fetch trips it. Defaults:
@@ -523,7 +528,7 @@ export function createHlsVideoEngine(
 
       // Ordering isn't load-bearing — selection is reactive, so a measurement
       // that lands after the first pick just re-fires it.
-      observePlayerSize,
+      trackPlayerResolution,
       switchVideoTrack,
       switchAudioTrack,
       // Mid-stream audio-buffer flush on language switch is handled in

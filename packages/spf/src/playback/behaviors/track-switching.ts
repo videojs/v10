@@ -14,10 +14,10 @@
  *
  *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
  *      partial-track match; an empty match falls through to the full set.
- *   2. **player size** — a soft filter on the player measurement
- *      (`capToPlayerSize`, video only): narrow to the smallest rendition tier
- *      covering the player, plus everything below it. No-op without a
- *      measurement.
+ *   2. **player resolution** — a soft filter on `playerResolution`
+ *      (`playerResolutionCap`, video only): narrow to the smallest rendition
+ *      tier covering the player element, plus everything below it. No-op
+ *      without a measurement.
  *   3. **active CDN** — a soft filter on `cdnPriority` (`preferActiveCdn`):
  *      narrow to the highest-priority CDN that still has tracks; an empty match
  *      falls through. Shared by video and audio, so every type stays on one CDN
@@ -42,7 +42,7 @@
  * `setupTrackSwitching` owns only the lifecycle and runs what it's given. Video
  * and audio run constraints `[excludeFailedCdns, excludeUnplayableTracks]` then
  * rules `[filterByUserSelection, preferActiveCdn, rankByBandwidth]` and take the
- * head; video inserts `capToPlayerSize` after the user filter, and
+ * head; video inserts `playerResolutionCap` after the user filter, and
  * `switchVideoTrack` also accepts ABR tuning config, `switchAudioTrack` takes
  * none. `switchTextTrack` differs — selection is *optional* (captions are
  * opt-in / off-able), so it runs `[excludeFailedCdns]` + `[preferActiveCdn]` and
@@ -327,15 +327,17 @@ type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = 
   SwitchVideoTrackConfig;
 
 /**
- * State the player-size cap reads: TrackSwitchingStateMap plus the *optional*
- * player measurement — its CSS-pixel box (`playerWidth` / `playerHeight`) and the
- * device-pixel ratio it was measured at (`playerScale`), manifested by
- * `observePlayerSize`.
+ * State the player-resolution cap reads: TrackSwitchingStateMap plus the
+ * *optional* player measurement, manifested by `trackPlayerResolution`.
+ *
+ * Structurally compatible with `behaviors/dom/track-player-resolution`'s
+ * `PlayerResolution` rather than importing it: this module is DOM-free (project
+ * references enforce that), and a rule comparing pixel areas needs two numbers,
+ * not a player. Same shape, and for the same reason, as `screenResolutionCap`'s
+ * view of `screenResolution`.
  */
-type PlayerSizeCapStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
-  playerWidth?: ReadonlySignal<number | undefined>;
-  playerHeight?: ReadonlySignal<number | undefined>;
-  playerScale?: ReadonlySignal<number | undefined>;
+type PlayerResolutionCapStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
+  playerResolution?: ReadonlySignal<{ readonly width: number; readonly height: number } | undefined>;
 };
 
 /**
@@ -397,9 +399,10 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
 }
 
 /**
- * Player-size cap — a soft filter, video only. Narrows to the renditions worth
- * delivering at the player's rendered size, so a small embed doesn't pull
- * segments nobody can perceive.
+ * Player-resolution cap — a soft filter, video only. Narrows to the renditions
+ * worth delivering at the player element's rendered size, so a small embed
+ * doesn't pull segments nobody can perceive. The tighter sibling of
+ * `screenResolutionCap`: the element's box, not the screen behind it.
  *
  * The cap is the *smallest tier that still covers the player*, and everything at
  * or below it survives — not "everything at or below the player's area," which
@@ -412,22 +415,18 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  * out — they can't be judged against the player, and dropping them could strand
  * a source whose renditions all omit it.
  *
- * The measurement arrives as a CSS-pixel box plus the ratio it was measured at,
- * and this rule is where the two combine into the area renditions are compared
- * against. An absent ratio — `observePlayerSize` not tracking it — compares CSS
- * pixels.
+ * Reading `state.playerResolution` through its signal is what subscribes the
+ * chain to resizes; `undefined` — no signal composed, or nothing to measure —
+ * means "don't cap" rather than a cap of zero, so the chain proceeds unnarrowed.
  */
-function capToPlayerSize<S extends SelectionKey, T extends SwitchableTrack>(
+function playerResolutionCap<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
-  { state }: SelectionRuleDeps<PlayerSizeCapStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
+  { state }: SelectionRuleDeps<PlayerResolutionCapStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
 ): readonly T[] {
-  const width = state.playerWidth?.get();
-  const height = state.playerHeight?.get();
-  if (!width || !height) return tracks;
+  const playerResolution = state.playerResolution?.get();
+  if (!playerResolution) return tracks;
 
-  // Both axes scale, so the area scales by the ratio squared.
-  const scale = state.playerScale?.get() ?? 1;
-  const playerPixelArea = width * scale * (height * scale);
+  const playerPixelArea = playerResolution.width * playerResolution.height;
 
   const covering = tracks.map((track) => resolutionArea(track)).filter((area) => area >= playerPixelArea);
   // Nothing covers the player — no opinion, fall through to the full set.
@@ -765,7 +764,7 @@ export const switchVideoTrack = defineBehavior({
         userSelectionKey: 'userVideoTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks],
-        rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
+        rules: [filterByUserSelection, playerResolutionCap, preferActiveCdn, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
     }),

@@ -46,20 +46,22 @@ describe('watchDevicePixelRatio', () => {
   it('arms a resolution query against the current ratio', () => {
     vi.stubGlobal('devicePixelRatio', 2);
     const queries = stubMatchMedia();
+    const controller = new AbortController();
 
-    const cleanup = watchDevicePixelRatio(() => {});
+    watchDevicePixelRatio(() => {}, controller.signal);
 
     expect(queries.map((query) => query.media)).toEqual(['(resolution: 2dppx)']);
 
-    cleanup();
+    controller.abort();
   });
 
   it('reports the new ratio and re-arms against it', () => {
     vi.stubGlobal('devicePixelRatio', 2);
     const queries = stubMatchMedia();
     const onChange = vi.fn();
+    const controller = new AbortController();
 
-    const cleanup = watchDevicePixelRatio(onChange);
+    watchDevicePixelRatio(onChange, controller.signal);
 
     vi.stubGlobal('devicePixelRatio', 3);
     queries[0]?.dispatchEvent(new Event('change'));
@@ -67,14 +69,14 @@ describe('watchDevicePixelRatio', () => {
     expect(onChange).toHaveBeenCalledWith(3);
     expect(queries.map((query) => query.media)).toEqual(['(resolution: 2dppx)', '(resolution: 3dppx)']);
 
-    // The superseded query is detached — a stale match can't report again.
+    // The superseded query fired its `once` listener — a stale match can't report again.
     queries[0]?.dispatchEvent(new Event('change'));
     expect(onChange).toHaveBeenCalledTimes(1);
 
-    cleanup();
+    controller.abort();
   });
 
-  it('stops reporting after cleanup', () => {
+  it('stops reporting after the returned cleanup', () => {
     vi.stubGlobal('devicePixelRatio', 2);
     const queries = stubMatchMedia();
     const onChange = vi.fn();
@@ -86,9 +88,23 @@ describe('watchDevicePixelRatio', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('stops reporting once the signal aborts', () => {
+    vi.stubGlobal('devicePixelRatio', 2);
+    const queries = stubMatchMedia();
+    const onChange = vi.fn();
+    const controller = new AbortController();
+
+    watchDevicePixelRatio(onChange, controller.signal);
+    controller.abort();
+
+    queries[0]?.dispatchEvent(new Event('change'));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('does nothing when matchMedia is unavailable', () => {
     vi.stubGlobal('matchMedia', undefined);
 
-    expect(() => watchDevicePixelRatio(() => {})()).not.toThrow();
+    expect(() => watchDevicePixelRatio(() => {}, new AbortController().signal)).not.toThrow();
   });
 });
