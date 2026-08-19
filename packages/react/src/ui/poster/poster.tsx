@@ -34,7 +34,11 @@ interface ImageRequest {
  *
  * <Poster srcSet="poster-480.jpg 480w, poster-1080.jpg 1080w" sizes="100vw" />
  *
- * <Poster render={(props) => <Image {...props} alt="" fill />} />
+ * <Poster
+ *   render={({ src, ...props }: ComponentProps<'img'>) =>
+ *     src ? <Image {...props} src={src} alt="" fill /> : null
+ *   }
+ * />
  * ```
  */
 export const Poster = forwardRef(function Poster(

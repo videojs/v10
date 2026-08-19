@@ -66,16 +66,24 @@ The component is the `<img>`, so image attributes go straight on it:
 <Poster srcSet="poster-480.jpg 480w, poster-1080.jpg 1080w" sizes="100vw" />
 ```
 
-To render something else, use `render`. It receives the poster URL as `src`:
+To render something else, use `render`. It receives the poster URL as `src`, undefined until one resolves:
 
 ```tsx
-<Poster render={(props) => <Image {...props} alt="" fill />} />
+<Poster
+  render={({ src, ...props }: ComponentProps<'img'>) =>
+    src ? <Image {...props} src={src} alt="" fill /> : null
+  }
+/>
 ```
 
 Inside a skin, pass the same function as `renderPoster`. The skin draws your image in place of its own:
 
 ```tsx
-<VideoSkin renderPoster={(props) => <Image {...props} alt="" fill />} />
+<VideoSkin
+  renderPoster={({ src, ...props }: ComponentProps<'img'>) =>
+    src ? <Image {...props} src={src} alt="" fill /> : null
+  }
+/>
 ```
 
 A skin styles the `<img>` it draws directly. Render something that is not an `<img>` and its sizing is yours.
