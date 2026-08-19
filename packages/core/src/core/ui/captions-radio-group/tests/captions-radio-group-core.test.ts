@@ -7,6 +7,7 @@ function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTe
     chaptersCues: [],
     thumbnailCues: [],
     thumbnailTrackSrc: null,
+    thumbnailTrackCrossOrigin: null,
     textTrackList: [],
     subtitlesShowing: false,
     toggleSubtitles: vi.fn(() => true),

@@ -6,6 +6,7 @@ import {
   type ThumbnailImage,
 } from '@videojs/core';
 import { createThumbnail, selectTextTrack } from '@videojs/core/dom';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { CSSProperties } from 'react';
 import { forwardRef, useMemo, useRef, useState } from 'react';
 
@@ -60,6 +61,18 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
 
   const thumbnail = useMemo(() => core.findActiveThumbnail(thumbnails, time), [core, thumbnails, time]);
 
+  // Leaving `crossOrigin` unset means "follow the media element", so thumbnails
+  // keep working on a CORS-enabled player without a skin having to thread a prop
+  // through. `null` or `''` opts out and fetches the sprites no-CORS.
+  //
+  // Only the <track> path inherits: `thumbnails` passed directly may point at a
+  // host that has nothing to do with the media element.
+  const resolvedCrossOrigin = !isUndefined(crossOrigin)
+    ? crossOrigin || undefined
+    : externalThumbnails?.length
+      ? undefined
+      : (textTrack?.thumbnailTrackCrossOrigin ?? undefined);
+
   // Track src changes via the handle.
   handle.updateSrc(thumbnail?.url);
 
@@ -108,7 +121,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
               aria-hidden="true"
               decoding="async"
               src={thumbnail?.url}
-              crossOrigin={crossOrigin === '' || crossOrigin === null ? undefined : crossOrigin}
+              crossOrigin={resolvedCrossOrigin}
               loading={loading}
               style={imgStyle}
               // React's types omit `| undefined` from fetchPriority — cast to satisfy exactOptionalPropertyTypes.

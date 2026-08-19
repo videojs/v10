@@ -47,6 +47,7 @@ function createMenuStore(overrides: Partial<MenuMediaState> = {}): AnyPlayerStor
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       textTrackList: [
         { kind: 'captions', label: 'English', language: 'en', mode: 'showing' },
         { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },

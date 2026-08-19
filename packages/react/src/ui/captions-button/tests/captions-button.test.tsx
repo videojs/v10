@@ -25,6 +25,7 @@ function renderCaptionsTrigger({
     chaptersCues: [],
     thumbnailCues: [],
     thumbnailTrackSrc: null,
+    thumbnailTrackCrossOrigin: null,
     toggleSubtitles,
   });
 
@@ -48,6 +49,7 @@ describe('CaptionsButton', () => {
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       toggleSubtitles: vi.fn(),
     });
 
@@ -88,6 +90,7 @@ describe('CaptionsButton', () => {
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       toggleSubtitles,
     });
 

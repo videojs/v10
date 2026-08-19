@@ -52,8 +52,49 @@ describe('textTrackFeature', () => {
       expect(store.state.chaptersCues).toEqual([]);
       expect(store.state.thumbnailCues).toEqual([]);
       expect(store.state.thumbnailTrackSrc).toBeNull();
+      expect(store.state.thumbnailTrackCrossOrigin).toBeNull();
       expect(store.state.textTrackList).toEqual([]);
       expect(store.state.subtitlesShowing).toBe(false);
+    });
+  });
+
+  describe('thumbnailTrackCrossOrigin', () => {
+    /**
+     * Resolve the state for a media element carrying a thumbnail track. Uses
+     * `mockTextTracks` rather than `addTextTrack`, which jsdom implements as a
+     * no-op that never populates `textTracks`.
+     */
+    function crossOriginFor(crossOrigin: string | undefined, kind: TextTrackKind = 'metadata') {
+      const video = createVideo();
+      if (crossOrigin !== undefined) video.setAttribute('crossorigin', crossOrigin);
+      mockTextTracks(video, [createMockTrack(kind, 'disabled', { label: 'thumbnails' })]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      return store.state.thumbnailTrackCrossOrigin;
+    }
+
+    it('reports the media element CORS mode', () => {
+      expect(crossOriginFor('anonymous')).toBe('anonymous');
+      expect(crossOriginFor('use-credentials')).toBe('use-credentials');
+    });
+
+    it('maps the empty string and unknown keywords to anonymous', () => {
+      // The CORS-settings attribute treats every value but `use-credentials` as
+      // Anonymous. A custom media element reflects `crossOrigin` as a plain
+      // string, so unnormalized values reach here in practice.
+      expect(crossOriginFor('')).toBe('anonymous');
+      expect(crossOriginFor('bogus')).toBe('anonymous');
+      expect(crossOriginFor('USE-CREDENTIALS')).toBe('use-credentials');
+    });
+
+    it('is null when the media element is not in CORS mode', () => {
+      expect(crossOriginFor(undefined)).toBeNull();
+    });
+
+    it('is null when there is no thumbnail track to inherit for', () => {
+      expect(crossOriginFor('anonymous', 'subtitles')).toBeNull();
     });
   });
 

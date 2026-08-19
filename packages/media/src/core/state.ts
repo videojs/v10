@@ -329,6 +329,13 @@ export interface MediaTextTrackState {
   thumbnailCues: MediaTextCue[];
   /** The `<track>` element's `src` for resolving relative cue text URLs. */
   thumbnailTrackSrc: string | null;
+  /**
+   * The media element's CORS mode, mapped through the CORS-settings-attribute
+   * rules, or `null` when it is not in CORS mode. Thumbnail UI fetches the
+   * sprite sheets the cues point at with this mode, since a cross-origin
+   * `<track>` only loads at all when the media element is CORS-enabled.
+   */
+  thumbnailTrackCrossOrigin: 'anonymous' | 'use-credentials' | null;
   /** All text tracks available on the media element. */
   textTrackList: MediaTextTrack[];
   /** Whether captions/subtitles are currently enabled. */
