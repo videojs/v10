@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.28...@videojs/media@10.0.0-beta.29) (2026-08-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** resolve the poster in the store, and set src on img from it ([#2039](https://github.com/videojs/v10/issues/2039))
+* **packages:** name the resolved title `title`, and take it from config only ([#2176](https://github.com/videojs/v10/issues/2176))
+
+### Features
+
+* **packages:** make Mux and Vimeo content-data donors ([#1998](https://github.com/videojs/v10/issues/1998)) ([7940b2c](https://github.com/videojs/v10/commit/7940b2c4030d9582551a335eabc59b9a7979c52b))
+* **packages:** name the resolved title `title`, and take it from config only ([#2176](https://github.com/videojs/v10/issues/2176)) ([969cf56](https://github.com/videojs/v10/commit/969cf567b3125e437d8f68982f655ee4255409ae))
+* **packages:** resolve the poster in the store, and set src on img from it ([#2039](https://github.com/videojs/v10/issues/2039)) ([7a902db](https://github.com/videojs/v10/commit/7a902db20e9ec335eb27a6cee6aaa6a7c0d0e29d))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.29
+
 ## [10.0.0-beta.28](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.27...@videojs/media@10.0.0-beta.28) (2026-08-19)
 
 

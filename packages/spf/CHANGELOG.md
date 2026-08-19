@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.28...@videojs/spf@10.0.0-beta.29) (2026-08-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **spf:** cap renditions to the screen and surface unplayable sources ([#2135](https://github.com/videojs/v10/issues/2135))
+
+### Features
+
+* **packages:** make Mux and Vimeo content-data donors ([#1998](https://github.com/videojs/v10/issues/1998)) ([7940b2c](https://github.com/videojs/v10/commit/7940b2c4030d9582551a335eabc59b9a7979c52b))
+* **spf:** cap renditions to the screen and surface unplayable sources ([#2135](https://github.com/videojs/v10/issues/2135)) ([20c1464](https://github.com/videojs/v10/commit/20c14648b8342aec91c07e4a743949488ff62939))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.29
+    * @videojs/utils bumped to 10.0.0-beta.29
+
 ## [10.0.0-beta.28](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.27...@videojs/spf@10.0.0-beta.28) (2026-08-19)
 
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.28...@videojs/utils@10.0.0-beta.29) (2026-08-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** name the resolved title `title`, and take it from config only ([#2176](https://github.com/videojs/v10/issues/2176))
+
+### Features
+
+* **packages:** name the resolved title `title`, and take it from config only ([#2176](https://github.com/videojs/v10/issues/2176)) ([969cf56](https://github.com/videojs/v10/commit/969cf567b3125e437d8f68982f655ee4255409ae))
+
 ## [10.0.0-beta.28](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.27...@videojs/utils@10.0.0-beta.28) (2026-08-19)
 
 
