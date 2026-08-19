@@ -110,7 +110,7 @@ a runtime signal):
 | `multi-language-audio` | scope | Prefer the default/selected language. |
 | `5.1-surround-selection` | scope | Prefer the requested channel layout. |
 | `hevc-variant-selection` | scope | Prefer (or force) a codec, e.g. AVC over HEVC. |
-| `rendition-selection-caps` | scope (likely several) | Stay within an upper cap (player/screen size, cost tier) and/or above a floor. |
+| `rendition-selection-caps` | scope (likely several) | Stay within an upper cap (player/screen size, cost tier) and/or above a floor. **The screen-size cap has since shipped as `screenResolutionCap`** — the first rule written against this model, and the one that exercises the soft-filter fall-through. See [rendition-selection-caps.md](./features/rendition-selection-caps.md). |
 
 This set is already long, and it will grow as features land. That breadth — not any single entry — is
 the backdrop for the model.

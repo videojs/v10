@@ -11,8 +11,15 @@
  * test asserts identity and leans on this file for behavior.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
+  SVTA_UNSUPPORTED_VIDEO_FORMAT,
+} from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
-import { HlsBackgroundVideoMediaElement } from '../adapter';
+import { UNPLAYABLE_SOURCE_MESSAGE } from '../../../primitives/error-messages';
+import { HlsBackgroundVideoMediaElement, HlsBackgroundVideoMediaMixin } from '../adapter';
 
 describe('HlsBackgroundVideoMediaElement', () => {
   beforeEach(() => {
@@ -197,9 +204,22 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('picks the largest rendition on offer', async () => {
       const media = new HlsBackgroundVideoMediaElement();
+      // The default chain caps to the screen, so this is written explicitly —
+      // left ambient, the expected pick would vary with the runner's display.
+      media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
       media.engine.state.presentation.set(presentationWithFourTracks());
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('1440p');
+      media.destroy();
+    });
+
+    it('caps the pick to the screen when the manifest offers more than it can show', async () => {
+      const media = new HlsBackgroundVideoMediaElement();
+      // 1080p (2,073,600) is over a 1,555,200 px screen; 720p (921,600) fits.
+      media.engine.state.screenResolution.set({ width: 1440, height: 1080 });
+      media.engine.state.presentation.set(presentationWithFourTracks());
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+      expect(media.engine.state.selectedVideoTrackId.get()).toBe('720p');
       media.destroy();
     });
 
@@ -213,18 +233,193 @@ describe('HlsBackgroundVideoMediaElement', () => {
       ] as never;
 
       const media = new HlsBackgroundVideoMediaElement();
+      media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
       media.engine.state.presentation.set(capped);
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('720p');
       media.destroy();
     });
 
-    it('honors a config-supplied picker, overriding the adapter default', async () => {
-      // The adapter's own picker is spread first, so a consumer-supplied one wins.
-      const media = new HlsBackgroundVideoMediaElement({ config: { picker: () => '360p' } });
+    it('honors a config-supplied rule chain, overriding the engine default', async () => {
+      // The adapter supplies no selection config of its own, so a consumer's chain
+      // replaces the engine's `[screenResolutionCap, preferHighestResolution]`
+      // default outright — screen cap included, hence no screen written here.
+      const media = new HlsBackgroundVideoMediaElement({
+        config: { rules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === '360p')] },
+      });
       media.engine.state.presentation.set(presentationWithFourTracks());
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('360p');
+      media.destroy();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Error surface — error / 'error' event. The only signal an unplayable source
+  // produces here: the inner <video> stays at readyState 0 with `error` null.
+  // ---------------------------------------------------------------------------
+  describe('error surface', () => {
+    class TestMedia extends HlsBackgroundVideoMediaMixin(EventTarget) {}
+
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('exposes no error before anything is reported', () => {
+      const media = new TestMedia();
+      expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('surfaces a reported fatal condition and fires error', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      // A verdict with nothing unsupported behind it keeps its own code. No
+      // message: viewer-facing copy is the consumer's to localize from the code.
+      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: '' });
+      expect(fired).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('surfaces a cause with no verdict behind it — the pinned variant never re-picks', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      // What an MPEG-TS source actually produces here (measured on Chromium): a
+      // cause against the pinned rendition and nothing else, because only the
+      // pick's playlist resolves and dropping it is final. Verdict-only fatality
+      // would leave this a silent stall.
+      const data = { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' };
+      media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data }]);
+      await flush();
+
+      // Surfaced as the unimplemented-capability code, like the other two Medias:
+      // no retry, CDN, or rendition fixes it. The reporter's context rides along.
+      expect(media.error).toEqual({ code: SVTA_UNSUPPORTED_PLAYBACK_FEATURE, message: '', data });
+      expect(fired).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('surfaces the same code for an encrypted pick', async () => {
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
+      ]);
+      await flush();
+
+      // One code for both: the consumer's situation is identical either way, and
+      // the specifics stay on `engine.state.errors` and the console.
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+      media.destroy();
+    });
+
+    it('logs the explanation once, with the conditions attached', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const media = new TestMedia();
+        media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } }]);
+        await flush();
+        media.engine.state.errors.set([
+          { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } },
+          { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+        ]);
+        await flush();
+
+        // The prose is console-only — `error.message` stays empty — and a later
+        // append must not repeat it.
+        const logged = spy.mock.calls.filter(([message]) => message === UNPLAYABLE_SOURCE_MESSAGE);
+        expect(logged).toHaveLength(1);
+        expect(logged[0]?.[1]).toEqual({
+          conditions: [{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } }],
+        });
+        media.destroy();
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    it('explains a source with no video renditions too, not only a substituted code', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const media = new TestMedia();
+        // The shape that used to reach a developer as a bare 2011: a verdict with
+        // no cause behind it, so nothing was substituted and nothing was said.
+        media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+        await flush();
+
+        expect(spy.mock.calls.filter(([message]) => message === UNPLAYABLE_SOURCE_MESSAGE)).toHaveLength(1);
+        expect(media.error?.code).toBe(SVTA_NO_SUPPORTED_VIDEO_TRACK);
+        media.destroy();
+      } finally {
+        spy.mockRestore();
+      }
+    });
+
+    it('ignores a condition outside the fatal set', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      // 2039 (manifest feature unsupported) is the degraded-but-playable tier.
+      media.engine.state.errors.set([{ code: 2039 }]);
+      await flush();
+
+      expect(media.error).toBeNull();
+      expect(fired).toHaveLength(0);
+      media.destroy();
+    });
+
+    it('carries the first fatal condition data even when the code is substituted', async () => {
+      const media = new TestMedia();
+      // Sequence order is causal, so the cause is the one whose context rides
+      // along, while both conditions collapse to the same surfaced code.
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+      expect(media.error?.data).toEqual({ trackType: 'video', trackId: 'v1' });
+      media.destroy();
+    });
+
+    it('fires once per distinct condition, not per re-report', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+      // A later append leaves the first fatal in place; the surface must not
+      // re-fire for the condition it already announced.
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }, { code: 2039 }]);
+      await flush();
+
+      expect(fired).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('clears when the sequence resets for a new source', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+      expect(media.error).not.toBeNull();
+
+      // collectErrors clears the slot on source change. Clearing is not itself a
+      // failure, so it announces nothing.
+      media.engine.state.errors.set(undefined);
+      await flush();
+
+      expect(media.error).toBeNull();
+      expect(fired).toHaveLength(1);
       media.destroy();
     });
   });

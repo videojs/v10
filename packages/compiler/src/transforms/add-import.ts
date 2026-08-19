@@ -1,7 +1,8 @@
 import ts from 'typescript';
+import { collectTopLevelBindingNames } from '../utils/bindings';
 import { isImportDeclarationFrom } from '../utils/import-declaration';
 import { insertStatementsAfterImports } from '../utils/source-file';
-import { resolveRelative } from './imports';
+import { rebaseImportSpecifier } from './imports';
 
 export interface AddImportRef {
   source: string;
@@ -13,6 +14,17 @@ export interface AddImportRef {
 export interface AddImportContext {
   configDir?: string | undefined;
   outputFile?: string | undefined;
+}
+
+/** Add a bare side-effect import unless the source is already imported. */
+export function addSideEffectImport(sourceFile: ts.SourceFile, source: string, factory: ts.NodeFactory): ts.SourceFile {
+  if (sourceFile.statements.some((statement) => isImportDeclarationFrom(statement, source))) return sourceFile;
+
+  return insertStatementsAfterImports(
+    sourceFile,
+    [factory.createImportDeclaration(undefined, undefined, factory.createStringLiteral(source))],
+    factory
+  );
 }
 
 /**
@@ -30,7 +42,7 @@ export function addNamedImport(
   context: AddImportContext = {}
 ): ts.SourceFile {
   const target = ref.source.startsWith('.')
-    ? resolveRelative(ref.source, { rules: {}, configDir: context.configDir, outputFile: context.outputFile })
+    ? rebaseImportSpecifier(ref.source, { rules: {}, configDir: context.configDir, outputFile: context.outputFile })
     : ref.source;
 
   const existing = findImportBinding(sourceFile, target, ref);
@@ -43,7 +55,7 @@ export function addNamedImport(
     return addNamedImport(removeImportBinding(sourceFile, existing, factory), ref, factory, context);
   }
 
-  if (hasTopLevelBinding(sourceFile, ref.name)) {
+  if (collectTopLevelBindingNames(sourceFile).has(ref.name)) {
     throw new Error(
       `Cannot import ${JSON.stringify(ref.name)} from ${JSON.stringify(target)}: ` +
         `the local binding ${JSON.stringify(ref.name)} is already declared.`
@@ -163,7 +175,7 @@ function addToExistingImport(
       return replaceStatement(sourceFile, stmt, updated, factory);
     }
 
-    if (clause.isTypeOnly !== Boolean(ref.type)) continue;
+    if (!ref.type && clause.isTypeOnly) continue;
     if (!clause.namedBindings || !ts.isNamedImports(clause.namedBindings)) continue;
 
     const updated = factory.updateImportDeclaration(
@@ -175,7 +187,11 @@ function addToExistingImport(
         clause.name,
         factory.createNamedImports([
           ...clause.namedBindings.elements,
-          factory.createImportSpecifier(false, undefined, factory.createIdentifier(ref.name)),
+          factory.createImportSpecifier(
+            Boolean(ref.type) && !clause.isTypeOnly,
+            undefined,
+            factory.createIdentifier(ref.name)
+          ),
         ])
       ),
       stmt.moduleSpecifier,
@@ -195,45 +211,5 @@ function replaceStatement(
   return factory.updateSourceFile(
     sourceFile,
     sourceFile.statements.map((statement) => (statement === current ? replacement : statement))
-  );
-}
-
-function hasTopLevelBinding(sourceFile: ts.SourceFile, name: string): boolean {
-  return sourceFile.statements.some((statement) => statementDeclaresName(statement, name));
-}
-
-function statementDeclaresName(statement: ts.Statement, name: string): boolean {
-  if (ts.isImportDeclaration(statement)) {
-    const clause = statement.importClause;
-    if (clause?.name?.text === name) return true;
-    if (clause?.namedBindings) {
-      if (ts.isNamespaceImport(clause.namedBindings)) return clause.namedBindings.name.text === name;
-      return clause.namedBindings.elements.some((element) => element.name.text === name);
-    }
-    return false;
-  }
-
-  if (ts.isVariableStatement(statement)) {
-    return statement.declarationList.declarations.some((declaration) => bindingNameContains(declaration.name, name));
-  }
-
-  if (
-    ts.isFunctionDeclaration(statement) ||
-    ts.isClassDeclaration(statement) ||
-    ts.isInterfaceDeclaration(statement) ||
-    ts.isTypeAliasDeclaration(statement) ||
-    ts.isEnumDeclaration(statement) ||
-    ts.isModuleDeclaration(statement)
-  ) {
-    return Boolean(statement.name && ts.isIdentifier(statement.name) && statement.name.text === name);
-  }
-
-  return ts.isImportEqualsDeclaration(statement) && statement.name.text === name;
-}
-
-function bindingNameContains(binding: ts.BindingName, name: string): boolean {
-  if (ts.isIdentifier(binding)) return binding.text === name;
-  return binding.elements.some(
-    (element) => !ts.isOmittedExpression(element) && bindingNameContains(element.name, name)
   );
 }

@@ -2,7 +2,7 @@
   "name": "@videojs/icons",
   "type": "module",
   "private": true,
-  "version": "10.0.0-beta.27",
+  "version": "10.0.0-beta.28",
   "description": "SVG icon library for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -14,13 +14,13 @@
     "./dist/element/**/*.js"
   ],
   "exports": {
-    "./components": {
-      "types": "./dist/components/default/index.d.ts",
-      "default": "./dist/components/default/index.js"
+    "./vjsc": {
+      "types": "./dist/vjsc/default/index.d.ts",
+      "default": "./dist/vjsc/default/index.js"
     },
-    "./components/*": {
-      "types": "./dist/components/*/index.d.ts",
-      "default": "./dist/components/*/index.js"
+    "./vjsc/*": {
+      "types": "./dist/vjsc/*/index.d.ts",
+      "default": "./dist/vjsc/*/index.js"
     },
     "./react": {
       "types": "./dist/react/default/index.d.ts",
@@ -73,7 +73,7 @@
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@types/react": "^19.2.17",
-    "@videojs/jsx": "workspace:*",
+    "vjsc": "workspace:*",
     "@videojs/utils": "workspace:*",
     "oxc-transform": "0.143.0",
     "react": "^19.2.8",

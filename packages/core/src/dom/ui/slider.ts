@@ -94,7 +94,8 @@ export function createSlider(options: SliderOptions): SliderApi {
     cachedRect: DOMRect | null = null,
     capturedPointerId: number | null = null,
     lastDragPercent = 0,
-    committedOnRelease = false;
+    committedOnRelease = false,
+    pointingOnRelease = false;
 
   const throttledChange =
     changeThrottleMs > 0
@@ -124,20 +125,21 @@ export function createSlider(options: SliderOptions): SliderApi {
   }
 
   function endDrag(): void {
-    if (!isDragging) {
-      input.patch({ pointing: false });
-    } else {
-      // Fire a final commit if pointerup didn't already handle it.
-      if (!committedOnRelease) {
-        options.onValueCommit?.(lastDragPercent);
-      }
+    if (!isDragging) return;
 
-      isDragging = false;
-      input.patch({ dragging: false, pointing: false });
-      options.onDragEnd?.();
+    const pointing = committedOnRelease && pointingOnRelease;
+
+    // Fire a final commit if pointerup didn't already handle it.
+    if (!committedOnRelease) {
+      options.onValueCommit?.(lastDragPercent);
     }
 
+    isDragging = false;
+    input.patch({ dragging: false, pointing });
+    options.onDragEnd?.();
+
     committedOnRelease = false;
+    pointingOnRelease = false;
     cleanup();
   }
 
@@ -167,6 +169,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       cachedRect = el.getBoundingClientRect();
       cachedRTL = options.isRTL();
       committedOnRelease = false;
+      pointingOnRelease = false;
 
       releaseCapture();
       capturedPointerId = event.pointerId;
@@ -225,6 +228,13 @@ export function createSlider(options: SliderOptions): SliderApi {
       if (isNull(capturedPointerId)) return;
 
       const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
+      const releaseRect = options.getElement().getBoundingClientRect();
+      pointingOnRelease =
+        event.pointerType !== 'touch' &&
+        event.clientX >= releaseRect.left &&
+        event.clientX <= releaseRect.right &&
+        event.clientY >= releaseRect.top &&
+        event.clientY <= releaseRect.bottom;
 
       // Cancel any pending throttled change before the final unthrottled pair.
       throttledChange?.cancel();
@@ -297,7 +307,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       if (newPercent !== null) {
         event.preventDefault();
         newPercent = clamp(newPercent, 0, 100);
-        input.patch({ pointerPercent: newPercent, dragPercent: newPercent });
+        input.patch({ pointerPercent: newPercent, dragPercent: newPercent, pointing: false });
         options.onValueChange?.(newPercent);
         options.onValueCommit?.(newPercent);
       }

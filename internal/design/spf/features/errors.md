@@ -143,24 +143,6 @@ retry-exhaustion, pipeline producers) are not.
   through unresolved carries the prior source's errors forward.
   `resolve-track` guards the same transition with a commit-time id
   check; doing likewise here is a follow-up.
-- **A type absent entirely is silent, which is wrong for a composition
-  that needs it.** `hasTracksOfType` correctly treats "no tracks of this
-  type" as legitimate — a video-only source must not report 2012 — but
-  the audio-only engine composes *only* audio, so a source with no audio
-  rendition is unplayable and reports nothing at all. Observed on a
-  muxed-audio MPEG-TS source (`hls-1` in the sandbox): no cause, since
-  `reportUnsupportedTrackConditions` runs per resolved track and none resolves; no
-  verdict, since the guard returns first; the element sits at
-  `readyState 0` with `error === null`. `track-switching` can't tell the
-  two apart — it's per-type and composition-agnostic, and per §Open
-  questions producers must not assert fatality — so the fix likely mirrors
-  the causes/verdicts split: report "this type has no renditions" as a
-  distinct non-fatal-by-default condition and let each adapter's
-  `FATAL_SVTA_CODES` decide, which the audio-only adapter's narrower set
-  already demonstrates. No existing code fits (1004/1005 and 2011/2012 all
-  presuppose renditions that *were* there), so this needs a code chosen
-  against the spec. A source with no tracks of **any** type is the same
-  gap, wider: every type takes the silent path.
 - **Manifest fetch/parse failure never reaches `errors`.**
   `resolve-presentation` carries a `TODO(error-management)` and only
   `console.error`s. Notably the path a 403 takes, so an expired signed or
@@ -243,6 +225,8 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 |---|---|---|
 | `collectErrors` | `playback/behaviors/collect-errors.ts` | Owns the `errors` slot and its per-source lifecycle. No effects, no policy — a lifecycle owner, not an error handler. Same slot-owner-vs-writer split as `setupFailoverMonitor` / `failedCdns` |
 | `switchVideoTrack` / `switchAudioTrack` / `switchTextTrack` | `playback/behaviors/track-switching.ts` | Report the **verdict** (2011 / 2012) when a type has renditions but constraints pruned every one. Per-variant `noSupportedTrackCode`; text supplies none, since absent subtitles aren't a failure. Reports generically — it never reads a constraint's state, so it doesn't know *why* the set emptied |
+| `selectVideoTrack` | `playback/behaviors/select-tracks.ts` | The *pinned* variant. `entry` stays the only thing that ever **selects**; a sibling `effects` entry on the same `presentation-resolved` state only ever **de**selects, dropping a pick the constraints turned against. Keeping selection out of the reaction is what separates this from `switchVideoTrack` — a re-pick here would make it that behavior with extra steps — but it must *be* a reaction, since container and encryption are only known once a media playlist resolves, after `entry` ran. It reports nothing itself: whatever made the pick unplayable already reported its own cause (1004 / 4008), more specific than a verdict and already logged. A pick naming a track the manifest never offered is left alone, preserving the module's external-writes contract |
+| `reportAbsentTrackType` | `playback/behaviors/collect-errors.ts` | The one failure with no cause behind it: a source offering **no** renditions of a type the composition needs. Nothing resolves, so `reportUnsupportedTrackConditions` never runs and no cause exists to be more specific than a verdict. Shaped as a *constraint* rather than config so a composition opts in by adding it to `constraints` and one that doesn't pays nothing — it never actually constrains, returning its input untouched. Belongs at the head of the chain, where an empty input still means "the source offers none" rather than "the constraints ahead pruned them all." Idempotent, because the chain runs inside a `computed` that re-derives on every `presentation` write while the sequence keeps duplicates |
 | `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `playback/behaviors/resolve-track.ts` | Call the `reportUnsupportedTrackConditions` seam post-parse, reporting **causes** per rendition as it resolves — before committing the parsed track |
 
 **Helpers and seams:**
@@ -254,18 +238,82 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 | `canPlayTrack` | `media/dom/capabilities.ts` | Prunes non-fMP4 containers and encrypted renditions, so every reported cause has a corresponding exclusion |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.encrypted` | `media/hls/parse-media-playlist.ts` | `EXT-X-KEY` detection. `METHOD=NONE` is not encryption; a clear lead followed by a real key is. Deliberately not a CMAF-HAM `Protection` model — set-level `defaultKid` can't express a clear lead or key rotation, and CML never populates it from HLS |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.lowLatency` | `media/hls/parse-media-playlist.ts` | LL-HLS detection for the phase-5 notice — any of `EXT-X-PART`, `EXT-X-PART-INF`, or `PART-HOLD-BACK`. Records that the publisher configured LL-HLS, not that we honour it; partial segments are still skipped |
-| `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of both adapters' promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter |
-| `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE` and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes |
+| `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of the promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter. All three adapters share `firstFatal`; the `ErrorLike` mapping and its 99001 substitution are the video and audio ones only |
+| `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE`, `UNPLAYABLE_SOURCE_MESSAGE`, and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes. The generic one exists for a composition whose failures don't all reduce to a missing feature — see the background adapter below |
 
-**Adapters** — `playback/adapters/hls-video/adapter.ts` and
-`hls-audio/adapter.ts`. Each owns `FATAL_SVTA_CODES` (its fatality
-allow-list — the audio-only set is narrower, since it composes no video
-selection and so can never report 2011), the `error` getter, and the
-`'error'` dispatch. First fatal wins, latched on the *reported* code so a
-later append doesn't re-fire. Where the sequence holds an
+**Adapters** — `playback/adapters/hls-video/adapter.ts`,
+`hls-audio/adapter.ts`, and `hls-background-video/adapter.ts`. Each owns
+`FATAL_SVTA_CODES` (its fatality allow-list — the audio-only set is
+narrower, since it composes no video selection and so can never report
+2011; the background set is *wider*, and § below says why), the `error`
+getter, and the `'error'` dispatch. First fatal wins, latched so a later
+append doesn't re-fire, and clearing rides `collectErrors`' per-source
+reset rather than a source-change hook of its own.
+
+All three latch on the *reported* code rather than the surfaced one,
+because the two can differ: where the sequence holds an
 unimplemented-capability cause, the surfaced code becomes 99001 and the
 condition is logged with the sequence attached; the `message` stays
-empty either way.
+empty either way. One `HlsVideoMediaError` shape across all three, kept
+under the name `hls-video` publishes it as rather than copied per adapter.
+
+**The background-video adapter maps identically, and deliberately so.** It has
+no store feature or dialog above it to localize copy from a code — the argument
+for leaving the condition unmapped — but an SVTA code alone is something a
+consumer has to go and look up, where 99001 plus the logged sentence says the
+actionable thing: this player has no pipeline for what the source needs, and no
+retry or CDN changes that. The one thing it doesn't take is
+`alternativeMediaSuggestion`; nothing in this repo plays an HLS background video
+that this engine can't, so there is no sibling to name.
+
+**The console half diverges, though: it logs on every fatal condition, not only
+a substituted one, and logs the generic sentence.** Both follow from causes being
+fatal here. The other two adapters log only when they substitute 99001, which is
+sound where every fatal condition *is* a verdict about a missing feature; here a
+verdict can instead mean the source carries no video at all, which would otherwise
+reach a developer as a bare 2011 with nothing said about it. And a message naming
+one missing feature would be wrong for exactly that case, so
+`UNPLAYABLE_SOURCE_MESSAGE` names all three broadly instead. Nor does it defer the
+*why* to the conditions: an `SvtaError` is a code and its context, and nothing on
+this path sets `message`, so pointing a developer at them for prose they don't
+carry is what made the earlier wording confusing. One unconditional log also costs
+a branch less than one per case.
+
+Having *a* surface at all matters more here than
+elsewhere: on Chromium and WebKit (2026-08-14) every unplayable source in this
+composition is a *silent stall* with `HTMLMediaElement.error` null at
+`readyState 0`, since nothing in MSE reports it either. Chromium accepts MPEG-TS
+appends into a `video/mp4` SourceBuffer, fires `update` (not `error`), and
+buffers nothing; WebKit demuxes the TS outright. No SourceBuffer error, no
+MediaSource error, no element error on either. The reported sequence, its console
+output, and this surface are the only failure signals that exist.
+
+**And in the pinned variant a cause *is* a verdict**, which is why 1004 and 4008
+join 2011 in its fatal set. Elsewhere a cause is context — one unplayable
+rendition doesn't fail a source whose others still play, and a verdict follows if
+the type empties. Here only the *pinned* rendition's playlist is ever resolved, so
+a cause can only be about the pick itself, and dropping that pick is final:
+`selectVideoTrack` never re-picks, and `switchVideoTrack` isn't composed. Measured
+in the sandbox on Chromium (2026-08-17): an MPEG-TS source reports 1004 alone and
+an encrypted one 4008 alone — no verdict behind either, because the *other*
+renditions were never resolved and so were never pruned, leaving the candidate set
+non-empty while the pick is gone. A verdict-only allow-list left both as silent
+stalls, which is exactly what this surface exists to prevent. Both then map to
+99001 through the same substitution the other adapters use, so what a consumer
+reads is "unplayable here", with the container-vs-encryption specifics on the
+console. Reporting a verdict from the deselect instead was the
+alternative; it stays rejected because selection there deliberately reports
+nothing (the cause is more specific and already logged), and because fatality is
+the adapter's to decide.
+
+Both platform components forward it, since a consumer of either holds the element
+rather than the Media. `<hls-background-video>` re-fires `'error'` on itself and
+delegates an `error` getter — one eager listener on a Media it owns for life,
+rather than `CustomMediaElement`'s bridge-on-first-`addEventListener`, which is
+more machinery than a single event is worth. The React component re-dispatches on
+the `<video>` node instead, so React's own event plumbing invokes `onError` with
+the synthetic event it is typed for; a handler there learns *that* the source
+won't play, and the console and `engine.state.errors` hold which condition it was.
 
 `alternativeMediaSuggestion` is a static seam on the video adapter: a
 Media with a better-equipped sibling to point at (a Mux Video whose
@@ -323,6 +371,19 @@ limitations*).
     regardless of which constraint emptied the set** (all-CDN cooldown
     reads the same as capability rejection); nothing for a type with no
     tracks; 2012 for the audio variant; nothing for text
+  - `packages/spf/src/playback/behaviors/tests/select-tracks.test.ts` →
+    *capability constraint + verdict* — prunes an undecodable rendition
+    before the chain picks; no pick plus 2011 when every rendition is
+    undecodable; **clears a pick already made when a later container
+    relabel prunes every rendition** (the warm path the pinned variant
+    exists to survive); does not re-pick after unpinning (the pinning
+    contract); nothing reported for a presentation with no video tracks;
+    passes everything through with no probe wired
+  - `packages/spf/src/playback/engines/hls/tests/engine-background-video.test.ts`
+    → *errors* — declares the slot; makes no pick for an unplayable
+    container *without* reporting a verdict (the 1004 cause covers it);
+    reports 2011 for a source with no video renditions at all; reports that
+    **once**, not per presentation write; clears on src unload
   - `packages/spf/src/media/dom/tests/capabilities.test.ts` — encrypted
     renditions asserted unplayable without consulting `isTypeSupported`;
     clear renditions still fall through to the codec probe (the other
@@ -348,6 +409,21 @@ limitations*).
     once, with the conditions attached, silent for a verdict with no
     unsupported cause, and the alternative-Media sentence appended when
     the class names one
+  - `packages/spf/src/playback/adapters/hls-background-video/tests/adapter.test.ts`
+    → *error surface* — nothing before a report; a verdict with no cause
+    behind it keeps its own code and fires `'error'`; a *cause* with no
+    verdict behind it surfaces too, for container and encryption alike (the
+    pinned-variant rule above), substituted to 99001 with the reporter's
+    context carried through; 2039 stays out of it; the explanation is logged
+    once, with the conditions attached and no prose on `message`, **including
+    for a verdict that substitutes nothing**; fires once per distinct
+    condition; clears on per-source reset without announcing the clear
+  - `packages/html/src/media/hls-background-video/tests/media.test.ts` and
+    `packages/react/src/media/hls-background-video/tests/media.test.tsx`
+    → the forward — the element re-fires `'error'` on itself and exposes
+    the condition while the inner `<video>`'s own `error` stays null; the
+    React component's `onError` fires with the `<video>` as target, and
+    stays quiet for a non-fatal report
 - **E2E:**
   - `apps/e2e/tests/spf-unsupported-source.spec.ts` (Chromium and WebKit —
     the two the CI matrix and `test:all` run; a `vite-firefox` project
@@ -360,16 +436,44 @@ limitations*).
     and an fMP4 control reports nothing. Driven by the
     `html-hls-video-ts` page, deliberately absent from
     `fixtures/media.ts`'s page arrays
+  - `apps/e2e/tests/spf-background-video.spec.ts` (same two projects) —
+    the background composition against real manifests: a playable fMP4
+    source reports nothing; MPEG-TS surfaces 99001 with an empty
+    `message`; **the sequence holds 1004 with no 2011 behind it**, the
+    pinned-variant shape a `select-tracks` refactor would otherwise change
+    unnoticed; the *encrypted* source surfaces the same 99001 over a 4008;
+    an audio-only ladder keeps its own 2011 with no substitution; a source
+    change back to fMP4 clears the error and plays; and React's `onError`
+    fires. The load-bearing one is **the inner `<video>` staying at
+    `readyState 0` with `error` null** while all of that happens — the
+    measured premise the surface exists for, now asserted rather than
+    recorded. Driven by `html-` and `react-hls-background-video`, a
+    `background` category in `generate-pages.ts` whose template skips the
+    player shell every other page uses — this composition has no controls
+    to hang on a skin — and takes a `?src=` param, so one page per platform
+    serves every source shape
 - **Manual:** the sandbox offers both failing shapes to the plain HLS
   presets — `hls-audio-only-ts` (MPEG-TS) and `hls-drm-unlicensed` (the
   DRM asset with no license path), each labelled with the error it should
   produce. `SPF_HLS_SOURCE_IDS` is what keeps the unlicensed DRM
   source reachable there while the presets that *can* license DRM get the
-  playable variants instead.
+  playable variants instead. The two SPF background presets
+  (`hls-background-video`, `mux-background-video`) take the same source
+  list, so the same failing shapes reach the pinned variant. Walked on
+  Chromium 2026-08-17 against `html-hls-background-video` and
+  `react-hls-background-video`: `hls-4k` plays and pins 2558x1440 against a
+  3456x2234 screen with an empty sequence and `error` null; `hls-1` (TS)
+  surfaces 1004 and `hls-drm-unlicensed` surfaces 4008, each from a cause
+  with no verdict behind it; `hls-audio-only-cmaf` surfaces 2011; and the
+  event fires once, clears on a new `src`, and re-fires for the next bad
+  source. That walk is what found the verdict-only gap the fatal set now
+  covers.
 - **Out of scope / deferred:**
-  - **No E2E for the encrypted path** — no encrypted source is wired into
-    the e2e fixtures, so 4008 → 99001 is unit-verified plus manually
-    reachable in the sandbox, not automated
+  - **The encrypted path is E2E-covered on the background composition
+    only** — `MEDIA.hlsDrm` (the sandbox's unlicensed DRM asset, its token
+    signed to 2038 so it can't rot) proves 4008 → 99001 there. The same
+    path through `hls-video` and into the dialog is still unit-verified
+    plus manually reachable, since its pages take one source each
   - **The audio verdict (2012) is unit-covered only** — the e2e TS
     source has muxed audio and therefore no separate audio track
 

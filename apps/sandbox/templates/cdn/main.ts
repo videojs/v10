@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { EMBED_PRESETS } from '@app/constants';
 import { renderChapters } from '@app/shared/html/chapters';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
@@ -18,12 +19,18 @@ import {
 } from '@app/shared/sandbox-listener';
 import {
   BACKGROUND_VIDEO_SRC,
+  CLOUDFLARE_VIDEO_SRC,
   getChapters,
   getPosterSrc,
   getStoryboardSrc,
-  HLS_BACKGROUND_VIDEO_SRC,
   isLiveSource,
   SOURCES,
+  SPOTIFY_AUDIO_SRC,
+  TIKTOK_VIDEO_SRC,
+  TWITCH_VIDEO_SRC,
+  VIMEO_VIDEO_SRC,
+  withMuxMaxResolution,
+  YOUTUBE_VIDEO_SRC,
 } from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
 import { getI18nTranslations } from '@videojs/html/cdn/i18n';
@@ -95,7 +102,9 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
   await provider.updateComplete;
   if (seq !== localeApplySeq) return;
 
-  if (!import.meta.env.DEV || tag === 'en') return;
+  // An embed plays in a cross-origin frame with no <video> of its own, so the
+  // metadata gate the label check waits on never opens.
+  if (!import.meta.env.DEV || tag === 'en' || isEmbedPreset(preset)) return;
   if (!document.querySelector('media-play-button')) return;
 
   const expected = getI18nTranslations(tag)['buttons.play'];
@@ -131,6 +140,11 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
     case 'native-hls-video':
     case 'hls-video':
     case 'dash-video':
+    case 'vimeo-video':
+    case 'youtube-video':
+    case 'cloudflare-video':
+    case 'tiktok-video':
+    case 'twitch-video':
       if (live) {
         if (skin === 'minimal') await import('@videojs/html/cdn/live-video-minimal');
         else await import('@videojs/html/cdn/live-video');
@@ -143,6 +157,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
     case 'mux-audio':
     case 'mux-audio-spf':
     case 'hls-audio':
+    case 'spotify-audio':
       if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
       else await import('@videojs/html/cdn/audio');
       break;
@@ -198,6 +213,26 @@ async function loadCdnMedia(preset: Preset) {
     case 'dash-video':
       await import('@videojs/html/cdn/media/dash-video');
       break;
+    // Each embed is one bundle beside the rest, so a page reaches a third-party
+    // player the same way it reaches an HLS one — no npm-only step.
+    case 'vimeo-video':
+      await import('@videojs/html/cdn/media/vimeo-video');
+      break;
+    case 'youtube-video':
+      await import('@videojs/html/cdn/media/youtube-video');
+      break;
+    case 'cloudflare-video':
+      await import('@videojs/html/cdn/media/cloudflare-video');
+      break;
+    case 'spotify-audio':
+      await import('@videojs/html/cdn/media/spotify-audio');
+      break;
+    case 'tiktok-video':
+      await import('@videojs/html/cdn/media/tiktok-video');
+      break;
+    case 'twitch-video':
+      await import('@videojs/html/cdn/media/twitch-video');
+      break;
   }
 }
 
@@ -206,8 +241,38 @@ async function loadCdnMedia(preset: Preset) {
 // ---------------------------------------------------------------------------
 
 function isAudioPreset(preset: Preset): boolean {
-  return preset === 'audio' || preset === 'mux-audio' || preset === 'mux-audio-spf' || preset === 'hls-audio';
+  return (
+    preset === 'audio' ||
+    preset === 'mux-audio' ||
+    preset === 'mux-audio-spf' ||
+    preset === 'hls-audio' ||
+    preset === 'spotify-audio'
+  );
 }
+
+function isEmbedPreset(preset: Preset): boolean {
+  return (EMBED_PRESETS as readonly Preset[]).includes(preset);
+}
+
+/**
+ * An embed fills the skin box the way `<video>` does on its own.
+ *
+ * TikTok's host floors itself at the portrait 325x578 its player refuses to draw
+ * below, so a landscape box needs that floor cleared.
+ */
+function getEmbedMediaClass(preset: Preset): string {
+  return preset === 'tiktok-video' ? 'block w-full h-full min-w-0 min-h-0' : 'block w-full h-full';
+}
+
+/** The one source each embed plays: a provider page URL, not one of the picker's files. */
+const EMBED_SOURCES: Partial<Record<Preset, string>> = {
+  'vimeo-video': VIMEO_VIDEO_SRC,
+  'youtube-video': YOUTUBE_VIDEO_SRC,
+  'cloudflare-video': CLOUDFLARE_VIDEO_SRC,
+  'spotify-audio': SPOTIFY_AUDIO_SRC,
+  'tiktok-video': TIKTOK_VIDEO_SRC,
+  'twitch-video': TWITCH_VIDEO_SRC,
+};
 
 function isBackgroundPreset(preset: Preset): boolean {
   return preset === 'background-video' || preset === 'hls-background-video' || preset === 'mux-background-video';
@@ -237,6 +302,12 @@ function getMediaTag(preset: Preset): string {
     'hls-video': 'hls-video',
     'hls-audio': 'hls-audio',
     'dash-video': 'dash-video',
+    'vimeo-video': 'vimeo-video',
+    'youtube-video': 'youtube-video',
+    'cloudflare-video': 'cloudflare-video',
+    'spotify-audio': 'spotify-audio',
+    'tiktok-video': 'tiktok-video',
+    'twitch-video': 'twitch-video',
     audio: 'audio',
     'background-video': 'background-video',
     'hls-background-video': 'hls-background-video',
@@ -300,18 +371,26 @@ async function render() {
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
-  // Each background preset renders its own fixed source: the native element takes
-  // a progressive MP4, the SPF-backed tags need CMAF/fMP4 over HLS. The Mux tag
-  // gets the capped URL, which is the whole reason that name is worth keeping —
-  // `hls-background-video` is the same element pinning the top rendition on offer.
+  // `<background-video>` renders a fixed progressive MP4, since a native element
+  // has no manifest to pick renditions from. The SPF-backed tags take the picked
+  // HLS source instead, and the Mux one adds the cap param that is the whole reason
+  // that name is worth keeping — `hls-background-video` is the same element against
+  // an uncapped manifest.
   const backgroundSrc =
     preset === 'mux-background-video'
-      ? `${HLS_BACKGROUND_VIDEO_SRC}?max_resolution=720p`
+      ? withMuxMaxResolution(source.url ?? '', '720p')
       : preset === 'hls-background-video'
-        ? HLS_BACKGROUND_VIDEO_SRC
+        ? (source.url ?? '')
         : BACKGROUND_VIDEO_SRC;
-  const sourceAttr = isBackgroundPreset(preset) ? `src="${backgroundSrc}"` : `src="${source.url}"`;
-  const mediaAttrs = renderMediaAttrs(state);
+  const sourceAttr = isBackgroundPreset(preset)
+    ? `src="${backgroundSrc}"`
+    : `src="${EMBED_SOURCES[preset] ?? source.url}"`;
+  // An embed hands playback to a provider that owns autoplay, looping, and how much
+  // it preloads, so the settings menu has nothing to attach to — same as the
+  // per-embed pages on the html and react platforms.
+  const mediaAttrs = isEmbedPreset(preset) ? '' : renderMediaAttrs(state);
+  const crossoriginAttr = isEmbedPreset(preset) ? '' : 'crossorigin="anonymous"';
+  const mediaClassAttr = isEmbedPreset(preset) ? `class="${getEmbedMediaClass(preset)}"` : '';
 
   // Background video needs viewport dimensions instead of flex centering.
   if (isBackgroundPreset(preset)) {
@@ -351,7 +430,7 @@ async function render() {
 
   const skin = html`
     <${skinTag} class="aspect-video max-w-4xl mx-auto">
-      <${mediaTag} ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
+      <${mediaTag} ${mediaClassAttr} ${sourceAttr} ${mediaAttrs} playsinline ${crossoriginAttr}>
         ${isVideoPreset(preset) ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}
       </${mediaTag}>

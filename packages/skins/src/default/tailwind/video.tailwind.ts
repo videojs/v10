@@ -137,7 +137,7 @@ const splitControls = cn(
 
 export const primaryControls = cn(
   splitControls,
-  'bottom-2 inset-x-2 origin-bottom',
+  'z-20 bottom-2 inset-x-2 origin-bottom',
   '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1'
 );
 
@@ -158,7 +158,7 @@ export const spacer = 'grow';
 
 export const time = {
   ...baseTime,
-  group: cn(baseTime.group, 'px-3'),
+  group: cn(baseTime.group, 'px-2 @lg/media-root:px-3'),
 };
 
 /* Thumbnail (with video surface) */

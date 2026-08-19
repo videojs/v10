@@ -12,6 +12,15 @@ import { dirname, relative, resolve } from 'node:path';
 const SPECIFIER = /(?:\bfrom|\bimport)\s*\(?\s*["']([^"']+)["']/g;
 
 /**
+ * JSDoc blocks, dropped before the scan.
+ *
+ * Their `{import('…')}` type annotations are indistinguishable from dynamic imports, and the
+ * modules they name are types that no bundle ever loads — third-party dev bundles are full of
+ * them. Minified production bundles carry no JSDoc, so nothing real is hidden by this.
+ */
+const JSDOC_BLOCK = /\/\*\*[\s\S]*?\*\//g;
+
+/**
  * Drop matches that cannot be module specifiers.
  *
  * The scan is a regex rather than a parser, so it also sees the words `from` and `import` inside
@@ -24,7 +33,9 @@ function isLikelySpecifier(value: string): boolean {
 }
 
 export function collectSpecifiers(code: string): string[] {
-  return [...code.matchAll(SPECIFIER)].map((match) => match[1] as string).filter(isLikelySpecifier);
+  return [...code.replace(JSDOC_BLOCK, '').matchAll(SPECIFIER)]
+    .map((match) => match[1] as string)
+    .filter(isLikelySpecifier);
 }
 
 function isAbsoluteSpecifier(specifier: string): boolean {

@@ -1,6 +1,7 @@
-import { dirname, relative, resolve, sep } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import ts from 'typescript';
 import { getImportSource } from '../utils/import-declaration';
+import { toPosixPath } from '../utils/path';
 
 /**
  * Per-identifier rewrite target. `source` may be either a bare specifier
@@ -70,7 +71,7 @@ function rewriteImportStatement(
 
   const clause = stmt.importClause;
   const resolvedBareTarget = (target: string): string =>
-    target.startsWith('.') ? resolveRelative(target, options) : target;
+    target.startsWith('.') ? rebaseImportSpecifier(target, options) : target;
 
   if (!clause?.namedBindings || !ts.isNamedImports(clause.namedBindings)) {
     // Default-only or namespace-only imports — bare-string rewrite still applies; function form
@@ -93,7 +94,9 @@ function rewriteImportStatement(
     const target = rule(importedName);
     if (target === false) continue;
     const resolvedSource =
-      options.configDir && target.source.startsWith('.') ? resolveRelative(target.source, options) : target.source;
+      options.configDir && target.source.startsWith('.')
+        ? rebaseImportSpecifier(target.source, options)
+        : target.source;
     const propertyName = target.name === localName ? undefined : factory.createIdentifier(target.name);
     const spec = factory.createImportSpecifier(element.isTypeOnly, propertyName, factory.createIdentifier(localName));
     const bucket = buckets.get(resolvedSource);
@@ -140,16 +143,16 @@ function updateModuleSpecifier(
 }
 
 /**
- * Resolve a relative `source` (from a rule) against `configDir`, then express
+ * Rebase a relative `source` (from a rule) against `configDir`, then express
  * the result as a relative path *from* the output file. Bare specifiers should
  * not be passed here.
  */
-export function resolveRelative(source: string, options: ImportRewriteOptions): string {
+export function rebaseImportSpecifier(source: string, options: ImportRewriteOptions): string {
   if (!source.startsWith('.')) return source;
   const { configDir, outputFile } = options;
   if (!configDir || !outputFile) return source;
   const absolute = resolve(configDir, source);
   let rel = relative(dirname(outputFile), absolute);
   if (!rel.startsWith('.')) rel = `./${rel}`;
-  return rel.split(sep).join('/');
+  return toPosixPath(rel);
 }

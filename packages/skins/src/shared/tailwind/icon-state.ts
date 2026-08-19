@@ -55,10 +55,10 @@ export const iconState = {
     // the animation variables to `none` whenever airplay isn't connected.
     button: [
       'group',
-      'not-data-[airplay-state=connected]:[--media-icon--airplay__fill-animation:none]',
-      'not-data-[airplay-state=connected]:[--media-icon--airplay__triangle-animation:none]',
-      'motion-reduce:[--media-icon--airplay__fill-animation:none]',
-      'motion-reduce:[--media-icon--airplay__triangle-animation:none]',
+      'not-data-[airplay-state=connected]:[--media-icon-airplay-fill-animation:none]',
+      'not-data-[airplay-state=connected]:[--media-icon-airplay-triangle-animation:none]',
+      'motion-reduce:[--media-icon-airplay-fill-animation:none]',
+      'motion-reduce:[--media-icon-airplay-triangle-animation:none]',
     ].join(' '),
     enter:
       'opacity-0 group-not-data-[airplay-state=connected]:opacity-100 group-not-data-[airplay-state=connected]:scale-100',

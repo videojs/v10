@@ -1,6 +1,11 @@
-import { Container as ContainerPrimitive } from '@videojs/core/components';
-import styles from '../../styles/components/container.tailwind';
+import * as $ from '@videojs/core/vjsc';
+import type { PropsWithChildren } from 'vjsc/components';
+import styles from '../../styles/components/container.styles';
 
-export function Container({ children }: { children?: unknown }) {
-  return <ContainerPrimitive className={styles.container}>{children}</ContainerPrimitive>;
+export function Container({ children, className, ...props }: PropsWithChildren) {
+  return (
+    <$.Container className={[styles.root, className]} {...props}>
+      {children}
+    </$.Container>
+  );
 }

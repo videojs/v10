@@ -1,0 +1,7 @@
+@layer videojs.theme.variant {
+  .media-theme-minimal {
+    --media-video-border-radius: var(--media-border-radius, 0.75rem);
+    --media-control-radius: calc(var(--media-spacing) * 2);
+    --media-surface-radius: calc(var(--media-spacing) * 2.5);
+  }
+}

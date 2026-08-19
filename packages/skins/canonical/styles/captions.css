@@ -1,0 +1,22 @@
+@layer videojs.components {
+  @scope (.media-skin) {
+    video::-webkit-media-text-track-container {
+      translate: 0 calc(var(--media-spacing) * -2);
+      transition: translate var(--media-controls-transition-duration) ease-out 25ms;
+    }
+
+    :scope.media-theme-default:has([data-controls][data-visible]) video::-webkit-media-text-track-container {
+      translate: 0 calc(var(--media-spacing) * -14);
+    }
+
+    :scope.media-theme-minimal:has([data-controls][data-visible]) video::-webkit-media-text-track-container {
+      translate: 0 calc(var(--media-spacing) * -18);
+    }
+
+    @container media-root (width > 42rem) {
+      :scope.media-theme-minimal:has([data-controls][data-visible]) video::-webkit-media-text-track-container {
+        translate: 0 calc(var(--media-spacing) * -12);
+      }
+    }
+  }
+}

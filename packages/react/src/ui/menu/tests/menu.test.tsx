@@ -1064,6 +1064,29 @@ describe('MenuContent', () => {
     });
   });
 
+  it('derives item indicators from their radio item', () => {
+    render(
+      <MenuRoot defaultOpen>
+        <MenuTrigger>Settings</MenuTrigger>
+        <MenuContent>
+          <MenuRadioGroup value="auto" onValueChange={vi.fn()}>
+            <MenuRadioItem value="auto">
+              Auto
+              <MenuItemIndicator data-testid="selected-indicator">Selected</MenuItemIndicator>
+            </MenuRadioItem>
+            <MenuRadioItem value="1080p">
+              1080p
+              <MenuItemIndicator data-testid="unselected-indicator">Selected</MenuItemIndicator>
+            </MenuRadioItem>
+          </MenuRadioGroup>
+        </MenuContent>
+      </MenuRoot>
+    );
+
+    expect(screen.queryByTestId('selected-indicator')).not.toBeNull();
+    expect(screen.queryByTestId('unselected-indicator')).toBeNull();
+  });
+
   it('lets explicit group labels override generated aria-labelledby', async () => {
     render(<ExplicitGroupLabelFixture />);
 

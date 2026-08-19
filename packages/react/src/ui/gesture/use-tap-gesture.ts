@@ -1,14 +1,12 @@
-import { createTapGesture, type GesturePointerType, type GestureRegion } from '@videojs/core/dom';
+import type { GestureProps } from '@videojs/core';
+import { createTapGesture } from '@videojs/core/dom';
 import type { RefObject } from 'react';
 import { useEffect } from 'react';
 
 import { useContainer } from '../../player/context';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
-export interface UseTapGestureOptions {
-  pointer?: GesturePointerType;
-  region?: GestureRegion;
-  disabled?: boolean;
+export interface UseTapGestureOptions extends Pick<GestureProps, 'pointer' | 'region' | 'disabled'> {
   target?: RefObject<HTMLElement | null>;
 }
 

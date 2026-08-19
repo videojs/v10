@@ -3,6 +3,13 @@ import { isPlainObject, isString } from '../predicate';
 type ClassPrimitive = string | Record<string, unknown> | undefined;
 type ClassValue = ClassPrimitive | readonly string[] | readonly ClassPrimitive[];
 
+export type ClassName<State> = string | ((state: State) => string | undefined) | undefined;
+
+/** Resolve a static or state-derived class name. */
+export function resolveClassName<State>(className: ClassName<State>, state: State): string | undefined {
+  return typeof className === 'function' ? className(state) : className;
+}
+
 /**
  * A (very basic) utility to merge class names and make them a little easier to read.
  * Aims to replicate the API of popular libraries like `clsx` and `classnames` but with a much simpler implementation.

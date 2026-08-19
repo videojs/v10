@@ -41,7 +41,7 @@ describe('build', () => {
   it('renders an HTML target after transforming its module graph', async () => {
     writeFileSync(
       join(workDir, 'src', 'input.tsx'),
-      `export function Skin(){ return <Panel className={['root', false, 'ready']}><img alt=""/>Hello & goodbye</Panel>; }\n`,
+      `export function Skin(){ return <Panel className={['root', false, 'ready']}>Hello & goodbye</Panel>; }\n`,
       'utf8'
     );
 
@@ -55,7 +55,40 @@ describe('build', () => {
       { configDir: workDir }
     );
 
-    expect(result.files[0]!.source).toBe('<section class="root ready"><img alt="">Hello &amp; goodbye</section>');
+    expect(result.files[0]!.source).toBe('<section class="root ready">Hello &amp; goodbye</section>');
+  });
+
+  it('resolves repeated scoped HTML relationships per rendered occurrence', async () => {
+    writeFileSync(
+      join(workDir, 'src', 'input.tsx'),
+      `
+        import { Scope } from 'vjsc/html-runtime/jsx-runtime';
+        const menuId = '__vjsc-id-menu-content';
+        const tooltipId = '__vjsc-id-tooltip-trigger';
+        const Menu = () => <Scope prefix="menu"><button commandfor={menuId}></button><media-menu id={menuId}></media-menu></Scope>;
+        const Tooltip = () => <Scope prefix="tooltip"><button id={tooltipId}></button><media-tooltip trigger={tooltipId}></media-tooltip></Scope>;
+        export function Skin(){ return <main><Menu/><Menu/><Tooltip/><Tooltip/></main>; }
+      `,
+      'utf8'
+    );
+
+    const result = await build(
+      {
+        input: 'src/input.tsx',
+        output: { file: 'dist/output.html' },
+        target: html(),
+      },
+      { configDir: workDir }
+    );
+
+    expect(result.files[0]!.source).toBe(
+      '<main>' +
+        '<button commandfor="vjs-menu-content"></button><media-menu id="vjs-menu-content"></media-menu>' +
+        '<button commandfor="vjs-menu-2-content"></button><media-menu id="vjs-menu-2-content"></media-menu>' +
+        '<button id="vjs-tooltip-trigger"></button><media-tooltip trigger="vjs-tooltip-trigger"></media-tooltip>' +
+        '<button id="vjs-tooltip-2-trigger"></button><media-tooltip trigger="vjs-tooltip-2-trigger"></media-tooltip>' +
+        '</main>'
+    );
   });
 
   it('compiles configured entries and emitted assets', async () => {

@@ -46,6 +46,8 @@ export {
   type Locale,
   onI18nRegistryChange,
   registerI18n,
+  Text,
+  type TextProps,
   type TranslationParams,
   type Translations,
   type Translator,

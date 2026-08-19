@@ -6,7 +6,7 @@ import ts from 'typescript';
  * This is intentionally syntactic: cleanup transforms use it to make
  * conservative keep/drop decisions without constructing a type checker.
  */
-export function collectReferencedIdentifiers(sourceFile: ts.SourceFile): Set<string> {
+export function collectReferencedIdentifiers(node: ts.Node): Set<string> {
   const referenced = new Set<string>();
 
   const visit = (node: ts.Node): void => {
@@ -61,7 +61,7 @@ export function collectReferencedIdentifiers(sourceFile: ts.SourceFile): Set<str
     ts.forEachChild(node, visit);
   };
 
-  ts.forEachChild(sourceFile, visit);
+  visit(node);
   return referenced;
 }
 

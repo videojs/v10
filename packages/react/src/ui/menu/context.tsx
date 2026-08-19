@@ -65,6 +65,14 @@ export function useMenuRadioGroupContext(): MenuRadioGroupContextValue {
   return ctx;
 }
 
+const MenuRadioItemContext = createContext(false);
+
+export const MenuRadioItemContextProvider = MenuRadioItemContext.Provider;
+
+export function useOptionalMenuRadioItemContext(): boolean {
+  return useContext(MenuRadioItemContext);
+}
+
 // ---------------------------------------------------------------------------
 // Root trigger render context — provided by Menu.Trigger for render children.
 // ---------------------------------------------------------------------------
