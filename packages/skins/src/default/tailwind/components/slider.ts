@@ -105,7 +105,11 @@ export const slider = {
     ),
   },
   preview: cn(
-    '[--max-width:min(--spacing(48),100cqi)] [--max-height:--spacing(32)] min-w-(--max-width) h-1',
+    '[--max-width-factor:36]',
+    '[--max-width:min(calc(var(--spacing)*var(--max-width-factor)),100cqi)]',
+    '[--max-height:calc(var(--max-width)*(100cqb/100cqi))]',
+    '@2xl/media-root:[--max-width-factor:48]',
+    'min-w-(--max-width) h-1',
     'before:absolute before:z-1 before:top-1/2 before:left-1/2 before:size-1 before:bg-current before:rounded-full before:pointer-events-none',
     'before:shadow-[0_0_0_1px_var(--shadow-current-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
