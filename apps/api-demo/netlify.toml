@@ -1,0 +1,15 @@
+[build]
+  command = "pnpm build:api-demo"
+  publish = "apps/api-demo/dist"
+  ignore = "pnpm turbo query affected --packages @videojs/api-demo --tasks build --exit-code"
+
+# turbo query affected defaults to comparing against the merge-base with main.
+# On main itself that merge-base is HEAD, so turbo finds zero changes and skips
+# the build. HEAD~1 compares against the previous commit instead. Scoped to
+# production and branch-deploy only — PR previews keep the default merge-base
+# behavior so multi-commit pushes work.
+[context.production.environment]
+  TURBO_SCM_BASE = "HEAD~1"
+
+[context.branch-deploy.environment]
+  TURBO_SCM_BASE = "HEAD~1"

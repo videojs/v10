@@ -1,0 +1,48 @@
+---
+import { THEME_COLOR, THEME_KEY } from '@/consts';
+---
+
+{/* Dark mode initialization script - runs before paint to prevent FOUC. */}
+{
+  /* ts(2570) on define:vars-injected vars is expected — astro check can't see the injection (withastro/language-tools#711) */
+}
+<script
+  is:inline
+  define:vars={{ localStorageKey: THEME_KEY, themeColor: THEME_COLOR }}
+>
+  if (
+    typeof localStorage !== "undefined" &&
+    typeof document !== "undefined" &&
+    typeof document.documentElement !== "undefined"
+  ) {
+    let localStorageValue = localStorage[localStorageKey];
+    const isValidKey =
+      localStorageValue === "light" ||
+      localStorageValue === "dark" ||
+      localStorageValue === "system";
+    if (!localStorageValue || !isValidKey) {
+      localStorage[localStorageKey] = "system";
+      localStorageValue = "system";
+    }
+    let isDark = false;
+    if (localStorageValue === "dark") {
+      document.documentElement.classList.add("dark");
+      isDark = true;
+    } else if (localStorageValue === "system") {
+      if (
+        typeof window.matchMedia !== "undefined" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      ) {
+        document.documentElement.classList.add("dark");
+        isDark = true;
+      }
+    }
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      themeColorMeta.setAttribute(
+        "content",
+        isDark ? themeColor.dark : themeColor.light,
+      );
+    }
+  }
+</script>

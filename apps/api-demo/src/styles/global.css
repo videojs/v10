@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/*
+ * Display typeface + palette borrowed from videojs.org (site/src/styles/globals.css)
+ * so the demo shares the same look and feel.
+ */
+@font-face {
+  font-family: "Eurostile LT Pro Extended";
+  src:
+    url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff2") format("woff2"),
+    url("https://static.mux.com/fonts/EurostileLTProBoldExtended2/font.woff") format("woff");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --color-manila-light: #f3e7d2;
+  --color-manila-25: #e7ddc6;
+  --color-manila-50: #dcd2bb;
+  --color-manila-dark: #bfb39e;
+  --color-faded-black: #1e1d1d;
+  --color-soot: #32302f;
+  --color-warm-gray: #403c38;
+  --color-bright-yellow: #ffca18;
+  --color-gold: #ffa81b;
+  --color-orange: #ff6200;
+  --color-red: #eb3132;
+  --color-magenta: #cc3566;
+
+  --font-sans: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Eurostile LT Pro Extended", system-ui, sans-serif;
+}
+
+/* Class-based dark mode, toggled by adding `.dark` to <html> (see ThemeToggle). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Match native form controls and scrollbars to the active theme. */
+.dark * {
+  color-scheme: dark;
+}
+
+/* Dropdown arrow for native <select> elements (filled triangle, same as the site). */
+@utility select-chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M4.99992 6L0 0H10L4.99992 6Z' fill='%231e1d1d'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 0.7rem;
+}
+
+/* Lighter arrow (manila-light) for selects on dark surfaces. */
+:where(.dark) .select-chevron {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M4.99992 6L0 0H10L4.99992 6Z' fill='%23f3e7d2'/%3E%3C/svg%3E");
+}
+
+/* Raised bevel: top highlight + bottom inset edge + drop shadow to lift the panel. */
+@utility panel-raised {
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--color-manila-light) 45%, transparent),
+    inset 0 -1px 0 0 color-mix(in srgb, var(--color-faded-black) 12%, transparent),
+    0 3px 7px color-mix(in srgb, var(--color-faded-black) 18%, transparent);
+}
+
+:where(.dark) .panel-raised {
+  box-shadow:
+    inset 0 1px 0 0 color-mix(in srgb, var(--color-manila-light) 18%, transparent),
+    inset 0 -2px 4px color-mix(in srgb, black 35%, transparent),
+    0 4px 11px color-mix(in srgb, black 45%, transparent);
+}
+
+/* Teenage-engineering style key: a rounded, raised button (seated in a square
+ * black socket — see TE_SOCKET_CLASS). */
+@utility te-button {
+  border-radius: 0.3125rem;
+  box-shadow: inset 0 1px 0 0 color-mix(in srgb, white 30%, transparent);
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@videojs/api-demo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@videojs/media": "workspace:*",
+    "@videojs/react": "workspace:*",
+    "@videojs/utils": "workspace:*",
+    "astro": "^7.1.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.8",
+    "@astrojs/react": "^6.0.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "npm:@typescript/typescript6@^6.0.0",
+    "vite": "^8.1.5"
+  }
+}
