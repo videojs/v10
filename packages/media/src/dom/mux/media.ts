@@ -1,11 +1,11 @@
 import { shallowEqual } from '@videojs/utils/object';
-import type { MediaContentData } from '../../core/types';
 import { HlsJsMedia, type HlsSource } from '../hls-js';
 import { createMuxDrmSystems } from './drm';
 import {
   createMuxPosterURL,
   createMuxStoryboardURL,
   createMuxVideoURL,
+  type MuxContentData,
   type MuxDrmParams,
   type MuxSourceBase,
   parseMuxVideoURL,
@@ -40,7 +40,7 @@ export const muxMediaDefaultProps: MuxMediaProps = {
  */
 export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   #source: MuxSource | null = muxMediaDefaultProps.source;
-  #contentData: MediaContentData = {};
+  #contentData: MuxContentData = {};
 
   /**
    * Media source URL. Setting a Mux stream URL
@@ -133,7 +133,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * it does. Nothing here is applied for you, apart from the thumbnail track
    * `<mux-video>` adds from `storyboard` (and drops for live streams).
    */
-  get contentData(): MediaContentData {
+  get contentData(): MuxContentData {
     return this.#contentData;
   }
 
@@ -142,7 +142,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
     const poster = createMuxPosterURL(this.#source);
     const storyboard = createMuxStoryboardURL(this.#source);
 
-    const next: MediaContentData = {
+    const next: MuxContentData = {
       ...(poster && { poster }),
       ...(storyboard && { storyboard }),
     };
