@@ -38,6 +38,20 @@ export const VIDEO_PAGES = [
     resource: 'dash',
   },
   {
+    name: 'HTML Shaka Video HLS',
+    path: '/pages/html-shaka-video-hls.html',
+    framework: 'html',
+    media: 'shaka-video',
+    resource: 'hlsTs',
+  },
+  {
+    name: 'HTML Shaka Video DASH',
+    path: '/pages/html-shaka-video-dash.html',
+    framework: 'html',
+    media: 'shaka-video',
+    resource: 'dash',
+  },
+  {
     name: 'HTML Native HLS Video',
     path: '/pages/html-native-hls-video.html',
     framework: 'html',
@@ -64,6 +78,13 @@ export const VIDEO_PAGES = [
     path: '/pages/react-video-hls.html',
     framework: 'react',
     media: 'hlsjs-video',
+    resource: 'hlsTs',
+  },
+  {
+    name: 'React Shaka Video HLS',
+    path: '/pages/react-shaka-video-hls.html',
+    framework: 'react',
+    media: 'shaka-video',
     resource: 'hlsTs',
   },
 ] as const satisfies readonly PageEntry[];
