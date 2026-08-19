@@ -36,7 +36,7 @@ function App() {
             muted={muted}
             loop={loop}
             preload={preload}
-            crossOrigin="anonymous"
+            crossOrigin=""
           />
         </AudioSkinComponent>
       </AudioPlayer>

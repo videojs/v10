@@ -48,7 +48,7 @@ function App() {
             muted={muted}
             loop={loop}
             preload={preload}
-            crossOrigin="anonymous"
+            crossOrigin=""
           />
           {/*
             Both are opt-in media components, and no env key is needed for Mux-hosted sources.

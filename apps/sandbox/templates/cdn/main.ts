@@ -395,7 +395,7 @@ async function render() {
   // it preloads, so the settings menu has nothing to attach to — same as the
   // per-embed pages on the html and react platforms.
   const mediaAttrs = isEmbedPreset(preset) ? '' : renderMediaAttrs(state);
-  const crossoriginAttr = isEmbedPreset(preset) ? '' : 'crossorigin="anonymous"';
+  const crossoriginAttr = isEmbedPreset(preset) ? '' : 'crossorigin';
   const mediaClassAttr = isEmbedPreset(preset) ? `class="${getEmbedMediaClass(preset)}"` : '';
 
   // Background video needs viewport dimensions instead of flex centering.
@@ -440,7 +440,7 @@ async function render() {
         ${isVideoPreset(preset) ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}
       </${mediaTag}>
-      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin="anonymous" />` : ''}
+      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
     </${skinTag}>
   `;
 

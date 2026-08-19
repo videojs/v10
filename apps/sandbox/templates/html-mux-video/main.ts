@@ -49,7 +49,7 @@ async function render() {
       <${tag} class="aspect-video max-w-4xl mx-auto">
         ${placeholder ? `<img slot="poster" alt="" style="background: url('${placeholder}') var(--media-object-position, center) / contain no-repeat">` : ''}
         <!-- The storyboard track is derived automatically from the Mux src. -->
-        <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
+        <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin>
           ${renderChapters(getChapters(state.source))}
         </mux-video>
         <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->

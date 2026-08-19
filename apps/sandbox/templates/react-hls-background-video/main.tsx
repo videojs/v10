@@ -27,7 +27,7 @@ function App() {
     <SandboxI18nProvider>
       <BackgroundVideoPlayer>
         <BackgroundVideoSkin>
-          <HlsBackgroundVideo src={SOURCES[source].url ?? ''} crossOrigin="anonymous" />
+          <HlsBackgroundVideo src={SOURCES[source].url ?? ''} crossOrigin="" />
         </BackgroundVideoSkin>
       </BackgroundVideoPlayer>
     </SandboxI18nProvider>

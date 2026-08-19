@@ -43,7 +43,7 @@ function MetadataVideo({ mediaTitle }: { mediaTitle: string | null | undefined }
     <Video
       className="aspect-video w-full bg-black object-cover"
       controls
-      crossOrigin="anonymous"
+      crossOrigin=""
       playsInline
       ref={configureMedia}
       src={SOURCES['mp4-1'].url}
