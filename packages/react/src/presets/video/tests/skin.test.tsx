@@ -43,4 +43,15 @@ describe('VideoSkin', () => {
     expect(custom?.getAttribute('src')).toBe('poster.jpg');
     expect(custom?.getAttribute('style')).toContain('poster-placeholder.jpg');
   });
+
+  it('lets renderPoster draw something that is not an image', () => {
+    const { container } = render(<VideoSkin renderPoster={(props) => <div {...props} data-testid="custom" />} />, {
+      wrapper: wrapper(),
+    });
+
+    expect(container.querySelector('.media-default-skin > img')).toBeNull();
+
+    const custom = container.querySelector('[data-testid="custom"]');
+    expect(custom?.getAttribute('src')).toBe('poster.jpg');
+  });
 });

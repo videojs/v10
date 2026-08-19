@@ -77,7 +77,9 @@ The site deploys via Netlify from two branches:
 
 On each release, the CD workflow force-pushes `main` to `site/v10`, keeping production docs in sync with published packages.
 
-**Fixing a typo without cutting a release:** Land the fix on `main` first, then cherry-pick to `site/v10`. The next release's force-push already includes the fix (since it came from `main`), so nothing gets lost. The `site/v10` branch is protected — direct pushes are restricted to the CD bot.
+**Changelog prose** arrives too late for that force-push. The prose bot only starts once the release is published, so its PR lands on `main` after production has already moved. The [Forward-port changelog](../.github/workflows/forward-port-changelog.yml) workflow closes the gap: whenever anything under `src/content/changelog/` changes on `main`, it copies that folder onto `site/v10`. No cherry-pick needed.
+
+**Fixing a typo without cutting a release:** Land the fix on `main` first, then cherry-pick to `site/v10`. The next release's force-push already includes the fix (since it came from `main`), so nothing gets lost. Treat `site/v10` as bot-owned — it is rewritten from `main` on every release, so anything pushed there that isn't also on `main` disappears at the next cut.
 
 ## Environment Variables
 

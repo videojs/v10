@@ -1,0 +1,83 @@
+name: Forward-port changelog
+
+# The release job copies main onto site/v10 as its last step, and the changelog
+# prose bot only starts once that release is published. So prose always lands on
+# main after production has already moved, and used to need a hand cherry-pick to
+# reach videojs.org.
+#
+# This job closes that gap. It runs after the release is finished, touches only
+# the changelog folder, and pushes to site/v10 rather than main, so it cannot
+# delay, block, or re-trigger a release.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'site/src/content/changelog/**'
+
+concurrency:
+  group: forward-port-changelog
+  cancel-in-progress: false
+
+jobs:
+  forward-port:
+    # Sit out the release commit. Merging the release PR trips this workflow and
+    # the release job at the same time, and the release job force-pushes main onto
+    # site/v10 as its last step, so the raw changelog reaches production that way
+    # regardless. Running here as well would only publish it early: this job takes
+    # about a minute, while the release job takes roughly four and can sit queued
+    # behind its `production` concurrency group for far longer. Skipping keeps a
+    # version's changelog off videojs.org until its packages are really on npm.
+    #
+    # This matches release-please's squashed release commit, `chore: release main
+    # (#1234)`. If that title ever changes, update this condition with it.
+    if: "${{ !startsWith(github.event.head_commit.message, 'chore: release main') }}"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: site/v10
+          fetch-depth: 0
+
+      - name: Copy the changelog from main onto site/v10
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Merging the release PR trips this workflow and the release job at the
+          # same time, and the release job force-pushes main onto site/v10 when it
+          # finishes. If that lands mid-run our push is rejected, so re-read
+          # site/v10 and try again. Replacing the folder wholesale keeps every
+          # attempt idempotent.
+          for attempt in 1 2 3; do
+            git fetch origin \
+              '+refs/heads/main:refs/remotes/origin/main' \
+              '+refs/heads/site/v10:refs/remotes/origin/site/v10'
+            git reset --hard origin/site/v10
+
+            # main only ever holds changelog files for released versions: a file is
+            # created on the release branch and reaches main when the release PR
+            # merges. So there is nothing here to reconcile, and no unreleased
+            # changelog to leak into production.
+            rm -rf site/src/content/changelog
+            git checkout origin/main -- site/src/content/changelog
+            git add -A site/src/content/changelog
+
+            if git diff --cached --quiet; then
+              echo "site/v10 changelog already matches main — nothing to do"
+              exit 0
+            fi
+
+            git commit -m 'chore(site): forward-port changelog to site/v10'
+            if git push origin HEAD:site/v10; then
+              exit 0
+            fi
+            echo "::notice::site/v10 moved under us (attempt ${attempt}) — retrying"
+          done
+
+          echo "::error::Could not push the changelog to site/v10 after 3 attempts"
+          exit 1
