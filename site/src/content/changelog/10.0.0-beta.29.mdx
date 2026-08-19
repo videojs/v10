@@ -1,5 +1,5 @@
 ---
-description: ""
+description: "Resolves poster and title in the store from media metadata, settles slider preview behavior, and completes the canonical video skins."
 date: 2026-08-19
 version: "10.0.0-beta.29"
 prerelease: true
@@ -7,39 +7,44 @@ breaking: true
 compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.28...@videojs/core@10.0.0-beta.29"
 ---
 
+Your media knows its own poster and title. Beta.29 teaches the player to ask for them, retires the store setters that used to stand in the way, and finishes the canonical source the shipped skins will eventually be generated from.
 
-### 🚀 Features
-- *(skin)* Add canonical buffering indicator ([#2189](https://github.com/videojs/v10/pull/2189)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical error dialog ([#2190](https://github.com/videojs/v10/pull/2190)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical captions button ([#2191](https://github.com/videojs/v10/pull/2191)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical remote playback controls ([#2192](https://github.com/videojs/v10/pull/2192)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical input indicators ([#2193](https://github.com/videojs/v10/pull/2193)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Complete canonical volume popover ([#2194](https://github.com/videojs/v10/pull/2194)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical time slider chapters ([#2195](https://github.com/videojs/v10/pull/2195)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical video settings menu ([#2196](https://github.com/videojs/v10/pull/2196)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical video input bindings ([#2197](https://github.com/videojs/v10/pull/2197)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Complete canonical default video skin ([#2198](https://github.com/videojs/v10/pull/2198)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical minimal video skin ([#2199](https://github.com/videojs/v10/pull/2199)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Add canonical styling and registry output ([#2202](https://github.com/videojs/v10/pull/2202)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Share settings menu composition ([#2203](https://github.com/videojs/v10/pull/2203)) by [@mihar-22](https://github.com/mihar-22)
-- *(spf)* [**breaking**] Cap renditions to the screen and surface unplayable sources ([#2135](https://github.com/videojs/v10/pull/2135)) by [@cjpillsbury](https://github.com/cjpillsbury)
-- *(ci)* Forward-port changelog prose to site/v10 ([#2228](https://github.com/videojs/v10/pull/2228)) by [@decepulis](https://github.com/decepulis)
-- *(packages)* Make Mux and Vimeo content-data donors ([#1998](https://github.com/videojs/v10/pull/1998)) by [@decepulis](https://github.com/decepulis)
-- *(packages)* [**breaking**] Name the resolved title `title`, and take it from config only ([#2176](https://github.com/videojs/v10/pull/2176)) by [@decepulis](https://github.com/decepulis)
-- *(packages)* [**breaking**] Resolve the poster in the store, and set src on img from it ([#2039](https://github.com/videojs/v10/pull/2039)) by [@decepulis](https://github.com/decepulis)
+## Breaking changes
 
-### 🐛 Bug Fixes
-- *(skin)* Style fixes ([#2257](https://github.com/videojs/v10/pull/2257)) by [@sampotts](https://github.com/sampotts)
-- *(skin)* Align canonical poster and default controls ([#2181](https://github.com/videojs/v10/pull/2181)) by [@mihar-22](https://github.com/mihar-22)
-- *(ci)* Cancel stale workflow runs ([#2263](https://github.com/videojs/v10/pull/2263)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Preserve slider preview behavior ([#2259](https://github.com/videojs/v10/pull/2259)) by [@sampotts](https://github.com/sampotts)
-- *(compiler)* Add version to vjsc package ([#2272](https://github.com/videojs/v10/pull/2272)) by [@luwes](https://github.com/luwes)
+- **Poster is player metadata** ([#2039](https://github.com/videojs/v10/pull/2039)). `setPoster` and `setDefaultPoster` are gone from the store, and `defaultPoster` is gone as a provider input. Pass `poster` on the player instead: the `poster` attribute on `<video-player>`, or the `poster` prop on a preset's `VideoPlayer` or the `Player` your `createPlayer` returns. React skins take a `renderPoster` function in place of the `poster` prop; the player owns the URL, so there is no string form.
+- **`contentTitle` is now `title`** ([#2176](https://github.com/videojs/v10/pull/2176)). Read `store.title` rather than `store.contentTitle`, and pass `title` rather than `contentTitle` to a React player. `setContentTitle`, `setDefaultContentTitle`, and the `defaultContentTitle` input are all removed. Markup is untouched: `title` on an HTML element already means the tooltip, so the attribute stays `content-title` and the element property stays `contentTitle`.
+- **SPF track selection takes rules, not pickers** ([#2135](https://github.com/videojs/v10/pull/2135)). `SelectVideoTrackConfig.picker`, `SelectAudioTrackConfig.picker`, and `BackgroundVideoEngineConfig.picker` are replaced by `rules` plus an optional `constraints` pre-pass, which is the chain `switchVideoTrack` already ran. A rule composes into either behavior unchanged, and it picks among candidates the manifest actually offers rather than returning any id. `preferHighestResolution` ships as a shared rule.
 
-### 🚜 Refactor
-- *(skin)* Simplify canonical projections and styling ([#2206](https://github.com/videojs/v10/pull/2206)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Migrate styling to compiler ([#2207](https://github.com/videojs/v10/pull/2207)) by [@mihar-22](https://github.com/mihar-22)
-- *(skin)* Use compiler catalog emission ([#2213](https://github.com/videojs/v10/pull/2213)) by [@mihar-22](https://github.com/mihar-22)
-- *(compiler)* Add declarative component registries ([#2234](https://github.com/videojs/v10/pull/2234)) by [@mihar-22](https://github.com/mihar-22)
+## Poster and title come from the media
 
-### 📚 Documentation
-- *(site)* Add changelog prose for 10.0.0-beta.28 ([#2256](https://github.com/videojs/v10/pull/2256)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+The player resolves both values from the same two tiers now: what you pass, then what the media reports, then the empty string. Nothing else can write them.
+
+Mux and Vimeo hold up their end of that bargain first ([#1998](https://github.com/videojs/v10/pull/1998)). `MediaContentData` gained named keys for the vocabulary features read — `title`, `poster`, and `storyboard` — and both hosts donate a cached bag that fires `contentdatachange` only when the bag genuinely changed. Mux refreshes its derived poster and storyboard URLs before `sourcechange`, skips the event when playback parameters move but the image URLs don't, and clears the bag when the source is dropped. Vimeo sets `title` once the embed loads and treats a blank title as an absent key. The SPF-backed Mux Medias share one `MuxMediaMixin` with their hls.js counterparts, so a source change no longer leaves the store stale. See the elements for [HTML](/docs/framework/html/reference/mux-video/) and [React](/docs/framework/react/reference/mux-video/), and the `contentData` contract in the media sources concept for [HTML](/docs/framework/html/concepts/media-sources/) and [React](/docs/framework/react/concepts/media-sources/).
+
+The title landed first ([#2176](https://github.com/videojs/v10/pull/2176)), then the poster ([#2039](https://github.com/videojs/v10/pull/2039)). Both are breaking; see [Breaking changes](#breaking-changes). The interesting half of the poster work is what `<media-poster>` does with the resolved URL: it fills `src` on an image you already supplied rather than rendering one of its own. The packaged skins carry a plain `<img>` as slot fallback content, so slotting your own image displaces it, and an image that brings its own `src`, `srcset`, or `<picture>` candidates is left alone. The host reports `data-loading`, `data-loaded`, and `data-error` beside `data-visible`. In React the component *is* the image, so image attributes go straight on it and `render` swaps the element while keeping the resolved `src`. Full details in the poster reference for [HTML](/docs/framework/html/reference/poster/) and [React](/docs/framework/react/reference/poster/).
+
+## Sliders that hold their preview
+
+Drag the time slider with a mouse, release inside the control, and the scrub preview used to vanish. The slider keeps its `data-pointing` state through a release inside its bounds now, while a release outside, a touch, and keyboard adjustment all clear it ([#2257](https://github.com/videojs/v10/pull/2257)). A follow-up routed `endDrag` through one path so a stale `pointermove` arriving before `lostpointercapture` can't drop hover either ([#2259](https://github.com/videojs/v10/pull/2259)).
+
+The rest of the pass is about small players. Preview thumbnails size from the container's aspect ratio against a shared `--max-size` cap, so they stay inside the player instead of spilling out of it, and the Minimal skin clamps them at both slider edges. Primary controls sit above secondary ones in the stacking order, so a preview no longer renders behind the cast and fullscreen cluster. Thumbs animate with opacity and scale rather than resizing, fill and buffer transitions line up, and Minimal keeps its volume thumb visible on `:focus-visible`. The Default skin hides the captions toggle on narrow players. Covered in the slider references for [HTML](/docs/framework/html/reference/time-slider/) and [React](/docs/framework/react/reference/time-slider/), volume for [HTML](/docs/framework/html/reference/volume-slider/) and [React](/docs/framework/react/reference/volume-slider/), and captions for [HTML](/docs/framework/html/reference/captions-button/) and [React](/docs/framework/react/reference/captions-button/).
+
+## Canonical skins reach parity
+
+The canonical skin source that started in beta.27 now covers a complete Default and Minimal video skin, authored once and projected to HTML, React, vanilla CSS, and a shadcn-style registry. It arrived one component at a time: the buffering indicator ([#2189](https://github.com/videojs/v10/pull/2189)), error dialog ([#2190](https://github.com/videojs/v10/pull/2190)), captions button ([#2191](https://github.com/videojs/v10/pull/2191)), the cast, AirPlay, and picture-in-picture cluster ([#2192](https://github.com/videojs/v10/pull/2192)), the input indicator overlay ([#2193](https://github.com/videojs/v10/pull/2193)), the volume popover with side and orientation variants ([#2194](https://github.com/videojs/v10/pull/2194)), time slider chapters and the thumbnail preview ([#2195](https://github.com/videojs/v10/pull/2195)), and the settings menu with its quality, audio, speed, and captions submenus ([#2196](https://github.com/videojs/v10/pull/2196)).
+
+Keyboard and pointer defaults became declarable too ([#2197](https://github.com/videojs/v10/pull/2197)). `Hotkey` and `Gesture` are framework-neutral core components wired to `InputAction`, and a reusable composition declares the standard video shortcuts — play, seek, volume, fullscreen, captions, picture-in-picture, speed — alongside center-click to pause and double-tap to seek or go fullscreen by region. HTML gained the standalone `<media-gesture>` registration it was missing. With all of that in place, the Default skin got its responsive control layout ([#2198](https://github.com/videojs/v10/pull/2198)) and a compact Minimal skin joined it ([#2199](https://github.com/videojs/v10/pull/2199)).
+
+Styling followed the same route. A validated `--media-*` token contract runs across themes, Tailwind, and emitted CSS, and the registry output composes with `cn` and opt-in prop forwarding so it stays editable ([#2202](https://github.com/videojs/v10/pull/2202)). Four near-duplicate settings submenus collapsed behind shared `Submenu` and `RadioItem` wrappers, leaving `QualityMenu`, `AudioTrackMenu`, `PlaybackRateMenu`, and `CaptionsMenu` to supply domain behavior only ([#2203](https://github.com/videojs/v10/pull/2203)). A poster styling gate that kept generated HTML posters transparent while visible is fixed, and the canonical Default skin dropped its seek buttons while `SeekButton` stays published as a standalone registry component ([#2181](https://github.com/videojs/v10/pull/2181)).
+
+None of this changes what you install yet. The packages still ship the hand-authored skins, and the generated output is checked against one reviewed snapshot and driven by the E2E suite while parity work finishes. Start from the skins concept for [HTML](/docs/framework/html/concepts/skins/) and [React](/docs/framework/react/concepts/skins/), or the customization guide for [HTML](/docs/framework/html/how-to/customize-skins/) and [React](/docs/framework/react/how-to/customize-skins/).
+
+## The compiler behind it
+
+Four refactors turned skin-specific machinery into a general pipeline. Template and text transforms gave way to composable JSX edit primitives, and generated projections came out of version control in favor of build-time generation ([#2206](https://github.com/videojs/v10/pull/2206)). Style authoring moved into a typed `styles()` API with explicit output files, layers, semantic class names, and variants ([#2207](https://github.com/videojs/v10/pull/2207)). Catalog resolution and emission became compiler APIs, with shadcn reduced to an adapter over them ([#2213](https://github.com/videojs/v10/pull/2213)). And canonical components are now described by typed schemas, with the React and HTML registries owning their own mappings — the compiler package renamed to `vjsc` along the way, and picked up a `generate` CLI ([#2234](https://github.com/videojs/v10/pull/2234)). That rename briefly broke preview package publishing, since `vjsc` shipped without a `version` field for `pnpm pack` to resolve; it has one now ([#2272](https://github.com/videojs/v10/pull/2272)).
+
+## Under the hood: SPF
+
+SPF background video picks a rendition that fits the screen it will be shown on ([#2135](https://github.com/videojs/v10/pull/2135)). `screenResolutionCap` narrows candidates to renditions whose pixel area fits, composed ahead of the ranker in the default chain, and it measures area rather than a `"1080p"`-style tier, because a tier only describes a rendition once you assume its aspect ratio. It's a soft filter: an over-cap rendition is wasteful, not unplayable, so no screen reading and nothing fitting both mean "don't cap" rather than a cap of zero. Player-size capping is a different signal and a different layer, and stays out of this.
+
+A source the engine can't play also stops failing silently. An unsupported container, encryption with no EME, and an undecodable codec all leave `HTMLMediaElement.error` null with the element stalled at `readyState 0`, because nothing in MSE reports them. The engine now collects SVTA-coded conditions per source, promotes the first fatal one to `error` and an `'error'` event, and explains it on the console; `<hls-background-video>` re-fires it, and the React component re-dispatches on the inner `<video>` so `onError` runs. The selection rewrite that made this composable is breaking; see [Breaking changes](#breaking-changes).
