@@ -1,5 +1,6 @@
 {
   "name": "vjsc",
+  "version": "0.0.0",
   "type": "module",
   "description": "Private compiler infrastructure for Video.js source transforms and builds",
   "license": "Apache-2.0",
