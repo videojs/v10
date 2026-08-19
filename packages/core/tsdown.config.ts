@@ -16,10 +16,10 @@ const localeEntries = Object.fromEntries([
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
-  deps: { neverBundle: ['@videojs/jsx'] },
+  deps: { neverBundle: ['vjsc/components'] },
   entry: {
     index: './src/core/index.ts',
-    components: './src/core/ui/components.generated.ts',
+    vjsc: './src/core/ui/schema.generated.ts',
     i18n: './src/core/i18n/index.ts',
     ...localeEntries,
     dom: './src/dom/index.ts',

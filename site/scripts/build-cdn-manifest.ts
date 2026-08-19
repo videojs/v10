@@ -3,7 +3,7 @@
  *
  * Scans the built `@videojs/html` CDN media bundles and records which media
  * subpaths actually ship a CDN build. The installation page uses this to hide
- * the CDN install option for renderers that have no CDN bundle (e.g. Vimeo).
+ * the CDN install option for a renderer that has no CDN bundle.
  *
  * Produces `site/src/content/cdn-media.json` as an array of `{ id }` entries
  * (one per media subpath), consumed via the `cdnMedia` content collection.

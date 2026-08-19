@@ -1,4 +1,5 @@
 import { isMacOS } from '@videojs/utils/dom';
+import type { HotkeyProps } from '../../core/ui/hotkey/hotkey-core';
 
 import { HotkeyCoordinator } from './coordinator';
 
@@ -12,18 +13,12 @@ export interface ParsedHotkeyBinding {
   originalKey: string;
 }
 
-export interface HotkeyOptions {
-  keys: string;
+export interface HotkeyOptions extends Pick<HotkeyProps, 'keys' | 'target' | 'disabled' | 'value'> {
   onActivate: (event: KeyboardEvent, key: string) => void;
-  /** Where to listen — `'player'` (container) or `'document'`. */
-  target?: 'player' | 'document' | undefined;
   /** Whether `event.repeat` should fire the callback. */
   repeatable?: boolean | undefined;
-  disabled?: boolean | undefined;
   /** Action name for the ARIA registry and subscriber events. */
-  action?: string | undefined;
-  /** Action value for matching UI controls and subscriber events. */
-  value?: number | undefined;
+  action?: HotkeyProps['action'] | undefined;
 }
 
 const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);

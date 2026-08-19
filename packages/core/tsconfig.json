@@ -5,6 +5,6 @@
     "lib": ["ES2022", "WebWorker"],
     "declarationDir": "types"
   },
-  "references": [{ "path": "../jsx" }, { "path": "../utils" }, { "path": "../store" }, { "path": "../media" }],
+  "references": [{ "path": "../compiler" }, { "path": "../utils" }, { "path": "../store" }, { "path": "../media" }],
   "include": ["src/*.ts", "src/core/**/*.ts"]
 }

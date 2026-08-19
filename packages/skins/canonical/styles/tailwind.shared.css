@@ -1,0 +1,29 @@
+@theme inline {
+  --color-media-accent: var(--media-accent-color, oklch(1 0 0));
+  --color-media-accent-text: var(--media-accent-text-color, contrast-color(var(--media-accent-color, oklch(0 0 0))));
+  --color-media-control-hover: var(--media-accent-color, oklch(1 0 0 / 0.1));
+  --text-media: calc(var(--media-spacing) * 3.25);
+  --spacing-media-icon: var(--media-icon-size, calc(var(--media-spacing) * 4.5));
+  --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
+  --radius-media-control: var(--media-control-radius);
+  --radius-media-surface: var(--media-surface-radius);
+}
+
+@utility status-indicator-gradient {
+  background-image: linear-gradient(
+    to bottom,
+    oklch(0 0 0 / 0.35),
+    oklch(0 0 0 / 0.2) calc(var(--media-spacing) * 12),
+    transparent
+  );
+}
+
+@utility transition-settings-menu {
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+  transition-duration: 100ms, 100ms, 100ms, 100ms, 250ms, 250ms;
+  transition-property: opacity, filter, transform, scale, width, height;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: 0ms, 0ms, 0ms, 0ms, 250ms, 250ms;
+  }
+}

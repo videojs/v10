@@ -27,6 +27,13 @@ export interface SliderProps {
   max?: number | undefined;
 }
 
+export type SliderPreviewOverflow = 'clamp' | 'visible';
+
+export interface SliderPreviewProps {
+  /** Whether the preview is clamped to the slider bounds. */
+  overflow?: SliderPreviewOverflow | undefined;
+}
+
 /** Current pointer/drag input state, typically provided by a DOM controller. */
 export interface SliderInput {
   /** Pointer position as a percentage of the track (0–100). */

@@ -1,13 +1,22 @@
 import { basename } from 'node:path';
 import { runInNewContext } from 'node:vm';
 
-export const HTML_RUNTIME_ID = '\0@videojs/compiler:html-runtime';
-export const HTML_RUNTIME_IMPORT = '@videojs/compiler/html-runtime/jsx-runtime';
+export { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from './html/virtual';
 
 /** Evaluate a bundled entry against the static JSX runtime and return its HTML. */
-export function renderHtmlChunk(code: string, entryFile: string): string {
+export function renderHtmlChunk(code: string, entryFile: string, imports: readonly string[] = []): string {
   const module = { exports: {} as Record<string, unknown> };
-  runInNewContext(code, { module, exports: module.exports });
+  const external = new Set(imports);
+
+  runInNewContext(code, {
+    module,
+    exports: module.exports,
+    require(specifier: string) {
+      if (!external.has(specifier)) throw new Error(`Unexpected external module in HTML build: ${specifier}`);
+      return {};
+    },
+  });
+
   return String(selectRender(module.exports, entryFile)({})).trim();
 }
 
@@ -36,45 +45,3 @@ function selectRender(
       `Use a default export or leave exactly one function export. Function exports: ${available}.`
   );
 }
-
-export const HTML_RUNTIME = `
-export const Fragment = Symbol('Fragment');
-const raw = Symbol('raw-html');
-
-export function jsx(type, props) {
-  if (type === Fragment) return html(renderChildren(props?.children));
-  if (typeof type === 'function') return type(props ?? {});
-
-  const { children, ...attributes } = props ?? {};
-  return html('<' + type + renderAttributes(attributes) + '>' + renderChildren(children) + '</' + type + '>');
-}
-
-export const jsxs = jsx;
-
-function renderAttributes(attributes) {
-  let output = '';
-  const entries = Object.entries(attributes);
-  entries.sort(([left], [right]) => left === 'id' ? 1 : right === 'id' ? -1 : 0);
-  for (const [name, value] of entries) {
-    if (value == null || value === false || typeof value === 'function') continue;
-    const attribute = name === 'className' ? 'class' : name.replace(/[A-Z]/g, (letter) => '-' + letter.toLowerCase());
-    const normalized = attribute === 'class' ? [value].flat(Infinity).filter(Boolean).join(' ') : value;
-    output += normalized === true ? ' ' + attribute : ' ' + attribute + '="' + escape(normalized) + '"';
-  }
-  return output;
-}
-
-function renderChildren(children) {
-  return [children].flat(Infinity).filter((value) => value != null && value !== false).map((value) => {
-    return value && typeof value === 'object' && raw in value ? value[raw] : escape(value);
-  }).join('');
-}
-
-function escape(value) {
-  return String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-}
-
-function html(value) {
-  return { [raw]: value, toString() { return value; } };
-}
-`;

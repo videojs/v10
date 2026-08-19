@@ -1,3 +1,3 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from 'vjsc/components';
 
 export default defineComponent({ name: 'Container' });

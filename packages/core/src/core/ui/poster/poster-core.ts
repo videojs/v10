@@ -4,6 +4,11 @@ export interface PosterState {
   visible: boolean;
 }
 
+/** Framework-neutral poster component props. */
+export interface PosterProps {
+  src?: string | undefined;
+}
+
 export class PosterCore {
   #media: MediaPlaybackState | null = null;
 

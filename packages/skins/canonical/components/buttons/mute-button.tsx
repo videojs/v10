@@ -1,13 +1,15 @@
-import { MuteButton as MuteButtonPrimitive } from '@videojs/core/components';
-import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/components';
-import styles from '../../styles/components/button.tailwind';
+import type { MuteButtonProps as CoreProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';
+import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/vjsc';
+import type { Props } from 'vjsc/components';
+import styles from '../../styles/components/button.styles';
 
-export function MuteButton() {
+export function MuteButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <MuteButtonPrimitive className={[styles.button, styles.muteButton]}>
-      <VolumeOffIcon className={[styles.buttonIcon, styles.volumeOffIcon]} />
-      <VolumeLowIcon className={[styles.buttonIcon, styles.volumeLowIcon]} />
-      <VolumeHighIcon className={[styles.buttonIcon, styles.volumeHighIcon]} />
-    </MuteButtonPrimitive>
+    <$.MuteButton className={[styles.root, styles.mute, className]} {...props}>
+      <VolumeOffIcon className={[styles.icon, styles.icons.volumeOff]} />
+      <VolumeLowIcon className={[styles.icon, styles.icons.volumeLow]} />
+      <VolumeHighIcon className={[styles.icon, styles.icons.volumeHigh]} />
+    </$.MuteButton>
   );
 }

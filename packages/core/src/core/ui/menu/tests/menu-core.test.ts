@@ -6,6 +6,7 @@ function createInput(overrides: Partial<MenuInput> = {}): MenuInput {
   return {
     active: false,
     status: 'idle',
+    isSubmenu: false,
     ...overrides,
   };
 }
@@ -20,7 +21,6 @@ describe('MenuCore', () => {
         defaultOpen: false,
         closeOnEscape: true,
         closeOnOutsideClick: true,
-        isSubmenu: false,
       });
     });
   });
@@ -75,17 +75,17 @@ describe('MenuCore', () => {
       expect(state.align).toBe('end');
     });
 
-    it('reflects isSubmenu from props', () => {
-      const core = new MenuCore({ isSubmenu: true });
-      core.setInput(createInput());
+    it('reflects isSubmenu from runtime input', () => {
+      const core = new MenuCore();
+      core.setInput(createInput({ isSubmenu: true }));
       const state = core.getState();
 
       expect(state.isSubmenu).toBe(true);
     });
 
     it('omits root positioning for submenus', () => {
-      const core = new MenuCore({ side: 'right', align: 'end', isSubmenu: true });
-      core.setInput(createInput());
+      const core = new MenuCore({ side: 'right', align: 'end' });
+      core.setInput(createInput({ isSubmenu: true }));
       const state = core.getState();
 
       expect(state.side).toBeUndefined();
@@ -136,8 +136,7 @@ describe('MenuCore', () => {
 
     it('leaves submenu tabindex to roving focus management', () => {
       const core = new MenuCore();
-      core.setProps({ isSubmenu: true });
-      core.setInput(createInput());
+      core.setInput(createInput({ isSubmenu: true }));
       const state = core.getState();
       const attrs = core.getTriggerAttrs(state);
 
@@ -158,8 +157,8 @@ describe('MenuCore', () => {
     });
 
     it('omits popover attr for submenus', () => {
-      const core = new MenuCore({ isSubmenu: true });
-      core.setInput(createInput());
+      const core = new MenuCore();
+      core.setInput(createInput({ isSubmenu: true }));
       const state = core.getState();
       const attrs = core.getContentAttrs(state);
 
@@ -213,7 +212,7 @@ describe('MenuCore', () => {
     it('exports Props, State, Input types via namespace', () => {
       // Compile-time check: ensure namespace types are accessible.
       const _props: MenuCore.Props = {};
-      const _input: MenuCore.Input = { active: false, status: 'idle' };
+      const _input: MenuCore.Input = { active: false, status: 'idle', isSubmenu: false };
       expect(_props).toBeDefined();
       expect(_input).toBeDefined();
     });

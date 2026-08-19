@@ -1,3 +1,4 @@
-import { defineComponent } from '@videojs/jsx';
+import { defineComponent } from 'vjsc/components';
+import type { PosterProps } from './poster-core';
 
-export default defineComponent({ name: 'Poster' });
+export default defineComponent<PosterProps>({ name: 'Poster' });

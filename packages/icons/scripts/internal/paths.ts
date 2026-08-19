@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const ROOT = join(__dirname, '../..');
 export const ASSETS_DIR = join(ROOT, 'src/assets');
+export const VJSC_DIR = join(ROOT, 'vjsc');
 export const DIST_DIR = join(ROOT, 'dist');
 
 export function getIconSets(): string[] {

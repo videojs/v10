@@ -11,6 +11,7 @@ export interface InterfaceDeclarationOptions {
   name: string;
   export?: boolean | undefined;
   extends?: readonly ts.TypeReferenceNode[] | undefined;
+  members?: readonly ts.TypeElement[] | undefined;
   properties?: readonly InterfacePropertySpec[] | undefined;
 }
 
@@ -30,14 +31,17 @@ export function createInterfaceDeclaration(
         ),
       ]
     : undefined;
-  const members = (options.properties ?? []).map((property) =>
-    factory.createPropertySignature(
-      property.readonly ? [factory.createModifier(ts.SyntaxKind.ReadonlyKeyword)] : undefined,
-      property.name,
-      property.optional ? factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
-      property.type
-    )
-  );
+  const members = [
+    ...(options.members ?? []),
+    ...(options.properties ?? []).map((property) =>
+      factory.createPropertySignature(
+        property.readonly ? [factory.createModifier(ts.SyntaxKind.ReadonlyKeyword)] : undefined,
+        property.name,
+        property.optional ? factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
+        property.type
+      )
+    ),
+  ];
   return factory.createInterfaceDeclaration(modifiers, options.name, undefined, heritageClauses, members);
 }
 
@@ -75,7 +79,7 @@ export function createIndexedAccessType(
   return factory.createIndexedAccessTypeNode(object, index);
 }
 
-function entityNameExpression(name: ts.EntityName, factory: ts.NodeFactory): ts.Expression {
+export function entityNameExpression(name: ts.EntityName, factory: ts.NodeFactory = ts.factory): ts.Expression {
   if (ts.isIdentifier(name)) return factory.createIdentifier(name.text);
   return factory.createPropertyAccessExpression(
     entityNameExpression(name.left, factory),

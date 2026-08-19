@@ -8,7 +8,7 @@ export interface ModuleReference {
   ambiguous: boolean;
 }
 
-/** Collect runtime module references and the named imports used by the source file. */
+/** Collect runtime module references and the imported exports used by the source file. */
 export function collectModuleReferences(sourceFile: ts.SourceFile): ModuleReference[] {
   const references: ModuleReference[] = [];
   const usedNames = collectReferencedIdentifiers(sourceFile);
@@ -21,7 +21,9 @@ export function collectModuleReferences(sourceFile: ts.SourceFile): ModuleRefere
       if (clause && !clause.isTypeOnly) {
         if (clause.name && usedNames.has(clause.name.text)) ambiguous = true;
         if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) {
-          if (usedNames.has(clause.namedBindings.name.text)) ambiguous = true;
+          const namespace = collectNamespaceReferences(sourceFile, clause.namedBindings.name.text);
+          names.push(...namespace.names);
+          ambiguous = namespace.ambiguous;
         } else if (clause.namedBindings) {
           for (const element of clause.namedBindings.elements) {
             if (!element.isTypeOnly && usedNames.has(element.name.text)) {
@@ -74,4 +76,34 @@ export function collectModuleReferences(sourceFile: ts.SourceFile): ModuleRefere
   visit(sourceFile);
 
   return references;
+}
+
+function collectNamespaceReferences(
+  sourceFile: ts.SourceFile,
+  localName: string
+): { names: readonly string[]; ambiguous: boolean } {
+  const names = new Set<string>();
+  let ambiguous = false;
+
+  const visit = (node: ts.Node): void => {
+    if (ts.isImportDeclaration(node)) return;
+
+    if (ts.isIdentifier(node) && node.text === localName) {
+      const parent = node.parent;
+
+      if (ts.isPropertyAccessExpression(parent) && parent.expression === node) {
+        names.add(parent.name.text);
+      } else if (ts.isQualifiedName(parent) && parent.left === node) {
+        names.add(parent.right.text);
+      } else {
+        ambiguous = true;
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  };
+
+  visit(sourceFile);
+
+  return { names: [...names], ambiguous };
 }

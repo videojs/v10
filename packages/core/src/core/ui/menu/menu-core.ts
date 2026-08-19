@@ -19,12 +19,26 @@ export interface MenuProps {
   closeOnEscape?: boolean | undefined;
   /** Close the menu when clicking outside. Root menus only. */
   closeOnOutsideClick?: boolean | undefined;
-  /** True when this menu instance is nested inside a parent menu's content. */
-  isSubmenu?: boolean | undefined;
 }
 
-/** Raw transition state provided by `createTransition`. */
-export interface MenuInput extends TransitionState {}
+export interface MenuTriggerProps {
+  disabled?: boolean | undefined;
+}
+
+export interface MenuItemProps {
+  disabled?: boolean | undefined;
+}
+
+export interface MenuItemIndicatorProps {
+  checked?: boolean | undefined;
+  forceMount?: boolean | undefined;
+}
+
+/** Runtime input derived by framework adapters and `createTransition`. */
+export interface MenuInput extends TransitionState {
+  /** Whether this menu is nested inside another menu's content. */
+  isSubmenu: boolean;
+}
 
 export interface MenuState extends TransitionFlags {
   open: boolean;
@@ -45,7 +59,6 @@ export class MenuCore {
     defaultOpen: false,
     closeOnEscape: true,
     closeOnOutsideClick: true,
-    isSubmenu: false,
   };
 
   #props = { ...MenuCore.defaultProps };
@@ -69,7 +82,7 @@ export class MenuCore {
 
   getState(): MenuState {
     const input = this.#input!;
-    const isSubmenu = this.#props.isSubmenu;
+    const isSubmenu = input.isSubmenu;
 
     return {
       open: input.active,

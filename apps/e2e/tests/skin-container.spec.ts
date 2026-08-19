@@ -25,8 +25,9 @@ for (const { framework, path } of SOURCE_SKINS) {
       await expect(container).toBeAttached();
       await expect(page.locator('video')).toBeAttached();
       await expect(container.locator('media-poster, img.media-poster')).toBeAttached();
-      await expect(container.locator('media-controls, .media-controls')).toBeAttached();
+      await expect(container.locator('media-controls, .media-controls-root')).toBeAttached();
       await expect(container.locator('.media-overlay')).toBeAttached();
+      await expect(container.locator('media-seek-button, .media-seek-button')).toHaveCount(0);
 
       const placeholder = await container.evaluate((element) =>
         getComputedStyle(element).getPropertyValue('--media-poster-placeholder')
@@ -38,8 +39,10 @@ for (const { framework, path } of SOURCE_SKINS) {
       const poster = page.locator('media-poster, img.media-poster').first();
 
       await expect(poster).toHaveAttribute('data-visible', '');
+      await expect(poster).toHaveCSS('opacity', '1');
       await page.locator('video').evaluate((video: HTMLVideoElement) => video.play());
       await expect(poster).not.toHaveAttribute('data-visible');
+      await expect(poster).toHaveCSS('opacity', '0');
     });
   });
 }

@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.0.0-beta.28](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.27...@videojs/skins@10.0.0-beta.28) (2026-08-19)
+
+
+### Bug Fixes
+
+* **skin:** misc style fixes ([#2232](https://github.com/videojs/v10/issues/2232)) ([1e8cc17](https://github.com/videojs/v10/commit/1e8cc17912e6a31427eb607e07ac56db921e908e))
+* **skin:** use finite radius value ([#2253](https://github.com/videojs/v10/issues/2253)) ([2cc8249](https://github.com/videojs/v10/commit/2cc8249907d44b94319f4578ecb5463981a2e237))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.28
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.28
+    * @videojs/icons bumped to 10.0.0-beta.28
+
 ## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.26...@videojs/skins@10.0.0-beta.27) (2026-08-17)
 
 

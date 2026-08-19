@@ -4,11 +4,12 @@
  * The variant subtracts audio, text, ABR, and preload-monitoring behaviors
  * from the HLS video engine, then seeds `loadActivated: true` so the
  * composition behaves as if preload has already been activated. These tests
- * confirm the seed, the absence of subtracted state slots, and the picker
- * configurability.
+ * confirm the seed, the absence of subtracted state slots, and the selection
+ * rule chain — its screen-size cap and its configurability.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
+import { SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { createBackgroundVideoEngine } from '../engine-background-video';
 
@@ -60,6 +61,133 @@ describe('createBackgroundVideoEngine', () => {
     engine.destroy();
   });
 
+  // Error reporting is deliberately *not* subtracted: nothing about an unplayable
+  // source reaches the media element on its own, so without the sequence a
+  // background video fails invisibly.
+  describe('errors', () => {
+    const unplayablePresentation = (): MaybeResolvedPresentation => ({
+      id: 'p',
+      url: 'https://example.com/v.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'video-switching',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: '720p-ts',
+                  url: 'https://example.com/720p.m3u8',
+                  bandwidth: 2_000_000,
+                  // Already relabeled, as `resolve-track` leaves the whole type
+                  // once a media playlist resolves without an EXT-X-MAP.
+                  mimeType: 'video/mp2t',
+                  codecs: ['avc1.42E01E'],
+                  width: 1280,
+                  height: 720,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    it('declares the errors slot', () => {
+      const engine = createBackgroundVideoEngine();
+      expect('errors' in (snapshot(engine.state) as Record<string, unknown>)).toBe(true);
+      engine.destroy();
+    });
+
+    // MPEG-TS: the capability constraint prunes it, so nothing is selected. No
+    // verdict — the cause (1004) is reported by `resolveVideoTrack` as the playlist
+    // resolves, which is more specific and needs no manifest fetch here.
+    it('makes no pick for an unplayable container', async () => {
+      const engine = createBackgroundVideoEngine();
+      engine.state.presentation.set(unplayablePresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.selectedVideoTrackId.get()).toBeUndefined();
+      expect(engine.state.errors.get()).toBeUndefined();
+      engine.destroy();
+    });
+
+    // The one failure with no per-rendition cause behind it: nothing resolves, so
+    // nothing reports. `reportAbsentTrackType` at the head of the constraint chain
+    // is what covers it, composed because this engine is video-only.
+    it('reports for a source with no video renditions at all', async () => {
+      const engine = createBackgroundVideoEngine();
+      engine.state.presentation.set(audioOnlyPresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.errors.get()).toEqual([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      engine.destroy();
+    });
+
+    const audioOnlyPresentation = (): MaybeResolvedPresentation =>
+      ({
+        id: 'p',
+        url: 'https://example.com/audio-only.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'audio-set',
+            type: 'audio',
+            switchingSets: [
+              {
+                id: 'audio-switching',
+                type: 'audio',
+                tracks: [
+                  {
+                    type: 'audio',
+                    id: 'audio-1',
+                    url: 'https://example.com/audio.m3u8',
+                    bandwidth: 128_000,
+                    mimeType: 'audio/mp4',
+                    codecs: ['mp4a.40.2'],
+                    groupId: 'g',
+                    name: 'English',
+                    sampleRate: 48_000,
+                    channels: 2,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }) as never;
+
+    it('reports the absent type once, not on every presentation write', async () => {
+      // The constraint chain runs inside a `computed` that re-derives on every
+      // write, and the sequence keeps duplicates, so the guard is load-bearing.
+      const engine = createBackgroundVideoEngine();
+      engine.state.presentation.set(audioOnlyPresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      engine.state.presentation.set(audioOnlyPresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.errors.get()).toHaveLength(1);
+      engine.destroy();
+    });
+
+    it('clears the sequence on src unload so the next source starts clean', async () => {
+      const engine = createBackgroundVideoEngine();
+      engine.state.presentation.set(audioOnlyPresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(engine.state.errors.get()).toHaveLength(1);
+
+      engine.state.presentation.set(undefined);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.errors.get()).toBeUndefined();
+      engine.destroy();
+    });
+  });
+
   it('omits subtracted context slots — no audio segment loader / text actors', () => {
     const engine = createBackgroundVideoEngine();
     const context = snapshot(engine.context) as Record<string, unknown>;
@@ -78,8 +206,13 @@ describe('createBackgroundVideoEngine', () => {
     engine.destroy();
   });
 
-  it('defaults the picker to pickHighestResolutionVideoTrack', async () => {
+  // The screen is written explicitly in both tests below rather than left to
+  // whatever the test runner's screen happens to be: the default chain caps to it,
+  // so an ambient reading would make the expected pick machine-dependent.
+  it('defaults the rule chain to the largest rendition that fits the screen', async () => {
     const engine = createBackgroundVideoEngine();
+    // Roomy enough that the cap admits both, leaving the ranker to decide.
+    engine.state.screenResolution.set({ width: 3840, height: 2160 });
 
     const presentation: MaybeResolvedPresentation = {
       id: 'p',
@@ -135,9 +268,57 @@ describe('createBackgroundVideoEngine', () => {
     engine.destroy();
   });
 
-  it('honors a custom picker override from config', async () => {
+  it('caps the default pick to the screen', async () => {
+    const engine = createBackgroundVideoEngine();
+    // 921,600 px: the 1080p rung's 2,073,600 is over it, the 480p rung's 409,920 fits.
+    engine.state.screenResolution.set({ width: 1280, height: 720 });
+
+    const videoTrack = (id: string, width: number, height: number, bandwidth: number) =>
+      ({
+        type: 'video',
+        id,
+        url: `https://example.com/${id}.m3u8`,
+        bandwidth,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        initialization: { url: 'init', byteRange: { offset: 0, length: 0 } },
+        segments: [],
+        startTime: 0,
+        duration: 0,
+        width,
+        height,
+      }) as never;
+
+    engine.state.presentation.set({
+      id: 'p',
+      url: 'https://example.com/manifest.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'video-switching',
+              type: 'video',
+              tracks: [videoTrack('480p', 854, 480, 1_000_000), videoTrack('1080p', 1920, 1080, 4_000_000)],
+            },
+          ],
+        },
+      ],
+    } as MaybeResolvedPresentation);
+
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    expect(engine.state.selectedVideoTrackId.get()).toBe('480p');
+    engine.destroy();
+  });
+
+  it('honors a custom rule chain from config', async () => {
+    // Two tracks, so overriding is observable: the default chain
+    // (`[screenResolutionCap, preferHighestResolution]`) would take 720p on any
+    // screen that fits it, and this rule takes 480p regardless.
     const engine = createBackgroundVideoEngine({
-      picker: () => 'forced-pick',
+      rules: [(tracks) => tracks.filter((track) => track.id === '480p')],
     });
 
     const presentation: MaybeResolvedPresentation = {
@@ -167,6 +348,20 @@ describe('createBackgroundVideoEngine', () => {
                   width: 854,
                   height: 480,
                 } as never,
+                {
+                  type: 'video',
+                  id: '720p',
+                  url: 'https://example.com/720p.m3u8',
+                  bandwidth: 2_500_000,
+                  mimeType: 'video/mp4',
+                  codecs: ['avc1.42E01E'],
+                  initialization: { url: 'init', byteRange: { offset: 0, length: 0 } },
+                  segments: [],
+                  startTime: 0,
+                  duration: 0,
+                  width: 1280,
+                  height: 720,
+                } as never,
               ],
             },
           ],
@@ -176,7 +371,58 @@ describe('createBackgroundVideoEngine', () => {
 
     engine.state.presentation.set(presentation);
     await new Promise<void>((resolve) => queueMicrotask(resolve));
-    expect(engine.state.selectedVideoTrackId.get()).toBe('forced-pick');
+    expect(engine.state.selectedVideoTrackId.get()).toBe('480p');
     engine.destroy();
+  });
+
+  describe('screenResolution', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    function stubScreen(width: number, height: number, ratio = 1) {
+      const screen = Object.assign(new EventTarget(), { width, height, orientation: new EventTarget() });
+      vi.stubGlobal('screen', screen);
+      vi.stubGlobal('devicePixelRatio', ratio);
+      return screen;
+    }
+
+    it('is populated in device pixels before any presentation is set', () => {
+      // The cap needs the screen from frame 0, not once a source arrives — the
+      // slot is independent of the presentation lifecycle.
+      stubScreen(1440, 900, 2);
+      const engine = createBackgroundVideoEngine();
+
+      expect(engine.state.screenResolution.get()).toEqual({ width: 2880, height: 1800 });
+
+      engine.destroy();
+    });
+
+    it('honors useDevicePixelRatio from engine config', () => {
+      stubScreen(1440, 900, 2);
+      const engine = createBackgroundVideoEngine({ useDevicePixelRatio: false });
+
+      expect(engine.state.screenResolution.get()).toEqual({ width: 1440, height: 900 });
+
+      engine.destroy();
+    });
+
+    it('tracks the screen changing under the window', () => {
+      const screen = stubScreen(1440, 900);
+      const engine = createBackgroundVideoEngine();
+
+      screen.width = 3840;
+      screen.height = 2160;
+      screen.dispatchEvent(new Event('change'));
+
+      expect(engine.state.screenResolution.get()).toEqual({ width: 3840, height: 2160 });
+
+      engine.destroy();
+    });
+
+    // Teardown is asserted at the behavior level instead — see
+    // `behaviors/dom/tests/track-screen-resolution.test.ts`. Reading the slot
+    // after `destroy()` returns `undefined` regardless, so an engine-level
+    // assertion here couldn't tell a removed listener from torn-down state.
   });
 });

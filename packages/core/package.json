@@ -1,7 +1,7 @@
 {
   "name": "@videojs/core",
   "type": "module",
-  "version": "10.0.0-beta.27",
+  "version": "10.0.0-beta.28",
   "description": "Core components and utilities for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -29,10 +29,10 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
-    "./components": {
-      "types": "./dist/dev/components.d.ts",
-      "development": "./dist/dev/components.js",
-      "default": "./dist/default/components.js"
+    "./vjsc": {
+      "types": "./dist/dev/vjsc.d.ts",
+      "development": "./dist/dev/vjsc.js",
+      "default": "./dist/default/vjsc.js"
     },
     "./i18n": {
       "types": "./dist/dev/i18n.d.ts",
@@ -57,15 +57,15 @@
     "dist"
   ],
   "scripts": {
-    "generate:components": "node --import tsx ./scripts/generate-components.ts --config components.config.js",
-    "check:components": "node --import tsx ./scripts/generate-components.ts --config components.config.js --check",
+    "generate:schema": "vjsc generate",
+    "check:schema": "vjsc generate --check",
     "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
     "generate:i18n-types": "node --import tsx ./scripts/generate-i18n-types.ts",
-    "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types && pnpm run generate:components",
+    "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types && pnpm run generate:schema",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "pnpm run check:components && pnpm run test:types && vitest run",
+    "test": "pnpm run check:schema && pnpm run test:types && vitest run",
     "test:types": "tsgo --project ./src/core/ui/tests/tsconfig.json",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
@@ -76,7 +76,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@videojs/jsx": "workspace:*",
+    "vjsc": "workspace:*",
     "jsdom": "^26.1.0",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.2",

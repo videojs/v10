@@ -22,7 +22,7 @@ export function isJsxElementLike(node: ts.Node): node is JsxElementLike {
 export function findJsxAttribute(attributes: ts.JsxAttributes, name: string): ts.JsxAttribute | undefined {
   return attributes.properties.find(
     (property): property is ts.JsxAttribute =>
-      ts.isJsxAttribute(property) && ts.isIdentifier(property.name) && property.name.text === name
+      ts.isJsxAttribute(property) && jsxAttributeNameText(property.name) === name
   );
 }
 
@@ -154,11 +154,30 @@ export function jsxAttributes(element: JsxElementLike): ts.JsxAttributes {
   return ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
 }
 
+export function jsxChildren(element: JsxElementLike): readonly ts.JsxChild[] {
+  return ts.isJsxElement(element) ? element.children : [];
+}
+
+export function jsxAttributeNameText(name: ts.JsxAttributeName): string {
+  return ts.isIdentifier(name) ? name.text : `${name.namespace.text}:${name.name.text}`;
+}
+
 export function readJsxAttributeExpression(attribute: ts.JsxAttribute): ts.Expression | undefined {
   const initializer = attribute.initializer;
   if (!initializer) return undefined;
   if (ts.isStringLiteral(initializer)) return initializer;
   return ts.isJsxExpression(initializer) ? initializer.expression : undefined;
+}
+
+/** Read a JSX attribute as an expression, treating a bare attribute as `true`. */
+export function readJsxAttributeValue(
+  attribute: ts.JsxAttribute,
+  factory: ts.NodeFactory = ts.factory
+): ts.Expression | undefined {
+  if (!attribute.initializer) return factory.createTrue();
+  if (ts.isStringLiteral(attribute.initializer)) return attribute.initializer;
+  if (ts.isJsxExpression(attribute.initializer)) return attribute.initializer.expression;
+  return attribute.initializer as ts.Expression;
 }
 
 export function updateJsxAttributes(

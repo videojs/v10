@@ -38,6 +38,22 @@ const createCssPlugin = (source: string): CompilerPlugin => ({
 });
 
 describe('vjsCompiler', () => {
+  it('uses Vite filter patterns for included and excluded modules', async () => {
+    const plugin = createPlugin({
+      config: {},
+      include: '**/*.tsx',
+      exclude: '**/*.test.tsx',
+    });
+
+    expect(await plugin.transform.call(createContext(), 'export const value = 1;', '/workspace/value.ts')).toBeNull();
+    expect(
+      await plugin.transform.call(createContext(), 'export const View = <div/>;', '/workspace/view.test.tsx')
+    ).toBeNull();
+    expect(
+      await plugin.transform.call(createContext(), 'export const View = <div/>;', '/workspace/view.tsx')
+    ).not.toBeNull();
+  });
+
   it('imports emitted CSS assets as virtual modules', async () => {
     const plugin = createPlugin({ config: { plugins: [createCssPlugin('.foo{display:flex;}')] } });
 
@@ -52,7 +68,7 @@ describe('vjsCompiler', () => {
     expect(match).not.toBeNull();
 
     const id = match![1]!;
-    expect(id).toContain('virtual:@videojs/compiler/css/');
+    expect(id).toContain('virtual:vjsc/css/');
     expect(plugin.resolveId(id)).toBe(`\0${id}`);
     expect(plugin.load(`\0${id}`)).toBe('.foo{display:flex;}');
     expect(result!.code).toContain('function App');
@@ -89,6 +105,39 @@ describe('vjsCompiler', () => {
     expect(secondCssId).not.toBe(firstCssId);
     expect(plugin.resolveId(firstCssId)).toBeNull();
     expect(plugin.load(`\0${secondCssId}`)).toBe(css);
+  });
+
+  it('shares identical emitted assets between transformed modules', async () => {
+    let css = '.foo{color:red;}';
+    const plugin = createPlugin({
+      config: {
+        plugins: [
+          {
+            name: 'fixture-css',
+            setup(context) {
+              return {
+                finish() {
+                  context.addAsset({ type: 'css', fileName: 'shared.css', source: css });
+                },
+              };
+            },
+          },
+        ],
+      },
+    });
+    const first = await plugin.transform.call(createContext(), 'export const first = <Foo/>;', '/workspace/first.tsx');
+    const second = await plugin.transform.call(
+      createContext(),
+      'export const second = <Foo/>;',
+      '/workspace/second.tsx'
+    );
+    const firstCssId = first!.code.match(/^import "([^"]+)";/)![1]!;
+    const secondCssId = second!.code.match(/^import "([^"]+)";/)![1]!;
+
+    expect(secondCssId).toBe(firstCssId);
+    css = '.foo{color:blue;}';
+    await plugin.transform.call(createContext(), 'export const first = <Foo/>;', '/workspace/first.tsx');
+    expect(plugin.load(`\0${secondCssId}`)).toBe('.foo{color:red;}');
   });
 
   it('forwards compiler warnings to Vite', async () => {

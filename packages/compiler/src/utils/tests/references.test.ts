@@ -23,4 +23,17 @@ function View({ value: local }: Props) {
 
     expect(referenced).toEqual(new Set(['Label', 'Theme', 'classes', 'Props', 'Menu', 'icons']));
   });
+
+  it('collects from an expression node', () => {
+    const sourceFile = ts.createSourceFile(
+      'input.ts',
+      `const value = className ? resolve(className) : fallback;`,
+      ts.ScriptTarget.Latest,
+      true
+    );
+    const statement = sourceFile.statements[0] as ts.VariableStatement;
+    const expression = statement.declarationList.declarations[0]!.initializer!;
+
+    expect(collectReferencedIdentifiers(expression)).toEqual(new Set(['className', 'resolve', 'fallback']));
+  });
 });

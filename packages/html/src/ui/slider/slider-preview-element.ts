@@ -1,4 +1,4 @@
-import type { SliderPreviewOverflow } from '@videojs/core/dom';
+import type { SliderPreviewProps } from '@videojs/core';
 import { applyStateDataAttrs, getSliderPreviewStyle } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
@@ -14,7 +14,7 @@ export class SliderPreviewElement extends MediaElement {
     overflow: { type: String },
   } satisfies PropertyDeclarationMap<'overflow'>;
 
-  overflow: SliderPreviewOverflow = 'clamp';
+  overflow: NonNullable<SliderPreviewProps['overflow']> = 'clamp';
 
   readonly #ctx = new ContextConsumer(this, {
     context: sliderContext,

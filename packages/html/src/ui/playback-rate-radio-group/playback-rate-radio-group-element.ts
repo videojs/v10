@@ -58,7 +58,7 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
         translateText(this.#core.getLabel(state), this.#i18n.value, this.#core.getLabelParams(state))
       );
       this.#options.sync(state, this.#i18n.value, this.#i18n.locale);
-      this.publishMenuMetadata(state.disabled, state.availability);
+      this.publishMenuTriggerState(state.disabled, state.availability);
     }
 
     super.update(changed);

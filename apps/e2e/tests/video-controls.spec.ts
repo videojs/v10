@@ -189,6 +189,23 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       }
     });
 
+    test('time slider preserves hover after a mouse drag release', async ({ page }) => {
+      await player.showControls();
+
+      const box = await player.timeSlider.boundingBox();
+      if (!box) throw new Error('Time slider not visible');
+
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + 1, y);
+      await page.mouse.up();
+
+      await expect(player.timeSlider).not.toHaveAttribute(DATA_ATTRS.dragging);
+      await expect(player.timeSlider).toHaveAttribute(DATA_ATTRS.pointing, '');
+    });
+
     test('settings button shows its tooltip on focus and still opens the menu', async ({ page }) => {
       await player.showControls();
       await player.settingsButton.focus();

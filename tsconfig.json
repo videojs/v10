@@ -21,7 +21,7 @@
 
     { "path": "packages/compiler" },
 
-    { "path": "packages/jsx" },
+    { "path": "packages/icons" },
 
     { "path": "packages/skins" },
 

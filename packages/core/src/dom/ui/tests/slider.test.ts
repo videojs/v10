@@ -281,13 +281,13 @@ describe('createSlider', () => {
       firePointerUp(slider, { clientX: 100 });
       expect(onValueCommit).toHaveBeenCalledWith(50);
 
-      // lostpointercapture cleans up drag state.
+      // lostpointercapture cleans up drag state while preserving mouse hover.
       fireLostPointerCapture(slider);
       flush();
 
       expect(onDragEnd).toHaveBeenCalled();
       expect(slider.input.current.dragging).toBe(false);
-      expect(slider.input.current.pointing).toBe(false);
+      expect(slider.input.current.pointing).toBe(true);
 
       slider.destroy();
     });
@@ -301,6 +301,51 @@ describe('createSlider', () => {
       firePointerUp(slider, { clientX: 100 });
 
       expect(onValueCommit).toHaveBeenCalledWith(50);
+
+      slider.destroy();
+    });
+
+    it('clears pointing when the mouse is released outside the slider', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 100 }));
+      firePointerUp(slider, { clientX: 250 });
+      fireLostPointerCapture(slider);
+      flush();
+
+      expect(slider.input.current.pointing).toBe(false);
+
+      slider.destroy();
+    });
+
+    it('clears pointing after a touch release', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 100, pointerType: 'touch' }));
+      firePointerUp(slider, { clientX: 100, pointerType: 'touch' });
+      fireLostPointerCapture(slider);
+      flush();
+
+      expect(slider.input.current.pointing).toBe(false);
+
+      slider.destroy();
+    });
+
+    it('preserves mouse hover when a stale pointermove precedes lostpointercapture', () => {
+      const onDragEnd = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onDragEnd }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      firePointerUp(slider, { clientX: 100 });
+      firePointerMove(slider, { clientX: 100, buttons: 0 });
+      fireLostPointerCapture(slider);
+      flush();
+
+      expect(slider.input.current.pointing).toBe(true);
+      expect(onDragEnd).toHaveBeenCalledOnce();
 
       slider.destroy();
     });
@@ -606,6 +651,24 @@ describe('createSlider', () => {
 
       expect(event.preventDefault).not.toHaveBeenCalled();
       expect(onValueChange).not.toHaveBeenCalled();
+
+      slider.destroy();
+    });
+
+    it('clears pointing when the keyboard takes over after a mouse release', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 100 }));
+      firePointerUp(slider, { clientX: 100 });
+      fireLostPointerCapture(slider);
+      flush();
+      expect(slider.input.current.pointing).toBe(true);
+
+      slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
+      flush();
+
+      expect(slider.input.current.pointing).toBe(false);
 
       slider.destroy();
     });

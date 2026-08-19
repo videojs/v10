@@ -1,21 +1,21 @@
-/** @jsxImportSource @videojs/jsx */
+/** @jsxImportSource vjsc/components */
 
-import { Slot } from '@videojs/jsx';
 import { describe, it } from 'vitest';
+import { Slot, Text } from 'vjsc/components';
 import {
   Controls,
   FullscreenButton,
+  Menu,
   MuteButton,
   PlayButton,
   Popover,
   SeekButton,
   Slider,
-  Text,
   Time,
   TimeSlider,
   Tooltip,
   VolumeSlider,
-} from '../components.generated';
+} from '../schema.generated';
 
 describe('constrained JSX', () => {
   it('accepts typed components and nested compound parts', () => {
@@ -73,6 +73,13 @@ describe('constrained JSX', () => {
       </Popover.Root>
     );
 
+    void (
+      <Menu.Root>
+        <Menu.SubmenuTrigger>Quality</Menu.SubmenuTrigger>
+        <Menu.Content />
+      </Menu.Root>
+    );
+
     void (<FullscreenButton key="fullscreen" />);
     void (<Text>10</Text>);
   });
@@ -94,6 +101,8 @@ describe('constrained JSX', () => {
     void (<Time.Value type="elapsed" />);
     // @ts-expect-error - invalid slider orientation
     void (<VolumeSlider.Root orientation="diagonal" />);
+    // @ts-expect-error - submenu state is derived by framework adapters
+    void (<Menu.Root isSubmenu />);
   });
 
   it('rejects platform intrinsic elements', () => {
