@@ -1,7 +1,6 @@
 import type { CSSProperties, PropsWithChildren } from 'react';
 
 import type { Poster } from '@/ui/poster';
-import type { RenderProp } from '@/utils/types';
 
 export type BaseSkinProps<T = unknown> = PropsWithChildren<
   T & {
@@ -21,7 +20,7 @@ export type BaseVideoSkinProps<T = unknown> = BaseSkinProps<T> & {
    * <VideoSkin renderPoster={(props) => <Image {...props} alt="" fill />} />
    * ```
    */
-  renderPoster?: RenderProp<Poster.State> | undefined;
+  renderPoster?: Poster.Props['render'];
   /** Low-resolution placeholder shown behind the poster while it loads (blur-up effect). */
   placeholder?: string | undefined;
 };
