@@ -114,10 +114,11 @@ describe('createCompilerReactConfig', () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.code).toContain('export interface DefaultVideoSkinProps extends Omit<ContainerProps');
     expect(result.code).toContain('children?: ReactNode');
-    expect(result.code).toContain('poster?: string | PosterProps["render"] | undefined');
+    expect(result.code).toContain('renderPoster?: PosterProps["render"]');
     expect(result.code).toContain('<Container {...containerProps}');
     expect(result.code).toContain('{children}');
-    expect(result.code).toContain('poster && <Poster');
+    expect(result.code).toContain('<Poster render={renderPoster}');
+    expect(result.code).not.toContain('poster?:');
     expect(result.code).not.toContain('<Slot');
     expect(result.code).not.toContain('placeholder');
     expect(result.code).not.toContain('CSSProperties');

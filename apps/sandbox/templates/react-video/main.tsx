@@ -34,8 +34,8 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <VideoPlayer>
-        <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
+      <VideoPlayer poster={poster}>
+        <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <Video
             src={SOURCES[source].url}
             autoPlay={autoplay}

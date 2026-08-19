@@ -41,7 +41,7 @@ describe('build', () => {
   it('renders an HTML target after transforming its module graph', async () => {
     writeFileSync(
       join(workDir, 'src', 'input.tsx'),
-      `export function Skin(){ return <Panel className={['root', false, 'ready']}>Hello & goodbye</Panel>; }\n`,
+      `export function Skin(){ return <Panel className={['root', false, 'ready']}><img alt=""/>Hello & goodbye</Panel>; }\n`,
       'utf8'
     );
 
@@ -55,7 +55,7 @@ describe('build', () => {
       { configDir: workDir }
     );
 
-    expect(result.files[0]!.source).toBe('<section class="root ready">Hello &amp; goodbye</section>');
+    expect(result.files[0]!.source).toBe('<section class="root ready"><img alt="">Hello &amp; goodbye</section>');
   });
 
   it('compiles configured entries and emitted assets', async () => {

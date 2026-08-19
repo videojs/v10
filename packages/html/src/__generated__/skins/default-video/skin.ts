@@ -15,7 +15,9 @@ import '../../../define/ui/volume-slider';
 
 export const skin = /* html */ `<media-container class="media-container media-skin media-skin-video media-theme-default">
   <slot></slot>
-  <media-poster class="media-poster"><slot name="poster"></slot></media-poster>
+  <media-poster class="media-poster">
+    <slot name="poster"><img alt="" /></slot>
+  </media-poster>
   <media-controls class="media-controls">
     <media-tooltip-group>
       <media-controls-group class="media-controls-group-primary">

@@ -56,7 +56,6 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
           const defaultVideoSkin = code.function('DefaultVideoSkin');
           const container = code.function('Container');
           const poster = code.function('Poster');
-          const posterIsString = () => code.value.equal(code.value.typeOf('poster'), code.value.string('string'));
 
           return [
             defaultVideoSkin.insertBefore(() =>
@@ -71,39 +70,22 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
                     type: code.type.named(ReactNode),
                   },
                   {
-                    name: 'poster',
+                    name: 'renderPoster',
                     optional: true,
-                    type: code.type.union(
-                      code.type.string(),
-                      code.type.indexed(code.type.named(PosterProps), code.type.literal('render')),
-                      code.type.undefined()
-                    ),
+                    type: code.type.indexed(code.type.named(PosterProps), code.type.literal('render')),
                   },
                 ],
               })
             ),
-            defaultVideoSkin.setProps(['children', 'className', 'poster', { name: 'containerProps', spread: true }], {
-              type: 'DefaultVideoSkinProps',
-              initializer: code.value.object(),
-            }),
-            defaultVideoSkin.jsx.element('Slot').replace(() => code.jsx.expression(code.value.identifier('children'))),
-            defaultVideoSkin.jsx.element('Poster').replace(() =>
-              code.jsx.if(
-                'poster',
-                code.jsx.create('Poster', {
-                  src: code.value.conditional(
-                    posterIsString(),
-                    code.value.identifier('poster'),
-                    code.value.undefined()
-                  ),
-                  render: code.value.conditional(
-                    posterIsString(),
-                    code.value.undefined(),
-                    code.value.identifier('poster')
-                  ),
-                })
-              )
+            defaultVideoSkin.setProps(
+              ['children', 'className', 'renderPoster', { name: 'containerProps', spread: true }],
+              {
+                type: 'DefaultVideoSkinProps',
+                initializer: code.value.object(),
+              }
             ),
+            defaultVideoSkin.jsx.element('Slot').replace(() => code.jsx.expression(code.value.identifier('children'))),
+            defaultVideoSkin.jsx.element('Poster').addProp('render', code.value.identifier('renderPoster')),
             defaultVideoSkin.jsx.element('Container').spreadProps('containerProps', { position: 'start' }),
             defaultVideoSkin.jsx.element('Container').addProp('className', () => {
               if (!options.rootClassName) {

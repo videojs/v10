@@ -55,7 +55,12 @@ type ConfigStateKey<State> = [State] extends [never] ? PropertyKey : keyof State
 export type PlayerFeatureConfig<State = never> = Record<
   string,
   {
-    /** Private source-state action that accepts `string | null | undefined`. */
+    /**
+     * Source-state action applied when the input changes. It must accept
+     * `string | null | undefined`, since an input the author omits arrives as
+     * `undefined`. A feature's own public setter qualifies when it accepts
+     * that; otherwise point at a private action that does.
+     */
     action: ConfigActionKey<State>;
     /** Provider-owned source-state key whose value survives media detach. */
     state: ConfigStateKey<State>;

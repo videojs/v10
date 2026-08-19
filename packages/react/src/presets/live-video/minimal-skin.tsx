@@ -1,7 +1,6 @@
 'use client';
 
 import { captionsText } from '@videojs/core/i18n/text/menu';
-import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
@@ -49,7 +48,6 @@ import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
-import { isRenderProp } from '@/utils/use-render';
 import type { BaseVideoSkinProps } from '../types';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
@@ -171,7 +169,7 @@ function CaptionsTrigger(): ReactNode {
 }
 
 export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNode {
-  const { children, className, poster, placeholder, style, ...rest } = props;
+  const { children, className, renderPoster, placeholder, style, ...rest } = props;
 
   const containerStyle = placeholder
     ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
@@ -185,9 +183,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
     >
       {children}
 
-      {poster && (
-        <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />
-      )}
+      <Poster render={renderPoster} />
 
       <BufferingIndicator
         render={(props) => (

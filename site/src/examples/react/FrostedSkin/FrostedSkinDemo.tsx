@@ -15,8 +15,8 @@ import '@videojs/react/video/skin.css';
  */
 export function FrostedSkinDemo() {
   return (
-    <VideoPlayer>
-      <VideoSkin className="aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
+    <VideoPlayer poster={VJS10_DEMO_VIDEO.poster}>
+      <VideoSkin className="aspect-video">
         <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
       </VideoSkin>
     </VideoPlayer>

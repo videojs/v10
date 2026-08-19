@@ -40,13 +40,15 @@ function selectRender(
 export const HTML_RUNTIME = `
 export const Fragment = Symbol('Fragment');
 const raw = Symbol('raw-html');
+const voidElements = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
 
 export function jsx(type, props) {
   if (type === Fragment) return html(renderChildren(props?.children));
   if (typeof type === 'function') return type(props ?? {});
 
   const { children, ...attributes } = props ?? {};
-  return html('<' + type + renderAttributes(attributes) + '>' + renderChildren(children) + '</' + type + '>');
+  const openingTag = '<' + type + renderAttributes(attributes) + '>';
+  return html(voidElements.has(type) ? openingTag : openingTag + renderChildren(children) + '</' + type + '>');
 }
 
 export const jsxs = jsx;

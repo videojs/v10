@@ -25,8 +25,8 @@ import '@videojs/react/video/${skinCss}.css';
 
 export function App() {
   return (
-    <VideoPlayer>
-      <${skinComponent} poster="${VJS10_DEMO_VIDEO.poster}">
+    <VideoPlayer poster="${VJS10_DEMO_VIDEO.poster}">
+      <${skinComponent}>
         <Video src="${VJS10_DEMO_VIDEO.mp4}" playsInline />
       </${skinComponent}>
     </VideoPlayer>

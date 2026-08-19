@@ -216,8 +216,8 @@ import { MEDIA } from '../resources';
 
 function App() {
   return (
-    <VideoPlayer>
-      <VideoSkin${posterProp} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
+    <VideoPlayer${posterProp}>
+      <VideoSkin style={{ maxWidth: 800, aspectRatio: '16/9' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} playsInline crossOrigin="anonymous">${storyboardTrack}
         </${reactMedia.component}>
       </VideoSkin>
@@ -310,7 +310,7 @@ const style = document.createElement('style');
 style.textContent = skin.css;
 document.head.appendChild(style);
 
-const playerMatch = skin.html.match(/<video-player>[\\s\\S]*<\\/video-player>/);
+const playerMatch = skin.html.match(/<video-player\\b[^>]*>[\\s\\S]*<\\/video-player>/);
 
 if (!playerMatch) {
   throw new Error('Could not find <video-player> in ejected HTML output.');
@@ -370,13 +370,12 @@ customElements.define('source-video-skin', SourceVideoSkinElement);
 const html = String.raw;
 
 document.getElementById('root')!.innerHTML = html\`
-  <video-player>
+  <video-player poster="\${MEDIA.${resource}.poster}">
     <source-video-skin
       data-source-skin
       style="display: block; max-width: 800px; aspect-ratio: 16/9; --media-poster-placeholder: url(\${MEDIA.${resource}.poster})"
     >
       <video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>
-      <img slot="poster" src="\${MEDIA.${resource}.poster}" alt="Video poster" />
     </source-video-skin>
   </video-player>
 \`;
@@ -399,10 +398,9 @@ const { Player } = createPlayer({ features: videoFeatures });
 
 function App() {
   return (
-    <Player>
+    <Player poster={MEDIA.${resource}.poster}>
       <DefaultVideoSkin
         data-source-skin
-        poster={MEDIA.${resource}.poster}
         style={{
           maxWidth: 800,
           aspectRatio: '16/9',

@@ -23,6 +23,14 @@ export const poster = (isShadowDOM: boolean) =>
           '[&_::slotted(img)]:[object-fit:var(--media-object-fit,contain)]',
           '[&_::slotted(img)]:[object-position:var(--media-object-position,center)]',
           '[&_::slotted(img)]:rounded-(--container-border-radius)',
+          // The image this skin carries as slot fallback content, which `::slotted` cannot reach.
+          '[&_img]:absolute',
+          '[&_img]:inset-0',
+          '[&_img]:w-full',
+          '[&_img]:h-full',
+          '[&_img]:[object-fit:var(--media-object-fit,contain)]',
+          '[&_img]:[object-position:var(--media-object-position,center)]',
+          '[&_img]:rounded-(--container-border-radius)',
         ]
       : [
           'rounded-[inherit] [object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]',

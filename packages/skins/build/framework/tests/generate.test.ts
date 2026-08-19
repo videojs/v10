@@ -37,7 +37,9 @@ describe('createFrameworkSkin', () => {
     expect(skin).toContain('export interface DefaultVideoSkinProps extends Omit<ContainerProps');
     expect(skin).toContain('<Container {...containerProps}');
     expect(skin).toContain('{children}');
-    expect(skin).toContain('poster && <Poster');
+    expect(skin).toContain('renderPoster?: PosterProps["render"]');
+    expect(skin).toContain('<Poster render={renderPoster}');
+    expect(skin).not.toContain('poster?:');
     expect(skin).toContain('media-skin media-skin-video media-theme-default');
     expect(skin).not.toContain('className="media-surface');
     expect(buttonTooltip).toContain('export interface ButtonTooltipProps extends TooltipPrimitive.RootProps');
@@ -109,7 +111,8 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('export const skin = /* html */ `<media-container');
     expect(html).toContain('class="media-container media-skin media-skin-video media-theme-default"');
     expect(html).toContain('<slot></slot>');
-    expect(html).toContain('<media-poster class="media-poster"><slot name="poster"></slot></media-poster>');
+    expect(html).toContain('<media-poster class="media-poster">');
+    expect(html).toContain('<slot name="poster"><img alt="" /></slot>');
     expect(html).toContain('<div class="media-overlay"></div>');
     expect(html).toContain('<media-play-button class="media-button media-play-button">');
     expect(html).toContain('<media-tooltip side="top" class="media-surface media-tooltip">');

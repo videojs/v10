@@ -150,6 +150,11 @@ export interface MediaStreamTypeState {
 export interface MediaMetadataState {
   /** The resolved content title. Set it through the player, not through the store. */
   title: string;
+  /**
+   * The resolved poster URL, independent of the media element's own `poster`.
+   * Set it through the player, not through the store.
+   */
+  poster: string;
 }
 
 export interface MediaLiveState {

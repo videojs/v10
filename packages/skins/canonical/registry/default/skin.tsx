@@ -15,19 +15,14 @@ const SEEK_SECONDS = 10;
 
 export interface DefaultVideoSkinProps extends Omit<ContainerProps, 'children'> {
   children?: ReactNode;
-  poster?: string | PosterProps['render'] | undefined;
+  renderPoster?: PosterProps['render'];
 }
 
-export function DefaultVideoSkin({ children, className, poster, ...containerProps }: DefaultVideoSkinProps = {}) {
+export function DefaultVideoSkin({ children, className, renderPoster, ...containerProps }: DefaultVideoSkinProps = {}) {
   return (
     <Container {...containerProps} className={cn('media-skin media-skin-video media-theme-default', className)}>
       {children}
-      {poster && (
-        <Poster
-          src={typeof poster === 'string' ? poster : undefined}
-          render={typeof poster === 'string' ? undefined : poster}
-        />
-      )}
+      <Poster render={renderPoster} />
 
       <Controls.Root className="absolute inset-x-media-controls-gap bottom-media-controls-gap z-10 flex items-center gap-media-controls-gap rounded-media-pill p-media-controls-padding font-media text-media leading-none text-media-controls bg-media-surface shadow-media-surface backdrop-blur-media-surface">
         <Tooltip.Provider>

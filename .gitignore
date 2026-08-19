@@ -43,6 +43,12 @@ packages/html/docs/
 packages/react/docs/
 
 # -------------------------
+# Merge & Patch Backups
+# -------------------------
+*.orig
+*.rej
+
+# -------------------------
 # Environment
 # -------------------------
 .env

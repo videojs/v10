@@ -1,81 +1,74 @@
-import type { MediaPlaybackState } from '@videojs/media';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { PosterCore } from '../poster-core';
-
-function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {
-  return {
-    paused: true,
-    ended: false,
-    started: false,
-    waiting: false,
-    play: vi.fn(async () => {}),
-    pause: vi.fn(),
-    togglePaused: vi.fn(() => true),
-    ...overrides,
-  };
-}
 
 describe('PosterCore', () => {
   describe('getState', () => {
-    it('returns visible: true when playback has not started', () => {
-      const core = new PosterCore();
-      const media = createMediaState({ started: false });
-
-      core.setMedia(media);
-      const state = core.getState();
-
-      expect(state.visible).toBe(true);
-    });
-
-    it('returns visible: false when playback has started', () => {
-      const core = new PosterCore();
-      const media = createMediaState({ started: true });
-
-      core.setMedia(media);
-      const state = core.getState();
-
-      expect(state.visible).toBe(false);
-    });
-
-    it('returns only primitive values (no methods)', () => {
-      const core = new PosterCore();
-      const media = createMediaState();
-
-      core.setMedia(media);
-      const state = core.getState();
-
-      expect(state).toEqual({ visible: true });
-
-      const functionKeys = Object.entries(state).filter(([, value]) => typeof value === 'function');
-      expect(functionKeys).toHaveLength(0);
-    });
-
-    it('visibility is independent of paused state', () => {
+    it('is visible before playback starts and hidden after', () => {
       const core = new PosterCore();
 
-      // Started but paused - should not be visible
-      core.setMedia(createMediaState({ started: true, paused: true }));
-      expect(core.getState().visible).toBe(false);
-
-      // Started and playing - should not be visible
-      core.setMedia(createMediaState({ started: true, paused: false }));
-      expect(core.getState().visible).toBe(false);
-
-      // Not started and paused - should be visible
-      core.setMedia(createMediaState({ started: false, paused: true }));
+      core.setMedia({ started: false, poster: 'poster.jpg' });
       expect(core.getState().visible).toBe(true);
+
+      core.setMedia({ started: true, poster: 'poster.jpg' });
+      expect(core.getState().visible).toBe(false);
     });
 
-    it('visibility is independent of ended state', () => {
+    it('passes the resolved URL through untouched', () => {
       const core = new PosterCore();
 
-      // Started and ended - should not be visible (started takes precedence)
-      core.setMedia(createMediaState({ started: true, ended: true }));
-      expect(core.getState().visible).toBe(false);
+      core.setMedia({ started: false, poster: 'poster.jpg' });
 
-      // Not started and ended (edge case) - should be visible
-      core.setMedia(createMediaState({ started: false, ended: true }));
-      expect(core.getState().visible).toBe(true);
+      expect(core.getState().src).toBe('poster.jpg');
+    });
+
+    it('reports an empty src when nothing supplied a poster', () => {
+      const core = new PosterCore();
+
+      core.setMedia({ started: false, poster: '' });
+
+      expect(core.getState().src).toBe('');
+    });
+
+    it('reports no load state until the binding says otherwise', () => {
+      const core = new PosterCore();
+
+      core.setMedia({ started: false, poster: 'poster.jpg' });
+
+      expect(core.getState()).toEqual({
+        visible: true,
+        src: 'poster.jpg',
+        loading: false,
+        loaded: false,
+        error: false,
+      });
+    });
+
+    it('reports exactly one load state at a time', () => {
+      const core = new PosterCore();
+      core.setMedia({ started: false, poster: 'poster.jpg' });
+
+      core.setImageLoadState('loading');
+      expect(core.getState()).toMatchObject({ loading: true, loaded: false, error: false });
+
+      core.setImageLoadState('loaded');
+      expect(core.getState()).toMatchObject({ loading: false, loaded: true, error: false });
+
+      core.setImageLoadState('error');
+      expect(core.getState()).toMatchObject({ loading: false, loaded: false, error: true });
+
+      core.setImageLoadState('none');
+      expect(core.getState()).toMatchObject({ loading: false, loaded: false, error: false });
+    });
+
+    it('keeps load state independent of the resolved src, which the author may not be using', () => {
+      const core = new PosterCore();
+
+      // The author set `src` on their own image, so nothing resolved a poster
+      // yet an image is still loading.
+      core.setMedia({ started: false, poster: '' });
+      core.setImageLoadState('loading');
+
+      expect(core.getState()).toMatchObject({ src: '', loading: true });
     });
   });
 });

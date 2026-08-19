@@ -8,10 +8,15 @@ import { metadataFeature } from '../metadata';
 import { audioFeatures, backgroundFeatures, liveAudioFeatures, liveVideoFeatures, videoFeatures } from '../presets';
 
 const titleConfig = metadataFeature.config!.title;
+const posterConfig = metadataFeature.config!.poster;
 
-/** Set the user title the way a provider does, through the feature's own config. */
+/** Set a user override the way a provider does, through the feature's own config. */
 function setUserTitle(store: object, value: MediaContentValue): void {
   setPlayerConfigValue(store, titleConfig, value);
+}
+
+function setUserPoster(store: object, value: MediaContentValue): void {
+  setPlayerConfigValue(store, posterConfig, value);
 }
 
 class ContentDataMedia extends EventTarget {
@@ -23,10 +28,18 @@ class ContentDataMedia extends EventTarget {
   }
 
   setTitle(value: MediaContentValue): void {
-    if (!this.contentData || Object.is(this.contentData.title, value)) return;
+    this.#setKey('title', value);
+  }
+
+  setPoster(value: MediaContentValue): void {
+    this.#setKey('poster', value);
+  }
+
+  #setKey(key: 'title' | 'poster', value: MediaContentValue): void {
+    if (!this.contentData || Object.is(this.contentData[key], value)) return;
     const contentData = { ...this.contentData };
-    if (value === undefined) delete contentData.title;
-    else contentData.title = value;
+    if (value === undefined) delete contentData[key];
+    else contentData[key] = value;
     this.contentData = contentData;
     this.dispatchEvent(new Event('contentdatachange'));
   }
@@ -123,25 +136,63 @@ describe('metadataFeature', () => {
     expect(addEventListener).not.toHaveBeenCalledWith('contentdatachange', expect.anything());
   });
 
-  it('resets media metadata on detach while preserving user-owned state', () => {
-    const store = createStore<PlayerTarget>()(metadataFeature);
-    setUserTitle(store, 'user');
-    const detach = store.attach(target(new ContentDataMedia({ title: 'media' })));
-
-    detach();
-
-    expect(store.title).toBe('user');
-  });
-
   it('takes the title under another name in markup, where `title` is the tooltip', () => {
     expect(titleConfig.html?.attribute).toBe('content-title');
   });
 
-  it('selects the resolved title and nothing that writes it', () => {
+  it('resolves the content poster through the same order as the title', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
 
-    expect(selectMetadata(store.state)).toEqual({ title: '' });
+    expect(store.poster).toBe('');
+
+    const media = new ContentDataMedia({ poster: 'media.jpg' });
+    store.attach(target(media));
+    expect(store.poster).toBe('media.jpg');
+
+    setUserPoster(store, 'user.jpg');
+    expect(store.poster).toBe('user.jpg');
+
+    media.setPoster('latest-media.jpg');
+    expect(store.poster).toBe('user.jpg');
+
+    setUserPoster(store, null);
+    expect(store.poster).toBe('latest-media.jpg');
+
+    media.setPoster(undefined);
+    expect(store.poster).toBe('');
+  });
+
+  it('resolves title and poster independently from one bag', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    const media = new ContentDataMedia({ title: 'media title' });
+    store.attach(target(media));
+
+    expect(store.title).toBe('media title');
+    expect(store.poster).toBe('');
+
+    media.setPoster('media.jpg');
+
+    expect(store.title).toBe('media title');
+    expect(store.poster).toBe('media.jpg');
+  });
+
+  it('resets both media-owned values on detach while preserving user-owned state', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    setUserPoster(store, 'user.jpg');
+    const detach = store.attach(target(new ContentDataMedia({ title: 'media', poster: 'media.jpg' })));
+
+    detach();
+
+    expect(store.title).toBe('');
+    expect(store.poster).toBe('user.jpg');
+  });
+
+  it('selects the resolved metadata and nothing that writes it', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+
+    expect(selectMetadata(store.state)).toEqual({ title: '', poster: '' });
     expect(store.state).not.toHaveProperty('setTitle');
-    expect(store.state).not.toHaveProperty('defaultTitle');
+    expect(store.state).not.toHaveProperty('setPoster');
+    expect(store.state).not.toHaveProperty('defaultPoster');
   });
 });

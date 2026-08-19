@@ -30,7 +30,8 @@
       inset: 0;
     }
 
-    .media-poster ::slotted(img) {
+    .media-poster ::slotted(img),
+    .media-poster img {
       border-radius: inherit;
       object-fit: var(--media-object-fit, contain);
       object-position: var(--media-object-position, center);

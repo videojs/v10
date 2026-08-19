@@ -628,14 +628,29 @@ function findLastImportEnd(source: string): number {
 // ---------------------------------------------------------------------------
 
 /**
- * Replace the BaseSkinProps / BaseVideoSkinProps type chain with a clean interface.
- * Removes intermediate type aliases and produces a flat exported interface.
+ * The members a `Base*SkinProps` alias adds on top of `BaseSkinProps`, without
+ * their JSDoc: the comments describe the skin component, not the player the
+ * ejected file exports.
  */
-function resolvePropsInterface(source: string): string {
+function getAddedMembers(statement: ts.Statement, sourceFile: ts.SourceFile): string[] {
+  if (!ts.isTypeAliasDeclaration(statement) || !ts.isIntersectionTypeNode(statement.type)) return [];
+
+  return statement.type.types
+    .filter(ts.isTypeLiteralNode)
+    .flatMap((literal) => literal.members)
+    .map((member) => member.getText(sourceFile).trim().replace(/;$/, ''));
+}
+
+/**
+ * Replace the `BaseSkinProps` type chain with a clean interface. Removes the
+ * intermediate type aliases and produces a flat exported interface, carrying
+ * over whatever members those aliases added.
+ */
+export function resolvePropsInterface(source: string): string {
   const sourceFile = createSourceFile('props.tsx', source);
-  const hasVideoProps = source.includes('BaseVideoSkinProps');
 
   const toRemove: Array<{ start: number; end: number }> = [];
+  const addedMembers: string[] = [];
   let mainPropsName: string | null = null;
   let mainPropsStart = -1;
   let mainPropsEnd = -1;
@@ -646,11 +661,15 @@ function resolvePropsInterface(source: string): string {
 
     const name = getStatementName(statement);
 
-    if (name === 'BaseSkinProps' || name === 'BaseVideoSkinProps') {
+    // `BaseSkinProps` and the per-media aliases built on it, e.g.
+    // `BaseVideoSkinProps`. Leaving one behind would reference a removed type.
+    if (name?.startsWith('Base') && name.endsWith('SkinProps')) {
       toRemove.push({ start: statement.getFullStart(), end: statement.getEnd() });
+      addedMembers.push(...getAddedMembers(statement, sourceFile));
+      continue;
     }
 
-    if (name?.endsWith('SkinProps') && name !== 'BaseSkinProps' && name !== 'BaseVideoSkinProps') {
+    if (name?.endsWith('SkinProps')) {
       mainPropsName = name;
       mainPropsStart = statement.getFullStart();
       mainPropsEnd = statement.getEnd();
@@ -661,8 +680,8 @@ function resolvePropsInterface(source: string): string {
   if (!mainPropsName) return source;
 
   const exportKw = mainPropsExported ? 'export ' : '';
-  const posterProp = hasVideoProps ? '\n  poster?: string | RenderProp<Poster.State> | undefined;' : '';
-  const interfaceText = `${exportKw}interface ${mainPropsName} {\n  children?: ReactNode;\n  style?: CSSProperties;\n  className?: string;${posterProp}\n}`;
+  const members = ['children?: ReactNode', 'style?: CSSProperties', 'className?: string', ...addedMembers];
+  const interfaceText = `${exportKw}interface ${mainPropsName} {\n${members.map((member) => `  ${member};`).join('\n')}\n}`;
 
   const replacements = [
     ...toRemove.map((r) => ({ ...r, text: '' })),
@@ -847,7 +866,7 @@ function flattenErrorClasses(source: string): string {
 /**
  * Move the destructured props from the skin function body into the function
  * argument so the signature reads e.g.:
- *   `function VideoSkin({ children, className, poster, ...rest }: VideoSkinProps)`
+ *   `function VideoSkin({ children, className, style, ...rest }: VideoSkinProps)`
  */
 function destructureSkinProps(source: string): string {
   return source.replace(
@@ -893,8 +912,9 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
   );
 
   // 2. Rename SkinProps → PlayerProps, replace `children` with `src`
+  const posterProp = isVideo ? '\n  poster?: string | undefined;' : '';
   source = source.replace(/export interface \w+SkinProps/, `export interface ${playerName}Props`);
-  source = source.replace(/(\s*)children\?: ReactNode;/, `$1src: string;`);
+  source = source.replace(/(\s*)children\?: ReactNode;/, `$1src: string;${posterProp}`);
 
   // 3. Replace the skin function: rename, swap children→src, wrap in Player
   //    Match the destructured form: function XSkin({ children, className, poster, ...rest }: XSkinProps): ReactNode {
@@ -915,11 +935,11 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
           .split('\n')
           .map((line) => (line.trim() === '' ? '' : `  ${line}`))
           .join('\n');
-        newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player>\n${reindented}\n    </Player>\n  )${newBody.slice(parenEnd + 1)}`;
+        const playerProps = isVideo ? ' poster={poster}' : '';
+        newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player${playerProps}>\n${reindented}\n    </Player>\n  )${newBody.slice(parenEnd + 1)}`;
       }
 
-      const hasPoster = destructuredRest.includes('poster');
-      const posterExample = hasPoster ? `\n *   poster="${DEMO_POSTER_SRC}"` : '';
+      const posterExample = isVideo ? `\n *   poster="${DEMO_POSTER_SRC}"` : '';
 
       // @example JSDoc and the function signature
       const header = [
@@ -931,7 +951,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
         ' * />',
         ' * ```',
         ' */',
-        `export function ${playerName}({ src, ${destructuredRest}}: ${playerName}Props): ReactNode {`,
+        `export function ${playerName}({ src, ${isVideo ? 'poster, ' : ''}${destructuredRest}}: ${playerName}Props): ReactNode {`,
       ].join('\n');
 
       return `${header}\n${newBody}\n}`;

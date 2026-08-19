@@ -5,11 +5,11 @@ const { Player } = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (
-    <Player>
+    <Player poster="{{VJS10_DEMO_POSTER}}">
       <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" playsInline />
 
-        <Poster className="media-poster" src="{{VJS10_DEMO_POSTER}}" />
+        <Poster className="media-poster" />
 
         <PlayButton
           className="media-play-button"

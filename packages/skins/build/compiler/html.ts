@@ -1,4 +1,5 @@
 import { defineConfig, html, rewrite } from '@videojs/compiler';
+import ts from 'typescript';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -127,6 +128,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             .function('Container')
             .jsx.props('className')
             .on('ContainerPrimitive');
+          const posterSlot = code.function('Poster').jsx.element('Slot');
 
           return [
             rootContainer.addProp('className', () => {
@@ -137,6 +139,23 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
             }),
             containerPrimitiveClassName.replace(({ value }) => code.value.array([value, 'className'])),
             code.function('Container').setProps(['children', 'className']),
+            posterSlot.replace(({ element, factory }) => {
+              if (!ts.isJsxSelfClosingElement(element)) return;
+              const slot = factory.createIdentifier('slot');
+              return factory.createJsxElement(
+                factory.createJsxOpeningElement(slot, undefined, element.attributes),
+                [
+                  factory.createJsxSelfClosingElement(
+                    factory.createIdentifier('img'),
+                    undefined,
+                    factory.createJsxAttributes([
+                      factory.createJsxAttribute(factory.createIdentifier('alt'), factory.createStringLiteral('')),
+                    ])
+                  ),
+                ],
+                factory.createJsxClosingElement(slot)
+              );
+            }),
             code.jsx.element('Slot').replace('slot'),
             code.jsx.element('OverlayPrimitive').replace('div'),
             code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),

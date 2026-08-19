@@ -35,7 +35,9 @@ function getTemplateHTML() {
       <slot></slot>
 
       <media-poster class="${poster(true)}">
-        <slot name="poster"></slot>
+        <slot name="poster">
+          <img alt="" decoding="async">
+        </slot>
       </media-poster>
 
       <media-buffering-indicator class="${bufferingIndicator}">
