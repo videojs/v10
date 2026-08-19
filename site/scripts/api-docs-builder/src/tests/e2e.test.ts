@@ -815,6 +815,7 @@ describe('Feature pipeline (end-to-end)', () => {
       expect(names).toContain('metadata');
       expect(names).toContain('orientationLock');
       expect(names).toContain('playback');
+      expect(names).toContain('poster');
       expect(names).toContain('volume');
     });
 
@@ -830,7 +831,7 @@ describe('Feature pipeline (end-to-end)', () => {
     });
 
     it('produces one result per feature', () => {
-      expect(results.length).toBe(5);
+      expect(results.length).toBe(6);
     });
   });
 
@@ -949,6 +950,32 @@ describe('Feature pipeline (end-to-end)', () => {
       expect(volume.config).toEqual({});
       expect(Object.keys(volume.state)).toContain('volume');
       expect(Object.keys(volume.actions)).toContain('setVolume');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // POSTER FEATURE (published-key defaults and narrow unions)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Metadata covers an input that names its action by string. Poster covers the
+  // two steps that still have to follow a published key the rest of the way:
+  // the initial value behind it, and a value type narrower than plain text.
+
+  describe('poster (published-key defaults and narrow unions)', () => {
+    it('reads the default through a plain state key', () => {
+      const config = findFeature('poster')!.reference.config;
+
+      expect(config.poster!.default).toBe("'/poster.jpg'");
+    });
+
+    // The fixture's PlayerFeatureConfig mirrors production, so a constraint that
+    // drifted back to demanding exactly `string | null | undefined` would fail
+    // this file's own type check before it reached the assertion.
+    it('keeps a narrower union as the input type', () => {
+      const config = findFeature('poster')!.reference.config;
+
+      expect(config.posterFit!.type).toBe("undefined | null | 'contain' | 'cover'");
+      expect(config.posterFit!.default).toBe("'contain'");
     });
   });
 

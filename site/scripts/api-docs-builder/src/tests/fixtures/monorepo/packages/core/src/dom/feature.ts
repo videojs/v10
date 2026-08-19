@@ -17,12 +17,16 @@ type ActionInput<Action> = Action extends (...args: infer Arguments) => unknown
     : never
   : never;
 
-/** State keys whose action accepts exactly `string | null | undefined`. */
+/**
+ * Actions accepting text, including narrower unions such as a string enum, so
+ * a feature keeps its own value type on the provider input. `null | undefined`
+ * stays mandatory because that is how a provider clears an absent input.
+ */
 type ConfigActionKey<State> = [State] extends [never]
   ? PropertyKey
   : {
       [Key in keyof State]-?: [ActionInput<State[Key]>] extends [ConfigValue]
-        ? [ConfigValue] extends [ActionInput<State[Key]>]
+        ? [null | undefined] extends [ActionInput<State[Key]>]
           ? Key
           : never
         : never;

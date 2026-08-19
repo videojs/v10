@@ -68,6 +68,10 @@ const UTIL_ENTRY_POINTS: EntryPoint[] = [
   { index: 'packages/store/src/html/controllers/index.ts', framework: 'html' },
   { index: 'packages/core/src/core/i18n/index.ts', framework: null },
   { index: 'packages/core/src/dom/store/selectors.ts', framework: null },
+  // A selector for a feature that ships in no preset is declared beside its
+  // feature, so importing `selectors.ts` does not retain it. Those modules are
+  // not reachable from the entry points above, so each is scanned directly.
+  { index: 'packages/core/src/dom/store/features/orientation-lock.ts', framework: null },
   { index: 'packages/store/src/core/selector.ts', framework: null },
 ];
 

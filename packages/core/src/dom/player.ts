@@ -35,11 +35,16 @@ type ActionInput<Action> = Action extends (...args: infer Arguments) => unknown
     : never
   : never;
 
+/**
+ * Actions accepting text, including narrower unions such as a string enum, so
+ * a feature keeps its own value type on the provider input. `null | undefined`
+ * stays mandatory because that is how a provider clears an absent input.
+ */
 type ConfigActionKey<State> = [State] extends [never]
   ? PropertyKey
   : {
       [Key in keyof State]-?: [ActionInput<State[Key]>] extends [ConfigValue]
-        ? [ConfigValue] extends [ActionInput<State[Key]>]
+        ? [null | undefined] extends [ActionInput<State[Key]>]
           ? Key
           : never
         : never;
@@ -56,10 +61,10 @@ export type PlayerFeatureConfig<State = never> = Record<
   string,
   {
     /**
-     * Source-state action applied when the input changes. It must accept
-     * `string | null | undefined`, since an input the author omits arrives as
-     * `undefined`. A feature's own public setter qualifies when it accepts
-     * that; otherwise point at a private action that does.
+     * Source-state action applied when the input changes. It must accept the
+     * input's own value type plus `null | undefined`, since an input the author
+     * omits arrives as `undefined`. A feature's own public setter qualifies when
+     * it accepts that; otherwise point at a private action that does.
      */
     action: ConfigActionKey<State>;
     /** Provider-owned source-state key whose value survives media detach. */

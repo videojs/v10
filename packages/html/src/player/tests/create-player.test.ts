@@ -1,4 +1,11 @@
-import { audioFeatures, backgroundFeatures, metadataFeature, type PopupGroup, videoFeatures } from '@videojs/core/dom';
+import {
+  audioFeatures,
+  backgroundFeatures,
+  features,
+  metadataFeature,
+  type PopupGroup,
+  videoFeatures,
+} from '@videojs/core/dom';
 import { ContextConsumer } from '@videojs/element/context';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -164,6 +171,31 @@ describe('createPlayer', () => {
 
     expect(player.getAttribute('title')).toBe('Tooltip');
     expect(player.store.title).toBe('');
+  });
+
+  it('applies orientation lock configuration through attributes and properties', async () => {
+    const { ProviderMixin } = createPlayer({ features: [features.orientationLock] });
+    const ProviderElement = ProviderMixin(MediaElement);
+    const tagName = 'test-orientation-lock-provider';
+    customElements.define(tagName, ProviderElement);
+
+    const player = document.createElement(tagName) as InstanceType<typeof ProviderElement>;
+    player.setAttribute('orientation-lock-type', 'portrait');
+    document.body.append(player);
+
+    expect(player.store.orientationLockType).toBe('portrait');
+
+    player.orientationLockType = 'natural';
+    await player.updateComplete;
+
+    expect(player.store.orientationLockType).toBe('natural');
+
+    player.orientationLockType = undefined;
+    await player.updateComplete;
+
+    expect(player.store.orientationLockType).toBe('landscape');
+
+    player.remove();
   });
 
   it('leaves config attributes inert when their feature is absent', () => {

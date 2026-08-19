@@ -265,7 +265,9 @@ function configKeyReference(node: ts.Expression): string | undefined {
 }
 
 /**
- * Map each computed key in the state() object literal to the value it starts at.
+ * Map each key in the state() object literal to the value it starts at, under
+ * the same name a config entry uses to reach it: the identifier inside a
+ * computed key, or a published member's own name.
  *
  * A named constant is resolved to its literal so the docs show the value rather
  * than a private identifier; anything else falls back to the written text. A key
@@ -284,14 +286,18 @@ function parseStateInitialValues(node: ts.Expression, sourceFile: ts.SourceFile)
 
   for (const prop of body.properties) {
     if (!ts.isPropertyAssignment(prop)) continue;
-    if (!ts.isComputedPropertyName(prop.name) || !ts.isIdentifier(prop.name.expression)) continue;
+
+    const key = ts.isComputedPropertyName(prop.name)
+      ? ts.isIdentifier(prop.name.expression) && prop.name.expression.text
+      : ts.isIdentifier(prop.name) && prop.name.text;
+    if (!key) continue;
 
     const initializer = prop.initializer;
     if (ts.isIdentifier(initializer) && initializer.text === 'undefined') continue;
 
     const resolved = ts.isIdentifier(initializer) ? constants.get(initializer.text) : undefined;
 
-    values.set(prop.name.expression.text, resolved ?? initializer.getText(sourceFile));
+    values.set(key, resolved ?? initializer.getText(sourceFile));
   }
 
   return values;

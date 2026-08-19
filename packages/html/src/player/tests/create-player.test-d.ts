@@ -7,6 +7,7 @@ import {
   metadataFeature,
   type PlayerStore,
   type PlayerTarget,
+  type ScreenOrientationLockType,
   type VideoPlayerStore,
   videoFeatures,
 } from '@videojs/core/dom';
@@ -72,14 +73,19 @@ describe('createPlayer', () => {
     plainProvider.contentTitle;
   });
 
-  it('accepts the orientation lock feature alias with and without config', () => {
-    const configuredOrientationLock = features.orientationLock({ type: 'portrait' });
+  it('exposes orientation lock configuration as a provider property', () => {
+    const withOrientationLock = createPlayer({ features: [features.orientationLock] });
+    const withoutOrientationLock = createPlayer({ features: [features.playback] });
+    const OrientationProvider = withOrientationLock.ProviderMixin(MediaElement);
+    const PlainProvider = withoutOrientationLock.ProviderMixin(MediaElement);
+    const orientationProvider = new OrientationProvider();
+    const plainProvider = new PlainProvider();
 
-    const defaultResult = createPlayer({ features: [features.orientationLock] });
-    const configuredResult = createPlayer({ features: [configuredOrientationLock] });
+    assertType<CreatePlayerResult<PlayerStore<[typeof features.orientationLock]>>>(withOrientationLock);
+    assertType<ScreenOrientationLockType | null | undefined>(orientationProvider.orientationLockType);
 
-    assertType<CreatePlayerResult<PlayerStore<[typeof features.orientationLock]>>>(defaultResult);
-    assertType<CreatePlayerResult<PlayerStore<[typeof configuredOrientationLock]>>>(configuredResult);
+    // @ts-expect-error orientation lock properties are absent when the feature is absent.
+    plainProvider.orientationLockType;
   });
 
   it('resolves extended video features to generic PlayerStore', () => {
