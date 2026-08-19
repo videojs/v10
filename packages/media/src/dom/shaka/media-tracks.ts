@@ -6,11 +6,7 @@ import type {
   MediaVideoRenditionCapability,
   MediaVideoTrackCapability,
 } from '../../core/types';
-import type { HTMLVideoElementHost } from '../video-host';
-
-type ShakaEngineHost = HTMLVideoElementHost & {
-  readonly engine?: shaka.Player | null;
-};
+import type { ShakaEngineHost } from './types';
 
 type MediaTracksHost = ShakaEngineHost &
   MediaVideoTrackCapability &

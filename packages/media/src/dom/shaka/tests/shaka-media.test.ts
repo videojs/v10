@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
+  const CONFIG_DEFAULTS = { streaming: { bufferingGoal: 10, rebufferingGoal: 2 } };
+
   /** Shaka merges every `configure()` call into the current configuration. */
   function merge(target: Record<string, any>, source: Record<string, any>) {
     for (const [key, value] of Object.entries(source)) {
@@ -29,7 +31,9 @@ vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
       resetConfiguration: vi.fn(() => {
         player.config = {};
       }),
-      getConfiguration: vi.fn(() => player.config),
+      // The real `getConfiguration()` always returns a fully resolved
+      // configuration; `config` tracks only what was written.
+      getConfiguration: vi.fn(() => merge(structuredClone(CONFIG_DEFAULTS), player.config)),
       getVideoTracks: vi.fn(() => player.videoTracks),
       getAudioTracks: vi.fn(() => player.audioTracks),
       selectVideoTrack: vi.fn(),
@@ -113,11 +117,15 @@ type MockAudioTrack = {
   channelsCount?: number | null;
 };
 
-function setup() {
+function setup({ preload = 'auto' as const }: { preload?: ShakaMedia['preload'] } = {}) {
   const video = document.createElement('video');
   document.body.appendChild(video);
 
   const media = new ShakaMedia();
+  // Most suites exercise source, configuration, and error semantics, which
+  // read clearest when every assignment reaches the engine immediately; the
+  // preload suite opts back into the deferring defaults it is about.
+  media.preload = preload;
   media.attach(video);
 
   return { media, video, engine: media.engine as unknown as MockEngine };
@@ -127,6 +135,9 @@ function setup() {
 async function flush() {
   for (let index = 0; index < 5; index += 1) await Promise.resolve();
 }
+
+/** What the element itself configures on a fresh or reset engine. */
+const ELEMENT_DEFAULTS = { abr: { restrictToElementSize: true } };
 
 const MANIFEST = 'https://example.com/manifest.mpd';
 const OTHER_MANIFEST = 'https://example.com/other.m3u8';
@@ -221,7 +232,7 @@ describe('ShakaMedia', () => {
       media.source = { src: MANIFEST, engine: { shaka: { streaming: { bufferingGoal: 30 } } } };
       await flush();
 
-      expect(engine.config).toEqual({ streaming: { bufferingGoal: 30 } });
+      expect(engine.config).toEqual({ ...ELEMENT_DEFAULTS, streaming: { bufferingGoal: 30 } });
     });
 
     it('derives src and loads the manifest', async () => {
@@ -277,7 +288,7 @@ describe('ShakaMedia', () => {
       await flush();
 
       expect(engine.load).not.toHaveBeenCalled();
-      expect(engine.config).toEqual({ streaming: { bufferingGoal: 60 } });
+      expect(engine.config).toEqual({ ...ELEMENT_DEFAULTS, streaming: { bufferingGoal: 60 } });
     });
 
     it('resets configuration instead of merging when a shaka option is dropped', async () => {
@@ -293,7 +304,7 @@ describe('ShakaMedia', () => {
       await flush();
 
       expect(engine.resetConfiguration).toHaveBeenCalled();
-      expect(engine.config).toEqual({ streaming: { bufferingGoal: 30 } });
+      expect(engine.config).toEqual({ ...ELEMENT_DEFAULTS, streaming: { bufferingGoal: 30 } });
     });
 
     it('hands a new source to shaka without waiting for the load in flight', async () => {
@@ -397,6 +408,102 @@ describe('ShakaMedia', () => {
     });
   });
 
+  describe('preload', () => {
+    it('clamps buffering for metadata until the first play', async () => {
+      const { video, media, engine } = setup({ preload: 'metadata' });
+
+      media.source = { src: MANIFEST };
+      await flush();
+
+      expect(engine.load).toHaveBeenCalledWith(MANIFEST, undefined, undefined);
+      expect(engine.config.streaming).toEqual({ bufferingGoal: 1, rebufferingGoal: 1 });
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(engine.config.streaming).toEqual({ bufferingGoal: 10, rebufferingGoal: 2 });
+    });
+
+    it('keeps a metadata clamp across a configuration re-apply', async () => {
+      const { media, engine } = setup({ preload: 'metadata' });
+
+      media.source = { src: MANIFEST };
+      await flush();
+      media.source = { src: MANIFEST, engine: { shaka: { streaming: { bufferingGoal: 60 } } } };
+      await flush();
+
+      expect(engine.config.streaming).toEqual({ bufferingGoal: 1, rebufferingGoal: 1 });
+    });
+
+    it('holds the load for none until the first play', async () => {
+      const { video, media, engine } = setup({ preload: 'none' });
+
+      media.source = { src: MANIFEST };
+      await flush();
+
+      expect(engine.load).not.toHaveBeenCalled();
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(engine.load).toHaveBeenCalledWith(MANIFEST, undefined, undefined);
+    });
+
+    it('loads immediately for none when the target will autoplay', async () => {
+      const { video, media, engine } = setup({ preload: 'none' });
+      video.autoplay = true;
+
+      media.source = { src: MANIFEST };
+      await flush();
+
+      expect(engine.load).toHaveBeenCalledWith(MANIFEST, undefined, undefined);
+    });
+
+    it('releases a held load when preload widens', async () => {
+      const { media, engine } = setup({ preload: 'none' });
+
+      media.source = { src: MANIFEST };
+      await flush();
+      media.preload = 'auto';
+
+      expect(engine.load).toHaveBeenCalledWith(MANIFEST, undefined, undefined);
+    });
+
+    it('holds only the newest source when one replaces a held one', async () => {
+      const { video, media, engine } = setup({ preload: 'none' });
+
+      media.source = { src: MANIFEST };
+      await flush();
+      media.source = { src: OTHER_MANIFEST };
+      await flush();
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(engine.load).toHaveBeenCalledTimes(1);
+      expect(engine.load).toHaveBeenCalledWith(OTHER_MANIFEST, undefined, undefined);
+    });
+
+    it('drops a held load when the source clears', async () => {
+      const { video, media, engine } = setup({ preload: 'none' });
+
+      media.source = { src: MANIFEST };
+      await flush();
+      media.source = null;
+      await flush();
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(engine.load).not.toHaveBeenCalled();
+      expect(engine.unload).toHaveBeenCalled();
+    });
+
+    it('mirrors onto the target element', () => {
+      const { video, media } = setup();
+
+      media.preload = 'none';
+
+      expect(video.preload).toBe('none');
+    });
+  });
+
   describe('videoRenditions', () => {
     it('mirrors the video tracks of the loaded asset', async () => {
       const { media, engine } = setup();
@@ -444,7 +551,7 @@ describe('ShakaMedia', () => {
       media.videoRenditions[1]!.selected = true;
       await flush();
 
-      expect(engine.config.abr).toEqual({ enabled: false });
+      expect(engine.config.abr).toEqual({ restrictToElementSize: true, enabled: false });
       expect(engine.selectVideoTrack).toHaveBeenCalledWith(engine.videoTracks[1]);
     });
 
@@ -459,7 +566,7 @@ describe('ShakaMedia', () => {
       media.videoRenditions[1]!.selected = false;
       await flush();
 
-      expect(engine.config.abr).toEqual({ enabled: true });
+      expect(engine.config.abr).toEqual({ restrictToElementSize: true, enabled: true });
     });
 
     it('leaves shaka configuration alone when nothing was ever pinned', async () => {
@@ -487,7 +594,7 @@ describe('ShakaMedia', () => {
       media.source = { src: MANIFEST, engine: { shaka: { streaming: { bufferingGoal: 30 } } } };
       await flush();
 
-      expect(engine.config.abr).toEqual({ enabled: false });
+      expect(engine.config.abr).toEqual({ restrictToElementSize: true, enabled: false });
       expect(engine.selectVideoTrack).toHaveBeenCalledWith(engine.videoTracks[1]);
     });
 
@@ -504,7 +611,7 @@ describe('ShakaMedia', () => {
       await flush();
 
       expect([...media.videoRenditions]).toEqual([]);
-      expect(engine.config.abr).toEqual({ enabled: true });
+      expect(engine.config.abr).toEqual({ restrictToElementSize: true, enabled: true });
     });
 
     it('stops mirroring tracks once destroyed', async () => {
