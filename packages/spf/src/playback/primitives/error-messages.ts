@@ -29,13 +29,13 @@ export const UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE =
  *
  * The background variant is the case: it treats a per-rendition cause as fatal on
  * its own, so what reaches its surface can be an unsupported container, DRM it
- * can't decrypt, or a source carrying no video at all. One sentence covers every
- * one of those, and the conditions logged beside it — already structured, already
- * carrying track type, id, and container — say which. Naming a feature instead
- * would be wrong for the last case and would send a developer looking in the
- * wrong place.
+ * can't decrypt, or a source carrying no video at all. Naming one feature would be
+ * wrong for the last of those, so all three are named broadly. Deferring the *why*
+ * to the conditions instead would promise prose they don't carry — an `SvtaError`
+ * is a code and its context, and nothing on this path sets `message`.
  */
-export const UNPLAYABLE_SOURCE_MESSAGE = "Can't play this source. The conditions logged with this message say why.";
+export const UNPLAYABLE_SOURCE_MESSAGE =
+  "Can't play this source — unsupported container, encryption, or no usable video track.";
 
 /**
  * LL-HLS delivery, played as standard live. The parser ignores partial segments

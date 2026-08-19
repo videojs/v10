@@ -272,10 +272,12 @@ fatal here. The other two adapters log only when they substitute 99001, which is
 sound where every fatal condition *is* a verdict about a missing feature; here a
 verdict can instead mean the source carries no video at all, which would otherwise
 reach a developer as a bare 2011 with nothing said about it. And a message naming
-a missing feature would be wrong for exactly that case, so
-`UNPLAYABLE_SOURCE_MESSAGE` names none: the structured conditions logged beside it
-already carry track type, id, and container. One unconditional log also costs a
-branch less than one per case.
+one missing feature would be wrong for exactly that case, so
+`UNPLAYABLE_SOURCE_MESSAGE` names all three broadly instead. Nor does it defer the
+*why* to the conditions: an `SvtaError` is a code and its context, and nothing on
+this path sets `message`, so pointing a developer at them for prose they don't
+carry is what made the earlier wording confusing. One unconditional log also costs
+a branch less than one per case.
 
 Having *a* surface at all matters more here than
 elsewhere: on Chromium and WebKit (2026-08-14) every unplayable source in this
