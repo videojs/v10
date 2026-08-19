@@ -1,5 +1,6 @@
 import * as p from '@clack/prompts';
 import { validateInstallationOptions } from '@/utils/installation/codegen';
+import { INSTALL_METHOD_LABELS } from '@/utils/installation/install-method-options';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
 import type { InstallMethod, Renderer, UseCase } from '@/utils/installation/types';
 import type { Framework } from '../utils/config.js';
@@ -60,6 +61,7 @@ function mapPresetToUseCase(preset: string): UseCase {
 }
 
 const ALL_RENDERERS = Object.keys(RENDERER_LABELS) as Renderer[];
+const ALL_INSTALL_METHODS = Object.keys(INSTALL_METHOD_LABELS) as InstallMethod[];
 
 function validateMedia(media: string): Renderer {
   if (!ALL_RENDERERS.includes(media as Renderer)) {
@@ -70,8 +72,9 @@ function validateMedia(media: string): Renderer {
 }
 
 function validateInstallMethod(method: string, framework: Framework): InstallMethod {
-  const valid = framework === 'html' ? ['cdn', 'npm', 'pnpm', 'yarn', 'bun'] : ['npm', 'pnpm', 'yarn', 'bun'];
-  if (!valid.includes(method)) {
+  // CDN is HTML-only; react installs always go through a package manager.
+  const valid = framework === 'html' ? ALL_INSTALL_METHODS : ALL_INSTALL_METHODS.filter((m) => m !== 'cdn');
+  if (!valid.includes(method as InstallMethod)) {
     console.error(`Invalid install method: "${method}". Valid options: ${valid.join(', ')}`);
     process.exit(1);
   }

@@ -15,6 +15,9 @@ const ALIASED_FILES = [
   'utils/installation/cdn-code.ts',
   'utils/installation/detect-renderer.ts',
   'utils/installation/renderer-options.ts',
+  'utils/installation/usecase-options.ts',
+  'utils/installation/skin-options.ts',
+  'utils/installation/install-method-options.ts',
   'consts.ts',
 ];
 
