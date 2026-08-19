@@ -1,18 +1,20 @@
-import type { MenuProps } from '@videojs/core';
 import { qualityText } from '@videojs/core/i18n/text/menu';
-import { SwitchesIcon } from '@videojs/icons/components';
-import { type Props, Template, Text } from 'vjsc/components';
+import { SwitchesIcon } from '@videojs/icons/vjsc';
+import { type PropsOf, Template, Text } from 'vjsc/components';
 import styles from '../../styles/components/menu.styles';
 import { QualityRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 
-export function QualityMenu(props: Props<MenuProps> = {}) {
+export interface QualityMenuProps
+  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function QualityMenu(props: QualityMenuProps = {}) {
   return (
     <Submenu
       icon={<SwitchesIcon className={styles.icon} />}
       label={<Text token={qualityText.key}>{qualityText.text}</Text>}
-      selectedLabel={<Text data-part="hint" className={styles.hintLabel} />}
+      selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
       {...props}
     >
       <QualityRadioGroup>

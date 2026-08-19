@@ -6,5 +6,5 @@
     "declaration": true,
     "jsx": "react-jsx"
   },
-  "include": ["compiler"]
+  "include": ["vjsc"]
 }

@@ -20,7 +20,7 @@ import { loadCatalogStyles } from './styles';
 export interface CatalogOutputFile {
   readonly path: string;
   readonly content: string;
-  /** External module imports required by a bundled output file. */
+  /** Exact non-relative module specifiers retained by this output file. */
   readonly imports?: readonly string[] | undefined;
 }
 
@@ -31,6 +31,9 @@ export interface CatalogOutputFiles {
 
 export interface EmittedCatalogItem<File extends CatalogOutputFile = CatalogOutputFile> {
   readonly files: readonly File[];
+  /** Exact non-relative module specifiers retained by every emitted file. */
+  readonly imports: readonly string[];
+  /** Package names derived from `imports`. */
   readonly dependencies: readonly string[];
 }
 
@@ -232,15 +235,19 @@ async function emitModules<Definition extends CatalogDefinition>(
         }))
       );
 
-      files.push({
-        path: layout.outputFile,
-        content: rewriteRelativeImports(result.code, layout, layoutsByInput, layoutsByItem, entriesByInput, options),
-      });
+      files.push(
+        withModuleImports({
+          path: layout.outputFile,
+          content: rewriteRelativeImports(result.code, layout, layoutsByInput, layoutsByItem, entriesByInput, options),
+        })
+      );
     }
 
+    const imports = collectItemImports(files);
     output[catalogItem.name] = {
       files,
-      dependencies: collectPackageDependencies(files),
+      imports,
+      dependencies: collectPackageDependencies(imports),
     };
   }
 
@@ -288,11 +295,11 @@ async function emitBundles<Definition extends CatalogDefinition>(
     }
 
     const files = [
-      {
+      withModuleImports({
         path: outputFile,
         content: chunks[0].source,
         ...(chunks[0].imports.length ? { imports: chunks[0].imports } : {}),
-      },
+      }),
     ];
     const outputDir = dirname(resolve(catalog.rootDir, outputFile));
 
@@ -305,9 +312,11 @@ async function emitBundles<Definition extends CatalogDefinition>(
         }))
     );
 
+    const imports = collectItemImports(files);
     output[catalogItem.name] = {
       files,
-      dependencies: collectPackageDependencies(files),
+      imports,
+      dependencies: collectPackageDependencies(imports),
     };
   }
 
@@ -477,13 +486,28 @@ function rewriteRelativeImports<Definition extends CatalogDefinition>(
   });
 }
 
-function collectPackageDependencies(files: readonly CatalogOutputFile[]): string[] {
+function withModuleImports<File extends CatalogOutputFile>(file: File): File {
+  const imports = uniqueModuleSpecifiers(file.imports ?? collectModuleSpecifiers(file.content, file.path));
+
+  return {
+    ...file,
+    ...(imports.length > 0 ? { imports } : {}),
+  };
+}
+
+function collectItemImports(files: readonly CatalogOutputFile[]): string[] {
+  return uniqueModuleSpecifiers(files.flatMap((file) => file.imports ?? []));
+}
+
+function uniqueModuleSpecifiers(specifiers: readonly string[]): string[] {
+  return [...new Set(specifiers.filter((specifier) => !specifier.startsWith('.')))].sort();
+}
+
+function collectPackageDependencies(imports: readonly string[]): string[] {
   const packages = new Set<string>();
 
-  for (const file of files) {
-    for (const specifier of collectModuleSpecifiers(file.content, file.path)) {
-      if (isPackageSpecifier(specifier)) packages.add(packageName(specifier));
-    }
+  for (const specifier of imports) {
+    if (isPackageSpecifier(specifier)) packages.add(packageName(specifier));
   }
 
   return [...packages].sort();

@@ -1,18 +1,20 @@
-import type { MenuProps } from '@videojs/core';
 import { audioText } from '@videojs/core/i18n/text/menu';
-import { SpeechIcon } from '@videojs/icons/components';
-import { type Props, Template, Text } from 'vjsc/components';
+import { SpeechIcon } from '@videojs/icons/vjsc';
+import { type PropsOf, Template, Text } from 'vjsc/components';
 import styles from '../../styles/components/menu.styles';
 import { AudioTrackRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 
-export function AudioTrackMenu(props: Props<MenuProps> = {}) {
+export interface AudioTrackMenuProps
+  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   return (
     <Submenu
       icon={<SpeechIcon className={styles.icon} />}
       label={<Text token={audioText.key}>{audioText.text}</Text>}
-      selectedLabel={<Text data-part="hint" className={styles.hintLabel} />}
+      selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
       {...props}
     >
       <AudioTrackRadioGroup>

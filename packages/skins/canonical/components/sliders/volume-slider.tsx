@@ -1,5 +1,5 @@
 import type { VolumeSliderProps as CoreProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
+import * as $ from '@videojs/core/vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/slider.styles';
 

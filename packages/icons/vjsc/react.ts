@@ -10,15 +10,19 @@ export function registry(options: ReactIconRegistryOptions = {}) {
   const family = options.family ?? 'default';
   const source = family === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${family}`;
 
-  return defineRegistry(
+  return defineRegistry({
     components,
-    resolveTargets((component) =>
+    targets: resolveTargets((component) =>
       defineTarget({
         import: {
           from: source,
           name: component,
         },
+        props: {
+          from: source,
+          name: 'IconProps',
+        },
       })
-    )
-  );
+    ),
+  });
 }

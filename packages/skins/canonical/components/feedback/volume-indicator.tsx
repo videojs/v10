@@ -1,6 +1,6 @@
 import type { VolumeIndicatorProps as CoreProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
-import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/components';
+import * as $ from '@videojs/core/vjsc';
+import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/volume-indicator.styles';
 

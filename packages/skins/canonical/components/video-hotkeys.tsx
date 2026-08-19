@@ -1,4 +1,4 @@
-import * as $ from '@videojs/core/components';
+import * as $ from '@videojs/core/vjsc';
 
 export interface VideoHotkeysProps {
   disabled?: boolean | undefined;

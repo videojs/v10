@@ -64,9 +64,9 @@ describe('emitFrameworkSkin', () => {
     expect(skin).toContain('from "./components/buttons/play-button"');
     expect(skin).toContain('from "./components/feedback/buffering-indicator"');
     expect(skin).toContain('export interface DefaultVideoSkinProps extends Omit<ContainerProps');
-    expect(skin).toMatch(/<Container className=.*\{\.\.\.containerProps\}>/s);
+    expect(skin).toMatch(/<Container className=.*\{\.\.\.props\}>/s);
     expect(skin).toContain('{children}');
-    expect(skin).toContain('poster && <Poster');
+    expect(skin).toContain('<Poster src={isPosterString ? poster : undefined}');
     expect(skin).toContain('media-skin media-skin-video media-theme-default');
     expect(skin).not.toContain('className="media-surface');
     expect(skin).not.toContain('SeekButton');
@@ -82,7 +82,7 @@ describe('emitFrameworkSkin', () => {
     expect(qualityMenu).toContain('renderItem={(props, item) =>');
     expect(qualityMenu).toContain('{item.tier ? <sup');
     expect(qualityMenu).not.toContain('<Template');
-    expect(qualityMenu).toContain('<RadioItem {...props} checked={item.checked}>');
+    expect(qualityMenu).toContain('<RadioItem {...props}>');
     expect(qualityMenu).toContain('/>');
     expect(qualityMenu).not.toContain('</QualityRadioGroup>');
     expect(submenu).toContain('export function Submenu');
@@ -92,7 +92,8 @@ describe('emitFrameworkSkin', () => {
     expect(submenu).toContain('<MenuPrimitive.Root {...props}>');
     expect(radioItem).toContain('<MenuPrimitive.RadioItem className=');
     expect(radioItem).toContain('{...props}>');
-    expect(radioItem).toContain('checked={checked === true}');
+    expect(radioItem).toContain('<MenuPrimitive.ItemIndicator forceMount');
+    expect(radioItem).not.toContain('checked=');
     expect(radioGroup).toContain('interface QualityRadioGroupProps extends QualityRadioGroupPrimitive.Props');
     expect(radioGroup).toContain('<QualityRadioGroupPrimitive className=');
     expect(radioGroup).toContain('{...props}/>');
@@ -106,7 +107,7 @@ describe('emitFrameworkSkin', () => {
     expect(container).not.toContain('placeholder');
     expect(poster).toContain('export function Poster');
     expect(poster).toContain('PosterProps');
-    expect(poster).toContain('<PosterPrimitive className=');
+    expect(poster).toContain('<PosterPrimitive render={children} className=');
     expect(poster).toContain('{...props}/>');
     expect(poster).not.toContain('<Slot');
     expect(overlay).toContain('export function Overlay({ className, ...props }: OverlayProps = {})');
@@ -195,24 +196,29 @@ describe('emitFrameworkSkin', () => {
     expect(html).toContain('<slot></slot>');
     expect(html).toContain('<media-poster class="media-poster"><slot name="poster"></slot></media-poster>');
     expect(html).toContain('<media-buffering-indicator class="media-buffering-indicator">');
-    expect(html).toContain('<media-captions-button class="media-button media-captions-button">');
-    expect(html).toContain('<media-cast-button class="media-button media-cast-button">');
-    expect(html).toContain('<media-airplay-button class="media-button media-airplay-button">');
-    expect(html).toContain('<media-pip-button class="media-button media-pip-button">');
+    expect(html).toContain('<media-captions-button class="media-button media-captions-button"');
+    expect(html).toContain('<media-cast-button class="media-button media-cast-button"');
+    expect(html).toContain('<media-airplay-button class="media-button media-airplay-button"');
+    expect(html).toContain('<media-pip-button class="media-button media-pip-button"');
     expect(html).toContain('<div class="media-status-indicator-overlay">');
     expect(html).toContain('actions="toggleSubtitles,toggleFullscreen,togglePictureInPicture"');
     expect(html).toContain('<media-volume-indicator class="media-volume-indicator">');
     expect(html).toContain('<media-error-dialog class="media-error-dialog">');
     expect(html).toContain('<media-alert-dialog-title class="media-error-dialog-title">');
     expect(html).toContain('<div class="media-overlay"></div>');
-    expect(html).toContain('<media-play-button class="media-button media-play-button">');
+    expect(html).toContain('<media-play-button class="media-button media-play-button"');
     expect(html).not.toContain('media-seek-button');
     expect(html).not.toContain('@videojs/html/ui/seek-button');
-    expect(html).toContain('<media-tooltip side="top" class="media-surface media-tooltip">');
-    expect(html).toContain('commandfor="settings-menu"');
-    expect(html).toContain('id="settings-trigger"');
-    expect(html).toContain('trigger="settings-trigger"');
-    expect(html).toContain('id="settings-quality-menu"');
+    expect(html).toContain('<media-tooltip trigger="');
+    expect(html).toContain('side="top" class="media-surface media-tooltip"');
+    expect(html.match(/data-has-submenu=""/g)).toHaveLength(4);
+
+    const ids = [...html.matchAll(/\sid="([^"]+)"/g)].map((match) => match[1]!);
+    const relationships = [...html.matchAll(/\s(?:commandfor|trigger)="([^"]+)"/g)].map((match) => match[1]!);
+
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(relationships.length).toBeGreaterThan(0);
+    expect(relationships.every((id) => ids.includes(id))).toBe(true);
     expect(html).toContain('<media-quality-radio-group class="media-radio-group">');
     expect(html).toContain('<span data-part="label"></span>');
     expect(html.match(/<media-hotkey /g)).toHaveLength(17);
@@ -248,7 +254,7 @@ describe('emitFrameworkSkin', () => {
     expect(react).toContain('<TimePrimitive.Group className="media-time-group">');
     expect(react).toContain('<ControlsPrimitive.Group className="media-controls-remote">');
     expect(react).not.toContain('SeekButton');
-    expect(react).not.toContain('placeholder');
+    expect(react).not.toContain('placeholder?:');
 
     expect(html).toContain("import '@videojs/html/icons/element/minimal'");
     expect(html).toContain('media-skin media-skin-video-minimal media-theme-minimal');

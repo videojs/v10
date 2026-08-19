@@ -9,6 +9,6 @@
     },
     "declarationDir": "types"
   },
-  "include": ["src", "compiler"],
+  "include": ["src", "vjsc"],
   "references": [{ "path": "../icons" }]
 }

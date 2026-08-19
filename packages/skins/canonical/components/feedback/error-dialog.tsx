@@ -1,4 +1,4 @@
-import * as $ from '@videojs/core/components';
+import * as $ from '@videojs/core/vjsc';
 import type { Props } from 'vjsc/components';
 import buttonStyles from '../../styles/components/button.styles';
 import styles from '../../styles/components/error-dialog.styles';

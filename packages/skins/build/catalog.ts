@@ -1,5 +1,4 @@
 import { resolve } from 'node:path';
-import { pascalCase } from '@videojs/utils/string';
 import { type Catalog, loadCatalog } from 'vjsc/catalog';
 import { skinCatalog } from '../canonical/catalog';
 
@@ -13,11 +12,6 @@ export const canonicalRoot = resolve(skinsPackageRoot, 'canonical');
 /** Load and analyze the authored catalog used by every Skin output. */
 export function loadSkinCatalog(): Promise<SkinCatalog> {
   return loadCatalog(skinCatalog, { rootDir: canonicalRoot });
-}
-
-/** Derive the canonical root component export from a catalog Skin name. */
-export function skinRootComponentName(skin: SkinCatalogSkin): string {
-  return `${pascalCase(skin.name)}Skin`;
 }
 
 export function catalogSourcePath(path: string): string {

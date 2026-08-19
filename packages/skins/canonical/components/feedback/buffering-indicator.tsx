@@ -1,6 +1,6 @@
 import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
-import { SpinnerIcon } from '@videojs/icons/components';
+import * as $ from '@videojs/core/vjsc';
+import { SpinnerIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/buffering.styles';
 

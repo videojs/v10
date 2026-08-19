@@ -1,5 +1,5 @@
-import * as $ from '@videojs/core/components';
-import { Slot } from 'vjsc/components';
+import * as $ from '@videojs/core/vjsc';
+import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
 import { CastButton } from '../../components/buttons/cast-button';
@@ -19,11 +19,18 @@ import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
 import styles from '../../styles/skins/default-video.styles';
 
-export function DefaultVideoSkin({ children }: { children?: unknown }) {
+export interface DefaultVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
+  children?: VjscNode;
+  poster?: string | PropsOf<typeof Poster>['children'];
+}
+
+export function DefaultVideoSkin({ children, className, poster, ...props }: DefaultVideoSkinProps = {}) {
+  const isPosterString = typeof poster === 'string';
+
   return (
-    <Container className="media-skin media-skin-video media-theme-default">
+    <Container className={['media-skin media-skin-video media-theme-default', className]} {...props}>
       <Slot>{children}</Slot>
-      <Poster />
+      <Poster src={isPosterString ? poster : undefined}>{isPosterString ? undefined : poster}</Poster>
       <BufferingIndicator />
       <ErrorDialog />
 

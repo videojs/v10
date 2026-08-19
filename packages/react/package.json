@@ -128,9 +128,9 @@
     }
   },
   "scripts": {
-    "generate:compiler": "vjsc generate",
-    "check:compiler": "vjsc generate --check",
-    "prebuild": "pnpm run generate:compiler",
+    "generate:vjsc": "vjsc generate",
+    "check:vjsc": "vjsc generate --check",
+    "prebuild": "pnpm run generate:vjsc",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm build:watch",

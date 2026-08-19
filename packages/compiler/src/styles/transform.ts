@@ -147,9 +147,12 @@ function staticClassName(expression: ts.Expression): string | undefined {
       ? expression.arguments
       : undefined;
 
-  if (!values?.every(ts.isStringLiteralLike)) return undefined;
+  if (!values) return undefined;
 
-  return values
+  const strings = values.filter(ts.isStringLiteralLike);
+  if (strings.length !== values.length) return undefined;
+
+  return strings
     .map((value) => value.text)
     .filter(Boolean)
     .join(' ');

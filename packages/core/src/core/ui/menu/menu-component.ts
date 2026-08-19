@@ -8,6 +8,7 @@ export default defineComponent({
   parts: {
     Root: defineComponent<MenuProps>(),
     Trigger: defineComponent<MenuTriggerProps>(),
+    SubmenuTrigger: defineComponent<MenuTriggerProps>(),
     Content: defineComponent(),
     Group: defineComponent(),
     GroupLabel: defineComponent(),

@@ -1,13 +1,25 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
+import { emitRegistry } from 'vjsc/shadcn';
 import { skinRegistry } from '../../../canonical/registry/config';
 import { loadSkinCatalog } from '../../catalog';
-import { emitShadcnRegistry } from '../shadcn';
+import { reactOutput } from '../react';
 
-describe('emitShadcnRegistry', () => {
+describe('emitRegistry', () => {
   it('emits individual React/Tailwind components and a shadcn source manifest', async () => {
     const catalog = await loadSkinCatalog();
-    const output = await emitShadcnRegistry(catalog, skinRegistry);
+    const output = await emitRegistry(catalog, skinRegistry, {
+      output: reactOutput({
+        resolveImport(reference) {
+          if (reference.source === '@videojs/utils/style' || reference.source === '@videojs/skins/registry') {
+            return { ...reference, source: `${skinRegistry.paths.import}/utils` };
+          }
+
+          return reference;
+        },
+      }),
+      styles: { mode: 'tailwind', variant: 'default' },
+    });
     const entry = output.files.find((file) => file.path.endsWith('/play-button/play-button.tsx'));
     const posterEntry = output.files.find((file) => file.path.endsWith('/poster/poster.tsx'));
     const containerEntry = output.files.find((file) => file.path.endsWith('/container/container.tsx'));
@@ -38,9 +50,9 @@ describe('emitShadcnRegistry', () => {
     } as const;
 
     expect(entry?.content).not.toContain('styles/tailwind.css');
-    expect(skinEntry?.content).toContain(
-      'className={cn("media-skin media-skin-video media-theme-default", className)}'
-    );
+    expect(skinEntry?.content).toMatch(/["']media-skin media-skin-video media-theme-default["']/);
+    expect(skinEntry?.content).toContain('className={cn(');
+    expect(skinEntry?.content).not.toContain('cnPrimitive');
     expect(posterEntry?.content).toMatch(/from ["']@videojs\/react["']/);
     expect(containerEntry?.content).toMatch(/from ["']@videojs\/react["']/);
     expect(containerEntry?.content).not.toContain('/poster/poster');
@@ -60,7 +72,7 @@ describe('emitShadcnRegistry', () => {
     expect(playButton?.meta).toEqual({
       framework: 'react',
       style: 'tailwind',
-      skin: skinRegistry.entry,
+      skin: 'default-video',
     });
     expect(registry.items.find((item) => item.name === 'default-video')?.registryDependencies).toContain(
       '@videojs/play-button'
@@ -78,13 +90,13 @@ describe('emitShadcnRegistry', () => {
       '@videojs/seek-button'
     );
     expect(registry.items.find((item) => item.name === 'seek-button')).toBeDefined();
-    expect(registry.items.find((item) => item.name === 'container')?.dependencies).toEqual(['@videojs/react']);
+    expect(registry.items.find((item) => item.name === 'container')?.dependencies).toEqual(['@videojs/react', 'react']);
     expect(registry.items.find((item) => item.name === 'container')?.registryDependencies).toEqual([
       '@videojs/styles',
       '@videojs/utils',
     ]);
     expect(registry.items.some((item) => item.name === 'button-tooltip')).toBe(false);
-    const styleItem = registry.items.find((item) => item.name === skinRegistry.styleItem.name);
+    const styleItem = registry.items.find((item) => item.name === 'styles');
     expect(styleItem?.type).toBe('registry:style');
     expect(styleItem?.files?.map((file) => file.target)).toEqual([
       'components/videojs/styles/base.css',
@@ -95,7 +107,7 @@ describe('emitShadcnRegistry', () => {
       'components/videojs/styles/themes/minimal.css',
       'components/videojs/styles/themes/video.css',
     ]);
-    const utilityItem = registry.items.find((item) => item.name === skinRegistry.utilityItem.name);
+    const utilityItem = registry.items.find((item) => item.name === 'utils');
     expect(utilityItem?.type).toBe('registry:lib');
     expect(utilityItem?.files?.map((file) => file.target)).toEqual(['components/videojs/utils.ts']);
     expect(output.files.find((file) => file.path.endsWith('/utils.ts'))?.content).toContain(

@@ -1,9 +1,13 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+
 import { afterEach, describe, expect, it } from 'vitest';
+
 import { defineCatalog } from '../../catalog/define';
+import { defineOutput } from '../../catalog/emit';
 import { loadCatalog } from '../../catalog/resolve';
+import { defineConfig, jsx } from '../../config';
 import { defineRegistry, emitRegistry } from '../index';
 
 const roots: string[] = [];
@@ -19,93 +23,112 @@ describe('defineRegistry', () => {
       name: 'example',
       homepage: 'https://example.com',
       namespace: '@example',
-      installRoot: 'components/example',
-      outputDir: 'registry',
-      sourceRoot: 'source',
-      entry: 'root',
-      framework: 'react',
-      style: 'tailwind',
-      styleItem: {
-        name: 'styles',
-        title: 'Styles',
-        description: 'Shared styles.',
+      paths: {
+        output: 'registry',
+        source: 'source',
+        install: 'components/example',
+        import: '@/components/example',
       },
-      utilityItem: {
-        name: 'utils',
-        title: 'Utilities',
-        description: 'Shared utilities.',
-        source: './utils.ts',
-        target: 'utils.ts',
-        dependencies: [],
+      items: {
+        published: ['root'],
+        describe: () => ({
+          type: 'registry:block',
+          title: 'Root',
+          description: 'Root block.',
+        }),
       },
-      items: ['root'],
     });
 
-    expect(registry).toMatchObject({ entry: 'root', outputDir: 'registry' });
+    expect(registry).toMatchObject({
+      paths: { output: 'registry' },
+      items: { published: ['root'] },
+    });
   });
 });
 
 describe('emitRegistry', () => {
-  it('partitions published dependencies from bundled catalog items', async () => {
+  it('emits a catalog and partitions published, private, and shared dependencies', async () => {
     const root = setup({
-      'root.ts': `import { Public } from './public'; import { Private } from './private'; export const Root = [Public, Private];`,
+      'root.ts': `import { Public } from './public'; import { Private } from './private'; import { cn } from '@/example/utils'; export const Root = [Public, Private, cn];`,
       'public.ts': `export const Public = true;`,
-      'private.ts': `export const Private = true;`,
+      'private.ts': `import value from 'private-package'; export const Private = value;`,
+      'styles.css': `@import 'tailwindcss';`,
+      'utils.ts': `export const cn = (...values) => values.filter(Boolean).join(' ');`,
     });
     const definition = defineCatalog({
+      allowedImports: ['@/example/utils', 'private-package'],
       items: [
         { name: 'root', source: './root.ts', title: 'Root', type: 'block' },
         { name: 'public', source: './public.ts', title: 'Public', type: 'component' },
-        { name: 'private', source: './private.ts', title: 'Private', type: 'component' },
       ],
     });
     const loaded = await loadCatalog(definition, { rootDir: root });
-    const emittedItems = Object.fromEntries(
-      loaded.items.map((item) => [
-        item.name,
-        {
-          files: [{ path: `${item.name}.ts`, content: '' }],
-          dependencies: item.name === 'private' ? ['private-package'] : [],
-        },
-      ])
-    );
-
-    const registry = emitRegistry(loaded, {
+    const registry = defineRegistry(definition, {
       name: 'example',
       homepage: 'https://example.com',
       namespace: '@example',
+      paths: {
+        output: 'registry',
+        source: 'source',
+        install: 'components/example',
+        import: '@/components/example',
+      },
+      meta: { framework: 'react' },
       items: {
         published: ['root', 'public'],
-        emitted: emittedItems,
+        describe: (item) => ({
+          type: item.type === 'block' ? 'registry:block' : 'registry:component',
+          title: item.title,
+          description: `${item.title}.`,
+        }),
         shared: [
           {
             name: 'styles',
             type: 'registry:style',
             title: 'Styles',
             description: 'Shared styles.',
-            files: [{ path: 'styles.css', content: '' }],
+            requiredBy: 'all',
+            files: [{ source: './styles.css' }],
+          },
+          {
+            name: 'utils',
+            type: 'registry:lib',
+            title: 'Utilities',
+            description: 'Shared utilities.',
+            requiredBy: { imports: ['@/example/utils'] },
+            dependencies: ['clsx'],
+            files: [{ source: './utils.ts' }],
           },
         ],
-        describe: (item) => ({
-          type: item.type === 'block' ? 'registry:block' : 'registry:component',
-          title: item.title,
-          description: `${item.title}.`,
-        }),
-      },
-      resolve: {
-        dependencies: () => ['styles'],
-        file: (file) => ({ path: file.path, target: file.path, type: 'registry:component' }),
       },
     });
+    const output = await emitRegistry(loaded, registry, {
+      output: defineOutput({ compiler: defineConfig({ external: ['private-package'], target: jsx() }) }),
+    });
 
-    expect(registry.items.map((item) => item.name)).toEqual(['styles', 'root', 'public']);
-    expect(registry.items.find((item) => item.name === 'root')).toMatchObject({
+    expect(output.files.map((file) => file.path)).toEqual([
+      'source/components/public/public.ts',
+      'source/private.ts',
+      'source/root.ts',
+      'source/styles.css',
+      'source/utils.ts',
+    ]);
+    expect(output.registry.items.map((item) => item.name)).toEqual(['styles', 'utils', 'root', 'public']);
+    expect(output.registry.items.find((item) => item.name === 'root')).toMatchObject({
       files: [
-        { path: 'private.ts', target: 'private.ts' },
-        { path: 'root.ts', target: 'root.ts' },
+        { path: 'registry/source/private.ts', target: 'components/example/root/private.ts' },
+        { path: 'registry/source/root.ts', target: 'components/example/root/root.ts' },
       ],
       dependencies: ['private-package'],
-      registryDependencies: ['@example/public', '@example/styles'],
+      registryDependencies: ['@example/public', '@example/styles', '@example/utils'],
+      meta: { framework: 'react' },
+    });
+    expect(output.registry.items.find((item) => item.name === 'public')).toMatchObject({
+      registryDependencies: ['@example/styles'],
+    });
+    expect(output.registry.items.find((item) => item.name === 'utils')).toMatchObject({
+      dependencies: ['clsx'],
+      files: [{ type: 'registry:lib', target: 'components/example/utils.ts' }],
     });
   });
 });
@@ -113,10 +136,12 @@ describe('emitRegistry', () => {
 function setup(files: Readonly<Record<string, string>>): string {
   const root = mkdtempSync(join(tmpdir(), 'videojs-compiler-shadcn-'));
   roots.push(root);
+
   for (const [file, source] of Object.entries(files)) {
     const path = join(root, file);
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, source);
   }
+
   return root;
 }

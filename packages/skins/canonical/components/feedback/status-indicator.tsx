@@ -1,5 +1,5 @@
 import type { StatusIndicatorProps as CoreProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
+import * as $ from '@videojs/core/vjsc';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -9,7 +9,7 @@ import {
   PipEnterIcon,
   PipExitIcon,
   PlayIcon,
-} from '@videojs/icons/components';
+} from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/status-indicator.styles';
 

@@ -20,12 +20,12 @@ export function registry(options: HtmlIconRegistryOptions = {}) {
     },
   });
 
-  return defineRegistry(
+  return defineRegistry({
     components,
-    resolveTargets((_component, name) =>
+    targets: resolveTargets((_component, name) =>
       defineTarget({
         render: ({ props }) => <Icon {...props} {...(family === 'default' ? {} : { family })} name={name} />,
       })
-    )
-  );
+    ),
+  });
 }

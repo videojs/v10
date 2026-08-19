@@ -28,7 +28,7 @@ const DEFINITIONS = {
   VolumeOffIcon: defineComponent({ name: 'VolumeOffIcon' }),
 } as const;
 
-export const components = defineComponents('@videojs/icons/components', DEFINITIONS);
+export const components = defineComponents('@videojs/icons/vjsc', DEFINITIONS);
 
 export function resolveTargets(resolve: (component: keyof typeof DEFINITIONS, name: string) => RegistryTarget) {
   return {

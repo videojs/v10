@@ -5,7 +5,7 @@ import { registry as htmlRegistry } from '../html';
 import { registry as reactRegistry } from '../react';
 
 const source = `
-  import { PlayIcon } from '@videojs/icons/components';
+  import { PlayIcon } from '@videojs/icons/vjsc';
 
   export const icon = <PlayIcon className="icon" />;
 `;

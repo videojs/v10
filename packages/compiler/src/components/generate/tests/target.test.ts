@@ -40,6 +40,8 @@ describe('generateTarget', () => {
     expect(first.changed).toBe(true);
     expect(second.changed).toBe(false);
     expect(readFileSync(output, 'utf8')).toBe(first.code);
+    expect(first.code).toContain("import { defineTarget } from 'vjsc/components';");
+    expect(first.code).not.toContain('defineElement');
     expect(first.code).toContain('export const PlayButton = defineTarget({');
     expect(first.code).toContain("name: 'Tooltip',");
     expect(first.code).toContain("path: ['Popup'],");
@@ -84,6 +86,9 @@ describe('generateTarget', () => {
     expect(resolvedTagName).toContain("static tagName = 'media-target'");
     expect(result.code).toContain("from: './preferred.ts'");
     expect(result.code).not.toContain("from: './fallback.ts'");
+    expect(result.code).toContain("import { defineElement } from 'vjsc/components';");
+    expect(result.code).toContain("defineElement('media-target', {");
+    expect(result.code).not.toContain('defineTarget');
     expect(result.code).toContain('export const targets = {');
   });
 

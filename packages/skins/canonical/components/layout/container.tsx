@@ -1,4 +1,4 @@
-import * as $ from '@videojs/core/components';
+import * as $ from '@videojs/core/vjsc';
 import type { PropsWithChildren } from 'vjsc/components';
 import styles from '../../styles/components/container.styles';
 

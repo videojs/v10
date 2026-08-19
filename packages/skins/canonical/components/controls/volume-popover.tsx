@@ -1,5 +1,5 @@
 import type { PopoverProps as CoreProps, VolumeSliderProps as CoreVolumeSliderProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
+import * as $ from '@videojs/core/vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/popup.styles';
 import { MuteButton } from '../buttons/mute-button';
@@ -10,7 +10,11 @@ export function VolumePopover({
   side = 'top',
   orientation = 'vertical',
   ...props
-}: Props<CoreProps & Pick<CoreVolumeSliderProps, 'orientation'>> = {}) {
+}: Props<
+  CoreProps & {
+    orientation?: CoreVolumeSliderProps['orientation'];
+  }
+> = {}) {
   return (
     <$.Popover.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>
       <$.Popover.Trigger>

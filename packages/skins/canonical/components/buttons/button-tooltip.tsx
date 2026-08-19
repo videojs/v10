@@ -1,9 +1,9 @@
 import type { TooltipProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
-import type { ComponentNode, PropsWithChildren } from 'vjsc/components';
+import * as $ from '@videojs/core/vjsc';
+import type { PropsWithChildren, VjscElement } from 'vjsc/components';
 import styles from '../../styles/components/popup.styles';
 
-export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipProps> & { children: ComponentNode }) {
+export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipProps> & { children: VjscElement }) {
   return (
     <$.Tooltip.Root {...props}>
       <$.Tooltip.Trigger>{children}</$.Tooltip.Trigger>

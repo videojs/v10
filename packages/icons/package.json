@@ -14,13 +14,13 @@
     "./dist/element/**/*.js"
   ],
   "exports": {
-    "./components": {
-      "types": "./dist/components/default/index.d.ts",
-      "default": "./dist/components/default/index.js"
+    "./vjsc": {
+      "types": "./dist/vjsc/default/index.d.ts",
+      "default": "./dist/vjsc/default/index.js"
     },
-    "./components/*": {
-      "types": "./dist/components/*/index.d.ts",
-      "default": "./dist/components/*/index.js"
+    "./vjsc/*": {
+      "types": "./dist/vjsc/*/index.d.ts",
+      "default": "./dist/vjsc/*/index.js"
     },
     "./react": {
       "types": "./dist/react/default/index.d.ts",

@@ -96,6 +96,6 @@ export const COMPONENTS = {
   VolumeSlider: VolumeSliderDef,
 } as const;
 
-export const components = defineComponents('@videojs/core/components', COMPONENTS);
+export const components = defineComponents('@videojs/core/vjsc', COMPONENTS);
 
 export type Components = typeof COMPONENTS;

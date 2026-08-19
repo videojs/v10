@@ -36,7 +36,6 @@ describe('reactOutput', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        components: { editable: true },
       }),
       configDir: dirname(filename),
     });
@@ -81,7 +80,6 @@ describe('reactOutput', () => {
           manifest: await loadStyleManifest(statusStyleFiles),
           variant: 'minimal',
         },
-        components: { editable: true },
       }),
     });
 
@@ -99,7 +97,6 @@ describe('reactOutput', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        components: { editable: true },
       }),
     });
 
@@ -109,24 +106,29 @@ describe('reactOutput', () => {
     expect(result.code).not.toContain('Parameters<typeof TooltipPrimitive.Root>');
   });
 
-  it('forwards VolumePopover props directly to Popover.Root', async () => {
+  it('emits the React-only volume availability fallback', async () => {
     const filename = resolve(canonicalRoot, 'components/controls/volume-popover.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        components: { editable: true },
       }),
     });
 
     expect(result.code).toContain('interface VolumePopoverProps extends Omit<PopoverPrimitive.RootProps, "children">');
     expect(result.code).toContain('className?: PopoverPrimitive.PopupProps["className"]');
-    expect(result.code).toContain('orientation?: VolumeSliderProps["orientation"]');
+    expect(result.code).toMatch(/orientation\?: CoreVolumeSliderProps\[['"]orientation['"]\]/);
     expect(result.code).toContain('...props');
+    expect(result.code).toMatch(/import \{[^}]*usePlayer[^}]*\} from "@videojs\/react"/);
+    expect(result.code).toContain('const volumeAvailability = usePlayer(state => state.volumeAvailability);');
     expect(result.code).toContain(
       '<PopoverPrimitive.Root openOnHover delay={200} closeDelay={100} side={side} {...props}>'
     );
+    expect(result.code).toMatch(
+      /return \(?volumeAvailability === "available" \? <PopoverPrimitive\.Root[\s\S]+: <MuteButton\s*\/>/
+    );
+    expect(result.code).not.toContain('VolumeAvailability');
     expect(result.code).not.toContain('popoverProps');
   });
 
@@ -137,13 +139,16 @@ describe('reactOutput', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        components: { editable: true },
       }),
     });
 
     expect(result.code).toContain('interface AudioTrackMenuProps extends Omit<SubmenuProps');
     expect(result.code).toContain('AudioTrackMenu(props: AudioTrackMenuProps = {})');
+    expect(result.code).toContain('const audioTrack = useAudioTrackOptions()');
+    expect(result.code).toContain('const available = audioTrack?.state.availability === "available"');
+    expect(result.code).toContain('{audioTrack?.selectedLabel}');
     expect(result.code).toMatch(/<Submenu icon=.*\{\.\.\.props\}>/s);
+    expect(result.code).not.toContain('MenuPrimitive.SelectedLabel');
     expect(result.code).not.toContain('AudioTrackSettingsMenu');
   });
 
@@ -160,7 +165,6 @@ describe('reactOutput', () => {
             resolve(canonicalRoot, 'styles/components/menu.styles.ts'),
           ]),
         },
-        components: { editable: true },
       }),
     });
 
@@ -182,11 +186,16 @@ describe('reactOutput', () => {
       filename,
       config: reactConfig({
         styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        components: { editable: true },
       }),
     });
 
-    expect(result.code).toContain('interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, "children">');
+    expect(result.code).toMatch(/interface VideoSettingsMenuProps extends Omit<SettingsMenuProps, ['"]children['"]>/);
+    expect(result.code).toContain('const quality = useQualityOptions()');
+    expect(result.code).toContain('const audioTrack = useAudioTrackOptions()');
+    expect(result.code).toContain('const playbackRate = usePlaybackRateOptions()');
+    expect(result.code).toContain('const captions = useCaptionsOptions()');
+    expect(result.code).toContain('const hasSettings =');
+    expect(result.code).toContain('hasSettings && <SettingsMenu');
   });
 
   it('allows settings menu props to override canonical positioning defaults', async () => {
@@ -249,7 +258,7 @@ describe('reactOutput', () => {
     });
 
     expect(source).toContain('Container({ children, className, ...props }: PropsWithChildren)');
-    expect(posterSource).toContain('Poster({ className, ...props }: Props = {})');
+    expect(posterSource).toContain('Poster({ children, className, src, ...props }: PropsWithChildren<CoreProps> = {})');
     expect(`${source}\n${posterSource}`).not.toContain('TargetProps');
     expect(result.diagnostics).toEqual([]);
     expect(posterResult.diagnostics).toEqual([]);
@@ -258,16 +267,19 @@ describe('reactOutput', () => {
     expect(result.code).not.toContain('Parameters<');
     expect(result.code).toMatch(/<ContainerPrimitive className=.*\{\.\.\.props\}>/s);
     expect(posterResult.code).toContain('export function Poster(');
-    expect(posterResult.code).toContain('PosterProps');
+    expect(posterResult.code).toContain(
+      'interface PosterProps extends Omit<PosterPrimitive.Props, "children" | "render">'
+    );
+    expect(posterResult.code).toContain('children?: PosterPrimitive.Props["render"]');
     expect(posterResult.code).not.toContain('Parameters<');
-    expect(posterResult.code).toMatch(/<PosterPrimitive className=.*\{\.\.\.props\}\/>/s);
+    expect(posterResult.code).toMatch(/<PosterPrimitive render=\{children\} className=.*\{\.\.\.props\}\/>/s);
     expect(posterResult.code).toContain('[&[data-visible][src]:not([data-loaded])]:opacity-0');
     expect(posterResult.code).not.toContain('Slot');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinContainer');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinPoster');
   });
 
-  it('adds React-only inputs while keeping the canonical Skin as the composition root', async () => {
+  it('projects the canonical Skin inputs through its React targets', async () => {
     const filename = resolve(canonicalRoot, 'skins/default-video/skin.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
@@ -280,13 +292,13 @@ describe('reactOutput', () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.code).toContain('export interface DefaultVideoSkinProps extends Omit<ContainerProps');
     expect(result.code).toContain('children?: ReactNode');
-    expect(result.code).toContain('poster?: string | PosterProps["render"] | undefined');
-    expect(result.code).toMatch(/<Container className=.*\{\.\.\.containerProps\}>/s);
+    expect(result.code).toContain("poster?: string | PosterProps['children']");
+    expect(result.code).toMatch(/<Container className=.*\{\.\.\.props\}>/s);
     expect(result.code).toContain('{children}');
-    expect(result.code).toContain('poster && <Poster');
+    expect(result.code).toContain('<Poster src={isPosterString ? poster : undefined}');
     expect(result.code).not.toContain('SeekButton');
     expect(result.code).not.toContain('<Slot');
-    expect(result.code).not.toContain('placeholder');
+    expect(result.code).not.toContain('placeholder?:');
     expect(result.code).not.toContain('CSSProperties');
     expect(result.code).not.toContain('Parameters<');
   });

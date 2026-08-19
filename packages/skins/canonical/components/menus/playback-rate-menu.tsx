@@ -1,18 +1,20 @@
-import type { MenuProps } from '@videojs/core';
 import { speedText } from '@videojs/core/i18n/text/menu';
-import { SpeedIcon } from '@videojs/icons/components';
-import { type Props, Template, Text } from 'vjsc/components';
+import { SpeedIcon } from '@videojs/icons/vjsc';
+import { type PropsOf, Template, Text } from 'vjsc/components';
 import styles from '../../styles/components/menu.styles';
 import { PlaybackRateRadioGroup } from './radio-group';
 import { RadioItem } from './radio-item';
 import { Submenu } from './submenu';
 
-export function PlaybackRateMenu(props: Props<MenuProps> = {}) {
+export interface PlaybackRateMenuProps
+  extends Omit<PropsOf<typeof Submenu>, 'children' | 'icon' | 'label' | 'selectedLabel'> {}
+
+export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   return (
     <Submenu
       icon={<SpeedIcon className={styles.icon} />}
       label={<Text token={speedText.key}>{speedText.text}</Text>}
-      selectedLabel={<Text data-part="hint" className={styles.hintLabel} />}
+      selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
       {...props}
     >
       <PlaybackRateRadioGroup>

@@ -2,14 +2,14 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const componentsRoot = resolve(import.meta.dirname, '../../dist/components');
+const vjscRoot = resolve(import.meta.dirname, '../../dist/vjsc');
 const reactRoot = resolve(import.meta.dirname, '../../dist/react');
 
-describe('canonical icon components', () => {
+describe('VJSC icon components', () => {
   it.each(['default', 'minimal'])('builds named constrained-JSX components for the %s set', async (set) => {
     const [source, types] = await Promise.all([
-      readFile(resolve(componentsRoot, set, 'index.js'), 'utf8'),
-      readFile(resolve(componentsRoot, set, 'index.d.ts'), 'utf8'),
+      readFile(resolve(vjscRoot, set, 'index.js'), 'utf8'),
+      readFile(resolve(vjscRoot, set, 'index.d.ts'), 'utf8'),
     ]);
 
     expect(source).toContain(`import { createComponent } from 'vjsc/components';`);

@@ -6,12 +6,22 @@ export const AirPlayButton = defineTarget({
     from: '@videojs/react',
     name: 'AirPlayButton',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'AirPlayButton',
+    path: ['Props'],
+  },
 });
 
 export const AudioTrackRadioGroup = defineTarget({
   import: {
     from: '@videojs/react',
     name: 'AudioTrackRadioGroup',
+  },
+  props: {
+    from: '@videojs/react',
+    name: 'AudioTrackRadioGroup',
+    path: ['Props'],
   },
 });
 
@@ -20,12 +30,22 @@ export const BufferingIndicator = defineTarget({
     from: '@videojs/react',
     name: 'BufferingIndicator',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'BufferingIndicator',
+    path: ['Props'],
+  },
 });
 
 export const CaptionsButton = defineTarget({
   import: {
     from: '@videojs/react',
     name: 'CaptionsButton',
+  },
+  props: {
+    from: '@videojs/react',
+    name: 'CaptionsButton',
+    path: ['Props'],
   },
 });
 
@@ -34,6 +54,11 @@ export const CaptionsRadioGroup = defineTarget({
     from: '@videojs/react',
     name: 'CaptionsRadioGroup',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'CaptionsRadioGroup',
+    path: ['Props'],
+  },
 });
 
 export const CastButton = defineTarget({
@@ -41,12 +66,22 @@ export const CastButton = defineTarget({
     from: '@videojs/react',
     name: 'CastButton',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'CastButton',
+    path: ['Props'],
+  },
 });
 
 export const Container = defineTarget({
   import: {
     from: '@videojs/react',
     name: 'Container',
+  },
+  props: {
+    from: '@videojs/react',
+    name: 'Container',
+    path: ['Props'],
   },
 });
 
@@ -57,12 +92,22 @@ export const Controls = {
       name: 'Controls',
       path: ['Group'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Controls',
+      path: ['GroupProps'],
+    },
   }),
   Root: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Controls',
       path: ['Root'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Controls',
+      path: ['RootProps'],
     },
   }),
 } as const;
@@ -74,12 +119,22 @@ export const ErrorDialog = {
       name: 'ErrorDialog',
       path: ['Close'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'ErrorDialog',
+      path: ['CloseProps'],
+    },
   }),
   Description: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'ErrorDialog',
       path: ['Description'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'ErrorDialog',
+      path: ['DescriptionProps'],
     },
   }),
   Popup: defineTarget({
@@ -88,6 +143,11 @@ export const ErrorDialog = {
       name: 'ErrorDialog',
       path: ['Popup'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'ErrorDialog',
+      path: ['PopupProps'],
+    },
   }),
   Root: defineTarget({
     import: {
@@ -95,12 +155,22 @@ export const ErrorDialog = {
       name: 'ErrorDialog',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'ErrorDialog',
+      path: ['RootProps'],
+    },
   }),
   Title: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'ErrorDialog',
       path: ['Title'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'ErrorDialog',
+      path: ['TitleProps'],
     },
   }),
 } as const;
@@ -110,6 +180,11 @@ export const FullscreenButton = defineTarget({
     from: '@videojs/react',
     name: 'FullscreenButton',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'FullscreenButton',
+    path: ['Props'],
+  },
 });
 
 export const Gesture = defineTarget({
@@ -117,12 +192,22 @@ export const Gesture = defineTarget({
     from: '@videojs/react',
     name: 'Gesture',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'Gesture',
+    path: ['Props'],
+  },
 });
 
 export const Hotkey = defineTarget({
   import: {
     from: '@videojs/react',
     name: 'Hotkey',
+  },
+  props: {
+    from: '@videojs/react',
+    name: 'Hotkey',
+    path: ['Props'],
   },
 });
 
@@ -133,12 +218,22 @@ export const Menu = {
       name: 'Menu',
       path: ['CheckboxItem'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['CheckboxItemProps'],
+    },
   }),
   Content: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Menu',
       path: ['Content'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['ContentProps'],
     },
   }),
   Group: defineTarget({
@@ -147,12 +242,22 @@ export const Menu = {
       name: 'Menu',
       path: ['Group'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['GroupProps'],
+    },
   }),
   GroupLabel: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Menu',
       path: ['GroupLabel'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['GroupLabelProps'],
     },
   }),
   Item: defineTarget({
@@ -161,12 +266,22 @@ export const Menu = {
       name: 'Menu',
       path: ['Item'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['ItemProps'],
+    },
   }),
   ItemIndicator: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Menu',
       path: ['ItemIndicator'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['ItemIndicatorProps'],
     },
   }),
   RadioGroup: defineTarget({
@@ -175,12 +290,22 @@ export const Menu = {
       name: 'Menu',
       path: ['RadioGroup'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['RadioGroupProps'],
+    },
   }),
   RadioItem: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Menu',
       path: ['RadioItem'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['RadioItemProps'],
     },
   }),
   Root: defineTarget({
@@ -189,6 +314,11 @@ export const Menu = {
       name: 'Menu',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['RootProps'],
+    },
   }),
   Separator: defineTarget({
     import: {
@@ -196,12 +326,34 @@ export const Menu = {
       name: 'Menu',
       path: ['Separator'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['SeparatorProps'],
+    },
+  }),
+  SubmenuTrigger: defineTarget({
+    import: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['Trigger'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['TriggerProps'],
+    },
   }),
   Trigger: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Menu',
       path: ['Trigger'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Menu',
+      path: ['TriggerProps'],
     },
   }),
 } as const;
@@ -211,12 +363,22 @@ export const MuteButton = defineTarget({
     from: '@videojs/react',
     name: 'MuteButton',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'MuteButton',
+    path: ['Props'],
+  },
 });
 
 export const PiPButton = defineTarget({
   import: {
     from: '@videojs/react',
     name: 'PiPButton',
+  },
+  props: {
+    from: '@videojs/react',
+    name: 'PiPButton',
+    path: ['Props'],
   },
 });
 
@@ -225,12 +387,22 @@ export const PlaybackRateRadioGroup = defineTarget({
     from: '@videojs/react',
     name: 'PlaybackRateRadioGroup',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'PlaybackRateRadioGroup',
+    path: ['Props'],
+  },
 });
 
 export const PlayButton = defineTarget({
   import: {
     from: '@videojs/react',
     name: 'PlayButton',
+  },
+  props: {
+    from: '@videojs/react',
+    name: 'PlayButton',
+    path: ['Props'],
   },
 });
 
@@ -241,12 +413,22 @@ export const Popover = {
       name: 'Popover',
       path: ['Arrow'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Popover',
+      path: ['ArrowProps'],
+    },
   }),
   Popup: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Popover',
       path: ['Popup'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Popover',
+      path: ['PopupProps'],
     },
   }),
   Root: defineTarget({
@@ -255,12 +437,22 @@ export const Popover = {
       name: 'Popover',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Popover',
+      path: ['RootProps'],
+    },
   }),
   Trigger: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Popover',
       path: ['Trigger'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Popover',
+      path: ['TriggerProps'],
     },
   }),
 } as const;
@@ -270,6 +462,11 @@ export const Poster = defineTarget({
     from: '@videojs/react',
     name: 'Poster',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'Poster',
+    path: ['Props'],
+  },
 });
 
 export const QualityRadioGroup = defineTarget({
@@ -277,12 +474,22 @@ export const QualityRadioGroup = defineTarget({
     from: '@videojs/react',
     name: 'QualityRadioGroup',
   },
+  props: {
+    from: '@videojs/react',
+    name: 'QualityRadioGroup',
+    path: ['Props'],
+  },
 });
 
 export const SeekButton = defineTarget({
   import: {
     from: '@videojs/react',
     name: 'SeekButton',
+  },
+  props: {
+    from: '@videojs/react',
+    name: 'SeekButton',
+    path: ['Props'],
   },
 });
 
@@ -293,12 +500,22 @@ export const SeekIndicator = {
       name: 'SeekIndicator',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'SeekIndicator',
+      path: ['RootProps'],
+    },
   }),
   Value: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'SeekIndicator',
       path: ['Value'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'SeekIndicator',
+      path: ['ValueProps'],
     },
   }),
 } as const;
@@ -310,12 +527,22 @@ export const Slider = {
       name: 'Slider',
       path: ['Buffer'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Slider',
+      path: ['BufferProps'],
+    },
   }),
   Fill: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Slider',
       path: ['Fill'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Slider',
+      path: ['FillProps'],
     },
   }),
   Preview: defineTarget({
@@ -324,6 +551,11 @@ export const Slider = {
       name: 'Slider',
       path: ['Preview'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Slider',
+      path: ['PreviewProps'],
+    },
   }),
   Root: defineTarget({
     import: {
@@ -331,12 +563,22 @@ export const Slider = {
       name: 'Slider',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Slider',
+      path: ['RootProps'],
+    },
   }),
   Thumb: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Slider',
       path: ['Thumb'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Slider',
+      path: ['ThumbProps'],
     },
   }),
   Thumbnail: {
@@ -346,12 +588,22 @@ export const Slider = {
         name: 'Slider',
         path: ['Thumbnail', 'Image'],
       },
+      props: {
+        from: '@videojs/react',
+        name: 'Slider',
+        path: ['Thumbnail', 'ImageProps'],
+      },
     }),
     Root: defineTarget({
       import: {
         from: '@videojs/react',
         name: 'Slider',
         path: ['Thumbnail', 'Root'],
+      },
+      props: {
+        from: '@videojs/react',
+        name: 'Slider',
+        path: ['Thumbnail', 'RootProps'],
       },
     }),
   } as const,
@@ -361,12 +613,22 @@ export const Slider = {
       name: 'Slider',
       path: ['Track'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Slider',
+      path: ['TrackProps'],
+    },
   }),
   Value: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Slider',
       path: ['Value'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Slider',
+      path: ['ValueProps'],
     },
   }),
 } as const;
@@ -375,6 +637,11 @@ export const StatusAnnouncer = defineTarget({
   import: {
     from: '@videojs/react',
     name: 'StatusAnnouncer',
+  },
+  props: {
+    from: '@videojs/react',
+    name: 'StatusAnnouncer',
+    path: ['Props'],
   },
 });
 
@@ -385,12 +652,22 @@ export const StatusIndicator = {
       name: 'StatusIndicator',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'StatusIndicator',
+      path: ['RootProps'],
+    },
   }),
   Value: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'StatusIndicator',
       path: ['Value'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'StatusIndicator',
+      path: ['ValueProps'],
     },
   }),
 } as const;
@@ -402,6 +679,11 @@ export const Time = {
       name: 'Time',
       path: ['Group'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Time',
+      path: ['GroupProps'],
+    },
   }),
   Separator: defineTarget({
     import: {
@@ -409,12 +691,22 @@ export const Time = {
       name: 'Time',
       path: ['Separator'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Time',
+      path: ['SeparatorProps'],
+    },
   }),
   Value: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Time',
       path: ['Value'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Time',
+      path: ['ValueProps'],
     },
   }),
 } as const;
@@ -426,12 +718,22 @@ export const TimeSlider = {
       name: 'TimeSlider',
       path: ['Buffer'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['BufferProps'],
+    },
   }),
   Chapters: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'TimeSlider',
       path: ['Chapters'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['ChaptersProps'],
     },
   }),
   ChapterTitle: defineTarget({
@@ -440,12 +742,22 @@ export const TimeSlider = {
       name: 'TimeSlider',
       path: ['ChapterTitle'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['ChapterTitleProps'],
+    },
   }),
   Fill: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'TimeSlider',
       path: ['Fill'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['FillProps'],
     },
   }),
   Preview: defineTarget({
@@ -454,12 +766,22 @@ export const TimeSlider = {
       name: 'TimeSlider',
       path: ['Preview'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['PreviewProps'],
+    },
   }),
   Root: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'TimeSlider',
       path: ['Root'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['RootProps'],
     },
   }),
   Thumb: defineTarget({
@@ -468,6 +790,11 @@ export const TimeSlider = {
       name: 'TimeSlider',
       path: ['Thumb'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['ThumbProps'],
+    },
   }),
   Track: defineTarget({
     import: {
@@ -475,12 +802,22 @@ export const TimeSlider = {
       name: 'TimeSlider',
       path: ['Track'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['TrackProps'],
+    },
   }),
   Value: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'TimeSlider',
       path: ['Value'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'TimeSlider',
+      path: ['ValueProps'],
     },
   }),
 } as const;
@@ -492,12 +829,22 @@ export const Tooltip = {
       name: 'Tooltip',
       path: ['Arrow'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Tooltip',
+      path: ['ArrowProps'],
+    },
   }),
   Label: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Tooltip',
       path: ['Label'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Tooltip',
+      path: ['LabelProps'],
     },
   }),
   Popup: defineTarget({
@@ -506,12 +853,22 @@ export const Tooltip = {
       name: 'Tooltip',
       path: ['Popup'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Tooltip',
+      path: ['PopupProps'],
+    },
   }),
   Provider: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Tooltip',
       path: ['Provider'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Tooltip',
+      path: ['ProviderProps'],
     },
   }),
   Root: defineTarget({
@@ -520,6 +877,11 @@ export const Tooltip = {
       name: 'Tooltip',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Tooltip',
+      path: ['RootProps'],
+    },
   }),
   Shortcut: defineTarget({
     import: {
@@ -527,12 +889,22 @@ export const Tooltip = {
       name: 'Tooltip',
       path: ['Shortcut'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'Tooltip',
+      path: ['ShortcutProps'],
+    },
   }),
   Trigger: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'Tooltip',
       path: ['Trigger'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'Tooltip',
+      path: ['TriggerProps'],
     },
   }),
 } as const;
@@ -544,6 +916,11 @@ export const VolumeIndicator = {
       name: 'VolumeIndicator',
       path: ['Fill'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeIndicator',
+      path: ['FillProps'],
+    },
   }),
   Root: defineTarget({
     import: {
@@ -551,12 +928,22 @@ export const VolumeIndicator = {
       name: 'VolumeIndicator',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeIndicator',
+      path: ['RootProps'],
+    },
   }),
   Value: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'VolumeIndicator',
       path: ['Value'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeIndicator',
+      path: ['ValueProps'],
     },
   }),
 } as const;
@@ -568,12 +955,22 @@ export const VolumeSlider = {
       name: 'VolumeSlider',
       path: ['Fill'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeSlider',
+      path: ['FillProps'],
+    },
   }),
   Preview: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'VolumeSlider',
       path: ['Preview'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeSlider',
+      path: ['PreviewProps'],
     },
   }),
   Root: defineTarget({
@@ -582,12 +979,22 @@ export const VolumeSlider = {
       name: 'VolumeSlider',
       path: ['Root'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeSlider',
+      path: ['RootProps'],
+    },
   }),
   Thumb: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'VolumeSlider',
       path: ['Thumb'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeSlider',
+      path: ['ThumbProps'],
     },
   }),
   Track: defineTarget({
@@ -596,12 +1003,22 @@ export const VolumeSlider = {
       name: 'VolumeSlider',
       path: ['Track'],
     },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeSlider',
+      path: ['TrackProps'],
+    },
   }),
   Value: defineTarget({
     import: {
       from: '@videojs/react',
       name: 'VolumeSlider',
       path: ['Value'],
+    },
+    props: {
+      from: '@videojs/react',
+      name: 'VolumeSlider',
+      path: ['ValueProps'],
     },
   }),
 } as const;

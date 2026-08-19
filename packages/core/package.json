@@ -29,10 +29,10 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
-    "./components": {
-      "types": "./dist/dev/components.d.ts",
-      "development": "./dist/dev/components.js",
-      "default": "./dist/default/components.js"
+    "./vjsc": {
+      "types": "./dist/dev/vjsc.d.ts",
+      "development": "./dist/dev/vjsc.js",
+      "default": "./dist/default/vjsc.js"
     },
     "./i18n": {
       "types": "./dist/dev/i18n.d.ts",

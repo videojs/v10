@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { transform } from '@svgr/core';
 import { transformSync } from 'oxc-transform';
 import { iconNames } from './internal/icon-names.js';
-import { ASSETS_DIR, COMPILER_DIR, DIST_DIR, getIconSets, getSvgFiles } from './internal/paths.js';
+import { ASSETS_DIR, DIST_DIR, getIconSets, getSvgFiles, VJSC_DIR } from './internal/paths.js';
 import { optimizeSvg } from './internal/svg.js';
 
 const FRAMEWORKS = ['react', 'html'] as const;
@@ -101,7 +101,7 @@ function buildCanonicalComponentTypes(icons: { varName: string }[]): string {
   return [`import type { Component, EmptyProps } from 'vjsc/components';`, ``, ...components, ``].join('\n');
 }
 
-function buildCompilerComponents(icons: { name: string; varName: string }[]): string {
+function buildVjscComponents(icons: { name: string; varName: string }[]): string {
   const definitions = icons.map(({ varName }) => {
     const name = `${iconNames(varName).pascal}Icon`;
     return `  ${name}: defineComponent({ name: '${name}' }),`;
@@ -118,7 +118,7 @@ function buildCompilerComponents(icons: { name: string; varName: string }[]): st
     ...definitions,
     `} as const;`,
     ``,
-    `export const components = defineComponents('@videojs/icons/components', DEFINITIONS);`,
+    `export const components = defineComponents('@videojs/icons/vjsc', DEFINITIONS);`,
     ``,
     `export function resolveTargets(resolve: (component: keyof typeof DEFINITIONS, name: string) => RegistryTarget) {`,
     `  return {`,
@@ -338,14 +338,14 @@ async function buildIconSet(setName: string): Promise<void> {
   }));
 
   if (setName === 'default') {
-    ensureDir(COMPILER_DIR);
-    writeFileSync(join(COMPILER_DIR, 'components.generated.ts'), buildCompilerComponents(icons));
+    ensureDir(VJSC_DIR);
+    writeFileSync(join(VJSC_DIR, 'components.generated.ts'), buildVjscComponents(icons));
   }
 
-  const componentsDir = join(DIST_DIR, 'components', setName);
-  ensureDir(componentsDir);
-  writeFileSync(join(componentsDir, 'index.js'), buildCanonicalComponents(icons));
-  writeFileSync(join(componentsDir, 'index.d.ts'), buildCanonicalComponentTypes(icons));
+  const vjscDir = join(DIST_DIR, 'vjsc', setName);
+  ensureDir(vjscDir);
+  writeFileSync(join(vjscDir, 'index.js'), buildCanonicalComponents(icons));
+  writeFileSync(join(vjscDir, 'index.d.ts'), buildCanonicalComponentTypes(icons));
 
   // Build react and html per-icon modules
   for (const framework of FRAMEWORKS) {

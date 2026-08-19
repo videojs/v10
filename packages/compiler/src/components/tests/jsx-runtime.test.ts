@@ -1,6 +1,14 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { defineComponent } from '../definition';
-import { createComponent, jsx, type Props, VIDEOJS_NODE } from '../jsx-runtime';
+import {
+  type ClassNameValue,
+  createComponent,
+  jsx,
+  type Props,
+  VIDEOJS_NODE,
+  type VjscElement,
+  type VjscNode,
+} from '../jsx-runtime';
 
 describe('createComponent', () => {
   it('creates nested component parts with dotted part paths', () => {
@@ -28,6 +36,9 @@ describe('createComponent', () => {
     const PlayButton = createComponent(defineComponent({ name: 'PlayButton' }));
     const node = jsx(PlayButton, { className: 'play' }, 'control');
 
+    expectTypeOf(node).toEqualTypeOf<VjscElement>();
+    expectTypeOf<VjscNode>().toEqualTypeOf<unknown>();
+
     expect(node).toEqual({
       [VIDEOJS_NODE]: true,
       type: PlayButton,
@@ -36,15 +47,11 @@ describe('createComponent', () => {
     });
   });
 
-  it('keeps class lists local to compiler component attributes', () => {
-    type ClassNamePart = string | false | null | undefined;
-
+  it('accepts class lists in canonical component props and attributes', () => {
     const PlayButton = createComponent(defineComponent({ name: 'PlayButton' }));
 
-    expectTypeOf<Props['className']>().toEqualTypeOf<string | undefined>();
-    expectTypeOf<Parameters<typeof PlayButton>[0]['className']>().toEqualTypeOf<
-      ClassNamePart | readonly ClassNamePart[]
-    >();
+    expectTypeOf<Props['className']>().toEqualTypeOf<ClassNameValue>();
+    expectTypeOf<Parameters<typeof PlayButton>[0]['className']>().toEqualTypeOf<ClassNameValue>();
   });
 
   it('fails when a canonical component is evaluated outside the compiler runtime', () => {

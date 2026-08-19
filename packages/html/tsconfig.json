@@ -10,7 +10,7 @@
     "declarationDir": "types",
     "useDefineForClassFields": false
   },
-  "include": ["src", "compiler"],
+  "include": ["src", "vjsc"],
   "exclude": ["src/cdn/locales"],
   "references": [{ "path": "../icons" }]
 }

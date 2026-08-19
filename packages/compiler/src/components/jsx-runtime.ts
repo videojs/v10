@@ -13,15 +13,24 @@ export const VIDEOJS_NODE = Symbol.for('@videojs/node');
 
 export type ComponentType = Component<never> | typeof Fragment;
 
-export interface ComponentNode {
+/** One canonical JSX element produced by the compiler authoring runtime. */
+export interface VjscElement {
   readonly [VIDEOJS_NODE]: true;
   readonly type: ComponentType;
   readonly props: Record<string, unknown>;
   readonly key: string | number | null;
 }
 
+/** Framework-neutral content accepted by a component child or named content slot. */
+export type VjscNode = unknown;
+
+type ClassNamePart = string | false | null | undefined;
+
+/** Static class-name values accepted while authoring canonical components. */
+export type ClassNameValue = ClassNamePart | readonly ClassNameValue[];
+
 export interface BaseProps {
-  className?: string | undefined;
+  className?: ClassNameValue;
   children?: unknown;
 }
 
@@ -29,10 +38,11 @@ export type Props<CoreProps extends object = EmptyProps> = CoreProps & Pick<Base
 
 export type PropsWithChildren<CoreProps extends object = EmptyProps> = Props<CoreProps> & Pick<BaseProps, 'children'>;
 
-type ComponentClassNamePart = string | false | null | undefined;
+/** Props accepted by another canonical component. Output targets replace this with its emitted props export. */
+export type PropsOf<Component extends (props: never) => unknown> = NonNullable<Parameters<Component>[0]>;
 
 type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> & {
-  className?: ComponentClassNamePart | readonly ComponentClassNamePart[];
+  className?: ClassNameValue;
 };
 
 export interface SlotProps {
@@ -60,23 +70,23 @@ export interface TextProps extends BaseProps {
 export type GroupProps = BaseProps;
 
 export interface Component<Props extends object> {
-  (props: ComponentAttributes<Props>): ComponentNode;
+  (props: ComponentAttributes<Props>): VjscElement;
   readonly $$component: { name: string; part: string | null };
 }
 
-type InferComponentNodeProps<Node> =
+type InferComponentProps<Node> =
   Node extends ComponentDefinition<infer Props, ComponentRecord | undefined> ? Props : never;
 
-type ComponentNodeProps<Node> = [NonNullable<InferComponentNodeProps<Node>>] extends [never]
+type ResolvedComponentProps<Node> = [NonNullable<InferComponentProps<Node>>] extends [never]
   ? EmptyProps
-  : NonNullable<InferComponentNodeProps<Node>>;
+  : NonNullable<InferComponentProps<Node>>;
 
 type CompoundComponent<Parts extends ComponentRecord> = {
   [K in keyof Parts & string]: Parts[K] extends ComponentDefinition<object, infer ChildParts>
     ? ChildParts extends ComponentRecord
       ? CompoundComponent<ChildParts>
-      : Component<ComponentNodeProps<Parts[K]>>
-    : Component<ComponentNodeProps<Parts[K]>>;
+      : Component<ResolvedComponentProps<Parts[K]>>
+    : Component<ResolvedComponentProps<Parts[K]>>;
 };
 
 export type CreateComponentResult<M> =
@@ -87,7 +97,7 @@ export type CreateComponentResult<M> =
     : Component<InferProps<M>>;
 
 function createRuntimeComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
-  const component = (_props: ComponentAttributes<Props>): ComponentNode => {
+  const component = (_props: ComponentAttributes<Props>): VjscElement => {
     throw new Error(`vjsc/components: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
   };
 
@@ -130,7 +140,7 @@ function createComponentParts(name: string, parts: ComponentRecord, prefix = '')
   return compound;
 }
 
-function createNode(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
+function createNode(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): VjscElement {
   return {
     [VIDEOJS_NODE]: true,
     type,
@@ -139,18 +149,18 @@ function createNode(type: ComponentType, props: Record<string, unknown>, key?: s
   };
 }
 
-export function jsx(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
+export function jsx(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): VjscElement {
   return createNode(type, props, key);
 }
 
-export function jsxs(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
+export function jsxs(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): VjscElement {
   return createNode(type, props, key);
 }
 
 export const Fragment: unique symbol = Symbol.for('@videojs/fragment') as never;
 
 export namespace JSX {
-  export type Element = ComponentNode;
+  export type Element = VjscElement;
 
   export interface ElementChildrenAttribute {
     children: Record<string, never>;

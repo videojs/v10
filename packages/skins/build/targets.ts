@@ -3,7 +3,7 @@ import { basename, posix, resolve } from 'node:path';
 import { format } from 'oxfmt';
 import { type CatalogOutputFile, type CatalogStyleTransform, emitCatalog } from 'vjsc/catalog';
 
-import { catalogSourcePath, type SkinCatalog, type SkinCatalogSkin, skinRootComponentName } from './catalog';
+import { catalogSourcePath, type SkinCatalog, type SkinCatalogSkin } from './catalog';
 import { htmlOutput } from './output/html';
 import { type ReactImportResolver, reactOutput } from './output/react';
 
@@ -80,7 +80,6 @@ async function emitReactTarget(
     items: [skin.name],
     output: reactOutput({
       iconSet,
-      rootComponentName: skinRootComponentName(skin),
       ...(target.resolveImport ? { resolveImport: target.resolveImport } : {}),
     }),
     styles,

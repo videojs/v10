@@ -1,6 +1,6 @@
 import type { MenuProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
-import { type ComponentNode, type PropsWithChildren, Text } from 'vjsc/components';
+import * as $ from '@videojs/core/vjsc';
+import { type PropsWithChildren, Text, type VjscNode } from 'vjsc/components';
 import styles from '../../styles/components/menu.styles';
 import { MenuChevron } from './menu-chevron';
 
@@ -13,21 +13,21 @@ export function Submenu({
   ...props
 }: PropsWithChildren<
   MenuProps & {
-    icon: ComponentNode;
-    label: ComponentNode;
-    selectedLabel: ComponentNode;
+    icon: VjscNode;
+    label: VjscNode;
+    selectedLabel: VjscNode;
   }
 >) {
   return (
     <$.Menu.Root {...props}>
-      <$.Menu.Trigger className={[styles.item, styles.option]}>
+      <$.Menu.SubmenuTrigger className={[styles.item, styles.option]}>
         {icon}
         {label}
         <Text className={styles.hint}>
           {selectedLabel}
           <MenuChevron />
         </Text>
-      </$.Menu.Trigger>
+      </$.Menu.SubmenuTrigger>
       <$.Menu.Content className={[styles.submenu, className]}>
         <$.Menu.Item className={[styles.item, styles.back]}>
           <MenuChevron flipped />

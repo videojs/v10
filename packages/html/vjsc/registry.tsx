@@ -1,34 +1,46 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/components/registry */
 
-import { components } from '@videojs/core/components';
-import { type ComponentRegistry, defineRegistry, defineTarget, Fragment, type TextProps } from 'vjsc/components';
+import type { MenuProps, MenuTriggerProps } from '@videojs/core';
+import { components } from '@videojs/core/vjsc';
+import {
+  type ComponentRegistry,
+  defineElement,
+  defineRegistry,
+  defineRegistryPart,
+  defineTarget,
+  Fragment,
+  Host,
+  type TextProps,
+} from 'vjsc/components';
 import * as Element from './components.generated';
 
-const Div = defineTarget({ tagName: 'div' });
-const Slot = defineTarget({ tagName: 'slot' });
-const Span = defineTarget({ tagName: 'span' });
-const Sup = defineTarget({ tagName: 'sup' });
-const HtmlTemplate = defineTarget({ tagName: 'template' });
+const Button = defineElement('button');
+const Div = defineElement('div');
+const Slot = defineElement('slot');
+const Span = defineElement('span');
+const Sup = defineElement('sup');
+const HtmlTemplate = defineElement('template');
 
 const Label = defineTarget<Record<string, unknown>>({
-  render: ({ props }) => <Span {...props} data-part="label" />,
+  render: ({ props }) => <Span data-part="label" {...props} />,
 });
 const Tier = defineTarget<Record<string, unknown>>({
-  render: ({ props }) => <Sup {...props} data-part="tier" />,
+  render: ({ props }) => <Sup data-part="tier" {...props} />,
 });
 const Badge = defineTarget<Record<string, unknown>>({
-  render: ({ props }) => <Span {...props} data-part="badge" />,
+  render: ({ props }) => <Span data-part="badge" {...props} />,
 });
+
 const Text = defineTarget<TextProps>({
   render: ({ props }) =>
     props.token ? <Element.Text {...props}>{props.children}</Element.Text> : <Span {...props}>{props.children}</Span>,
 });
 
 /** Canonical core components rendered through registered Video.js custom elements. */
-export const registry: ComponentRegistry = defineRegistry(
+export const registry: ComponentRegistry = defineRegistry({
   components,
-  {
+  targets: {
     ...Element.targets,
 
     Container: Element.MediaContainer,
@@ -49,10 +61,26 @@ export const registry: ComponentRegistry = defineRegistry(
     },
     Menu: {
       parts: {
-        Root: Fragment,
-        Trigger: Fragment,
-        Content: Element.Menu,
-        Group: Div,
+        Root: {
+          host: Element.Menu,
+          render: defineRegistryPart<MenuProps>(({ props }) => <Host {...props}>{props.children}</Host>),
+        },
+        Trigger: defineRegistryPart<MenuTriggerProps>(({ props, id }) => (
+          <Button commandfor={id('content')} {...props}>
+            {props.children}
+          </Button>
+        )),
+        SubmenuTrigger: defineRegistryPart<MenuTriggerProps>(({ props, id }) => (
+          <Element.MenuItem commandfor={id('content')} data-has-submenu="" {...props}>
+            {props.children}
+          </Element.MenuItem>
+        )),
+        Content: defineRegistryPart(({ props, id }) => (
+          <Element.Menu id={id('content')} {...props}>
+            {props.children}
+          </Element.Menu>
+        )),
+        Group: Fragment,
         GroupLabel: Element.MenuGroupLabel,
         Item: Element.MenuItem,
         ItemIndicator: Element.MenuItemIndicator,
@@ -63,7 +91,7 @@ export const registry: ComponentRegistry = defineRegistry(
       },
     },
     Popover: {
-      host: {
+      parts: {
         Popup: Element.Popover,
       },
       render: ({ root, parts }) => (
@@ -113,16 +141,16 @@ export const registry: ComponentRegistry = defineRegistry(
       Value: Element.SliderValue,
     },
     Tooltip: {
-      host: {
+      parts: {
         Provider: Element.TooltipGroup,
         Popup: Element.Tooltip,
         Label: Element.TooltipLabel,
         Shortcut: Element.TooltipShortcut,
       },
-      render: ({ root, parts }) => (
+      render: ({ root, parts, id }) => (
         <>
-          {parts.Trigger.one().props.children}
-          <Element.Tooltip {...root.props} {...parts.Popup.one().props}>
+          <Host id={id('trigger')}>{parts.Trigger.one().props.children}</Host>
+          <Element.Tooltip trigger={id('trigger')} {...root.props} {...parts.Popup.one().props}>
             {parts.Popup.one().props.children}
           </Element.Tooltip>
         </>
@@ -142,41 +170,38 @@ export const registry: ComponentRegistry = defineRegistry(
       Value: Element.SliderValue,
     },
   },
-  {
-    types: () => false,
-    primitives: {
-      Group: Div,
-      Slot,
-      Text,
-      Template: {
-        chapter: {
-          render: ({ props }) => (
-            <HtmlTemplate>
-              <Div {...props}>{props.children}</Div>
-            </HtmlTemplate>
-          ),
-        },
-        'quality-option': {
-          render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
-          parts: {
-            label: Label,
-            tier: Tier,
-            badge: Badge,
-          },
-        },
-        'audio-track-option': {
-          render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
-          parts: { label: Label },
-        },
-        'playback-rate-option': {
-          render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
-          parts: { label: Label },
-        },
-        'captions-option': {
-          render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
-          parts: { label: Label },
+  primitives: {
+    Group: Div,
+    Slot,
+    Text,
+    Template: {
+      chapter: {
+        render: ({ props }) => (
+          <HtmlTemplate>
+            <Div {...props}>{props.children}</Div>
+          </HtmlTemplate>
+        ),
+      },
+      'quality-option': {
+        render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
+        parts: {
+          label: Label,
+          tier: Tier,
+          badge: Badge,
         },
       },
+      'audio-track-option': {
+        render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
+        parts: { label: Label },
+      },
+      'playback-rate-option': {
+        render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
+        parts: { label: Label },
+      },
+      'captions-option': {
+        render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
+        parts: { label: Label },
+      },
     },
-  }
-);
+  },
+});

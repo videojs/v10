@@ -1,6 +1,6 @@
 import type { PiPButtonProps as CoreProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
-import { PipEnterIcon, PipExitIcon } from '@videojs/icons/components';
+import * as $ from '@videojs/core/vjsc';
+import { PipEnterIcon, PipExitIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';

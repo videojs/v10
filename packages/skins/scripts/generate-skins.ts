@@ -2,8 +2,9 @@ import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { camelCase, kebabCase } from '@videojs/utils/string';
 import type { ImportRef } from 'vjsc/ast';
+import { emitRegistry } from 'vjsc/shadcn';
 import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
-import { emitShadcnRegistry } from '../build/output/shadcn';
+import { reactOutput } from '../build/output/react';
 import { emitFrameworkSkin, type FrameworkTarget } from '../build/targets';
 import type { SkinName } from '../canonical/catalog';
 import { skinRegistry } from '../canonical/registry/config';
@@ -89,19 +90,33 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     }
   }
 
-  const shadcn = await emitShadcnRegistry(catalog, skinRegistry);
+  const shadcn = await emitRegistry(catalog, skinRegistry, {
+    output: reactOutput({
+      resolveImport(reference) {
+        if (reference.source === '@videojs/utils/style' || reference.source === '@videojs/skins/registry') {
+          return { ...reference, source: `${skinRegistry.paths.import}/utils` };
+        }
 
-  const files = await collectGeneratedFiles(shadcn.files, skinRegistry.outputDir);
+        return reference;
+      },
+    }),
+    styles: {
+      mode: 'tailwind',
+      variant: 'default',
+    },
+  });
+
+  const files = await collectGeneratedFiles(shadcn.files, skinRegistry.paths.output);
 
   files.set(
-    posix.join(skinRegistry.outputDir, 'registry.json'),
+    posix.join(skinRegistry.paths.output, 'registry.json'),
     await formatGeneratedFile('registry.json', JSON.stringify(shadcn.registry))
   );
 
   await syncGeneratedFiles({
     rootDir: skinsPackageRoot,
     files,
-    managedRoots: [posix.join(skinRegistry.outputDir, skinRegistry.sourceRoot)],
+    managedRoots: [posix.join(skinRegistry.paths.output, skinRegistry.paths.source)],
     check: options.check,
   });
 }

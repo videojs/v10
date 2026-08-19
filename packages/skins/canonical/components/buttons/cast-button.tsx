@@ -1,6 +1,6 @@
 import type { CastButtonProps as CoreProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
-import { CastEnterIcon, CastExitIcon } from '@videojs/icons/components';
+import * as $ from '@videojs/core/vjsc';
+import { CastEnterIcon, CastExitIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';

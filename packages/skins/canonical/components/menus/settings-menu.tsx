@@ -1,7 +1,7 @@
 import type { MenuProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
 import { settingsText } from '@videojs/core/i18n/text/menu';
-import { GearIcon } from '@videojs/icons/components';
+import * as $ from '@videojs/core/vjsc';
+import { GearIcon } from '@videojs/icons/vjsc';
 import { type PropsWithChildren, Text } from 'vjsc/components';
 import buttonStyles from '../../styles/components/button.styles';
 import styles from '../../styles/components/menu.styles';

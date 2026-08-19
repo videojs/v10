@@ -1,6 +1,6 @@
 import type { TimeSliderProps as CoreProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
-import { SpinnerIcon } from '@videojs/icons/components';
+import * as $ from '@videojs/core/vjsc';
+import { SpinnerIcon } from '@videojs/icons/vjsc';
 import { Group as PreviewValue, type Props, Template } from 'vjsc/components';
 import popupStyles from '../../styles/components/popup.styles';
 import styles from '../../styles/components/slider.styles';

@@ -69,14 +69,14 @@ describe('htmlOutput', () => {
     expect(result.code).toContain('{children}');
     expect(posterResult.code).toContain('<media-poster');
     expect(posterResult.code).toContain('[&[data-visible][src]:not([data-loaded])]:opacity-0');
-    expect(posterResult.code).toContain('<slot name="poster"/>');
+    expect(posterResult.code).toContain('<slot name="poster">{children}</slot>');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinContainer');
     expect(`${result.code}\n${posterResult.code}`).not.toContain('SkinPoster');
   });
 
   it('leaves adjacent popup identity wiring to the HTML runtime', async () => {
     const result = await transform(
-      `import * as $ from '@videojs/core/components';
+      `import * as $ from '@videojs/core/vjsc';
 
 export function VolumePopover() {
   return <$.Popover.Root><$.Popover.Trigger><$.MuteButton /></$.Popover.Trigger><$.Popover.Popup /></$.Popover.Root>;

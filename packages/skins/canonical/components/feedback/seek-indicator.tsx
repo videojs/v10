@@ -1,6 +1,6 @@
 import type { SeekIndicatorProps as CoreProps } from '@videojs/core';
-import * as $ from '@videojs/core/components';
-import { ChevronIcon } from '@videojs/icons/components';
+import * as $ from '@videojs/core/vjsc';
+import { ChevronIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/seek-indicator.styles';
 
