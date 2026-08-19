@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { type CompilerConfig, transform } from 'vjsc';
-import { resolveOutputConfig } from 'vjsc/catalog';
+import { resolveCatalogCompilerConfig } from 'vjsc/catalog';
 import { loadStyleManifest, type StylePluginOptions, plugin as stylesPlugin } from 'vjsc/styles';
 import { htmlOutput } from '../html';
 
@@ -20,7 +20,7 @@ type HtmlTestOptions = NonNullable<Parameters<typeof htmlOutput>[0]> & {
 
 function htmlConfig({ styles, ...options }: HtmlTestOptions): CompilerConfig {
   const output = htmlOutput(options);
-  const config = resolveOutputConfig(output);
+  const config = resolveCatalogCompilerConfig(output);
 
   return {
     ...config,

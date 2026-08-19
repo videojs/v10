@@ -1,5 +1,5 @@
-import { Fragment } from '../jsx-runtime';
-import { REGISTRY_NODE, type RegistryElementType, type RegistryNode } from './index';
+import { Fragment } from '../components/jsx-runtime';
+import { REGISTRY_NODE, type RegistryElementType, type RegistryNode } from './definition';
 
 export { Fragment };
 

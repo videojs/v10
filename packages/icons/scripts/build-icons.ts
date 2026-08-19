@@ -112,7 +112,8 @@ function buildVjscSchema(icons: { name: string; varName: string }[]): string {
   });
 
   return [
-    `import { defineComponent, defineSchema, type RegistryEntry } from 'vjsc/components';`,
+    `import { defineComponent, defineSchema } from 'vjsc/components';`,
+    `import type { RegistryEntry } from 'vjsc/registry';`,
     ``,
     `const DEFINITIONS = {`,
     ...definitions,

@@ -38,17 +38,17 @@
       "types": "./dist/components/jsx-dev-runtime.d.ts",
       "default": "./dist/components/jsx-dev-runtime.js"
     },
-    "./components/registry": {
-      "types": "./dist/components/registry.d.ts",
-      "default": "./dist/components/registry.js"
+    "./registry": {
+      "types": "./dist/registry/index.d.ts",
+      "default": "./dist/registry/index.js"
     },
-    "./components/registry/jsx-runtime": {
-      "types": "./dist/components/registry/jsx-runtime.d.ts",
-      "default": "./dist/components/registry/jsx-runtime.js"
+    "./registry/jsx-runtime": {
+      "types": "./dist/registry/jsx-runtime.d.ts",
+      "default": "./dist/registry/jsx-runtime.js"
     },
-    "./components/registry/jsx-dev-runtime": {
-      "types": "./dist/components/registry/jsx-dev-runtime.d.ts",
-      "default": "./dist/components/registry/jsx-dev-runtime.js"
+    "./registry/jsx-dev-runtime": {
+      "types": "./dist/registry/jsx-dev-runtime.d.ts",
+      "default": "./dist/registry/jsx-dev-runtime.js"
     },
     "./generate": {
       "types": "./dist/generate/index.d.ts",

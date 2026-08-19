@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { html, jsx, transform } from 'vjsc';
-import { plugin } from 'vjsc/components';
+import { plugin } from 'vjsc/registry';
 import { registry as htmlRegistry } from '../html';
 import { registry as reactRegistry } from '../react';
 

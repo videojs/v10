@@ -1,6 +1,6 @@
 import type ts from 'typescript';
-import type { GenerateEntriesConfig } from './components/generate/entries';
 import type { GenerateSchemaConfig } from './components/generate/schema';
+import type { GenerateEntriesConfig } from './registry/generate/entries';
 import type { ImportRule } from './transforms/imports';
 
 export type CompilerTransform = ts.TransformerFactory<ts.SourceFile>;

@@ -5,10 +5,10 @@ import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { defineCatalog } from '../../catalog/define';
-import { defineOutput } from '../../catalog/emit';
+import { defineCatalogOutput } from '../../catalog/emit';
 import { loadCatalog } from '../../catalog/resolve';
 import { defineConfig, jsx } from '../../config';
-import { defineRegistry, emitRegistry } from '../index';
+import { defineShadcnRegistry, emitShadcnRegistry } from '../index';
 
 const roots: string[] = [];
 
@@ -16,10 +16,10 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('defineRegistry', () => {
+describe('defineShadcnRegistry', () => {
   it('preserves publication metadata and catalog item names', () => {
     const definition = defineCatalog({ items: [{ name: 'root', source: './root.ts' }] });
-    const registry = defineRegistry(definition, {
+    const registry = defineShadcnRegistry(definition, {
       name: 'example',
       homepage: 'https://example.com',
       namespace: '@example',
@@ -46,7 +46,7 @@ describe('defineRegistry', () => {
   });
 });
 
-describe('emitRegistry', () => {
+describe('emitShadcnRegistry', () => {
   it('emits a catalog and partitions published, private, and shared dependencies', async () => {
     const root = setup({
       'root.ts': `import { Public } from './public'; import { Private } from './private'; import { cn } from '@/example/utils'; export const Root = [Public, Private, cn];`,
@@ -63,7 +63,7 @@ describe('emitRegistry', () => {
       ],
     });
     const loaded = await loadCatalog(definition, { rootDir: root });
-    const registry = defineRegistry(definition, {
+    const registry = defineShadcnRegistry(definition, {
       name: 'example',
       homepage: 'https://example.com',
       namespace: '@example',
@@ -102,8 +102,8 @@ describe('emitRegistry', () => {
         ],
       },
     });
-    const output = await emitRegistry(loaded, registry, {
-      output: defineOutput({ compiler: defineConfig({ external: ['private-package'], target: jsx() }) }),
+    const output = await emitShadcnRegistry(loaded, registry, {
+      output: defineCatalogOutput({ compiler: defineConfig({ external: ['private-package'], target: jsx() }) }),
     });
 
     expect(output.files.map((file) => file.path)).toEqual([

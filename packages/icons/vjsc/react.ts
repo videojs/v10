@@ -1,4 +1,4 @@
-import { defineRegistry } from 'vjsc/components';
+import { defineRegistry } from 'vjsc/registry';
 import * as $ from './schema.generated';
 
 export interface ReactIconRegistryOptions {

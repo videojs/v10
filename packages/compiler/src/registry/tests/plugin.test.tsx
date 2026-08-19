@@ -1,11 +1,10 @@
-/** @jsxImportSource ../registry */
+/** @jsxImportSource .. */
 
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
+import { defineComponent, defineSchema } from '../../components/definition';
 import { html, jsx as target } from '../../config';
 import { transform } from '../../transform';
-import { defineComponent, defineSchema } from '../definition';
-import { plugin } from '../plugin';
 import {
   defineElement,
   defineRegistry,
@@ -14,7 +13,8 @@ import {
   type RegistryEntry,
   type RegistryEntryReference,
   type RegistryPropTransformContext,
-} from '../registry';
+} from '..';
+import { plugin } from '../plugin';
 
 const components = defineSchema('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),

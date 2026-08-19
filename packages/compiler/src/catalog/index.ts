@@ -16,11 +16,10 @@ export {
   type CatalogSourceContext,
   type CatalogStyleContext,
   type CatalogStyleTransform,
-  defineOutput,
+  defineCatalogOutput,
   type EmittedCatalogItem,
   emitCatalog,
-  resolveOutputConfig,
-  type StaticCatalogOutputAdapter,
+  resolveCatalogCompilerConfig,
 } from './emit';
 export {
   type Catalog,

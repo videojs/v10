@@ -1,7 +1,7 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type GeneratedFile, syncGeneratedFiles } from 'vjsc/generate';
-import { emitRegistry } from 'vjsc/shadcn';
+import { emitShadcnRegistry } from 'vjsc/shadcn';
 import { resolvePackageImport as resolveHtmlPackageImport } from '../../html/vjsc';
 import { resolvePackageImport as resolveReactPackageImport } from '../../react/vjsc';
 
@@ -50,7 +50,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     ]);
   }
 
-  const shadcn = await emitRegistry(catalog, skinRegistry, {
+  const shadcn = await emitShadcnRegistry(catalog, skinRegistry, {
     output: reactOutput({
       resolveImport(reference) {
         if (reference.source === '@videojs/utils/style' || reference.source === '@videojs/skins/registry') {

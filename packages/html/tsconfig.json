@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "vjsc/components/registry",
+    "jsxImportSource": "vjsc/registry",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@/*": ["./src/*"]

@@ -1,6 +1,12 @@
 import type ts from 'typescript';
-import type { ComponentDefinition, ComponentRecord, ComponentSchema, EmptyProps, InferProps } from '../definition';
-import type { Fragment, GroupProps, SlotProps, TemplateProps, TextProps } from '../jsx-runtime';
+import type {
+  ComponentDefinition,
+  ComponentRecord,
+  ComponentSchema,
+  EmptyProps,
+  InferProps,
+} from '../components/definition';
+import type { Fragment, GroupProps, SlotProps, TemplateProps, TextProps } from '../components/jsx-runtime';
 import { createRegistryElement, REGISTRY_ENTRY } from './element';
 
 export { isRegistryElement } from './element';
@@ -95,7 +101,7 @@ export interface HostComponent extends RegistryHost {
 
 export const Host = Object.assign(
   (_props: Record<string, unknown>): RegistryNode => {
-    throw new Error('vjsc/components: <Host> can only be evaluated by the registry JSX runtime.');
+    throw new Error('vjsc/registry: <Host> can only be evaluated by the registry JSX runtime.');
   },
   { [REGISTRY_HOST]: true as const }
 );

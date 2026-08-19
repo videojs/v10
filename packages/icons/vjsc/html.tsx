@@ -1,7 +1,7 @@
 /** @jsxRuntime automatic */
-/** @jsxImportSource vjsc/components/registry */
+/** @jsxImportSource vjsc/registry */
 
-import { defineElement, defineRegistry } from 'vjsc/components';
+import { defineElement, defineRegistry } from 'vjsc/registry';
 import * as $ from './schema.generated';
 
 export interface HtmlIconRegistryOptions {

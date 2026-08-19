@@ -1,14 +1,14 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { emitRegistry } from 'vjsc/shadcn';
+import { emitShadcnRegistry } from 'vjsc/shadcn';
 import { skinRegistry } from '../../../canonical/registry/config';
 import { loadSkinCatalog } from '../../catalog';
 import { reactOutput } from '../react';
 
-describe('emitRegistry', () => {
+describe('emitShadcnRegistry', () => {
   it('emits individual React/Tailwind components and a shadcn source manifest', async () => {
     const catalog = await loadSkinCatalog();
-    const output = await emitRegistry(catalog, skinRegistry, {
+    const output = await emitShadcnRegistry(catalog, skinRegistry, {
       output: reactOutput({
         resolveImport(reference) {
           if (reference.source === '@videojs/utils/style' || reference.source === '@videojs/skins/registry') {

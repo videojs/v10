@@ -2,8 +2,8 @@ import { posix } from 'node:path';
 
 import { jsx } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
-import { defineOutput, emitCatalog, type StaticCatalogOutputAdapter } from 'vjsc/catalog';
-import { extendRegistry } from 'vjsc/components';
+import { defineCatalogOutput, emitCatalog } from 'vjsc/catalog';
+import { extendRegistry } from 'vjsc/registry';
 import { registry as iconRegistry } from '../../../icons/vjsc/react';
 import { registry as reactRegistry } from '../../../react/vjsc';
 import { catalogSourcePath, getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
@@ -22,15 +22,15 @@ interface EmitReactSkinOptions extends ReactOutputOptions {
 }
 
 /** Create the React module output adapter for a Skin catalog. */
-export function reactOutput(options: ReactOutputOptions = {}): StaticCatalogOutputAdapter {
+export function reactOutput(options: ReactOutputOptions = {}) {
   const resolveImport = (reference: ImportRef): ImportRef | false =>
     options.resolveImport ? options.resolveImport(reference) : reference;
 
   const iconSet = options.iconSet ?? 'default';
   const iconSource = iconSet === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${iconSet}`;
 
-  return defineOutput({
-    registry: extendRegistry(reactRegistry, iconRegistry({ family: iconSet })),
+  return defineCatalogOutput({
+    componentRegistry: extendRegistry(reactRegistry, iconRegistry({ family: iconSet })),
     compiler: {
       target: jsx({
         imports: {

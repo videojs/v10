@@ -1,9 +1,9 @@
 import { dirname } from 'node:path';
 
 import { isPlainObject } from '@videojs/utils/predicate';
-import { parseGenerateEntriesConfig } from './components/generate/entries';
 import { parseGenerateSchemaConfig } from './components/generate/schema';
 import type { CompilerBuildConfig, CompilerConfig } from './config';
+import { parseGenerateEntriesConfig } from './registry/generate/entries';
 import { findConfigFile, loadConfigExport } from './utils/config-file';
 
 export interface LoadedCompilerConfig {

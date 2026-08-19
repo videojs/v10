@@ -3,7 +3,7 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "vjsc/components/registry",
+    "jsxImportSource": "vjsc/registry",
     "lib": ["ES2022"],
     "types": ["node"],
     "declarationDir": "types"

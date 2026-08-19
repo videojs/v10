@@ -1,8 +1,8 @@
 import { parseArgs } from 'node:util';
-import { generateEntries } from './components/generate/entries';
 import { generateSchema } from './components/generate/schema';
 import type { CompilerConfig } from './config';
 import { loadBuildConfig } from './load-config';
+import { generateEntries } from './registry/generate/entries';
 
 const HELP = `vjsc
 

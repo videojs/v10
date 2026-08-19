@@ -1,15 +1,9 @@
 /** @jsxRuntime automatic */
-/** @jsxImportSource vjsc/components/registry */
+/** @jsxImportSource vjsc/registry */
 
 import { schema } from '@videojs/core/vjsc';
-import {
-  type ComponentRegistry,
-  defineElement,
-  defineRegistry,
-  Fragment,
-  Host,
-  type RegistryEntry,
-} from 'vjsc/components';
+import { Fragment } from 'vjsc/components';
+import { type ComponentRegistry, defineElement, defineRegistry, Host, type RegistryEntry } from 'vjsc/registry';
 import * as $ from './entries.generated';
 
 const Button = defineElement('button');

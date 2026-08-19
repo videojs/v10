@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { defineComponent, defineSchema } from '../../definition';
+import { defineComponent, defineSchema } from '../../components/definition';
 import { defineRegistry, extendRegistry, type RegistryEntryReference } from '../index';
 
 const schema = defineSchema('@fixture/components', {

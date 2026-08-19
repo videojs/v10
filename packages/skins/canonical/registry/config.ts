@@ -1,4 +1,4 @@
-import { defineRegistry } from 'vjsc/shadcn';
+import { defineShadcnRegistry } from 'vjsc/shadcn';
 
 import { skinCatalog } from '../catalog';
 
@@ -12,7 +12,7 @@ const paths = {
 const styles = skinCatalog.resources.styles;
 
 /** React/Tailwind publication policy for the canonical Skin inventory. */
-export const skinRegistry = defineRegistry(skinCatalog, {
+export const skinRegistry = defineShadcnRegistry(skinCatalog, {
   name: 'videojs',
   homepage: 'https://videojs.org',
   namespace: '@videojs',

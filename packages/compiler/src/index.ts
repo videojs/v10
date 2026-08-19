@@ -7,17 +7,6 @@ export {
   type OutputFile,
 } from './build';
 export type {
-  GenerateEntriesConfig,
-  GenerateSchemaEntriesConfig,
-  GenerateSourceEntriesConfig,
-  ResolvedEntry,
-  ResolvedSourceModule,
-  SchemaEntryContext,
-  SchemaEntryResolver,
-  SourceEntryContext,
-  SourceEntryResolver,
-} from './components/generate/entries';
-export type {
   ComponentFileSet,
   ComponentSource,
   GenerateSchemaConfig,
@@ -79,6 +68,17 @@ export {
   loadConfig,
   loadConfigFile,
 } from './load-config';
+export type {
+  GenerateEntriesConfig,
+  GenerateSchemaEntriesConfig,
+  GenerateSourceEntriesConfig,
+  ResolvedEntry,
+  ResolvedSourceModule,
+  SchemaEntryContext,
+  SchemaEntryResolver,
+  SourceEntryContext,
+  SourceEntryResolver,
+} from './registry/generate/entries';
 export {
   type ConstStatementOptions,
   type FunctionPropSpec,

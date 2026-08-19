@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { html, transform } from 'vjsc';
-import { plugin } from 'vjsc/components';
+import { plugin } from 'vjsc/registry';
 import { registry } from '../registry';
 
 function compile(source: string, filename = '/project/src/view.tsx') {

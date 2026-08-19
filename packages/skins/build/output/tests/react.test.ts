@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { type CompilerConfig, transform } from 'vjsc';
-import { resolveOutputConfig } from 'vjsc/catalog';
+import { resolveCatalogCompilerConfig } from 'vjsc/catalog';
 import { loadStyleManifest, type StylePluginOptions, plugin as stylesPlugin } from 'vjsc/styles';
 import { reactOutput } from '../react';
 
@@ -20,7 +20,7 @@ type ReactTestOptions = NonNullable<Parameters<typeof reactOutput>[0]> & {
 
 function reactConfig({ styles, ...options }: ReactTestOptions): CompilerConfig {
   const output = reactOutput(options);
-  const config = resolveOutputConfig(output);
+  const config = resolveCatalogCompilerConfig(output);
 
   return {
     ...config,

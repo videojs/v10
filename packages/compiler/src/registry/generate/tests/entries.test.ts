@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { defineComponent, defineSchema } from '../../definition';
+import { defineComponent, defineSchema } from '../../../components/definition';
 import { generateEntries, parseGenerateEntriesConfig } from '../entries';
 
 describe('generateEntries', () => {

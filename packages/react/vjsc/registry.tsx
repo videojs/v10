@@ -1,9 +1,10 @@
 /** @jsxRuntime automatic */
-/** @jsxImportSource vjsc/components/registry */
+/** @jsxImportSource vjsc/registry */
 
 import { schema } from '@videojs/core/vjsc';
 import ts from 'typescript';
 import { createArrowFunction } from 'vjsc/ast';
+import type { TemplatePartProps, TemplateProps } from 'vjsc/components';
 import {
   type ComponentRegistry,
   defineElement,
@@ -12,9 +13,7 @@ import {
   type RegistryEntry,
   type RegistryPropTransformContext,
   type RegistryRenderContext,
-  type TemplatePartProps,
-  type TemplateProps,
-} from 'vjsc/components';
+} from 'vjsc/registry';
 import * as $ from './entries.generated';
 
 const Div = defineElement('div', {

@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { posix, resolve } from 'node:path';
 
 import { uniqBy } from '@videojs/utils/array';
-import { type RegistryItem, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
+import { type RegistryItem, registrySchema, type Registry as ShadcnRegistrySchema } from 'shadcn/schema';
 
 import type { CatalogDefinition } from '../catalog/define';
 import {
@@ -18,26 +18,26 @@ type RegistryItemType = RegistryItem['type'];
 type PublishedRegistryItemType = Extract<RegistryItemType, 'registry:block' | 'registry:component'>;
 type SharedRegistryItemType = Extract<RegistryItemType, 'registry:lib' | 'registry:style'>;
 
-export type Registry = ShadcnRegistry;
-export type RegistryFile = NonNullable<RegistryItem['files']>[number];
-export type RegistryFileType = RegistryFile['type'];
+export type ShadcnRegistry = ShadcnRegistrySchema;
+export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
+export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
-export interface RegistrySharedFile {
+export interface ShadcnRegistrySharedFile {
   /** Catalog-relative input file. */
   readonly source: string;
   /** Path relative to the registry source root. Defaults to `source`. */
   readonly path?: string | undefined;
   /** Installation path relative to the registry install root. Defaults to `path`. */
   readonly target?: string | undefined;
-  readonly type?: RegistryFileType | undefined;
+  readonly type?: ShadcnRegistryFileType | undefined;
 }
 
-export interface RegistrySharedItem {
+export interface ShadcnRegistrySharedItem {
   readonly name: string;
   readonly type: SharedRegistryItemType;
   readonly title: string;
   readonly description: string;
-  readonly files: readonly RegistrySharedFile[];
+  readonly files: readonly ShadcnRegistrySharedFile[];
   readonly dependencies?: readonly string[] | undefined;
   readonly requiredBy?:
     | 'all'
@@ -48,14 +48,14 @@ export interface RegistrySharedItem {
   readonly meta?: RegistryItem['meta'];
 }
 
-export interface RegistryItemDescription {
+export interface ShadcnRegistryItemDescription {
   readonly type: PublishedRegistryItemType;
   readonly title: string;
   readonly description: string;
   readonly meta?: RegistryItem['meta'];
 }
 
-export interface RegistryDefinition<Definition extends CatalogDefinition = CatalogDefinition> {
+export interface ShadcnRegistryDefinition<Definition extends CatalogDefinition = CatalogDefinition> {
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
@@ -68,39 +68,39 @@ export interface RegistryDefinition<Definition extends CatalogDefinition = Catal
   readonly meta?: RegistryItem['meta'];
   readonly items: {
     readonly published: readonly CatalogItem<Definition>['name'][];
-    readonly shared?: readonly RegistrySharedItem[] | undefined;
-    describe(item: CatalogItem<Definition>): RegistryItemDescription;
+    readonly shared?: readonly ShadcnRegistrySharedItem[] | undefined;
+    describe(item: CatalogItem<Definition>): ShadcnRegistryItemDescription;
   };
 }
 
-/** Preserve registry publication policy while checking it against an authored catalog. */
-export function defineRegistry<
+/** Preserve shadcn publication policy while checking it against an authored catalog. */
+export function defineShadcnRegistry<
   const Definition extends CatalogDefinition,
-  const Config extends RegistryDefinition<Definition>,
+  const Config extends ShadcnRegistryDefinition<Definition>,
 >(_catalog: Definition, config: Config): Config {
   return config;
 }
 
-export interface RegistryEmitOptions<Definition extends CatalogDefinition = CatalogDefinition> {
+export interface EmitShadcnRegistryOptions<Definition extends CatalogDefinition = CatalogDefinition> {
   readonly output: CatalogOutputAdapter<Definition>;
   readonly styles?: CatalogStyleTransform | undefined;
 }
 
-export interface RegistryOutputFile extends CatalogOutputFile {
+export interface ShadcnRegistryOutputFile extends CatalogOutputFile {
   readonly kind: 'source' | 'style';
 }
 
-export interface RegistryOutput {
-  readonly files: readonly RegistryOutputFile[];
-  readonly registry: Registry;
+export interface ShadcnRegistryOutput {
+  readonly files: readonly ShadcnRegistryOutputFile[];
+  readonly registry: ShadcnRegistry;
 }
 
 /** Emit editable catalog modules, shared files, and a validated shadcn registry. */
-export async function emitRegistry<const Definition extends CatalogDefinition>(
+export async function emitShadcnRegistry<const Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
-  definition: RegistryDefinition<Definition>,
-  options: RegistryEmitOptions<Definition>
-): Promise<RegistryOutput> {
+  definition: ShadcnRegistryDefinition<Definition>,
+  options: EmitShadcnRegistryOptions<Definition>
+): Promise<ShadcnRegistryOutput> {
   validateDefinition(catalog, definition);
 
   const resolved = resolveCatalog(catalog, definition.items.published);
@@ -125,7 +125,7 @@ export async function emitRegistry<const Definition extends CatalogDefinition>(
   const shared = await loadSharedFiles(catalog, definition);
   const files = uniqueOutputFiles([
     ...shared.flatMap((item) => item.files.map((file) => file.output)),
-    ...(Object.values(emitted) as Array<EmittedCatalogItem<RegistryOutputFile> | undefined>).flatMap(
+    ...(Object.values(emitted) as Array<EmittedCatalogItem<ShadcnRegistryOutputFile> | undefined>).flatMap(
       (item) => item?.files ?? []
     ),
     ...output.files.style.map((file) => ({ ...file, kind: 'style' as const })),
@@ -138,18 +138,18 @@ export async function emitRegistry<const Definition extends CatalogDefinition>(
 }
 
 interface LoadedSharedFile {
-  readonly definition: RegistrySharedFile;
-  readonly output: RegistryOutputFile;
+  readonly definition: ShadcnRegistrySharedFile;
+  readonly output: ShadcnRegistryOutputFile;
 }
 
 interface LoadedSharedItem {
-  readonly definition: RegistrySharedItem;
+  readonly definition: ShadcnRegistrySharedItem;
   readonly files: readonly LoadedSharedFile[];
 }
 
 function mapEmittedItems<Definition extends CatalogDefinition>(
   items: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem>>>
-): Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<RegistryOutputFile>>>> {
+): Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<ShadcnRegistryOutputFile>>>> {
   const entries = Object.entries(items) as Array<[string, EmittedCatalogItem | undefined]>;
 
   return Object.fromEntries(
@@ -162,12 +162,12 @@ function mapEmittedItems<Definition extends CatalogDefinition>(
           }
         : undefined,
     ])
-  ) as Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<RegistryOutputFile>>>>;
+  ) as Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<ShadcnRegistryOutputFile>>>>;
 }
 
 async function loadSharedFiles<Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
-  definition: RegistryDefinition<Definition>
+  definition: ShadcnRegistryDefinition<Definition>
 ): Promise<LoadedSharedItem[]> {
   return Promise.all(
     (definition.items.shared ?? []).map(async (item) => ({
@@ -192,22 +192,22 @@ async function loadSharedFiles<Definition extends CatalogDefinition>(
 
 function createManifest<Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
-  definition: RegistryDefinition<Definition>,
-  emitted: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<RegistryOutputFile>>>>,
+  definition: ShadcnRegistryDefinition<Definition>,
+  emitted: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<ShadcnRegistryOutputFile>>>>,
   shared: readonly LoadedSharedItem[]
-): Registry {
+): ShadcnRegistry {
   const itemsByName = new Map(catalog.items.map((item) => [item.name, item]));
   const published = new Set<string>(definition.items.published);
   const registryItems = definition.items.published.map((name): RegistryItem => {
     const item = itemsByName.get(name);
 
-    if (!item) throw new Error(`Registry references missing catalog item \`${name}\`.`);
+    if (!item) throw new Error(`shadcn registry references missing catalog item \`${name}\`.`);
 
     const partition = partitionItemDependencies(item, itemsByName, published);
     const sources = partition.includedItems.map((included) => {
       const source = emitted[included.name as CatalogItem<Definition>['name']];
 
-      if (!source) throw new Error(`Registry output is missing catalog item \`${included.name}\`.`);
+      if (!source) throw new Error(`shadcn registry output is missing catalog item \`${included.name}\`.`);
       return source;
     });
     const imports = new Set(sources.flatMap((source) => source.imports));
@@ -261,7 +261,7 @@ function createManifest<Definition extends CatalogDefinition>(
   return registry;
 }
 
-function requiredBy(requirement: RegistrySharedItem['requiredBy'], imports: ReadonlySet<string>): boolean {
+function requiredBy(requirement: ShadcnRegistrySharedItem['requiredBy'], imports: ReadonlySet<string>): boolean {
   if (requirement === 'all') return true;
   if (!requirement) return false;
 
@@ -269,11 +269,11 @@ function requiredBy(requirement: RegistrySharedItem['requiredBy'], imports: Read
 }
 
 function registryFile<Definition extends CatalogDefinition>(
-  file: RegistryOutputFile,
+  file: ShadcnRegistryOutputFile,
   owner: string,
   ownerType: PublishedRegistryItemType,
-  definition: RegistryDefinition<Definition>
-): RegistryFile {
+  definition: ShadcnRegistryDefinition<Definition>
+): ShadcnRegistryFile {
   return {
     path: posix.join(definition.paths.output, file.path),
     target: installTarget(file.path, owner, ownerType, definition),
@@ -283,9 +283,9 @@ function registryFile<Definition extends CatalogDefinition>(
 
 function sharedRegistryFile<Definition extends CatalogDefinition>(
   file: LoadedSharedFile,
-  item: RegistrySharedItem,
-  definition: RegistryDefinition<Definition>
-): RegistryFile {
+  item: ShadcnRegistrySharedItem,
+  definition: ShadcnRegistryDefinition<Definition>
+): ShadcnRegistryFile {
   const relative = stripSourceRoot(file.output.path, definition.paths.source);
 
   return {
@@ -300,7 +300,7 @@ function sharedRegistryFile<Definition extends CatalogDefinition>(
 function sourceOutputPath<Definition extends CatalogDefinition>(
   item: CatalogItem<Definition>,
   sourceFile: string,
-  definition: RegistryDefinition<Definition>
+  definition: ShadcnRegistryDefinition<Definition>
 ): string {
   const itemDir = itemOutputDir(item, definition);
   const entrySource = normalizePath(item.source);
@@ -313,7 +313,7 @@ function sourceOutputPath<Definition extends CatalogDefinition>(
 
 function itemOutputDir<Definition extends CatalogDefinition>(
   item: CatalogItem<Definition>,
-  definition: RegistryDefinition<Definition>
+  definition: ShadcnRegistryDefinition<Definition>
 ): string {
   const type = definition.items.describe(item).type;
 
@@ -330,7 +330,7 @@ function privateSourceOutput(itemDir: string, entrySource: string, source: strin
 
 function dependencyImport<Definition extends CatalogDefinition>(
   dependency: CatalogItem<Definition>,
-  definition: RegistryDefinition<Definition>
+  definition: ShadcnRegistryDefinition<Definition>
 ): string {
   const output = sourceOutputPath(dependency, dependency.source, definition);
   const relative = stripSourceRoot(output, definition.paths.source).replace(/^components\//, '');
@@ -343,7 +343,7 @@ function installTarget<Definition extends CatalogDefinition>(
   path: string,
   owner: string,
   ownerType: PublishedRegistryItemType,
-  definition: RegistryDefinition<Definition>
+  definition: ShadcnRegistryDefinition<Definition>
 ): string {
   const relative = stripSourceRoot(path, definition.paths.source);
 
@@ -359,7 +359,7 @@ function installTarget<Definition extends CatalogDefinition>(
 function stripSourceRoot(path: string, sourceRoot: string): string {
   const prefix = `${normalizePath(sourceRoot)}/`;
   if (!path.startsWith(prefix)) {
-    throw new Error(`Registry source file \`${path}\` must be inside \`${sourceRoot}\`.`);
+    throw new Error(`shadcn registry source file \`${path}\` must be inside \`${sourceRoot}\`.`);
   }
 
   return path.slice(prefix.length);
@@ -371,15 +371,17 @@ function normalizePath(path: string): string {
 
 function validateDefinition<Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
-  definition: RegistryDefinition<Definition>
+  definition: ShadcnRegistryDefinition<Definition>
 ): void {
   const catalogNames = new Set(catalog.items.map((item) => item.name));
   const sharedNames = new Set<string>();
 
   for (const shared of definition.items.shared ?? []) {
-    if (sharedNames.has(shared.name)) throw new Error(`Registry shared item \`${shared.name}\` is declared twice.`);
+    if (sharedNames.has(shared.name)) {
+      throw new Error(`shadcn registry shared item \`${shared.name}\` is declared twice.`);
+    }
     if (catalogNames.has(shared.name)) {
-      throw new Error(`Registry shared item \`${shared.name}\` conflicts with a catalog item.`);
+      throw new Error(`shadcn registry shared item \`${shared.name}\` conflicts with a catalog item.`);
     }
 
     sharedNames.add(shared.name);
@@ -428,19 +430,19 @@ function uniqueDependencies(dependencies: readonly string[]): { dependencies?: s
   return unique.length > 0 ? { dependencies: unique } : {};
 }
 
-function uniqueRegistryFiles(files: readonly RegistryFile[]): RegistryFile[] {
+function uniqueRegistryFiles(files: readonly ShadcnRegistryFile[]): ShadcnRegistryFile[] {
   return uniqBy([...files], (file) => `${file.path}\0${file.target ?? ''}`).sort((left, right) =>
     left.path.localeCompare(right.path)
   );
 }
 
-function uniqueOutputFiles(files: readonly RegistryOutputFile[]): RegistryOutputFile[] {
-  const unique = new Map<string, RegistryOutputFile>();
+function uniqueOutputFiles(files: readonly ShadcnRegistryOutputFile[]): ShadcnRegistryOutputFile[] {
+  const unique = new Map<string, ShadcnRegistryOutputFile>();
 
   for (const file of files) {
     const previous = unique.get(file.path);
     if (previous && previous.content !== file.content) {
-      throw new Error(`Registry output collision: \`${file.path}\`.`);
+      throw new Error(`shadcn registry output collision: \`${file.path}\`.`);
     }
 
     unique.set(file.path, file);

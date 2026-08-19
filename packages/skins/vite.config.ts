@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { resolveOutputConfig } from 'vjsc/catalog';
+import { resolveCatalogCompilerConfig } from 'vjsc/catalog';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
 
@@ -13,7 +13,7 @@ const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
 
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 
-const output = resolveOutputConfig(reactOutput());
+const output = resolveCatalogCompilerConfig(reactOutput());
 
 export default defineConfig({
   root: resolve(packageDir, 'dev'),

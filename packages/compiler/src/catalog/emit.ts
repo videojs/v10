@@ -2,8 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { dirname, posix, relative, resolve } from 'node:path';
 
 import { build } from '../build';
-import { type ComponentRegistry, plugin as componentsPlugin } from '../components';
 import type { CompilerConfig } from '../config';
+import { type ComponentRegistry, plugin as registryPlugin } from '../registry';
 import { compileStyles } from '../styles/compile';
 import { loadDesignSystem } from '../styles/design-system';
 import { collectReferencedStyleRules, type StyleManifest } from '../styles/manifest';
@@ -76,12 +76,13 @@ export type CatalogStyleTransform =
 export interface CatalogOutputAdapter<Definition extends CatalogDefinition = CatalogDefinition> {
   /** Preserve editable modules by default, or bundle each requested catalog entry. */
   readonly mode?: 'modules' | 'bundle' | undefined;
-  readonly registry?: ComponentRegistry | undefined;
+  /** Framework mappings used to lower canonical components. */
+  readonly componentRegistry?: ComponentRegistry | undefined;
   readonly compiler?: CompilerConfig | ((catalogItem: CatalogItem<Definition>) => CompilerConfig) | undefined;
   readonly configDir?: string | ((catalogItem: CatalogItem<Definition>) => string | undefined) | undefined;
 }
 
-export interface StaticCatalogOutputAdapter<Definition extends CatalogDefinition = CatalogDefinition>
+interface StaticCatalogOutputAdapter<Definition extends CatalogDefinition = CatalogDefinition>
   extends CatalogOutputAdapter<Definition> {
   readonly compiler: CompilerConfig;
 }
@@ -102,22 +103,27 @@ export interface CatalogEmitOptions<Definition extends CatalogDefinition = Catal
   };
 }
 
-export function defineOutput<const Adapter extends StaticCatalogOutputAdapter>(adapter: Adapter): Adapter;
-export function defineOutput<const Definition extends CatalogDefinition>(
+/** Define a reusable catalog output adapter while preserving its inferred configuration. */
+export function defineCatalogOutput<const Adapter extends StaticCatalogOutputAdapter>(adapter: Adapter): Adapter;
+export function defineCatalogOutput<const Definition extends CatalogDefinition>(
   adapter: CatalogOutputAdapter<Definition>
 ): CatalogOutputAdapter<Definition>;
-export function defineOutput(adapter: CatalogOutputAdapter<any>): CatalogOutputAdapter<any> {
+export function defineCatalogOutput(adapter: CatalogOutputAdapter<any>): CatalogOutputAdapter<any> {
   return adapter;
 }
 
-export function resolveOutputConfig<Definition extends CatalogDefinition>(
+/** Resolve the compiler configuration contributed by a catalog output adapter. */
+export function resolveCatalogCompilerConfig<Definition extends CatalogDefinition>(
   output: CatalogOutputAdapter<Definition>,
   catalogItem?: CatalogItem<Definition>
 ): CompilerConfig {
   const compiler = output.compiler;
   const config =
     typeof compiler === 'function' ? (catalogItem ? compiler(catalogItem) : missingOutputItem()) : (compiler ?? {});
-  const plugins = [...(output.registry ? [componentsPlugin(output.registry)] : []), ...(config.plugins ?? [])];
+  const plugins = [
+    ...(output.componentRegistry ? [registryPlugin(output.componentRegistry)] : []),
+    ...(config.plugins ?? []),
+  ];
 
   return {
     ...config,
@@ -145,7 +151,7 @@ export async function emitCatalog<const Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   options: CatalogEmitOptions<Definition>
 ): Promise<CatalogOutput<Definition>> {
-  assertRegistryCompatibility(catalog, options.output.registry);
+  assertRegistryCompatibility(catalog, options.output.componentRegistry);
 
   const requestedNames = options.items ?? catalog.items.map((catalogItem) => catalogItem.name);
   const requested = requestedCatalogItems(catalog, requestedNames);
@@ -366,7 +372,7 @@ function compilerConfig<Definition extends CatalogDefinition>(
   catalogItem: CatalogItem<Definition>,
   manifest: StyleManifest | undefined
 ): CompilerConfig {
-  const config = resolveOutputConfig(output, catalogItem);
+  const config = resolveCatalogCompilerConfig(output, catalogItem);
 
   if (!manifest || !styles) return config;
 

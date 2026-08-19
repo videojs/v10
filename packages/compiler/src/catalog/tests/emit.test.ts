@@ -2,8 +2,9 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { defineComponent, defineRegistry, defineSchema } from '../../components';
+import { defineComponent, defineSchema } from '../../components';
 import { defineConfig, jsx } from '../../config';
+import { defineRegistry } from '../../registry';
 import { defineCatalog } from '../define';
 import { emitCatalog } from '../emit';
 import { loadCatalog } from '../resolve';
@@ -38,7 +39,7 @@ describe('emitCatalog', () => {
     );
 
     const output = await emitCatalog(loaded, {
-      output: { registry },
+      output: { componentRegistry: registry },
       files: { source: ({ sourceFile }) => sourceFile },
     });
 

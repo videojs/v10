@@ -1,4 +1,4 @@
-import type { RegistryElement, RegistryEntry, RegistryNode } from './index';
+import type { RegistryElement, RegistryEntry, RegistryNode } from './definition';
 
 export const REGISTRY_ENTRY = Symbol.for('vjsc/registry-entry');
 
@@ -7,7 +7,7 @@ export function createRegistryElement<
   Entry extends RegistryEntry<Props> = RegistryEntry<Props>,
 >(entry: Entry): RegistryElement<Props> & Entry {
   const element = (_props: Props & { children?: unknown }): RegistryNode => {
-    throw new Error('vjsc/components: registry elements can only be evaluated by the registry JSX runtime.');
+    throw new Error('vjsc/registry: registry elements can only be evaluated by the registry JSX runtime.');
   };
 
   const registryElement: RegistryElement<Props> = Object.assign(element, { [REGISTRY_ENTRY]: entry });
