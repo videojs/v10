@@ -24,6 +24,20 @@ export const UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE =
   "Can't play this source: it requires an unsupported playback feature.";
 
 /**
+ * Logged for **any** fatal condition, by a composition whose failures don't all
+ * reduce to a missing feature.
+ *
+ * The background variant is the case: it treats a per-rendition cause as fatal on
+ * its own, so what reaches its surface can be an unsupported container, DRM it
+ * can't decrypt, or a source carrying no video at all. Naming one feature would be
+ * wrong for the last of those, so all three are named broadly. Deferring the *why*
+ * to the conditions instead would promise prose they don't carry — an `SvtaError`
+ * is a code and its context, and nothing on this path sets `message`.
+ */
+export const UNPLAYABLE_SOURCE_MESSAGE =
+  "Can't play this source — unsupported container, encryption, or no usable video track.";
+
+/**
  * LL-HLS delivery, played as standard live. The parser ignores partial segments
  * and the loader fetches whole ones, so latency lands wherever `HOLD-BACK` puts
  * it — the stream plays, just not at the latency it was published for.

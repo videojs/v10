@@ -2,7 +2,8 @@ import '@app/styles.css';
 import '@videojs/react/background/skin.css';
 import { BackgroundVideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
-import { HLS_BACKGROUND_VIDEO_SRC } from '@app/shared/sources';
+import { useSource } from '@app/shared/react/use-source';
+import { SOURCES, withMuxMaxResolution } from '@app/shared/sources';
 import { BackgroundVideoSkin } from '@videojs/react/background';
 import { MuxBackgroundVideo } from '@videojs/react/media/mux-background-video';
 import { createRoot } from 'react-dom/client';
@@ -14,11 +15,13 @@ import { createRoot } from 'react-dom/client';
 // manifest rather than present and unpicked.
 
 function App() {
+  const source = useSource();
+
   return (
     <SandboxI18nProvider>
       <BackgroundVideoPlayer>
         <BackgroundVideoSkin>
-          <MuxBackgroundVideo src={`${HLS_BACKGROUND_VIDEO_SRC}?max_resolution=720p`} />
+          <MuxBackgroundVideo src={withMuxMaxResolution(SOURCES[source].url ?? '', '720p')} />
         </BackgroundVideoSkin>
       </BackgroundVideoPlayer>
     </SandboxI18nProvider>

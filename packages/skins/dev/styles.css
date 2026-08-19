@@ -1,0 +1,27 @@
+@layer videojs.base, videojs.theme, videojs.components;
+
+@import "../canonical/styles/base.css";
+@import "../canonical/styles/themes/default.css";
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #111;
+}
+
+#root {
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.preview-player {
+  width: min(60rem, calc(100vw - 2rem));
+  aspect-ratio: 16 / 9;
+}

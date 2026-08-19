@@ -1,8 +1,6 @@
-import type { ComponentNode } from '@videojs/jsx';
-import styles from '../../styles/components/overlay.tailwind';
+import { Group, type Props } from 'vjsc/components';
+import styles from '../../styles/components/overlay.styles';
 
-declare const OverlayPrimitive: (props: { className?: unknown }) => ComponentNode;
-
-export function Overlay() {
-  return <OverlayPrimitive className={styles.overlay} />;
+export function Overlay({ className, ...props }: Props = {}) {
+  return <Group className={[styles.root, className]} {...props} />;
 }

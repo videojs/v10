@@ -8,14 +8,18 @@ import {
   updateJsxAttributes,
 } from '../utils/jsx';
 
-interface SetJsxAttributeOptions {
+export interface SetJsxAttributeOptions {
   overwrite?: boolean | undefined;
 }
 
-interface ReplaceJsxElementTagOptions {
+export interface ReplaceJsxElementTagOptions {
   attributes?: ts.JsxAttributes | undefined;
   children?: readonly ts.JsxChild[] | undefined;
   preserveTypeArguments?: boolean | undefined;
+}
+
+export interface ReplaceJsxElementChildrenOptions {
+  selfClosingWhenEmpty?: boolean | undefined;
 }
 
 /** Add or replace one JSX attribute while preserving the surrounding element. */
@@ -34,6 +38,37 @@ export function setJsxAttribute(
     ? attributes.properties.map((property) => (property === existing ? attribute : property))
     : [...attributes.properties, attribute];
   return updateJsxAttributes(element, factory.updateJsxAttributes(attributes, properties), factory);
+}
+
+/** Remove one named JSX attribute while preserving the surrounding element. */
+export function removeJsxAttribute(element: JsxElementLike, name: string, factory: ts.NodeFactory): JsxElementLike {
+  const attributes = jsxAttributes(element);
+  const properties = attributes.properties.filter(
+    (property) => !(ts.isJsxAttribute(property) && ts.isIdentifier(property.name) && property.name.text === name)
+  );
+  return properties.length === attributes.properties.length
+    ? element
+    : updateJsxAttributes(element, factory.updateJsxAttributes(attributes, properties), factory);
+}
+
+/** Replace an element's direct children, optionally collapsing an empty element. */
+export function replaceJsxElementChildren(
+  element: JsxElementLike,
+  children: readonly ts.JsxChild[],
+  factory: ts.NodeFactory,
+  options: ReplaceJsxElementChildrenOptions = {}
+): JsxElementLike {
+  const tag = ts.isJsxElement(element) ? element.openingElement.tagName : element.tagName;
+  const typeArguments = typeArgumentsOf(element);
+  const attributes = jsxAttributes(element);
+  if (children.length === 0 && options.selfClosingWhenEmpty) {
+    return factory.createJsxSelfClosingElement(tag, typeArguments, attributes);
+  }
+  return factory.createJsxElement(
+    factory.createJsxOpeningElement(tag, typeArguments, attributes),
+    children,
+    factory.createJsxClosingElement(tag)
+  );
 }
 
 /** Lift one meaningful child into a JSX prop and make the element self-closing. */

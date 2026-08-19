@@ -1,4 +1,4 @@
-import type { SliderState } from '../../core/ui/slider/slider-core';
+import type { SliderPreviewOverflow, SliderState } from '../../core/ui/slider/slider-core';
 import { SliderCSSVars } from '../../core/ui/slider/slider-css-vars';
 import type { TimeSliderState } from '../../core/ui/time-slider/time-slider-core';
 
@@ -20,7 +20,7 @@ export function getTimeSliderCSSVars(state: TimeSliderState): Record<string, str
 // Slider Preview
 // ---------------------------------------------------------------------------
 
-export type SliderPreviewOverflow = 'clamp' | 'visible';
+export type { SliderPreviewOverflow } from '../../core/ui/slider/slider-core';
 
 /** Compute structural positioning styles for a slider preview element. */
 export function getSliderPreviewStyle(width: number, overflow: SliderPreviewOverflow) {

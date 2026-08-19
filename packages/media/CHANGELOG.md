@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-beta.28](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.27...@videojs/media@10.0.0-beta.28) (2026-08-19)
+
+
+### Features
+
+* **media:** add maxAutoResolution cap to hls.js sources ([#2061](https://github.com/videojs/v10/issues/2061)) ([414513f](https://github.com/videojs/v10/commit/414513f03db856e860a882921927a12e7d57c470))
+* **media:** cap hls.js renditions to the player size ([#2243](https://github.com/videojs/v10/issues/2243)) ([e5dd81a](https://github.com/videojs/v10/commit/e5dd81ad6c255a0203a731a03985e44c91ae1bc3))
+
+
+### Bug Fixes
+
+* **packages:** make the TikTok embed answer the player's controls ([#2218](https://github.com/videojs/v10/issues/2218)) ([0882e1a](https://github.com/videojs/v10/commit/0882e1a232da5438a312ac09ba522d7eb489573f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.28
+
 ## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.26...@videojs/media@10.0.0-beta.27) (2026-08-17)
 
 

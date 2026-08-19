@@ -1,5 +1,5 @@
 import type { Media } from '@videojs/media/dom';
-import { HlsBackgroundVideoMedia } from '@videojs/spf/hls-background-video';
+import { HlsBackgroundVideoMedia, type HlsVideoMediaError } from '@videojs/spf/hls-background-video';
 import { type CustomElement, namedNodeMapToObject } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
@@ -32,6 +32,14 @@ const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElement) as unknown as Const
  * Takes no structured `source` — `src` is an HLS URL, as the package it replaces
  * required. Mux playback-ID identity, poster, and storyboard belong to
  * `<mux-video>`; none of them mean anything without controls to hang them on.
+ *
+ * Nothing about an unplayable source reaches the inner `<video>` on its own, so
+ * `error` on it stays null and the element sits at `readyState 0`. The engine
+ * reports each condition and logs it, the Media promotes the fatal one, and this
+ * element re-fires it as its own `error` / `'error'` — the one place a consumer
+ * holding the element can see a source that never appears.
+ *
+ * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  *
  * `<mux-background-video>` is this element under the name the package it replaces
  * used. Same class, so the tag is a naming choice and nothing more.
@@ -80,6 +88,11 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
     // nothing here needs to repeat it.
     const video = this.video;
     if (video) this.#media.attach(video);
+
+    // Re-fired rather than bridged on demand the way `CustomMediaElement` does
+    // it: one listener for the one event this element has, on a Media it owns
+    // for its whole life, is less than the machinery to defer it would cost.
+    this.#media.addEventListener('error', () => this.dispatchEvent(new Event('error')));
   }
 
   /** Register the Media (not the inner `<video>`) with the provider. */
@@ -107,6 +120,16 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
   get video(): HTMLVideoElement | null {
     const video = this.shadowRoot?.querySelector('video');
     return video instanceof HTMLVideoElement ? video : null;
+  }
+
+  /**
+   * What made the current source unplayable, or `null`. An SVTA code rather than
+   * a `MediaError` one — 99001 where this player has no pipeline for what the
+   * source needs, with the specifics logged. Reset by a new source, and not on
+   * the inner `<video>`, which never learns of it.
+   */
+  get error(): HlsVideoMediaError | null {
+    return this.#media.error;
   }
 
   /** HLS manifest URL. Assigning a new one restarts playback from scratch. */

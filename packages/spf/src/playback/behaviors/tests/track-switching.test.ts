@@ -17,9 +17,6 @@ import type {
 import { applyContainerMimeType } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import {
-  applyConstraints,
-  applyRules,
-  type SelectionRule,
   type SwitchVideoTrackConfig,
   setupTrackSwitching,
   switchAudioTrack,
@@ -691,93 +688,6 @@ describe('switchAudioTrack — userAudioTrackSelection filter', () => {
     expect(state.selectedAudioTrackId.get()).toBe('audio-en');
 
     reactor.destroy();
-  });
-});
-
-// ============================================================================
-// applyRules — the rule-chain composer (pure; no signals)
-// ============================================================================
-
-describe('applyRules', () => {
-  const track = (id: string) => ({ id });
-  const all = [track('a'), track('b'), track('c')];
-
-  const noDeps = { state: {}, context: {}, config: {} };
-
-  it('applies rules in order; the pick is the first survivor', () => {
-    const dropA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
-    const reverse: SelectionRule<{ id: string }> = (tracks) => [...tracks].reverse();
-    const result = applyRules([dropA, reverse], all, noDeps);
-    expect(result.map((t) => t.id)).toEqual(['c', 'b']);
-  });
-
-  it('skips a rule that returns nothing (fall-through), keeping the prior set', () => {
-    const matchNone: SelectionRule<{ id: string }> = () => [];
-    const result = applyRules([matchNone], all, noDeps);
-    expect(result.map((t) => t.id)).toEqual(['a', 'b', 'c']);
-  });
-
-  it('stops at one survivor and does not run later rules (early-bail)', () => {
-    const toA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id === 'a');
-    let laterCalled = false;
-    const later: SelectionRule<{ id: string }> = (tracks) => {
-      laterCalled = true;
-      return tracks;
-    };
-    const result = applyRules([toA, later], all, noDeps);
-    expect(result.map((t) => t.id)).toEqual(['a']);
-    expect(laterCalled).toBe(false);
-  });
-
-  it('passes the candidate list and deps (state, context, config) through to each rule', () => {
-    const deps = { state: { marker: 1 }, context: { other: 2 }, config: { tuning: 3 } };
-    let received: unknown[] = [];
-    const rule: SelectionRule<{ id: string }, typeof deps.state, typeof deps.context, typeof deps.config> = (
-      tracks,
-      ruleDeps
-    ) => {
-      received = [tracks, ruleDeps];
-      return tracks;
-    };
-    applyRules([rule], all, deps);
-    expect(received).toEqual([all, deps]);
-  });
-});
-
-// ============================================================================
-// applyConstraints — the hard-constraints pre-pass (pure; no signals)
-// ============================================================================
-
-describe('applyConstraints', () => {
-  const track = (id: string) => ({ id });
-  const all = [track('a'), track('b'), track('c')];
-  const noDeps = { state: {}, context: {}, config: {} };
-
-  const noA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
-  const noC: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'c');
-
-  it('removes what each constraint excludes (pooled)', () => {
-    expect(applyConstraints([noA, noC], all, noDeps).map((t) => t.id)).toEqual(['b']);
-  });
-
-  it('is order-independent', () => {
-    expect(applyConstraints([noA, noC], all, noDeps)).toEqual(applyConstraints([noC, noA], all, noDeps));
-  });
-
-  it('preserves an empty result — no fall-through, unlike applyRules', () => {
-    const none: SelectionRule<{ id: string }> = () => [];
-    expect(applyConstraints([none], all, noDeps)).toEqual([]);
-  });
-
-  it('runs every constraint — no early-bail at a single survivor', () => {
-    const toA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id === 'a');
-    let laterCalled = false;
-    const later: SelectionRule<{ id: string }> = (tracks) => {
-      laterCalled = true;
-      return tracks;
-    };
-    applyConstraints([toA, later], all, noDeps);
-    expect(laterCalled).toBe(true);
   });
 });
 

@@ -1,4 +1,4 @@
-import { globSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { globSync, readdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
@@ -29,23 +29,16 @@ const presets = [
   'audio-minimal-ui',
   'background',
 ];
-const media = [
-  'google-cast',
-  'hls-audio',
-  'hls-background-video',
-  'hls-video',
-  'hlsjs-video',
-  'mux-audio',
-  'mux-background-video',
-  'mux-data',
-  'mux-video',
-  'native-hls-video',
-  'dash-video',
-];
+
+const mediaDir = 'src/define/media';
 
 /**
- * Media entries, one bundle per name — or per flavor, for a name that is a
- * directory.
+ * Media entries, one bundle per module under `src/define/media` — or per flavor,
+ * for a module that is a directory.
+ *
+ * Discovered from the definitions so the two delivery surfaces cannot drift:
+ * whatever ships on npm as `@videojs/html/media/<name>` also ships as
+ * `cdn/media/<name>.js`, and as a file in the archive cut from this output.
  *
  * A directory ships its index as the flavor-neutral bundle and each flavor
  * beside it, so `media/mux-video/spf` reads the same as the npm subpath it
@@ -57,18 +50,20 @@ const media = [
  * where two flavors of one element can end up in a single realm — see the
  * tag-collision note in `define/media/mux-video/spf`.
  */
-const mediaEntries = media.flatMap((name) => {
-  const dir = `src/cdn/media/${name}`;
+const mediaEntries = readdirSync(mediaDir, { withFileTypes: true })
+  .flatMap((entry) => {
+    if (entry.isDirectory()) {
+      return globSync(`${mediaDir}/${entry.name}/*.ts`).map((src) => {
+        const flavor = basename(src, '.ts');
+        return { src, name: flavor === 'index' ? `media/${entry.name}` : `media/${entry.name}/${flavor}` };
+      });
+    }
 
-  if (!statSync(dir, { throwIfNoEntry: false })?.isDirectory()) {
-    return [{ src: `${dir}.ts`, name: `media/${name}` }];
-  }
-
-  return globSync(`${dir}/*.ts`).map((src) => {
-    const flavor = basename(src, '.ts');
-    return { src, name: flavor === 'index' ? `media/${name}` : `media/${name}/${flavor}` };
-  });
-});
+    return entry.name.endsWith('.ts')
+      ? [{ src: `${mediaDir}/${entry.name}`, name: `media/${basename(entry.name, '.ts')}` }]
+      : [];
+  })
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 const localeEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
   src: file,

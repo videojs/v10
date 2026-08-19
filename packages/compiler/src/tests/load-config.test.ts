@@ -29,6 +29,15 @@ describe('findConfig', () => {
   it('returns null when no default config exists', () => {
     expect(findConfig(workDir, undefined)).toBeNull();
   });
+
+  it('prefers the vjsc config name', () => {
+    const compilerPath = join(workDir, 'compiler.config.mjs');
+    const vjscPath = join(workDir, 'vjsc.config.mjs');
+    writeFileSync(compilerPath, 'export default {};\n', 'utf8');
+    writeFileSync(vjscPath, 'export default {};\n', 'utf8');
+
+    expect(findConfig(workDir, undefined)).toBe(vjscPath);
+  });
 });
 
 describe('loadConfigFile', () => {
@@ -64,6 +73,19 @@ describe('loadConfigFile', () => {
     writeFileSync(configPath, `export default { output: { dir: 'dist', file: 'dist/out.tsx' } };\n`, 'utf8');
 
     await expect(loadConfigFile(configPath)).rejects.toThrow('`output.dir` and `output.file` cannot be used together');
+  });
+
+  it('accepts disabled target imports', async () => {
+    const configPath = join(workDir, 'compiler.config.mjs');
+    writeFileSync(
+      configPath,
+      `export default { target: { name: 'jsx', imports: { '@fixture/server-only': false } } };\n`,
+      'utf8'
+    );
+
+    await expect(loadConfigFile(configPath)).resolves.toMatchObject({
+      config: { target: { imports: { '@fixture/server-only': false } } },
+    });
   });
 
   it('reloads a config file after its contents change', async () => {

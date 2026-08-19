@@ -79,9 +79,9 @@ class TestPlayerProviderElement extends MediaElement {
   }
 }
 
-class TestMetadataRadioGroupElement extends MenuRadioGroupElement {
+class TestMenuRadioGroupElement extends MenuRadioGroupElement {
   publish(disabled: boolean, availability: 'available' | 'unavailable'): void {
-    this.publishMenuMetadata(disabled, availability);
+    this.publishMenuTriggerState(disabled, availability);
   }
 }
 
@@ -289,12 +289,12 @@ describe('MenuElement', () => {
     expect(child.hidden).toBe(true);
   });
 
-  it('relays radio-group metadata to a submenu trigger', async () => {
+  it('relays radio-group state to a submenu trigger', async () => {
     const root = createElement(MenuElement);
     const trigger = createElement(MenuItemElement);
     const hint = document.createElement('span');
     const child = createElement(MenuElement);
-    const group = createElement(TestMetadataRadioGroupElement);
+    const group = createElement(TestMenuRadioGroupElement);
     const selectedItem = createElement(MenuRadioItemElement);
     const selectedLabel = document.createElement('span');
 
@@ -339,11 +339,11 @@ describe('MenuElement', () => {
     expect(child.open).toBe(false);
   });
 
-  it('preserves an explicitly disabled submenu trigger when metadata is available', async () => {
+  it('preserves an explicitly disabled submenu trigger when radio-group state is available', async () => {
     const root = createElement(MenuElement);
     const trigger = createElement(MenuItemElement);
     const child = createElement(MenuElement);
-    const group = createElement(TestMetadataRadioGroupElement);
+    const group = createElement(TestMenuRadioGroupElement);
 
     root.open = true;
     trigger.commandfor = 'child-menu';

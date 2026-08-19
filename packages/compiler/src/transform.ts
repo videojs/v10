@@ -30,6 +30,7 @@ export interface TransformResult {
   code: string;
   map: CompilerSourceMap;
   assets: readonly CompilerAsset[];
+  watchFiles: readonly string[];
   diagnostics: readonly CompilerDiagnostic[];
 }
 
@@ -38,7 +39,7 @@ export class CompilerError extends Error {
     public readonly diagnostics: readonly CompilerDiagnostic[],
     options?: { cause?: unknown }
   ) {
-    super(diagnostics[0]?.message ?? '@videojs/compiler failed', options);
+    super(diagnostics[0]?.message ?? 'vjsc failed', options);
     this.name = 'CompilerError';
   }
 }
@@ -66,13 +67,19 @@ export async function transform(source: string, options: TransformOptions = {}):
   const config = options.config ?? {};
   const target = config.target ?? jsx();
   const assets: CompilerAsset[] = [];
+  const watchFiles = new Set<string>();
   const diagnostics: CompilerDiagnostic[] = [];
   const context: CompilerContext = {
     filename,
+    sourceText: source,
     configDir: options.configDir ?? process.cwd(),
+    target,
     ...(options.outputFile ? { outputFile: options.outputFile } : {}),
     addAsset(asset) {
       assets.push(asset);
+    },
+    addWatchFile(fileName) {
+      watchFiles.add(fileName);
     },
     report(diagnostic) {
       diagnostics.push(withDiagnosticSource(diagnostic, source, filename));
@@ -90,7 +97,7 @@ export async function transform(source: string, options: TransformOptions = {}):
 
   if (target.imports) {
     importTransform = {
-      plugin: '@videojs/compiler:imports',
+      plugin: 'vjsc:imports',
       transform: transformImports({
         rules: target.imports,
         configDir: context.configDir,
@@ -116,7 +123,7 @@ export async function transform(source: string, options: TransformOptions = {}):
   }
 
   const targetTransforms = (target.transforms ?? []).map((transform) => ({
-    plugin: '@videojs/compiler:target',
+    plugin: 'vjsc:target',
     transform,
   }));
   const transformers: PipelineTransform[] = [
@@ -131,8 +138,8 @@ export async function transform(source: string, options: TransformOptions = {}):
   // Order matters — dropping a local may make the imports it referenced
   // unused. Always run when any transformer ran.
   if (transformers.length > 0) {
-    transformers.push({ plugin: '@videojs/compiler:cleanup', transform: dropUnusedLocals() });
-    transformers.push({ plugin: '@videojs/compiler:cleanup', transform: dropUnusedImports() });
+    transformers.push({ plugin: 'vjsc:cleanup', transform: dropUnusedLocals() });
+    transformers.push({ plugin: 'vjsc:cleanup', transform: dropUnusedImports() });
   }
 
   if (transformers.length === 0) {
@@ -141,6 +148,7 @@ export async function transform(source: string, options: TransformOptions = {}):
       code: source,
       map: identitySourceMap(source, filename, options.outputFile),
       assets,
+      watchFiles: [...watchFiles],
       diagnostics,
     };
   }
@@ -156,7 +164,7 @@ export async function transform(source: string, options: TransformOptions = {}):
 
     await runFinishers(finishers, filename, source);
 
-    return { code: printed.code, map: printed.map, assets, diagnostics };
+    return { code: printed.code, map: printed.map, assets, watchFiles: [...watchFiles], diagnostics };
   } catch (error) {
     if (error instanceof CompilerError) throw error;
     throw new CompilerError([fatalDiagnosticFromError(error, { filename, sourceText: source })], { cause: error });

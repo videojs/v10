@@ -145,8 +145,9 @@ test.describe('Visual — HTML Portrait Layout', () => {
       const thumbnail = document.querySelector('video-skin')!.shadowRoot!.querySelector('media-slider-thumbnail')!;
       const style = getComputedStyle(thumbnail);
       const probe = document.createElement('div');
-      probe.style.height = style.getPropertyValue('--max-height');
-      document.body.append(probe);
+      probe.style.position = 'absolute';
+      probe.style.height = style.getPropertyValue('--thumbnail-max-height');
+      thumbnail.parentElement!.append(probe);
 
       const configuredMaxHeight = parseFloat(getComputedStyle(probe).height);
       probe.remove();

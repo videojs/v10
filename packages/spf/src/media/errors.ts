@@ -56,8 +56,15 @@ export const SVTA_UNSUPPORTED_AUDIO_FORMAT = 1005;
 export const SVTA_UNSUPPORTED_DRM_SYSTEM = 4008;
 
 /**
- * SVTA 2 [Playback] 011 — no video track the environment can play. For a source
- * that *has* video renditions where every one was excluded as unplayable.
+ * SVTA 2 [Playback] 011 — no video track the environment can play.
+ *
+ * Covers both ways a composition can end up with nothing to select: renditions
+ * that existed and were all excluded as unplayable, and — where the composition
+ * composes `reportAbsentTrackType` to say it needs the type — a source carrying
+ * none to begin with. Deliberately one code for both, because they are the same
+ * answer to a viewer, and because the alternative is a code the SVTA spec doesn't
+ * define. Whether an absent type is a failure is the composition's to state,
+ * which is why it opts in rather than being read off the source.
  */
 export const SVTA_NO_SUPPORTED_VIDEO_TRACK = 2011;
 

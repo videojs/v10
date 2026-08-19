@@ -2,8 +2,9 @@
  * Generates Vite test pages from PageEntry definitions.
  *
  * Reads the media type configs and page arrays, then writes .ts/.tsx + .html
- * files to `apps/vite/src/pages/`. Special pages (ejected skins, captions) are
- * hand-written and not generated.
+ * files to `apps/vite/src/pages/`, which is gitignored — every page there comes
+ * from this script, including the special ones (ejected skins, captions,
+ * background video), which take their own templates rather than the player shell.
  *
  * Run: `pnpm --dir apps/e2e generate-pages`
  */
@@ -99,6 +100,17 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
     hasPoster: false,
     isAudio: true,
   },
+  // Rendered by the `background` category templates rather than the player ones:
+  // this element has no controls to hang on a skin. The entry exists because
+  // every page looks its media type up here.
+  'hls-background-video': {
+    element: 'hls-background-video',
+    imports: ['@videojs/html/media/hls-background-video'],
+    attrs: '',
+    hasStoryboard: false,
+    hasPoster: false,
+    isAudio: false,
+  },
 };
 
 // React component names for media elements
@@ -106,6 +118,10 @@ const REACT_MEDIA: Record<string, { component: string; importPath: string }> = {
   video: { component: 'Video', importPath: '@videojs/react/video' },
   'hlsjs-video': { component: 'HlsJsVideo', importPath: '@videojs/react/media/hlsjs-video' },
   audio: { component: 'Audio', importPath: '@videojs/react/audio' },
+  'hls-background-video': {
+    component: 'HlsBackgroundVideo',
+    importPath: '@videojs/react/media/hls-background-video',
+  },
 };
 
 // CDN import paths (override standard imports)
@@ -124,7 +140,7 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions' | 'source-html' | 'source-react';
+  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions' | 'background' | 'source-html' | 'source-react';
 }
 
 // ---------------------------------------------------------------------------
@@ -258,8 +274,78 @@ createRoot(document.getElementById('root')!).render(<App />);
 }
 
 // ---------------------------------------------------------------------------
-// Special page templates (captions, ejected skins)
+// Special page templates (captions, ejected skins, background video)
 // ---------------------------------------------------------------------------
+
+/**
+ * The SPF background-video Media, alone rather than inside a player: the
+ * composition subscribes to no store features and has no controls, so a skin
+ * would only add moving parts to what the spec is measuring.
+ *
+ * `?src=` picks the source, so one page serves every shape
+ * `spf-background-video.spec.ts` drives — playable, MPEG-TS, encrypted,
+ * audio-only — and a test can compare two of them without a page each. Assigned
+ * as a property rather than interpolated into markup, since the DRM source
+ * carries a signed-URL query string.
+ */
+function backgroundVideoPage(config: MediaTypeConfig, resource: string): string {
+  return `${config.imports.map((imp) => `import '${imp}';`).join('\n')}
+import { MEDIA } from '../resources';
+
+const src = new URLSearchParams(window.location.search).get('src') ?? MEDIA.${resource}.url;
+
+const media = document.createElement('${config.element}') as HTMLElement & { src: string };
+media.src = src;
+// Viewport units rather than percentages: the shared page shell's #root has no
+// height of its own, and a background video that lays out at zero is one an
+// engine may treat as offscreen.
+media.style.width = '100vw';
+media.style.height = '100vh';
+
+document.getElementById('root')!.append(media);
+`;
+}
+
+/**
+ * The React counterpart, and the only place `onError` can be observed: the
+ * component hands out no reference to its Media, so what a consumer sees is
+ * whatever React's own event plumbing delivers. Failures are counted onto
+ * `window` rather than rendered — the assertion is that the prop fired at all,
+ * since the condition behind it isn't reachable from here by design.
+ */
+function reactBackgroundVideoPage(media: string, resource: string): string {
+  const reactMedia = REACT_MEDIA[media];
+  if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
+
+  return `import { ${reactMedia.component} } from '${reactMedia.importPath}';
+import { createRoot } from 'react-dom/client';
+import { MEDIA } from '../resources';
+
+declare global {
+  interface Window {
+    __backgroundVideoErrors: number;
+  }
+}
+
+window.__backgroundVideoErrors = 0;
+
+const src = new URLSearchParams(window.location.search).get('src') ?? MEDIA.${resource}.url;
+
+function App() {
+  return (
+    <${reactMedia.component}
+      src={src}
+      style={{ width: '100vw', height: '100vh' }}
+      onError={() => {
+        window.__backgroundVideoErrors += 1;
+      }}
+    />
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
+`;
+}
 
 function captionsPage(resource: string): string {
   const captionVtt = 'WEBVTT\\n\\n00:00:00.000 --> 00:00:30.000\\nThis is a test caption';
@@ -445,6 +531,26 @@ const PAGES: PageDef[] = [
     media: 'hls-video',
     resource: 'hlsTs',
   },
+  // The SPF background-video composition, driven by `spf-background-video.spec.ts`
+  // alone: `?src=` swaps the source per test, so these carry a playable default
+  // and stay out of `fixtures/media.ts`'s page arrays — the parameterized
+  // playback suites all assume a player with controls.
+  {
+    name: 'HTML HLS Background Video',
+    path: 'html-hls-background-video',
+    framework: 'html',
+    media: 'hls-background-video',
+    resource: 'hlsFmp4',
+    category: 'background',
+  },
+  {
+    name: 'React HLS Background Video',
+    path: 'react-hls-background-video',
+    framework: 'react',
+    media: 'hls-background-video',
+    resource: 'hlsFmp4',
+    category: 'background',
+  },
   { name: 'HTML DASH Video', path: 'html-dash-video', framework: 'html', media: 'dash-video', resource: 'dash' },
   {
     name: 'HTML Native HLS Video',
@@ -554,7 +660,12 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
   let ts: string;
 
   // Special category pages
-  if (page.category === 'captions') {
+  if (page.category === 'background') {
+    ts =
+      page.framework === 'react'
+        ? reactBackgroundVideoPage(page.media, page.resource)
+        : backgroundVideoPage(config, page.resource);
+  } else if (page.category === 'captions') {
     ts = captionsPage(page.resource);
   } else if (page.category === 'ejected-html') {
     ts = ejectedHtmlPage(page.resource);

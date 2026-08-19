@@ -89,7 +89,7 @@ function getTemplateHTML() {
                   <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
                 </media-volume-slider>
               </media-popover>
-              <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
+              <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, button.captions, iconState.captions.button)}">
                 ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>

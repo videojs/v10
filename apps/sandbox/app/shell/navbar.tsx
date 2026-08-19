@@ -30,6 +30,7 @@ type NavbarProps = {
   onAccentColorChange: (value: string) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
+  isSpfBackgroundVideo: boolean;
   isSpfHls: boolean;
   isMuxVideo: boolean;
   isMuxAudio: boolean;
@@ -47,9 +48,9 @@ type NavbarProps = {
  * protection. Derived from the pair rather than stored on the source, since every
  * source here plays fine under some other media.
  *
- * Keyed on the *preset*, not a single is-SPF-HLS flag, because the two
- * variants answer differently and a note promising the wrong outcome is worse
- * than none — a reviewer would file the difference as a bug:
+ * Keyed on the *preset*, not a single is-SPF-HLS flag, because the variants answer
+ * differently and a note promising the wrong outcome is worse than none — a
+ * reviewer would file the difference as a bug:
  *
  * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only
  *   engine resolves only the audio rendition, so it never fetches an encrypted
@@ -62,6 +63,20 @@ type NavbarProps = {
  *   only appears for one of them.
  */
 function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
+  // The background presets are the same engine again, error surface included:
+  // `collectErrors` is composed, the one-shot selection carries capability
+  // constraints, and the adapter promotes the first fatal condition. Nothing
+  // reaches the media element even so — MPEG-TS and encryption both leave
+  // `HTMLMediaElement.error` null, measured on Chromium and WebKit — so that
+  // promoted condition is the only signal there is. Kept separate from the plain
+  // HLS branch below because this composition's fatal set is wider: it is
+  // video-only, so an absent video type is fatal here too.
+  if (preset === 'hls-background-video' || preset === 'mux-background-video') {
+    if (source.drm) return 'expects protected error';
+    if (source.subType && source.subType !== 'mp4') return 'expects unsupported-format error';
+    return undefined;
+  }
+
   if (preset !== 'hls-video' && preset !== 'hls-audio') return undefined;
   const audioOnlyPreset = preset === 'hls-audio';
 
@@ -130,6 +145,7 @@ export function Navbar({
   onAccentColorChange,
   availableSources,
   isBackgroundVideo,
+  isSpfBackgroundVideo,
   isSpfHls,
   isMuxVideo,
   isMuxAudio,
@@ -192,7 +208,7 @@ export function Navbar({
               if (sources[id].type === 'none') return true;
               // Any HLS source, including formats the SPF engine can't play — reaching
               // those failures on purpose is how the error paths get smoke-tested.
-              if (isSpfHls) return sources[id].type === 'hls';
+              if (isSpfHls || isSpfBackgroundVideo) return sources[id].type === 'hls';
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
               return true;
             })
@@ -200,7 +216,10 @@ export function Navbar({
               const note = expectedOutcomeNote(sources[id], preset);
               return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
             })}
-          disabled={isBackgroundVideo || isEmbedMedia}
+          // `<background-video>` is the one background preset with a fixed source:
+          // it hands a progressive MP4 to the browser, where the SPF-backed pair
+          // stream whatever manifest they're pointed at.
+          disabled={(isBackgroundVideo && !isSpfBackgroundVideo) || isEmbedMedia}
         />
       </div>
 
