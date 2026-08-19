@@ -4,7 +4,11 @@ import './server-shim';
 
 import { deepEqual } from '@videojs/utils/object';
 import { isObject } from '@videojs/utils/predicate';
-import shaka from 'shaka-player';
+// The es2021 bundle is the same everything-but-UI API as the package default,
+// minus the ES5 down-compilation nothing this repo targets needs. Shaka ships
+// no `exports` map, so the deep path is public surface — and `dist/*.ui*` is
+// where the UI library lives; never import those.
+import shaka from 'shaka-player/dist/shaka-player.compiled-es2021';
 
 import type { DrmSystemsConfig } from '../../core/drm';
 import { MediaError } from '../../core/media-error';

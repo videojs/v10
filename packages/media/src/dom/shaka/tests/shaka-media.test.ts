@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('shaka-player', () => {
+vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
   /** Shaka merges every `configure()` call into the current configuration. */
   function merge(target: Record<string, any>, source: Record<string, any>) {
     for (const [key, value] of Object.entries(source)) {
