@@ -6,6 +6,13 @@ on:
   push:
     branches:
       - main
+  # Recovery hatch: release-please recomputes each package's commit range from its
+  # latest release, so a missing tag makes that package replay old commits into the
+  # next release PR. Dispatching re-runs the calculation once the tag is restored,
+  # without needing an unrelated commit on main to trigger it. release-please
+  # detects the target branch from the repository default, so no ref input is
+  # needed here.
+  workflow_dispatch:
 
 # To use Turborepo Remote Caching, set the following environment variables.
 # env:
