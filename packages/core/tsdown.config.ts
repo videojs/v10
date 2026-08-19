@@ -19,7 +19,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   deps: { neverBundle: ['vjsc/components'] },
   entry: {
     index: './src/core/index.ts',
-    vjsc: './src/core/ui/components.generated.ts',
+    vjsc: './src/core/ui/schema.generated.ts',
     i18n: './src/core/i18n/index.ts',
     ...localeEntries,
     dom: './src/dom/index.ts',

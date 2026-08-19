@@ -183,7 +183,7 @@ function assertRegistryCompatibility(catalog: Catalog, registry: ComponentRegist
 
   const componentSources = new Set(catalog.components);
   const undeclared = registry.bindings
-    .map(({ components }) => components.source)
+    .map(({ schema }) => schema.source)
     .filter((source) => !componentSources.has(source));
 
   if (undeclared.length > 0) {

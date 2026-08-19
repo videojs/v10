@@ -1,5 +1,5 @@
-import { defineRegistry, defineTarget } from 'vjsc/components';
-import { components, resolveTargets } from './components.generated';
+import { defineRegistry } from 'vjsc/components';
+import * as $ from './schema.generated';
 
 export interface ReactIconRegistryOptions {
   family?: string | undefined;
@@ -11,18 +11,16 @@ export function registry(options: ReactIconRegistryOptions = {}) {
   const source = family === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${family}`;
 
   return defineRegistry({
-    components,
-    targets: resolveTargets((component) =>
-      defineTarget({
-        import: {
-          from: source,
-          name: component,
-        },
-        props: {
-          from: source,
-          name: 'IconProps',
-        },
-      })
-    ),
+    schema: $.schema,
+    entries: $.mapEntries((component) => ({
+      import: {
+        from: source,
+        name: component,
+      },
+      props: {
+        from: source,
+        name: 'IconProps',
+      },
+    })),
   });
 }

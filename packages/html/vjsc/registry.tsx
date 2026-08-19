@@ -1,19 +1,16 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/components/registry */
 
-import type { MenuProps, MenuTriggerProps } from '@videojs/core';
-import { components } from '@videojs/core/vjsc';
+import { schema } from '@videojs/core/vjsc';
 import {
   type ComponentRegistry,
   defineElement,
   defineRegistry,
-  defineRegistryPart,
-  defineTarget,
   Fragment,
   Host,
-  type TextProps,
+  type RegistryEntry,
 } from 'vjsc/components';
-import * as Element from './components.generated';
+import * as $ from './entries.generated';
 
 const Button = defineElement('button');
 const Div = defineElement('div');
@@ -22,158 +19,173 @@ const Span = defineElement('span');
 const Sup = defineElement('sup');
 const HtmlTemplate = defineElement('template');
 
-const Label = defineTarget<Record<string, unknown>>({
+const optionLabel: RegistryEntry = {
   render: ({ props }) => <Span data-part="label" {...props} />,
-});
-const Tier = defineTarget<Record<string, unknown>>({
-  render: ({ props }) => <Sup data-part="tier" {...props} />,
-});
-const Badge = defineTarget<Record<string, unknown>>({
-  render: ({ props }) => <Span data-part="badge" {...props} />,
-});
-
-const Text = defineTarget<TextProps>({
-  render: ({ props }) =>
-    props.token ? <Element.Text {...props}>{props.children}</Element.Text> : <Span {...props}>{props.children}</Span>,
-});
+};
 
 /** Canonical core components rendered through registered Video.js custom elements. */
 export const registry: ComponentRegistry = defineRegistry({
-  components,
-  targets: {
-    ...Element.targets,
+  schema,
+  entries: {
+    ...$.entries,
 
-    Container: Element.MediaContainer,
+    Container: $.MediaContainer,
     Controls: {
       parts: {
-        Root: Element.Controls,
-        Group: Element.ControlsGroup,
+        Root: $.Controls,
+        Group: $.ControlsGroup,
       },
     },
     ErrorDialog: {
       parts: {
         Root: Fragment,
-        Popup: Element.ErrorDialog,
-        Title: Element.AlertDialogTitle,
-        Description: Element.AlertDialogDescription,
-        Close: Element.AlertDialogClose,
+        Popup: $.ErrorDialog,
+        Title: $.AlertDialogTitle,
+        Description: $.AlertDialogDescription,
+        Close: $.AlertDialogClose,
       },
     },
     Menu: {
       parts: {
         Root: {
-          host: Element.Menu,
-          render: defineRegistryPart<MenuProps>(({ props }) => <Host {...props}>{props.children}</Host>),
+          host: $.Menu,
+          render: ({ props }) => <Host {...props}>{props.children}</Host>,
         },
-        Trigger: defineRegistryPart<MenuTriggerProps>(({ props, id }) => (
+        Trigger: ({ props, id }) => (
           <Button commandfor={id('content')} {...props}>
             {props.children}
           </Button>
-        )),
-        SubmenuTrigger: defineRegistryPart<MenuTriggerProps>(({ props, id }) => (
-          <Element.MenuItem commandfor={id('content')} data-has-submenu="" {...props}>
-            {props.children}
-          </Element.MenuItem>
-        )),
-        Content: defineRegistryPart(({ props, id }) => (
-          <Element.Menu id={id('content')} {...props}>
-            {props.children}
-          </Element.Menu>
-        )),
+        ),
+        SubmenuTrigger: ({ props, id, reference }) => {
+          const MenuItem = reference($.MenuItem);
+
+          return (
+            <MenuItem commandfor={id('content')} data-has-submenu="" {...props}>
+              {props.children}
+            </MenuItem>
+          );
+        },
+        Content: ({ props, id, reference }) => {
+          const Menu = reference($.Menu);
+
+          return (
+            <Menu id={id('content')} {...props}>
+              {props.children}
+            </Menu>
+          );
+        },
         Group: Fragment,
-        GroupLabel: Element.MenuGroupLabel,
-        Item: Element.MenuItem,
-        ItemIndicator: Element.MenuItemIndicator,
-        RadioGroup: Element.MenuRadioGroup,
-        RadioItem: Element.MenuRadioItem,
+        GroupLabel: $.MenuGroupLabel,
+        Item: $.MenuItem,
+        ItemIndicator: $.MenuItemIndicator,
+        RadioGroup: $.MenuRadioGroup,
+        RadioItem: $.MenuRadioItem,
         Separator: Div,
-        CheckboxItem: Element.MenuCheckboxItem,
+        CheckboxItem: $.MenuCheckboxItem,
       },
     },
     Popover: {
       parts: {
-        Popup: Element.Popover,
+        Popup: $.Popover,
       },
-      render: ({ root, parts }) => (
-        <>
-          {parts.Trigger.one().props.children}
-          <Element.Popover {...root.props} {...parts.Popup.one().props}>
-            {parts.Popup.one().props.children}
-          </Element.Popover>
-        </>
-      ),
+      render: ({ root, parts, reference }) => {
+        const Popover = reference($.Popover);
+
+        return (
+          <>
+            {parts.Trigger.one().props.children}
+            <Popover {...root.props} {...parts.Popup.one().props}>
+              {parts.Popup.one().props.children}
+            </Popover>
+          </>
+        );
+      },
     },
     SeekIndicator: {
-      Root: Element.SeekIndicator,
-      Value: Element.SeekIndicatorValue,
+      Root: $.SeekIndicator,
+      Value: $.SeekIndicatorValue,
     },
     Slider: {
-      Root: Element.Slider,
-      Track: Element.SliderTrack,
-      Fill: Element.SliderFill,
-      Buffer: Element.SliderBuffer,
-      Thumb: Element.SliderThumb,
+      Root: $.Slider,
+      Track: $.SliderTrack,
+      Fill: $.SliderFill,
+      Buffer: $.SliderBuffer,
+      Thumb: $.SliderThumb,
       Thumbnail: {
         Root: Div,
-        Image: Element.SliderThumbnail,
+        Image: $.SliderThumbnail,
       },
-      Preview: Element.SliderPreview,
-      Value: Element.SliderValue,
+      Preview: $.SliderPreview,
+      Value: $.SliderValue,
     },
     StatusIndicator: {
-      Root: Element.StatusIndicator,
-      Value: Element.StatusIndicatorValue,
+      Root: $.StatusIndicator,
+      Value: $.StatusIndicatorValue,
     },
     Time: {
-      Group: Element.TimeGroup,
-      Separator: Element.TimeSeparator,
-      Value: Element.Time,
+      Group: $.TimeGroup,
+      Separator: $.TimeSeparator,
+      Value: $.Time,
     },
     TimeSlider: {
-      Root: Element.TimeSlider,
-      Track: Element.SliderTrack,
-      Fill: Element.SliderFill,
-      Buffer: Element.SliderBuffer,
-      Thumb: Element.SliderThumb,
-      Chapters: Element.TimeSliderChapters,
-      ChapterTitle: Element.TimeSliderChapterTitle,
-      Preview: Element.SliderPreview,
-      Value: Element.SliderValue,
+      Root: $.TimeSlider,
+      Track: $.SliderTrack,
+      Fill: $.SliderFill,
+      Buffer: $.SliderBuffer,
+      Thumb: $.SliderThumb,
+      Chapters: $.TimeSliderChapters,
+      ChapterTitle: $.TimeSliderChapterTitle,
+      Preview: $.SliderPreview,
+      Value: $.SliderValue,
     },
     Tooltip: {
       parts: {
-        Provider: Element.TooltipGroup,
-        Popup: Element.Tooltip,
-        Label: Element.TooltipLabel,
-        Shortcut: Element.TooltipShortcut,
+        Provider: $.TooltipGroup,
+        Popup: $.Tooltip,
+        Label: $.TooltipLabel,
+        Shortcut: $.TooltipShortcut,
       },
-      render: ({ root, parts, id }) => (
-        <>
-          <Host id={id('trigger')}>{parts.Trigger.one().props.children}</Host>
-          <Element.Tooltip trigger={id('trigger')} {...root.props} {...parts.Popup.one().props}>
-            {parts.Popup.one().props.children}
-          </Element.Tooltip>
-        </>
-      ),
+      render: ({ root, parts, id, reference }) => {
+        const Tooltip = reference($.Tooltip);
+
+        return (
+          <>
+            <Host id={id('trigger')}>{parts.Trigger.one().props.children}</Host>
+            <Tooltip trigger={id('trigger')} {...root.props} {...parts.Popup.one().props}>
+              {parts.Popup.one().props.children}
+            </Tooltip>
+          </>
+        );
+      },
     },
     VolumeIndicator: {
-      Root: Element.VolumeIndicator,
-      Fill: Element.VolumeIndicatorFill,
-      Value: Element.VolumeIndicatorValue,
+      Root: $.VolumeIndicator,
+      Fill: $.VolumeIndicatorFill,
+      Value: $.VolumeIndicatorValue,
     },
     VolumeSlider: {
-      Root: Element.VolumeSlider,
-      Track: Element.SliderTrack,
-      Fill: Element.SliderFill,
-      Thumb: Element.SliderThumb,
-      Preview: Element.SliderPreview,
-      Value: Element.SliderValue,
+      Root: $.VolumeSlider,
+      Track: $.SliderTrack,
+      Fill: $.SliderFill,
+      Thumb: $.SliderThumb,
+      Preview: $.SliderPreview,
+      Value: $.SliderValue,
     },
   },
   primitives: {
     Group: Div,
     Slot,
-    Text,
+    Text: {
+      render: ({ props, reference }) => {
+        const I18nText = reference($.Text);
+
+        return props.token ? (
+          <I18nText {...props}>{props.children}</I18nText>
+        ) : (
+          <Span {...props}>{props.children}</Span>
+        );
+      },
+    },
     Template: {
       chapter: {
         render: ({ props }) => (
@@ -185,22 +197,26 @@ export const registry: ComponentRegistry = defineRegistry({
       'quality-option': {
         render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
         parts: {
-          label: Label,
-          tier: Tier,
-          badge: Badge,
+          label: optionLabel,
+          tier: {
+            render: ({ props }) => <Sup data-part="tier" {...props} />,
+          },
+          badge: {
+            render: ({ props }) => <Span data-part="badge" {...props} />,
+          },
         },
       },
       'audio-track-option': {
         render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
-        parts: { label: Label },
+        parts: { label: optionLabel },
       },
       'playback-rate-option': {
         render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
-        parts: { label: Label },
+        parts: { label: optionLabel },
       },
       'captions-option': {
         render: ({ props }) => <HtmlTemplate>{props.children}</HtmlTemplate>,
-        parts: { label: Label },
+        parts: { label: optionLabel },
       },
     },
   },

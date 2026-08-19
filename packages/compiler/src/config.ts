@@ -1,6 +1,6 @@
 import type ts from 'typescript';
-import type { GenerateComponentsConfig } from './components/generate/components';
-import type { GenerateTargetConfig } from './components/generate/target';
+import type { GenerateEntriesConfig } from './components/generate/entries';
+import type { GenerateSchemaConfig } from './components/generate/schema';
 import type { ImportRule } from './transforms/imports';
 
 export type CompilerTransform = ts.TransformerFactory<ts.SourceFile>;
@@ -98,8 +98,8 @@ export interface CompilerConfig {
 }
 
 export interface CompilerGenerateConfig {
-  components?: GenerateComponentsConfig | readonly GenerateComponentsConfig[] | undefined;
-  target?: GenerateTargetConfig | readonly GenerateTargetConfig[] | undefined;
+  schema?: GenerateSchemaConfig | readonly GenerateSchemaConfig[] | undefined;
+  entries?: GenerateEntriesConfig | readonly GenerateEntriesConfig[] | undefined;
 }
 
 export type CompilerBuildConfig = CompilerConfig | readonly CompilerConfig[];

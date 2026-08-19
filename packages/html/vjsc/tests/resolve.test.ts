@@ -2,9 +2,9 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'vjsc/ast';
 
-import { resolveHtmlTargets } from '../resolve';
+import { resolveHtmlEntries } from '../resolve';
 
-describe('resolveHtmlTargets', () => {
+describe('resolveHtmlEntries', () => {
   it('resolves imported element classes', () => {
     const fileName = resolve(import.meta.dirname, '../../src/define/ui/example.ts');
     const sourceFile = parse(`import { ExampleElement } from '../../ui/example-element';\nExampleElement;`, {
@@ -16,7 +16,7 @@ describe('resolveHtmlTargets', () => {
     }).ast;
 
     expect(
-      resolveHtmlTargets({
+      resolveHtmlEntries({
         fileName,
         sourceFile,
         resolveModule: () => ({ fileName: importedFile, sourceFile: importedSource }),
@@ -25,7 +25,7 @@ describe('resolveHtmlTargets', () => {
       {
         name: 'Example',
         priority: 2,
-        target: {
+        entry: {
           tagName: 'media-example',
           import: { from: '@videojs/html/ui/example', sideEffect: true },
         },
@@ -40,7 +40,7 @@ describe('resolveHtmlTargets', () => {
     }).ast;
 
     expect(
-      resolveHtmlTargets({
+      resolveHtmlEntries({
         fileName,
         sourceFile,
         resolveModule: () => undefined,
@@ -49,7 +49,7 @@ describe('resolveHtmlTargets', () => {
       {
         name: 'ExampleVideo',
         priority: 2,
-        target: {
+        entry: {
           tagName: 'example-video',
           import: { from: '@videojs/html/media/example-video', sideEffect: true },
         },

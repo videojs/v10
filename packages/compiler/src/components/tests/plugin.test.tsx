@@ -4,11 +4,19 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { html, jsx as target } from '../../config';
 import { transform } from '../../transform';
-import { defineComponent, defineComponents } from '../definition';
+import { defineComponent, defineSchema } from '../definition';
 import { plugin } from '../plugin';
-import { defineRegistry, defineTarget, extendRegistry, Host, type RegistryPropTransformContext } from '../registry';
+import {
+  defineElement,
+  defineRegistry,
+  extendRegistry,
+  Host,
+  type RegistryEntry,
+  type RegistryEntryReference,
+  type RegistryPropTransformContext,
+} from '../registry';
 
-const components = defineComponents('@fixture/components', {
+const components = defineSchema('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),
   Tooltip: defineComponent({
     name: 'Tooltip',
@@ -21,31 +29,31 @@ const components = defineComponents('@fixture/components', {
   }),
 });
 
-function fixtureTargets() {
+function fixtureEntries() {
   return {
-    PlayButton: fixtureTarget('PlayButton'),
+    PlayButton: fixtureEntry('PlayButton'),
     Tooltip: {
-      Root: fixtureTarget('Tooltip', 'Root'),
-      Trigger: fixtureTarget('Tooltip', 'Trigger'),
-      Popup: fixtureTarget('Tooltip', 'Popup'),
+      Root: fixtureEntry('Tooltip', 'Root'),
+      Trigger: fixtureEntry('Tooltip', 'Trigger'),
+      Popup: fixtureEntry('Tooltip', 'Popup'),
     },
   } as const;
 }
 
-function fixtureTarget(component: string, part?: string) {
-  return defineTarget({
+function fixtureEntry(component: string, part?: string): RegistryEntryReference {
+  return {
     import: {
       from: '@fixture/react',
       name: component,
       ...(part ? { path: [part] } : {}),
     },
-  });
+  };
 }
 
 describe('plugin', () => {
   it('rewrites canonical components imported through a namespace', async () => {
-    const targets = fixtureTargets();
-    const registry = defineRegistry({ components, targets });
+    const entries = fixtureEntries();
+    const registry = defineRegistry({ schema: components, entries });
     const result = await transform(
       `
         import * as $ from '@fixture/components';
@@ -61,13 +69,13 @@ describe('plugin', () => {
   });
 
   it('lowers component sources added by an extended registry', async () => {
-    const skinComponents = defineComponents('@fixture/skin-components', {
+    const skinComponents = defineSchema('@fixture/skin-components', {
       Overlay: defineComponent({ name: 'Overlay' }),
     });
-    const registry = extendRegistry(defineRegistry({ components, targets: fixtureTargets() }), {
-      components: skinComponents,
-      targets: {
-        Overlay: defineTarget({ import: { from: '@fixture/react', name: 'Overlay' } }),
+    const registry = extendRegistry(defineRegistry({ schema: components, entries: fixtureEntries() }), {
+      schema: skinComponents,
+      entries: {
+        Overlay: { import: { from: '@fixture/react', name: 'Overlay' } },
       },
     });
     const result = await transform(
@@ -87,7 +95,7 @@ describe('plugin', () => {
   });
 
   it('applies target import rules to registry bindings', async () => {
-    const registry = defineRegistry({ components, targets: fixtureTargets() });
+    const registry = defineRegistry({ schema: components, entries: fixtureEntries() });
     const compilerTarget = target({ imports: { '@fixture/react': '@fixture/preact' } });
     const result = await transform(`import { PlayButton } from '@fixture/components'; <PlayButton />;`, {
       config: {
@@ -100,14 +108,14 @@ describe('plugin', () => {
     expect(result.code).toContain('<PlayButton />');
   });
 
-  it('lets registries transform target props', async () => {
+  it('lets registries transform entry props', async () => {
     const registry = defineRegistry({
-      components,
-      targets: {
-        ...fixtureTargets(),
-        PlayButton: defineTarget({
+      schema: components,
+      entries: {
+        ...fixtureEntries(),
+        PlayButton: {
           import: { from: '@fixture/react', name: 'PlayButton' },
-        }),
+        },
       },
       props: {
         transform: transformFixtureProp,
@@ -136,8 +144,8 @@ describe('plugin', () => {
 
   it('remaps class utility imports through the compiler target', async () => {
     const registry = defineRegistry({
-      components,
-      targets: fixtureTargets(),
+      schema: components,
+      entries: fixtureEntries(),
       props: {
         transform: transformFixtureProp,
       },
@@ -158,8 +166,8 @@ describe('plugin', () => {
 
   it('allows prop transforms beyond class names', async () => {
     const registry = defineRegistry({
-      components,
-      targets: fixtureTargets(),
+      schema: components,
+      entries: fixtureEntries(),
       props: {
         transform({ name, factory }) {
           return name === 'priority' ? factory.createNumericLiteral(2) : undefined;
@@ -175,8 +183,8 @@ describe('plugin', () => {
 
   it('reuses an existing resolved class utility import', async () => {
     const registry = defineRegistry({
-      components,
-      targets: fixtureTargets(),
+      schema: components,
+      entries: fixtureEntries(),
       props: {
         transform: transformFixtureProp,
       },
@@ -204,8 +212,8 @@ describe('plugin', () => {
 
   it('preserves framework-neutral canonical prop helpers', async () => {
     const registry = defineRegistry({
-      components,
-      targets: fixtureTargets(),
+      schema: components,
+      entries: fixtureEntries(),
       types: (name) => (name === 'VjscNode' ? { from: 'react', name: 'ReactNode' } : false),
     });
     const result = await transform(
@@ -227,15 +235,15 @@ describe('plugin', () => {
     expect(result.code).toContain('<PlayButtonPrimitive {...props}/>');
   });
 
-  it('projects forwarded canonical props through target metadata', async () => {
+  it('projects forwarded canonical props through registry entry metadata', async () => {
     const registry = defineRegistry({
-      components,
-      targets: {
-        ...fixtureTargets(),
-        PlayButton: defineTarget({
+      schema: components,
+      entries: {
+        ...fixtureEntries(),
+        PlayButton: {
           import: { from: '@fixture/react', name: 'PlayButton' },
           props: { from: '@fixture/react', name: 'PlayButton', path: ['Props'] },
-        }),
+        },
       },
     });
     const result = await transform(
@@ -259,15 +267,15 @@ describe('plugin', () => {
     expect(result.code).not.toContain("from 'vjsc/components'");
   });
 
-  it('projects intrinsic target props', async () => {
+  it('projects intrinsic entry props', async () => {
     const registry = defineRegistry({
-      components,
-      targets: {
-        ...fixtureTargets(),
-        PlayButton: defineTarget({
+      schema: components,
+      entries: {
+        ...fixtureEntries(),
+        PlayButton: {
           tagName: 'div',
           props: { from: 'react', name: 'ComponentProps', intrinsic: 'div' },
-        }),
+        },
       },
     });
     const result = await transform(
@@ -286,15 +294,15 @@ describe('plugin', () => {
     expect(result.code).toContain('interface OverlayProps extends Omit<ComponentProps<"div">, "children">');
   });
 
-  it('projects authored children through an explicit target prop', async () => {
+  it('projects authored children through an explicit entry prop', async () => {
     const registry = defineRegistry({
-      components,
-      targets: {
-        ...fixtureTargets(),
-        PlayButton: defineTarget({
+      schema: components,
+      entries: {
+        ...fixtureEntries(),
+        PlayButton: {
           import: { from: '@fixture/react', name: 'PlayButton' },
           props: { from: '@fixture/react', name: 'PlayButton', path: ['Props'], children: 'render' },
-        }),
+        },
       },
       types: (name) => (name === 'VjscNode' ? { from: 'react', name: 'ReactNode' } : false),
     });
@@ -318,7 +326,7 @@ describe('plugin', () => {
   });
 
   it('resolves props exported by another emitted component', async () => {
-    const registry = defineRegistry({ components, targets: fixtureTargets() });
+    const registry = defineRegistry({ schema: components, entries: fixtureEntries() });
     const result = await transform(
       `
         import { ButtonTooltip } from './button-tooltip';
@@ -335,8 +343,8 @@ describe('plugin', () => {
     expect(result.code).not.toContain('PropsOf');
   });
 
-  it('rewrites canonical JSX nested in target props', async () => {
-    const registry = defineRegistry({ components, targets: fixtureTargets() });
+  it('rewrites canonical JSX nested in entry props', async () => {
+    const registry = defineRegistry({ schema: components, entries: fixtureEntries() });
     const result = await transform(
       `
         import * as $ from '@fixture/components';
@@ -352,10 +360,10 @@ describe('plugin', () => {
 
   it('preserves type imports and adapts React attribute names for HTML', async () => {
     const registry = defineRegistry({
-      components,
-      targets: {
-        ...fixtureTargets(),
-        PlayButton: defineTarget({ tagName: 'media-play-button' }),
+      schema: components,
+      entries: {
+        ...fixtureEntries(),
+        PlayButton: { tagName: 'media-play-button' },
       },
     });
     const compilerTarget = html();
@@ -379,7 +387,7 @@ describe('plugin', () => {
   });
 
   it('reports canonical components missing from the registry contract', async () => {
-    const registry = defineRegistry({ components, targets: fixtureTargets() });
+    const registry = defineRegistry({ schema: components, entries: fixtureEntries() });
 
     await expect(
       transform(`import * as $ from '@fixture/components'; <$.Missing />;`, {
@@ -389,19 +397,19 @@ describe('plugin', () => {
   });
 
   it('rewrites pass-through hosts and JSX part transforms', async () => {
-    const targets = fixtureTargets();
+    const entries = fixtureEntries();
     const registry = defineRegistry({
-      components,
-      targets: {
-        PlayButton: targets.PlayButton,
+      schema: components,
+      entries: {
+        PlayButton: entries.PlayButton,
         Tooltip: {
           parts: {
-            Root: targets.Tooltip.Root,
+            Root: entries.Tooltip.Root,
             Trigger: {
-              host: targets.Tooltip.Trigger,
+              host: entries.Tooltip.Trigger,
               render: ({ props }) => <Host {...props} render={props.children} />,
             },
-            Popup: targets.Tooltip.Popup,
+            Popup: entries.Tooltip.Popup,
           },
         },
       },
@@ -428,21 +436,42 @@ describe('plugin', () => {
     expect(result.code).toContain('<TooltipAlias.Popup className="popup">Hello</TooltipAlias.Popup>');
   });
 
-  it('provides deterministic identifiers scoped to each compound component occurrence', async () => {
-    const targets = fixtureTargets();
+  it('rewrites hosted leaf components', async () => {
     const registry = defineRegistry({
-      components,
-      targets: {
-        PlayButton: targets.PlayButton,
+      schema: components,
+      entries: {
+        PlayButton: {
+          host: {
+            import: { from: '@fixture/react', name: 'PlayButton' },
+          },
+          render: ({ props }) => <Host {...props} render={props.children} />,
+        },
+        Tooltip: fixtureEntries().Tooltip,
+      },
+    });
+    const result = await transform(`import { PlayButton } from '@fixture/components'; <PlayButton>Play</PlayButton>;`, {
+      config: { target: target(), plugins: [plugin(registry)] },
+    });
+
+    expect(result.code).toContain('import { PlayButton } from "@fixture/react";');
+    expect(result.code).toContain('<PlayButton render={"Play"}/>');
+  });
+
+  it('provides deterministic identifiers scoped to each compound component occurrence', async () => {
+    const entries = fixtureEntries();
+    const registry = defineRegistry({
+      schema: components,
+      entries: {
+        PlayButton: entries.PlayButton,
         Tooltip: {
           parts: {
-            Root: targets.Tooltip.Root,
+            Root: entries.Tooltip.Root,
             Trigger: {
-              host: targets.Tooltip.Trigger,
+              host: entries.Tooltip.Trigger,
               render: ({ props, id }) => <Host {...props} data-scope={id('shared')} />,
             },
             Popup: {
-              host: targets.Tooltip.Popup,
+              host: entries.Tooltip.Popup,
               render: ({ props, id }) => <Host {...props} data-scope={id('shared')} id={id('content')} />,
             },
           },
@@ -479,14 +508,14 @@ describe('plugin', () => {
   });
 
   it('keeps scoped identifiers unique across source modules', async () => {
-    const Button = defineTarget({ tagName: 'button' });
+    const Button = defineElement('button');
     const registry = defineRegistry({
-      components,
-      targets: {
-        ...fixtureTargets(),
-        PlayButton: defineTarget<Record<string, unknown>>({
+      schema: components,
+      entries: {
+        ...fixtureEntries(),
+        PlayButton: {
           render: ({ props, id }) => <Button {...props} id={id('root')} />,
-        }),
+        },
       },
     });
     const source = `import { PlayButton } from '@fixture/components'; <PlayButton />;`;
@@ -507,14 +536,14 @@ describe('plugin', () => {
   });
 
   it('forwards transparent Host props through nested registry components', async () => {
-    const wrapperComponents = defineComponents('@fixture/wrappers', {
+    const wrapperComponents = defineSchema('@fixture/wrappers', {
       Wrapper: defineComponent({ name: 'Wrapper' }),
     });
-    const PlayButton = defineTarget({ tagName: 'media-play-button' });
-    const TooltipPopup = defineTarget({ tagName: 'media-tooltip' });
+    const PlayButton = defineElement('media-play-button');
+    const TooltipPopup = defineElement('media-tooltip');
     const base = defineRegistry({
-      components,
-      targets: {
+      schema: components,
+      entries: {
         PlayButton,
         Tooltip: {
           render: ({ root, parts, id }) => (
@@ -527,8 +556,8 @@ describe('plugin', () => {
       },
     });
     const registry = extendRegistry(base, {
-      components: wrapperComponents,
-      targets: {
+      schema: wrapperComponents,
+      entries: {
         Wrapper: {
           render: ({ props }) => (
             <Host {...props} data-wrapper="">
@@ -559,13 +588,13 @@ describe('plugin', () => {
     expect(result.code).toContain(`<media-tooltip trigger="${triggerId}"/>`);
   });
 
-  it('forwards Host props to one matching compound-part target', async () => {
-    const Button = defineTarget({ tagName: 'button' });
-    const Popup = defineTarget({ tagName: 'media-popup' });
+  it('forwards Host props to one matching compound part', async () => {
+    const Button = defineElement('button');
+    const Popup = defineElement('media-popup');
     const registry = defineRegistry({
-      components,
-      targets: {
-        PlayButton: fixtureTarget('PlayButton'),
+      schema: components,
+      entries: {
+        PlayButton: fixtureEntry('PlayButton'),
         Tooltip: {
           parts: {
             Root: {
@@ -595,12 +624,12 @@ describe('plugin', () => {
   });
 
   it('rejects transparent Host output without exactly one concrete child', async () => {
-    const wrapperComponents = defineComponents('@fixture/wrappers', {
+    const wrapperComponents = defineSchema('@fixture/wrappers', {
       Wrapper: defineComponent({ name: 'Wrapper' }),
     });
     const registry = defineRegistry({
-      components: wrapperComponents,
-      targets: {
+      schema: wrapperComponents,
+      entries: {
         Wrapper: {
           render: ({ props }) => <Host>{props.children}</Host>,
         },
@@ -616,12 +645,12 @@ describe('plugin', () => {
   });
 
   it('defers transparent Host forwarding for one dynamic HTML child', async () => {
-    const wrapperComponents = defineComponents('@fixture/wrappers', {
+    const wrapperComponents = defineSchema('@fixture/wrappers', {
       Wrapper: defineComponent({ name: 'Wrapper' }),
     });
     const registry = defineRegistry({
-      components: wrapperComponents,
-      targets: {
+      schema: wrapperComponents,
+      entries: {
         Wrapper: {
           render: ({ props }) => <Host data-wrapper="">{props.children}</Host>,
         },
@@ -643,17 +672,15 @@ describe('plugin', () => {
   });
 
   it('supports whole-component JSX and HTML element imports', async () => {
-    const PlayButtonElement = defineTarget({
-      tagName: 'media-play-button',
+    const PlayButtonElement = defineElement('media-play-button', {
       import: { from: '@fixture/html/play-button', sideEffect: true },
     });
-    const TooltipElement = defineTarget({
-      tagName: 'media-tooltip',
+    const TooltipElement = defineElement('media-tooltip', {
       import: { from: '@fixture/html/tooltip', sideEffect: true },
     });
     const registry = defineRegistry({
-      components,
-      targets: {
+      schema: components,
+      entries: {
         PlayButton: PlayButtonElement,
         Tooltip: {
           parts: {
@@ -696,17 +723,16 @@ describe('plugin', () => {
   });
 
   it('supports leaf components rendered through registry JSX', async () => {
-    const Icon = defineTarget({
-      tagName: 'media-icon',
+    const Icon = defineElement('media-icon', {
       import: { from: '@fixture/html/icon', sideEffect: true },
     });
     const registry = defineRegistry({
-      components,
-      targets: {
-        ...fixtureTargets(),
-        PlayButton: defineTarget<Record<string, unknown>>({
+      schema: components,
+      entries: {
+        ...fixtureEntries(),
+        PlayButton: {
           render: ({ props }) => <Icon {...props} name="play" />,
-        }),
+        },
       },
     });
     const result = await transform(
@@ -719,17 +745,16 @@ describe('plugin', () => {
   });
 
   it('keeps nested instances out of a parent component part collection', async () => {
-    const TooltipElement = defineTarget({
-      tagName: 'media-tooltip',
+    const TooltipElement = defineElement('media-tooltip', {
       import: { from: '@fixture/html/tooltip', sideEffect: true },
     });
     const registry = defineRegistry({
-      components,
-      targets: {
-        PlayButton: defineTarget({
+      schema: components,
+      entries: {
+        PlayButton: {
           tagName: 'media-play-button',
           import: { from: '@fixture/html/play-button', sideEffect: true },
-        }),
+        },
         Tooltip: {
           render: ({ root, parts }) => (
             <TooltipElement {...root.props}>
@@ -763,25 +788,25 @@ describe('plugin', () => {
   });
 
   it('lowers compiler primitives through framework targets', async () => {
-    const Div = defineTarget({ tagName: 'div' });
-    const Span = defineTarget({ tagName: 'span' });
-    const SlotTarget = defineTarget<{ children?: unknown }>({
+    const Div = defineElement('div');
+    const Span = defineElement('span');
+    const slot: RegistryEntry<{ children?: unknown }> = {
       render: ({ props }) => props.children,
-    });
-    const TextTarget = defineTarget<Record<string, unknown>>({
+    };
+    const text: RegistryEntry = {
       render: ({ props }) => <Span {...props}>{props.children}</Span>,
-    });
+    };
     const registry = defineRegistry({
-      components,
-      targets: fixtureTargets(),
+      schema: components,
+      entries: fixtureEntries(),
       types: (name) => ({
         from: 'react',
         name: name === 'VjscNode' ? 'ReactNode' : name === 'VjscElement' ? 'ReactElement' : name,
       }),
       primitives: {
         Group: Div,
-        Slot: SlotTarget,
-        Text: TextTarget,
+        Slot: slot,
+        Text: text,
       },
     });
     const result = await transform(
@@ -807,8 +832,8 @@ describe('plugin', () => {
   });
 
   it('renders named templates into JSX callback props', async () => {
-    const Span = defineTarget({ tagName: 'span' });
-    const RenderItem = defineTarget({
+    const Span = defineElement('span');
+    const renderItem = {
       transform: ({ factory, render }) =>
         factory.createArrowFunction(
           undefined,
@@ -820,18 +845,26 @@ describe('plugin', () => {
           factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
           render({ parameters: ['props', 'item'], spreadProps: 'props' })
         ),
-    });
-    const Label = defineTarget<Record<string, unknown> & { item: { label: unknown } }>({
+    } satisfies RegistryEntry;
+    interface ItemPartProps {
+      item: { label: unknown };
+    }
+
+    const optionLabel: RegistryEntry<ItemPartProps> = {
       render: ({ props }) => <Span {...props}>{props.item.label}</Span>,
-    });
+    };
     const registry = defineRegistry({
-      components,
-      targets: fixtureTargets(),
+      schema: components,
+      entries: fixtureEntries(),
       primitives: {
         Template: {
           item: {
-            render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
-            parts: { label: Label },
+            render: ({ props, reference }) => {
+              const RenderItem = reference(renderItem);
+
+              return <Host renderItem={<RenderItem>{props.children}</RenderItem>} />;
+            },
+            parts: { label: optionLabel },
           },
         },
       },
@@ -858,7 +891,7 @@ describe('plugin', () => {
   });
 
   it('forwards render callback props after authored defaults', async () => {
-    const Row = defineTarget({
+    const row = {
       transform: ({ factory, render }) =>
         factory.createArrowFunction(
           undefined,
@@ -868,14 +901,18 @@ describe('plugin', () => {
           factory.createToken(ts.SyntaxKind.EqualsGreaterThanToken),
           render({ parameters: ['props'], spreadProps: 'props' })
         ),
-    });
+    } satisfies RegistryEntry;
     const registry = defineRegistry({
-      components,
-      targets: fixtureTargets(),
+      schema: components,
+      entries: fixtureEntries(),
       primitives: {
         Template: {
           row: {
-            render: ({ props }) => <Host renderItem={<Row>{props.children}</Row>} />,
+            render: ({ props, reference }) => {
+              const Row = reference(row);
+
+              return <Host renderItem={<Row>{props.children}</Row>} />;
+            },
           },
         },
       },
@@ -900,7 +937,7 @@ describe('plugin', () => {
 function transformFixtureProp({
   name,
   value,
-  target: output,
+  entry: output,
   factory,
   import: requestImport,
 }: RegistryPropTransformContext): ts.Expression | undefined {

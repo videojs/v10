@@ -1,6 +1,6 @@
 import { parseArgs } from 'node:util';
-import { generateComponents } from './components/generate/components';
-import { generateTarget } from './components/generate/target';
+import { generateEntries } from './components/generate/entries';
+import { generateSchema } from './components/generate/schema';
 import type { CompilerConfig } from './config';
 import { loadBuildConfig } from './load-config';
 
@@ -64,13 +64,13 @@ function runGenerationConfig(config: CompilerConfig, cwd: string, check: boolean
   if (!generation) return 0;
   let generated = 0;
 
-  for (const componentConfig of asArray(generation.components)) {
-    report(generateComponents(componentConfig, { cwd, check }), check);
+  for (const schemaConfig of asArray(generation.schema)) {
+    report(generateSchema(schemaConfig, { cwd, check }), check);
     generated++;
   }
 
-  for (const targetConfig of asArray(generation.target)) {
-    report(generateTarget(targetConfig, { cwd, check }), check);
+  for (const entriesConfig of asArray(generation.entries)) {
+    report(generateEntries(entriesConfig, { cwd, check }), check);
     generated++;
   }
 

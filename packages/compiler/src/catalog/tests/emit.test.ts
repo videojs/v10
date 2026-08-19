@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { defineComponent, defineComponents, defineRegistry, defineTarget } from '../../components';
+import { defineComponent, defineRegistry, defineSchema } from '../../components';
 import { defineConfig, jsx } from '../../config';
 import { defineCatalog } from '../define';
 import { emitCatalog } from '../emit';
@@ -19,13 +19,13 @@ describe('emitCatalog', () => {
     const root = setup({
       'entry.tsx': `import { PlayButton } from '@fixture/components'; export const entry = <PlayButton disabled />;`,
     });
-    const components = defineComponents('@fixture/components', {
+    const components = defineSchema('@fixture/components', {
       PlayButton: defineComponent<{ disabled?: boolean }>({ name: 'PlayButton' }),
     });
     const registry = defineRegistry({
-      components,
-      targets: {
-        PlayButton: defineTarget({ import: { from: '@fixture/react', name: 'PlayButton' } }),
+      schema: components,
+      entries: {
+        PlayButton: { import: { from: '@fixture/react', name: 'PlayButton' } },
       },
     });
     const loaded = await loadCatalog(

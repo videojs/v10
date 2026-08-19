@@ -1,8 +1,8 @@
 import { dirname } from 'node:path';
 
 import { isPlainObject } from '@videojs/utils/predicate';
-import { parseGenerateComponentsConfig } from './components/generate/components';
-import { parseGenerateTargetConfig } from './components/generate/target';
+import { parseGenerateEntriesConfig } from './components/generate/entries';
+import { parseGenerateSchemaConfig } from './components/generate/schema';
 import type { CompilerBuildConfig, CompilerConfig } from './config';
 import { findConfigFile, loadConfigExport } from './utils/config-file';
 
@@ -81,11 +81,11 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
 
   if (value.generate !== undefined) {
     if (!isPlainObject(value.generate)) throw invalidConfig(location, '`generate` must be an object');
-    if (value.generate.components !== undefined) {
-      parseGenerateComponentsConfig(value.generate.components, `${location}.generate.components`);
+    if (value.generate.schema !== undefined) {
+      parseGenerateSchemaConfig(value.generate.schema, `${location}.generate.schema`);
     }
-    if (value.generate.target !== undefined) {
-      parseGenerateTargetConfig(value.generate.target, `${location}.generate.target`);
+    if (value.generate.entries !== undefined) {
+      parseGenerateEntriesConfig(value.generate.entries, `${location}.generate.entries`);
     }
   }
 

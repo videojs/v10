@@ -23,7 +23,10 @@ export type ComponentManifest<
   Parts extends ComponentRecord | undefined = ComponentRecord | undefined,
 > = ComponentDefinition<Props, Parts> & { name: string };
 
-export interface ComponentSet<Definitions extends ComponentRecord = ComponentRecord, Source extends string = string> {
+export interface ComponentSchema<
+  Definitions extends ComponentRecord = ComponentRecord,
+  Source extends string = string,
+> {
   readonly source: Source;
   readonly definitions: Definitions;
 }
@@ -76,9 +79,9 @@ export function defineComponent<
   return (options ?? {}) as ComponentDefinition<Props, Parts>;
 }
 
-export function defineComponents<const Source extends string, const Definitions extends ComponentRecord>(
+export function defineSchema<const Source extends string, const Definitions extends ComponentRecord>(
   source: Source,
   definitions: Definitions
-): ComponentSet<Definitions, Source> {
+): ComponentSchema<Definitions, Source> {
   return { source, definitions };
 }

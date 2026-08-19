@@ -47,6 +47,7 @@ export function componentTransforms(resolveImport: ImportResolver): CompilerPlug
 
   return rewrite((code) => {
     const usePlayer = code.import(references.usePlayer.source, references.usePlayer.name);
+
     const optionHooks = Object.fromEntries(
       optionMenus.map(({ hook }) => {
         const reference = references.optionHooks[hook];
@@ -65,9 +66,11 @@ export function componentTransforms(resolveImport: ImportResolver): CompilerPlug
 /**
  * Adds the React volume fallback.
  *
+ * ```diff
  * + const volumeAvailability = usePlayer(...);
  * - return <Popover.Root>...</Popover.Root>;
  * + return volumeAvailability === 'available' ? <Popover.Root>...</Popover.Root> : <MuteButton />;
+ * ```
  */
 function volumeAvailabilityTransforms(code: TransformHelpers, usePlayer: ImportReference): readonly TransformStep[] {
   const component = code.function('VolumePopover');
@@ -94,10 +97,12 @@ function volumeAvailabilityTransforms(code: TransformHelpers, usePlayer: ImportR
 /**
  * Binds one option menu to its React hook.
  *
+ * ```diff
  * + const quality = useQualityOptions();
  * + const available = quality?.state.availability === 'available';
  * - return <Submenu selectedLabel={<SelectedLabel />}>...</Submenu>;
  * + return available && <Submenu selectedLabel={<span>{quality?.selectedLabel}</span>}>...</Submenu>;
+ * ```
  */
 function optionMenuTransforms(
   code: TransformHelpers,
@@ -138,10 +143,12 @@ function optionMenuTransforms(
 /**
  * Hides the aggregate settings menu when every option source is unavailable.
  *
+ * ```diff
  * + const quality = useQualityOptions();
  * + const hasSettings = quality?.state.availability === 'available' || ...;
  * - return <SettingsMenu />;
  * + return hasSettings && <SettingsMenu />;
+ * ```
  */
 function settingsAvailabilityTransforms(
   code: TransformHelpers,

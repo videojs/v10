@@ -1,22 +1,21 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/components/registry */
 
-import { components } from '@videojs/core/vjsc';
+import { schema } from '@videojs/core/vjsc';
 import ts from 'typescript';
 import { createArrowFunction } from 'vjsc/ast';
 import {
   type ComponentRegistry,
   defineElement,
   defineRegistry,
-  defineRegistryPart,
-  defineTarget,
   Host,
+  type RegistryEntry,
   type RegistryPropTransformContext,
-  type SlotProps,
+  type RegistryRenderContext,
   type TemplatePartProps,
-  type TextProps,
+  type TemplateProps,
 } from 'vjsc/components';
-import { targets as t } from './components.generated';
+import * as $ from './entries.generated';
 
 const Div = defineElement('div', {
   props: {
@@ -29,38 +28,6 @@ const Div = defineElement('div', {
 const Span = defineElement('span');
 const Sup = defineElement('sup');
 
-const Slot = defineTarget<SlotProps>({
-  render: ({ props }) => props.children,
-});
-
-const I18nText = defineTarget<TextProps>({
-  import: {
-    from: '@videojs/react',
-    name: 'Text',
-  },
-});
-
-const Text = defineTarget<TextProps>({
-  render: ({ props }) =>
-    props.token ? <I18nText {...props}>{props.children}</I18nText> : <Span {...props}>{props.children}</Span>,
-});
-
-const SliderThumbnail = defineTarget({
-  import: {
-    from: '@videojs/react',
-    name: 'Slider',
-    path: ['Thumbnail'],
-  },
-});
-
-const Poster = defineTarget({
-  props: { from: '@videojs/react', name: 'Poster', path: ['Props'], children: 'render' },
-  render: ({ props }) => <t.Poster render={props.children} {...props} />,
-});
-
-const RenderChapter = renderCallback(['props']);
-const RenderItem = renderCallback(['props', 'item']);
-
 interface OptionPartProps extends TemplatePartProps {
   readonly item: {
     readonly badge?: unknown;
@@ -69,50 +36,58 @@ interface OptionPartProps extends TemplatePartProps {
   };
 }
 
-const Label = defineTarget<OptionPartProps>({
+const optionLabel: RegistryEntry<OptionPartProps> = {
   render: ({ props }) => <Span {...props}>{props.item.label}</Span>,
-});
-const Tier = defineTarget<OptionPartProps>({
-  when: ({ props }) => props.item.tier,
-  render: ({ props }) => <Sup {...props}>{props.item.tier}</Sup>,
-});
-const Badge = defineTarget<OptionPartProps>({
-  when: ({ props }) => props.item.badge,
-  render: ({ props }) => <Span {...props}>{props.item.badge}</Span>,
-});
+};
 
 /** Canonical core components rendered through the React component package. */
 export const registry: ComponentRegistry = defineRegistry({
-  components,
-  targets: {
-    ...t,
+  schema,
+  entries: {
+    ...$.entries,
 
     Popover: {
       parts: {
-        ...t.Popover,
+        ...$.Popover,
         Trigger: {
-          host: t.Popover.Trigger,
-          render: defineRegistryPart(({ props }) => <Host render={props.children} {...props} />),
+          host: $.Popover.Trigger,
+          render: ({ props }) => <Host render={props.children} {...props} />,
         },
       },
     },
 
-    Poster,
+    Poster: {
+      props: {
+        ...$.Poster.props,
+        children: 'render',
+      },
+      render: ({ props, reference }) => {
+        const PosterPrimitive = reference($.Poster);
+
+        return <PosterPrimitive render={props.children} {...props} />;
+      },
+    },
 
     Slider: {
-      ...t.Slider,
+      ...$.Slider,
       Thumbnail: {
         Root: Div,
-        Image: SliderThumbnail,
+        Image: {
+          import: {
+            from: '@videojs/react',
+            name: 'Slider',
+            path: ['Thumbnail'],
+          },
+        },
       },
     },
 
     Tooltip: {
       parts: {
-        ...t.Tooltip,
+        ...$.Tooltip,
         Trigger: {
-          host: t.Tooltip.Trigger,
-          render: defineRegistryPart(({ props }) => <Host render={props.children} {...props} />),
+          host: $.Tooltip.Trigger,
+          render: ({ props }) => <Host render={props.children} {...props} />,
         },
       },
     },
@@ -128,55 +103,86 @@ export const registry: ComponentRegistry = defineRegistry({
         : false,
   primitives: {
     Group: Div,
-    Slot,
-    Text,
+    Slot: ({ props }) => props.children,
+    Text: {
+      render: ({ props, reference }) => {
+        const I18nText = reference({
+          import: {
+            from: '@videojs/react',
+            name: 'Text',
+          },
+        });
+
+        return props.token ? (
+          <I18nText {...props}>{props.children}</I18nText>
+        ) : (
+          <Span {...props}>{props.children}</Span>
+        );
+      },
+    },
     Template: {
       chapter: {
-        render: ({ props }) => (
-          <Host
-            renderChapter={
-              <RenderChapter>
-                <Div {...props}>{props.children}</Div>
-              </RenderChapter>
-            }
-          />
-        ),
+        render: ({ props, reference }) => {
+          const RenderChapter = reference(renderCallback(['props']));
+
+          return (
+            <Host
+              renderChapter={
+                <RenderChapter>
+                  <Div {...props}>{props.children}</Div>
+                </RenderChapter>
+              }
+            />
+          );
+        },
       },
       'quality-option': {
-        render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
+        render: renderOption,
         parts: {
-          label: Label,
-          tier: Tier,
-          badge: Badge,
+          label: optionLabel,
+          tier: {
+            when: ({ props }) => props.item.tier,
+            render: ({ props }) => <Sup {...props}>{props.item.tier}</Sup>,
+          },
+          badge: {
+            when: ({ props }) => props.item.badge,
+            render: ({ props }) => <Span {...props}>{props.item.badge}</Span>,
+          },
         },
       },
       'audio-track-option': {
-        render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
-        parts: { label: Label },
+        render: renderOption,
+        parts: { label: optionLabel },
       },
       'playback-rate-option': {
-        render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
-        parts: { label: Label },
+        render: renderOption,
+        parts: { label: optionLabel },
       },
       'captions-option': {
-        render: ({ props }) => <Host renderItem={<RenderItem>{props.children}</RenderItem>} />,
-        parts: { label: Label },
+        render: renderOption,
+        parts: { label: optionLabel },
       },
     },
   },
 });
 
 function renderCallback(parameters: readonly string[]) {
-  return defineTarget({
+  return {
     transform: ({ factory, render }) =>
       createArrowFunction(parameters, render({ parameters, spreadProps: 'props' }), factory),
-  });
+  } satisfies RegistryEntry;
+}
+
+function renderOption({ props, reference }: RegistryRenderContext<Omit<TemplateProps, 'name'>>) {
+  const RenderItem = reference(renderCallback(['props', 'item']));
+
+  return <Host renderItem={<RenderItem>{props.children}</RenderItem>} />;
 }
 
 function transformReactProp({
   name,
   value,
-  target,
+  entry,
   factory,
   import: requestImport,
 }: RegistryPropTransformContext): ts.Expression | undefined {
@@ -186,7 +192,7 @@ function transformReactProp({
   const items = [...value.elements];
   const forwarded = items.some((item) => ts.isIdentifier(item) && item.text === 'className');
 
-  if (!forwarded || !acceptsClassNameCallback(target)) {
+  if (!forwarded || !acceptsClassNameCallback(entry)) {
     return factory.createCallExpression(cn, undefined, items);
   }
 
@@ -204,8 +210,8 @@ function transformReactProp({
   );
 }
 
-function acceptsClassNameCallback(target: RegistryPropTransformContext['target']): boolean {
+function acceptsClassNameCallback(entry: RegistryPropTransformContext['entry']): boolean {
   return Boolean(
-    target && !('tagName' in target) && target.import.from === '@videojs/react' && target.import.name !== 'Container'
+    entry && !('tagName' in entry) && entry.import.from === '@videojs/react' && entry.import.name !== 'Container'
   );
 }

@@ -15,7 +15,7 @@ import {
   TimeSlider,
   Tooltip,
   VolumeSlider,
-} from '../components.generated';
+} from '../schema.generated';
 
 describe('constrained JSX', () => {
   it('accepts typed components and nested compound parts', () => {

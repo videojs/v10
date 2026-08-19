@@ -1,4 +1,4 @@
-import { defineComponent, defineComponents, type RegistryTarget } from 'vjsc/components';
+import { defineComponent, defineSchema, type RegistryEntry } from 'vjsc/components';
 
 const DEFINITIONS = {
   AirPlayEnterIcon: defineComponent({ name: 'AirPlayEnterIcon' }),
@@ -28,9 +28,9 @@ const DEFINITIONS = {
   VolumeOffIcon: defineComponent({ name: 'VolumeOffIcon' }),
 } as const;
 
-export const components = defineComponents('@videojs/icons/vjsc', DEFINITIONS);
+export const schema = defineSchema('@videojs/icons/vjsc', DEFINITIONS);
 
-export function resolveTargets(resolve: (component: keyof typeof DEFINITIONS, name: string) => RegistryTarget) {
+export function mapEntries(resolve: (component: keyof typeof DEFINITIONS, name: string) => RegistryEntry) {
   return {
     AirPlayEnterIcon: resolve('AirPlayEnterIcon', 'airplay-enter'),
     AirPlayExitIcon: resolve('AirPlayExitIcon', 'airplay-exit'),

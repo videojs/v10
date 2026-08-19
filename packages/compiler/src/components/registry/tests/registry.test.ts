@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { defineComponent, defineComponents } from '../../definition';
-import { defineRegistry, defineTarget, extendRegistry, isTargetComponent, REGISTRY_TARGET } from '../index';
+import { defineComponent, defineSchema } from '../../definition';
+import { defineRegistry, extendRegistry, type RegistryEntryReference } from '../index';
 
-const components = defineComponents('@fixture/components', {
+const schema = defineSchema('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),
   Tooltip: defineComponent({
     name: 'Tooltip',
@@ -16,35 +16,35 @@ const components = defineComponents('@fixture/components', {
 });
 
 describe('defineRegistry', () => {
-  it('binds typed component definitions to generated target hosts', () => {
-    const targets = fixtureTargets();
+  it('binds a typed component schema to registry entries', () => {
+    const entries = fixtureEntries();
     const registry = defineRegistry({
-      components,
-      targets: {
-        PlayButton: targets.PlayButton,
+      schema,
+      entries: {
+        PlayButton: entries.PlayButton,
         Tooltip: {
           parts: {
-            Root: targets.Tooltip.Root,
+            Root: entries.Tooltip.Root,
             Trigger: {
-              host: targets.Tooltip.Trigger,
+              host: entries.Tooltip.Trigger,
               render: () => null,
             },
-            Popup: targets.Tooltip.Popup,
+            Popup: entries.Tooltip.Popup,
           },
         },
       },
     });
 
     const binding = registry.bindings[0]!;
-    const tooltip = binding.targets.Tooltip as {
+    const tooltip = binding.entries.Tooltip as {
       parts: { Root: unknown; Trigger: { host: unknown } };
     };
 
-    expect(binding.components).toBe(components);
-    expect(isTargetComponent(binding.targets.PlayButton)).toBe(true);
-    expect(isTargetComponent(tooltip.parts.Root)).toBe(true);
-    expect(tooltip.parts.Trigger.host).toBe(targets.Tooltip.Trigger);
-    expect(targets.Tooltip.Popup[REGISTRY_TARGET]).toEqual({
+    expect(binding.schema).toBe(schema);
+    expect(binding.entries.PlayButton).toBe(entries.PlayButton);
+    expect(tooltip.parts.Root).toBe(entries.Tooltip.Root);
+    expect(tooltip.parts.Trigger.host).toBe(entries.Tooltip.Trigger);
+    expect(entries.Tooltip.Popup).toEqual({
       import: {
         from: '@fixture/react',
         name: 'Tooltip',
@@ -54,17 +54,17 @@ describe('defineRegistry', () => {
   });
 
   it('extends a registry with another typed component binding', () => {
-    const skinComponents = defineComponents('@fixture/skin-components', {
+    const skinComponents = defineSchema('@fixture/skin-components', {
       Overlay: defineComponent({ name: 'Overlay' }),
     });
-    const registry = extendRegistry(defineRegistry({ components, targets: fixtureTargets() }), {
-      components: skinComponents,
-      targets: {
-        Overlay: defineTarget({ import: { from: '@fixture/react', name: 'Overlay' } }),
+    const registry = extendRegistry(defineRegistry({ schema, entries: fixtureEntries() }), {
+      schema: skinComponents,
+      entries: {
+        Overlay: { import: { from: '@fixture/react', name: 'Overlay' } },
       },
     });
 
-    expect(registry.bindings.map(({ components }) => components.source)).toEqual([
+    expect(registry.bindings.map(({ schema }) => schema.source)).toEqual([
       '@fixture/components',
       '@fixture/skin-components',
     ]);
@@ -72,24 +72,24 @@ describe('defineRegistry', () => {
   });
 
   it('composes registry options with extension precedence', () => {
-    const skinComponents = defineComponents('@fixture/skin-components', {
+    const skinComponents = defineSchema('@fixture/skin-components', {
       Overlay: defineComponent({ name: 'Overlay' }),
     });
     const baseTransform = () => undefined;
     const extensionTransform = () => undefined;
-    const Group = fixtureTarget('Group');
-    const Text = fixtureTarget('Text');
+    const Group = fixtureEntry('Group');
+    const Text = fixtureEntry('Text');
     const base = defineRegistry({
-      components,
-      targets: fixtureTargets(),
+      schema,
+      entries: fixtureEntries(),
       props: { transform: baseTransform },
       primitives: { Group },
       types: () => ({ from: '@fixture/react', name: 'BaseNode' }),
     });
     const registry = extendRegistry(base, {
-      components: skinComponents,
-      targets: {
-        Overlay: defineTarget({ import: { from: '@fixture/react', name: 'Overlay' } }),
+      schema: skinComponents,
+      entries: {
+        Overlay: { import: { from: '@fixture/react', name: 'Overlay' } },
       },
       props: { transform: extensionTransform },
       primitives: { Text },
@@ -105,23 +105,23 @@ describe('defineRegistry', () => {
   });
 });
 
-function fixtureTargets() {
+function fixtureEntries() {
   return {
-    PlayButton: fixtureTarget('PlayButton'),
+    PlayButton: fixtureEntry('PlayButton'),
     Tooltip: {
-      Root: fixtureTarget('Tooltip', 'Root'),
-      Trigger: fixtureTarget('Tooltip', 'Trigger'),
-      Popup: fixtureTarget('Tooltip', 'Popup'),
+      Root: fixtureEntry('Tooltip', 'Root'),
+      Trigger: fixtureEntry('Tooltip', 'Trigger'),
+      Popup: fixtureEntry('Tooltip', 'Popup'),
     },
   } as const;
 }
 
-function fixtureTarget(component: string, part?: string) {
-  return defineTarget({
+function fixtureEntry(component: string, part?: string): RegistryEntryReference {
+  return {
     import: {
       from: '@fixture/react',
       name: component,
       ...(part ? { path: [part] } : {}),
     },
-  });
+  };
 }

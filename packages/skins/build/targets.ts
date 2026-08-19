@@ -4,11 +4,11 @@ import { format } from 'oxfmt';
 import { type CatalogOutputFile, type CatalogStyleTransform, emitCatalog } from 'vjsc/catalog';
 
 import { catalogSourcePath, type SkinCatalog, type SkinCatalogSkin } from './catalog';
-import { htmlOutput } from './output/html';
+import { type HTMLImportResolver, htmlOutput } from './output/html';
 import { type ReactImportResolver, reactOutput } from './output/react';
 
 export type FrameworkTarget =
-  | { framework: 'html'; resolveImport?: ((specifier: string) => string) | undefined }
+  | { framework: 'html'; resolveImport?: HTMLImportResolver | undefined }
   | { framework: 'react'; resolveImport?: ReactImportResolver | undefined };
 
 interface FrameworkSkinFile extends CatalogOutputFile {

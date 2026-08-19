@@ -60,6 +60,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
       ...(group.iconSet === 'default' ? {} : { iconSet: group.iconSet }),
       targets: group.targets,
     });
+
     const styles = await Promise.all(
       output.styles.map(async (style) => [style.path, await formatGeneratedFile(style.path, style.content)] as const)
     );

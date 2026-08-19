@@ -101,28 +101,28 @@ function buildCanonicalComponentTypes(icons: { varName: string }[]): string {
   return [`import type { Component, EmptyProps } from 'vjsc/components';`, ``, ...components, ``].join('\n');
 }
 
-function buildVjscComponents(icons: { name: string; varName: string }[]): string {
+function buildVjscSchema(icons: { name: string; varName: string }[]): string {
   const definitions = icons.map(({ varName }) => {
     const name = `${iconNames(varName).pascal}Icon`;
     return `  ${name}: defineComponent({ name: '${name}' }),`;
   });
-  const targets = icons.map(({ name, varName }) => {
+  const entries = icons.map(({ name, varName }) => {
     const component = `${iconNames(varName).pascal}Icon`;
     return `    ${component}: resolve('${component}', '${name}'),`;
   });
 
   return [
-    `import { defineComponent, defineComponents, type RegistryTarget } from 'vjsc/components';`,
+    `import { defineComponent, defineSchema, type RegistryEntry } from 'vjsc/components';`,
     ``,
     `const DEFINITIONS = {`,
     ...definitions,
     `} as const;`,
     ``,
-    `export const components = defineComponents('@videojs/icons/vjsc', DEFINITIONS);`,
+    `export const schema = defineSchema('@videojs/icons/vjsc', DEFINITIONS);`,
     ``,
-    `export function resolveTargets(resolve: (component: keyof typeof DEFINITIONS, name: string) => RegistryTarget) {`,
+    `export function mapEntries(resolve: (component: keyof typeof DEFINITIONS, name: string) => RegistryEntry) {`,
     `  return {`,
-    ...targets,
+    ...entries,
     `  };`,
     `}`,
     ``,
@@ -339,7 +339,7 @@ async function buildIconSet(setName: string): Promise<void> {
 
   if (setName === 'default') {
     ensureDir(VJSC_DIR);
-    writeFileSync(join(VJSC_DIR, 'components.generated.ts'), buildVjscComponents(icons));
+    writeFileSync(join(VJSC_DIR, 'schema.generated.ts'), buildVjscSchema(icons));
   }
 
   const vjscDir = join(DIST_DIR, 'vjsc', setName);

@@ -1,6 +1,6 @@
 import { basename, relative, resolve } from 'node:path';
 
-import type { ResolvedTarget, SourceTargetContext } from 'vjsc';
+import type { ResolvedEntry, SourceEntryContext } from 'vjsc';
 import {
   collectClassDeclarations,
   collectModuleReferences,
@@ -11,19 +11,19 @@ import {
 const packageDir = resolve(import.meta.dirname, '..');
 const elementSuffix = 'Element';
 
-export function resolveHtmlTargets({ fileName, sourceFile, resolveModule }: SourceTargetContext): ResolvedTarget[] {
+export function resolveHtmlEntries({ fileName, sourceFile, resolveModule }: SourceEntryContext): ResolvedEntry[] {
   const defineFile = relative(packageDir, fileName);
   if (defineFile.endsWith('/compounds.ts')) return [];
 
   const source = publicModule(defineFile);
-  const targets: ResolvedTarget[] = [];
+  const entries: ResolvedEntry[] = [];
 
   for (const declaration of collectClassDeclarations(sourceFile)) {
     const name = declaration.name?.text;
     const tagName = readStaticStringProperty(declaration, 'tagName');
 
     if (name?.endsWith(elementSuffix) && tagName) {
-      targets.push(createTarget(defineFile, source, name, tagName));
+      entries.push(createEntry(defineFile, source, name, tagName));
     }
   }
 
@@ -37,20 +37,20 @@ export function resolveHtmlTargets({ fileName, sourceFile, resolveModule }: Sour
       const declaration = findClassDeclaration(imported.sourceFile, name);
       const tagName = declaration && readStaticStringProperty(declaration, 'tagName');
 
-      if (tagName) targets.push(createTarget(defineFile, source, name, tagName));
+      if (tagName) entries.push(createEntry(defineFile, source, name, tagName));
     }
   }
 
-  return targets;
+  return entries;
 }
 
-function createTarget(defineFile: string, source: string, className: string, tagName: string): ResolvedTarget {
+function createEntry(defineFile: string, source: string, className: string, tagName: string): ResolvedEntry {
   const name = className.slice(0, -elementSuffix.length);
 
   return {
     name,
-    priority: targetPriority(defineFile, name),
-    target: {
+    priority: entryPriority(defineFile, name),
+    entry: {
       tagName,
       import: { from: source, sideEffect: true },
     },
@@ -67,10 +67,10 @@ function kebabCase(value: string): string {
   return value.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
-function targetPriority(defineFile: string, name: string): number {
+function entryPriority(defineFile: string, name: string): number {
   const moduleName = basename(defineFile, '.ts');
-  const targetName = kebabCase(name);
+  const entryName = kebabCase(name);
 
-  if (moduleName === targetName) return 2;
-  return targetName.startsWith(`${moduleName}-`) ? 1 : 0;
+  if (moduleName === entryName) return 2;
+  return entryName.startsWith(`${moduleName}-`) ? 1 : 0;
 }

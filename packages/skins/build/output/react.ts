@@ -4,7 +4,7 @@ import { defineOutput, type StaticCatalogOutputAdapter } from 'vjsc/catalog';
 import { extendRegistry } from 'vjsc/components';
 import { registry as iconRegistry } from '../../../icons/vjsc/react';
 import { registry as reactRegistry } from '../../../react/vjsc';
-import { componentTransforms } from './react/components';
+import { componentTransforms } from './react/transform';
 
 export type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
 

@@ -1,74 +1,76 @@
 import type ts from 'typescript';
-import type { ComponentDefinition, ComponentRecord, ComponentSet, EmptyProps, InferProps } from '../definition';
+import type { ComponentDefinition, ComponentRecord, ComponentSchema, EmptyProps, InferProps } from '../definition';
 import type { Fragment, GroupProps, SlotProps, TemplateProps, TextProps } from '../jsx-runtime';
+import { createRegistryElement, REGISTRY_ENTRY } from './element';
+
+export { isRegistryElement } from './element';
 
 export const REGISTRY_NODE = Symbol.for('vjsc/registry-node');
-export const REGISTRY_TARGET = Symbol.for('vjsc/registry-target');
 export const REGISTRY_HOST = Symbol.for('vjsc/registry-host');
 
-export interface TargetNamedImport {
+export interface RegistryImport {
   readonly from: string;
   readonly name: string;
   readonly path?: readonly string[] | undefined;
 }
 
-export interface TargetSideEffectImport {
+export interface RegistrySideEffectImport {
   readonly from: string;
   readonly sideEffect: true;
 }
 
-export interface TargetPropsReference extends TargetNamedImport {
+export interface RegistryPropsReference extends RegistryImport {
   /** Intrinsic element passed as the imported type's single literal type argument. */
   readonly intrinsic?: string | undefined;
-  /** Target prop represented by authored children. Defaults to `children`. */
+  /** Entry prop represented by authored children. Defaults to `children`. */
   readonly children?: string | undefined;
 }
 
-interface TargetPropsMetadata {
-  /** Public props exposed by this framework target. */
-  readonly props?: TargetPropsReference | undefined;
+interface RegistryPropsMetadata {
+  /** Public props exposed by this registry entry. */
+  readonly props?: RegistryPropsReference | undefined;
 }
 
-export type TargetReference = TargetPropsMetadata &
+export type RegistryEntryReference = RegistryPropsMetadata &
   (
     | {
-        readonly import: TargetNamedImport;
+        readonly import: RegistryImport;
         readonly tagName?: never;
       }
     | {
         readonly tagName: string;
-        readonly import?: TargetSideEffectImport | undefined;
+        readonly import?: RegistrySideEffectImport | undefined;
       }
   );
 
-export interface TargetRenderDefinition<Props extends object = EmptyProps> extends TargetPropsMetadata {
+export interface RegistryRenderEntry<Props extends object = EmptyProps> extends RegistryPropsMetadata {
   readonly render: RegistryRender<Props>;
   readonly when?: RegistryCondition<Props> | undefined;
   readonly transform?: never;
 }
 
-/** Controls how a target-local AST transform materializes its authored children. */
-export interface TargetTransformRenderOptions {
+/** Controls how a registry-local AST transform materializes its authored children. */
+export interface RegistryTransformRenderOptions {
   readonly parameters?: readonly string[] | undefined;
   readonly spreadProps?: string | undefined;
 }
 
-/** Compiler context exposed to uncommon targets that cannot be expressed as registry JSX alone. */
-export interface TargetTransformContext<Props extends object = EmptyProps> extends RegistryRenderContext<Props> {
+/** Compiler context for uncommon entries that cannot be expressed as registry JSX alone. */
+export interface RegistryTransformContext<Props extends object = EmptyProps> extends RegistryRenderContext<Props> {
   readonly factory: ts.NodeFactory;
-  render(options?: TargetTransformRenderOptions): ts.Expression;
+  render(options?: RegistryTransformRenderOptions): ts.Expression;
 }
 
-export interface TargetTransformDefinition<Props extends object = EmptyProps> extends TargetPropsMetadata {
-  readonly transform: (context: TargetTransformContext<Props>) => ts.Expression;
+export interface RegistryTransformEntry<Props extends object = EmptyProps> extends RegistryPropsMetadata {
+  readonly transform: (context: RegistryTransformContext<Props>) => ts.Expression;
   readonly render?: never;
   readonly when?: never;
 }
 
-export type TargetDefinition<Props extends object = EmptyProps> =
-  | TargetReference
-  | TargetRenderDefinition<Props>
-  | TargetTransformDefinition<Props>;
+export type RegistryEntry<Props extends object = EmptyProps> =
+  | RegistryEntryReference
+  | RegistryRenderEntry<Props>
+  | RegistryTransformEntry<Props>;
 
 export interface RegistryNode {
   readonly [REGISTRY_NODE]: true;
@@ -77,16 +79,13 @@ export interface RegistryNode {
   readonly key: string | number | null;
 }
 
-export interface RegistryTarget {
-  /** Runtime target metadata; props are carried by `TargetComponent`. */
-  readonly [REGISTRY_TARGET]: TargetDefinition<any>;
-}
-
 export interface RegistryHost {
   readonly [REGISTRY_HOST]: true;
 }
 
-export interface TargetComponent<Props extends object = Record<string, unknown>> extends RegistryTarget {
+export interface RegistryElement<Props extends object = Record<string, unknown>> {
+  /** Entry metadata carried by a registry JSX reference. */
+  readonly [REGISTRY_ENTRY]: RegistryEntry<Props>;
   (props: Props & { children?: unknown }): RegistryNode;
 }
 
@@ -101,9 +100,14 @@ export const Host = Object.assign(
   { [REGISTRY_HOST]: true as const }
 );
 
-export type RegistryElementType = TargetComponent | HostComponent | typeof Fragment;
+export type RegistryElementType = RegistryElement | HostComponent | typeof Fragment;
 
-export interface RegistryRenderContext<Props extends object = EmptyProps> {
+export interface RegistryReferenceContext {
+  /** Create a JSX element for an additional entry used inside this render. */
+  reference<Props extends object = Record<string, unknown>>(entry: RegistryEntry<Props>): RegistryElement<Props>;
+}
+
+export interface RegistryRenderContext<Props extends object = EmptyProps> extends RegistryReferenceContext {
   readonly props: Props & { readonly children?: unknown };
   /** Return a deterministic identifier scoped to this canonical component occurrence. */
   id(name: string): string;
@@ -123,7 +127,7 @@ type PartCollections<Parts extends ComponentRecord, Root extends keyof Parts> = 
 export interface RegistryComponentContext<
   Parts extends ComponentRecord,
   Root extends keyof Parts & string = keyof Parts & string,
-> {
+> extends RegistryReferenceContext {
   readonly root: RegistryPart<InferProps<Parts[Root]>>;
   readonly parts: PartCollections<Parts, Root>;
   /** Return a deterministic identifier shared by every part in this component occurrence. */
@@ -134,24 +138,24 @@ export type RegistryRender<Props extends object = EmptyProps> = (context: Regist
 
 export type RegistryCondition<Props extends object = EmptyProps> = (context: RegistryRenderContext<Props>) => unknown;
 
-export interface RegistryHostedPart<Props extends object = EmptyProps> {
-  /** Physical target substituted for `<Host>` inside this part's render function. */
-  readonly host: TargetComponent;
+export interface RegistryHostedEntry<Props extends object = EmptyProps> {
+  /** Entry substituted for `<Host>` inside this render function. */
+  readonly host: RegistryEntry<any>;
   readonly render: RegistryRender<Props>;
 }
 
-export type RegistryPartTransform<Props extends object = EmptyProps> =
-  | RegistryTarget
+export type RegistryPartEntry<Props extends object = EmptyProps> =
+  | RegistryEntry<Props>
   | typeof Fragment
   | RegistryRender<Props>
-  | RegistryHostedPart<Props>;
+  | RegistryHostedEntry<Props>;
 
-type PartTransforms<Parts extends ComponentRecord> = {
-  readonly [Part in keyof Parts]: RegistryPartTransform<InferProps<Parts[Part]>>;
+type PartEntries<Parts extends ComponentRecord> = {
+  readonly [Part in keyof Parts]: RegistryPartEntry<InferProps<Parts[Part]>>;
 };
 
-type PartialPartTransforms<Parts extends ComponentRecord> = {
-  readonly [Part in keyof Parts]?: RegistryPartTransform<InferProps<Parts[Part]>>;
+type PartialPartEntries<Parts extends ComponentRecord> = {
+  readonly [Part in keyof Parts]?: RegistryPartEntry<InferProps<Parts[Part]>>;
 };
 
 type RegistryComponentRender<Parts extends ComponentRecord, Root extends keyof Parts & string> = (
@@ -161,25 +165,25 @@ type RegistryComponentRender<Parts extends ComponentRecord, Root extends keyof P
 export interface RegistryTemplate {
   /** Render the authored template through registry JSX. */
   readonly render: RegistryRender<Omit<TemplateProps, 'name'>>;
-  /** Template-local transforms keyed by `<Template.Part name>`. */
-  readonly parts?: Readonly<Record<string, RegistryPartTransform<Record<string, unknown>>>> | undefined;
+  /** Template-local entries keyed by `<Template.Part name>`. */
+  readonly parts?: Readonly<Record<string, RegistryPartEntry<any>>> | undefined;
 }
 
 export interface RegistryPrimitives {
-  readonly Group?: RegistryPartTransform<GroupProps> | undefined;
-  readonly Slot?: RegistryPartTransform<SlotProps> | undefined;
-  readonly Text?: RegistryPartTransform<TextProps> | undefined;
+  readonly Group?: RegistryPartEntry<GroupProps> | undefined;
+  readonly Slot?: RegistryPartEntry<SlotProps> | undefined;
+  readonly Text?: RegistryPartEntry<TextProps> | undefined;
   readonly Template?: Readonly<Record<string, RegistryTemplate>> | undefined;
 }
 
-export type RegistryTypeResolver = (name: string) => TargetNamedImport | false | undefined;
+export type RegistryTypeResolver = (name: string) => RegistryImport | false | undefined;
 
 export interface RegistryPropTransformContext {
   readonly name: string;
   readonly value: ts.Expression;
-  readonly target: TargetReference | undefined;
+  readonly entry: RegistryEntryReference | undefined;
   readonly factory: ts.NodeFactory;
-  import(reference: TargetNamedImport): ts.Identifier;
+  import(reference: RegistryImport): ts.Identifier;
 }
 
 export type RegistryPropTransform = (context: RegistryPropTransformContext) => ts.Expression | undefined;
@@ -202,43 +206,40 @@ type WholeComponentTransform<
 > = Definition['root'] extends keyof Parts & string
   ? {
       readonly render: RegistryComponentRender<Parts, Definition['root']>;
-      readonly parts?: PartialPartTransforms<Parts> | undefined;
+      readonly parts?: PartialPartEntries<Parts> | undefined;
       readonly imports?: readonly string[] | undefined;
     }
   : never;
 
-type CompoundRegistryEntry<
+type CompoundEntryFor<
   Definition extends ComponentDefinition<object, ComponentRecord | undefined>,
   Parts extends ComponentRecord,
 > =
-  | RegistryTargetTree<Definition>
+  | RegistryEntryTree<Definition>
   | {
-      readonly parts: PartTransforms<Parts>;
+      readonly parts: PartEntries<Parts>;
       readonly render?: never;
       readonly imports?: readonly string[] | undefined;
     }
   | WholeComponentTransform<Definition, Parts>;
 
-type LeafRegistryEntry<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> =
-  | RegistryTarget
-  | {
-      readonly render?: RegistryPartTransform<InferProps<Definition>> | undefined;
-      readonly imports?: readonly string[] | undefined;
-    };
+type LeafEntryFor<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = RegistryPartEntry<
+  InferProps<Definition>
+>;
 
-export type RegistryEntry<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = [
+type EntryFor<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = [
   DefinedParts<Definition>,
 ] extends [never]
-  ? LeafRegistryEntry<Definition>
-  : CompoundRegistryEntry<Definition, Extract<DefinedParts<Definition>, ComponentRecord>>;
+  ? LeafEntryFor<Definition>
+  : CompoundEntryFor<Definition, Extract<DefinedParts<Definition>, ComponentRecord>>;
 
 export type RegistryEntries<Definitions extends ComponentRecord> = {
-  readonly [Name in keyof Definitions]: RegistryEntry<Definitions[Name]>;
+  readonly [Name in keyof Definitions]: EntryFor<Definitions[Name]>;
 };
 
 export interface ComponentRegistryBinding {
-  readonly components: ComponentSet;
-  readonly targets: Readonly<Record<string, unknown>>;
+  readonly schema: ComponentSchema;
+  readonly entries: Readonly<Record<string, unknown>>;
 }
 
 export interface ComponentRegistry {
@@ -249,49 +250,33 @@ export interface ComponentRegistry {
 }
 
 export interface RegistryDefinition<Definitions extends ComponentRecord = ComponentRecord> extends RegistryOptions {
-  readonly components: ComponentSet<Definitions>;
-  readonly targets: RegistryEntries<NoInfer<Definitions>>;
+  readonly schema: ComponentSchema<Definitions>;
+  readonly entries: RegistryEntries<NoInfer<Definitions>>;
 }
 
-type RegistryTargetTree<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = [
+type RegistryEntryTree<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = [
   DefinedParts<Definition>,
 ] extends [never]
-  ? RegistryTarget
+  ? RegistryPartEntry<InferProps<Definition>>
   : {
-      readonly [Part in keyof DefinedParts<Definition>]: RegistryTargetTree<DefinedParts<Definition>[Part]>;
+      readonly [Part in keyof DefinedParts<Definition>]: RegistryEntryTree<DefinedParts<Definition>[Part]>;
     };
-
-export function defineTarget<Props extends object = Record<string, unknown>>(
-  definition: TargetDefinition<Props>
-): TargetComponent<Props> {
-  const target = (_props: Props & { children?: unknown }): RegistryNode => {
-    throw new Error('vjsc/components: target components can only be evaluated by the registry JSX runtime.');
-  };
-
-  return Object.assign(target, { [REGISTRY_TARGET]: definition });
-}
 
 export function defineElement<Props extends object = Record<string, unknown>>(
   tagName: string,
   options: {
-    readonly import?: TargetSideEffectImport | undefined;
-    readonly props?: TargetPropsReference | undefined;
+    readonly import?: RegistrySideEffectImport | undefined;
+    readonly props?: RegistryPropsReference | undefined;
   } = {}
-): TargetComponent<Props> {
-  return defineTarget({ tagName, ...options });
-}
-
-export function defineRegistryPart<Props extends object = EmptyProps>(
-  render: RegistryRender<Props>
-): RegistryRender<Props> {
-  return render;
+): RegistryElement<Props> & RegistryEntryReference {
+  return createRegistryElement<Props, RegistryEntryReference>({ tagName, ...options });
 }
 
 export function defineRegistry<const Definitions extends ComponentRecord>(
   definition: RegistryDefinition<Definitions>
 ): ComponentRegistry {
   return {
-    bindings: [{ components: definition.components, targets: definition.targets }],
+    bindings: [{ schema: definition.schema, entries: definition.entries }],
     ...(definition.props ? { props: definition.props } : {}),
     primitives: definition.primitives ?? {},
     ...(definition.types ? { types: definition.types } : {}),
@@ -319,8 +304,4 @@ export function extendRegistry<const Definitions extends ComponentRecord>(
 
 export function isHost(value: unknown): value is HostComponent {
   return typeof value === 'function' && REGISTRY_HOST in value;
-}
-
-export function isTargetComponent(value: unknown): value is TargetComponent {
-  return typeof value === 'function' && REGISTRY_TARGET in value;
 }

@@ -1,4 +1,4 @@
-import { components } from '@videojs/core/vjsc';
+import { schema } from '@videojs/core/vjsc';
 import { defineCatalog } from 'vjsc/catalog';
 
 const resources = {
@@ -19,7 +19,7 @@ const resources = {
 
 /** Canonical Skin source catalog shared by package, registry, and future documentation outputs. */
 export const skinCatalog = defineCatalog({
-  components: [components.source, '@videojs/icons/vjsc'],
+  components: [schema.source, '@videojs/icons/vjsc'],
   resources,
   allowedImports: [
     '@videojs/core',

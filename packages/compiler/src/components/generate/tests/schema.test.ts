@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { generateComponents, parseGenerateComponentsConfig } from '../components';
+import { generateSchema, parseGenerateSchemaConfig } from '../schema';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 
@@ -30,12 +30,12 @@ function setup(): { dir: string; output: string; pattern: string } {
   return { dir, output: join(dir, 'out.ts'), pattern: join(dir, '*/*-component.ts') };
 }
 
-describe('generateComponents', () => {
+describe('generateSchema', () => {
   it('emits deterministic component exports and metadata from manifests', () => {
     const { dir, output, pattern } = setup();
-    const config = { source: '@fixture/components', components: [pattern], output };
-    const first = generateComponents(config, { cwd: dir });
-    const second = generateComponents(config, { cwd: dir });
+    const config = { source: '@fixture/components', files: [pattern], output };
+    const first = generateSchema(config, { cwd: dir });
+    const second = generateSchema(config, { cwd: dir });
 
     expect(first.changed).toBe(true);
     expect(second.changed).toBe(false);
@@ -46,7 +46,7 @@ describe('generateComponents', () => {
     expect(first.code).toContain('export const Slider = createComponent(SliderDef);');
     expect(first.code).toContain('PlayButton: PlayButtonDef,');
     expect(first.code).toContain('Slider: SliderDef,');
-    expect(first.code).toContain("export const components = defineComponents('@fixture/components', COMPONENTS);");
+    expect(first.code).toContain("export const schema = defineSchema('@fixture/components', DEFINITIONS);");
   });
 
   it('fails check mode when generated output is stale', () => {
@@ -54,7 +54,7 @@ describe('generateComponents', () => {
     writeFileSync(output, '// stale\n');
 
     expect(() =>
-      generateComponents({ source: '@fixture/components', components: [pattern], output }, { cwd: dir, check: true })
+      generateSchema({ source: '@fixture/components', files: [pattern], output }, { cwd: dir, check: true })
     ).toThrow('Generated file is stale');
   });
 
@@ -66,9 +66,9 @@ describe('generateComponents', () => {
       `${STUB} export default defineComponent({ name: 'Slider' });`
     );
 
-    expect(() =>
-      generateComponents({ source: '@fixture/components', components: [pattern], output }, { cwd: dir })
-    ).toThrow('Duplicate component name: Slider');
+    expect(() => generateSchema({ source: '@fixture/components', files: [pattern], output }, { cwd: dir })).toThrow(
+      'Duplicate component name: Slider'
+    );
   });
 
   it('supports generated components derived from non-manifest files', () => {
@@ -77,10 +77,10 @@ describe('generateComponents', () => {
     writeFileSync(join(dir, 'icons', 'play.svg'), '<svg/>');
     writeFileSync(join(dir, 'icons', 'pause.svg'), '<svg/>');
 
-    const result = generateComponents(
+    const result = generateSchema(
       {
         source: '@fixture/icons',
-        components: [
+        files: [
           {
             files: join(dir, 'icons/*.svg'),
             name: (filename) => `${filename[0]!.toUpperCase()}${filename.slice(1)}Icon`,
@@ -96,8 +96,8 @@ describe('generateComponents', () => {
   });
 
   it('validates loaded config values', () => {
-    expect(() => parseGenerateComponentsConfig({ source: '', components: [], output: '' }, 'fixture')).toThrow(
-      'Invalid component generator config fixture'
+    expect(() => parseGenerateSchemaConfig({ source: '', files: [], output: '' }, 'fixture')).toThrow(
+      'Invalid component schema generator config fixture'
     );
   });
 });

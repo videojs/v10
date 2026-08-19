@@ -1,11 +1,11 @@
-import { components } from '@videojs/core/vjsc';
+import { schema } from '@videojs/core/vjsc';
 import { defineConfig } from 'vjsc';
 
 export default defineConfig({
   generate: {
-    target: {
-      components,
-      output: './vjsc/components.generated.ts',
+    entries: {
+      schema,
+      output: './vjsc/entries.generated.ts',
 
       resolve({ component, part }) {
         // React exposes Menu.SubmenuTrigger through Menu.Trigger.

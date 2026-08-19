@@ -1,8 +1,8 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/components/registry */
 
-import { defineRegistry, defineTarget } from 'vjsc/components';
-import { components, resolveTargets } from './components.generated';
+import { defineElement, defineRegistry } from 'vjsc/components';
+import * as $ from './schema.generated';
 
 export interface HtmlIconRegistryOptions {
   family?: string | undefined;
@@ -12,8 +12,7 @@ export interface HtmlIconRegistryOptions {
 export function registry(options: HtmlIconRegistryOptions = {}) {
   const family = options.family ?? 'default';
   const source = family === 'default' ? '@videojs/html/icons/element' : `@videojs/html/icons/element/${family}`;
-  const Icon = defineTarget({
-    tagName: 'media-icon',
+  const Icon = defineElement('media-icon', {
     import: {
       from: source,
       sideEffect: true,
@@ -21,11 +20,9 @@ export function registry(options: HtmlIconRegistryOptions = {}) {
   });
 
   return defineRegistry({
-    components,
-    targets: resolveTargets((_component, name) =>
-      defineTarget({
-        render: ({ props }) => <Icon {...props} {...(family === 'default' ? {} : { family })} name={name} />,
-      })
-    ),
+    schema: $.schema,
+    entries: $.mapEntries((_component, name) => ({
+      render: ({ props }) => <Icon {...props} {...(family === 'default' ? {} : { family })} name={name} />,
+    })),
   });
 }

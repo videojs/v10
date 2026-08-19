@@ -7,21 +7,21 @@ export {
   type OutputFile,
 } from './build';
 export type {
+  GenerateEntriesConfig,
+  GenerateSchemaEntriesConfig,
+  GenerateSourceEntriesConfig,
+  ResolvedEntry,
+  ResolvedSourceModule,
+  SchemaEntryContext,
+  SchemaEntryResolver,
+  SourceEntryContext,
+  SourceEntryResolver,
+} from './components/generate/entries';
+export type {
   ComponentFileSet,
   ComponentSource,
-  GenerateComponentsConfig,
-} from './components/generate/components';
-export type {
-  ComponentTargetContext,
-  ComponentTargetResolver,
-  GenerateComponentTargetConfig,
-  GenerateSourceTargetConfig,
-  GenerateTargetConfig,
-  ResolvedSourceModule,
-  ResolvedTarget,
-  SourceTargetContext,
-  SourceTargetResolver,
-} from './components/generate/target';
+  GenerateSchemaConfig,
+} from './components/generate/schema';
 export {
   type CompilerAsset,
   type CompilerBuildConfig,

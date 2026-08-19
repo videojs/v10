@@ -8,6 +8,8 @@ interface HtmlOutputOptions {
   iconSet?: string | undefined;
 }
 
+export type HTMLImportResolver = (reference: string) => string;
+
 /** Create the bundled HTML output adapter for a Skin catalog. */
 export function htmlOutput(options: HtmlOutputOptions = {}): StaticCatalogOutputAdapter {
   const registry = extendRegistry(htmlRegistry, iconRegistry({ family: options.iconSet ?? 'default' }));
