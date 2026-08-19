@@ -25,22 +25,21 @@ import type { ComponentProps } from 'react';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { VideoPlayer, VideoSkin } from '@videojs/react/video';
 
-type PosterImageProps = Omit<ComponentProps<typeof NextImage>, 'alt' | 'src'> & {
-  alt?: string;
-  src?: string;
-};
-
-function PosterImage({ alt = '', src, ...props }: PosterImageProps) {
-  if (!src) return null;
-  return <NextImage {...props} src={src} alt={alt} />;
-}
-
 export function MyPlayer() {
   return (
     <VideoPlayer>
       <VideoSkin
-        renderPoster={
-          <PosterImage fill placeholder="blur" blurDataURL="data:image/webp;base64,…" />
+        renderPoster={({ src, ...props }: ComponentProps<'img'>) =>
+          src ? (
+            <NextImage
+              {...props}
+              src={src}
+              alt=""
+              fill
+              placeholder="blur"
+              blurDataURL="data:image/webp;base64,…"
+            />
+          ) : null
         }
       >
         <MuxVideo
@@ -55,7 +54,7 @@ export function MyPlayer() {
 
 Next.js generates blur data for static imports. Because this poster URL arrives at runtime, pass `blurDataURL` yourself.
 
-The element shorthand above is equivalent to `renderPoster={(props) => <PosterImage {...props} />}`.
+`src` is `undefined` until the media resolves a poster, and `next/image` requires one, so gate on it.
 
 ## Use a plain image
 
