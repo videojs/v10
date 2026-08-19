@@ -332,6 +332,23 @@ describe('createSlider', () => {
 
       slider.destroy();
     });
+
+    it('preserves mouse hover when a stale pointermove precedes lostpointercapture', () => {
+      const onDragEnd = vi.fn();
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el, onDragEnd }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
+      firePointerUp(slider, { clientX: 100 });
+      firePointerMove(slider, { clientX: 100, buttons: 0 });
+      fireLostPointerCapture(slider);
+      flush();
+
+      expect(slider.input.current.pointing).toBe(true);
+      expect(onDragEnd).toHaveBeenCalledOnce();
+
+      slider.destroy();
+    });
   });
 
   describe('pointer: lostpointercapture', () => {

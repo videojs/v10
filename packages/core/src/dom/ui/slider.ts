@@ -125,20 +125,18 @@ export function createSlider(options: SliderOptions): SliderApi {
   }
 
   function endDrag(): void {
+    if (!isDragging) return;
+
     const pointing = committedOnRelease && pointingOnRelease;
 
-    if (!isDragging) {
-      input.patch({ pointing });
-    } else {
-      // Fire a final commit if pointerup didn't already handle it.
-      if (!committedOnRelease) {
-        options.onValueCommit?.(lastDragPercent);
-      }
-
-      isDragging = false;
-      input.patch({ dragging: false, pointing });
-      options.onDragEnd?.();
+    // Fire a final commit if pointerup didn't already handle it.
+    if (!committedOnRelease) {
+      options.onValueCommit?.(lastDragPercent);
     }
+
+    isDragging = false;
+    input.patch({ dragging: false, pointing });
+    options.onDragEnd?.();
 
     committedOnRelease = false;
     pointingOnRelease = false;

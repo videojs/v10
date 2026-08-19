@@ -186,7 +186,7 @@ export const slider = {
   preview: cn(
     baseSlider.preview,
     '[--preview-end-inset:calc(100cqi-100%)]',
-    '[--preview-left:clamp(calc(var(--max-width)/2),var(--media-slider-pointer),calc(100%-var(--max-width)/2+var(--preview-end-inset)))]',
+    '[--preview-left:clamp(calc(var(--max-size)/2),var(--media-slider-pointer),calc(100%-var(--max-size)/2+var(--preview-end-inset)))]',
     '@2xl/media-root:[--preview-left:var(--media-slider-pointer)]'
   ),
 };

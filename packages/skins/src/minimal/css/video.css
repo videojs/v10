@@ -302,9 +302,9 @@
 .media-minimal-skin--video .media-slider .media-slider__preview {
   --preview-end-inset: calc(100cqi - 100%);
   --preview-left: clamp(
-    calc(var(--max-width) / 2),
+    calc(var(--max-size) / 2),
     var(--media-slider-pointer),
-    calc(100% - var(--max-width) / 2 + var(--preview-end-inset))
+    calc(100% - var(--max-size) / 2 + var(--preview-end-inset))
   );
 
   @container media-root (width > 42rem) {

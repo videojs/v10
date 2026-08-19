@@ -1,7 +1,7 @@
 import { cn } from '@videojs/utils/style';
 
 const previewContent = cn(
-  'absolute left-1/2 max-w-(--max-width)',
+  'absolute left-1/2 max-w-(--max-size)',
   '-translate-x-1/2 translate-y-2 scale-80 opacity-0 blur-lg origin-bottom',
   'transition-[filter,opacity,scale] duration-150 ease-out',
   'group-data-pointing/slider:scale-100 group-data-pointing/slider:opacity-100',
@@ -105,22 +105,25 @@ export const slider = {
     ),
   },
   preview: cn(
-    '[--max-width-factor:36]',
-    '[--max-width:min(calc(var(--spacing)*var(--max-width-factor)),100cqi)]',
-    '[--max-height:calc(var(--max-width)*(100cqb/100cqi))]',
-    '@2xl/media-root:[--max-width-factor:48]',
-    'min-w-(--max-width) h-1',
+    '[--max-size-factor:36]',
+    '[--max-size:min(calc(var(--spacing)*var(--max-size-factor)),100cqi)]',
+    '@2xl/media-root:[--max-size-factor:48]',
+    'min-w-(--max-size) h-1',
     'before:absolute before:z-1 before:top-1/2 before:left-1/2 before:size-1 before:bg-current before:rounded-full before:pointer-events-none',
     'before:shadow-[0_0_0_1px_var(--shadow-current-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
     'before:transition-[opacity,scale] before:duration-200 before:ease-out',
     'data-pointing:not-data-dragging:before:opacity-100 data-pointing:not-data-dragging:before:scale-100'
   ),
-  thumbnail: cn(previewContent, '[--thumbnail-max-width:var(--max-width)] [bottom:calc(100%+--spacing(9))]'),
+  thumbnail: cn(
+    previewContent,
+    '[--thumbnail-max-width:var(--max-size)] [--thumbnail-max-height:var(--max-size)]',
+    '[bottom:calc(100%+--spacing(9))]'
+  ),
   value: cn(
     previewContent,
     '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums',
     'text-shadow-2xs text-shadow-(color:--shadow-current-color)'
   ),
-  chapterTitle: 'min-w-0 max-w-(--max-width) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
+  chapterTitle: 'min-w-0 max-w-(--max-size) px-6 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };

@@ -1,7 +1,7 @@
 import { cn } from '@videojs/utils/style';
 
 const previewContent = cn(
-  'absolute [left:var(--preview-left,var(--media-slider-pointer))] max-w-(--max-width)',
+  'absolute [left:var(--preview-left,var(--media-slider-pointer))] max-w-(--max-size)',
   '-translate-x-1/2 translate-y-2 scale-80 opacity-0 blur-lg origin-bottom',
   'transition-[filter,opacity,scale] duration-150 ease-out',
   'group-data-pointing/slider:scale-100 group-data-pointing/slider:opacity-100',
@@ -84,6 +84,7 @@ export const slider = {
       'group-active/slider:size-3.5',
       'outline-2 outline-transparent -outline-offset-2',
       'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2',
+      'focus-visible:opacity-100 focus-visible:scale-100',
       // Horizontal
       'data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:left-(--media-slider-fill,0)',
       'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
@@ -95,10 +96,9 @@ export const slider = {
     interactive: cn('pointer-fine:group-hover/slider:opacity-100 pointer-fine:group-hover/slider:scale-100'),
   },
   preview: cn(
-    '[--max-width-factor:28]',
-    '[--max-width:min(calc(var(--spacing)*var(--max-width-factor)),100cqi)]',
-    '[--max-height:calc(var(--max-width)*(100cqb/100cqi))]',
-    '@lg/media-root:[--max-width-factor:36] @2xl/media-root:[--max-width-factor:48]',
+    '[--max-size-factor:28]',
+    '[--max-size:min(calc(var(--spacing)*var(--max-size-factor)),100cqi)]',
+    '@lg/media-root:[--max-size-factor:36] @2xl/media-root:[--max-size-factor:48]',
     'min-w-full h-1',
     'before:absolute before:z-1 before:bg-current/35 before:pointer-events-none',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
@@ -109,7 +109,11 @@ export const slider = {
     'data-[orientation=vertical]:before:top-[calc(100%-var(--media-slider-pointer))] data-[orientation=vertical]:before:left-1/2',
     'data-[orientation=vertical]:before:w-5 data-[orientation=vertical]:before:h-px'
   ),
-  thumbnail: cn(previewContent, '[--thumbnail-max-width:var(--max-width)] [bottom:calc(100%+--spacing(11))]'),
+  thumbnail: cn(
+    previewContent,
+    '[--thumbnail-max-width:var(--max-size)] [--thumbnail-max-height:var(--max-size)]',
+    '[bottom:calc(100%+--spacing(11))]'
+  ),
   value: cn(
     previewContent,
     '[bottom:calc(100%+--spacing(5))] flex flex-row-reverse justify-center gap-2 px-3 tabular-nums',
