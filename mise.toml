@@ -1,0 +1,30 @@
+# Optional convenience for contributors who use mise (https://mise.jdx.dev).
+#
+# mise is not required. `.node-version`/`.nvmrc` (Node) and `packageManager`
+# (pnpm) stay the source of truth, so nvm, Volta, and CI never drift from this
+# file. See "Using mise" in CONTRIBUTING.md.
+min_version = "2025.1.0"
+
+[settings]
+# Resolve Node from `.nvmrc`/`.node-version` instead of duplicating the pin.
+# Idiomatic version files are opt-in per project, and older mise releases spell
+# this setting differently — `min_version` above turns that into a loud error
+# rather than a silently unpinned Node.
+idiomatic_version_file_enable_tools = ["node"]
+
+[tools]
+# Mirrors `packageManager` in package.json; `pnpm check:workspace` enforces it.
+# Node is deliberately absent — see `[settings]` above.
+pnpm = "11.17.0"
+
+[env]
+# Expose workspace binaries (biome, turbo, tsgo, prettier, tsx) directly, so
+# they can be invoked without a `pnpm exec` prefix.
+_.path = ["{{config_root}}/node_modules/.bin"]
+
+# Personal, gitignored overrides. Skipped when the file does not exist.
+_.file = { path = ".env.local", redact = true }
+
+[tasks.setup]
+description = "Install dependencies and build workspace packages"
+run = ["pnpm install", "pnpm build:packages"]
