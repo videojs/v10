@@ -42,8 +42,8 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
   // tab (cdn when available, else npm). That reset swaps in new DOM nodes rather
   // than toggling `data-tab-active` on existing ones, so the observer above
   // doesn't catch it — sync the store explicitly. Without this, a stale `cdn`
-  // can survive onto a renderer with no CDN build (e.g. Vimeo), where the usage
-  // block would then wrongly drop its required JS import lines.
+  // can survive onto a renderer with no CDN build, where the usage block would
+  // then wrongly drop its required JS import lines.
   useEffect(() => {
     installMethod.set(supportsCdn ? 'cdn' : 'npm');
   }, [supportsCdn]);

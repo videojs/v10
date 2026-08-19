@@ -22,6 +22,11 @@ export interface PosterState {
   error: boolean;
 }
 
+/** Framework-neutral poster component props. */
+export interface PosterProps {
+  src?: string | undefined;
+}
+
 /**
  * Turns playback and metadata into poster presentation state.
  *

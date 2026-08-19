@@ -26,9 +26,9 @@ import { PlayerController } from '../../player/player-controller';
 import { popupGroupContext } from '../../player/popup-group-context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
-import { type MenuContextValue, type MenuTriggerMetadata, menuContext } from './context';
+import { type MenuContextValue, type MenuTriggerState, menuContext } from './context';
 
-const defaultTriggerMetadata: MenuTriggerMetadata = {
+const defaultTriggerState: MenuTriggerState = {
   hint: '',
   disabled: false,
 };
@@ -72,8 +72,8 @@ export class MenuElement extends MediaElement {
   #triggerAbort: AbortController | null = null;
   #cleanupSizeObserver: (() => void) | null = null;
   #currentTrigger: HTMLElement | null = null;
-  #metadataTrigger: HTMLElement | null = null;
-  #triggerMetadata = defaultTriggerMetadata;
+  #stateTrigger: HTMLElement | null = null;
+  #triggerState = defaultTriggerState;
   #releaseControlsLock: (() => void) | null = null;
   #registeredParentMenu: MenuApi | null = null;
   #cleanupParentRegistration: (() => void) | null = null;
@@ -126,7 +126,7 @@ export class MenuElement extends MediaElement {
     super.disconnectedCallback();
     this.#cleanupSizeObserver?.();
     this.#cleanupSizeObserver = null;
-    this.#syncTriggerMetadata(null);
+    this.#syncTriggerState(null);
     this.#cleanupTrigger();
     this.#cleanupParentRegistration?.();
     this.#cleanupParentRegistration = null;
@@ -151,7 +151,6 @@ export class MenuElement extends MediaElement {
     if (!this.hasUpdated && this.defaultOpen && !this.open) this.open = true;
 
     const parentCtx = this.#parentCtx.value ?? null;
-    const isSubmenu = parentCtx !== null;
     this.#syncParentRegistration(parentCtx);
 
     this.#core.setProps({
@@ -161,7 +160,6 @@ export class MenuElement extends MediaElement {
       align: this.align,
       closeOnEscape: this.closeOnEscape,
       closeOnOutsideClick: this.closeOnOutsideClick,
-      isSubmenu,
     });
 
     if (this.#menu && changed.has('open')) {
@@ -177,7 +175,7 @@ export class MenuElement extends MediaElement {
     const isSubmenu = parentCtx !== null;
 
     const input = this.#menu.input.current;
-    this.#core.setInput(input);
+    this.#core.setInput({ ...input, isSubmenu });
     const state = this.#core.getState();
 
     if (!isSubmenu && state.open) {
@@ -197,7 +195,7 @@ export class MenuElement extends MediaElement {
       menu: this.#menu,
       state,
       stateAttrMap: MenuDataAttrs,
-      setTriggerMetadata: this.#setTriggerMetadata,
+      setTriggerState: this.#setTriggerState,
     });
   }
 
@@ -270,7 +268,7 @@ export class MenuElement extends MediaElement {
 
     this.#menu?.setTriggerElement(triggerElement ?? null);
     if (triggerElement) applyElementProps(triggerElement, this.#core.getTriggerAttrs(state, this.id));
-    this.#syncTriggerMetadata(triggerElement ?? null);
+    this.#syncTriggerState(triggerElement ?? null);
 
     this.removeAttribute(MenuDataAttrs.side);
     this.removeAttribute(MenuDataAttrs.align);
@@ -328,40 +326,40 @@ export class MenuElement extends MediaElement {
     this.#menu?.contentProps.onFocusOut(event);
   };
 
-  #setTriggerMetadata = (metadata: MenuTriggerMetadata): void => {
+  #setTriggerState = (triggerState: MenuTriggerState): void => {
     if (
-      metadata.hint === this.#triggerMetadata.hint &&
-      metadata.disabled === this.#triggerMetadata.disabled &&
-      metadata.availability === this.#triggerMetadata.availability
+      triggerState.hint === this.#triggerState.hint &&
+      triggerState.disabled === this.#triggerState.disabled &&
+      triggerState.availability === this.#triggerState.availability
     ) {
       return;
     }
 
-    this.#triggerMetadata = metadata;
-    if (metadata.disabled && this.open && this.#parentCtx.value) this.close('imperative-action');
+    this.#triggerState = triggerState;
+    if (triggerState.disabled && this.open && this.#parentCtx.value) this.close('imperative-action');
     this.requestUpdate();
   };
 
-  #syncTriggerMetadata(trigger: HTMLElement | null): void {
-    if (trigger !== this.#metadataTrigger) {
-      this.#clearTriggerMetadata();
-      this.#metadataTrigger = trigger;
+  #syncTriggerState(trigger: HTMLElement | null): void {
+    if (trigger !== this.#stateTrigger) {
+      this.#clearTriggerState();
+      this.#stateTrigger = trigger;
     }
 
     if (!trigger) return;
 
-    const disabled = this.#triggerMetadata.disabled || isTriggerExplicitlyDisabled(trigger);
+    const disabled = this.#triggerState.disabled || isTriggerExplicitlyDisabled(trigger);
     applyElementProps(trigger, {
       'aria-disabled': disabled ? 'true' : undefined,
-      'data-availability': this.#triggerMetadata.availability,
+      'data-availability': this.#triggerState.availability,
     });
 
     const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
-    if (hint && hint.textContent !== this.#triggerMetadata.hint) hint.textContent = this.#triggerMetadata.hint;
+    if (hint && hint.textContent !== this.#triggerState.hint) hint.textContent = this.#triggerState.hint;
   }
 
-  #clearTriggerMetadata(): void {
-    const trigger = this.#metadataTrigger;
+  #clearTriggerState(): void {
+    const trigger = this.#stateTrigger;
     if (!trigger) return;
 
     applyElementProps(trigger, {
@@ -371,7 +369,7 @@ export class MenuElement extends MediaElement {
 
     const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
     if (hint?.textContent) hint.textContent = '';
-    this.#metadataTrigger = null;
+    this.#stateTrigger = null;
   }
 
   #syncTrigger(triggerElement: HTMLElement | null): void {

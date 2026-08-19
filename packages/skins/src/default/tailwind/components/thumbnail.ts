@@ -7,7 +7,7 @@ export const thumbnail = {
     'has-data-loading:aspect-video has-data-loading:overflow-hidden'
   ),
   image: cn(
-    'relative block max-w-(--thumbnail-max-width) max-h-(--max-height) overflow-clip rounded-[inherit]',
+    'relative block max-w-(--thumbnail-max-width) max-h-(--thumbnail-max-height) overflow-clip rounded-[inherit]',
     'transition-opacity duration-150 ease-out',
     'after:absolute after:inset-0 after:rounded-[inherit]',
     'after:bg-linear-to-t after:from-black/50 after:via-black/10 after:to-black/0',

@@ -8,6 +8,10 @@ on:
     branches-ignore:
       - 'rfc/**'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   install:
     runs-on: ubuntu-latest
@@ -86,10 +90,9 @@ jobs:
       matrix:
         package:
           - '@videojs/cli'
-          - '@videojs/compiler'
+          - 'vjsc'
           - '@videojs/core'
           - '@videojs/icons'
-          - '@videojs/jsx'
           - '@videojs/media'
           - '@videojs/skins'
           - '@videojs/store'

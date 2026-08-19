@@ -157,7 +157,7 @@ function CaptionsTrigger(): ReactNode {
       <Tooltip.Root side="top">
         <Tooltip.Trigger
           render={
-            <CaptionsButton className={iconState.captions.button} render={<Button />}>
+            <CaptionsButton className={cn(button.captions, iconState.captions.button)} render={<Button />}>
               <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
               <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
             </CaptionsButton>
@@ -176,7 +176,7 @@ function CaptionsTrigger(): ReactNode {
       <Menu.Trigger
         disabled={disabled}
         render={
-          <CaptionsButton className={iconState.captions.button} render={<Button />}>
+          <CaptionsButton className={cn(button.captions, iconState.captions.button)} render={<Button />}>
             <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
             <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
           </CaptionsButton>

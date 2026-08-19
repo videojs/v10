@@ -22,6 +22,7 @@ export const button = {
   ),
   icon: cn('grid aspect-square p-0!', 'not-aria-disabled:active:scale-[0.97]'),
   seek: hideAtSmall,
+  captions: hideAtSmall,
   /**
    * Live variant: wide pill button with a status dot rendered via `::before`
    * (gray → red at the live edge) and "LIVE" as the button's own text.

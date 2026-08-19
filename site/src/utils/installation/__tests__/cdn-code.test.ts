@@ -75,7 +75,7 @@ describe('rendererSupportsCdn', () => {
     expect(rendererSupportsCdn('mux-audio', manifest)).toBe(true);
   });
 
-  it('returns false for vimeo, which has no CDN build', () => {
+  it('returns false for a media renderer absent from the manifest', () => {
     expect(rendererSupportsCdn('vimeo', manifest)).toBe(false);
   });
 });

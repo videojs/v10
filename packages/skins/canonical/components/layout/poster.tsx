@@ -1,11 +1,12 @@
-import { Poster as PosterPrimitive } from '@videojs/core/components';
-import { Slot } from '@videojs/jsx';
-import styles from '../../styles/components/poster.tailwind';
+import type { PosterProps as CoreProps } from '@videojs/core';
+import * as $ from '@videojs/core/vjsc';
+import { type PropsWithChildren, Slot } from 'vjsc/components';
+import styles from '../../styles/components/poster.styles';
 
-export function Poster() {
+export function Poster({ children, className, src, ...props }: PropsWithChildren<CoreProps> = {}) {
   return (
-    <PosterPrimitive className={styles.poster}>
-      <Slot name="poster" />
-    </PosterPrimitive>
+    <$.Poster className={[styles.root, className]} src={src} {...props}>
+      <Slot name="poster">{children}</Slot>
+    </$.Poster>
   );
 }

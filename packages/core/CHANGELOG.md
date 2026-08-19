@@ -1,5 +1,27 @@
 # Changelog
 
+## [10.0.0-beta.28](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.27...@videojs/core@10.0.0-beta.28) (2026-08-19)
+
+
+### Features
+
+* **core:** prefer locale-matched captions on toggle ([#2237](https://github.com/videojs/v10/issues/2237)) ([8f2eb78](https://github.com/videojs/v10/commit/8f2eb782603bb14b99d03ec5565a2c9a6f894e7f))
+
+
+### Bug Fixes
+
+* **core:** improve Bengali translations ([#2236](https://github.com/videojs/v10/issues/2236)) ([163d37d](https://github.com/videojs/v10/commit/163d37db01fe78f1b9b768451e4d0436f6aa8fae))
+* **core:** include menu triggers in tab order ([#2238](https://github.com/videojs/v10/issues/2238)) ([8eebaef](https://github.com/videojs/v10/commit/8eebaefc1b2438ea45b1b28df09ef6aef2b2bde6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.28
+    * @videojs/store bumped to 10.0.0-beta.28
+    * @videojs/utils bumped to 10.0.0-beta.28
+
 ## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.26...@videojs/core@10.0.0-beta.27) (2026-08-17)
 
 

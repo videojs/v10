@@ -1,4 +1,16 @@
-export { type BuildOptions, type BuildResult, build, type OutputFile } from './build';
+export {
+  type BuildOptions,
+  type BuildResult,
+  build,
+  type OutputAssetFile,
+  type OutputChunkFile,
+  type OutputFile,
+} from './build';
+export type {
+  ComponentFileSet,
+  ComponentSource,
+  GenerateSchemaConfig,
+} from './components/generate/schema';
 export {
   type CompilerAsset,
   type CompilerBuildConfig,
@@ -6,6 +18,7 @@ export {
   type CompilerContext,
   type CompilerDiagnostic,
   type CompilerExternal,
+  type CompilerGenerateConfig,
   type CompilerInput,
   type CompilerOutputOptions,
   type CompilerPipelineStep,
@@ -44,6 +57,7 @@ export {
   shouldUseColor,
   withDiagnosticSource,
 } from './diagnostics';
+export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './jsx/editor';
 export {
   CONFIG_FILENAMES,
   findConfig,
@@ -54,6 +68,17 @@ export {
   loadConfig,
   loadConfigFile,
 } from './load-config';
+export type {
+  GenerateEntriesConfig,
+  GenerateSchemaEntriesConfig,
+  GenerateSourceEntriesConfig,
+  ResolvedEntry,
+  ResolvedSourceModule,
+  SchemaEntryContext,
+  SchemaEntryResolver,
+  SourceEntryContext,
+  SourceEntryResolver,
+} from './registry/generate/entries';
 export {
   type ConstStatementOptions,
   type FunctionPropSpec,
@@ -80,7 +105,6 @@ export {
   type MatchPredicate,
   type ModuleSelection,
   type RewriteCallback,
-  type RewriteOptions,
   rewrite,
   type ScopedJsxElementSelection,
   type ScopedJsxHelpers,

@@ -232,6 +232,29 @@ const SOURCE_MAP = {
     subType: 'mp4',
     live: true,
   },
+  /**
+   * A 4K ladder over HLS, and the default source for the SPF background presets.
+   *
+   * Deliberately *not* the clip {@link BACKGROUND_VIDEO_SRC} plays: the rendition
+   * ladder has to straddle a real screen for the screen-resolution cap to have
+   * anything to choose between. Its rungs run 640x360 → 3838x2160, so a display
+   * under the top rung caps to 2558x1440 instead. (Those off-by-two widths are the
+   * source's near-square pixel aspect ratio, not a typo, and they are the reason
+   * the cap compares pixel areas rather than matching `1920x1080`-style tiers.)
+   * Video-only — the source carries no audio track.
+   *
+   * CMAF/fMP4, because SPF appends fMP4 segments directly and does no MPEG-TS
+   * transmuxing. Packaging follows the video quality tier — `premium` yields CMAF,
+   * while `plus`/`basic` (legacy `encoding_tier: smart`) yield MPEG-TS — which is
+   * also why a 4K ladder needs `max_resolution_tier: '2160p'` alongside
+   * `video_quality: 'premium'`.
+   */
+  'hls-4k': {
+    label: 'HLS - Short 4K UHD 2160p',
+    url: 'https://stream.mux.com/SfAaZ9InpM8FMfky7DkNBuTpxEDqU8Jchpa49urOWcs.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+  },
   'hls-audio-only-cmaf': {
     label: 'HLS - Audio only (CMAF/fmp4)',
     url: 'https://stream.mux.com/2NEjLyf6ETnskbfAtbM00Vdzb97B00OKUUQcRD6LZpBRw.m3u8',
@@ -329,22 +352,31 @@ export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'd
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
 export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
 export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
+/**
+ * Where the SPF background presets land when entered. The 4K ladder rather than
+ * {@link DEFAULT_SOURCE}, which is MPEG-TS and so is a failure case for this
+ * engine rather than a demo of it.
+ */
+export const DEFAULT_BACKGROUND_SOURCE: SourceId = 'hls-4k';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';
 
 /**
- * The same clip as {@link BACKGROUND_VIDEO_SRC} over HLS, for the SPF-backed
- * `<hls-background-video>` and its `<mux-background-video>` alias. Re-ingested
- * from that asset's `high.mp4` rendition.
+ * Add Mux's rendition cap to a stream URL, the param `<mux-background-video>`
+ * exists to demonstrate. Merged rather than appended, since a sandbox source may
+ * already carry params of its own (clip bounds, a playback token).
  *
- * Must be a **CMAF/fMP4** asset: SPF appends fMP4 segments directly and does no
- * MPEG-TS transmuxing, so a TS-packaged playback ID surfaces the
- * unsupported-container error instead of playing. Packaging follows the video
- * quality tier — `premium` yields CMAF, while `plus`/`basic` (legacy
- * `encoding_tier: smart`) yield MPEG-TS — which is why this is a separate asset
- * rather than the `.m3u8` of the one above.
+ * Left alone when the URL is signed: Mux validates the whole query against the
+ * token, so a param added beside one answers 403 instead of capping — which would
+ * replace whatever failure that source was chosen to reach.
  */
-export const HLS_BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/JsDMLkGisX8lHq01wcVv32kQ2vIYvsrEXx007W15xDKJg.m3u8';
+export function withMuxMaxResolution(url: string, maxResolution: string): string {
+  if (!url || url.includes('token=')) return url;
+
+  const capped = new URL(url);
+  capped.searchParams.set('max_resolution', maxResolution);
+  return capped.href;
+}
 
 export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
 

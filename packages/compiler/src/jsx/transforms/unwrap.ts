@@ -7,6 +7,8 @@ export interface UnwrapOptions {
   match: Matcher;
   /** Forward wrapper props to exactly one matching direct child before unwrapping. */
   forwardPropsTo?: Matcher | undefined;
+  /** Restrict unwrapping to matching named function declarations. */
+  withinFunction?: ((node: ts.FunctionDeclaration, factory: ts.NodeFactory) => boolean) | undefined;
 }
 
 /** Remove a matched JSX wrapper while preserving its children in a fragment. */
@@ -14,9 +16,11 @@ export function unwrap(options: UnwrapOptions): ts.TransformerFactory<ts.SourceF
   return (context) => {
     const factory = context.factory;
 
-    const visit = (node: ts.Node): ts.VisitResult<ts.Node> => {
-      const next = ts.visitEachChild(node, visit, context);
-      if (!isJsxElementLike(next) || !options.match(next)) return next;
+    const visit = (node: ts.Node, active: boolean): ts.VisitResult<ts.Node> => {
+      const scoped =
+        options.withinFunction && ts.isFunctionDeclaration(node) ? options.withinFunction(node, factory) : active;
+      const next = ts.visitEachChild(node, (child) => visit(child, scoped), context);
+      if (!scoped || !isJsxElementLike(next) || !options.match(next)) return next;
 
       if (!ts.isJsxElement(next)) {
         if (options.forwardPropsTo) throw invalidForwardTarget(next, 0);
@@ -31,7 +35,8 @@ export function unwrap(options: UnwrapOptions): ts.TransformerFactory<ts.SourceF
       );
     };
 
-    return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
+    return (sourceFile) =>
+      ts.visitEachChild(sourceFile, (node) => visit(node, options.withinFunction === undefined), context);
   };
 }
 

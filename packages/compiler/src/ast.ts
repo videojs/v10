@@ -2,7 +2,7 @@
  * Advanced TypeScript-AST primitives for compiler plugin authors.
  *
  * Most compiler configurations should use the high-level `rewrite()` DSL
- * from `@videojs/compiler`. This subpath is the explicit escape hatch for
+ * from `vjsc`. This subpath is the explicit escape hatch for
  * transforms that need direct access to TypeScript nodes and factories.
  */
 export type { CompilerTransform } from './config';
@@ -15,23 +15,38 @@ export {
   byTag,
   type ChildAsPropOptions,
   childAsProp,
+  createJsxEditor,
+  type ExtractedJsxChild,
+  findJsxAttribute,
   hasChild,
+  hasJsxAttribute,
+  isJsxElementLike,
   type JsxChildReplacement,
+  type JsxElementEdit,
   type JsxElementLike,
   type JsxPropReference,
   jsxAttributes,
   jsxExpression,
   type Matcher,
+  moveJsxChildToProp,
   propertyAccess,
   type ReplaceJsxChildOptions,
+  type ReplaceJsxElementChildrenOptions,
+  type ReplaceJsxElementTagOptions,
   type ReplaceOptions,
   readAccessPath,
   readJsxAttributeExpression,
   readJsxProp,
   readStringAttribute,
+  removeJsxAttribute,
   replace,
   replaceJsxChild,
+  replaceJsxElementChildren,
+  replaceJsxElementTag,
   replaceJsxPropValue,
+  type SetJsxAttributeOptions,
+  setJsxAttribute,
+  singleJsxChildExpression,
   singleJsxElementChild,
   tagName,
   type UnwrapOptions,
@@ -45,14 +60,20 @@ export {
   type AddImportContext,
   type AddImportRef,
   addNamedImport,
+  addSideEffectImport,
   dropUnusedImports,
   dropUnusedLocals,
   type ImportRef,
   type ImportRewriteOptions,
   type ImportRule,
-  resolveRelative,
+  rebaseImportSpecifier,
   transformImports,
 } from './transforms';
+export {
+  collectClassDeclarations,
+  findClassDeclaration,
+  readStaticStringProperty,
+} from './utils/classes';
 export {
   createIndexedAccessType,
   createInterfaceDeclaration,
@@ -61,6 +82,7 @@ export {
   type InterfaceDeclarationOptions,
   type InterfacePropertySpec,
 } from './utils/declarations';
+export { createArrowFunction } from './utils/functions';
 export { collectModuleReferences, type ModuleReference } from './utils/module-references';
 export {
   collectModuleSpecifiers,

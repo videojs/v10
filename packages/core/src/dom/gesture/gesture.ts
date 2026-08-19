@@ -1,35 +1,21 @@
-export type GesturePointerType = 'mouse' | 'touch' | 'pen';
+import type { GestureProps, GestureType } from '../../core/ui/gesture/gesture-core';
 
-export type GestureType = 'tap' | 'doubletap';
+export type { GesturePointerType, GestureRegion, GestureType } from '../../core/ui/gesture/gesture-core';
 
-export type GestureRegion = 'left' | 'center' | 'right';
-
-export interface GestureOptions {
-  pointer?: GesturePointerType | undefined;
-  region?: GestureRegion | undefined;
-  disabled?: boolean | undefined;
-  action?: string | undefined;
-  value?: number | undefined;
+export interface GestureOptions extends Pick<GestureProps, 'pointer' | 'region' | 'disabled' | 'value'> {
+  action?: GestureProps['action'] | undefined;
 }
 
-export interface GestureBinding {
+export interface GestureBinding extends GestureOptions {
   type: GestureType;
   recognizer: GestureRecognizer;
   onActivate: (event: PointerEvent) => void;
-  pointer?: GesturePointerType | undefined;
-  region?: GestureRegion | undefined;
-  disabled?: boolean | undefined;
-  action?: string | undefined;
-  value?: number | undefined;
 }
 
-export interface GestureActivateEvent {
+export interface GestureActivateEvent extends Pick<GestureProps, 'value' | 'region' | 'pointer'> {
   type: GestureType;
   source: 'gesture';
-  action?: string | undefined;
-  value?: number | undefined;
-  region?: GestureRegion | undefined;
-  pointer?: GesturePointerType | undefined;
+  action?: GestureProps['action'] | undefined;
   event: PointerEvent;
 }
 

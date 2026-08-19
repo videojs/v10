@@ -29,10 +29,16 @@ describe('transform', () => {
           rewrite((code) => {
             const ContainerProps = code.import('@fixture/react', 'ContainerProps', { type: true });
             return [
-              code.function('Skin').setProps(['children', { name: 'props', spread: true }], {
-                type: ContainerProps,
-                initializer: code.value.object(),
-              }),
+              code
+                .function('Skin')
+                .setProps(
+                  [
+                    { name: 'disabled', initializer: code.value.boolean(false) },
+                    'children',
+                    { name: 'props', spread: true },
+                  ],
+                  { type: ContainerProps, initializer: code.value.object() }
+                ),
             ];
           }),
         ],
@@ -41,7 +47,46 @@ describe('transform', () => {
 
     expect(result.diagnostics).toEqual([]);
     expect(result.code).toContain('import type { ContainerProps } from "@fixture/react"');
-    expect(compact(result.code)).toContain(compact('function Skin({ children, ...props }: ContainerProps = {})'));
+    expect(compact(result.code)).toContain(
+      compact('function Skin({ disabled = false, children, ...props }: ContainerProps = {})')
+    );
+  });
+
+  it('adds a type reference to an existing value import', async () => {
+    const result = await transform(
+      `import { Submenu } from './submenu'; export interface MenuProps {} export const Menu = Submenu;`,
+      {
+        filename: '/project/src/menu.tsx',
+        outputFile: '/project/dist/menu.tsx',
+        configDir: '/project/config',
+        config: {
+          plugins: [
+            rewrite((code) => {
+              const SubmenuProps = code.import('./submenu', 'SubmenuProps', {
+                type: true,
+                relativeTo: 'module',
+              });
+
+              return [code.interface('MenuProps').extends(SubmenuProps)];
+            }),
+          ],
+        },
+      }
+    );
+
+    expect(result.code).toContain("import { Submenu, type SubmenuProps } from './submenu'");
+    expect(result.code).toContain('export interface MenuProps extends SubmenuProps');
+  });
+
+  it('replaces a function parameter type without changing its binding', async () => {
+    const result = await transform(`export function Button(props: SourceProps = {}) { return <Root {...props}/>; }`, {
+      config: {
+        plugins: [rewrite((code) => [code.function('Button').setParameterType(code.type.named('ButtonProps'))])],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(compact(result.code)).toContain(compact('function Button(props: ButtonProps = {})'));
   });
 
   it('composes generic import, JSX attribute, JSX element, and interface edits', async () => {
@@ -202,6 +247,19 @@ export function Template({ children, className }: TemplateProps) {
     expect(result.code).not.toContain('className');
   });
 
+  it('scopes JSX wrapper removal to a matching function', async () => {
+    const source = `export function Target() { return <Group><Item /></Group>; }
+export function Other() { return <Group><Item /></Group>; }`;
+    const result = await transform(source, {
+      config: {
+        plugins: [rewrite((code) => [code.function('Target').jsx.element('Group').unwrap()])],
+      },
+    });
+
+    expect(compact(result.code)).toContain(compact('function Target() { return <><Item /></>; }'));
+    expect(compact(result.code)).toContain(compact('function Other() { return <Group><Item /></Group>; }'));
+  });
+
   it('scopes JSX prop edits to matching element tags', async () => {
     const source = `export function Template(){ return <Panel className="component"><div className="native" /></Panel>; }`;
     const result = await transform(source, {
@@ -275,10 +333,11 @@ export function Target(){ return <Root />; }`;
               code.variable('Placeholder').remove(),
               code.function('Target').insertBefore(() =>
                 code.statement.interface({
-                  name: 'TargetProps',
+                  name: 'RenderedProps',
                   export: true,
                   extends: [code.type.named('Omit', [code.type.named(BaseProps), code.type.literal('hidden')])],
                   properties: [
+                    { name: 'disabled', optional: true, type: code.type.boolean() },
                     { name: 'value', optional: true, type: code.type.string() },
                     {
                       name: 'render',
@@ -299,10 +358,29 @@ export function Target(){ return <Root />; }`;
     expect(result.code).toContain('import type { BaseProps } from "@fixture/react"');
     expect(compact(result.code)).toContain(
       compact(
-        'export interface TargetProps extends Omit<BaseProps, "hidden"> { value?: string; render?: BaseProps["render"]; }'
+        'export interface RenderedProps extends Omit<BaseProps, "hidden"> { disabled?: boolean; value?: string; render?: BaseProps["render"]; }'
       )
     );
-    expect(result.code.indexOf('interface TargetProps')).toBeLessThan(result.code.indexOf('function Target'));
+    expect(result.code.indexOf('interface RenderedProps')).toBeLessThan(result.code.indexOf('function Target'));
+  });
+
+  it('adds missing properties to an existing interface', async () => {
+    const source = `export interface Props { current?: string }`;
+    const result = await transform(source, {
+      config: {
+        plugins: [
+          rewrite((code) => [
+            code.interface('Props').addProperties([
+              { name: 'current', optional: true, type: code.type.string() },
+              { name: 'className', optional: true, type: code.type.string() },
+            ]),
+          ]),
+        ],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(compact(result.code)).toContain(compact('interface Props { current?: string; className?: string; }'));
   });
 
   it('rejects ambiguous JSX prop forwarding targets', async () => {
@@ -342,7 +420,12 @@ export function Template({ backdrop }) {
               ),
               code
                 .function('Template')
-                .prepend(code.statement.const('backdropState', code.value.call(useBackdrop, ['backdrop']))),
+                .prepend(() =>
+                  code.statement.const(
+                    'backdropState',
+                    code.value.call(useBackdrop, [code.value.property('backdrop', 'state')])
+                  )
+                ),
               code
                 .function('Template')
                 .beforeReturn(code.statement.const('ready', code.value.call('Boolean', ['backdropState']))),
@@ -357,7 +440,7 @@ export function Template({ backdrop }) {
     expect(result.code.indexOf('import { Frame }')).toBeLessThan(result.code.indexOf('export const TOP_ACTIONS'));
     expect(result.code).toContain('import { useBackdrop } from "@fixture/react"');
     expect(compactCode).toContain(compact('export const TOP_ACTIONS = ["togglePaused"] as const;'));
-    expect(compactCode).toContain(compact('const backdropState = useBackdrop(backdrop);'));
+    expect(compactCode).toContain(compact('const backdropState = useBackdrop(backdrop.state);'));
     expect(compactCode).toContain(compact('const ready = Boolean(backdropState);return <Frame />;'));
   });
 });

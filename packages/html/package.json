@@ -1,7 +1,7 @@
 {
   "name": "@videojs/html",
   "type": "module",
-  "version": "10.0.0-beta.27",
+  "version": "10.0.0-beta.28",
   "description": "HTML library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -165,6 +165,9 @@
     }
   },
   "scripts": {
+    "generate:vjsc": "vjsc generate",
+    "check:vjsc": "vjsc generate --check",
+    "prebuild": "pnpm run generate:vjsc",
     "build": "tsdown",
     "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
     "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts",
@@ -185,10 +188,12 @@
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
+    "vjsc": "workspace:*",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "happy-dom": "^20.11.1",
     "tsdown": "^0.22.14",
+    "tsx": "^4.23.1",
     "typescript": "^6.0.2",
     "vitest": "^4.1.10"
   },

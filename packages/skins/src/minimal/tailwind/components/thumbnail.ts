@@ -9,7 +9,7 @@ export const thumbnail = {
     'has-data-loading:aspect-video has-data-loading:overflow-hidden'
   ),
   image: cn(
-    'relative block max-w-(--thumbnail-max-width) max-h-(--max-height) overflow-clip rounded-[inherit]',
+    'relative block max-w-(--thumbnail-max-width) max-h-(--thumbnail-max-height) overflow-clip rounded-[inherit]',
     'transition-opacity duration-150 ease-out data-loading:opacity-0'
   ),
   spinner: cn(

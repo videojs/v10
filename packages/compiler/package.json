@@ -1,5 +1,6 @@
 {
-  "name": "@videojs/compiler",
+  "name": "vjsc",
+  "version": "0.0.0",
   "type": "module",
   "description": "Private compiler infrastructure for Video.js source transforms and builds",
   "license": "Apache-2.0",
@@ -8,6 +9,9 @@
     "type": "git",
     "url": "https://github.com/videojs/v10",
     "directory": "packages/compiler"
+  },
+  "bin": {
+    "vjsc": "./bin/vjsc.js"
   },
   "sideEffects": false,
   "exports": {
@@ -19,12 +23,53 @@
       "types": "./dist/ast.d.ts",
       "default": "./dist/ast.js"
     },
+    "./catalog": {
+      "types": "./dist/catalog/index.d.ts",
+      "default": "./dist/catalog/index.js"
+    },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "default": "./dist/components/index.js"
+    },
+    "./components/jsx-runtime": {
+      "types": "./dist/components/jsx-runtime.d.ts",
+      "default": "./dist/components/jsx-runtime.js"
+    },
+    "./components/jsx-dev-runtime": {
+      "types": "./dist/components/jsx-dev-runtime.d.ts",
+      "default": "./dist/components/jsx-dev-runtime.js"
+    },
+    "./registry": {
+      "types": "./dist/registry/index.d.ts",
+      "default": "./dist/registry/index.js"
+    },
+    "./registry/jsx-runtime": {
+      "types": "./dist/registry/jsx-runtime.d.ts",
+      "default": "./dist/registry/jsx-runtime.js"
+    },
+    "./registry/jsx-dev-runtime": {
+      "types": "./dist/registry/jsx-dev-runtime.d.ts",
+      "default": "./dist/registry/jsx-dev-runtime.js"
+    },
+    "./generate": {
+      "types": "./dist/generate/index.d.ts",
+      "default": "./dist/generate/index.js"
+    },
+    "./shadcn": {
+      "types": "./dist/shadcn/index.d.ts",
+      "default": "./dist/shadcn/index.js"
+    },
+    "./styles": {
+      "types": "./dist/styles/index.d.ts",
+      "default": "./dist/styles/index.js"
+    },
     "./vite": {
       "types": "./dist/bundlers/vite.d.ts",
       "default": "./dist/bundlers/vite.js"
     }
   },
   "files": [
+    "bin",
     "dist"
   ],
   "scripts": {
@@ -44,8 +89,14 @@
     }
   },
   "dependencies": {
+    "@tailwindcss/node": "4.2.1",
+    "@videojs/utils": "workspace:*",
     "kleur": "^4.1.5",
+    "lightningcss": "^1.32.0",
     "rolldown": "~1.1.5",
+    "shadcn": "^4.16.2",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "4.2.1",
     "typescript": "6.0.2"
   },
   "devDependencies": {
