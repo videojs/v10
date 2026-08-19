@@ -1,0 +1,10 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "generate": {
+      "dependsOn": ["@videojs/core#build", "vjsc#build"],
+      "outputs": ["vjsc/entries.generated.ts"]
+    }
+  }
+}

@@ -41,6 +41,12 @@ site/src/content/cdn-media.json
 packages/cli/docs/
 packages/html/docs/
 packages/react/docs/
+
+# VJSC
+packages/core/src/core/ui/schema.generated.ts
+packages/html/vjsc/entries.generated.ts
+packages/icons/vjsc/schema.generated.ts
+packages/react/vjsc/entries.generated.ts
 packages/html/src/__generated__/skins/
 packages/react/src/__generated__/skins/
 packages/skins/canonical/registry/default/

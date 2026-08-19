@@ -57,6 +57,7 @@
     "dist"
   ],
   "scripts": {
+    "generate": "pnpm run generate:schema",
     "generate:schema": "vjsc generate",
     "check:schema": "vjsc generate --check",
     "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",

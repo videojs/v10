@@ -9,6 +9,7 @@ import { optimizeSvg } from './internal/svg.js';
 
 const FRAMEWORKS = ['react', 'html'] as const;
 const isWatch = process.argv.includes('--watch');
+const isGenerateOnly = process.argv.includes('--generate-only');
 
 async function buildReactIconModule(svgContent: string, componentName: string): Promise<{ js: string; tsx: string }> {
   const optimized = optimizeSvg(svgContent);
@@ -128,6 +129,11 @@ function buildVjscSchema(icons: { name: string; varName: string }[]): string {
     `}`,
     ``,
   ].join('\n');
+}
+
+function generateVjscSchema(icons: { name: string; varName: string }[]): void {
+  ensureDir(VJSC_DIR);
+  writeFileSync(join(VJSC_DIR, 'schema.generated.ts'), buildVjscSchema(icons));
 }
 
 function buildElementIndex(sets: string[]): string {
@@ -339,8 +345,7 @@ async function buildIconSet(setName: string): Promise<void> {
   }));
 
   if (setName === 'default') {
-    ensureDir(VJSC_DIR);
-    writeFileSync(join(VJSC_DIR, 'schema.generated.ts'), buildVjscSchema(icons));
+    generateVjscSchema(icons);
   }
 
   const vjscDir = join(DIST_DIR, 'vjsc', setName);
@@ -418,6 +423,15 @@ function debounce(fn: () => void, ms: number): () => void {
 }
 
 async function main(): Promise<void> {
+  if (isGenerateOnly) {
+    const icons = getSvgFiles('default').map((file) => ({
+      name: file.replace('.svg', ''),
+      varName: file.replace('.svg', ''),
+    }));
+    generateVjscSchema(icons);
+    return;
+  }
+
   if (isWatch) {
     console.log('Watching icons for changes...\n');
 

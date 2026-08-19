@@ -59,6 +59,7 @@
     "dist"
   ],
   "scripts": {
+    "generate": "node --import tsx scripts/build-icons.ts --generate-only",
     "build": "node --import tsx scripts/build-icons.ts",
     "build:watch": "pnpm run build -- --watch",
     "dev": "pnpm run build:watch",

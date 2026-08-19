@@ -5,7 +5,7 @@
   "globalEnv": ["BRANCH", "CONTEXT", "DEPLOY_PRIME_URL"],
   "tasks": {
     "build": {
-      "dependsOn": ["^build", "^build:cdn"],
+      "dependsOn": ["^build", "^build:cdn", "generate"],
       "outputs": ["dist/**", "types/**", "*.tsbuildinfo", ".netlify/**"]
     },
     "build:cdn": {
@@ -13,7 +13,7 @@
       "outputs": ["cdn/**"]
     },
     "dev": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "generate"],
       "cache": false,
       "persistent": true,
       "interactive": false
@@ -22,8 +22,11 @@
       "cache": false
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "generate"],
       "outputs": []
+    },
+    "generate": {
+      "outputs": ["src/core/ui/schema.generated.ts", "vjsc/*.generated.ts"]
     },
     "lint": {
       "outputs": []
