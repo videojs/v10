@@ -194,5 +194,6 @@ describe('metadataFeature', () => {
     expect(store.state).not.toHaveProperty('setTitle');
     expect(store.state).not.toHaveProperty('setPoster');
     expect(store.state).not.toHaveProperty('defaultPoster');
+    expect(store.state).not.toHaveProperty('defaultTitle');
   });
 });
