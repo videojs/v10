@@ -109,6 +109,7 @@ export const controls = cn(
   // Position & wrapping layout (small)
   'absolute bottom-1 inset-x-1',
   '[--base-side-offset:5] [--base-boundary-offset:1]',
+  '[--volume-mask:linear-gradient(to_right,transparent_10%,black_25%,black_100%)]',
   'gap-x-2 flex-wrap rounded-[--spacing(3)] group/controls',
   'text-white z-20',
   'peer-data-open/error:hidden',
@@ -129,8 +130,23 @@ export const controls = cn(
 
 /* Button groups */
 
+const volumeMaskTarget = cn(
+  '[mask-image:var(--volume-mask-image,none)]',
+  '[mask-repeat:no-repeat]',
+  '[mask-position:var(--volume-mask-position,100%_0)]',
+  '[mask-size:var(--volume-mask-size,200%_100%)]',
+  '[transition:mask-position_50ms_ease-out]'
+);
+
 export const buttonGroupStart = cn(baseButtonGroup, 'flex-1 @2xl/media-root:flex-none');
-export const buttonGroupEnd = cn(baseButtonGroup, 'flex-1 justify-end @2xl/media-root:flex-none');
+export const buttonGroupEnd = cn(
+  baseButtonGroup,
+  volumeMaskTarget,
+  'flex-1 justify-end @2xl/media-root:flex-none',
+  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--volume-mask-image:var(--volume-mask)]',
+  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--volume-mask-position:0_0]',
+  'group-has-[[data-volume-level][aria-expanded=true]]/controls:@max-2xl/media-root:[--volume-mask-size:400%_100%]'
+);
 
 export const spacer = 'grow';
 
@@ -140,12 +156,11 @@ export const time = {
   ...baseTime,
   controls: cn(
     baseTime.controls,
+    volumeMaskTarget,
     '[--slider-height:--spacing(5)] grow-0 shrink-0 basis-full order-[-1] px-1.5',
     '@2xl/media-root:[--slider-height:--spacing(8)] @2xl/media-root:grow @2xl/media-root:shrink @2xl/media-root:basis-0 @2xl/media-root:order-[unset]',
-    '@2xl/media-root:[mask-position:100%_0] @2xl/media-root:[mask-size:200%_100%]',
-    '@2xl/media-root:[transition:mask-position_50ms_ease-out]',
-    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-image:linear-gradient(to_right,transparent_10%,black_25%,black_100%)]',
-    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-position:0_0]'
+    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[--volume-mask-image:var(--volume-mask)]',
+    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[--volume-mask-position:0_0]'
   ),
 };
 
@@ -180,7 +195,7 @@ export const slider = {
 
 export const popup = {
   ...basePopup,
-  volume: cn(basePopup.popover, 'p-0 bg-transparent'),
+  volume: cn(basePopup.popover, 'p-0 bg-transparent', '@max-2xl/media-root:[--media-popover-side-offset:--spacing(3)]'),
 };
 
 /* Menu */

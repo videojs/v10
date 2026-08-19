@@ -122,7 +122,7 @@ function getTemplateHTML() {
             </div>
 
             <div class="${cn(buttonGroupEnd, menu.settingsGroup)}">
-              <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
+              <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, button.captions, iconState.captions.button)}">
                 ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>

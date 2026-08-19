@@ -174,6 +174,7 @@
   --base-boundary-offset: 1;
   --inset-factor: 1;
   --inset: calc(var(--spacing) * var(--inset-factor));
+  --volume-mask: linear-gradient(to right, transparent 10%, #000 25%, #000 100%);
 
   position: absolute;
   inset-inline: var(--inset);
@@ -229,6 +230,37 @@
     justify-content: end;
   }
 
+  :is(.media-time-controls, .media-button-group:last-child) {
+    mask-image: var(--volume-mask-image, none);
+    mask-repeat: no-repeat;
+    mask-position: var(--volume-mask-position, 100% 0);
+    mask-size: var(--volume-mask-size, 200% 100%);
+    transition: mask-position 50ms ease-out;
+  }
+
+  @container media-root (width <= 42rem) {
+    .media-popover--volume {
+      --media-popover-side-offset: calc(var(--spacing) * 3);
+    }
+  }
+
+  &:has(.media-button--mute[aria-expanded="true"]) {
+    @container media-root (width <= 42rem) {
+      .media-button-group:last-child {
+        --volume-mask-image: var(--volume-mask);
+        --volume-mask-position: 0 0;
+        --volume-mask-size: 400% 100%;
+      }
+    }
+
+    @container media-root (width > 42rem) {
+      .media-time-controls {
+        --volume-mask-image: var(--volume-mask);
+        --volume-mask-position: 0 0;
+      }
+    }
+  }
+
   @container media-root (width > 42rem) {
     --inset-factor: 2;
     --base-side-offset: 2;
@@ -245,20 +277,6 @@
     .media-button-group:first-child,
     .media-button-group:last-child {
       flex: 0 0 auto;
-    }
-
-    .media-time-controls {
-      mask-position: 100% 0;
-      mask-size: 200% 100%;
-      transition: mask-position 50ms ease-out;
-    }
-
-    &:has(.media-button--mute[aria-expanded="true"]) .media-time-controls {
-      mask-image: linear-gradient(to right, transparent 10%, #000 25%, #000 100%);
-    }
-
-    &:has(.media-button--mute[aria-expanded="true"]) .media-time-controls {
-      mask-position: 0 0;
     }
   }
 }
