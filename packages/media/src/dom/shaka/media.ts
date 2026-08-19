@@ -79,6 +79,8 @@ class ShakaMediaBase
   #src = shakaMediaDefaultProps.src;
   #source: ShakaSource | null = shakaMediaDefaultProps.source;
   #error: MediaError | null = null;
+  // The raw Shaka failure last seen, whichever path delivered it first.
+  #reported: unknown = null;
   #isDestroyed = false;
 
   constructor() {
@@ -155,9 +157,10 @@ class ShakaMediaBase
   }
 
   /**
-   * The last playback failure, or `null`. Shaka loads asynchronously, so a
-   * manifest that cannot be played fails after `src` was assigned rather than at
-   * the assignment; the `error` event is when to read this.
+   * The last playback failure Shaka could not recover from, or `null`. Shaka
+   * loads asynchronously, so a manifest that cannot be played fails after `src`
+   * was assigned rather than at the assignment; the `error` event is when to
+   * read this.
    *
    * A Shaka failure says more about what went wrong than the media element's
    * own `error` does, so it wins while there is one; anything the element failed
@@ -243,6 +246,7 @@ class ShakaMediaBase
 
   #loadSource(engine: shaka.Player) {
     this.#error = null;
+    this.#reported = null;
     const { src } = this;
     this.#run(src ? engine.load(src, undefined, this.#source?.type) : engine.unload());
   }
@@ -269,9 +273,15 @@ class ShakaMediaBase
     // A teardown rejects whatever it was racing; there is no one left to tell.
     if (this.#isDestroyed) return;
 
+    // One failure can arrive twice — rejecting the engine call it broke and
+    // announcing itself on the `error` event — so whichever lands first is the
+    // one that counts.
+    if (error === this.#reported) return;
+    this.#reported = error;
+
     const mediaError = toMediaError(error);
-    // Superseding a load aborts the one in flight. That is this element doing
-    // its job, not a failure worth announcing.
+    // An aborted load or a failure Shaka intends to retry is not worth
+    // announcing.
     if (!mediaError) return;
 
     this.#error = mediaError;
@@ -281,7 +291,7 @@ class ShakaMediaBase
 
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
- * @fires error - Fired when playback fails. Read `error` for the failure.
+ * @fires error - Fired when playback fails in a way Shaka could not recover from. Read `error` for the failure.
  */
 export class ShakaMedia extends ShakaMediaMediaTracksMixin(ShakaMediaBase) {}
 
@@ -353,9 +363,14 @@ const abortedCodes = new Set<number>([shaka.util.Error.Code.LOAD_INTERRUPTED, sh
 /**
  * A Shaka failure as a `MediaError`, or `null` when there is nothing to report.
  *
- * Shaka classifies a failure by category rather than by a media error code, and
- * marks a recoverable one as such — it retries those itself, so only a critical
- * failure ends up fatal here.
+ * Only a failure Shaka gave up on is reported. Shaka marks one it means to
+ * retry as recoverable and fires it on the way through, and an announced error
+ * stands until the next load — so announcing those would leave the error UI
+ * over playback that is still running. Whatever a retry cannot save comes back
+ * as critical.
+ *
+ * Shaka classifies a failure by category rather than by a media error code, so
+ * the code is derived from that.
  */
 function toMediaError(error: unknown): MediaError | null {
   if (!isShakaError(error)) {
@@ -364,9 +379,16 @@ function toMediaError(error: unknown): MediaError | null {
 
   if (abortedCodes.has(error.code)) return null;
 
+  if (error.severity !== shaka.util.Error.Severity.CRITICAL) {
+    if (__DEV__) {
+      console.warn('[vjs-shaka] Shaka reported a recoverable failure and will retry it.', error);
+    }
+
+    return null;
+  }
+
   const code = categoryToCode[error.category] ?? MediaError.MEDIA_ERR_CUSTOM;
-  const fatal = error.severity === shaka.util.Error.Severity.CRITICAL;
-  const mediaError = new MediaError(error.message, code, fatal, `shaka-${error.code}`);
+  const mediaError = new MediaError(error.message, code, true, `shaka-${error.code}`);
   mediaError.data = error;
 
   return mediaError;

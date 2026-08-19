@@ -586,12 +586,37 @@ describe('ShakaMedia', () => {
       expect(media.error).toMatchObject({ code: 5, fatal: true });
     });
 
-    it('marks a recoverable failure as non-fatal', async () => {
+    it('leaves a recoverable failure to shaka to retry', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const { media, engine } = setup();
+      const onError = vi.fn();
+      media.addEventListener('error', onError);
 
       engine.emit('error', { detail: shakaError({ severity: 1 }) });
 
-      expect(media.error).toMatchObject({ fatal: false });
+      // Announcing it would put the error UI over playback that is still going.
+      expect(onError).not.toHaveBeenCalled();
+      expect(media.error).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('recoverable'), expect.anything());
+    });
+
+    it('reports a failure once when shaka both rejects and announces it', async () => {
+      const { media, engine } = setup();
+      const onError = vi.fn();
+      media.addEventListener('error', onError);
+
+      // Shaka hands the same failure to the `error` event and to the call it broke.
+      const failure = shakaError({ category: 6, code: 6001 });
+      engine.load.mockImplementationOnce(async () => {
+        engine.emit('error', { detail: failure });
+        throw failure;
+      });
+
+      media.src = MANIFEST;
+      await flush();
+
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(media.error).toMatchObject({ code: 5, fatal: true });
     });
 
     it('ignores a load that a newer one replaced', async () => {
