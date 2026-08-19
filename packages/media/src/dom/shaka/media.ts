@@ -1,4 +1,5 @@
 import { deepEqual } from '@videojs/utils/object';
+import { isObject } from '@videojs/utils/predicate';
 import shaka from 'shaka-player';
 
 import type { DrmSystemsConfig } from '../../core/drm';
@@ -79,8 +80,9 @@ class ShakaMediaBase
   #src = shakaMediaDefaultProps.src;
   #source: ShakaSource | null = shakaMediaDefaultProps.source;
   #error: MediaError | null = null;
-  // The raw Shaka failure last seen, whichever path delivered it first.
-  #reported: unknown = null;
+  // The raw Shaka failures already announced. Held weakly: it answers nothing
+  // but "seen before", and each failure is a fresh object.
+  #reported = new WeakSet<object>();
   #isDestroyed = false;
 
   constructor() {
@@ -246,7 +248,6 @@ class ShakaMediaBase
 
   #loadSource(engine: shaka.Player) {
     this.#error = null;
-    this.#reported = null;
     const { src } = this;
     this.#run(src ? engine.load(src, undefined, this.#source?.type) : engine.unload());
   }
@@ -275,9 +276,13 @@ class ShakaMediaBase
 
     // One failure can arrive twice — rejecting the engine call it broke and
     // announcing itself on the `error` event — so whichever lands first is the
-    // one that counts.
-    if (error === this.#reported) return;
-    this.#reported = error;
+    // one that counts. This outlives the load it came from: an `error` handler
+    // that assigns a fallback `src` would otherwise see the rejection still in
+    // flight land as a fresh failure against the source it just started.
+    if (isObject(error)) {
+      if (this.#reported.has(error)) return;
+      this.#reported.add(error);
+    }
 
     const mediaError = toMediaError(error);
     // An aborted load or a failure Shaka intends to retry is not worth

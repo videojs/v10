@@ -619,6 +619,32 @@ describe('ShakaMedia', () => {
       expect(media.error).toMatchObject({ code: 5, fatal: true });
     });
 
+    it('does not re-announce a failure against the source an error handler fell back to', async () => {
+      const { media, engine } = setup();
+      const onError = vi.fn();
+
+      // The `error` event lands first; the rejection of the load it broke is
+      // still in flight when the handler starts a new one.
+      const failure = shakaError();
+      engine.load.mockImplementationOnce(async () => {
+        engine.emit('error', { detail: failure });
+        await Promise.resolve();
+        throw failure;
+      });
+
+      media.addEventListener('error', () => {
+        onError();
+        media.src = OTHER_MANIFEST;
+      });
+
+      media.src = MANIFEST;
+      await flush();
+
+      expect(onError).toHaveBeenCalledTimes(1);
+      expect(engine.load).toHaveBeenLastCalledWith(OTHER_MANIFEST, undefined, undefined);
+      expect(media.error).toBeNull();
+    });
+
     it('ignores a load that a newer one replaced', async () => {
       const { media, engine } = setup();
       const onError = vi.fn();
