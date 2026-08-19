@@ -1,3 +1,7 @@
+// Keep this import first: it lends shaka's UMD evaluation the `self` global a
+// server runtime lacks. See `server-shim.ts`.
+import './server-shim';
+
 import { deepEqual } from '@videojs/utils/object';
 import { isObject } from '@videojs/utils/predicate';
 import shaka from 'shaka-player';
@@ -8,8 +12,13 @@ import { MediaTracksMixin } from '../../core/media-tracks';
 import type { MediaEngineHost } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { ShakaMediaMediaTracksMixin } from './media-tracks';
+import { didShimSelf } from './server-shim';
 
 export { shaka };
+
+if (didShimSelf) {
+  Reflect.deleteProperty(globalThis, 'self');
+}
 
 type Opaque = string | number | boolean | bigint | symbol | null | undefined | ArrayBufferView;
 
@@ -87,6 +96,10 @@ class ShakaMediaBase
 
   constructor() {
     super();
+
+    // A server render has no DOM to probe or play into; the client constructs
+    // an instance of its own. Even the support check needs browser globals.
+    if (typeof document === 'undefined') return;
 
     installPolyfills();
 
