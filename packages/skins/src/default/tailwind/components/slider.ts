@@ -13,7 +13,8 @@ const previewContent = cn(
 export const slider = {
   root: cn(
     'group/slider relative flex flex-1 items-center justify-center rounded-(--track-border-radius) outline-none cursor-pointer',
-    '[--track-border-radius:calc(infinity*1px)]',
+    '[--track-border-radius:99px]',
+    '[--chapter-gap:calc(var(--spacing)*1)] [--chapter-inset-start:calc(var(--chapter-gap)/2)] [--chapter-inset-end:calc(var(--chapter-gap)/2)]',
     // Horizontal
     'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-(--slider-width,100%) data-[orientation=horizontal]:h-(--slider-height,--spacing(8))',
     // Vertical
@@ -30,8 +31,7 @@ export const slider = {
   chapter: {
     base: cn(
       'group/chapter absolute inset-0 flex items-center justify-center min-w-0 min-h-0',
-      '[--chapter-gap:calc(var(--spacing)*1)] [--chapter-inset-start:0.5] [--chapter-inset-end:0.5]',
-      'first:[--chapter-inset-start:0] last:[--chapter-inset-end:0]',
+      'first:[--chapter-inset-start:0px] last:[--chapter-inset-end:0px]',
       'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start))]',
       'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start)_0)]'
     ),
@@ -40,10 +40,10 @@ export const slider = {
       'motion-safe:transition-[height,width] motion-safe:duration-200 motion-safe:ease-out',
       'data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-1',
       'group-data-highlighted/chapter:data-[orientation=horizontal]:h-1.75',
-      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--chapter-gap)*var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-gap)*var(--chapter-inset-start))_round_var(--track-border-radius))]',
+      'data-[orientation=horizontal]:[clip-path:inset(0_calc(100%-var(--media-slider-chapter-end)+var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-inset-start))_round_var(--track-border-radius))]',
       'data-[orientation=vertical]:w-1 data-[orientation=vertical]:h-full',
       'group-data-highlighted/chapter:data-[orientation=vertical]:w-1.75',
-      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--chapter-gap)*var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-gap)*var(--chapter-inset-start))_0_round_var(--track-border-radius))]'
+      'data-[orientation=vertical]:[clip-path:inset(calc(100%-var(--media-slider-chapter-end)+var(--chapter-inset-end))_0_calc(var(--media-slider-chapter-start)+var(--chapter-inset-start))_0_round_var(--track-border-radius))]'
     ),
   },
   fill: {

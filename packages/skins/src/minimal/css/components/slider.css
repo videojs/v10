@@ -163,8 +163,8 @@
 
   .media-slider__chapter {
     --chapter-gap: calc(var(--spacing) * 1);
-    --chapter-inset-start: 0.5;
-    --chapter-inset-end: 0.5;
+    --chapter-inset-start: calc(var(--chapter-gap) / 2);
+    --chapter-inset-end: calc(var(--chapter-gap) / 2);
     position: absolute;
     inset: 0;
     display: flex;
@@ -174,10 +174,10 @@
     min-height: 0;
 
     &:first-child {
-      --chapter-inset-start: 0;
+      --chapter-inset-start: 0px;
     }
     &:last-child {
-      --chapter-inset-end: 0;
+      --chapter-inset-end: 0px;
     }
 
     .media-slider__chapter-track {
@@ -197,9 +197,8 @@
       .media-slider__chapter-track {
         height: var(--chapter-track-size);
         clip-path: inset(
-          0 calc(100% - var(--media-slider-chapter-end) + var(--chapter-gap) * var(--chapter-inset-end)) 0
-            calc(var(--media-slider-chapter-start) + var(--chapter-gap) * var(--chapter-inset-start)) round
-            var(--track-border-radius)
+          0 calc(100% - var(--media-slider-chapter-end) + var(--chapter-inset-end)) 0
+            calc(var(--media-slider-chapter-start) + var(--chapter-inset-start)) round var(--track-border-radius)
         );
       }
 
@@ -214,9 +213,8 @@
       .media-slider__chapter-track {
         width: var(--chapter-track-size);
         clip-path: inset(
-          calc(100% - var(--media-slider-chapter-end) + var(--chapter-gap) * var(--chapter-inset-end)) 0
-            calc(var(--media-slider-chapter-start) + var(--chapter-gap) * var(--chapter-inset-start)) 0 round
-            var(--track-border-radius)
+          calc(100% - var(--media-slider-chapter-end) + var(--chapter-inset-end)) 0
+            calc(var(--media-slider-chapter-start) + var(--chapter-inset-start)) 0 round var(--track-border-radius)
         );
       }
 
