@@ -25,7 +25,7 @@ for (const { framework, path } of SOURCE_SKINS) {
       await expect(container).toBeAttached();
       await expect(page.locator('video')).toBeAttached();
       await expect(container.locator('media-poster, img.media-poster')).toBeAttached();
-      await expect(container.locator('media-controls, .media-controls')).toBeAttached();
+      await expect(container.locator('media-controls, .media-controls-root')).toBeAttached();
       await expect(container.locator('.media-overlay')).toBeAttached();
       await expect(container.locator('media-seek-button, .media-seek-button')).toHaveCount(0);
 
