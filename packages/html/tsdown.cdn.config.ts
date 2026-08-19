@@ -36,10 +36,9 @@ const mediaDir = 'src/define/media';
  * Media entries, one bundle per module under `src/define/media` — or per flavor,
  * for a module that is a directory.
  *
- * Read from the definitions themselves rather than a hand-kept list, so anything
- * published as `@videojs/html/media/<name>` also ships as `cdn/media/<name>.js`.
- * A hand-kept list let several media elements ship on npm with no CDN bundle,
- * and therefore nothing in the release archive cut from this output.
+ * Discovered from the definitions so the two delivery surfaces cannot drift:
+ * whatever ships on npm as `@videojs/html/media/<name>` also ships as
+ * `cdn/media/<name>.js`, and as a file in the archive cut from this output.
  *
  * A directory ships its index as the flavor-neutral bundle and each flavor
  * beside it, so `media/mux-video/spf` reads the same as the npm subpath it
