@@ -16,9 +16,12 @@ export interface ThumbnailProps {
    *
    * Left unset, this follows the media element: a cross-origin thumbnail
    * `<track>` only loads when the media is CORS-enabled, so the sprite sheets
-   * its cues point at are fetched with that same mode. Pass `null` or `''` to
-   * opt out and fetch them without CORS. Thumbnails supplied directly never
-   * inherit, since they need not be related to the media element at all.
+   * its cues point at are fetched with that same mode. Pass `null` to opt out
+   * and fetch them without CORS. Thumbnails supplied directly never inherit,
+   * since they need not be related to the media element at all.
+   *
+   * `''` is a value like any other, read as Anonymous by the CORS-settings
+   * attribute rules — it does not opt out.
    */
   crossOrigin?: ThumbnailCrossOrigin | undefined;
   /** Image loading strategy forwarded to the inner `<img>`. */

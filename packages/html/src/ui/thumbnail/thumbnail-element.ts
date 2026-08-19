@@ -9,7 +9,7 @@ import type { ThumbnailApi } from '@videojs/core/dom';
 import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { MediaTextTrackState } from '@videojs/media';
-import { isUndefined } from '@videojs/utils/predicate';
+import { isNull, isUndefined } from '@videojs/utils/predicate';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -158,14 +158,16 @@ export class ThumbnailElement extends MediaElement {
   /**
    * Leaving `crossOrigin` unset means "follow the media element", so thumbnails
    * keep working on a CORS-enabled player without a skin having to thread an
-   * attribute through. `null` or `''` opts out and fetches the sprites no-CORS,
-   * which is also what removing the attribute produces.
+   * attribute through. `null` opts out and fetches the sprites no-CORS, which is
+   * also what removing the attribute produces. A bare `crossorigin` is passed
+   * straight through, since the CORS-settings attribute reads it as Anonymous.
    *
    * Only the `<track>` path inherits: `thumbnails` set directly may point at a
    * host that has nothing to do with the media element.
    */
   #resolveCrossOrigin(textTrack: MediaTextTrackState | undefined): string | undefined {
-    if (!isUndefined(this.crossOrigin)) return this.crossOrigin || undefined;
+    if (isNull(this.crossOrigin)) return undefined;
+    if (!isUndefined(this.crossOrigin)) return this.crossOrigin;
     if (this.#externalThumbnails) return undefined;
 
     return textTrack?.thumbnailTrackCrossOrigin ?? undefined;

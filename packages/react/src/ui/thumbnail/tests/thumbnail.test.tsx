@@ -46,9 +46,14 @@ describe('Thumbnail', () => {
       expect(renderCrossOrigin('use-credentials', { crossOrigin: 'anonymous' })).toBe('anonymous');
     });
 
-    it('opts out of inheritance for an explicit empty or null value', () => {
+    it('opts out of inheritance for an explicit null', () => {
       expect(renderCrossOrigin('anonymous', { crossOrigin: null })).toBeNull();
-      expect(renderCrossOrigin('anonymous', { crossOrigin: '' })).toBeNull();
+    });
+
+    it('passes an empty crossOrigin through rather than opting out', () => {
+      // The CORS-settings attribute reads an empty value as Anonymous, so it is
+      // a value like any other and must not be mistaken for "no CORS".
+      expect(renderCrossOrigin('use-credentials', { crossOrigin: '' })).toBe('');
     });
 
     it('does not inherit for thumbnails supplied directly', () => {

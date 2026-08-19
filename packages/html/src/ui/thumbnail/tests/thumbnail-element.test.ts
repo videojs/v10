@@ -98,9 +98,18 @@ describe('ThumbnailElement', () => {
       expect(property).toBe('anonymous');
     });
 
-    it('opts out of inheritance for an explicit empty or null value', async () => {
+    it('opts out of inheritance for an explicit null', async () => {
       await expect(renderCrossOrigin('anonymous', (el) => (el.crossOrigin = null))).resolves.toBeNull();
-      await expect(renderCrossOrigin('anonymous', (el) => (el.crossOrigin = ''))).resolves.toBeNull();
+    });
+
+    it('passes a bare crossorigin through rather than opting out', async () => {
+      // The CORS-settings attribute reads an empty value as Anonymous, so it is
+      // a value like any other and must not be mistaken for "no CORS".
+      const attribute = await renderCrossOrigin('use-credentials', (el) => {
+        el.setAttribute('crossorigin', '');
+      });
+
+      expect(attribute).toBe('');
     });
 
     it('does not inherit for thumbnails supplied directly', async () => {
