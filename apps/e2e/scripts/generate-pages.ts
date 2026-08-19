@@ -373,8 +373,13 @@ document.getElementById('root')!.innerHTML = html\`
   <video-player poster="\${MEDIA.${resource}.poster}">
     <source-video-skin
       data-source-skin
-      style="display: block; max-width: 800px; aspect-ratio: 16/9; --media-poster-placeholder: url(\${MEDIA.${resource}.poster})"
+      style="display: block; max-width: 800px; aspect-ratio: 16/9"
     >
+      <img
+        slot="poster"
+        alt=""
+        style="background: url('\${MEDIA.${resource}.poster}') var(--media-object-position, center) / contain no-repeat"
+      >
       <video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>
     </source-video-skin>
   </video-player>
@@ -388,7 +393,6 @@ function sourceReactPage(resource: string): string {
   return `import { createPlayer } from '@/player/create-player';
 import { Video } from '@/media/video';
 import { videoFeatures } from '@videojs/core/dom';
-import type { CSSProperties } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DefaultVideoSkin } from '${generatedRoot}/skin';
 import '${generatedRoot}/styles/styles.css';
@@ -401,11 +405,18 @@ function App() {
     <Player poster={MEDIA.${resource}.poster}>
       <DefaultVideoSkin
         data-source-skin
-        style={{
-          maxWidth: 800,
-          aspectRatio: '16/9',
-          '--media-poster-placeholder': \`url(\${MEDIA.${resource}.poster})\`,
-        } as CSSProperties}
+        renderPoster={
+          <img
+            alt=""
+            style={{
+              backgroundImage: \`url("\${MEDIA.${resource}.poster}")\`,
+              backgroundPosition: 'var(--media-object-position, center)',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'contain',
+            }}
+          />
+        }
+        style={{ maxWidth: 800, aspectRatio: '16/9' }}
       >
         <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />
       </DefaultVideoSkin>

@@ -2,7 +2,7 @@
 
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -169,18 +169,10 @@ function CaptionsTrigger(): ReactNode {
 }
 
 export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNode {
-  const { children, className, renderPoster, placeholder, style, ...rest } = props;
-
-  const containerStyle = placeholder
-    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
-    : style;
+  const { children, className, renderPoster, style, ...rest } = props;
 
   return (
-    <Container
-      className={cn('media-minimal-skin media-minimal-skin--video', className)}
-      style={containerStyle}
-      {...rest}
-    >
+    <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} style={style} {...rest}>
       {children}
 
       <Poster render={renderPoster} />

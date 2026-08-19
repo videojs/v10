@@ -28,10 +28,7 @@ for (const { framework, path } of SOURCE_SKINS) {
       await expect(container.locator('media-controls, .media-controls')).toBeAttached();
       await expect(container.locator('.media-overlay')).toBeAttached();
 
-      const placeholder = await container.evaluate((element) =>
-        getComputedStyle(element).getPropertyValue('--media-poster-placeholder')
-      );
-      expect(placeholder).toContain('url(');
+      await expect(skin.locator('img[style*="background"]').first()).toHaveCSS('background-image', /url\(/);
     });
 
     test('hides the poster once playback starts', async ({ page }) => {

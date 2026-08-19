@@ -33,7 +33,7 @@ import {
   volumeIndicator,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -368,14 +368,10 @@ function SettingsMenu(): ReactNode {
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, renderPoster, placeholder, style, ...rest } = props;
-
-  const containerStyle = placeholder
-    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
-    : style;
+  const { children, className, renderPoster, style, ...rest } = props;
 
   return (
-    <Container className={cn(container(false), className)} style={containerStyle} {...rest}>
+    <Container className={cn(container(false), className)} style={style} {...rest}>
       {children}
 
       <Poster className={poster(false)} render={renderPoster} />

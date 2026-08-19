@@ -89,9 +89,11 @@ describe('createFrameworkSkin', () => {
     expect(style(output, 'styles/container.css')).not.toContain('.media-overlay {');
     expect(style(output, 'styles/overlays.css')).toContain('.media-overlay {');
     expect(style(output, 'styles/poster.css')).toContain('.media-poster {');
+    expect(style(output, 'styles/poster.css')).not.toContain('[data-loaded]');
     expect(style(output, 'styles/theme.css')).toContain('.media-theme-default {');
     expect(style(output, 'styles/theme.css')).not.toContain('@scope');
     expect(output.styles.map((file) => file.content).join('\n')).not.toContain('--tw-');
+    expect(output.styles.map((file) => file.content).join('\n')).not.toContain('poster-placeholder');
     expect(style(output, 'styles/base.css')).toContain('@scope (.media-skin)');
     expect(style(output, 'styles/base.css')).toContain('button {');
     expect(style(output, 'styles/base.css')).toContain('[hidden] {');

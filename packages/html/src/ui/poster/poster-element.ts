@@ -72,11 +72,6 @@ type ImageLoadState = 'pending' | 'loaded' | 'error';
 export class PosterElement extends MediaElement {
   static readonly tagName = 'media-poster';
 
-  static get observedAttributes(): string[] {
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
-    return [...super.observedAttributes, 'placeholdersrc'];
-  }
-
   readonly #core = new PosterCore();
   readonly #children = new MutationObserver(() => this.requestUpdate());
 
@@ -106,18 +101,6 @@ export class PosterElement extends MediaElement {
 
     if (__DEV__ && !this.#playback.value) {
       logMissingFeature(this.localName, this.#playback.displayName ?? 'playback');
-    }
-  }
-
-  override attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null): void {
-    super.attributeChangedCallback(attr, oldValue, newValue);
-
-    if (attr === 'placeholdersrc') {
-      if (newValue) {
-        this.style.setProperty('--media-poster-placeholder', `url(${newValue})`);
-      } else {
-        this.style.removeProperty('--media-poster-placeholder');
-      }
     }
   }
 

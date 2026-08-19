@@ -18,18 +18,6 @@
       opacity: 0;
     }
 
-    .media-poster:before {
-      pointer-events: none;
-      background-image: var(--media-poster-placeholder, none);
-      background-size: var(--media-object-fit, contain);
-      background-position: var(--media-object-position, center);
-      content: '';
-      filter: blur(var(--media-poster-placeholder-blur, 20px));
-      background-repeat: no-repeat;
-      position: absolute;
-      inset: 0;
-    }
-
     .media-poster ::slotted(img),
     .media-poster img {
       border-radius: inherit;
@@ -39,10 +27,6 @@
       height: 100%;
       position: absolute;
       inset: 0;
-    }
-
-    .media-poster[data-visible]:not([data-loaded]) {
-      opacity: 0;
     }
   }
 }

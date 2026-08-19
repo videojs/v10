@@ -258,29 +258,41 @@ The poster is a skin concern. Build an `image.mux.com` URL and hand it over:
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video-skin placeholdersrc="data:image/webp;base64,…">
-  <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8"></mux-video>
-  <img slot="poster" src="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2" alt="" />
-</video-skin>
+<video-player poster="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2">
+  <video-skin>
+    <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8"></mux-video>
+    <img
+      slot="poster"
+      alt=""
+      style="background: url('data:image/webp;base64,…') center / contain no-repeat"
+    />
+  </video-skin>
+</video-player>
 ```
 
-The poster is a slotted `img` rather than an attribute, which gives the skin control over how it appears. `placeholdersrc` is the blurred stand-in shown while the real poster loads, Mux Player's `placeholder`.
+The player supplies the real poster. The slotted image supplies Mux Player's `placeholder` as its background while that poster loads.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```jsx
-<VideoSkin
-  poster="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2"
-  placeholder="data:image/webp;base64,…"
->
-  <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} />
-</VideoSkin>
+<VideoPlayer poster="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2">
+  <VideoSkin
+    renderPoster={
+      <img
+        alt=""
+        style={{ background: "url('data:image/webp;base64,…') center / contain no-repeat" }}
+      />
+    }
+  >
+    <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} />
+  </VideoSkin>
+</VideoPlayer>
 ```
 
-`placeholder` is the blurred stand-in shown while the real poster loads, Mux Player's `placeholder`.
+`renderPoster` customizes the poster image, so its background can show Mux Player's `placeholder` while the real poster loads.
 </FrameworkCase>
 
-Mux serves the poster from its `thumbnail` endpoint, so every Mux Player poster attribute becomes a query parameter you append: `thumbnail-time` is `?time=`, and the size, crop, rotation, and format options work the same way. See the <DocsLink slug="reference/poster">Poster</DocsLink> reference for the component itself.
+Mux serves the poster from its `thumbnail` endpoint, so every Mux Player poster attribute becomes a query parameter you append: `thumbnail-time` is `?time=`, and the size, crop, rotation, and format options work the same way. See <DocsLink slug="how-to/add-a-poster-placeholder">Add a poster placeholder</DocsLink> for more examples or the <DocsLink slug="reference/poster">Poster</DocsLink> reference for the component itself.
 
 ## Customize your player
 
