@@ -87,6 +87,14 @@ export const CastButton = {
   },
 } as const;
 
+export const CloudflareVideo = {
+  tagName: 'cloudflare-video',
+  import: {
+    from: '@videojs/html/media/cloudflare-video',
+    sideEffect: true,
+  },
+} as const;
+
 export const Controls = {
   tagName: 'media-controls',
   import: {
@@ -431,6 +439,14 @@ export const SliderValue = {
   },
 } as const;
 
+export const SpotifyAudio = {
+  tagName: 'spotify-audio',
+  import: {
+    from: '@videojs/html/media/spotify-audio',
+    sideEffect: true,
+  },
+} as const;
+
 export const StatusAnnouncer = {
   tagName: 'media-status-announcer',
   import: {
@@ -467,6 +483,14 @@ export const Thumbnail = {
   tagName: 'media-thumbnail',
   import: {
     from: '@videojs/html/ui/thumbnail',
+    sideEffect: true,
+  },
+} as const;
+
+export const TikTokVideo = {
+  tagName: 'tiktok-video',
+  import: {
+    from: '@videojs/html/media/tiktok-video',
     sideEffect: true,
   },
 } as const;
@@ -551,6 +575,14 @@ export const TooltipShortcut = {
   },
 } as const;
 
+export const TwitchVideo = {
+  tagName: 'twitch-video',
+  import: {
+    from: '@videojs/html/media/twitch-video',
+    sideEffect: true,
+  },
+} as const;
+
 export const VimeoVideo = {
   tagName: 'vimeo-video',
   import: {
@@ -611,6 +643,7 @@ export const entries = {
   CaptionsButton,
   CaptionsRadioGroup,
   CastButton,
+  CloudflareVideo,
   Controls,
   ControlsGroup,
   DashVideo,
@@ -654,11 +687,13 @@ export const entries = {
   SliderThumbnail,
   SliderTrack,
   SliderValue,
+  SpotifyAudio,
   StatusAnnouncer,
   StatusIndicator,
   StatusIndicatorValue,
   Text,
   Thumbnail,
+  TikTokVideo,
   Time,
   TimeGroup,
   TimeSeparator,
@@ -669,6 +704,7 @@ export const entries = {
   TooltipGroup,
   TooltipLabel,
   TooltipShortcut,
+  TwitchVideo,
   VimeoVideo,
   VolumeIndicator,
   VolumeIndicatorFill,

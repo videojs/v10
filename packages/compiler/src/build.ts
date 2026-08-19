@@ -101,6 +101,8 @@ async function buildEntry(entry: BuildEntry, config: CompilerConfig, configDir: 
     transform: {
       jsx: isHtml ? { runtime: 'automatic', importSource: 'vjsc/html-runtime' } : 'preserve',
     },
+    // The output target intentionally overrides source-project JSX settings.
+    checks: { configurationFieldConflict: false },
     experimental: { attachDebugInfo: 'none' },
   });
 

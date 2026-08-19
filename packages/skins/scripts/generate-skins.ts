@@ -8,7 +8,7 @@ import { resolvePackageImport as resolveReactPackageImport } from '../../react/v
 import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
 import { emitHtmlSkin } from '../build/output/html';
 import { emitReactSkin, reactOutput } from '../build/output/react';
-import { skinRegistry } from '../canonical/registry/config';
+import { skinRegistry } from '../canonical/registry/shadcn';
 import { formatGeneratedFile } from './generation/format';
 
 export interface GenerateSkinsOptions {

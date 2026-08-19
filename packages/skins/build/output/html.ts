@@ -3,7 +3,7 @@ import { html } from 'vjsc';
 import { defineCatalogOutput, emitCatalog } from 'vjsc/catalog';
 import { extendRegistry } from 'vjsc/registry';
 import { registry as htmlRegistry } from '../../../html/vjsc';
-import { registry as iconRegistry } from '../../../icons/vjsc/html';
+import { html as iconRegistry } from '../../../icons/vjsc';
 import { getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
 import { packageSkinStyles, skinStyleTransform } from './styles';
 

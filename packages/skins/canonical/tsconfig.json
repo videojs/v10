@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../../tsconfig.base.json",
   "compilerOptions": {
     "composite": false,
     "incremental": false,
@@ -9,6 +9,6 @@
     "lib": ["ES2022"],
     "noEmit": true
   },
-  "include": ["canonical/**/*.ts", "canonical/**/*.tsx"],
-  "exclude": ["canonical/registry/default"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["registry/default"]
 }

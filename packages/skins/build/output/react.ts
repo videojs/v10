@@ -4,7 +4,7 @@ import { jsx } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
 import { defineCatalogOutput, emitCatalog } from 'vjsc/catalog';
 import { extendRegistry } from 'vjsc/registry';
-import { registry as iconRegistry } from '../../../icons/vjsc/react';
+import { react as iconRegistry } from '../../../icons/vjsc';
 import { registry as reactRegistry } from '../../../react/vjsc';
 import { catalogSourcePath, getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
 import { componentTransforms } from './react/transform';

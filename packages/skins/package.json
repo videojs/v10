@@ -33,7 +33,7 @@
     "check:skins": "vitest run scripts/generation/tests/generated-skins.test.ts",
     "dev": "vite --host",
     "test": "pnpm run test:types && vitest run",
-    "test:types": "tsgo --project ./tsconfig.canonical.json",
+    "test:types": "tsgo --project ./canonical/tsconfig.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {

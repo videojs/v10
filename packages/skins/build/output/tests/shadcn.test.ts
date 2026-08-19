@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { emitShadcnRegistry } from 'vjsc/shadcn';
-import { skinRegistry } from '../../../canonical/registry/config';
+import { skinRegistry } from '../../../canonical/registry/shadcn';
 import { loadSkinCatalog } from '../../catalog';
 import { reactOutput } from '../react';
 
