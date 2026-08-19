@@ -11,10 +11,11 @@ import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import type { PropDef } from '@/types/component-reference';
 import type { SupportedFramework } from '@/types/docs';
+import type { FeatureConfigDef } from '@/types/feature-reference';
 import PropRow from './PropRow.astro';
 
 interface Props {
-  props: Record<string, PropDef>;
+  props: Record<string, PropDef | FeatureConfigDef>;
   componentName: string;
   framework: SupportedFramework;
   showAttributeName?: boolean;
@@ -47,6 +48,7 @@ const { props, componentName, framework, showAttributeName } = Astro.props;
             defaultValue={prop.default}
             required={prop.required}
             showAttributeName={showAttributeName}
+            attribute={"attribute" in prop ? prop.attribute : undefined}
             componentName={componentName}
           />
         ))
