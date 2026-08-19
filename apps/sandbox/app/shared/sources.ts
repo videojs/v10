@@ -435,8 +435,7 @@ export function getPosterSrc(source: SourceId): string | undefined {
 
 /**
  * A CSS image to sit behind the poster while it loads. This upscales a 20px
- * thumbnail, and the browser's own smoothing does the blurring — there is no
- * blur layer to ride on any more.
+ * thumbnail, and the browser's own smoothing does the blurring.
  */
 export function getPlaceholderSrc(source: SourceId): string | undefined {
   const id = getMuxAssetId(source);
