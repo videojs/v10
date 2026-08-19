@@ -1,5 +1,33 @@
 # Changelog
 
+## [10.0.0-beta.28](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.27...@videojs/react@10.0.0-beta.28) (2026-08-19)
+
+
+### Features
+
+* **media:** add maxAutoResolution cap to hls.js sources ([#2061](https://github.com/videojs/v10/issues/2061)) ([414513f](https://github.com/videojs/v10/commit/414513f03db856e860a882921927a12e7d57c470))
+* **media:** cap hls.js renditions to the player size ([#2243](https://github.com/videojs/v10/issues/2243)) ([e5dd81a](https://github.com/videojs/v10/commit/e5dd81ad6c255a0203a731a03985e44c91ae1bc3))
+
+
+### Bug Fixes
+
+* **core:** include menu triggers in tab order ([#2238](https://github.com/videojs/v10/issues/2238)) ([8eebaef](https://github.com/videojs/v10/commit/8eebaefc1b2438ea45b1b28df09ef6aef2b2bde6))
+* **packages:** restore menu trigger keyboard interaction ([#2235](https://github.com/videojs/v10/issues/2235)) ([0b193a5](https://github.com/videojs/v10/commit/0b193a5d365a200d045dd8b306affde919ad6ac7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.28
+    * @videojs/media bumped to 10.0.0-beta.28
+    * @videojs/spf bumped to 10.0.0-beta.28
+    * @videojs/store bumped to 10.0.0-beta.28
+    * @videojs/utils bumped to 10.0.0-beta.28
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.28
+    * @videojs/skins bumped to 10.0.0-beta.28
+
 ## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.26...@videojs/react@10.0.0-beta.27) (2026-08-17)
 
 
