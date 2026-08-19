@@ -4,7 +4,7 @@ import { basename, dirname, extname, isAbsolute, resolve } from 'node:path';
 import { isPlainObject } from '@videojs/utils/predicate';
 import ts from 'typescript';
 
-import { type GeneratedFileOptions, type GeneratedFileResult, writeGeneratedFile } from '../../utils/generated-file';
+import { type GeneratedFileOptions, type GeneratedFileResult, writeGeneratedFile } from '../../generate';
 import { toPosixPath } from '../../utils/path';
 import { relativeModuleSpecifier, sourceScriptKind } from '../../utils/source-module';
 

@@ -17,3 +17,11 @@ export function loadSkinCatalog(): Promise<SkinCatalog> {
 export function catalogSourcePath(path: string): string {
   return path.replace(/^\.\//, '');
 }
+
+export function getCatalogSkin(catalog: SkinCatalog, name: SkinCatalogSkin['name']): SkinCatalogSkin {
+  const skin = catalog.items.find((item) => item.name === name && item.type === 'skin');
+
+  if (skin?.type !== 'skin') throw new Error(`Skin \`${name}\` does not exist.`);
+
+  return skin;
+}

@@ -1,25 +1,18 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { camelCase, kebabCase } from '@videojs/utils/string';
-import type { ImportRef } from 'vjsc/ast';
+import { type GeneratedFile, syncGeneratedFiles } from 'vjsc/generate';
 import { emitRegistry } from 'vjsc/shadcn';
-import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
-import { reactOutput } from '../build/output/react';
-import { emitFrameworkSkin, type FrameworkTarget } from '../build/targets';
-import type { SkinName } from '../canonical/catalog';
-import { skinRegistry } from '../canonical/registry/config';
-import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from './generation/files';
+import { resolvePackageImport as resolveHtmlPackageImport } from '../../html/vjsc';
+import { resolvePackageImport as resolveReactPackageImport } from '../../react/vjsc';
 
-type FrameworkSkinTarget = FrameworkTarget & {
-  packageRoot: string;
-  outputDir: string;
-  skin: SkinName;
-  iconSet?: string | undefined;
-};
+import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
+import { emitHtmlSkin } from '../build/output/html';
+import { emitReactSkin, reactOutput } from '../build/output/react';
+import { skinRegistry } from '../canonical/registry/config';
+import { formatGeneratedFile } from './generation/format';
 
 export interface GenerateSkinsOptions {
   check?: boolean | undefined;
-  frameworkTargets?: readonly FrameworkSkinTarget[] | undefined;
 }
 
 const frameworkSkins = [
@@ -27,68 +20,34 @@ const frameworkSkins = [
   { name: 'minimal-video', iconSet: 'minimal' },
 ] as const;
 
-const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = frameworkSkins.flatMap(({ name, iconSet }) => {
-  const outputDir = `src/__generated__/skins/${name}`;
-  return [
-    {
-      framework: 'html' as const,
-      packageRoot: resolve(skinsPackageRoot, '../html'),
-      outputDir,
-      skin: name,
-      iconSet,
-      resolveImport: htmlPackageImportResolver(posix.join(outputDir, 'skin.ts')),
-    },
-    {
-      framework: 'react' as const,
-      packageRoot: resolve(skinsPackageRoot, '../react'),
-      outputDir,
-      skin: name,
-      iconSet,
-      resolveImport: reactPackageImportResolver,
-    },
-  ];
-});
+const frameworkPackages = {
+  html: resolve(skinsPackageRoot, '../html'),
+  react: resolve(skinsPackageRoot, '../react'),
+} as const;
 
 /** Generate framework Skins and the contained React/Tailwind registry. */
 export async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> {
   const catalog = await loadSkinCatalog();
-  const targets = options.frameworkTargets ?? defaultFrameworkTargets;
 
-  for (const group of groupFrameworkTargets(targets)) {
-    const output = await emitFrameworkSkin(catalog, {
-      skin: group.skin,
-      ...(group.iconSet === 'default' ? {} : { iconSet: group.iconSet }),
-      targets: group.targets,
-    });
+  for (const skin of frameworkSkins) {
+    const outputDir = `src/__generated__/skins/${skin.name}`;
+    const [html, react] = await Promise.all([
+      emitHtmlSkin(catalog, {
+        skin: skin.name,
+        iconSet: skin.iconSet,
+        resolveImport: (specifier) => resolveHtmlPackageImport(specifier, posix.join(outputDir, 'skin.ts')),
+      }),
+      emitReactSkin(catalog, {
+        skin: skin.name,
+        iconSet: skin.iconSet,
+        resolveImport: resolveReactPackageImport,
+      }),
+    ]);
 
-    const styles = await Promise.all(
-      output.styles.map(async (style) => [style.path, await formatGeneratedFile(style.path, style.content)] as const)
-    );
-
-    for (const target of group.targets) {
-      const generatedFiles = output.files.filter((file) => file.framework === target.framework);
-
-      if (generatedFiles.length === 0) {
-        throw new Error(`Framework Skin generation did not emit the ${target.framework} target.`);
-      }
-
-      const files = new Map<string, string>();
-
-      for (const file of generatedFiles) {
-        files.set(posix.join(target.outputDir, file.path), await formatGeneratedFile(file.path, file.content));
-      }
-
-      for (const [fileName, formatted] of styles) {
-        files.set(posix.join(target.outputDir, fileName), formatted);
-      }
-
-      await syncGeneratedFiles({
-        rootDir: target.packageRoot,
-        files,
-        managedRoots: [target.outputDir],
-        check: options.check,
-      });
-    }
+    await Promise.all([
+      syncSkinOutput(frameworkPackages.html, outputDir, html, options.check),
+      syncSkinOutput(frameworkPackages.react, outputDir, react, options.check),
+    ]);
   }
 
   const shadcn = await emitRegistry(catalog, skinRegistry, {
@@ -107,114 +66,41 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     },
   });
 
-  const files = await collectGeneratedFiles(shadcn.files, skinRegistry.paths.output);
-
-  files.set(
-    posix.join(skinRegistry.paths.output, 'registry.json'),
-    await formatGeneratedFile('registry.json', JSON.stringify(shadcn.registry))
-  );
-
   await syncGeneratedFiles({
     rootDir: skinsPackageRoot,
-    files,
     managedRoots: [posix.join(skinRegistry.paths.output, skinRegistry.paths.source)],
+    files: [
+      ...inDirectory(shadcn.files, skinRegistry.paths.output),
+      {
+        path: posix.join(skinRegistry.paths.output, 'registry.json'),
+        content: JSON.stringify(shadcn.registry),
+      },
+    ],
     check: options.check,
+    format: formatGeneratedFile,
   });
 }
 
-function groupFrameworkTargets(
-  targets: readonly FrameworkSkinTarget[]
-): Array<{ skin: SkinName; iconSet: string; targets: FrameworkSkinTarget[] }> {
-  const groups = new Map<string, { skin: SkinName; iconSet: string; targets: FrameworkSkinTarget[] }>();
-
-  for (const target of targets) {
-    const iconSet = target.iconSet ?? 'default';
-    const key = `${target.skin}\0${iconSet}`;
-    let group = groups.get(key);
-    if (!group) {
-      group = { skin: target.skin, iconSet, targets: [] };
-      groups.set(key, group);
-    }
-
-    if (group.targets.some((existing) => existing.framework === target.framework)) {
-      throw new Error(
-        `Framework Skin generation received multiple ${target.framework} outputs for Skin \`${target.skin}\`.`
-      );
-    }
-
-    group.targets.push(target);
-  }
-
-  return [...groups.values()];
+async function syncSkinOutput(
+  packageRoot: string,
+  outputDir: string,
+  output: { files: readonly GeneratedFile[]; styles: readonly GeneratedFile[] },
+  check: boolean | undefined
+): Promise<void> {
+  await syncGeneratedFiles({
+    rootDir: packageRoot,
+    managedRoots: [outputDir],
+    files: inDirectory([...output.files, ...output.styles], outputDir),
+    check,
+    format: formatGeneratedFile,
+  });
 }
 
-function htmlPackageImportResolver(outputFile: string): (specifier: string) => string {
-  return (specifier) => {
-    const target = htmlPackageModule(specifier);
-    const relative = posix.relative(posix.dirname(outputFile), target);
-    return relative.startsWith('.') ? relative : `./${relative}`;
-  };
-}
-
-function htmlPackageModule(specifier: string): string {
-  if (specifier === '@videojs/html/i18n') return 'src/define/i18n';
-
-  const uiPrefix = '@videojs/html/ui/';
-  if (specifier.startsWith(uiPrefix)) return posix.join('src/define/ui', specifier.slice(uiPrefix.length));
-
-  const mediaPrefix = '@videojs/html/media/';
-  if (specifier.startsWith(mediaPrefix)) return posix.join('src/define/media', specifier.slice(mediaPrefix.length));
-
-  const iconsPrefix = '@videojs/html/icons/element';
-  if (specifier === iconsPrefix) return 'src/icons/element';
-
-  if (specifier.startsWith(`${iconsPrefix}/`))
-    return posix.join('src/icons/element', specifier.slice(iconsPrefix.length + 1));
-
-  throw new Error(`Cannot resolve HTML package import \`${specifier}\`.`);
-}
-
-function reactPackageImportResolver(reference: ImportRef): ImportRef | false {
-  if (reference.source === '@videojs/react') {
-    if (reference.name === 'Text') return { ...reference, source: '@/i18n' };
-    if (reference.name === 'Container' || reference.name === 'ContainerProps') {
-      return { ...reference, source: '@/player/container' };
-    }
-    if (reference.name === 'Poster' || reference.name === 'PosterProps') {
-      return { ...reference, source: '@/ui/poster' };
-    }
-    if (reference.name === 'usePlayer') return { ...reference, source: '@/player/context' };
-    if (reference.name === 'useTranslator') return { ...reference, source: '@/i18n' };
-    if (reference.name === 'useQualityOptions') {
-      return { ...reference, source: '@/ui/quality/use-quality-options' };
-    }
-    if (reference.name === 'useAudioTrackOptions') {
-      return { ...reference, source: '@/ui/audio-track/use-audio-track-options' };
-    }
-    if (reference.name === 'usePlaybackRateOptions') {
-      return { ...reference, source: '@/ui/playback-rate/use-playback-rate-options' };
-    }
-    if (reference.name === 'useCaptionsOptions') {
-      return { ...reference, source: '@/ui/captions-radio-group/use-captions-options' };
-    }
-    if (reference.name === 'RenderProp') return { ...reference, source: '@/utils/types' };
-    return { ...reference, source: `@/ui/${reactComponentModule(reference.name)}` };
-  }
-  const iconsPrefix = '@videojs/react/icons';
-  if (reference.source === iconsPrefix) return { ...reference, source: '@/icons' };
-  if (reference.source.startsWith(`${iconsPrefix}/`)) {
-    return { ...reference, source: `@/icons/${reference.source.slice(iconsPrefix.length + 1)}` };
-  }
-  return reference;
-}
-
-const reactComponentModules: Readonly<Record<string, string>> = {
-  AirPlayButton: 'airplay-button',
-  PiPButton: 'pip-button',
-};
-
-function reactComponentModule(name: string): string {
-  return reactComponentModules[name] ?? kebabCase(camelCase(name));
+function inDirectory(files: Iterable<GeneratedFile>, outputDir: string): GeneratedFile[] {
+  return [...files].map((file) => ({
+    path: posix.join(outputDir, file.path),
+    content: file.content,
+  }));
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

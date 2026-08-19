@@ -4,7 +4,7 @@ import { isAbsolute, resolve } from 'node:path';
 import { isPlainObject } from '@videojs/utils/predicate';
 import ts from 'typescript';
 
-import { type GeneratedFileOptions, type GeneratedFileResult, writeGeneratedFile } from '../../utils/generated-file';
+import { type GeneratedFileOptions, type GeneratedFileResult, writeGeneratedFile } from '../../generate';
 import { resolveSourceModule, sourceScriptKind } from '../../utils/source-module';
 import type { ComponentDefinition, ComponentRecord, ComponentSchema } from '../definition';
 import type { RegistryEntryReference } from '../registry';

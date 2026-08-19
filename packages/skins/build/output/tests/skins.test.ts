@@ -1,29 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { loadSkinCatalog } from '../catalog';
-import { emitFrameworkSkin } from '../targets';
+import { loadSkinCatalog } from '../../catalog';
+import { emitHtmlSkin } from '../html';
+import { emitReactSkin } from '../react';
 
-describe('emitFrameworkSkin', () => {
+describe('Skin output', () => {
   it('emits editable React modules and role-based vanilla stylesheets', async () => {
-    const output = await emitFrameworkSkin(await loadSkinCatalog(), {
+    const output = await emitReactSkin(await loadSkinCatalog(), {
       skin: 'default-video',
-      targets: [{ framework: 'react' }, { framework: 'html' }],
     });
-    const files = output.files.filter((candidate) => candidate.framework === 'react');
-    const skin = content(output, 'react', 'skin.tsx');
-    const buttonTooltip = content(output, 'react', 'components/buttons/button-tooltip.tsx');
-    const playButton = content(output, 'react', 'components/buttons/play-button.tsx');
-    const overlay = content(output, 'react', 'components/layout/overlay.tsx');
-    const poster = content(output, 'react', 'components/layout/poster.tsx');
-    const container = content(output, 'react', 'components/layout/container.tsx');
-    const volumeSlider = content(output, 'react', 'components/sliders/volume-slider.tsx');
-    const timeSlider = content(output, 'react', 'components/sliders/time-slider.tsx');
-    const settingsMenu = content(output, 'react', 'components/menus/settings-menu.tsx');
-    const qualityMenu = content(output, 'react', 'components/menus/quality-menu.tsx');
-    const radioGroup = content(output, 'react', 'components/menus/radio-group.tsx');
-    const radioItem = content(output, 'react', 'components/menus/radio-item.tsx');
-    const submenu = content(output, 'react', 'components/menus/submenu.tsx');
-    const videoGestures = content(output, 'react', 'components/video-gestures.tsx');
-    const videoHotkeys = content(output, 'react', 'components/video-hotkeys.tsx');
+    const files = output.files;
+    const skin = content(output, 'skin.tsx');
+    const buttonTooltip = content(output, 'components/buttons/button-tooltip.tsx');
+    const playButton = content(output, 'components/buttons/play-button.tsx');
+    const overlay = content(output, 'components/layout/overlay.tsx');
+    const poster = content(output, 'components/layout/poster.tsx');
+    const container = content(output, 'components/layout/container.tsx');
+    const volumeSlider = content(output, 'components/sliders/volume-slider.tsx');
+    const timeSlider = content(output, 'components/sliders/time-slider.tsx');
+    const settingsMenu = content(output, 'components/menus/settings-menu.tsx');
+    const qualityMenu = content(output, 'components/menus/quality-menu.tsx');
+    const radioGroup = content(output, 'components/menus/radio-group.tsx');
+    const radioItem = content(output, 'components/menus/radio-item.tsx');
+    const submenu = content(output, 'components/menus/submenu.tsx');
+    const videoGestures = content(output, 'components/video-gestures.tsx');
+    const videoHotkeys = content(output, 'components/video-hotkeys.tsx');
 
     expect(files.map((file) => file.path)).toEqual([
       'components/buttons/airplay-button.tsx',
@@ -168,11 +168,10 @@ describe('emitFrameworkSkin', () => {
   });
 
   it('bundles HTML registrations and markup into one Skin module', async () => {
-    const output = await emitFrameworkSkin(await loadSkinCatalog(), {
+    const output = await emitHtmlSkin(await loadSkinCatalog(), {
       skin: 'default-video',
-      targets: [{ framework: 'html' }],
     });
-    const html = content(output, 'html', 'skin.ts');
+    const html = content(output, 'skin.ts');
 
     expect(html).toContain("import '@videojs/html/icons/element'");
     expect(html).toContain("import '@videojs/html/ui/airplay-button'");
@@ -240,13 +239,13 @@ describe('emitFrameworkSkin', () => {
   });
 
   it('projects the minimal video composition and theme for both frameworks', async () => {
-    const output = await emitFrameworkSkin(await loadSkinCatalog(), {
-      skin: 'minimal-video',
-      iconSet: 'minimal',
-      targets: [{ framework: 'react' }, { framework: 'html' }],
-    });
-    const react = content(output, 'react', 'skin.tsx');
-    const html = content(output, 'html', 'skin.ts');
+    const catalog = await loadSkinCatalog();
+    const [reactOutput, htmlOutput] = await Promise.all([
+      emitReactSkin(catalog, { skin: 'minimal-video', iconSet: 'minimal' }),
+      emitHtmlSkin(catalog, { skin: 'minimal-video', iconSet: 'minimal' }),
+    ]);
+    const react = content(reactOutput, 'skin.tsx');
+    const html = content(htmlOutput, 'skin.ts');
 
     expect(react).toContain('export interface MinimalVideoSkinProps extends Omit<ContainerProps');
     expect(react).toContain('media-skin media-skin-video-minimal media-theme-minimal');
@@ -268,24 +267,22 @@ describe('emitFrameworkSkin', () => {
     expect(html).not.toContain('media-status-indicator-minimal');
     expect(html).not.toContain('media-volume-indicator-minimal');
     expect(html).not.toContain('media-seek-button');
-    expect(style(output, 'styles/controls.css')).toContain('@scope (.media-skin-video-minimal)');
-    expect(style(output, 'styles/theme.css')).toContain('.media-theme-minimal {');
-    expect(style(output, 'styles/theme.css')).not.toContain('.media-theme-default {');
+    expect(style(reactOutput, 'styles/controls.css')).toContain('@scope (.media-skin-video-minimal)');
+    expect(style(reactOutput, 'styles/theme.css')).toContain('.media-theme-minimal {');
+    expect(style(reactOutput, 'styles/theme.css')).not.toContain('.media-theme-default {');
   });
 });
 
-function style(output: Awaited<ReturnType<typeof emitFrameworkSkin>>, fileName: string): string {
+type SkinOutput = Awaited<ReturnType<typeof emitReactSkin>>;
+
+function style(output: SkinOutput, fileName: string): string {
   const file = output.styles.find((candidate) => candidate.path === fileName);
   if (!file) throw new Error(`Missing generated style file \`${fileName}\`.`);
   return file.content;
 }
 
-function content(
-  output: Awaited<ReturnType<typeof emitFrameworkSkin>>,
-  framework: 'html' | 'react',
-  fileName: string
-): string {
-  const file = output.files.find((candidate) => candidate.framework === framework && candidate.path === fileName);
-  if (!file) throw new Error(`Missing generated ${framework} file \`${fileName}\`.`);
+function content(output: SkinOutput, fileName: string): string {
+  const file = output.files.find((candidate) => candidate.path === fileName);
+  if (!file) throw new Error(`Missing generated file \`${fileName}\`.`);
   return file.content;
 }

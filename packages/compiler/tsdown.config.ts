@@ -14,6 +14,7 @@ export default defineConfig({
     'components/registry': './src/components/registry/index.ts',
     'components/registry/jsx-runtime': './src/components/registry/jsx-runtime.ts',
     'components/registry/jsx-dev-runtime': './src/components/registry/jsx-dev-runtime.ts',
+    'generate/index': './src/generate/index.ts',
     'shadcn/index': './src/shadcn/index.ts',
     'styles/index': './src/styles/index.ts',
     'bundlers/vite': './src/bundlers/vite.ts',

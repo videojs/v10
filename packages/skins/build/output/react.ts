@@ -1,16 +1,24 @@
+import { posix } from 'node:path';
+
 import { jsx } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
-import { defineOutput, type StaticCatalogOutputAdapter } from 'vjsc/catalog';
+import { defineOutput, emitCatalog, type StaticCatalogOutputAdapter } from 'vjsc/catalog';
 import { extendRegistry } from 'vjsc/components';
 import { registry as iconRegistry } from '../../../icons/vjsc/react';
 import { registry as reactRegistry } from '../../../react/vjsc';
+import { catalogSourcePath, getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
 import { componentTransforms } from './react/transform';
+import { packageSkinStyles, skinStyleTransform } from './styles';
 
-export type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
+type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
 
 interface ReactOutputOptions {
   iconSet?: string | undefined;
   resolveImport?: ReactImportResolver | undefined;
+}
+
+interface EmitReactSkinOptions extends ReactOutputOptions {
+  skin: SkinCatalogSkin['name'];
 }
 
 /** Create the React module output adapter for a Skin catalog. */
@@ -36,4 +44,29 @@ export function reactOutput(options: ReactOutputOptions = {}): StaticCatalogOutp
       plugins: [componentTransforms(resolveImport)],
     },
   });
+}
+
+/** Emit one canonical Skin as editable React modules and vanilla CSS. */
+export async function emitReactSkin(catalog: SkinCatalog, options: EmitReactSkinOptions) {
+  const { skin: skinName, ...outputOptions } = options;
+  const skin = getCatalogSkin(catalog, skinName);
+  const entryPath = catalogSourcePath(skin.source);
+  const entryDir = posix.dirname(entryPath);
+  const output = await emitCatalog(catalog, {
+    items: [skin.name],
+    output: reactOutput(outputOptions),
+    styles: skinStyleTransform(catalog, skin),
+    files: {
+      source: ({ sourceFile }) => {
+        const path = catalogSourcePath(sourceFile);
+
+        return path.startsWith(`${entryDir}/`) ? posix.relative(entryDir, path) : path;
+      },
+    },
+  });
+
+  return {
+    files: output.files.source,
+    styles: await packageSkinStyles(catalog, skin, output.files.style),
+  };
 }
