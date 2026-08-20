@@ -2,11 +2,10 @@ import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { html, jsx } from 'vjsc';
-import { type VjscTransformConfig, vjscPlugin } from 'vjsc/bundle';
-import { catalogMetaPlugin } from 'vjsc/catalog';
+import { discoverVjscModules, html, jsx, moduleMetaPlugin } from 'vjsc';
+import { type VjscTransformConfig, vjscPlugin } from 'vjsc/rolldown';
 import { plugin as stylesPlugin } from 'vjsc/styles';
-import skinCatalog from './vjsc/catalog';
+import type { SkinMeta } from './vjsc/meta';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './vjsc/registry/frameworks';
 import { componentTransforms } from './vjsc/registry/react';
 import { createSkinShadcnPlugin } from './vjsc/registry/shadcn';
@@ -36,6 +35,7 @@ function createRegistryConfig() {
 
 function createPreviewConfig() {
   const transforms = new Map<string, VjscTransformConfig>();
+  const skins = discoverVjscModules<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
 
   return {
     root: resolve(packageDir, 'dev'),
@@ -52,8 +52,8 @@ function createPreviewConfig() {
           const style = parameters.get('style');
           if ((framework !== 'react' && framework !== 'html') || !skinName || !style) return null;
 
-          const skin = skinCatalog.items.find((item) => item.type === 'skin' && item.name === skinName);
-          if (!skin || skin.type !== 'skin') return null;
+          const skin = skins.find((item) => item.name === skinName);
+          if (!skin) return null;
 
           const key = parameters.toString();
           const cached = transforms.get(key);
@@ -76,7 +76,7 @@ function createPreviewConfig() {
                       scope: `.${skin.style.scope}`,
                     },
                   }),
-              catalogMetaPlugin(),
+              moduleMetaPlugin(),
               ...(framework === 'react' ? [componentTransforms()] : []),
             ],
           };

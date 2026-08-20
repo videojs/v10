@@ -2,12 +2,12 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { defineComponent, defineSchema } from '../../components';
-import { jsx } from '../../config';
-import { defineRegistry } from '../../registry';
-import { defineCatalog } from '../define';
-import { projectCatalog } from '../project';
-import { loadCatalog } from '../resolve';
+import { defineComponent, defineSchema } from '../../../components';
+import { jsx } from '../../../config';
+import { defineRegistry } from '../../../registry';
+import { defineSource } from '../define';
+import { transformSource } from '../project';
+import { loadSource } from '../resolve';
 
 const roots: string[] = [];
 
@@ -15,7 +15,7 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('projectCatalog', () => {
+describe('transformSource', () => {
   it('uses a component registry without exposing transform configuration', async () => {
     const root = setup({
       'entry.tsx': `import { PlayButton } from '@fixture/components'; export const entry = <PlayButton disabled />;`,
@@ -29,16 +29,16 @@ describe('projectCatalog', () => {
         PlayButton: { import: { from: '@fixture/react', name: 'PlayButton' } },
       },
     });
-    const loaded = await loadCatalog(
-      defineCatalog({
+    const loaded = await loadSource(
+      defineSource({
         allowedImports: ['@fixture/components'],
         items: [{ name: 'entry', source: './entry.tsx' }],
       }),
       { rootDir: root }
     );
 
-    const output = await projectCatalog(loaded, {
-      projection: { componentRegistry: registry },
+    const output = await transformSource(loaded, {
+      transformer: { componentRegistry: registry },
       files: { source: ({ sourceFile }) => sourceFile },
     });
 
@@ -46,32 +46,32 @@ describe('projectCatalog', () => {
     expect(output.files.source[0]?.content).toContain('<PlayButton disabled/>');
   });
 
-  it('transforms, relinks, and collects dependencies for selected catalog items', async () => {
+  it('transforms, relinks, and collects dependencies for selected source items', async () => {
     const root = setup({
       'entry.tsx': `import { dependency } from './dependency'; import { helper } from './private/helper'; import React from 'react'; import { createElement } from 'react'; export const entry = [dependency, helper, React, createElement];`,
       'private/helper.ts': `export const helper: number = 1;`,
       'dependency.ts': `export const dependency: number = 2;`,
       'unused.ts': `export const unused = true;`,
     });
-    const definition = defineCatalog({
+    const definition = defineSource({
       items: [
         { name: 'entry', source: './entry.tsx' },
         { name: 'dependency', source: './dependency.ts' },
         { name: 'unused', source: './unused.ts' },
       ],
     });
-    const loaded = await loadCatalog(definition, { rootDir: root });
+    const loaded = await loadSource(definition, { rootDir: root });
 
-    const output = await projectCatalog(loaded, {
+    const output = await transformSource(loaded, {
       items: ['entry'],
-      projection: {
+      transformer: {
         transform: { target: jsx() },
       },
       files: {
-        source({ catalogItem, sourceFile }) {
-          return sourceFile === catalogItem.source
-            ? `${catalogItem.name}/index.ts`
-            : `${catalogItem.name}/${sourceFile.slice(2)}`;
+        source({ sourceItem, sourceFile }) {
+          return sourceFile === sourceItem.source
+            ? `${sourceItem.name}/index.ts`
+            : `${sourceItem.name}/${sourceFile.slice(2)}`;
         },
       },
       resolve: {
@@ -101,7 +101,7 @@ describe('projectCatalog', () => {
     expect(output.files.style).toEqual([]);
   });
 
-  it('projects catalog styles and emits referenced vanilla CSS', async () => {
+  it('projects source styles and emits referenced vanilla CSS', async () => {
     const root = setup({
       'entry.tsx': `import styles from './button.styles'; export const entry = <button className={styles.root}/>;`,
       'button.styles.ts': `
@@ -120,22 +120,22 @@ describe('projectCatalog', () => {
         });
       `,
     });
-    const loaded = await loadCatalog(
-      defineCatalog({
+    const loaded = await loadSource(
+      defineSource({
         allowedImports: ['vjsc/styles'],
         items: [{ name: 'entry', source: './entry.tsx' }],
       }),
       { rootDir: root }
     );
 
-    const output = await projectCatalog(loaded, {
+    const output = await transformSource(loaded, {
       items: ['entry'],
-      projection: {
+      transformer: {
         transform: { target: jsx() },
       },
       styles: {
         mode: 'css',
-        input: resolve(import.meta.dirname, '../../styles/tests/fixtures/tailwind.css'),
+        input: resolve(import.meta.dirname, '../../../styles/tests/fixtures/tailwind.css'),
         scope: '.fixture-skin',
         variant: 'compact',
       },
@@ -155,7 +155,7 @@ describe('projectCatalog', () => {
 });
 
 function setup(files: Readonly<Record<string, string>>): string {
-  const root = mkdtempSync(join(tmpdir(), 'vjsc-catalog-projection-'));
+  const root = mkdtempSync(join(tmpdir(), 'vjsc-source-transformer-'));
   roots.push(root);
   for (const [file, source] of Object.entries(files)) {
     const path = join(root, file);

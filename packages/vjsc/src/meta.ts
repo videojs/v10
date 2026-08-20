@@ -3,58 +3,60 @@ import { isAbsolute, relative, resolve } from 'node:path';
 
 import ts from 'typescript';
 
-import type { CompilerPlugin } from '../config';
-import { toPosixPath } from '../utils/path';
-import { sourceScriptKind } from '../utils/source-module';
-import type { CatalogItemDefinition } from './define';
+import type { CompilerPlugin } from './config';
+import { toPosixPath } from './utils/path';
+import { sourceScriptKind } from './utils/source-module';
 
-export interface CatalogItemMeta {
+export interface VjscModuleMeta {
   readonly name: string;
   readonly [key: string]: unknown;
 }
 
-export interface DiscoverCatalogItemsOptions {
+export interface DiscoverVjscModulesOptions {
   readonly rootDir: string;
-  readonly files: string | readonly string[];
+  readonly include: string | readonly string[];
+  readonly exclude?: string | readonly string[] | undefined;
   readonly exportName?: string | undefined;
 }
 
-/** Discover self-describing catalog entries without evaluating their source modules. */
-export function discoverCatalogItems<Item extends CatalogItemMeta = CatalogItemMeta>(
-  options: DiscoverCatalogItemsOptions
-): readonly (Item & CatalogItemDefinition)[] {
+/** Discover self-describing VJSC modules without evaluating their source. */
+export function discoverVjscModules<Item extends VjscModuleMeta = VjscModuleMeta>(
+  options: DiscoverVjscModulesOptions
+): readonly (Item & { readonly source: string })[] {
   const rootDir = resolve(options.rootDir);
-  const patterns = typeof options.files === 'string' ? [options.files] : options.files;
+  const patterns = typeof options.include === 'string' ? [options.include] : options.include;
   const exportName = options.exportName ?? 'meta';
   const sourceFiles = [
     ...new Set(
       patterns.flatMap((pattern) =>
-        globSync(pattern, { cwd: rootDir }).map((path) => (isAbsolute(path) ? path : resolve(rootDir, path)))
+        globSync(pattern, { cwd: rootDir, ...(options.exclude ? { exclude: options.exclude } : {}) }).map((path) =>
+          isAbsolute(path) ? path : resolve(rootDir, path)
+        )
       )
     ),
   ].sort();
 
   const items = sourceFiles.flatMap((fileName) => {
-    const meta = findCatalogItemMeta(readFileSync(fileName, 'utf8'), fileName, exportName) as Item | undefined;
+    const meta = findVjscModuleMeta(readFileSync(fileName, 'utf8'), fileName, exportName) as Item | undefined;
     if (!meta) return [];
-    if ('source' in meta) throw new Error(`Catalog item metadata in ${fileName} must not declare \`source\`.`);
+    if ('source' in meta) throw new Error(`VJSC module metadata in ${fileName} must not declare \`source\`.`);
     const path = toPosixPath(relative(rootDir, fileName));
     return [{ ...meta, source: `./${path}` }];
   });
   const names = new Set<string>();
 
   for (const item of items) {
-    if (names.has(item.name)) throw new Error(`Catalog item \`${item.name}\` is declared more than once.`);
+    if (names.has(item.name)) throw new Error(`VJSC module \`${item.name}\` is declared more than once.`);
     names.add(item.name);
   }
 
   return items.sort((left, right) => left.name.localeCompare(right.name));
 }
 
-/** Remove compile-time catalog metadata from projected component modules. */
-export function catalogMetaPlugin(exportName = 'meta'): CompilerPlugin {
+/** Remove compile-time metadata from transformed VJSC modules. */
+export function moduleMetaPlugin(exportName = 'meta'): CompilerPlugin {
   return {
-    name: 'vjsc:catalog-meta',
+    name: 'vjsc:module-meta',
     enforce: 'pre',
     setup() {
       return {
@@ -68,13 +70,13 @@ export function catalogMetaPlugin(exportName = 'meta'): CompilerPlugin {
   };
 }
 
-export function extractCatalogItemMeta(source: string, fileName: string, exportName = 'meta'): CatalogItemMeta {
-  const meta = findCatalogItemMeta(source, fileName, exportName);
+export function extractVjscModuleMeta(source: string, fileName: string, exportName = 'meta'): VjscModuleMeta {
+  const meta = findVjscModuleMeta(source, fileName, exportName);
   if (meta) return meta;
-  throw new Error(`Catalog source ${fileName} must export a static \`${exportName}\` object.`);
+  throw new Error(`VJSC source ${fileName} must export a static \`${exportName}\` object.`);
 }
 
-function findCatalogItemMeta(source: string, fileName: string, exportName: string): CatalogItemMeta | undefined {
+function findVjscModuleMeta(source: string, fileName: string, exportName: string): VjscModuleMeta | undefined {
   const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, sourceScriptKind(fileName));
 
   for (const statement of sourceFile.statements) {
@@ -85,9 +87,9 @@ function findCatalogItemMeta(source: string, fileName: string, exportName: strin
     if (!declaration?.initializer) break;
     const value = staticValue(declaration.initializer, fileName);
     if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
-      throw new Error(`Catalog metadata \`${exportName}\` in ${fileName} must contain a non-empty literal \`name\`.`);
+      throw new Error(`VJSC metadata \`${exportName}\` in ${fileName} must contain a non-empty literal \`name\`.`);
     }
-    return value as CatalogItemMeta;
+    return value as VjscModuleMeta;
   }
 
   return undefined;
@@ -141,7 +143,7 @@ function staticPropertyName(name: ts.PropertyName, fileName: string): string {
 }
 
 function nonStaticMeta(fileName: string): Error {
-  return new Error(`Catalog metadata in ${fileName} must contain only static literal values.`);
+  return new Error(`VJSC metadata in ${fileName} must contain only static literal values.`);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

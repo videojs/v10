@@ -1,7 +1,7 @@
 import type { CaptionsButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
-import type { CatalogItemMeta } from 'vjsc/catalog';
+import type { VjscModuleMeta } from 'vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';
@@ -21,4 +21,4 @@ export const meta = {
   type: 'component',
   title: 'Captions Button',
   description: 'A state-aware button that toggles captions and subtitles.',
-} as const satisfies CatalogItemMeta;
+} as const satisfies VjscModuleMeta;

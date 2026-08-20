@@ -8,7 +8,7 @@ The package is private (`"private": true` in `package.json`) and is not publishe
 
 ## Structure
 
-- `vjsc/` — target-neutral Skin sources plus Vite/VJSC projection and registry configuration.
+- `vjsc/` — target-neutral Skin sources plus Vite/VJSC transforms and Shadcn registry configuration.
 - `src/default/` — default skin tokens and CSS.
 - `src/minimal/` — minimal skin tokens and CSS.
 - `src/shared/` — tokens shared between skins.

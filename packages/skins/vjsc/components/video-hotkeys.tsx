@@ -1,5 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
-import type { CatalogItemMeta } from 'vjsc/catalog';
+import type { VjscModuleMeta } from 'vjsc';
 
 export interface VideoHotkeysProps {
   disabled?: boolean | undefined;
@@ -33,4 +33,4 @@ export const meta = {
   type: 'component',
   title: 'Video Hotkeys',
   description: 'The standard keyboard controls for on-demand video playback.',
-} as const satisfies CatalogItemMeta;
+} as const satisfies VjscModuleMeta;

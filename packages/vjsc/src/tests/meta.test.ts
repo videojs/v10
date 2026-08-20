@@ -4,37 +4,37 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { transform } from '../../transform';
-import { catalogMetaPlugin, discoverCatalogItems, extractCatalogItemMeta } from '../meta';
+import { discoverVjscModules, extractVjscModuleMeta, moduleMetaPlugin } from '../meta';
+import { transform } from '../transform';
 
-describe('catalog metadata', () => {
+describe('VJSC module metadata', () => {
   it('extracts static metadata through satisfies expressions', () => {
     expect(
-      extractCatalogItemMeta(
+      extractVjscModuleMeta(
         `export const meta = { name: 'default-video', type: 'skin', style: { theme: 'default' } } as const satisfies Meta;`,
-        '/catalog/skin.tsx'
+        '/vjsc/skin.tsx'
       )
     ).toEqual({ name: 'default-video', type: 'skin', style: { theme: 'default' } });
   });
 
   it('discovers metadata and infers source paths', () => {
-    const rootDir = mkdtempSync(join(tmpdir(), 'vjsc-catalog-'));
+    const rootDir = mkdtempSync(join(tmpdir(), 'vjsc-meta-'));
     mkdirSync(join(rootDir, 'components'));
     writeFileSync(join(rootDir, 'components/play.tsx'), `export const meta = { name: 'play', type: 'component' };`);
     writeFileSync(join(rootDir, 'components/helper.tsx'), `export function Helper() { return null; }`);
 
-    expect(discoverCatalogItems({ rootDir, files: 'components/*.tsx' })).toEqual([
+    expect(discoverVjscModules({ rootDir, include: 'components/*.tsx' })).toEqual([
       { name: 'play', type: 'component', source: './components/play.tsx' },
     ]);
   });
 
   it('removes metadata exports from projected modules', async () => {
     const result = await transform(
-      `import type { CatalogItemMeta } from 'vjsc/catalog';\nexport const meta = { name: 'play' } satisfies CatalogItemMeta;\nexport function Play() { return <button />; }`,
-      { config: { plugins: [catalogMetaPlugin()] } }
+      `import type { VjscModuleMeta } from 'vjsc';\nexport const meta = { name: 'play' } satisfies VjscModuleMeta;\nexport function Play() { return <button />; }`,
+      { config: { plugins: [moduleMetaPlugin()] } }
     );
 
-    expect(result.code).not.toContain('CatalogItemMeta');
+    expect(result.code).not.toContain('VjscModuleMeta');
     expect(result.code).not.toContain('const meta');
     expect(result.code).toContain('function Play');
   });

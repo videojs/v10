@@ -10,7 +10,7 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@videojs/icons/vjsc';
-import type { CatalogItemMeta } from 'vjsc/catalog';
+import type { VjscModuleMeta } from 'vjsc';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/status-indicator.styles';
 
@@ -45,4 +45,4 @@ export const meta = {
   type: 'component',
   title: 'Status Indicator',
   description: 'Visual feedback for captions, fullscreen, picture-in-picture, and playback actions.',
-} as const satisfies CatalogItemMeta;
+} as const satisfies VjscModuleMeta;

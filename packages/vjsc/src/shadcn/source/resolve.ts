@@ -1,104 +1,104 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import ts from 'typescript';
-import { collectModuleReferences, type ModuleReference } from '../utils/module-references';
-import { toPosixPath } from '../utils/path';
-import { resolveSourceModule, sourceScriptKind } from '../utils/source-module';
+import { discoverVjscModules } from '../../meta';
+import { collectModuleReferences, type ModuleReference } from '../../utils/module-references';
+import { toPosixPath } from '../../utils/path';
+import { resolveSourceModule, sourceScriptKind } from '../../utils/source-module';
 import type {
-  CatalogDefinition,
-  CatalogImportPattern,
-  CatalogImports,
-  CatalogItemDefinition,
-  CatalogItemName,
+  SourceDefinition,
+  SourceImportPattern,
+  SourceImports,
+  SourceItemDefinition,
+  SourceItemName,
 } from './define';
-import { discoverCatalogItems } from './meta';
 
-export interface CatalogFiles {
+export interface SourceFiles {
   readonly source: readonly string[];
   readonly style: readonly string[];
 }
 
-type DefinedItem<Definition extends CatalogDefinition> = Definition['items'][number];
+type DefinedItem<Definition extends SourceDefinition> = Definition['items'][number];
 
-type CatalogResources<Definition extends CatalogDefinition> = Definition extends {
+type SourceResources<Definition extends SourceDefinition> = Definition extends {
   readonly resources: infer Resources;
 }
   ? Resources
   : undefined;
 
-type ImportGroupName<Definition extends CatalogDefinition> = Definition extends {
-  readonly imports: infer Imports extends CatalogImports;
+type ImportGroupName<Definition extends SourceDefinition> = Definition extends {
+  readonly imports: infer Imports extends SourceImports;
 }
   ? Imports[keyof Imports]
   : never;
 
-type CatalogReferences<Definition extends CatalogDefinition> = {
+type SourceReferences<Definition extends SourceDefinition> = {
   readonly [Name in ImportGroupName<Definition>]: readonly string[];
 };
 
-export type CatalogItem<Definition extends CatalogDefinition> = DefinedItem<Definition> & {
+export type SourceItem<Definition extends SourceDefinition> = DefinedItem<Definition> & {
   readonly dependencies: readonly string[];
-  readonly files: CatalogFiles;
-  readonly references: CatalogReferences<Definition>;
+  readonly files: SourceFiles;
+  readonly references: SourceReferences<Definition>;
 };
 
-/** An authored catalog enriched with direct module and item dependency analysis. */
-export interface Catalog<Definition extends CatalogDefinition = CatalogDefinition> {
+/** An authored source enriched with direct module and item dependency analysis. */
+export interface Source<Definition extends SourceDefinition = SourceDefinition> {
   readonly rootDir: string;
-  readonly resources: CatalogResources<Definition>;
-  readonly items: readonly CatalogItem<Definition>[];
-  readonly references: CatalogReferences<Definition>;
+  readonly resources: SourceResources<Definition>;
+  readonly items: readonly SourceItem<Definition>[];
+  readonly references: SourceReferences<Definition>;
 }
 
-/** One or more requested catalog items and everything required to compile them. */
-export interface CatalogResolution<Definition extends CatalogDefinition = CatalogDefinition> {
-  readonly items: readonly CatalogItem<Definition>[];
-  readonly files: CatalogFiles;
-  readonly references: CatalogReferences<Definition>;
+/** One or more requested source items and everything required to compile them. */
+export interface SourceResolution<Definition extends SourceDefinition = SourceDefinition> {
+  readonly items: readonly SourceItem<Definition>[];
+  readonly files: SourceFiles;
+  readonly references: SourceReferences<Definition>;
 }
 
 type ReferenceGroups = Map<string, Set<string>>;
 
-interface NormalizedItem<Item extends CatalogItemDefinition> {
+interface NormalizedItem<Item extends SourceItemDefinition> {
   item: Item;
   sourceFile: string;
 }
 
-interface AnalyzeCatalogItemContext<Definition extends CatalogDefinition> {
+interface AnalyzeSourceItemContext<Definition extends SourceDefinition> {
   entry: NormalizedItem<DefinedItem<Definition>>;
   rootDir: string;
   entries: ReadonlyMap<string, NormalizedItem<DefinedItem<Definition>>>;
   dependencies: Set<string>;
   files: { source: Set<string>; style: Set<string> };
   references: ReferenceGroups;
-  imports: CatalogImports;
-  allowedImports: readonly CatalogImportPattern[] | undefined;
+  imports: SourceImports;
+  allowedImports: readonly SourceImportPattern[] | undefined;
   visitedSource: Set<string>;
   visitedStyle: Set<string>;
 }
 
-/** Load and analyze every authored catalog item once. */
-export async function loadCatalog<const Definition extends CatalogDefinition>(
+/** Load and analyze every authored source item once. */
+export async function loadSource<const Definition extends SourceDefinition>(
   definition: Definition,
   options: { rootDir: string }
-): Promise<Catalog<Definition>> {
+): Promise<Source<Definition>> {
   const rootDir = resolve(options.rootDir);
   const definitionItems =
     'discovery' in definition
-      ? discoverCatalogItems(definition.discovery as Parameters<typeof discoverCatalogItems>[0])
+      ? discoverVjscModules(definition.discovery as Parameters<typeof discoverVjscModules>[0])
       : definition.items;
   const normalized = normalizeItems(definitionItems, rootDir) as NormalizedItem<DefinedItem<Definition>>[];
   const entries = new Map(normalized.map((entry) => [entry.sourceFile, entry]));
   const imports = definition.imports ?? {};
-  const items: CatalogItem<Definition>[] = [];
-  const catalogReferences = createReferenceGroups(imports);
+  const items: SourceItem<Definition>[] = [];
+  const sourceReferences = createReferenceGroups(imports);
 
   for (const entry of normalized) {
     const dependencies = new Set<string>();
     const files = { source: new Set<string>(), style: new Set<string>() };
     const references = createReferenceGroups(imports);
 
-    await analyzeCatalogSourceFile(
+    await analyzeSourceFile(
       {
         entry,
         rootDir,
@@ -114,14 +114,14 @@ export async function loadCatalog<const Definition extends CatalogDefinition>(
       entry.sourceFile
     );
 
-    const itemReferences = freezeGroups(references) as CatalogReferences<Definition>;
-    mergeGroups(catalogReferences, itemReferences);
+    const itemReferences = freezeGroups(references) as SourceReferences<Definition>;
+    mergeGroups(sourceReferences, itemReferences);
     items.push({
       ...entry.item,
       dependencies: sortedUnique(dependencies),
       files: {
-        source: sortedUnique(files.source).map((fileName) => catalogPath(rootDir, fileName)),
-        style: sortedUnique(files.style).map((fileName) => catalogPath(rootDir, fileName)),
+        source: sortedUnique(files.source).map((fileName) => sourcePath(rootDir, fileName)),
+        style: sortedUnique(files.style).map((fileName) => sourcePath(rootDir, fileName)),
       },
       references: itemReferences,
     });
@@ -132,22 +132,22 @@ export async function loadCatalog<const Definition extends CatalogDefinition>(
 
   return {
     rootDir,
-    resources: definition.resources as CatalogResources<Definition>,
+    resources: definition.resources as SourceResources<Definition>,
     items,
-    references: freezeGroups(catalogReferences) as CatalogReferences<Definition>,
+    references: freezeGroups(sourceReferences) as SourceReferences<Definition>,
   };
 }
 
-/** Resolve requested catalog items together with their transitive dependencies. */
-export function resolveCatalog<const Definition extends CatalogDefinition>(
-  catalog: Catalog<Definition>,
-  itemNames: readonly CatalogItemName<Definition>[]
-): CatalogResolution<Definition> {
-  const items = new Map(catalog.items.map((item) => [item.name, item]));
-  const resolvedItems: CatalogItem<Definition>[] = [];
+/** Resolve requested source items together with their transitive dependencies. */
+export function resolveSource<const Definition extends SourceDefinition>(
+  source: Source<Definition>,
+  itemNames: readonly SourceItemName<Definition>[]
+): SourceResolution<Definition> {
+  const items = new Map(source.items.map((item) => [item.name, item]));
+  const resolvedItems: SourceItem<Definition>[] = [];
   const visited = new Set<string>();
   const files = { source: new Set<string>(), style: new Set<string>() };
-  const referenceNames = Object.keys(catalog.references);
+  const referenceNames = Object.keys(source.references);
   const references = new Map(referenceNames.map((name) => [name, new Set<string>()]));
 
   const visit = (name: string, requestedBy?: string): void => {
@@ -156,8 +156,8 @@ export function resolveCatalog<const Definition extends CatalogDefinition>(
     if (!item) {
       throw new Error(
         requestedBy
-          ? `Catalog item \`${requestedBy}\` depends on missing item \`${name}\`.`
-          : `Catalog item \`${name}\` does not exist.`
+          ? `Source item \`${requestedBy}\` depends on missing item \`${name}\`.`
+          : `Source item \`${name}\` does not exist.`
       );
     }
 
@@ -177,28 +177,28 @@ export function resolveCatalog<const Definition extends CatalogDefinition>(
       source: sortedUnique(files.source),
       style: sortedUnique(files.style),
     },
-    references: freezeGroups(references) as CatalogReferences<Definition>,
+    references: freezeGroups(references) as SourceReferences<Definition>,
   };
 }
 
 function normalizeItems(
-  items: readonly CatalogItemDefinition[],
+  items: readonly SourceItemDefinition[],
   rootDir: string
-): NormalizedItem<CatalogItemDefinition>[] {
-  const normalized: NormalizedItem<CatalogItemDefinition>[] = [];
+): NormalizedItem<SourceItemDefinition>[] {
+  const normalized: NormalizedItem<SourceItemDefinition>[] = [];
   const names = new Set<string>();
   const sources = new Set<string>();
 
   for (const item of [...items].sort((a, b) => compareStrings(a.name, b.name))) {
-    if (names.has(item.name)) throw new Error(`Catalog item \`${item.name}\` is declared more than once.`);
+    if (names.has(item.name)) throw new Error(`Source item \`${item.name}\` is declared more than once.`);
     names.add(item.name);
 
     const sourceFile = resolve(rootDir, item.source);
     if (!isWithinRoot(rootDir, sourceFile)) {
-      throw new Error(`Catalog item \`${item.name}\` source must stay inside the catalog root.`);
+      throw new Error(`Source item \`${item.name}\` source must stay inside the source root.`);
     }
     if (sources.has(sourceFile)) {
-      throw new Error(`Catalog source \`${catalogPath(rootDir, sourceFile)}\` is declared more than once.`);
+      throw new Error(`Source source \`${sourcePath(rootDir, sourceFile)}\` is declared more than once.`);
     }
     sources.add(sourceFile);
     normalized.push({ item, sourceFile });
@@ -207,14 +207,14 @@ function normalizeItems(
   return normalized;
 }
 
-async function analyzeCatalogSourceFile<Definition extends CatalogDefinition>(
-  context: AnalyzeCatalogItemContext<Definition>,
+async function analyzeSourceFile<Definition extends SourceDefinition>(
+  context: AnalyzeSourceItemContext<Definition>,
   fileName: string
 ): Promise<void> {
   if (context.visitedSource.has(fileName)) return;
   context.visitedSource.add(fileName);
 
-  const sourceText = await readCatalogSource(context, fileName);
+  const sourceText = await readSourceFile(context, fileName);
   context.files.source.add(fileName);
 
   const sourceFile = ts.createSourceFile(
@@ -234,8 +234,8 @@ async function analyzeCatalogSourceFile<Definition extends CatalogDefinition>(
   }
 }
 
-function recordImportReferences<Definition extends CatalogDefinition>(
-  context: AnalyzeCatalogItemContext<Definition>,
+function recordImportReferences<Definition extends SourceDefinition>(
+  context: AnalyzeSourceItemContext<Definition>,
   sourceFile: ts.SourceFile,
   reference: ModuleReference
 ): void {
@@ -245,16 +245,16 @@ function recordImportReferences<Definition extends CatalogDefinition>(
     throw nodeError(
       sourceFile,
       reference.node,
-      `Catalog item \`${context.entry.item.name}\` must use named imports from \`${reference.source}\` so ${groupName} references can be collected.`
+      `Source item \`${context.entry.item.name}\` must use named imports from \`${reference.source}\` so ${groupName} references can be collected.`
     );
   }
   const group = context.references.get(groupName);
-  if (!group) throw new Error(`Unknown catalog reference group \`${groupName}\`.`);
+  if (!group) throw new Error(`Unknown source reference group \`${groupName}\`.`);
   for (const name of reference.names) group.add(name);
 }
 
-async function visitRelativeReference<Definition extends CatalogDefinition>(
-  context: AnalyzeCatalogItemContext<Definition>,
+async function visitRelativeReference<Definition extends SourceDefinition>(
+  context: AnalyzeSourceItemContext<Definition>,
   sourceFile: ts.SourceFile,
   reference: ModuleReference
 ): Promise<void> {
@@ -263,14 +263,14 @@ async function visitRelativeReference<Definition extends CatalogDefinition>(
     throw nodeError(
       sourceFile,
       reference.node,
-      `Catalog item \`${context.entry.item.name}\` cannot resolve \`${reference.source}\`.`
+      `Source item \`${context.entry.item.name}\` cannot resolve \`${reference.source}\`.`
     );
   }
   if (!isWithinRoot(context.rootDir, importedFile)) {
     throw nodeError(
       sourceFile,
       reference.node,
-      `Catalog item \`${context.entry.item.name}\` imports source outside the catalog root.`
+      `Source item \`${context.entry.item.name}\` imports source outside the source root.`
     );
   }
 
@@ -285,17 +285,17 @@ async function visitRelativeReference<Definition extends CatalogDefinition>(
     await validateStyleImports(context, importedFile);
     return;
   }
-  await analyzeCatalogSourceFile(context, importedFile);
+  await analyzeSourceFile(context, importedFile);
 }
 
-async function validateStyleImports<Definition extends CatalogDefinition>(
-  context: AnalyzeCatalogItemContext<Definition>,
+async function validateStyleImports<Definition extends SourceDefinition>(
+  context: AnalyzeSourceItemContext<Definition>,
   fileName: string
 ): Promise<void> {
   if (context.visitedStyle.has(fileName)) return;
   context.visitedStyle.add(fileName);
 
-  const sourceText = await readCatalogSource(context, fileName);
+  const sourceText = await readSourceFile(context, fileName);
   const sourceFile = ts.createSourceFile(
     fileName,
     sourceText,
@@ -315,14 +315,14 @@ async function validateStyleImports<Definition extends CatalogDefinition>(
       throw nodeError(
         sourceFile,
         reference.node,
-        `Catalog item \`${context.entry.item.name}\` cannot resolve \`${reference.source}\`.`
+        `Source item \`${context.entry.item.name}\` cannot resolve \`${reference.source}\`.`
       );
     }
     if (!isWithinRoot(context.rootDir, importedFile)) {
       throw nodeError(
         sourceFile,
         reference.node,
-        `Catalog item \`${context.entry.item.name}\` imports source outside the catalog root.`
+        `Source item \`${context.entry.item.name}\` imports source outside the source root.`
       );
     }
 
@@ -330,21 +330,21 @@ async function validateStyleImports<Definition extends CatalogDefinition>(
   }
 }
 
-async function readCatalogSource<Definition extends CatalogDefinition>(
-  context: AnalyzeCatalogItemContext<Definition>,
+async function readSourceFile<Definition extends SourceDefinition>(
+  context: AnalyzeSourceItemContext<Definition>,
   fileName: string
 ): Promise<string> {
   try {
     return await readFile(fileName, 'utf8');
   } catch {
     throw new Error(
-      `Catalog item \`${context.entry.item.name}\` cannot read \`${catalogPath(context.rootDir, fileName)}\`.`
+      `Source item \`${context.entry.item.name}\` cannot read \`${sourcePath(context.rootDir, fileName)}\`.`
     );
   }
 }
 
-function validatePackageImport<Definition extends CatalogDefinition>(
-  context: AnalyzeCatalogItemContext<Definition>,
+function validatePackageImport<Definition extends SourceDefinition>(
+  context: AnalyzeSourceItemContext<Definition>,
   sourceFile: ts.SourceFile,
   reference: ModuleReference
 ): void {
@@ -355,18 +355,18 @@ function validatePackageImport<Definition extends CatalogDefinition>(
   throw nodeError(
     sourceFile,
     reference.node,
-    `Catalog item \`${context.entry.item.name}\` imports package \`${reference.source}\`, which is not allowed.`
+    `Source item \`${context.entry.item.name}\` imports package \`${reference.source}\`, which is not allowed.`
   );
 }
 
-function matchesImport(pattern: CatalogImportPattern, source: string): boolean {
+function matchesImport(pattern: SourceImportPattern, source: string): boolean {
   if (typeof pattern === 'string') return pattern === source;
 
   pattern.lastIndex = 0;
   return pattern.test(source);
 }
 
-function diagnoseCycles<Definition extends CatalogDefinition>(items: readonly CatalogItem<Definition>[]): void {
+function diagnoseCycles<Definition extends SourceDefinition>(items: readonly SourceItem<Definition>[]): void {
   const byName = new Map(items.map((item) => [item.name, item]));
   const visited = new Set<string>();
   const active = new Set<string>();
@@ -375,7 +375,7 @@ function diagnoseCycles<Definition extends CatalogDefinition>(items: readonly Ca
   const visit = (name: string): void => {
     if (active.has(name)) {
       const start = stack.indexOf(name);
-      throw new Error(`Catalog dependency cycle: ${[...stack.slice(start), name].join(' -> ')}.`);
+      throw new Error(`Source dependency cycle: ${[...stack.slice(start), name].join(' -> ')}.`);
     }
     if (visited.has(name)) return;
     visited.add(name);
@@ -389,14 +389,14 @@ function diagnoseCycles<Definition extends CatalogDefinition>(items: readonly Ca
   for (const item of items) visit(item.name);
 }
 
-function createReferenceGroups(imports: CatalogImports): ReferenceGroups {
+function createReferenceGroups(imports: SourceImports): ReferenceGroups {
   return new Map([...new Set(Object.values(imports))].map((name) => [name, new Set<string>()]));
 }
 
 function mergeGroups(target: ReferenceGroups, source: Readonly<Record<string, readonly string[]>>): void {
   for (const [name, values] of Object.entries(source)) {
     const group = target.get(name);
-    if (!group) throw new Error(`Unknown catalog reference group \`${name}\`.`);
+    if (!group) throw new Error(`Unknown source reference group \`${name}\`.`);
     for (const value of values) group.add(value);
   }
 }
@@ -419,7 +419,7 @@ function isStyleDefinitionFile(fileName: string): boolean {
   return fileName.endsWith('.styles.ts');
 }
 
-function catalogPath(rootDir: string, fileName: string): string {
+function sourcePath(rootDir: string, fileName: string): string {
   return `./${toPosixPath(relative(rootDir, fileName))}`;
 }
 

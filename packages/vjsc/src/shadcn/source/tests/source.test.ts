@@ -2,8 +2,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
-import { defineCatalog, defineDiscoveredCatalog } from '../define';
-import { loadCatalog, resolveCatalog } from '../resolve';
+import { defineDiscoveredSource, defineSource } from '../define';
+import { loadSource, resolveSource } from '../resolve';
 
 const roots: string[] = [];
 
@@ -11,9 +11,9 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('defineCatalog', () => {
+describe('defineSource', () => {
   it('preserves authored item metadata and literal names', () => {
-    const definition = defineCatalog({
+    const definition = defineSource({
       resources: { styles: './styles.css' },
       imports: { '@example/components': 'components' },
       items: [{ name: 'player', source: './player.tsx', type: 'skin', style: { variant: 'default' } }],
@@ -23,12 +23,12 @@ describe('defineCatalog', () => {
     expectTypeOf(definition.items[0]!.style.variant).toEqualTypeOf<'default'>();
   });
 
-  it('discovers self-describing items while preserving catalog configuration types', async () => {
+  it('discovers self-describing items while preserving source configuration types', async () => {
     const root = setup({
       'entry.tsx': `export const meta = { name: 'entry', type: 'component' }; export const Entry = null;`,
     });
-    const definition = defineDiscoveredCatalog<{ name: string; type: 'component' }>()({
-      discovery: { rootDir: root, files: '*.tsx' },
+    const definition = defineDiscoveredSource<{ name: string; type: 'component' }>()({
+      discovery: { rootDir: root, include: '*.tsx' },
       resources: { styles: './styles.css' },
     });
 
@@ -39,12 +39,12 @@ describe('defineCatalog', () => {
       join(root, 'entry.tsx'),
       `export const meta = { name: 'renamed', type: 'component' }; export const Entry = null;`
     );
-    const loaded = await loadCatalog(definition, { rootDir: root });
+    const loaded = await loadSource(definition, { rootDir: root });
     expect(loaded.items[0]?.name).toBe('renamed');
   });
 });
 
-describe('loadCatalog', () => {
+describe('loadSource', () => {
   it('analyzes item dependencies, private source, styles, and configured imports', async () => {
     const root = setup({
       'entry.tsx': `import { Helper } from './private/helper'; import './entry.styles'; export const Entry = Helper;`,
@@ -52,7 +52,7 @@ describe('loadCatalog', () => {
       'private/helper.tsx': `import { Dependency } from '../dependency'; import { Controls } from '@example/components'; export const Helper = Dependency ?? Controls;`,
       'dependency.tsx': `export const Dependency = null;`,
     });
-    const definition = defineCatalog({
+    const definition = defineSource({
       resources: { styles: './styles.css' },
       imports: { '@example/components': 'components' },
       items: [
@@ -61,7 +61,7 @@ describe('loadCatalog', () => {
       ],
     });
 
-    const loaded = await loadCatalog(definition, { rootDir: root });
+    const loaded = await loadSource(definition, { rootDir: root });
 
     expect(loaded.items.find((item) => item.name === 'entry')).toEqual({
       name: 'entry',
@@ -80,7 +80,7 @@ describe('loadCatalog', () => {
   it('rejects missing imports and dependency cycles', async () => {
     const missingRoot = setup({ 'entry.tsx': `import './missing'; export const Entry = null;` });
     await expect(
-      loadCatalog(defineCatalog({ items: [{ name: 'entry', source: './entry.tsx' }] }), { rootDir: missingRoot })
+      loadSource(defineSource({ items: [{ name: 'entry', source: './entry.tsx' }] }), { rootDir: missingRoot })
     ).rejects.toThrow('cannot resolve `./missing`');
 
     const cycleRoot = setup({
@@ -88,8 +88,8 @@ describe('loadCatalog', () => {
       'b.tsx': `import { A } from './a'; export const B = A;`,
     });
     await expect(
-      loadCatalog(
-        defineCatalog({
+      loadSource(
+        defineSource({
           items: [
             { name: 'a', source: './a.tsx' },
             { name: 'b', source: './b.tsx' },
@@ -97,7 +97,7 @@ describe('loadCatalog', () => {
         }),
         { rootDir: cycleRoot }
       )
-    ).rejects.toThrow('Catalog dependency cycle: a -> b -> a.');
+    ).rejects.toThrow('Source dependency cycle: a -> b -> a.');
   });
 
   it('enforces allowed package imports across source and style modules', async () => {
@@ -105,22 +105,22 @@ describe('loadCatalog', () => {
       'entry.tsx': `import { allowed } from '@example/allowed'; import styles from './entry.styles'; export const Entry = allowed ?? styles;`,
       'entry.styles.ts': `import { styles } from '@example/styles'; export default styles;`,
     });
-    const definition = defineCatalog({
+    const definition = defineSource({
       allowedImports: ['@example/allowed', /^@example\/styles$/],
       items: [{ name: 'entry', source: './entry.tsx' }],
     });
 
-    await expect(loadCatalog(definition, { rootDir: root })).resolves.toBeDefined();
+    await expect(loadSource(definition, { rootDir: root })).resolves.toBeDefined();
 
     writeFileSync(join(root, 'entry.styles.ts'), `import '@example/not-allowed'; export default {};`);
 
-    await expect(loadCatalog(definition, { rootDir: root })).rejects.toThrow(
+    await expect(loadSource(definition, { rootDir: root })).rejects.toThrow(
       'imports package `@example/not-allowed`, which is not allowed'
     );
   });
 });
 
-describe('resolveCatalog', () => {
+describe('resolveSource', () => {
   it('resolves requested items with their transitive requirements', async () => {
     const root = setup({
       'a.ts': `import { B } from './b'; export const A = B;`,
@@ -128,7 +128,7 @@ describe('resolveCatalog', () => {
       'c.ts': `export const C = null;`,
       'unused.ts': `export const Unused = null;`,
     });
-    const definition = defineCatalog({
+    const definition = defineSource({
       items: [
         { name: 'a', source: './a.ts' },
         { name: 'b', source: './b.ts' },
@@ -136,9 +136,9 @@ describe('resolveCatalog', () => {
         { name: 'unused', source: './unused.ts' },
       ],
     });
-    const loaded = await loadCatalog(definition, { rootDir: root });
+    const loaded = await loadSource(definition, { rootDir: root });
 
-    const resolved = resolveCatalog(loaded, ['a']);
+    const resolved = resolveSource(loaded, ['a']);
 
     expect(resolved.items.map((item) => item.name)).toEqual(['c', 'b', 'a']);
     expect(resolved.files).toEqual({ source: ['./a.ts', './b.ts', './c.ts'], style: [] });
@@ -146,7 +146,7 @@ describe('resolveCatalog', () => {
 });
 
 function setup(files: Readonly<Record<string, string>>): string {
-  const root = mkdtempSync(join(tmpdir(), 'videojs-compiler-catalog-'));
+  const root = mkdtempSync(join(tmpdir(), 'videojs-compiler-source-'));
   roots.push(root);
   for (const [file, source] of Object.entries(files)) {
     const path = join(root, file);

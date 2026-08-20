@@ -20,10 +20,6 @@
       "types": "./dist/ast.d.ts",
       "default": "./dist/ast.js"
     },
-    "./catalog": {
-      "types": "./dist/catalog/index.d.ts",
-      "default": "./dist/catalog/index.js"
-    },
     "./components": {
       "types": "./dist/components/index.d.ts",
       "default": "./dist/components/index.js"
@@ -56,9 +52,9 @@
       "types": "./dist/styles/index.d.ts",
       "default": "./dist/styles/index.js"
     },
-    "./bundle": {
-      "types": "./dist/bundle/index.d.ts",
-      "default": "./dist/bundle/index.js"
+    "./rolldown": {
+      "types": "./dist/rolldown/index.d.ts",
+      "default": "./dist/rolldown/index.js"
     }
   },
   "files": [

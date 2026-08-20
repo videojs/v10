@@ -5,11 +5,10 @@ import { dirname, join } from 'node:path';
 import { rolldown } from 'rolldown';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { defineCatalog } from '../../catalog/define';
-import { defineCatalogProjection } from '../../catalog/project';
-import { loadCatalog } from '../../catalog/resolve';
 import { jsx } from '../../config';
-import { createShadcnRegistryFiles, defineShadcnRegistry, projectShadcnRegistry, shadcnPlugin } from '../index';
+import { createShadcnRegistry, createShadcnRegistryFiles, defineShadcnRegistry, shadcnPlugin } from '../index';
+import { defineSource } from '../source/define';
+import { loadSource } from '../source/resolve';
 
 const roots: string[] = [];
 
@@ -18,8 +17,8 @@ afterEach(() => {
 });
 
 describe('defineShadcnRegistry', () => {
-  it('preserves publication metadata and catalog item names', () => {
-    const definition = defineCatalog({ items: [{ name: 'root', source: './root.ts' }] });
+  it('preserves publication metadata and source item names', () => {
+    const definition = defineSource({ items: [{ name: 'root', source: './root.ts' }] });
     const registry = defineShadcnRegistry(definition, {
       name: 'example',
       homepage: 'https://example.com',
@@ -47,8 +46,8 @@ describe('defineShadcnRegistry', () => {
   });
 });
 
-describe('projectShadcnRegistry', () => {
-  it('emits a catalog and partitions published, private, and shared dependencies', async () => {
+describe('createShadcnRegistry', () => {
+  it('emits a source and partitions published, private, and shared dependencies', async () => {
     const root = setup({
       'root.ts': `import { Public } from './public'; import { Private } from './private'; import { cn } from '@/example/utils'; export const Root = [Public, Private, cn];`,
       'public.ts': `export const Public = true;`,
@@ -56,14 +55,14 @@ describe('projectShadcnRegistry', () => {
       'styles.css': `@import 'tailwindcss';`,
       'utils.ts': `export const cn = (...values) => values.filter(Boolean).join(' ');`,
     });
-    const definition = defineCatalog({
+    const definition = defineSource({
       allowedImports: ['@/example/utils', 'private-package'],
       items: [
         { name: 'root', source: './root.ts', title: 'Root', type: 'block' },
         { name: 'public', source: './public.ts', title: 'Public', type: 'component' },
       ],
     });
-    const loaded = await loadCatalog(definition, { rootDir: root });
+    const loaded = await loadSource(definition, { rootDir: root });
     const registry = defineShadcnRegistry(definition, {
       name: 'example',
       homepage: 'https://example.com',
@@ -103,8 +102,8 @@ describe('projectShadcnRegistry', () => {
         ],
       },
     });
-    const output = await projectShadcnRegistry(loaded, registry, {
-      projection: defineCatalogProjection({ transform: { target: jsx() } }),
+    const output = await createShadcnRegistry(loaded, registry, {
+      transformer: { transform: { target: jsx() } },
     });
 
     expect(output.files.map((file) => file.path)).toEqual([
@@ -148,7 +147,7 @@ describe('projectShadcnRegistry', () => {
 
   it('emits final registry files through a native Rolldown plugin', async () => {
     const root = setup({ 'root.ts': `export const Root = true;` });
-    const definition = defineCatalog({
+    const definition = defineSource({
       items: [{ name: 'root', source: './root.ts', title: 'Root', type: 'block' }],
     });
     const registry = defineShadcnRegistry(definition, {
@@ -167,10 +166,10 @@ describe('projectShadcnRegistry', () => {
       },
     });
     const outputAdapter = shadcnPlugin({
-      catalog: definition,
+      source: definition,
       rootDir: root,
       registry,
-      projection: defineCatalogProjection({ transform: { target: jsx() } }),
+      transformer: { transform: { target: jsx() } },
     });
 
     const bundle = await rolldown({

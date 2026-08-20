@@ -1,10 +1,3 @@
-export {
-  type VjscPluginOptions,
-  type VjscTransformConfig,
-  type VjscTransformContext,
-  type VjscTransformer,
-  vjscPlugin,
-} from './bundle';
 export type {
   ComponentFileSet,
   ComponentSource,
@@ -55,6 +48,13 @@ export {
   withDiagnosticSource,
 } from './diagnostics';
 export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './jsx/editor';
+export {
+  type DiscoverVjscModulesOptions,
+  discoverVjscModules,
+  extractVjscModuleMeta,
+  moduleMetaPlugin,
+  type VjscModuleMeta,
+} from './meta';
 export type { SchemaEntryContext, SchemaEntryResolver } from './registry/resolve';
 export {
   type ConstStatementOptions,

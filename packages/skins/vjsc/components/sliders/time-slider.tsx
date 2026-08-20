@@ -1,7 +1,7 @@
 import type { TimeSliderProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { SpinnerIcon } from '@videojs/icons/vjsc';
-import type { CatalogItemMeta } from 'vjsc/catalog';
+import type { VjscModuleMeta } from 'vjsc';
 import { Group as PreviewValue, type Props, Template } from 'vjsc/components';
 import popupStyles from '../../styles/components/popup.styles';
 import styles from '../../styles/components/slider.styles';
@@ -36,4 +36,4 @@ export const meta = {
   type: 'component',
   title: 'Time Slider',
   description: 'A playback timeline for seeking, with current and buffered progress plus time and thumbnail previews.',
-} as const satisfies CatalogItemMeta;
+} as const satisfies VjscModuleMeta;

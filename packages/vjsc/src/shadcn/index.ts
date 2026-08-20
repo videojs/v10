@@ -9,15 +9,17 @@ import {
   registrySchema,
   type Registry as ShadcnRegistrySchema,
 } from 'shadcn/schema';
-import type { CatalogDefinition } from '../catalog/define';
+import type { VjscModuleMeta } from '../meta';
+import type { SourceDefinition } from './source/define';
+import { defineDiscoveredSource } from './source/define';
 import {
-  type CatalogOutputFile,
-  type CatalogProjection,
-  type CatalogStyleTransform,
-  type ProjectedCatalogItem,
-  projectCatalog,
-} from '../catalog/project';
-import { type Catalog, type CatalogItem, loadCatalog, resolveCatalog } from '../catalog/resolve';
+  type SourceOutputFile,
+  type SourceStyleTransform,
+  type SourceTransformer,
+  type TransformedSourceItem,
+  transformSource,
+} from './source/project';
+import { loadSource, resolveSource, type Source, type SourceItem } from './source/resolve';
 
 type RegistryItemType = RegistryItem['type'];
 type PublishedRegistryItemType = Extract<RegistryItemType, 'registry:block' | 'registry:component'>;
@@ -27,8 +29,13 @@ export type ShadcnRegistry = ShadcnRegistrySchema;
 export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
 export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
+/** Discover the self-describing VJSC modules owned by one Shadcn registry. */
+export function defineShadcnSource<Item extends VjscModuleMeta>() {
+  return defineDiscoveredSource<Item>();
+}
+
 export interface ShadcnRegistrySharedFile {
-  /** Catalog-relative input file. */
+  /** Source-relative input file. */
   readonly source: string;
   /** Path relative to the registry source root. Defaults to `source`. */
   readonly path?: string | undefined;
@@ -60,7 +67,7 @@ export interface ShadcnRegistryItemDescription {
   readonly meta?: RegistryItem['meta'];
 }
 
-export interface ShadcnRegistryDefinition<Definition extends CatalogDefinition = CatalogDefinition> {
+export interface ShadcnRegistryDefinition<Definition extends SourceDefinition = SourceDefinition> {
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
@@ -74,26 +81,26 @@ export interface ShadcnRegistryDefinition<Definition extends CatalogDefinition =
   readonly imports?: Readonly<Record<string, string>> | undefined;
   readonly meta?: RegistryItem['meta'];
   readonly items: {
-    readonly published: readonly CatalogItem<Definition>['name'][];
+    readonly published: readonly SourceItem<Definition>['name'][];
     readonly shared?: readonly ShadcnRegistrySharedItem[] | undefined;
-    describe(item: CatalogItem<Definition>): ShadcnRegistryItemDescription;
+    describe(item: SourceItem<Definition>): ShadcnRegistryItemDescription;
   };
 }
 
-/** Preserve shadcn publication policy while checking it against an authored catalog. */
+/** Preserve shadcn publication policy while checking it against an authored source. */
 export function defineShadcnRegistry<
-  const Definition extends CatalogDefinition,
+  const Definition extends SourceDefinition,
   const Config extends ShadcnRegistryDefinition<Definition>,
->(_catalog: Definition, config: Config): Config {
+>(_source: Definition, config: Config): Config {
   return config;
 }
 
-export interface ShadcnProjectionOptions<Definition extends CatalogDefinition = CatalogDefinition> {
-  readonly projection: CatalogProjection<Definition>;
-  readonly styles?: CatalogStyleTransform | undefined;
+export interface ShadcnTransformOptions<Definition extends SourceDefinition = SourceDefinition> {
+  readonly transformer: SourceTransformer<Definition>;
+  readonly styles?: SourceStyleTransform | undefined;
 }
 
-export interface ShadcnRegistryOutputFile extends CatalogOutputFile {
+export interface ShadcnRegistryOutputFile extends SourceOutputFile {
   readonly kind: 'source' | 'style';
 }
 
@@ -107,12 +114,12 @@ export interface ShadcnOutputFile {
   readonly content: string;
 }
 
-export interface ShadcnOutputOptions<Definition extends CatalogDefinition> {
-  readonly catalog: Definition;
+export interface ShadcnOutputOptions<Definition extends SourceDefinition> {
+  readonly source: Definition;
   readonly rootDir: string;
   readonly registry: ShadcnRegistryDefinition<Definition>;
-  readonly projection: CatalogProjection<Definition>;
-  readonly styles?: CatalogStyleTransform | undefined;
+  readonly transformer: SourceTransformer<Definition>;
+  readonly styles?: SourceStyleTransform | undefined;
   readonly id?: `virtual:vjsc/${string}` | undefined;
 }
 
@@ -121,7 +128,7 @@ export interface ShadcnPlugin extends Plugin {
 }
 
 /** Emit a Shadcn source registry through native Rolldown output hooks. */
-export function shadcnPlugin<const Definition extends CatalogDefinition>(
+export function shadcnPlugin<const Definition extends SourceDefinition>(
   options: ShadcnOutputOptions<Definition>
 ): ShadcnPlugin {
   const moduleId = options.id ?? 'virtual:vjsc/shadcn';
@@ -147,20 +154,20 @@ export function shadcnPlugin<const Definition extends CatalogDefinition>(
       );
       if (chunks.length === 0) return;
 
-      const catalog = await loadCatalog(options.catalog, { rootDir: options.rootDir });
-      const output = await projectShadcnRegistry(catalog, options.registry, {
-        projection: options.projection,
+      const source = await loadSource(options.source, { rootDir: options.rootDir });
+      const output = await createShadcnRegistry(source, options.registry, {
+        transformer: options.transformer,
         ...(options.styles ? { styles: options.styles } : {}),
       });
 
       const files = createShadcnRegistryFiles(output, options.registry);
       const watchFiles = new Set(
-        catalog.items.flatMap((item) =>
-          [...item.files.source, ...item.files.style].map((fileName) => resolve(catalog.rootDir, fileName))
+        source.items.flatMap((item) =>
+          [...item.files.source, ...item.files.style].map((fileName) => resolve(source.rootDir, fileName))
         )
       );
       for (const item of options.registry.items.shared ?? []) {
-        for (const file of item.files) watchFiles.add(resolve(catalog.rootDir, file.source));
+        for (const file of item.files) watchFiles.add(resolve(source.rootDir, file.source));
       }
 
       for (const file of watchFiles) this.addWatchFile(file);
@@ -172,8 +179,8 @@ export function shadcnPlugin<const Definition extends CatalogDefinition>(
   return Object.assign(plugin, { moduleId });
 }
 
-/** Assemble final Shadcn registry JSON assets from projected source. */
-export function createShadcnRegistryFiles<Definition extends CatalogDefinition>(
+/** Assemble final Shadcn registry JSON assets from transformed source. */
+export function createShadcnRegistryFiles<Definition extends SourceDefinition>(
   output: ShadcnRegistryOutput,
   definition: ShadcnRegistryDefinition<Definition>
 ): ShadcnOutputFile[] {
@@ -205,25 +212,25 @@ function exactId(id: string): RegExp {
   return new RegExp(`^${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
 }
 
-/** Project editable catalog modules, shared files, and a validated Shadcn registry. */
-export async function projectShadcnRegistry<const Definition extends CatalogDefinition>(
-  catalog: Catalog<Definition>,
+/** Project editable source modules, shared files, and a validated Shadcn registry. */
+export async function createShadcnRegistry<const Definition extends SourceDefinition>(
+  source: Source<Definition>,
   definition: ShadcnRegistryDefinition<Definition>,
-  options: ShadcnProjectionOptions<Definition>
+  options: ShadcnTransformOptions<Definition>
 ): Promise<ShadcnRegistryOutput> {
-  validateDefinition(catalog, definition);
+  validateDefinition(source, definition);
 
-  const resolved = resolveCatalog(catalog, definition.items.published);
+  const resolved = resolveSource(source, definition.items.published);
   const itemNames = resolved.items.map((item) => item.name);
-  const output = await projectCatalog(catalog, {
+  const output = await transformSource(source, {
     items: itemNames,
-    projection: {
-      ...withRegistryImports(options.projection, definition.imports),
-      cwd: (item) => resolve(catalog.rootDir, itemOutputDir(item, definition)),
+    transformer: {
+      ...withRegistryImports(options.transformer, definition.imports),
+      cwd: (item) => resolve(source.rootDir, itemOutputDir(item, definition)),
     },
     ...(options.styles ? { styles: options.styles } : {}),
     files: {
-      source: ({ catalogItem, sourceFile }) => sourceOutputPath(catalogItem, sourceFile, definition),
+      source: ({ sourceItem, sourceFile }) => sourceOutputPath(sourceItem, sourceFile, definition),
     },
     resolve: {
       imports: {
@@ -231,11 +238,11 @@ export async function projectShadcnRegistry<const Definition extends CatalogDefi
       },
     },
   });
-  const projected = mapProjectedItems(output.items);
-  const shared = await loadSharedFiles(catalog, definition);
+  const transformed = mapTransformedItems(output.items);
+  const shared = await loadSharedFiles(source, definition);
   const files = uniqueOutputFiles([
     ...shared.flatMap((item) => item.files.map((file) => file.output)),
-    ...(Object.values(projected) as Array<ProjectedCatalogItem<ShadcnRegistryOutputFile> | undefined>).flatMap(
+    ...(Object.values(transformed) as Array<TransformedSourceItem<ShadcnRegistryOutputFile> | undefined>).flatMap(
       (item) => item?.files ?? []
     ),
     ...output.files.style.map((file) => ({ ...file, kind: 'style' as const })),
@@ -243,20 +250,20 @@ export async function projectShadcnRegistry<const Definition extends CatalogDefi
 
   return {
     files,
-    registry: createManifest(catalog, definition, projected, shared),
+    registry: createManifest(source, definition, transformed, shared),
   };
 }
 
-function withRegistryImports<Definition extends CatalogDefinition>(
-  projection: CatalogProjection<Definition>,
+function withRegistryImports<Definition extends SourceDefinition>(
+  transformer: SourceTransformer<Definition>,
   imports: ShadcnRegistryDefinition<Definition>['imports']
-): CatalogProjection<Definition> {
-  if (!imports || Object.keys(imports).length === 0) return projection;
+): SourceTransformer<Definition> {
+  if (!imports || Object.keys(imports).length === 0) return transformer;
 
   return {
-    ...projection,
+    ...transformer,
     transform: (item) => {
-      const configured = projection.transform;
+      const configured = transformer.transform;
       const config = typeof configured === 'function' ? configured(item) : (configured ?? {});
       if (!config.target) return config;
 
@@ -281,10 +288,10 @@ interface LoadedSharedItem {
   readonly files: readonly LoadedSharedFile[];
 }
 
-function mapProjectedItems<Definition extends CatalogDefinition>(
-  items: Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem>>>
-): Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem<ShadcnRegistryOutputFile>>>> {
-  const entries = Object.entries(items) as Array<[string, ProjectedCatalogItem | undefined]>;
+function mapTransformedItems<Definition extends SourceDefinition>(
+  items: Readonly<Partial<Record<SourceItem<Definition>['name'], TransformedSourceItem>>>
+): Readonly<Partial<Record<SourceItem<Definition>['name'], TransformedSourceItem<ShadcnRegistryOutputFile>>>> {
+  const entries = Object.entries(items) as Array<[string, TransformedSourceItem | undefined]>;
 
   return Object.fromEntries(
     entries.map(([name, item]) => [
@@ -296,11 +303,11 @@ function mapProjectedItems<Definition extends CatalogDefinition>(
           }
         : undefined,
     ])
-  ) as Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem<ShadcnRegistryOutputFile>>>>;
+  ) as Readonly<Partial<Record<SourceItem<Definition>['name'], TransformedSourceItem<ShadcnRegistryOutputFile>>>>;
 }
 
-async function loadSharedFiles<Definition extends CatalogDefinition>(
-  catalog: Catalog<Definition>,
+async function loadSharedFiles<Definition extends SourceDefinition>(
+  source: Source<Definition>,
   definition: ShadcnRegistryDefinition<Definition>
 ): Promise<LoadedSharedItem[]> {
   return Promise.all(
@@ -314,7 +321,7 @@ async function loadSharedFiles<Definition extends CatalogDefinition>(
             definition: file,
             output: {
               path,
-              content: await readFile(resolve(catalog.rootDir, file.source), 'utf8'),
+              content: await readFile(resolve(source.rootDir, file.source), 'utf8'),
               kind: path.endsWith('.css') ? ('style' as const) : ('source' as const),
             },
           };
@@ -324,24 +331,26 @@ async function loadSharedFiles<Definition extends CatalogDefinition>(
   );
 }
 
-function createManifest<Definition extends CatalogDefinition>(
-  catalog: Catalog<Definition>,
+function createManifest<Definition extends SourceDefinition>(
+  source: Source<Definition>,
   definition: ShadcnRegistryDefinition<Definition>,
-  projected: Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem<ShadcnRegistryOutputFile>>>>,
+  transformed: Readonly<
+    Partial<Record<SourceItem<Definition>['name'], TransformedSourceItem<ShadcnRegistryOutputFile>>>
+  >,
   shared: readonly LoadedSharedItem[]
 ): ShadcnRegistry {
-  const itemsByName = new Map(catalog.items.map((item) => [item.name, item]));
+  const itemsByName = new Map(source.items.map((item) => [item.name, item]));
   const published = new Set<string>(definition.items.published);
   const registryItems = definition.items.published.map((name): RegistryItem => {
     const item = itemsByName.get(name);
 
-    if (!item) throw new Error(`shadcn registry references missing catalog item \`${name}\`.`);
+    if (!item) throw new Error(`shadcn registry references missing source item \`${name}\`.`);
 
     const partition = partitionItemDependencies(item, itemsByName, published);
     const sources = partition.includedItems.map((included) => {
-      const source = projected[included.name as CatalogItem<Definition>['name']];
+      const source = transformed[included.name as SourceItem<Definition>['name']];
 
-      if (!source) throw new Error(`shadcn registry output is missing catalog item \`${included.name}\`.`);
+      if (!source) throw new Error(`shadcn registry output is missing source item \`${included.name}\`.`);
       return source;
     });
     const imports = new Set(sources.flatMap((source) => source.imports));
@@ -360,7 +369,7 @@ function createManifest<Definition extends CatalogDefinition>(
       ...description,
       files: uniqueRegistryFiles(
         partition.includedItems.flatMap((included) => {
-          const source = projected[included.name as CatalogItem<Definition>['name']]!;
+          const source = transformed[included.name as SourceItem<Definition>['name']]!;
           const owner = definition.items.describe(included);
 
           return source.files.map((file) => registryFile(file, included.name, owner.type, definition));
@@ -402,7 +411,7 @@ function requiredBy(requirement: ShadcnRegistrySharedItem['requiredBy'], imports
   return requirement.imports.some((specifier) => imports.has(specifier));
 }
 
-function registryFile<Definition extends CatalogDefinition>(
+function registryFile<Definition extends SourceDefinition>(
   file: ShadcnRegistryOutputFile,
   owner: string,
   ownerType: PublishedRegistryItemType,
@@ -415,7 +424,7 @@ function registryFile<Definition extends CatalogDefinition>(
   };
 }
 
-function sharedRegistryFile<Definition extends CatalogDefinition>(
+function sharedRegistryFile<Definition extends SourceDefinition>(
   file: LoadedSharedFile,
   item: ShadcnRegistrySharedItem,
   definition: ShadcnRegistryDefinition<Definition>
@@ -431,8 +440,8 @@ function sharedRegistryFile<Definition extends CatalogDefinition>(
   };
 }
 
-function sourceOutputPath<Definition extends CatalogDefinition>(
-  item: CatalogItem<Definition>,
+function sourceOutputPath<Definition extends SourceDefinition>(
+  item: SourceItem<Definition>,
   sourceFile: string,
   definition: ShadcnRegistryDefinition<Definition>
 ): string {
@@ -445,8 +454,8 @@ function sourceOutputPath<Definition extends CatalogDefinition>(
     : privateSourceOutput(itemDir, entrySource, source);
 }
 
-function itemOutputDir<Definition extends CatalogDefinition>(
-  item: CatalogItem<Definition>,
+function itemOutputDir<Definition extends SourceDefinition>(
+  item: SourceItem<Definition>,
   definition: ShadcnRegistryDefinition<Definition>
 ): string {
   const type = definition.items.describe(item).type;
@@ -462,8 +471,8 @@ function privateSourceOutput(itemDir: string, entrySource: string, source: strin
   return relative.startsWith('../') ? posix.join(itemDir, 'internal', source) : posix.join(itemDir, relative);
 }
 
-function dependencyImport<Definition extends CatalogDefinition>(
-  dependency: CatalogItem<Definition>,
+function dependencyImport<Definition extends SourceDefinition>(
+  dependency: SourceItem<Definition>,
   definition: ShadcnRegistryDefinition<Definition>
 ): string {
   const output = sourceOutputPath(dependency, dependency.source, definition);
@@ -473,7 +482,7 @@ function dependencyImport<Definition extends CatalogDefinition>(
   return posix.join(definition.paths.import, dependency.name, posix.basename(module));
 }
 
-function installTarget<Definition extends CatalogDefinition>(
+function installTarget<Definition extends SourceDefinition>(
   path: string,
   owner: string,
   ownerType: PublishedRegistryItemType,
@@ -503,37 +512,37 @@ function normalizePath(path: string): string {
   return path.replace(/^\.\//, '');
 }
 
-function validateDefinition<Definition extends CatalogDefinition>(
-  catalog: Catalog<Definition>,
+function validateDefinition<Definition extends SourceDefinition>(
+  source: Source<Definition>,
   definition: ShadcnRegistryDefinition<Definition>
 ): void {
-  const catalogNames = new Set(catalog.items.map((item) => item.name));
+  const sourceNames = new Set(source.items.map((item) => item.name));
   const sharedNames = new Set<string>();
 
   for (const shared of definition.items.shared ?? []) {
     if (sharedNames.has(shared.name)) {
       throw new Error(`shadcn registry shared item \`${shared.name}\` is declared twice.`);
     }
-    if (catalogNames.has(shared.name)) {
-      throw new Error(`shadcn registry shared item \`${shared.name}\` conflicts with a catalog item.`);
+    if (sourceNames.has(shared.name)) {
+      throw new Error(`shadcn registry shared item \`${shared.name}\` conflicts with a source item.`);
     }
 
     sharedNames.add(shared.name);
   }
 }
 
-function partitionItemDependencies<Definition extends CatalogDefinition>(
-  root: CatalogItem<Definition>,
-  items: ReadonlyMap<string, CatalogItem<Definition>>,
+function partitionItemDependencies<Definition extends SourceDefinition>(
+  root: SourceItem<Definition>,
+  items: ReadonlyMap<string, SourceItem<Definition>>,
   published: ReadonlySet<string>
-): { includedItems: CatalogItem<Definition>[]; registryItems: CatalogItem<Definition>[] } {
-  const includedItems = new Map<string, CatalogItem<Definition>>();
-  const registryItems = new Map<string, CatalogItem<Definition>>();
+): { includedItems: SourceItem<Definition>[]; registryItems: SourceItem<Definition>[] } {
+  const includedItems = new Map<string, SourceItem<Definition>>();
+  const registryItems = new Map<string, SourceItem<Definition>>();
 
   const visit = (name: string): void => {
     const item = items.get(name);
 
-    if (!item) throw new Error(`Catalog item \`${root.name}\` depends on missing item \`${name}\`.`);
+    if (!item) throw new Error(`Source item \`${root.name}\` depends on missing item \`${name}\`.`);
 
     if (name !== root.name && published.has(name)) {
       registryItems.set(name, item);

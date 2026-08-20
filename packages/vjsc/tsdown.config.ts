@@ -6,7 +6,6 @@ export default defineConfig({
   entry: {
     index: './src/index.ts',
     ast: './src/ast.ts',
-    'catalog/index': './src/catalog/index.ts',
     'components/index': './src/components/index.ts',
     'components/jsx-runtime': './src/components/jsx-runtime.ts',
     'components/jsx-dev-runtime': './src/components/jsx-dev-runtime.ts',
@@ -15,7 +14,7 @@ export default defineConfig({
     'registry/jsx-dev-runtime': './src/registry/jsx-dev-runtime.ts',
     'shadcn/index': './src/shadcn/index.ts',
     'styles/index': './src/styles/index.ts',
-    'bundle/index': './src/bundle/index.ts',
+    'rolldown/index': './src/bundle/index.ts',
   },
   platform: 'node',
   // The package is ESM, so `.js`/`.d.ts` match its checked-in export map.

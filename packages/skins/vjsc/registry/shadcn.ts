@@ -1,10 +1,9 @@
 import { resolve } from 'node:path';
 
 import { jsx } from 'vjsc';
-import { defineCatalogProjection } from 'vjsc/catalog';
-import { defineShadcnRegistry, shadcnPlugin } from 'vjsc/shadcn';
+import { defineShadcnRegistry, defineShadcnSource, type ShadcnPlugin, shadcnPlugin } from 'vjsc/shadcn';
 
-import skinCatalog from '../catalog';
+import type { SkinModuleMeta } from '../meta';
 import { createReactComponentRegistry } from './frameworks';
 import { componentTransforms } from './react';
 
@@ -15,10 +14,43 @@ const paths = {
   import: '@/components/videojs',
 } as const;
 
-const styles = skinCatalog.resources.styles;
+const rootDir = resolve(import.meta.dirname, '..');
+const styles = {
+  tailwind: {
+    compiler: './styles/tailwind.css',
+    registry: './styles/tailwind.registry.css',
+    shared: './styles/tailwind.shared.css',
+  },
+  base: './styles/base.css',
+  shared: ['./styles/captions.css', './styles/themes/video.css'],
+  themes: {
+    default: './styles/themes/default.css',
+    minimal: './styles/themes/minimal.css',
+  },
+} as const;
+
+const skinSource = defineShadcnSource<SkinModuleMeta>()({
+  discovery: {
+    rootDir,
+    include: ['./components/**/*.tsx', './skins/*/skin.tsx'],
+  },
+  resources: { styles },
+  allowedImports: [
+    '@videojs/core',
+    '@videojs/utils/style',
+    'vjsc',
+    'vjsc/styles',
+    'vjsc/components',
+    /^@videojs\/core\/i18n\/text\//,
+  ],
+  imports: {
+    '@videojs/core/vjsc': 'components',
+    '@videojs/icons/vjsc': 'icons',
+  },
+});
 
 /** React/Tailwind publication policy for the canonical Skin inventory. */
-const skinRegistry = defineShadcnRegistry(skinCatalog, {
+const skinRegistry = defineShadcnRegistry(skinSource, {
   name: 'videojs',
   homepage: 'https://videojs.org',
   namespace: '@videojs',
@@ -93,23 +125,21 @@ const skinRegistry = defineShadcnRegistry(skinCatalog, {
 });
 
 /** Configure the Shadcn source-distribution output consumed by the Skins Vite build. */
-export function createSkinShadcnPlugin() {
+export function createSkinShadcnPlugin(): ShadcnPlugin {
   return shadcnPlugin({
-    catalog: skinCatalog,
-    rootDir: resolve(import.meta.dirname, '..'),
+    source: skinSource,
+    rootDir,
     registry: skinRegistry,
-    projection: defineCatalogProjection({
+    transformer: {
       componentRegistry: createReactComponentRegistry(),
       transform: {
         target: jsx({ importSource: 'react' }),
         plugins: [componentTransforms()],
       },
-    }),
+    },
     styles: {
       mode: 'tailwind',
       variant: 'default',
     },
   });
 }
-
-export default skinRegistry;
