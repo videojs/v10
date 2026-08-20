@@ -14,7 +14,7 @@ const corePlayButton = resolve(packageDir, '../core/src/core/ui/play-button/play
 const reactVirtualSkin = 'virtual:vjsc/skin/react/default-video/vanilla.tsx';
 const htmlVirtualSkin = 'virtual:vjsc/skin/html/minimal-video/tailwind.tsx';
 
-describe('VJSC Skins Vite workflow', () => {
+describe('Skins Vite workflow', () => {
   let server: ViteDevServer | undefined;
 
   afterEach(async () => {

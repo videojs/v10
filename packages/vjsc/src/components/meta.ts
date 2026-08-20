@@ -3,25 +3,25 @@ import { isAbsolute, relative, resolve } from 'node:path';
 
 import ts from 'typescript';
 
-import type { CompilerPlugin } from './config';
-import { toPosixPath } from './utils/path';
-import { sourceScriptKind } from './utils/source-module';
+import type { CompilerPlugin } from '../config';
+import { toPosixPath } from '../utils/path';
+import { sourceScriptKind } from '../utils/source-module';
 
-export interface VjscModuleMeta {
+export interface ComponentMeta {
   readonly name: string;
   readonly [key: string]: unknown;
 }
 
-export interface DiscoverVjscModulesOptions {
+export interface DiscoverComponentsOptions {
   readonly rootDir: string;
   readonly include: string | readonly string[];
   readonly exclude?: string | readonly string[] | undefined;
   readonly exportName?: string | undefined;
 }
 
-/** Discover self-describing VJSC modules without evaluating their source. */
-export function discoverVjscModules<Item extends VjscModuleMeta = VjscModuleMeta>(
-  options: DiscoverVjscModulesOptions
+/** Discover self-describing components without evaluating their source. */
+export function discoverComponents<Item extends ComponentMeta = ComponentMeta>(
+  options: DiscoverComponentsOptions
 ): readonly (Item & { readonly source: string })[] {
   const rootDir = resolve(options.rootDir);
   const patterns = typeof options.include === 'string' ? [options.include] : options.include;
@@ -38,26 +38,26 @@ export function discoverVjscModules<Item extends VjscModuleMeta = VjscModuleMeta
   ].sort();
 
   const items = sourceFiles.flatMap((fileName) => {
-    const meta = findVjscModuleMeta(readFileSync(fileName, 'utf8'), fileName, exportName) as Item | undefined;
+    const meta = findComponentMeta(readFileSync(fileName, 'utf8'), fileName, exportName) as Item | undefined;
     if (!meta) return [];
-    if ('source' in meta) throw new Error(`VJSC module metadata in ${fileName} must not declare \`source\`.`);
+    if ('source' in meta) throw new Error(`Component metadata in ${fileName} must not declare \`source\`.`);
     const path = toPosixPath(relative(rootDir, fileName));
     return [{ ...meta, source: `./${path}` }];
   });
   const names = new Set<string>();
 
   for (const item of items) {
-    if (names.has(item.name)) throw new Error(`VJSC module \`${item.name}\` is declared more than once.`);
+    if (names.has(item.name)) throw new Error(`Component \`${item.name}\` is declared more than once.`);
     names.add(item.name);
   }
 
   return items.sort((left, right) => left.name.localeCompare(right.name));
 }
 
-/** Remove compile-time metadata from transformed VJSC modules. */
-export function moduleMetaPlugin(exportName = 'meta'): CompilerPlugin {
+/** Remove compile-time metadata from transformed components. */
+export function componentMetaPlugin(exportName = 'meta'): CompilerPlugin {
   return {
-    name: 'vjsc:module-meta',
+    name: 'vjsc:component-meta',
     enforce: 'pre',
     setup() {
       return {
@@ -71,13 +71,13 @@ export function moduleMetaPlugin(exportName = 'meta'): CompilerPlugin {
   };
 }
 
-export function extractVjscModuleMeta(source: string, fileName: string, exportName = 'meta'): VjscModuleMeta {
-  const meta = findVjscModuleMeta(source, fileName, exportName);
+export function extractComponentMeta(source: string, fileName: string, exportName = 'meta'): ComponentMeta {
+  const meta = findComponentMeta(source, fileName, exportName);
   if (meta) return meta;
-  throw new Error(`VJSC source ${fileName} must export a static \`${exportName}\` object.`);
+  throw new Error(`Component source ${fileName} must export a static \`${exportName}\` object.`);
 }
 
-function findVjscModuleMeta(source: string, fileName: string, exportName: string): VjscModuleMeta | undefined {
+function findComponentMeta(source: string, fileName: string, exportName: string): ComponentMeta | undefined {
   const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, sourceScriptKind(fileName));
 
   for (const statement of sourceFile.statements) {
@@ -88,9 +88,9 @@ function findVjscModuleMeta(source: string, fileName: string, exportName: string
     if (!declaration?.initializer) break;
     const value = staticValue(declaration.initializer, fileName);
     if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
-      throw new Error(`VJSC metadata \`${exportName}\` in ${fileName} must contain a non-empty literal \`name\`.`);
+      throw new Error(`Component metadata \`${exportName}\` in ${fileName} must contain a non-empty literal \`name\`.`);
     }
-    return value as VjscModuleMeta;
+    return value as ComponentMeta;
   }
 
   return undefined;
@@ -144,7 +144,7 @@ function staticPropertyName(name: ts.PropertyName, fileName: string): string {
 }
 
 function nonStaticMeta(fileName: string): Error {
-  return new Error(`VJSC metadata in ${fileName} must contain only static literal values.`);
+  return new Error(`Component metadata in ${fileName} must contain only static literal values.`);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

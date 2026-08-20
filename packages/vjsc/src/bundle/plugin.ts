@@ -8,9 +8,7 @@ import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../c
 import { CompilerError, transform } from '../transform';
 import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from './html-runtime';
 
-export interface VjscPluginOptions {
-  /** Native Rolldown transform-hook filter. Defaults to TSX modules. */
-  readonly filter?: HookFilter | undefined;
+export interface TransformPluginOptions {
   /** Select a VJSC transform for each module, or return null to defer. */
   readonly transform?: CompilerConfig | VjscTransformer | undefined;
   /** Directory used to resolve relative transform configuration. */
@@ -26,8 +24,13 @@ export interface VjscTransformContext {
 
 export type VjscTransformer = (context: VjscTransformContext) => CompilerConfig | null | Promise<CompilerConfig | null>;
 
-/** Apply VJSC transforms and generated modules through any Rolldown-compatible host. */
-export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
+export interface TransformPluginFilter {
+  readonly hook?: HookFilter | undefined;
+  readonly test?: ((id: string) => boolean) | undefined;
+}
+
+/** Shared implementation used by the public Vite and Rolldown adapters. */
+export function createVjscPlugin(options: TransformPluginOptions = {}, filter: TransformPluginFilter = {}): Plugin {
   const cwd = resolve(options.cwd ?? process.cwd());
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
@@ -74,8 +77,9 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
     },
     transform: {
       order: 'pre',
-      filter: options.filter ?? { id: /\.tsx(?:\?|$)/ },
+      ...(filter.hook ? { filter: filter.hook } : {}),
       async handler(code, id) {
+        if (filter.test && !filter.test(id)) return null;
         const transformed = parseId(id);
         const selected = options.transform ?? {};
         const configured =
@@ -183,5 +187,3 @@ function bundlerLogFromDiagnostic(diagnostic: CompilerDiagnostic): RolldownLog |
     pluginCode: diagnostic.code,
   };
 }
-
-export default vjscPlugin;

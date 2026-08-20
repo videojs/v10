@@ -1,5 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
-import type { VjscModuleMeta } from 'vjsc';
+import type { ComponentMeta } from 'vjsc/components';
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
@@ -81,4 +81,4 @@ export const meta = {
   },
   title: 'Minimal Video Skin',
   description: 'A compact on-demand video skin with wrapping controls and the complete video component set.',
-} as const satisfies VjscModuleMeta;
+} as const satisfies ComponentMeta;

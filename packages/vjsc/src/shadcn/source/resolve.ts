@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import ts from 'typescript';
-import { discoverVjscModules } from '../../meta';
+import { discoverComponents } from '../../components/meta';
 import { collectModuleReferences, type ModuleReference } from '../../utils/module-references';
 import { toPosixPath } from '../../utils/path';
 import { resolveSourceModule, sourceScriptKind } from '../../utils/source-module';
@@ -85,7 +85,7 @@ export async function loadSource<const Definition extends SourceDefinition>(
   const rootDir = resolve(options.rootDir);
   const definitionItems =
     'discovery' in definition
-      ? discoverVjscModules(definition.discovery as Parameters<typeof discoverVjscModules>[0])
+      ? discoverComponents(definition.discovery as Parameters<typeof discoverComponents>[0])
       : definition.items;
   const normalized = normalizeItems(definitionItems, rootDir) as NormalizedItem<DefinedItem<Definition>>[];
   const entries = new Map(normalized.map((entry) => [entry.sourceFile, entry]));

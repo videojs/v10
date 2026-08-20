@@ -1,12 +1,13 @@
 import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
+import { iconElementPlugin } from '@videojs/icons/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { type CompilerConfig, discoverVjscModules, html, jsx, moduleMetaPlugin } from 'vjsc';
+import { type CompilerConfig, html, jsx } from 'vjsc';
+import { componentMetaPlugin, discoverComponents } from 'vjsc/components';
 import { plugin as registryPlugin } from 'vjsc/registry';
-import { vjscPlugin } from 'vjsc/rolldown';
 import { plugin as stylesPlugin } from 'vjsc/styles';
-import { iconElementPlugin } from '../icons/vjsc/element-plugin';
+import { vjscPlugin } from 'vjsc/vite';
 import type { SkinMeta } from './vjsc/meta';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './vjsc/registry/frameworks';
 import { componentTransforms } from './vjsc/registry/react';
@@ -37,7 +38,7 @@ function createRegistryConfig() {
 
 function createPreviewConfig() {
   const transforms = new Map<string, CompilerConfig>();
-  const skins = discoverVjscModules<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
+  const skins = discoverComponents<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
 
   return {
     root: resolve(packageDir, 'dev'),
@@ -48,7 +49,7 @@ function createPreviewConfig() {
       iconElementPlugin(),
       vjscPlugin({
         cwd: packageDir,
-        filter: { id: new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`) },
+        include: new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`),
         transform: ({ parameters }) => {
           const framework = parameters.get('framework');
           const skinName = parameters.get('skin');
@@ -80,7 +81,7 @@ function createPreviewConfig() {
                       scope: `.${skin.style.scope}`,
                     },
                   }),
-              moduleMetaPlugin(),
+              componentMetaPlugin(),
               ...(framework === 'react' ? [componentTransforms()] : []),
             ],
           };

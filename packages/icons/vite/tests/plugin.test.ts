@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { iconElementPlugin } from '../element-plugin';
+import { iconElementPlugin } from '../index';
 
 describe('iconElementPlugin', () => {
   it('loads an element family directly from SVG source', () => {

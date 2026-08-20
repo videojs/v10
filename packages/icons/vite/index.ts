@@ -1,13 +1,21 @@
-import { globSync, readFileSync } from 'node:fs';
+import { existsSync, globSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
-import type { Plugin } from 'vjsc/rolldown';
+import type { Plugin } from 'vite';
 
 const ELEMENT_ID = '@videojs/icons/element';
 
 /** Serve HTML Icon families from their SVG sources during a bundler build. */
-export function iconElementPlugin(options: { cwd?: string } = {}): Plugin {
-  const cwd = options.cwd ?? resolve(import.meta.dirname, '..');
+export interface IconElementPluginOptions {
+  readonly cwd?: string | undefined;
+}
+
+export function iconElementPlugin(options: IconElementPluginOptions = {}): Plugin {
+  const sourceRoot = resolve(import.meta.dirname, '../src/assets');
+
+  const cwd =
+    options.cwd ??
+    (existsSync(sourceRoot) ? resolve(import.meta.dirname, '..') : resolve(import.meta.dirname, '../..'));
 
   return {
     name: 'videojs:icons:element',
@@ -47,6 +55,7 @@ const icons = ${JSON.stringify(icons)};
 
 if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {
   let MediaIconElement = customElements.get('media-icon');
+
   if (!MediaIconElement) {
     MediaIconElement = class extends HTMLElement {
       static families = new Map();
@@ -63,8 +72,10 @@ if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined')
         if (svg !== undefined && this.innerHTML !== svg) this.innerHTML = svg;
       }
     };
+
     customElements.define('media-icon', MediaIconElement);
   }
+
   MediaIconElement.register(family, icons);
 }
 `;

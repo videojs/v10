@@ -10,8 +10,7 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@videojs/icons/vjsc';
-import type { VjscModuleMeta } from 'vjsc';
-import type { Props } from 'vjsc/components';
+import type { ComponentMeta, Props } from 'vjsc/components';
 import styles from '../../styles/components/status-indicator.styles';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
@@ -45,4 +44,4 @@ export const meta = {
   type: 'component',
   title: 'Status Indicator',
   description: 'Visual feedback for captions, fullscreen, picture-in-picture, and playback actions.',
-} as const satisfies VjscModuleMeta;
+} as const satisfies ComponentMeta;

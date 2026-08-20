@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CompilerPlugin, CompilerSourceMap } from '../../config';
 import { jsx } from '../../config';
-import { vjscPlugin } from '../plugin';
+import { vjscPlugin } from '../../rolldown';
 
 type TestPlugin = {
   resolveId(id: string): Promise<string | null>;

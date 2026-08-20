@@ -6,8 +6,7 @@ import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vitest';
 
 import { jsx } from '../../config';
-import { vjscPlugin } from '../plugin';
-import { schemaPlugin } from '../schema';
+import { schemaPlugin, vjscPlugin } from '../../rolldown';
 
 describe('vjscPlugin', () => {
   it('uses native host filters for included and excluded modules', async () => {
@@ -23,7 +22,8 @@ describe('vjscPlugin', () => {
       external: /^react\//,
       plugins: [
         vjscPlugin({
-          filter: { id: { include: '**/*.tsx', exclude: '**/*.test.tsx' } },
+          include: '**/*.tsx',
+          exclude: '**/*.test.tsx',
           transform: {
             plugins: [
               {

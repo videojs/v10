@@ -6,7 +6,8 @@ import { rolldown } from 'rolldown';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { jsx } from '../../config';
-import { createShadcnRegistry, createShadcnRegistryFiles, defineShadcnRegistry, shadcnPlugin } from '../index';
+import { shadcnPlugin } from '../../rolldown';
+import { createShadcnRegistry, createShadcnRegistryFiles, defineShadcnRegistry } from '../index';
 import { defineSource } from '../source/define';
 import { loadSource } from '../source/resolve';
 

@@ -1,8 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { posix, resolve } from 'node:path';
-
+import { componentMetaPlugin } from '../../components/meta';
 import type { CompilerConfig } from '../../config';
-import { moduleMetaPlugin } from '../../meta';
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';
 import { collectReferencedStyleRules, type StyleManifest } from '../../styles/manifest';
@@ -178,6 +177,7 @@ async function transformModules<Definition extends SourceDefinition>(
 
     for (const layout of layouts) {
       const code = await readFile(layout.inputFile, 'utf8');
+
       const result = await transform(code, {
         filename: layout.inputFile,
         outputFile: resolve(source.rootDir, layout.outputFile),
@@ -259,7 +259,7 @@ function transformConfig<Definition extends SourceDefinition>(
   manifest: StyleManifest | undefined
 ): CompilerConfig {
   const config = resolveSourceTransformConfig(transformer, sourceItem);
-  const plugins = [moduleMetaPlugin()];
+  const plugins = [componentMetaPlugin()];
 
   if (!manifest || !styles) return { ...config, plugins: [...plugins, ...(config.plugins ?? [])] };
 

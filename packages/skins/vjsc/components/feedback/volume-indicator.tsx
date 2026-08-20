@@ -1,8 +1,7 @@
 import type { VolumeIndicatorProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/vjsc';
-import type { VjscModuleMeta } from 'vjsc';
-import type { Props } from 'vjsc/components';
+import type { ComponentMeta, Props } from 'vjsc/components';
 import styles from '../../styles/components/volume-indicator.styles';
 
 export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) {
@@ -22,4 +21,4 @@ export const meta = {
   type: 'component',
   title: 'Volume Indicator',
   description: 'Visual feedback for mute and volume changes.',
-} as const satisfies VjscModuleMeta;
+} as const satisfies ComponentMeta;

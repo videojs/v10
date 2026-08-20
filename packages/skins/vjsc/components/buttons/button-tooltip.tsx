@@ -1,7 +1,6 @@
 import type { TooltipProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
-import type { VjscModuleMeta } from 'vjsc';
-import type { PropsWithChildren, VjscElement } from 'vjsc/components';
+import type { ComponentMeta, PropsWithChildren, VjscElement } from 'vjsc/components';
 import styles from '../../styles/components/popup.styles';
 
 export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipProps> & { children: VjscElement }) {
@@ -20,4 +19,4 @@ export const meta = {
   type: 'component',
   title: 'Button Tooltip',
   description: 'An internal tooltip composition shared by button controls.',
-} as const satisfies VjscModuleMeta;
+} as const satisfies ComponentMeta;

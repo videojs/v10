@@ -1,7 +1,7 @@
 import type { SeekButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { SeekIcon } from '@videojs/icons/vjsc';
-import type { VjscModuleMeta } from 'vjsc';
+import type { ComponentMeta } from 'vjsc/components';
 import { type Props, Text } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';
@@ -22,4 +22,4 @@ export const meta = {
   title: 'Seek Button',
   description:
     'A button that skips playback forward or backward by a configurable number of seconds, with a direction-aware icon and accessible tooltip.',
-} as const satisfies VjscModuleMeta;
+} as const satisfies ComponentMeta;

@@ -2,14 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { posix, resolve } from 'node:path';
 
 import { uniqBy } from '@videojs/utils/array';
-import type { Plugin } from 'rolldown';
 import {
   type RegistryItem,
   registryItemSchema,
   registrySchema,
   type Registry as ShadcnRegistrySchema,
 } from 'shadcn/schema';
-import type { VjscModuleMeta } from '../meta';
+import type { ComponentMeta } from '../components/meta';
 import type { SourceDefinition } from './source/define';
 import { defineDiscoveredSource } from './source/define';
 import {
@@ -19,7 +18,7 @@ import {
   type TransformedSourceItem,
   transformSource,
 } from './source/project';
-import { loadSource, resolveSource, type Source, type SourceItem } from './source/resolve';
+import { resolveSource, type Source, type SourceItem } from './source/resolve';
 
 type RegistryItemType = RegistryItem['type'];
 type PublishedRegistryItemType = Extract<RegistryItemType, 'registry:block' | 'registry:component'>;
@@ -29,8 +28,8 @@ export type ShadcnRegistry = ShadcnRegistrySchema;
 export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
 export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
-/** Discover the self-describing VJSC modules owned by one Shadcn registry. */
-export function defineShadcnSource<Item extends VjscModuleMeta>() {
+/** Discover the self-describing components owned by one Shadcn registry. */
+export function defineShadcnSource<Item extends ComponentMeta>() {
   return defineDiscoveredSource<Item>();
 }
 
@@ -114,71 +113,6 @@ export interface ShadcnOutputFile {
   readonly content: string;
 }
 
-export interface ShadcnOutputOptions<Definition extends SourceDefinition> {
-  readonly source: Definition;
-  readonly rootDir: string;
-  readonly registry: ShadcnRegistryDefinition<Definition>;
-  readonly transformer: SourceTransformer<Definition>;
-  readonly styles?: SourceStyleTransform | undefined;
-  readonly id?: `virtual:vjsc/${string}` | undefined;
-}
-
-export interface ShadcnPlugin extends Plugin {
-  readonly moduleId: `virtual:vjsc/${string}`;
-}
-
-/** Emit a Shadcn source registry through native Rolldown output hooks. */
-export function shadcnPlugin<const Definition extends SourceDefinition>(
-  options: ShadcnOutputOptions<Definition>
-): ShadcnPlugin {
-  const moduleId = options.id ?? 'virtual:vjsc/shadcn';
-  const resolvedId = `\0${moduleId}`;
-  const plugin: Plugin = {
-    name: 'vjsc:shadcn',
-    resolveId: {
-      filter: { id: exactId(moduleId) },
-      handler(id) {
-        return id === moduleId ? resolvedId : null;
-      },
-    },
-    load: {
-      filter: { id: exactId(resolvedId) },
-      handler(id) {
-        return id === resolvedId ? 'export default null;' : null;
-      },
-    },
-    async generateBundle(_outputOptions, bundle) {
-      const chunks = Object.entries(bundle).filter(
-        (entry): entry is [string, Extract<(typeof bundle)[string], { type: 'chunk' }>] =>
-          entry[1].type === 'chunk' && entry[1].facadeModuleId === resolvedId
-      );
-      if (chunks.length === 0) return;
-
-      const source = await loadSource(options.source, { rootDir: options.rootDir });
-      const output = await createShadcnRegistry(source, options.registry, {
-        transformer: options.transformer,
-        ...(options.styles ? { styles: options.styles } : {}),
-      });
-
-      const files = createShadcnRegistryFiles(output, options.registry);
-      const watchFiles = new Set(
-        source.items.flatMap((item) =>
-          [...item.files.source, ...item.files.style].map((fileName) => resolve(source.rootDir, fileName))
-        )
-      );
-      for (const item of options.registry.items.shared ?? []) {
-        for (const file of item.files) watchFiles.add(resolve(source.rootDir, file.source));
-      }
-
-      for (const file of watchFiles) this.addWatchFile(file);
-      for (const file of files) this.emitFile({ type: 'asset', fileName: file.path, source: file.content });
-      for (const [fileName] of chunks) delete bundle[fileName];
-    },
-  };
-
-  return Object.assign(plugin, { moduleId });
-}
-
 /** Assemble final Shadcn registry JSON assets from transformed source. */
 export function createShadcnRegistryFiles<Definition extends SourceDefinition>(
   output: ShadcnRegistryOutput,
@@ -206,10 +140,6 @@ export function createShadcnRegistryFiles<Definition extends SourceDefinition>(
   });
 
   return [{ path: 'registry.json', content: JSON.stringify(output.registry) }, ...items];
-}
-
-function exactId(id: string): RegExp {
-  return new RegExp(`^${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
 }
 
 /** Project editable source modules, shared files, and a validated Shadcn registry. */

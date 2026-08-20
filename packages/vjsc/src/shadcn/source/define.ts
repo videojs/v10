@@ -1,4 +1,4 @@
-import { type DiscoverVjscModulesOptions, discoverVjscModules, type VjscModuleMeta } from '../../meta';
+import { type ComponentMeta, type DiscoverComponentsOptions, discoverComponents } from '../../components/meta';
 
 export interface SourceItemDefinition {
   readonly name: string;
@@ -19,13 +19,13 @@ export interface SourceDefinition {
 }
 
 export interface SourceDiscoveryDefinition extends Omit<SourceDefinition, 'items'> {
-  readonly discovery: DiscoverVjscModulesOptions;
+  readonly discovery: DiscoverComponentsOptions;
 }
 
-export type DiscoveredSourceDefinition<
-  Item extends VjscModuleMeta,
-  Definition extends SourceDiscoveryDefinition,
-> = Omit<Definition, 'discovery'> & {
+export type DiscoveredSourceDefinition<Item extends ComponentMeta, Definition extends SourceDiscoveryDefinition> = Omit<
+  Definition,
+  'discovery'
+> & {
   readonly discovery: Definition['discovery'];
   readonly items: readonly (Item & SourceItemDefinition)[];
 };
@@ -38,11 +38,11 @@ export function defineSource<const Definition extends SourceDefinition>(definiti
 }
 
 /** Bind source metadata once, then infer the authored discovery and resource configuration. */
-export function defineDiscoveredSource<Item extends VjscModuleMeta>() {
+export function defineDiscoveredSource<Item extends ComponentMeta>() {
   return <const Definition extends SourceDiscoveryDefinition>(
     definition: Definition
   ): DiscoveredSourceDefinition<Item, Definition> => ({
     ...definition,
-    items: discoverVjscModules<Item>(definition.discovery),
+    items: discoverComponents<Item>(definition.discovery),
   });
 }

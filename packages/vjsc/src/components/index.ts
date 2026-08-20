@@ -26,3 +26,10 @@ export {
   type VjscElement,
   type VjscNode,
 } from './jsx-runtime';
+export {
+  type ComponentMeta,
+  componentMetaPlugin,
+  type DiscoverComponentsOptions,
+  discoverComponents,
+  extractComponentMeta,
+} from './meta';

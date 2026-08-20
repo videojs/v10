@@ -7,5 +7,5 @@
     "types": ["node"],
     "jsx": "react-jsx"
   },
-  "include": ["vjsc"]
+  "include": ["vite", "vjsc"]
 }

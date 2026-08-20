@@ -1,8 +1,7 @@
 import type { MuteButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/vjsc';
-import type { VjscModuleMeta } from 'vjsc';
-import type { Props } from 'vjsc/components';
+import type { ComponentMeta, Props } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 
 export function MuteButton({ className, ...props }: Props<CoreProps> = {}) {
@@ -19,4 +18,4 @@ export const meta = {
   type: 'component',
   title: 'Mute Button',
   description: 'A state-aware mute button used by the volume control.',
-} as const satisfies VjscModuleMeta;
+} as const satisfies ComponentMeta;

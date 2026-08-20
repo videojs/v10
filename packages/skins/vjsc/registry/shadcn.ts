@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 
 import { jsx } from 'vjsc';
 import { plugin as registryPlugin } from 'vjsc/registry';
-import { defineShadcnRegistry, defineShadcnSource, type ShadcnPlugin, shadcnPlugin } from 'vjsc/shadcn';
+import { defineShadcnRegistry, defineShadcnSource } from 'vjsc/shadcn';
+import { type ShadcnPlugin, shadcnPlugin } from 'vjsc/vite';
 
 import type { SkinModuleMeta } from '../meta';
 import { createReactComponentRegistry } from './frameworks';
@@ -16,6 +17,7 @@ const paths = {
 } as const;
 
 const rootDir = resolve(import.meta.dirname, '..');
+
 const styles = {
   tailwind: {
     compiler: './styles/tailwind.css',
@@ -50,7 +52,7 @@ const skinSource = defineShadcnSource<SkinModuleMeta>()({
   },
 });
 
-/** React/Tailwind publication policy for the VJSC Skin inventory. */
+/** React/Tailwind publication policy for the Skin inventory. */
 const skinRegistry = defineShadcnRegistry(skinSource, {
   name: 'videojs',
   homepage: 'https://videojs.org',

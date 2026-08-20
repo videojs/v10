@@ -265,6 +265,36 @@ function buildElementBaseTypes(): string {
   ].join('\n');
 }
 
+function buildVitePlugin(): void {
+  const sourceFile = join(import.meta.dirname, '../vite/index.ts');
+  const result = transformSync(sourceFile, readFileSync(sourceFile, 'utf8'), {
+    lang: 'ts',
+    sourceType: 'module',
+  });
+  if (result.errors.length > 0 || !result.code) {
+    throw new Error(
+      `Could not transpile the Vite plugin:\n${result.errors.map((error) => error.codeframe ?? error.message).join('\n')}`
+    );
+  }
+
+  const outputDir = join(DIST_DIR, 'vite');
+  ensureDir(outputDir);
+  writeFileSync(join(outputDir, 'index.js'), result.code);
+  writeFileSync(
+    join(outputDir, 'index.d.ts'),
+    [
+      `import type { Plugin } from 'vite';`,
+      ``,
+      `export interface IconElementPluginOptions {`,
+      `  readonly cwd?: string | undefined;`,
+      `}`,
+      ``,
+      `export declare function iconElementPlugin(options?: IconElementPluginOptions): Plugin;`,
+      ``,
+    ].join('\n')
+  );
+}
+
 function buildIndexExports(icons: { name: string; varName: string }[], framework: 'react' | 'html'): string {
   return icons
     .map(({ name, varName }) => {
@@ -373,6 +403,7 @@ async function build(): Promise<void> {
   const elementDir = join(DIST_DIR, 'element');
   writeFileSync(join(elementDir, 'index.js'), buildElementIndex(sets));
   writeFileSync(join(elementDir, 'index.d.ts'), `export {};\n`);
+  buildVitePlugin();
 }
 
 function debounce(fn: () => void, ms: number): () => void {
