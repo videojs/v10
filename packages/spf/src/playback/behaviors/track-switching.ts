@@ -70,6 +70,7 @@ import { createMachineReactor } from '../../core/reactors/create-machine-reactor
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { DEFAULT_QUALITY_CONFIG, type QualityConfig, resolutionArea } from '../../media/abr/quality-selection';
 import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../media/errors';
+import type { Resolution } from '../../media/primitives/resolution';
 import {
   matchesPartialTrack,
   pickTextTrackFromTracks,
@@ -329,15 +330,9 @@ type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = 
 /**
  * State the player-resolution cap reads: TrackSwitchingStateMap plus the
  * *optional* player measurement, manifested by `trackPlayerResolution`.
- *
- * Structurally compatible with `behaviors/dom/track-player-resolution`'s
- * `PlayerResolution` rather than importing it: this module is DOM-free (project
- * references enforce that), and a rule comparing pixel areas needs two numbers,
- * not a player. Same shape, and for the same reason, as `screenResolutionCap`'s
- * view of `screenResolution`.
  */
 type PlayerResolutionCapStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
-  playerResolution?: ReadonlySignal<{ readonly width: number; readonly height: number } | undefined>;
+  playerResolution?: ReadonlySignal<Resolution | undefined>;
 };
 
 /**

@@ -24,12 +24,10 @@ import { shallowEqual } from '@videojs/utils/object';
 import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';
+import { type Resolution, scaleResolution } from '../../../media/primitives/resolution';
 
 /** A player element's rendered pixel dimensions. */
-export interface PlayerResolution {
-  readonly width: number;
-  readonly height: number;
-}
+export type PlayerResolution = Resolution;
 
 export interface PlayerResolutionState {
   playerResolution?: PlayerResolution;
@@ -58,24 +56,6 @@ export interface TrackPlayerResolutionConfig {
   useDevicePixelRatio?: boolean;
 }
 
-/**
- * Project an observed CSS box into device pixels, or `undefined` when there is no
- * measurement in it.
- *
- * Rounded because device pixels are whole and a fractional ratio doesn't divide a
- * box evenly, the same as `getScreenResolution`. A zero axis is "not measurable"
- * rather than a measurement of zero: an element that isn't being rendered reports
- * a `0 × 0` box, and capping to an area of zero would pin every source to its
- * smallest rendition.
- */
-function toPlayerResolution(size: ElementSize & { scale?: number }): PlayerResolution | undefined {
-  const scale = size.scale ?? 1;
-  const width = Math.round(size.width * scale);
-  const height = Math.round(size.height * scale);
-
-  return width > 0 && height > 0 ? { width, height } : undefined;
-}
-
 function trackPlayerResolutionSetup({
   state,
   context,
@@ -100,7 +80,7 @@ function trackPlayerResolutionSetup({
     // to the same device pixels is not a change worth re-running selection for.
     // Same reason `watchScreenResolution` compares its readings.
     const write = (size: ElementSize & { scale?: number }) => {
-      const next = toPlayerResolution(size);
+      const next = scaleResolution(size, size.scale);
       if (shallowEqual(current, next)) return;
 
       current = next;

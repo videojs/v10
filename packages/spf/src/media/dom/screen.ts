@@ -19,12 +19,10 @@
 import { getDevicePixelRatio, listen, watchDevicePixelRatio } from '@videojs/utils/dom';
 import { shallowEqual } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
+import { type Resolution, scaleResolution } from '../primitives/resolution';
 
 /** A screen's pixel dimensions. */
-export interface ScreenResolution {
-  readonly width: number;
-  readonly height: number;
-}
+export type ScreenResolution = Resolution;
 
 export interface ScreenResolutionOptions {
   /**
@@ -66,16 +64,9 @@ export function getScreenResolution(
 
   // A missing or nonsense ratio falls back to 1 (see `getDevicePixelRatio`): a
   // CSS-pixel reading is still true and still cappable, so it isn't worth failing
-  // the whole answer over.
-  const ratio = useDevicePixelRatio ? getDevicePixelRatio() : 1;
-
-  // Rounded because device pixels are whole and a fractional ratio doesn't divide
-  // a screen evenly. `NaN` from a nonsense dimension fails the check below, since
-  // no comparison against it holds.
-  const width = Math.round(screen.width * ratio);
-  const height = Math.round(screen.height * ratio);
-
-  return width > 0 && height > 0 ? { width, height } : undefined;
+  // the whole answer over. Rounding, and the nothing-to-report case a `NaN` or
+  // zero dimension lands in, belong to `scaleResolution`.
+  return scaleResolution(screen, useDevicePixelRatio ? getDevicePixelRatio() : 1);
 }
 
 /**

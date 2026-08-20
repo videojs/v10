@@ -54,6 +54,7 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
+import type { Resolution } from '../../media/primitives/resolution';
 import {
   type AudioSelectionConfig,
   byDescendingResolution,
@@ -255,15 +256,9 @@ const DEFAULT_AUDIO_RULES: readonly SelectTrackRule<SelectAudioTrackConfig>[] = 
  */
 export const preferHighestResolution: SelectTrackRule<unknown> = (tracks) => [...tracks].sort(byDescendingResolution);
 
-/**
- * What {@link screenResolutionCap} reads off the composition state.
- *
- * Structurally compatible with `media/dom/screen`'s `ScreenResolution` rather than
- * importing it: this module sits outside the DOM layer (project references enforce
- * that), and a rule comparing pixel areas needs two numbers, not a screen.
- */
+/** What {@link screenResolutionCap} reads off the composition state. */
 type ScreenResolutionRuleState = {
-  screenResolution?: ReadonlySignal<{ readonly width: number; readonly height: number } | undefined>;
+  screenResolution?: ReadonlySignal<Resolution | undefined>;
 };
 
 /**
