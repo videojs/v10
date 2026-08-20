@@ -156,6 +156,18 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     }
   }
 
+  /** Whether remote playback (AirPlay, Google Cast) is disabled for this media. */
+  get disableRemotePlayback() {
+    return super.disableRemotePlayback;
+  }
+
+  set disableRemotePlayback(value: boolean) {
+    super.disableRemotePlayback = value;
+    if (this.#delegate instanceof HlsJsOnlyMedia) {
+      this.#delegate.disableRemotePlayback = value;
+    }
+  }
+
   /** Current stream type (`'on-demand'` / `'live'` / `'unknown'`). */
   get streamType(): StreamType {
     return this.#delegate?.streamType ?? this.#streamType;

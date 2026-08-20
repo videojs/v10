@@ -38,6 +38,21 @@ class FakeHost extends EventTarget {
   attach(target: HTMLMediaElement) {
     this.target = target;
   }
+
+  // Mirrors `HTMLMediaElementHost`: media props forward to the attached target
+  // and are dropped while nothing is attached.
+  get disableRemotePlayback(): boolean {
+    return this.target?.disableRemotePlayback ?? false;
+  }
+
+  set disableRemotePlayback(value: boolean) {
+    if (this.target) this.target.disableRemotePlayback = value;
+  }
+}
+
+/** hls.js forces the flag on for ManagedMediaSource inside `attachMedia`. */
+function simulateHlsJsMmsAttach(video: HTMLVideoElement) {
+  video.disableRemotePlayback = true;
 }
 
 const AirPlayHost = HlsJsMediaAirPlayMixin(
@@ -83,28 +98,61 @@ describe('HlsJsMediaAirPlayMixin', () => {
     expect(source?.src).toContain('master.m3u8');
   });
 
-  it('sets disableRemotePlayback = false when the author has not disabled it', () => {
-    const engine = createEngine();
-    const host = new AirPlayHost(engine);
-    const video = createVideo();
-    host.attach(video); // captures the author value (false) before hls.js runs
-    video.disableRemotePlayback = true; // hls.js forces it on for MMS
+  describe('disableRemotePlayback', () => {
+    it('clears the flag hls.js set when no author opted out', () => {
+      const engine = createEngine();
+      const host = new AirPlayHost(engine);
+      const video = createVideo();
+      host.attach(video);
+      simulateHlsJsMmsAttach(video);
 
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+      (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
-    expect(video.disableRemotePlayback).toBe(false);
-  });
+      expect(video.disableRemotePlayback).toBe(false);
+    });
 
-  it('preserves disableRemotePlayback when the author explicitly disabled it', () => {
-    const engine = createEngine();
-    const host = new AirPlayHost(engine);
-    const video = createVideo();
-    video.disableRemotePlayback = true;
-    host.attach(video); // captures the author value (true) before hls.js runs
+    it('preserves an opt-out already on the element at attach', () => {
+      // Markup (`<hlsjs-video disableremoteplayback>`) and framework props reach
+      // the element rather than the media API.
+      const engine = createEngine();
+      const host = new AirPlayHost(engine);
+      const video = createVideo();
+      video.disableRemotePlayback = true;
+      host.attach(video);
+      simulateHlsJsMmsAttach(video);
 
-    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+      (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
-    expect(video.disableRemotePlayback).toBe(true);
+      expect(video.disableRemotePlayback).toBe(true);
+    });
+
+    it('preserves an opt-out set through the media API before attach', () => {
+      const engine = createEngine();
+      const host = new AirPlayHost(engine);
+      const video = createVideo();
+      host.disableRemotePlayback = true;
+      host.attach(video);
+      simulateHlsJsMmsAttach(video);
+
+      (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+      expect(video.disableRemotePlayback).toBe(true);
+    });
+
+    it('preserves an opt-out set through the media API after attach', () => {
+      // `attachMedia` writes the flag synchronously but MEDIA_ATTACHED only
+      // fires once the media source opens, so an opt-out can land in between.
+      const engine = createEngine();
+      const host = new AirPlayHost(engine);
+      const video = createVideo();
+      host.attach(video);
+      simulateHlsJsMmsAttach(video);
+      host.disableRemotePlayback = true;
+
+      (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+      expect(video.disableRemotePlayback).toBe(true);
+    });
   });
 
   it('updates the <source> src on MANIFEST_LOADING', () => {

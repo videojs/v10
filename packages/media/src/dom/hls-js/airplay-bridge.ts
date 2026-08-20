@@ -19,7 +19,9 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
   class HlsJsMediaAirPlay extends (BaseClass as Constructor<HlsEngineHost>) {
     #sourceEl: HTMLSourceElement | null = null;
     #disconnect: AbortController | null = null;
-    /** Whether disableRemotePlayback was set on the media element */
+    /** Whether disableRemotePlayback was set explicitly. hls.js also writes
+     * this flag on the element (forced on for MMS), so the element alone
+     * cannot tell an opt-out apart from an MMS requirement */
     #authorDisableRemotePlayback = false;
 
     constructor(...args: any[]) {
@@ -33,10 +35,19 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       });
     }
 
+    override get disableRemotePlayback(): boolean {
+      return super.disableRemotePlayback;
+    }
+
+    override set disableRemotePlayback(value: boolean) {
+      this.#authorDisableRemotePlayback = value;
+      super.disableRemotePlayback = value;
+    }
+
     override attach(target: HTMLVideoElement): void {
-      // Snapshot the author's intent before `super.attach` runs hls.js's
-      // `attachMedia`, which forces `disableRemotePlayback` on for MMS.
-      this.#authorDisableRemotePlayback = target.disableRemotePlayback ?? false;
+      // Markup and React props reach the element, not the setter above, so adopt
+      // it before `super.attach` lets hls.js overwrite the flag.
+      this.#authorDisableRemotePlayback ||= target.disableRemotePlayback ?? false;
       super.attach(target);
     }
 

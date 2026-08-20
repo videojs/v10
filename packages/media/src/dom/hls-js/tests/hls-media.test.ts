@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../core/media-error';
 import type { RemotePlaybackLike } from '../../../core/types';
 import { addMediaComponent, type MediaComponent } from '../../media-host';
@@ -455,6 +455,115 @@ describe('HlsJsMedia', () => {
 
       expect(media.liveEdgeStart).toBeNaN();
       expect(media.targetLiveWindow).toBeNaN();
+    });
+  });
+
+  describe('disableRemotePlayback', () => {
+    /**
+     * jsdom implements neither WebKit's AirPlay APIs nor a `textTracks` list the
+     * hls.js mixins can subscribe to, so the AirPlay bridge needs both stubbed
+     * before it will run against a video element.
+     */
+    function createAirPlayVideo() {
+      const video = document.createElement('video');
+      Object.defineProperty(video, 'webkitCurrentPlaybackTargetIsWireless', {
+        configurable: true,
+        writable: true,
+        value: false,
+      });
+      Object.defineProperty(video, 'textTracks', {
+        configurable: true,
+        value: Object.assign(new EventTarget(), { length: 0, [Symbol.iterator]: () => [][Symbol.iterator]() }),
+      });
+      document.body.appendChild(video);
+      return video;
+    }
+
+    function createMseMedia() {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+      const media = new HlsJsMedia();
+      media.config = { contentType: ContentTypes.M3U8 };
+      return media;
+    }
+
+    /** hls.js forces the flag on for ManagedMediaSource inside `attachMedia`. */
+    function simulateHlsJsMmsAttach(video: HTMLVideoElement) {
+      video.disableRemotePlayback = true;
+    }
+
+    /** hls.js emits MEDIA_ATTACHED only once the media source opens. */
+    function fireMediaAttached(media: HlsJsMedia, video: HTMLVideoElement) {
+      media.engine!.trigger(Hls.Events.MEDIA_ATTACHED, { media: video } as any);
+      // The bridge appends the AirPlay fallback source in the same pass; if it
+      // is missing the bridge never ran and the assertions below prove nothing.
+      expect(video.querySelector('source')).not.toBeNull();
+    }
+
+    beforeEach(() => {
+      (globalThis as any).WebKitPlaybackTargetAvailabilityEvent = class {};
+    });
+
+    afterEach(() => {
+      delete (globalThis as any).WebKitPlaybackTargetAvailabilityEvent;
+    });
+
+    it('enables AirPlay when nothing opted out', () => {
+      const video = createAirPlayVideo();
+      const media = createMseMedia();
+      media.attach(video);
+      media.src = 'https://example.com/master.m3u8';
+      media.load();
+
+      simulateHlsJsMmsAttach(video);
+      fireMediaAttached(media, video);
+
+      expect(video.disableRemotePlayback).toBe(false);
+    });
+
+    it('honors the attribute mirrored onto the video element', () => {
+      // `<hlsjs-video disableremoteplayback>` and the React prop both reach the
+      // element before the host attaches to it.
+      const video = createAirPlayVideo();
+      video.disableRemotePlayback = true;
+
+      const media = createMseMedia();
+      media.attach(video);
+      media.src = 'https://example.com/master.m3u8';
+      media.load();
+
+      simulateHlsJsMmsAttach(video);
+      fireMediaAttached(media, video);
+
+      expect(video.disableRemotePlayback).toBe(true);
+    });
+
+    it('honors the media API set before the engine is created', () => {
+      const video = createAirPlayVideo();
+      const media = createMseMedia();
+      media.attach(video);
+      media.disableRemotePlayback = true;
+
+      media.src = 'https://example.com/master.m3u8';
+      media.load();
+
+      simulateHlsJsMmsAttach(video);
+      fireMediaAttached(media, video);
+
+      expect(video.disableRemotePlayback).toBe(true);
+    });
+
+    it('honors the media API set after the engine attached', () => {
+      const video = createAirPlayVideo();
+      const media = createMseMedia();
+      media.attach(video);
+      media.src = 'https://example.com/master.m3u8';
+      media.load();
+
+      simulateHlsJsMmsAttach(video);
+      media.disableRemotePlayback = true;
+      fireMediaAttached(media, video);
+
+      expect(video.disableRemotePlayback).toBe(true);
     });
   });
 });
