@@ -41,8 +41,8 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
       );
 
       for (const module of discovered) {
-        const transforms = options.publish.transforms?.(module, discovered) ?? [{}];
-        for (const transform of transforms) {
+        const transformations = options.publish.modules?.(module, discovered) ?? [{}];
+        for (const transform of transformations) {
           const id = moduleId(module.filename, transform);
           if (sources.has(id)) this.error(`Shadcn source transformation is declared twice: \`${id}\`.`);
           sources.set(id, { ...module, id, transform: { ...transform } });

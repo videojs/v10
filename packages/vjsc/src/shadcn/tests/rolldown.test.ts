@@ -104,13 +104,13 @@ describe('shadcnPlugin', () => {
       'components/root.tsx': `import { Child } from './child'; export function Root() { return <main>{Child}</main>; } ${meta('root', 'block')}`,
       'components/child.tsx': `export const Child = <aside/>; ${meta('child')}`,
     });
-    const transforms = () => [
+    const publishModules = () => [
       { framework: 'react', skin: 'default' },
       { framework: 'react', skin: 'minimal' },
     ];
     const output = await build(root, {
       styles: undefined,
-      publish: { ...baseOptions().publish, transforms },
+      publish: { ...baseOptions().publish, modules: publishModules },
     });
 
     expect(assetJson(output, 'root.json').registryDependencies).toContain('@example/child');
@@ -125,12 +125,12 @@ describe('shadcnPlugin', () => {
       'components/root.tsx': `import type { Label } from './types'; export function Root({ label }: { label: Label }) { return <main>{label}</main>; } ${meta('root', 'block')}`,
       'components/types.ts': `export type Label = string;`,
     });
-    const transforms: FixtureOptions['publish']['transforms'] = (module) =>
+    const publishModules: FixtureOptions['publish']['modules'] = (module) =>
       basename(module.filename) === 'root.tsx' ? [{ framework: 'react', skin: 'minimal' }] : [];
 
-    await expect(build(root, { styles: undefined, publish: { ...baseOptions().publish, transforms } })).rejects.toThrow(
-      /source dependency was not captured/
-    );
+    await expect(
+      build(root, { styles: undefined, publish: { ...baseOptions().publish, modules: publishModules } })
+    ).rejects.toThrow(/source dependency was not captured/);
   });
 
   it('rejects unsafe paths and duplicate item names', async () => {

@@ -49,7 +49,7 @@ export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta>
   readonly exclude?: string | readonly string[] | undefined;
   readonly publish: {
     /** Select each VJSC transformation of a discovered module that should be available for publication. */
-    readonly transforms?:
+    readonly modules?:
       | ((
           module: ShadcnModule<Item>,
           modules: readonly ShadcnModule<Item>[]

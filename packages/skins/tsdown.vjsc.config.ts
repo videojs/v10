@@ -58,7 +58,7 @@ export default defineConfig({
         style: 'tailwind',
       },
       publish: {
-        transforms: (module, modules) => {
+        modules: (module, modules) => {
           if (module.filename === registryUtils) return [{}];
 
           const skins = modules.flatMap(({ meta }) => (meta?.type === 'skin' ? [meta] : []));
