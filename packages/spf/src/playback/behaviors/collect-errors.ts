@@ -78,14 +78,14 @@ export function emitError(state: ErrorEmitterState, error: SvtaError): void {
  * composition opts in by adding it to `constraints` — nothing to thread through
  * config, and no cost at all to a composition that leaves it out.
  *
- * **Belongs first in the chain.** A constraint sees the list as it stands at its
- * own position, so only at the head does an empty input mean "the source offers
- * none of this type" rather than "the constraints ahead of me pruned them all."
+ * **Belongs last in the chain.** A constraint sees the list as it stands at its
+ * own position, so only at the tail does an empty input mean "nothing playable
+ * here" — none of this type offered, or the constraints ahead pruned them all.
  *
- * This is the one failure no per-rendition cause can report: causes come from
- * `reportUnsupportedTrackConditions` as each media playlist resolves, and here
- * nothing resolves, because there is nothing to resolve. Everything else already
- * reports something more specific than a verdict.
+ * These are the failures no per-rendition cause can report: causes come from
+ * `reportUnsupportedTrackConditions` as each media playlist resolves, and a
+ * rendition pruned before selection never resolves. Container and encryption
+ * aren't knowable until one does; CODECS is, so an undecodable ladder isn't.
  *
  * Idempotent because the constraint chain runs inside a `computed` that re-derives
  * on every `presentation` write — segment appends and live reloads included — and
@@ -94,7 +94,7 @@ export function emitError(state: ErrorEmitterState, error: SvtaError): void {
  *
  * @example
  * // engine-background-video.ts — video-only, so a source with none can't play
- * constraints: [reportAbsentTrackType(SVTA_NO_SUPPORTED_VIDEO_TRACK), excludeUnplayableTracks]
+ * constraints: [excludeUnplayableTracks, reportAbsentTrackType(SVTA_NO_SUPPORTED_VIDEO_TRACK)]
  */
 export function reportAbsentTrackType<T>(code: number): SelectionRule<T, ErrorEmitterState> {
   return (tracks, { state }) => {

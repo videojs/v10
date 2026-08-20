@@ -56,9 +56,9 @@ export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps
  * 1004 and an encrypted one 4008, each with no verdict behind it, and the element
  * then sits at `readyState 0` with `error` null forever.
  *
- * The verdict is still listed, for the one shape that reports nothing else: a
- * source offering no video renditions at all, which `reportAbsentTrackType`
- * reports from the head of the constraint chain.
+ * The verdict is still listed, for the shapes that report nothing else: no video
+ * renditions at all, or a ladder pruned before anything resolves — both of which
+ * `reportAbsentTrackType` covers from the tail of the constraint chain.
  *
  * First-fatal-wins then surfaces the cause rather than the verdict when both are
  * present, which is the more specific of the two.

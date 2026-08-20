@@ -226,7 +226,7 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 | `collectErrors` | `playback/behaviors/collect-errors.ts` | Owns the `errors` slot and its per-source lifecycle. No effects, no policy — a lifecycle owner, not an error handler. Same slot-owner-vs-writer split as `setupFailoverMonitor` / `failedCdns` |
 | `switchVideoTrack` / `switchAudioTrack` / `switchTextTrack` | `playback/behaviors/track-switching.ts` | Report the **verdict** (2011 / 2012) when a type has renditions but constraints pruned every one. Per-variant `noSupportedTrackCode`; text supplies none, since absent subtitles aren't a failure. Reports generically — it never reads a constraint's state, so it doesn't know *why* the set emptied |
 | `selectVideoTrack` | `playback/behaviors/select-tracks.ts` | The *pinned* variant. `entry` stays the only thing that ever **selects**; a sibling `effects` entry on the same `presentation-resolved` state only ever **de**selects, dropping a pick the constraints turned against. Keeping selection out of the reaction is what separates this from `switchVideoTrack` — a re-pick here would make it that behavior with extra steps — but it must *be* a reaction, since container and encryption are only known once a media playlist resolves, after `entry` ran. It reports nothing itself: whatever made the pick unplayable already reported its own cause (1004 / 4008), more specific than a verdict and already logged. A pick naming a track the manifest never offered is left alone, preserving the module's external-writes contract |
-| `reportAbsentTrackType` | `playback/behaviors/collect-errors.ts` | The one failure with no cause behind it: a source offering **no** renditions of a type the composition needs. Nothing resolves, so `reportUnsupportedTrackConditions` never runs and no cause exists to be more specific than a verdict. Shaped as a *constraint* rather than config so a composition opts in by adding it to `constraints` and one that doesn't pays nothing — it never actually constrains, returning its input untouched. Belongs at the head of the chain, where an empty input still means "the source offers none" rather than "the constraints ahead pruned them all." Idempotent, because the chain runs inside a `computed` that re-derives on every `presentation` write while the sequence keeps duplicates |
+| `reportAbsentTrackType` | `playback/behaviors/collect-errors.ts` | The failures with no cause behind them: a source offering **no** renditions of a type the composition needs, and a ladder the capability pre-pass prunes to nothing. Neither resolves anything, so `reportUnsupportedTrackConditions` never runs and no cause exists to be more specific than a verdict. Shaped as a *constraint* rather than config so a composition opts in by adding it to `constraints` and one that doesn't pays nothing — it never actually constrains, returning its input untouched. Belongs at the **tail** of the chain, where an empty input means "nothing playable here" — both shapes at once, which is what 2011 denotes. Idempotent, because the chain runs inside a `computed` that re-derives on every `presentation` write while the sequence keeps duplicates |
 | `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `playback/behaviors/resolve-track.ts` | Call the `reportUnsupportedTrackConditions` seam post-parse, reporting **causes** per rendition as it resolves — before committing the parsed track |
 
 **Helpers and seams:**
@@ -305,6 +305,14 @@ console. Reporting a verdict from the deselect instead was the
 alternative; it stays rejected because selection there deliberately reports
 nothing (the cause is more specific and already logged), and because fatality is
 the adapter's to decide.
+
+Those measurements predate the tail placement of `reportAbsentTrackType`: both
+sources now report their cause and then 2011, once the pre-pass re-runs on the
+relabeled type and finds nothing left. First-fatal-wins still surfaces the cause, so
+`media.error` is unchanged and only the sequence grows — what stacked reporting
+(Principles 5–6) expects. The tail is also what covers a ladder pruned on `CODECS`:
+the one cause knowable from the multivariant playlist, and so the only one whose
+renditions are never picked, never resolved, and never report a cause at all.
 
 Both platform components forward it, since a consumer of either holds the element
 rather than the Media. `<hls-background-video>` re-fires `'error'` on itself and

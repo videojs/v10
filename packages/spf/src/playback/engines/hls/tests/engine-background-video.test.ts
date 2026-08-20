@@ -103,17 +103,71 @@ describe('createBackgroundVideoEngine', () => {
       engine.destroy();
     });
 
-    // MPEG-TS: the capability constraint prunes it, so nothing is selected. No
-    // verdict — the cause (1004) is reported by `resolveVideoTrack` as the playlist
-    // resolves, which is more specific and needs no manifest fetch here.
+    // MPEG-TS: the capability constraint prunes it, so nothing is selected and the
+    // emptied set reports 2011. The cause (1004) precedes it in the real flow, where
+    // the track is picked and resolves first; this presentation starts pre-relabeled.
     it('makes no pick for an unplayable container', async () => {
       const engine = createBackgroundVideoEngine();
       engine.state.presentation.set(unplayablePresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       expect(engine.state.selectedVideoTrackId.get()).toBeUndefined();
-      expect(engine.state.errors.get()).toBeUndefined();
+      expect(engine.state.errors.get()).toEqual([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
       engine.destroy();
+    });
+
+    // CODECS is in the multivariant playlist, so an undecodable ladder is pruned
+    // before anything is picked and nothing resolves to report a cause. The emptied
+    // survivor set is the only thing left to report, which is why 2011 covers it.
+    it('reports for a ladder the environment cannot decode', async () => {
+      const engine = createBackgroundVideoEngine({ canPlayTrack: () => false });
+      engine.state.presentation.set(undecodablePresentation());
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(engine.state.selectedVideoTrackId.get()).toBeUndefined();
+      expect(engine.state.errors.get()).toEqual([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      engine.destroy();
+    });
+
+    // fMP4 throughout, so only the injected codec probe rejects it.
+    const undecodablePresentation = (): MaybeResolvedPresentation => ({
+      id: 'p',
+      url: 'https://example.com/v.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'video-switching',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: '720p-hevc',
+                  url: 'https://example.com/720p.m3u8',
+                  bandwidth: 2_000_000,
+                  mimeType: 'video/mp4',
+                  codecs: ['hvc1.1.6.L93.B0'],
+                  width: 1280,
+                  height: 720,
+                },
+                {
+                  type: 'video',
+                  id: '1080p-hevc',
+                  url: 'https://example.com/1080p.m3u8',
+                  bandwidth: 5_000_000,
+                  mimeType: 'video/mp4',
+                  codecs: ['hvc1.1.6.L120.B0'],
+                  width: 1920,
+                  height: 1080,
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
 
     // The one failure with no per-rendition cause behind it: nothing resolves, so
