@@ -35,7 +35,7 @@ export async function syncGeneratedModuleTypes(options: SyncGeneratedModuleTypes
 
     return {
       path: `${typesDir}/${outputPath ?? declarationPath(toPosixPath(sourcePath))}`,
-      content: emitDeclaration(module.code, sourceFile),
+      content: createGeneratedModuleDeclaration(module, sourceFile),
     };
   });
 
@@ -47,7 +47,9 @@ export async function syncGeneratedModuleTypes(options: SyncGeneratedModuleTypes
   });
 }
 
-function emitDeclaration(code: string, fileName: string): string {
+/** Emit one generated module declaration entirely in memory. */
+export function createGeneratedModuleDeclaration(module: GeneratedModule, fileName: string): string {
+  const code = module.code;
   const compilerOptions: ts.CompilerOptions = {
     declaration: true,
     emitDeclarationOnly: true,

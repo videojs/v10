@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import type { schema as coreSchema } from '@videojs/core/vjsc';
 import { type ComponentRegistry, extendRegistry } from 'vjsc/registry';
-import { createCoreSchemaModule } from '../../core/src/vjsc';
+import { coreSchemaModule } from '../../core/src/vjsc.config';
 import { createRegistry as createHtmlRegistry } from '../../html/vjsc/registry';
 import {
   createHtmlRegistry as createHtmlIconRegistry,
@@ -24,7 +24,7 @@ export function getIconSchemaModule(family = 'default') {
 }
 
 export function createReactComponentRegistry(iconFamily = 'default'): ComponentRegistry {
-  const schema = createCoreSchemaModule().schema as CoreSchema;
+  const schema = getCoreSchemaModule().schema as CoreSchema;
 
   return extendRegistry(
     createReactRegistry(schema),
@@ -33,7 +33,7 @@ export function createReactComponentRegistry(iconFamily = 'default'): ComponentR
 }
 
 export function createHtmlComponentRegistry(iconFamily = 'default'): ComponentRegistry {
-  const schema = createCoreSchemaModule().schema as CoreSchema;
+  const schema = getCoreSchemaModule().schema as CoreSchema;
 
   return extendRegistry(
     createHtmlRegistry(schema),
@@ -41,4 +41,6 @@ export function createHtmlComponentRegistry(iconFamily = 'default'): ComponentRe
   );
 }
 
-export const coreSchemaModule = createCoreSchemaModule();
+export function getCoreSchemaModule() {
+  return coreSchemaModule.load();
+}

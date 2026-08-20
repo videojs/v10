@@ -14,7 +14,7 @@ describe('vjsCompiler', () => {
     const virtualFile = join(root, '.vjsc/entry.ts');
     writeFileSync(source, 'export const value = 42;');
     const load = vi.fn(() => ({
-      code: `export { value } from '../value.ts';`,
+      code: `export { value } from '../value';`,
       watchFiles: [source],
     }));
 
@@ -24,12 +24,22 @@ describe('vjsCompiler', () => {
         vjsCompiler({
           modules: [{ id: 'virtual:vjsc/entry.ts', load }],
           resolveId: () => virtualFile,
+          declarations: [
+            {
+              id: 'virtual:vjsc/entry.ts',
+              sourceFileName: virtualFile,
+              fileName: 'entry.d.ts',
+            },
+          ],
         }),
       ],
     });
     const output = await bundle.generate({ format: 'es' });
 
     expect(output.output[0]?.code).toContain('const value = 42');
+    expect(output.output.find((item) => item.fileName === 'entry.d.ts')).toMatchObject({
+      source: "export { value } from '../value';\n",
+    });
     expect(load).toHaveBeenCalledOnce();
   });
 });

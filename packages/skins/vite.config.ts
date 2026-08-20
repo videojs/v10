@@ -8,16 +8,15 @@ import { catalogMetaPlugin, catalogVirtualModule } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
-import { createCoreSchemaModule } from '../core/src/vjsc';
+import { coreSchemaModule } from '../core/src/vjsc.config';
 import { createIconElementModule } from './build/icon-element';
-import { coreSchemaModule, createReactComponentRegistry, getIconSchemaModule } from './build/metadata';
+import { createReactComponentRegistry, getIconSchemaModule } from './build/metadata';
 import { componentTransforms } from './build/output/react/transform';
 import { createSkinVirtualModules } from './build/virtual-skins';
 import { skinCatalog } from './canonical/catalog';
 
 const packageDir = import.meta.dirname;
 const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
-const coreDir = resolve(packageDir, '../core');
 const iconsDir = resolve(packageDir, '../icons');
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
@@ -27,16 +26,6 @@ const defaultIconElementModule = createIconElementModule('default');
 const minimalIconElementModule = createIconElementModule('minimal');
 
 await Promise.all([
-  syncGeneratedModuleTypes({
-    rootDir: coreDir,
-    modules: [
-      {
-        fileName: resolve(coreDir, '.vjsc/virtual/core-schema.ts'),
-        outputPath: 'core-schema.d.ts',
-        module: coreSchemaModule,
-      },
-    ],
-  }),
   syncGeneratedModuleTypes({
     rootDir: iconsDir,
     modules: [
@@ -68,7 +57,7 @@ export default defineConfig({
     compiler({
       include: `${canonicalDir}/**/*.tsx`,
       modules: [
-        { id: 'virtual:vjsc/core-schema', load: createCoreSchemaModule },
+        coreSchemaModule,
         { id: 'virtual:vjsc/icons-schema', load: () => getIconSchemaModule() },
         catalogVirtualModule(skinCatalog),
         { id: 'virtual:vjsc/icons/element/default.js', load: () => defaultIconElementModule },

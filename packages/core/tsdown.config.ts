@@ -1,12 +1,10 @@
-import { resolve } from 'node:path';
-
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
-import { writeGeneratedFile } from 'vjsc/generate';
+import compiler from 'vjsc/rolldown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import en from './src/core/i18n/locales/en.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
-import { createCoreSchemaModule } from './src/vjsc.ts';
+import { coreSchemaModule } from './src/vjsc.config.ts';
 
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 const textNamespaces = [...new Set(Object.keys(en).map((key) => key.split('.')[0]))];
@@ -18,15 +16,29 @@ const localeEntries = Object.fromEntries([
   ...textNamespaces.map((namespace) => [`i18n/text/${namespace}`, `./src/core/i18n/text/${namespace}.ts`]),
 ]);
 
-const schemaFile = resolve(import.meta.dirname, '.vjsc/virtual/core-schema.ts');
-writeGeneratedFile(schemaFile, createCoreSchemaModule(schemaFile).code);
-
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
+  dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json', entry: ['src/**/*.ts'] } : false,
   deps: { neverBundle: ['vjsc/components'] },
+  plugins: [
+    compiler({
+      modules: [coreSchemaModule],
+      resolveId: () => coreSchemaModule.fileName,
+      declarations:
+        mode === 'dev'
+          ? [
+              {
+                id: coreSchemaModule.id,
+                sourceFileName: coreSchemaModule.fileName,
+                fileName: 'vjsc.d.ts',
+              },
+            ]
+          : [],
+    }),
+  ],
   entry: {
     index: './src/core/index.ts',
-    vjsc: schemaFile,
+    vjsc: coreSchemaModule.id,
     i18n: './src/core/i18n/index.ts',
     ...localeEntries,
     dom: './src/dom/index.ts',
