@@ -1,4 +1,4 @@
-// SPF DRM smoke — the shared Mux DRM source through the DRM engine variant.
+// SPF DRM smoke — the shared Mux DRM source through the standard HLS engine.
 // http://localhost:5173/spf-drm/
 //
 // Supported query params:
@@ -7,8 +7,8 @@
 //                                     CDMs (Edge on Windows has Widevine AND
 //                                     PlayReady; unfiltered, Widevine wins).
 import { SOURCES } from '@app/shared/sources';
-import type { DrmHlsVideoEngineSignals, DrmSystemsConfig } from '@videojs/spf/hls-drm';
-import { createDrmHlsVideoEngine } from '@videojs/spf/hls-drm';
+import type { DrmSystemsConfig, HlsVideoEngineSignals } from '@videojs/spf/hls';
+import { createHlsVideoEngine } from '@videojs/spf/hls';
 
 const video = document.getElementById('video') as HTMLVideoElement;
 const statusPre = document.getElementById('status') as HTMLPreElement;
@@ -24,8 +24,8 @@ const KEY_SYSTEM_BY_PARAM: Record<string, string> = {
 const only = KEY_SYSTEM_BY_PARAM[new URLSearchParams(location.search).get('drm') ?? ''];
 if (only) source.drm = { [only]: source.drm[only] };
 
-let signals!: DrmHlsVideoEngineSignals;
-const engine = createDrmHlsVideoEngine({
+let signals!: HlsVideoEngineSignals;
+const engine = createHlsVideoEngine({
   drm: source.drm,
   onSignalsReady: (refs) => {
     signals = refs;
