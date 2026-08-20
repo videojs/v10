@@ -5,6 +5,7 @@ import {
   getMediaPlaylistMetadata,
   isResolvedTrack,
   MEDIA_PLAYLIST_METADATA_KEY,
+  type MediaPlaylistKey,
   type MediaPlaylistMetadata,
   type PartiallyResolvedAudioTrack,
   type PartiallyResolvedTextTrack,
@@ -204,10 +205,12 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   // parser ignores parts and the loader fetches whole segments, so this records
   // that the publisher configured LL-HLS, not that we honour it.
   let lowLatency = false;
-  // Any EXT-X-KEY with a real METHOD makes the rendition encrypted. Sticky: a
-  // clear lead (METHOD=NONE first, a real key later) still counts, since we can
-  // only report whether decryption is needed at all.
-  let encrypted = false;
+  // Every EXT-X-KEY with a real METHOD, deduped by full attribute identity —
+  // rotation-heavy playlists re-declare the same key before each segment run.
+  // `encrypted` derives from this list, so a clear lead (METHOD=NONE first, a
+  // real key later) still reads as encrypted.
+  const keys: MediaPlaylistKey[] = [];
+  const seenKeys = new Set<string>();
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -241,9 +244,23 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
 
     if (key) {
       const method = key.get('METHOD');
-
-      if (method !== undefined && method !== 'NONE') encrypted = true;
-
+      if (method !== undefined && method !== 'NONE') {
+        const uri = key.get('URI');
+        const keyFormat = key.get('KEYFORMAT');
+        const keyId = key.get('KEYID');
+        const iv = key.get('IV');
+        const identity = [method, uri, keyFormat, keyId, iv].join(' ');
+        if (!seenKeys.has(identity)) {
+          seenKeys.add(identity);
+          keys.push({
+            method,
+            ...(uri !== undefined && { uri: resolveUrl(uri, baseUrl) }),
+            ...(keyFormat !== undefined && { keyFormat }),
+            ...(keyId !== undefined && { keyId }),
+            ...(iv !== undefined && { iv }),
+          });
+        }
+      }
       continue;
     }
 
@@ -424,7 +441,8 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         lowLatency,
         endList,
         holdBack,
-        encrypted,
+        encrypted: keys.length > 0,
+        ...(keys.length > 0 && { keys }),
       } satisfies MediaPlaylistMetadata,
     },
   } as unknown as ResolveTrack<T>;
