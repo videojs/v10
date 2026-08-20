@@ -2,7 +2,7 @@
 title: CloudflareVideo
 frameworkTitle:
   html: cloudflare-video
-description: Video element that plays Cloudflare Stream videos through the Stream player
+description: Video component that plays Cloudflare Stream videos through the Stream player
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
@@ -22,7 +22,7 @@ import basicUsageHtml from "@/components/docs/demos/cloudflare-video/html/css/Ba
 import basicUsageHtmlCss from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.ts?raw";
 
-Video element that plays [Cloudflare Stream](https://developers.cloudflare.com/stream/) videos through the Stream player embed. Cloudflare's own chrome stays hidden by default, so it drops into a player skin like any other media element; set `controls` to use Cloudflare's UI instead.
+Video component that plays [Cloudflare Stream](https://developers.cloudflare.com/stream/) videos through the Stream player embed. Cloudflare's own chrome stays hidden by default, so it drops into a player skin like any other media component; set `controls` to use Cloudflare's UI instead.
 
 ## Load a source
 
@@ -42,13 +42,22 @@ Video element that plays [Cloudflare Stream](https://developers.cloudflare.com/s
 
 ## Signed playback
 
-For [signed URLs](https://developers.cloudflare.com/stream/viewing-videos/securing-your-stream/), pass the signed token wherever the UID would go: as the whole `src`, or inside a Stream URL. Keep your customer subdomain when your URLs name one — signed and access-controlled videos are only served from `customer-<code>.cloudflarestream.com`, so the element preserves that origin instead of collapsing it onto the shared host.
+For [signed URLs](https://developers.cloudflare.com/stream/viewing-videos/securing-your-stream/), pass the signed token wherever the UID would go: as the whole `src`, or inside a Stream URL. Keep your customer subdomain when your URLs name one. Cloudflare serves signed and access-controlled videos only from `customer-<code>.cloudflarestream.com`, so the element preserves that origin instead of collapsing it onto the shared host.
 
-## Embed parameters
+## Behavior
+
+A few things work differently from a native `<video>` element, because the Stream embed doesn't expose them:
+
+- The embed owns text tracks: `textTracks` stays empty, and `engine.cloudflare.defaultTextTrack` picks the track to show.
+- Picture-in-picture is unavailable, and the player reports it as unsupported.
+- Fullscreen targets the iframe, so Cloudflare's own chrome shows in fullscreen.
+- `playsInline` has no effect: the Stream embed always plays inline.
+
+## Engine options
 
 Pass [Stream player parameters](https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/) under `source.engine.cloudflare`, spelled exactly as Cloudflare spells them. They're serialized onto the embed URL untouched, and the embed reads them once, when its URL is built. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
-| Param | It sets |
+| Option | Description |
 |---|---|
 | `defaultTextTrack` | BCP 47 language of the text track to show by default (`'en'`, `'de'`) |
 | `primaryColor` | Any CSS color for the progress bar and other player accents |
@@ -78,15 +87,6 @@ video.source = {
 };
 ```
 </FrameworkCase>
-
-## Behavior
-
-A few things work differently from a native `<video>` element, because the Stream embed doesn't expose them:
-
-- The embed owns text tracks: `textTracks` stays empty, and `engine.cloudflare.defaultTextTrack` picks the track to show.
-- Picture-in-picture is unavailable, and the player reports it as unsupported.
-- Fullscreen targets the iframe, so Cloudflare's own chrome shows in fullscreen.
-- `playsInline` has no effect: the Stream embed always plays inline.
 
 ## Examples
 

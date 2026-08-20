@@ -56,6 +56,9 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
     label: 'Cloudflare Stream',
   },
   {
+    // `vm.tiktok.com` is deliberately absent: those short links carry an opaque
+    // code instead of the numeric video id the media needs, and resolving one
+    // takes an HTTP redirect the picker can't follow.
     match: (h) => h === 'tiktok.com' || h === 'www.tiktok.com',
     renderer: 'tiktok',
     label: 'TikTok',

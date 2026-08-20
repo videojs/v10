@@ -89,6 +89,10 @@ describe('detectRenderer', () => {
       });
     });
 
+    it('returns null for vm.tiktok.com short links (no numeric video id to parse)', () => {
+      expect(detectRenderer('https://vm.tiktok.com/ZMhqBqQqQ/', 'default-video')).toBeNull();
+    });
+
     it('detects twitch.tv as Twitch', () => {
       expect(detectRenderer('https://www.twitch.tv/videos/106400740', 'default-video')).toEqual({
         renderer: 'twitch',

@@ -142,6 +142,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/spotify-audio' },
           { slug: 'reference/tiktok-video' },
           { slug: 'reference/twitch-video' },
+          { slug: 'reference/vimeo-video' },
           { slug: 'reference/youtube-video' },
         ],
       },

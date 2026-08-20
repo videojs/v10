@@ -2,7 +2,7 @@
 title: TikTokVideo
 frameworkTitle:
   html: tiktok-video
-description: Video element that plays TikTok videos through the TikTok embed player
+description: Video component that plays TikTok videos through the TikTok embed player
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
@@ -22,7 +22,7 @@ import basicUsageHtml from "@/components/docs/demos/tiktok-video/html/css/BasicU
 import basicUsageHtmlCss from "@/components/docs/demos/tiktok-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/tiktok-video/html/css/BasicUsage.ts?raw";
 
-Video element that plays TikTok videos through the [TikTok embed player](https://developers.tiktok.com/doc/embed-player). TikTok videos are portrait, and the player refuses to draw its chrome below 325×578, so the element starts at that size rather than the usual 300×150.
+Video component that plays TikTok videos through the [TikTok embed player](https://developers.tiktok.com/doc/embed-player). TikTok videos are portrait, and the player won't draw its chrome below 325×578, so the element starts at that size rather than the usual 300×150.
 
 ## Load a source
 
@@ -44,22 +44,24 @@ Video element that plays TikTok videos through the [TikTok embed player](https:/
 
 TikTok always draws part of its own chrome: the center play button, author header, and social rail are always visible. `controls` adds the progress bar and control buttons on top of those. Without `controls`, the element ignores pointer events, so a player skin above it receives every click.
 
-## The dormant player
+## Deferred startup
 
-TikTok builds its player lazily: until something starts playback, the embed has no media element, reports a duration of 0, and silently drops commands. The element works around this by bringing the player up with a muted autoplay it immediately parks, so the embed answers play, pause, and seek before the first play. Two settings opt out: `preload="none"` trades those working controls back for an untouched network, and `controls` hands playback to TikTok's own chrome instead.
+TikTok builds its player lazily: until something starts playback, the embed has no video element, reports a duration of 0, and silently drops commands. The element works around this by bringing the player up with a muted autoplay it immediately parks, so the embed answers play, pause, and seek before the first play.
 
-## Playback surface
+Two settings opt out. `preload="none"` skips the warm-up, leaving the network untouched until the viewer presses play, and the controls inert until then. `controls` hands playback to TikTok's own chrome instead.
+
+## Behavior
 
 - Mute works, but there's no volume control: the embed reports a level but takes no command to set one.
 - No playback rate and no text tracks; captions are toggled with `engine.tiktok.closed_caption`.
 - `poster` and `playsInline` never reach the embed: it always plays inline and draws the video's own cover image.
 - Changing `controls` or `loop` after the embed is up rebuilds it; rewriting the iframe URL is the only reload TikTok allows.
 
-## Player parameters
+## Engine options
 
 Pass [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) under `source.engine.tiktok`, spelled exactly as TikTok spells them — each one `0` or `1`. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
-| Param | It toggles | Default |
+| Option | Description | Default |
 |---|---|---|
 | `closed_caption` | The closed captions button | `1` |
 | `description` | The video description | `0` |

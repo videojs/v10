@@ -292,7 +292,12 @@ function parseCustomMediaElementCall(
         const tagArg = node.arguments[0]!;
         if (ts.isStringLiteral(tagArg) && ['video', 'audio', 'iframe'].includes(tagArg.text)) {
           targetTag = tagArg.text as MediaTargetTag;
-          mediaType = targetTag === 'audio' ? 'audio' : 'video';
+          // A `video`/`audio` target names the media type outright. An
+          // `iframe` target says nothing about what plays inside it, so fall
+          // back to the element's own name: `SpotifyAudio` is audio-only, and
+          // documenting it against the video event contract would be wrong.
+          mediaType =
+            targetTag === 'audio' || (targetTag === 'iframe' && className.endsWith('Audio')) ? 'audio' : 'video';
         }
         // Second arg: host class identifier
         const hostArg = node.arguments[1]!;
@@ -867,17 +872,26 @@ function resolveObjectLiteralEntries(
 }
 
 /**
- * Resolve an identifier to a `const name = { ... }` object literal declared
- * in the same file or in an imported file.
+ * Resolve an identifier to a `const name = { ... }` object literal declared in
+ * the same file or reachable by following the imports that provide it.
+ *
+ * The chain is walked rather than hopped once: a React media file imports its
+ * defaults from a package barrel, `mapDistToSource` rewrites that barrel to the
+ * sibling `media.ts`, and a host module that keeps its props in a separate
+ * `props.ts` only re-imports the const from there.
  */
 function resolveConstObjectLiteral(
   name: string,
   sourceFile: ts.SourceFile,
   filePath: string,
-  compilerOptions: ts.CompilerOptions
+  compilerOptions: ts.CompilerOptions,
+  visitedFiles = new Set<string>()
 ): { objectLiteral: ts.ObjectLiteralExpression; sourceFile: ts.SourceFile; filePath: string } | undefined {
   const local = findConstObjectLiteral(sourceFile, name);
   if (local) return { objectLiteral: local, sourceFile, filePath };
+
+  if (visitedFiles.has(filePath)) return undefined;
+  visitedFiles.add(filePath);
 
   const importPath = findImportPath(sourceFile, name);
   if (!importPath) return undefined;
@@ -886,9 +900,7 @@ function resolveConstObjectLiteral(
 
   const content = fs.readFileSync(importedFilePath, 'utf-8');
   const importedSourceFile = ts.createSourceFile(importedFilePath, content, ts.ScriptTarget.Latest, true);
-  const imported = findConstObjectLiteral(importedSourceFile, name);
-  if (!imported) return undefined;
-  return { objectLiteral: imported, sourceFile: importedSourceFile, filePath: importedFilePath };
+  return resolveConstObjectLiteral(name, importedSourceFile, importedFilePath, compilerOptions, visitedFiles);
 }
 
 function findConstObjectLiteral(sourceFile: ts.SourceFile, name: string): ts.ObjectLiteralExpression | undefined {
