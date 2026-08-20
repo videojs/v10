@@ -1,7 +1,30 @@
+import { resolve } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
-import { html, transform } from 'vjsc';
+import { createEntriesModule, createSchemaModule, html, transform } from 'vjsc';
 import { plugin } from 'vjsc/registry';
-import { registry } from '../registry';
+import { createRegistry, type HtmlRegistryEntries } from '../registry';
+import { resolveHtmlEntries } from '../resolve';
+
+const packageDir = resolve(import.meta.dirname, '../..');
+const coreDir = resolve(packageDir, '../core');
+const schema = createSchemaModule(
+  {
+    source: '@videojs/core/vjsc',
+    files: ['./src/core/ui/*/*-component.ts'],
+    output: './src/core/ui/schema.generated.ts',
+  },
+  { cwd: coreDir }
+);
+const entries = createEntriesModule(
+  {
+    files: ['./src/define/{ui,media}/*.ts', './src/define/i18n.ts'],
+    output: './vjsc/entries.generated.ts',
+    resolve: resolveHtmlEntries,
+  },
+  { cwd: packageDir }
+);
+const registry = createRegistry(schema.schema, entries.exports as HtmlRegistryEntries);
 
 function compile(source: string, filename = '/project/src/view.tsx') {
   return transform(source, {

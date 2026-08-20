@@ -1,10 +1,8 @@
 import { format } from 'oxfmt';
 import { html } from 'vjsc';
 import { defineCatalogOutput, emitCatalog } from 'vjsc/catalog';
-import { extendRegistry } from 'vjsc/registry';
-import { registry as htmlRegistry } from '../../../html/vjsc';
-import { html as iconRegistry } from '../../../icons/vjsc';
 import { getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
+import { createHtmlComponentRegistry } from '../metadata';
 import { packageSkinStyles, skinStyleTransform } from './styles';
 
 interface HtmlOutputOptions {
@@ -20,11 +18,9 @@ interface EmitHtmlSkinOptions extends HtmlOutputOptions {
 
 /** Create the bundled HTML output adapter for a Skin catalog. */
 export function htmlOutput(options: HtmlOutputOptions = {}) {
-  const registry = extendRegistry(htmlRegistry, iconRegistry({ family: options.iconSet ?? 'default' }));
-
   return defineCatalogOutput({
     mode: 'bundle',
-    componentRegistry: registry,
+    componentRegistry: createHtmlComponentRegistry(options.iconSet ?? 'default'),
     compiler: {
       external: (source) => source.startsWith('@videojs/html/'),
       target: html(),

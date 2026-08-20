@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { html, jsx, transform } from 'vjsc';
+import { defineComponent, defineSchema } from 'vjsc/components';
 import { plugin } from 'vjsc/registry';
-import { registry as htmlRegistry } from '../html';
-import { registry as reactRegistry } from '../react';
+import { createHtmlRegistry, createReactRegistry } from '../registry';
+
+const schema = defineSchema('@videojs/icons/vjsc', {
+  PlayIcon: defineComponent({ name: 'PlayIcon' }),
+});
 
 const source = `
   import { PlayIcon } from '@videojs/icons/vjsc';
@@ -15,7 +19,7 @@ describe('icon registries', () => {
     const result = await transform(source, {
       config: {
         target: jsx(),
-        plugins: [plugin(reactRegistry({ family: 'minimal' }))],
+        plugins: [plugin(createReactRegistry(schema, { family: 'minimal' }))],
       },
     });
 
@@ -27,7 +31,7 @@ describe('icon registries', () => {
     const result = await transform(source, {
       config: {
         target: html(),
-        plugins: [plugin(htmlRegistry({ family: 'minimal' }))],
+        plugins: [plugin(createHtmlRegistry(schema, { family: 'minimal' }))],
       },
     });
 

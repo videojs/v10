@@ -3,10 +3,8 @@ import { posix } from 'node:path';
 import { jsx } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
 import { defineCatalogOutput, emitCatalog } from 'vjsc/catalog';
-import { extendRegistry } from 'vjsc/registry';
-import { react as iconRegistry } from '../../../icons/vjsc';
-import { registry as reactRegistry } from '../../../react/vjsc';
 import { catalogSourcePath, getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
+import { createReactComponentRegistry } from '../metadata';
 import { componentTransforms } from './react/transform';
 import { packageSkinStyles, skinStyleTransform } from './styles';
 
@@ -30,7 +28,7 @@ export function reactOutput(options: ReactOutputOptions = {}) {
   const iconSource = iconSet === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${iconSet}`;
 
   return defineCatalogOutput({
-    componentRegistry: extendRegistry(reactRegistry, iconRegistry({ family: iconSet })),
+    componentRegistry: createReactComponentRegistry(iconSet),
     compiler: {
       target: jsx({
         jsxImportSource: 'react',
