@@ -3,20 +3,28 @@
  * resolved presentation whose tracks declare DRM keys are both in scope,
  * negotiates a key system over the configured license servers (the minimal
  * key-system probe — capability-probing's full async probe supersedes it when
- * that lands), creates and attaches MediaKeys, opens one MediaKeySession per
- * manifest-carried init data (Widevine PSSH / PlayReady PRO as `data:` URIs),
- * and exchanges each license message against the chosen system's server.
+ * that lands) with per-system init-data types and the declared encryption
+ * scheme, creates MediaKeys, applies the server certificate when the chosen
+ * system configures one (FairPlay can't request a license without it), and
+ * attaches. Sessions open manifest-driven — one per inline init data
+ * (Widevine PSSH / PlayReady PRO as `data:` URIs) — or, when the manifest
+ * carries none (FairPlay `skd://`), event-driven off the element's
+ * `encrypted` events, deduped by init-data bytes. Each license message is
+ * exchanged against the chosen system's server.
  *
  * Publishes the attached MediaKeys on `context.mediaKeys` and drives the
  * `awaitingMediaKeys` load gate: raised synchronously on entry, lowered once
  * MediaKeys attach. Appending encrypted data with no MediaKeys attached
  * misbehaves on Chromium, so the segment-load dispatchers park while the gate
  * is up (see `load-segments.ts`); compose this behavior ahead of them so the
- * gate is up before their first dispatch. Failures report onto the errors
- * sequence via `emitError` (SVTA 4008 no usable key system, 4010 MediaKeys
- * init, 4004 license request, 4016 license rejected, 4021 request
- * generation); a refused negotiation leaves the gate up — playback stays
- * parked rather than failing decode, and severity is the adapter's call.
+ * gate is up before their first dispatch — but lowered on *attach*, not on
+ * license: the appends that follow are what fire `encrypted` for the
+ * event-driven path, and browsers queue decode on missing keys. Failures
+ * report onto the errors sequence via `emitError` (SVTA 4008 no usable key
+ * system, 4010 MediaKeys init, 4013 certificate, 4004 license request, 4016
+ * license rejected, 4021 request generation); a refused negotiation or
+ * failed certificate leaves the gate up — playback stays parked rather than
+ * failing decode, and severity is the adapter's call.
  *
  * Single-positive-state reactor riding the resolver's resolved/unresolved
  * lifecycle, like `setupMediaSource`: source replacement routes through
@@ -29,10 +37,9 @@
  * only into DRM engine variants — non-DRM compositions carry neither the
  * machinery nor the gate slot.
  *
- * Out of scope for the first slice (tracked in drm-support.md):
- * `encrypted`-event fallback for keys with no manifest init data (FairPlay
- * `skd://`), server-certificate fetch, key rotation / keys declared after
- * entry, and `keystatuschange` reactivity.
+ * Still out of scope (tracked in drm-support.md): key rotation / keys
+ * declared after entry, `keystatuschange` reactivity, and per-vendor license
+ * body shaping (Mux takes the raw message as octet-stream for every system).
  */
 import { listen } from '@videojs/utils/dom';
 import { defineBehavior } from '../../../core/composition/create-composition';
@@ -41,11 +48,12 @@ import { createMachineReactor } from '../../../core/reactors/create-machine-reac
 import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import {
   attachMediaKeys,
-  buildKeySystemConfigurations,
   contentTypesFromPresentation,
   type DrmSystemsConfig,
   declaredDrmKeys,
+  declaredEncryptionScheme,
   fetchLicense,
+  fetchServerCertificate,
   initDataFromKeyUri,
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
@@ -53,6 +61,7 @@ import {
 } from '../../../media/dom/eme';
 import {
   SVTA_BAD_LICENSE_REQUEST,
+  SVTA_DRM_CERTIFICATE_ERROR,
   SVTA_DRM_INITIALIZATION_ERROR,
   SVTA_DRM_LICENSE_REJECTED,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
@@ -134,7 +143,8 @@ function setupMediaKeysSetup({
             const candidates = keySystemCandidates(keys, config.drm);
             const result = await requestKeySystemAccess(
               candidates,
-              buildKeySystemConfigurations(contentTypesFromPresentation(presentation))
+              contentTypesFromPresentation(presentation),
+              declaredEncryptionScheme(keys)
             );
             if (controller.signal.aborted) return;
             if (!result) {
@@ -144,8 +154,27 @@ function setupMediaKeysSetup({
               return;
             }
 
+            const { keySystem } = result;
+            const { licenseUrl, serverCertificateUrl } = config.drm[keySystem]!;
             const mediaKeys = await result.access.createMediaKeys();
             if (controller.signal.aborted) return;
+
+            // FairPlay can't generate a license request without the server
+            // (application) certificate, so its failure parks the source like
+            // an unusable key system rather than proceeding to certain
+            // failure. Skipped entirely when the config names no URL.
+            if (serverCertificateUrl !== undefined) {
+              try {
+                const certificate = await fetchServerCertificate(serverCertificateUrl, controller.signal);
+                await mediaKeys.setServerCertificate(certificate);
+              } catch (error) {
+                if (controller.signal.aborted) return;
+                emitError(state, { code: SVTA_DRM_CERTIFICATE_ERROR, data: { keySystem, reason: String(error) } });
+                return;
+              }
+              if (controller.signal.aborted) return;
+            }
+
             await attachMediaKeys(mediaElement, mediaKeys);
             if (controller.signal.aborted) {
               attachMediaKeys(mediaElement, null).catch(() => {});
@@ -154,11 +183,6 @@ function setupMediaKeysSetup({
             context.mediaKeys.set(mediaKeys);
             state.awaitingMediaKeys.set(false);
 
-            // One session per manifest-carried init data of the chosen
-            // system. Keys without inline init data (FairPlay `skd://`) wait
-            // on the encrypted-event fallback (out of slice).
-            const { keySystem } = result;
-            const { licenseUrl } = config.drm[keySystem]!;
             const exchange = async (session: MediaKeySession, message: BufferSource) => {
               let license: Uint8Array<ArrayBuffer>;
               try {
@@ -175,23 +199,55 @@ function setupMediaKeysSetup({
                 emitError(state, { code: SVTA_DRM_LICENSE_REJECTED, data: { keySystem, reason: String(error) } });
               }
             };
-            for (const key of keys) {
-              if (key.keyFormat === undefined || KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat] !== keySystem) continue;
-              const initData = key.uri === undefined ? undefined : initDataFromKeyUri(key.uri);
-              if (!initData) continue;
-
+            const openSession = (initDataType: string, initData: Uint8Array<ArrayBuffer>) => {
               const session = mediaKeys.createSession();
               sessions.push(session);
               listen(session, 'message', (event) => void exchange(session, (event as MediaKeyMessageEvent).message), {
                 signal: controller.signal,
               });
-              session.generateRequest('cenc', initData).catch((error) => {
+              session.generateRequest(initDataType, initData).catch((error) => {
                 if (controller.signal.aborted) return;
                 emitError(state, {
                   code: SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
                   data: { keySystem, reason: String(error) },
                 });
               });
+            };
+
+            // One session per manifest-carried init data of the chosen system
+            // (Widevine PSSH / PlayReady PRO as `data:` URIs).
+            for (const key of keys) {
+              if (key.keyFormat === undefined || KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat] !== keySystem) continue;
+              const initData = key.uri === undefined ? undefined : initDataFromKeyUri(key.uri);
+              if (!initData) continue;
+              openSession('cenc', initData);
+            }
+
+            // Event-driven fallback: keys without inline init data (FairPlay
+            // `skd://`) surface protection only once an appended init segment
+            // fires `encrypted` (`sinf` on the MSE path). Active only when the
+            // manifest path opened no session — on manifest-licensed sources
+            // appends re-fire `encrypted` for content already being licensed,
+            // and reacting would double-license. Deduped by init-data bytes:
+            // demuxed audio and video both fire.
+            if (sessions.length === 0) {
+              const seenInitData: Uint8Array[] = [];
+              listen(
+                mediaElement,
+                'encrypted',
+                (event) => {
+                  const { initDataType, initData } = event as MediaEncryptedEvent;
+                  if (!initData) return;
+                  const bytes = new Uint8Array(initData);
+                  const isSeen = seenInitData.some(
+                    (seen) => seen.length === bytes.length && seen.every((byte, i) => byte === bytes[i])
+                  );
+                  if (isSeen) return;
+                  seenInitData.push(bytes);
+                  openSession(initDataType, bytes);
+                },
+                { signal: controller.signal }
+              );
             }
           };
 

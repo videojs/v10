@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
-import { attachMediaKeys, fetchLicense, requestKeySystemAccess } from '../../../../media/dom/eme';
+import {
+  attachMediaKeys,
+  fetchLicense,
+  fetchServerCertificate,
+  requestKeySystemAccess,
+} from '../../../../media/dom/eme';
 import {
   SVTA_BAD_LICENSE_REQUEST,
+  SVTA_DRM_CERTIFICATE_ERROR,
   SVTA_DRM_LICENSE_REJECTED,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
@@ -21,6 +27,7 @@ vi.mock('../../../../media/dom/eme', async () => {
     requestKeySystemAccess: vi.fn(),
     attachMediaKeys: vi.fn(async () => {}),
     fetchLicense: vi.fn(),
+    fetchServerCertificate: vi.fn(),
   };
 });
 
@@ -104,6 +111,7 @@ function makeFakeEme(keySystem = 'com.widevine.alpha') {
       sessions.push(session);
       return session;
     }),
+    setServerCertificate: vi.fn(async () => true),
   } as unknown as MediaKeys;
   const access = { createMediaKeys: vi.fn(async () => mediaKeys) } as unknown as MediaKeySystemAccess;
   return { keySystem, access, mediaKeys, sessions };
@@ -138,6 +146,9 @@ describe('setupMediaKeys', () => {
     vi.mocked(requestKeySystemAccess).mockReset();
     vi.mocked(attachMediaKeys).mockReset().mockResolvedValue(undefined);
     vi.mocked(fetchLicense).mockReset();
+    vi.mocked(fetchServerCertificate)
+      .mockReset()
+      .mockResolvedValue(new Uint8Array([7, 7]));
   });
 
   it('stays out while preconditions are unmet or the source declares no keys', async () => {
@@ -172,13 +183,104 @@ describe('setupMediaKeys', () => {
 
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
     // Declared ∩ configured, in fixed preference order (FairPlay outranks
-    // Widevine), with capabilities built from the presentation's codecs.
+    // Widevine), over the presentation's content types and the encryption
+    // scheme its SAMPLE-AES keys declare.
     expect(requestKeySystemAccess).toHaveBeenCalledWith(
       ['com.apple.fps', 'com.widevine.alpha'],
-      [expect.objectContaining({ videoCapabilities: [{ contentType: 'video/mp4; codecs="avc1.4d401f"' }] })]
+      { video: ['video/mp4; codecs="avc1.4d401f"'], audio: [] },
+      'cbcs'
     );
     expect(attachMediaKeys).toHaveBeenCalledWith(video, eme.mediaKeys);
     expect(state.awaitingMediaKeys.get()).toBe(false);
+
+    reactor.destroy();
+  });
+
+  it('fetches and applies the server certificate before opening sessions', async () => {
+    const eme = makeFakeEme('com.apple.fps');
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    const { context, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY, FAIRPLAY_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
+    expect(fetchServerCertificate).toHaveBeenCalledWith(
+      DRM_CONFIG['com.apple.fps'].serverCertificateUrl,
+      expect.anything()
+    );
+    expect(eme.mediaKeys.setServerCertificate).toHaveBeenCalledWith(new Uint8Array([7, 7]));
+
+    reactor.destroy();
+  });
+
+  it('reports 4013 and holds the gate when the certificate phase fails', async () => {
+    const eme = makeFakeEme('com.apple.fps');
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    vi.mocked(fetchServerCertificate).mockRejectedValue(new Error('appcert 403'));
+    const { state, context, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([FAIRPLAY_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    await vi.waitFor(() =>
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_CERTIFICATE_ERROR])
+    );
+    expect(state.awaitingMediaKeys.get()).toBe(true);
+    expect(context.mediaKeys.get()).toBeUndefined();
+    expect(attachMediaKeys).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('opens event-driven sessions when the manifest carries no init data, deduped by bytes', async () => {
+    const eme = makeFakeEme('com.apple.fps');
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    const video = document.createElement('video');
+    const { context, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([FAIRPLAY_KEY]) },
+      { mediaElement: video }
+    );
+
+    // skd:// carries no inline init data, so no manifest-driven session opens.
+    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
+    expect(eme.sessions).toHaveLength(0);
+
+    const sinf = new Uint8Array([5, 5, 5]);
+    const fireEncrypted = (bytes: Uint8Array) =>
+      video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'sinf', initData: bytes.buffer }));
+
+    fireEncrypted(sinf);
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    expect(eme.sessions[0]!.generateRequest).toHaveBeenCalledWith('sinf', sinf);
+
+    // The same init data again (the other track of a muxed pair, a re-append)
+    // opens nothing; different init data opens a second session.
+    fireEncrypted(sinf);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(eme.sessions).toHaveLength(1);
+
+    fireEncrypted(new Uint8Array([6, 6, 6]));
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(2));
+
+    reactor.destroy();
+  });
+
+  it('ignores encrypted events when manifest-driven sessions exist', async () => {
+    const eme = makeFakeEme();
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    const video = document.createElement('video');
+    const { reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY]) },
+      { mediaElement: video }
+    );
+
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    video.dispatchEvent(
+      Object.assign(new Event('encrypted'), { initDataType: 'cenc', initData: new Uint8Array([1]).buffer })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(eme.sessions).toHaveLength(1);
 
     reactor.destroy();
   });
