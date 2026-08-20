@@ -4,7 +4,6 @@ import { defineConfig } from 'tsdown';
 import { shadcnPlugin, vjscPlugin } from 'vjsc/rolldown';
 import type { ShadcnItem } from 'vjsc/shadcn';
 
-import { baseConfig } from '../../build/tsdown.ts';
 import type { SkinModuleMeta } from './vjsc/meta';
 import { createSkinTransformer } from './vjsc/transform';
 
@@ -21,7 +20,7 @@ const paths = {
 } as const;
 
 export default defineConfig({
-  ...baseConfig,
+  report: process.env.CI === 'true',
   name: 'skins-shadcn-registry',
   cwd: packageDir,
   entry: { registry: registryUtils },

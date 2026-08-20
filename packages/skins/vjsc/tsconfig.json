@@ -3,6 +3,7 @@
   "compilerOptions": {
     "composite": false,
     "incremental": false,
+    "allowImportingTsExtensions": true,
     "isolatedDeclarations": false,
     "jsx": "react-jsx",
     "jsxImportSource": "vjsc/components",
@@ -10,6 +11,6 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx"],
+  "include": ["**/*.ts", "**/*.tsx", "../tsdown.vjsc.config.ts"],
   "exclude": ["registry/default"]
 }
