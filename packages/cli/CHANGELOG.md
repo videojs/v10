@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.29...@videojs/cli@10.0.0-beta.30) (2026-08-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/cli:** Synchronize videojs versions
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.28...@videojs/cli@10.0.0-beta.29) (2026-08-19)
 
 
