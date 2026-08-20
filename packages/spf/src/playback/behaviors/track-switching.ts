@@ -14,14 +14,15 @@
  *
  *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
  *      partial-track match; an empty match falls through to the full set.
- *   2. **player resolution** — a soft filter on `playerResolution`
- *      (`playerResolutionCap`, video only): narrow to the smallest rendition
- *      tier covering the player element, plus everything below it. No-op
- *      without a measurement.
- *   3. **active CDN** — a soft filter on `cdnPriority` (`preferActiveCdn`):
+ *   2. **active CDN** — a soft filter on `cdnPriority` (`preferActiveCdn`):
  *      narrow to the highest-priority CDN that still has tracks; an empty match
  *      falls through. Shared by video and audio, so every type stays on one CDN
  *      (`deriveCdnPriority` owns the list). No-op for non-redundant sources.
+ *   3. **player resolution** — a soft filter on `playerResolution`
+ *      (`playerResolutionCap`, video only): narrow to the smallest rendition
+ *      tier covering the player element, plus everything below it. No-op
+ *      without a measurement. Ahead of the ranker but behind the CDN scope, so
+ *      the cap chooses *within* a host rather than between hosts.
  *   4. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
  *      audio. Fitting tracks (within the throughput threshold) first, highest
  *      bitrate first; over-throughput tracks after, least-over first. Hysteresis
@@ -42,7 +43,7 @@
  * `setupTrackSwitching` owns only the lifecycle and runs what it's given. Video
  * and audio run constraints `[excludeFailedCdns, excludeUnplayableTracks]` then
  * rules `[filterByUserSelection, preferActiveCdn, rankByBandwidth]` and take the
- * head; video inserts `playerResolutionCap` after the user filter, and
+ * head; video inserts `playerResolutionCap` after the active-CDN scope, and
  * `switchVideoTrack` also accepts ABR tuning config, `switchAudioTrack` takes
  * none. `switchTextTrack` differs — selection is *optional* (captions are
  * opt-in / off-able), so it runs `[excludeFailedCdns]` + `[preferActiveCdn]` and
@@ -410,6 +411,13 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  * out — they can't be judged against the player, and dropping them could strand
  * a source whose renditions all omit it.
  *
+ * Runs *after* `preferActiveCdn`, so it narrows within the host already chosen.
+ * Ahead of it, a cap that pruned every rendition of the preferred CDN would leave
+ * the scope to fall to the next one with survivors — a size preference silently
+ * moving playback to another host. Redundant streams normally mirror the same
+ * ladder, which makes that a nonstandard-but-legal mismatch across CDNs rather
+ * than an everyday case; the ordering costs nothing either way.
+ *
  * Reading `state.playerResolution` through its signal is what subscribes the
  * chain to resizes; `undefined` — no signal composed, or nothing to measure —
  * means "don't cap" rather than a cap of zero, so the chain proceeds unnarrowed.
@@ -425,7 +433,7 @@ function playerResolutionCap<S extends SelectionKey, T extends SwitchableTrack>(
 
   const covering = tracks.map((track) => resolutionArea(track)).filter((area) => area >= playerPixelArea);
   // Nothing covers the player — no opinion, fall through to the full set.
-  if (!covering.length) return [];
+  if (!covering.length) return tracks;
 
   const cap = Math.min(...covering);
   return tracks.filter((track) => resolutionArea(track) <= cap);
@@ -759,7 +767,7 @@ export const switchVideoTrack = defineBehavior({
         userSelectionKey: 'userVideoTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks],
-        rules: [filterByUserSelection, playerResolutionCap, preferActiveCdn, rankByBandwidth],
+        rules: [filterByUserSelection, preferActiveCdn, playerResolutionCap, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
     }),
