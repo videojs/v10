@@ -18,21 +18,21 @@ describe('detectRenderer', () => {
     });
 
     it('detects vimeo.com as Vimeo', () => {
-      expect(detectRenderer('https://vimeo.com/347119375', 'default-video')).toEqual({
+      expect(detectRenderer('https://vimeo.com/76979871', 'default-video')).toEqual({
         renderer: 'vimeo',
         label: 'Vimeo',
       });
     });
 
     it('detects player.vimeo.com as Vimeo', () => {
-      expect(detectRenderer('https://player.vimeo.com/video/347119375', 'default-video')).toEqual({
+      expect(detectRenderer('https://player.vimeo.com/video/76979871', 'default-video')).toEqual({
         renderer: 'vimeo',
         label: 'Vimeo',
       });
     });
 
     it('returns null for a Vimeo URL in an audio use case (no audio fallthrough)', () => {
-      expect(detectRenderer('https://vimeo.com/347119375', 'default-audio')).toBeNull();
+      expect(detectRenderer('https://vimeo.com/76979871', 'default-audio')).toBeNull();
     });
 
     it('detects youtube.com and youtu.be as YouTube', () => {

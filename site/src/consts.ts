@@ -67,7 +67,7 @@ export const VJS10_DEMO_STORYBOARD = `https://image.mux.com/${VJS10_DEMO_VIDEO.i
 // asset above: Mux doesn't serve DASH, and Vimeo is a hosting service. The DASH
 // value matches the sample used by the site's DASH reference demo.
 export const VJS10_DEMO_DASH = 'https://dash.akamaized.net/akamai/streamroot/050714/Spring_4Ktest.mpd';
-export const VJS10_DEMO_VIMEO = 'https://vimeo.com/347119375';
+export const VJS10_DEMO_VIMEO = 'https://vimeo.com/76979871';
 export const VJS10_DEMO_YOUTUBE = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
 export const VJS10_DEMO_CLOUDFLARE = 'https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4';
 // An episode rather than a track: Spotify plays episodes in full for a
