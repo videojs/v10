@@ -40,6 +40,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^22.18.6",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",

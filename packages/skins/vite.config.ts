@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { jsx, syncGeneratedModuleTypes } from 'vjsc';
@@ -7,6 +8,7 @@ import { catalogMetaPlugin } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
+import { createIconElementModule } from './build/icon-element';
 import {
   coreSchemaModule,
   createReactComponentRegistry,
@@ -15,6 +17,7 @@ import {
   reactEntriesModule,
 } from './build/metadata';
 import { componentTransforms } from './build/output/react/transform';
+import { createSkinVirtualModules } from './build/virtual-skins';
 
 const packageDir = import.meta.dirname;
 const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
@@ -22,8 +25,11 @@ const coreDir = resolve(packageDir, '../core');
 const iconsDir = resolve(packageDir, '../icons');
 const reactDir = resolve(packageDir, '../react');
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
+const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 
 const iconSchemaModule = getIconSchemaModule();
+const defaultIconElementModule = createIconElementModule('default');
+const minimalIconElementModule = createIconElementModule('minimal');
 
 await Promise.all([
   syncGeneratedModuleTypes({
@@ -79,6 +85,9 @@ export default defineConfig({
         { id: 'virtual:vjsc/icons-schema', load: () => iconSchemaModule },
         { id: 'virtual:vjsc/registry/react', load: () => reactEntriesModule },
         { id: 'virtual:vjsc/registry/html', load: () => htmlEntriesModule },
+        { id: 'virtual:vjsc/icons/element/default.js', load: () => defaultIconElementModule },
+        { id: 'virtual:vjsc/icons/element/minimal.js', load: () => minimalIconElementModule },
+        ...createSkinVirtualModules(),
       ],
       config: {
         ...output,
@@ -95,6 +104,7 @@ export default defineConfig({
         ],
       },
     }),
+    tailwindcss(),
     react({ jsxImportSource: 'react' }),
   ],
   resolve: {
@@ -105,10 +115,39 @@ export default defineConfig({
         replacement: resolve(reactSourceDir, 'icons/index.ts'),
       },
       {
+        find: /^@videojs\/react\/icons\/(.+)$/,
+        replacement: `${reactSourceDir}/icons/$1/index.ts`,
+      },
+      {
         find: /^@videojs\/react\/video$/,
         replacement: resolve(reactSourceDir, 'presets/video/index.ts'),
       },
       { find: /^@\//, replacement: `${reactSourceDir}/` },
+      { find: /^@videojs\/html\/i18n$/, replacement: resolve(htmlSourceDir, 'define/i18n.ts') },
+      {
+        find: /^@videojs\/html\/ui\/(.+)$/,
+        replacement: `${htmlSourceDir}/define/ui/$1.ts`,
+      },
+      {
+        find: /^@videojs\/html\/media\/(.+)$/,
+        replacement: `${htmlSourceDir}/define/media/$1.ts`,
+      },
+      {
+        find: /^@videojs\/html\/icons\/element$/,
+        replacement: resolve(htmlSourceDir, 'icons/element/index.ts'),
+      },
+      {
+        find: /^@videojs\/html\/icons\/element\/(.+)$/,
+        replacement: `${htmlSourceDir}/icons/element/$1/index.ts`,
+      },
+      {
+        find: /^@videojs\/icons\/element$/,
+        replacement: 'virtual:vjsc/icons/element/default.js',
+      },
+      {
+        find: /^@videojs\/icons\/element\/(.+)$/,
+        replacement: 'virtual:vjsc/icons/element/$1.js',
+      },
     ],
     conditions: ['development', 'import', 'module', 'browser', 'default'],
     dedupe: ['react', 'react-dom'],

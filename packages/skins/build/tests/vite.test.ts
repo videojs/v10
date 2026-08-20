@@ -8,6 +8,8 @@ const configFile = resolve(packageDir, 'vite.config.ts');
 const defaultSkinUrl = '/../canonical/skins/default-video/skin.tsx';
 const playButtonUrl = '/../canonical/components/buttons/play-button.tsx';
 const buttonStyles = resolve(packageDir, 'canonical/styles/components/button.styles.ts');
+const reactVirtualSkin = 'virtual:vjsc/skin/react/default-video/vanilla.tsx';
+const htmlVirtualSkin = 'virtual:vjsc/skin/html/minimal-video/tailwind.tsx';
 
 describe('canonical Skins Vite workflow', () => {
   let server: ViteDevServer | undefined;
@@ -39,7 +41,34 @@ describe('canonical Skins Vite workflow', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(owner?.transformResult).toBeNull();
-  });
+  }, 30_000);
+
+  it('serves framework and style projections through stable virtual modules', async () => {
+    server = await createServer({
+      configFile,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    const reactSkin = await server.transformRequest(reactVirtualSkin);
+    const htmlSkin = await server.transformRequest(htmlVirtualSkin);
+
+    expect(reactSkin?.code).toContain('$RefreshReg$');
+    expect(reactSkin?.code).toContain('DefaultVideoSkin');
+    expect(htmlSkin?.code).toContain('const skin =');
+    expect(htmlSkin?.code).toContain('media-skin-video-minimal');
+    expect(htmlSkin?.code).not.toContain('@videojs/core/vjsc');
+
+    const resolved = await server.pluginContainer.resolveId(reactVirtualSkin);
+    const virtualModule = resolved && server.moduleGraph.getModuleById(resolved.id);
+    expect(virtualModule?.transformResult).not.toBeNull();
+
+    server.watcher.emit('change', buttonStyles);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(virtualModule?.transformResult).toBeNull();
+  }, 30_000);
 
   it('builds the same canonical configuration for production', async () => {
     const result = await build({
@@ -49,5 +78,5 @@ describe('canonical Skins Vite workflow', () => {
     });
 
     expect(result).toBeTruthy();
-  });
+  }, 30_000);
 });

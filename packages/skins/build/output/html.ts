@@ -14,6 +14,7 @@ type HTMLImportResolver = (reference: string) => string;
 interface EmitHtmlSkinOptions extends HtmlOutputOptions {
   skin: SkinCatalogSkin['name'];
   resolveImport?: HTMLImportResolver | undefined;
+  style?: 'tailwind' | 'vanilla' | undefined;
 }
 
 /** Create the bundled HTML output adapter for a Skin catalog. */
@@ -30,12 +31,13 @@ export function htmlOutput(options: HtmlOutputOptions = {}) {
 
 /** Emit one canonical Skin as a bundled HTML template module and vanilla CSS. */
 export async function emitHtmlSkin(catalog: SkinCatalog, options: EmitHtmlSkinOptions) {
-  const { resolveImport, skin: skinName, ...outputOptions } = options;
+  const { resolveImport, skin: skinName, style = 'vanilla', ...outputOptions } = options;
   const skin = getCatalogSkin(catalog, skinName);
   const output = await emitCatalog(catalog, {
     items: [skin.name],
     output: htmlOutput(outputOptions),
-    styles: skinStyleTransform(catalog, skin),
+    styles:
+      style === 'tailwind' ? { mode: 'tailwind', variant: skin.style.variant } : skinStyleTransform(catalog, skin),
     files: {
       source: () => 'skin.html',
     },
@@ -58,7 +60,7 @@ export async function emitHtmlSkin(catalog: SkinCatalog, options: EmitHtmlSkinOp
 
   return {
     files: [{ path: 'skin.ts', content }],
-    styles: await packageSkinStyles(catalog, skin, output.files.style),
+    styles: style === 'vanilla' ? await packageSkinStyles(catalog, skin, output.files.style) : [],
   };
 }
 

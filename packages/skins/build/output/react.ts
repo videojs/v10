@@ -19,6 +19,10 @@ interface EmitReactSkinOptions extends ReactOutputOptions {
   skin: SkinCatalogSkin['name'];
 }
 
+export interface EmitReactSkinModuleOptions extends EmitReactSkinOptions {
+  style: 'tailwind' | 'vanilla';
+}
+
 /** Create the React module output adapter for a Skin catalog. */
 export function reactOutput(options: ReactOutputOptions = {}) {
   const resolveImport = (reference: ImportRef): ImportRef | false =>
@@ -30,6 +34,7 @@ export function reactOutput(options: ReactOutputOptions = {}) {
   return defineCatalogOutput({
     componentRegistry: createReactComponentRegistry(iconSet),
     compiler: {
+      external: (source) => !source.startsWith('.') && !source.startsWith('/'),
       target: jsx({
         jsxImportSource: 'react',
         imports: {
@@ -67,5 +72,31 @@ export async function emitReactSkin(catalog: SkinCatalog, options: EmitReactSkin
   return {
     files: output.files.source,
     styles: await packageSkinStyles(catalog, skin, output.files.style),
+  };
+}
+
+/** Bundle one React Skin for a virtual development or package-build entry. */
+export async function emitReactSkinModule(catalog: SkinCatalog, options: EmitReactSkinModuleOptions) {
+  const { skin: skinName, style, ...outputOptions } = options;
+  const skin = getCatalogSkin(catalog, skinName);
+  const adapter = reactOutput(outputOptions);
+  const output = await emitCatalog(catalog, {
+    items: [skin.name],
+    output: { ...adapter, mode: 'bundle' },
+    styles:
+      style === 'tailwind' ? { mode: 'tailwind', variant: skin.style.variant } : skinStyleTransform(catalog, skin),
+    files: {
+      source: () => `.vjsc/virtual/react/${skin.name}/${style}/skin.tsx`,
+    },
+  });
+  const bundled = output.files.source[0];
+
+  if (output.files.source.length !== 1 || !bundled) {
+    throw new Error(`React Skin module expected one output file, but received ${output.files.source.length}.`);
+  }
+
+  return {
+    code: bundled.content,
+    styles: style === 'vanilla' ? await packageSkinStyles(catalog, skin, output.files.style) : [],
   };
 }

@@ -1,21 +1,68 @@
 import { Video, VideoPlayer } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
-import { DefaultVideoSkin } from '../canonical/skins/default-video/skin';
 import './styles.css';
 
-function App() {
+const modules = {
+  'react/default-video/vanilla': () => import('virtual:vjsc/skin/react/default-video/vanilla.tsx'),
+  'react/default-video/tailwind': () => import('virtual:vjsc/skin/react/default-video/tailwind.tsx'),
+  'react/minimal-video/vanilla': () => import('virtual:vjsc/skin/react/minimal-video/vanilla.tsx'),
+  'react/minimal-video/tailwind': () => import('virtual:vjsc/skin/react/minimal-video/tailwind.tsx'),
+  'html/default-video/vanilla': () => import('virtual:vjsc/skin/html/default-video/vanilla.tsx'),
+  'html/default-video/tailwind': () => import('virtual:vjsc/skin/html/default-video/tailwind.tsx'),
+  'html/minimal-video/vanilla': () => import('virtual:vjsc/skin/html/minimal-video/vanilla.tsx'),
+  'html/minimal-video/tailwind': () => import('virtual:vjsc/skin/html/minimal-video/tailwind.tsx'),
+} as const;
+
+type ModuleKey = keyof typeof modules;
+
+const params = new URLSearchParams(location.search);
+const requested = `${params.get('framework') ?? 'react'}/${params.get('skin') ?? 'default-video'}/${params.get('style') ?? 'vanilla'}`;
+const key: ModuleKey = requested in modules ? (requested as ModuleKey) : 'react/default-video/vanilla';
+const [framework, , styleMode] = key.split('/') as ['react' | 'html', string, 'vanilla' | 'tailwind'];
+const loaded = await modules[key]();
+
+if (styleMode === 'tailwind') await import('../canonical/styles/tailwind.css');
+
+const style = document.createElement('style');
+style.dataset.vjsc = key;
+style.textContent = loaded.css;
+document.head.append(style);
+
+function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ className?: string }>> }) {
   return (
     <VideoPlayer>
-      <DefaultVideoSkin className="preview-player">
+      <Skin className="preview-player">
         <Video
           src="https://stream.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA.m3u8"
           playsInline
           crossOrigin="anonymous"
         />
-      </DefaultVideoSkin>
+      </Skin>
     </VideoPlayer>
   );
 }
 
-createRoot(document.getElementById('root')!).render(<App />);
+const root = document.getElementById('root')!;
+const links = document.createElement('nav');
+links.ariaLabel = 'Skin preview variants';
+links.innerHTML = Object.keys(modules)
+  .map((value) => {
+    const [nextFramework, nextSkin, nextStyle] = value.split('/');
+    const href = `?framework=${nextFramework}&skin=${nextSkin}&style=${nextStyle}`;
+    return `<a href="${href}"${value === key ? ' aria-current="page"' : ''}>${value}</a>`;
+  })
+  .join('');
+root.before(links);
+
+if (framework === 'react') {
+  const Skin = 'DefaultVideoSkin' in loaded ? loaded.DefaultVideoSkin : loaded.MinimalVideoSkin;
+  createRoot(root).render(<App Skin={Skin} />);
+} else {
+  await import('../../html/src/define/video/player');
+  const skin = loaded.skin.replace(
+    '<slot></slot>',
+    '<video src="https://stream.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA.m3u8" playsinline crossorigin="anonymous"></video>'
+  );
+  root.innerHTML = `<video-player>${skin}</video-player>`;
+}
