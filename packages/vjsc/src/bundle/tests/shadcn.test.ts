@@ -84,6 +84,24 @@ describe('shadcnPlugin', () => {
     expect(source).toContain(`from './internal/components/private'`);
   });
 
+  it('owns type-only and dynamic relative imports without emitting trigger chunks', async () => {
+    const root = setup({
+      'app.ts': `export const app = true;`,
+      'components/root.tsx': `import type { Label } from './types'; export const load = () => import('./lazy'); export function Root({ label }: { label: Label }) { return <main>{label}</main>; } ${meta('root', 'block')}`,
+      'components/types.tsx': `export type Label = string;`,
+      'components/lazy.tsx': `export const Lazy = <aside/>;`,
+    });
+    const output = await build(root, registry({ published: ['root'], shared: [] }));
+    const item = assetJson(output, 'root.json');
+
+    expect(item.files.map((file: { target: string }) => file.target)).toEqual([
+      'components/example/root/lazy.tsx',
+      'components/example/root/root.tsx',
+      'components/example/root/types.tsx',
+    ]);
+    expect(output.output.filter((entry) => entry.type === 'chunk').map((entry) => entry.fileName)).toEqual(['app.js']);
+  });
+
   it('rejects unsafe paths and registry file collisions', async () => {
     const root = setup({
       'app.ts': `export const app = true;`,
@@ -94,6 +112,8 @@ describe('shadcnPlugin', () => {
     const definition = registry({ published: ['root'], shared: [] });
     const unsafe = { ...definition, paths: { ...definition.paths, output: '../registry' } };
     await expect(build(root, unsafe)).rejects.toThrow(/output path must be a non-empty relative path/);
+    const embeddedTraversal = { ...definition, paths: { ...definition.paths, output: 'safe/../../registry' } };
+    await expect(build(root, embeddedTraversal)).rejects.toThrow(/output path must be a non-empty relative path/);
 
     const collision = registry({
       published: ['root'],

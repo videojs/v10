@@ -2,11 +2,13 @@ import { createHash } from 'node:crypto';
 import { globSync, readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import type { Plugin } from 'rolldown';
+import type { OutputBundle, Plugin } from 'rolldown';
+import ts from 'typescript';
 
 import { type ComponentMeta, extractComponentMeta } from '../components/meta';
 import type { ShadcnRegistryDefinition } from '../shadcn';
 import { createShadcnRegistryFiles, type ShadcnGraph, type ShadcnGraphModule } from '../shadcn/registry';
+import { sourceScriptKind } from '../utils/source-module';
 
 export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta> {
   /** Root containing the editable source and shared registry files. */
@@ -33,6 +35,7 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
   const triggerId = `virtual:vjsc/shadcn/${createHash('sha256').update(root).update(query).digest('hex').slice(0, 12)}`;
   const resolvedTriggerId = `\0${triggerId}`;
   const captured = new Map<string, CapturedModule>();
+  const resolvedImports = new Map<string, Set<string>>();
   let metadata = new Map<string, Item | undefined>();
   let triggerSource = 'export default null;';
   let graph: ShadcnGraph | undefined;
@@ -41,6 +44,7 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
     name: 'vjsc:shadcn',
     buildStart() {
       captured.clear();
+      resolvedImports.clear();
       graph = undefined;
       metadata = discoverSources(options, root);
       validatePublishedItems(metadata, options.registry);
@@ -83,6 +87,21 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
           );
         }
         captured.set(fileName, { id, source: code });
+        const imports = resolvedImports.get(fileName) ?? new Set<string>();
+        resolvedImports.set(fileName, imports);
+        for (const specifier of relativeModuleSpecifiers(code, fileName)) {
+          const resolved = await this.resolve(specifier, id);
+          if (!resolved)
+            this.error(`Shadcn source cannot resolve relative import \`${specifier}\` from \`${fileName}\`.`);
+          const importedFile = canonicalPath(cleanId(resolved.id));
+          if (!metadata.has(importedFile)) {
+            this.error(
+              `Shadcn relative import \`${specifier}\` from \`${fileName}\` resolves outside the configured source files.`
+            );
+          }
+          imports.add(importedFile);
+          await this.load({ id: resolved.id });
+        }
         return null;
       },
     },
@@ -97,10 +116,11 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
           id: fileName,
           source: capture.source,
           meta: metadata.get(fileName),
-          importedIds: info.importedIds.map((id) => {
-            const canonical = canonicalPath(cleanId(id));
-            return metadata.has(canonical) ? canonical : id;
-          }),
+          importedIds: unique([
+            ...info.importedIds.map((id) => canonicalImport(id, metadata)),
+            ...info.dynamicallyImportedIds.map((id) => canonicalImport(id, metadata)),
+            ...(resolvedImports.get(fileName) ?? []),
+          ]),
         });
       }
 
@@ -116,11 +136,79 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
       for (const file of await createShadcnRegistryFiles(graph, options.registry)) {
         this.emitFile({ type: 'asset', fileName: file.path, source: file.content });
       }
-      for (const [fileName, item] of Object.entries(bundle)) {
-        if (item.type === 'chunk' && item.facadeModuleId === resolvedTriggerId) delete bundle[fileName];
-      }
+      removeTriggerChunks(bundle, resolvedTriggerId);
     },
   };
+}
+
+function relativeModuleSpecifiers(source: string, fileName: string): string[] {
+  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, sourceScriptKind(fileName));
+  const specifiers = new Set<string>();
+  const visit = (node: ts.Node): void => {
+    const literal =
+      (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier
+        ? node.moduleSpecifier
+        : ts.isCallExpression(node) &&
+            node.expression.kind === ts.SyntaxKind.ImportKeyword &&
+            node.arguments.length === 1
+          ? node.arguments[0]
+          : undefined;
+    if (literal && ts.isStringLiteralLike(literal) && literal.text.startsWith('.')) specifiers.add(literal.text);
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return [...specifiers];
+}
+
+function canonicalImport(id: string, metadata: ReadonlyMap<string, unknown>): string {
+  const canonical = canonicalPath(cleanId(id));
+  return metadata.has(canonical) ? canonical : id;
+}
+
+function removeTriggerChunks(bundle: OutputBundle, triggerId: string): void {
+  const chunks = new Map(
+    Object.entries(bundle).filter(
+      (entry): entry is [string, Extract<(typeof entry)[1], { type: 'chunk' }>] => entry[1].type === 'chunk'
+    )
+  );
+  const trigger = [...chunks].find(([, chunk]) => chunk.facadeModuleId === triggerId)?.[0];
+  if (!trigger) return;
+
+  const candidates = new Set<string>();
+  const visit = (fileName: string): void => {
+    if (candidates.has(fileName)) return;
+    candidates.add(fileName);
+    const chunk = chunks.get(fileName);
+    for (const dependency of [...(chunk?.imports ?? []), ...(chunk?.dynamicImports ?? [])]) {
+      if (chunks.has(dependency)) visit(dependency);
+    }
+  };
+  visit(trigger);
+
+  const retained = new Set<string>();
+  for (const fileName of candidates) {
+    if (fileName === trigger) continue;
+    const chunk = chunks.get(fileName)!;
+    if (
+      chunk.isEntry ||
+      [...chunks].some(
+        ([importer, value]) =>
+          !candidates.has(importer) && [...value.imports, ...value.dynamicImports].includes(fileName)
+      )
+    ) {
+      retained.add(fileName);
+    }
+  }
+  const retainDependencies = (fileName: string): void => {
+    const chunk = chunks.get(fileName);
+    for (const dependency of [...(chunk?.imports ?? []), ...(chunk?.dynamicImports ?? [])]) {
+      if (!candidates.has(dependency) || retained.has(dependency)) continue;
+      retained.add(dependency);
+      retainDependencies(dependency);
+    }
+  };
+  for (const fileName of [...retained]) retainDependencies(fileName);
+  for (const fileName of candidates) if (!retained.has(fileName)) delete bundle[fileName];
 }
 
 function discoverSources<Item extends ComponentMeta>(
@@ -202,4 +290,8 @@ function canonicalPath(path: string): string {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function unique(values: Iterable<string>): string[] {
+  return [...new Set(values)];
 }

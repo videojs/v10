@@ -542,7 +542,13 @@ function optionalList<Key extends string>(key: Key, values: ReadonlySet<string>)
 
 function validateRelativePath(path: string, label: string): void {
   const normalized = normalizePath(path);
-  if (!normalized || isAbsolute(path) || escapesRoot(normalized)) {
+  if (
+    !normalized ||
+    normalized === '.' ||
+    isAbsolute(path) ||
+    posix.isAbsolute(normalized) ||
+    escapesRoot(normalized)
+  ) {
     throw new Error(`${label} must be a non-empty relative path: \`${path}\`.`);
   }
 }
@@ -575,7 +581,7 @@ function stripRoot(path: string, root: string): string {
 }
 
 function normalizePath(path: string): string {
-  return toPosix(path).replace(/^\.\//, '');
+  return path ? posix.normalize(toPosix(path)).replace(/^\.\//, '') : '';
 }
 
 function escapesRoot(path: string): boolean {
