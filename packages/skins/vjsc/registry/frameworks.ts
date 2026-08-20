@@ -51,12 +51,10 @@ export function createHtmlComponentRegistry(iconFamily = 'default'): ComponentRe
 }
 
 export function getCoreSchemaModule() {
-  return createSchemaModule(
-    {
-      source: '@videojs/core/vjsc',
-      include: ['./src/core/ui/*/*-component.ts'],
-      output: resolve(corePackageDir, 'vjsc.ts'),
-    },
-    { cwd: corePackageDir }
-  );
+  return createSchemaModule({
+    cwd: corePackageDir,
+    source: '@videojs/core/vjsc',
+    include: ['./src/core/ui/*/*-component.ts'],
+    output: resolve(corePackageDir, 'vjsc.ts'),
+  });
 }

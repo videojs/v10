@@ -14,16 +14,14 @@ export interface ComponentFileSet {
 
 export type ComponentSource = string | ComponentFileSet;
 
-export interface GenerateSchemaConfig {
-  /** Module specifier canonical source files use to import the generated components. */
+export interface CreateSchemaModuleOptions {
+  /** Base directory used to resolve relative paths. */
+  readonly cwd?: string | undefined;
+  /** Module specifier source files use to import the generated components. */
   readonly source: string;
   readonly include: readonly ComponentSource[];
   readonly exclude?: string | readonly string[] | undefined;
   readonly output: string;
-}
-
-export interface CreateSchemaModuleOptions {
-  readonly cwd?: string | undefined;
 }
 export interface SchemaModule {
   readonly code: string;
@@ -47,18 +45,14 @@ interface InlineComponent {
 type ResolvedComponent = ManifestComponent | InlineComponent;
 
 /** Produce a component schema module without writing it to disk. */
-export function createSchemaModule(
-  config: GenerateSchemaConfig,
-  options: CreateSchemaModuleOptions = {}
-): SchemaModule {
-  const { include, output, source } = config;
-  const cwd = options.cwd ?? process.cwd();
+export function createSchemaModule(options: CreateSchemaModuleOptions): SchemaModule {
+  const { cwd = process.cwd(), exclude, include, output, source } = options;
   const outputAbsolute = isAbsolute(output) ? output : resolve(cwd, output);
   const watchFiles = new Set<string>();
 
   const resolved = include.flatMap<ResolvedComponent>((entry) =>
     typeof entry === 'string'
-      ? resolveManifestEntry(entry, config.exclude, cwd, outputAbsolute, watchFiles)
+      ? resolveManifestEntry(entry, exclude, cwd, outputAbsolute, watchFiles)
       : resolveFileSet(entry, cwd, watchFiles)
   );
   const entries = resolved.sort((a, b) => a.name.localeCompare(b.name));

@@ -7,14 +7,12 @@ import createRegistry from '../registry';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const coreDir = resolve(packageDir, '../core');
-const schema = createSchemaModule(
-  {
-    source: '@videojs/core/vjsc',
-    include: ['./src/core/ui/*/*-component.ts'],
-    output: './.vjsc/virtual/core-schema.ts',
-  },
-  { cwd: coreDir }
-);
+const schema = createSchemaModule({
+  cwd: coreDir,
+  source: '@videojs/core/vjsc',
+  include: ['./src/core/ui/*/*-component.ts'],
+  output: './.vjsc/virtual/core-schema.ts',
+});
 const registry = createRegistry(schema.schema as Parameters<typeof createRegistry>[0]);
 
 function compile(source: string, filename = '/project/src/view.tsx') {

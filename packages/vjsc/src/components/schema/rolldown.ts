@@ -2,11 +2,11 @@ import { resolve } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 import { createGeneratedModuleDeclaration } from './declaration';
-import { type CreateSchemaModuleOptions, createSchemaModule, type GenerateSchemaConfig } from './generate';
+import { type CreateSchemaModuleOptions, createSchemaModule } from './generate';
 
 type VjscModuleId = `virtual:vjsc/${string}`;
 
-export interface SchemaPluginOptions extends Omit<GenerateSchemaConfig, 'output'>, CreateSchemaModuleOptions {
+export interface SchemaPluginOptions extends Omit<CreateSchemaModuleOptions, 'output'> {
   /** Virtual entry consumed by the bundler. */
   readonly id?: VjscModuleId | undefined;
   /** Final declaration asset emitted alongside the bundled schema. */
@@ -25,15 +25,13 @@ export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   const sourceFileName = resolve(cwd, 'vjsc.ts');
 
   const loadSchema = () =>
-    createSchemaModule(
-      {
-        source: options.source,
-        include: options.include,
-        ...(options.exclude ? { exclude: options.exclude } : {}),
-        output: sourceFileName,
-      },
-      { cwd }
-    );
+    createSchemaModule({
+      cwd,
+      source: options.source,
+      include: options.include,
+      ...(options.exclude ? { exclude: options.exclude } : {}),
+      output: sourceFileName,
+    });
 
   const plugin: Plugin = {
     name: 'vjsc:schema',

@@ -5,19 +5,17 @@ import { iconNames } from './icon-names';
 
 const packageDir = resolve(import.meta.dirname, '..');
 
-/** Read one icon-family schema directly from its canonical SVG assets. */
+/** Read one icon-family schema directly from its source SVG assets. */
 export function createIconSchemaModule(family = 'default'): SchemaModule {
-  return createSchemaModule(
-    {
-      source: '@videojs/icons/vjsc',
-      include: [
-        {
-          include: resolve(packageDir, `src/assets/${family}/*.svg`),
-          name: (filename) => `${iconNames(filename).pascal}Icon`,
-        },
-      ],
-      output: resolve(packageDir, 'vjsc.ts'),
-    },
-    { cwd: packageDir }
-  );
+  return createSchemaModule({
+    cwd: packageDir,
+    source: '@videojs/icons/vjsc',
+    include: [
+      {
+        include: resolve(packageDir, `src/assets/${family}/*.svg`),
+        name: (filename) => `${iconNames(filename).pascal}Icon`,
+      },
+    ],
+    output: resolve(packageDir, 'vjsc.ts'),
+  });
 }

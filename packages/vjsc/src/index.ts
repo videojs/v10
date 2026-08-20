@@ -2,7 +2,6 @@ export type {
   ComponentFileSet,
   ComponentSource,
   CreateSchemaModuleOptions,
-  GenerateSchemaConfig,
   SchemaModule,
 } from './components/schema/generate';
 export { createSchemaModule } from './components/schema/generate';
