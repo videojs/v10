@@ -26,21 +26,21 @@ class PlayButton extends MediaElement {
 
 ### Import directly or destructure from createPlayer
 
-<DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> returns a `context` property that is the same `playerContext` instance. Both approaches reference the same object:
+<DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> returns a `playerContext` property that is the same `playerContext` instance exported from the package. Both approaches reference the same object:
 
 ```ts
 // Direct import
 import { playerContext } from '@videojs/html';
 
 // Destructured — identical object
-const { context } = createPlayer({ features: videoFeatures });
-context === playerContext; // true
+const { playerContext: configuredContext } = createPlayer({ features: videoFeatures });
+configuredContext === playerContext; // true
 ```
 
 Use the direct import when building reusable elements that don't depend on a specific `createPlayer` call.
 
 ### When you need this
 
-Most elements should use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level factory such as `createProviderMixin`.
+Most custom-player elements should use the configured <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> returned by `createPlayer`, which is already bound to the context. Import `playerContext` directly when using the package-level controller or another lower-level context consumer.
 
 <UtilReference util="playerContext" />

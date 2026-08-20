@@ -3,7 +3,6 @@ import {
   createButton,
   createPlayer,
   MediaElement,
-  PlayerController,
   selectPlayback,
   selectTime,
   selectVolume,
@@ -11,18 +10,18 @@ import {
 import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/ui/container';
 
-const { ProviderMixin, context } = createPlayer({
+const { PlayerElement, PlayerController } = createPlayer({
   features: videoFeatures,
 });
 
-class DemoPlayer extends ProviderMixin(MediaElement) {
+class DemoPlayer extends PlayerElement {
   static readonly tagName = 'demo-ctrl-player';
 }
 
 class PlayerActions extends MediaElement {
   static readonly tagName = 'demo-ctrl-actions';
 
-  readonly #player = new PlayerController(this, context);
+  readonly #player = new PlayerController(this);
 
   #disconnect: AbortController | null = null;
 
@@ -55,9 +54,9 @@ class PlayerActions extends MediaElement {
 class PlayerState extends MediaElement {
   static readonly tagName = 'demo-ctrl-state';
 
-  readonly #playback = new PlayerController(this, context, selectPlayback);
-  readonly #time = new PlayerController(this, context, selectTime);
-  readonly #volume = new PlayerController(this, context, selectVolume);
+  readonly #playback = new PlayerController(this, selectPlayback);
+  readonly #time = new PlayerController(this, selectTime);
+  readonly #volume = new PlayerController(this, selectVolume);
 
   protected override update(changed: Map<string, unknown>): void {
     super.update(changed);

@@ -41,10 +41,10 @@ function LiveIndicator() {
 import { createPlayer, MediaElement, selectStreamType } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class LiveIndicator extends MediaElement {
-  readonly #stream = new PlayerController(this, context, selectStreamType);
+  readonly #stream = new PlayerController(this, selectStreamType);
 }
 ```
 </FrameworkCase>

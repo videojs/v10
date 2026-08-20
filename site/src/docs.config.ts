@@ -204,7 +204,6 @@ export const sidebar: Sidebar = [
           { slug: 'reference/use-snapshot', frameworks: ['react'] },
           { slug: 'reference/media-attach-mixin', frameworks: ['html'] },
           { slug: 'reference/player-context', frameworks: ['html'] },
-          { slug: 'reference/provider-mixin', frameworks: ['html'] },
           { slug: 'reference/snapshot-controller', frameworks: ['html'] },
           { slug: 'reference/store-controller', frameworks: ['html'] },
         ],

@@ -95,7 +95,7 @@ const { Player } = createPlayer({
 ```ts
 import { createPlayer, playbackFeature, timeFeature } from '@videojs/html';
 
-const { ProviderMixin, PlayerController, context } = createPlayer({
+const { PlayerElement, PlayerController } = createPlayer({
   features: [playbackFeature, timeFeature], // [!code focus]
 });
 ```
