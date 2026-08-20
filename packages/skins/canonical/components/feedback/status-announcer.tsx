@@ -1,5 +1,6 @@
 import type { StatusAnnouncerProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/status-announcer.styles';
 
@@ -11,4 +12,4 @@ export const meta = {
   type: 'component',
   title: 'Status Announcer',
   description: 'A polite live region that announces media state changes.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

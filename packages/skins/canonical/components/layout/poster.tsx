@@ -1,5 +1,6 @@
 import type { PosterProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import { type PropsWithChildren, Slot } from 'vjsc/components';
 import styles from '../../styles/components/poster.styles';
 
@@ -15,4 +16,4 @@ export const meta = {
   type: 'component',
   title: 'Poster',
   description: 'The video poster and its presentation styling shared by Skin compositions.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

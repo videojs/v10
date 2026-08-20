@@ -1,6 +1,7 @@
 import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { SpinnerIcon } from '@videojs/icons/vjsc';
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/buffering.styles';
 
@@ -16,4 +17,4 @@ export const meta = {
   type: 'component',
   title: 'Buffering Indicator',
   description: 'A delayed spinner displayed while media is waiting for data.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

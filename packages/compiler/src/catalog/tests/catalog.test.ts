@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
-import { defineCatalog } from '../define';
+import { defineCatalog, defineDiscoveredCatalog } from '../define';
 import { loadCatalog, resolveCatalog } from '../resolve';
 
 const roots: string[] = [];
@@ -21,6 +21,26 @@ describe('defineCatalog', () => {
 
     expectTypeOf(definition.items[0]!.name).toEqualTypeOf<'player'>();
     expectTypeOf(definition.items[0]!.style.variant).toEqualTypeOf<'default'>();
+  });
+
+  it('discovers self-describing items while preserving catalog configuration types', async () => {
+    const root = setup({
+      'entry.tsx': `export const meta = { name: 'entry', type: 'component' }; export const Entry = null;`,
+    });
+    const definition = defineDiscoveredCatalog<{ name: string; type: 'component' }>()({
+      discovery: { rootDir: root, files: '*.tsx' },
+      resources: { styles: './styles.css' },
+    });
+
+    expect(definition.items).toEqual([{ name: 'entry', source: './entry.tsx', type: 'component' }]);
+    expectTypeOf(definition.resources.styles).toEqualTypeOf<'./styles.css'>();
+
+    writeFileSync(
+      join(root, 'entry.tsx'),
+      `export const meta = { name: 'renamed', type: 'component' }; export const Entry = null;`
+    );
+    const loaded = await loadCatalog(definition, { rootDir: root });
+    expect(loaded.items[0]?.name).toBe('renamed');
   });
 });
 

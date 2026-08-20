@@ -1,4 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
+import type { CatalogItemMeta } from 'vjsc/catalog';
 
 export interface VideoGesturesProps {
   disabled?: boolean | undefined;
@@ -20,4 +21,4 @@ export const meta = {
   type: 'component',
   title: 'Video Gestures',
   description: 'The standard pointer gestures for on-demand video playback.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

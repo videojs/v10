@@ -1,6 +1,7 @@
 import type { PlayButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { PauseIcon, PlayIcon, RestartIcon } from '@videojs/icons/vjsc';
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';
@@ -22,4 +23,4 @@ export const meta = {
   title: 'Play Button',
   description:
     'A three-state button that plays, pauses, or restarts media with matching icons and an accessible tooltip.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

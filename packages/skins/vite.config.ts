@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { jsx, syncGeneratedModuleTypes } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
-import { catalogMetaPlugin } from 'vjsc/catalog';
+import { catalogMetaPlugin, catalogVirtualModule } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
@@ -21,7 +21,7 @@ import {
 } from './build/metadata';
 import { componentTransforms } from './build/output/react/transform';
 import { createSkinVirtualModules } from './build/virtual-skins';
-import { createSkinCatalogItemsModule } from './canonical/catalog';
+import { skinCatalog } from './canonical/catalog';
 
 const packageDir = import.meta.dirname;
 const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
@@ -34,7 +34,6 @@ const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 const iconSchemaModule = getIconSchemaModule();
 const defaultIconElementModule = createIconElementModule('default');
 const minimalIconElementModule = createIconElementModule('minimal');
-const catalogModule = createSkinCatalogItemsModule();
 
 await Promise.all([
   syncGeneratedModuleTypes({
@@ -44,16 +43,6 @@ await Promise.all([
         fileName: resolve(coreDir, '.vjsc/virtual/core-schema.ts'),
         outputPath: 'core-schema.d.ts',
         module: coreSchemaModule,
-      },
-    ],
-  }),
-  syncGeneratedModuleTypes({
-    rootDir: packageDir,
-    modules: [
-      {
-        fileName: resolve(packageDir, '.vjsc/virtual/catalog.ts'),
-        outputPath: 'catalog.d.ts',
-        module: catalogModule,
       },
     ],
   }),
@@ -112,7 +101,7 @@ export default defineConfig({
         { id: 'virtual:vjsc/icons-schema', load: () => getIconSchemaModule() },
         { id: 'virtual:vjsc/registry/react', load: createReactEntriesModule },
         { id: 'virtual:vjsc/registry/html', load: createHtmlEntriesModule },
-        { id: 'virtual:vjsc/catalog', load: createSkinCatalogItemsModule },
+        catalogVirtualModule(skinCatalog),
         { id: 'virtual:vjsc/icons/element/default.js', load: () => defaultIconElementModule },
         { id: 'virtual:vjsc/icons/element/minimal.js', load: () => minimalIconElementModule },
         ...createSkinVirtualModules(),

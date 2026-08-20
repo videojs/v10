@@ -1,6 +1,7 @@
 import type { FullscreenButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/icons/vjsc';
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import type { Props } from 'vjsc/components';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';
@@ -20,4 +21,4 @@ export const meta = {
   type: 'component',
   title: 'Fullscreen Button',
   description: 'A button that enters and exits fullscreen with state-aware icons and an accessible tooltip.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

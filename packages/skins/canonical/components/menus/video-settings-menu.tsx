@@ -1,3 +1,4 @@
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import type { PropsOf } from 'vjsc/components';
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
@@ -22,4 +23,4 @@ export const meta = {
   type: 'component',
   title: 'Video Settings Menu',
   description: 'Nested video quality, audio track, playback rate, and captions settings menus.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

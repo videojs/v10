@@ -1,3 +1,4 @@
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import { Group, type Props } from 'vjsc/components';
 import styles from '../../styles/components/overlay.styles';
 
@@ -9,4 +10,4 @@ export const meta = {
   type: 'component',
   title: 'Overlay',
   description: 'The inert video scrim rendered behind visible controls and feedback UI.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

@@ -8,6 +8,7 @@ const configFile = resolve(packageDir, 'vite.config.ts');
 const defaultSkinUrl = '/../canonical/skins/default-video/skin.tsx';
 const playButtonUrl = '/../canonical/components/buttons/play-button.tsx';
 const buttonStyles = resolve(packageDir, 'canonical/styles/components/button.styles.ts');
+const canonicalPlayButton = resolve(packageDir, 'canonical/components/buttons/play-button.tsx');
 const corePlayButton = resolve(packageDir, '../core/src/core/ui/play-button/play-button-component.ts');
 const reactVirtualSkin = 'virtual:vjsc/skin/react/default-video/vanilla.tsx';
 const htmlVirtualSkin = 'virtual:vjsc/skin/html/minimal-video/tailwind.tsx';
@@ -77,6 +78,10 @@ describe('canonical Skins Vite workflow', () => {
     expect(catalog?.code).toContain('default-video');
     expect(catalog?.code).toContain('play-button');
 
+    const resolvedCatalog = await server.pluginContainer.resolveId(virtualCatalog);
+    const catalogModule = resolvedCatalog && server.moduleGraph.getModuleById(resolvedCatalog.id);
+    expect(catalogModule?.transformResult).not.toBeNull();
+
     const resolved = await server.pluginContainer.resolveId(reactVirtualSkin);
     expect(resolved?.id).toBe(reactVirtualSkin);
     const virtualModule = resolved && server.moduleGraph.getModuleById(resolved.id);
@@ -94,6 +99,11 @@ describe('canonical Skins Vite workflow', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(virtualModule?.transformResult).toBeNull();
+
+    server.watcher.emit('change', canonicalPlayButton);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(catalogModule?.transformResult).toBeNull();
   }, 30_000);
 
   it('builds the same canonical configuration for production', async () => {

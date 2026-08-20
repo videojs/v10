@@ -1,4 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
@@ -80,4 +81,4 @@ export const meta = {
   },
   title: 'Minimal Video Skin',
   description: 'A compact on-demand video skin with wrapping controls and the complete video component set.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

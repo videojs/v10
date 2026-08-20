@@ -11,6 +11,7 @@ import type {
   CatalogItemDefinition,
   CatalogItemName,
 } from './define';
+import { discoverCatalogItems } from './meta';
 
 export interface CatalogFiles {
   readonly source: readonly string[];
@@ -85,7 +86,11 @@ export async function loadCatalog<const Definition extends CatalogDefinition>(
   options: { rootDir: string }
 ): Promise<Catalog<Definition>> {
   const rootDir = resolve(options.rootDir);
-  const normalized = normalizeItems(definition.items, rootDir) as NormalizedItem<DefinedItem<Definition>>[];
+  const definitionItems =
+    'discovery' in definition
+      ? discoverCatalogItems(definition.discovery as Parameters<typeof discoverCatalogItems>[0])
+      : definition.items;
+  const normalized = normalizeItems(definitionItems, rootDir) as NormalizedItem<DefinedItem<Definition>>[];
   const entries = new Map(normalized.map((entry) => [entry.sourceFile, entry]));
   const imports = definition.imports ?? {};
   const items: CatalogItem<Definition>[] = [];

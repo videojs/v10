@@ -1,7 +1,7 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { type CatalogItemMeta, createCatalogItemsModule, defineCatalog } from 'vjsc/catalog';
+import { type CatalogItemMeta, defineDiscoveredCatalog } from 'vjsc/catalog';
 
 export interface ComponentMeta extends CatalogItemMeta {
   readonly type: 'component';
@@ -38,39 +38,27 @@ const resources = {
   },
 } as const;
 
-export const catalogDiscovery = {
-  rootDir: dirname(fileURLToPath(import.meta.url)),
-  files: ['./components/**/*.tsx', './skins/*/skin.tsx'],
-} as const;
-
-/** Generate the self-describing canonical item inventory without evaluating item modules. */
-export function createSkinCatalogItemsModule() {
-  return createCatalogItemsModule<SkinCatalogMeta>(catalogDiscovery);
-}
-
-/** Recreate the canonical catalog inventory from colocated item metadata. */
-export function createSkinCatalog() {
-  return defineCatalog({
-    components: ['@videojs/core/vjsc', '@videojs/icons/vjsc'],
-    resources,
-    allowedImports: [
-      '@videojs/core',
-      '@videojs/utils/style',
-      'vjsc/styles',
-      'vjsc/components',
-      'vjsc/catalog',
-      /^@videojs\/core\/i18n\/text\//,
-    ],
-    imports: {
-      '@videojs/core/vjsc': 'components',
-      '@videojs/icons/vjsc': 'icons',
-    },
-    items: createSkinCatalogItemsModule().items,
-  });
-}
-
 /** Canonical Skin source catalog shared by registry policy and static tooling. */
-export const skinCatalog = createSkinCatalog();
+export const skinCatalog = defineDiscoveredCatalog<SkinCatalogMeta>()({
+  discovery: {
+    rootDir: dirname(fileURLToPath(import.meta.url)),
+    files: ['./components/**/*.tsx', './skins/*/skin.tsx'],
+  },
+  components: ['@videojs/core/vjsc', '@videojs/icons/vjsc'],
+  resources,
+  allowedImports: [
+    '@videojs/core',
+    '@videojs/utils/style',
+    'vjsc/styles',
+    'vjsc/components',
+    'vjsc/catalog',
+    /^@videojs\/core\/i18n\/text\//,
+  ],
+  imports: {
+    '@videojs/core/vjsc': 'components',
+    '@videojs/icons/vjsc': 'icons',
+  },
+});
 
 export type SkinItemName = (typeof skinCatalog.items)[number]['name'];
 export type SkinName = Extract<(typeof skinCatalog.items)[number], { readonly type: 'skin' }>['name'];

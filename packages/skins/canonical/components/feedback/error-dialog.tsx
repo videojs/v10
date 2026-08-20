@@ -1,4 +1,5 @@
 import * as $ from '@videojs/core/vjsc';
+import type { CatalogItemMeta } from 'vjsc/catalog';
 import type { Props } from 'vjsc/components';
 import buttonStyles from '../../styles/components/button.styles';
 import styles from '../../styles/components/error-dialog.styles';
@@ -19,4 +20,4 @@ export const meta = {
   type: 'component',
   title: 'Error Dialog',
   description: 'An alert dialog that presents and dismisses playback errors.',
-} as const satisfies import('vjsc/catalog').CatalogItemMeta;
+} as const satisfies CatalogItemMeta;

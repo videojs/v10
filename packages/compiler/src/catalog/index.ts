@@ -1,10 +1,13 @@
 export {
   type CatalogDefinition,
+  type CatalogDiscoveryDefinition,
   type CatalogImportPattern,
   type CatalogImports,
   type CatalogItemDefinition,
   type CatalogItemName,
+  type DiscoveredCatalogDefinition,
   defineCatalog,
+  defineDiscoveredCatalog,
 } from './define';
 export {
   type CatalogEmitOptions,
@@ -23,12 +26,7 @@ export {
 } from './emit';
 export {
   type CatalogItemMeta,
-  type CatalogItemsModule,
   catalogMetaPlugin,
-  createCatalogItemsModule,
-  type DiscoverCatalogItemsOptions,
-  discoverCatalogItems,
-  extractCatalogItemMeta,
 } from './meta';
 export {
   type Catalog,
@@ -39,3 +37,4 @@ export {
   resolveCatalog,
 } from './resolve';
 export { loadCatalogStyles } from './styles';
+export { catalogVirtualModule, type VirtualCatalogDefinition } from './virtual';
