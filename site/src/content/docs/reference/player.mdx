@@ -156,13 +156,14 @@ function PlayPauseButton() {
 <DocsLinkCard slug="reference/use-player">usePlayer reference</DocsLinkCard>
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-Use `PlayerController` to subscribe to store state from any custom element inside the player:
+Use the preset's typed `PlayerController` to subscribe to store state from any custom element inside the player:
 
 ```ts title="play-pause-button.ts"
-import { PlayerController, UIElement, playerContext, selectPlayback } from '@videojs/html';
+import { UIElement, selectPlayback } from '@videojs/html';
+import { PlayerController } from '@videojs/html/video';
 
 class PlayPauseButton extends UIElement {
-  readonly #playback = new PlayerController(this, playerContext, selectPlayback);
+  readonly #playback = new PlayerController(this, selectPlayback);
 
   connectedCallback() {
     super.connectedCallback();
