@@ -11,6 +11,8 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/render-element/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/render-element/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/render-element/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/render-element/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/render-element/react/tailwind/BasicUsage.tsx?raw";
 
 `renderElement` renders a UI component element, handling default tag rendering, render props (element or function), props merging, ref composition, and state-driven `className`/`style`.
 
@@ -64,6 +66,15 @@ The `render` prop lets consumers fully customize the rendered element while pres
       ]}
     >
       <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <BasicUsageDemoReactTailwind client:idle />
     </Demo>
   </StyleCase>
 </FrameworkCase>

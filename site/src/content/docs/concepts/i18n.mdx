@@ -14,24 +14,43 @@ import LanguageDemoHtml from '@/components/docs/demos/i18n/html/css/Language.ast
 import languageHtml from '@/components/docs/demos/i18n/html/css/Language.html?raw';
 import languageHtmlCss from '@/components/docs/demos/i18n/html/css/Language.css?raw';
 import languageHtmlTs from '@/components/docs/demos/i18n/html/css/Language.ts?raw';
+import LanguageDemoHtmlTailwind from '@/components/docs/demos/i18n/html/tailwind/Language.astro';
+import languageTailwindHtml from '@/components/docs/demos/i18n/html/tailwind/Language.html?raw';
+import languageTailwindHtmlTs from '@/components/docs/demos/i18n/html/tailwind/Language.ts?raw';
 import LanguageDemoReact from '@/components/docs/demos/i18n/react/css/Language';
 import languageReactTsx from '@/components/docs/demos/i18n/react/css/Language.tsx?raw';
 import languageReactCss from '@/components/docs/demos/i18n/react/css/Language.css?raw';
+import LanguageDemoReactTailwind from '@/components/docs/demos/i18n/react/tailwind/Language';
+import languageReactTailwindTsx from '@/components/docs/demos/i18n/react/tailwind/Language.tsx?raw';
 import SourceDemo from '@/components/docs/demos/i18n/SourceDemo.astro';
 import RegisteredDemoHtml from '@/components/docs/demos/i18n/html/css/Registered.astro';
 import registeredHtmlTs from '@/components/docs/demos/i18n/html/css/Registered.ts?raw';
+import RegisteredDemoHtmlTailwind from '@/components/docs/demos/i18n/html/tailwind/Registered.astro';
+import registeredTailwindHtmlTs from '@/components/docs/demos/i18n/html/tailwind/Registered.ts?raw';
 import BuiltInDemoHtml from '@/components/docs/demos/i18n/html/css/BuiltIn.astro';
 import builtInHtml from '@/components/docs/demos/i18n/html/css/BuiltIn.html?raw';
+import BuiltInDemoHtmlTailwind from '@/components/docs/demos/i18n/html/tailwind/BuiltIn.astro';
+import builtInTailwindHtml from '@/components/docs/demos/i18n/html/tailwind/BuiltIn.html?raw';
 import FallbackDemoHtml from '@/components/docs/demos/i18n/html/css/Fallback.astro';
 import fallbackHtml from '@/components/docs/demos/i18n/html/css/Fallback.html?raw';
+import FallbackDemoHtmlTailwind from '@/components/docs/demos/i18n/html/tailwind/Fallback.astro';
+import fallbackTailwindHtml from '@/components/docs/demos/i18n/html/tailwind/Fallback.html?raw';
 import OverrideDemoReact from '@/components/docs/demos/i18n/react/css/Override';
 import overrideReactTsx from '@/components/docs/demos/i18n/react/css/Override.tsx?raw';
+import OverrideDemoReactTailwind from '@/components/docs/demos/i18n/react/tailwind/Override';
+import overrideReactTailwindTsx from '@/components/docs/demos/i18n/react/tailwind/Override.tsx?raw';
 import RegisteredDemoReact from '@/components/docs/demos/i18n/react/css/Registered';
 import registeredReactTsx from '@/components/docs/demos/i18n/react/css/Registered.tsx?raw';
+import RegisteredDemoReactTailwind from '@/components/docs/demos/i18n/react/tailwind/Registered';
+import registeredReactTailwindTsx from '@/components/docs/demos/i18n/react/tailwind/Registered.tsx?raw';
 import BuiltInDemoReact from '@/components/docs/demos/i18n/react/css/BuiltIn';
 import builtInReactTsx from '@/components/docs/demos/i18n/react/css/BuiltIn.tsx?raw';
+import BuiltInDemoReactTailwind from '@/components/docs/demos/i18n/react/tailwind/BuiltIn';
+import builtInReactTailwindTsx from '@/components/docs/demos/i18n/react/tailwind/BuiltIn.tsx?raw';
 import FallbackDemoReact from '@/components/docs/demos/i18n/react/css/Fallback';
 import fallbackReactTsx from '@/components/docs/demos/i18n/react/css/Fallback.tsx?raw';
+import FallbackDemoReactTailwind from '@/components/docs/demos/i18n/react/tailwind/Fallback';
+import fallbackReactTailwindTsx from '@/components/docs/demos/i18n/react/tailwind/Fallback.tsx?raw';
 
 Video.js displays its controls in English by default. Use internationalization when the player should match another language used by your site or application.
 
@@ -57,6 +76,17 @@ Wrap the player with `<media-i18n>`. Choose any shipped language to lazy-load it
   </Demo>
 </StyleCase>
 
+<StyleCase styles={["tailwind"]}>
+  <Demo
+    files={[
+      { title: "index.html", code: languageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: languageTailwindHtmlTs, lang: "ts" },
+    ]}
+  >
+    <LanguageDemoHtmlTailwind />
+  </Demo>
+</StyleCase>
+
 Set `lang` on `<media-i18n>` when one player needs a different language from the rest of the page.
 
 </FrameworkCase>
@@ -73,6 +103,16 @@ Mount `I18nProvider` inside the player `Provider`. Choose any shipped language t
     ]}
   >
     <LanguageDemoReact client:idle />
+  </Demo>
+</StyleCase>
+
+<StyleCase styles={["tailwind"]}>
+  <Demo
+    files={[
+      { title: "App.tsx", code: languageReactTailwindTsx, lang: "tsx" },
+    ]}
+  >
+    <LanguageDemoReactTailwind client:idle />
   </Demo>
 </StyleCase>
 
@@ -151,6 +191,37 @@ Choose a source, then hover the play button to see its resolved label.
   </TabsRoot>
 </StyleCase>
 
+<StyleCase styles={["tailwind"]}>
+  <TabsRoot client:idle>
+    <TabsList client:idle label="Translation source examples">
+      <Tab client:idle value="override" initial>Player override</Tab>
+      <Tab client:idle value="registered">Registered</Tab>
+      <Tab client:idle value="built-in">Built-in</Tab>
+      <Tab client:idle value="fallback">Fallback</Tab>
+    </TabsList>
+    <TabsPanel client:idle value="override" initial className="max-h-none overflow-visible p-0">
+      <SourceDemo code={overrideReactTailwindTsx} lang="tsx">
+        <OverrideDemoReactTailwind client:idle />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="registered" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={registeredReactTailwindTsx} lang="tsx">
+        <RegisteredDemoReactTailwind client:idle />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="built-in" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={builtInReactTailwindTsx} lang="tsx">
+        <BuiltInDemoReactTailwind client:idle />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="fallback" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={fallbackReactTailwindTsx} lang="tsx">
+        <FallbackDemoReactTailwind client:idle />
+      </SourceDemo>
+    </TabsPanel>
+  </TabsRoot>
+</StyleCase>
+
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -181,6 +252,31 @@ Choose a source, then hover the play button to see its resolved label.
     <TabsPanel client:idle value="fallback" className="max-h-none overflow-visible p-0">
       <SourceDemo code={fallbackHtml} lang="html">
         <FallbackDemoHtml />
+      </SourceDemo>
+    </TabsPanel>
+  </TabsRoot>
+</StyleCase>
+
+<StyleCase styles={["tailwind"]}>
+  <TabsRoot client:idle>
+    <TabsList client:idle label="Translation source examples">
+      <Tab client:idle value="registered" initial>Registered</Tab>
+      <Tab client:idle value="built-in">Built-in</Tab>
+      <Tab client:idle value="fallback">Fallback</Tab>
+    </TabsList>
+    <TabsPanel client:idle value="registered" initial className="max-h-none overflow-visible p-0">
+      <SourceDemo code={registeredTailwindHtmlTs} lang="ts">
+        <RegisteredDemoHtmlTailwind />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="built-in" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={builtInTailwindHtml} lang="html">
+        <BuiltInDemoHtmlTailwind />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="fallback" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={fallbackTailwindHtml} lang="html">
+        <FallbackDemoHtmlTailwind />
       </SourceDemo>
     </TabsPanel>
   </TabsRoot>

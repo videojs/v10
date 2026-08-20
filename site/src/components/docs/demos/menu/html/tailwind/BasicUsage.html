@@ -1,0 +1,181 @@
+<video-player class="relative block">
+    <media-container class="relative block">
+        <hlsjs-video
+            class="w-full"
+            src="{{VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS}}"
+            autoplay
+            crossorigin="anonymous"
+            muted
+            playsinline
+            loop
+        >
+            <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srclang="en" label="English" />
+            <track kind="subtitles" src="/docs/demos/captions-button/captions.vtt" srclang="es" label="Spanish" />
+        </hlsjs-video>
+        <div class="absolute right-2.5 bottom-2.5">
+            <button
+                type="button"
+                commandfor="settings-menu"
+                class="cursor-pointer rounded-full border border-white/35 bg-white/75 px-4 py-1.5 text-black backdrop-blur-[10px]"
+            >Settings</button>
+            <media-menu
+                id="settings-menu"
+                side="top"
+                align="end"
+                class="relative box-border h-(--media-menu-height) max-h-[var(--media-menu-available-height,var(--media-popover-available-height,none))] w-(--media-menu-width) max-w-[var(--media-menu-available-width,var(--media-popover-available-width,none))] min-w-45 overflow-hidden overscroll-none rounded-lg bg-black/88 p-1.5 text-sm text-white backdrop-blur-[10px] transition-[width,height,opacity,filter] duration-[220ms] ease-in-out [--media-menu-side-offset:8px]"
+            >
+                <div
+                    class="absolute inset-0 grid translate-x-0 gap-0.5 overflow-auto overscroll-none p-1.5 outline-none transition-[translate,filter] duration-[220ms] ease-in-out will-change-[translate] in-data-[submenu-expanded=true]:-translate-x-full in-data-[submenu-expanded=true]:blur-sm"
+                >
+                    <media-menu-item
+                        commandfor="quality-menu"
+                        class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                    >
+                        <span>Quality</span>
+                        <span class="inline-flex items-center gap-2 text-white/72">
+                            <span data-part="hint"></span>
+                            <span aria-hidden="true" class="text-lg leading-none">›</span>
+                        </span>
+                    </media-menu-item>
+                    <media-menu-item
+                        commandfor="audio-menu"
+                        class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                    >
+                        <span>Audio</span>
+                        <span class="inline-flex items-center gap-2 text-white/72">
+                            <span data-part="hint"></span>
+                            <span aria-hidden="true" class="text-lg leading-none">›</span>
+                        </span>
+                    </media-menu-item>
+                    <media-menu-item
+                        commandfor="speed-menu"
+                        class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                    >
+                        <span>Speed</span>
+                        <span class="inline-flex items-center gap-2 text-white/72">
+                            <span data-part="hint"></span>
+                            <span aria-hidden="true" class="text-lg leading-none">›</span>
+                        </span>
+                    </media-menu-item>
+                    <media-menu-item
+                        commandfor="captions-menu"
+                        class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                    >
+                        <span>Captions</span>
+                        <span class="inline-flex items-center gap-2 text-white/72">
+                            <span data-part="hint"></span>
+                            <span aria-hidden="true" class="text-lg leading-none">›</span>
+                        </span>
+                    </media-menu-item>
+                    <media-menu-item
+                        class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                    >Copy link</media-menu-item>
+                </div>
+
+                <media-menu
+                    id="quality-menu"
+                    class="absolute inset-0 z-1 grid translate-x-0 gap-0.5 overflow-auto overscroll-none p-1.5 outline-none transition-[translate,filter] duration-[220ms] ease-in-out will-change-[translate] data-starting-style:overflow-hidden data-starting-style:pointer-events-none data-starting-style:blur-sm data-starting-style:translate-x-full data-ending-style:overflow-hidden data-ending-style:pointer-events-none data-ending-style:blur-sm data-ending-style:translate-x-full"
+                >
+                    <media-menu-item
+                        class="flex min-h-8 cursor-pointer items-center justify-start gap-2 rounded-md px-2.5 hover:bg-white/16"
+                    >
+                        <span aria-hidden="true" class="text-lg leading-none text-white/72">‹</span>
+                        Quality
+                    </media-menu-item>
+                    <media-quality-radio-group class="grid gap-0.5">
+                        <template>
+                            <media-menu-radio-item
+                                class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                            >
+                                <span>
+                                    <span data-part="label"></span>
+                                    <sup data-part="tier" class="ml-0.5 text-[10px]"></sup>
+                                </span>
+                                <span data-part="badge" class="ml-auto text-white/72"></span>
+                                <media-menu-item-indicator
+                                    force-mount
+                                    class="opacity-0 in-aria-checked:opacity-100"
+                                >✓</media-menu-item-indicator>
+                            </media-menu-radio-item>
+                        </template>
+                    </media-quality-radio-group>
+                </media-menu>
+
+                <media-menu
+                    id="audio-menu"
+                    class="absolute inset-0 z-1 grid translate-x-0 gap-0.5 overflow-auto overscroll-none p-1.5 outline-none transition-[translate,filter] duration-[220ms] ease-in-out will-change-[translate] data-starting-style:overflow-hidden data-starting-style:pointer-events-none data-starting-style:blur-sm data-starting-style:translate-x-full data-ending-style:overflow-hidden data-ending-style:pointer-events-none data-ending-style:blur-sm data-ending-style:translate-x-full"
+                >
+                    <media-menu-item
+                        class="flex min-h-8 cursor-pointer items-center justify-start gap-2 rounded-md px-2.5 hover:bg-white/16"
+                    >
+                        <span aria-hidden="true" class="text-lg leading-none text-white/72">‹</span>
+                        Audio
+                    </media-menu-item>
+                    <media-audio-track-radio-group class="grid gap-0.5">
+                        <template>
+                            <media-menu-radio-item
+                                class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                            >
+                                <span data-part="label"></span>
+                                <media-menu-item-indicator
+                                    force-mount
+                                    class="opacity-0 in-aria-checked:opacity-100"
+                                >✓</media-menu-item-indicator>
+                            </media-menu-radio-item>
+                        </template>
+                    </media-audio-track-radio-group>
+                </media-menu>
+
+                <media-menu
+                    id="speed-menu"
+                    class="absolute inset-0 z-1 grid translate-x-0 gap-0.5 overflow-auto overscroll-none p-1.5 outline-none transition-[translate,filter] duration-[220ms] ease-in-out will-change-[translate] data-starting-style:overflow-hidden data-starting-style:pointer-events-none data-starting-style:blur-sm data-starting-style:translate-x-full data-ending-style:overflow-hidden data-ending-style:pointer-events-none data-ending-style:blur-sm data-ending-style:translate-x-full"
+                >
+                    <media-menu-item
+                        class="flex min-h-8 cursor-pointer items-center justify-start gap-2 rounded-md px-2.5 hover:bg-white/16"
+                    >
+                        <span aria-hidden="true" class="text-lg leading-none text-white/72">‹</span>
+                        Speed
+                    </media-menu-item>
+                    <media-playback-rate-radio-group class="grid gap-0.5">
+                        <template>
+                            <media-menu-radio-item
+                                class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                            >
+                                <span data-part="label"></span>
+                                <media-menu-item-indicator
+                                    force-mount
+                                    class="opacity-0 in-aria-checked:opacity-100"
+                                >✓</media-menu-item-indicator>
+                            </media-menu-radio-item>
+                        </template>
+                    </media-playback-rate-radio-group>
+                </media-menu>
+
+                <media-menu
+                    id="captions-menu"
+                    class="absolute inset-0 z-1 grid translate-x-0 gap-0.5 overflow-auto overscroll-none p-1.5 outline-none transition-[translate,filter] duration-[220ms] ease-in-out will-change-[translate] data-starting-style:overflow-hidden data-starting-style:pointer-events-none data-starting-style:blur-sm data-starting-style:translate-x-full data-ending-style:overflow-hidden data-ending-style:pointer-events-none data-ending-style:blur-sm data-ending-style:translate-x-full"
+                >
+                    <media-menu-item
+                        class="flex min-h-8 cursor-pointer items-center justify-start gap-2 rounded-md px-2.5 hover:bg-white/16"
+                    >
+                        <span aria-hidden="true" class="text-lg leading-none text-white/72">‹</span>
+                        Captions
+                    </media-menu-item>
+                    <media-captions-radio-group class="grid gap-0.5">
+                        <template>
+                            <media-menu-radio-item
+                                class="flex min-h-8 cursor-pointer items-center justify-between rounded-md px-2.5 data-highlighted:bg-white/16 data-[availability=unavailable]:hidden"
+                            >
+                                <span data-part="label"></span>
+                                <media-menu-item-indicator
+                                    force-mount
+                                    class="opacity-0 in-aria-checked:opacity-100"
+                                >✓</media-menu-item-indicator>
+                            </media-menu-radio-item>
+                        </template>
+                    </media-captions-radio-group>
+                </media-menu>
+            </media-menu>
+        </div>
+    </media-container>
+</video-player>

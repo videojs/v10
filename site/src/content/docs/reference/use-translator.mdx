@@ -11,6 +11,8 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/use-translator/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/use-translator/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-translator/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/use-translator/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/use-translator/react/tailwind/BasicUsage.tsx?raw";
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -30,6 +32,15 @@ Switch the provider locale to see `useTranslator` resolve a simple key and a par
     ]}
   >
     <BasicUsageDemoReact client:idle />
+  </Demo>
+</StyleCase>
+<StyleCase styles={["tailwind"]}>
+  <Demo
+    files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}
+  >
+    <BasicUsageDemoReactTailwind client:idle />
   </Demo>
 </StyleCase>
 

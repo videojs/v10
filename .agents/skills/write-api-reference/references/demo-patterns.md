@@ -11,10 +11,29 @@ site/src/components/docs/demos/{component}/
 │   ├── BasicUsage.html      # Markup only (no <style> or <script>)
 │   ├── BasicUsage.css       # Styles
 │   └── BasicUsage.ts        # Side-effect imports for custom element registration
-└── react/css/
-    ├── BasicUsage.tsx        # React component
-    └── BasicUsage.css        # Styles
+├── html/tailwind/
+│   ├── BasicUsage.astro     # Same wrapper shape as the css variant
+│   ├── BasicUsage.html      # Markup with Tailwind utilities inline (no .css file)
+│   └── BasicUsage.ts        # Identical copy of the css variant's .ts
+├── react/css/
+│   ├── BasicUsage.tsx       # React component
+│   └── BasicUsage.css       # Styles
+└── react/tailwind/
+    └── BasicUsage.tsx       # css variant with Tailwind utility classes (no .css file)
 ```
+
+Every styled demo ships both a `css/` and a `tailwind/` variant with the same demo names; the MDX
+page gates them with `<StyleCase styles={["css"]}>` / `<StyleCase styles={["tailwind"]}>`. Demos
+with no stylesheet of their own (style-agnostic, e.g. JSON-config demos) live only in `css/` and
+render for both styles.
+
+Tailwind variants must stay copy-paste compatible with a stock Tailwind v4 setup — never use site
+theme tokens (`manila-*`, `text-h1`, `intent:`). The site theme resets the default color and text
+scales, so the stock tokens demos rely on (`gray-*`, `blue-500`, `neutral-*`, `text-xs`,
+`text-sm`) are re-declared verbatim in a dedicated `@theme` block in
+`site/src/styles/globals.css`; extend that block (stock values only) if a new demo needs another
+token. State styling uses data-attribute variants (`data-paused:`, `in-data-paused:`,
+`not-in-data-ended:`) in place of the css variant's attribute selectors.
 
 ## BEM Naming
 

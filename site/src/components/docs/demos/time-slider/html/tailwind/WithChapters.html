@@ -1,0 +1,37 @@
+<video-player class="relative block">
+    <media-container class="relative block">
+        <video
+            class="w-full"
+            src="{{VJS10_DEMO_VIDEO_MP4}}"
+            autoplay
+            muted
+            playsinline
+            loop
+            crossorigin="anonymous"
+        >
+            <track
+                kind="chapters"
+                src="/docs/demos/time-slider/chapters.vtt"
+                srclang="en"
+                default
+            />
+        </video>
+        <media-time-slider class="absolute inset-x-3 bottom-2 flex h-5 cursor-pointer items-center text-white">
+            <media-time-slider-chapters class="relative block h-full w-full">
+                <template>
+                    <div class="absolute inset-0 flex items-center [clip-path:inset(0_calc(100%_-_var(--media-slider-chapter-end))_0_var(--media-slider-chapter-start))]">
+                        <media-slider-track class="absolute inset-x-0 block h-1 overflow-hidden rounded-full bg-white/30 transition-[height] duration-150 in-data-highlighted:h-1.75 [clip-path:inset(0_calc(100%_-_var(--media-slider-chapter-end)_+_2px)_0_calc(var(--media-slider-chapter-start)_+_2px)_round_9999px)]">
+                            <media-slider-buffer class="absolute inset-y-0 left-0 block w-(--media-slider-buffer) rounded-[inherit] bg-white/30 transition-[width] duration-200 ease-linear"></media-slider-buffer>
+                            <media-slider-fill class="absolute inset-y-0 left-0 block w-(--media-slider-fill) rounded-[inherit] bg-white transition-[width] duration-200 ease-linear in-data-dragging:w-(--media-slider-pointer) in-data-dragging:duration-0"></media-slider-fill>
+                        </media-slider-track>
+                    </div>
+                </template>
+            </media-time-slider-chapters>
+            <media-slider-thumb class="absolute top-1/2 left-(--media-slider-fill) block size-3 -translate-1/2 rounded-full bg-white in-data-dragging:left-(--media-slider-pointer)"></media-slider-thumb>
+            <media-slider-preview class="pointer-events-none absolute bottom-full left-(--media-slider-pointer) flex -translate-x-1/2 -translate-y-1 gap-1.5 rounded-sm bg-black/80 px-1.75 py-0.75 whitespace-nowrap text-white opacity-0 in-data-pointing:opacity-100 in-data-interactive:not-in-data-pointing:opacity-100">
+                <media-time-slider-chapter-title class="empty:hidden"></media-time-slider-chapter-title>
+                <media-slider-value type="pointer"></media-slider-value>
+            </media-slider-preview>
+        </media-time-slider>
+    </media-container>
+</video-player>

@@ -11,6 +11,8 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/use-button/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/use-button/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-button/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/use-button/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/use-button/react/tailwind/BasicUsage.tsx?raw";
 
 `useButton` provides button behavior including keyboard activation and accessibility checks. It returns a `getButtonProps` function for spreading onto a `<button>` element and a `buttonRef` for validation.
 
@@ -29,6 +31,15 @@ import basicUsageReactCss from "@/components/docs/demos/use-button/react/css/Bas
       ]}
     >
       <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <BasicUsageDemoReactTailwind client:idle />
     </Demo>
   </StyleCase>
 </FrameworkCase>

@@ -16,12 +16,17 @@ import DocsLinkCard from "@/components/docs/DocsLinkCard.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/mux-video/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/mux-video/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/mux-video/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/mux-video/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/mux-video/react/tailwind/BasicUsage.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/mux-video/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/mux-video/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/mux-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/mux-video/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/mux-video/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/mux-video/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/mux-video/html/tailwind/BasicUsage.ts?raw";
 
 Video element for playing Mux-hosted HLS streams. Built on hls.js with Mux-specific optimizations.
 
@@ -150,6 +155,13 @@ Register the elements by importing `@videojs/html/media/mux-data` and `@videojs/
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -160,6 +172,14 @@ Register the elements by importing `@videojs/html/media/mux-data` and `@videojs/
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

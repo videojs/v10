@@ -14,12 +14,17 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import WithPartsDemoReact from "@/components/docs/demos/volume-slider/react/css/WithParts";
 import withPartsReactTsx from "@/components/docs/demos/volume-slider/react/css/WithParts.tsx?raw";
 import withPartsReactCss from "@/components/docs/demos/volume-slider/react/css/WithParts.css?raw";
+import WithPartsDemoReactTailwind from "@/components/docs/demos/volume-slider/react/tailwind/WithParts";
+import withPartsReactTailwindTsx from "@/components/docs/demos/volume-slider/react/tailwind/WithParts.tsx?raw";
 
 {/* HTML demos */}
 import WithPartsDemoHtml from "@/components/docs/demos/volume-slider/html/css/WithParts.astro";
 import withPartsHtml from "@/components/docs/demos/volume-slider/html/css/WithParts.html?raw";
 import withPartsHtmlCss from "@/components/docs/demos/volume-slider/html/css/WithParts.css?raw";
 import withPartsHtmlTs from "@/components/docs/demos/volume-slider/html/css/WithParts.ts?raw";
+import WithPartsDemoHtmlTailwind from "@/components/docs/demos/volume-slider/html/tailwind/WithParts.astro";
+import withPartsTailwindHtml from "@/components/docs/demos/volume-slider/html/tailwind/WithParts.html?raw";
+import withPartsTailwindHtmlTs from "@/components/docs/demos/volume-slider/html/tailwind/WithParts.ts?raw";
 
 ## Anatomy
 
@@ -89,6 +94,15 @@ Nest sub-components for full control over the slider's DOM structure. This examp
       <WithPartsDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: withPartsReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <WithPartsDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -101,6 +115,16 @@ Nest sub-components for full control over the slider's DOM structure. This examp
       ]}
     >
       <WithPartsDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: withPartsTailwindHtml, lang: "html" },
+        { title: "index.ts", code: withPartsTailwindHtmlTs, lang: "ts" },
+      ]}
+    >
+      <WithPartsDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

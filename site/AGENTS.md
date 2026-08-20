@@ -48,6 +48,7 @@ pnpm -F site astro check
 ## Demos
 
 - Use `{{VJS*}}` placeholders from `scripts/replace-demo-placeholders.ts` for shared media URLs in HTML and React demos.
+- Every styled demo ships a `css/` and a `tailwind/` variant, gated in MDX with `<StyleCase>`. Tailwind variants use stock Tailwind v4 utilities only — never site theme tokens; the stock tokens demos rely on are re-declared in a dedicated `@theme` block in `src/styles/globals.css`. Structure and naming are owned by the `write-api-reference` skill (`references/demo-patterns.md`).
 - Keep demo-specific CSS scoped under a unique root class.
 - Prefix demo classes with framework, component, and variant.
 - Reflect meaningful HTML demo state to `data-*` attributes and style those attributes.

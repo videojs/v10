@@ -11,6 +11,8 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/use-locale/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/use-locale/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-locale/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/use-locale/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/use-locale/react/tailwind/BasicUsage.tsx?raw";
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -30,6 +32,15 @@ Switch the provider locale to see `useLocale` supply the BCP 47 tag used to form
     ]}
   >
     <BasicUsageDemoReact client:idle />
+  </Demo>
+</StyleCase>
+<StyleCase styles={["tailwind"]}>
+  <Demo
+    files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}
+  >
+    <BasicUsageDemoReactTailwind client:idle />
   </Demo>
 </StyleCase>
 

@@ -11,6 +11,8 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/use-media/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/use-media/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-media/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/use-media/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/use-media/react/tailwind/BasicUsage.tsx?raw";
 
 The `useMedia` hook returned by <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> returns the current `Media` object (or `null` if no media has been registered yet). `Media` is a runtime-agnostic playback interface — any instance that conforms to it, including an `HTMLVideoElement`, can be the media. It exposes capabilities like `play()` and event subscription rather than assuming a native element. It must be called within the matching `Player`. The media object becomes available after a `<Video>` or `<Audio>` component mounts inside the player tree. To attach a custom media element instead of the built-in components, see <DocsLink slug="reference/use-media-attach">`useMediaAttach`</DocsLink>.
 
@@ -31,6 +33,15 @@ const { Player, useMedia } = createPlayer({ features: videoFeatures });
       ]}
     >
       <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <BasicUsageDemoReactTailwind client:idle />
     </Demo>
   </StyleCase>
 </FrameworkCase>

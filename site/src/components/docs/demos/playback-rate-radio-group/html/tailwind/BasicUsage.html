@@ -1,0 +1,38 @@
+<video-player class="relative block">
+    <media-container class="relative block">
+        <video
+            class="w-full"
+            src="{{VJS10_DEMO_VIDEO_MP4}}"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <div class="absolute right-2.5 bottom-2.5">
+            <button
+                type="button"
+                commandfor="speed-menu"
+                class="cursor-pointer rounded-full border border-white/35 bg-white/75 px-4 py-1.5 text-black backdrop-blur-[10px]"
+            >
+                Speed
+            </button>
+            <media-menu
+                id="speed-menu"
+                side="top"
+                align="end"
+                class="[--media-menu-side-offset:8px] box-border grid min-w-45 max-w-[var(--media-menu-available-width,var(--media-popover-available-width,none))] max-h-[var(--media-menu-available-height,var(--media-popover-available-height,none))] gap-0.5 overflow-auto overscroll-none rounded-lg bg-black/88 p-1.5 text-sm text-white backdrop-blur-[10px]"
+            >
+                <media-playback-rate-radio-group class="grid gap-0.5" aria-label="Speed">
+                    <template>
+                        <media-menu-radio-item
+                            class="flex min-h-8 cursor-pointer items-center justify-between gap-2 rounded-md px-2.5 data-highlighted:bg-white/16"
+                        >
+                            <span data-part="label"></span>
+                            <media-menu-item-indicator force-mount class="opacity-0 in-aria-checked:opacity-100">✓</media-menu-item-indicator>
+                        </media-menu-radio-item>
+                    </template>
+                </media-playback-rate-radio-group>
+            </media-menu>
+        </div>
+    </media-container>
+</video-player>

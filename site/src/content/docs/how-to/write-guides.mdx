@@ -14,10 +14,15 @@ import Demo from '@/components/docs/demos/Demo.astro';
 import BasicUsageDemoReact from '@/components/docs/demos/play-button/react/css/BasicUsage';
 import basicUsageReactTsx from '@/components/docs/demos/play-button/react/css/BasicUsage.tsx?raw';
 import basicUsageReactCss from '@/components/docs/demos/play-button/react/css/BasicUsage.css?raw';
+import BasicUsageDemoReactTailwind from '@/components/docs/demos/play-button/react/tailwind/BasicUsage';
+import basicUsageReactTailwindTsx from '@/components/docs/demos/play-button/react/tailwind/BasicUsage.tsx?raw';
 import BasicUsageDemoHtml from '@/components/docs/demos/play-button/html/css/BasicUsage.astro';
 import basicUsageHtml from '@/components/docs/demos/play-button/html/css/BasicUsage.html?raw';
 import basicUsageHtmlCss from '@/components/docs/demos/play-button/html/css/BasicUsage.css?raw';
 import basicUsageHtmlTs from '@/components/docs/demos/play-button/html/css/BasicUsage.ts?raw';
+import BasicUsageDemoHtmlTailwind from '@/components/docs/demos/play-button/html/tailwind/BasicUsage.astro';
+import basicUsageTailwindHtml from '@/components/docs/demos/play-button/html/tailwind/BasicUsage.html?raw';
+import basicUsageTailwindHtmlTs from '@/components/docs/demos/play-button/html/tailwind/BasicUsage.ts?raw';
 
 What is a guide? In this context, it's a document in the docs that's not an API reference. For API references, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink>.
 
@@ -119,7 +124,7 @@ Keep documentation clear, human, and useful. Here are the key rules:
 ## 5. Understand MDX and our components
 
 ### `<FrameworkCase>` and `<StyleCase>`
-First, understand that the guide you write will be rendered for every framework / style combination (e.g., HTML + CSS, React + CSS) unless you restrict it to specific frameworks in the sidebar config as shown above.
+First, understand that the guide you write will be rendered for every framework / style combination (e.g., HTML + CSS, HTML + Tailwind, React + CSS, React + Tailwind) unless you restrict it to specific frameworks in the sidebar config as shown above.
 
 Use the `<FrameworkCase>` and `<StyleCase>` components to conditionally show content to just one framework or style:
 
@@ -563,6 +568,13 @@ Which renders as:
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -573,6 +585,14 @@ Which renders as:
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

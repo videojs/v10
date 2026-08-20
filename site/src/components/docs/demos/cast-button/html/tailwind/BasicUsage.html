@@ -1,0 +1,18 @@
+<video-player class="relative block">
+    <media-container>
+        <hlsjs-video
+            class="w-full"
+            src="{{VJS10_DEMO_VIDEO_HLS}}"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></hlsjs-video>
+        <media-cast-button
+            class="absolute right-2.5 bottom-2.5 cursor-pointer rounded-full border border-white/30 bg-white/70 px-5 py-2 text-black backdrop-blur-[10px] data-disabled:cursor-not-allowed data-disabled:opacity-50 data-disabled:grayscale"
+        >
+            <span class="hidden in-data-[cast-state=connected]:inline">Stop casting</span>
+            <span class="hidden not-in-data-[cast-state=connected]:inline">Start casting</span>
+        </media-cast-button>
+    </media-container>
+</video-player>

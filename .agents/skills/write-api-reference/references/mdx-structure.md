@@ -180,6 +180,13 @@ Renders a `<button>` with an automatic `aria-label`: "Unmute" when muted, "Mute"
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -192,14 +199,25 @@ Renders a `<button>` with an automatic `aria-label`: "Unmute" when muted, "Mute"
       <BasicUsageDemoHtml />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 ```
 
 Key details:
 - React demos use `client:idle` for hydration
 - HTML demos render server-side (no `client:*` directive)
-- React source tabs: `App.tsx`, `App.css`
-- HTML source tabs: `index.html`, `index.css`, `index.ts`
+- React source tabs: `App.tsx`, `App.css` (Tailwind variant: `App.tsx` only)
+- HTML source tabs: `index.html`, `index.css`, `index.ts` (Tailwind variant: `index.html`, `index.ts`)
+- Tailwind import names append `Tailwind` to the css names (`BasicUsageDemoReactTailwind`,
+  `basicUsageReactTailwindTsx`, `BasicUsageDemoHtmlTailwind`, `basicUsageTailwindHtml`,
+  `basicUsageTailwindHtmlTs`); place them directly after the corresponding css imports
 
 ### ComponentReference Component
 

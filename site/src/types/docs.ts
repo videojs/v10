@@ -1,6 +1,6 @@
 export const FRAMEWORK_STYLES = {
-  react: ['css'],
-  html: ['css'],
+  react: ['css', 'tailwind'],
+  html: ['css', 'tailwind'],
 } as const;
 
 export type SupportedFramework = keyof typeof FRAMEWORK_STYLES;
@@ -14,6 +14,7 @@ export const FRAMEWORK_LABELS: Record<SupportedFramework, string> = {
 
 export const STYLE_LABELS: Record<AnySupportedStyle, string> = {
   css: 'CSS',
+  tailwind: 'Tailwind',
 };
 
 export const SUPPORTED_FRAMEWORKS = Object.keys(FRAMEWORK_STYLES) as (keyof typeof FRAMEWORK_STYLES)[];

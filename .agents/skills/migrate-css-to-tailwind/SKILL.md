@@ -14,6 +14,11 @@ description: Migrate site styles to Tailwind v4. Use for CSS, modules, SCSS, sty
 
 Keep the change scoped to migration; report unrelated styling problems separately.
 
+Exception: docs demo `tailwind/` variants under `site/src/components/docs/demos` are copy-paste
+snippets for a stock Tailwind v4 setup — site theme tokens and site-only conventions do not apply
+there. Their rules live with the API reference demo patterns
+(`.agents/skills/write-api-reference/references/demo-patterns.md`).
+
 ## Example
 
 Input: “Migrate the site header module to Tailwind v4.”

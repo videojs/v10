@@ -1,0 +1,18 @@
+<video-player class="relative block">
+    <media-container>
+        <video
+            class="w-full"
+            src="{{VJS10_DEMO_VIDEO_MP4}}"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <media-airplay-button
+            class="absolute right-2.5 bottom-2.5 cursor-pointer rounded-full border border-white/30 bg-white/70 px-5 py-2 text-black backdrop-blur-[10px] data-disabled:cursor-not-allowed data-disabled:opacity-50 data-disabled:grayscale"
+        >
+            <span class="hidden in-data-[airplay-state=connected]:inline">Stop AirPlay</span>
+            <span class="hidden not-in-data-[airplay-state=connected]:inline">Start AirPlay</span>
+        </media-airplay-button>
+    </media-container>
+</video-player>

@@ -82,6 +82,24 @@ src/components/docs/demos/{name}/react/css/
 └── BasicUsage.css      # Styles
 ```
 
+### Tailwind variants
+
+Every styled demo also ships a `tailwind/` twin with the same demo names, gated in the MDX page with `<StyleCase styles={["css"]}>` / `<StyleCase styles={["tailwind"]}>`:
+
+```
+src/components/docs/demos/{name}/html/tailwind/
+├── BasicUsage.astro    # Same wrapper shape as the css variant
+├── BasicUsage.html     # Markup with Tailwind utilities inline (no .css file)
+└── BasicUsage.ts       # Identical copy of the css variant's .ts
+
+src/components/docs/demos/{name}/react/tailwind/
+└── BasicUsage.tsx      # css variant with Tailwind utility classes (no .css file)
+```
+
+Tailwind variants mirror the css variant 1:1 and must stay copy-paste compatible with a stock Tailwind v4 setup — never use site theme tokens. The stock tokens demos rely on are re-declared in a dedicated `@theme` block in `src/styles/globals.css`; extend that block (stock values only) if a new demo needs another token. State-dependent styling uses data-attribute variants (`data-paused:`, `in-data-paused:`, `not-in-data-ended:`) in place of the css variant's attribute selectors. Demos with no stylesheet of their own (for example JSON-config demos) stay `css/`-only and render for both styles.
+
+Tailwind import names in the MDX page append `Tailwind` to the css names (`BasicUsageDemoReactTailwind`, `basicUsageReactTailwindTsx`, `basicUsageTailwindHtml`, `basicUsageTailwindHtmlTs`), placed directly after the corresponding css imports. React Tailwind demos show a single `App.tsx` tab; HTML Tailwind demos show `index.html` + `index.ts` (no css tab).
+
 ### BEM naming
 
 Use BEM class names for CSS scoping. The block name follows the pattern `{framework}-{component}-{variant}`:

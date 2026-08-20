@@ -12,6 +12,9 @@ import BasicUsageDemoHtml from "@/components/docs/demos/player-controller/html/c
 import basicUsageHtml from "@/components/docs/demos/player-controller/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/player-controller/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/player-controller/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/player-controller/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/player-controller/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/player-controller/html/tailwind/BasicUsage.ts?raw";
 
 `PlayerController` is a reactive controller that consumes the player store from <DocsLink slug="reference/player-context">`playerContext`</DocsLink>. Without a selector it returns the store instance directly (no subscription — use this for actions). With a selector it returns the selected value and subscribes to changes, triggering a host update on shallow-equal change. Access the current value via `.value`, which returns `undefined` until connected to a provider.
 
@@ -29,6 +32,16 @@ import basicUsageHtmlTs from "@/components/docs/demos/player-controller/html/css
       ]}
     >
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+        { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>
