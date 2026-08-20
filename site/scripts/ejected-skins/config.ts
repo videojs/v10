@@ -97,6 +97,10 @@ function createHtmlSkin(style: SkinStyle, variant: SkinVariant, mediaType: Media
   const group = getGroup(mediaType, live);
   const file = variant === 'minimal' ? 'minimal-skin' : 'skin';
   const styleSuffix = style === 'tailwind' ? '.tailwind' : '';
+  const template =
+    style === 'css' && variant === 'default'
+      ? `packages/html/src/preset/${group}/skin-element.ts`
+      : `packages/html/src/define/${group}/${file}${styleSuffix}.ts`;
 
   return {
     id: getId('html', style, variant, mediaType, live),
@@ -107,7 +111,7 @@ function createHtmlSkin(style: SkinStyle, variant: SkinVariant, mediaType: Media
     group,
     variant,
     live,
-    template: `packages/html/src/define/${group}/${file}${styleSuffix}.ts`,
+    template,
     ...(style === 'css' && { css: `packages/html/src/define/${group}/${file}.css` }),
     iconSet: variant,
   };
