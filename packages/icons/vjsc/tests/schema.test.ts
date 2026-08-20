@@ -1,16 +1,15 @@
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { iconSchemaVirtualModule } from '../schema';
+import { createIconSchemaModule } from '../schema';
 
-describe('iconSchemaVirtualModule', () => {
-  it('loads each family in memory with a stable module identity', () => {
-    const module = iconSchemaVirtualModule('minimal');
-    const generated = module.load();
+describe('createIconSchemaModule', () => {
+  it('loads each family directly from its canonical assets', () => {
+    const generated = createIconSchemaModule('minimal');
 
-    expect(module.id).toBe('virtual:vjsc/icons-schema/minimal');
     expect(generated.schema.source).toBe('@videojs/icons/vjsc');
     expect(Object.keys(generated.schema.definitions)).toContain('PlayIcon');
-    expect(existsSync(module.fileName)).toBe(false);
+    expect(existsSync(resolve(import.meta.dirname, '../../vjsc.ts'))).toBe(false);
   });
 });

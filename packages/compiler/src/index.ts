@@ -12,10 +12,8 @@ export type {
   CreateSchemaModuleOptions,
   GenerateSchemaConfig,
   SchemaModule,
-  VirtualSchemaConfig,
-  VirtualSchemaModule,
 } from './components/generate/schema';
-export { createSchemaModule, schemaVirtualModule } from './components/generate/schema';
+export { createSchemaModule } from './components/generate/schema';
 export {
   type CompilerAsset,
   type CompilerBuildConfig,

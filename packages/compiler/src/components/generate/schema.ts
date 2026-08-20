@@ -10,7 +10,6 @@ import {
   type GeneratedModuleOptions,
   writeGeneratedFile,
 } from '../../generate';
-import type { VirtualModuleDefinition } from '../../module-graph';
 import { toPosixPath } from '../../utils/path';
 import { relativeModuleSpecifier, sourceScriptKind } from '../../utils/source-module';
 import { type ComponentDefinition, type ComponentRecord, type ComponentSchema, defineSchema } from '../definition';
@@ -34,17 +33,6 @@ export type GenerateSchemaResult = GeneratedFileResult;
 export type CreateSchemaModuleOptions = GeneratedModuleOptions;
 export interface SchemaModule extends GeneratedModule {
   readonly schema: ComponentSchema;
-}
-
-export interface VirtualSchemaConfig extends Omit<GenerateSchemaConfig, 'output'> {
-  readonly id: VirtualModuleDefinition['id'];
-  /** Filesystem identity used for relative imports and declaration generation. This file is not written. */
-  readonly fileName: string;
-}
-
-export interface VirtualSchemaModule extends VirtualModuleDefinition {
-  readonly fileName: string;
-  load(): SchemaModule;
 }
 
 interface ManifestComponent {
@@ -99,29 +87,6 @@ export function createSchemaModule(
     code: generated,
     schema: defineSchema(source, Object.fromEntries(entries.map((entry) => [entry.name, entry.definition]))),
     watchFiles: [...watchFiles].sort(),
-  };
-}
-
-/** Expose a generated component schema through a stable bundler module without writing its source. */
-export function schemaVirtualModule(
-  config: VirtualSchemaConfig,
-  options: CreateSchemaModuleOptions = {}
-): VirtualSchemaModule {
-  const cwd = options.cwd ?? process.cwd();
-  const fileName = isAbsolute(config.fileName) ? config.fileName : resolve(cwd, config.fileName);
-
-  return {
-    id: config.id,
-    fileName,
-    load: () =>
-      createSchemaModule(
-        {
-          source: config.source,
-          files: config.files,
-          output: fileName,
-        },
-        { cwd }
-      ),
   };
 }
 

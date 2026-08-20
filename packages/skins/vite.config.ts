@@ -4,24 +4,20 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { jsx } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
-import { catalogMetaPlugin, catalogVirtualModule } from 'vjsc/catalog';
+import { catalogMetaPlugin } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
-import { coreSchemaModule } from '../core/src/vjsc.config';
-import { iconSchemaVirtualModule } from '../icons/vjsc/schema';
 import { createIconElementModule } from './build/icon-element';
 import { createReactComponentRegistry } from './build/metadata';
 import { componentTransforms } from './build/output/react/transform';
 import { createSkinVirtualModules } from './build/virtual-skins';
-import { skinCatalog } from './canonical/catalog';
 
 const packageDir = import.meta.dirname;
 const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 
-const iconSchemaModule = iconSchemaVirtualModule();
 const defaultIconElementModule = createIconElementModule('default');
 const minimalIconElementModule = createIconElementModule('minimal');
 
@@ -44,9 +40,6 @@ export default defineConfig({
     compiler({
       include: `${canonicalDir}/**/*.tsx`,
       modules: [
-        coreSchemaModule,
-        iconSchemaModule,
-        catalogVirtualModule(skinCatalog),
         { id: 'virtual:vjsc/icons/element/default.js', load: () => defaultIconElementModule },
         { id: 'virtual:vjsc/icons/element/minimal.js', load: () => minimalIconElementModule },
         ...createSkinVirtualModules(),

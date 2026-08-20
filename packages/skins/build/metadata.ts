@@ -1,17 +1,18 @@
 import { resolve } from 'node:path';
 
 import type { schema as coreSchema } from '@videojs/core/vjsc';
+import { createSchemaModule } from 'vjsc';
 import { type ComponentRegistry, extendRegistry } from 'vjsc/registry';
-import { coreSchemaModule } from '../../core/src/vjsc.config';
 import { createRegistry as createHtmlRegistry } from '../../html/vjsc/registry';
 import {
   createHtmlRegistry as createHtmlIconRegistry,
   createReactRegistry as createReactIconRegistry,
 } from '../../icons/vjsc/registry';
-import { iconSchemaVirtualModule } from '../../icons/vjsc/schema';
+import { createIconSchemaModule } from '../../icons/vjsc/schema';
 import { createRegistry as createReactRegistry } from '../../react/vjsc/registry';
 
 const packagesDir = resolve(import.meta.dirname, '../..');
+const corePackageDir = resolve(packagesDir, 'core');
 type CoreSchema = typeof coreSchema;
 
 export const frameworkRegistryWatchFiles = {
@@ -20,7 +21,7 @@ export const frameworkRegistryWatchFiles = {
 } as const;
 
 export function getIconSchemaModule(family = 'default') {
-  return iconSchemaVirtualModule(family).load();
+  return createIconSchemaModule(family);
 }
 
 export function createReactComponentRegistry(iconFamily = 'default'): ComponentRegistry {
@@ -42,5 +43,12 @@ export function createHtmlComponentRegistry(iconFamily = 'default'): ComponentRe
 }
 
 export function getCoreSchemaModule() {
-  return coreSchemaModule.load();
+  return createSchemaModule(
+    {
+      source: '@videojs/core/vjsc',
+      files: ['./src/core/ui/*/*-component.ts'],
+      output: resolve(corePackageDir, 'vjsc.ts'),
+    },
+    { cwd: corePackageDir }
+  );
 }

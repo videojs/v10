@@ -1,10 +1,5 @@
 export * from './definition';
 export {
-  schemaVirtualModule,
-  type VirtualSchemaConfig,
-  type VirtualSchemaModule,
-} from './generate/schema';
-export {
   type BaseProps,
   type ClassNameValue,
   type Component,

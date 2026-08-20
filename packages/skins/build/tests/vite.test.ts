@@ -12,7 +12,6 @@ const canonicalPlayButton = resolve(packageDir, 'canonical/components/buttons/pl
 const corePlayButton = resolve(packageDir, '../core/src/core/ui/play-button/play-button-component.ts');
 const reactVirtualSkin = 'virtual:vjsc/skin/react/default-video/vanilla.tsx';
 const htmlVirtualSkin = 'virtual:vjsc/skin/html/minimal-video/tailwind.tsx';
-const virtualCatalog = 'virtual:vjsc/catalog';
 
 describe('canonical Skins Vite workflow', () => {
   let server: ViteDevServer | undefined;
@@ -68,20 +67,12 @@ describe('canonical Skins Vite workflow', () => {
 
     const reactSkin = await server.transformRequest(reactVirtualSkin);
     const htmlSkin = await server.transformRequest(htmlVirtualSkin);
-    const catalog = await server.transformRequest(virtualCatalog);
 
     expect(reactSkin?.code).toContain('$RefreshReg$');
     expect(reactSkin?.code).toContain('DefaultVideoSkin');
     expect(htmlSkin?.code).toContain('const skin =');
     expect(htmlSkin?.code).toContain('media-skin-video-minimal');
     expect(htmlSkin?.code).not.toContain('@videojs/core/vjsc');
-    expect(catalog?.code).toContain('default-video');
-    expect(catalog?.code).toContain('play-button');
-
-    const resolvedCatalog = await server.pluginContainer.resolveId(virtualCatalog);
-    const catalogModule = resolvedCatalog && server.moduleGraph.getModuleById(resolvedCatalog.id);
-    expect(catalogModule?.transformResult).not.toBeNull();
-
     const resolved = await server.pluginContainer.resolveId(reactVirtualSkin);
     expect(resolved?.id).toBe(reactVirtualSkin);
     const virtualModule = resolved && server.moduleGraph.getModuleById(resolved.id);
@@ -103,7 +94,7 @@ describe('canonical Skins Vite workflow', () => {
     server.watcher.emit('change', canonicalPlayButton);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(catalogModule?.transformResult).toBeNull();
+    expect(virtualModule?.transformResult).toBeNull();
   }, 30_000);
 
   it('builds the same canonical configuration for production', async () => {

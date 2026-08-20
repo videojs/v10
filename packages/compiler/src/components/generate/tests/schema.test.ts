@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { createSchemaModule, generateSchema, parseGenerateSchemaConfig, schemaVirtualModule } from '../schema';
+import { createSchemaModule, generateSchema, parseGenerateSchemaConfig } from '../schema';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 
@@ -50,23 +50,6 @@ describe('generateSchema', () => {
       join(dir, 'play-button', 'play-button-component.ts'),
       join(dir, 'slider', 'slider-component.ts'),
     ]);
-    expect(existsSync(output)).toBe(false);
-  });
-
-  it('loads a virtual schema using a filesystem identity without writing it', () => {
-    const { dir, output, pattern } = setup();
-    const module = schemaVirtualModule(
-      {
-        id: 'virtual:vjsc/schema',
-        source: '@fixture/components',
-        files: [pattern],
-        fileName: output,
-      },
-      { cwd: dir }
-    );
-
-    expect(module.fileName).toBe(output);
-    expect(module.load().schema.source).toBe('@fixture/components');
     expect(existsSync(output)).toBe(false);
   });
 

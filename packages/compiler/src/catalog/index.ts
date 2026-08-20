@@ -37,4 +37,3 @@ export {
   resolveCatalog,
 } from './resolve';
 export { loadCatalogStyles } from './styles';
-export { catalogVirtualModule, type VirtualCatalogDefinition } from './virtual';
