@@ -20,8 +20,9 @@ import InlineMarkdown from './InlineMarkdown.astro';
  * page — the table is only useful next to the paragraph naming the provider's
  * own documentation.
  *
- * Renders nothing when the engine documents no options, so a page can carry the
- * component before its interface has JSDoc.
+ * Renders nothing when the media exposes no engine options at all. An option
+ * with no JSDoc still gets a row: it exists in the API surface, so a reader
+ * setting it should be able to find it.
  */
 interface Props {
   /** Media class name, e.g. `YouTubeVideo`. */
@@ -57,7 +58,7 @@ const options = ref?.engineOptions?.[engine] ?? [];
               <MarkdownCode>{option.type}</MarkdownCode>
             </Td>
             <Td class="align-top">
-              <InlineMarkdown content={option.description} />
+              <InlineMarkdown content={option.description} fallback="—" />
             </Td>
           </Tr>
         ))}

@@ -1767,12 +1767,17 @@ describe('Media element pipeline (end-to-end)', () => {
           type: 'ReferrerPolicy | undefined',
           description: '`referrerpolicy` for the embed iframe. Not an embed parameter.',
         },
+        // Present in the API surface, so documented as existing even with no
+        // description to give it.
+        { name: 'undocumented', type: 'string | undefined' },
       ]);
     });
 
-    it('omits engine options carrying no JSDoc', () => {
+    it('keeps an engine option that carries no JSDoc, without a description', () => {
       const options = findElement('EmbedVideo')!.reference.engineOptions?.embed ?? [];
-      expect(options.map((option) => option.name)).not.toContain('undocumented');
+      const undocumented = options.find((option) => option.name === 'undocumented');
+      expect(undocumented).toBeDefined();
+      expect(undocumented?.description).toBeUndefined();
     });
   });
 

@@ -789,12 +789,10 @@ function resolveInferredTypes(
  * provider (`source.ts` for most, `media.ts` for Vimeo) and one extends a
  * third-party type (`@vimeo/player`), which the checker resolves the same way.
  *
- * JSDoc is the only source of prose here, so a wrong or missing description is
- * fixed on the interface member, never in the docs page. Members carrying no
- * JSDoc are omitted, and an engine left with none is dropped entirely: a name
- * and a type with no description is not documentation, and the third-party
- * engine configs (`hls.js` alone declares 134 undocumented options) would
- * otherwise bury the ones we do describe.
+ * Every member is emitted, described or not: an option in the API surface is one
+ * a reader can set, and a name with its type still says what exists and what
+ * shape it takes. JSDoc is the only source of prose, so a missing or wrong
+ * description is fixed on the interface member, never in the docs page.
  */
 function extractEngineOptions(
   hostFilePath: string,
@@ -836,20 +834,18 @@ function extractEngineOptions(
     const configType = checker.getTypeOfSymbolAtLocation(engine, anchor).getNonNullableType();
     const options = configType
       .getProperties()
-      .flatMap((member) => {
+      .map((member) => {
+        const def: EngineOptionDef = {
+          name: member.getName(),
+          type: checker.typeToString(checker.getTypeOfSymbolAtLocation(member, anchor)),
+        };
         // Collapse whitespace: multi-line JSDoc renders into one table cell.
         const description = ts
           .displayPartsToString(member.getDocumentationComment(checker))
           .replace(/\s+/g, ' ')
           .trim();
-        if (!description) return [];
-        return [
-          {
-            name: member.getName(),
-            type: checker.typeToString(checker.getTypeOfSymbolAtLocation(member, anchor)),
-            description,
-          } satisfies EngineOptionDef,
-        ];
+        if (description) def.description = description;
+        return def;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
     if (options.length > 0) engines[engine.getName()] = options;
