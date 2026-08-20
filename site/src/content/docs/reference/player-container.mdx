@@ -2,7 +2,7 @@
 title: Container
 frameworkTitle:
   html: media-container
-description: The player's interaction surface — handles layout, fullscreen, media attachment, and user activity detection.
+description: The player's visual and interaction surface for layout, fullscreen, focus, and user activity.
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
@@ -55,10 +55,11 @@ const { Player } = createPlayer({ features: videoFeatures });
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-For most users, importing from `@videojs/html/video/player` registers both `<video-player>` and `<media-container>` with the standard video features:
+Register the standard player and skin entry points for a complete video player. The skin supplies `<media-container>` and the UI elements it uses:
 
 ```ts
 import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
 ```
 
 ```html
@@ -69,16 +70,16 @@ import '@videojs/html/video/player';
 </video-player>
 ```
 
-For custom behavior, import the preconfigured `ContainerMixin` from the main HTML package:
+For custom behavior, extend the same `ContainerElement` used by the built-in player:
 
 ```ts title="my-player.ts"
-import { ContainerMixin, MediaElement } from '@videojs/html';
+import { ContainerElement } from '@videojs/html';
 
-class MyContainer extends ContainerMixin(MediaElement) {}
+class MyContainer extends ContainerElement {}
 customElements.define('my-container', MyContainer);
 ```
 
-<DocsLinkCard slug="reference/container-mixin">ContainerMixin reference</DocsLinkCard>
+Import `@videojs/html/ui/container` when you only need to register the standard `<media-container>` element.
 </FrameworkCase>
 
 ## What it does
@@ -114,7 +115,7 @@ When the user goes fullscreen, the **container** goes fullscreen — not the vid
 Media discovery is handled by `Player`, not `Container`. When a media component like `<Video>` registers itself via context, `Player` wires it to the store and all of the player's features.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-Media discovery is handled by the provider, not the container. Custom media elements like `<hlsjs-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are picked up automatically via a `querySelector` fallback. No `slot="media"` attribute is needed.
+Media discovery is handled by the player provider, not the container. Custom media elements like `<hlsjs-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are tracked automatically, including when they are added, removed, or replaced after connection. No `slot="media"` attribute is needed.
 </FrameworkCase>
 
 ### Interaction surface

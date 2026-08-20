@@ -257,7 +257,7 @@ function isUtilExport(exportNode: tae.ExportNode): boolean {
 
 function getDisplayName(name: string): string {
   if (name.startsWith('create') && name.includes('Mixin')) {
-    // createProviderMixin → ProviderMixin
+    // createMediaAttachMixin → MediaAttachMixin
     return name.replace(/^create/, '');
   }
   return name;

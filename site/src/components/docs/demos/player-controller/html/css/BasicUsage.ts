@@ -9,7 +9,7 @@ import {
   selectVolume,
 } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
-import '@videojs/html/media/container';
+import '@videojs/html/ui/container';
 
 const { ProviderMixin, context } = createPlayer({
   features: videoFeatures,
