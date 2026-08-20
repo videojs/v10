@@ -15,11 +15,11 @@
     "build",
     "scripts",
     "dev",
-    "canonical/catalog.ts",
-    "canonical/registry/shadcn.ts",
-    "canonical/styles/tokens.ts",
+    "vjsc/catalog.ts",
+    "vjsc/registry/shadcn.ts",
+    "vjsc/styles/tokens.ts",
     "vite.config.ts"
   ],
-  "exclude": ["canonical/registry/default"],
+  "exclude": ["vjsc/registry/default"],
   "references": [{ "path": "../core" }, { "path": "../html" }, { "path": "../icons" }, { "path": "../react" }]
 }

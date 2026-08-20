@@ -1,17 +1,17 @@
 import { resolve } from 'node:path';
 import { type Catalog, loadCatalog } from 'vjsc/catalog';
-import skinCatalog from '../canonical/catalog';
+import skinCatalog from '../vjsc/catalog';
 
 export type SkinCatalog = Catalog<typeof skinCatalog>;
 export type SkinCatalogItem = SkinCatalog['items'][number];
 export type SkinCatalogSkin = Extract<SkinCatalogItem, { type: 'skin' }>;
 
 export const skinsPackageRoot = resolve(import.meta.dirname, '..');
-export const canonicalRoot = resolve(skinsPackageRoot, 'canonical');
+export const vjscRoot = resolve(skinsPackageRoot, 'vjsc');
 
 /** Load and analyze the authored catalog used by every Skin output. */
 export function loadSkinCatalog(definition: typeof skinCatalog = skinCatalog): Promise<SkinCatalog> {
-  return loadCatalog(definition, { rootDir: canonicalRoot });
+  return loadCatalog(definition, { rootDir: vjscRoot });
 }
 
 export function catalogSourcePath(path: string): string {

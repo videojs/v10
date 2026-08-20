@@ -9,7 +9,7 @@ This record separates the canonical Skin authoring model from the tools that pre
 
 ## One source, several projections
 
-`packages/skins/canonical` is the source of truth for Skin composition and styling. Core owns the framework-neutral component schema. React, HTML, and Icons own the registries that lower that schema to their public components. Skins owns catalog discovery and policy, Skin-specific transforms, style/theme policy, and delivery adapters.
+`packages/skins/vjsc` is the source of truth for Skin composition and styling. Core owns the framework-neutral component schema. React, HTML, and Icons own the registries that lower that schema to their public components. Skins owns catalog discovery and policy, Skin-specific transforms, style/theme policy, and delivery adapters.
 
 Each canonical item describes itself through a colocated `meta` export. The authored catalog configuration tells VJSC where to discover those entries and supplies catalog-wide policy; VJSC analyzes source ownership and dependency closure in memory. A VJSC projection selects a framework and a style representation. A delivery adapter then decides whether that projection is served live, emitted as package source, or published as an editable registry.
 
@@ -127,8 +127,8 @@ The remaining cutover belongs to [#2183](https://github.com/videojs/v10/issues/2
 
 ## Current sources of truth
 
-- Canonical item identity and description: colocated `meta` exports under `packages/skins/canonical/components` and `packages/skins/canonical/skins`
-- Catalog-wide discovery, resource, import, and delivery policy: `packages/skins/canonical/catalog.ts`
+- Canonical item identity and description: colocated `meta` exports under `packages/skins/vjsc/components` and `packages/skins/vjsc/skins`
+- Catalog-wide discovery, resource, import, and delivery policy: `packages/skins/vjsc/catalog.ts`
 - Framework and style delivery adapters: `packages/skins/build/output/`
 - Vite and Rolldown adapters: `packages/vjsc/src/bundlers/`
 - Catalog resolution and emission: `packages/vjsc/src/catalog/`

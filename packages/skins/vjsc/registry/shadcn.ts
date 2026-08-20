@@ -3,7 +3,7 @@ import { defineShadcnRegistry } from 'vjsc/shadcn';
 import skinCatalog from '../catalog';
 
 const paths = {
-  output: 'canonical/registry',
+  output: 'vjsc/registry',
   source: 'default',
   install: 'components/videojs',
   import: '@/components/videojs',

@@ -22,7 +22,7 @@ const key: ModuleKey = requested in modules ? (requested as ModuleKey) : 'react/
 const [framework, , styleMode] = key.split('/') as ['react' | 'html', string, 'vanilla' | 'tailwind'];
 const loaded = await modules[key]();
 
-if (styleMode === 'tailwind') await import('../canonical/styles/tailwind.css');
+if (styleMode === 'tailwind') await import('../vjsc/styles/tailwind.css');
 
 const style = document.createElement('style');
 style.dataset.vjsc = key;

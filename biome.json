@@ -99,8 +99,8 @@
     {
       "includes": [
         "packages/{html,react}/src/__generated__/skins/**",
-        "packages/skins/canonical/registry/default/**",
-        "packages/skins/canonical/styles/base.css"
+        "packages/skins/vjsc/registry/default/**",
+        "packages/skins/vjsc/styles/base.css"
       ],
       "formatter": {
         "enabled": false

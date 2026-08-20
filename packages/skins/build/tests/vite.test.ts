@@ -5,10 +5,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'vite.config.ts');
-const defaultSkinUrl = '/../canonical/skins/default-video/skin.tsx';
-const playButtonUrl = '/../canonical/components/buttons/play-button.tsx';
-const buttonStyles = resolve(packageDir, 'canonical/styles/components/button.styles.ts');
-const canonicalPlayButton = resolve(packageDir, 'canonical/components/buttons/play-button.tsx');
+const defaultSkinUrl = '/../vjsc/skins/default-video/skin.tsx';
+const playButtonUrl = '/../vjsc/components/buttons/play-button.tsx';
+const buttonStyles = resolve(packageDir, 'vjsc/styles/components/button.styles.ts');
+const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
 const corePlayButton = resolve(packageDir, '../core/src/core/ui/play-button/play-button-component.ts');
 const reactVirtualSkin = 'virtual:vjsc/skin/react/default-video/vanilla.tsx';
 const htmlVirtualSkin = 'virtual:vjsc/skin/html/minimal-video/tailwind.tsx';
@@ -91,7 +91,7 @@ describe('canonical Skins Vite workflow', () => {
 
     expect(virtualModule?.transformResult).toBeNull();
 
-    server.watcher.emit('change', canonicalPlayButton);
+    server.watcher.emit('change', vjscPlayButton);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(virtualModule?.transformResult).toBeNull();

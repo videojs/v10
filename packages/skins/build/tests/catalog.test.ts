@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { loadCatalogStyles, resolveCatalog } from 'vjsc/catalog';
-import { canonicalRoot, loadSkinCatalog } from '../catalog';
+import { loadSkinCatalog, vjscRoot } from '../catalog';
 
 describe('skinCatalog', () => {
   it('resolves the canonical default Skin and its compiler inputs', async () => {
@@ -87,7 +87,7 @@ describe('skinCatalog', () => {
   it('loads styles from resolved catalog items', async () => {
     const catalog = await loadSkinCatalog();
     const manifest = await loadCatalogStyles(catalog, ['play-button']);
-    const rules = manifest.modules.get(resolve(canonicalRoot, 'styles/components/button.styles.ts'));
+    const rules = manifest.modules.get(resolve(vjscRoot, 'styles/components/button.styles.ts'));
 
     expect(rules?.get('root')).toMatchObject({ className: 'media-button', file: 'buttons.css' });
     expect(rules?.get('icons.pause')?.className).toBe('media-pause-icon');

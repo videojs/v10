@@ -6,12 +6,12 @@ import { resolveCatalogCompilerConfig } from 'vjsc/catalog';
 import { loadStyleManifest, type StylePluginOptions, plugin as stylesPlugin } from 'vjsc/styles';
 import { htmlOutput } from '../html';
 
-const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
+const vjscRoot = resolve(import.meta.dirname, '../../../vjsc');
 const styleFiles = [
-  resolve(canonicalRoot, 'styles/components/container.styles.ts'),
-  resolve(canonicalRoot, 'styles/components/popup.styles.ts'),
-  resolve(canonicalRoot, 'styles/components/poster.styles.ts'),
-  resolve(canonicalRoot, 'styles/components/slider.styles.ts'),
+  resolve(vjscRoot, 'styles/components/container.styles.ts'),
+  resolve(vjscRoot, 'styles/components/popup.styles.ts'),
+  resolve(vjscRoot, 'styles/components/poster.styles.ts'),
+  resolve(vjscRoot, 'styles/components/slider.styles.ts'),
 ];
 
 type HtmlTestOptions = NonNullable<Parameters<typeof htmlOutput>[0]> & {
@@ -30,7 +30,7 @@ function htmlConfig({ styles, ...options }: HtmlTestOptions): CompilerConfig {
 
 describe('htmlOutput', () => {
   it('emits idiomatic light-DOM elements', async () => {
-    const filename = resolve(canonicalRoot, 'components/sliders/time-slider.tsx');
+    const filename = resolve(vjscRoot, 'components/sliders/time-slider.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -47,9 +47,9 @@ describe('htmlOutput', () => {
   });
 
   it('lowers Container and Poster as independent HTML components', async () => {
-    const filename = resolve(canonicalRoot, 'components/layout/container.tsx');
+    const filename = resolve(vjscRoot, 'components/layout/container.tsx');
     const source = await readFile(filename, 'utf8');
-    const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
+    const posterFilename = resolve(vjscRoot, 'components/layout/poster.tsx');
     const posterSource = await readFile(posterFilename, 'utf8');
     const config = htmlConfig({
       styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },

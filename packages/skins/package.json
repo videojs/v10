@@ -30,7 +30,7 @@
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "vite --host",
     "test": "pnpm run test:types && vitest run",
-    "test:types": "tsgo --project ./canonical/tsconfig.json",
+    "test:types": "tsgo --project ./vjsc/tsconfig.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {

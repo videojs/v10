@@ -14,12 +14,12 @@ import { createReactComponentRegistry } from './build/metadata';
 import { reactOutput } from './build/output/react';
 import { componentTransforms } from './build/output/react/transform';
 import { createSkinVirtualModules } from './build/virtual-skins';
-import skinCatalog from './canonical/catalog';
-import skinRegistry from './canonical/registry/shadcn';
 import { formatGeneratedFile } from './scripts/generation/format';
+import skinCatalog from './vjsc/catalog';
+import skinRegistry from './vjsc/registry/shadcn';
 
 const packageDir = import.meta.dirname;
-const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
+const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 
@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => (mode === 'registry' ? createRegistryC
 function createRegistryConfig() {
   const registry = shadcnPlugin({
     catalog: skinCatalog,
-    rootDir: canonicalDir,
+    rootDir: vjscDir,
     registry: skinRegistry,
     output: reactOutput({
       resolveImport(reference) {
@@ -79,7 +79,7 @@ function createPreviewConfig() {
     },
     plugins: [
       vjscPlugin({
-        include: `${canonicalDir}/**/*.tsx`,
+        include: `${vjscDir}/**/*.tsx`,
         entries: [
           { id: 'virtual:vjsc/icons/element/default.js' as const, load: () => defaultIconElementModule },
           { id: 'virtual:vjsc/icons/element/minimal.js' as const, load: () => minimalIconElementModule },
@@ -92,7 +92,7 @@ function createPreviewConfig() {
               mode: 'css',
               variant: 'default',
               emit: {
-                input: resolve(canonicalDir, 'styles/tailwind.css'),
+                input: resolve(vjscDir, 'styles/tailwind.css'),
                 scope: '.media-skin-video',
               },
             }),

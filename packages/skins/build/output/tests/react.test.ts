@@ -6,12 +6,12 @@ import { resolveCatalogCompilerConfig } from 'vjsc/catalog';
 import { loadStyleManifest, type StylePluginOptions, plugin as stylesPlugin } from 'vjsc/styles';
 import { reactOutput } from '../react';
 
-const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
+const vjscRoot = resolve(import.meta.dirname, '../../../vjsc');
 const styleFiles = [
-  resolve(canonicalRoot, 'styles/components/button.styles.ts'),
-  resolve(canonicalRoot, 'styles/components/container.styles.ts'),
-  resolve(canonicalRoot, 'styles/components/popup.styles.ts'),
-  resolve(canonicalRoot, 'styles/components/poster.styles.ts'),
+  resolve(vjscRoot, 'styles/components/button.styles.ts'),
+  resolve(vjscRoot, 'styles/components/container.styles.ts'),
+  resolve(vjscRoot, 'styles/components/popup.styles.ts'),
+  resolve(vjscRoot, 'styles/components/poster.styles.ts'),
 ];
 
 type ReactTestOptions = NonNullable<Parameters<typeof reactOutput>[0]> & {
@@ -30,7 +30,7 @@ function reactConfig({ styles, ...options }: ReactTestOptions): CompilerConfig {
 
 describe('reactOutput', () => {
   it('opts registry components into forwarded React props', async () => {
-    const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
+    const filename = resolve(vjscRoot, 'components/buttons/seek-button.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -51,7 +51,7 @@ describe('reactOutput', () => {
   });
 
   it('preserves canonical component props in packaged output', async () => {
-    const filename = resolve(canonicalRoot, 'components/buttons/play-button.tsx');
+    const filename = resolve(vjscRoot, 'components/buttons/play-button.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -69,9 +69,9 @@ describe('reactOutput', () => {
   });
 
   it('keeps selected style variants out of editable component props', async () => {
-    const filename = resolve(canonicalRoot, 'components/feedback/status-indicator.tsx');
+    const filename = resolve(vjscRoot, 'components/feedback/status-indicator.tsx');
     const source = await readFile(filename, 'utf8');
-    const statusStyleFiles = [...styleFiles, resolve(canonicalRoot, 'styles/components/status-indicator.styles.ts')];
+    const statusStyleFiles = [...styleFiles, resolve(vjscRoot, 'styles/components/status-indicator.styles.ts')];
     const result = await transform(source, {
       filename,
       config: reactConfig({
@@ -91,7 +91,7 @@ describe('reactOutput', () => {
   });
 
   it('uses public primitive props for the tooltip composition', async () => {
-    const filename = resolve(canonicalRoot, 'components/buttons/button-tooltip.tsx');
+    const filename = resolve(vjscRoot, 'components/buttons/button-tooltip.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -107,7 +107,7 @@ describe('reactOutput', () => {
   });
 
   it('emits the React-only volume availability fallback', async () => {
-    const filename = resolve(canonicalRoot, 'components/controls/volume-popover.tsx');
+    const filename = resolve(vjscRoot, 'components/controls/volume-popover.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -133,7 +133,7 @@ describe('reactOutput', () => {
   });
 
   it('exposes and forwards domain menu props through the shared submenu', async () => {
-    const filename = resolve(canonicalRoot, 'components/menus/audio-track-menu.tsx');
+    const filename = resolve(vjscRoot, 'components/menus/audio-track-menu.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -153,17 +153,14 @@ describe('reactOutput', () => {
   });
 
   it('forwards submenu className to the visual menu content', async () => {
-    const filename = resolve(canonicalRoot, 'components/menus/submenu.tsx');
+    const filename = resolve(vjscRoot, 'components/menus/submenu.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
       config: reactConfig({
         styles: {
           mode: 'tailwind',
-          manifest: await loadStyleManifest([
-            ...styleFiles,
-            resolve(canonicalRoot, 'styles/components/menu.styles.ts'),
-          ]),
+          manifest: await loadStyleManifest([...styleFiles, resolve(vjscRoot, 'styles/components/menu.styles.ts')]),
         },
       }),
     });
@@ -180,7 +177,7 @@ describe('reactOutput', () => {
   });
 
   it('derives the settings menu props used by the editable video composition', async () => {
-    const filename = resolve(canonicalRoot, 'components/menus/video-settings-menu.tsx');
+    const filename = resolve(vjscRoot, 'components/menus/video-settings-menu.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -199,17 +196,14 @@ describe('reactOutput', () => {
   });
 
   it('allows settings menu props to override canonical positioning defaults', async () => {
-    const filename = resolve(canonicalRoot, 'components/menus/settings-menu.tsx');
+    const filename = resolve(vjscRoot, 'components/menus/settings-menu.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
       config: reactConfig({
         styles: {
           mode: 'tailwind',
-          manifest: await loadStyleManifest([
-            ...styleFiles,
-            resolve(canonicalRoot, 'styles/components/menu.styles.ts'),
-          ]),
+          manifest: await loadStyleManifest([...styleFiles, resolve(vjscRoot, 'styles/components/menu.styles.ts')]),
         },
       }),
     });
@@ -220,7 +214,7 @@ describe('reactOutput', () => {
   });
 
   it('allows a target to resolve generated React imports', async () => {
-    const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
+    const filename = resolve(vjscRoot, 'components/buttons/seek-button.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
@@ -241,9 +235,9 @@ describe('reactOutput', () => {
   });
 
   it('lowers Container and Poster as independent React components', async () => {
-    const filename = resolve(canonicalRoot, 'components/layout/container.tsx');
+    const filename = resolve(vjscRoot, 'components/layout/container.tsx');
     const source = await readFile(filename, 'utf8');
-    const posterFilename = resolve(canonicalRoot, 'components/layout/poster.tsx');
+    const posterFilename = resolve(vjscRoot, 'components/layout/poster.tsx');
     const posterSource = await readFile(posterFilename, 'utf8');
     const config = reactConfig({
       styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
@@ -280,7 +274,7 @@ describe('reactOutput', () => {
   });
 
   it('projects the canonical Skin inputs through its React targets', async () => {
-    const filename = resolve(canonicalRoot, 'skins/default-video/skin.tsx');
+    const filename = resolve(vjscRoot, 'skins/default-video/skin.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await transform(source, {
       filename,
