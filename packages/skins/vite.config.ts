@@ -2,41 +2,28 @@ import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { jsx, syncGeneratedModuleTypes } from 'vjsc';
+import { jsx } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
 import { catalogMetaPlugin, catalogVirtualModule } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
 import { coreSchemaModule } from '../core/src/vjsc.config';
+import { iconSchemaVirtualModule } from '../icons/vjsc/schema';
 import { createIconElementModule } from './build/icon-element';
-import { createReactComponentRegistry, getIconSchemaModule } from './build/metadata';
+import { createReactComponentRegistry } from './build/metadata';
 import { componentTransforms } from './build/output/react/transform';
 import { createSkinVirtualModules } from './build/virtual-skins';
 import { skinCatalog } from './canonical/catalog';
 
 const packageDir = import.meta.dirname;
 const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
-const iconsDir = resolve(packageDir, '../icons');
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 
-const iconSchemaModule = getIconSchemaModule();
+const iconSchemaModule = iconSchemaVirtualModule();
 const defaultIconElementModule = createIconElementModule('default');
 const minimalIconElementModule = createIconElementModule('minimal');
-
-await Promise.all([
-  syncGeneratedModuleTypes({
-    rootDir: iconsDir,
-    modules: [
-      {
-        fileName: resolve(iconsDir, '.vjsc/virtual/icons-schema.ts'),
-        outputPath: 'icons-schema.d.ts',
-        module: iconSchemaModule,
-      },
-    ],
-  }),
-]);
 
 const componentRegistry = createReactComponentRegistry();
 
@@ -58,7 +45,7 @@ export default defineConfig({
       include: `${canonicalDir}/**/*.tsx`,
       modules: [
         coreSchemaModule,
-        { id: 'virtual:vjsc/icons-schema', load: () => getIconSchemaModule() },
+        iconSchemaModule,
         catalogVirtualModule(skinCatalog),
         { id: 'virtual:vjsc/icons/element/default.js', load: () => defaultIconElementModule },
         { id: 'virtual:vjsc/icons/element/minimal.js', load: () => minimalIconElementModule },

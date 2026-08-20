@@ -8,7 +8,7 @@ import {
   createHtmlRegistry as createHtmlIconRegistry,
   createReactRegistry as createReactIconRegistry,
 } from '../../icons/vjsc/registry';
-import { createIconSchemaModule } from '../../icons/vjsc/schema';
+import { iconSchemaVirtualModule } from '../../icons/vjsc/schema';
 import { createRegistry as createReactRegistry } from '../../react/vjsc/registry';
 
 const packagesDir = resolve(import.meta.dirname, '../..');
@@ -20,7 +20,7 @@ export const frameworkRegistryWatchFiles = {
 } as const;
 
 export function getIconSchemaModule(family = 'default') {
-  return createIconSchemaModule(family);
+  return iconSchemaVirtualModule(family).load();
 }
 
 export function createReactComponentRegistry(iconFamily = 'default'): ComponentRegistry {

@@ -1,14 +1,15 @@
 import { resolve } from 'node:path';
 
-import { createSchemaModule, type SchemaModule } from 'vjsc';
+import { schemaVirtualModule, type VirtualSchemaModule } from 'vjsc';
 import { iconNames } from './icon-names';
 
 const packageDir = resolve(import.meta.dirname, '..');
 
-/** Build one canonical icon-family schema in memory for compiler consumers. */
-export function createIconSchemaModule(family = 'default'): SchemaModule {
-  return createSchemaModule(
+/** Expose one canonical icon-family schema through the shared bundler graph. */
+export function iconSchemaVirtualModule(family = 'default'): VirtualSchemaModule {
+  return schemaVirtualModule(
     {
+      id: family === 'default' ? 'virtual:vjsc/icons-schema' : `virtual:vjsc/icons-schema/${family}`,
       source: '@videojs/icons/vjsc',
       files: [
         {
@@ -16,7 +17,7 @@ export function createIconSchemaModule(family = 'default'): SchemaModule {
           name: (filename) => `${iconNames(filename).pascal}Icon`,
         },
       ],
-      output: './.vjsc/virtual/icons-schema.ts',
+      fileName: `./.vjsc/virtual/icons-schema-${family}.ts`,
     },
     { cwd: packageDir }
   );
