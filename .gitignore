@@ -50,8 +50,6 @@ packages/icons/vjsc/schema.generated.ts
 packages/react/vjsc/entries.generated.ts
 packages/html/src/__generated__/skins/
 packages/react/src/__generated__/skins/
-packages/skins/vjsc/registry/default/
-packages/skins/vjsc/registry/registry.json
 
 # -------------------------
 # Merge & Patch Backups

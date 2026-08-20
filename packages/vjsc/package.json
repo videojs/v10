@@ -2,7 +2,7 @@
   "name": "vjsc",
   "version": "0.0.0",
   "type": "module",
-  "description": "Private VJSC infrastructure for source transforms and builds",
+  "description": "Private VJSC source transforms and Rolldown plugins",
   "license": "Apache-2.0",
   "private": true,
   "repository": {
