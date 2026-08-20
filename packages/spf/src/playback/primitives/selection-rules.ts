@@ -6,8 +6,9 @@
  * behaviors can share rules. The simple `selectVideoTrack` variant exists
  * specifically to tree-shake the ABR path out, so importing a composer from
  * `behaviors/track-switching.ts` would drag the bandwidth estimator and quality
- * selection back in with it. These four have no dependencies at all — pure
- * generics over a candidate list — so either side can reach them freely.
+ * selection back in with it. Nothing here reaches past pure generics over a
+ * candidate list and small media-layer helpers, so either side can reach
+ * them freely.
  *
  * See `internal/design/spf/track-switching-model.md` for the model these
  * implement: a hard constraints pre-pass, then an ordered chain of soft
@@ -15,6 +16,7 @@
  */
 
 import type { CanPlayTrack } from '../../media/types';
+import { getCodecFamilies, getCodecFamily } from '../../media/utils/tracks';
 
 /**
  * Deps handed to each rule and to `applyRules`, mirroring a behavior's setup
@@ -149,4 +151,60 @@ export function excludeUnplayableTracks<T, State, Context, Config>(
   const canPlay = (config as CapabilityConstraintConfig | undefined)?.canPlayTrack;
   if (!canPlay) return tracks;
   return tracks.filter((track) => canPlay(track as Parameters<CanPlayTrack>[0]));
+}
+
+/**
+ * What {@link preferCodecFamilies} reads off the config it is handed — a cast
+ * view, for the same reason as {@link CapabilityConstraintConfig}.
+ */
+export interface CodecPreferenceConfig {
+  preferredCodecs?: string[];
+}
+
+/**
+ * The codec families {@link preferCodecFamilies} narrows to when the config
+ * carries no `preferredCodecs`: AVC (both its 4CCs) and AAC. The default is
+ * deliberate rather than neutral — SPF implements no
+ * `SourceBuffer.changeType()`, so on a mixed-codec source the *initial*
+ * family choice is the one ABR lives inside for the whole source (see
+ * `stickToSelectedCodecs` in `behaviors/track-switching.ts`), and AVC/AAC is
+ * the family pair with the broadest decode support. The cost, equally
+ * deliberate: on a ladder whose higher rungs are HEVC-only (a common 4K
+ * shape), the default caps quality at the top AVC rung — configure
+ * `preferredCodecs` (or pass `[]`) to trade the other way.
+ */
+export const DEFAULT_PREFERRED_CODECS: readonly string[] = ['avc1', 'avc3', 'mp4a'];
+
+/**
+ * Codec-family preference — a *soft* filter (scope) for a selection-rule
+ * chain; the `hevc-variant-selection` concern from
+ * `internal/design/spf/track-switching-model.md`. Narrows to the tracks whose
+ * codec families are all in `preferredCodecs` (family-compared, so entries
+ * may be 4CCs or full codec strings). Soft-filter semantics: a source with no
+ * preferred-family rendition (an HEVC-only ladder under the AVC default) is
+ * left unnarrowed, and a track without codecs never matches — on a ladder
+ * with no codecs anywhere (DOM-free tests) the rule is inert.
+ *
+ * `preferredCodecs` defaults to {@link DEFAULT_PREFERRED_CODECS}; explicitly
+ * pass `[]` to disable the preference while keeping the rule composed.
+ *
+ * "All families" rather than "any" so a muxed rendition is judged as the unit
+ * it is: `hvc1,mp4a` must not count as preferred just because its audio half
+ * matches.
+ *
+ * Lives here rather than beside `switchVideoTrack` for the module's usual
+ * reason: the pinned `selectVideoTrack` variant can compose it without
+ * dragging the ABR path in.
+ */
+export function preferCodecFamilies<T, State, Context, Config>(
+  tracks: readonly T[],
+  { config }: SelectionRuleDeps<State, Context, Config>
+): readonly T[] {
+  const preferred = (config as CodecPreferenceConfig | undefined)?.preferredCodecs ?? DEFAULT_PREFERRED_CODECS;
+  if (!preferred.length) return tracks;
+  const preferredFamilies = new Set(preferred.map(getCodecFamily));
+  return tracks.filter((track) => {
+    const families = getCodecFamilies(track as { codecs?: string[] });
+    return !!families && families.every((family) => preferredFamilies.has(family));
+  });
 }
