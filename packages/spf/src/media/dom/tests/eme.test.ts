@@ -3,6 +3,7 @@ import type { Presentation } from '../../types';
 import {
   buildKeySystemConfigurations,
   declaredDrmKeys,
+  declaredEncryptionScheme,
   initDataFromKeyUri,
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
@@ -101,6 +102,19 @@ describe('declaredDrmKeys', () => {
   });
 });
 
+describe('declaredEncryptionScheme', () => {
+  it('maps SAMPLE-AES to cbcs and SAMPLE-AES-CTR to cenc', () => {
+    expect(declaredEncryptionScheme([WIDEVINE_KEY])).toBe('cbcs');
+    expect(declaredEncryptionScheme([{ ...WIDEVINE_KEY, method: 'SAMPLE-AES-CTR' }])).toBe('cenc');
+  });
+
+  it('declares nothing for mixed or unrecognized methods', () => {
+    expect(declaredEncryptionScheme([WIDEVINE_KEY, { ...WIDEVINE_KEY, method: 'SAMPLE-AES-CTR' }])).toBeUndefined();
+    expect(declaredEncryptionScheme([{ method: 'AES-128', uri: 'k.bin' }])).toBeUndefined();
+    expect(declaredEncryptionScheme([])).toBeUndefined();
+  });
+});
+
 describe('keySystemCandidates', () => {
   const drm = {
     'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' },
@@ -125,8 +139,8 @@ describe('keySystemCandidates', () => {
 });
 
 describe('buildKeySystemConfigurations', () => {
-  it('builds one cenc configuration with per-type capabilities from track content types', () => {
-    const [config] = buildKeySystemConfigurations({
+  it('builds one configuration with per-type capabilities from track content types', () => {
+    const [config] = buildKeySystemConfigurations('com.widevine.alpha', {
       video: ['video/mp4; codecs="avc1.4d401f"'],
       audio: ['audio/mp4; codecs="mp4a.40.2"'],
     });
@@ -136,8 +150,35 @@ describe('buildKeySystemConfigurations', () => {
     expect(config?.audioCapabilities).toEqual([{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }]);
   });
 
+  it('asks FairPlay for its own init-data types — Safari rejects cenc-only', () => {
+    const [config] = buildKeySystemConfigurations('com.apple.fps', {
+      video: ['video/mp4; codecs="avc1.4d401f"'],
+      audio: [],
+    });
+
+    expect(config?.initDataTypes).toEqual(['sinf', 'cenc']);
+  });
+
+  it('stamps the declared encryption scheme on every capability', () => {
+    const [config] = buildKeySystemConfigurations(
+      'com.widevine.alpha',
+      { video: ['video/mp4; codecs="avc1.4d401f"'], audio: ['audio/mp4; codecs="mp4a.40.2"'] },
+      'cbcs'
+    );
+
+    expect(config?.videoCapabilities).toEqual([
+      { contentType: 'video/mp4; codecs="avc1.4d401f"', encryptionScheme: 'cbcs' },
+    ]);
+    expect(config?.audioCapabilities).toEqual([
+      { contentType: 'audio/mp4; codecs="mp4a.40.2"', encryptionScheme: 'cbcs' },
+    ]);
+  });
+
   it('omits a capability list when that type has no content types', () => {
-    const [config] = buildKeySystemConfigurations({ video: ['video/mp4; codecs="avc1.4d401f"'], audio: [] });
+    const [config] = buildKeySystemConfigurations('com.widevine.alpha', {
+      video: ['video/mp4; codecs="avc1.4d401f"'],
+      audio: [],
+    });
 
     expect(config?.videoCapabilities).toHaveLength(1);
     expect(config?.audioCapabilities).toBeUndefined();
