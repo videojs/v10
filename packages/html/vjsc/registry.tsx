@@ -1,7 +1,7 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/registry */
 
-import type coreSchema from '@videojs/core/vjsc';
+import type schema from '@videojs/core/vjsc';
 import { Fragment } from 'vjsc/components';
 import {
   type ComponentRegistry,
@@ -14,18 +14,19 @@ import {
 } from 'vjsc/registry';
 import { resolveHtmlEntry } from './resolve';
 
-type CoreSchema = typeof coreSchema;
+type CoreSchema = typeof schema;
 type CoreDefinitions = CoreSchema['definitions'];
 
 const Button = defineElement('button');
 const Div = defineElement('div');
-const I18nText = defineElement('media-text', {
-  import: { from: '@videojs/html/i18n', sideEffect: true },
-});
 const Slot = defineElement('slot');
 const Span = defineElement('span');
 const Sup = defineElement('sup');
 const HtmlTemplate = defineElement('template');
+
+const I18nText = defineElement('media-text', {
+  import: { from: '@videojs/html/i18n', sideEffect: true },
+});
 
 const optionLabel: RegistryEntry = {
   render: ({ props }) => <Span data-part="label" {...props} />,
@@ -34,6 +35,7 @@ const optionLabel: RegistryEntry = {
 /** Canonical core components rendered through registered Video.js custom elements. */
 export default function createRegistry(schema: CoreSchema): ComponentRegistry {
   const $ = resolveRegistryEntries(schema, resolveHtmlEntry);
+
   const entries = {
     ...$,
 
