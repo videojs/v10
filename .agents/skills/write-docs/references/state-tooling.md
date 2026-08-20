@@ -276,15 +276,16 @@ Document common errors:
 **Solution:**
 
 // ❌ Wrong
-const { create } = createPlayer({ features: videoFeatures });
-const player = create();
-player.play(); // Error!
+const { PlayerElement } = createPlayer({ features: videoFeatures });
+const player = new PlayerElement();
+await player.store.play(); // No media is attached yet.
 
 // ✅ Correct
-const { create } = createPlayer({ features: videoFeatures });
-const player = create();
-await player.attach(videoElement);
-player.play();
+const { PlayerElement } = createPlayer({ features: videoFeatures });
+const player = new PlayerElement();
+player.append(videoElement);
+document.body.append(player);
+await player.store.play();
 ```
 
 ## Plugin Documentation Pattern

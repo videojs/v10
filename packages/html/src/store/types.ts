@@ -3,7 +3,7 @@ import type { Constructor } from '@videojs/utils/types';
 import type { UIElement } from '@/ui/ui-element';
 
 // ----------------------------------------
-// PlayerProvider
+// PlayerElement
 // ----------------------------------------
 
 type PlayerProperties<Store extends PlayerStore> = {

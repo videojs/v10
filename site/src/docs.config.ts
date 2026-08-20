@@ -103,7 +103,7 @@ export const sidebar: Sidebar = [
         defaultOpen: false,
         llmsDescription: 'API Reference for UI components for building media player interfaces.',
         contents: [
-          { slug: 'reference/player-provider' },
+          { slug: 'reference/player' },
           { slug: 'reference/player-container' },
           { slug: 'reference/i18n-provider', frameworks: ['react'] },
           // sorted alphabetically
