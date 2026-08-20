@@ -5,7 +5,7 @@ import { defineConfig, normalizePath } from 'vite';
 import { html, jsx } from 'vjsc';
 import { type VjscProjectionContext, type VjscTransformConfig, vjscPlugin } from 'vjsc/bundle';
 import { catalogMetaPlugin } from 'vjsc/catalog';
-import { shadcnPlugin } from 'vjsc/shadcn';
+import { shadcnOutput } from 'vjsc/shadcn';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import { createIconElementModule } from './build/icon-element';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './build/metadata';
@@ -24,7 +24,7 @@ const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 export default defineConfig(({ mode }) => (mode === 'registry' ? createRegistryConfig() : createPreviewConfig()));
 
 function createRegistryConfig() {
-  const registry = shadcnPlugin({
+  const registry = shadcnOutput({
     catalog: skinCatalog,
     rootDir: vjscDir,
     registry: skinRegistry,
@@ -38,7 +38,7 @@ function createRegistryConfig() {
 
   return {
     root: packageDir,
-    plugins: [registry],
+    plugins: [vjscPlugin({ outputs: [registry] })],
     build: {
       outDir: resolve(packageDir, 'dist/registry'),
       emptyOutDir: true,

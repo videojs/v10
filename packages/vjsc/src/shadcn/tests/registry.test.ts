@@ -5,11 +5,12 @@ import { dirname, join } from 'node:path';
 import { rolldown } from 'rolldown';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { vjscPlugin } from '../../bundle/plugin';
 import { defineCatalog } from '../../catalog/define';
 import { defineCatalogOutput } from '../../catalog/emit';
 import { loadCatalog } from '../../catalog/resolve';
 import { defineConfig, jsx } from '../../config';
-import { createShadcnRegistryFiles, defineShadcnRegistry, emitShadcnRegistry, shadcnPlugin } from '../index';
+import { createShadcnRegistryFiles, defineShadcnRegistry, emitShadcnRegistry, shadcnOutput } from '../index';
 
 const roots: string[] = [];
 
@@ -166,14 +167,17 @@ describe('emitShadcnRegistry', () => {
         describe: () => ({ type: 'registry:block', title: 'Root', description: 'Root.' }),
       },
     });
-    const plugin = shadcnPlugin({
+    const outputAdapter = shadcnOutput({
       catalog: definition,
       rootDir: root,
       registry,
       output: defineCatalogOutput({ compiler: defineConfig({ external: [], target: jsx() }) }),
     });
 
-    const bundle = await rolldown({ input: plugin.moduleId, plugins: [plugin] });
+    const bundle = await rolldown({
+      input: outputAdapter.moduleId,
+      plugins: [vjscPlugin({ outputs: [outputAdapter] })],
+    });
     const output = await bundle.generate({ format: 'es' });
 
     expect(output.output.map((item) => item.fileName)).toEqual(['registry.json', 'root.json']);

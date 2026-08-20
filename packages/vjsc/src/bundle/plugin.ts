@@ -10,7 +10,7 @@ import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from '../targets/h
 import { CompilerError, transform } from '../transform';
 import { createGeneratedModuleDeclaration } from './declaration';
 import { createBundleModules, type VirtualModuleDefinition } from './modules';
-import type { VjscModule } from './source';
+import type { VjscModule, VjscOutputAdapter } from './source';
 
 export interface VjscDeclarationOutput {
   readonly id: VirtualModuleDefinition['id'];
@@ -36,6 +36,8 @@ export interface VjscPluginOptions {
   readonly resolveModuleId?: ((id: VirtualModuleDefinition['id']) => string) | undefined;
   /** Declaration assets emitted from generated modules during a build. */
   readonly declarations?: readonly VjscDeclarationOutput[] | undefined;
+  /** Build-only asset projections activated through their virtual entry modules. */
+  readonly outputs?: readonly VjscOutputAdapter[] | undefined;
 }
 
 export interface VjscTransformConfig {
@@ -75,12 +77,19 @@ interface HotUpdatePlugin {
 /** Apply VJSC transforms and generated modules through any Rolldown-compatible host. */
 export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
   const cwd = resolve(options.cwd ?? process.cwd());
+  const outputs = options.outputs ?? [];
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
   const watchFilesByModule = new Map<string, Set<string>>();
   const modulesByWatchFile = new Map<string, Set<string>>();
   const modules = createBundleModules({
-    modules: options.modules ?? [],
+    modules: [
+      ...(options.modules ?? []),
+      ...outputs.map((output) => ({
+        id: output.moduleId,
+        load: () => ({ code: 'export default null;', watchFiles: [] }),
+      })),
+    ],
     resolveId: options.resolveModuleId ?? resolvedVirtualModuleId,
   });
 
@@ -215,7 +224,7 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
         };
       },
     },
-    async generateBundle() {
+    async generateBundle(_outputOptions, bundle) {
       for (const declaration of options.declarations ?? []) {
         const generated = await modules.load(declaration.id);
         if (!generated) throw new Error(`VJSC declaration module does not exist: ${declaration.id}`);
@@ -225,6 +234,22 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
           fileName: declaration.fileName,
           source: createGeneratedModuleDeclaration(generated, resolve(declaration.sourceFileName)),
         });
+      }
+
+      for (const output of outputs) {
+        const resolvedId = modules.resolveId(output.moduleId);
+        const chunks = Object.entries(bundle).filter(
+          (entry): entry is [string, Extract<(typeof bundle)[string], { type: 'chunk' }>] =>
+            entry[1].type === 'chunk' && entry[1].facadeModuleId === resolvedId
+        );
+        if (chunks.length === 0) continue;
+
+        const built = await output.build();
+        addWatchFiles(this, built);
+        for (const file of built.files) {
+          this.emitFile({ type: 'asset', fileName: file.path, source: file.content });
+        }
+        for (const [fileName] of chunks) delete bundle[fileName];
       }
     },
   };
@@ -261,7 +286,7 @@ function withParameters(id: string, parameters: URLSearchParams): string {
   return `${id}?${normalized}`;
 }
 
-function addWatchFiles(context: { addWatchFile(id: string): void }, module: VjscModule): void {
+function addWatchFiles(context: { addWatchFile(id: string): void }, module: Pick<VjscModule, 'watchFiles'>): void {
   for (const fileName of module.watchFiles) context.addWatchFile(resolve(fileName));
 }
 

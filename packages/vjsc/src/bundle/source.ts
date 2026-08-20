@@ -11,3 +11,18 @@ export interface VjscOutputFile {
 }
 
 export type VjscOutputFormatter = (file: VjscOutputFile) => string | Promise<string>;
+
+export interface VjscBuildOutput {
+  readonly files: readonly VjscOutputFile[];
+  readonly watchFiles: readonly string[];
+}
+
+/** Build-only asset projection activated by using its virtual module as an entry. */
+export interface VjscOutputAdapter {
+  readonly moduleId: `virtual:vjsc/${string}`;
+  build(): VjscBuildOutput | Promise<VjscBuildOutput>;
+}
+
+export function defineVjscOutput<const Output extends VjscOutputAdapter>(output: Output): Output {
+  return output;
+}
