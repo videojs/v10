@@ -551,6 +551,14 @@ export const TimeSliderChapterTitle = {
   },
 } as const;
 
+export const Title = {
+  tagName: 'media-title',
+  import: {
+    from: '@videojs/html/ui/title',
+    sideEffect: true,
+  },
+} as const;
+
 export const Tooltip = {
   tagName: 'media-tooltip',
   import: {
@@ -709,6 +717,7 @@ export const entries = {
   TimeSlider,
   TimeSliderChapters,
   TimeSliderChapterTitle,
+  Title,
   Tooltip,
   TooltipGroup,
   TooltipLabel,

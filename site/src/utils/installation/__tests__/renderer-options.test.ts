@@ -8,8 +8,8 @@ describe('buildOptions', () => {
       { value: 'hls', label: 'HLS' },
       { value: 'dash', label: 'DASH' },
       { value: 'mux-video', label: 'Mux' },
-      { value: 'youtube', label: 'YouTube' },
       { value: 'vimeo', label: 'Vimeo' },
+      { value: 'youtube', label: 'YouTube' },
       { value: 'cloudflare', label: 'Cloudflare Stream' },
       { value: 'tiktok', label: 'TikTok' },
       { value: 'twitch', label: 'Twitch' },
@@ -22,5 +22,16 @@ describe('buildOptions', () => {
       { value: 'mux-audio', label: 'Mux' },
       { value: 'spotify', label: 'Spotify' },
     ]);
+  });
+
+  it('offers only live-aware media for live-video', () => {
+    expect(buildOptions('live-video')).toEqual([
+      { value: 'hls', label: 'HLS' },
+      { value: 'mux-video', label: 'Mux' },
+    ]);
+  });
+
+  it('offers only Mux for live-audio', () => {
+    expect(buildOptions('live-audio')).toEqual([{ value: 'mux-audio', label: 'Mux' }]);
   });
 });

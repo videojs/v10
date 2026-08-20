@@ -4,7 +4,14 @@ import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import { detectRenderer } from '@/utils/installation/detect-renderer';
 import { buildOptions } from '@/utils/installation/renderer-options';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import {
+  getInstallationPreset,
+  type InstallMethod,
+  type Renderer,
+  type Skin,
+  USE_CASES,
+  type UseCase,
+} from '@/utils/installation/types';
 import type { Framework } from './config.js';
 
 const CDN_MEDIA_SUBPATHS = cdnMedia.map((entry) => entry.id);
@@ -26,11 +33,7 @@ export async function promptFramework(): Promise<Framework> {
   return value;
 }
 
-const PRESET_OPTIONS: Array<{ value: UseCase; label: string }> = [
-  { value: 'default-video', label: 'Video' },
-  { value: 'default-audio', label: 'Audio' },
-  { value: 'background-video', label: 'Background Video' },
-];
+const PRESET_OPTIONS = USE_CASES.map((value) => ({ value, label: getInstallationPreset(value).label }));
 
 // Reuse the installation page's option builder so labels and ordering stay in
 // lockstep with the UI.
@@ -45,7 +48,7 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
   if (useCase === 'background-video') {
     return [{ value: 'video', label: 'Default' }];
   }
-  const isAudio = useCase === 'default-audio';
+  const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
   return [
     { value: isAudio ? 'audio' : 'video', label: 'Default' },
     { value: isAudio ? 'minimal-audio' : 'minimal-video', label: 'Minimal' },
@@ -63,8 +66,6 @@ function installMethodOptions(
     { value: 'yarn', label: 'yarn' },
     { value: 'bun', label: 'bun' },
   ];
-  // CDN is HTML-only, and only when the renderer ships a CDN build — matching
-  // the install page, which hides the CDN tab for renderers without one.
   if (framework === 'html' && supportsCdnInstall(renderer)) {
     options.unshift({ value: 'cdn', label: 'CDN' });
   }
@@ -81,7 +82,7 @@ export interface PartialInstallFlags {
 }
 
 export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
-  const isAudio = useCase === 'default-audio';
+  const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
   const map: Record<string, Skin> = {
     default: isAudio ? 'audio' : 'video',
     minimal: isAudio ? 'minimal-audio' : 'minimal-video',

@@ -1,5 +1,5 @@
 import type { Renderer, UseCase } from '@/utils/installation/types';
-import { VALID_RENDERERS } from '@/utils/installation/types';
+import { getInstallationPreset } from '@/utils/installation/types';
 
 export interface DetectionResult {
   renderer: Renderer;
@@ -147,7 +147,7 @@ export function detectRenderer(url: string, useCase: UseCase): DetectionResult |
 }
 
 export function isRendererValidForUseCase(renderer: Renderer, useCase: UseCase): boolean {
-  return VALID_RENDERERS[useCase].includes(renderer);
+  return getInstallationPreset(useCase).renderers.includes(renderer);
 }
 
 const RENDERER_ARTICLES: Record<Renderer, 'a' | 'an'> = {

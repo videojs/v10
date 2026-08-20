@@ -1,6 +1,6 @@
 import type { SelectOption } from '@/components/Select';
 import type { Renderer, UseCase } from '@/utils/installation/types';
-import { VALID_RENDERERS } from '@/utils/installation/types';
+import { getInstallationPreset } from '@/utils/installation/types';
 
 export const RENDERER_LABELS: Record<Renderer, string> = {
   'background-video': 'Background Video',
@@ -19,7 +19,7 @@ export const RENDERER_LABELS: Record<Renderer, string> = {
 };
 
 export function buildOptions(useCase: UseCase): SelectOption<Renderer>[] {
-  return VALID_RENDERERS[useCase].map((r) => ({
+  return getInstallationPreset(useCase).renderers.map((r) => ({
     value: r,
     label: RENDERER_LABELS[r],
   }));

@@ -16,7 +16,14 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { resolveImports } from '../../../build/plugins/resolve-css-imports.ts';
 import { normalizeImports } from '../normalize-imports.ts';
-import { DEMO_POSTER_SRC, DEMO_VIDEO_SRC, getSkinMediaType, type MediaType, type ReactSkinDef } from './config.ts';
+import {
+  DEMO_LIVE_POSTER_SRC,
+  DEMO_LIVE_SRC,
+  DEMO_POSTER_SRC,
+  DEMO_VIDEO_SRC,
+  LIVE_MEDIA,
+  type ReactSkinDef,
+} from './config.ts';
 import { pkgDistUrl, toRepoPath, validatePackageImports } from './package-resolver.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -886,30 +893,33 @@ function destructureSkinProps(source: string): string {
  * into VideoPlayer/AudioPlayer wrapped in `Player`, and removes the
  * separate Skin export.
  */
-function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: string; component: string } {
+function flattenSkinIntoPlayer(
+  source: string,
+  skin: Pick<ReactSkinDef, 'group' | 'live' | 'mediaType' | 'style'>
+): { player: string; component: string } {
+  const { group, live, mediaType, style } = skin;
   const isVideo = mediaType === 'video';
-  const mediaTag = isVideo ? 'Video' : 'Audio';
-  const features = isVideo ? 'videoFeatures' : 'audioFeatures';
-  const playerName = isVideo ? 'VideoPlayer' : 'AudioPlayer';
-  const subpath = isVideo ? 'video' : 'audio';
+  const mediaTag = live ? LIVE_MEDIA[mediaType].component : isVideo ? 'Video' : 'Audio';
+  const features = live ? (isVideo ? 'liveVideoFeatures' : 'liveAudioFeatures') : `${mediaType}Features`;
+  const playerName = `${live ? 'Live' : ''}${isVideo ? 'VideoPlayer' : 'AudioPlayer'}`;
   const playsInline = isVideo ? ' playsInline' : '';
 
   const player = [
     `import { createPlayer } from '@videojs/react';`,
-    `import { ${features} } from '@videojs/react/${subpath}';`,
+    `import { ${features} } from '@videojs/react/${group}';`,
     '',
     `export const { Player } = createPlayer({ features: ${features} });`,
     '',
   ].join('\n');
 
-  // 1. Add Video/Audio import, CSS import, and Player import from ./player
-  const mediaImport = `import { ${mediaTag} } from '@videojs/react/${subpath}';`;
-  const cssImport = "import './player.css';";
-  const playerImport = "import { Player } from './player';";
-  source = source.replace(
-    /(import \{[^}]*\} from '@videojs\/react';)/,
-    `$1\n${mediaImport}\n${cssImport}\n${playerImport}`
-  );
+  // 1. Add media, CSS, and Player imports
+  const mediaImport = live
+    ? `import { ${mediaTag} } from '@videojs/react/media/${LIVE_MEDIA[mediaType].subpath}';`
+    : `import { ${mediaTag} } from '@videojs/react/${group}';`;
+  const playerImports = [mediaImport];
+  if (style === 'css') playerImports.push("import './player.css';");
+  playerImports.push("import { Player } from './player';");
+  source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${playerImports.join('\n')}`);
 
   // 2. Rename SkinProps → PlayerProps, replace `children` with `src`
   const posterProp = isVideo ? '\n  poster?: string | undefined;' : '';
@@ -919,7 +929,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
   // 3. Replace the skin function: rename, swap children→src, wrap in Player
   //    Match the destructured form: function XSkin({ children, className, poster, ...rest }: XSkinProps): ReactNode {
   source = source.replace(
-    /export function \w+Skin\(\{ children, ([^}]+)\}: \w+SkinProps\): ReactNode \{\n([\s\S]*?)\n\}/,
+    /export function \w+Skin\w*\(\{ children, ([^}]+)\}: \w+SkinProps\): ReactNode \{\n([\s\S]*?)\n\}/,
     (_, destructuredRest: string, body: string) => {
       // Replace {children} with <Video/Audio> element inside the body
       let newBody = body.replace(/^\n+/, '').replace(/(\s*)\{children\}/, `$1<${mediaTag} src={src}${playsInline} />`);
@@ -939,7 +949,8 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
         newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player${playerProps}>\n${reindented}\n    </Player>\n  )${newBody.slice(parenEnd + 1)}`;
       }
 
-      const posterExample = isVideo ? `\n *   poster="${DEMO_POSTER_SRC}"` : '';
+      const posterSrc = live ? DEMO_LIVE_POSTER_SRC : DEMO_POSTER_SRC;
+      const posterExample = isVideo ? `\n *   poster="${posterSrc}"` : '';
 
       // @example JSDoc and the function signature
       const header = [
@@ -947,7 +958,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
         ' * @example',
         ' * ```tsx',
         ` * <${playerName}`,
-        ` *   src="${DEMO_VIDEO_SRC}"${posterExample}`,
+        ` *   src="${live ? DEMO_LIVE_SRC : DEMO_VIDEO_SRC}"${posterExample}`,
         ' * />',
         ' * ```',
         ' */',
@@ -1013,9 +1024,8 @@ export async function processReactSkin(
   tsx = destructureSkinProps(tsx);
 
   // 11. Flatten skin into player (split into player.ts + Player.tsx, wrap in Player)
-  const mediaType = getSkinMediaType(skin);
-  const { player, component } = flattenSkinIntoPlayer(tsx, mediaType);
-  const componentFile = mediaType === 'video' ? 'VideoPlayer' : 'AudioPlayer';
+  const { player, component } = flattenSkinIntoPlayer(tsx, skin);
+  const componentFile = `${skin.live ? 'Live' : ''}${skin.mediaType === 'video' ? 'VideoPlayer' : 'AudioPlayer'}`;
 
   return {
     tsx: {

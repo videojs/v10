@@ -50,6 +50,14 @@ export const VJS10_MULTI_AUDIO_DEMO_VIDEO: StreamingVideoSource = {
   hls: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8',
 };
 
+// A continuously-running live stream, so the live presets' demo snippets show a
+// player that actually reports live-edge state. Matches the `hls-live` source in
+// the sandbox.
+export const VJS10_DEMO_LIVE: StreamingVideoSource = {
+  id: 'v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM',
+  hls: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',
+};
+
 export const VJS10_DEMO_BACKGROUND_VIDEO_MP4 =
   'https://stream.mux.com/601n4w1fq88NJiVpzvrQQeQfNnnjjfKMIN7dCGAEarTs/highest.mp4';
 export const VJS10_DEMO_POSTER = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/thumbnail.jpg`;
