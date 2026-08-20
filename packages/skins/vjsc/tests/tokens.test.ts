@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest';
 import { tokens } from '../styles/tokens';
 
 describe('tokens', () => {
-  test('classifies every canonical --media-* custom property', async () => {
+  test('classifies every VJSC --media-* custom property', async () => {
     const root = resolve(import.meta.dirname, '..');
     const entries = await readdir(root, { recursive: true, withFileTypes: true });
     const files = entries

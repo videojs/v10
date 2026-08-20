@@ -3,7 +3,6 @@ import { posix, resolve } from 'node:path';
 
 import type { CompilerConfig } from '../../config';
 import { moduleMetaPlugin } from '../../meta';
-import { type ComponentRegistry, plugin as registryPlugin } from '../../registry';
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';
 import { collectReferencedStyleRules, type StyleManifest } from '../../styles/manifest';
@@ -73,8 +72,6 @@ export type SourceStyleTransform =
     };
 
 export interface SourceTransformer<Definition extends SourceDefinition = SourceDefinition> {
-  /** Framework mappings used to lower VJSC components. */
-  readonly componentRegistry?: ComponentRegistry | undefined;
   readonly transform?: CompilerConfig | ((sourceItem: SourceItem<Definition>) => CompilerConfig) | undefined;
   readonly cwd?: string | ((sourceItem: SourceItem<Definition>) => string | undefined) | undefined;
 }
@@ -107,15 +104,7 @@ export function resolveSourceTransformConfig<Definition extends SourceDefinition
         ? configured(sourceItem)
         : missingTransformerItem()
       : (configured ?? {});
-  const plugins = [
-    ...(transformer.componentRegistry ? [registryPlugin(transformer.componentRegistry)] : []),
-    ...(config.plugins ?? []),
-  ];
-
-  return {
-    ...config,
-    ...(plugins.length > 0 ? { plugins } : {}),
-  };
+  return config;
 }
 
 interface SourceLayout<Definition extends SourceDefinition> extends SourceFileContext<Definition> {

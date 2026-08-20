@@ -2,9 +2,11 @@ import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { discoverVjscModules, html, jsx, moduleMetaPlugin } from 'vjsc';
-import { type VjscTransformConfig, vjscPlugin } from 'vjsc/rolldown';
+import { type CompilerConfig, discoverVjscModules, html, jsx, moduleMetaPlugin } from 'vjsc';
+import { plugin as registryPlugin } from 'vjsc/registry';
+import { vjscPlugin } from 'vjsc/rolldown';
 import { plugin as stylesPlugin } from 'vjsc/styles';
+import { iconElementPlugin } from '../icons/vjsc/element-plugin';
 import type { SkinMeta } from './vjsc/meta';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './vjsc/registry/frameworks';
 import { componentTransforms } from './vjsc/registry/react';
@@ -34,7 +36,7 @@ function createRegistryConfig() {
 }
 
 function createPreviewConfig() {
-  const transforms = new Map<string, VjscTransformConfig>();
+  const transforms = new Map<string, CompilerConfig>();
   const skins = discoverVjscModules<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
 
   return {
@@ -43,6 +45,7 @@ function createPreviewConfig() {
       __DEV__: 'true',
     },
     plugins: [
+      iconElementPlugin(),
       vjscPlugin({
         cwd: packageDir,
         filter: { id: new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`) },
@@ -59,19 +62,20 @@ function createPreviewConfig() {
           const cached = transforms.get(key);
           if (cached) return cached;
 
-          const config: VjscTransformConfig = {
+          const registry =
+            framework === 'react'
+              ? createReactComponentRegistry(skin.style.theme)
+              : createHtmlComponentRegistry(skin.style.theme);
+          const config: CompilerConfig = {
             target: framework === 'react' ? jsx({ importSource: 'react' }) : html(),
-            registry:
-              framework === 'react'
-                ? createReactComponentRegistry(skin.style.theme)
-                : createHtmlComponentRegistry(skin.style.theme),
             plugins: [
+              registryPlugin(registry),
               style === 'tailwind'
                 ? stylesPlugin({ mode: 'tailwind', variant: skin.style.variant })
                 : stylesPlugin({
                     mode: 'css',
                     variant: skin.style.variant,
-                    emit: {
+                    stylesheet: {
                       input: resolve(vjscDir, 'styles/tailwind.css'),
                       scope: `.${skin.style.scope}`,
                     },

@@ -8,7 +8,7 @@ export interface SkinToken {
 
 /**
  * Stable classification for every `--media-*` custom property used by a
- * canonical Skin.
+ * VJSC Skin.
  */
 export const tokens = {
   '--media-accent-color': {

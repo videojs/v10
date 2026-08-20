@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { isAbsolute, relative } from 'node:path';
+import { isAbsolute, relative, resolve } from 'node:path';
 import ts from 'typescript';
 import { HTML_RUNTIME_IMPORT } from '../bundle/html-runtime';
 import type { ComponentDefinition, ComponentRecord } from '../components/definition';
@@ -145,7 +145,11 @@ export function plugin(registry: ComponentRegistry): CompilerPlugin {
   return {
     name: 'vjsc:components',
     enforce: 'post',
-    setup({ configDir, filename, target }) {
+    setup(context) {
+      const { configDir, filename, target } = context;
+      for (const file of registry.watchFiles ?? []) {
+        context.addWatchFile(isAbsolute(file) ? file : resolve(configDir, file));
+      }
       const moduleId = registryModuleId(filename, configDir);
 
       return {

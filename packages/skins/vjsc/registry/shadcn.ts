@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import { jsx } from 'vjsc';
+import { plugin as registryPlugin } from 'vjsc/registry';
 import { defineShadcnRegistry, defineShadcnSource, type ShadcnPlugin, shadcnPlugin } from 'vjsc/shadcn';
 
 import type { SkinModuleMeta } from '../meta';
@@ -49,7 +50,7 @@ const skinSource = defineShadcnSource<SkinModuleMeta>()({
   },
 });
 
-/** React/Tailwind publication policy for the canonical Skin inventory. */
+/** React/Tailwind publication policy for the VJSC Skin inventory. */
 const skinRegistry = defineShadcnRegistry(skinSource, {
   name: 'videojs',
   homepage: 'https://videojs.org',
@@ -131,10 +132,9 @@ export function createSkinShadcnPlugin(): ShadcnPlugin {
     rootDir,
     registry: skinRegistry,
     transformer: {
-      componentRegistry: createReactComponentRegistry(),
       transform: {
         target: jsx({ importSource: 'react' }),
-        plugins: [componentTransforms()],
+        plugins: [registryPlugin(createReactComponentRegistry()), componentTransforms()],
       },
     },
     styles: {

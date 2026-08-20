@@ -4,8 +4,7 @@ import { resolve } from 'node:path';
 
 import type { HookFilter, Plugin, RolldownLog } from 'rolldown';
 
-import type { CompilerDiagnostic, CompilerPlugin, CompilerSourceMap, CompilerTarget } from '../config';
-import { type ComponentRegistry, plugin as registryPlugin } from '../registry';
+import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../config';
 import { CompilerError, transform } from '../transform';
 import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from './html-runtime';
 
@@ -13,15 +12,9 @@ export interface VjscPluginOptions {
   /** Native Rolldown transform-hook filter. Defaults to TSX modules. */
   readonly filter?: HookFilter | undefined;
   /** Select a VJSC transform for each module, or return null to defer. */
-  readonly transform?: VjscTransformConfig | VjscTransformer | undefined;
+  readonly transform?: CompilerConfig | VjscTransformer | undefined;
   /** Directory used to resolve relative transform configuration. */
   readonly cwd?: string | undefined;
-}
-
-export interface VjscTransformConfig {
-  readonly target?: CompilerTarget | undefined;
-  readonly registry?: ComponentRegistry | undefined;
-  readonly plugins?: readonly CompilerPlugin[] | undefined;
 }
 
 export interface VjscTransformContext {
@@ -31,9 +24,7 @@ export interface VjscTransformContext {
   readonly parameters: URLSearchParams;
 }
 
-export type VjscTransformer = (
-  context: VjscTransformContext
-) => VjscTransformConfig | null | Promise<VjscTransformConfig | null>;
+export type VjscTransformer = (context: VjscTransformContext) => CompilerConfig | null | Promise<CompilerConfig | null>;
 
 /** Apply VJSC transforms and generated modules through any Rolldown-compatible host. */
 export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
@@ -92,19 +83,11 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
             ? await selected({ code, id, filename: transformed.id, parameters: transformed.parameters })
             : selected;
         if (!configured) return null;
-        const config = {
-          ...(configured.target ? { target: configured.target } : {}),
-          plugins: [
-            ...(configured.registry ? [registryPlugin(configured.registry)] : []),
-            ...(configured.plugins ?? []),
-          ],
-        };
-        for (const file of configured.registry?.watchFiles ?? []) this.addWatchFile(resolve(file));
         let result: Awaited<ReturnType<typeof transform>>;
         try {
           result = await transform(code, {
             filename: cleanId(id),
-            config,
+            config: configured,
             configDir: cwd,
             outputFile: cleanId(id),
           });

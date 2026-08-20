@@ -11,7 +11,7 @@ import { loadStyleManifest, type StyleManifest } from './manifest';
 import { isStyleModulePath, resolveStyleModuleFile } from './modules';
 import { createStyleTransform } from './transform';
 
-export interface StyleEmitOptions {
+export interface StylesheetOptions {
   /** Tailwind CSS entry used to resolve utilities, theme tokens, and variants. */
   readonly input: string;
   /** Optional selector wrapped around emitted CSS with `@scope`. */
@@ -29,15 +29,15 @@ export type StylePluginOptions =
   | (StylePluginBaseOptions & {
       /** Project style references to editable Tailwind utility groups. */
       readonly mode: 'tailwind';
-      readonly emit?: never;
+      readonly stylesheet?: never;
     })
   | (StylePluginBaseOptions & {
       readonly mode: 'css';
-      /** Emit vanilla CSS assets in addition to projecting semantic class names. */
-      readonly emit?: StyleEmitOptions | undefined;
+      /** Create vanilla CSS modules in addition to transforming semantic class names. */
+      readonly stylesheet?: StylesheetOptions | undefined;
     });
 
-/** Project imported style references and optionally emit their vanilla CSS assets. */
+/** Transform imported style references and optionally create vanilla CSS modules. */
 export function plugin(options: StylePluginOptions): CompilerPlugin {
   const designs = new Map<string, { mtimeMs: number; design: Promise<DesignSystem> }>();
   const manifests = new Map<string, CachedManifest>();
@@ -60,9 +60,9 @@ export function plugin(options: StylePluginOptions): CompilerPlugin {
         }),
       };
 
-      if (options.mode === 'css' && options.emit) {
-        const emit = options.emit;
-        const input = resolve(context.configDir, emit.input);
+      if (options.mode === 'css' && options.stylesheet) {
+        const stylesheet = options.stylesheet;
+        const input = resolve(context.configDir, stylesheet.input);
 
         context.addWatchFile(input);
 
@@ -70,7 +70,7 @@ export function plugin(options: StylePluginOptions): CompilerPlugin {
           const assets = await compileStyles({
             design: await cachedDesignSystem(designs, input),
             manifest,
-            ...(emit.scope ? { scope: emit.scope } : {}),
+            ...(stylesheet.scope ? { scope: stylesheet.scope } : {}),
             ...(options.variant ? { variant: options.variant } : {}),
           });
 

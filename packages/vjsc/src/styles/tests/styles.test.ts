@@ -91,7 +91,7 @@ describe('plugin', () => {
           plugin({
             mode: 'css',
             variant: 'compact',
-            emit: { input: tailwindInput, scope: '.fixture-skin' },
+            stylesheet: { input: tailwindInput, scope: '.fixture-skin' },
           }),
         ],
       },

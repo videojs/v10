@@ -19,7 +19,7 @@ export type { DesignSystem } from './design-system';
 
 export type { StyleManifest, StyleManifestRule } from './manifest';
 
-export type { StyleEmitOptions, StylePluginOptions } from './plugin';
+export type { StylePluginOptions, StylesheetOptions } from './plugin';
 
 export type { StyleMode } from './transform';
 

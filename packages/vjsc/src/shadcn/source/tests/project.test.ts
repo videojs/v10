@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { defineComponent, defineSchema } from '../../../components';
 import { jsx } from '../../../config';
-import { defineRegistry } from '../../../registry';
+import { defineRegistry, plugin } from '../../../registry';
 import { defineSource } from '../define';
 import { transformSource } from '../project';
 import { loadSource } from '../resolve';
@@ -38,7 +38,7 @@ describe('transformSource', () => {
     );
 
     const output = await transformSource(loaded, {
-      transformer: { componentRegistry: registry },
+      transformer: { transform: { plugins: [plugin(registry)] } },
       files: { source: ({ sourceFile }) => sourceFile },
     });
 

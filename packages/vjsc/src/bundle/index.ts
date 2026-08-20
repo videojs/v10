@@ -1,6 +1,6 @@
+export type { HookFilter, Plugin } from 'rolldown';
 export {
   type VjscPluginOptions,
-  type VjscTransformConfig,
   type VjscTransformContext,
   type VjscTransformer,
   vjscPlugin,
