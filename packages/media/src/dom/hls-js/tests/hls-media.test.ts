@@ -1040,9 +1040,13 @@ describe('HlsJsMedia', () => {
 
     function createMseMedia() {
       vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
-      const media = new HlsJsMedia();
-      media.config = { contentType: ContentTypes.M3U8 };
-      return media;
+      return new HlsJsMedia();
+    }
+
+    /** Builds the hls.js engine and attaches it to the already-attached element. */
+    function loadMse(media: HlsJsMedia) {
+      media.source = { src: 'https://example.com/master.m3u8', type: ContentTypes.M3U8 };
+      media.load();
     }
 
     /** hls.js forces the flag on for ManagedMediaSource inside `attachMedia`. */
@@ -1070,8 +1074,7 @@ describe('HlsJsMedia', () => {
       const video = createAirPlayVideo();
       const media = createMseMedia();
       media.attach(video);
-      media.src = 'https://example.com/master.m3u8';
-      media.load();
+      loadMse(media);
 
       simulateHlsJsMmsAttach(video);
       fireMediaAttached(media, video);
@@ -1087,8 +1090,7 @@ describe('HlsJsMedia', () => {
 
       const media = createMseMedia();
       media.attach(video);
-      media.src = 'https://example.com/master.m3u8';
-      media.load();
+      loadMse(media);
 
       simulateHlsJsMmsAttach(video);
       fireMediaAttached(media, video);
@@ -1102,8 +1104,7 @@ describe('HlsJsMedia', () => {
       media.attach(video);
       media.disableRemotePlayback = true;
 
-      media.src = 'https://example.com/master.m3u8';
-      media.load();
+      loadMse(media);
 
       simulateHlsJsMmsAttach(video);
       fireMediaAttached(media, video);
@@ -1115,8 +1116,7 @@ describe('HlsJsMedia', () => {
       const video = createAirPlayVideo();
       const media = createMseMedia();
       media.attach(video);
-      media.src = 'https://example.com/master.m3u8';
-      media.load();
+      loadMse(media);
 
       simulateHlsJsMmsAttach(video);
       media.disableRemotePlayback = true;
