@@ -2,34 +2,22 @@ import { readFile } from 'node:fs/promises';
 import { dirname, isAbsolute, posix, relative, resolve } from 'node:path';
 
 import { type RegistryItem, registryItemSchema, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
-import ts from 'typescript';
 
 import type { ComponentMeta } from '../components/meta';
-import { sourceScriptKind, stripScriptExtension } from '../ts/utils/source-module';
-import { collectImportReferences, type ImportReference } from './imports';
+import { stripScriptExtension } from '../ts/utils/source-module';
+import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
+import {
+  collectOwnedModules,
+  indexModulesByName,
+  type RegistrySourceModule,
+  type SourceGraph,
+  validateSourceGraph,
+} from './graph';
 import type { ShadcnRegistryDefinition, ShadcnRegistryFile, ShadcnRegistrySharedItem } from './index';
 
 type PublishedRegistryItemType = Extract<RegistryItem['type'], 'registry:block' | 'registry:component'>;
 
-/** One canonical module captured after VJSC transformation. */
-export interface ShadcnGraphModule<Item extends ComponentMeta = ComponentMeta> {
-  readonly id: string;
-  readonly source: string;
-  readonly meta?: Item | undefined;
-  readonly importedIds: readonly string[];
-}
-
-/** The host-owned module graph used to assemble a Shadcn registry. */
-export interface ShadcnGraph<Item extends ComponentMeta = ComponentMeta> {
-  readonly root: string;
-  readonly modules: ReadonlyMap<string, ShadcnGraphModule<Item>>;
-}
-
-interface RegistryModule extends ShadcnGraphModule {
-  readonly sourcePath: string;
-}
-
-interface OwnedModule extends RegistryModule {
+interface OwnedModule extends RegistrySourceModule {
   readonly outputPath: string;
   readonly target: string;
 }
@@ -54,10 +42,10 @@ export interface ShadcnOutputFile {
 
 /** Assemble schema-valid Shadcn JSON assets from the host's transformed module graph. */
 export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
-  graph: ShadcnGraph<Item>,
+  graph: SourceGraph<Item>,
   definition: ShadcnRegistryDefinition<Item>
 ): Promise<ShadcnOutputFile[]> {
-  const modules = validateGraph(graph);
+  const modules = validateSourceGraph(graph);
   validateDefinition(definition, modules);
 
   const publishedNames = new Set<string>(definition.items.published);
@@ -132,33 +120,10 @@ function validateRegistryFiles(items: readonly RegistryItem[]): void {
   }
 }
 
-function validateGraph(graph: ShadcnGraph): ReadonlyMap<string, RegistryModule> {
-  if (!isAbsolute(graph.root)) throw new Error(`Shadcn graph root must be absolute: \`${graph.root}\`.`);
-  const root = resolve(graph.root);
-  const modules = new Map<string, RegistryModule>();
-
-  for (const [key, module] of graph.modules) {
-    if (!isAbsolute(module.id)) throw new Error(`Shadcn graph module ID must be absolute: \`${module.id}\`.`);
-    const id = resolve(module.id);
-    if (key !== module.id || id !== module.id) {
-      throw new Error(`Shadcn graph module must use its canonical ID as its map key: \`${module.id}\`.`);
-    }
-    const sourcePath = toPosix(relative(root, id));
-    if (!sourcePath || escapesRoot(sourcePath)) {
-      throw new Error(`Shadcn graph module must be inside the graph root: \`${module.id}\`.`);
-    }
-    if (module.meta && !module.meta.name) {
-      throw new Error(`Shadcn graph module has an empty component name: \`${module.id}\`.`);
-    }
-    assertMetaRemoved(module);
-    if (modules.has(id)) throw new Error(`Shadcn graph module is captured twice: \`${id}\`.`);
-    modules.set(id, { ...module, sourcePath });
-  }
-
-  return modules;
-}
-
-function validateDefinition(definition: ShadcnRegistryDefinition, modules: ReadonlyMap<string, RegistryModule>): void {
+function validateDefinition(
+  definition: ShadcnRegistryDefinition,
+  modules: ReadonlyMap<string, RegistrySourceModule>
+): void {
   for (const [name, value] of Object.entries(definition.paths)) {
     if (name === 'import') continue;
     validateRelativePath(value, `Shadcn registry ${name} path`);
@@ -187,23 +152,10 @@ function validateDefinition(definition: ShadcnRegistryDefinition, modules: Reado
   }
 }
 
-function indexModulesByName(modules: ReadonlyMap<string, RegistryModule>): ReadonlyMap<string, RegistryModule> {
-  const indexed = new Map<string, RegistryModule>();
-  for (const module of modules.values()) {
-    if (!module.meta) continue;
-    const previous = indexed.get(module.meta.name);
-    if (previous) {
-      throw new Error(`Component \`${module.meta.name}\` is declared by both \`${previous.id}\` and \`${module.id}\`.`);
-    }
-    indexed.set(module.meta.name, module);
-  }
-  return indexed;
-}
-
 function buildPublishedItem<Item extends ComponentMeta>(
   name: string,
-  modulesByName: ReadonlyMap<string, RegistryModule>,
-  modules: ReadonlyMap<string, RegistryModule>,
+  modulesByName: ReadonlyMap<string, RegistrySourceModule>,
+  modules: ReadonlyMap<string, RegistrySourceModule>,
   publishedNames: ReadonlySet<string>,
   shared: readonly LoadedSharedItem[],
   definition: ShadcnRegistryDefinition<Item>
@@ -250,36 +202,9 @@ function buildPublishedItem<Item extends ComponentMeta>(
   };
 }
 
-function collectOwnedModules(
-  root: RegistryModule,
-  modules: ReadonlyMap<string, RegistryModule>,
-  publishedNames: ReadonlySet<string>
-): { modules: RegistryModule[]; publishedDependencies: Set<string> } {
-  const owned = new Map<string, RegistryModule>();
-  const publishedDependencies = new Set<string>();
-
-  const visit = (module: RegistryModule): void => {
-    if (owned.has(module.id)) return;
-    owned.set(module.id, module);
-
-    for (const importedId of module.importedIds) {
-      const dependency = modules.get(cleanModuleId(importedId));
-      if (!dependency) continue;
-      if (dependency.id !== root.id && dependency.meta && publishedNames.has(dependency.meta.name)) {
-        publishedDependencies.add(dependency.meta.name);
-      } else {
-        visit(dependency);
-      }
-    }
-  };
-
-  visit(root);
-  return { modules: [...owned.values()], publishedDependencies };
-}
-
 function createLayout(
-  root: RegistryModule,
-  modules: readonly RegistryModule[],
+  root: RegistrySourceModule,
+  modules: readonly RegistrySourceModule[],
   ownerType: PublishedRegistryItemType,
   definition: ShadcnRegistryDefinition
 ): ReadonlyMap<string, OwnedModule> {
@@ -320,17 +245,16 @@ function createLayout(
 function rewriteImports(
   module: OwnedModule,
   layout: ReadonlyMap<string, OwnedModule>,
-  modules: ReadonlyMap<string, RegistryModule>,
+  modules: ReadonlyMap<string, RegistrySourceModule>,
   publishedNames: ReadonlySet<string>,
   definition: ShadcnRegistryDefinition
 ): { source: string; imports: string[]; dependencies: string[] } {
-  const references = collectImportReferences(module.source, module.id);
-  const replacements: Array<ImportReference & { replacement: string }> = [];
+  const replacements: ImportReplacement[] = [];
   const imports: string[] = [];
   const dependencies = new Set<string>();
 
-  references.forEach((reference, index) => {
-    const resolvedId = resolveImportedId(module, reference.specifier, index, modules);
+  module.imports.forEach((reference) => {
+    const resolvedId = reference.resolvedId;
     const dependency = resolvedId ? modules.get(resolvedId) : undefined;
     let replacement = definition.imports?.[reference.specifier];
 
@@ -348,52 +272,20 @@ function rewriteImports(
     if (replacement !== reference.specifier) replacements.push({ ...reference, replacement });
 
     if (!dependency && !definition.imports?.[reference.specifier]) {
-      const graphId = resolvedId ?? module.importedIds[index] ?? reference.specifier;
+      const graphId = resolvedId ?? reference.specifier;
       const packageName = packageDependency(graphId) ?? packageDependency(reference.specifier);
       if (packageName) dependencies.add(packageName);
     }
   });
 
-  let source = module.source;
-  for (const replacement of replacements.sort((left, right) => right.start - left.start)) {
-    source =
-      source.slice(0, replacement.start) +
-      replacement.quote +
-      escapeSpecifier(replacement.replacement, replacement.quote) +
-      replacement.quote +
-      source.slice(replacement.end);
-  }
-  return { source, imports, dependencies: [...dependencies].sort() };
+  return {
+    source: replaceImportSpecifiers(module.source, replacements),
+    imports,
+    dependencies: [...dependencies].sort(),
+  };
 }
 
-function resolveImportedId(
-  module: ShadcnGraphModule,
-  specifier: string,
-  index: number,
-  modules: ReadonlyMap<string, RegistryModule>
-): string | undefined {
-  if (specifier.startsWith('.')) {
-    const candidate = resolve(dirname(module.id), specifier);
-    const match = module.importedIds
-      .map(cleanModuleId)
-      .find(
-        (id) =>
-          id === candidate ||
-          stripScriptExtension(id) === candidate ||
-          stripScriptExtension(id) === stripScriptExtension(candidate) ||
-          stripScriptExtension(id) === posix.join(toPosix(candidate), 'index')
-      );
-    if (match) return match;
-  }
-  if (module.importedIds.includes(specifier)) return specifier;
-
-  const ordered = module.importedIds[index];
-  if (!ordered) return undefined;
-  const id = cleanModuleId(ordered);
-  return modules.has(id) || ordered === specifier ? id : undefined;
-}
-
-function publishedImport(module: RegistryModule, definition: ShadcnRegistryDefinition): string {
+function publishedImport(module: RegistrySourceModule, definition: ShadcnRegistryDefinition): string {
   if (!module.meta) throw new Error(`Shadcn published dependency is missing component metadata: \`${module.id}\`.`);
   return posix.join(definition.paths.import, module.meta.name, posix.basename(stripScriptExtension(module.sourcePath)));
 }
@@ -435,27 +327,6 @@ async function loadSharedItems(root: string, definition: ShadcnRegistryDefinitio
   );
 }
 
-function assertMetaRemoved(module: ShadcnGraphModule): void {
-  const sourceFile = ts.createSourceFile(
-    module.id,
-    module.source,
-    ts.ScriptTarget.Latest,
-    true,
-    sourceScriptKind(module.id)
-  );
-  for (const statement of sourceFile.statements) {
-    if (
-      ts.isVariableStatement(statement) &&
-      statement.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) &&
-      statement.declarationList.declarations.some(
-        (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === 'meta'
-      )
-    ) {
-      throw new Error(`Component metadata remains in transformed Shadcn source: \`${module.id}\`.`);
-    }
-  }
-}
-
 function isRequiredBy(requirement: ShadcnRegistrySharedItem['requiredBy'], imports: ReadonlySet<string>): boolean {
   if (requirement === 'all') return true;
   return requirement?.imports.some((specifier) => imports.has(specifier)) ?? false;
@@ -478,15 +349,6 @@ function packageDependency(id: string): string | undefined {
   if (id.startsWith('@'))
     return segments.length >= 2 && segments[0]!.length > 1 ? `${segments[0]}/${segments[1]}` : undefined;
   return /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(segments[0]!) ? segments[0] : undefined;
-}
-
-function cleanModuleId(id: string): string {
-  const query = id.indexOf('?');
-  return query === -1 ? id : id.slice(0, query);
-}
-
-function escapeSpecifier(specifier: string, quote: string): string {
-  return specifier.replaceAll('\\', '\\\\').replaceAll(quote, `\\${quote}`);
 }
 
 function mergedMeta(...values: Array<RegistryItem['meta'] | undefined>): { meta?: RegistryItem['meta'] } {

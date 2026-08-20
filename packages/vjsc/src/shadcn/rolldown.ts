@@ -1,49 +1,38 @@
 import { createHash } from 'node:crypto';
 import { globSync, readFileSync, realpathSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { isAbsolute, resolve } from 'node:path';
 
 import type { OutputBundle, Plugin } from 'rolldown';
 
 import { type ComponentMeta, extractComponentMeta } from '../components/meta';
-import { collectImportReferences } from './imports';
-import type { ShadcnRegistryDefinition } from './index';
-import { createShadcnRegistryFiles, type ShadcnGraph, type ShadcnGraphModule } from './registry';
+import { analyzeImports } from './analyze';
+import type { SourceGraph, SourceImport, SourceModule } from './graph';
+import { createShadcnRegistryFiles } from './registry';
+import type { ShadcnPluginOptions, ShadcnRegistryDefinition } from './types';
 
-export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta> {
-  /** Root containing the editable source and shared registry files. */
-  readonly root: string;
-  /** Complete root-relative inventory of editable source modules. */
-  readonly include: string | readonly string[];
-  /** Root-relative source module globs to omit. */
-  readonly exclude?: string | readonly string[] | undefined;
-  /** VJSC projection requested through the host module graph. */
-  readonly query: Readonly<Record<string, string>>;
-  /** Shadcn publication policy. */
-  readonly registry: ShadcnRegistryDefinition<Item>;
-}
+export type { ShadcnPluginOptions } from './types';
 
 interface CapturedModule {
   readonly id: string;
   readonly source: string;
+  readonly imports: readonly SourceImport[];
 }
 
 /** Emit a Shadcn registry from VJSC-transformed modules in the Rolldown graph. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
-  const root = canonicalPath(options.root);
+  const root = resolveModulePath(options.root);
   const query = createQuery(options.query);
   const triggerId = `virtual:vjsc/shadcn/${createHash('sha256').update(root).update(query).digest('hex').slice(0, 12)}`;
   const resolvedTriggerId = `\0${triggerId}`;
   const captured = new Map<string, CapturedModule>();
-  const resolvedImports = new Map<string, Set<string>>();
   let metadata = new Map<string, Item | undefined>();
   let triggerSource = 'export default null;';
-  let graph: ShadcnGraph | undefined;
+  let graph: SourceGraph | undefined;
 
   return {
     name: 'vjsc:shadcn',
     buildStart() {
       captured.clear();
-      resolvedImports.clear();
       graph = undefined;
       metadata = discoverSources(options, root);
       validatePublishedItems(metadata, options.registry);
@@ -74,7 +63,7 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
       order: 'pre',
       async handler(code, id) {
         if (!id.endsWith(query)) return null;
-        const fileName = canonicalPath(cleanId(id));
+        const fileName = resolveModulePath(cleanId(id));
         if (!metadata.has(fileName)) return null;
 
         if (hasComponentMeta(code, fileName)) {
@@ -82,27 +71,27 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
             `Shadcn source ${fileName} still exports component metadata. Place shadcnPlugin after vjscPlugin and enable componentMetaPlugin().`
           );
         }
-        captured.set(fileName, { id, source: code });
-        const imports = resolvedImports.get(fileName) ?? new Set<string>();
-        resolvedImports.set(fileName, imports);
-        for (const specifier of relativeModuleSpecifiers(code, fileName)) {
-          const resolved = await this.resolve(specifier, id);
-          if (!resolved)
-            this.error(`Shadcn source cannot resolve relative import \`${specifier}\` from \`${fileName}\`.`);
-          const importedFile = canonicalPath(cleanId(resolved.id));
-          if (!metadata.has(importedFile)) {
+        const imports: SourceImport[] = [];
+        for (const reference of analyzeImports(code, fileName)) {
+          const resolved = await this.resolve(reference.specifier, id);
+          const resolvedId = resolved ? resolveGraphModuleId(resolved.id, metadata) : undefined;
+          if (reference.specifier.startsWith('.') && !resolvedId) {
+            this.error(`Shadcn source cannot resolve relative import \`${reference.specifier}\` from \`${fileName}\`.`);
+          }
+          if (reference.specifier.startsWith('.') && !metadata.has(resolvedId!)) {
             this.error(
-              `Shadcn relative import \`${specifier}\` from \`${fileName}\` resolves outside the configured source files.`
+              `Shadcn relative import \`${reference.specifier}\` from \`${fileName}\` resolves outside the configured source files.`
             );
           }
-          imports.add(importedFile);
+          imports.push({ ...reference, ...(resolvedId ? { resolvedId } : {}) });
         }
+        captured.set(fileName, { id, source: code, imports });
         return null;
       },
     },
     buildEnd(error) {
       if (error) return;
-      const modules: ShadcnGraphModule[] = [];
+      const modules: SourceModule[] = [];
 
       for (const [fileName, capture] of captured) {
         const info = this.getModuleInfo(capture.id);
@@ -111,11 +100,7 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
           id: fileName,
           source: capture.source,
           meta: metadata.get(fileName),
-          importedIds: unique([
-            ...info.importedIds.map((id) => canonicalImport(id, metadata)),
-            ...info.dynamicallyImportedIds.map((id) => canonicalImport(id, metadata)),
-            ...(resolvedImports.get(fileName) ?? []),
-          ]),
+          imports: capture.imports,
         });
       }
 
@@ -136,17 +121,11 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
   };
 }
 
-function relativeModuleSpecifiers(source: string, fileName: string): string[] {
-  return unique(
-    collectImportReferences(source, fileName)
-      .map((reference) => reference.specifier)
-      .filter((specifier) => specifier.startsWith('.'))
-  );
-}
-
-function canonicalImport(id: string, metadata: ReadonlyMap<string, unknown>): string {
-  const canonical = canonicalPath(cleanId(id));
-  return metadata.has(canonical) ? canonical : id;
+function resolveGraphModuleId(id: string, metadata: ReadonlyMap<string, unknown>): string {
+  const clean = cleanId(id);
+  if (!isAbsolute(clean)) return id;
+  const resolved = resolveModulePath(clean);
+  return metadata.has(resolved) ? resolved : id;
 }
 
 function removeTriggerChunks(bundle: OutputBundle, triggerId: string): void {
@@ -205,7 +184,7 @@ function discoverSources<Item extends ComponentMeta>(
     ...new Set(
       include.flatMap((pattern) =>
         globSync(pattern, { cwd: root, ...(exclude ? { exclude } : {}) }).map((fileName) =>
-          canonicalPath(resolve(root, fileName))
+          resolveModulePath(resolve(root, fileName))
         )
       )
     ),
@@ -264,7 +243,7 @@ function cleanId(id: string): string {
   return queryIndex === -1 ? id : id.slice(0, queryIndex);
 }
 
-function canonicalPath(path: string): string {
+function resolveModulePath(path: string): string {
   try {
     return realpathSync(resolve(path));
   } catch {
@@ -274,8 +253,4 @@ function canonicalPath(path: string): string {
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function unique(values: Iterable<string>): string[] {
-  return [...new Set(values)];
 }
