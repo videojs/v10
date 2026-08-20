@@ -99,18 +99,18 @@ describe('shadcnPlugin', () => {
     expect(output.output.filter((entry) => entry.type === 'chunk')).toEqual([]);
   });
 
-  it('keeps parameterized module identities and dependencies projection-specific', async () => {
+  it('keeps transformed module identities and dependencies transform-specific', async () => {
     const root = setup({
       'components/root.tsx': `import { Child } from './child'; export function Root() { return <main>{Child}</main>; } ${meta('root', 'block')}`,
       'components/child.tsx': `export const Child = <aside/>; ${meta('child')}`,
     });
-    const parameters = () => [
+    const transforms = () => [
       { framework: 'react', skin: 'default' },
       { framework: 'react', skin: 'minimal' },
     ];
     const output = await build(root, {
       styles: undefined,
-      configure: { ...baseOptions().configure, parameters },
+      publish: { ...baseOptions().publish, transforms },
     });
 
     expect(assetJson(output, 'root.json').registryDependencies).toContain('@example/child');
@@ -120,17 +120,17 @@ describe('shadcnPlugin', () => {
     );
   });
 
-  it('rejects projection-incomplete type dependencies', async () => {
+  it('rejects type dependencies missing the requested transformation', async () => {
     const root = setup({
       'components/root.tsx': `import type { Label } from './types'; export function Root({ label }: { label: Label }) { return <main>{label}</main>; } ${meta('root', 'block')}`,
       'components/types.ts': `export type Label = string;`,
     });
-    const parameters: FixtureOptions['configure']['parameters'] = (module) =>
+    const transforms: FixtureOptions['publish']['transforms'] = (module) =>
       basename(module.filename) === 'root.tsx' ? [{ framework: 'react', skin: 'minimal' }] : [];
 
-    await expect(
-      build(root, { styles: undefined, configure: { ...baseOptions().configure, parameters } })
-    ).rejects.toThrow(/source dependency was not captured/);
+    await expect(build(root, { styles: undefined, publish: { ...baseOptions().publish, transforms } })).rejects.toThrow(
+      /source dependency was not captured/
+    );
   });
 
   it('rejects unsafe paths and duplicate item names', async () => {
@@ -208,10 +208,10 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
     },
     imports: { '@/source/utils': '@/components/example/utils' },
     meta: { framework: 'react', style: 'tailwind' },
-    configure: {
+    publish: {
       items: (modules) =>
         modules.flatMap<ShadcnItem<FixtureMeta>>((module) => {
-          const { filename, meta: itemMeta, parameters } = module;
+          const { filename, meta: itemMeta, transform } = module;
           if (basename(filename) === 'utils.ts') {
             return [
               {
@@ -225,7 +225,7 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
             ];
           }
           if (!itemMeta) return [];
-          const skin = parameters.get('skin');
+          const skin = transform.skin;
           const name = skin && skin !== 'default' ? `${itemMeta.name}-${skin}` : itemMeta.name;
           return [
             {

@@ -13,7 +13,7 @@ import type { ShadcnModule, ShadcnPluginOptions } from './types';
 
 export type { ShadcnPluginOptions } from './types';
 
-/** Discover editable sources, capture their VJSC projections, and emit Shadcn JSON assets. */
+/** Discover editable sources, capture their VJSC transformations, and emit Shadcn JSON assets. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
   const root = resolveModulePath(options.root);
   const sources = new Map<string, SourceState<Item>>();
@@ -35,17 +35,17 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
         (filename): ShadcnModule<Item> => ({
           id: filename,
           filename,
-          parameters: new URLSearchParams(),
+          transform: {},
           meta: maybeExtractComponentMeta(readFileSync(filename, 'utf8'), filename) as Item | undefined,
         })
       );
 
       for (const module of discovered) {
-        const parameterSets = options.configure.parameters?.(module, discovered) ?? [{}];
-        for (const parameters of parameterSets) {
-          const id = moduleId(module.filename, parameters);
-          if (sources.has(id)) this.error(`Shadcn source projection is declared twice: \`${id}\`.`);
-          sources.set(id, { ...module, id, parameters: new URLSearchParams(parameters) });
+        const transforms = options.publish.transforms?.(module, discovered) ?? [{}];
+        for (const transform of transforms) {
+          const id = moduleId(module.filename, transform);
+          if (sources.has(id)) this.error(`Shadcn source transformation is declared twice: \`${id}\`.`);
+          sources.set(id, { ...module, id, transform: { ...transform } });
           this.emitFile({ type: 'chunk', id });
         }
       }

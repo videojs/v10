@@ -9,12 +9,12 @@ export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
 export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
 export interface ShadcnModule<Item extends ComponentMeta = ComponentMeta> {
-  /** Full host module ID, including projection query parameters. */
+  /** Full host module ID, including its VJSC transform query. */
   readonly id: string;
   /** Absolute physical source filename. */
   readonly filename: string;
-  /** Query parameters supplied to source transforms. */
-  readonly parameters: URLSearchParams;
+  /** VJSC transform selection used to produce this editable module. */
+  readonly transform: Readonly<Record<string, string>>;
   readonly meta?: Item | undefined;
 }
 
@@ -47,15 +47,15 @@ export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta>
   /** Complete root-relative source inventory loaded through the host graph. */
   readonly include: string | readonly string[];
   readonly exclude?: string | readonly string[] | undefined;
-  readonly configure: {
-    /** Select the VJSC query contexts in which each discovered module is transformed. */
-    readonly parameters?:
+  readonly publish: {
+    /** Select each VJSC transformation of a discovered module that should be available for publication. */
+    readonly transforms?:
       | ((
           module: ShadcnModule<Item>,
           modules: readonly ShadcnModule<Item>[]
         ) => readonly Readonly<Record<string, string>>[])
       | undefined;
-    /** Describe the published registry items after every source projection has been transformed. */
+    /** Describe the published registry items after every requested transformation is complete. */
     readonly items: (modules: readonly ShadcnModule<Item>[]) => readonly ShadcnItem<Item>[];
   };
   readonly name: string;

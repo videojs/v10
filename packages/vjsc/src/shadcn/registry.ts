@@ -95,10 +95,10 @@ function describePublishedModules<Item extends ComponentMeta>(
   const configurable = [...modules.values()].map((module) => ({
     id: module.id,
     filename: module.filename,
-    parameters: parseModuleId(module.id).parameters,
+    transform: Object.fromEntries(parseModuleId(module.id).parameters),
     meta: module.meta,
   }));
-  for (const item of options.configure.items(configurable)) {
+  for (const item of options.publish.items(configurable)) {
     const module = modules.get(item.module.id);
     if (!module) throw new Error(`Shadcn item \`${item.name}\` references an unknown module: \`${item.module.id}\`.`);
     validateItemName(item.name);

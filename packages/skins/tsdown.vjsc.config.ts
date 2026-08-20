@@ -57,8 +57,8 @@ export default defineConfig({
         framework: 'react',
         style: 'tailwind',
       },
-      configure: {
-        parameters: (module, modules) => {
+      publish: {
+        transforms: (module, modules) => {
           if (module.filename === registryUtils) return [{}];
 
           const skins = modules.flatMap(({ meta }) => (meta?.type === 'skin' ? [meta] : []));
@@ -73,7 +73,7 @@ export default defineConfig({
         },
         items: (modules) =>
           modules.flatMap<ShadcnItem<SkinModuleMeta>>((module) => {
-            const { filename, meta, parameters } = module;
+            const { filename, meta, transform } = module;
 
             if (filename === registryUtils) {
               return [
@@ -91,7 +91,7 @@ export default defineConfig({
 
             if (!meta) return [];
 
-            const skinName = parameters.get('skin');
+            const skinName = transform.skin;
 
             const skin = modules.find(
               (candidate) => candidate.meta?.type === 'skin' && candidate.meta.name === skinName
