@@ -17,9 +17,9 @@
  * Four states encode the load-gating policy directly:
  *
  * - `'preconditions-unmet'` — no loader actor in context, or the selected track hasn't resolved.
- * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended` (highest precedence) or `preload === 'none'
- *   && !loadActivated`. Nothing fires; already-queued loader work drains. Auto-resumes into the derived state when the
- *   policy lifts.
+ * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended` or `awaitingMediaKeys` (highest
+ *   precedence) or `preload === 'none' && !loadActivated`. Nothing fires; already-queued loader work drains.
+ *   Auto-resumes into the derived state when the policy lifts.
  * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`. Fires an init-segment-only `load`
  *   message **once on entry**. The variant's loader actor decides what to do — v/a's actor fetches the init segment;
  *   text's actor no-ops (no init concept).
@@ -75,6 +75,17 @@ export interface SegmentLoadingState {
    * remote-playback session owns presentation). An absent slot means never suspended.
    */
   loadingSuspended?: boolean;
+  /**
+   * DRM key-readiness gate: initiate no new loading work while `true` — an
+   * encrypted source's MediaKeys aren't attached yet, and appending encrypted
+   * data before `setMediaKeys` misbehaves on Chromium. **Observed, never
+   * declared**, exactly like `loadingSuspended`: only DRM-composed variants
+   * carry a writer (`setupMediaKeys`), so an absent slot means never gated.
+   * Held separate from `loadingSuspended` because the two writers decide from
+   * different domains (remote-playback session vs key readiness) — co-writing
+   * one boolean would be a last-write-wins conflict.
+   */
+  awaitingMediaKeys?: boolean;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
@@ -132,10 +143,14 @@ function setupSegmentLoading<
   context,
   config,
 }: {
-  // `loadingSuspended` is observed, never declared (see its state-shape doc):
-  // optional here so variant maps — which omit it from their contracts — are
-  // assignable as-is, while compositions with a writer expose the live slot.
-  state: SegmentLoadingStateMap<K> & { loadingSuspended?: ReadonlySignal<SegmentLoadingState['loadingSuspended']> };
+  // `loadingSuspended` and `awaitingMediaKeys` are observed, never declared
+  // (see their state-shape docs): optional here so variant maps — which omit
+  // them from their contracts — are assignable as-is, while compositions with
+  // a writer expose the live slot.
+  state: SegmentLoadingStateMap<K> & {
+    loadingSuspended?: ReadonlySignal<SegmentLoadingState['loadingSuspended']>;
+    awaitingMediaKeys?: ReadonlySignal<SegmentLoadingState['awaitingMediaKeys']>;
+  };
   context: { [P in L]: ReadonlySignal<SegmentLoaderLike<Track> | undefined> };
   config: {
     selectedKey: K;
@@ -166,8 +181,8 @@ function setupSegmentLoading<
 
   const derivedStateSignal = computed<SegmentLoadingFsmState>(() => {
     // Policy-off wins even over preconditions: a loader arriving while
-    // suspended must not dispatch.
-    if (state.loadingSuspended?.get()) return 'dormant';
+    // suspended (or before an encrypted source's MediaKeys attach) must not dispatch.
+    if (state.loadingSuspended?.get() || state.awaitingMediaKeys?.get()) return 'dormant';
 
     if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
 
