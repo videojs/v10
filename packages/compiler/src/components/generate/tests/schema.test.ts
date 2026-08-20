@@ -1,10 +1,10 @@
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { generateSchema, parseGenerateSchemaConfig } from '../schema';
+import { createSchemaModule, generateSchema, parseGenerateSchemaConfig } from '../schema';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 
@@ -31,6 +31,18 @@ function setup(): { dir: string; output: string; pattern: string } {
 }
 
 describe('generateSchema', () => {
+  it('produces schema source and watch files without writing output', () => {
+    const { dir, output, pattern } = setup();
+    const generated = createSchemaModule({ source: '@fixture/components', files: [pattern], output }, { cwd: dir });
+
+    expect(generated.code).toContain('export const PlayButton');
+    expect(generated.watchFiles).toEqual([
+      join(dir, 'play-button', 'play-button-component.ts'),
+      join(dir, 'slider', 'slider-component.ts'),
+    ]);
+    expect(existsSync(output)).toBe(false);
+  });
+
   it('emits deterministic component exports and metadata from manifests', () => {
     const { dir, output, pattern } = setup();
     const config = { source: '@fixture/components', files: [pattern], output };

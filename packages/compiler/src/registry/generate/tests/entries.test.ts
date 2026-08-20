@@ -1,13 +1,32 @@
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { defineComponent, defineSchema } from '../../../components/definition';
-import { generateEntries, parseGenerateEntriesConfig } from '../entries';
+import { createEntriesModule, generateEntries, parseGenerateEntriesConfig } from '../entries';
 
 describe('generateEntries', () => {
+  it('produces entry source without writing output', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'videojs-entries-'));
+    const output = join(dir, 'entries.ts');
+    writeFileSync(join(dir, 'element.ts'), `export class TargetElement { static tagName = 'media-target'; }`);
+
+    const generated = createEntriesModule(
+      {
+        files: '*.ts',
+        output,
+        resolve: () => [{ name: 'Target', entry: { tagName: 'media-target' } }],
+      },
+      { cwd: dir }
+    );
+
+    expect(generated.code).toContain('export const Target');
+    expect(generated.watchFiles).toEqual([join(dir, 'element.ts')]);
+    expect(existsSync(output)).toBe(false);
+  });
+
   it('emits deterministic nested entries from a component schema', () => {
     const dir = mkdtempSync(join(tmpdir(), 'videojs-entries-'));
     const output = join(dir, 'entries.ts');

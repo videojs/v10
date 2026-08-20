@@ -9,8 +9,11 @@ export {
 export type {
   ComponentFileSet,
   ComponentSource,
+  CreateSchemaModuleOptions,
   GenerateSchemaConfig,
+  SchemaModule,
 } from './components/generate/schema';
+export { createSchemaModule } from './components/generate/schema';
 export {
   type CompilerAsset,
   type CompilerBuildConfig,
@@ -69,6 +72,8 @@ export {
   loadConfigFile,
 } from './load-config';
 export type {
+  CreateEntriesModuleOptions,
+  EntriesModule,
   GenerateEntriesConfig,
   GenerateSchemaEntriesConfig,
   GenerateSourceEntriesConfig,
@@ -79,6 +84,7 @@ export type {
   SourceEntryContext,
   SourceEntryResolver,
 } from './registry/generate/entries';
+export { createEntriesModule } from './registry/generate/entries';
 export {
   type ConstStatementOptions,
   type FunctionPropSpec,

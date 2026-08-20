@@ -4,7 +4,13 @@ import { isAbsolute, resolve } from 'node:path';
 import { isPlainObject } from '@videojs/utils/predicate';
 import ts from 'typescript';
 import type { ComponentDefinition, ComponentRecord, ComponentSchema } from '../../components/definition';
-import { type GeneratedFileOptions, type GeneratedFileResult, writeGeneratedFile } from '../../generate';
+import {
+  type GeneratedFileOptions,
+  type GeneratedFileResult,
+  type GeneratedModule,
+  type GeneratedModuleOptions,
+  writeGeneratedFile,
+} from '../../generate';
 import { resolveSourceModule, sourceScriptKind } from '../../utils/source-module';
 import type { RegistryEntryReference } from '../definition';
 
@@ -51,6 +57,8 @@ export interface GenerateSourceEntriesConfig {
 export type GenerateEntriesConfig = GenerateSchemaEntriesConfig | GenerateSourceEntriesConfig;
 export type GenerateEntriesOptions = GeneratedFileOptions;
 export type GenerateEntriesResult = GeneratedFileResult;
+export type CreateEntriesModuleOptions = GeneratedModuleOptions;
+export type EntriesModule = GeneratedModule;
 
 type EntryNode =
   | { readonly name: string; readonly entry: RegistryEntryReference }
@@ -60,13 +68,23 @@ export function generateEntries(
   config: GenerateEntriesConfig,
   options: GenerateEntriesOptions = {}
 ): GenerateEntriesResult {
+  const generated = createEntriesModule(config, options);
+  return writeGeneratedFile(config.output, generated.code, options);
+}
+
+/** Produce registry entry metadata without writing it to disk. */
+export function createEntriesModule(
+  config: GenerateEntriesConfig,
+  options: CreateEntriesModuleOptions = {}
+): EntriesModule {
   const cwd = options.cwd ?? process.cwd();
-  const nodes = isSchemaEntriesConfig(config) ? resolveSchemaEntries(config) : resolveSourceEntries(config, cwd);
+  const generated = isSchemaEntriesConfig(config)
+    ? { nodes: resolveSchemaEntries(config), watchFiles: [] }
+    : resolveSourceEntries(config, cwd);
 
-  if (nodes.length === 0) throw new Error('No registry entries were generated.');
+  if (generated.nodes.length === 0) throw new Error('No registry entries were generated.');
 
-  const code = emitEntries(nodes);
-  return writeGeneratedFile(config.output, code, options);
+  return { code: emitEntries(generated.nodes), watchFiles: generated.watchFiles };
 }
 
 function isSchemaEntriesConfig(config: GenerateEntriesConfig): config is GenerateSchemaEntriesConfig {
@@ -116,7 +134,10 @@ function resolveDefinition(
   };
 }
 
-function resolveSourceEntries(config: GenerateSourceEntriesConfig, cwd: string): EntryNode[] {
+function resolveSourceEntries(
+  config: GenerateSourceEntriesConfig,
+  cwd: string
+): { nodes: EntryNode[]; watchFiles: readonly string[] } {
   const patterns = typeof config.files === 'string' ? [config.files] : config.files;
   const sourceModules = new Map<string, ResolvedSourceModule>();
   const entries = patterns.flatMap((pattern) =>
@@ -152,7 +173,10 @@ function resolveSourceEntries(config: GenerateSourceEntriesConfig, cwd: string):
     return sorted[0]!;
   });
 
-  return selected.map(({ name, entry }) => ({ name, entry })).sort(compareEntries);
+  return {
+    nodes: selected.map(({ name, entry }) => ({ name, entry })).sort(compareEntries),
+    watchFiles: [...sourceModules.keys()].sort(),
+  };
 }
 
 function readSourceModule(fileName: string, modules: Map<string, ResolvedSourceModule>): ResolvedSourceModule {

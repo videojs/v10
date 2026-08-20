@@ -21,6 +21,16 @@ export interface GeneratedFileResult {
   readonly changed: boolean;
 }
 
+/** In-memory generated module source and the files that determine it. */
+export interface GeneratedModule {
+  readonly code: string;
+  readonly watchFiles: readonly string[];
+}
+
+export interface GeneratedModuleOptions {
+  readonly cwd?: string | undefined;
+}
+
 export type GeneratedFileFormatter = (file: GeneratedFile) => string | Promise<string>;
 
 export interface SyncGeneratedFilesOptions {

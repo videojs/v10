@@ -4,7 +4,13 @@ import { basename, dirname, extname, isAbsolute, resolve } from 'node:path';
 import { isPlainObject } from '@videojs/utils/predicate';
 import ts from 'typescript';
 
-import { type GeneratedFileOptions, type GeneratedFileResult, writeGeneratedFile } from '../../generate';
+import {
+  type GeneratedFileOptions,
+  type GeneratedFileResult,
+  type GeneratedModule,
+  type GeneratedModuleOptions,
+  writeGeneratedFile,
+} from '../../generate';
 import { toPosixPath } from '../../utils/path';
 import { relativeModuleSpecifier, sourceScriptKind } from '../../utils/source-module';
 
@@ -24,6 +30,8 @@ export interface GenerateSchemaConfig {
 
 export type GenerateSchemaOptions = GeneratedFileOptions;
 export type GenerateSchemaResult = GeneratedFileResult;
+export type CreateSchemaModuleOptions = GeneratedModuleOptions;
+export type SchemaModule = GeneratedModule;
 
 interface ManifestComponent {
   readonly kind: 'manifest';
@@ -42,12 +50,24 @@ export function generateSchema(
   config: GenerateSchemaConfig,
   options: GenerateSchemaOptions = {}
 ): GenerateSchemaResult {
+  const generated = createSchemaModule(config, options);
+  return writeGeneratedFile(config.output, generated.code, options);
+}
+
+/** Produce a component schema module without writing it to disk. */
+export function createSchemaModule(
+  config: GenerateSchemaConfig,
+  options: CreateSchemaModuleOptions = {}
+): SchemaModule {
   const { files, output, source } = config;
   const cwd = options.cwd ?? process.cwd();
   const outputAbsolute = isAbsolute(output) ? output : resolve(cwd, output);
+  const watchFiles = new Set<string>();
 
   const resolved = files.flatMap<ResolvedComponent>((entry) =>
-    typeof entry === 'string' ? resolveManifestEntry(entry, cwd, outputAbsolute) : resolveFileSet(entry, cwd)
+    typeof entry === 'string'
+      ? resolveManifestEntry(entry, cwd, outputAbsolute, watchFiles)
+      : resolveFileSet(entry, cwd, watchFiles)
   );
   const entries = resolved.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -59,7 +79,7 @@ export function generateSchema(
   if (duplicate) throw new Error(`Duplicate component name: ${duplicate.name}`);
 
   const generated = `${[emitHeader(entries), emitComponents(entries), emitMetadata(entries, source)].join('\n\n')}\n`;
-  return writeGeneratedFile(outputAbsolute, generated, options);
+  return { code: generated, watchFiles: [...watchFiles].sort() };
 }
 
 export function parseGenerateSchemaConfig(value: unknown, location: string): readonly GenerateSchemaConfig[] {
@@ -120,9 +140,15 @@ function parseComponentName(manifestPath: string): string {
   throw new Error(`defineComponent() in ${manifestPath} is missing a literal \`name:\` field`);
 }
 
-function resolveManifestEntry(pattern: string, cwd: string, outputFile: string): ManifestComponent[] {
+function resolveManifestEntry(
+  pattern: string,
+  cwd: string,
+  outputFile: string,
+  watchFiles: Set<string>
+): ManifestComponent[] {
   return globSync(pattern, { cwd }).map((path) => {
     const manifestPath = isAbsolute(path) ? path : resolve(cwd, path);
+    watchFiles.add(manifestPath);
 
     return {
       kind: 'manifest',
@@ -132,11 +158,14 @@ function resolveManifestEntry(pattern: string, cwd: string, outputFile: string):
   });
 }
 
-function resolveFileSet(entry: ComponentFileSet, cwd: string): InlineComponent[] {
-  return globSync(entry.files, { cwd }).map((file) => ({
-    kind: 'inline',
-    name: entry.name(fileStem(file)),
-  }));
+function resolveFileSet(entry: ComponentFileSet, cwd: string, watchFiles: Set<string>): InlineComponent[] {
+  return globSync(entry.files, { cwd }).map((file) => {
+    watchFiles.add(isAbsolute(file) ? file : resolve(cwd, file));
+    return {
+      kind: 'inline',
+      name: entry.name(fileStem(file)),
+    };
+  });
 }
 
 function fileStem(filePath: string): string {
