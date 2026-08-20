@@ -137,6 +137,7 @@ describe('vjscPlugin', () => {
         expect.stringMatching(/\/child\.tsx\?framework=react&skin=default-video&style=tailwind$/),
       ])
     );
+    expect(capture.sourceEntries).toEqual([false, false]);
     expect(output.output.filter((item) => item.type === 'chunk').map((item) => item.fileName)).toEqual(['app.js']);
     expect(output.output.some((item) => item.type === 'chunk' && item.code.includes('jsx-runtime'))).toBe(false);
   });
@@ -199,6 +200,7 @@ function createSourceCapture(entry: string, projection: string) {
   const resolvedTriggerId = `\0${triggerId}`;
   const sources = new Map<string, string>();
   let dependencies: string[] = [];
+  let sourceEntries: boolean[] = [];
 
   const plugin: Plugin = {
     name: 'test-source-capture',
@@ -208,8 +210,15 @@ function createSourceCapture(entry: string, projection: string) {
     async buildEnd() {
       const resolved = await this.resolve(entry);
       if (!resolved) this.error(`Could not resolve source capture entry: ${entry}`);
-      const entryInfo = await this.load({ id: resolved.id, resolveDependencies: true });
+      const entryInfo = this.getModuleInfo(resolved.id);
+      if (!entryInfo) this.error(`Source capture entry is missing from the graph: ${resolved.id}`);
       dependencies = [...entryInfo.importedIds];
+      sourceEntries = [
+        entryInfo.isEntry,
+        ...entryInfo.importedIds
+          .filter((id) => id.includes('/child.tsx?'))
+          .map((id) => this.getModuleInfo(id)?.isEntry ?? true),
+      ];
     },
     resolveId(id) {
       return id === triggerId ? resolvedTriggerId : null;
@@ -236,6 +245,9 @@ function createSourceCapture(entry: string, projection: string) {
     sources,
     get dependencies() {
       return dependencies;
+    },
+    get sourceEntries() {
+      return sourceEntries;
     },
   };
 }

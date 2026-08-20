@@ -1,19 +1,12 @@
 import type { Plugin } from 'rolldown';
 import { createVjscPlugin, type VjscTransformContext, type VjscTransformer } from '../bundle/plugin';
 import { createSchemaPlugin, type SchemaPlugin, type SchemaPluginOptions } from '../bundle/schema';
-import { createShadcnPlugin, type ShadcnPlugin, type ShadcnPluginOptions } from '../bundle/shadcn';
+import { createShadcnPlugin, type ShadcnPluginOptions } from '../bundle/shadcn';
+import type { ComponentMeta } from '../components';
 import type { CompilerConfig } from '../config';
-import type { SourceDefinition } from '../shadcn/source/define';
 
 export type { Plugin } from 'rolldown';
-export type {
-  SchemaPlugin,
-  SchemaPluginOptions,
-  ShadcnPlugin,
-  ShadcnPluginOptions,
-  VjscTransformContext,
-  VjscTransformer,
-};
+export type { SchemaPlugin, SchemaPluginOptions, ShadcnPluginOptions, VjscTransformContext, VjscTransformer };
 
 /** A native Rolldown ID pattern accepted by include and exclude filters. */
 export type FilterPattern = string | RegExp | readonly (string | RegExp)[];
@@ -50,8 +43,6 @@ export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   return createSchemaPlugin(options);
 }
 
-export function shadcnPlugin<const Definition extends SourceDefinition>(
-  options: ShadcnPluginOptions<Definition>
-): ShadcnPlugin {
+export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
   return createShadcnPlugin(options);
 }

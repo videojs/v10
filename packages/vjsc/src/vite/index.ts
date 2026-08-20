@@ -2,8 +2,8 @@ import { createFilter, type FilterPattern, type Plugin } from 'vite';
 import { createVjscPlugin, type VjscTransformContext, type VjscTransformer } from '../bundle/plugin';
 import { createSchemaPlugin, type SchemaPluginOptions } from '../bundle/schema';
 import { createShadcnPlugin, type ShadcnPluginOptions } from '../bundle/shadcn';
+import type { ComponentMeta } from '../components';
 import type { CompilerConfig } from '../config';
-import type { SourceDefinition } from '../shadcn/source/define';
 
 export type { FilterPattern, Plugin } from 'vite';
 export type { SchemaPluginOptions, ShadcnPluginOptions, VjscTransformContext, VjscTransformer };
@@ -23,10 +23,6 @@ export interface SchemaPlugin extends Plugin {
   readonly moduleId: `virtual:vjsc/${string}`;
 }
 
-export interface ShadcnPlugin extends Plugin {
-  readonly moduleId: `virtual:vjsc/${string}`;
-}
-
 /** Apply VJSC transforms through Vite using its standard module filters. */
 export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
   const { include, exclude, ...transformOptions } = options;
@@ -39,8 +35,6 @@ export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   return createSchemaPlugin(options) as SchemaPlugin;
 }
 
-export function shadcnPlugin<const Definition extends SourceDefinition>(
-  options: ShadcnPluginOptions<Definition>
-): ShadcnPlugin {
-  return createShadcnPlugin(options) as ShadcnPlugin;
+export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
+  return Object.assign(createShadcnPlugin(options), { apply: 'build' as const }) as Plugin;
 }
