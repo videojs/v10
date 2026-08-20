@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Presentation } from '../../types';
 import {
   buildKeySystemConfigurations,
@@ -7,6 +7,9 @@ import {
   initDataFromKeyUri,
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
+  requestKeySystemAccess,
+  shapeLicenseRequest,
+  toCencInitData,
 } from '../eme';
 
 // "ping" in base64 — small stand-in for a PSSH payload.
@@ -112,6 +115,96 @@ describe('declaredEncryptionScheme', () => {
     expect(declaredEncryptionScheme([WIDEVINE_KEY, { ...WIDEVINE_KEY, method: 'SAMPLE-AES-CTR' }])).toBeUndefined();
     expect(declaredEncryptionScheme([{ method: 'AES-128', uri: 'k.bin' }])).toBeUndefined();
     expect(declaredEncryptionScheme([])).toBeUndefined();
+  });
+});
+
+describe('requestKeySystemAccess', () => {
+  it('walks PlayReady variants in order and reports the configured base id', async () => {
+    const spy = vi.spyOn(navigator, 'requestMediaKeySystemAccess');
+    const access = {} as MediaKeySystemAccess;
+    spy.mockRejectedValueOnce(new Error('no recommendation CDM')).mockResolvedValueOnce(access);
+
+    const result = await requestKeySystemAccess(['com.microsoft.playready'], { video: [], audio: [] });
+
+    expect(spy.mock.calls.map(([keySystem]) => keySystem)).toEqual([
+      'com.microsoft.playready.recommendation',
+      'com.microsoft.playready',
+    ]);
+    expect(result).toEqual({ keySystem: 'com.microsoft.playready', access });
+    spy.mockRestore();
+  });
+});
+
+describe('toCencInitData', () => {
+  const payload = new Uint8Array([1, 2, 3, 4]);
+  const pssh = (() => {
+    // A minimal well-formed v0 PSSH box wrapping `payload`.
+    const box = new Uint8Array(36);
+    new DataView(box.buffer).setUint32(0, 36);
+    box.set([0x70, 0x73, 0x73, 0x68], 4); // 'pssh'
+    new DataView(box.buffer).setUint32(28, 4);
+    box.set(payload, 32);
+    return box;
+  })();
+
+  it('passes Widevine data through untouched — Mux ships a complete PSSH', () => {
+    expect(toCencInitData('com.widevine.alpha', pssh)).toBe(pssh);
+  });
+
+  it('wraps a raw PlayReady Object into a v0 PSSH box', () => {
+    const wrapped = toCencInitData('com.microsoft.playready', payload);
+
+    expect(wrapped.length).toBe(32 + payload.length);
+    expect(new DataView(wrapped.buffer).getUint32(0)).toBe(wrapped.length);
+    expect([...wrapped.slice(4, 8)]).toEqual([0x70, 0x73, 0x73, 0x68]); // 'pssh'
+    expect(new DataView(wrapped.buffer).getUint32(8)).toBe(0); // v0, no flags
+    // The PlayReady system id, 9a04f079-9840-4286-ab92-e65be0885f95.
+    expect([...wrapped.slice(12, 16)]).toEqual([0x9a, 0x04, 0xf0, 0x79]);
+    expect(new DataView(wrapped.buffer).getUint32(28)).toBe(payload.length);
+    expect([...wrapped.slice(32)]).toEqual([...payload]);
+  });
+
+  it('leaves an already-PSSH PlayReady declaration alone', () => {
+    expect(toCencInitData('com.microsoft.playready', pssh)).toBe(pssh);
+  });
+});
+
+describe('shapeLicenseRequest', () => {
+  const utf16 = (text: string) => {
+    const bytes = new Uint8Array(text.length * 2);
+    for (let i = 0; i < text.length; i++) new DataView(bytes.buffer).setUint16(i * 2, text.charCodeAt(i), true);
+    return bytes;
+  };
+
+  it('passes non-PlayReady messages through as octet-stream', () => {
+    const message = new Uint8Array([1, 2, 3]).buffer;
+    const shaped = shapeLicenseRequest('com.widevine.alpha', message);
+
+    expect(shaped.body).toBe(message);
+    expect(shaped.headers).toEqual({ 'Content-Type': 'application/octet-stream' });
+  });
+
+  it('unwraps a PlayReadyKeyMessage envelope into headers and the decoded challenge', () => {
+    // btoa('challenge!') carried inside the classic UTF-16 XML envelope.
+    const envelope = utf16(
+      '<PlayReadyKeyMessage><LicenseAcquisition Version="1">' +
+        '<Challenge encoding="base64encoded">Y2hhbGxlbmdlIQ==</Challenge>' +
+        '<HttpHeaders><HttpHeader><name>Content-Type</name><value>text/xml; charset=utf-8</value></HttpHeader>' +
+        '<HttpHeader><name>SOAPAction</name><value>AcquireLicense</value></HttpHeader></HttpHeaders>' +
+        '</LicenseAcquisition></PlayReadyKeyMessage>'
+    );
+    const shaped = shapeLicenseRequest('com.microsoft.playready', envelope.buffer);
+
+    expect(new TextDecoder().decode(shaped.body as ArrayBuffer | Uint8Array)).toBe('challenge!');
+    expect(shaped.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8', SOAPAction: 'AcquireLicense' });
+  });
+
+  it('sends an unwrapped PlayReady challenge as XML — modern CDMs skip the envelope', () => {
+    const raw = utf16('<soap:Envelope>raw challenge</soap:Envelope>');
+    const shaped = shapeLicenseRequest('com.microsoft.playready', raw.buffer);
+
+    expect(shaped.body).toBe(raw.buffer);
+    expect(shaped.headers).toEqual({ 'Content-Type': 'text/xml; charset=utf-8' });
   });
 });
 
