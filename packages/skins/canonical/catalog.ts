@@ -1,7 +1,7 @@
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { type CatalogItemMeta, defineCatalog, discoverCatalogItems } from 'vjsc/catalog';
+import { type CatalogItemMeta, createCatalogItemsModule, defineCatalog } from 'vjsc/catalog';
 
 export interface ComponentMeta extends CatalogItemMeta {
   readonly type: 'component';
@@ -38,6 +38,16 @@ const resources = {
   },
 } as const;
 
+export const catalogDiscovery = {
+  rootDir: dirname(fileURLToPath(import.meta.url)),
+  files: ['./components/**/*.tsx', './skins/*/skin.tsx'],
+} as const;
+
+/** Generate the self-describing canonical item inventory without evaluating item modules. */
+export function createSkinCatalogItemsModule() {
+  return createCatalogItemsModule<SkinCatalogMeta>(catalogDiscovery);
+}
+
 /** Canonical Skin source catalog shared by package, registry, and future documentation outputs. */
 export const skinCatalog = defineCatalog({
   components: ['@videojs/core/vjsc', '@videojs/icons/vjsc'],
@@ -54,10 +64,7 @@ export const skinCatalog = defineCatalog({
     '@videojs/core/vjsc': 'components',
     '@videojs/icons/vjsc': 'icons',
   },
-  items: discoverCatalogItems<SkinCatalogMeta>({
-    rootDir: dirname(fileURLToPath(import.meta.url)),
-    files: ['./components/**/*.tsx', './skins/*/skin.tsx'],
-  }),
+  items: createSkinCatalogItemsModule().items,
 });
 
 export type SkinItemName = (typeof skinCatalog.items)[number]['name'];

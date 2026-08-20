@@ -18,6 +18,7 @@ import {
 } from './build/metadata';
 import { componentTransforms } from './build/output/react/transform';
 import { createSkinVirtualModules } from './build/virtual-skins';
+import { createSkinCatalogItemsModule } from './canonical/catalog';
 
 const packageDir = import.meta.dirname;
 const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
@@ -30,11 +31,16 @@ const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 const iconSchemaModule = getIconSchemaModule();
 const defaultIconElementModule = createIconElementModule('default');
 const minimalIconElementModule = createIconElementModule('minimal');
+const catalogModule = createSkinCatalogItemsModule();
 
 await Promise.all([
   syncGeneratedModuleTypes({
     rootDir: coreDir,
     modules: [{ fileName: resolve(coreDir, 'src/core/ui/schema.generated.ts'), module: coreSchemaModule }],
+  }),
+  syncGeneratedModuleTypes({
+    rootDir: packageDir,
+    modules: [{ fileName: resolve(packageDir, 'canonical/catalog.generated.ts'), module: catalogModule }],
   }),
   syncGeneratedModuleTypes({
     rootDir: reactDir,
@@ -85,6 +91,7 @@ export default defineConfig({
         { id: 'virtual:vjsc/icons-schema', load: () => iconSchemaModule },
         { id: 'virtual:vjsc/registry/react', load: () => reactEntriesModule },
         { id: 'virtual:vjsc/registry/html', load: () => htmlEntriesModule },
+        { id: 'virtual:vjsc/catalog', load: createSkinCatalogItemsModule },
         { id: 'virtual:vjsc/icons/element/default.js', load: () => defaultIconElementModule },
         { id: 'virtual:vjsc/icons/element/minimal.js', load: () => minimalIconElementModule },
         ...createSkinVirtualModules(),

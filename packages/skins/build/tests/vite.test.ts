@@ -10,6 +10,7 @@ const playButtonUrl = '/../canonical/components/buttons/play-button.tsx';
 const buttonStyles = resolve(packageDir, 'canonical/styles/components/button.styles.ts');
 const reactVirtualSkin = 'virtual:vjsc/skin/react/default-video/vanilla.tsx';
 const htmlVirtualSkin = 'virtual:vjsc/skin/html/minimal-video/tailwind.tsx';
+const virtualCatalog = 'virtual:vjsc/catalog';
 
 describe('canonical Skins Vite workflow', () => {
   let server: ViteDevServer | undefined;
@@ -53,12 +54,15 @@ describe('canonical Skins Vite workflow', () => {
 
     const reactSkin = await server.transformRequest(reactVirtualSkin);
     const htmlSkin = await server.transformRequest(htmlVirtualSkin);
+    const catalog = await server.transformRequest(virtualCatalog);
 
     expect(reactSkin?.code).toContain('$RefreshReg$');
     expect(reactSkin?.code).toContain('DefaultVideoSkin');
     expect(htmlSkin?.code).toContain('const skin =');
     expect(htmlSkin?.code).toContain('media-skin-video-minimal');
     expect(htmlSkin?.code).not.toContain('@videojs/core/vjsc');
+    expect(catalog?.code).toContain('default-video');
+    expect(catalog?.code).toContain('play-button');
 
     const resolved = await server.pluginContainer.resolveId(reactVirtualSkin);
     const virtualModule = resolved && server.moduleGraph.getModuleById(resolved.id);

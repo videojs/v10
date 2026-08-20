@@ -4,6 +4,7 @@ import { isAbsolute, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 import type { CompilerPlugin } from '../config';
+import type { GeneratedModule } from '../generate';
 import { toPosixPath } from '../utils/path';
 import { sourceScriptKind } from '../utils/source-module';
 import type { CatalogItemDefinition } from './define';
@@ -17,6 +18,10 @@ export interface DiscoverCatalogItemsOptions {
   readonly rootDir: string;
   readonly files: string | readonly string[];
   readonly exportName?: string | undefined;
+}
+
+export interface CatalogItemsModule<Item extends CatalogItemMeta = CatalogItemMeta> extends GeneratedModule {
+  readonly items: readonly (Item & CatalogItemDefinition)[];
 }
 
 /** Discover self-describing catalog entries without evaluating their source modules. */
@@ -49,6 +54,19 @@ export function discoverCatalogItems<Item extends CatalogItemMeta = CatalogItemM
   }
 
   return items.sort((left, right) => left.name.localeCompare(right.name));
+}
+
+/** Generate the catalog inventory facade consumed by bundlers and editor type sync. */
+export function createCatalogItemsModule<Item extends CatalogItemMeta = CatalogItemMeta>(
+  options: DiscoverCatalogItemsOptions
+): CatalogItemsModule<Item> {
+  const items = discoverCatalogItems<Item>(options);
+
+  return {
+    items,
+    code: `export const items = ${JSON.stringify(items, null, 2)} as const;\nexport default items;\n`,
+    watchFiles: items.map((item) => resolve(options.rootDir, item.source)),
+  };
 }
 
 /** Remove compile-time catalog metadata from projected component modules. */

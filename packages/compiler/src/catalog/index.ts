@@ -23,7 +23,9 @@ export {
 } from './emit';
 export {
   type CatalogItemMeta,
+  type CatalogItemsModule,
   catalogMetaPlugin,
+  createCatalogItemsModule,
   type DiscoverCatalogItemsOptions,
   discoverCatalogItems,
   extractCatalogItemMeta,
