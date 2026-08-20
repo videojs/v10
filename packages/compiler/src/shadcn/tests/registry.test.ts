@@ -8,7 +8,7 @@ import { defineCatalog } from '../../catalog/define';
 import { defineCatalogOutput } from '../../catalog/emit';
 import { loadCatalog } from '../../catalog/resolve';
 import { defineConfig, jsx } from '../../config';
-import { defineShadcnRegistry, emitShadcnRegistry } from '../index';
+import { createShadcnRegistryFiles, defineShadcnRegistry, emitShadcnRegistry } from '../index';
 
 const roots: string[] = [];
 
@@ -130,6 +130,19 @@ describe('emitShadcnRegistry', () => {
       dependencies: ['clsx'],
       files: [{ type: 'registry:lib', target: 'components/example/utils.ts' }],
     });
+    const built = createShadcnRegistryFiles(output, registry);
+    const rootItem = JSON.parse(built.find((file) => file.path === 'root.json')!.content);
+    expect(built.map((file) => file.path)).toEqual([
+      'registry.json',
+      'styles.json',
+      'utils.json',
+      'root.json',
+      'public.json',
+    ]);
+    expect(rootItem.files[0]).toMatchObject({
+      path: 'registry/source/private.ts',
+    });
+    expect(rootItem.files[0].content).toContain(`export const Private = value;`);
   });
 });
 

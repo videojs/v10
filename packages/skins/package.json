@@ -27,7 +27,7 @@
   },
   "scripts": {
     "build": "tsdown && pnpm run build:registry",
-    "build:registry": "node --import tsx ./scripts/build-registry.ts && shadcn build canonical/registry/registry.json --output dist/registry",
+    "build:registry": "node --import tsx ./scripts/build-registry.ts",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "vite --host",
     "test": "pnpm run test:types && vitest run",
@@ -50,7 +50,6 @@
     "oxfmt": "^0.62.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "shadcn": "^4.16.2",
     "tailwindcss": "4.2.1",
     "tailwind-merge": "^3.5.0",
     "tsdown": "^0.22.14",

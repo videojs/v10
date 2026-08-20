@@ -2,7 +2,12 @@ import { readFile } from 'node:fs/promises';
 import { posix, resolve } from 'node:path';
 
 import { uniqBy } from '@videojs/utils/array';
-import { type RegistryItem, registrySchema, type Registry as ShadcnRegistrySchema } from 'shadcn/schema';
+import {
+  type RegistryItem,
+  registryItemSchema,
+  registrySchema,
+  type Registry as ShadcnRegistrySchema,
+} from 'shadcn/schema';
 
 import type { CatalogDefinition } from '../catalog/define';
 import {
@@ -13,6 +18,7 @@ import {
   emitCatalog,
 } from '../catalog/emit';
 import { type Catalog, type CatalogItem, resolveCatalog } from '../catalog/resolve';
+import type { GeneratedFile } from '../generate';
 
 type RegistryItemType = RegistryItem['type'];
 type PublishedRegistryItemType = Extract<RegistryItemType, 'registry:block' | 'registry:component'>;
@@ -93,6 +99,35 @@ export interface ShadcnRegistryOutputFile extends CatalogOutputFile {
 export interface ShadcnRegistryOutput {
   readonly files: readonly ShadcnRegistryOutputFile[];
   readonly registry: ShadcnRegistry;
+}
+
+/** Build final Shadcn registry JSON assets directly from in-memory emitted sources. */
+export function createShadcnRegistryFiles<Definition extends CatalogDefinition>(
+  output: ShadcnRegistryOutput,
+  definition: ShadcnRegistryDefinition<Definition>
+): GeneratedFile[] {
+  const sources = new Map(output.files.map((file) => [file.path, file.content]));
+  const items = output.registry.items.map((item) => {
+    const built = {
+      $schema: 'https://ui.shadcn.com/schema/registry-item.json',
+      ...item,
+      ...(item.files
+        ? {
+            files: item.files.map((file) => {
+              const sourcePath = posix.relative(definition.paths.output, file.path);
+              const content = sources.get(sourcePath);
+              if (content === undefined) throw new Error(`Shadcn registry source does not exist: ${file.path}`);
+              return { ...file, content };
+            }),
+          }
+        : {}),
+    };
+
+    registryItemSchema.parse(built);
+    return { path: `${item.name}.json`, content: JSON.stringify(built) };
+  });
+
+  return [{ path: 'registry.json', content: JSON.stringify(output.registry) }, ...items];
 }
 
 /** Emit editable catalog modules, shared files, and a validated shadcn registry. */

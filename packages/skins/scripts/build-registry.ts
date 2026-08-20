@@ -1,8 +1,8 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { type GeneratedFile, syncGeneratedFiles } from 'vjsc/generate';
-import { emitShadcnRegistry } from 'vjsc/shadcn';
+import { syncGeneratedFiles } from 'vjsc/generate';
+import { createShadcnRegistryFiles, emitShadcnRegistry } from 'vjsc/shadcn';
 
 import { loadSkinCatalog, skinsPackageRoot } from '../build/catalog';
 import { reactOutput } from '../build/output/react';
@@ -29,23 +29,13 @@ export async function buildRegistry(): Promise<void> {
 
   await syncGeneratedFiles({
     rootDir: skinsPackageRoot,
-    managedRoots: [posix.join(skinRegistry.paths.output, skinRegistry.paths.source)],
-    files: [
-      ...inDirectory(output.files, skinRegistry.paths.output),
-      {
-        path: posix.join(skinRegistry.paths.output, 'registry.json'),
-        content: JSON.stringify(output.registry),
-      },
-    ],
+    managedRoots: ['dist/registry'],
+    files: createShadcnRegistryFiles(output, skinRegistry).map((file) => ({
+      ...file,
+      path: posix.join('dist/registry', file.path),
+    })),
     format: formatGeneratedFile,
   });
-}
-
-function inDirectory(files: Iterable<GeneratedFile>, outputDir: string): GeneratedFile[] {
-  return [...files].map((file) => ({
-    path: posix.join(outputDir, file.path),
-    content: file.content,
-  }));
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
