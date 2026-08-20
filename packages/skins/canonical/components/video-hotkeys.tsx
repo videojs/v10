@@ -27,3 +27,9 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
     </>
   );
 }
+export const meta = {
+  name: 'video-hotkeys',
+  type: 'component',
+  title: 'Video Hotkeys',
+  description: 'The standard keyboard controls for on-demand video playback.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

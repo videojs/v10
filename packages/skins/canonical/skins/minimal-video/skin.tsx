@@ -70,3 +70,14 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
     </Container>
   );
 }
+export const meta = {
+  name: 'minimal-video',
+  type: 'skin',
+  style: {
+    scope: 'media-skin-video-minimal',
+    theme: 'minimal',
+    variant: 'minimal',
+  },
+  title: 'Minimal Video Skin',
+  description: 'A compact on-demand video skin with wrapping controls and the complete video component set.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

@@ -17,3 +17,9 @@ export function VideoSettingsMenu(props: VideoSettingsMenuProps = {}) {
     </SettingsMenu>
   );
 }
+export const meta = {
+  name: 'video-settings-menu',
+  type: 'component',
+  title: 'Video Settings Menu',
+  description: 'Nested video quality, audio track, playback rate, and captions settings menus.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

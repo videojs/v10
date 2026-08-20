@@ -22,6 +22,13 @@ export {
   resolveCatalogCompilerConfig,
 } from './emit';
 export {
+  type CatalogItemMeta,
+  catalogMetaPlugin,
+  type DiscoverCatalogItemsOptions,
+  discoverCatalogItems,
+  extractCatalogItemMeta,
+} from './meta';
+export {
   type Catalog,
   type CatalogFiles,
   type CatalogItem,

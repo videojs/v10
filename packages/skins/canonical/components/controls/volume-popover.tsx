@@ -26,3 +26,9 @@ export function VolumePopover({
     </$.Popover.Root>
   );
 }
+export const meta = {
+  name: 'volume-popover',
+  type: 'component',
+  title: 'Volume Control',
+  description: 'A mute toggle with a vertical slider for adjusting playback volume in a popover.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

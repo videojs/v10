@@ -15,3 +15,9 @@ export function PiPButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+export const meta = {
+  name: 'pip-button',
+  type: 'component',
+  title: 'Picture-in-Picture Button',
+  description: 'A state-aware button that enters and exits picture-in-picture.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

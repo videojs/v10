@@ -14,3 +14,9 @@ export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipP
     </$.Tooltip.Root>
   );
 }
+export const meta = {
+  name: 'button-tooltip',
+  type: 'component',
+  title: 'Button Tooltip',
+  description: 'An internal tooltip composition shared by button controls.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

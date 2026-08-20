@@ -16,3 +16,10 @@ export function PlayButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+export const meta = {
+  name: 'play-button',
+  type: 'component',
+  title: 'Play Button',
+  description:
+    'A three-state button that plays, pauses, or restarts media with matching icons and an accessible tooltip.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

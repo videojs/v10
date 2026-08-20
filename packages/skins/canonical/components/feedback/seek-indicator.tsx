@@ -12,3 +12,9 @@ export function SeekIndicator({ className, ...props }: Props<CoreProps> = {}) {
     </$.SeekIndicator.Root>
   );
 }
+export const meta = {
+  name: 'seek-indicator',
+  type: 'component',
+  title: 'Seek Indicator',
+  description: 'Visual feedback for forward and backward seek actions.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

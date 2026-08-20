@@ -15,3 +15,9 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
     </>
   );
 }
+export const meta = {
+  name: 'video-gestures',
+  type: 'component',
+  title: 'Video Gestures',
+  description: 'The standard pointer gestures for on-demand video playback.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

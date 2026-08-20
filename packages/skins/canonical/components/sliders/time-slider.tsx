@@ -30,3 +30,9 @@ export function TimeSlider({ className, ...props }: Props<CoreProps> = {}) {
     </$.TimeSlider.Root>
   );
 }
+export const meta = {
+  name: 'time-slider',
+  type: 'component',
+  title: 'Time Slider',
+  description: 'A playback timeline for seeking, with current and buffered progress plus time and thumbnail previews.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

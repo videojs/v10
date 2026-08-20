@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { createEntriesModule, createSchemaModule, jsx, syncGeneratedModuleTypes } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
+import { catalogMetaPlugin } from 'vjsc/catalog';
 import { defineRegistry, extendRegistry, plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
@@ -99,7 +100,7 @@ const output = {
       react: (name) => resolveImport({ source: 'react', name }),
     },
   }),
-  plugins: [registryPlugin(componentRegistry), componentTransforms(resolveImport)],
+  plugins: [catalogMetaPlugin(), registryPlugin(componentRegistry), componentTransforms(resolveImport)],
 };
 
 export default defineConfig({

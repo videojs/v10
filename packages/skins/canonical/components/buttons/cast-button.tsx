@@ -15,3 +15,9 @@ export function CastButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+export const meta = {
+  name: 'cast-button',
+  type: 'component',
+  title: 'Cast Button',
+  description: 'A state-aware button that starts and stops Google Cast playback.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

@@ -15,3 +15,10 @@ export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProp
     </ButtonTooltip>
   );
 }
+export const meta = {
+  name: 'seek-button',
+  type: 'component',
+  title: 'Seek Button',
+  description:
+    'A button that skips playback forward or backward by a configurable number of seconds, with a direction-aware icon and accessible tooltip.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

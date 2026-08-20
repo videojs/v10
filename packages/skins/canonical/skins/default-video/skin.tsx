@@ -72,3 +72,14 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
     </Container>
   );
 }
+export const meta = {
+  name: 'default-video',
+  type: 'skin',
+  style: {
+    scope: 'media-skin-video',
+    theme: 'default',
+    variant: 'default',
+  },
+  title: 'Default Video Skin',
+  description: 'A complete on-demand video skin with responsive controls, settings, feedback, and input controls.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

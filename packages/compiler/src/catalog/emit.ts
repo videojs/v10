@@ -14,6 +14,7 @@ import { toPosixPath } from '../utils/path';
 import { relativeModuleSpecifier, resolveSourceModule } from '../utils/source-module';
 
 import type { CatalogDefinition } from './define';
+import { catalogMetaPlugin } from './meta';
 import { type Catalog, type CatalogItem, type CatalogResolution, resolveCatalog } from './resolve';
 import { loadCatalogStyles } from './styles';
 
@@ -373,8 +374,9 @@ function compilerConfig<Definition extends CatalogDefinition>(
   manifest: StyleManifest | undefined
 ): CompilerConfig {
   const config = resolveCatalogCompilerConfig(output, catalogItem);
+  const plugins = [catalogMetaPlugin()];
 
-  if (!manifest || !styles) return config;
+  if (!manifest || !styles) return { ...config, plugins: [...plugins, ...(config.plugins ?? [])] };
 
   const styleOptions =
     styles.mode === 'tailwind'
@@ -391,7 +393,7 @@ function compilerConfig<Definition extends CatalogDefinition>(
 
   return {
     ...config,
-    plugins: [stylesPlugin(styleOptions), ...(config.plugins ?? [])],
+    plugins: [...plugins, stylesPlugin(styleOptions), ...(config.plugins ?? [])],
   };
 }
 

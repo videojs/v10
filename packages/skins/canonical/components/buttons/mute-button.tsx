@@ -13,3 +13,9 @@ export function MuteButton({ className, ...props }: Props<CoreProps> = {}) {
     </$.MuteButton>
   );
 }
+export const meta = {
+  name: 'mute-button',
+  type: 'component',
+  title: 'Mute Button',
+  description: 'A state-aware mute button used by the volume control.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

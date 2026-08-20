@@ -15,3 +15,9 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
     </ButtonTooltip>
   );
 }
+export const meta = {
+  name: 'fullscreen-button',
+  type: 'component',
+  title: 'Fullscreen Button',
+  description: 'A button that enters and exits fullscreen with state-aware icons and an accessible tooltip.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

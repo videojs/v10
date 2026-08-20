@@ -11,3 +11,9 @@ export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {
     </$.BufferingIndicator>
   );
 }
+export const meta = {
+  name: 'buffering-indicator',
+  type: 'component',
+  title: 'Buffering Indicator',
+  description: 'A delayed spinner displayed while media is waiting for data.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

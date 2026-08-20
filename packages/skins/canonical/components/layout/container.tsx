@@ -9,3 +9,9 @@ export function Container({ children, className, ...props }: PropsWithChildren) 
     </$.Container>
   );
 }
+export const meta = {
+  name: 'container',
+  type: 'component',
+  title: 'Container',
+  description: 'The player layout container shared by Skin compositions.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

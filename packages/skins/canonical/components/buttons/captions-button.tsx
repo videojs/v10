@@ -15,3 +15,9 @@ export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+export const meta = {
+  name: 'captions-button',
+  type: 'component',
+  title: 'Captions Button',
+  description: 'A state-aware button that toggles captions and subtitles.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

@@ -13,3 +13,10 @@ export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
     </$.VolumeSlider.Root>
   );
 }
+export const meta = {
+  name: 'volume-slider',
+  type: 'component',
+  title: 'Volume Slider',
+  description:
+    'A horizontal or vertical slider for adjusting playback volume by dragging, using the keyboard, or scrolling.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

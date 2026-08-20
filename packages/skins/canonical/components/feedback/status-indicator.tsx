@@ -39,3 +39,9 @@ export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<Core
     </$.StatusIndicator.Root>
   );
 }
+export const meta = {
+  name: 'status-indicator',
+  type: 'component',
+  title: 'Status Indicator',
+  description: 'Visual feedback for captions, fullscreen, picture-in-picture, and playback actions.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

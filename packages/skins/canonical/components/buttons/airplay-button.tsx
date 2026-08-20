@@ -15,3 +15,9 @@ export function AirPlayButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+export const meta = {
+  name: 'airplay-button',
+  type: 'component',
+  title: 'AirPlay Button',
+  description: 'A state-aware button that starts and stops AirPlay playback.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

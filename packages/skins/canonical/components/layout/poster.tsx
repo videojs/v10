@@ -10,3 +10,9 @@ export function Poster({ children, className, src, ...props }: PropsWithChildren
     </$.Poster>
   );
 }
+export const meta = {
+  name: 'poster',
+  type: 'component',
+  title: 'Poster',
+  description: 'The video poster and its presentation styling shared by Skin compositions.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;

@@ -16,3 +16,9 @@ export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) 
     </$.VolumeIndicator.Root>
   );
 }
+export const meta = {
+  name: 'volume-indicator',
+  type: 'component',
+  title: 'Volume Indicator',
+  description: 'Visual feedback for mute and volume changes.',
+} as const satisfies import('vjsc/catalog').CatalogItemMeta;
