@@ -1,12 +1,11 @@
 import type { GeneralHookFilter, Plugin } from 'rolldown';
 import { createVjscPlugin, type VjscTransformContext, type VjscTransformer } from '../bundle/plugin';
 import { createSchemaPlugin, type SchemaPlugin, type SchemaPluginOptions } from '../bundle/schema';
-import { createShadcnPlugin, type ShadcnPluginOptions } from '../bundle/shadcn';
-import type { ComponentMeta } from '../components';
 import type { CompilerConfig } from '../config';
 
 export type { Plugin, RolldownOutput } from 'rolldown';
-export type { SchemaPlugin, SchemaPluginOptions, ShadcnPluginOptions, VjscTransformContext, VjscTransformer };
+export { type ShadcnPluginOptions, shadcnPlugin } from '../shadcn/rolldown';
+export type { SchemaPlugin, SchemaPluginOptions, VjscTransformContext, VjscTransformer };
 
 /** A native Rolldown ID pattern accepted by include and exclude filters. */
 export type FilterPattern = Exclude<GeneralHookFilter, { include?: unknown; exclude?: unknown }>;
@@ -41,8 +40,4 @@ function normalizeFilter(pattern: FilterPattern): string | RegExp | (string | Re
 
 export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   return createSchemaPlugin(options);
-}
-
-export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
-  return createShadcnPlugin(options);
 }

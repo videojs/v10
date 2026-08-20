@@ -6,8 +6,9 @@ import { defineConfig, normalizePath } from 'vite';
 import { type CompilerConfig, html, jsx } from 'vjsc';
 import { componentMetaPlugin, discoverComponents } from 'vjsc/components';
 import { plugin as registryPlugin } from 'vjsc/registry';
+import { shadcnPlugin } from 'vjsc/rolldown';
 import { plugin as stylesPlugin } from 'vjsc/styles';
-import { shadcnPlugin, type VjscTransformer, vjscPlugin } from 'vjsc/vite';
+import { type VjscTransformer, vjscPlugin } from 'vjsc/vite';
 import type { SkinMeta } from './vjsc/meta';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './vjsc/registry/frameworks';
 import { componentTransforms } from './vjsc/registry/react';
@@ -32,12 +33,6 @@ function createRegistryConfig() {
         include: vjscInclude,
         transform,
       }),
-      shadcnPlugin({
-        root: vjscDir,
-        include: ['./components/**/*.tsx', './skins/*/skin.tsx'],
-        query: { framework: 'react', skin: 'default-video', style: 'tailwind' },
-        registry: skinRegistry,
-      }),
     ],
     build: {
       outDir: resolve(packageDir, 'dist/registry'),
@@ -45,6 +40,14 @@ function createRegistryConfig() {
       rolldownOptions: {
         input: [],
         external: isPackageImport,
+        plugins: [
+          shadcnPlugin({
+            root: vjscDir,
+            include: ['./components/**/*.{ts,tsx}', './skins/*/skin.{ts,tsx}'],
+            query: { framework: 'react', skin: 'default-video', style: 'tailwind' },
+            registry: skinRegistry,
+          }),
+        ],
       },
     },
   };

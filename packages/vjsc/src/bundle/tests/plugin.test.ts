@@ -51,8 +51,13 @@ describe('vjscPlugin', () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-projection-'));
     const entry = join(root, 'entry.tsx');
     const child = join(root, 'child.tsx');
-    writeFileSync(entry, `import { Child } from './child'; export const Entry = () => <Child/>;`);
+    const label = join(root, 'label.ts');
+    writeFileSync(
+      entry,
+      `import { Child } from './child'; import { label } from './label'; export const Entry = () => <Child>{label}</Child>;`
+    );
     writeFileSync(child, `export const Child = () => <span/>;`);
+    writeFileSync(label, `export const label = 'projected';`);
     const transformed: string[] = [];
 
     const bundle = await rolldown({
@@ -77,11 +82,12 @@ describe('vjscPlugin', () => {
     const output = await bundle.generate({ format: 'es' });
 
     expect(output.output[0]?.code).toContain('react/jsx-runtime');
-    expect(transformed).toHaveLength(2);
+    expect(transformed).toHaveLength(3);
     expect(transformed).toEqual(
       expect.arrayContaining([
         expect.stringMatching(/\/child\.tsx\?framework=react&style=vanilla$/),
         expect.stringMatching(/\/entry\.tsx\?framework=react&style=vanilla$/),
+        expect.stringMatching(/\/label\.ts\?framework=react&style=vanilla$/),
       ])
     );
   });

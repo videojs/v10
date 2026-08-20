@@ -3,19 +3,18 @@ import { globSync, readFileSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import type { OutputBundle, Plugin } from 'rolldown';
-import ts from 'typescript';
 
 import { type ComponentMeta, extractComponentMeta } from '../components/meta';
-import type { ShadcnRegistryDefinition } from '../shadcn';
-import { createShadcnRegistryFiles, type ShadcnGraph, type ShadcnGraphModule } from '../shadcn/registry';
-import { sourceScriptKind } from '../utils/source-module';
+import { collectImportReferences } from './imports';
+import type { ShadcnRegistryDefinition } from './index';
+import { createShadcnRegistryFiles, type ShadcnGraph, type ShadcnGraphModule } from './registry';
 
 export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta> {
   /** Root containing the editable source and shared registry files. */
   readonly root: string;
-  /** Root-relative component module globs. */
+  /** Complete root-relative inventory of editable source modules. */
   readonly include: string | readonly string[];
-  /** Root-relative component module globs to omit. */
+  /** Root-relative source module globs to omit. */
   readonly exclude?: string | readonly string[] | undefined;
   /** VJSC projection requested through the host module graph. */
   readonly query: Readonly<Record<string, string>>;
@@ -28,8 +27,8 @@ interface CapturedModule {
   readonly source: string;
 }
 
-/** Shared implementation used by the public Vite and Rolldown adapters. */
-export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
+/** Emit a Shadcn registry from VJSC-transformed modules in the Rolldown graph. */
+export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
   const root = canonicalPath(options.root);
   const query = createQuery(options.query);
   const triggerId = `virtual:vjsc/shadcn/${createHash('sha256').update(root).update(query).digest('hex').slice(0, 12)}`;
@@ -55,11 +54,8 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
         for (const file of item.files) this.addWatchFile(resolve(root, file.source));
       }
 
-      const published = new Set(options.registry.items.published);
-      const entries = [...metadata]
-        .filter((entry): entry is [string, Item] => entry[1] !== undefined && published.has(entry[1].name))
-        .map(([fileName]) => `${fileName}${query}`);
-      triggerSource = `${entries.map((id) => `import ${JSON.stringify(id)};`).join('\n')}\nexport default null;`;
+      const entries = [...metadata.keys()].map((fileName) => `${fileName}${query}`);
+      triggerSource = `${entries.map((id) => `void import(${JSON.stringify(id)});`).join('\n')}\nexport default null;`;
       this.emitFile({ type: 'chunk', id: triggerId });
     },
     resolveId: {
@@ -100,7 +96,6 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
             );
           }
           imports.add(importedFile);
-          await this.load({ id: resolved.id });
         }
         return null;
       },
@@ -142,22 +137,11 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
 }
 
 function relativeModuleSpecifiers(source: string, fileName: string): string[] {
-  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, sourceScriptKind(fileName));
-  const specifiers = new Set<string>();
-  const visit = (node: ts.Node): void => {
-    const literal =
-      (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier
-        ? node.moduleSpecifier
-        : ts.isCallExpression(node) &&
-            node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-            node.arguments.length === 1
-          ? node.arguments[0]
-          : undefined;
-    if (literal && ts.isStringLiteralLike(literal) && literal.text.startsWith('.')) specifiers.add(literal.text);
-    ts.forEachChild(node, visit);
-  };
-  visit(sourceFile);
-  return [...specifiers];
+  return unique(
+    collectImportReferences(source, fileName)
+      .map((reference) => reference.specifier)
+      .filter((specifier) => specifier.startsWith('.'))
+  );
 }
 
 function canonicalImport(id: string, metadata: ReadonlyMap<string, unknown>): string {

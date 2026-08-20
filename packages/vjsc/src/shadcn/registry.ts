@@ -6,6 +6,7 @@ import ts from 'typescript';
 
 import type { ComponentMeta } from '../components/meta';
 import { sourceScriptKind, stripScriptExtension } from '../utils/source-module';
+import { collectImportReferences, type ImportReference } from './imports';
 import type { ShadcnRegistryDefinition, ShadcnRegistryFile, ShadcnRegistrySharedItem } from './index';
 
 type PublishedRegistryItemType = Extract<RegistryItem['type'], 'registry:block' | 'registry:component'>;
@@ -31,13 +32,6 @@ interface RegistryModule extends ShadcnGraphModule {
 interface OwnedModule extends RegistryModule {
   readonly outputPath: string;
   readonly target: string;
-}
-
-interface ImportReference {
-  readonly specifier: string;
-  readonly start: number;
-  readonly end: number;
-  readonly quote: string;
 }
 
 interface BuiltItem {
@@ -439,41 +433,6 @@ async function loadSharedItems(root: string, definition: ShadcnRegistryDefinitio
       ),
     }))
   );
-}
-
-function collectImportReferences(source: string, fileName: string): ImportReference[] {
-  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, sourceScriptKind(fileName));
-  const references: ImportReference[] = [];
-  const visit = (node: ts.Node): void => {
-    const literal = moduleSpecifier(node);
-    if (literal) {
-      const start = literal.getStart(sourceFile);
-      references.push({
-        specifier: literal.text,
-        start,
-        end: literal.getEnd(),
-        quote: source[start] === '`' ? '`' : source[start] === '"' ? '"' : "'",
-      });
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(sourceFile);
-  return references;
-}
-
-function moduleSpecifier(node: ts.Node): ts.StringLiteralLike | undefined {
-  if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
-    return node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier) ? node.moduleSpecifier : undefined;
-  }
-  if (
-    ts.isCallExpression(node) &&
-    node.expression.kind === ts.SyntaxKind.ImportKeyword &&
-    node.arguments.length === 1 &&
-    ts.isStringLiteralLike(node.arguments[0]!)
-  ) {
-    return node.arguments[0];
-  }
-  return undefined;
 }
 
 function assertMetaRemoved(module: ShadcnGraphModule): void {

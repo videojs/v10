@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { type ComponentMeta, componentMetaPlugin } from '../../components';
 import { jsx } from '../../config';
 import { shadcnPlugin, vjscPlugin } from '../../rolldown';
-import type { ShadcnRegistryDefinition } from '../../shadcn';
+import type { ShadcnRegistryDefinition } from '../index';
 
 interface FixtureMeta extends ComponentMeta {
   readonly name: string;
@@ -88,7 +88,7 @@ describe('shadcnPlugin', () => {
     const root = setup({
       'app.ts': `export const app = true;`,
       'components/root.tsx': `import type { Label } from './types'; export const load = () => import('./lazy'); export function Root({ label }: { label: Label }) { return <main>{label}</main>; } ${meta('root', 'block')}`,
-      'components/types.tsx': `export type Label = string;`,
+      'components/types.ts': `import type { Lazy } from './lazy'; export type Label = string | typeof Lazy;`,
       'components/lazy.tsx': `export const Lazy = <aside/>;`,
     });
     const output = await build(root, registry({ published: ['root'], shared: [] }));
@@ -97,9 +97,26 @@ describe('shadcnPlugin', () => {
     expect(item.files.map((file: { target: string }) => file.target)).toEqual([
       'components/example/root/lazy.tsx',
       'components/example/root/root.tsx',
-      'components/example/root/types.tsx',
+      'components/example/root/types.ts',
     ]);
     expect(output.output.filter((entry) => entry.type === 'chunk').map((entry) => entry.fileName)).toEqual(['app.js']);
+  });
+
+  it('captures cyclic source modules without recursively loading from transform hooks', async () => {
+    const root = setup({
+      'app.ts': `export const app = true;`,
+      'components/root.tsx': `import type { A } from './a'; export function Root({ value }: { value: A }) { return <main>{value}</main>; } ${meta('root', 'block')}`,
+      'components/a.ts': `import type { B } from './b'; export type A = B;`,
+      'components/b.ts': `import type { A } from './a'; export type B = string | A;`,
+    });
+    const output = await build(root, registry({ published: ['root'], shared: [] }));
+    const item = assetJson(output, 'root.json');
+
+    expect(item.files.map((file: { target: string }) => file.target)).toEqual([
+      'components/example/root/a.ts',
+      'components/example/root/b.ts',
+      'components/example/root/root.tsx',
+    ]);
   });
 
   it('rejects unsafe paths and registry file collisions', async () => {
@@ -211,7 +228,7 @@ async function build(
   });
   const output = shadcnPlugin({
     root,
-    include: './components/**/*.tsx',
+    include: './components/**/*.{ts,tsx}',
     query: { framework: 'react', style: 'tailwind' },
     registry: definition,
   });

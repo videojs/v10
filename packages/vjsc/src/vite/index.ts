@@ -1,12 +1,10 @@
 import { createFilter, type FilterPattern, type Plugin } from 'vite';
 import { createVjscPlugin, type VjscTransformContext, type VjscTransformer } from '../bundle/plugin';
 import { createSchemaPlugin, type SchemaPluginOptions } from '../bundle/schema';
-import { createShadcnPlugin, type ShadcnPluginOptions } from '../bundle/shadcn';
-import type { ComponentMeta } from '../components';
 import type { CompilerConfig } from '../config';
 
 export type { FilterPattern, Plugin } from 'vite';
-export type { SchemaPluginOptions, ShadcnPluginOptions, VjscTransformContext, VjscTransformer };
+export type { SchemaPluginOptions, VjscTransformContext, VjscTransformer };
 
 export interface VjscPluginOptions {
   /** Modules passed to the transform hook. Defaults to TSX modules. */
@@ -33,8 +31,4 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
 
 export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   return createSchemaPlugin(options) as SchemaPlugin;
-}
-
-export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
-  return Object.assign(createShadcnPlugin(options), { apply: 'build' as const }) as Plugin;
 }

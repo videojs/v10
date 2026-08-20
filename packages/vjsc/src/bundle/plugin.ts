@@ -53,7 +53,7 @@ export function createVjscPlugin(options: TransformPluginOptions = {}, filter: T
           ...resolveOptions,
           skipSelf: true,
         });
-        if (!resolved || resolved.external || !cleanId(resolved.id).endsWith('.tsx')) return resolved;
+        if (!resolved || resolved.external || !isCanonicalSourceModule(cleanId(resolved.id))) return resolved;
 
         return {
           ...resolved,
@@ -156,6 +156,10 @@ function parseId(id: string): ParsedId {
 function cleanId(id: string): string {
   const queryIndex = id.indexOf('?');
   return queryIndex === -1 ? id : id.slice(0, queryIndex);
+}
+
+function isCanonicalSourceModule(id: string): boolean {
+  return /\.(?:[cm]?[jt]s|[jt]sx)$/.test(id);
 }
 
 function withParameters(id: string, parameters: URLSearchParams): string {
