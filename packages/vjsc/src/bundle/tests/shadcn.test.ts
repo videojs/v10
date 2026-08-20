@@ -42,8 +42,9 @@ describe('shadcnPlugin', () => {
     const rootItem = assetJson(output, 'root.json');
     const publicItem = assetJson(output, 'public.json');
     registrySchema.parse(manifest);
-    registryItemSchema.parse(rootItem);
-    registryItemSchema.parse(publicItem);
+    for (const item of output.output.filter((entry) => entry.type === 'asset' && entry.fileName !== 'registry.json')) {
+      registryItemSchema.parse(JSON.parse(String(item.source)));
+    }
 
     expect(rootItem).toMatchObject({
       dependencies: ['private-package'],
@@ -63,6 +64,52 @@ describe('shadcnPlugin', () => {
     expect(rootSource).not.toContain('jsx-runtime');
     expect(publicItem.registryDependencies).toEqual(['@example/styles']);
     expect(output.output.find((item) => item.fileName === 'app.js')).toMatchObject({ type: 'chunk' });
+  });
+
+  it('rewrites relative imports when private dependencies move at installation', async () => {
+    const root = setup({
+      'app.ts': `export const app = true;`,
+      'components/nested/root.tsx': `import { Private } from '../private'; export function Root() { return <main>{Private}</main>; } ${meta('root', 'block')}`,
+      'components/private.tsx': `export const Private = <aside/>; ${meta('private')}`,
+    });
+    const output = await build(root, registry({ published: ['root'], shared: [] }));
+    const item = assetJson(output, 'root.json');
+    const source = item.files.find((file: { target: string }) => file.target.endsWith('/root.tsx')).content;
+
+    expect(item.files.map((file: { target: string }) => file.target)).toEqual([
+      'components/example/root/internal/components/private.tsx',
+      'components/example/root/root.tsx',
+    ]);
+    expect(source).toContain(`from './internal/components/private'`);
+  });
+
+  it('rejects unsafe paths and registry file collisions', async () => {
+    const root = setup({
+      'app.ts': `export const app = true;`,
+      'components/root.tsx': `${meta('root', 'block')} export const Root = <main/>;`,
+      'first.css': '.first{}',
+      'second.css': '.second{}',
+    });
+    const definition = registry({ published: ['root'], shared: [] });
+    const unsafe = { ...definition, paths: { ...definition.paths, output: '../registry' } };
+    await expect(build(root, unsafe)).rejects.toThrow(/output path must be a non-empty relative path/);
+
+    const collision = registry({
+      published: ['root'],
+      shared: [
+        {
+          name: 'styles',
+          type: 'registry:style',
+          title: 'Styles',
+          description: 'Styles.',
+          files: [
+            { source: './first.css', path: 'styles.css' },
+            { source: './second.css', path: 'styles.css' },
+          ],
+        },
+      ],
+    });
+    await expect(build(root, collision)).rejects.toThrow(/source collision/);
   });
 
   it('fails when ordered before VJSC source transformation', async () => {
@@ -217,6 +264,6 @@ function setup(files: Readonly<Record<string, string>>): string {
 
 function assetJson(output: RolldownOutput, fileName: string): any {
   const asset = output.output.find((item) => item.type === 'asset' && item.fileName === fileName);
-  if (!asset || asset.type !== 'asset') throw new Error(`Missing asset: ${fileName}`);
+  if (asset?.type !== 'asset') throw new Error(`Missing asset: ${fileName}`);
   return JSON.parse(String(asset.source));
 }

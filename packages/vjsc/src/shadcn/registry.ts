@@ -92,6 +92,7 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
     ],
   } satisfies ShadcnRegistry;
 
+  validateRegistryFiles(registry.items);
   registrySchema.parse(registry);
 
   const contents = new Map<string, string>();
@@ -123,6 +124,18 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
   }
 
   return assets;
+}
+
+function validateRegistryFiles(items: readonly RegistryItem[]): void {
+  const paths = new Map<string, string>();
+  const targets = new Map<string, string>();
+
+  for (const item of items) {
+    for (const file of item.files ?? []) {
+      assertNoCollision(paths, file.path, item.name, 'source path');
+      if (file.target) assertNoCollision(targets, file.target, item.name, 'installation target');
+    }
+  }
 }
 
 function validateGraph(graph: ShadcnGraph): ReadonlyMap<string, RegistryModule> {
