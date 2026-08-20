@@ -1,9 +1,9 @@
 import type { PropertyValues } from '@videojs/element';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { MenuGroupController } from './menu-group-controller';
 
-export class MenuGroupElement extends MediaElement {
+export class MenuGroupElement extends UIElement {
   static readonly tagName = 'media-menu-group';
 
   readonly #group = new MenuGroupController(this);

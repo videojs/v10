@@ -84,12 +84,12 @@ import '@videojs/html/video/player';
 If you need a custom feature set, a custom tag name, or want to combine provider+container into a single element, use `createPlayer()` to get `ProviderMixin` and compose your own class:
 
 ```ts title="my-player.ts"
-import { ContainerMixin, createPlayer, MediaElement } from '@videojs/html';
+import { ContainerMixin, createPlayer, UIElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-class MyPlayer extends ProviderMixin(MediaElement) {}
+class MyPlayer extends ProviderMixin(UIElement) {}
 customElements.define('my-player', MyPlayer);
 ```
 
@@ -157,7 +157,7 @@ Use `PlayerController` to subscribe to store state from any custom element insid
 ```ts title="play-pause-button.ts"
 import { selectPlayback } from '@videojs/html';
 
-class PlayPauseButton extends MediaElement {
+class PlayPauseButton extends UIElement {
   #playback = new PlayerController(this, context, selectPlayback);
 
   connectedCallback() {

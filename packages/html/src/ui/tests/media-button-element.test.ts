@@ -7,8 +7,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../i18n';
 import { containerContext, playerContext } from '../../player/context';
-import { MediaElement } from '../media-element';
 import { PlayButtonElement } from '../play-button/play-button-element';
+import { UIElement } from '../ui-element';
 
 let tagCounter = 0;
 
@@ -47,7 +47,7 @@ function createPlaybackStore(): AnyPlayerStore {
   return store;
 }
 
-class TestContainerProviderElement extends MediaElement {
+class TestContainerProviderElement extends UIElement {
   readonly provider = new ContextProvider(this, {
     context: containerContext,
     initialValue: {
@@ -57,7 +57,7 @@ class TestContainerProviderElement extends MediaElement {
   });
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   static readonly tagName = 'test-media-button-player';
 
   store = createPlaybackStore();

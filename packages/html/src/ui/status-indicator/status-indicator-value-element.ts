@@ -1,5 +1,5 @@
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class StatusIndicatorValueElement extends MediaElement {
+export class StatusIndicatorValueElement extends UIElement {
   static readonly tagName = 'media-status-indicator-value';
 }

@@ -26,7 +26,7 @@ import { ContainerMixin, createPlayer } from '@videojs/html';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
+class VideoPlayer extends ProviderMixin(ContainerMixin(UIElement)) {}
 ```
 
 ### Split composition
@@ -39,10 +39,10 @@ import { ContainerMixin, createPlayer } from '@videojs/html';
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 // Provider owns the store, sits at the top
-class PlayerShell extends ProviderMixin(MediaElement) {}
+class PlayerShell extends ProviderMixin(UIElement) {}
 
 // Container registers as the layout/fullscreen target
-class MediaRegion extends ContainerMixin(MediaElement) {}
+class MediaRegion extends ContainerMixin(UIElement) {}
 ```
 
 <UtilReference util="ContainerMixin" />

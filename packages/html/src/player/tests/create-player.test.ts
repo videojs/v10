@@ -10,7 +10,7 @@ import { ContextConsumer } from '@videojs/element/context';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { ContainerMixin } from '../../index';
-import { MediaElement } from '../../ui/media-element';
+import { UIElement } from '../../ui/ui-element';
 import { createPlayer } from '../create-player';
 import { popupGroupContext } from '../popup-group-context';
 
@@ -48,14 +48,14 @@ describe('createPlayer', () => {
 
   it('ProviderMixin produces a valid custom element class', () => {
     const { ProviderMixin } = createPlayer({ features: videoFeatures });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
 
     expect(typeof ProviderElement).toBe('function');
     expect(ProviderElement.prototype).toBeDefined();
   });
 
   it('ContainerMixin produces a valid custom element class', () => {
-    const ContainerElement = ContainerMixin(MediaElement);
+    const ContainerElement = ContainerMixin(UIElement);
 
     expect(typeof ContainerElement).toBe('function');
     expect(ContainerElement.prototype).toBeDefined();
@@ -64,7 +64,7 @@ describe('createPlayer', () => {
   it('scopes popup coordination to container descendants', async () => {
     const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-    class PopupGroupProbe extends MediaElement {
+    class PopupGroupProbe extends UIElement {
       popupGroup: PopupGroup | undefined;
 
       constructor() {
@@ -78,8 +78,8 @@ describe('createPlayer', () => {
       }
     }
 
-    const providerTag = defineTestElement(ProviderMixin(MediaElement));
-    const containerTag = defineTestElement(ContainerMixin(MediaElement));
+    const providerTag = defineTestElement(ProviderMixin(UIElement));
+    const containerTag = defineTestElement(ContainerMixin(UIElement));
     const probeTag = defineTestElement(PopupGroupProbe);
     const provider = document.createElement(providerTag);
     const container = document.createElement(containerTag);
@@ -91,8 +91,8 @@ describe('createPlayer', () => {
     document.body.append(provider);
 
     await Promise.all([
-      (provider as MediaElement).updateComplete,
-      (container as MediaElement).updateComplete,
+      (provider as UIElement).updateComplete,
+      (container as UIElement).updateComplete,
       outsideProbe.updateComplete,
       insideProbe.updateComplete,
     ]);
@@ -123,7 +123,7 @@ describe('createPlayer', () => {
 
   it('maps selected feature inputs to reactive properties and attributes', async () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-metadata-provider';
     customElements.define(tagName, ProviderElement);
 
@@ -155,7 +155,7 @@ describe('createPlayer', () => {
 
   it('leaves the element its own `title`, which means the tooltip', async () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-title-provider';
     customElements.define(tagName, ProviderElement);
 
@@ -200,7 +200,7 @@ describe('createPlayer', () => {
 
   it('leaves config attributes inert when their feature is absent', () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
 
     expect(ProviderElement.observedAttributes).not.toContain('content-title');
     expect(ProviderElement.prototype).not.toHaveProperty('contentTitle');

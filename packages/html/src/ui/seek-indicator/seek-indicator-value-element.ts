@@ -1,5 +1,5 @@
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class SeekIndicatorValueElement extends MediaElement {
+export class SeekIndicatorValueElement extends UIElement {
   static readonly tagName = 'media-seek-indicator-value';
 }

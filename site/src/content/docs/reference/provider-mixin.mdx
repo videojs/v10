@@ -32,10 +32,10 @@ import { ContainerMixin, createPlayer } from '@videojs/html';
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 // Layout shell owns the store
-class AppShell extends ProviderMixin(MediaElement) {}
+class AppShell extends ProviderMixin(UIElement) {}
 
 // Content region is the fullscreen target and container reference
-class VideoRegion extends ContainerMixin(MediaElement) {}
+class VideoRegion extends ContainerMixin(UIElement) {}
 ```
 
 When a single element handles both responsibilities, compose the mixins directly:
@@ -45,7 +45,7 @@ import { ContainerMixin, createPlayer } from '@videojs/html';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
+class VideoPlayer extends ProviderMixin(ContainerMixin(UIElement)) {}
 ```
 
 <UtilReference util="ProviderMixin" />

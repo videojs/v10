@@ -16,7 +16,7 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 /**
  * `<media-live-button>` — selects from `live`, `time`, and `buffer` features
@@ -26,7 +26,7 @@ import { MediaElement } from '../media-element';
  * Doesn't extend `MediaButtonElement` because that base couples a button to
  * a single feature selector; the LiveButton needs three.
  */
-export class LiveButtonElement extends MediaElement {
+export class LiveButtonElement extends UIElement {
   static readonly tagName = 'media-live-button';
 
   static override properties: PropertyDeclarationMap = {

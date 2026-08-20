@@ -17,7 +17,7 @@ exported from `@videojs/element`, rather than being added directly to `ReactiveE
 ```
 @videojs/utils/dom   → deferFrames() composable utility
 @videojs/element     → DestroyMixin(HTMLElement) — generic, works with any base
-@videojs/html        → MediaElement = DestroyMixin(ReactiveElement) + hostDestroyed()
+@videojs/html        → UIElement = DestroyMixin(ReactiveElement) + hostDestroyed()
 @videojs/core        → HlsCustomMedia = DestroyMixin(HTMLElement) via CustomMediaMixin
 ```
 
@@ -27,7 +27,7 @@ Adds `destroyed`, `destroy()`, `destroyCallback()`, deferred 2-rAF scheduling on
 disconnect, cancel on reconnect, and `keep-alive` attribute support. Works with any
 `HTMLElement` subclass.
 
-### MediaElement
+### UIElement
 
 Composes `DestroyMixin(ReactiveElement)` and bridges `destroyCallback()` to
 `hostDestroyed()` on reactive controllers. Also guards `performUpdate()` when destroyed.
@@ -48,5 +48,5 @@ class (from `DelegateMixin`) overrides `destroyCallback()` to call
 
 - **Put everything on `ReactiveElement`** — Simpler (direct `#controllers`
   access), but breaks Lit structural compat. Rejected.
-- **Separate `MediaElement` class without mixin** — Doesn't compose with
+- **Separate `UIElement` class without mixin** — Doesn't compose with
   `CustomMediaMixin(HTMLElement)` for custom media elements. Rejected.

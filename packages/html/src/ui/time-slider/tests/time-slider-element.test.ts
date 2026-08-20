@@ -1,11 +1,10 @@
 import { SliderDataAttrs, type SliderState } from '@videojs/core';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-
-import { MediaElement } from '../../media-element';
 import { sliderContext } from '../../slider/context';
 import { SliderThumbElement } from '../../slider/slider-thumb-element';
 import { SliderValueElement } from '../../slider/slider-value-element';
+import { UIElement } from '../../ui-element';
 import { TimeSliderChapterTitleElement } from '../time-slider-chapters/time-slider-chapter-title-element';
 import { TimeSliderChaptersElement } from '../time-slider-chapters/time-slider-chapters-element';
 import { TimeSliderElement } from '../time-slider-element';
@@ -22,7 +21,7 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   return document.createElement(tag) as Element;
 }
 
-class TestSliderProviderElement extends MediaElement {
+class TestSliderProviderElement extends UIElement {
   readonly provider = new ContextProvider(this, {
     context: sliderContext,
     initialValue: createSliderContext(),

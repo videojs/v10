@@ -14,7 +14,7 @@ import {
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 
-import { MediaElement } from '../../ui/media-element';
+import { UIElement } from '../../ui/ui-element';
 import { type CreatePlayerResult, createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
@@ -61,8 +61,8 @@ describe('createPlayer', () => {
   it('infers config properties from selected features', () => {
     const withMetadata = createPlayer({ features: [metadataFeature] });
     const withoutMetadata = createPlayer({ features: [features.playback] });
-    const MetadataProvider = withMetadata.ProviderMixin(MediaElement);
-    const PlainProvider = withoutMetadata.ProviderMixin(MediaElement);
+    const MetadataProvider = withMetadata.ProviderMixin(UIElement);
+    const PlainProvider = withoutMetadata.ProviderMixin(UIElement);
     const metadataProvider = new MetadataProvider();
     const plainProvider = new PlainProvider();
 

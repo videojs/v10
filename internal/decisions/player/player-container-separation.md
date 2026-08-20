@@ -99,7 +99,7 @@ import { ContainerMixin, createPlayer } from '@videojs/html';
 const { ProviderMixin } = createPlayer({ features });
 
 // Combine into a single element if desired
-class MyPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {
+class MyPlayer extends ProviderMixin(ContainerMixin(UIElement)) {
   static readonly tagName = 'my-player';
 }
 ```

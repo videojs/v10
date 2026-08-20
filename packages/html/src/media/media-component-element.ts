@@ -8,7 +8,7 @@ import {
 } from '@videojs/media/dom/media-host';
 
 import { mediaContext } from '../player/context';
-import { MediaElement } from '../ui/media-element';
+import { UIElement } from '../ui/ui-element';
 
 type MediaHost = HTMLMediaElementHost<HTMLMediaTargetLike, any>;
 
@@ -28,7 +28,7 @@ function resolveMediaHost(media: Media | null): MediaHost | null {
  * changes, is removed when this element disconnects, and is destroyed with
  * this element.
  */
-export abstract class MediaComponentElement<Component extends MediaComponent> extends MediaElement {
+export abstract class MediaComponentElement<Component extends MediaComponent> extends UIElement {
   #component: Component | null = null;
   #host: MediaHost | null = null;
   #removeComponent: (() => void) | null = null;

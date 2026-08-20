@@ -28,8 +28,8 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { containerContext } from '../../player/context';
 import { popupGroupContext } from '../../player/popup-group-context';
-import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
+import { UIElement } from '../ui-element';
 import { tooltipGroupContext } from './context';
 import { TooltipLabelElement } from './tooltip-label-element';
 import { TooltipShortcutElement } from './tooltip-shortcut-element';
@@ -45,7 +45,7 @@ function isLabelTrigger(el: HTMLElement): el is TriggerElement {
   return '$state' in el;
 }
 
-export class TooltipElement extends MediaElement {
+export class TooltipElement extends UIElement {
   static readonly tagName = 'media-tooltip';
 
   static override properties = {

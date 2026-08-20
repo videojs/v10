@@ -1,9 +1,9 @@
 import { applyElementProps } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class MenuItemIndicatorElement extends MediaElement {
+export class MenuItemIndicatorElement extends UIElement {
   static readonly tagName = 'media-menu-item-indicator';
 
   static override properties = {
