@@ -75,7 +75,9 @@ import type { Resolution } from '../../media/primitives/resolution';
 import {
   matchesPartialTrack,
   pickTextTrackFromTracks,
+  smallestCoveringPixelArea,
   type TextSelectionConfig,
+  tracksUnderPixelArea,
 } from '../../media/primitives/select-tracks';
 import {
   type AudioTrack,
@@ -406,6 +408,8 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  * against a 360p/720p/1080p ladder: only 360p is below it, so capping at the
  * player's area would hold an 800-px-wide box to a 640-px-wide picture. The
  * honest answer is the tier above, 720p, with 360p left in for the ranker.
+ * `smallestCoveringPixelArea` picks that cap; `tracksUnderPixelArea` — the same
+ * filter `screenResolutionCap` narrows with — applies it.
  *
  * Renditions declaring no width or height compare as area `0` and are never capped
  * out — they can't be judged against the player, and dropping them could strand
@@ -429,14 +433,11 @@ function playerResolutionCap<S extends SelectionKey, T extends SwitchableTrack>(
   const playerResolution = state.playerResolution?.get();
   if (!playerResolution) return tracks;
 
-  const playerPixelArea = playerResolution.width * playerResolution.height;
+  // A player larger than every rendition has no covering tier, so the cap is
+  // `undefined` and the filter's unbounded default narrows nothing.
+  const cap = smallestCoveringPixelArea(tracks, playerResolution.width * playerResolution.height);
 
-  const covering = tracks.map((track) => resolutionArea(track)).filter((area) => area >= playerPixelArea);
-  // Nothing covers the player — no opinion, fall through to the full set.
-  if (!covering.length) return tracks;
-
-  const cap = Math.min(...covering);
-  return tracks.filter((track) => resolutionArea(track) <= cap);
+  return tracksUnderPixelArea(tracks, cap);
 }
 
 /**

@@ -107,6 +107,24 @@ export function tracksUnderPixelArea<T extends RankableTrack>(
 }
 
 /**
+ * The smallest track area that still covers `minPixelArea`, or `undefined` when
+ * no track reaches it.
+ *
+ * The cap a surface-size rule wants when it should round *up* to the ladder: a
+ * surface between two tiers is covered by the upper one, and capping at the
+ * surface's own area instead would serve a picture smaller than the surface and
+ * upscale it.
+ *
+ * Tracks declaring no dimensions compare as area `0` and so never cover anything,
+ * which keeps them out of the cap rather than pinning it to zero.
+ */
+export function smallestCoveringPixelArea(tracks: readonly RankableTrack[], minPixelArea: number): number | undefined {
+  const covering = tracks.map(pixelArea).filter((area) => area >= minPixelArea);
+
+  return covering.length ? Math.min(...covering) : undefined;
+}
+
+/**
  * Compare two tracks by resolution, largest first, with bandwidth as the tiebreak
  * for renditions of identical dimensions. Missing dimensions are treated as area
  * `0`, so a track without them sorts last.
