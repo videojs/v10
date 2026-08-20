@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
 import { attachMediaKeys, fetchLicense, requestKeySystemAccess } from '../../../../media/dom/eme';
+import {
+  SVTA_BAD_LICENSE_REQUEST,
+  SVTA_DRM_LICENSE_REJECTED,
+  SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+  type SvtaError,
+} from '../../../../media/errors';
 import type { Presentation } from '../../../../media/types';
 import { type MediaKeysContext, type MediaKeysState, setupMediaKeys } from '../setup-media-keys';
 
@@ -106,6 +113,9 @@ function makeState(initial: MediaKeysState = {}) {
   return {
     presentation: signal<MediaKeysState['presentation']>(initial.presentation),
     awaitingMediaKeys: signal<boolean | undefined>(initial.awaitingMediaKeys),
+    // Optional reporter seam (ErrorEmitterState) — present here to simulate a
+    // composition where collectErrors owns the slot.
+    errors: signal<SvtaError[] | undefined>(undefined),
   };
 }
 
@@ -207,7 +217,7 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
   });
 
-  it('holds the gate when no configured key system is usable', async () => {
+  it('holds the gate and reports 4008 when no configured key system is usable', async () => {
     vi.mocked(requestKeySystemAccess).mockResolvedValue(undefined);
     const { state, context, reactor } = setupSetupMediaKeys(
       { presentation: makePresentation([WIDEVINE_KEY]) },
@@ -218,6 +228,88 @@ describe('setupMediaKeys', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(state.awaitingMediaKeys.get()).toBe(true);
     expect(context.mediaKeys.get()).toBeUndefined();
+    expect(state.errors.get()).toEqual([
+      { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { keySystems: ['com.widevine.alpha'] } },
+    ]);
+
+    reactor.destroy();
+  });
+
+  it('reports 4004 when the license request fails, without dropping the session', async () => {
+    const eme = makeFakeEme();
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    vi.mocked(fetchLicense).mockRejectedValue(new Error('license server said no'));
+    const { state, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+
+    await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_BAD_LICENSE_REQUEST]));
+    expect(state.errors.get()?.[0]?.data).toMatchObject({ keySystem: 'com.widevine.alpha' });
+    expect(eme.sessions[0]!.update).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('reports 4016 when the CDM rejects the license', async () => {
+    const eme = makeFakeEme();
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
+    const { state, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    eme.sessions[0]!.update.mockRejectedValue(new TypeError('bad CKC'));
+    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+
+    await vi.waitFor(() => expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_REJECTED]));
+
+    reactor.destroy();
+  });
+
+  it('reports 4021 when the CDM cannot generate a license request', async () => {
+    const eme = makeFakeEme();
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    const failingSession = makeFakeSession();
+    failingSession.generateRequest.mockRejectedValue(new Error('no CDM for you'));
+    (eme.mediaKeys.createSession as ReturnType<typeof vi.fn>).mockReturnValue(failingSession);
+    const { state, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    await vi.waitFor(() =>
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED])
+    );
+
+    reactor.destroy();
+  });
+
+  it('reports nothing after teardown aborts in-flight license work', async () => {
+    const eme = makeFakeEme();
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    let rejectLicense!: (reason: Error) => void;
+    vi.mocked(fetchLicense).mockImplementation(() => new Promise((_resolve, reject) => (rejectLicense = reject)));
+    const { state, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+    await vi.waitFor(() => expect(fetchLicense).toHaveBeenCalled());
+
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    rejectLicense(new Error('aborted'));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.errors.get() ?? []).toEqual([]);
 
     reactor.destroy();
   });
