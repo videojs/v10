@@ -9,13 +9,19 @@ Goal: the sandbox's Mux DRM source (`apps/sandbox/app/shared/sources.ts`,
 `DRM_PLAYBACK_ID` + `DRM_SYSTEMS`) plays end-to-end on Chrome/Widevine through an
 SPF DRM-composed engine variant. FairPlay/PlayReady adapters are shaped but not built.
 
-**Status 2026-08-20: VERIFIED end-to-end.** Steps 1–7 and 9 done (steps 2–4 as one
-`setupMediaKeys` behavior; the variant ships behind its own `@videojs/spf/hls-drm`
-entry — the `./hls` entry was already at its size budget). Smoke on Chrome/Widevine
-via the `spf-drm` sandbox template: license POSTs to license.mux.com, 893 frames
-decoded / 0 dropped, ABR upgraded to 2048x914 on the encrypted track. Step 8
-(errors-sequence reporting) remains, plus the out-of-slice list below. Smoke gotcha:
-Chrome 150 never fires `sourceopen` in hidden tabs — keep the tab visible.
+**Status 2026-08-20: VERIFIED end-to-end, Widevine AND FairPlay.** Steps 1–9 done
+(steps 2–4 as one `setupMediaKeys` behavior; the variant ships behind its own
+`@videojs/spf/hls-drm` entry — the `./hls` entry was already at its size budget).
+Chrome/Widevine smoke via the `spf-drm` sandbox template: license POSTs to
+license.mux.com, 893 frames decoded / 0 dropped, ABR upgraded to 2048x914 on the
+encrypted track. Step 8 (errors) landed: SVTA 4004/4008/4010/4013/4016/4021 onto
+the collectErrors sequence. FairPlay vertical landed on top (per-key-system MKSA
+configs incl. sinf, encryption scheme derived from EXT-X-KEY METHOD — cbcs for
+Mux, server-certificate phase, encrypted-event fallback sessions with byte
+dedupe) and **played on Safari** (user-verified). Post-FairPlay Chrome check:
+negotiation + 2 Widevine license POSTs + zero errors confirmed; rendered-frames
+re-check pending a visible tab. Smoke gotcha: Chrome 150 never fires
+`sourceopen` in hidden tabs — keep the tab visible.
 
 ## Steps (TDD; narrowest test per step)
 
