@@ -43,8 +43,6 @@
     "test:e2e:install": "pnpm --dir apps/e2e run install:browsers && pnpm --dir apps/e2e run install:deps",
     "test:size": "node --test .github/scripts/tests/*.test.js",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
-    "generate:skins": "pnpm -F @videojs/skins generate:skins",
-    "check:skins": "pnpm -F @videojs/skins check:skins",
     "typecheck": "tsgo --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md",
     "check:workspace": "node build/scripts/check-workspace.mjs"

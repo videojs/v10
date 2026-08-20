@@ -23,7 +23,7 @@ export const coreSchemaModule = createCoreSchemaModule();
 export const reactEntriesModule = createEntriesModule(
   {
     schema: coreSchemaModule.schema,
-    output: './vjsc/entries.generated.ts',
+    output: './.vjsc/virtual/registry-react.ts',
     resolve: resolveReactEntry,
   },
   { cwd: reactDir }
@@ -32,7 +32,7 @@ export const reactEntriesModule = createEntriesModule(
 export const htmlEntriesModule = createEntriesModule(
   {
     files: ['./src/define/{ui,media}/*.ts', './src/define/i18n.ts'],
-    output: './vjsc/entries.generated.ts',
+    output: './.vjsc/virtual/registry-html.ts',
     resolve: resolveHtmlEntries,
   },
   { cwd: htmlDir }
@@ -52,7 +52,7 @@ export function getIconSchemaModule(family = 'default') {
             name: (filename) => `${iconNames(filename).pascal}Icon`,
           },
         ],
-        output: './vjsc/schema.generated.ts',
+        output: './.vjsc/virtual/icons-schema.ts',
       },
       { cwd: iconsDir }
     );

@@ -10,10 +10,10 @@ import {
   defineRegistry,
   Host,
   type RegistryEntry,
+  type RegistryEntryReference,
   type RegistryPropTransformContext,
   type RegistryRenderContext,
 } from 'vjsc/registry';
-import type * as GeneratedEntries from './entries.generated';
 
 const Div = defineElement('div', {
   props: {
@@ -38,16 +38,22 @@ const optionLabel: RegistryEntry<OptionPartProps> = {
   render: ({ props }) => <Span {...props}>{props.item.label}</Span>,
 };
 
-/** Canonical core components rendered through the React component package. */
-export type ReactRegistryEntries = typeof GeneratedEntries;
+export interface ReactRegistryEntries {
+  readonly entries: Readonly<Record<string, RegistryEntryReference>>;
+  readonly [name: string]: unknown;
+}
 
+type ReactEntryName = 'Popover' | 'Poster' | 'Slider' | 'Tooltip';
+type ReactGeneratedEntry = RegistryEntryReference & Readonly<Record<string, RegistryEntryReference>>;
+
+/** Canonical core components rendered through the React component package. */
 export function createRegistry(schema: ComponentSchema, entries: ReactRegistryEntries): ComponentRegistry {
-  const $ = entries;
+  const $ = entries as unknown as Readonly<Record<ReactEntryName, ReactGeneratedEntry>>;
 
   return defineRegistry({
     schema,
     entries: {
-      ...$.entries,
+      ...(entries.entries as Readonly<Record<string, never>>),
 
       Popover: {
         parts: {

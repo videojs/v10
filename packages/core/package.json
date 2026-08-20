@@ -57,16 +57,13 @@
     "dist"
   ],
   "scripts": {
-    "generate": "pnpm run generate:schema",
-    "generate:schema": "vjsc generate",
-    "check:schema": "vjsc generate --check",
     "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
     "generate:i18n-types": "node --import tsx ./scripts/generate-i18n-types.ts",
-    "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types && pnpm run generate:schema",
+    "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "pnpm run check:schema && pnpm run test:types && vitest run",
+    "test": "pnpm run build && pnpm run test:types && vitest run",
     "test:types": "tsgo --project ./src/core/ui/tests/tsconfig.json",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"

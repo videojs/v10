@@ -12,14 +12,14 @@ const schema = createSchemaModule(
   {
     source: '@videojs/core/vjsc',
     files: ['./src/core/ui/*/*-component.ts'],
-    output: './src/core/ui/schema.generated.ts',
+    output: './.vjsc/virtual/core-schema.ts',
   },
   { cwd: coreDir }
 );
 const entries = createEntriesModule(
   {
     files: ['./src/define/{ui,media}/*.ts', './src/define/i18n.ts'],
-    output: './vjsc/entries.generated.ts',
+    output: './.vjsc/virtual/registry-html.ts',
     resolve: resolveHtmlEntries,
   },
   { cwd: packageDir }

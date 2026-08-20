@@ -9,6 +9,8 @@ import { toPosixPath } from './utils/path';
 export interface GeneratedTypeModule {
   /** Source-tree location whose relative imports the generated module uses. */
   readonly fileName: string;
+  /** Declaration path relative to the hidden type workspace. */
+  readonly outputPath?: string | undefined;
   readonly module: GeneratedModule;
 }
 
@@ -23,7 +25,7 @@ export interface SyncGeneratedModuleTypesOptions {
 export async function syncGeneratedModuleTypes(options: SyncGeneratedModuleTypesOptions): Promise<void> {
   const rootDir = resolve(options.rootDir);
   const typesDir = options.typesDir ?? '.vjsc/types';
-  const files = options.modules.map(({ fileName, module }) => {
+  const files = options.modules.map(({ fileName, outputPath, module }) => {
     const sourceFile = resolve(fileName);
     const sourcePath = relative(rootDir, sourceFile);
 
@@ -32,7 +34,7 @@ export async function syncGeneratedModuleTypes(options: SyncGeneratedModuleTypes
     }
 
     return {
-      path: `${typesDir}/${declarationPath(toPosixPath(sourcePath))}`,
+      path: `${typesDir}/${outputPath ?? declarationPath(toPosixPath(sourcePath))}`,
       content: emitDeclaration(module.code, sourceFile),
     };
   });

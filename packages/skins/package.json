@@ -27,10 +27,8 @@
   },
   "scripts": {
     "build": "tsdown && pnpm run build:registry",
-    "build:registry": "pnpm run generate:skins && shadcn build canonical/registry/registry.json --output dist/registry",
+    "build:registry": "node --import tsx ./scripts/build-registry.ts && shadcn build canonical/registry/registry.json --output dist/registry",
     "build:watch": "tsdown --watch ./src --no-clean",
-    "generate:skins": "node --import tsx ./scripts/generate-skins.ts",
-    "check:skins": "vitest run scripts/generation/tests/generated-skins.test.ts",
     "dev": "vite --host",
     "test": "pnpm run test:types && vitest run",
     "test:types": "tsgo --project ./canonical/tsconfig.json",

@@ -4,12 +4,11 @@ import { join } from 'node:path';
 import { transform } from '@svgr/core';
 import { transformSync } from 'oxc-transform';
 import { iconNames } from './internal/icon-names.js';
-import { ASSETS_DIR, DIST_DIR, getIconSets, getSvgFiles, VJSC_DIR } from './internal/paths.js';
+import { ASSETS_DIR, DIST_DIR, getIconSets, getSvgFiles } from './internal/paths.js';
 import { optimizeSvg } from './internal/svg.js';
 
 const FRAMEWORKS = ['react', 'html'] as const;
 const isWatch = process.argv.includes('--watch');
-const isGenerateOnly = process.argv.includes('--generate-only');
 
 async function buildReactIconModule(svgContent: string, componentName: string): Promise<{ js: string; tsx: string }> {
   const optimized = optimizeSvg(svgContent);
@@ -100,40 +99,6 @@ function buildCanonicalComponentTypes(icons: { varName: string }[]): string {
   });
 
   return [`import type { Component, EmptyProps } from 'vjsc/components';`, ``, ...components, ``].join('\n');
-}
-
-function buildVjscSchema(icons: { name: string; varName: string }[]): string {
-  const definitions = icons.map(({ varName }) => {
-    const name = `${iconNames(varName).pascal}Icon`;
-    return `  ${name}: defineComponent({ name: '${name}' }),`;
-  });
-  const entries = icons.map(({ name, varName }) => {
-    const component = `${iconNames(varName).pascal}Icon`;
-    return `    ${component}: resolve('${component}', '${name}'),`;
-  });
-
-  return [
-    `import { defineComponent, defineSchema } from 'vjsc/components';`,
-    `import type { RegistryEntry } from 'vjsc/registry';`,
-    ``,
-    `const DEFINITIONS = {`,
-    ...definitions,
-    `} as const;`,
-    ``,
-    `export const schema = defineSchema('@videojs/icons/vjsc', DEFINITIONS);`,
-    ``,
-    `export function mapEntries(resolve: (component: keyof typeof DEFINITIONS, name: string) => RegistryEntry) {`,
-    `  return {`,
-    ...entries,
-    `  };`,
-    `}`,
-    ``,
-  ].join('\n');
-}
-
-function generateVjscSchema(icons: { name: string; varName: string }[]): void {
-  ensureDir(VJSC_DIR);
-  writeFileSync(join(VJSC_DIR, 'schema.generated.ts'), buildVjscSchema(icons));
 }
 
 function buildElementIndex(sets: string[]): string {
@@ -344,10 +309,6 @@ async function buildIconSet(setName: string): Promise<void> {
     content: readFileSync(join(ASSETS_DIR, setName, file), 'utf8'),
   }));
 
-  if (setName === 'default') {
-    generateVjscSchema(icons);
-  }
-
   const vjscDir = join(DIST_DIR, 'vjsc', setName);
   ensureDir(vjscDir);
   writeFileSync(join(vjscDir, 'index.js'), buildCanonicalComponents(icons));
@@ -423,15 +384,6 @@ function debounce(fn: () => void, ms: number): () => void {
 }
 
 async function main(): Promise<void> {
-  if (isGenerateOnly) {
-    const icons = getSvgFiles('default').map((file) => ({
-      name: file.replace('.svg', ''),
-      varName: file.replace('.svg', ''),
-    }));
-    generateVjscSchema(icons);
-    return;
-  }
-
   if (isWatch) {
     console.log('Watching icons for changes...\n');
 

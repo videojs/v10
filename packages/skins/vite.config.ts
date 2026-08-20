@@ -36,28 +36,53 @@ const catalogModule = createSkinCatalogItemsModule();
 await Promise.all([
   syncGeneratedModuleTypes({
     rootDir: coreDir,
-    modules: [{ fileName: resolve(coreDir, '.vjsc/virtual/core-schema.ts'), module: coreSchemaModule }],
+    modules: [
+      {
+        fileName: resolve(coreDir, '.vjsc/virtual/core-schema.ts'),
+        outputPath: 'core-schema.d.ts',
+        module: coreSchemaModule,
+      },
+    ],
   }),
   syncGeneratedModuleTypes({
     rootDir: packageDir,
-    modules: [{ fileName: resolve(packageDir, 'canonical/catalog.generated.ts'), module: catalogModule }],
+    modules: [
+      {
+        fileName: resolve(packageDir, '.vjsc/virtual/catalog.ts'),
+        outputPath: 'catalog.d.ts',
+        module: catalogModule,
+      },
+    ],
   }),
   syncGeneratedModuleTypes({
     rootDir: reactDir,
-    modules: [{ fileName: resolve(reactDir, 'vjsc/entries.generated.ts'), module: reactEntriesModule }],
+    modules: [
+      {
+        fileName: resolve(reactDir, '.vjsc/virtual/registry-react.ts'),
+        outputPath: 'registry-react.d.ts',
+        module: reactEntriesModule,
+      },
+    ],
   }),
   syncGeneratedModuleTypes({
     rootDir: resolve(packageDir, '../html'),
     modules: [
       {
-        fileName: resolve(packageDir, '../html/vjsc/entries.generated.ts'),
+        fileName: resolve(packageDir, '../html/.vjsc/virtual/registry-html.ts'),
+        outputPath: 'registry-html.d.ts',
         module: htmlEntriesModule,
       },
     ],
   }),
   syncGeneratedModuleTypes({
     rootDir: iconsDir,
-    modules: [{ fileName: resolve(iconsDir, 'vjsc/schema.generated.ts'), module: iconSchemaModule }],
+    modules: [
+      {
+        fileName: resolve(iconsDir, '.vjsc/virtual/icons-schema.ts'),
+        outputPath: 'icons-schema.d.ts',
+        module: iconSchemaModule,
+      },
+    ],
   }),
 ]);
 

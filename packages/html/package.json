@@ -165,10 +165,6 @@
     }
   },
   "scripts": {
-    "generate": "pnpm run generate:vjsc",
-    "generate:vjsc": "vjsc generate",
-    "check:vjsc": "vjsc generate --check",
-    "prebuild": "pnpm run generate:vjsc",
     "build": "tsdown",
     "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
     "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts",

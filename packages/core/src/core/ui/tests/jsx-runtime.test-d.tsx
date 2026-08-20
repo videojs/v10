@@ -1,7 +1,5 @@
 /** @jsxImportSource vjsc/components */
 
-import { describe, it } from 'vitest';
-import { Slot, Text } from 'vjsc/components';
 import {
   Controls,
   FullscreenButton,
@@ -15,7 +13,9 @@ import {
   TimeSlider,
   Tooltip,
   VolumeSlider,
-} from '../schema.generated';
+} from '@videojs/core/vjsc';
+import { describe, it } from 'vitest';
+import { Slot, Text } from 'vjsc/components';
 
 describe('constrained JSX', () => {
   it('accepts typed components and nested compound parts', () => {

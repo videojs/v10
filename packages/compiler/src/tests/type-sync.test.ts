@@ -9,7 +9,7 @@ import { syncGeneratedModuleTypes } from '../type-sync';
 describe('syncGeneratedModuleTypes', () => {
   it('emits declarations into a mirrored hidden type tree', async () => {
     const rootDir = await mkdtemp(join(tmpdir(), 'vjsc-types-'));
-    const fileName = join(rootDir, 'src/schema.generated.ts');
+    const fileName = join(rootDir, 'src/schema.ts');
     await mkdir(join(rootDir, 'src'));
     await writeFile(join(rootDir, 'src/value.ts'), 'export default 1;\n');
 
@@ -26,7 +26,7 @@ describe('syncGeneratedModuleTypes', () => {
       ],
     });
 
-    await expect(readFile(join(rootDir, '.vjsc/types/src/schema.generated.d.ts'), 'utf8')).resolves.toBe(
+    await expect(readFile(join(rootDir, '.vjsc/types/src/schema.d.ts'), 'utf8')).resolves.toBe(
       `export declare const schema: {\n    readonly value: 1;\n};\n`
     );
   });
@@ -40,5 +40,23 @@ describe('syncGeneratedModuleTypes', () => {
         modules: [{ fileName: join(rootDir, '../outside.ts'), module: { code: '', watchFiles: [] } }],
       })
     ).rejects.toThrow('must stay inside its root');
+  });
+
+  it('supports a stable declaration path independent of the synthetic source location', async () => {
+    const rootDir = await mkdtemp(join(tmpdir(), 'vjsc-types-'));
+    const fileName = join(rootDir, '.vjsc/virtual/catalog.ts');
+
+    await syncGeneratedModuleTypes({
+      rootDir,
+      modules: [
+        {
+          fileName,
+          outputPath: 'catalog.d.ts',
+          module: { code: `export const items = ['play'] as const;`, watchFiles: [] },
+        },
+      ],
+    });
+
+    await expect(readFile(join(rootDir, '.vjsc/types/catalog.d.ts'), 'utf8')).resolves.toContain('readonly ["play"]');
   });
 });
