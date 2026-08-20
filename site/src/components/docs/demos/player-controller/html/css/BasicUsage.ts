@@ -10,13 +10,9 @@ import {
 import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/ui/container';
 
-const { PlayerElement, PlayerController } = createPlayer({
+const { PlayerElement: DemoPlayerElement, PlayerController } = createPlayer({
   features: videoFeatures,
 });
-
-class DemoPlayer extends PlayerElement {
-  static readonly tagName = 'demo-ctrl-player';
-}
 
 class PlayerActions extends MediaElement {
   static readonly tagName = 'demo-ctrl-actions';
@@ -72,6 +68,6 @@ class PlayerState extends MediaElement {
   }
 }
 
-customElements.define(DemoPlayer.tagName, DemoPlayer);
+customElements.define('demo-ctrl-player', DemoPlayerElement);
 customElements.define(PlayerActions.tagName, PlayerActions);
 customElements.define(PlayerState.tagName, PlayerState);

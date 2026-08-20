@@ -1,8 +1,8 @@
-.demo-video-player {
+.demo-video-player media-container {
   position: relative;
 }
 
-.demo-video-player video {
+.demo-video-player media-container video {
   width: 100%;
 }
 
