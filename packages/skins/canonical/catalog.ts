@@ -39,7 +39,7 @@ const resources = {
 } as const;
 
 /** Canonical Skin source catalog shared by registry policy and static tooling. */
-export const skinCatalog = defineDiscoveredCatalog<SkinCatalogMeta>()({
+const skinCatalog = defineDiscoveredCatalog<SkinCatalogMeta>()({
   discovery: {
     rootDir: dirname(fileURLToPath(import.meta.url)),
     files: ['./components/**/*.tsx', './skins/*/skin.tsx'],
@@ -59,6 +59,8 @@ export const skinCatalog = defineDiscoveredCatalog<SkinCatalogMeta>()({
     '@videojs/icons/vjsc': 'icons',
   },
 });
+
+export default skinCatalog;
 
 export type SkinItemName = (typeof skinCatalog.items)[number]['name'];
 export type SkinName = Extract<(typeof skinCatalog.items)[number], { readonly type: 'skin' }>['name'];

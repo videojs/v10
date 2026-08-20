@@ -3,7 +3,7 @@ import type { VirtualModuleDefinition } from 'vjsc';
 import { resolveCatalog } from 'vjsc/catalog';
 import type { GeneratedModule } from 'vjsc/generate';
 
-import { skinCatalog } from '../canonical/catalog';
+import skinCatalog from '../canonical/catalog';
 import { loadSkinCatalog } from './catalog';
 import { frameworkRegistryWatchFiles, getCoreSchemaModule, getIconSchemaModule } from './metadata';
 import { emitHtmlSkin } from './output/html';

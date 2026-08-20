@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { type Catalog, loadCatalog } from 'vjsc/catalog';
-import { skinCatalog } from '../canonical/catalog';
+import skinCatalog from '../canonical/catalog';
 
 export type SkinCatalog = Catalog<typeof skinCatalog>;
 export type SkinCatalogItem = SkinCatalog['items'][number];

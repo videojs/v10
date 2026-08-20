@@ -2,13 +2,14 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
+import { rolldown } from 'rolldown';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { defineCatalog } from '../../catalog/define';
 import { defineCatalogOutput } from '../../catalog/emit';
 import { loadCatalog } from '../../catalog/resolve';
 import { defineConfig, jsx } from '../../config';
-import { createShadcnRegistryFiles, defineShadcnRegistry, emitShadcnRegistry } from '../index';
+import { createShadcnRegistryFiles, defineShadcnRegistry, emitShadcnRegistry, shadcnPlugin } from '../index';
 
 const roots: string[] = [];
 
@@ -143,6 +144,40 @@ describe('emitShadcnRegistry', () => {
       path: 'registry/source/private.ts',
     });
     expect(rootItem.files[0].content).toContain(`export const Private = value;`);
+  });
+
+  it('emits final registry files through a native Rolldown plugin', async () => {
+    const root = setup({ 'root.ts': `export const Root = true;` });
+    const definition = defineCatalog({
+      items: [{ name: 'root', source: './root.ts', title: 'Root', type: 'block' }],
+    });
+    const registry = defineShadcnRegistry(definition, {
+      name: 'example',
+      homepage: 'https://example.com',
+      namespace: '@example',
+      paths: {
+        output: 'registry',
+        source: 'source',
+        install: 'components/example',
+        import: '@/components/example',
+      },
+      items: {
+        published: ['root'],
+        describe: () => ({ type: 'registry:block', title: 'Root', description: 'Root.' }),
+      },
+    });
+    const plugin = shadcnPlugin({
+      catalog: definition,
+      rootDir: root,
+      registry,
+      output: defineCatalogOutput({ compiler: defineConfig({ external: [], target: jsx() }) }),
+    });
+
+    const bundle = await rolldown({ input: plugin.moduleId, plugins: [plugin] });
+    const output = await bundle.generate({ format: 'es' });
+
+    expect(output.output.map((item) => item.fileName)).toEqual(['registry.json', 'root.json']);
+    expect(output.output.find((item) => item.fileName === 'root.json')).toMatchObject({ type: 'asset' });
   });
 });
 

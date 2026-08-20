@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { posix, resolve } from 'node:path';
 
 import { uniqBy } from '@videojs/utils/array';
+import type { Plugin } from 'rolldown';
 import {
   type RegistryItem,
   registryItemSchema,
@@ -17,8 +18,8 @@ import {
   type EmittedCatalogItem,
   emitCatalog,
 } from '../catalog/emit';
-import { type Catalog, type CatalogItem, resolveCatalog } from '../catalog/resolve';
-import type { GeneratedFile } from '../generate';
+import { type Catalog, type CatalogItem, loadCatalog, resolveCatalog } from '../catalog/resolve';
+import type { GeneratedFile, GeneratedFileFormatter } from '../generate';
 
 type RegistryItemType = RegistryItem['type'];
 type PublishedRegistryItemType = Extract<RegistryItemType, 'registry:block' | 'registry:component'>;
@@ -99,6 +100,60 @@ export interface ShadcnRegistryOutputFile extends CatalogOutputFile {
 export interface ShadcnRegistryOutput {
   readonly files: readonly ShadcnRegistryOutputFile[];
   readonly registry: ShadcnRegistry;
+}
+
+export interface ShadcnPluginOptions<Definition extends CatalogDefinition> {
+  readonly catalog: Definition;
+  readonly rootDir: string;
+  readonly registry: ShadcnRegistryDefinition<Definition>;
+  readonly output: CatalogOutputAdapter<Definition>;
+  readonly styles?: CatalogStyleTransform | undefined;
+  readonly format?: GeneratedFileFormatter | undefined;
+  readonly id?: `virtual:vjsc/${string}` | undefined;
+}
+
+export interface ShadcnPlugin extends Plugin {
+  readonly moduleId: `virtual:vjsc/${string}`;
+}
+
+/** Emit a final Shadcn registry as native Rolldown/Vite build assets. */
+export function shadcnPlugin<const Definition extends CatalogDefinition>(
+  options: ShadcnPluginOptions<Definition>
+): ShadcnPlugin {
+  const moduleId = options.id ?? 'virtual:vjsc/shadcn';
+  const resolvedId = `\0${moduleId}`;
+
+  return {
+    name: 'vjsc:shadcn',
+    moduleId,
+    resolveId: (id) => (id === moduleId ? resolvedId : null),
+    load: (id) => (id === resolvedId ? 'export default null;' : null),
+    async generateBundle(_outputOptions, bundle) {
+      const catalog = await loadCatalog(options.catalog, { rootDir: options.rootDir });
+      const output = await emitShadcnRegistry(catalog, options.registry, {
+        output: options.output,
+        ...(options.styles ? { styles: options.styles } : {}),
+      });
+
+      for (const item of catalog.items) {
+        for (const fileName of [...item.files.source, ...item.files.style]) {
+          this.addWatchFile(resolve(catalog.rootDir, fileName));
+        }
+      }
+
+      for (const file of createShadcnRegistryFiles(output, options.registry)) {
+        this.emitFile({
+          type: 'asset',
+          fileName: file.path,
+          source: options.format ? await options.format(file) : file.content,
+        });
+      }
+
+      for (const [fileName, outputFile] of Object.entries(bundle)) {
+        if (outputFile.type === 'chunk' && outputFile.facadeModuleId === resolvedId) delete bundle[fileName];
+      }
+    },
+  };
 }
 
 /** Build final Shadcn registry JSON assets directly from in-memory emitted sources. */
