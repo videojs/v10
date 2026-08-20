@@ -5,6 +5,7 @@ import { isAbsolute, resolve } from 'node:path';
 import type { OutputBundle, Plugin } from 'rolldown';
 
 import { type ComponentMeta, extractComponentMeta } from '../components/meta';
+import { readVjscSource } from '../ts/rolldown';
 import { analyzeImports } from './analyze';
 import type { SourceGraph, SourceImport, SourceModule } from './graph';
 import { createShadcnRegistryFiles } from './registry';
@@ -12,19 +13,12 @@ import type { ShadcnPluginOptions, ShadcnRegistryDefinition } from './types';
 
 export type { ShadcnPluginOptions } from './types';
 
-interface CapturedModule {
-  readonly id: string;
-  readonly source: string;
-  readonly imports: readonly SourceImport[];
-}
-
 /** Emit a Shadcn registry from VJSC-transformed modules in the Rolldown graph. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
   const root = resolveModulePath(options.root);
   const query = createQuery(options.query);
   const triggerId = `virtual:vjsc/shadcn/${createHash('sha256').update(root).update(query).digest('hex').slice(0, 12)}`;
   const resolvedTriggerId = `\0${triggerId}`;
-  const captured = new Map<string, CapturedModule>();
   let metadata = new Map<string, Item | undefined>();
   let triggerSource = 'export default null;';
   let graph: SourceGraph | undefined;
@@ -32,7 +26,6 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
   return {
     name: 'vjsc:shadcn',
     buildStart() {
-      captured.clear();
       graph = undefined;
       metadata = discoverSources(options, root);
       validatePublishedItems(metadata, options.registry);
@@ -59,20 +52,35 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
         return id === resolvedTriggerId ? triggerSource : null;
       },
     },
-    transform: {
-      order: 'pre',
-      async handler(code, id) {
-        if (!id.endsWith(query)) return null;
-        const fileName = resolveModulePath(cleanId(id));
-        if (!metadata.has(fileName)) return null;
+    async buildEnd(error) {
+      if (error) return;
+      const modules: SourceModule[] = [];
+      const moduleIds = new Map<string, string>();
 
-        if (hasComponentMeta(code, fileName)) {
+      for (const id of this.getModuleIds()) {
+        if (!id.endsWith(query)) continue;
+        const fileName = resolveModulePath(cleanId(id));
+        if (metadata.has(fileName)) moduleIds.set(fileName, id);
+      }
+
+      for (const [fileName, meta] of metadata) {
+        const id = moduleIds.get(fileName);
+        if (!id) {
+          if (meta && options.registry.items.published.includes(meta.name)) {
+            this.error(`Shadcn published item \`${meta.name}\` was not loaded by the host graph.`);
+          }
+          continue;
+        }
+        const info = this.getModuleInfo(id);
+        if (!info) this.error(`Shadcn source is missing from the host graph: ${id}`);
+        const source = readVjscSource(info.meta);
+        if (!source) {
           this.error(
-            `Shadcn source ${fileName} still exports component metadata. Place shadcnPlugin after vjscPlugin and enable componentMetaPlugin().`
+            `Shadcn source ${fileName} has no editable VJSC output. Process it with vjscPlugin and componentMetaPlugin().`
           );
         }
         const imports: SourceImport[] = [];
-        for (const reference of analyzeImports(code, fileName)) {
+        for (const reference of analyzeImports(source, fileName)) {
           const resolved = await this.resolve(reference.specifier, id);
           const resolvedId = resolved ? resolveGraphModuleId(resolved.id, metadata) : undefined;
           if (reference.specifier.startsWith('.') && !resolvedId) {
@@ -85,29 +93,12 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
           }
           imports.push({ ...reference, ...(resolvedId ? { resolvedId } : {}) });
         }
-        captured.set(fileName, { id, source: code, imports });
-        return null;
-      },
-    },
-    buildEnd(error) {
-      if (error) return;
-      const modules: SourceModule[] = [];
-
-      for (const [fileName, capture] of captured) {
-        const info = this.getModuleInfo(capture.id);
-        if (!info) this.error(`Shadcn source is missing from the host graph: ${capture.id}`);
         modules.push({
           id: fileName,
-          source: capture.source,
-          meta: metadata.get(fileName),
-          imports: capture.imports,
+          source,
+          meta,
+          imports,
         });
-      }
-
-      for (const [fileName, meta] of metadata) {
-        if (!meta || !options.registry.items.published.includes(meta.name)) continue;
-        if (!captured.has(fileName))
-          this.error(`Shadcn published item \`${meta.name}\` was not loaded by the host graph.`);
       }
       graph = { root, modules: new Map(modules.map((module) => [module.id, module])) };
     },
@@ -219,16 +210,6 @@ function maybeExtractComponentMeta(source: string, fileName: string): ComponentM
     return extractComponentMeta(source, fileName);
   } catch (error) {
     if (error instanceof Error && error.message.includes('must export a static')) return undefined;
-    throw error;
-  }
-}
-
-function hasComponentMeta(source: string, fileName: string): boolean {
-  try {
-    extractComponentMeta(source, fileName);
-    return true;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('must export a static')) return false;
     throw error;
   }
 }

@@ -19,7 +19,7 @@ export interface SchemaPlugin extends Plugin {
 }
 
 /** Create a virtual component-schema entry directly inside a bundler config. */
-export function createSchemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
+export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   const cwd = resolve(options.cwd ?? process.cwd());
   const moduleId = options.id ?? 'virtual:vjsc/schema';
   const sourceFileName = resolve(cwd, 'vjsc.ts');

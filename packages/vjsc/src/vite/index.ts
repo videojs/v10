@@ -1,34 +1,6 @@
-import { createFilter, type FilterPattern, type Plugin } from 'vite';
-import { createSchemaPlugin, type SchemaPluginOptions } from '../components/schema/rolldown';
-import { createVjscPlugin, type VjscTransformContext, type VjscTransformer } from '../ts/rolldown';
-import type { CompilerConfig } from '../ts/types';
-
-export type { FilterPattern, Plugin } from 'vite';
-export type { SchemaPluginOptions, VjscTransformContext, VjscTransformer };
-
-export interface VjscPluginOptions {
-  /** Modules passed to the transform hook. Defaults to TSX modules. */
-  readonly include?: FilterPattern | undefined;
-  /** Modules omitted from the transform hook. */
-  readonly exclude?: FilterPattern | undefined;
-  /** Select a VJSC transform for each module, or return null to defer. */
-  readonly transform?: CompilerConfig | VjscTransformer | undefined;
-  /** Directory used to resolve relative transform configuration. */
-  readonly cwd?: string | undefined;
-}
-
-export interface SchemaPlugin extends Plugin {
-  readonly moduleId: `virtual:vjsc/${string}`;
-}
-
-/** Apply VJSC transforms through Vite using its standard module filters. */
-export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
-  const { include, exclude, ...transformOptions } = options;
-  return createVjscPlugin(transformOptions, {
-    test: createFilter(include ?? /\.tsx(?:\?|$)/, exclude),
-  }) as unknown as Plugin;
-}
-
-export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
-  return createSchemaPlugin(options) as SchemaPlugin;
-}
+export {
+  type VjscPluginOptions,
+  type VjscTransformContext,
+  type VjscTransformer,
+  vjscPlugin,
+} from '../ts/rolldown';

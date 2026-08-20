@@ -2,12 +2,12 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import type { HookFilter, Plugin, RolldownLog } from 'rolldown';
+import type { GeneralHookFilter, HookFilter, Plugin, RolldownLog } from 'rolldown';
 import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from './html-runtime';
 import { CompilerError, transform } from './transform';
 import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from './types';
 
-export interface TransformPluginOptions {
+interface TransformPluginOptions {
   /** Select a VJSC transform for each module, or return null to defer. */
   readonly transform?: CompilerConfig | VjscTransformer | undefined;
   /** Directory used to resolve relative transform configuration. */
@@ -23,13 +23,35 @@ export interface VjscTransformContext {
 
 export type VjscTransformer = (context: VjscTransformContext) => CompilerConfig | null | Promise<CompilerConfig | null>;
 
-export interface TransformPluginFilter {
+interface TransformPluginFilter {
   readonly hook?: HookFilter | undefined;
   readonly test?: ((id: string) => boolean) | undefined;
 }
 
-/** Shared implementation used by the public Vite and Rolldown adapters. */
-export function createVjscPlugin(options: TransformPluginOptions = {}, filter: TransformPluginFilter = {}): Plugin {
+/** A native Rolldown ID pattern accepted by include and exclude filters. */
+export type FilterPattern = Exclude<GeneralHookFilter, { include?: unknown; exclude?: unknown }>;
+
+export interface VjscPluginOptions extends TransformPluginOptions {
+  /** Modules passed to the transform hook. Defaults to TSX and projected VJSC modules. */
+  readonly include?: FilterPattern | undefined;
+  /** Modules omitted from the transform hook. */
+  readonly exclude?: FilterPattern | undefined;
+}
+
+/** Apply VJSC transforms through Rolldown or a Rolldown-compatible host. */
+export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
+  const { include, exclude, ...transformOptions } = options;
+  return createVjscPlugin(transformOptions, {
+    hook: {
+      id: {
+        include: normalizeFilter(include ?? [/\.tsx(?:\?|$)/, /\.[cm]?[jt]sx?\?[^#]*framework=/]),
+        ...(exclude ? { exclude: normalizeFilter(exclude) } : {}),
+      },
+    },
+  });
+}
+
+function createVjscPlugin(options: TransformPluginOptions = {}, filter: TransformPluginFilter = {}): Plugin {
   const cwd = resolve(options.cwd ?? process.cwd());
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
@@ -126,13 +148,24 @@ export function createVjscPlugin(options: TransformPluginOptions = {}, filter: T
           if (!referenced) cssById.delete(publicId);
         }
 
+        const output = imports.length > 0 ? `${imports.join('\n')}\n${result.code}` : result.code;
         return {
-          code: imports.length > 0 ? `${imports.join('\n')}\n${result.code}` : result.code,
+          code: output,
           map: offsetSourceMap(result.map, imports.length),
+          meta: { vjsc: { source: output } },
         };
       },
     },
   };
+}
+
+/** Read editable VJSC output retained across later host transforms. */
+export function readVjscSource(meta: unknown): string | undefined {
+  if (!meta || typeof meta !== 'object') return undefined;
+  const vjsc = Reflect.get(meta, 'vjsc');
+  if (!vjsc || typeof vjsc !== 'object') return undefined;
+  const source = Reflect.get(vjsc, 'source');
+  return typeof source === 'string' ? source : undefined;
 }
 
 interface ParsedId {
@@ -189,4 +222,8 @@ function bundlerLogFromDiagnostic(diagnostic: CompilerDiagnostic): RolldownLog |
     },
     pluginCode: diagnostic.code,
   };
+}
+
+function normalizeFilter(pattern: FilterPattern): string | RegExp | (string | RegExp)[] {
+  return Array.isArray(pattern) ? [...pattern] : (pattern as string | RegExp);
 }

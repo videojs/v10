@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 import { componentMetaPlugin } from '../../components';
 import { vjscPlugin } from '../../rolldown';
 import { vjscPlugin as viteVjscPlugin } from '../../vite';
+import { readVjscSource } from '../rolldown';
 import { jsx } from '../types';
 
 describe('vjscPlugin', () => {
@@ -95,16 +96,18 @@ describe('vjscPlugin', () => {
   it.each([
     ['Rolldown', buildWithRolldown],
     ['Vite', buildWithVite],
-  ])('captures editable transformed source through the %s module graph', async (_host, build) => {
+  ])('captures editable transformed source through the %s module graph', async (host, build) => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-capture-'));
     const app = join(root, 'app.ts');
     const entry = join(root, 'entry.tsx');
     const child = join(root, 'child.tsx');
+    const model = join(root, 'model.ts');
     writeFileSync(app, `export const app = 'unrelated';`);
     writeFileSync(
       entry,
-      `import { Child } from './child';\nexport const meta = { name: 'entry' };\nexport interface EntryProps { label: string; }\nexport function Entry(props: EntryProps) { return <Child label={props.label}/>; }`
+      `import { Child } from './child';\nimport type { Label } from './model';\nexport const meta = { name: 'entry' };\nexport interface EntryProps { label: Label; }\nexport function Entry(props: EntryProps) { return <Child label={props.label}/>; }`
     );
+    writeFileSync(model, `export type Label = string;`);
     writeFileSync(
       child,
       `export const meta = { name: 'child' };\nexport interface ChildProps { label: string; }\nexport function Child(props: ChildProps) { return <span>{props.label}</span>; }`
@@ -144,6 +147,11 @@ describe('vjscPlugin', () => {
       ])
     );
     expect(capture.sourceEntries).toEqual([false, false]);
+    expect(capture.typeDependency).toMatch(/\/model\.ts\?framework=react&skin=default-video&style=tailwind$/);
+    if (host === 'Vite') {
+      expect(capture.hostCode).not.toContain('interface EntryProps');
+      expect(capture.hostCode).not.toContain('<Child');
+    }
     expect(output.output.filter((item) => item.type === 'chunk').map((item) => item.fileName)).toEqual(['app.js']);
     expect(output.output.some((item) => item.type === 'chunk' && item.code.includes('jsx-runtime'))).toBe(false);
   });
@@ -185,6 +193,8 @@ function createSourceCapture(entry: string, projection: string) {
   const sources = new Map<string, string>();
   let dependencies: string[] = [];
   let sourceEntries: boolean[] = [];
+  let typeDependency: string | undefined;
+  let hostCode: string | null = null;
 
   const plugin: Plugin = {
     name: 'test-source-capture',
@@ -196,6 +206,7 @@ function createSourceCapture(entry: string, projection: string) {
       if (!resolved) this.error(`Could not resolve source capture entry: ${entry}`);
       const entryInfo = this.getModuleInfo(resolved.id);
       if (!entryInfo) this.error(`Source capture entry is missing from the graph: ${resolved.id}`);
+      hostCode = entryInfo.code;
       dependencies = [...entryInfo.importedIds];
       sourceEntries = [
         entryInfo.isEntry,
@@ -203,19 +214,19 @@ function createSourceCapture(entry: string, projection: string) {
           .filter((id) => id.includes('/child.tsx?'))
           .map((id) => this.getModuleInfo(id)?.isEntry ?? true),
       ];
+      for (const id of this.getModuleIds()) {
+        if (!id.endsWith(projection)) continue;
+        const info = this.getModuleInfo(id);
+        const source = readVjscSource(info?.meta);
+        if (source) sources.set(id, source);
+      }
+      typeDependency = (await this.resolve('./model', resolved.id))?.id;
     },
     resolveId(id) {
       return id === triggerId ? resolvedTriggerId : null;
     },
     load(id) {
       return id === resolvedTriggerId ? `import ${JSON.stringify(entry)}; export default null;` : null;
-    },
-    transform: {
-      order: 'pre',
-      handler(code, id) {
-        if (id.endsWith(projection)) sources.set(id, code);
-        return null;
-      },
     },
     generateBundle(_options, bundle) {
       for (const [fileName, item] of Object.entries(bundle)) {
@@ -232,6 +243,12 @@ function createSourceCapture(entry: string, projection: string) {
     },
     get sourceEntries() {
       return sourceEntries;
+    },
+    get typeDependency() {
+      return typeDependency;
+    },
+    get hostCode() {
+      return hostCode;
     },
   };
 }

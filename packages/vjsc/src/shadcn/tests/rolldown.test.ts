@@ -150,15 +150,15 @@ describe('shadcnPlugin', () => {
     await expect(build(root, collision)).rejects.toThrow(/source collision/);
   });
 
-  it('fails when ordered before VJSC source transformation', async () => {
+  it('reads completed VJSC metadata regardless of plugin declaration order', async () => {
     const root = setup({
       'app.ts': `export const app = true;`,
       'components/root.tsx': `export function Root() { return <main/>; } ${meta('root', 'block')}`,
     });
 
-    await expect(build(root, registry({ published: ['root'], shared: [] }), ['shadcn', 'vjsc'])).rejects.toThrow(
-      /Place shadcnPlugin after vjscPlugin/
-    );
+    const output = await build(root, registry({ published: ['root'], shared: [] }), ['shadcn', 'vjsc']);
+
+    expect(assetJson(output, 'root.json').files[0].content).toContain('<main />');
   });
 
   it('rejects missing metadata, duplicate names, and missing published items', async () => {
