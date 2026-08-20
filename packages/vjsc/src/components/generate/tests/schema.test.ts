@@ -1,10 +1,10 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { createSchemaModule, generateSchema, parseGenerateSchemaConfig } from '../schema';
+import { createSchemaModule } from '../schema';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 
@@ -30,7 +30,7 @@ function setup(): { dir: string; output: string; pattern: string } {
   return { dir, output: join(dir, 'out.ts'), pattern: join(dir, '*/*-component.ts') };
 }
 
-describe('generateSchema', () => {
+describe('createSchemaModule', () => {
   it('produces schema source and watch files without writing output', () => {
     const { dir, output, pattern } = setup();
     const generated = createSchemaModule({ source: '@fixture/components', files: [pattern], output }, { cwd: dir });
@@ -56,28 +56,15 @@ describe('generateSchema', () => {
   it('emits deterministic component exports and metadata from manifests', () => {
     const { dir, output, pattern } = setup();
     const config = { source: '@fixture/components', files: [pattern], output };
-    const first = generateSchema(config, { cwd: dir });
-    const second = generateSchema(config, { cwd: dir });
+    const module = createSchemaModule(config, { cwd: dir });
 
-    expect(first.changed).toBe(true);
-    expect(second.changed).toBe(false);
-    expect(readFileSync(output, 'utf8')).toBe(first.code);
-    expect(first.code).toContain("import PlayButtonDef from './play-button/play-button-component';");
-    expect(first.code).toContain("import SliderDef from './slider/slider-component';");
-    expect(first.code).toContain('export const PlayButton = createComponent(PlayButtonDef);');
-    expect(first.code).toContain('export const Slider = createComponent(SliderDef);');
-    expect(first.code).toContain('PlayButton: PlayButtonDef,');
-    expect(first.code).toContain('Slider: SliderDef,');
-    expect(first.code).toContain("export default defineSchema('@fixture/components', DEFINITIONS);");
-  });
-
-  it('fails check mode when generated output is stale', () => {
-    const { dir, output, pattern } = setup();
-    writeFileSync(output, '// stale\n');
-
-    expect(() =>
-      generateSchema({ source: '@fixture/components', files: [pattern], output }, { cwd: dir, check: true })
-    ).toThrow('Generated file is stale');
+    expect(module.code).toContain("import PlayButtonDef from './play-button/play-button-component';");
+    expect(module.code).toContain("import SliderDef from './slider/slider-component';");
+    expect(module.code).toContain('export const PlayButton = createComponent(PlayButtonDef);');
+    expect(module.code).toContain('export const Slider = createComponent(SliderDef);');
+    expect(module.code).toContain('PlayButton: PlayButtonDef,');
+    expect(module.code).toContain('Slider: SliderDef,');
+    expect(module.code).toContain("export default defineSchema('@fixture/components', DEFINITIONS);");
   });
 
   it('rejects duplicate component names', () => {
@@ -88,7 +75,7 @@ describe('generateSchema', () => {
       `${STUB} export default defineComponent({ name: 'Slider' });`
     );
 
-    expect(() => generateSchema({ source: '@fixture/components', files: [pattern], output }, { cwd: dir })).toThrow(
+    expect(() => createSchemaModule({ source: '@fixture/components', files: [pattern], output }, { cwd: dir })).toThrow(
       'Duplicate component name: Slider'
     );
   });
@@ -99,7 +86,7 @@ describe('generateSchema', () => {
     writeFileSync(join(dir, 'icons', 'play.svg'), '<svg/>');
     writeFileSync(join(dir, 'icons', 'pause.svg'), '<svg/>');
 
-    const result = generateSchema(
+    const result = createSchemaModule(
       {
         source: '@fixture/icons',
         files: [
@@ -115,11 +102,5 @@ describe('generateSchema', () => {
 
     expect(result.code).toContain("export const PauseIcon = createComponent({ name: 'PauseIcon' });");
     expect(result.code).toContain("export const PlayIcon = createComponent({ name: 'PlayIcon' });");
-  });
-
-  it('validates loaded config values', () => {
-    expect(() => parseGenerateSchemaConfig({ source: '', files: [], output: '' }, 'fixture')).toThrow(
-      'Invalid component schema generator config fixture'
-    );
   });
 });

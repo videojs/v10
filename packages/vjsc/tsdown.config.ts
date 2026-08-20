@@ -5,7 +5,6 @@ export default defineConfig({
   ...baseConfig,
   entry: {
     index: './src/index.ts',
-    cli: './src/cli.ts',
     ast: './src/ast.ts',
     'catalog/index': './src/catalog/index.ts',
     'components/index': './src/components/index.ts',
@@ -14,7 +13,6 @@ export default defineConfig({
     'registry/index': './src/registry/index.ts',
     'registry/jsx-runtime': './src/registry/jsx-runtime.ts',
     'registry/jsx-dev-runtime': './src/registry/jsx-dev-runtime.ts',
-    'generate/index': './src/generate/index.ts',
     'shadcn/index': './src/shadcn/index.ts',
     'styles/index': './src/styles/index.ts',
     'bundle/index': './src/bundle/index.ts',
@@ -24,7 +22,6 @@ export default defineConfig({
   fixedExtension: false,
   format: 'es',
   sourcemap: true,
-  banner: ({ fileName }) => (fileName === 'cli.js' ? { js: '#!/usr/bin/env node' } : undefined),
   clean: true,
   hash: false,
   unbundle: true,

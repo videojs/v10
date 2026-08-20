@@ -9,7 +9,7 @@ import {
   registrySchema,
   type Registry as ShadcnRegistrySchema,
 } from 'shadcn/schema';
-
+import type { VjscOutputFile, VjscOutputFormatter } from '../bundle/source';
 import type { CatalogDefinition } from '../catalog/define';
 import {
   type CatalogOutputAdapter,
@@ -19,7 +19,6 @@ import {
   emitCatalog,
 } from '../catalog/emit';
 import { type Catalog, type CatalogItem, loadCatalog, resolveCatalog } from '../catalog/resolve';
-import type { GeneratedFile, GeneratedFileFormatter } from '../generate';
 
 type RegistryItemType = RegistryItem['type'];
 type PublishedRegistryItemType = Extract<RegistryItemType, 'registry:block' | 'registry:component'>;
@@ -110,7 +109,7 @@ export interface ShadcnPluginOptions<Definition extends CatalogDefinition> {
   readonly registry: ShadcnRegistryDefinition<Definition>;
   readonly output: CatalogOutputAdapter<Definition>;
   readonly styles?: CatalogStyleTransform | undefined;
-  readonly format?: GeneratedFileFormatter | undefined;
+  readonly format?: VjscOutputFormatter | undefined;
   readonly id?: `virtual:vjsc/${string}` | undefined;
 }
 
@@ -162,7 +161,7 @@ export function shadcnPlugin<const Definition extends CatalogDefinition>(
 export function createShadcnRegistryFiles<Definition extends CatalogDefinition>(
   output: ShadcnRegistryOutput,
   definition: ShadcnRegistryDefinition<Definition>
-): GeneratedFile[] {
+): VjscOutputFile[] {
   const sources = new Map(output.files.map((file) => [file.path, file.content]));
   const items = output.registry.items.map((item) => {
     const built = {

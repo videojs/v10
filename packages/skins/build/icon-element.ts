@@ -1,10 +1,10 @@
 import { globSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
-import type { GeneratedModule } from 'vjsc/generate';
+import type { VjscModule } from 'vjsc/bundle';
 
 /** Generate the browser registration module for one HTML icon family. */
-export function createIconElementModule(family: string, options: { cwd?: string } = {}): GeneratedModule {
+export function createIconElementModule(family: string, options: { cwd?: string } = {}): VjscModule {
   const cwd = options.cwd ?? resolve(import.meta.dirname, '../../icons');
   const files = globSync(resolve(cwd, `src/assets/${family}/*.svg`)).sort();
   if (files.length === 0) throw new Error(`Icon family \`${family}\` does not contain any SVG assets.`);

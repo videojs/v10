@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { transform } from '../../transform';
-import { catalogMetaPlugin, createCatalogItemsModule, discoverCatalogItems, extractCatalogItemMeta } from '../meta';
+import { catalogMetaPlugin, discoverCatalogItems, extractCatalogItemMeta } from '../meta';
 
 describe('catalog metadata', () => {
   it('extracts static metadata through satisfies expressions', () => {
@@ -26,23 +26,6 @@ describe('catalog metadata', () => {
     expect(discoverCatalogItems({ rootDir, files: 'components/*.tsx' })).toEqual([
       { name: 'play', type: 'component', source: './components/play.tsx' },
     ]);
-  });
-
-  it('generates a typed catalog inventory module without evaluating entries', () => {
-    const rootDir = mkdtempSync(join(tmpdir(), 'vjsc-catalog-'));
-    mkdirSync(join(rootDir, 'components'));
-    const source = join(rootDir, 'components/play.tsx');
-    writeFileSync(
-      source,
-      `throw new Error('must not execute');\nexport const meta = { name: 'play', type: 'component' };`
-    );
-
-    const module = createCatalogItemsModule({ rootDir, files: 'components/*.tsx' });
-
-    expect(module.items).toEqual([{ name: 'play', type: 'component', source: './components/play.tsx' }]);
-    expect(module.code).toContain('export const items = [');
-    expect(module.code).toContain('as const');
-    expect(module.watchFiles).toEqual([source]);
   });
 
   it('removes metadata exports from projected modules', async () => {

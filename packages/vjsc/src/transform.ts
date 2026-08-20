@@ -21,7 +21,7 @@ import { transformImports } from './transforms/imports';
 export interface TransformOptions {
   filename?: string | undefined;
   config?: CompilerConfig | undefined;
-  /** Directory relative paths in `imports` rules resolve against. Typically the compiler.config.js dir. */
+  /** Directory relative paths in `imports` rules resolve against. */
   configDir?: string | undefined;
   /** Output file path (used to project relative-path import targets). */
   outputFile?: string | undefined;

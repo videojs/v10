@@ -1,7 +1,6 @@
 import { resolve } from 'node:path';
 
-import type { VirtualModuleDefinition } from 'vjsc';
-import type { GeneratedModule } from 'vjsc/generate';
+import type { VirtualModuleDefinition, VjscModule } from 'vjsc/bundle';
 
 import type skinCatalog from '../vjsc/catalog';
 
@@ -11,7 +10,7 @@ export const skinStyleModes = ['vanilla', 'tailwind'] as const;
 export type SkinFramework = (typeof skinFrameworks)[number];
 export type SkinStyleMode = (typeof skinStyleModes)[number];
 
-export interface SkinVirtualModule extends GeneratedModule {
+export interface SkinVirtualModule extends VjscModule {
   readonly id: `virtual:vjsc/skin/${SkinFramework}/${string}/${SkinStyleMode}.tsx`;
 }
 

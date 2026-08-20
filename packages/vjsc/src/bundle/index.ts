@@ -15,3 +15,4 @@ export {
   vjscPlugin,
 } from './plugin';
 export { type SchemaPlugin, type SchemaPluginOptions, schemaPlugin } from './schema';
+export type { VjscModule, VjscOutputFile, VjscOutputFormatter } from './source';

@@ -1,12 +1,12 @@
 import { resolve } from 'node:path';
 
-import type { GeneratedModule } from '../generate';
+import type { VjscModule } from './source';
 
 export const VIRTUAL_MODULE_PREFIX = 'virtual:vjsc/';
 
 export interface VirtualModuleDefinition {
   readonly id: `${typeof VIRTUAL_MODULE_PREFIX}${string}`;
-  load(): GeneratedModule | Promise<GeneratedModule>;
+  load(): VjscModule | Promise<VjscModule>;
 }
 
 /** Preserve a virtual module definition while checking its stable public ID. */
@@ -27,7 +27,7 @@ export interface BundleModules {
   readonly ids: readonly VirtualModuleDefinition['id'][];
   resolveId(id: string): string | null;
   publicId(id: string): VirtualModuleDefinition['id'] | null;
-  load(id: string): Promise<GeneratedModule | null>;
+  load(id: string): Promise<VjscModule | null>;
 }
 
 export function createBundleModules(options: BundleModulesOptions): BundleModules {

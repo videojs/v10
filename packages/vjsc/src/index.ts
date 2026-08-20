@@ -31,7 +31,6 @@ export {
   type CompilerContext,
   type CompilerDiagnostic,
   type CompilerExternal,
-  type CompilerGenerateConfig,
   type CompilerInput,
   type CompilerOutputOptions,
   type CompilerPipelineStep,
@@ -72,29 +71,6 @@ export {
   withDiagnosticSource,
 } from './diagnostics';
 export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './jsx/editor';
-export {
-  CONFIG_FILENAMES,
-  findConfig,
-  type LoadedCompilerBuildConfig,
-  type LoadedCompilerConfig,
-  loadBuildConfig,
-  loadBuildConfigFile,
-  loadConfig,
-  loadConfigFile,
-} from './load-config';
-export type {
-  CreateEntriesModuleOptions,
-  EntriesModule,
-  GeneratedRegistryEntries,
-  GenerateEntriesConfig,
-  GenerateSchemaEntriesConfig,
-  GenerateSourceEntriesConfig,
-  ResolvedEntry,
-  ResolvedSourceModule,
-  SourceEntryContext,
-  SourceEntryResolver,
-} from './registry/generate/entries';
-export { createEntriesModule } from './registry/generate/entries';
 export type { SchemaEntryContext, SchemaEntryResolver } from './registry/resolve';
 export {
   type ConstStatementOptions,

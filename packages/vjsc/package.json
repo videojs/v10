@@ -10,9 +10,6 @@
     "url": "https://github.com/videojs/v10",
     "directory": "packages/vjsc"
   },
-  "bin": {
-    "vjsc": "./bin/vjsc.js"
-  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -51,10 +48,6 @@
       "types": "./dist/registry/jsx-dev-runtime.d.ts",
       "default": "./dist/registry/jsx-dev-runtime.js"
     },
-    "./generate": {
-      "types": "./dist/generate/index.d.ts",
-      "default": "./dist/generate/index.js"
-    },
     "./shadcn": {
       "types": "./dist/shadcn/index.d.ts",
       "default": "./dist/shadcn/index.js"
@@ -69,7 +62,6 @@
     }
   },
   "files": [
-    "bin",
     "dist"
   ],
   "scripts": {

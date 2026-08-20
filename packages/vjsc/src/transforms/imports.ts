@@ -26,7 +26,7 @@ export type ImportRule = false | string | ((name: string) => ImportRef | false);
 export interface ImportRewriteOptions {
   /** Map: original module specifier → rewrite rule. */
   rules: Record<string, ImportRule>;
-  /** Directory that relative `source` values in rules resolve against (typically the compiler.config.js dir). */
+  /** Directory that relative `source` values in rules resolve against. */
   configDir?: string | undefined;
   /** Output file path (used to project relative-path rules into a relative import). */
   outputFile?: string | undefined;

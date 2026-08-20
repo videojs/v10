@@ -5,12 +5,12 @@ import { resolve } from 'node:path';
 import type { GeneralHookFilter, Plugin, RolldownLog } from 'rolldown';
 
 import type { CompilerDiagnostic, CompilerPlugin, CompilerSourceMap, CompilerTarget } from '../config';
-import type { GeneratedModule } from '../generate';
 import { type ComponentRegistry, plugin as registryPlugin } from '../registry';
 import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from '../targets/html';
 import { CompilerError, transform } from '../transform';
 import { createGeneratedModuleDeclaration } from './declaration';
 import { createBundleModules, type VirtualModuleDefinition } from './modules';
+import type { VjscModule } from './source';
 
 export interface VjscDeclarationOutput {
   readonly id: VirtualModuleDefinition['id'];
@@ -261,7 +261,7 @@ function withParameters(id: string, parameters: URLSearchParams): string {
   return `${id}?${normalized}`;
 }
 
-function addWatchFiles(context: { addWatchFile(id: string): void }, module: GeneratedModule): void {
+function addWatchFiles(context: { addWatchFile(id: string): void }, module: VjscModule): void {
   for (const fileName of module.watchFiles) context.addWatchFile(resolve(fileName));
 }
 
