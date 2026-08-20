@@ -4,7 +4,7 @@ import { jsx } from '../../config';
 import { vjscPlugin } from '../plugin';
 
 type TestPlugin = {
-  resolveId(id: string): string | null;
+  resolveId(id: string): Promise<string | null>;
   load(this: { addWatchFile(id: string): void }, id: string): Promise<string | null>;
   transform(
     this: { addWatchFile(id: string): void; error(error: unknown): never; warn(warning: unknown): void },
@@ -44,7 +44,7 @@ const createCssPlugin = (source: string): CompilerPlugin => ({
 
 describe('vjscPlugin', () => {
   it('imports emitted CSS assets as virtual modules', async () => {
-    const plugin = createPlugin({ config: { plugins: [createCssPlugin('.foo{display:flex;}')] } });
+    const plugin = createPlugin({ transform: { plugins: [createCssPlugin('.foo{display:flex;}')] } });
 
     const result = await plugin.transform.call(
       createContext(),
@@ -58,7 +58,7 @@ describe('vjscPlugin', () => {
 
     const id = match![1]!;
     expect(id).toContain('virtual:vjsc/css/');
-    expect(plugin.resolveId(id)).toBe(`\0${id}`);
+    await expect(plugin.resolveId(id)).resolves.toBe(`\0${id}`);
     await expect(plugin.load.call(createContext(), `\0${id}`)).resolves.toBe('.foo{display:flex;}');
     expect(result!.code).toContain('function App');
     expect(result!.map.mappings).toMatch(/^;/);
@@ -67,7 +67,7 @@ describe('vjscPlugin', () => {
   it('changes the virtual CSS identity when emitted content changes', async () => {
     let css = '.foo{color:red;}';
     const plugin = createPlugin({
-      config: {
+      transform: {
         plugins: [
           {
             name: 'fixture-css',
@@ -92,14 +92,14 @@ describe('vjscPlugin', () => {
     const secondCssId = second!.code.match(/^import "([^"]+)";/)![1]!;
 
     expect(secondCssId).not.toBe(firstCssId);
-    expect(plugin.resolveId(firstCssId)).toBeNull();
+    await expect(plugin.resolveId(firstCssId)).resolves.toBeNull();
     await expect(plugin.load.call(createContext(), `\0${secondCssId}`)).resolves.toBe(css);
   });
 
   it('shares identical emitted assets between transformed modules', async () => {
     let css = '.foo{color:red;}';
     const plugin = createPlugin({
-      config: {
+      transform: {
         plugins: [
           {
             name: 'fixture-css',
@@ -141,7 +141,7 @@ describe('vjscPlugin', () => {
     });
     const loadContext = createContext();
 
-    expect(plugin.resolveId('virtual:vjsc/value')).toBe('\0virtual:vjsc/value');
+    await expect(plugin.resolveId('virtual:vjsc/value')).resolves.toBe('\0virtual:vjsc/value');
     await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toBe(code);
     expect(loadContext.addWatchFile).toHaveBeenCalledWith('/workspace/value.ts');
 
@@ -155,14 +155,14 @@ describe('vjscPlugin', () => {
       modules: [{ id, load: () => ({ code: 'export const Skin = <div/>;', watchFiles: [] }) }],
     });
 
-    expect(plugin.resolveId(id)).toBe(id);
+    await expect(plugin.resolveId(id)).resolves.toBe(id);
     await expect(plugin.load.call(createContext(), id)).resolves.toContain('<div/>');
   });
 
   it('forwards compiler warnings to the host', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({
-      config: {
+      transform: {
         plugins: [
           {
             name: 'fixture',
@@ -187,7 +187,7 @@ describe('vjscPlugin', () => {
   it('forwards located compiler warnings to the host', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({
-      config: {
+      transform: {
         plugins: [
           {
             name: 'fixture',
@@ -225,7 +225,7 @@ describe('vjscPlugin', () => {
   it('fails the host transform for compiler errors', async () => {
     const context = createContext();
     const plugin = createPlugin({
-      config: {
+      transform: {
         plugins: [
           {
             name: 'fixture',
@@ -251,7 +251,7 @@ describe('vjscPlugin', () => {
 
   it('forwards syntax errors to the host with their source location', async () => {
     const context = createContext();
-    const plugin = createPlugin({ config: {} });
+    const plugin = createPlugin({ transform: {} });
 
     await expect(
       plugin.transform.call(context, `export function App( { return <Foo/> }`, '/workspace/broken.tsx')
@@ -264,7 +264,7 @@ describe('vjscPlugin', () => {
   it('rebases relative import targets from the transformed module', async () => {
     const plugin = createPlugin({
       cwd: '/workspace',
-      config: {
+      transform: {
         target: jsx({ imports: { '@fixture/widgets': './shared/widgets' } }),
       },
     });

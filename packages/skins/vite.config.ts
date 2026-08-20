@@ -75,7 +75,7 @@ function createPreviewConfig() {
           { id: 'virtual:vjsc/icons/element/minimal.js' as const, load: () => minimalIconElementModule },
           ...createSkinVirtualModules(skinCatalog),
         ],
-        config: {
+        transform: {
           ...output,
           plugins: [
             stylesPlugin({

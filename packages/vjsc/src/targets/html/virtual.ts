@@ -18,6 +18,7 @@ export function jsx(type, props) {
 }
 
 export const jsxs = jsx;
+export const jsxDEV = jsx;
 
 export function Scope({ prefix, children }) {
   return renderable(scope, { prefix, children });

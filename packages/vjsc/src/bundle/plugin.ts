@@ -1,10 +1,13 @@
 import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { GeneralHookFilter, Plugin, RolldownLog } from 'rolldown';
 
-import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../config';
+import type { CompilerDiagnostic, CompilerPlugin, CompilerSourceMap, CompilerTarget } from '../config';
 import type { GeneratedModule } from '../generate';
+import { type ComponentRegistry, plugin as registryPlugin } from '../registry';
+import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from '../targets/html';
 import { CompilerError, transform } from '../transform';
 import { createGeneratedModuleDeclaration } from './declaration';
 import { createBundleModules, type VirtualModuleDefinition } from './modules';
@@ -21,8 +24,10 @@ export interface VjscPluginOptions {
   /** Source modules transformed by VJSC. Defaults to TSX files. */
   readonly include?: GeneralHookFilter | undefined;
   readonly exclude?: GeneralHookFilter | undefined;
-  /** Transform configuration applied to included source modules. */
-  readonly config?: CompilerConfig | undefined;
+  /** Default transformation applied to included source modules without a projection query. */
+  readonly transform?: VjscTransformConfig | undefined;
+  /** Named transformations selected by the `framework` module query parameter. */
+  readonly projections?: Readonly<Record<string, VjscProjection>> | undefined;
   /** Directory used to resolve relative transform configuration. */
   readonly cwd?: string | undefined;
   /** Generated modules served without materializing their source. */
@@ -32,6 +37,22 @@ export interface VjscPluginOptions {
   /** Declaration assets emitted from generated modules during a build. */
   readonly declarations?: readonly VjscDeclarationOutput[] | undefined;
 }
+
+export interface VjscTransformConfig {
+  readonly target?: CompilerTarget | undefined;
+  readonly registry?: ComponentRegistry | undefined;
+  readonly plugins?: readonly CompilerPlugin[] | undefined;
+}
+
+export interface VjscProjectionContext {
+  readonly id: string;
+  readonly name: string;
+  readonly parameters: URLSearchParams;
+}
+
+export type VjscProjection =
+  | VjscTransformConfig
+  | ((context: VjscProjectionContext) => VjscTransformConfig | Promise<VjscTransformConfig>);
 
 interface HotModuleNode {
   readonly id: string | null;
@@ -65,11 +86,38 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
 
   const plugin: Plugin & HotUpdatePlugin = {
     name: 'vjsc',
-    resolveId(id) {
+    async resolveId(id, importer, resolveOptions) {
+      if (id === HTML_RUNTIME_IMPORT || id === `${HTML_RUNTIME_IMPORT.replace('/jsx-runtime', '')}/jsx-dev-runtime`) {
+        return HTML_RUNTIME_ID;
+      }
       if (cssById.has(id)) return `\0${id}`;
-      return modules.resolveId(id);
+      const generatedId = modules.resolveId(id);
+      if (generatedId) return generatedId;
+
+      const projection = parseProjectionId(id, options.projections);
+      const inherited = importer ? parseProjectionId(importer, options.projections) : null;
+      if (!projection && (!inherited || !id.startsWith('.'))) return null;
+
+      const resolved = await this.resolve(projection?.id ?? id, importer ? cleanId(importer) : undefined, {
+        ...resolveOptions,
+        skipSelf: true,
+      });
+      if (!resolved || resolved.external || !cleanId(resolved.id).endsWith('.tsx')) return resolved;
+
+      return {
+        ...resolved,
+        id: withParameters(cleanId(resolved.id), projection?.parameters ?? inherited!.parameters),
+      };
     },
     async load(id) {
+      if (id === HTML_RUNTIME_ID) return { code: HTML_RUNTIME, moduleType: 'js' };
+
+      const projection = parseProjectionId(id, options.projections);
+      if (projection) {
+        this.addWatchFile(projection.id);
+        return { code: await readFile(projection.id, 'utf8'), moduleType: 'tsx' };
+      }
+
       const publicId = id.startsWith('\0') ? id.slice(1) : modules.publicId(id);
       if (!publicId) return null;
       const css = cssById.get(publicId);
@@ -97,18 +145,33 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
       order: 'pre',
       filter: {
         id: {
-          include: options.include ?? /\.tsx$/,
+          include: options.include ?? /\.tsx(?:\?|$)/,
           ...(options.exclude ? { exclude: options.exclude } : {}),
         },
       },
       async handler(code, id) {
+        const projection = parseProjectionId(id, options.projections);
+        const selected = projection ? options.projections?.[projection.name] : options.transform;
+        if (!selected) return null;
+
+        const configured =
+          typeof selected === 'function'
+            ? await selected({ id: projection!.id, name: projection!.name, parameters: projection!.parameters })
+            : selected;
+        const config = {
+          ...(configured.target ? { target: configured.target } : {}),
+          plugins: [
+            ...(configured.registry ? [registryPlugin(configured.registry)] : []),
+            ...(configured.plugins ?? []),
+          ],
+        };
         let result: Awaited<ReturnType<typeof transform>>;
         try {
           result = await transform(code, {
-            filename: id,
-            config: options.config ?? {},
+            filename: cleanId(id),
+            config,
             configDir: cwd,
-            outputFile: id,
+            outputFile: cleanId(id),
           });
         } catch (error) {
           if (error instanceof CompilerError) this.error(bundlerLogFromDiagnostic(error.diagnostics[0]!));
@@ -163,6 +226,35 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
   };
 
   return plugin;
+}
+
+interface ProjectionId {
+  readonly id: string;
+  readonly name: string;
+  readonly parameters: URLSearchParams;
+}
+
+function parseProjectionId(id: string, projections: VjscPluginOptions['projections']): ProjectionId | null {
+  if (!projections) return null;
+  const queryIndex = id.indexOf('?');
+  if (queryIndex === -1) return null;
+
+  const parameters = new URLSearchParams(id.slice(queryIndex + 1));
+  const name = parameters.get('framework');
+  if (!name || !projections[name]) return null;
+  return { id: id.slice(0, queryIndex), name, parameters };
+}
+
+function cleanId(id: string): string {
+  const queryIndex = id.indexOf('?');
+  return queryIndex === -1 ? id : id.slice(0, queryIndex);
+}
+
+function withParameters(id: string, parameters: URLSearchParams): string {
+  const normalized = new URLSearchParams(
+    [...parameters.entries()].sort(([left], [right]) => left.localeCompare(right))
+  );
+  return `${id}?${normalized}`;
 }
 
 function addWatchFiles(context: { addWatchFile(id: string): void }, module: GeneratedModule): void {

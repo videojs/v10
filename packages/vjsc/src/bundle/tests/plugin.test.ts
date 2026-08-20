@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { rolldown } from 'rolldown';
 import { describe, expect, it, vi } from 'vitest';
 
+import { jsx } from '../../config';
 import { vjscPlugin } from '../plugin';
 import { schemaPlugin } from '../schema';
 
@@ -59,7 +60,7 @@ describe('vjscPlugin', () => {
         vjscPlugin({
           include: '**/*.tsx',
           exclude: '**/*.test.tsx',
-          config: {
+          transform: {
             plugins: [
               {
                 name: 'record-transform',
@@ -77,6 +78,46 @@ describe('vjscPlugin', () => {
 
     expect(transformed).toHaveLength(1);
     expect(transformed[0]).toMatch(/\/view\.tsx$/);
+  });
+
+  it('projects real source modules and propagates the projection through relative imports', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-projection-'));
+    const entry = join(root, 'entry.tsx');
+    const child = join(root, 'child.tsx');
+    writeFileSync(entry, `import { Child } from './child'; export const Entry = () => <Child/>;`);
+    writeFileSync(child, `export const Child = () => <span/>;`);
+    const transformed: string[] = [];
+
+    const bundle = await rolldown({
+      input: `${entry}?style=vanilla&framework=react`,
+      external: /^react\//,
+      plugins: [
+        vjscPlugin({
+          projections: {
+            react: { target: jsx({ importSource: 'react' }) },
+          },
+        }),
+        {
+          name: 'record-projected-modules',
+          transform: {
+            filter: { id: /\?framework=react&style=vanilla$/ },
+            handler(_code, id) {
+              transformed.push(id);
+            },
+          },
+        },
+      ],
+    });
+    const output = await bundle.generate({ format: 'es' });
+
+    expect(output.output[0]?.code).toContain('react/jsx-runtime');
+    expect(transformed).toHaveLength(2);
+    expect(transformed).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/\/child\.tsx\?framework=react&style=vanilla$/),
+        expect.stringMatching(/\/entry\.tsx\?framework=react&style=vanilla$/),
+      ])
+    );
   });
 
   it('creates a schema entry directly from inline bundler configuration', async () => {

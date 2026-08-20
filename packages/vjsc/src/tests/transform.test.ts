@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { jsx, rewrite, transform } from '..';
+import { html, jsx, rewrite, transform } from '..';
 import { addProp, byTag, childAsProp, replace } from '../jsx';
 
 const compact = (value: string): string => value.replace(/\s+/g, '');
@@ -13,6 +13,14 @@ describe('transform', () => {
 
     expect(result.code).toMatch(/^\/\*\* @jsxImportSource react \*\//);
     expect(result.map.mappings).toMatch(/^;/);
+  });
+
+  it('declares the internal JSX runtime for HTML projections', async () => {
+    const result = await transform('export const View = <div />;', {
+      config: { target: html() },
+    });
+
+    expect(result.code).toMatch(/^\/\*\* @jsxImportSource vjsc\/html-runtime \*\//);
   });
 
   it('adds a props binding to a parameterless function', async () => {

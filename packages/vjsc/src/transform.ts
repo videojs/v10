@@ -181,10 +181,11 @@ export async function transform(source: string, options: TransformOptions = {}):
 }
 
 function withJsxImportSource(result: TransformResult, target: CompilerTarget): TransformResult {
-  if (target.name !== 'jsx' || !target.importSource) return result;
+  const importSource = target.name === 'html' ? 'vjsc/html-runtime' : target.importSource;
+  if (!importSource) return result;
   return {
     ...result,
-    code: `/** @jsxImportSource ${target.importSource} */\n${result.code}`,
+    code: `/** @jsxImportSource ${importSource} */\n${result.code}`,
     map: { ...result.map, mappings: `;${result.map.mappings}` },
   };
 }
