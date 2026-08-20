@@ -2,11 +2,14 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { rolldown } from 'rolldown';
+import { type Plugin, type RolldownOutput, rolldown } from 'rolldown';
+import { build as viteBuild } from 'vite';
 import { describe, expect, it } from 'vitest';
 
+import { componentMetaPlugin } from '../../components';
 import { jsx } from '../../config';
 import { schemaPlugin, vjscPlugin } from '../../rolldown';
+import { vjscPlugin as viteVjscPlugin } from '../../vite';
 
 describe('vjscPlugin', () => {
   it('uses native host filters for included and excluded modules', async () => {
@@ -83,6 +86,61 @@ describe('vjscPlugin', () => {
     );
   });
 
+  it.each([
+    ['Rolldown', buildWithRolldown],
+    ['Vite', buildWithVite],
+  ])('captures editable transformed source through the %s module graph', async (_host, build) => {
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-capture-'));
+    const app = join(root, 'app.ts');
+    const entry = join(root, 'entry.tsx');
+    const child = join(root, 'child.tsx');
+    writeFileSync(app, `export const app = 'unrelated';`);
+    writeFileSync(
+      entry,
+      `import { Child } from './child';\nexport const meta = { name: 'entry' };\nexport interface EntryProps { label: string; }\nexport function Entry(props: EntryProps) { return <Child label={props.label}/>; }`
+    );
+    writeFileSync(
+      child,
+      `export const meta = { name: 'child' };\nexport interface ChildProps { label: string; }\nexport function Child(props: ChildProps) { return <span>{props.label}</span>; }`
+    );
+    const projection = '?framework=react&skin=default-video&style=tailwind';
+    const capture = createSourceCapture(`${entry}${projection}`, projection);
+
+    const output = await build({
+      app,
+      plugins: [
+        {
+          transform: ({ parameters }) =>
+            parameters.get('framework') === 'react'
+              ? { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] }
+              : null,
+        },
+        capture.plugin,
+      ],
+    });
+
+    expect([...capture.sources.keys()]).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/\/entry\.tsx\?framework=react&skin=default-video&style=tailwind$/),
+        expect.stringMatching(/\/child\.tsx\?framework=react&skin=default-video&style=tailwind$/),
+      ])
+    );
+    const entrySource = [...capture.sources].find(([id]) => id.includes('/entry.tsx?'))?.[1];
+    const childSource = [...capture.sources].find(([id]) => id.includes('/child.tsx?'))?.[1];
+    expect(entrySource).toContain('interface EntryProps');
+    expect(entrySource).toContain('<Child label={props.label}/>');
+    expect(entrySource).not.toContain('const meta');
+    expect(childSource).toContain('<span>{props.label}</span>');
+    expect(childSource).not.toContain('const meta');
+    expect(capture.dependencies).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/\/child\.tsx\?framework=react&skin=default-video&style=tailwind$/),
+      ])
+    );
+    expect(output.output.filter((item) => item.type === 'chunk').map((item) => item.fileName)).toEqual(['app.js']);
+    expect(output.output.some((item) => item.type === 'chunk' && item.code.includes('jsx-runtime'))).toBe(false);
+  });
+
   it('creates a schema entry directly from inline bundler configuration', async () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-schema-plugin-'));
     const sourceDir = join(root, 'play-button');
@@ -105,3 +163,79 @@ describe('vjscPlugin', () => {
     expect(plugin.moduleId).toBe('virtual:vjsc/schema');
   });
 });
+
+interface HostBuildOptions {
+  readonly app: string;
+  readonly plugins: readonly [Parameters<typeof vjscPlugin>[0], Plugin];
+}
+
+async function buildWithRolldown({ app, plugins: [options, capture] }: HostBuildOptions): Promise<RolldownOutput> {
+  const bundle = await rolldown({
+    input: app,
+    external: /^react(?:\/|$)/,
+    plugins: [vjscPlugin(options), capture],
+  });
+  return bundle.generate({ format: 'es', entryFileNames: '[name].js' });
+}
+
+async function buildWithVite({ app, plugins: [options, capture] }: HostBuildOptions): Promise<RolldownOutput> {
+  return (await viteBuild({
+    configFile: false,
+    logLevel: 'silent',
+    plugins: [viteVjscPlugin(options), capture],
+    build: {
+      write: false,
+      rolldownOptions: {
+        input: app,
+        external: /^react(?:\/|$)/,
+        output: { format: 'es', entryFileNames: '[name].js' },
+      },
+    },
+  })) as RolldownOutput;
+}
+
+function createSourceCapture(entry: string, projection: string) {
+  const triggerId = 'virtual:vjsc/test-source-capture';
+  const resolvedTriggerId = `\0${triggerId}`;
+  const sources = new Map<string, string>();
+  let dependencies: string[] = [];
+
+  const plugin: Plugin = {
+    name: 'test-source-capture',
+    buildStart() {
+      this.emitFile({ type: 'chunk', id: triggerId });
+    },
+    async buildEnd() {
+      const resolved = await this.resolve(entry);
+      if (!resolved) this.error(`Could not resolve source capture entry: ${entry}`);
+      const entryInfo = await this.load({ id: resolved.id, resolveDependencies: true });
+      dependencies = [...entryInfo.importedIds];
+    },
+    resolveId(id) {
+      return id === triggerId ? resolvedTriggerId : null;
+    },
+    load(id) {
+      return id === resolvedTriggerId ? `import ${JSON.stringify(entry)}; export default null;` : null;
+    },
+    transform: {
+      order: 'pre',
+      handler(code, id) {
+        if (id.endsWith(projection)) sources.set(id, code);
+        return null;
+      },
+    },
+    generateBundle(_options, bundle) {
+      for (const [fileName, item] of Object.entries(bundle)) {
+        if (item.type === 'chunk' && item.facadeModuleId === resolvedTriggerId) delete bundle[fileName];
+      }
+    },
+  };
+
+  return {
+    plugin,
+    sources,
+    get dependencies() {
+      return dependencies;
+    },
+  };
+}
