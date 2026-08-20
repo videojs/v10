@@ -63,11 +63,3 @@ export interface ShadcnRegistryDefinition<Item extends ComponentMeta = Component
     describe(item: Item): ShadcnRegistryItemDescription;
   };
 }
-
-/** Preserve a plain Shadcn publication definition while checking its shape. */
-export function defineShadcnRegistry<
-  Item extends ComponentMeta,
-  const Definition extends ShadcnRegistryDefinition<Item>,
->(definition: Definition): Definition {
-  return definition;
-}
