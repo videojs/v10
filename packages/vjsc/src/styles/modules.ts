@@ -1,7 +1,7 @@
 import { realpathSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-import { resolveSourceModule, stripScriptExtension } from '../utils/source-module';
+import { resolveSourceModule, stripScriptExtension } from '../ts/utils/source-module';
 
 import type { StyleManifest } from './manifest';
 

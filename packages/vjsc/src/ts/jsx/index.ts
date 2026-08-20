@@ -1,5 +1,5 @@
-export { type CompilerTargetOptions, type JsxTargetOptions, jsx } from '../config';
 export type { ImportRef } from '../transforms/imports';
+export { type CompilerTargetOptions, type JsxTargetOptions, jsx } from '../types';
 export {
   accessPath,
   findJsxAttribute,

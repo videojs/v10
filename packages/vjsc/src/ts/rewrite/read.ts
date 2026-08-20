@@ -1,8 +1,7 @@
 import { isObject } from '@videojs/utils/predicate';
 import ts from 'typescript';
-
-import type { CompilerPlugin, CompilerTransform } from '../config';
 import type { JsxElementLike } from '../jsx';
+import type { CompilerPlugin, CompilerTransform } from '../types';
 import { isJsxElementLike, readJsxAttributeExpression } from '../utils/jsx';
 
 export function readJsxElement(value: unknown, context: unknown): JsxElementLike | undefined {

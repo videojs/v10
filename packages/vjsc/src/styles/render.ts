@@ -8,7 +8,7 @@ import {
   transform,
 } from 'lightningcss';
 
-import { DiagnosticError } from '../diagnostics';
+import { DiagnosticError } from '../ts/diagnostics';
 
 import { cloneCssAst, collectRuleClasses, withoutNullValues } from './css-ast';
 import type { DesignSystem } from './design-system';

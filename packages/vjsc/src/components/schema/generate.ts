@@ -2,8 +2,8 @@ import { globSync, readFileSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, resolve } from 'node:path';
 
 import ts from 'typescript';
-import { toPosixPath } from '../../utils/path';
-import { relativeModuleSpecifier, sourceScriptKind } from '../../utils/source-module';
+import { toPosixPath } from '../../ts/utils/path';
+import { relativeModuleSpecifier, sourceScriptKind } from '../../ts/utils/source-module';
 import { type ComponentDefinition, type ComponentRecord, type ComponentSchema, defineSchema } from '../definition';
 
 export interface ComponentFileSet {

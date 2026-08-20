@@ -3,10 +3,9 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { HookFilter, Plugin, RolldownLog } from 'rolldown';
-
-import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../config';
-import { CompilerError, transform } from '../transform';
 import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from './html-runtime';
+import { CompilerError, transform } from './transform';
+import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from './types';
 
 export interface TransformPluginOptions {
   /** Select a VJSC transform for each module, or return null to defer. */
@@ -53,7 +52,7 @@ export function createVjscPlugin(options: TransformPluginOptions = {}, filter: T
           ...resolveOptions,
           skipSelf: true,
         });
-        if (!resolved || resolved.external || !isCanonicalSourceModule(cleanId(resolved.id))) return resolved;
+        if (!resolved || resolved.external || !isVjscModule(cleanId(resolved.id))) return resolved;
 
         return {
           ...resolved,
@@ -158,7 +157,7 @@ function cleanId(id: string): string {
   return queryIndex === -1 ? id : id.slice(0, queryIndex);
 }
 
-function isCanonicalSourceModule(id: string): boolean {
+function isVjscModule(id: string): boolean {
   return /\.(?:[cm]?[jt]s|[jt]sx)$/.test(id);
 }
 

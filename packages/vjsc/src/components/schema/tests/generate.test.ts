@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { createSchemaModule } from '../schema';
+import { createSchemaModule } from '../generate';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 

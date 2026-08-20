@@ -8,7 +8,7 @@ import {
   transform,
 } from 'lightningcss';
 
-import { DiagnosticError } from '../diagnostics';
+import { DiagnosticError } from '../ts/diagnostics';
 
 import { cloneCssAst, hasNestedCssRules, visitCssRules, withoutNullValues } from './css-ast';
 import { foldGroupDescendantSelectors } from './selectors';

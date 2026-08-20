@@ -1,13 +1,8 @@
 import { resolve } from 'node:path';
 
 import type { Plugin } from 'rolldown';
-
-import {
-  type CreateSchemaModuleOptions,
-  createSchemaModule,
-  type GenerateSchemaConfig,
-} from '../components/generate/schema';
 import { createGeneratedModuleDeclaration } from './declaration';
+import { type CreateSchemaModuleOptions, createSchemaModule, type GenerateSchemaConfig } from './generate';
 
 type VjscModuleId = `virtual:vjsc/${string}`;
 

@@ -1,8 +1,8 @@
 import ts from 'typescript';
 
-import { addNamedImport } from '../transforms/add-import';
-import { replaceJsxPropValue } from '../utils/jsx';
-import { collectReferencedIdentifiers } from '../utils/references';
+import { addNamedImport } from '../ts/transforms/add-import';
+import { replaceJsxPropValue } from '../ts/utils/jsx';
+import { collectReferencedIdentifiers } from '../ts/utils/references';
 
 import { splitClassNames } from './class-names';
 import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';

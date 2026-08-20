@@ -3,9 +3,9 @@ import { isAbsolute, relative, resolve } from 'node:path';
 
 import ts from 'typescript';
 
-import type { CompilerPlugin } from '../config';
-import { toPosixPath } from '../utils/path';
-import { sourceScriptKind } from '../utils/source-module';
+import type { CompilerPlugin } from '../ts/types';
+import { toPosixPath } from '../ts/utils/path';
+import { sourceScriptKind } from '../ts/utils/source-module';
 
 export interface ComponentMeta {
   readonly name: string;

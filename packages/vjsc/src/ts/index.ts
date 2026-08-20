@@ -5,7 +5,7 @@
  * from `vjsc`. This subpath is the explicit escape hatch for
  * transforms that need direct access to TypeScript nodes and factories.
  */
-export type { CompilerTransform } from './config';
+
 export {
   type AddPropImportRef,
   type AddPropOptions,
@@ -69,6 +69,7 @@ export {
   rebaseImportSpecifier,
   transformImports,
 } from './transforms';
+export type { CompilerTransform } from './types';
 export {
   collectClassDeclarations,
   findClassDeclaration,

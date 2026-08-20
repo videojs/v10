@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { jsx } from '../../config';
 import { transform } from '../../transform';
+import { jsx } from '../../types';
 import { dropUnusedLocals } from '../drop-unused-locals';
 
 const wrap = async (source: string): Promise<string> =>

@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { html, jsx, rewrite, transform } from '..';
+import { html, jsx, rewrite, transform } from '../../index';
 import { addProp, byTag, childAsProp, replace } from '../jsx';
 
 const compact = (value: string): string => value.replace(/\s+/g, '');

@@ -7,8 +7,8 @@ import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vitest';
 
 import { type ComponentMeta, componentMetaPlugin } from '../../components';
-import { jsx } from '../../config';
 import { shadcnPlugin, vjscPlugin } from '../../rolldown';
+import { jsx } from '../../ts/types';
 import type { ShadcnRegistryDefinition } from '../index';
 
 interface FixtureMeta extends ComponentMeta {

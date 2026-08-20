@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { type CompilerPlugin, type CompilerTransform, transform } from '..';
+import { type CompilerPlugin, type CompilerTransform, transform } from '../../index';
 import {
   accessPath,
   addProp,

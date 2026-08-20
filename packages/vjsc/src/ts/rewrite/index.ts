@@ -1,10 +1,10 @@
 import ts from 'typescript';
-import type { CompilerContext, CompilerPipelineStep, CompilerPlugin, CompilerTransform } from '../config';
 import type { JsxElementLike } from '../jsx';
 import { tagName, unwrap as unwrapJsxElement } from '../jsx';
 import { moveJsxChildToProp, replaceJsxElementTag, setJsxAttribute } from '../jsx/edits';
 import { addNamedImport } from '../transforms/add-import';
 import { type ImportRewriteOptions, type ImportRule, transformImports } from '../transforms/imports';
+import type { CompilerContext, CompilerPipelineStep, CompilerPlugin, CompilerTransform } from '../types';
 import {
   createIndexedAccessType,
   createInterfaceDeclaration,

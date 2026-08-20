@@ -2,7 +2,7 @@ import { isAbsolute, relative } from 'node:path';
 import { isObject } from '@videojs/utils/predicate';
 import kleur from 'kleur';
 import ts from 'typescript';
-import type { CompilerDiagnostic } from './config';
+import type { CompilerDiagnostic } from './types';
 
 export type LogLevelName = 'silent' | 'error' | 'warn' | 'info' | 'verbose';
 export type DiagnosticFormat = 'default' | 'jsonl';

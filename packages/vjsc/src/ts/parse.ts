@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import type { CompilerDiagnostic } from './config';
+import type { CompilerDiagnostic } from './types';
 
 export interface ParseOptions {
   filename?: string | undefined;

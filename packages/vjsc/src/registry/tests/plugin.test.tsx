@@ -3,8 +3,8 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { defineComponent, defineSchema } from '../../components/definition';
-import { html, jsx as target } from '../../config';
-import { transform } from '../../transform';
+import { transform } from '../../ts/transform';
+import { html, jsx as target } from '../../ts/types';
 import {
   defineElement,
   defineRegistry,

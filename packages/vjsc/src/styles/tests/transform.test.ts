@@ -1,9 +1,8 @@
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-
-import { jsx } from '../../config';
-import { transform } from '../../transform';
+import { transform } from '../../ts/transform';
+import { jsx } from '../../ts/types';
 import type { StyleManifest, StyleManifestRule } from '../manifest';
 import { plugin } from '../plugin';
 

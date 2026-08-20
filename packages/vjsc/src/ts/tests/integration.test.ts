@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { transform } from '..';
+import { transform } from '../../index';
 import { anyTag, byTag, childAsProp, hasChild, jsx, replace } from '../jsx';
 import type { ImportRule } from '../transforms';
 

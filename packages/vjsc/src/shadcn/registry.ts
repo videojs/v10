@@ -5,7 +5,7 @@ import { type RegistryItem, registryItemSchema, registrySchema, type Registry as
 import ts from 'typescript';
 
 import type { ComponentMeta } from '../components/meta';
-import { sourceScriptKind, stripScriptExtension } from '../utils/source-module';
+import { sourceScriptKind, stripScriptExtension } from '../ts/utils/source-module';
 import { collectImportReferences, type ImportReference } from './imports';
 import type { ShadcnRegistryDefinition, ShadcnRegistryFile, ShadcnRegistrySharedItem } from './index';
 

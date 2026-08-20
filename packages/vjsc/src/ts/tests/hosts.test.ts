@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -7,9 +7,9 @@ import { build as viteBuild } from 'vite';
 import { describe, expect, it } from 'vitest';
 
 import { componentMetaPlugin } from '../../components';
-import { jsx } from '../../config';
-import { schemaPlugin, vjscPlugin } from '../../rolldown';
+import { vjscPlugin } from '../../rolldown';
 import { vjscPlugin as viteVjscPlugin } from '../../vite';
+import { jsx } from '../types';
 
 describe('vjscPlugin', () => {
   it('uses native host filters for included and excluded modules', async () => {
@@ -146,28 +146,6 @@ describe('vjscPlugin', () => {
     expect(capture.sourceEntries).toEqual([false, false]);
     expect(output.output.filter((item) => item.type === 'chunk').map((item) => item.fileName)).toEqual(['app.js']);
     expect(output.output.some((item) => item.type === 'chunk' && item.code.includes('jsx-runtime'))).toBe(false);
-  });
-
-  it('creates a schema entry directly from inline bundler configuration', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-schema-plugin-'));
-    const sourceDir = join(root, 'play-button');
-    const source = join(sourceDir, 'play-button-component.ts');
-    mkdirSync(sourceDir);
-    writeFileSync(
-      source,
-      `const defineComponent: any = (value: any) => value; export default defineComponent({ name: 'PlayButton' });`
-    );
-    const plugin = schemaPlugin({
-      cwd: root,
-      source: '@fixture/components',
-      include: ['./*/*-component.ts'],
-    });
-
-    const bundle = await rolldown({ input: plugin.moduleId, plugins: [plugin] });
-    const output = await bundle.generate({ format: 'es' });
-
-    expect(output.output[0]?.code).toContain('PlayButton');
-    expect(plugin.moduleId).toBe('virtual:vjsc/schema');
   });
 });
 

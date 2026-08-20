@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { type JsxElementLike, type JsxPropReference, readAccessPath, readJsxProp } from '../jsx';
+import { type JsxElementLike, type JsxPropReference, readAccessPath, readJsxProp } from '../ts/jsx';
 
 export type ClassNameSegment =
   | { kind: 'literal'; value: string; node: ts.StringLiteral | ts.NoSubstitutionTemplateLiteral }

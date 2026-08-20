@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { transform } from '../../transform';
+import { transform } from '../../ts/transform';
 import { componentMetaPlugin, discoverComponents, extractComponentMeta } from '../meta';
 
 describe('component metadata', () => {

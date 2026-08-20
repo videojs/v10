@@ -1,6 +1,6 @@
 import ts from 'typescript';
 
-import { sourceScriptKind } from '../utils/source-module';
+import { sourceScriptKind } from '../ts/utils/source-module';
 
 export interface ImportReference {
   readonly specifier: string;

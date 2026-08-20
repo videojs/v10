@@ -1,6 +1,6 @@
 import { basename, dirname, resolve } from 'node:path';
 import ts from 'typescript';
-import type { CompilerSourceMap } from './config';
+import type { CompilerSourceMap } from './types';
 
 interface EmitTextWriter {
   getText(): string;

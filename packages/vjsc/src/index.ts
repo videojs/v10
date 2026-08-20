@@ -4,26 +4,9 @@ export type {
   CreateSchemaModuleOptions,
   GenerateSchemaConfig,
   SchemaModule,
-} from './components/generate/schema';
-export { createSchemaModule } from './components/generate/schema';
-export {
-  type CompilerAsset,
-  type CompilerConfig,
-  type CompilerContext,
-  type CompilerDiagnostic,
-  type CompilerPipelineStep,
-  type CompilerPlugin,
-  type CompilerPluginEnforce,
-  type CompilerSourceMap,
-  type CompilerTarget,
-  type CompilerTargetOptions,
-  type CompilerTransform,
-  type HtmlTarget,
-  html,
-  type JsxTarget,
-  type JsxTargetOptions,
-  jsx,
-} from './config';
+} from './components/schema/generate';
+export { createSchemaModule } from './components/schema/generate';
+export type { SchemaEntryContext, SchemaEntryResolver } from './registry/resolve';
 export {
   compilerDiagnosticToJsonEvent,
   DiagnosticError,
@@ -46,9 +29,8 @@ export {
   mapLogLevelToString,
   shouldUseColor,
   withDiagnosticSource,
-} from './diagnostics';
-export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './jsx/editor';
-export type { SchemaEntryContext, SchemaEntryResolver } from './registry/resolve';
+} from './ts/diagnostics';
+export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './ts/jsx/editor';
 export {
   type ConstStatementOptions,
   type FunctionPropSpec,
@@ -87,7 +69,25 @@ export {
   type ValueHelpers,
   type ValueReference,
   type VariableSelection,
-} from './rewrite';
-export { CompilerError, type TransformOptions, type TransformResult, transform } from './transform';
-export type { ImportRule } from './transforms';
-export type { InterfaceDeclarationOptions, InterfacePropertySpec } from './utils/declarations';
+} from './ts/rewrite';
+export { CompilerError, type TransformOptions, type TransformResult, transform } from './ts/transform';
+export type { ImportRule } from './ts/transforms';
+export {
+  type CompilerAsset,
+  type CompilerConfig,
+  type CompilerContext,
+  type CompilerDiagnostic,
+  type CompilerPipelineStep,
+  type CompilerPlugin,
+  type CompilerPluginEnforce,
+  type CompilerSourceMap,
+  type CompilerTarget,
+  type CompilerTargetOptions,
+  type CompilerTransform,
+  type HtmlTarget,
+  html,
+  type JsxTarget,
+  type JsxTargetOptions,
+  jsx,
+} from './ts/types';
+export type { InterfaceDeclarationOptions, InterfacePropertySpec } from './ts/utils/declarations';

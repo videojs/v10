@@ -1,4 +1,4 @@
-import type { CompilerPlugin } from '../config';
+import type { CompilerPlugin } from '../ts/types';
 import type { CompileStylesOptions } from './compile';
 import type { DesignSystem } from './design-system';
 import type { StyleManifest } from './manifest';

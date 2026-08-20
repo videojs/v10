@@ -1,19 +1,19 @@
 import { createHash } from 'node:crypto';
 import { isAbsolute, relative, resolve } from 'node:path';
 import ts from 'typescript';
-import { HTML_RUNTIME_IMPORT } from '../bundle/html-runtime';
 import type { ComponentDefinition, ComponentRecord } from '../components/definition';
 import { Fragment } from '../components/jsx-runtime';
-import type { CompilerPlugin, CompilerTarget } from '../config';
-import { DiagnosticError, diagnosticLocationFromNode } from '../diagnostics';
-import { collectTopLevelBindingNames } from '../utils/bindings';
+import { DiagnosticError, diagnosticLocationFromNode } from '../ts/diagnostics';
+import { HTML_RUNTIME_IMPORT } from '../ts/html-runtime';
+import type { CompilerPlugin, CompilerTarget } from '../ts/types';
+import { collectTopLevelBindingNames } from '../ts/utils/bindings';
 import {
   createIndexedAccessType,
   createInterfaceDeclaration,
   createLiteralType,
   createNamedType,
-} from '../utils/declarations';
-import { getImportSource } from '../utils/import-declaration';
+} from '../ts/utils/declarations';
+import { getImportSource } from '../ts/utils/import-declaration';
 import {
   hasJsxAttribute,
   isJsxElementLike,
@@ -21,9 +21,9 @@ import {
   jsxAttributes,
   jsxChildren,
   readJsxAttributeValue,
-} from '../utils/jsx';
-import { toPosixPath } from '../utils/path';
-import { collectReferencedIdentifiers } from '../utils/references';
+} from '../ts/utils/jsx';
+import { toPosixPath } from '../ts/utils/path';
+import { collectReferencedIdentifiers } from '../ts/utils/references';
 import {
   type ComponentRegistry,
   isHost,

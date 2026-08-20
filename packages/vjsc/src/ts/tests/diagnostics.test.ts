@@ -1,6 +1,6 @@
 import type ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { CompilerError, transform } from '..';
+import { CompilerError, transform } from '../../index';
 import {
   DiagnosticError,
   diagnosticLocationFromNode,

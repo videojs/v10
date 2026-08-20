@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import ts from 'typescript';
 
-import type { CompilerContext, CompilerPipelineStep, CompilerPlugin } from '../config';
+import type { CompilerContext, CompilerPipelineStep, CompilerPlugin } from '../ts/types';
 
 import { compileStyles } from './compile';
 import { type DesignSystem, loadDesignSystem } from './design-system';

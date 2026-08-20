@@ -1,7 +1,7 @@
 import { createFilter, type FilterPattern, type Plugin } from 'vite';
-import { createVjscPlugin, type VjscTransformContext, type VjscTransformer } from '../bundle/plugin';
-import { createSchemaPlugin, type SchemaPluginOptions } from '../bundle/schema';
-import type { CompilerConfig } from '../config';
+import { createSchemaPlugin, type SchemaPluginOptions } from '../components/schema/rolldown';
+import { createVjscPlugin, type VjscTransformContext, type VjscTransformer } from '../ts/rolldown';
+import type { CompilerConfig } from '../ts/types';
 
 export type { FilterPattern, Plugin } from 'vite';
 export type { SchemaPluginOptions, VjscTransformContext, VjscTransformer };

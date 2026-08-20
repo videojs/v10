@@ -104,7 +104,7 @@ export function jsx(options: JsxTargetOptions = {}): JsxTarget {
   };
 }
 
-/** Transform canonical JSX into the static HTML runtime representation. */
+/** Transform VJSC JSX into the static HTML runtime representation. */
 export function html(options: CompilerTargetOptions = {}): HtmlTarget {
   return {
     name: 'html',

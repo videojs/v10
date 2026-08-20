@@ -1,4 +1,10 @@
 import ts from 'typescript';
+import { fatalDiagnosticFromError, withDiagnosticSource } from './diagnostics';
+import { parse } from './parse';
+import { identitySourceMap, printSourceFile } from './source-map';
+import { dropUnusedImports } from './transforms/drop-unused-imports';
+import { dropUnusedLocals } from './transforms/drop-unused-locals';
+import { transformImports } from './transforms/imports';
 import {
   type CompilerAsset,
   type CompilerConfig,
@@ -10,13 +16,7 @@ import {
   type CompilerTarget,
   type CompilerTransform,
   jsx,
-} from './config';
-import { fatalDiagnosticFromError, withDiagnosticSource } from './diagnostics';
-import { parse } from './parse';
-import { identitySourceMap, printSourceFile } from './source-map';
-import { dropUnusedImports } from './transforms/drop-unused-imports';
-import { dropUnusedLocals } from './transforms/drop-unused-locals';
-import { transformImports } from './transforms/imports';
+} from './types';
 
 export interface TransformOptions {
   filename?: string | undefined;
