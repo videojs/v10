@@ -6,7 +6,17 @@ import { vjsCompiler } from '../vite';
 type TestPlugin = {
   configResolved(config: { root: string }): void;
   resolveId(id: string): string | null;
-  load(id: string): string | null;
+  load(this: { addWatchFile(id: string): void }, id: string): Promise<string | null>;
+  handleHotUpdate(context: {
+    file: string;
+    modules: object[];
+    server: {
+      moduleGraph: {
+        getModuleById(id: string): object | undefined;
+        invalidateModule(module: object): void;
+      };
+    };
+  }): object[];
   transform(
     this: { addWatchFile(id: string): void; error(error: unknown): never; warn(warning: unknown): void },
     code: string,
@@ -70,7 +80,7 @@ describe('vjsCompiler', () => {
     const id = match![1]!;
     expect(id).toContain('virtual:vjsc/css/');
     expect(plugin.resolveId(id)).toBe(`\0${id}`);
-    expect(plugin.load(`\0${id}`)).toBe('.foo{display:flex;}');
+    await expect(plugin.load.call(createContext(), `\0${id}`)).resolves.toBe('.foo{display:flex;}');
     expect(result!.code).toContain('function App');
     expect(result!.map.mappings).toMatch(/^;/);
   });
@@ -104,7 +114,7 @@ describe('vjsCompiler', () => {
 
     expect(secondCssId).not.toBe(firstCssId);
     expect(plugin.resolveId(firstCssId)).toBeNull();
-    expect(plugin.load(`\0${secondCssId}`)).toBe(css);
+    await expect(plugin.load.call(createContext(), `\0${secondCssId}`)).resolves.toBe(css);
   });
 
   it('shares identical emitted assets between transformed modules', async () => {
@@ -137,7 +147,42 @@ describe('vjsCompiler', () => {
     expect(secondCssId).toBe(firstCssId);
     css = '.foo{color:blue;}';
     await plugin.transform.call(createContext(), 'export const first = <Foo/>;', '/workspace/first.tsx');
-    expect(plugin.load(`\0${secondCssId}`)).toBe('.foo{color:red;}');
+    await expect(plugin.load.call(createContext(), `\0${secondCssId}`)).resolves.toBe('.foo{color:red;}');
+  });
+
+  it('loads generated modules and invalidates them when their inputs change', async () => {
+    let code = 'export const value = 1;';
+    const plugin = createPlugin({
+      modules: [
+        {
+          id: 'virtual:vjsc/value',
+          load: () => ({ code, watchFiles: ['/workspace/value.ts'] }),
+        },
+      ],
+    });
+    const loadContext = createContext();
+
+    expect(plugin.resolveId('virtual:vjsc/value')).toBe('\0virtual:vjsc/value');
+    await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toBe(code);
+    expect(loadContext.addWatchFile).toHaveBeenCalledWith('/workspace/value.ts');
+
+    const module = {};
+    const invalidateModule = vi.fn();
+    code = 'export const value = 2;';
+    expect(
+      plugin.handleHotUpdate({
+        file: '/workspace/value.ts',
+        modules: [],
+        server: {
+          moduleGraph: {
+            getModuleById: vi.fn(() => module),
+            invalidateModule,
+          },
+        },
+      })
+    ).toEqual([module]);
+    expect(invalidateModule).toHaveBeenCalledWith(module);
+    await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toContain('value = 2');
   });
 
   it('forwards compiler warnings to Vite', async () => {

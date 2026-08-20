@@ -2,11 +2,13 @@ import { createHash } from 'node:crypto';
 import { createFilter, type FilterPattern, type Plugin } from 'vite';
 import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../config';
 import { type LoadedCompilerConfig, loadConfig } from '../load-config';
+import { createVirtualModuleGraph, type VirtualModuleDefinition } from '../module-graph';
 import { CompilerError, transform } from '../transform';
 
 export type VideojsCompilerPluginOptions = {
   include?: FilterPattern | undefined;
   exclude?: FilterPattern | undefined;
+  modules?: readonly VirtualModuleDefinition[] | undefined;
 } & (
   | {
       config?: CompilerConfig | undefined;
@@ -33,6 +35,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   const filter = createFilter(options.include ?? /\.tsx$/, options.exclude);
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
+  const modules = createVirtualModuleGraph(options.modules ?? []);
   let root = process.cwd();
   let loadedConfig: LoadedCompilerConfig | null | undefined;
 
@@ -54,14 +57,31 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       root = config.root;
     },
     resolveId(id) {
-      return cssById.has(id) ? `\0${id}` : null;
+      return cssById.has(id) || modules.has(id) ? `\0${id}` : null;
     },
-    load(id) {
+    async load(id) {
       if (!id.startsWith('\0')) return null;
-      return cssById.get(id.slice(1)) ?? null;
+      const publicId = id.slice(1);
+      const css = cssById.get(publicId);
+      if (css !== undefined) return css;
+
+      const generated = await modules.load(publicId);
+      if (!generated) return null;
+      for (const fileName of generated.watchFiles) this.addWatchFile(fileName);
+      return generated.code;
     },
     watchChange(id) {
       if (loadedConfig?.configPath === id) loadedConfig = undefined;
+      modules.invalidate(id);
+    },
+    handleHotUpdate(context) {
+      const affected = modules
+        .invalidate(context.file)
+        .map((id) => context.server.moduleGraph.getModuleById(`\0${id}`))
+        .filter((module) => module !== undefined);
+
+      for (const module of affected) context.server.moduleGraph.invalidateModule(module);
+      return [...new Set([...context.modules, ...affected])];
     },
     async transform(code, id) {
       if (!filter(id)) return null;

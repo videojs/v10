@@ -71,6 +71,13 @@ export {
   loadConfig,
   loadConfigFile,
 } from './load-config';
+export {
+  createVirtualModuleGraph,
+  defineVirtualModule,
+  VIRTUAL_MODULE_PREFIX,
+  type VirtualModuleDefinition,
+  type VirtualModuleGraph,
+} from './module-graph';
 export type {
   CreateEntriesModuleOptions,
   EntriesModule,
