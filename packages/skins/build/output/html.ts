@@ -1,8 +1,8 @@
 import { format } from 'oxfmt';
 import { html } from 'vjsc';
 import { defineCatalogOutput, emitCatalog } from 'vjsc/catalog';
+import { createHtmlComponentRegistry } from '../../vjsc/registry/frameworks';
 import { getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
-import { createHtmlComponentRegistry } from '../metadata';
 import { packageSkinStyles, skinStyleTransform } from './styles';
 
 interface HtmlOutputOptions {

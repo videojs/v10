@@ -1,6 +1,10 @@
-import { defineShadcnRegistry } from 'vjsc/shadcn';
+import { resolve } from 'node:path';
 
+import { defineShadcnRegistry, shadcnOutput } from 'vjsc/shadcn';
+
+import { reactOutput } from '../../build/output/react';
 import skinCatalog from '../catalog';
+import { formatGeneratedFile } from '../format';
 
 const paths = {
   output: 'vjsc/registry',
@@ -85,5 +89,20 @@ const skinRegistry = defineShadcnRegistry(skinCatalog, {
     ],
   },
 });
+
+/** Configure the Shadcn source-distribution output consumed by the Skins Vite build. */
+export function createSkinShadcnOutput() {
+  return shadcnOutput({
+    catalog: skinCatalog,
+    rootDir: resolve(import.meta.dirname, '..'),
+    registry: skinRegistry,
+    output: reactOutput(),
+    styles: {
+      mode: 'tailwind',
+      variant: 'default',
+    },
+    format: formatGeneratedFile,
+  });
+}
 
 export default skinRegistry;

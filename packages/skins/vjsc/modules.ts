@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import type { VirtualModuleDefinition, VjscModule } from 'vjsc/bundle';
 
-import type skinCatalog from '../vjsc/catalog';
+import type skinCatalog from './catalog';
 
 export const skinFrameworks = ['react', 'html'] as const;
 export const skinStyleModes = ['vanilla', 'tailwind'] as const;

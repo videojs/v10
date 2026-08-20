@@ -2,9 +2,9 @@ import { posix } from 'node:path';
 
 import { jsx } from 'vjsc';
 import { defineCatalogOutput, emitCatalog } from 'vjsc/catalog';
+import { createReactComponentRegistry } from '../../vjsc/registry/frameworks';
+import { componentTransforms } from '../../vjsc/registry/react';
 import { catalogSourcePath, getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
-import { createReactComponentRegistry } from '../metadata';
-import { componentTransforms } from './react/transform';
 import { packageSkinStyles, skinStyleTransform } from './styles';
 
 interface ReactOutputOptions {

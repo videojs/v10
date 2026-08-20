@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { createIconElementModule } from '../icon-element';
+import { createIconElementModule } from '../icons';
 
 describe('createIconElementModule', () => {
   it('generates a watched custom-element module from source SVGs', () => {
