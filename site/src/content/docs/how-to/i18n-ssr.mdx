@@ -139,7 +139,8 @@ Match your app's locale negotiation. Video.js does not replace framework i18n; i
 SSR HTML players should emit `lang` and wrap the player with <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink>. Register packs in the entry module loaded before custom elements upgrade:
 
 ```ts
-import '@videojs/html/video';
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
 import '@videojs/html/i18n/locales/es/register';
 ```
 
