@@ -43,6 +43,7 @@ packages/html/docs/
 packages/react/docs/
 
 # VJSC
+packages/*/.vjsc/
 packages/core/src/core/ui/schema.generated.ts
 packages/html/vjsc/entries.generated.ts
 packages/icons/vjsc/schema.generated.ts

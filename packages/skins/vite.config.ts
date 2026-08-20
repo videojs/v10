@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { createEntriesModule, createSchemaModule, jsx } from 'vjsc';
+import { createEntriesModule, createSchemaModule, jsx, syncGeneratedModuleTypes } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
 import { defineRegistry, extendRegistry, plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
@@ -52,6 +52,21 @@ const iconSchema = createSchemaModule(
   },
   { cwd: iconsDir }
 );
+
+await Promise.all([
+  syncGeneratedModuleTypes({
+    rootDir: coreDir,
+    modules: [{ fileName: resolve(coreDir, 'src/core/ui/schema.generated.ts'), module: coreSchema }],
+  }),
+  syncGeneratedModuleTypes({
+    rootDir: reactDir,
+    modules: [{ fileName: resolve(reactDir, 'vjsc/entries.generated.ts'), module: reactEntries }],
+  }),
+  syncGeneratedModuleTypes({
+    rootDir: iconsDir,
+    modules: [{ fileName: resolve(iconsDir, 'vjsc/schema.generated.ts'), module: iconSchema }],
+  }),
+]);
 
 const iconEntries = Object.fromEntries(
   iconFiles.map((file) => {

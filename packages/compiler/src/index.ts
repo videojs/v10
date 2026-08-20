@@ -134,4 +134,9 @@ export {
 } from './rewrite';
 export { CompilerError, type TransformOptions, type TransformResult, transform } from './transform';
 export type { ImportRule } from './transforms';
+export {
+  type GeneratedTypeModule,
+  type SyncGeneratedModuleTypesOptions,
+  syncGeneratedModuleTypes,
+} from './type-sync';
 export type { InterfaceDeclarationOptions, InterfacePropertySpec } from './utils/declarations';
