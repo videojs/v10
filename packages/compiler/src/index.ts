@@ -35,6 +35,7 @@ export {
   type HtmlTarget,
   html,
   type JsxTarget,
+  type JsxTargetOptions,
   jsx,
 } from './config';
 export {

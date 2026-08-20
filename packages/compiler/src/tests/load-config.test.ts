@@ -88,6 +88,15 @@ describe('loadConfigFile', () => {
     });
   });
 
+  it('rejects the old JSX import source option', async () => {
+    const configPath = join(workDir, 'compiler.config.mjs');
+    writeFileSync(configPath, `export default { target: { name: 'jsx', jsxImportSource: 'react' } };\n`, 'utf8');
+
+    await expect(loadConfigFile(configPath)).rejects.toThrow(
+      '`target.jsxImportSource` was renamed to `target.importSource`'
+    );
+  });
+
   it('reloads a config file after its contents change', async () => {
     const configPath = join(workDir, 'compiler.config.mjs');
     writeFileSync(configPath, `export default { input: 'one.tsx' };\n`, 'utf8');

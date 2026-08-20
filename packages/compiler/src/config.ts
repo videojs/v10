@@ -66,17 +66,20 @@ export interface CompilerPlugin {
 
 /** Source transformations shared by JSX and HTML targets. */
 export interface CompilerTargetOptions {
-  /** JSX runtime used by the tool that lowers a JSX projection. */
-  jsxImportSource?: string | undefined;
   /** Per-source-module rewrite rules. */
   imports?: Record<string, ImportRule> | undefined;
   /** Transforms applied in order after `transformImports`. */
   transforms?: readonly CompilerTransform[] | undefined;
 }
 
+export interface JsxTargetOptions extends CompilerTargetOptions {
+  /** JSX runtime used by the tool that lowers a JSX projection. */
+  importSource?: string | undefined;
+}
+
 export interface JsxTarget {
   name: 'jsx';
-  jsxImportSource?: string | undefined;
+  importSource?: string | undefined;
   imports?: Record<string, ImportRule> | undefined;
   transforms?: readonly CompilerTransform[] | undefined;
 }
@@ -120,10 +123,10 @@ export function defineConfig<const Config extends CompilerBuildConfig>(config: C
   return config;
 }
 
-export function jsx(options: CompilerTargetOptions = {}): JsxTarget {
+export function jsx(options: JsxTargetOptions = {}): JsxTarget {
   return {
     name: 'jsx',
-    ...(options.jsxImportSource ? { jsxImportSource: options.jsxImportSource } : {}),
+    ...(options.importSource ? { importSource: options.importSource } : {}),
     ...(options.imports ? { imports: options.imports } : {}),
     ...(options.transforms ? { transforms: options.transforms } : {}),
   };

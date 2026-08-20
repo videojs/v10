@@ -94,14 +94,7 @@ const componentRegistry = createReactComponentRegistry();
 const resolveImport = (reference: ImportRef): ImportRef => reference;
 const output = {
   target: jsx({
-    jsxImportSource: 'react',
-    imports: {
-      '@videojs/core': (name) => resolveImport({ source: '@videojs/core', name }),
-      '@videojs/react': (name) => resolveImport({ source: '@videojs/react', name }),
-      '@videojs/utils/style': (name) => resolveImport({ source: '@videojs/utils/style', name }),
-      '@videojs/react/icons': (name) => resolveImport({ source: '@videojs/react/icons', name }),
-      react: (name) => resolveImport({ source: 'react', name }),
-    },
+    importSource: 'react',
   }),
   plugins: [catalogMetaPlugin(), registryPlugin(componentRegistry), componentTransforms(resolveImport)],
 };

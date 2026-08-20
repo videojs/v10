@@ -8,7 +8,7 @@ const compact = (value: string): string => value.replace(/\s+/g, '');
 describe('transform', () => {
   it('declares the downstream JSX runtime selected by the target', async () => {
     const result = await transform('export const View = <div />;', {
-      config: { target: jsx({ jsxImportSource: 'react' }) },
+      config: { target: jsx({ importSource: 'react' }) },
     });
 
     expect(result.code).toMatch(/^\/\*\* @jsxImportSource react \*\//);

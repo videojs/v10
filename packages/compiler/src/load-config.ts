@@ -132,6 +132,15 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
     if (!isPlainObject(value.target) || (value.target.name !== 'jsx' && value.target.name !== 'html')) {
       throw invalidConfig(location, '`target.name` must be "jsx" or "html"');
     }
+    if (value.target.jsxImportSource !== undefined) {
+      throw invalidConfig(location, '`target.jsxImportSource` was renamed to `target.importSource`');
+    }
+    if (
+      value.target.importSource !== undefined &&
+      (value.target.name !== 'jsx' || typeof value.target.importSource !== 'string' || !value.target.importSource)
+    ) {
+      throw invalidConfig(location, '`target.importSource` must be a non-empty string for the JSX target');
+    }
     if (value.target.imports !== undefined) {
       if (!isPlainObject(value.target.imports)) throw invalidConfig(location, '`target.imports` must be an object');
       for (const [source, rule] of Object.entries(value.target.imports)) {

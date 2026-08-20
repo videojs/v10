@@ -36,14 +36,18 @@ export function reactOutput(options: ReactOutputOptions = {}) {
     compiler: {
       external: (source) => !source.startsWith('.') && !source.startsWith('/'),
       target: jsx({
-        jsxImportSource: 'react',
-        imports: {
-          '@videojs/core': (name) => resolveImport({ source: '@videojs/core', name }),
-          '@videojs/react': (name) => resolveImport({ source: '@videojs/react', name }),
-          '@videojs/utils/style': (name) => resolveImport({ source: '@videojs/utils/style', name }),
-          [iconSource]: (name) => resolveImport({ source: iconSource, name }),
-          react: (name) => resolveImport({ source: 'react', name }),
-        },
+        importSource: 'react',
+        ...(options.resolveImport
+          ? {
+              imports: {
+                '@videojs/core': (name) => resolveImport({ source: '@videojs/core', name }),
+                '@videojs/react': (name) => resolveImport({ source: '@videojs/react', name }),
+                '@videojs/utils/style': (name) => resolveImport({ source: '@videojs/utils/style', name }),
+                [iconSource]: (name) => resolveImport({ source: iconSource, name }),
+                react: (name) => resolveImport({ source: 'react', name }),
+              },
+            }
+          : {}),
       }),
       plugins: [componentTransforms(resolveImport)],
     },
