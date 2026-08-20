@@ -47,13 +47,17 @@ export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta>
   /** Complete root-relative source inventory loaded through the host graph. */
   readonly include: string | readonly string[];
   readonly exclude?: string | readonly string[] | undefined;
-  /** Select the VJSC query contexts in which each discovered module is transformed. */
-  readonly parameters?:
-    | ((
-        module: ShadcnModule<Item>,
-        modules: readonly ShadcnModule<Item>[]
-      ) => readonly Readonly<Record<string, string>>[])
-    | undefined;
+  readonly configure: {
+    /** Select the VJSC query contexts in which each discovered module is transformed. */
+    readonly parameters?:
+      | ((
+          module: ShadcnModule<Item>,
+          modules: readonly ShadcnModule<Item>[]
+        ) => readonly Readonly<Record<string, string>>[])
+      | undefined;
+    /** Describe the published registry items after every source projection has been transformed. */
+    readonly items: (modules: readonly ShadcnModule<Item>[]) => readonly ShadcnItem<Item>[];
+  };
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
@@ -66,7 +70,5 @@ export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta>
   /** Editable-source import strings whose installation specifier is exceptional. */
   readonly imports?: Readonly<Record<string, string>> | undefined;
   readonly meta?: RegistryItem['meta'];
-  /** Describe the published registry items after every source projection has been transformed. */
-  readonly items: (modules: readonly ShadcnModule<Item>[]) => readonly ShadcnItem<Item>[];
   readonly styles?: ShadcnStyle | undefined;
 }

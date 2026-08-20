@@ -108,7 +108,10 @@ describe('shadcnPlugin', () => {
       { framework: 'react', skin: 'default' },
       { framework: 'react', skin: 'minimal' },
     ];
-    const output = await build(root, { styles: undefined, parameters });
+    const output = await build(root, {
+      styles: undefined,
+      configure: { ...baseOptions().configure, parameters },
+    });
 
     expect(assetJson(output, 'root.json').registryDependencies).toContain('@example/child');
     expect(assetJson(output, 'root-minimal.json').registryDependencies).toContain('@example/child-minimal');
@@ -122,10 +125,12 @@ describe('shadcnPlugin', () => {
       'components/root.tsx': `import type { Label } from './types'; export function Root({ label }: { label: Label }) { return <main>{label}</main>; } ${meta('root', 'block')}`,
       'components/types.ts': `export type Label = string;`,
     });
-    const parameters: FixtureOptions['parameters'] = (module) =>
+    const parameters: FixtureOptions['configure']['parameters'] = (module) =>
       basename(module.filename) === 'root.tsx' ? [{ framework: 'react', skin: 'minimal' }] : [];
 
-    await expect(build(root, { styles: undefined, parameters })).rejects.toThrow(/source dependency was not captured/);
+    await expect(
+      build(root, { styles: undefined, configure: { ...baseOptions().configure, parameters } })
+    ).rejects.toThrow(/source dependency was not captured/);
   });
 
   it('rejects unsafe paths and duplicate item names', async () => {
@@ -203,34 +208,36 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
     },
     imports: { '@/source/utils': '@/components/example/utils' },
     meta: { framework: 'react', style: 'tailwind' },
-    items: (modules) =>
-      modules.flatMap<ShadcnItem<FixtureMeta>>((module) => {
-        const { filename, meta: itemMeta, parameters } = module;
-        if (basename(filename) === 'utils.ts') {
+    configure: {
+      items: (modules) =>
+        modules.flatMap<ShadcnItem<FixtureMeta>>((module) => {
+          const { filename, meta: itemMeta, parameters } = module;
+          if (basename(filename) === 'utils.ts') {
+            return [
+              {
+                module,
+                name: 'utils',
+                type: 'registry:lib',
+                title: 'Utilities',
+                description: 'Shared utilities.',
+                filename: 'utils.ts',
+              },
+            ];
+          }
+          if (!itemMeta) return [];
+          const skin = parameters.get('skin');
+          const name = skin && skin !== 'default' ? `${itemMeta.name}-${skin}` : itemMeta.name;
           return [
             {
               module,
-              name: 'utils',
-              type: 'registry:lib',
-              title: 'Utilities',
-              description: 'Shared utilities.',
-              filename: 'utils.ts',
+              name,
+              type: itemMeta.type === 'block' ? 'registry:block' : 'registry:component',
+              title: itemMeta.title,
+              description: itemMeta.description,
             },
           ];
-        }
-        if (!itemMeta) return [];
-        const skin = parameters.get('skin');
-        const name = skin && skin !== 'default' ? `${itemMeta.name}-${skin}` : itemMeta.name;
-        return [
-          {
-            module,
-            name,
-            type: itemMeta.type === 'block' ? 'registry:block' : 'registry:component',
-            title: itemMeta.title,
-            description: itemMeta.description,
-          },
-        ];
-      }),
+        }),
+    },
     styles: { input: './styles.css', filename: 'tailwind.css' },
     ...overrides,
   };

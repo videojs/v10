@@ -41,7 +41,7 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
       );
 
       for (const module of discovered) {
-        const parameterSets = options.parameters?.(module, discovered) ?? [{}];
+        const parameterSets = options.configure.parameters?.(module, discovered) ?? [{}];
         for (const parameters of parameterSets) {
           const id = moduleId(module.filename, parameters);
           if (sources.has(id)) this.error(`Shadcn source projection is declared twice: \`${id}\`.`);

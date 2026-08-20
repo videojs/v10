@@ -98,7 +98,7 @@ function describePublishedModules<Item extends ComponentMeta>(
     parameters: parseModuleId(module.id).parameters,
     meta: module.meta,
   }));
-  for (const item of options.items(configurable)) {
+  for (const item of options.configure.items(configurable)) {
     const module = modules.get(item.module.id);
     if (!module) throw new Error(`Shadcn item \`${item.name}\` references an unknown module: \`${item.module.id}\`.`);
     validateItemName(item.name);
