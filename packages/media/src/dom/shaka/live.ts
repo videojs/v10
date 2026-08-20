@@ -67,7 +67,9 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
 
     #onLoading = () => {
       this.#reset();
-      this.#armSeekToLive();
+      // A deferred load's own first `play` set the pending seek and then
+      // started this load; arming again would wipe that shot mid-flight.
+      if (!this.#seekToLivePending) this.#armSeekToLive();
     };
 
     #onUnloading = () => this.#reset();
@@ -75,8 +77,11 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
     #onLoaded = () => {
       this.#derive();
       // For deferred loading the manifest only arrives after the first play,
-      // so retry the seek once `liveEdgeStart` becomes finite.
-      if (this.#seekToLivePending) this.#trySeekToLive();
+      // so the pending seek resolves here. Either way the shot is spent: a
+      // load that came up on-demand has no edge to seek.
+      if (!this.#seekToLivePending) return;
+      this.#seekToLivePending = false;
+      this.#trySeekToLive();
     };
 
     #derive = () => {

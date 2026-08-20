@@ -127,6 +127,18 @@ describe('ShakaMediaLiveMixin', () => {
     expect(video.currentTime).toBe(94);
   });
 
+  it('seeks to the live edge when the first play starts the load', () => {
+    const engine = createEngine({ live: true, maxSegmentDuration: 2, seekEnd: 100 });
+    const { video } = setupWithTarget(engine);
+
+    // A deferred load (`preload: 'none'`): the first play is what starts it.
+    video.dispatchEvent(new Event('play'));
+    engine.emit('loading');
+    engine.emit('loaded');
+
+    expect(video.currentTime).toBe(94);
+  });
+
   it('waits for the manifest when play comes first', () => {
     const engine = createEngine({ live: true, maxSegmentDuration: 2, seekEnd: 100 });
     const { video } = setupWithTarget(engine);
