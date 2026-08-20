@@ -15,7 +15,7 @@ const packagesDir = resolve(import.meta.dirname, '../..');
 const corePackageDir = resolve(packagesDir, 'core');
 type CoreSchema = typeof coreSchema;
 
-export const frameworkRegistryWatchFiles = {
+const frameworkRegistryWatchFiles = {
   html: [resolve(packagesDir, 'html/vjsc/registry.tsx'), resolve(packagesDir, 'html/vjsc/resolve.ts')],
   react: [resolve(packagesDir, 'react/vjsc/registry.tsx'), resolve(packagesDir, 'react/vjsc/resolve.ts')],
 } as const;
@@ -25,21 +25,29 @@ export function getIconSchemaModule(family = 'default') {
 }
 
 export function createReactComponentRegistry(iconFamily = 'default'): ComponentRegistry {
-  const schema = getCoreSchemaModule().schema as CoreSchema;
+  const core = getCoreSchemaModule();
+  const icons = getIconSchemaModule(iconFamily);
 
-  return extendRegistry(
-    createReactRegistry(schema),
-    createReactIconRegistry(getIconSchemaModule(iconFamily).schema, { family: iconFamily })
-  );
+  return {
+    ...extendRegistry(
+      createReactRegistry(core.schema as CoreSchema),
+      createReactIconRegistry(icons.schema, { family: iconFamily })
+    ),
+    watchFiles: [...core.watchFiles, ...icons.watchFiles, ...frameworkRegistryWatchFiles.react],
+  };
 }
 
 export function createHtmlComponentRegistry(iconFamily = 'default'): ComponentRegistry {
-  const schema = getCoreSchemaModule().schema as CoreSchema;
+  const core = getCoreSchemaModule();
+  const icons = getIconSchemaModule(iconFamily);
 
-  return extendRegistry(
-    createHtmlRegistry(schema),
-    createHtmlIconRegistry(getIconSchemaModule(iconFamily).schema, { family: iconFamily })
-  );
+  return {
+    ...extendRegistry(
+      createHtmlRegistry(core.schema as CoreSchema),
+      createHtmlIconRegistry(icons.schema, { family: iconFamily })
+    ),
+    watchFiles: [...core.watchFiles, ...icons.watchFiles, ...frameworkRegistryWatchFiles.html],
+  };
 }
 
 export function getCoreSchemaModule() {

@@ -15,11 +15,11 @@ type TestPlugin = {
 
 const createPlugin = (...args: Parameters<typeof vjscPlugin>): TestPlugin => {
   const plugin = vjscPlugin(...args) as unknown as {
-    resolveId: TestPlugin['resolveId'];
+    resolveId: { handler: TestPlugin['resolveId'] };
     load: TestPlugin['load'];
     transform: { handler: TestPlugin['transform'] };
   };
-  return { resolveId: plugin.resolveId, load: plugin.load, transform: plugin.transform.handler };
+  return { resolveId: plugin.resolveId.handler, load: plugin.load, transform: plugin.transform.handler };
 };
 
 const createContext = () => ({

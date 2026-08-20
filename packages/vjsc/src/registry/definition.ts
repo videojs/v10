@@ -253,6 +253,8 @@ export interface ComponentRegistry {
   readonly props?: RegistryOptions['props'];
   readonly primitives: RegistryPrimitives;
   readonly types?: RegistryTypeResolver | undefined;
+  /** Source inputs used to construct this in-memory registry. */
+  readonly watchFiles?: readonly string[] | undefined;
 }
 
 export interface RegistryDefinition<Definitions extends ComponentRecord = ComponentRecord> extends RegistryOptions {
@@ -305,6 +307,9 @@ export function extendRegistry<const Definitions extends ComponentRecord>(
     ...((next.props ?? registry.props) ? { props: next.props ?? registry.props } : {}),
     primitives: { ...registry.primitives, ...next.primitives },
     ...((next.types ?? registry.types) ? { types: next.types ?? registry.types } : {}),
+    ...(registry.watchFiles?.length || next.watchFiles?.length
+      ? { watchFiles: [...new Set([...(registry.watchFiles ?? []), ...(next.watchFiles ?? [])])] }
+      : {}),
   };
 }
 

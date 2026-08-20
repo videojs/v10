@@ -86,28 +86,31 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
 
   const plugin: Plugin & HotUpdatePlugin = {
     name: 'vjsc',
-    async resolveId(id, importer, resolveOptions) {
-      if (id === HTML_RUNTIME_IMPORT || id === `${HTML_RUNTIME_IMPORT.replace('/jsx-runtime', '')}/jsx-dev-runtime`) {
-        return HTML_RUNTIME_ID;
-      }
-      if (cssById.has(id)) return `\0${id}`;
-      const generatedId = modules.resolveId(id);
-      if (generatedId) return generatedId;
+    resolveId: {
+      order: 'pre',
+      async handler(id, importer, resolveOptions) {
+        if (id === HTML_RUNTIME_IMPORT || id === `${HTML_RUNTIME_IMPORT.replace('/jsx-runtime', '')}/jsx-dev-runtime`) {
+          return HTML_RUNTIME_ID;
+        }
+        if (cssById.has(id)) return `\0${id}`;
+        const generatedId = modules.resolveId(id);
+        if (generatedId) return generatedId;
 
-      const projection = parseProjectionId(id, options.projections);
-      const inherited = importer ? parseProjectionId(importer, options.projections) : null;
-      if (!projection && (!inherited || !id.startsWith('.'))) return null;
+        const projection = parseProjectionId(id, options.projections);
+        const inherited = importer ? parseProjectionId(importer, options.projections) : null;
+        if (!projection && (!inherited || !id.startsWith('.'))) return null;
 
-      const resolved = await this.resolve(projection?.id ?? id, importer ? cleanId(importer) : undefined, {
-        ...resolveOptions,
-        skipSelf: true,
-      });
-      if (!resolved || resolved.external || !cleanId(resolved.id).endsWith('.tsx')) return resolved;
+        const resolved = await this.resolve(projection?.id ?? id, importer ? cleanId(importer) : undefined, {
+          ...resolveOptions,
+          skipSelf: true,
+        });
+        if (!resolved || resolved.external || !cleanId(resolved.id).endsWith('.tsx')) return resolved;
 
-      return {
-        ...resolved,
-        id: withParameters(cleanId(resolved.id), projection?.parameters ?? inherited!.parameters),
-      };
+        return {
+          ...resolved,
+          id: withParameters(cleanId(resolved.id), projection?.parameters ?? inherited!.parameters),
+        };
+      },
     },
     async load(id) {
       if (id === HTML_RUNTIME_ID) return { code: HTML_RUNTIME, moduleType: 'js' };
@@ -165,6 +168,7 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
             ...(configured.plugins ?? []),
           ],
         };
+        for (const file of configured.registry?.watchFiles ?? []) this.addWatchFile(resolve(file));
         let result: Awaited<ReturnType<typeof transform>>;
         try {
           result = await transform(code, {

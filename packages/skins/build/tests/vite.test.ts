@@ -5,8 +5,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'vite.config.ts');
-const defaultSkinUrl = '/../vjsc/skins/default-video/skin.tsx';
-const playButtonUrl = '/../vjsc/components/buttons/play-button.tsx';
+const reactProjection = '?framework=react&icon=default&scope=media-skin-video&style=vanilla&variant=default';
+const defaultSkinUrl = `/../vjsc/skins/default-video/skin.tsx${reactProjection}`;
+const playButtonUrl = `/../vjsc/components/buttons/play-button.tsx${reactProjection}`;
 const buttonStyles = resolve(packageDir, 'vjsc/styles/components/button.styles.ts');
 const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
 const corePlayButton = resolve(packageDir, '../core/src/core/ui/play-button/play-button-component.ts');
@@ -57,7 +58,7 @@ describe('canonical Skins Vite workflow', () => {
     expect(owner?.transformResult).toBeNull();
   }, 30_000);
 
-  it('serves framework and style projections through stable virtual modules', async () => {
+  it('serves framework and style projections through stable catalog facades', async () => {
     server = await createServer({
       configFile,
       logLevel: 'silent',
@@ -68,8 +69,8 @@ describe('canonical Skins Vite workflow', () => {
     const reactSkin = await server.transformRequest(reactVirtualSkin);
     const htmlSkin = await server.transformRequest(htmlVirtualSkin);
 
-    expect(reactSkin?.code).toContain('$RefreshReg$');
-    expect(reactSkin?.code).toContain('DefaultVideoSkin');
+    expect(reactSkin?.code).toContain('export * from');
+    expect(reactSkin?.code).toContain('framework=react');
     expect(htmlSkin?.code).toContain('const skin =');
     expect(htmlSkin?.code).toContain('media-skin-video-minimal');
     expect(htmlSkin?.code).not.toContain('@videojs/core/vjsc');
@@ -77,24 +78,33 @@ describe('canonical Skins Vite workflow', () => {
     expect(resolved?.id).toBe(reactVirtualSkin);
     const virtualModule = resolved && server.moduleGraph.getModuleById(resolved.id);
     expect(virtualModule?.transformResult).not.toBeNull();
+    await server.transformRequest(playButtonUrl);
+    const projectedPlayButtonId = await server.pluginContainer.resolveId(`${vjscPlayButton}${reactProjection}`);
+    const projectedPlayButton = projectedPlayButtonId && server.moduleGraph.getModuleById(projectedPlayButtonId.id);
+    expect(projectedPlayButton).toBeDefined();
+    expect(projectedPlayButton?.transformResult).not.toBeNull();
 
     server.watcher.emit('change', buttonStyles);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(virtualModule?.transformResult).toBeNull();
+    expect(projectedPlayButton?.transformResult).toBeNull();
 
-    await server.transformRequest(reactVirtualSkin);
-    expect(virtualModule?.transformResult).not.toBeNull();
+    await server.transformRequest(playButtonUrl);
+    expect(projectedPlayButton?.transformResult).not.toBeNull();
 
     server.watcher.emit('change', corePlayButton);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(virtualModule?.transformResult).toBeNull();
+    expect(projectedPlayButton?.transformResult).toBeNull();
+
+    await server.transformRequest(playButtonUrl);
+    expect(projectedPlayButton?.transformResult).not.toBeNull();
 
     server.watcher.emit('change', vjscPlayButton);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(virtualModule?.transformResult).toBeNull();
+    expect(projectedPlayButton?.transformResult).toBeNull();
   }, 30_000);
 
   it('builds the same canonical configuration for production', async () => {

@@ -24,11 +24,6 @@ const loaded = await modules[key]();
 
 if (styleMode === 'tailwind') await import('../vjsc/styles/tailwind.css');
 
-const style = document.createElement('style');
-style.dataset.vjsc = key;
-style.textContent = loaded.css;
-document.head.append(style);
-
 function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ className?: string }>> }) {
   return (
     <VideoPlayer>
