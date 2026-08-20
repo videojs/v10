@@ -10,7 +10,7 @@ import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
-import { canPlayTrack } from '../../../media/dom/capabilities';
+import { makeCanPlayTrackWithDrm } from '../../../media/dom/capabilities';
 import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
@@ -18,6 +18,7 @@ import {
   getShowingSubtitlesTrackFromMedia,
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
+import type { DrmSystemsConfig } from '../../../media/drm';
 import type { SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import { mediaPlaylistReloadDelay, resolveLiveLatency } from '../../../media/hls/reload-policy';
@@ -50,6 +51,7 @@ import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
+import { setupMediaKeys } from '../../behaviors/dom/setup-media-keys';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
 import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-range';
@@ -75,8 +77,8 @@ import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 import {
+  makeReportUnsupportedTrackConditionsWithDrm,
   type ReportUnsupportedTrackConditions,
-  reportUnsupportedTrackConditions,
 } from '../../primitives/report-track-conditions';
 import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
@@ -159,6 +161,12 @@ export interface HlsVideoEngineState {
    */
   loadingSuspended?: boolean;
   /**
+   * DRM key-readiness gate, owned by `setupMediaKeys`: `true` while an encrypted source's MediaKeys aren't attached
+   * yet; the `loadXSegments` dispatchers park on it. Never set for clear sources. See
+   * `SegmentLoadingState['awaitingMediaKeys']`.
+   */
+  awaitingMediaKeys?: boolean;
+  /**
    * Author intent for the AirPlay/remote-playback picker, written by the media adapter's `disableRemotePlayback` IDL
    * property. `true` is an explicit opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
    * element's remote playback disabled. Distinct from the underlying `<video>.disableRemotePlayback`, which stays
@@ -175,6 +183,8 @@ export interface HlsVideoEngineState {
 export interface HlsVideoEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
+  /** The attached MediaKeys for an encrypted source, owned by `setupMediaKeys`. */
+  mediaKeys?: MediaKeys;
   videoBufferActor?: SourceBufferActor;
   audioBufferActor?: SourceBufferActor;
   videoSegmentLoaderActor?: SegmentLoaderActor;
@@ -204,9 +214,18 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   initialBandwidth?: number;
   /**
+   * License servers keyed by EME key-system id — `source.drm`'s shape. Feeds `setupMediaKeys` (negotiation, MediaKeys
+   * attach, license exchange) and the DRM-aware capability probe / condition reporter, so encrypted renditions a
+   * configured system can serve play instead of being pruned. Absent or empty, encrypted renditions are refused
+   * exactly as a DRM-less engine refuses them: pruned before selection, with `SVTA_UNSUPPORTED_DRM_SYSTEM` causes
+   * reported.
+   */
+  drm?: DrmSystemsConfig;
+  /**
    * Codec capability probe injected into `track-switching`'s `excludeUnplayableTracks` constraint — drops renditions
-   * the environment can't decode before selection. Defaults to the `MediaSource.isTypeSupported` -backed
-   * `canPlayTrack`; supply your own to override (e.g. force-exclude a codec).
+   * the environment can't decode before selection. Defaults to `makeCanPlayTrackWithDrm` over `drm` (with no `drm`,
+   * equivalent to the plain `MediaSource.isTypeSupported`-backed `canPlayTrack`); supply your own to override (e.g.
+   * force-exclude a codec).
    */
   canPlayTrack?: CanPlayTrack;
   /**
@@ -375,15 +394,22 @@ export function createHlsVideoEngine(
   // (model `startMediaTime`) and the loader stamps (buffer `timestampOffset`) apply the
   // SAME derive. Default is shared-`min` across selected A/V (subsumes per-type).
   const deriveStartMediaTime = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
+  // No license servers configured is the degenerate DRM config: the DRM-aware
+  // probe and reporter refuse encrypted renditions exactly as the DRM-less
+  // `canPlayTrack` / `reportUnsupportedTrackConditions` pair does, and
+  // `setupMediaKeys` reports SVTA 4008 for an encrypted source it can't serve.
+  const drm = config.drm ?? {};
   const finalConfig = {
     ...config,
     deriveStartMediaTime,
+    drm,
     // Baked (not user-overridable): this engine composes `setupAirPlay`,
     // whose native fallback `<source>` requires the MSE attachment to keep
     // sibling source alternatives part of resource selection.
     attachMediaSource: attachMediaSourceAsSourceElement,
-    canPlayTrack: config.canPlayTrack ?? canPlayTrack,
-    reportUnsupportedTrackConditions: config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditions,
+    canPlayTrack: config.canPlayTrack ?? makeCanPlayTrackWithDrm(drm),
+    reportUnsupportedTrackConditions:
+      config.reportUnsupportedTrackConditions ?? makeReportUnsupportedTrackConditionsWithDrm(drm),
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
     // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.
@@ -461,6 +487,12 @@ export function createHlsVideoEngine(
       // in setup-buffer-actors.ts.
       setupMediaSource,
       updateMediaSourceDuration,
+
+      // EME lifecycle for encrypted sources (no-op for clear ones). Composed
+      // right after MSE setup and — load-bearing — before the `load*Segments`
+      // dispatchers, so the `awaitingMediaKeys` gate is up before their first
+      // dispatch of encrypted segments.
+      setupMediaKeys,
 
       // ── Non-zero-PTS relocation (spike) ──────────────────────────────────
       // Establishes per-track `startMediaTime` and publishes the relocating

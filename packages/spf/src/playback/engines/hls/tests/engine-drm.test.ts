@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { createDrmHlsVideoEngine, type DrmHlsVideoEngineSignals } from '../engine-drm';
+import { createHlsVideoEngine, type HlsVideoEngineSignals } from '../engine';
 
-describe('createDrmHlsVideoEngine', () => {
-  it('constructs with a license-server map, materializes the DRM slots, and destroys cleanly', async () => {
-    let signals: DrmHlsVideoEngineSignals | undefined;
-    const engine = createDrmHlsVideoEngine({
+describe('createHlsVideoEngine (DRM composition)', () => {
+  it('materializes the DRM slots with a license-server map and destroys cleanly', async () => {
+    let signals: HlsVideoEngineSignals | undefined;
+    const engine = createHlsVideoEngine({
       drm: { 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } },
       onSignalsReady: (refs) => {
         signals = refs;
@@ -15,6 +15,21 @@ describe('createDrmHlsVideoEngine', () => {
     // `setupMediaKeys` declares both slots; nothing is set before a source.
     expect(signals!.state.awaitingMediaKeys.get()).toBeUndefined();
     expect(signals!.context.mediaKeys.get()).toBeUndefined();
+
+    await engine.destroy();
+  });
+
+  it('constructs without a drm config — the degenerate empty license map', async () => {
+    // Clear sources are unaffected; encrypted renditions are refused exactly
+    // as before DRM composed in (pruned, with 4008 causes).
+    let signals: HlsVideoEngineSignals | undefined;
+    const engine = createHlsVideoEngine({
+      onSignalsReady: (refs) => {
+        signals = refs;
+      },
+    });
+
+    expect(signals!.state.awaitingMediaKeys.get()).toBeUndefined();
 
     await engine.destroy();
   });
