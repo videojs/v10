@@ -1,9 +1,8 @@
 import { resolve } from 'node:path';
 
 import type { Plugin } from 'rolldown';
-
+import { createGeneratedModuleDeclaration } from '../generate/declaration';
 import type { VirtualModuleDefinition } from '../module-graph';
-import { createGeneratedModuleDeclaration } from '../type-sync';
 import { createCompilerModules } from './modules';
 
 export interface CompilerDeclarationOutput {
