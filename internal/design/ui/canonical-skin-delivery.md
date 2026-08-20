@@ -75,18 +75,54 @@ Removing those task edges requires each remaining consumer to stop importing mis
 
 The temporary Turbo `generate` tasks can be removed per consumer once a clean checkout can run that consumer without the generated metadata present. Removing all generation edges is not blocked on the Shadcn registry build, because that explicit materialization is a delivery action rather than a compiler prerequisite.
 
+## Virtual modules and synchronized types
+
+VJSC should follow the framework pattern of separating runtime modules from editor types. Vite resolves generated runtime code through virtual modules, while VJSC writes only a hidden, gitignored type workspace such as `.vjsc/types`. [Astro sync](https://docs.astro.build/en/reference/cli-reference/#astro-sync) generates `.astro/types.d.ts` automatically before dev, build, and check; [SvelteKit sync](https://svelte.dev/docs/kit/cli#svelte-kit-sync) generates `.svelte-kit` types and a TypeScript configuration that exposes them through `rootDirs`. VJSC should provide the equivalent lifecycle rather than generating implementation modules inside package source directories.
+
+```text
+Runtime module                         Type declaration
+virtual:vjsc/core-schema               .vjsc/types/core-schema.d.ts
+virtual:vjsc/icons-schema              .vjsc/types/icons-schema.d.ts
+virtual:vjsc/registry/react            .vjsc/types/registry-react.d.ts
+virtual:vjsc/registry/html             .vjsc/types/registry-html.d.ts
+virtual:vjsc/skin/<target>/<skin>      declarations for public build entries
+```
+
+Vite's [`resolveId` and `load` hooks](https://vite.dev/guide/api-plugin.html#importing-a-virtual-file) supply runtime modules. VJSC synchronizes declarations automatically when dev, build, or check starts and when a watched schema input changes. A prepare-time sync may improve editor startup, but it is a convenience rather than a prerequisite for Vite. The result is zero generated intermediates in `src`; transient declarations and caches may still exist under `.vjsc`.
+
+Any module that imports a VJSC virtual module must be evaluated through the VJSC module graph. Vite and Vitest receive the Vite adapter; framework package builds and Shadcn emission receive the same underlying Rolldown-compatible plugin. Plain Node configuration must pass source descriptors or module paths to VJSC instead of eagerly importing registries that depend on virtual modules. This allows framework registries to consume the virtual Core schema without making the schema a disk prerequisite.
+
+Schema, registry, and virtual entry changes participate in one invalidation graph:
+
+```text
+component or icon definition
+  -> virtual schema and synchronized declaration
+    -> framework registry
+      -> affected virtual Skin entries and CSS
+```
+
+Implementation-only changes may preserve React state through Fast Refresh. Registry mappings, exported schema shape, and HTML templates may remount or trigger a full browser reload, but they must update automatically without a manual generation step or server restart.
+
+## Catalog boundary
+
+The authored catalog remains the initial source of item identity, resources, publication metadata, and policy. Its resolved dependency graph may be exposed as a virtual module, but generating the catalog itself is not required for the Vite workflow.
+
+A future file-based catalog is possible if each canonical entry owns a colocated `defineCatalogItem` declaration and VJSC aggregates those declarations into a virtual catalog plus an item-name declaration. This follows the same pattern as generated content collections, but should be evaluated only after virtual schemas and registries prove the module and type lifecycle. Moving authored policy out of the current catalog merely to make the aggregate generated would add indirection without removing responsibility.
+
 ## Current state and validation sequence
 
 The current Vite preview proves only React with compiler-emitted vanilla CSS and imports the canonical Default Video Skin directly. A production `vite build` succeeds after registry metadata exists. Development from a clean generated-artifact state currently fails while loading the Vite configuration; after generation, the server starts but the source-aliased React graph also needs the repository's `__DEV__` definition.
 
 [#2260](https://github.com/videojs/v10/issues/2260) should establish the architecture in this order:
 
-1. Start the preview from a clean checkout without materialized VJSC metadata or framework Skin output.
-2. Provide selectable Default/Minimal × React/HTML × Tailwind/vanilla entries through stable Vite module identities.
-3. Verify canonical TSX, style module, theme, schema/registry, and compiler-config updates independently, including React state preservation and HTML remount behavior.
-4. Run the same matrix through `vite build` and compare its rendered result with development.
-5. Keep catalog emission tests for package and Shadcn structure, then use [#2183](https://github.com/videojs/v10/issues/2183) for visual, style, interaction, and accessibility parity before the source-of-truth cutover.
-6. Remove each temporary script or Turbo dependency only after its package, test, typecheck, and preview consumers work without the ignored artifact.
+1. Extract a Rolldown-compatible VJSC module-graph plugin shared by Vite, package builds, tests, and source emitters.
+2. Generate the Core and Icon schemas as virtual modules and synchronize their declarations under `.vjsc`; stop importing their disk artifacts from compiler configuration.
+3. Load React and HTML registries through that graph and replace generated entry modules with resolver-backed virtual data.
+4. Expose stable virtual entries for Default/Minimal × React/HTML × Tailwind/vanilla without materializing framework Skin trees.
+5. Implement dependency-to-owner invalidation for canonical source, styles, themes, schemas, registries, and compiler configuration, then verify React refresh and HTML remount behavior through a real Vite server.
+6. Run the same matrix through `vite build`, and make React and HTML package builds consume the shared virtual entries while materializing only public `dist` output and declarations.
+7. Keep explicit catalog/Shadcn emission tests, then use [#2183](https://github.com/videojs/v10/issues/2183) for visual, style, interaction, and accessibility parity before the source-of-truth cutover.
+8. Remove each source-tree artifact, generation script, and temporary Turbo dependency after its preview, package, test, typecheck, and Shadcn consumers use the new graph.
 
 ## Current sources of truth
 
