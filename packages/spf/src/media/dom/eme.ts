@@ -12,6 +12,7 @@ export {
   type DrmSystemConfig,
   type DrmSystemsConfig,
   declaredDrmKeys,
+  declaredEncryptionScheme,
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
 } from '../drm';
@@ -41,23 +42,34 @@ export function contentTypesFromPresentation(presentation: MaybeResolvedPresenta
 }
 
 /**
- * A single `cenc` MediaKeySystemConfiguration over the given content types.
- * No robustness ladder — the CDM's default suffices until security-level
- * constraint filtering lands (see drm-support.md's security-level phase).
+ * Init-data types per key system. FairPlay's are its own — Safari rejects a
+ * cenc-only configuration; on the MSE path its init data arrives as `sinf`.
  */
-export function buildKeySystemConfigurations(contentTypes: {
-  video: readonly string[];
-  audio: readonly string[];
-}): MediaKeySystemConfiguration[] {
+const INIT_DATA_TYPES_BY_KEY_SYSTEM: Readonly<Record<string, readonly string[]>> = {
+  'com.apple.fps': ['sinf', 'cenc'],
+};
+
+/**
+ * A single MediaKeySystemConfiguration for one key system over the given
+ * content types, each capability stamped with the declared encryption scheme
+ * when there is one (see `declaredEncryptionScheme`). No robustness ladder —
+ * the CDM's default suffices until security-level constraint filtering lands
+ * (see drm-support.md's security-level phase).
+ */
+export function buildKeySystemConfigurations(
+  keySystem: string,
+  contentTypes: { video: readonly string[]; audio: readonly string[] },
+  encryptionScheme?: 'cbcs' | 'cenc'
+): MediaKeySystemConfiguration[] {
+  const capability = (contentType: string) => ({
+    contentType,
+    ...(encryptionScheme !== undefined && { encryptionScheme }),
+  });
   return [
     {
-      initDataTypes: ['cenc'],
-      ...(contentTypes.video.length > 0 && {
-        videoCapabilities: contentTypes.video.map((contentType) => ({ contentType })),
-      }),
-      ...(contentTypes.audio.length > 0 && {
-        audioCapabilities: contentTypes.audio.map((contentType) => ({ contentType })),
-      }),
+      initDataTypes: [...(INIT_DATA_TYPES_BY_KEY_SYSTEM[keySystem] ?? ['cenc'])],
+      ...(contentTypes.video.length > 0 && { videoCapabilities: contentTypes.video.map(capability) }),
+      ...(contentTypes.audio.length > 0 && { audioCapabilities: contentTypes.audio.map(capability) }),
     },
   ];
 }
@@ -80,21 +92,38 @@ export function initDataFromKeyUri(uri: string): Uint8Array<ArrayBuffer> | undef
 }
 
 /**
- * Negotiate CDM access: ask for each candidate in order, first success wins.
- * Resolves `undefined` when every candidate is refused (or none were given).
+ * Negotiate CDM access: ask for each candidate in order with a configuration
+ * built for that system, first success wins. Resolves `undefined` when every
+ * candidate is refused (or none were given).
  */
 export async function requestKeySystemAccess(
   keySystems: readonly string[],
-  configurations: MediaKeySystemConfiguration[]
+  contentTypes: { video: readonly string[]; audio: readonly string[] },
+  encryptionScheme?: 'cbcs' | 'cenc'
 ): Promise<{ keySystem: string; access: MediaKeySystemAccess } | undefined> {
   for (const keySystem of keySystems) {
     try {
+      const configurations = buildKeySystemConfigurations(keySystem, contentTypes, encryptionScheme);
       return { keySystem, access: await navigator.requestMediaKeySystemAccess(keySystem, configurations) };
     } catch {
       // Refused — try the next candidate.
     }
   }
   return undefined;
+}
+
+/**
+ * Fetch the DRM server (application) certificate. FairPlay needs it applied
+ * (`MediaKeys.setServerCertificate`) before any license request can be
+ * generated; Widevine and PlayReady configs simply don't name one.
+ */
+export async function fetchServerCertificate(
+  serverCertificateUrl: string,
+  signal: AbortSignal
+): Promise<Uint8Array<ArrayBuffer>> {
+  const response = await fetch(serverCertificateUrl, { signal });
+  if (!response.ok) throw new Error(`Server certificate request failed with status ${response.status}`);
+  return new Uint8Array(await response.arrayBuffer());
 }
 
 /** Attach (or with `null`, detach) MediaKeys on a media element. */

@@ -73,6 +73,27 @@ export function declaredDrmKeys(presentation: MaybeResolvedPresentation | undefi
   return keys;
 }
 
+/** Encryption scheme per HLS `METHOD`, for the MKSA encryption-scheme query. */
+const ENCRYPTION_SCHEME_BY_METHOD: Readonly<Record<string, 'cbcs' | 'cenc'>> = {
+  'SAMPLE-AES': 'cbcs',
+  'SAMPLE-AES-CTR': 'cenc',
+  'SAMPLE-AES-CENC': 'cenc',
+};
+
+/**
+ * The one encryption scheme the declared keys use, or `undefined` when they
+ * mix schemes or declare none we recognize. Stamped onto negotiation
+ * capabilities so scheme-aware CDMs refuse content they can't decrypt (Mux
+ * serves `SAMPLE-AES` — cbcs); UAs predating the encryption-scheme query
+ * ignore the member, so declaring it never costs support.
+ */
+export function declaredEncryptionScheme(keys: readonly MediaPlaylistKey[]): 'cbcs' | 'cenc' | undefined {
+  const schemes = new Set(
+    keys.map((key) => ENCRYPTION_SCHEME_BY_METHOD[key.method]).filter((scheme) => scheme !== undefined)
+  );
+  return schemes.size === 1 ? [...schemes][0] : undefined;
+}
+
 /**
  * The key systems worth asking the CDM for: declared by the presentation's
  * keys *and* holding a configured license server, in {@link KEY_SYSTEM_PREFERENCE}
