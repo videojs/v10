@@ -62,6 +62,13 @@ export const SVTA_BAD_LICENSE_REQUEST = 4004;
 export const SVTA_DRM_INITIALIZATION_ERROR = 4010;
 
 /**
+ * SVTA 4 [Content Protection] 013 — DRM certificate error. The server
+ * (application) certificate could not be fetched or was rejected by the CDM;
+ * without it FairPlay can never produce a license request.
+ */
+export const SVTA_DRM_CERTIFICATE_ERROR = 4013;
+
+/**
  * SVTA 4 [Content Protection] 016 — DRM license response rejected. The server
  * answered but the CDM refused the license (`MediaKeySession.update()` threw).
  */
