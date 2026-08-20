@@ -49,6 +49,19 @@ export function validateSourceGraph(graph: SourceGraph): ReadonlyMap<string, Reg
     modules.set(id, { ...module, sourcePath });
   }
 
+  for (const module of modules.values()) {
+    for (const sourceImport of module.imports) {
+      if (!sourceImport.resolvedId || !isAbsolute(sourceImport.resolvedId)) continue;
+      const dependencyId = resolve(sourceImport.resolvedId);
+      const dependencyPath = toPosix(relative(root, dependencyId));
+      if (dependencyPath && !escapesRoot(dependencyPath) && !modules.has(dependencyId)) {
+        throw new Error(
+          `Shadcn source dependency was not transformed by VJSC: \`${sourceImport.specifier}\` from \`${module.id}\`.`
+        );
+      }
+    }
+  }
+
   return modules;
 }
 
@@ -70,10 +83,12 @@ export function indexModulesByName(
 export function collectOwnedModules(
   root: RegistrySourceModule,
   modules: ReadonlyMap<string, RegistrySourceModule>,
-  publishedNames: ReadonlySet<string>
-): { modules: RegistrySourceModule[]; publishedDependencies: Set<string> } {
+  publishedNames: ReadonlySet<string>,
+  sharedNames: ReadonlyMap<string, string>
+): { modules: RegistrySourceModule[]; publishedDependencies: Set<string>; sharedDependencies: Set<string> } {
   const owned = new Map<string, RegistrySourceModule>();
   const publishedDependencies = new Set<string>();
+  const sharedDependencies = new Set<string>();
 
   const visit = (module: RegistrySourceModule): void => {
     if (owned.has(module.id)) return;
@@ -82,7 +97,10 @@ export function collectOwnedModules(
     for (const sourceImport of module.imports) {
       const dependency = sourceImport.resolvedId ? modules.get(sourceImport.resolvedId) : undefined;
       if (!dependency) continue;
-      if (dependency.id !== root.id && dependency.meta && publishedNames.has(dependency.meta.name)) {
+      const sharedName = sharedNames.get(dependency.id);
+      if (sharedName) {
+        sharedDependencies.add(sharedName);
+      } else if (dependency.id !== root.id && dependency.meta && publishedNames.has(dependency.meta.name)) {
         publishedDependencies.add(dependency.meta.name);
       } else {
         visit(dependency);
@@ -91,7 +109,7 @@ export function collectOwnedModules(
   };
 
   visit(root);
-  return { modules: [...owned.values()], publishedDependencies };
+  return { modules: [...owned.values()], publishedDependencies, sharedDependencies };
 }
 
 function assertMetaRemoved(module: SourceModule): void {

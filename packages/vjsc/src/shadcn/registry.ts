@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import { dirname, isAbsolute, posix, relative, resolve } from 'node:path';
 
 import { type RegistryItem, registryItemSchema, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
@@ -32,7 +32,13 @@ interface LoadedSharedItem {
   readonly files: readonly {
     readonly file: ShadcnRegistryFile;
     readonly content: string;
+    readonly module?: RegistrySourceModule | undefined;
   }[];
+}
+
+interface SharedModule {
+  readonly name: string;
+  readonly installedImport: string;
 }
 
 export interface ShadcnOutputFile {
@@ -50,9 +56,10 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
 
   const publishedNames = new Set<string>(definition.items.published);
   const modulesByName = indexModulesByName(modules);
-  const shared = await loadSharedItems(graph.root, definition);
+  const shared = await loadSharedItems(graph.root, definition, modules);
+  const sharedModules = indexSharedModules(shared, definition);
   const builtItems = definition.items.published.map((name) =>
-    buildPublishedItem(name, modulesByName, modules, publishedNames, shared, definition)
+    buildPublishedItem(name, modulesByName, modules, publishedNames, shared, sharedModules, definition)
   );
   const registry = {
     $schema: 'https://ui.shadcn.com/schema/registry.json',
@@ -66,7 +73,13 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
           title: item.title,
           description: item.description,
           files: files.map(({ file }) => file),
-          ...(item.dependencies?.length ? { dependencies: unique(item.dependencies) } : {}),
+          ...optionalArray(
+            'dependencies',
+            unique([
+              ...(item.dependencies ?? []),
+              ...files.flatMap(({ module }) => (module ? modulePackageDependencies(module) : [])),
+            ])
+          ),
           ...mergedMeta(definition.meta, item.meta),
         })
       ),
@@ -158,15 +171,23 @@ function buildPublishedItem<Item extends ComponentMeta>(
   modules: ReadonlyMap<string, RegistrySourceModule>,
   publishedNames: ReadonlySet<string>,
   shared: readonly LoadedSharedItem[],
+  sharedModules: ReadonlyMap<string, SharedModule>,
   definition: ShadcnRegistryDefinition<Item>
 ): BuiltItem {
   const root = modulesByName.get(name)!;
   if (!root.meta) throw new Error(`Shadcn published source is missing component metadata: \`${root.id}\`.`);
   const description = definition.items.describe(root.meta as Item);
-  const owned = collectOwnedModules(root, modules, publishedNames);
+  const owned = collectOwnedModules(
+    root,
+    modules,
+    publishedNames,
+    new Map([...sharedModules].map(([id, item]) => [id, item.name]))
+  );
   const layout = createLayout(root, owned.modules, description.type, definition);
   const registryDependencies = new Set<string>(
-    [...owned.publishedDependencies].map((dependency) => `${definition.namespace}/${dependency}`)
+    [...owned.publishedDependencies, ...owned.sharedDependencies].map(
+      (dependency) => `${definition.namespace}/${dependency}`
+    )
   );
   const dependencies = new Set<string>();
   const retainedImports = new Set<string>();
@@ -174,7 +195,7 @@ function buildPublishedItem<Item extends ComponentMeta>(
   const files = [...layout.values()]
     .sort((left, right) => left.outputPath.localeCompare(right.outputPath))
     .map((module): ShadcnRegistryFile => {
-      const rewritten = rewriteImports(module, layout, modules, publishedNames, definition);
+      const rewritten = rewriteImports(module, layout, modules, publishedNames, sharedModules, definition);
       for (const specifier of rewritten.imports) retainedImports.add(specifier);
       for (const dependency of rewritten.dependencies) dependencies.add(dependency);
       const path = posix.join(normalizePath(definition.paths.output), module.outputPath);
@@ -247,6 +268,7 @@ function rewriteImports(
   layout: ReadonlyMap<string, OwnedModule>,
   modules: ReadonlyMap<string, RegistrySourceModule>,
   publishedNames: ReadonlySet<string>,
+  sharedModules: ReadonlyMap<string, SharedModule>,
   definition: ShadcnRegistryDefinition
 ): { source: string; imports: string[]; dependencies: string[] } {
   const replacements: ImportReplacement[] = [];
@@ -262,6 +284,8 @@ function rewriteImports(
       const ownedDependency = layout.get(dependency.id);
       if (ownedDependency) {
         replacement = relativeImport(module.target, ownedDependency.target);
+      } else if (sharedModules.has(dependency.id)) {
+        replacement = sharedModules.get(dependency.id)!.installedImport;
       } else if (dependency.meta && publishedNames.has(dependency.meta.name)) {
         replacement = publishedImport(dependency, definition);
       }
@@ -295,7 +319,11 @@ function relativeImport(importerTarget: string, dependencyTarget: string): strin
   return specifier.startsWith('.') ? specifier : `./${specifier}`;
 }
 
-async function loadSharedItems(root: string, definition: ShadcnRegistryDefinition): Promise<LoadedSharedItem[]> {
+async function loadSharedItems(
+  root: string,
+  definition: ShadcnRegistryDefinition,
+  modules: ReadonlyMap<string, RegistrySourceModule>
+): Promise<LoadedSharedItem[]> {
   const sourceRoot = normalizePath(definition.paths.source);
   const outputRoot = normalizePath(definition.paths.output);
   const installRoot = normalizePath(definition.paths.install);
@@ -313,18 +341,48 @@ async function loadSharedItems(root: string, definition: ShadcnRegistryDefinitio
           const relativePath = normalizePath(file.path ?? file.source);
           const path = posix.join(outputRoot, sourceRoot, relativePath);
           const target = posix.join(installRoot, normalizePath(file.target ?? relativePath));
+          const id = await realpath(source).catch(() => source);
+          const module = modules.get(id);
           return {
             file: {
               path,
               target,
               type: file.type ?? (item.type === 'registry:lib' ? 'registry:lib' : 'registry:file'),
             },
-            content: await readFile(source, 'utf8'),
+            content: module?.source ?? (await readFile(source, 'utf8')),
+            ...(module ? { module } : {}),
           };
         })
       ),
     }))
   );
+}
+
+function indexSharedModules(
+  items: readonly LoadedSharedItem[],
+  definition: ShadcnRegistryDefinition
+): ReadonlyMap<string, SharedModule> {
+  const modules = new Map<string, SharedModule>();
+  const installRoot = normalizePath(definition.paths.install);
+  for (const item of items) {
+    for (const { file, module } of item.files) {
+      if (!module || !file.target) continue;
+      const installedPath = stripRoot(normalizePath(file.target), installRoot);
+      modules.set(module.id, {
+        name: item.definition.name,
+        installedImport: posix.join(definition.paths.import, stripScriptExtension(installedPath)),
+      });
+    }
+  }
+  return modules;
+}
+
+function modulePackageDependencies(module: RegistrySourceModule): string[] {
+  return module.imports.flatMap((reference) => {
+    const name =
+      packageDependency(reference.resolvedId ?? reference.specifier) ?? packageDependency(reference.specifier);
+    return name ? [name] : [];
+  });
 }
 
 function isRequiredBy(requirement: ShadcnRegistrySharedItem['requiredBy'], imports: ReadonlySet<string>): boolean {
@@ -359,6 +417,10 @@ function mergedMeta(...values: Array<RegistryItem['meta'] | undefined>): { meta?
 function optionalList<Key extends string>(key: Key, values: ReadonlySet<string>): Partial<Record<Key, string[]>> {
   const list = [...values].sort();
   return list.length ? ({ [key]: list } as Partial<Record<Key, string[]>>) : {};
+}
+
+function optionalArray<Key extends string>(key: Key, values: readonly string[]): Partial<Record<Key, string[]>> {
+  return values.length ? ({ [key]: [...values] } as Partial<Record<Key, string[]>>) : {};
 }
 
 function validateRelativePath(path: string, label: string): void {

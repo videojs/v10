@@ -67,12 +67,6 @@ export interface ShadcnRegistryDefinition<Item extends ComponentMeta = Component
 export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta> {
   /** Root containing editable source and shared registry files. */
   readonly root: string;
-  /** Complete root-relative inventory of editable source modules. */
-  readonly include: string | readonly string[];
-  /** Root-relative source module globs to omit. */
-  readonly exclude?: string | readonly string[] | undefined;
-  /** VJSC projection requested through the host module graph. */
-  readonly query: Readonly<Record<string, string>>;
   /** Shadcn publication policy. */
   readonly registry: ShadcnRegistryDefinition<Item>;
 }

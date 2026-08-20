@@ -152,7 +152,7 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
         return {
           code: output,
           map: offsetSourceMap(result.map, imports.length),
-          meta: { vjsc: { source: output } },
+          meta: { vjsc: { input: code, source: output } },
         };
       },
     },
@@ -161,11 +161,20 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
 
 /** Read editable VJSC output retained across later host transforms. */
 export function readVjscSource(meta: unknown): string | undefined {
+  return readVjscText(meta, 'source');
+}
+
+/** Read source supplied to VJSC before compiler transforms. */
+export function readVjscInput(meta: unknown): string | undefined {
+  return readVjscText(meta, 'input');
+}
+
+function readVjscText(meta: unknown, key: 'input' | 'source'): string | undefined {
   if (!meta || typeof meta !== 'object') return undefined;
   const vjsc = Reflect.get(meta, 'vjsc');
   if (!vjsc || typeof vjsc !== 'object') return undefined;
-  const source = Reflect.get(vjsc, 'source');
-  return typeof source === 'string' ? source : undefined;
+  const value = Reflect.get(vjsc, key);
+  return typeof value === 'string' ? value : undefined;
 }
 
 interface ParsedId {

@@ -29,10 +29,6 @@ export const skinRegistry = {
   homepage: 'https://videojs.org',
   namespace: '@videojs',
   paths,
-  imports: {
-    '@videojs/skins/registry': `${paths.import}/utils`,
-    '@videojs/utils/style': `${paths.import}/utils`,
-  },
   meta: {
     framework: 'react',
     style: 'tailwind',
@@ -88,10 +84,6 @@ export const skinRegistry = {
         type: 'registry:lib',
         title: 'Video.js Utilities',
         description: 'Class-name composition and state resolution utilities used by editable Video.js components.',
-        dependencies: ['clsx', 'tailwind-merge'],
-        requiredBy: {
-          imports: [`${paths.import}/utils`],
-        },
         files: [{ source: './registry/utils.ts', path: 'utils.ts' }],
       },
     ],

@@ -1,26 +1,26 @@
 import { resolve } from 'node:path';
-import { build } from 'vite';
+import { build } from 'tsdown';
 import { describe, expect, it } from 'vitest';
-import type { RolldownOutput } from 'vjsc/rolldown';
 import type { ShadcnRegistry } from 'vjsc/shadcn';
 
 const packageDir = resolve(import.meta.dirname, '../..');
-const configFile = resolve(packageDir, 'vite.config.ts');
+const configFile = resolve(packageDir, 'tsdown.vjsc.config.ts');
 
 describe('Skins Shadcn registry', () => {
   it('emits editable React and Tailwind JSON without a synthetic runtime chunk', async () => {
-    const result = await build({
-      configFile,
-      mode: 'registry',
+    const [result] = await build({
+      cwd: packageDir,
+      config: configFile,
+      configLoader: 'unrun',
       logLevel: 'silent',
-      build: { write: false },
+      write: false,
     });
-    if (Array.isArray(result)) throw new Error('Expected one registry build output.');
-    const output = result as RolldownOutput;
+    if (!result) throw new Error('Expected one registry build output.');
+    const output = result.chunks;
 
-    expect(output.output.some((item) => item.type === 'chunk')).toBe(false);
+    expect(output.some((item) => item.type === 'chunk')).toBe(false);
     const assets = new Map<string, string>(
-      output.output.filter((item) => item.type === 'asset').map((item) => [item.fileName, String(item.source)] as const)
+      output.filter((item) => item.type === 'asset').map((item) => [item.fileName, String(item.source)] as const)
     );
     const registry = assetJson<ShadcnRegistry>(assets, 'registry.json');
     const playButton = assetJson<BuiltItem>(assets, 'play-button.json');

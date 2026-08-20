@@ -3,16 +3,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { iconElementPlugin } from '@videojs/icons/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { type CompilerConfig, html, jsx } from 'vjsc';
-import { componentMetaPlugin, discoverComponents } from 'vjsc/components';
-import { registryPlugin } from 'vjsc/registry';
-import { shadcnPlugin } from 'vjsc/rolldown';
-import { stylesPlugin } from 'vjsc/styles';
-import { type VjscTransformer, vjscPlugin } from 'vjsc/vite';
-import type { SkinMeta } from './vjsc/meta';
-import { createHtmlComponentRegistry, createReactComponentRegistry } from './vjsc/registry/frameworks';
-import { componentTransforms } from './vjsc/registry/react';
-import { skinRegistry } from './vjsc/registry/shadcn';
+import { vjscPlugin } from 'vjsc/vite';
+import { createSkinTransformer } from './vjsc/transform';
 
 const packageDir = import.meta.dirname;
 const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
@@ -20,38 +12,7 @@ const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 const vjscInclude = new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`);
 
-export default defineConfig(({ mode }) => (mode === 'registry' ? createRegistryConfig() : createPreviewConfig()));
-
-function createRegistryConfig() {
-  const transform = createSkinTransformer();
-
-  return {
-    root: packageDir,
-    plugins: [
-      vjscPlugin({
-        cwd: packageDir,
-        include: vjscInclude,
-        transform,
-      }),
-    ],
-    build: {
-      outDir: resolve(packageDir, 'dist/registry'),
-      emptyOutDir: true,
-      rolldownOptions: {
-        input: [],
-        external: isPackageImport,
-        plugins: [
-          shadcnPlugin({
-            root: vjscDir,
-            include: ['./components/**/*.{ts,tsx}', './skins/*/skin.{ts,tsx}'],
-            query: { framework: 'react', skin: 'default-video', style: 'tailwind' },
-            registry: skinRegistry,
-          }),
-        ],
-      },
-    },
-  };
-}
+export default defineConfig(createPreviewConfig());
 
 function createPreviewConfig() {
   const transform = createSkinTransformer();
@@ -117,54 +78,6 @@ function createPreviewConfig() {
       exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
     },
   };
-}
-
-function createSkinTransformer(): VjscTransformer {
-  const transforms = new Map<string, CompilerConfig>();
-  const skins = discoverComponents<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
-
-  return ({ parameters }) => {
-    const framework = parameters.get('framework');
-    const skinName = parameters.get('skin');
-    const style = parameters.get('style');
-    if ((framework !== 'react' && framework !== 'html') || !skinName || !style) return null;
-
-    const skin = skins.find((item) => item.name === skinName);
-    if (!skin) return null;
-
-    const key = parameters.toString();
-    const cached = transforms.get(key);
-    if (cached) return cached;
-
-    const registry =
-      framework === 'react'
-        ? createReactComponentRegistry(skin.style.theme)
-        : createHtmlComponentRegistry(skin.style.theme);
-    const config: CompilerConfig = {
-      target: framework === 'react' ? jsx({ importSource: 'react' }) : html(),
-      plugins: [
-        registryPlugin(registry),
-        style === 'tailwind'
-          ? stylesPlugin({ mode: 'tailwind', variant: skin.style.variant })
-          : stylesPlugin({
-              mode: 'css',
-              variant: skin.style.variant,
-              stylesheet: {
-                input: resolve(vjscDir, 'styles/tailwind.css'),
-                scope: `.${skin.style.scope}`,
-              },
-            }),
-        componentMetaPlugin(),
-        ...(framework === 'react' ? [componentTransforms()] : []),
-      ],
-    };
-    transforms.set(key, config);
-    return config;
-  };
-}
-
-function isPackageImport(id: string): boolean {
-  return !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0');
 }
 
 function escapeRegExp(value: string): string {

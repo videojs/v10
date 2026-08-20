@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { globSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
@@ -31,7 +31,6 @@ describe('shadcnPlugin', () => {
     const output = await build(root, registry(), ['vjsc', 'shadcn']);
 
     expect(output.output.map((item) => item.fileName).sort()).toEqual([
-      'app.js',
       'public.json',
       'registry.json',
       'root.json',
@@ -64,7 +63,7 @@ describe('shadcnPlugin', () => {
     expect(rootSource).not.toContain('const meta');
     expect(rootSource).not.toContain('jsx-runtime');
     expect(publicItem.registryDependencies).toEqual(['@example/styles']);
-    expect(output.output.find((item) => item.fileName === 'app.js')).toMatchObject({ type: 'chunk' });
+    expect(output.output.some((item) => item.type === 'chunk')).toBe(false);
   });
 
   it('rewrites relative imports when private dependencies move at installation', async () => {
@@ -99,7 +98,7 @@ describe('shadcnPlugin', () => {
       'components/example/root/root.tsx',
       'components/example/root/types.ts',
     ]);
-    expect(output.output.filter((entry) => entry.type === 'chunk').map((entry) => entry.fileName)).toEqual(['app.js']);
+    expect(output.output.filter((entry) => entry.type === 'chunk')).toEqual([]);
   });
 
   it('captures cyclic source modules without recursively loading from transform hooks', async () => {
@@ -117,6 +116,17 @@ describe('shadcnPlugin', () => {
       'components/example/root/b.ts',
       'components/example/root/root.tsx',
     ]);
+  });
+
+  it('rejects source dependencies omitted from the build entries', async () => {
+    const root = setup({
+      'components/root.tsx': `import type { Label } from './types'; export function Root({ label }: { label: Label }) { return <main>{label}</main>; } ${meta('root', 'block')}`,
+      'components/types.ts': `export type Label = string;`,
+    });
+
+    await expect(
+      build(root, registry({ published: ['root'], shared: [] }), ['vjsc', 'shadcn'], ['components/root.tsx'])
+    ).rejects.toThrow(/source dependency was not transformed by VJSC/);
   });
 
   it('rejects unsafe paths and registry file collisions', async () => {
@@ -176,7 +186,7 @@ describe('shadcnPlugin', () => {
       'components/second.tsx': `${meta('root', 'block')} export const Second = <main/>;`,
     });
     await expect(build(duplicate, registry({ published: ['root'], shared: [] }))).rejects.toThrow(
-      /Component `root` is declared more than once/
+      /Component `root` is declared by both/
     );
 
     const missingPublished = setup({
@@ -196,8 +206,6 @@ describe('shadcnPlugin', () => {
     const definition = registry({ published: ['root'], shared: [] });
     const outputPlugin = shadcnPlugin({
       root,
-      include: './components/**/*.tsx',
-      query: { framework: 'react', style: 'tailwind' },
       registry: definition,
     });
     const first = await build(root, definition, ['vjsc', outputPlugin]);
@@ -218,23 +226,20 @@ type PluginOrder = readonly ('vjsc' | 'shadcn' | ReturnType<typeof shadcnPlugin>
 async function build(
   root: string,
   definition: ShadcnRegistryDefinition<FixtureMeta>,
-  order: PluginOrder = ['vjsc', 'shadcn']
+  order: PluginOrder = ['vjsc', 'shadcn'],
+  entries = globSync('components/**/*.{ts,tsx}', { cwd: root })
 ): Promise<RolldownOutput> {
   const transform = vjscPlugin({
-    transform: ({ parameters }) =>
-      parameters.get('framework') === 'react'
-        ? { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] }
-        : null,
+    include: /\.[cm]?[jt]sx?$/,
+    transform: { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] },
   });
   const output = shadcnPlugin({
     root,
-    include: './components/**/*.{ts,tsx}',
-    query: { framework: 'react', style: 'tailwind' },
     registry: definition,
   });
   const plugins = order.map((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin));
   const bundle = await rolldown({
-    input: join(root, 'app.ts'),
+    input: entries.map((fileName) => join(root, fileName)),
     external: (id) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
     plugins,
   });

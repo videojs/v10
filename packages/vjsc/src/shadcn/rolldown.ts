@@ -1,94 +1,53 @@
-import { createHash } from 'node:crypto';
-import { globSync, readFileSync, realpathSync } from 'node:fs';
-import { isAbsolute, resolve } from 'node:path';
+import { realpathSync } from 'node:fs';
+import { isAbsolute, relative, resolve } from 'node:path';
 
-import type { OutputBundle, Plugin } from 'rolldown';
+import type { Plugin } from 'rolldown';
 
 import { type ComponentMeta, extractComponentMeta } from '../components/meta';
-import { readVjscSource } from '../ts/rolldown';
+import { readVjscInput, readVjscSource } from '../ts/rolldown';
 import { analyzeImports } from './analyze';
 import type { SourceGraph, SourceImport, SourceModule } from './graph';
 import { createShadcnRegistryFiles } from './registry';
-import type { ShadcnPluginOptions, ShadcnRegistryDefinition } from './types';
+import type { ShadcnPluginOptions } from './types';
 
 export type { ShadcnPluginOptions } from './types';
 
-/** Emit a Shadcn registry from VJSC-transformed modules in the Rolldown graph. */
+/** Emit only Shadcn JSON assets from VJSC modules in a dedicated Rolldown build. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
   const root = resolveModulePath(options.root);
-  const query = createQuery(options.query);
-  const triggerId = `virtual:vjsc/shadcn/${createHash('sha256').update(root).update(query).digest('hex').slice(0, 12)}`;
-  const resolvedTriggerId = `\0${triggerId}`;
-  let metadata = new Map<string, Item | undefined>();
-  let triggerSource = 'export default null;';
-  let graph: SourceGraph | undefined;
+  let graph: SourceGraph<Item> | undefined;
 
   return {
     name: 'vjsc:shadcn',
     buildStart() {
       graph = undefined;
-      metadata = discoverSources(options, root);
-      validatePublishedItems(metadata, options.registry);
-
-      this.addWatchFile(root);
-      for (const fileName of metadata.keys()) this.addWatchFile(fileName);
       for (const item of options.registry.items.shared ?? []) {
         for (const file of item.files) this.addWatchFile(resolve(root, file.source));
       }
-
-      const entries = [...metadata.keys()].map((fileName) => `${fileName}${query}`);
-      triggerSource = `${entries.map((id) => `void import(${JSON.stringify(id)});`).join('\n')}\nexport default null;`;
-      this.emitFile({ type: 'chunk', id: triggerId });
-    },
-    resolveId: {
-      filter: { id: new RegExp(`^${escapeRegExp(triggerId)}$`) },
-      handler(id) {
-        return id === triggerId ? resolvedTriggerId : null;
-      },
-    },
-    load: {
-      filter: { id: new RegExp(`^${escapeRegExp(resolvedTriggerId)}$`) },
-      handler(id) {
-        return id === resolvedTriggerId ? triggerSource : null;
-      },
     },
     async buildEnd(error) {
       if (error) return;
-      const modules: SourceModule[] = [];
-      const moduleIds = new Map<string, string>();
+      const modules: SourceModule<Item>[] = [];
 
       for (const id of this.getModuleIds()) {
-        if (!id.endsWith(query)) continue;
-        const fileName = resolveModulePath(cleanId(id));
-        if (metadata.has(fileName)) moduleIds.set(fileName, id);
-      }
-
-      for (const [fileName, meta] of metadata) {
-        const id = moduleIds.get(fileName);
-        if (!id) {
-          if (meta && options.registry.items.published.includes(meta.name)) {
-            this.error(`Shadcn published item \`${meta.name}\` was not loaded by the host graph.`);
-          }
-          continue;
-        }
+        const fileName = resolveGraphFile(id);
+        if (!fileName || !isInsideRoot(root, fileName)) continue;
         const info = this.getModuleInfo(id);
         if (!info) this.error(`Shadcn source is missing from the host graph: ${id}`);
+        const input = readVjscInput(info.meta);
         const source = readVjscSource(info.meta);
-        if (!source) {
-          this.error(
-            `Shadcn source ${fileName} has no editable VJSC output. Process it with vjscPlugin and componentMetaPlugin().`
-          );
-        }
+        if (!input || !source) continue;
+
         const imports: SourceImport[] = [];
         for (const reference of analyzeImports(source, fileName)) {
           const resolved = await this.resolve(reference.specifier, id);
-          const resolvedId = resolved ? resolveGraphModuleId(resolved.id, metadata) : undefined;
+          const resolvedId = resolved ? (resolveGraphFile(resolved.id) ?? resolved.id) : undefined;
           if (reference.specifier.startsWith('.') && !resolvedId) {
             this.error(`Shadcn source cannot resolve relative import \`${reference.specifier}\` from \`${fileName}\`.`);
           }
-          if (reference.specifier.startsWith('.') && !metadata.has(resolvedId!)) {
+          if (reference.specifier.startsWith('.') && resolvedId && !isInsideRoot(root, resolvedId)) {
             this.error(
-              `Shadcn relative import \`${reference.specifier}\` from \`${fileName}\` resolves outside the configured source files.`
+              `Shadcn relative import \`${reference.specifier}\` from \`${fileName}\` resolves outside the registry source root.`
             );
           }
           imports.push({ ...reference, ...(resolvedId ? { resolvedId } : {}) });
@@ -96,7 +55,7 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
         modules.push({
           id: fileName,
           source,
-          meta,
+          meta: maybeExtractComponentMeta(input, fileName) as Item | undefined,
           imports,
         });
       }
@@ -104,105 +63,12 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
     },
     async generateBundle(_outputOptions, bundle) {
       if (!graph) this.error('Shadcn source graph was not collected before output generation.');
+      for (const fileName of Object.keys(bundle)) delete bundle[fileName];
       for (const file of await createShadcnRegistryFiles(graph, options.registry)) {
         this.emitFile({ type: 'asset', fileName: file.path, source: file.content });
       }
-      removeTriggerChunks(bundle, resolvedTriggerId);
     },
   };
-}
-
-function resolveGraphModuleId(id: string, metadata: ReadonlyMap<string, unknown>): string {
-  const clean = cleanId(id);
-  if (!isAbsolute(clean)) return id;
-  const resolved = resolveModulePath(clean);
-  return metadata.has(resolved) ? resolved : id;
-}
-
-function removeTriggerChunks(bundle: OutputBundle, triggerId: string): void {
-  const chunks = new Map(
-    Object.entries(bundle).filter(
-      (entry): entry is [string, Extract<(typeof entry)[1], { type: 'chunk' }>] => entry[1].type === 'chunk'
-    )
-  );
-  const trigger = [...chunks].find(([, chunk]) => chunk.facadeModuleId === triggerId)?.[0];
-  if (!trigger) return;
-
-  const candidates = new Set<string>();
-  const visit = (fileName: string): void => {
-    if (candidates.has(fileName)) return;
-    candidates.add(fileName);
-    const chunk = chunks.get(fileName);
-    for (const dependency of [...(chunk?.imports ?? []), ...(chunk?.dynamicImports ?? [])]) {
-      if (chunks.has(dependency)) visit(dependency);
-    }
-  };
-  visit(trigger);
-
-  const retained = new Set<string>();
-  for (const fileName of candidates) {
-    if (fileName === trigger) continue;
-    const chunk = chunks.get(fileName)!;
-    if (
-      chunk.isEntry ||
-      [...chunks].some(
-        ([importer, value]) =>
-          !candidates.has(importer) && [...value.imports, ...value.dynamicImports].includes(fileName)
-      )
-    ) {
-      retained.add(fileName);
-    }
-  }
-  const retainDependencies = (fileName: string): void => {
-    const chunk = chunks.get(fileName);
-    for (const dependency of [...(chunk?.imports ?? []), ...(chunk?.dynamicImports ?? [])]) {
-      if (!candidates.has(dependency) || retained.has(dependency)) continue;
-      retained.add(dependency);
-      retainDependencies(dependency);
-    }
-  };
-  for (const fileName of [...retained]) retainDependencies(fileName);
-  for (const fileName of candidates) if (!retained.has(fileName)) delete bundle[fileName];
-}
-
-function discoverSources<Item extends ComponentMeta>(
-  options: ShadcnPluginOptions<Item>,
-  root: string
-): Map<string, Item | undefined> {
-  const include = typeof options.include === 'string' ? [options.include] : options.include;
-  const exclude = typeof options.exclude === 'string' ? [options.exclude] : options.exclude;
-  const files = [
-    ...new Set(
-      include.flatMap((pattern) =>
-        globSync(pattern, { cwd: root, ...(exclude ? { exclude } : {}) }).map((fileName) =>
-          resolveModulePath(resolve(root, fileName))
-        )
-      )
-    ),
-  ].sort();
-  const output = new Map<string, Item | undefined>();
-  const names = new Set<string>();
-
-  for (const fileName of files) {
-    const meta = maybeExtractComponentMeta(readFileSync(fileName, 'utf8'), fileName) as Item | undefined;
-    if (meta && names.has(meta.name)) throw new Error(`Component \`${meta.name}\` is declared more than once.`);
-    if (meta) names.add(meta.name);
-    output.set(fileName, meta);
-  }
-  return output;
-}
-
-function validatePublishedItems<Item extends ComponentMeta>(
-  metadata: ReadonlyMap<string, Item | undefined>,
-  registry: ShadcnRegistryDefinition<Item>
-): void {
-  const available = new Set([...metadata.values()].flatMap((meta) => (meta ? [meta.name] : [])));
-  const published = new Set<string>();
-  for (const name of registry.items.published) {
-    if (published.has(name)) throw new Error(`Shadcn item \`${name}\` is published more than once.`);
-    if (!available.has(name)) throw new Error(`Shadcn registry references missing component \`${name}\`.`);
-    published.add(name);
-  }
 }
 
 function maybeExtractComponentMeta(source: string, fileName: string): ComponentMeta | undefined {
@@ -214,9 +80,15 @@ function maybeExtractComponentMeta(source: string, fileName: string): ComponentM
   }
 }
 
-function createQuery(query: Readonly<Record<string, string>>): string {
-  const parameters = new URLSearchParams(Object.entries(query).sort(([left], [right]) => left.localeCompare(right)));
-  return `?${parameters}`;
+function resolveGraphFile(id: string): string | undefined {
+  const clean = cleanId(id);
+  if (!isAbsolute(clean)) return undefined;
+  return resolveModulePath(clean);
+}
+
+function isInsideRoot(root: string, fileName: string): boolean {
+  const path = relative(root, fileName);
+  return Boolean(path) && path !== '..' && !path.startsWith(`..${process.platform === 'win32' ? '\\' : '/'}`);
 }
 
 function cleanId(id: string): string {
@@ -230,8 +102,4 @@ function resolveModulePath(path: string): string {
   } catch {
     return resolve(path);
   }
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
