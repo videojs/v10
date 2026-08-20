@@ -9,6 +9,15 @@ Goal: the sandbox's Mux DRM source (`apps/sandbox/app/shared/sources.ts`,
 `DRM_PLAYBACK_ID` + `DRM_SYSTEMS`) plays end-to-end on Chrome/Widevine through an
 SPF DRM-composed engine variant. FairPlay/PlayReady adapters are shaped but not built.
 
+**Update: DRM is now composed into `createHlsVideoEngine` itself** (user call,
+given the measured +2 KB gz cost; `./hls` = 22.12 KB gz vs its 20 KB target).
+The `hls-drm` entry and `createDrmHlsVideoEngine` are deleted; engine config
+gains optional `drm: DrmSystemsConfig`, and the absent/empty config is the
+degenerate case — encrypted renditions refuse exactly as before (pruned + 4008
+causes). The DRM-less `canPlayTrack` refusal survives for the audio-only /
+background variants. Post-compose Chrome check: negotiation + license POSTs +
+zero errors through the main engine (frames pending a visible tab).
+
 **Status 2026-08-20: VERIFIED end-to-end, Widevine AND FairPlay.** Steps 1–9 done
 (steps 2–4 as one `setupMediaKeys` behavior; the variant ships behind its own
 `@videojs/spf/hls-drm` entry — the `./hls` entry was already at its size budget).
