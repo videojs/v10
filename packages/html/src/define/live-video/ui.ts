@@ -1,4 +1,4 @@
-// Registers the live video player, container, and all video UI custom
+// Registers the container and all live video UI custom
 // elements without creating a skin element. Use this entry when building an
 // ejected (light DOM) player layout for live HLS / DASH streams.
 
@@ -31,11 +31,8 @@ import {
 } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
-import { LiveVideoPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(LiveVideoPlayerElement);
 safeDefine(ContainerElement);
 safeDefine(I18nProviderElement);
 

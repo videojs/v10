@@ -1,25 +1,6 @@
-import { backgroundFeatures } from '@videojs/core/dom';
-import { createPlayer } from '../../player/create-player';
-import { ContainerElement } from '../../ui/container/container-element';
+import { BackgroundVideoPlayerElement } from '../../preset/background/player-element';
 import { safeDefine } from '../safe-define';
 
-const { PlayerElement, PlayerController: ConfiguredPlayerController } = createPlayer({
-  features: backgroundFeatures,
-});
-
-/** Player controller bound to the background video player store. */
-export const PlayerController = ConfiguredPlayerController;
-
-export class BackgroundVideoPlayerElement extends PlayerElement {
-  static readonly tagName = 'background-video-player';
-}
-
-// The player must be defined before consumers for context handshakes during upgrade.
 safeDefine(BackgroundVideoPlayerElement);
-safeDefine(ContainerElement);
 
-declare global {
-  interface HTMLElementTagNameMap {
-    [BackgroundVideoPlayerElement.tagName]: BackgroundVideoPlayerElement;
-  }
-}
+export { BackgroundVideoPlayerElement, PlayerController } from '../../preset/background/player-element';

@@ -22,6 +22,8 @@ const presets = [
   'video-minimal-ui',
   'live-video',
   'live-video-minimal',
+  'live-audio',
+  'live-audio-minimal',
   'audio',
   'audio-headless',
   'audio-minimal',
