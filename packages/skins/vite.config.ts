@@ -36,7 +36,7 @@ const catalogModule = createSkinCatalogItemsModule();
 await Promise.all([
   syncGeneratedModuleTypes({
     rootDir: coreDir,
-    modules: [{ fileName: resolve(coreDir, 'src/core/ui/schema.generated.ts'), module: coreSchemaModule }],
+    modules: [{ fileName: resolve(coreDir, '.vjsc/virtual/core-schema.ts'), module: coreSchemaModule }],
   }),
   syncGeneratedModuleTypes({
     rootDir: packageDir,

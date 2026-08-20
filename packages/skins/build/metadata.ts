@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 
 import { createEntriesModule, createSchemaModule } from 'vjsc';
 import { type ComponentRegistry, extendRegistry } from 'vjsc/registry';
+import { createCoreSchemaModule } from '../../core/vjsc';
 import { createRegistry as createHtmlRegistry, type HtmlRegistryEntries } from '../../html/vjsc/registry';
 import { resolveHtmlEntries } from '../../html/vjsc/resolve';
 import { iconNames } from '../../icons/scripts/internal/icon-names';
@@ -13,19 +14,11 @@ import { createRegistry as createReactRegistry, type ReactRegistryEntries } from
 import { resolveReactEntry } from '../../react/vjsc/resolve';
 
 const packagesDir = resolve(import.meta.dirname, '../..');
-const coreDir = resolve(packagesDir, 'core');
 const htmlDir = resolve(packagesDir, 'html');
 const iconsDir = resolve(packagesDir, 'icons');
 const reactDir = resolve(packagesDir, 'react');
 
-export const coreSchemaModule = createSchemaModule(
-  {
-    source: '@videojs/core/vjsc',
-    files: ['./src/core/ui/*/*-component.ts'],
-    output: './src/core/ui/schema.generated.ts',
-  },
-  { cwd: coreDir }
-);
+export const coreSchemaModule = createCoreSchemaModule();
 
 export const reactEntriesModule = createEntriesModule(
   {

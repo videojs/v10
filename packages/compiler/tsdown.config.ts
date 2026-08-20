@@ -18,6 +18,7 @@ export default defineConfig({
     'shadcn/index': './src/shadcn/index.ts',
     'styles/index': './src/styles/index.ts',
     'bundlers/vite': './src/bundlers/vite.ts',
+    'bundlers/rolldown': './src/bundlers/rolldown.ts',
   },
   platform: 'node',
   // The package is ESM, so `.js`/`.d.ts` match its checked-in export map.

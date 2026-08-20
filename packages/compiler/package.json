@@ -66,6 +66,10 @@
     "./vite": {
       "types": "./dist/bundlers/vite.d.ts",
       "default": "./dist/bundlers/vite.js"
+    },
+    "./rolldown": {
+      "types": "./dist/bundlers/rolldown.d.ts",
+      "default": "./dist/bundlers/rolldown.js"
     }
   },
   "files": [
