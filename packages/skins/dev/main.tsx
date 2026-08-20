@@ -56,9 +56,16 @@ links.innerHTML = Object.keys(modules)
 root.before(links);
 
 if (framework === 'react') {
-  const Skin = 'DefaultVideoSkin' in loaded ? loaded.DefaultVideoSkin : loaded.MinimalVideoSkin;
+  const Skin =
+    'DefaultVideoSkin' in loaded
+      ? loaded.DefaultVideoSkin
+      : 'MinimalVideoSkin' in loaded
+        ? loaded.MinimalVideoSkin
+        : null;
+  if (!Skin) throw new Error(`React Skin module \`${key}\` did not export a Skin component.`);
   createRoot(root).render(<App Skin={Skin} />);
 } else {
+  if (!('skin' in loaded)) throw new Error(`HTML Skin module \`${key}\` did not export a Skin template.`);
   await import('../../html/src/define/video/player');
   const skin = loaded.skin.replace(
     '<slot></slot>',

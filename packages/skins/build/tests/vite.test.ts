@@ -21,6 +21,18 @@ describe('canonical Skins Vite workflow', () => {
     server = undefined;
   }, 30_000);
 
+  it('scans the development entry without resolving virtual modules as files', async () => {
+    server = await createServer({
+      configFile,
+      logLevel: 'silent',
+      server: { middlewareMode: true },
+    });
+
+    await server.environments.client.depsOptimizer?.scanProcessing;
+    const resolved = await server.pluginContainer.resolveId(reactVirtualSkin);
+    expect(resolved?.id).toBe(reactVirtualSkin);
+  }, 30_000);
+
   it('transforms the canonical React/vanilla entry and invalidates style owners', async () => {
     server = await createServer({
       configFile,
@@ -66,6 +78,7 @@ describe('canonical Skins Vite workflow', () => {
     expect(catalog?.code).toContain('play-button');
 
     const resolved = await server.pluginContainer.resolveId(reactVirtualSkin);
+    expect(resolved?.id).toBe(reactVirtualSkin);
     const virtualModule = resolved && server.moduleGraph.getModuleById(resolved.id);
     expect(virtualModule?.transformResult).not.toBeNull();
 

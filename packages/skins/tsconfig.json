@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "lib": ["ES2022"],
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@videojs/react/video": ["../react/src/presets/video/index.ts"]
+    },
     "types": ["node"],
     "declarationDir": "types"
   },
@@ -10,6 +14,7 @@
     "src",
     "build",
     "scripts",
+    "dev",
     "canonical/catalog.ts",
     "canonical/registry/shadcn.ts",
     "canonical/styles/tokens.ts",

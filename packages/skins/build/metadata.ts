@@ -4,16 +4,13 @@ import { createEntriesModule, type EntriesModule } from 'vjsc';
 import type { ComponentSchema } from 'vjsc/components';
 import { type ComponentRegistry, extendRegistry } from 'vjsc/registry';
 import { createCoreSchemaModule } from '../../core/src/vjsc';
-// @ts-expect-error Tooling executes package-owned registry source; project builds expose declarations only.
 import { createRegistry as createHtmlRegistry, type HtmlRegistryEntries } from '../../html/vjsc/registry';
 import { resolveHtmlEntries } from '../../html/vjsc/resolve';
 import {
   createHtmlRegistry as createHtmlIconRegistry,
   createReactRegistry as createReactIconRegistry,
-  // @ts-expect-error Tooling executes package-owned registry source; project builds expose declarations only.
 } from '../../icons/vjsc/registry';
 import { createIconSchemaModule } from '../../icons/vjsc/schema';
-// @ts-expect-error Tooling executes package-owned registry source; project builds expose declarations only.
 import { createRegistry as createReactRegistry, type ReactRegistryEntries } from '../../react/vjsc/registry';
 import { resolveReactEntry } from '../../react/vjsc/resolve';
 

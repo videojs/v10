@@ -4,6 +4,7 @@ import { jsx } from '../../config';
 import { vjsCompiler } from '../vite';
 
 type TestPlugin = {
+  config(): { optimizeDeps: { exclude: string[] | undefined } };
   configResolved(config: { root: string }): void;
   resolveId(id: string): string | null;
   load(this: { addWatchFile(id: string): void }, id: string): Promise<string | null>;
@@ -183,6 +184,17 @@ describe('vjsCompiler', () => {
     ).toEqual([module]);
     expect(invalidateModule).toHaveBeenCalledWith(module);
     await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toContain('value = 2');
+  });
+
+  it('keeps virtual JSX in Vite transforms and out of dependency optimization', async () => {
+    const id = 'virtual:vjsc/skin/default.tsx';
+    const plugin = createPlugin({
+      modules: [{ id, load: () => ({ code: 'export const Skin = <div/>;', watchFiles: [] }) }],
+    });
+
+    expect(plugin.config().optimizeDeps.exclude).toEqual([id]);
+    expect(plugin.resolveId(id)).toBe(id);
+    await expect(plugin.load.call(createContext(), id)).resolves.toContain('<div/>');
   });
 
   it('invalidates transformed owners when a compiler dependency changes', async () => {

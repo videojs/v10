@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { extname, resolve } from 'node:path';
 import { createFilter, type FilterPattern, type Plugin } from 'vite';
 import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../config';
 import { type LoadedCompilerConfig, loadConfig } from '../load-config';
@@ -39,6 +38,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   const watchFilesByOwner = new Map<string, Set<string>>();
   const ownersByWatchFile = new Map<string, Set<string>>();
   const modules = createVirtualModuleGraph(options.modules ?? []);
+  const virtualModuleIds = options.modules?.map((module) => module.id) ?? [];
   const publicIdByResolvedId = new Map<string, string>();
   const resolvedIdByPublicId = new Map<string, string>();
   let root = process.cwd();
@@ -58,6 +58,14 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   return {
     name: 'vjsc',
     enforce: 'pre',
+    config() {
+      if (virtualModuleIds.length === 0) return null;
+      return {
+        optimizeDeps: {
+          exclude: virtualModuleIds,
+        },
+      };
+    },
     configResolved(config) {
       root = config.root;
     },
@@ -67,7 +75,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       if (!modules.has(id)) return null;
       let resolvedId = resolvedIdByPublicId.get(id);
       if (!resolvedId) {
-        resolvedId = resolvedVirtualModuleId(id, root);
+        resolvedId = resolvedVirtualModuleId(id);
         resolvedIdByPublicId.set(id, resolvedId);
         publicIdByResolvedId.set(resolvedId, id);
       }
@@ -154,11 +162,9 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   };
 }
 
-function resolvedVirtualModuleId(publicId: string, root: string): string {
-  const extension = extname(publicId);
-  if (extension !== '.jsx' && extension !== '.tsx') return `\0${publicId}`;
-  const hash = createHash('sha256').update(publicId).digest('hex').slice(0, 16);
-  return resolve(root, '.vjsc/virtual', `${hash}${extension}`);
+function resolvedVirtualModuleId(publicId: string): string {
+  if (publicId.endsWith('.jsx') || publicId.endsWith('.tsx')) return publicId;
+  return `\0${publicId}`;
 }
 
 function updateWatchFiles(
