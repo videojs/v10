@@ -2,10 +2,10 @@ import { TooltipGroupCore } from '@videojs/core';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { tooltipGroupContext } from './context';
 
-export class TooltipGroupElement extends MediaElement {
+export class TooltipGroupElement extends UIElement {
   static readonly tagName = 'media-tooltip-group';
 
   static override properties = {

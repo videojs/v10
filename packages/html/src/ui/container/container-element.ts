@@ -8,7 +8,7 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { type ContainerContextValue, containerContext } from '../../player/context';
 import { popupGroupContext } from '../../player/popup-group-context';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 /**
  * The visual, interactive player boundary.
@@ -16,7 +16,7 @@ import { MediaElement } from '../media-element';
  * A container registers itself with its closest player and provides popup
  * coordination to the controls it contains.
  */
-export class ContainerElement extends MediaElement implements MediaContainer {
+export class ContainerElement extends UIElement implements MediaContainer {
   static readonly tagName = 'media-container';
 
   #releaseContainer: (() => void) | null = null;

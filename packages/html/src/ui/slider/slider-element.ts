@@ -15,10 +15,10 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { sliderContext } from './context';
 
-export class SliderElement extends MediaElement {
+export class SliderElement extends UIElement {
   static readonly tagName = 'media-slider';
 
   static override properties = {

@@ -1,14 +1,14 @@
 import { liveVideoFeatures } from '@videojs/core/dom';
 import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
-import { MediaElement } from '../../ui/media-element';
+import { UIElement } from '../../ui/ui-element';
 import { safeDefine } from '../safe-define';
 
 const { ProviderMixin } = createPlayer({
   features: liveVideoFeatures,
 });
 
-export class LiveVideoPlayerElement extends ProviderMixin(MediaElement) {
+export class LiveVideoPlayerElement extends ProviderMixin(UIElement) {
   static readonly tagName = 'live-video-player';
 }
 

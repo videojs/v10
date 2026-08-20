@@ -25,7 +25,7 @@ import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { alertDialogContext } from '../alert-dialog/context';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 let idCounter = 0;
 
@@ -33,7 +33,7 @@ function hasAuthoredContent(host: HTMLElement): boolean {
   return Array.from(host.childNodes).some((node) => !!node.textContent?.trim());
 }
 
-export class ErrorDialogElement extends MediaElement {
+export class ErrorDialogElement extends UIElement {
   static readonly tagName = 'media-error-dialog';
 
   readonly #core = new ErrorDialogCore();

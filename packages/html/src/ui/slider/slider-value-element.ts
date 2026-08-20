@@ -2,10 +2,10 @@ import { applyStateDataAttrs } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { sliderContext } from './context';
 
-export class SliderValueElement extends MediaElement {
+export class SliderValueElement extends UIElement {
   static readonly tagName = 'media-slider-value';
 
   static override properties = {

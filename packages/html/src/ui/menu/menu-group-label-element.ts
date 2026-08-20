@@ -1,12 +1,12 @@
 import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { menuGroupContext } from './context';
 
 let idCounter = 0;
 
-export class MenuGroupLabelElement extends MediaElement {
+export class MenuGroupLabelElement extends UIElement {
   static readonly tagName = 'media-menu-group-label';
 
   readonly #groupCtx = new ContextConsumer(this, { context: menuGroupContext, subscribe: true });

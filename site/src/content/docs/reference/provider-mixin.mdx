@@ -27,12 +27,12 @@ On `disconnectedCallback`, the mixin detaches the current media target but keeps
 Use `ProviderMixin` with the independently extensible <DocsLink slug="reference/player-container">`ContainerElement`</DocsLink> when the store owner is a different element from the container:
 
 ```ts
-import { ContainerElement, createPlayer, MediaElement } from '@videojs/html';
+import { ContainerElement, createPlayer, UIElement } from '@videojs/html';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 // Layout shell owns the store
-class AppShell extends ProviderMixin(MediaElement) {}
+class AppShell extends ProviderMixin(UIElement) {}
 
 // Content region is the fullscreen target and container reference
 class VideoRegion extends ContainerElement {}

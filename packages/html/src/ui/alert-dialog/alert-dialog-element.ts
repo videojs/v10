@@ -10,12 +10,12 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { alertDialogContext } from './context';
 
 let idCounter = 0;
 
-export class AlertDialogElement extends MediaElement {
+export class AlertDialogElement extends UIElement {
   static readonly tagName = 'media-alert-dialog';
 
   static override properties = {

@@ -2,7 +2,7 @@ import type { StateAttrMap } from '@videojs/core';
 import { applyStateDataAttrs } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 
-import { MediaElement } from './media-element';
+import { UIElement } from './ui-element';
 
 /** Shape that compound context values must satisfy for parts to consume. */
 export interface PartContextValue<State extends object> {
@@ -23,7 +23,7 @@ export interface PartContextValue<State extends object> {
  * }
  * ```
  */
-export abstract class ContextPartElement<State extends object> extends MediaElement {
+export abstract class ContextPartElement<State extends object> extends UIElement {
   protected abstract readonly consumer: { value?: PartContextValue<State> | undefined };
 
   override connectedCallback(): void {

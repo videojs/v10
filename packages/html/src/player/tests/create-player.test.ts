@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BackgroundVideo } from '../../media/background-video';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { ContainerElement } from '../../ui/container/container-element';
-import { MediaElement } from '../../ui/media-element';
+import { UIElement } from '../../ui/ui-element';
 import { createPlayer } from '../create-player';
 import { popupGroupContext } from '../popup-group-context';
 
@@ -50,7 +50,7 @@ describe('createPlayer', () => {
 
   it('ProviderMixin produces a valid custom element class', () => {
     const { ProviderMixin } = createPlayer({ features: videoFeatures });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
 
     expect(typeof ProviderElement).toBe('function');
     expect(ProviderElement.prototype).toBeDefined();
@@ -64,7 +64,7 @@ describe('createPlayer', () => {
   it('scopes popup coordination to container descendants', async () => {
     const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-    class PopupGroupProbe extends MediaElement {
+    class PopupGroupProbe extends UIElement {
       popupGroup: PopupGroup | undefined;
 
       constructor() {
@@ -78,7 +78,7 @@ describe('createPlayer', () => {
       }
     }
 
-    const providerTag = defineTestElement(ProviderMixin(MediaElement));
+    const providerTag = defineTestElement(ProviderMixin(UIElement));
     const containerTag = defineTestElement(ContainerElement);
     const probeTag = defineTestElement(PopupGroupProbe);
     const provider = document.createElement(providerTag);
@@ -91,8 +91,8 @@ describe('createPlayer', () => {
     document.body.append(provider);
 
     await Promise.all([
-      (provider as MediaElement).updateComplete,
-      (container as MediaElement).updateComplete,
+      (provider as UIElement).updateComplete,
+      (container as UIElement).updateComplete,
       outsideProbe.updateComplete,
       insideProbe.updateComplete,
     ]);
@@ -103,7 +103,7 @@ describe('createPlayer', () => {
 
   it('keeps container registration identity-safe', async () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
-    const PlayerElement = ProviderMixin(MediaElement);
+    const PlayerElement = ProviderMixin(UIElement);
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
     const first = document.createElement(defineTestElement(class extends ContainerElement {}));
     const second = document.createElement(defineTestElement(class extends ContainerElement {}));
@@ -124,7 +124,7 @@ describe('createPlayer', () => {
 
   it('upgrades parser-created containers under a connected player', async () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
-    const PlayerElement = ProviderMixin(MediaElement);
+    const PlayerElement = ProviderMixin(UIElement);
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
     const containerTag = `test-late-container-${tagCounter++}`;
 
@@ -137,7 +137,7 @@ describe('createPlayer', () => {
 
   it('keeps custom media registration identity-safe', async () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
-    const PlayerElement = ProviderMixin(MediaElement);
+    const PlayerElement = ProviderMixin(UIElement);
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
     const mediaTag = defineTestElement(MediaAttachMixin(HTMLElement));
     const first = document.createElement(mediaTag);
@@ -157,7 +157,7 @@ describe('createPlayer', () => {
 
   it('tracks native media added, removed, and replaced after connection', async () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
-    const PlayerElement = ProviderMixin(MediaElement);
+    const PlayerElement = ProviderMixin(UIElement);
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
     const first = document.createElement('video');
     const second = document.createElement('audio');
@@ -177,7 +177,7 @@ describe('createPlayer', () => {
 
   it('does not retain disconnected context media as a native fallback', async () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
-    const PlayerElement = ProviderMixin(MediaElement);
+    const PlayerElement = ProviderMixin(UIElement);
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
     const background = document.createElement(defineTestElement(BackgroundVideo));
     const video = document.createElement('video');
@@ -215,7 +215,7 @@ describe('createPlayer', () => {
 
   it('maps selected feature inputs to reactive properties and attributes', async () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-metadata-provider';
     customElements.define(tagName, ProviderElement);
 
@@ -247,7 +247,7 @@ describe('createPlayer', () => {
 
   it('leaves the element its own `title`, which means the tooltip', async () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-title-provider';
     customElements.define(tagName, ProviderElement);
 
@@ -267,7 +267,7 @@ describe('createPlayer', () => {
 
   it('applies orientation lock configuration through attributes and properties', async () => {
     const { ProviderMixin } = createPlayer({ features: [features.orientationLock] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-orientation-lock-provider';
     customElements.define(tagName, ProviderElement);
 
@@ -292,7 +292,7 @@ describe('createPlayer', () => {
 
   it('leaves config attributes inert when their feature is absent', () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
 
     expect(ProviderElement.observedAttributes).not.toContain('content-title');
     expect(ProviderElement.prototype).not.toHaveProperty('contentTitle');

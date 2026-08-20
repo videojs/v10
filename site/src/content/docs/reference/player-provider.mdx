@@ -84,12 +84,12 @@ import '@videojs/html/video/player';
 If you need a custom feature set or tag name, use `createPlayer()` to get `ProviderMixin` and define your own state boundary. Extend `ContainerElement` separately when you need custom container behavior:
 
 ```ts title="my-player.ts"
-import { ContainerElement, createPlayer, MediaElement } from '@videojs/html';
+import { ContainerElement, createPlayer, UIElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-class MyPlayer extends ProviderMixin(MediaElement) {}
+class MyPlayer extends ProviderMixin(UIElement) {}
 class MyContainer extends ContainerElement {}
 customElements.define('my-player', MyPlayer);
 customElements.define('my-container', MyContainer);
@@ -161,7 +161,7 @@ Use `PlayerController` to subscribe to store state from any custom element insid
 ```ts title="play-pause-button.ts"
 import { selectPlayback } from '@videojs/html';
 
-class PlayPauseButton extends MediaElement {
+class PlayPauseButton extends UIElement {
   #playback = new PlayerController(this, context, selectPlayback);
 
   connectedCallback() {

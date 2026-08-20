@@ -4,7 +4,7 @@ import { getMediaComponents, type MediaComponent } from '@videojs/media/dom/medi
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
 import { afterEach, describe, expect, it } from 'vitest';
 import { mediaContext } from '../../player/context';
-import { MediaElement } from '../../ui/media-element';
+import { UIElement } from '../../ui/ui-element';
 import { MediaComponentElement } from '../media-component-element';
 
 class FakeComponent implements MediaComponent {
@@ -14,7 +14,7 @@ class FakeComponent implements MediaComponent {
   }
 }
 
-class TestMediaProvider extends MediaElement {
+class TestMediaProvider extends UIElement {
   readonly #provider = new ContextProvider(this, {
     context: mediaContext,
     initialValue: { media: null, registerMedia: () => () => {} },

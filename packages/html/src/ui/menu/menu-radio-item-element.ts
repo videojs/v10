@@ -2,10 +2,10 @@ import { applyElementProps, completeMenuItemSelection } from '@videojs/core/dom'
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { menuContext, menuRadioGroupContext } from './context';
 
-export class MenuRadioItemElement extends MediaElement {
+export class MenuRadioItemElement extends UIElement {
   static readonly tagName = 'media-menu-radio-item';
 
   static override properties = {
