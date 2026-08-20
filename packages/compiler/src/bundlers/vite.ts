@@ -35,6 +35,8 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   const filter = createFilter(options.include ?? /\.tsx$/, options.exclude);
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
+  const watchFilesByOwner = new Map<string, Set<string>>();
+  const ownersByWatchFile = new Map<string, Set<string>>();
   const modules = createVirtualModuleGraph(options.modules ?? []);
   let root = process.cwd();
   let loadedConfig: LoadedCompilerConfig | null | undefined;
@@ -75,10 +77,17 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       modules.invalidate(id);
     },
     handleHotUpdate(context) {
-      const affected = modules
+      const affectedVirtualModules = modules
         .invalidate(context.file)
         .map((id) => context.server.moduleGraph.getModuleById(`\0${id}`))
         .filter((module) => module !== undefined);
+      const affectedOwners = [
+        ...(loadedConfig?.configPath === context.file ? watchFilesByOwner.keys() : []),
+        ...(ownersByWatchFile.get(context.file) ?? []),
+      ]
+        .map((id) => context.server.moduleGraph.getModuleById(id))
+        .filter((module) => module !== undefined);
+      const affected = [...new Set([...affectedVirtualModules, ...affectedOwners])];
 
       for (const module of affected) context.server.moduleGraph.invalidateModule(module);
       return [...new Set([...context.modules, ...affected])];
@@ -101,6 +110,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
         else this.error(viteLogFromDiagnostic(diagnostic));
       }
       for (const file of result.watchFiles) this.addWatchFile(file);
+      updateWatchFiles(id, result.watchFiles, watchFilesByOwner, ownersByWatchFile);
 
       const previousCssIds = cssIdsByOwner.get(id) ?? new Set<string>();
       const nextCssIds = new Set<string>();
@@ -130,6 +140,31 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       };
     },
   };
+}
+
+function updateWatchFiles(
+  owner: string,
+  files: readonly string[],
+  filesByOwner: Map<string, Set<string>>,
+  ownersByFile: Map<string, Set<string>>
+): void {
+  const previous = filesByOwner.get(owner) ?? new Set<string>();
+  const next = new Set(files);
+
+  for (const fileName of previous) {
+    if (next.has(fileName)) continue;
+    const owners = ownersByFile.get(fileName);
+    owners?.delete(owner);
+    if (owners?.size === 0) ownersByFile.delete(fileName);
+  }
+
+  for (const fileName of next) {
+    const owners = ownersByFile.get(fileName) ?? new Set<string>();
+    owners.add(owner);
+    ownersByFile.set(fileName, owners);
+  }
+
+  filesByOwner.set(owner, next);
 }
 
 function cssVirtualId(fileName: string, source: string): string {

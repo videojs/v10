@@ -185,6 +185,41 @@ describe('vjsCompiler', () => {
     await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toContain('value = 2');
   });
 
+  it('invalidates transformed owners when a compiler dependency changes', async () => {
+    const dependency = '/workspace/styles.ts';
+    const owner = '/workspace/skin.tsx';
+    const plugin = createPlugin({
+      config: {
+        plugins: [
+          {
+            name: 'watch-dependency',
+            setup(context) {
+              context.addWatchFile(dependency);
+              return {};
+            },
+          },
+        ],
+      },
+    });
+    await plugin.transform.call(createContext(), 'export const Skin = <div/>;', owner);
+
+    const ownerModule = {};
+    const invalidateModule = vi.fn();
+    expect(
+      plugin.handleHotUpdate({
+        file: dependency,
+        modules: [],
+        server: {
+          moduleGraph: {
+            getModuleById: vi.fn((id) => (id === owner ? ownerModule : undefined)),
+            invalidateModule,
+          },
+        },
+      })
+    ).toEqual([ownerModule]);
+    expect(invalidateModule).toHaveBeenCalledWith(ownerModule);
+  });
+
   it('forwards compiler warnings to Vite', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({

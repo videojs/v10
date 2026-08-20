@@ -33,6 +33,7 @@ export function reactOutput(options: ReactOutputOptions = {}) {
     componentRegistry: extendRegistry(reactRegistry, iconRegistry({ family: iconSet })),
     compiler: {
       target: jsx({
+        jsxImportSource: 'react',
         imports: {
           '@videojs/core': (name) => resolveImport({ source: '@videojs/core', name }),
           '@videojs/react': (name) => resolveImport({ source: '@videojs/react', name }),

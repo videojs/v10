@@ -144,13 +144,16 @@ export async function transform(source: string, options: TransformOptions = {}):
 
   if (transformers.length === 0) {
     await runFinishers(finishers, filename, source);
-    return {
-      code: source,
-      map: identitySourceMap(source, filename, options.outputFile),
-      assets,
-      watchFiles: [...watchFiles],
-      diagnostics,
-    };
+    return withJsxImportSource(
+      {
+        code: source,
+        map: identitySourceMap(source, filename, options.outputFile),
+        assets,
+        watchFiles: [...watchFiles],
+        diagnostics,
+      },
+      target
+    );
   }
 
   let result: ts.TransformationResult<ts.SourceFile> | undefined;
@@ -164,13 +167,25 @@ export async function transform(source: string, options: TransformOptions = {}):
 
     await runFinishers(finishers, filename, source);
 
-    return { code: printed.code, map: printed.map, assets, watchFiles: [...watchFiles], diagnostics };
+    return withJsxImportSource(
+      { code: printed.code, map: printed.map, assets, watchFiles: [...watchFiles], diagnostics },
+      target
+    );
   } catch (error) {
     if (error instanceof CompilerError) throw error;
     throw new CompilerError([fatalDiagnosticFromError(error, { filename, sourceText: source })], { cause: error });
   } finally {
     result?.dispose();
   }
+}
+
+function withJsxImportSource(result: TransformResult, target: CompilerTarget): TransformResult {
+  if (target.name !== 'jsx' || !target.jsxImportSource) return result;
+  return {
+    ...result,
+    code: `/** @jsxImportSource ${target.jsxImportSource} */\n${result.code}`,
+    map: { ...result.map, mappings: `;${result.map.mappings}` },
+  };
 }
 
 function pluginContext(context: CompilerContext, plugin: string): CompilerContext {

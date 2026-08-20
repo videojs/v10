@@ -1,25 +1,105 @@
 import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { resolveCatalogCompilerConfig } from 'vjsc/catalog';
+import { createEntriesModule, createSchemaModule, jsx } from 'vjsc';
+import type { ImportRef } from 'vjsc/ast';
+import { defineRegistry, extendRegistry, plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
 
-import { reactOutput } from './build/output/react';
+import { iconNames } from '../icons/scripts/internal/icon-names';
+import { getSvgFiles } from '../icons/scripts/internal/paths';
+import { createRegistry, type ReactRegistryEntries } from '../react/vjsc/registry';
+import { resolveReactEntry } from '../react/vjsc/resolve';
+import { componentTransforms } from './build/output/react/transform';
 
 const packageDir = import.meta.dirname;
-
 const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
-
+const coreDir = resolve(packageDir, '../core');
+const iconsDir = resolve(packageDir, '../icons');
+const reactDir = resolve(packageDir, '../react');
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 
-const output = resolveCatalogCompilerConfig(reactOutput());
+const coreSchema = createSchemaModule(
+  {
+    source: '@videojs/core/vjsc',
+    files: ['./src/core/ui/*/*-component.ts'],
+    output: './src/core/ui/schema.generated.ts',
+  },
+  { cwd: coreDir }
+);
+
+const reactEntries = createEntriesModule(
+  {
+    schema: coreSchema.schema,
+    output: './vjsc/entries.generated.ts',
+    resolve: resolveReactEntry,
+  },
+  { cwd: reactDir }
+);
+
+const iconFiles = getSvgFiles('default');
+const iconSchema = createSchemaModule(
+  {
+    source: '@videojs/icons/vjsc',
+    files: [
+      {
+        files: resolve(iconsDir, 'src/assets/default/*.svg'),
+        name: (filename) => `${iconNames(filename).pascal}Icon`,
+      },
+    ],
+    output: './vjsc/schema.generated.ts',
+  },
+  { cwd: iconsDir }
+);
+
+const iconEntries = Object.fromEntries(
+  iconFiles.map((file) => {
+    const name = file.slice(0, -'.svg'.length);
+    const component = `${iconNames(name).pascal}Icon`;
+    return [
+      component,
+      {
+        import: { from: '@videojs/react/icons', name: component },
+        props: { from: '@videojs/react/icons', name: 'IconProps' },
+      },
+    ];
+  })
+);
+
+const componentRegistry = extendRegistry(
+  createRegistry(coreSchema.schema, reactEntries.exports as ReactRegistryEntries),
+  defineRegistry({ schema: iconSchema.schema, entries: iconEntries })
+);
+
+const resolveImport = (reference: ImportRef): ImportRef => reference;
+const output = {
+  target: jsx({
+    jsxImportSource: 'react',
+    imports: {
+      '@videojs/core': (name) => resolveImport({ source: '@videojs/core', name }),
+      '@videojs/react': (name) => resolveImport({ source: '@videojs/react', name }),
+      '@videojs/utils/style': (name) => resolveImport({ source: '@videojs/utils/style', name }),
+      '@videojs/react/icons': (name) => resolveImport({ source: '@videojs/react/icons', name }),
+      react: (name) => resolveImport({ source: 'react', name }),
+    },
+  }),
+  plugins: [registryPlugin(componentRegistry), componentTransforms(resolveImport)],
+};
 
 export default defineConfig({
   root: resolve(packageDir, 'dev'),
+  define: {
+    __DEV__: 'true',
+  },
   plugins: [
     compiler({
       include: `${canonicalDir}/**/*.tsx`,
+      modules: [
+        { id: 'virtual:vjsc/core-schema', load: () => coreSchema },
+        { id: 'virtual:vjsc/icons-schema', load: () => iconSchema },
+        { id: 'virtual:vjsc/registry/react', load: () => reactEntries },
+      ],
       config: {
         ...output,
         plugins: [
@@ -35,7 +115,7 @@ export default defineConfig({
         ],
       },
     }),
-    react(),
+    react({ jsxImportSource: 'react' }),
   ],
   resolve: {
     alias: [

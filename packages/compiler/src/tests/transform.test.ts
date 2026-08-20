@@ -6,6 +6,15 @@ import { addProp, byTag, childAsProp, replace } from '../jsx';
 const compact = (value: string): string => value.replace(/\s+/g, '');
 
 describe('transform', () => {
+  it('declares the downstream JSX runtime selected by the target', async () => {
+    const result = await transform('export const View = <div />;', {
+      config: { target: jsx({ jsxImportSource: 'react' }) },
+    });
+
+    expect(result.code).toMatch(/^\/\*\* @jsxImportSource react \*\//);
+    expect(result.map.mappings).toMatch(/^;/);
+  });
+
   it('adds a props binding to a parameterless function', async () => {
     const result = await transform(`export function Button(){ return <Root/>; }`, {
       config: {
