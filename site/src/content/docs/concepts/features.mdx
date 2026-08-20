@@ -35,7 +35,10 @@ import { VideoPlayer, Video, VideoSkin } from '@videojs/react/video';
 For example, if you import `<video-player>` from the `/video` path, you will have playback, volume, time, fullscreen, and more already enabled.
 
 ```html
-<script type="module" src="@videojs/html/video/player"></script> <!-- [!code focus] -->
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/video/skin';
+</script> <!-- [!code focus] -->
 <video-player> <!-- [!code focus] -->
   <video-skin>
     <video src="movie.mp4"></video>

@@ -135,7 +135,10 @@ The player feels like the rest of your app.
   </TabsPanel>
   <TabsPanel client:idle value="html">
     ```html
-    <script type="module" src="@videojs/html/video/player"></script>
+    <script type="module">
+      import '@videojs/html/video/player';
+      import '@videojs/html/video/skin';
+    </script>
 
     <video-player>
       <video-skin>
