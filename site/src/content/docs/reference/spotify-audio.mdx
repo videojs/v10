@@ -42,11 +42,11 @@ Audio component that plays Spotify content through the [Spotify embed](https://d
 
 ## Controls
 
-Spotify's own chrome is the only UI the embed offers, so `controls` decides whether the element is visible at all. With `controls`, it shows Spotify's player. Without it, the element hides itself and plays as an invisible transport: a hidden iframe still loads and plays, so a player skin's buttons drive playback while the embed takes no room on the page.
+Spotify's own chrome is the only UI the embed offers, so `controls` decides whether the element is visible at all. With `controls`, it shows Spotify's player. Without it, the element hides itself and plays as an invisible transport: a hidden iframe still loads and plays, so a <DocsLink slug="concepts/skins">player skin</DocsLink>'s buttons drive playback while the embed takes no room on the page.
 
 ## Behavior
 
-The Spotify embed exposes less than the other providers do:
+The Spotify embed exposes less than a native `<audio>` element:
 
 - No volume and no mute: the embed takes neither command and reports neither value, so a player skin shows no volume controls at all.
 - No playback rate and no text tracks.

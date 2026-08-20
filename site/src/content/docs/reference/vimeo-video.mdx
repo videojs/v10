@@ -22,9 +22,9 @@ import basicUsageHtml from "@/components/docs/demos/vimeo-video/html/css/BasicUs
 import basicUsageHtmlCss from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/vimeo-video/html/css/BasicUsage.ts?raw";
 
-Video component that plays Vimeo videos and live events through the [Vimeo player SDK](https://developer.vimeo.com/player/sdk). Vimeo's own chrome stays hidden by default, so it drops into a player skin like any other media component; set `controls` to use Vimeo's UI instead.
+Video component that plays Vimeo videos and live events through the [Vimeo player SDK](https://developer.vimeo.com/player/sdk). Vimeo's own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Vimeo's UI instead.
 
-Of the embed-backed medias, this one comes closest to a native `<video>`: volume, mute, playback rate, seeking, looping, and picture-in-picture all work, and the embed pushes real events instead of being polled.
+Of the embed-backed media components, this one comes closest to a native `<video>`: volume, mute, playback rate, seeking, looping, and picture-in-picture all work, and the embed pushes real events instead of being polled.
 
 ## Load a source
 
@@ -66,7 +66,7 @@ A `vimeo.com/event/<id>` URL plays that event through Vimeo's event embed, and i
 - `poster` has no effect. The embed shows its own thumbnail, which `engine.vimeo.thumbnail_id` picks.
 - `playbackRate` is limited to Vimeo's supported range, 0.5 through 2.
 - `playsInline` and `preload` are read when the embed URL is built, so changing them later doesn't take effect.
-- The video's Vimeo title arrives as content data, so a player skin can show it without your fetching anything.
+- The video's Vimeo title arrives as content data, so a player skin can show it without fetching anything yourself.
 
 ## Engine options
 
@@ -93,7 +93,7 @@ video.source = {
 ```
 </FrameworkCase>
 
-Unlike the other embed medias, these options are fully typed from Vimeo's own SDK rather than an open-ended record, so your editor completes every parameter and rejects one Vimeo doesn't have.
+These options are typed from Vimeo's own SDK, so your editor completes every parameter and rejects one Vimeo doesn't have.
 
 `autoplay`, `controls`, `loop`, `muted`, `playsinline`, and `preload` come from the props of the same name. Setting them here overrides the prop, which is worth knowing when a value seems to be ignored. The element also sends `transparent: false`, where Vimeo's default is `true`.
 

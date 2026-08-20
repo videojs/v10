@@ -42,11 +42,11 @@ Video component that plays TikTok videos through the [TikTok embed player](https
 
 ## Controls
 
-TikTok always draws part of its own chrome: the center play button, author header, and social rail are always visible. `controls` adds the progress bar and control buttons on top of those. Without `controls`, the element ignores pointer events, so a player skin above it receives every click.
+TikTok always draws part of its own chrome: the center play button, author header, and social rail are always visible. `controls` adds the progress bar and control buttons on top of those. Without `controls`, the element ignores pointer events, so a <DocsLink slug="concepts/skins">player skin</DocsLink> above it receives every click.
 
 ## Deferred startup
 
-TikTok builds its player lazily: until something starts playback, the embed has no video element, reports a duration of 0, and silently drops commands. The element works around this by bringing the player up with a muted autoplay it immediately parks, so the embed answers play, pause, and seek before the first play.
+TikTok builds its player lazily: until something starts playback, the embed has no video element, reports a duration of 0, and silently drops commands. The element works around this by starting a muted autoplay and pausing it immediately, so the embed answers play, pause, and seek before the first play.
 
 Two settings opt out. `preload="none"` skips the warm-up, leaving the network untouched until the viewer presses play, and the controls inert until then. `controls` hands playback to TikTok's own chrome instead.
 

@@ -22,11 +22,11 @@ import basicUsageHtml from "@/components/docs/demos/cloudflare-video/html/css/Ba
 import basicUsageHtmlCss from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/cloudflare-video/html/css/BasicUsage.ts?raw";
 
-Video component that plays [Cloudflare Stream](https://developers.cloudflare.com/stream/) videos through the Stream player embed. Cloudflare's own chrome stays hidden by default, so it drops into a player skin like any other media component; set `controls` to use Cloudflare's UI instead.
+Video component that plays [Cloudflare Stream](https://developers.cloudflare.com/stream/) videos through the Stream player embed. Cloudflare's own chrome stays hidden by default, so it drops into a <DocsLink slug="concepts/skins">player skin</DocsLink> like any other media component; set `controls` to use Cloudflare's UI instead.
 
 ## Load a source
 
-`src` takes a raw 32-character video UID, any `cloudflarestream.com` or `videodelivery.net` URL (watch, embed, iframe, manifest, and thumbnail paths all carry the UID in the same position), or a signed token, which stands in for the UID wherever it appears.
+`src` takes a raw 32-character video UID, any `cloudflarestream.com` or `videodelivery.net` URL, or a signed token. Watch, embed, iframe, manifest, and thumbnail URLs all carry the UID in the same position, and a signed token stands in for the UID wherever one appears.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
