@@ -17,6 +17,10 @@ const skinRegistry = defineShadcnRegistry(skinCatalog, {
   homepage: 'https://videojs.org',
   namespace: '@videojs',
   paths,
+  imports: {
+    '@videojs/skins/registry': `${paths.import}/utils`,
+    '@videojs/utils/style': `${paths.import}/utils`,
+  },
   meta: {
     framework: 'react',
     style: 'tailwind',

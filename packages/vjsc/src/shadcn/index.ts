@@ -72,6 +72,8 @@ export interface ShadcnRegistryDefinition<Definition extends CatalogDefinition =
     readonly install: string;
     readonly import: string;
   };
+  /** Source-only import rewrites applied to editable registry files. */
+  readonly imports?: Readonly<Record<string, string>> | undefined;
   readonly meta?: RegistryItem['meta'];
   readonly items: {
     readonly published: readonly CatalogItem<Definition>['name'][];
@@ -198,7 +200,7 @@ export async function emitShadcnRegistry<const Definition extends CatalogDefinit
   const output = await emitCatalog(catalog, {
     items: itemNames,
     output: {
-      ...options.output,
+      ...withRegistryImports(options.output, definition.imports),
       configDir: (item) => resolve(catalog.rootDir, itemOutputDir(item, definition)),
     },
     ...(options.styles ? { styles: options.styles } : {}),
@@ -224,6 +226,29 @@ export async function emitShadcnRegistry<const Definition extends CatalogDefinit
   return {
     files,
     registry: createManifest(catalog, definition, emitted, shared),
+  };
+}
+
+function withRegistryImports<Definition extends CatalogDefinition>(
+  output: CatalogOutputAdapter<Definition>,
+  imports: ShadcnRegistryDefinition<Definition>['imports']
+): CatalogOutputAdapter<Definition> {
+  if (!imports || Object.keys(imports).length === 0) return output;
+
+  return {
+    ...output,
+    compiler: (item) => {
+      const config = typeof output.compiler === 'function' ? output.compiler(item) : (output.compiler ?? {});
+      if (!config.target) return config;
+
+      return {
+        ...config,
+        target: {
+          ...config.target,
+          imports: { ...config.target.imports, ...imports },
+        },
+      };
+    },
   };
 }
 

@@ -9,15 +9,7 @@ describe('emitShadcnRegistry', () => {
   it('emits individual React/Tailwind components and a shadcn source manifest', async () => {
     const catalog = await loadSkinCatalog();
     const output = await emitShadcnRegistry(catalog, skinRegistry, {
-      output: reactOutput({
-        resolveImport(reference) {
-          if (reference.source === '@videojs/utils/style' || reference.source === '@videojs/skins/registry') {
-            return { ...reference, source: `${skinRegistry.paths.import}/utils` };
-          }
-
-          return reference;
-        },
-      }),
+      output: reactOutput(),
       styles: { mode: 'tailwind', variant: 'default' },
     });
     const entry = output.files.find((file) => file.path.endsWith('/play-button/play-button.tsx'));
@@ -66,6 +58,8 @@ describe('emitShadcnRegistry', () => {
     expect(entry?.content).toContain('<PlayButtonPrimitive className=');
     expect(entry?.content).toContain('{...props}>');
     expect(entry?.content).toContain('resolveClassName(className, state)');
+    expect(entry?.content).toContain('from "@/components/videojs/utils"');
+    expect(entry?.content).not.toContain('@videojs/utils/style');
     expect(playButton?.files?.some((file) => file.path.endsWith('/play-button/play-button.tsx'))).toBe(true);
     expect(playButton?.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);
     expect(playButton?.dependencies).toEqual(['@videojs/react', 'react']);

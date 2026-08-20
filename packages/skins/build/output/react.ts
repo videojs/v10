@@ -1,18 +1,14 @@
 import { posix } from 'node:path';
 
 import { jsx } from 'vjsc';
-import type { ImportRef } from 'vjsc/ast';
 import { defineCatalogOutput, emitCatalog } from 'vjsc/catalog';
 import { catalogSourcePath, getCatalogSkin, type SkinCatalog, type SkinCatalogSkin } from '../catalog';
 import { createReactComponentRegistry } from '../metadata';
 import { componentTransforms } from './react/transform';
 import { packageSkinStyles, skinStyleTransform } from './styles';
 
-type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
-
 interface ReactOutputOptions {
   iconSet?: string | undefined;
-  resolveImport?: ReactImportResolver | undefined;
 }
 
 interface EmitReactSkinOptions extends ReactOutputOptions {
@@ -25,31 +21,14 @@ export interface EmitReactSkinModuleOptions extends EmitReactSkinOptions {
 
 /** Create the React module output adapter for a Skin catalog. */
 export function reactOutput(options: ReactOutputOptions = {}) {
-  const resolveImport = (reference: ImportRef): ImportRef | false =>
-    options.resolveImport ? options.resolveImport(reference) : reference;
-
   const iconSet = options.iconSet ?? 'default';
-  const iconSource = iconSet === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${iconSet}`;
 
   return defineCatalogOutput({
     componentRegistry: createReactComponentRegistry(iconSet),
     compiler: {
       external: (source) => !source.startsWith('.') && !source.startsWith('/'),
-      target: jsx({
-        importSource: 'react',
-        ...(options.resolveImport
-          ? {
-              imports: {
-                '@videojs/core': (name) => resolveImport({ source: '@videojs/core', name }),
-                '@videojs/react': (name) => resolveImport({ source: '@videojs/react', name }),
-                '@videojs/utils/style': (name) => resolveImport({ source: '@videojs/utils/style', name }),
-                [iconSource]: (name) => resolveImport({ source: iconSource, name }),
-                react: (name) => resolveImport({ source: 'react', name }),
-              },
-            }
-          : {}),
-      }),
-      plugins: [componentTransforms(resolveImport)],
+      target: jsx({ importSource: 'react' }),
+      plugins: [componentTransforms()],
     },
   });
 }

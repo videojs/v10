@@ -213,27 +213,6 @@ describe('reactOutput', () => {
     expect(result.code).toContain('<MenuPrimitive.Root side="top" align="center" {...props}>');
   });
 
-  it('allows a target to resolve generated React imports', async () => {
-    const filename = resolve(vjscRoot, 'components/buttons/seek-button.tsx');
-    const source = await readFile(filename, 'utf8');
-    const result = await transform(source, {
-      filename,
-      config: reactConfig({
-        styles: { mode: 'tailwind', manifest: await loadStyleManifest(styleFiles) },
-        resolveImport(reference) {
-          if (reference.source === '@videojs/react' && reference.name === 'SeekButton') {
-            return { ...reference, source: '@/ui/seek-button' };
-          }
-          if (reference.source === '@videojs/react/icons') return { ...reference, source: '@/icons' };
-          return reference;
-        },
-      }),
-    });
-
-    expect(result.code).toContain('import { SeekButton as SeekButtonPrimitive } from "@/ui/seek-button"');
-    expect(result.code).toContain('import { SeekIcon } from "@/icons"');
-  });
-
   it('lowers Container and Poster as independent React components', async () => {
     const filename = resolve(vjscRoot, 'components/layout/container.tsx');
     const source = await readFile(filename, 'utf8');

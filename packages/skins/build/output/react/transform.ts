@@ -7,9 +7,6 @@ import {
   type TransformHelpers,
   type TransformStep,
 } from 'vjsc';
-import type { ImportRef } from 'vjsc/ast';
-
-type ImportResolver = (reference: ImportRef) => ImportRef | false;
 
 const optionMenus = [
   {
@@ -37,13 +34,13 @@ const optionMenus = [
 type OptionMenu = (typeof optionMenus)[number];
 
 interface ReactImports {
-  readonly usePlayer: ImportRef;
-  readonly optionHooks: Readonly<Record<OptionMenu['hook'], ImportRef>>;
+  readonly usePlayer: { readonly source: string; readonly name: string };
+  readonly optionHooks: Readonly<Record<OptionMenu['hook'], { readonly source: string; readonly name: string }>>;
 }
 
 /** React-only behavior that cannot be expressed by the framework-neutral component registry. */
-export function componentTransforms(resolveImport: ImportResolver): CompilerPlugin {
-  const references = resolveReactImports(resolveImport);
+export function componentTransforms(): CompilerPlugin {
+  const references = resolveReactImports();
 
   return rewrite((code) => {
     const usePlayer = code.import(references.usePlayer.source, references.usePlayer.name);
@@ -177,17 +174,16 @@ function settingsAvailabilityTransforms(
   ];
 }
 
-function resolveReactImports(resolveImport: ImportResolver): ReactImports {
+function resolveReactImports(): ReactImports {
   return {
-    usePlayer: requiredReactImport(resolveImport, 'usePlayer'),
-    optionHooks: Object.fromEntries(
-      optionMenus.map(({ hook }) => [hook, requiredReactImport(resolveImport, hook)])
-    ) as Record<OptionMenu['hook'], ImportRef>,
+    usePlayer: reactImport('usePlayer'),
+    optionHooks: Object.fromEntries(optionMenus.map(({ hook }) => [hook, reactImport(hook)])) as Record<
+      OptionMenu['hook'],
+      { source: string; name: string }
+    >,
   };
 }
 
-function requiredReactImport(resolveImport: ImportResolver, name: string): ImportRef {
-  const reference = resolveImport({ source: '@videojs/react', name });
-  if (!reference) throw new Error(`React Skin output requires a target import for \`${name}\`.`);
-  return reference;
+function reactImport(name: string): { source: string; name: string } {
+  return { source: '@videojs/react', name };
 }

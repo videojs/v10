@@ -3,7 +3,6 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { jsx } from 'vjsc';
-import type { ImportRef } from 'vjsc/ast';
 import { vjscPlugin } from 'vjsc/bundle';
 import { catalogMetaPlugin } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
@@ -23,8 +22,6 @@ const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 
-const resolveImport = (reference: ImportRef): ImportRef => reference;
-
 export default defineConfig(({ mode }) => (mode === 'registry' ? createRegistryConfig() : createPreviewConfig()));
 
 function createRegistryConfig() {
@@ -32,15 +29,7 @@ function createRegistryConfig() {
     catalog: skinCatalog,
     rootDir: vjscDir,
     registry: skinRegistry,
-    output: reactOutput({
-      resolveImport(reference) {
-        if (reference.source === '@videojs/utils/style' || reference.source === '@videojs/skins/registry') {
-          return { ...reference, source: `${skinRegistry.paths.import}/utils` };
-        }
-
-        return reference;
-      },
-    }),
+    output: reactOutput(),
     styles: {
       mode: 'tailwind',
       variant: 'default',
@@ -69,7 +58,7 @@ function createPreviewConfig() {
     target: jsx({
       importSource: 'react',
     }),
-    plugins: [catalogMetaPlugin(), registryPlugin(componentRegistry), componentTransforms(resolveImport)],
+    plugins: [catalogMetaPlugin(), registryPlugin(componentRegistry), componentTransforms()],
   };
 
   return {
