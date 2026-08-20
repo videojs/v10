@@ -9,13 +9,9 @@ import {
 import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/ui/container';
 
-const { PlayerElement, PlayerController } = createPlayer({
+const { PlayerElement: VideoPlayerElement, PlayerController } = createPlayer({
   features: videoFeatures,
 });
-
-class VideoPlayer extends PlayerElement {
-  static readonly tagName = 'demo-video-player';
-}
 
 class PlayToggle extends MediaElement {
   static readonly tagName = 'demo-play-toggle';
@@ -54,5 +50,5 @@ class PlayToggle extends MediaElement {
   }
 }
 
-customElements.define(VideoPlayer.tagName, VideoPlayer);
+customElements.define('demo-video-player', VideoPlayerElement);
 customElements.define(PlayToggle.tagName, PlayToggle);

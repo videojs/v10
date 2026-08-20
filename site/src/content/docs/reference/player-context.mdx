@@ -6,7 +6,7 @@ description: The default player context instance for consuming the player store 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`playerContext` is a Web Components context token that carries the player store through the DOM tree. Provider elements publish the store to this context, and consumer elements such as <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and <DocsLink slug="reference/player-container">`ContainerElement`</DocsLink> read from it.
+`playerContext` is a Web Components context token that carries the player store through the DOM tree. Player elements publish the store to this context, and consumer elements such as <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and <DocsLink slug="reference/player-container">`ContainerElement`</DocsLink> read from it.
 
 Pass it as the second argument to `PlayerController`:
 

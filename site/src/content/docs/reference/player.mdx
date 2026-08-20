@@ -2,13 +2,12 @@
 title: Player
 frameworkTitle:
   html: video-player
-description: The state boundary — creates a store and broadcasts it to all descendants.
+description: The state boundary — creates a store and makes it available to all descendants.
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
-import Aside from '@/components/Aside.astro';
 
 <FrameworkCase frameworks={["react"]}>
 The `Player` is the state boundary of your player. It creates a store and makes it available to every component inside it via context. Every player needs exactly one.
@@ -128,7 +127,7 @@ Everything that needs player state goes inside `Player`: skins, containers, UI c
 `Player` renders no visible element of its own — it's purely a state wrapper. Sizing, borders, and background go on the <DocsLink slug="reference/player-container">`Container`</DocsLink>, not `Player`.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-The `<video-player>` element uses `display: contents`, meaning it has no visual box of its own. Sizing, borders, and background go on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink>, not the provider.
+The `<video-player>` element uses `display: contents`, meaning it has no visual box of its own. Sizing, borders, and background go on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink>, not the player.
 </FrameworkCase>
 
 ## Accessing state
@@ -152,7 +151,7 @@ function PlayPauseButton() {
 <DocsLinkCard slug="reference/use-player">usePlayer reference</DocsLinkCard>
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-Use `PlayerController` to subscribe to store state from any custom element inside the provider:
+Use `PlayerController` to subscribe to store state from any custom element inside the player:
 
 ```ts title="play-pause-button.ts"
 import { MediaElement, PlayerController, playerContext, selectPlayback } from '@videojs/html';
@@ -163,7 +162,8 @@ class PlayPauseButton extends MediaElement {
   connectedCallback() {
     super.connectedCallback();
     this.addEventListener('click', () => {
-      this.#playback.store?.dispatch('toggle-playback');
+      const playback = this.#playback.value;
+      playback?.paused ? playback.play() : playback?.pause();
     });
   }
 }

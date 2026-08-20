@@ -14,7 +14,7 @@ export class LiveAudioPlayerElement extends PlayerElement {
   static readonly tagName = 'live-audio-player';
 }
 
-// Provider must be defined before consumer for context handshake during upgrade.
+// The player must be defined before consumers for context handshakes during upgrade.
 safeDefine(LiveAudioPlayerElement);
 safeDefine(ContainerElement);
 
