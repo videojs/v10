@@ -31,13 +31,11 @@ export const { Player } = createPlayer({
 import { createPlayer, features, MediaElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { ProviderMixin } = createPlayer({
+export const { PlayerElement } = createPlayer({
   features: [...videoFeatures, features.orientationLock],
 });
 
-class MyPlayer extends ProviderMixin(MediaElement) {}
-
-customElements.define('my-player', MyPlayer);
+customElements.define('my-player', PlayerElement);
 ```
 </FrameworkCase>
 
@@ -100,12 +98,12 @@ function OrientationToggle() {
 import { createPlayer, features, MediaElement, selectOrientationLock } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({
+const { PlayerController } = createPlayer({
   features: [...videoFeatures, features.orientationLock],
 });
 
 class OrientationToggle extends MediaElement {
-  readonly #lock = new PlayerController(this, context, selectOrientationLock);
+  readonly #lock = new PlayerController(this, selectOrientationLock);
 }
 ```
 </FrameworkCase>

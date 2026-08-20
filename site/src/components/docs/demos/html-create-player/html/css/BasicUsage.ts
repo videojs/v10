@@ -4,24 +4,23 @@ import {
   createButton,
   createPlayer,
   MediaElement,
-  PlayerController,
   selectPlayback,
 } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/ui/container';
 
-const { ProviderMixin, context } = createPlayer({
+const { PlayerElement, PlayerController } = createPlayer({
   features: videoFeatures,
 });
 
-class VideoPlayer extends ProviderMixin(MediaElement) {
+class VideoPlayer extends PlayerElement {
   static readonly tagName = 'demo-video-player';
 }
 
 class PlayToggle extends MediaElement {
   static readonly tagName = 'demo-play-toggle';
 
-  readonly #player = new PlayerController(this, context, selectPlayback);
+  readonly #player = new PlayerController(this, selectPlayback);
 
   #disconnect: AbortController | null = null;
 

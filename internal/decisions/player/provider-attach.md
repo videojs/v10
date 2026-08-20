@@ -43,6 +43,6 @@ This split created friction:
 
 ### Trade-offs
 
-- **Provider mixin grows in complexity.** It gains attach lifecycle management, fallback media discovery, and two additional context providers. This is manageable since the logic is straightforward and consolidates previously scattered responsibilities.
+- **Player element grows in complexity.** It owns attach lifecycle management, native media discovery, and two additional context providers. This is manageable because it consolidates previously scattered responsibilities in the element that already owns the store.
 
 - **DOM observation is a pragmatic compromise.** Plain `<video>` and `<audio>` elements can't consume context, so the provider observes its subtree for them. This means two discovery paths exist, but native elements continue to work when added, removed, or replaced after connection.

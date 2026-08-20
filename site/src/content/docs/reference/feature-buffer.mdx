@@ -41,10 +41,10 @@ function BufferBar() {
 import { createPlayer, MediaElement, selectBuffer } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class BufferBar extends MediaElement {
-  readonly #buffer = new PlayerController(this, context, selectBuffer);
+  readonly #buffer = new PlayerController(this, selectBuffer);
 }
 ```
 </FrameworkCase>
