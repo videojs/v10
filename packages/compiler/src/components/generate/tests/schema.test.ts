@@ -68,7 +68,7 @@ describe('generateSchema', () => {
     expect(first.code).toContain('export const Slider = createComponent(SliderDef);');
     expect(first.code).toContain('PlayButton: PlayButtonDef,');
     expect(first.code).toContain('Slider: SliderDef,');
-    expect(first.code).toContain("export const schema = defineSchema('@fixture/components', DEFINITIONS);");
+    expect(first.code).toContain("export default defineSchema('@fixture/components', DEFINITIONS);");
   });
 
   it('fails check mode when generated output is stale', () => {

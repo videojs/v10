@@ -1,7 +1,7 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/registry */
 
-import type { schema as coreSchema } from '@videojs/core/vjsc';
+import type coreSchema from '@videojs/core/vjsc';
 import { Fragment } from 'vjsc/components';
 import {
   type ComponentRegistry,
@@ -32,7 +32,7 @@ const optionLabel: RegistryEntry = {
 };
 
 /** Canonical core components rendered through registered Video.js custom elements. */
-export function createRegistry(schema: CoreSchema): ComponentRegistry {
+export default function createRegistry(schema: CoreSchema): ComponentRegistry {
   const $ = resolveRegistryEntries(schema, resolveHtmlEntry);
   const entries = {
     ...$,

@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createSchemaModule, html, transform } from 'vjsc';
 import { plugin } from 'vjsc/registry';
-import { createRegistry } from '../registry';
+import createRegistry from '../registry';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const coreDir = resolve(packageDir, '../core');

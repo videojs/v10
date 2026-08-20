@@ -251,7 +251,7 @@ function emitMetadata(entries: readonly ResolvedComponent[], source: string): st
 
   return `const DEFINITIONS = {\n${lines.join('\n')}\n} as const;
 
-export const schema = defineSchema('${source}', DEFINITIONS);`;
+export default defineSchema('${source}', DEFINITIONS);`;
 }
 
 function validateConfig(value: unknown, location: string): asserts value is GenerateSchemaConfig {

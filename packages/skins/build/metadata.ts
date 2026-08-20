@@ -1,15 +1,15 @@
 import { resolve } from 'node:path';
 
-import type { schema as coreSchema } from '@videojs/core/vjsc';
+import type coreSchema from '@videojs/core/vjsc';
 import { createSchemaModule } from 'vjsc';
 import { type ComponentRegistry, extendRegistry } from 'vjsc/registry';
-import { createRegistry as createHtmlRegistry } from '../../html/vjsc/registry';
+import createHtmlRegistry from '../../html/vjsc/registry';
 import {
   createHtmlRegistry as createHtmlIconRegistry,
   createReactRegistry as createReactIconRegistry,
 } from '../../icons/vjsc/registry';
 import { createIconSchemaModule } from '../../icons/vjsc/schema';
-import { createRegistry as createReactRegistry } from '../../react/vjsc/registry';
+import createReactRegistry from '../../react/vjsc/registry';
 
 const packagesDir = resolve(import.meta.dirname, '../..');
 const corePackageDir = resolve(packagesDir, 'core');

@@ -1,7 +1,7 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/registry */
 
-import type { schema as coreSchema } from '@videojs/core/vjsc';
+import type coreSchema from '@videojs/core/vjsc';
 import ts from 'typescript';
 import { createArrowFunction } from 'vjsc/ast';
 import type { TemplatePartProps, TemplateProps } from 'vjsc/components';
@@ -45,7 +45,7 @@ type CoreSchema = typeof coreSchema;
 type CoreDefinitions = CoreSchema['definitions'];
 
 /** Canonical core components rendered through the React component package. */
-export function createRegistry(schema: CoreSchema): ComponentRegistry {
+export default function createRegistry(schema: CoreSchema): ComponentRegistry {
   const $ = resolveRegistryEntries(schema, resolveReactEntry);
   const entries = {
     ...$,
