@@ -8,10 +8,13 @@ import { catalogMetaPlugin } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
+import { createCoreSchemaModule } from '../core/vjsc';
 import { createIconElementModule } from './build/icon-element';
 import {
   coreSchemaModule,
+  createHtmlEntriesModule,
   createReactComponentRegistry,
+  createReactEntriesModule,
   getIconSchemaModule,
   htmlEntriesModule,
   reactEntriesModule,
@@ -112,10 +115,10 @@ export default defineConfig({
     compiler({
       include: `${canonicalDir}/**/*.tsx`,
       modules: [
-        { id: 'virtual:vjsc/core-schema', load: () => coreSchemaModule },
-        { id: 'virtual:vjsc/icons-schema', load: () => iconSchemaModule },
-        { id: 'virtual:vjsc/registry/react', load: () => reactEntriesModule },
-        { id: 'virtual:vjsc/registry/html', load: () => htmlEntriesModule },
+        { id: 'virtual:vjsc/core-schema', load: createCoreSchemaModule },
+        { id: 'virtual:vjsc/icons-schema', load: () => getIconSchemaModule() },
+        { id: 'virtual:vjsc/registry/react', load: createReactEntriesModule },
+        { id: 'virtual:vjsc/registry/html', load: createHtmlEntriesModule },
         { id: 'virtual:vjsc/catalog', load: createSkinCatalogItemsModule },
         { id: 'virtual:vjsc/icons/element/default.js', load: () => defaultIconElementModule },
         { id: 'virtual:vjsc/icons/element/minimal.js', load: () => minimalIconElementModule },

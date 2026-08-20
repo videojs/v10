@@ -8,6 +8,7 @@ const configFile = resolve(packageDir, 'vite.config.ts');
 const defaultSkinUrl = '/../canonical/skins/default-video/skin.tsx';
 const playButtonUrl = '/../canonical/components/buttons/play-button.tsx';
 const buttonStyles = resolve(packageDir, 'canonical/styles/components/button.styles.ts');
+const corePlayButton = resolve(packageDir, '../core/src/core/ui/play-button/play-button-component.ts');
 const reactVirtualSkin = 'virtual:vjsc/skin/react/default-video/vanilla.tsx';
 const htmlVirtualSkin = 'virtual:vjsc/skin/html/minimal-video/tailwind.tsx';
 const virtualCatalog = 'virtual:vjsc/catalog';
@@ -69,6 +70,14 @@ describe('canonical Skins Vite workflow', () => {
     expect(virtualModule?.transformResult).not.toBeNull();
 
     server.watcher.emit('change', buttonStyles);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(virtualModule?.transformResult).toBeNull();
+
+    await server.transformRequest(reactVirtualSkin);
+    expect(virtualModule?.transformResult).not.toBeNull();
+
+    server.watcher.emit('change', corePlayButton);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(virtualModule?.transformResult).toBeNull();

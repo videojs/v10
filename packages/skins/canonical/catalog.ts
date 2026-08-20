@@ -48,24 +48,29 @@ export function createSkinCatalogItemsModule() {
   return createCatalogItemsModule<SkinCatalogMeta>(catalogDiscovery);
 }
 
-/** Canonical Skin source catalog shared by package, registry, and future documentation outputs. */
-export const skinCatalog = defineCatalog({
-  components: ['@videojs/core/vjsc', '@videojs/icons/vjsc'],
-  resources,
-  allowedImports: [
-    '@videojs/core',
-    '@videojs/utils/style',
-    'vjsc/styles',
-    'vjsc/components',
-    'vjsc/catalog',
-    /^@videojs\/core\/i18n\/text\//,
-  ],
-  imports: {
-    '@videojs/core/vjsc': 'components',
-    '@videojs/icons/vjsc': 'icons',
-  },
-  items: createSkinCatalogItemsModule().items,
-});
+/** Recreate the canonical catalog inventory from colocated item metadata. */
+export function createSkinCatalog() {
+  return defineCatalog({
+    components: ['@videojs/core/vjsc', '@videojs/icons/vjsc'],
+    resources,
+    allowedImports: [
+      '@videojs/core',
+      '@videojs/utils/style',
+      'vjsc/styles',
+      'vjsc/components',
+      'vjsc/catalog',
+      /^@videojs\/core\/i18n\/text\//,
+    ],
+    imports: {
+      '@videojs/core/vjsc': 'components',
+      '@videojs/icons/vjsc': 'icons',
+    },
+    items: createSkinCatalogItemsModule().items,
+  });
+}
+
+/** Canonical Skin source catalog shared by registry policy and static tooling. */
+export const skinCatalog = createSkinCatalog();
 
 export type SkinItemName = (typeof skinCatalog.items)[number]['name'];
 export type SkinName = Extract<(typeof skinCatalog.items)[number], { readonly type: 'skin' }>['name'];
