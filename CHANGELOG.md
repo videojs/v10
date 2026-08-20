@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.30] - 2026-08-20
+
+### 🚀 Features
+- *(packages)* Add shaka player media ([#2276](https://github.com/videojs/v10/pull/2276)) by [@luwes](https://github.com/luwes)
+- *(packages)* Add title component ([#1997](https://github.com/videojs/v10/pull/1997)) by [@decepulis](https://github.com/decepulis)
+- *(media)* Bring the shaka media to parity with the hls.js media ([#2285](https://github.com/videojs/v10/pull/2285)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(site)* Document metadata feature ([#2000](https://github.com/videojs/v10/pull/2000)) by [@decepulis](https://github.com/decepulis)
+- *(packages)* [**breaking**] Configure orientation lock through providers ([#1999](https://github.com/videojs/v10/pull/1999)) by [@decepulis](https://github.com/decepulis)
+- *(spf)* Cap Rendition to Player Size ([#2242](https://github.com/videojs/v10/pull/2242)) by [@spuppo-mux](https://github.com/spuppo-mux)
+
+### 🐛 Bug Fixes
+- *(skin)* Stabilize menu sizing and motion ([#2283](https://github.com/videojs/v10/pull/2283)) by [@sampotts](https://github.com/sampotts)
+- *(spf)* Report a verdict when the background ladder is undecodable ([#2286](https://github.com/videojs/v10/pull/2286)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(packages)* Load posters and storyboard thumbnails in cross-origin-isolated pages ([#2273](https://github.com/videojs/v10/pull/2273)) by [@luwes](https://github.com/luwes)
+
+### 🚜 Refactor
+- *(packages)* [**breaking**] Remove built-in poster placeholders ([#2063](https://github.com/videojs/v10/pull/2063)) by [@decepulis](https://github.com/decepulis)
+
+### 📚 Documentation
+- *(site)* Add changelog prose for 10.0.0-beta.29 ([#2277](https://github.com/videojs/v10/pull/2277)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+
 ## [@videojs/core@10.0.0-beta.29] - 2026-08-19
 
 ### 🚀 Features
@@ -1706,6 +1727,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.30]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.29...@videojs/core@10.0.0-beta.30
 [@videojs/core@10.0.0-beta.29]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.28...@videojs/core@10.0.0-beta.29
 [@videojs/core@10.0.0-beta.28]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.27...@videojs/core@10.0.0-beta.28
 [@videojs/core@10.0.0-beta.27]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.26...@videojs/core@10.0.0-beta.27
