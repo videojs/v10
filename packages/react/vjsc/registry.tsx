@@ -3,7 +3,6 @@
 
 import type coreSchema from '@videojs/core/vjsc';
 import ts from 'typescript';
-import { createArrowFunction } from 'vjsc/ast';
 import type { TemplatePartProps, TemplateProps } from 'vjsc/components';
 import {
   type ComponentRegistry,
@@ -16,6 +15,7 @@ import {
   type RegistryRenderContext,
   resolveRegistryEntries,
 } from 'vjsc/registry';
+import { createArrowFunction } from 'vjsc/ts';
 import { resolveReactEntry } from './resolve';
 
 const Div = defineElement('div', {

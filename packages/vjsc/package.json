@@ -16,9 +16,9 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./ast": {
-      "types": "./dist/ast.d.ts",
-      "default": "./dist/ast.js"
+    "./ts": {
+      "types": "./dist/ts/index.d.ts",
+      "default": "./dist/ts/index.js"
     },
     "./components": {
       "types": "./dist/components/index.d.ts",

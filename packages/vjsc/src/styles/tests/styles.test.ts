@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { transform } from '../../ts/transform';
 import { jsx } from '../../ts/types';
 import { getStyleDefinition } from '../define';
-import { collectReferencedStyleRules, loadStyleManifest, plugin, styles } from '../index';
+import { collectReferencedStyleRules, loadStyleManifest, styles, stylesPlugin } from '../index';
 
 const fixtureRoot = resolve(import.meta.dirname, 'fixtures');
 
@@ -44,13 +44,13 @@ describe('styles', () => {
   });
 });
 
-describe('plugin', () => {
+describe('stylesPlugin', () => {
   it('preserves editable Tailwind groups with an explicit class composer', async () => {
     const result = await transform(
       `import styles from './button.styles'; export const Button = () => <button className={styles.root} />;`,
       {
         filename: componentFile,
-        config: { target: jsx(), plugins: [plugin({ mode: 'tailwind', variant: 'compact' })] },
+        config: { target: jsx(), plugins: [stylesPlugin({ mode: 'tailwind', variant: 'compact' })] },
       }
     );
 
@@ -61,7 +61,7 @@ describe('plugin', () => {
   it('discovers style imports and projects the configured Tailwind variant', async () => {
     const result = await transform(component, {
       filename: componentFile,
-      config: { target: jsx(), plugins: [plugin({ mode: 'tailwind', variant: 'compact' })] },
+      config: { target: jsx(), plugins: [stylesPlugin({ mode: 'tailwind', variant: 'compact' })] },
     });
 
     expect(result.code).toContain('className={cn("grid border-0", "p-1", \'hook\')}');
@@ -76,7 +76,7 @@ describe('plugin', () => {
     await expect(
       transform(component, {
         filename: componentFile,
-        config: { target: jsx(), plugins: [plugin({ mode: 'tailwind', variant: 'unknown' })] },
+        config: { target: jsx(), plugins: [stylesPlugin({ mode: 'tailwind', variant: 'unknown' })] },
       })
     ).rejects.toThrow('does not define the `unknown` variant');
   });
@@ -87,7 +87,7 @@ describe('plugin', () => {
       config: {
         target: jsx(),
         plugins: [
-          plugin({
+          stylesPlugin({
             mode: 'css',
             variant: 'compact',
             stylesheet: { input: tailwindInput, scope: '.fixture-skin' },

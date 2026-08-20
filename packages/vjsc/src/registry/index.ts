@@ -1,5 +1,5 @@
 export * from './definition';
-export { plugin } from './plugin';
+export { plugin as registryPlugin } from './plugin';
 export {
   type ResolvedRegistryEntries,
   type ResolvedRegistryEntryTree,

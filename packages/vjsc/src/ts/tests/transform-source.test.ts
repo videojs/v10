@@ -83,7 +83,7 @@ describe('transform pipeline phases', () => {
       () =>
       (sourceFile) => {
         const importSource = sourceFile.statements.find(ts.isImportDeclaration)?.moduleSpecifier;
-        applied.push(`${name}:${ts.isStringLiteral(importSource) ? importSource.text : 'missing'}`);
+        applied.push(`${name}:${importSource && ts.isStringLiteral(importSource) ? importSource.text : 'missing'}`);
         return sourceFile;
       };
     const plugin = (name: string, enforce?: 'pre' | 'post'): CompilerPlugin => ({

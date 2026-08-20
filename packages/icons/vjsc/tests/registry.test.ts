@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { html, jsx, transform } from 'vjsc';
 import { defineComponent, defineSchema } from 'vjsc/components';
-import { plugin } from 'vjsc/registry';
+import { registryPlugin } from 'vjsc/registry';
 import { createHtmlRegistry, createReactRegistry } from '../registry';
 
 const schema = defineSchema('@videojs/icons/vjsc', {
@@ -19,7 +19,7 @@ describe('icon registries', () => {
     const result = await transform(source, {
       config: {
         target: jsx(),
-        plugins: [plugin(createReactRegistry(schema, { family: 'minimal' }))],
+        plugins: [registryPlugin(createReactRegistry(schema, { family: 'minimal' }))],
       },
     });
 
@@ -31,7 +31,7 @@ describe('icon registries', () => {
     const result = await transform(source, {
       config: {
         target: html(),
-        plugins: [plugin(createHtmlRegistry(schema, { family: 'minimal' }))],
+        plugins: [registryPlugin(createHtmlRegistry(schema, { family: 'minimal' }))],
       },
     });
 

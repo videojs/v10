@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 import { createSchemaModule, html, transform } from 'vjsc';
-import { plugin } from 'vjsc/registry';
+import { registryPlugin } from 'vjsc/registry';
 import createRegistry from '../registry';
 
 const packageDir = resolve(import.meta.dirname, '../..');
@@ -23,7 +23,7 @@ function compile(source: string, filename = '/project/src/view.tsx') {
     configDir: '/project',
     config: {
       target: html(),
-      plugins: [plugin(registry)],
+      plugins: [registryPlugin(registry)],
     },
   });
 }

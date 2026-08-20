@@ -96,10 +96,12 @@ function isTypeOnlyImport(node: ts.ImportDeclaration): boolean {
   if (!clause) return false;
   if (clause.isTypeOnly) return true;
   const bindings = clause.namedBindings;
-  return (
+  return Boolean(
     !clause.name &&
-    Boolean(bindings && ts.isNamedImports(bindings) && bindings.elements.length > 0) &&
-    bindings!.elements.every((element) => element.isTypeOnly)
+      bindings &&
+      ts.isNamedImports(bindings) &&
+      bindings.elements.length > 0 &&
+      bindings.elements.every((element) => element.isTypeOnly)
   );
 }
 

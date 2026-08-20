@@ -24,7 +24,7 @@ export type { StylePluginOptions, StylesheetOptions } from './plugin';
 export type { StyleMode } from './transform';
 
 /** Create the compiler styles plugin without loading its Node-only backend into authored style modules. */
-export function plugin(options: StylePluginOptions): CompilerPlugin {
+export function stylesPlugin(options: StylePluginOptions): CompilerPlugin {
   return {
     name: 'vjsc:styles',
     enforce: 'pre',
