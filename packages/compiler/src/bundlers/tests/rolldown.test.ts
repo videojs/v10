@@ -5,9 +5,9 @@ import { join } from 'node:path';
 import { rolldown } from 'rolldown';
 import { describe, expect, it, vi } from 'vitest';
 
-import { vjsCompilerModules } from '../rolldown';
+import { vjsCompiler } from '../rolldown';
 
-describe('vjsCompilerModules', () => {
+describe('vjsCompiler', () => {
   it('bundles a generated entry and its relative source imports', async () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-rolldown-'));
     const source = join(root, 'value.ts');
@@ -21,7 +21,7 @@ describe('vjsCompilerModules', () => {
     const bundle = await rolldown({
       input: 'virtual:vjsc/entry.ts',
       plugins: [
-        vjsCompilerModules({
+        vjsCompiler({
           modules: [{ id: 'virtual:vjsc/entry.ts', load }],
           resolveId: () => virtualFile,
         }),

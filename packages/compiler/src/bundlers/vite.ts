@@ -2,8 +2,9 @@ import { createHash } from 'node:crypto';
 import { createFilter, type FilterPattern, type Plugin } from 'vite';
 import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../config';
 import { type LoadedCompilerConfig, loadConfig } from '../load-config';
-import { createVirtualModuleGraph, type VirtualModuleDefinition } from '../module-graph';
+import type { VirtualModuleDefinition } from '../module-graph';
 import { CompilerError, transform } from '../transform';
+import { createCompilerModules } from './modules';
 
 export type VideojsCompilerPluginOptions = {
   include?: FilterPattern | undefined;
@@ -37,10 +38,10 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   const cssIdsByOwner = new Map<string, Set<string>>();
   const watchFilesByOwner = new Map<string, Set<string>>();
   const ownersByWatchFile = new Map<string, Set<string>>();
-  const modules = createVirtualModuleGraph(options.modules ?? []);
-  const virtualModuleIds = options.modules?.map((module) => module.id) ?? [];
-  const publicIdByResolvedId = new Map<string, string>();
-  const resolvedIdByPublicId = new Map<string, string>();
+  const modules = createCompilerModules({
+    modules: options.modules ?? [],
+    resolveId: resolvedVirtualModuleId,
+  });
   let root = process.cwd();
   let loadedConfig: LoadedCompilerConfig | null | undefined;
 
@@ -59,10 +60,10 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
     name: 'vjsc',
     enforce: 'pre',
     config() {
-      if (virtualModuleIds.length === 0) return null;
+      if (modules.ids.length === 0) return null;
       return {
         optimizeDeps: {
-          exclude: virtualModuleIds,
+          exclude: [...modules.ids],
         },
       };
     },
@@ -70,24 +71,16 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       root = config.root;
     },
     resolveId(id) {
-      if (publicIdByResolvedId.has(id)) return id;
       if (cssById.has(id)) return `\0${id}`;
-      if (!modules.has(id)) return null;
-      let resolvedId = resolvedIdByPublicId.get(id);
-      if (!resolvedId) {
-        resolvedId = resolvedVirtualModuleId(id);
-        resolvedIdByPublicId.set(id, resolvedId);
-        publicIdByResolvedId.set(resolvedId, id);
-      }
-      return resolvedId;
+      return modules.resolveId(id);
     },
     async load(id) {
-      const publicId = id.startsWith('\0') ? id.slice(1) : publicIdByResolvedId.get(id);
+      const publicId = id.startsWith('\0') ? id.slice(1) : modules.publicId(id);
       if (!publicId) return null;
       const css = cssById.get(publicId);
       if (css !== undefined) return css;
 
-      const generated = await modules.load(publicId);
+      const generated = await modules.load(id);
       if (!generated) return null;
       for (const fileName of generated.watchFiles) this.addWatchFile(fileName);
       return generated.code;
@@ -99,7 +92,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
     handleHotUpdate(context) {
       const affectedVirtualModules = modules
         .invalidate(context.file)
-        .map((id) => context.server.moduleGraph.getModuleById(resolvedIdByPublicId.get(id) ?? `\0${id}`))
+        .map((id) => context.server.moduleGraph.getModuleById(modules.resolvedId(id) ?? `\0${id}`))
         .filter((module) => module !== undefined);
       const affectedOwners = [
         ...(loadedConfig?.configPath === context.file ? watchFilesByOwner.keys() : []),
