@@ -3,6 +3,7 @@ import {
   getAnchorNames,
   getPositionedSide,
   type InlineStyleSnapshot,
+  isRTL,
   observeResize,
   rafThrottle,
   restoreInlineStyles,
@@ -146,7 +147,8 @@ export class PopupPositioner {
     const options = this.#options;
     if (!options?.position || !options.trigger || !options.popup) return;
 
-    const triggerRect = options.trigger.getBoundingClientRect();
+    const trigger = options.trigger;
+    const triggerRect = trigger.getBoundingClientRect();
     const boundaryRect = getPositioningBoundaryRect(this.#boundaryElement);
     const offsets = resolveOffsets(options.popup, options.cssVars);
     const preferredPosition = options.position;
@@ -155,7 +157,7 @@ export class PopupPositioner {
       const side = getPositionedSide(triggerRect, popupRect, boundaryRect, preferredPosition, offsets);
       const { positionAnchor: _, ...style } = getAnchorPositionStyle(
         options.anchorName,
-        { ...preferredPosition, side },
+        { ...preferredPosition, side, direction: isRTL(trigger) ? 'rtl' : 'ltr' },
         triggerRect,
         anchorSupported ? undefined : popupRect,
         boundaryRect,

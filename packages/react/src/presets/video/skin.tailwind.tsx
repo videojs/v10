@@ -175,7 +175,11 @@ function VolumePopover(): ReactNode {
 }
 
 function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
-  return <ChevronIcon className={cn(icon, menu.icon, menu.chevron, flipped ? iconFlipped : undefined)} />;
+  return (
+    <ChevronIcon
+      className={cn(icon, menu.icon, menu.chevron, flipped ? cn(iconFlipped, menu.backChevron) : undefined)}
+    />
+  );
 }
 
 function SettingsMenu(): ReactNode {
@@ -219,7 +223,9 @@ function SettingsMenu(): ReactNode {
                     <QualityIcon className={cn(icon, menu.icon)} />
                     <span>{t(qualityText)}</span>
                     <span className={menu.hint}>
-                      <span className={menu.hintLabel}>{quality.selectedLabel}</span>
+                      <bdi dir="auto" className={menu.hintLabel}>
+                        {quality.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -236,10 +242,10 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(qualityText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className={menu.item}>
-                      <span>
+                      <bdi dir="auto">
                         {item.label}
                         {item.tier ? <sup className={menu.tier}>{item.tier}</sup> : null}
-                      </span>
+                      </bdi>
                       {item.badge ? <span className={badge}>{item.badge}</span> : null}
                       <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
                         <CheckIcon className={cn(icon, menu.icon)} />
@@ -260,7 +266,9 @@ function SettingsMenu(): ReactNode {
                     <SpeechIcon className={icon} />
                     <span>{t(audioText)}</span>
                     <span className={menu.hint}>
-                      <span className={menu.hintLabel}>{audioTrack.selectedLabel}</span>
+                      <bdi dir="auto" className={menu.hintLabel}>
+                        {audioTrack.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -277,7 +285,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(audioText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className={menu.item}>
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
                         <CheckIcon className={icon} />
                       </Menu.ItemIndicator>
@@ -297,7 +305,9 @@ function SettingsMenu(): ReactNode {
                     <SpeedIcon className={cn(icon, menu.icon)} />
                     <span>{t(speedText)}</span>
                     <span className={menu.hint}>
-                      <span className={menu.hintLabel}>{playbackRate.selectedLabel}</span>
+                      <bdi dir="auto" className={menu.hintLabel}>
+                        {playbackRate.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -314,7 +324,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(playbackRateText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className={menu.item}>
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
                         <CheckIcon className={cn(icon, menu.icon)} />
                       </Menu.ItemIndicator>
@@ -334,7 +344,9 @@ function SettingsMenu(): ReactNode {
                     <CaptionsOffIcon className={cn(icon, menu.icon)} />
                     <span>{t(captionsText)}</span>
                     <span className={menu.hint}>
-                      <span className={menu.hintLabel}>{captions.selectedLabel}</span>
+                      <bdi dir="auto" className={menu.hintLabel}>
+                        {captions.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -351,7 +363,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(captionsText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className={menu.item}>
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
                         <CheckIcon className={cn(icon, menu.icon)} />
                       </Menu.ItemIndicator>

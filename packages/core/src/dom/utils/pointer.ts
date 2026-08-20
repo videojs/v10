@@ -4,15 +4,12 @@ import { clamp } from '@videojs/utils/number';
 export function getPercentFromPointerEvent(
   event: { clientX: number; clientY: number },
   rect: DOMRect,
-  orientation: 'horizontal' | 'vertical',
-  isRTL: boolean
+  orientation: 'horizontal' | 'vertical'
 ): number {
   let ratio: number;
 
   if (orientation === 'vertical') {
     ratio = 1 - (event.clientY - rect.top) / rect.height;
-  } else if (isRTL) {
-    ratio = (rect.right - event.clientX) / rect.width;
   } else {
     ratio = (event.clientX - rect.left) / rect.width;
   }

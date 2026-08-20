@@ -47,6 +47,29 @@ An <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> without `l
 
 </FrameworkCase>
 
+## Set text direction
+
+`lang` identifies the content language. `dir` controls text and layout direction. Browsers do not infer one from the other, so set both when the locale applies to the whole document:
+
+```ts
+document.documentElement.lang = 'ar';
+document.documentElement.dir = 'rtl';
+```
+
+Set `dir` back to `ltr` when you switch to a left-to-right language. This prevents the previous direction from remaining active.
+
+When React's `locale` is explicit, the player applies its resolved `lang` and `dir` to the container. A `lang` or `dir` passed to that container overrides the rendered DOM boundary only; translations still come from `I18nProvider locale`.
+
+In HTML, `<media-i18n lang>` sets the provider locale and derives its direction. An explicit `dir` on `<media-i18n>` overrides that derived direction.
+
+Providers without an explicit locale inherit ambient document language and direction. In that case, set `lang` and `dir` on `<html>` or another ancestor:
+
+```html
+<html lang="ar" dir="rtl">
+```
+
+RTL mirrors control ordering, menu motion, and navigation chevrons. Time-semantic media icons remain unchanged. Horizontal time and volume sliders retain a physical left-to-right value scale: Left Arrow decreases the value, Right Arrow increases it, and the minimum remains on the left.
+
 ## Explicit provider language
 
 <FrameworkCase frameworks={["react"]}>

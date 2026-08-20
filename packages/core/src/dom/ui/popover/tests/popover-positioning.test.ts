@@ -107,6 +107,14 @@ describe('getManualPositionStyle', () => {
     expect(style.left).toBe('20px');
   });
 
+  it('resolves horizontal start and end from RTL direction', () => {
+    const start = getManualPositionStyle(trigger, popup, { side: 'top', align: 'start', direction: 'rtl' });
+    const end = getManualPositionStyle(trigger, popup, { side: 'top', align: 'end', direction: 'rtl' });
+
+    expect(start.left).toBe('20px');
+    expect(end.left).toBe('100px');
+  });
+
   it('applies alignOffset from resolved CSS vars', () => {
     const offsets: PositioningOffsets = { sideOffset: 0, alignOffset: 10 };
     const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'start' }, offsets);
@@ -422,6 +430,14 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
     expect(style.bottom).toBe('calc(anchor(top) + var(--media-popover-side-offset, 0px))');
     expect(style.left).toBe('35px');
     expect(style.translate).toBe('clamp(-27px, -50%, calc(257px - 100%)) 0');
+  });
+
+  it('resolves horizontal start from RTL direction', async () => {
+    const getStyle = await importWithAnchorSupport();
+    const style = getStyle('a', { side: 'top', align: 'start', direction: 'rtl' });
+
+    expect(style.right).toBe(`calc(anchor(right) + ${ALIGN_VAR})`);
+    expect(style.left).toBeUndefined();
   });
 
   it('places popover above trigger for side=top using CSS var offset', async () => {

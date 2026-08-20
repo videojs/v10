@@ -9,7 +9,7 @@ import {
   selectControls,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
-import { applyStyles, isRTL } from '@videojs/utils/dom';
+import { applyStyles } from '@videojs/utils/dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useOptionalPlayer } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
@@ -80,7 +80,6 @@ export function useSlider<State extends SliderState = SliderState>(
       getElement: () => rootElementRef.current!,
       getThumbElement: () => thumbElementRef.current,
       getOrientation: () => optionsRef.current.orientation ?? 'horizontal',
-      isRTL: () => (rootElementRef.current ? isRTL(rootElementRef.current) : false),
       isDisabled: () => optionsRef.current.disabled ?? false,
       getPercent: () => optionsRef.current.getPercent(),
       getStepPercent: () => optionsRef.current.getStepPercent(),

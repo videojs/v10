@@ -46,6 +46,30 @@ describe('PopupPositioner', () => {
     expect(popup.style.left).toBe('');
   });
 
+  it('resolves horizontal start from the trigger direction', () => {
+    vi.stubGlobal('ResizeObserver', undefined);
+    const trigger = document.createElement('button');
+    const popup = document.createElement('div');
+    trigger.dir = 'rtl';
+
+    mockRect(document.documentElement, 0, 0, 800, 600);
+    mockRect(trigger, 100, 200, 120, 40);
+    mockRect(popup, 0, 0, 200, 80);
+    Object.defineProperty(popup, 'offsetWidth', { configurable: true, value: 200 });
+    Object.defineProperty(popup, 'offsetHeight', { configurable: true, value: 80 });
+
+    const positioner = new PopupPositioner();
+    positioner.sync({
+      anchorName: 'settings',
+      position: { side: 'top', align: 'start' },
+      trigger,
+      popup,
+    });
+
+    expect(popup.style.left).toBe('20px');
+    positioner.cleanup();
+  });
+
   it('shares resize tracking and batches follow-up measurements', () => {
     let resize: (() => void) | undefined;
     const disconnect = vi.fn();

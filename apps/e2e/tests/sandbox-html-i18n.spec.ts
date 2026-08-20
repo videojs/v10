@@ -4,6 +4,7 @@ import { SELECTORS } from '../fixtures/selectors';
 const SANDBOX_BASE = process.env.SANDBOX_URL ?? 'http://localhost:5299';
 
 const QUERY = 'locale=es&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata';
+const RTL_QUERY = 'locale=ar&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata';
 
 test.use({ trace: 'off' });
 
@@ -42,6 +43,15 @@ test.describe('Sandbox HTML i18n', () => {
     const frame = await getPreviewFrame(page, '/html-video/');
     await expectSpanishPlayLabel(frame);
   });
+
+  test('direct HTML page applies RTL locale to the player boundary', async ({ page }) => {
+    await page.goto(`${SANDBOX_BASE}/html-video/?${RTL_QUERY}`, { waitUntil: 'domcontentloaded' });
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    const provider = page.locator('media-i18n');
+    await expect(provider.locator('video-skin')).toHaveCSS('direction', 'rtl');
+  });
 });
 
 test.describe('Sandbox React i18n', () => {
@@ -56,5 +66,13 @@ test.describe('Sandbox React i18n', () => {
     });
     const frame = await getPreviewFrame(page, '/react-video/');
     await expectSpanishPlayLabel(frame);
+  });
+
+  test('direct React page applies RTL direction to the document and player', async ({ page }) => {
+    await page.goto(`${SANDBOX_BASE}/react-video/?${RTL_QUERY}`, { waitUntil: 'domcontentloaded' });
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.locator('.media-default-skin--video')).toHaveCSS('direction', 'rtl');
   });
 });

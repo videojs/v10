@@ -75,6 +75,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     langRootRef,
     parentLocale,
     localeFromProp = localeProp !== undefined,
+    localeFromOwnProp = localeProp !== undefined,
     translations: translationsProp,
     children,
     onActiveLocaleChange,
@@ -98,10 +99,11 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
         translator,
         locale: resolvedLocale,
         localeFromProp,
+        localeFromOwnProp,
         ...(translationsProp !== undefined ? { translations: translationsProp } : {}),
         ...(onActiveLocaleChange !== undefined ? { onActiveLocaleChange } : {}),
       }),
-      [translator, resolvedLocale, localeFromProp, translationsProp, onActiveLocaleChange]
+      [translator, resolvedLocale, localeFromProp, localeFromOwnProp, translationsProp, onActiveLocaleChange]
     );
 
     return (

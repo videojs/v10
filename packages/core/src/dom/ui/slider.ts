@@ -15,7 +15,6 @@ export interface SliderOptions {
   getThumbElement?: (() => HTMLElement | null) | undefined;
 
   getOrientation: () => 'horizontal' | 'vertical';
-  isRTL: () => boolean;
   isDisabled: () => boolean;
 
   /** Current value as 0–100 percent. Used by keyboard stepping. */
@@ -90,7 +89,6 @@ export function createSlider(options: SliderOptions): SliderApi {
   const changeThrottleMs = options.changeThrottle ?? 0;
 
   let isDragging = false,
-    cachedRTL = false,
     cachedRect: DOMRect | null = null,
     capturedPointerId: number | null = null,
     lastDragPercent = 0,
@@ -167,7 +165,6 @@ export function createSlider(options: SliderOptions): SliderApi {
       const el = options.getElement();
 
       cachedRect = el.getBoundingClientRect();
-      cachedRTL = options.isRTL();
       committedOnRelease = false;
       pointingOnRelease = false;
 
@@ -175,7 +172,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       capturedPointerId = event.pointerId;
       el.setPointerCapture(event.pointerId);
 
-      const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation(), cachedRTL);
+      const percent = getPercentFromPointerEvent(event, cachedRect, options.getOrientation());
 
       isDragging = true;
       lastDragPercent = percent;
@@ -201,7 +198,7 @@ export function createSlider(options: SliderOptions): SliderApi {
           return;
         }
 
-        const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
+        const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation());
 
         lastDragPercent = percent;
         input.patch({ dragPercent: percent, pointerPercent: percent });
@@ -213,7 +210,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       // No capture — hover preview.
       const el = options.getElement();
       const rect = el.getBoundingClientRect();
-      const percent = getPercentFromPointerEvent(event, rect, options.getOrientation(), options.isRTL());
+      const percent = getPercentFromPointerEvent(event, rect, options.getOrientation());
 
       input.patch({ pointing: true, pointerPercent: percent });
     },
@@ -227,7 +224,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       if (isNull(capturedPointerId)) return;
 
-      const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation(), cachedRTL);
+      const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation());
       const releaseRect = options.getElement().getBoundingClientRect();
       pointingOnRelease =
         event.pointerType !== 'touch' &&
@@ -268,21 +265,16 @@ export function createSlider(options: SliderOptions): SliderApi {
       // Round to nearest step before stepping to prevent drift from pointer drags.
       const rounded = roundToStep(currentPercent, stepPercent, 0);
 
-      const rtl = options.isRTL();
-
-      // Horizontal arrows flip for RTL. Vertical arrows are unaffected.
-      const horizontalSign = rtl ? -1 : 1;
-
       const step = event.shiftKey ? largeStepPercent : stepPercent;
 
       let newPercent: number | null = null;
 
       switch (event.key) {
         case 'ArrowRight':
-          newPercent = rounded + step * horizontalSign;
+          newPercent = rounded + step;
           break;
         case 'ArrowLeft':
-          newPercent = rounded - step * horizontalSign;
+          newPercent = rounded - step;
           break;
         case 'ArrowUp':
           newPercent = rounded + step;

@@ -158,7 +158,9 @@ function SettingsMenu(): ReactNode {
                     <QualityIcon className="media-icon" />
                     <span>{t(qualityText)}</span>
                     <span className="media-menu__hint">
-                      <span className="media-menu__hint-label">{quality.selectedLabel}</span>
+                      <bdi dir="auto" className="media-menu__hint-label">
+                        {quality.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -175,10 +177,10 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(qualityText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
-                      <span>
+                      <bdi dir="auto">
                         {item.label}
                         {item.tier ? <sup className="media-menu__tier">{item.tier}</sup> : null}
-                      </span>
+                      </bdi>
                       {item.badge ? <span className="media-badge">{item.badge}</span> : null}
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
@@ -199,7 +201,9 @@ function SettingsMenu(): ReactNode {
                     <SpeechIcon className="media-icon" />
                     <span>{t(audioText)}</span>
                     <span className="media-menu__hint">
-                      <span className="media-menu__hint-label">{audioTrack.selectedLabel}</span>
+                      <bdi dir="auto" className="media-menu__hint-label">
+                        {audioTrack.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -216,7 +220,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(audioText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
@@ -236,7 +240,9 @@ function SettingsMenu(): ReactNode {
                     <SpeedIcon className="media-icon" />
                     <span>{t(speedText)}</span>
                     <span className="media-menu__hint">
-                      <span className="media-menu__hint-label">{playbackRate.selectedLabel}</span>
+                      <bdi dir="auto" className="media-menu__hint-label">
+                        {playbackRate.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -253,7 +259,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(playbackRateText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
@@ -273,7 +279,9 @@ function SettingsMenu(): ReactNode {
                     <CaptionsOffIcon className="media-icon" />
                     <span>{t(captionsText)}</span>
                     <span className="media-menu__hint">
-                      <span className="media-menu__hint-label">{captions.selectedLabel}</span>
+                      <bdi dir="auto" className="media-menu__hint-label">
+                        {captions.selectedLabel}
+                      </bdi>
                       <MenuChevron />
                     </span>
                   </div>
@@ -290,7 +298,7 @@ function SettingsMenu(): ReactNode {
                   aria-label={t(captionsText)}
                   renderItem={(props, item) => (
                     <Menu.RadioItem {...props} className="media-menu__item">
-                      <span>{item.label}</span>
+                      <bdi dir="auto">{item.label}</bdi>
                       <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>

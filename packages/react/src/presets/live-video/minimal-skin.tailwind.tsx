@@ -190,7 +190,7 @@ function CaptionsTrigger(): ReactNode {
         >
           {captions.options.map((option) => (
             <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
-              <span>{option.label}</span>
+              <bdi dir="auto">{option.label}</bdi>
               <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
                 <CheckIcon className={cn(icon, menu.icon)} />
               </Menu.ItemIndicator>

@@ -1,8 +1,12 @@
 import { flush } from '@videojs/store';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UIKeyboardEvent, UIPointerEvent } from '../event';
 import { createSlider, type SliderApi, type SliderOptions } from '../slider';
+
+afterEach(() => {
+  document.documentElement.removeAttribute('dir');
+});
 
 // --- Helpers ---
 
@@ -32,7 +36,6 @@ function createOptions(overrides: Partial<SliderOptions> = {}): SliderOptions {
   return {
     getElement: () => createMockElement(),
     getOrientation: () => 'horizontal',
-    isRTL: () => false,
     isDisabled: () => false,
     getPercent: () => 50,
     getStepPercent: () => 1,
@@ -687,48 +690,36 @@ describe('createSlider', () => {
     });
   });
 
-  describe('keyboard: RTL', () => {
-    it('flips ArrowRight to decrement in RTL', () => {
+  describe('keyboard in an RTL document', () => {
+    it('keeps ArrowRight increasing', () => {
       const onValueChange = vi.fn();
-      const slider = createSlider(
-        createOptions({
-          isRTL: () => true,
-          getPercent: () => 50,
-          getStepPercent: () => 1,
-          onValueChange,
-        })
-      );
+      document.documentElement.dir = 'rtl';
+      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
 
       slider.thumbProps.onKeyDown(keyboardEvent('ArrowRight'));
-
-      expect(onValueChange).toHaveBeenCalledWith(49);
-
-      slider.destroy();
-    });
-
-    it('flips ArrowLeft to increment in RTL', () => {
-      const onValueChange = vi.fn();
-      const slider = createSlider(
-        createOptions({
-          isRTL: () => true,
-          getPercent: () => 50,
-          getStepPercent: () => 1,
-          onValueChange,
-        })
-      );
-
-      slider.thumbProps.onKeyDown(keyboardEvent('ArrowLeft'));
 
       expect(onValueChange).toHaveBeenCalledWith(51);
 
       slider.destroy();
     });
 
-    it('does not flip ArrowUp/ArrowDown in RTL', () => {
+    it('keeps ArrowLeft decreasing', () => {
       const onValueChange = vi.fn();
+      document.documentElement.dir = 'rtl';
+      const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
+
+      slider.thumbProps.onKeyDown(keyboardEvent('ArrowLeft'));
+
+      expect(onValueChange).toHaveBeenCalledWith(49);
+
+      slider.destroy();
+    });
+
+    it('keeps ArrowUp and ArrowDown unchanged', () => {
+      const onValueChange = vi.fn();
+      document.documentElement.dir = 'rtl';
       const slider = createSlider(
         createOptions({
-          isRTL: () => true,
           getPercent: () => 50,
           getStepPercent: () => 1,
           onValueChange,
@@ -824,34 +815,16 @@ describe('createSlider', () => {
     });
   });
 
-  describe('orientation: vertical + RTL', () => {
-    it('ignores RTL for vertical orientation', () => {
-      const el = createMockElement({ top: 0, height: 100 });
-      const slider = createSlider(
-        createOptions({ getElement: () => el, getOrientation: () => 'vertical', isRTL: () => true })
-      );
-
-      slider.rootProps.onPointerDown(pointerEvent({ clientY: 25 }));
-      flush();
-
-      // Same result as vertical + LTR — RTL has no effect.
-      expect(slider.input.current.pointerPercent).toBe(75);
-
-      slider.destroy();
-    });
-  });
-
-  describe('RTL pointer', () => {
-    it('flips horizontal percent for RTL', () => {
+  describe('pointer in an RTL document', () => {
+    it('keeps horizontal percent chronological', () => {
       const el = createMockElement({ left: 0, width: 200 });
-      const slider = createSlider(createOptions({ getElement: () => el, isRTL: () => true }));
+      el.dir = 'rtl';
+      const slider = createSlider(createOptions({ getElement: () => el }));
 
-      // RTL: right = 0%, left = 100%
-      // clientX=50, rect.right=200 → (200-50)/200 = 75%
       slider.rootProps.onPointerDown(pointerEvent({ clientX: 50 }));
       flush();
 
-      expect(slider.input.current.pointerPercent).toBe(75);
+      expect(slider.input.current.pointerPercent).toBe(25);
 
       slider.destroy();
     });

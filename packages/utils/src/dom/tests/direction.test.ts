@@ -32,4 +32,13 @@ describe('isRTL', () => {
 
     expect(isRTL(el)).toBe(true);
   });
+
+  it.each(['auto', 'invalid'])('uses computed direction for dir="%s"', (dir) => {
+    const el = document.createElement('div');
+    el.setAttribute('dir', dir);
+    el.style.direction = 'rtl';
+    document.body.appendChild(el);
+
+    expect(isRTL(el)).toBe(true);
+  });
 });

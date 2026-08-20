@@ -44,4 +44,15 @@ test.describe('Sandbox CDN i18n', () => {
       timeout: 15_000,
     });
   });
+
+  test('direct CDN page applies RTL direction to the document and player', async ({ page }) => {
+    await page.goto(
+      `${SANDBOX_BASE}/cdn/?preset=video&locale=ar&styling=css&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata`,
+      { waitUntil: 'domcontentloaded' }
+    );
+
+    await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.locator('media-i18n')).toHaveCSS('direction', 'rtl');
+  });
 });
