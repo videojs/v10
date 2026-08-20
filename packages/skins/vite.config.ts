@@ -2,22 +2,28 @@ import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { vjscPlugin } from 'vjsc/bundle';
-import { createSkinVjscPlugin } from './vjsc/plugin';
-import { createSkinShadcnOutput } from './vjsc/registry/shadcn';
+import { html, jsx } from 'vjsc';
+import { type VjscTransformConfig, vjscPlugin } from 'vjsc/bundle';
+import { catalogMetaPlugin } from 'vjsc/catalog';
+import { plugin as stylesPlugin } from 'vjsc/styles';
+import skinCatalog from './vjsc/catalog';
+import { createHtmlComponentRegistry, createReactComponentRegistry } from './vjsc/registry/frameworks';
+import { componentTransforms } from './vjsc/registry/react';
+import { createSkinShadcnPlugin } from './vjsc/registry/shadcn';
 
 const packageDir = import.meta.dirname;
+const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 
 export default defineConfig(({ mode }) => (mode === 'registry' ? createRegistryConfig() : createPreviewConfig()));
 
 function createRegistryConfig() {
-  const registry = createSkinShadcnOutput();
+  const registry = createSkinShadcnPlugin();
 
   return {
     root: packageDir,
-    plugins: [vjscPlugin({ outputs: [registry] })],
+    plugins: [registry],
     build: {
       outDir: resolve(packageDir, 'dist/registry'),
       emptyOutDir: true,
@@ -29,14 +35,64 @@ function createRegistryConfig() {
 }
 
 function createPreviewConfig() {
+  const transforms = new Map<string, VjscTransformConfig>();
+
   return {
     root: resolve(packageDir, 'dev'),
     define: {
       __DEV__: 'true',
     },
-    plugins: [createSkinVjscPlugin(), tailwindcss(), react({ jsxImportSource: 'react' })],
+    plugins: [
+      vjscPlugin({
+        cwd: packageDir,
+        filter: { id: new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`) },
+        transform: ({ parameters }) => {
+          const framework = parameters.get('framework');
+          const skinName = parameters.get('skin');
+          const style = parameters.get('style');
+          if ((framework !== 'react' && framework !== 'html') || !skinName || !style) return null;
+
+          const skin = skinCatalog.items.find((item) => item.type === 'skin' && item.name === skinName);
+          if (!skin || skin.type !== 'skin') return null;
+
+          const key = parameters.toString();
+          const cached = transforms.get(key);
+          if (cached) return cached;
+
+          const config: VjscTransformConfig = {
+            target: framework === 'react' ? jsx({ importSource: 'react' }) : html(),
+            registry:
+              framework === 'react'
+                ? createReactComponentRegistry(skin.style.theme)
+                : createHtmlComponentRegistry(skin.style.theme),
+            plugins: [
+              style === 'tailwind'
+                ? stylesPlugin({ mode: 'tailwind', variant: skin.style.variant })
+                : stylesPlugin({
+                    mode: 'css',
+                    variant: skin.style.variant,
+                    emit: {
+                      input: resolve(vjscDir, 'styles/tailwind.css'),
+                      scope: `.${skin.style.scope}`,
+                    },
+                  }),
+              catalogMetaPlugin(),
+              ...(framework === 'react' ? [componentTransforms()] : []),
+            ],
+          };
+          transforms.set(key, config);
+          return config;
+        },
+      }),
+      tailwindcss(),
+      react({ jsxImportSource: 'react' }),
+    ],
     resolve: {
       alias: [
+        {
+          find: /^virtual:vjsc\/skin\/(react|html)\/([^/]+)\/(vanilla|tailwind)\.tsx$/,
+          replacement: `${vjscDir}/skins/$2/skin.tsx?framework=$1&skin=$2&style=$3`,
+        },
         { find: /^@videojs\/react$/, replacement: resolve(reactSourceDir, 'index.ts') },
         {
           find: /^@videojs\/react\/icons$/,
@@ -68,14 +124,6 @@ function createPreviewConfig() {
           find: /^@videojs\/html\/icons\/element\/(.+)$/,
           replacement: `${htmlSourceDir}/icons/element/$1/index.ts`,
         },
-        {
-          find: /^@videojs\/icons\/element$/,
-          replacement: 'virtual:vjsc/icons/element/default.js',
-        },
-        {
-          find: /^@videojs\/icons\/element\/(.+)$/,
-          replacement: 'virtual:vjsc/icons/element/$1.js',
-        },
       ],
       conditions: ['development', 'import', 'module', 'browser', 'default'],
       dedupe: ['react', 'react-dom'],
@@ -85,4 +133,8 @@ function createPreviewConfig() {
       exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
     },
   };
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

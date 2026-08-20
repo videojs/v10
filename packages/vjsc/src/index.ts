@@ -1,11 +1,8 @@
 export {
-  defineVirtualModule,
-  VIRTUAL_MODULE_PREFIX,
-  type VirtualModuleDefinition,
   type VjscPluginOptions,
-  type VjscProjection,
-  type VjscProjectionContext,
   type VjscTransformConfig,
+  type VjscTransformContext,
+  type VjscTransformer,
   vjscPlugin,
 } from './bundle';
 export type {

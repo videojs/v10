@@ -10,9 +10,9 @@ export function createIconSchemaModule(family = 'default'): SchemaModule {
   return createSchemaModule(
     {
       source: '@videojs/icons/vjsc',
-      files: [
+      include: [
         {
-          files: resolve(packageDir, `src/assets/${family}/*.svg`),
+          include: resolve(packageDir, `src/assets/${family}/*.svg`),
           name: (filename) => `${iconNames(filename).pascal}Icon`,
         },
       ],

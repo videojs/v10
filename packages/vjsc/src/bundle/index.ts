@@ -1,26 +1,8 @@
 export {
-  type BundleModules,
-  type BundleModulesOptions,
-  createBundleModules,
-  defineVirtualModule,
-  VIRTUAL_MODULE_PREFIX,
-  type VirtualModuleDefinition,
-} from './modules';
-export {
-  type VjscDeclarationOutput,
-  type VjscFilterPattern,
   type VjscPluginOptions,
-  type VjscProjection,
-  type VjscProjectionContext,
   type VjscTransformConfig,
+  type VjscTransformContext,
+  type VjscTransformer,
   vjscPlugin,
 } from './plugin';
 export { type SchemaPlugin, type SchemaPluginOptions, schemaPlugin } from './schema';
-export {
-  defineVjscOutput,
-  type VjscBuildOutput,
-  type VjscModule,
-  type VjscOutputAdapter,
-  type VjscOutputFile,
-  type VjscOutputFormatter,
-} from './source';

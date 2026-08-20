@@ -54,7 +54,7 @@ export function getCoreSchemaModule() {
   return createSchemaModule(
     {
       source: '@videojs/core/vjsc',
-      files: ['./src/core/ui/*/*-component.ts'],
+      include: ['./src/core/ui/*/*-component.ts'],
       output: resolve(corePackageDir, 'vjsc.ts'),
     },
     { cwd: corePackageDir }

@@ -33,7 +33,7 @@ function setup(): { dir: string; output: string; pattern: string } {
 describe('createSchemaModule', () => {
   it('produces schema source and watch files without writing output', () => {
     const { dir, output, pattern } = setup();
-    const generated = createSchemaModule({ source: '@fixture/components', files: [pattern], output }, { cwd: dir });
+    const generated = createSchemaModule({ source: '@fixture/components', include: [pattern], output }, { cwd: dir });
 
     expect(generated.code).toContain('export const PlayButton');
     expect(generated.schema).toMatchObject({
@@ -55,7 +55,7 @@ describe('createSchemaModule', () => {
 
   it('emits deterministic component exports and metadata from manifests', () => {
     const { dir, output, pattern } = setup();
-    const config = { source: '@fixture/components', files: [pattern], output };
+    const config = { source: '@fixture/components', include: [pattern], output };
     const module = createSchemaModule(config, { cwd: dir });
 
     expect(module.code).toContain("import PlayButtonDef from './play-button/play-button-component';");
@@ -75,9 +75,9 @@ describe('createSchemaModule', () => {
       `${STUB} export default defineComponent({ name: 'Slider' });`
     );
 
-    expect(() => createSchemaModule({ source: '@fixture/components', files: [pattern], output }, { cwd: dir })).toThrow(
-      'Duplicate component name: Slider'
-    );
+    expect(() =>
+      createSchemaModule({ source: '@fixture/components', include: [pattern], output }, { cwd: dir })
+    ).toThrow('Duplicate component name: Slider');
   });
 
   it('supports generated components derived from non-manifest files', () => {
@@ -89,9 +89,9 @@ describe('createSchemaModule', () => {
     const result = createSchemaModule(
       {
         source: '@fixture/icons',
-        files: [
+        include: [
           {
-            files: join(dir, 'icons/*.svg'),
+            include: join(dir, 'icons/*.svg'),
             name: (filename) => `${filename[0]!.toUpperCase()}${filename.slice(1)}Icon`,
           },
         ],

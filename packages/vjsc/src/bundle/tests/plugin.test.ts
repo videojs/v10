@@ -3,48 +3,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { rolldown } from 'rolldown';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { jsx } from '../../config';
 import { vjscPlugin } from '../plugin';
 import { schemaPlugin } from '../schema';
 
 describe('vjscPlugin', () => {
-  it('bundles a generated entry and its relative source imports', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-rolldown-'));
-    const source = join(root, 'value.ts');
-    const virtualFile = join(root, '.vjsc/entry.ts');
-    writeFileSync(source, 'export const value = 42;');
-    const load = vi.fn(() => ({
-      code: `export { value } from '../value';`,
-      watchFiles: [source],
-    }));
-
-    const bundle = await rolldown({
-      input: 'virtual:vjsc/entry.ts',
-      plugins: [
-        vjscPlugin({
-          modules: [{ id: 'virtual:vjsc/entry.ts', load }],
-          resolveModuleId: () => virtualFile,
-          declarations: [
-            {
-              id: 'virtual:vjsc/entry.ts',
-              sourceFileName: virtualFile,
-              fileName: 'entry.d.ts',
-            },
-          ],
-        }),
-      ],
-    });
-    const output = await bundle.generate({ format: 'es' });
-
-    expect(output.output[0]?.code).toContain('const value = 42');
-    expect(output.output.find((item) => item.fileName === 'entry.d.ts')).toMatchObject({
-      source: "export { value } from '../value';\n",
-    });
-    expect(load).toHaveBeenCalledTimes(2);
-  });
-
   it('uses native host filters for included and excluded modules', async () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-filter-'));
     const source = join(root, 'view.tsx');
@@ -58,8 +23,7 @@ describe('vjscPlugin', () => {
       external: /^react\//,
       plugins: [
         vjscPlugin({
-          include: '**/*.tsx',
-          exclude: '**/*.test.tsx',
+          filter: { id: { include: '**/*.tsx', exclude: '**/*.test.tsx' } },
           transform: {
             plugins: [
               {
@@ -93,9 +57,8 @@ describe('vjscPlugin', () => {
       external: /^react\//,
       plugins: [
         vjscPlugin({
-          projections: {
-            react: { target: jsx({ importSource: 'react' }) },
-          },
+          transform: ({ parameters }) =>
+            parameters.get('framework') === 'react' ? { target: jsx({ importSource: 'react' }) } : null,
         }),
         {
           name: 'record-projected-modules',
@@ -132,7 +95,7 @@ describe('vjscPlugin', () => {
     const plugin = schemaPlugin({
       cwd: root,
       source: '@fixture/components',
-      files: ['./*/*-component.ts'],
+      include: ['./*/*-component.ts'],
     });
 
     const bundle = await rolldown({ input: plugin.moduleId, plugins: [plugin] });

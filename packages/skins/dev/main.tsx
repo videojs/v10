@@ -60,9 +60,15 @@ if (framework === 'react') {
   if (!Skin) throw new Error(`React Skin module \`${key}\` did not export a Skin component.`);
   createRoot(root).render(<App Skin={Skin} />);
 } else {
-  if (!('skin' in loaded)) throw new Error(`HTML Skin module \`${key}\` did not export a Skin template.`);
+  const Skin =
+    'DefaultVideoSkin' in loaded
+      ? loaded.DefaultVideoSkin
+      : 'MinimalVideoSkin' in loaded
+        ? loaded.MinimalVideoSkin
+        : null;
+  if (!Skin) throw new Error(`HTML Skin module \`${key}\` did not export a Skin component.`);
   await import('../../html/src/define/video/player');
-  const skin = loaded.skin.replace(
+  const skin = String(Skin({})).replace(
     '<slot></slot>',
     '<video src="https://stream.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA.m3u8" playsinline crossorigin="anonymous"></video>'
   );

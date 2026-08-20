@@ -2,18 +2,13 @@ import { readFile } from 'node:fs/promises';
 import { posix, resolve } from 'node:path';
 
 import { uniqBy } from '@videojs/utils/array';
+import type { Plugin } from 'rolldown';
 import {
   type RegistryItem,
   registryItemSchema,
   registrySchema,
   type Registry as ShadcnRegistrySchema,
 } from 'shadcn/schema';
-import {
-  defineVjscOutput,
-  type VjscOutputAdapter,
-  type VjscOutputFile,
-  type VjscOutputFormatter,
-} from '../bundle/source';
 import type { CatalogDefinition } from '../catalog/define';
 import {
   type CatalogOutputFile,
@@ -107,36 +102,58 @@ export interface ShadcnRegistryOutput {
   readonly registry: ShadcnRegistry;
 }
 
+export interface ShadcnOutputFile {
+  readonly path: string;
+  readonly content: string;
+}
+
 export interface ShadcnOutputOptions<Definition extends CatalogDefinition> {
   readonly catalog: Definition;
   readonly rootDir: string;
   readonly registry: ShadcnRegistryDefinition<Definition>;
   readonly projection: CatalogProjection<Definition>;
   readonly styles?: CatalogStyleTransform | undefined;
-  readonly format?: VjscOutputFormatter | undefined;
   readonly id?: `virtual:vjsc/${string}` | undefined;
 }
 
-/** Project a final Shadcn registry through a VJSC build plugin. */
-export function shadcnOutput<const Definition extends CatalogDefinition>(
+export interface ShadcnPlugin extends Plugin {
+  readonly moduleId: `virtual:vjsc/${string}`;
+}
+
+/** Emit a Shadcn source registry through native Rolldown output hooks. */
+export function shadcnPlugin<const Definition extends CatalogDefinition>(
   options: ShadcnOutputOptions<Definition>
-): VjscOutputAdapter {
+): ShadcnPlugin {
   const moduleId = options.id ?? 'virtual:vjsc/shadcn';
-  return defineVjscOutput({
-    moduleId,
-    async build() {
+  const resolvedId = `\0${moduleId}`;
+  const plugin: Plugin = {
+    name: 'vjsc:shadcn',
+    resolveId: {
+      filter: { id: exactId(moduleId) },
+      handler(id) {
+        return id === moduleId ? resolvedId : null;
+      },
+    },
+    load: {
+      filter: { id: exactId(resolvedId) },
+      handler(id) {
+        return id === resolvedId ? 'export default null;' : null;
+      },
+    },
+    async generateBundle(_outputOptions, bundle) {
+      const chunks = Object.entries(bundle).filter(
+        (entry): entry is [string, Extract<(typeof bundle)[string], { type: 'chunk' }>] =>
+          entry[1].type === 'chunk' && entry[1].facadeModuleId === resolvedId
+      );
+      if (chunks.length === 0) return;
+
       const catalog = await loadCatalog(options.catalog, { rootDir: options.rootDir });
       const output = await projectShadcnRegistry(catalog, options.registry, {
         projection: options.projection,
         ...(options.styles ? { styles: options.styles } : {}),
       });
 
-      const files = await Promise.all(
-        createShadcnRegistryFiles(output, options.registry).map(async (file) => ({
-          ...file,
-          content: options.format ? await options.format(file) : file.content,
-        }))
-      );
+      const files = createShadcnRegistryFiles(output, options.registry);
       const watchFiles = new Set(
         catalog.items.flatMap((item) =>
           [...item.files.source, ...item.files.style].map((fileName) => resolve(catalog.rootDir, fileName))
@@ -146,16 +163,20 @@ export function shadcnOutput<const Definition extends CatalogDefinition>(
         for (const file of item.files) watchFiles.add(resolve(catalog.rootDir, file.source));
       }
 
-      return { files, watchFiles: [...watchFiles].sort() };
+      for (const file of watchFiles) this.addWatchFile(file);
+      for (const file of files) this.emitFile({ type: 'asset', fileName: file.path, source: file.content });
+      for (const [fileName] of chunks) delete bundle[fileName];
     },
-  });
+  };
+
+  return Object.assign(plugin, { moduleId });
 }
 
 /** Assemble final Shadcn registry JSON assets from projected source. */
 export function createShadcnRegistryFiles<Definition extends CatalogDefinition>(
   output: ShadcnRegistryOutput,
   definition: ShadcnRegistryDefinition<Definition>
-): VjscOutputFile[] {
+): ShadcnOutputFile[] {
   const sources = new Map(output.files.map((file) => [file.path, file.content]));
   const items = output.registry.items.map((item) => {
     const built = {
@@ -178,6 +199,10 @@ export function createShadcnRegistryFiles<Definition extends CatalogDefinition>(
   });
 
   return [{ path: 'registry.json', content: JSON.stringify(output.registry) }, ...items];
+}
+
+function exactId(id: string): RegExp {
+  return new RegExp(`^${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
 }
 
 /** Project editable catalog modules, shared files, and a validated Shadcn registry. */

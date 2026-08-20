@@ -5,12 +5,11 @@ import { dirname, join } from 'node:path';
 import { rolldown } from 'rolldown';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { vjscPlugin } from '../../bundle/plugin';
 import { defineCatalog } from '../../catalog/define';
 import { defineCatalogProjection } from '../../catalog/project';
 import { loadCatalog } from '../../catalog/resolve';
 import { jsx } from '../../config';
-import { createShadcnRegistryFiles, defineShadcnRegistry, projectShadcnRegistry, shadcnOutput } from '../index';
+import { createShadcnRegistryFiles, defineShadcnRegistry, projectShadcnRegistry, shadcnPlugin } from '../index';
 
 const roots: string[] = [];
 
@@ -167,7 +166,7 @@ describe('projectShadcnRegistry', () => {
         describe: () => ({ type: 'registry:block', title: 'Root', description: 'Root.' }),
       },
     });
-    const outputAdapter = shadcnOutput({
+    const outputAdapter = shadcnPlugin({
       catalog: definition,
       rootDir: root,
       registry,
@@ -176,7 +175,7 @@ describe('projectShadcnRegistry', () => {
 
     const bundle = await rolldown({
       input: outputAdapter.moduleId,
-      plugins: [vjscPlugin({ outputs: [outputAdapter] })],
+      plugins: [outputAdapter],
     });
     const output = await bundle.generate({ format: 'es' });
 

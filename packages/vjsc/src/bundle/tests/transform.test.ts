@@ -129,36 +129,6 @@ describe('vjscPlugin', () => {
     await expect(plugin.load.call(createContext(), `\0${secondCssId}`)).resolves.toBe('.foo{color:red;}');
   });
 
-  it('reloads generated modules when the host requests them again', async () => {
-    let code = 'export const value = 1;';
-    const plugin = createPlugin({
-      modules: [
-        {
-          id: 'virtual:vjsc/value',
-          load: () => ({ code, watchFiles: ['/workspace/value.ts'] }),
-        },
-      ],
-    });
-    const loadContext = createContext();
-
-    await expect(plugin.resolveId('virtual:vjsc/value')).resolves.toBe('\0virtual:vjsc/value');
-    await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toBe(code);
-    expect(loadContext.addWatchFile).toHaveBeenCalledWith('/workspace/value.ts');
-
-    code = 'export const value = 2;';
-    await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toContain('value = 2');
-  });
-
-  it('keeps virtual JSX visible to downstream host transforms', async () => {
-    const id = 'virtual:vjsc/skin/default.tsx';
-    const plugin = createPlugin({
-      modules: [{ id, load: () => ({ code: 'export const Skin = <div/>;', watchFiles: [] }) }],
-    });
-
-    await expect(plugin.resolveId(id)).resolves.toBe(id);
-    await expect(plugin.load.call(createContext(), id)).resolves.toContain('<div/>');
-  });
-
   it('forwards compiler warnings to the host', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({

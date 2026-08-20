@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { isAbsolute, relative } from 'node:path';
 import ts from 'typescript';
+import { HTML_RUNTIME_IMPORT } from '../bundle/html-runtime';
 import type { ComponentDefinition, ComponentRecord } from '../components/definition';
 import { Fragment } from '../components/jsx-runtime';
 import type { CompilerPlugin, CompilerTarget } from '../config';
 import { DiagnosticError, diagnosticLocationFromNode } from '../diagnostics';
-import { HTML_RUNTIME_IMPORT } from '../targets/html';
 import { collectTopLevelBindingNames } from '../utils/bindings';
 import {
   createIndexedAccessType,

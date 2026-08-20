@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 
 import { jsx } from 'vjsc';
 import { defineCatalogProjection } from 'vjsc/catalog';
-import { defineShadcnRegistry, shadcnOutput } from 'vjsc/shadcn';
+import { defineShadcnRegistry, shadcnPlugin } from 'vjsc/shadcn';
 
 import skinCatalog from '../catalog';
 import { createReactComponentRegistry } from './frameworks';
@@ -93,8 +93,8 @@ const skinRegistry = defineShadcnRegistry(skinCatalog, {
 });
 
 /** Configure the Shadcn source-distribution output consumed by the Skins Vite build. */
-export function createSkinShadcnOutput() {
-  return shadcnOutput({
+export function createSkinShadcnPlugin() {
+  return shadcnPlugin({
     catalog: skinCatalog,
     rootDir: resolve(import.meta.dirname, '..'),
     registry: skinRegistry,

@@ -10,7 +10,7 @@ const coreDir = resolve(packageDir, '../core');
 const schema = createSchemaModule(
   {
     source: '@videojs/core/vjsc',
-    files: ['./src/core/ui/*/*-component.ts'],
+    include: ['./src/core/ui/*/*-component.ts'],
     output: './.vjsc/virtual/core-schema.ts',
   },
   { cwd: coreDir }

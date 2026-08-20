@@ -19,7 +19,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => {
   const schema = schemaPlugin({
     cwd: import.meta.dirname,
     source: '@videojs/core/vjsc',
-    files: ['./src/core/ui/*/*-component.ts'],
+    include: ['./src/core/ui/*/*-component.ts'],
     declaration: mode === 'dev' ? 'vjsc.d.ts' : false,
   });
 

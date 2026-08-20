@@ -1,9 +1,7 @@
 import ts from 'typescript';
 
-import type { VjscModule } from './source';
-
 /** Emit one generated module declaration entirely in memory. */
-export function createGeneratedModuleDeclaration(module: VjscModule, fileName: string): string {
+export function createGeneratedModuleDeclaration(module: { code: string }, fileName: string): string {
   const code = module.code;
   const compilerOptions: ts.CompilerOptions = {
     declaration: true,

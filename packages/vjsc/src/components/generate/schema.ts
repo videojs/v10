@@ -2,13 +2,13 @@ import { globSync, readFileSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, resolve } from 'node:path';
 
 import ts from 'typescript';
-import type { VjscModule } from '../../bundle/source';
 import { toPosixPath } from '../../utils/path';
 import { relativeModuleSpecifier, sourceScriptKind } from '../../utils/source-module';
 import { type ComponentDefinition, type ComponentRecord, type ComponentSchema, defineSchema } from '../definition';
 
 export interface ComponentFileSet {
-  readonly files: string;
+  readonly include: string;
+  readonly exclude?: string | readonly string[] | undefined;
   readonly name: (filename: string) => string;
 }
 
@@ -17,14 +17,17 @@ export type ComponentSource = string | ComponentFileSet;
 export interface GenerateSchemaConfig {
   /** Module specifier canonical source files use to import the generated components. */
   readonly source: string;
-  readonly files: readonly ComponentSource[];
+  readonly include: readonly ComponentSource[];
+  readonly exclude?: string | readonly string[] | undefined;
   readonly output: string;
 }
 
 export interface CreateSchemaModuleOptions {
   readonly cwd?: string | undefined;
 }
-export interface SchemaModule extends VjscModule {
+export interface SchemaModule {
+  readonly code: string;
+  readonly watchFiles: readonly string[];
   readonly schema: ComponentSchema;
 }
 
@@ -48,20 +51,20 @@ export function createSchemaModule(
   config: GenerateSchemaConfig,
   options: CreateSchemaModuleOptions = {}
 ): SchemaModule {
-  const { files, output, source } = config;
+  const { include, output, source } = config;
   const cwd = options.cwd ?? process.cwd();
   const outputAbsolute = isAbsolute(output) ? output : resolve(cwd, output);
   const watchFiles = new Set<string>();
 
-  const resolved = files.flatMap<ResolvedComponent>((entry) =>
+  const resolved = include.flatMap<ResolvedComponent>((entry) =>
     typeof entry === 'string'
-      ? resolveManifestEntry(entry, cwd, outputAbsolute, watchFiles)
+      ? resolveManifestEntry(entry, config.exclude, cwd, outputAbsolute, watchFiles)
       : resolveFileSet(entry, cwd, watchFiles)
   );
   const entries = resolved.sort((a, b) => a.name.localeCompare(b.name));
 
   if (entries.length === 0) {
-    throw new Error(`No component sources matched: ${JSON.stringify(files)}`);
+    throw new Error(`No component sources matched: ${JSON.stringify(include)}`);
   }
 
   const duplicate = entries.find((entry, index) => entry.name === entries[index - 1]?.name);
@@ -113,11 +116,12 @@ function parseComponentManifest(manifestPath: string): {
 
 function resolveManifestEntry(
   pattern: string,
+  exclude: string | readonly string[] | undefined,
   cwd: string,
   outputFile: string,
   watchFiles: Set<string>
 ): ManifestComponent[] {
-  return globSync(pattern, { cwd }).map((path) => {
+  return globSync(pattern, { cwd, ...(exclude ? { exclude } : {}) }).map((path) => {
     const manifestPath = isAbsolute(path) ? path : resolve(cwd, path);
     const manifest = parseComponentManifest(manifestPath);
     watchFiles.add(manifestPath);
@@ -131,7 +135,7 @@ function resolveManifestEntry(
 }
 
 function resolveFileSet(entry: ComponentFileSet, cwd: string, watchFiles: Set<string>): InlineComponent[] {
-  return globSync(entry.files, { cwd }).map((file) => {
+  return globSync(entry.include, { cwd, ...(entry.exclude ? { exclude: entry.exclude } : {}) }).map((file) => {
     watchFiles.add(isAbsolute(file) ? file : resolve(cwd, file));
     return {
       kind: 'inline',
