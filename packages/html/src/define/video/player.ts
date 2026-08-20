@@ -1,26 +1,6 @@
-import { videoFeatures } from '@videojs/core/dom';
-
-import { createPlayer } from '../../player/create-player';
-import { ContainerElement } from '../../ui/container/container-element';
+import { VideoPlayerElement } from '../../preset/video/player-element';
 import { safeDefine } from '../safe-define';
 
-const { PlayerElement, PlayerController: VideoPlayerController } = createPlayer({
-  features: videoFeatures,
-});
-
-/** Player controller bound to the standard video player store. */
-export const PlayerController = VideoPlayerController;
-
-export class VideoPlayerElement extends PlayerElement {
-  static readonly tagName = 'video-player';
-}
-
-// The player must be defined before consumers for context handshakes during upgrade.
 safeDefine(VideoPlayerElement);
-safeDefine(ContainerElement);
 
-declare global {
-  interface HTMLElementTagNameMap {
-    [VideoPlayerElement.tagName]: VideoPlayerElement;
-  }
-}
+export { PlayerController, VideoPlayerElement } from '../../preset/video/player-element';

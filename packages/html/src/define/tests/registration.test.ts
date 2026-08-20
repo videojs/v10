@@ -28,15 +28,13 @@ describe('composite define registration', () => {
   // ── Player composites ────────────────────────────────────────────────
 
   describe('video/player', () => {
-    it('registers video-player before media-container', async () => {
+    it('registers only video-player', async () => {
       const before = spy.mock.calls.length;
 
       await import('../video/player');
       const batch = batchSince(before);
 
-      expect(batch).toContain('video-player');
-      expect(batch).toContain('media-container');
-      expect(batch.indexOf('video-player')).toBeLessThan(batch.indexOf('media-container'));
+      expect(batch).toEqual(['video-player']);
     });
   });
 
@@ -47,9 +45,7 @@ describe('composite define registration', () => {
       await import('../audio/player');
       const batch = batchSince(before);
 
-      expect(batch).toContain('audio-player');
-      // media-container already registered by video/player — safeDefine skips it
-      expect(batch).not.toContain('media-container');
+      expect(batch).toEqual(['audio-player']);
     });
   });
 
@@ -60,8 +56,25 @@ describe('composite define registration', () => {
       await import('../background/player');
       const batch = batchSince(before);
 
-      expect(batch).toContain('background-video-player');
-      expect(batch).not.toContain('media-container');
+      expect(batch).toEqual(['background-video-player']);
+    });
+  });
+
+  describe('live-video/player', () => {
+    it('registers only live-video-player', async () => {
+      const before = spy.mock.calls.length;
+      await import('../live-video/player');
+
+      expect(batchSince(before)).toEqual(['live-video-player']);
+    });
+  });
+
+  describe('live-audio/player', () => {
+    it('registers only live-audio-player', async () => {
+      const before = spy.mock.calls.length;
+      await import('../live-audio/player');
+
+      expect(batchSince(before)).toEqual(['live-audio-player']);
     });
   });
 
@@ -191,6 +204,7 @@ describe('composite define registration', () => {
       await import('../video/ui');
       const batch = batchSince(before);
 
+      expect(batch).toContain('media-container');
       expect(batch).toContain('media-text');
       expect(batch).toContain('media-menu');
       expect(batch).toContain('media-menu-item');
@@ -206,6 +220,8 @@ describe('composite define registration', () => {
         'video-player',
         'audio-player',
         'background-video-player',
+        'live-video-player',
+        'live-audio-player',
         'media-container',
         // Sliders
         'media-slider',

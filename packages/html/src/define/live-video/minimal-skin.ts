@@ -6,7 +6,7 @@ import { SkinElement } from '../skin-element';
 
 import styles from './minimal-skin.css?inline';
 
-// Register the live video player, container, and minimal UI custom elements.
+// Register the container and minimal live video UI custom elements.
 import './minimal-ui';
 
 function getTemplateHTML() {

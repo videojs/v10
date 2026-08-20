@@ -1,17 +1,12 @@
-import { renderIcon } from '@videojs/icons/render/minimal';
+import { renderIcon } from '@videojs/icons/render';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
 
-import { safeDefine } from '../safe-define';
-import { SkinElement } from '../skin-element';
-
-import styles from './minimal-skin.css?inline';
-
-// Register the container and minimal live audio UI custom elements.
-import './minimal-ui';
+import { SkinElement } from '../../define/skin-element';
+import styles from '../../define/live-audio/skin.css?inline';
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="media-minimal-skin media-minimal-skin--audio">
+    <media-container class="media-default-skin media-default-skin--audio">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
@@ -28,7 +23,7 @@ function getTemplateHTML() {
         </div>
       </media-error-dialog>
 
-      <div class="media-controls">
+      <div class="media-surface media-controls">
         <media-tooltip-group>
           <div class="media-button-group">
             <span class="media-button--play__wrapper">
@@ -40,7 +35,7 @@ function getTemplateHTML() {
                 ${renderIcon('play', { class: 'media-icon media-icon--play' })}
                 ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="media-tooltip">
+              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip">
                 <media-tooltip-label></media-tooltip-label>
                 <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
               </media-tooltip>
@@ -52,18 +47,14 @@ function getTemplateHTML() {
           <div class="media-time-controls" aria-hidden="true"></div>
 
           <div class="media-button-group">
-            <media-mute-button id="live-audio-mute-trigger" commandfor="live-audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
+            <media-mute-button commandfor="live-audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
-            <media-tooltip trigger="live-audio-mute-trigger" delay="0" sticky side="top" class="media-tooltip">
-              <media-tooltip-label></media-tooltip-label>
-              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
-            </media-tooltip>
 
-            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="media-popover media-popover--volume">
-              <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
+            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="media-surface media-popover media-popover--volume">
+              <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
                 <media-slider-track class="media-slider__track">
                   <media-slider-fill class="media-slider__fill"></media-slider-fill>
                 </media-slider-track>
@@ -84,16 +75,14 @@ function getTemplateHTML() {
   `;
 }
 
-export class MinimalLiveAudioSkinElement extends SkinElement {
-  static readonly tagName = 'live-audio-minimal-skin';
+export class LiveAudioSkinElement extends SkinElement {
+  static readonly tagName = 'live-audio-skin';
   static styles = createShadowStyle(styles);
   static template = createTemplate(getTemplateHTML());
 }
 
-safeDefine(MinimalLiveAudioSkinElement);
-
 declare global {
   interface HTMLElementTagNameMap {
-    [MinimalLiveAudioSkinElement.tagName]: MinimalLiveAudioSkinElement;
+    [LiveAudioSkinElement.tagName]: LiveAudioSkinElement;
   }
 }

@@ -8,7 +8,7 @@ import { SkinElement } from '../skin-element';
 
 import styles from './minimal-skin.css?inline';
 
-// Register the player, container, and all UI custom elements.
+// Register the container and all UI custom elements.
 import './minimal-ui';
 
 function getTemplateHTML() {

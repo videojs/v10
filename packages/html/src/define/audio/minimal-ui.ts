@@ -1,4 +1,4 @@
-// Registers the audio player, container, and all audio UI custom elements
+// Registers the container and all audio UI custom elements
 // used by the minimal skin without creating a skin element. Use this entry
 // when building an ejected (light DOM) player layout.
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
@@ -20,11 +20,8 @@ import {
   defineVolumeSlider,
 } from '../ui/compounds';
 // Value import — player.ts body runs before this module's body.
-import { AudioPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(AudioPlayerElement);
 safeDefine(ContainerElement);
 
 // Compound groups.

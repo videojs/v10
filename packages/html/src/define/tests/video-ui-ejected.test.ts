@@ -8,7 +8,7 @@ async function waitForUpdates(elements: Element[]): Promise<void> {
   }
 }
 
-describe('video/ui ejected registration', () => {
+describe('video UI CDN registration', () => {
   it('updates volume slider child parts when light DOM exists before registration', async () => {
     document.body.innerHTML = /*html*/ `
       <video-player>
@@ -33,7 +33,13 @@ describe('video/ui ejected registration', () => {
       </video-player>
     `;
 
-    await import('../video/ui');
+    const video = document.querySelector('video')!;
+    // Happy DOM returns void here, while browsers return a promise.
+    Object.defineProperty(video.remote, 'cancelWatchAvailability', {
+      value: () => Promise.resolve(),
+    });
+
+    await import('../../cdn/video-ui');
 
     const volumeSlider = document.querySelector('media-volume-slider')! as HTMLElement & { orientation: string };
     const volumeTrack = volumeSlider.querySelector('media-slider-track')!;

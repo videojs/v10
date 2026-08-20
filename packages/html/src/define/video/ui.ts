@@ -1,4 +1,4 @@
-// Registers the video player, container, and all video UI custom elements
+// Registers the container and all video UI custom elements
 // without creating a skin element. Use this entry when building an ejected
 // (light DOM) player layout.
 
@@ -36,12 +36,9 @@ import {
   defineTime,
   defineTooltip,
 } from '../ui/compounds';
-// Value import — player.ts body runs before this module's body.
-import { VideoPlayerElement } from './player';
 
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(VideoPlayerElement);
 safeDefine(ContainerElement);
 safeDefine(I18nProviderElement);
 
