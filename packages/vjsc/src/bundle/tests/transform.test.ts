@@ -1,23 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CompilerPlugin, CompilerSourceMap } from '../../config';
 import { jsx } from '../../config';
-import { vjscPlugin } from '../vite';
+import { vjscPlugin } from '../plugin';
 
 type TestPlugin = {
-  config(): { optimizeDeps: { exclude: string[] | undefined } };
-  configResolved(config: { root: string }): void;
   resolveId(id: string): string | null;
   load(this: { addWatchFile(id: string): void }, id: string): Promise<string | null>;
-  handleHotUpdate(context: {
-    file: string;
-    modules: object[];
-    server: {
-      moduleGraph: {
-        getModuleById(id: string): object | undefined;
-        invalidateModule(module: object): void;
-      };
-    };
-  }): object[];
   transform(
     this: { addWatchFile(id: string): void; error(error: unknown): never; warn(warning: unknown): void },
     code: string,
@@ -25,8 +13,14 @@ type TestPlugin = {
   ): Promise<{ code: string; map: CompilerSourceMap } | null>;
 };
 
-const createPlugin = (...args: Parameters<typeof vjscPlugin>): TestPlugin =>
-  vjscPlugin(...args) as unknown as TestPlugin;
+const createPlugin = (...args: Parameters<typeof vjscPlugin>): TestPlugin => {
+  const plugin = vjscPlugin(...args) as unknown as {
+    resolveId: TestPlugin['resolveId'];
+    load: TestPlugin['load'];
+    transform: { handler: TestPlugin['transform'] };
+  };
+  return { resolveId: plugin.resolveId, load: plugin.load, transform: plugin.transform.handler };
+};
 
 const createContext = () => ({
   addWatchFile: vi.fn(),
@@ -49,22 +43,6 @@ const createCssPlugin = (source: string): CompilerPlugin => ({
 });
 
 describe('vjscPlugin', () => {
-  it('uses Vite filter patterns for included and excluded modules', async () => {
-    const plugin = createPlugin({
-      config: {},
-      include: '**/*.tsx',
-      exclude: '**/*.test.tsx',
-    });
-
-    expect(await plugin.transform.call(createContext(), 'export const value = 1;', '/workspace/value.ts')).toBeNull();
-    expect(
-      await plugin.transform.call(createContext(), 'export const View = <div/>;', '/workspace/view.test.tsx')
-    ).toBeNull();
-    expect(
-      await plugin.transform.call(createContext(), 'export const View = <div/>;', '/workspace/view.tsx')
-    ).not.toBeNull();
-  });
-
   it('imports emitted CSS assets as virtual modules', async () => {
     const plugin = createPlugin({ config: { plugins: [createCssPlugin('.foo{display:flex;}')] } });
 
@@ -151,10 +129,10 @@ describe('vjscPlugin', () => {
     await expect(plugin.load.call(createContext(), `\0${secondCssId}`)).resolves.toBe('.foo{color:red;}');
   });
 
-  it('loads generated modules and invalidates them when their inputs change', async () => {
+  it('reloads generated modules when the host requests them again', async () => {
     let code = 'export const value = 1;';
     const plugin = createPlugin({
-      entries: [
+      modules: [
         {
           id: 'virtual:vjsc/value',
           load: () => ({ code, watchFiles: ['/workspace/value.ts'] }),
@@ -167,72 +145,21 @@ describe('vjscPlugin', () => {
     await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toBe(code);
     expect(loadContext.addWatchFile).toHaveBeenCalledWith('/workspace/value.ts');
 
-    const module = {};
-    const invalidateModule = vi.fn();
     code = 'export const value = 2;';
-    expect(
-      plugin.handleHotUpdate({
-        file: '/workspace/value.ts',
-        modules: [],
-        server: {
-          moduleGraph: {
-            getModuleById: vi.fn(() => module),
-            invalidateModule,
-          },
-        },
-      })
-    ).toEqual([module]);
-    expect(invalidateModule).toHaveBeenCalledWith(module);
     await expect(plugin.load.call(loadContext, '\0virtual:vjsc/value')).resolves.toContain('value = 2');
   });
 
-  it('keeps virtual JSX in Vite transforms and out of dependency optimization', async () => {
+  it('keeps virtual JSX visible to downstream host transforms', async () => {
     const id = 'virtual:vjsc/skin/default.tsx';
     const plugin = createPlugin({
-      entries: [{ id, load: () => ({ code: 'export const Skin = <div/>;', watchFiles: [] }) }],
+      modules: [{ id, load: () => ({ code: 'export const Skin = <div/>;', watchFiles: [] }) }],
     });
 
-    expect(plugin.config().optimizeDeps.exclude).toEqual([id]);
     expect(plugin.resolveId(id)).toBe(id);
     await expect(plugin.load.call(createContext(), id)).resolves.toContain('<div/>');
   });
 
-  it('invalidates transformed owners when a compiler dependency changes', async () => {
-    const dependency = '/workspace/styles.ts';
-    const owner = '/workspace/skin.tsx';
-    const plugin = createPlugin({
-      config: {
-        plugins: [
-          {
-            name: 'watch-dependency',
-            setup(context) {
-              context.addWatchFile(dependency);
-              return {};
-            },
-          },
-        ],
-      },
-    });
-    await plugin.transform.call(createContext(), 'export const Skin = <div/>;', owner);
-
-    const ownerModule = {};
-    const invalidateModule = vi.fn();
-    expect(
-      plugin.handleHotUpdate({
-        file: dependency,
-        modules: [],
-        server: {
-          moduleGraph: {
-            getModuleById: vi.fn((id) => (id === owner ? ownerModule : undefined)),
-            invalidateModule,
-          },
-        },
-      })
-    ).toEqual([ownerModule]);
-    expect(invalidateModule).toHaveBeenCalledWith(ownerModule);
-  });
-
-  it('forwards compiler warnings to Vite', async () => {
+  it('forwards compiler warnings to the host', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({
       config: {
@@ -257,7 +184,7 @@ describe('vjscPlugin', () => {
     expect(warn).toHaveBeenCalledWith('Check this');
   });
 
-  it('forwards located compiler warnings to Vite', async () => {
+  it('forwards located compiler warnings to the host', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({
       config: {
@@ -295,7 +222,7 @@ describe('vjscPlugin', () => {
     });
   });
 
-  it('fails the Vite transform for compiler errors', async () => {
+  it('fails the host transform for compiler errors', async () => {
     const context = createContext();
     const plugin = createPlugin({
       config: {
@@ -322,7 +249,7 @@ describe('vjscPlugin', () => {
     expect(context.error).toHaveBeenCalledWith('Cannot compile this source');
   });
 
-  it('forwards syntax errors to Vite with their source location', async () => {
+  it('forwards syntax errors to the host with their source location', async () => {
     const context = createContext();
     const plugin = createPlugin({ config: {} });
 
@@ -336,11 +263,11 @@ describe('vjscPlugin', () => {
 
   it('rebases relative import targets from the transformed module', async () => {
     const plugin = createPlugin({
+      cwd: '/workspace',
       config: {
         target: jsx({ imports: { '@fixture/widgets': './shared/widgets' } }),
       },
     });
-    plugin.configResolved({ root: '/workspace' });
 
     const result = await plugin.transform.call(
       createContext(),

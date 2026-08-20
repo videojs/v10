@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { jsx } from 'vjsc';
 import type { ImportRef } from 'vjsc/ast';
+import { vjscPlugin } from 'vjsc/bundle';
 import { catalogMetaPlugin } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { shadcnPlugin } from 'vjsc/shadcn';
 import { plugin as stylesPlugin } from 'vjsc/styles';
-import vjscPlugin from 'vjsc/vite';
 import { createIconElementModule } from './build/icon-element';
 import { createReactComponentRegistry } from './build/metadata';
 import { reactOutput } from './build/output/react';
@@ -79,8 +79,9 @@ function createPreviewConfig() {
     },
     plugins: [
       vjscPlugin({
+        cwd: packageDir,
         include: `${vjscDir}/**/*.tsx`,
-        entries: [
+        modules: [
           { id: 'virtual:vjsc/icons/element/default.js' as const, load: () => defaultIconElementModule },
           { id: 'virtual:vjsc/icons/element/minimal.js' as const, load: () => minimalIconElementModule },
           ...createSkinVirtualModules(skinCatalog),

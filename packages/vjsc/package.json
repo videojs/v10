@@ -63,13 +63,9 @@
       "types": "./dist/styles/index.d.ts",
       "default": "./dist/styles/index.js"
     },
-    "./vite": {
-      "types": "./dist/bundlers/vite.d.ts",
-      "default": "./dist/bundlers/vite.js"
-    },
-    "./rolldown": {
-      "types": "./dist/bundlers/rolldown.d.ts",
-      "default": "./dist/bundlers/rolldown.js"
+    "./bundle": {
+      "types": "./dist/bundle/index.d.ts",
+      "default": "./dist/bundle/index.js"
     }
   },
   "files": [
@@ -84,14 +80,6 @@
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
-  "peerDependencies": {
-    "vite": "^7.0.0 || ^8.0.0"
-  },
-  "peerDependenciesMeta": {
-    "vite": {
-      "optional": true
-    }
-  },
   "dependencies": {
     "@tailwindcss/node": "4.2.1",
     "@videojs/utils": "workspace:*",
@@ -105,7 +93,6 @@
   },
   "devDependencies": {
     "tsdown": "^0.22.14",
-    "vite": "^8.1.5",
     "vitest": "^4.1.10"
   }
 }

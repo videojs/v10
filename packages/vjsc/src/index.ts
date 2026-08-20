@@ -6,6 +6,13 @@ export {
   type OutputChunkFile,
   type OutputFile,
 } from './build';
+export {
+  defineVirtualModule,
+  VIRTUAL_MODULE_PREFIX,
+  type VirtualModuleDefinition,
+  type VjscPluginOptions,
+  vjscPlugin,
+} from './bundle';
 export type {
   ComponentFileSet,
   ComponentSource,
@@ -72,13 +79,6 @@ export {
   loadConfig,
   loadConfigFile,
 } from './load-config';
-export {
-  createVirtualModuleGraph,
-  defineVirtualModule,
-  VIRTUAL_MODULE_PREFIX,
-  type VirtualModuleDefinition,
-  type VirtualModuleGraph,
-} from './module-graph';
 export type {
   CreateEntriesModuleOptions,
   EntriesModule,

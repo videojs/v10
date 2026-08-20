@@ -1,6 +1,6 @@
 import ts from 'typescript';
 
-import type { GeneratedModule } from './index';
+import type { GeneratedModule } from '../generate';
 
 /** Emit one generated module declaration entirely in memory. */
 export function createGeneratedModuleDeclaration(module: GeneratedModule, fileName: string): string {

@@ -5,7 +5,8 @@ import { join } from 'node:path';
 import { rolldown } from 'rolldown';
 import { describe, expect, it, vi } from 'vitest';
 
-import { schemaPlugin, vjscPlugin } from '../rolldown';
+import { vjscPlugin } from '../plugin';
+import { schemaPlugin } from '../schema';
 
 describe('vjscPlugin', () => {
   it('bundles a generated entry and its relative source imports', async () => {
@@ -23,7 +24,7 @@ describe('vjscPlugin', () => {
       plugins: [
         vjscPlugin({
           modules: [{ id: 'virtual:vjsc/entry.ts', load }],
-          resolveId: () => virtualFile,
+          resolveModuleId: () => virtualFile,
           declarations: [
             {
               id: 'virtual:vjsc/entry.ts',
@@ -40,7 +41,42 @@ describe('vjscPlugin', () => {
     expect(output.output.find((item) => item.fileName === 'entry.d.ts')).toMatchObject({
       source: "export { value } from '../value';\n",
     });
-    expect(load).toHaveBeenCalledOnce();
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it('uses native host filters for included and excluded modules', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-filter-'));
+    const source = join(root, 'view.tsx');
+    const excluded = join(root, 'view.test.tsx');
+    writeFileSync(source, 'export const view = <div/>;');
+    writeFileSync(excluded, 'export const testView = <div/>;');
+    const transformed: string[] = [];
+
+    const bundle = await rolldown({
+      input: [source, excluded],
+      external: /^react\//,
+      plugins: [
+        vjscPlugin({
+          include: '**/*.tsx',
+          exclude: '**/*.test.tsx',
+          config: {
+            plugins: [
+              {
+                name: 'record-transform',
+                setup(context) {
+                  transformed.push(context.filename);
+                  return {};
+                },
+              },
+            ],
+          },
+        }),
+      ],
+    });
+    await bundle.generate({ format: 'es' });
+
+    expect(transformed).toHaveLength(1);
+    expect(transformed[0]).toMatch(/\/view\.tsx$/);
   });
 
   it('creates a schema entry directly from inline bundler configuration', async () => {
