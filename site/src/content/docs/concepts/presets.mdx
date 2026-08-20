@@ -69,6 +69,29 @@ Each HTML preset provides registration entry points for a preconfigured player e
 
 These parts aren't equally tied together. Skins depend tightly on their feature bundle — a skin expects specific features to exist. Media elements are more interchangeable — you can swap in an HLS or DASH provider without changing your skin or features.
 
+<FrameworkCase frameworks={["html"]}>
+HTML preset roots are side-effect-free modules for importing the configured classes, typed controller, and feature bundle:
+
+```ts
+import {
+  PlayerController,
+  VideoPlayerElement,
+  VideoSkinElement,
+  videoFeatures,
+} from '@videojs/html/video';
+```
+
+Registration is explicit, so importing a value never changes the custom element registry:
+
+```ts
+import '@videojs/html/video/player'; // <video-player> only
+import '@videojs/html/video/ui';     // <media-container> + video UI
+import '@videojs/html/video/skin';   // <video-skin> + container + video UI
+```
+
+A complete default player imports `video/player` and `video/skin`. Import `video/ui` instead of the skin when rendering an ejected light-DOM layout.
+</FrameworkCase>
+
 ## Customizing a preset
 
 You can customize a preset in three ways: extend its feature bundle, eject its skin, or swap its media element.
