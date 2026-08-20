@@ -174,7 +174,7 @@ function parseDerivedKeys(node: ts.Expression): DerivedKeySource[] {
 }
 
 /**
- * Read the `config` map: `{ contentTitle: { action: 'setContentTitle', state: USER_X } }`.
+ * Read the `config` map: `{ title: { action: SET_USER_TITLE, state: USER_TITLE } }`.
  *
  * Each value names a source-state member either as an identifier bound to a
  * private symbol or as a string naming the member outright, which is how an
