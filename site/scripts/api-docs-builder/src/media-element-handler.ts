@@ -24,7 +24,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import { extractCSSVars } from './css-vars-handler.js';
-import type { HostPropertyDef, MediaEventDef, MediaReference, MediaTargetTag, ReactMediaReference } from './types.js';
+import type {
+  EngineOptionDef,
+  HostPropertyDef,
+  MediaEventDef,
+  MediaReference,
+  MediaTargetTag,
+  ReactMediaReference,
+} from './types.js';
 import { loadCompilerOptions } from './typescript.js';
 import { getJSDocDescription } from './utils.js';
 
@@ -771,6 +778,84 @@ function resolveInferredTypes(
     types.set(prop.name, checker.typeToString(propType));
   }
   return types;
+}
+
+/**
+ * Collect the options a media accepts under `source.engine`, keyed by engine name.
+ *
+ * Walks the host's `source` property type to `engine`, then lists each engine's
+ * own members with their declared type and JSDoc. Driven by the type rather than
+ * by file or name convention: the config interfaces sit in different files per
+ * provider (`source.ts` for most, `media.ts` for Vimeo) and one extends a
+ * third-party type (`@vimeo/player`), which the checker resolves the same way.
+ *
+ * JSDoc is the only source of prose here, so a wrong or missing description is
+ * fixed on the interface member, never in the docs page. Members carrying no
+ * JSDoc are omitted, and an engine left with none is dropped entirely: a name
+ * and a type with no description is not documentation, and the third-party
+ * engine configs (`hls.js` alone declares 134 undocumented options) would
+ * otherwise bury the ones we do describe.
+ */
+function extractEngineOptions(
+  hostFilePath: string,
+  hostClassName: string,
+  program: ts.Program,
+  checker: ts.TypeChecker
+): Record<string, EngineOptionDef[]> | undefined {
+  const sourceFile = program.getSourceFile(hostFilePath);
+  if (!sourceFile) return undefined;
+
+  let classNode: ts.ClassDeclaration | undefined;
+  const visit = (node: ts.Node) => {
+    if (ts.isClassDeclaration(node) && node.name?.text === hostClassName) classNode = node;
+    if (!classNode) ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  if (!classNode?.name) return undefined;
+  // Bind the narrowed node to a const: the closures below lose the narrowing on
+  // the mutable `classNode` the visitor assigns.
+  const anchor = classNode;
+  const anchorName = classNode.name;
+
+  const classSymbol = checker.getSymbolAtLocation(anchorName);
+  if (!classSymbol) return undefined;
+
+  const sourceProperty = checker.getDeclaredTypeOfSymbol(classSymbol).getProperty('source');
+  if (!sourceProperty) return undefined;
+
+  const engineProperty = checker
+    .getTypeOfSymbolAtLocation(sourceProperty, anchor)
+    .getNonNullableType()
+    .getProperty('engine');
+  if (!engineProperty) return undefined;
+
+  const engines: Record<string, EngineOptionDef[]> = {};
+  const engineType = checker.getTypeOfSymbolAtLocation(engineProperty, anchor).getNonNullableType();
+
+  for (const engine of engineType.getProperties()) {
+    const configType = checker.getTypeOfSymbolAtLocation(engine, anchor).getNonNullableType();
+    const options = configType
+      .getProperties()
+      .flatMap((member) => {
+        // Collapse whitespace: multi-line JSDoc renders into one table cell.
+        const description = ts
+          .displayPartsToString(member.getDocumentationComment(checker))
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (!description) return [];
+        return [
+          {
+            name: member.getName(),
+            type: checker.typeToString(checker.getTypeOfSymbolAtLocation(member, anchor)),
+            description,
+          } satisfies EngineOptionDef,
+        ];
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (options.length > 0) engines[engine.getName()] = options;
+  }
+
+  return Object.keys(engines).length > 0 ? engines : undefined;
 }
 
 function findImportPath(sourceFile: ts.SourceFile, name: string): string | undefined {
@@ -1734,10 +1819,13 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
     const react = extractReactReference(monorepoRoot, source, compilerOptions, publicProperties);
 
+    const engineOptions = extractEngineOptions(source.hostFilePath, source.hostClassName, program, checker);
+
     const reference: MediaReference = {
       name: source.className,
       tagName: source.tagName,
       mediaType: source.mediaType,
+      ...(engineOptions ? { engineOptions } : {}),
       platforms: {
         html: {
           target: source.targetTag,

@@ -6,6 +6,7 @@ description: Video component that plays Vimeo videos and live events through the
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -72,6 +73,8 @@ A `vimeo.com/event/<id>` URL plays that event through Vimeo's event embed, and i
 
 Pass [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) under `source.engine.vimeo`, spelled exactly as Vimeo spells them. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
+<EngineOptions media="VimeoVideo" engine="vimeo" />
+
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <VimeoVideo
@@ -93,7 +96,7 @@ video.source = {
 ```
 </FrameworkCase>
 
-These options are typed from Vimeo's own SDK, so your editor completes every parameter and rejects one Vimeo doesn't have.
+These options are typed from Vimeo's own SDK, so your editor completes every parameter and rejects one Vimeo doesn't have. That also means the list covers Vimeo's oEmbed API alongside the player: `id` and `url` both override the video `src` names, and `width`, `height`, `maxwidth`, `maxheight`, and `responsive` size an oEmbed response rather than this element. Pass the video through `src`, and size the element with CSS.
 
 `autoplay`, `controls`, `loop`, `muted`, `playsinline`, and `preload` come from the props of the same name. Setting them here overrides the prop, which is worth knowing when a value seems to be ignored. The element also sends `transparent: false`, where Vimeo's default is `true`.
 

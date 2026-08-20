@@ -6,6 +6,7 @@ description: Video component that plays Cloudflare Stream videos through the Str
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -57,13 +58,7 @@ A few things work differently from a native `<video>` element, because the Strea
 
 Pass [Stream player parameters](https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/) under `source.engine.cloudflare`, spelled exactly as Cloudflare spells them. They're serialized onto the embed URL untouched, and the embed reads them once, when its URL is built. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
-| Option | Description |
-|---|---|
-| `defaultTextTrack` | BCP 47 language of the text track to show by default (`'en'`, `'de'`) |
-| `primaryColor` | Any CSS color for the progress bar and other player accents |
-| `letterboxColor` | Any CSS color for the letterbox bars around a video that doesn't fill the player |
-| `startTime` | Where playback starts, in seconds or as a time string (`'5m30s'`) |
-| `ad-url` | VAST tag to play as a pre-roll ad |
+<EngineOptions media="CloudflareVideo" engine="cloudflare" />
 
 Anything Cloudflare adds next passes through the same way. `controls`, `autoplay`, `loop`, `muted`, `preload`, and `poster` come from the props of the same name, so they have no `engine.cloudflare` spelling.
 

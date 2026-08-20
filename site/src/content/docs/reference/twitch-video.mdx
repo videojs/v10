@@ -6,6 +6,7 @@ description: Video component that plays Twitch videos and live channels through 
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -86,11 +87,7 @@ video.source = {
 
 Pass [Twitch embed parameters](https://dev.twitch.tv/docs/embed/video-and-clips/) under `source.engine.twitch`, spelled exactly as Twitch spells them. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
-| Option | Description |
-|---|---|
-| `parent` | Every hostname that may frame the embed, on top of the page's own |
-| `collection` | Collection to play the video through |
-| `time` | Start position, in Twitch's spelling (`'1h30m10s'`) |
+<EngineOptions media="TwitchVideo" engine="twitch" />
 
 Anything Twitch adds next passes through the same way. `controls`, `autoplay`, and `muted` come from the props of the same name, and the video or channel comes from `src`, so none of those have an `engine.twitch` spelling.
 

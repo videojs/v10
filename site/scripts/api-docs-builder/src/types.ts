@@ -21,6 +21,7 @@ export type {
 } from '../../../src/types/feature-reference.js';
 export { FeatureReferenceSchema } from '../../../src/types/feature-reference.js';
 export type {
+  EngineOptionDef,
   HostPropertyDef,
   HtmlMediaReference,
   MediaEventDef,

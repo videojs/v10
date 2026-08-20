@@ -13,6 +13,7 @@ export type { default as VimeoPlayerApi } from '@vimeo/player';
 
 /** Vimeo engine options: embed parameters forwarded verbatim to `@vimeo/player` and the embed URL. */
 export interface VimeoEngineConfig extends VimeoEmbedParameters {
+  /** `referrerpolicy` for the embed iframe. Not a Vimeo embed parameter. */
   referrerPolicy?: ReferrerPolicy;
 }
 

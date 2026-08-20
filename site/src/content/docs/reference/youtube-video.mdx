@@ -6,6 +6,7 @@ description: Video component that plays YouTube videos and playlists through the
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -53,25 +54,7 @@ A few things work differently from a native `<video>` element, because the IFram
 
 Pass [YouTube player parameters](https://developers.google.com/youtube/player_parameters) under `source.engine.youtube`, spelled exactly as YouTube spells them. They're serialized onto the embed URL untouched, and the embed reads them once, when its URL is built. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
-| Option | Description |
-|---|---|
-| `cc_lang_pref` | ISO 639-1 language to show captions in; pair it with `cc_load_policy` |
-| `cc_load_policy` | `1` to show captions by default, even if the viewer has turned them off |
-| `color` | Progress-bar highlight color, `'red'` or `'white'`; defaults to `'red'` |
-| `disablekb` | `1` to stop responding to keyboard controls |
-| `enablejsapi` | `1` to allow driving the player through the IFrame Player API |
-| `end` | Stop playback this many seconds from the start of the video |
-| `fs` | `0` to hide the fullscreen button |
-| `hl` | Player interface language: an ISO 639-1 code or a full locale (`'fr'`, `'fr-ca'`) |
-| `iv_load_policy` | `3` to hide video annotations; defaults to `1` |
-| `list` | Playlist id (prefixed with `PL`) or channel name, depending on `listType` |
-| `listType` | What `list` refers to: `'playlist'` or `'user_uploads'` |
-| `loop` | `1` to repeat playback; looping a single video also needs `playlist` set to the same id |
-| `origin` | Embedding domain; set it whenever `enablejsapi` is `1` |
-| `playlist` | Comma-separated video ids to play after the one `src` names |
-| `rel` | `0` to draw related videos from the same channel; defaults to `1` |
-| `start` | Begin playback this many seconds from the start of the video |
-| `widget_referrer` | Embedding URL reported to YouTube Analytics for widget-hosted players |
+<EngineOptions media="YouTubeVideo" engine="youtube" />
 
 `autoplay`, `controls`, and `playsinline` come from the props of the same name, so they have no `engine.youtube` spelling. Parameters YouTube has deprecated are absent as well: `modestbranding`, `showinfo`, `autohide`, `theme`, and `listType: 'search'`. Anything YouTube adds next passes through the same way.
 

@@ -6,6 +6,7 @@ description: Video component that plays TikTok videos through the TikTok embed p
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -61,18 +62,7 @@ Two settings opt out. `preload="none"` skips the warm-up, leaving the network un
 
 Pass [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) under `source.engine.tiktok`, spelled exactly as TikTok spells them — each one `0` or `1`. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
-| Option | Description | Default |
-|---|---|---|
-| `closed_caption` | The closed captions button | `1` |
-| `description` | The video description | `0` |
-| `fullscreen_button` | The fullscreen button | `1` |
-| `music_info` | The music info banner | `0` |
-| `native_context_menu` | TikTok's own context menu | `1` |
-| `play_button` | The center play button | `1` |
-| `progress_bar` | The progress bar | `1` |
-| `rel` | What plays next: `1` for TikTok's recommendations, `0` for the author's own videos | `0` |
-| `timestamp` | The timestamp | `1` |
-| `volume_control` | The volume control | `1` |
+<EngineOptions media="TikTokVideo" engine="tiktok" />
 
 `autoplay`, `controls`, `loop`, and `muted` come from the props of the same name, so they have no `engine.tiktok` spelling. Anything TikTok adds next passes through the same way.
 

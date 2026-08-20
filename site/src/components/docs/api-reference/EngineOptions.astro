@@ -1,0 +1,67 @@
+---
+import { getEntry } from 'astro:content';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { MediaReference } from '@/types/media-reference';
+import { resolveReferenceSlug } from '@/utils/api-reference-overrides';
+import InlineMarkdown from './InlineMarkdown.astro';
+
+/**
+ * Renders the options a media accepts under `source.engine.<engine>`, generated
+ * from the engine config interface.
+ *
+ * Reference pages place this inline, beside the prose that explains the engine,
+ * rather than leaving it to the generated API Reference block at the foot of the
+ * page — the table is only useful next to the paragraph naming the provider's
+ * own documentation.
+ *
+ * Renders nothing when the engine documents no options, so a page can carry the
+ * component before its interface has JSDoc.
+ */
+interface Props {
+  /** Media class name, e.g. `YouTubeVideo`. */
+  media: string;
+  /** Key under `source.engine`, e.g. `youtube`. */
+  engine: string;
+}
+
+const { media, engine } = Astro.props;
+
+const entry = await getEntry('mediaReference', resolveReferenceSlug(media));
+const ref: MediaReference | null = entry?.data ?? null;
+const options = ref?.engineOptions?.[engine] ?? [];
+---
+
+{
+  options.length > 0 && (
+    <Table maxWidth={false} outerClass="my-6">
+      <Thead>
+        <Tr>
+          <Th>Option</Th>
+          <Th>Type</Th>
+          <Th>Description</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        {options.map((option) => (
+          <Tr>
+            <Td class="align-top">
+              <MarkdownCode>{option.name}</MarkdownCode>
+            </Td>
+            <Td class="align-top">
+              <MarkdownCode>{option.type}</MarkdownCode>
+            </Td>
+            <Td class="align-top">
+              <InlineMarkdown content={option.description} />
+            </Td>
+          </Tr>
+        ))}
+      </Tbody>
+    </Table>
+  )
+}

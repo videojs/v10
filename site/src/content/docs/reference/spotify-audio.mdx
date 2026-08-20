@@ -6,6 +6,7 @@ description: Audio component that plays Spotify tracks, episodes, playlists, and
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -56,11 +57,7 @@ The Spotify embed exposes less than a native `<audio>` element:
 
 Pass [Spotify embed options](https://developer.spotify.com/documentation/embeds) under `source.engine.spotify`, spelled exactly as Spotify spells them. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
 
-| Option | Description |
-|---|---|
-| `t` | Start position in seconds; outranks the `t` parameter on `src` |
-| `theme` | `0` for the dark theme; omit for the default |
-| `preferVideo` | `true` to load the video variant of an episode that has one |
+<EngineOptions media="SpotifyAudio" engine="spotify" />
 
 Anything Spotify adds next passes through the same way.
 
