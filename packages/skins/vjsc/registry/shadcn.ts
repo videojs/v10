@@ -5,7 +5,6 @@ import { defineCatalogProjection } from 'vjsc/catalog';
 import { defineShadcnRegistry, shadcnOutput } from 'vjsc/shadcn';
 
 import skinCatalog from '../catalog';
-import { formatOutputFile } from '../format';
 import { createReactComponentRegistry } from './frameworks';
 import { componentTransforms } from './react';
 
@@ -110,7 +109,6 @@ export function createSkinShadcnOutput() {
       mode: 'tailwind',
       variant: 'default',
     },
-    format: formatOutputFile,
   });
 }
 
