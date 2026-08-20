@@ -24,13 +24,18 @@ describe('Skins Shadcn registry', () => {
     );
     const registry = assetJson<ShadcnRegistry>(assets, 'registry.json');
     const playButton = assetJson<BuiltItem>(assets, 'play-button.json');
+    const minimalPlayButton = assetJson<BuiltItem>(assets, 'play-button-minimal.json');
     const defaultVideo = assetJson<BuiltItem>(assets, 'default-video.json');
+    const minimalVideo = assetJson<BuiltItem>(assets, 'minimal-video.json');
     const container = assetJson<BuiltItem>(assets, 'container.json');
     const styles = assetJson<BuiltItem>(assets, 'styles.json');
     const utils = assetJson<BuiltItem>(assets, 'utils.json');
     const playSource = playButton.files.find((file) => file.target?.endsWith('/play-button.tsx'))?.content;
 
-    expect(registry.items.map((item: { name: string }) => item.name)).toContain('play-button');
+    expect(registry.items).toHaveLength(52);
+    expect(registry.items.map((item: { name: string }) => item.name)).toEqual(
+      expect.arrayContaining(['button-tooltip', 'minimal-video', 'play-button', 'play-button-minimal'])
+    );
     expect(playSource).toContain('export interface PlayButtonProps');
     expect(playSource).toContain('<PlayButtonPrimitive className=');
     expect(playSource).toContain('grid min-h-0');
@@ -38,22 +43,30 @@ describe('Skins Shadcn registry', () => {
     expect(playSource).not.toContain('const meta');
     expect(playSource).not.toContain('jsx-runtime');
     expect(playButton.dependencies).toEqual(['@videojs/react', 'react']);
-    expect(playButton.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);
+    expect(playButton.registryDependencies).toEqual(['@videojs/button-tooltip', '@videojs/styles', '@videojs/utils']);
+    expect(minimalPlayButton.registryDependencies).toEqual([
+      '@videojs/button-tooltip-minimal',
+      '@videojs/styles',
+      '@videojs/utils',
+    ]);
+    expect(playSource).toContain('size-9');
+    expect(minimalPlayButton.files[0]?.content).toContain('size-9.5');
     expect(defaultVideo.registryDependencies).toEqual(
       expect.arrayContaining(['@videojs/container', '@videojs/overlay', '@videojs/play-button', '@videojs/poster'])
     );
     expect(defaultVideo.registryDependencies).not.toContain('@videojs/seek-button');
+    expect(minimalVideo.registryDependencies).toContain('@videojs/play-button-minimal');
+    expect(minimalVideo.registryDependencies).not.toContain('@videojs/play-button');
     expect(container.dependencies).toEqual(['@videojs/react', 'react']);
     expect(container.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);
-    expect(registry.items.some((item: { name: string }) => item.name === 'button-tooltip')).toBe(false);
     expect(styles.files.map((file) => file.target)).toEqual([
-      'components/videojs/styles/tailwind.css',
-      'components/videojs/styles/tailwind.shared.css',
       'components/videojs/styles/base.css',
       'components/videojs/styles/captions.css',
-      'components/videojs/styles/themes/video.css',
+      'components/videojs/styles/tailwind.css',
+      'components/videojs/styles/tailwind.shared.css',
       'components/videojs/styles/themes/default.css',
       'components/videojs/styles/themes/minimal.css',
+      'components/videojs/styles/themes/video.css',
     ]);
     expect(utils).toMatchObject({
       type: 'registry:lib',

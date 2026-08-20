@@ -1,10 +1,10 @@
 export type {
+  ShadcnItem,
+  ShadcnModule,
   ShadcnPluginOptions,
   ShadcnRegistry,
-  ShadcnRegistryDefinition,
   ShadcnRegistryFile,
   ShadcnRegistryFileType,
-  ShadcnRegistryItemDescription,
-  ShadcnRegistrySharedFile,
-  ShadcnRegistrySharedItem,
+  ShadcnStyle,
+  ShadcnVariant,
 } from './types';
