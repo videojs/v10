@@ -38,7 +38,7 @@ On the HTML side, there was temptation to combine the provider and container int
 - **Skins diverge across platforms.** In React, a skin is `Container` + UI controls — `Player` wraps outside. If the HTML player element _is_ the container, then HTML skins don't include a container (it's already baked in), while React skins do. "Skin" means different things on each platform.
 - **Features outside the fullscreen target lose state access.** The container is the fullscreen target. If it's also the provider, then anything outside it (playlist, transcript, sidebar) is also outside the player's state scope and can't use `PlayerController` or context to access player state.
 
-The current architecture exposes `ProviderMixin` through `createPlayer()` and a concrete `ContainerElement` independently from the main package. This decision formalizes the separation as the default: the provider and container remain distinct elements.
+The current architecture returns a configured `PlayerElement` from `createPlayer()` and exposes a concrete `ContainerElement` independently from the main package. This decision formalizes the separation as the default: the player and container remain distinct elements.
 
 ## Alternatives Considered
 
