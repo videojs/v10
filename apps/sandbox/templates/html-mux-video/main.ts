@@ -47,7 +47,7 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}${poster ? ` poster="${poster}"` : ''}>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        ${placeholder ? `<img slot="poster" alt="" style="background: url('${placeholder}') var(--media-object-position, center) / contain no-repeat">` : ''}
+        ${placeholder ? `<img slot="poster" alt="" crossorigin style="background: url('${placeholder}') var(--media-object-position, center) / contain no-repeat">` : ''}
         <!-- The storyboard track is derived automatically from the Mux src. -->
         <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin>
           ${renderChapters(getChapters(state.source))}
