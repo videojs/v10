@@ -383,7 +383,7 @@ export function withMuxMaxResolution(url: string, maxResolution: string): string
   return capped.href;
 }
 
-export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
+export const VIMEO_VIDEO_SRC = 'https://vimeo.com/347119375';
 
 export const YOUTUBE_VIDEO_SRC = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
 

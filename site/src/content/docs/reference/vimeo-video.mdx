@@ -32,13 +32,13 @@ Of the embed-backed medias, this one comes closest to a native `<video>`: volume
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<VimeoVideo src="https://vimeo.com/648359100" />
+<VimeoVideo src="https://vimeo.com/347119375" />
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<vimeo-video src="https://vimeo.com/648359100"></vimeo-video>
+<vimeo-video src="https://vimeo.com/347119375"></vimeo-video>
 ```
 </FrameworkCase>
 
@@ -49,8 +49,8 @@ Collection URLs aren't supported: channels, showcases, albums, groups, on-demand
 An unlisted video needs the hash Vimeo issues alongside its id. Pass it the way Vimeo writes it, either as a trailing path segment or as an `h` parameter:
 
 ```
-https://vimeo.com/1181503036/abc123def
-https://vimeo.com/1181503036?h=abc123def
+https://vimeo.com/347119375/abc123def
+https://vimeo.com/347119375?h=abc123def
 ```
 
 Both reach the embed as its `h` parameter. When a URL carries the hash in both places, the `h` parameter wins.
@@ -76,7 +76,7 @@ Pass [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) unde
 ```tsx
 <VimeoVideo
   source={{
-    src: 'https://vimeo.com/648359100',
+    src: 'https://vimeo.com/347119375',
     engine: { vimeo: { color: 'f03e3e', start_time: 30, speed: true } },
   }}
 />
@@ -87,7 +87,7 @@ Pass [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) unde
 ```ts
 const video = document.querySelector('vimeo-video');
 video.source = {
-  src: 'https://vimeo.com/648359100',
+  src: 'https://vimeo.com/347119375',
   engine: { vimeo: { color: 'f03e3e', start_time: 30, speed: true } },
 };
 ```
