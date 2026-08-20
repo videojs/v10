@@ -45,9 +45,16 @@ const FAIRPLAY_KEY = {
   uri: 'skd://mux?keyId=abc',
   keyFormat: 'com.apple.streamingkeydelivery',
 };
+// A raw PlayReady Object stand-in — NOT a PSSH box, exactly as Mux authors it.
+const PLAYREADY_KEY = {
+  method: 'SAMPLE-AES',
+  uri: `data:text/plain;charset=UTF-16;base64,${PSSH_BASE64}`,
+  keyFormat: 'com.microsoft.playready',
+};
 
 const DRM_CONFIG = {
   'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' },
+  'com.microsoft.playready': { licenseUrl: 'https://license.example.com/playready' },
   'com.apple.fps': {
     licenseUrl: 'https://license.example.com/fairplay',
     serverCertificateUrl: 'https://license.example.com/appcert',
@@ -196,6 +203,24 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
   });
 
+  it('wraps a raw PlayReady Object into a PSSH box before generating the request', async () => {
+    const eme = makeFakeEme('com.microsoft.playready');
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    const { reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([PLAYREADY_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    const [initDataType, initData] = eme.sessions[0]!.generateRequest.mock.calls[0]! as [string, Uint8Array];
+    expect(initDataType).toBe('cenc');
+    expect(initData.length).toBe(32 + PSSH_BYTES.length);
+    expect([...initData.slice(4, 8)]).toEqual([0x70, 0x73, 0x73, 0x68]); // 'pssh'
+    expect([...initData.slice(32)]).toEqual([...PSSH_BYTES]);
+
+    reactor.destroy();
+  });
+
   it('fetches and applies the server certificate before opening sessions', async () => {
     const eme = makeFakeEme('com.apple.fps');
     vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
@@ -314,7 +339,9 @@ describe('setupMediaKeys', () => {
     eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
 
     await vi.waitFor(() => expect(eme.sessions[0]!.update).toHaveBeenCalledWith(license));
-    expect(fetchLicense).toHaveBeenCalledWith(DRM_CONFIG['com.widevine.alpha'].licenseUrl, message, expect.anything());
+    expect(fetchLicense).toHaveBeenCalledWith(DRM_CONFIG['com.widevine.alpha'].licenseUrl, message, expect.anything(), {
+      'Content-Type': 'application/octet-stream',
+    });
 
     reactor.destroy();
   });

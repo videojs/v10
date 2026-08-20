@@ -58,6 +58,8 @@ import {
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
   requestKeySystemAccess,
+  shapeLicenseRequest,
+  toCencInitData,
 } from '../../../media/dom/eme';
 import {
   SVTA_BAD_LICENSE_REQUEST,
@@ -184,9 +186,10 @@ function setupMediaKeysSetup({
             state.awaitingMediaKeys.set(false);
 
             const exchange = async (session: MediaKeySession, message: BufferSource) => {
+              const { body, headers } = shapeLicenseRequest(keySystem, message);
               let license: Uint8Array<ArrayBuffer>;
               try {
-                license = await fetchLicense(licenseUrl, message, controller.signal);
+                license = await fetchLicense(licenseUrl, body, controller.signal, headers);
               } catch (error) {
                 if (controller.signal.aborted) return;
                 emitError(state, { code: SVTA_BAD_LICENSE_REQUEST, data: { keySystem, reason: String(error) } });
@@ -220,7 +223,7 @@ function setupMediaKeysSetup({
               if (key.keyFormat === undefined || KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat] !== keySystem) continue;
               const initData = key.uri === undefined ? undefined : initDataFromKeyUri(key.uri);
               if (!initData) continue;
-              openSession('cenc', initData);
+              openSession('cenc', toCencInitData(keySystem, initData));
             }
 
             // Event-driven fallback: keys without inline init data (FairPlay
