@@ -118,4 +118,15 @@ describe('Skins Vite workflow', () => {
 
     expect(result).toBeTruthy();
   }, 30_000);
+
+  it('does not initialize Shadcn output while serving registry mode', async () => {
+    server = await createServer({
+      configFile,
+      mode: 'registry',
+      logLevel: 'silent',
+      server: { middlewareMode: true },
+    });
+
+    expect([...server.moduleGraph.idToModuleMap.keys()].some((id) => id.includes('virtual:vjsc/shadcn'))).toBe(false);
+  }, 30_000);
 });

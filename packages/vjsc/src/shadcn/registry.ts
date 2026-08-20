@@ -14,7 +14,7 @@ type PublishedRegistryItemType = Extract<RegistryItem['type'], 'registry:block' 
 export interface ShadcnGraphModule<Item extends ComponentMeta = ComponentMeta> {
   readonly id: string;
   readonly source: string;
-  readonly meta: Item;
+  readonly meta?: Item | undefined;
   readonly importedIds: readonly string[];
 }
 
@@ -153,7 +153,9 @@ function validateGraph(graph: ShadcnGraph): ReadonlyMap<string, RegistryModule> 
     if (!sourcePath || escapesRoot(sourcePath)) {
       throw new Error(`Shadcn graph module must be inside the graph root: \`${module.id}\`.`);
     }
-    if (!module.meta.name) throw new Error(`Shadcn graph module has an empty component name: \`${module.id}\`.`);
+    if (module.meta && !module.meta.name) {
+      throw new Error(`Shadcn graph module has an empty component name: \`${module.id}\`.`);
+    }
     assertMetaRemoved(module);
     if (modules.has(id)) throw new Error(`Shadcn graph module is captured twice: \`${id}\`.`);
     modules.set(id, { ...module, sourcePath });
@@ -194,6 +196,7 @@ function validateDefinition(definition: ShadcnRegistryDefinition, modules: Reado
 function indexModulesByName(modules: ReadonlyMap<string, RegistryModule>): ReadonlyMap<string, RegistryModule> {
   const indexed = new Map<string, RegistryModule>();
   for (const module of modules.values()) {
+    if (!module.meta) continue;
     const previous = indexed.get(module.meta.name);
     if (previous) {
       throw new Error(`Component \`${module.meta.name}\` is declared by both \`${previous.id}\` and \`${module.id}\`.`);
@@ -212,6 +215,7 @@ function buildPublishedItem<Item extends ComponentMeta>(
   definition: ShadcnRegistryDefinition<Item>
 ): BuiltItem {
   const root = modulesByName.get(name)!;
+  if (!root.meta) throw new Error(`Shadcn published source is missing component metadata: \`${root.id}\`.`);
   const description = definition.items.describe(root.meta as Item);
   const owned = collectOwnedModules(root, modules, publishedNames);
   const layout = createLayout(root, owned.modules, description.type, definition);
@@ -267,7 +271,7 @@ function collectOwnedModules(
     for (const importedId of module.importedIds) {
       const dependency = modules.get(cleanModuleId(importedId));
       if (!dependency) continue;
-      if (dependency.id !== root.id && publishedNames.has(dependency.meta.name)) {
+      if (dependency.id !== root.id && dependency.meta && publishedNames.has(dependency.meta.name)) {
         publishedDependencies.add(dependency.meta.name);
       } else {
         visit(dependency);
@@ -285,6 +289,7 @@ function createLayout(
   ownerType: PublishedRegistryItemType,
   definition: ShadcnRegistryDefinition
 ): ReadonlyMap<string, OwnedModule> {
+  if (!root.meta) throw new Error(`Shadcn published source is missing component metadata: \`${root.id}\`.`);
   const layout = new Map<string, OwnedModule>();
   const outputPaths = new Map<string, string>();
   const targets = new Map<string, string>();
@@ -339,7 +344,7 @@ function rewriteImports(
       const ownedDependency = layout.get(dependency.id);
       if (ownedDependency) {
         replacement = relativeImport(module.target, ownedDependency.target);
-      } else if (publishedNames.has(dependency.meta.name)) {
+      } else if (dependency.meta && publishedNames.has(dependency.meta.name)) {
         replacement = publishedImport(dependency, definition);
       }
     }
@@ -395,6 +400,7 @@ function resolveImportedId(
 }
 
 function publishedImport(module: RegistryModule, definition: ShadcnRegistryDefinition): string {
+  if (!module.meta) throw new Error(`Shadcn published dependency is missing component metadata: \`${module.id}\`.`);
   return posix.join(definition.paths.import, module.meta.name, posix.basename(stripScriptExtension(module.sourcePath)));
 }
 

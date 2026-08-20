@@ -33,7 +33,7 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
   const triggerId = `virtual:vjsc/shadcn/${createHash('sha256').update(root).update(query).digest('hex').slice(0, 12)}`;
   const resolvedTriggerId = `\0${triggerId}`;
   const captured = new Map<string, CapturedModule>();
-  let metadata = new Map<string, Item>();
+  let metadata = new Map<string, Item | undefined>();
   let triggerSource = 'export default null;';
   let graph: ShadcnGraph | undefined;
 
@@ -42,7 +42,7 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
     buildStart() {
       captured.clear();
       graph = undefined;
-      metadata = discoverMetadata(options, root);
+      metadata = discoverSources(options, root);
       validatePublishedItems(metadata, options.registry);
 
       this.addWatchFile(root);
@@ -53,7 +53,7 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
 
       const published = new Set(options.registry.items.published);
       const entries = [...metadata]
-        .filter(([, meta]) => published.has(meta.name))
+        .filter((entry): entry is [string, Item] => entry[1] !== undefined && published.has(entry[1].name))
         .map(([fileName]) => `${fileName}${query}`);
       triggerSource = `${entries.map((id) => `import ${JSON.stringify(id)};`).join('\n')}\nexport default null;`;
       this.emitFile({ type: 'chunk', id: triggerId });
@@ -96,7 +96,7 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
         modules.push({
           id: fileName,
           source: capture.source,
-          meta: metadata.get(fileName)!,
+          meta: metadata.get(fileName),
           importedIds: info.importedIds.map((id) => {
             const canonical = canonicalPath(cleanId(id));
             return metadata.has(canonical) ? canonical : id;
@@ -105,7 +105,7 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
       }
 
       for (const [fileName, meta] of metadata) {
-        if (!options.registry.items.published.includes(meta.name)) continue;
+        if (!meta || !options.registry.items.published.includes(meta.name)) continue;
         if (!captured.has(fileName))
           this.error(`Shadcn published item \`${meta.name}\` was not loaded by the host graph.`);
       }
@@ -123,10 +123,10 @@ export function createShadcnPlugin<Item extends ComponentMeta>(options: ShadcnPl
   };
 }
 
-function discoverMetadata<Item extends ComponentMeta>(
+function discoverSources<Item extends ComponentMeta>(
   options: ShadcnPluginOptions<Item>,
   root: string
-): Map<string, Item> {
+): Map<string, Item | undefined> {
   const include = typeof options.include === 'string' ? [options.include] : options.include;
   const exclude = typeof options.exclude === 'string' ? [options.exclude] : options.exclude;
   const files = [
@@ -138,28 +138,37 @@ function discoverMetadata<Item extends ComponentMeta>(
       )
     ),
   ].sort();
-  const output = new Map<string, Item>();
+  const output = new Map<string, Item | undefined>();
   const names = new Set<string>();
 
   for (const fileName of files) {
-    const meta = extractComponentMeta(readFileSync(fileName, 'utf8'), fileName) as Item;
-    if (names.has(meta.name)) throw new Error(`Component \`${meta.name}\` is declared more than once.`);
-    names.add(meta.name);
+    const meta = maybeExtractComponentMeta(readFileSync(fileName, 'utf8'), fileName) as Item | undefined;
+    if (meta && names.has(meta.name)) throw new Error(`Component \`${meta.name}\` is declared more than once.`);
+    if (meta) names.add(meta.name);
     output.set(fileName, meta);
   }
   return output;
 }
 
 function validatePublishedItems<Item extends ComponentMeta>(
-  metadata: ReadonlyMap<string, Item>,
+  metadata: ReadonlyMap<string, Item | undefined>,
   registry: ShadcnRegistryDefinition<Item>
 ): void {
-  const available = new Set([...metadata.values()].map((meta) => meta.name));
+  const available = new Set([...metadata.values()].flatMap((meta) => (meta ? [meta.name] : [])));
   const published = new Set<string>();
   for (const name of registry.items.published) {
     if (published.has(name)) throw new Error(`Shadcn item \`${name}\` is published more than once.`);
     if (!available.has(name)) throw new Error(`Shadcn registry references missing component \`${name}\`.`);
     published.add(name);
+  }
+}
+
+function maybeExtractComponentMeta(source: string, fileName: string): ComponentMeta | undefined {
+  try {
+    return extractComponentMeta(source, fileName);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('must export a static')) return undefined;
+    throw error;
   }
 }
 

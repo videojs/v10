@@ -5,7 +5,7 @@ import { createShadcnPlugin, type ShadcnPluginOptions } from '../bundle/shadcn';
 import type { ComponentMeta } from '../components';
 import type { CompilerConfig } from '../config';
 
-export type { Plugin } from 'rolldown';
+export type { Plugin, RolldownOutput } from 'rolldown';
 export type { SchemaPlugin, SchemaPluginOptions, ShadcnPluginOptions, VjscTransformContext, VjscTransformer };
 
 /** A native Rolldown ID pattern accepted by include and exclude filters. */

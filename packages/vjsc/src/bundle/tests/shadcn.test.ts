@@ -129,7 +129,7 @@ describe('shadcnPlugin', () => {
       'components/root.tsx': `export function Root() { return <main/>; }`,
     });
     await expect(build(missingMeta, registry({ published: ['root'], shared: [] }))).rejects.toThrow(
-      /must export a static `meta` object/
+      /missing component `root`/
     );
 
     const duplicate = setup({

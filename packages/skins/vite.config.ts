@@ -7,11 +7,11 @@ import { type CompilerConfig, html, jsx } from 'vjsc';
 import { componentMetaPlugin, discoverComponents } from 'vjsc/components';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
-import { vjscPlugin } from 'vjsc/vite';
+import { shadcnPlugin, vjscPlugin } from 'vjsc/vite';
 import type { SkinMeta } from './vjsc/meta';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './vjsc/registry/frameworks';
 import { componentTransforms } from './vjsc/registry/react';
-import { createSkinShadcnPlugin } from './vjsc/registry/shadcn';
+import { skinRegistry } from './vjsc/registry/shadcn';
 
 const packageDir = import.meta.dirname;
 const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
@@ -21,24 +21,36 @@ const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 export default defineConfig(({ mode }) => (mode === 'registry' ? createRegistryConfig() : createPreviewConfig()));
 
 function createRegistryConfig() {
-  const registry = createSkinShadcnPlugin();
+  const transform = createSkinTransformer();
 
   return {
     root: packageDir,
-    plugins: [registry],
+    plugins: [
+      vjscPlugin({
+        cwd: packageDir,
+        include: new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`),
+        transform,
+      }),
+      shadcnPlugin({
+        root: vjscDir,
+        include: ['./components/**/*.tsx', './skins/*/skin.tsx'],
+        query: { framework: 'react', skin: 'default-video', style: 'tailwind' },
+        registry: skinRegistry,
+      }),
+    ],
     build: {
       outDir: resolve(packageDir, 'dist/registry'),
       emptyOutDir: true,
       rolldownOptions: {
-        input: registry.moduleId,
+        input: [],
+        external: (id: string) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
       },
     },
   };
 }
 
 function createPreviewConfig() {
-  const transforms = new Map<string, CompilerConfig>();
-  const skins = discoverComponents<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
+  const transform = createSkinTransformer();
 
   return {
     root: resolve(packageDir, 'dev'),
@@ -50,44 +62,7 @@ function createPreviewConfig() {
       vjscPlugin({
         cwd: packageDir,
         include: new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`),
-        transform: ({ parameters }) => {
-          const framework = parameters.get('framework');
-          const skinName = parameters.get('skin');
-          const style = parameters.get('style');
-          if ((framework !== 'react' && framework !== 'html') || !skinName || !style) return null;
-
-          const skin = skins.find((item) => item.name === skinName);
-          if (!skin) return null;
-
-          const key = parameters.toString();
-          const cached = transforms.get(key);
-          if (cached) return cached;
-
-          const registry =
-            framework === 'react'
-              ? createReactComponentRegistry(skin.style.theme)
-              : createHtmlComponentRegistry(skin.style.theme);
-          const config: CompilerConfig = {
-            target: framework === 'react' ? jsx({ importSource: 'react' }) : html(),
-            plugins: [
-              registryPlugin(registry),
-              style === 'tailwind'
-                ? stylesPlugin({ mode: 'tailwind', variant: skin.style.variant })
-                : stylesPlugin({
-                    mode: 'css',
-                    variant: skin.style.variant,
-                    stylesheet: {
-                      input: resolve(vjscDir, 'styles/tailwind.css'),
-                      scope: `.${skin.style.scope}`,
-                    },
-                  }),
-              componentMetaPlugin(),
-              ...(framework === 'react' ? [componentTransforms()] : []),
-            ],
-          };
-          transforms.set(key, config);
-          return config;
-        },
+        transform,
       }),
       tailwindcss(),
       react({ jsxImportSource: 'react' }),
@@ -137,6 +112,50 @@ function createPreviewConfig() {
       include: ['react', 'react-dom'],
       exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
     },
+  };
+}
+
+function createSkinTransformer() {
+  const transforms = new Map<string, CompilerConfig>();
+  const skins = discoverComponents<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
+
+  return ({ parameters }: { parameters: URLSearchParams }): CompilerConfig | null => {
+    const framework = parameters.get('framework');
+    const skinName = parameters.get('skin');
+    const style = parameters.get('style');
+    if ((framework !== 'react' && framework !== 'html') || !skinName || !style) return null;
+
+    const skin = skins.find((item) => item.name === skinName);
+    if (!skin) return null;
+
+    const key = parameters.toString();
+    const cached = transforms.get(key);
+    if (cached) return cached;
+
+    const registry =
+      framework === 'react'
+        ? createReactComponentRegistry(skin.style.theme)
+        : createHtmlComponentRegistry(skin.style.theme);
+    const config: CompilerConfig = {
+      target: framework === 'react' ? jsx({ importSource: 'react' }) : html(),
+      plugins: [
+        registryPlugin(registry),
+        style === 'tailwind'
+          ? stylesPlugin({ mode: 'tailwind', variant: skin.style.variant })
+          : stylesPlugin({
+              mode: 'css',
+              variant: skin.style.variant,
+              stylesheet: {
+                input: resolve(vjscDir, 'styles/tailwind.css'),
+                scope: `.${skin.style.scope}`,
+              },
+            }),
+        componentMetaPlugin(),
+        ...(framework === 'react' ? [componentTransforms()] : []),
+      ],
+    };
+    transforms.set(key, config);
+    return config;
   };
 }
 

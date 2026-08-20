@@ -1,13 +1,6 @@
-import { resolve } from 'node:path';
-
-import { jsx } from 'vjsc';
-import { plugin as registryPlugin } from 'vjsc/registry';
-import { defineShadcnRegistry, defineShadcnSource } from 'vjsc/shadcn';
-import { type ShadcnPlugin, shadcnPlugin } from 'vjsc/vite';
+import type { ShadcnRegistryDefinition } from 'vjsc/shadcn';
 
 import type { SkinModuleMeta } from '../meta';
-import { createReactComponentRegistry } from './frameworks';
-import { componentTransforms } from './react';
 
 const paths = {
   output: 'vjsc/registry',
@@ -15,8 +8,6 @@ const paths = {
   install: 'components/videojs',
   import: '@/components/videojs',
 } as const;
-
-const rootDir = resolve(import.meta.dirname, '..');
 
 const styles = {
   tailwind: {
@@ -32,28 +23,8 @@ const styles = {
   },
 } as const;
 
-const skinSource = defineShadcnSource<SkinModuleMeta>()({
-  discovery: {
-    rootDir,
-    include: ['./components/**/*.tsx', './skins/*/skin.tsx'],
-  },
-  resources: { styles },
-  allowedImports: [
-    '@videojs/core',
-    '@videojs/utils/style',
-    'vjsc',
-    'vjsc/styles',
-    'vjsc/components',
-    /^@videojs\/core\/i18n\/text\//,
-  ],
-  imports: {
-    '@videojs/core/vjsc': 'components',
-    '@videojs/icons/vjsc': 'icons',
-  },
-});
-
 /** React/Tailwind publication policy for the Skin inventory. */
-const skinRegistry = defineShadcnRegistry(skinSource, {
+export const skinRegistry = {
   name: 'videojs',
   homepage: 'https://videojs.org',
   namespace: '@videojs',
@@ -106,7 +77,7 @@ const skinRegistry = defineShadcnRegistry(skinSource, {
           { source: styles.tailwind.registry, path: styles.tailwind.compiler },
           { source: styles.tailwind.shared },
           { source: styles.base },
-          ...(styles.shared ?? []).map((source) => ({ source })),
+          ...styles.shared.map((source) => ({ source })),
           ...Object.entries(styles.themes)
             .sort(([left], [right]) => left.localeCompare(right))
             .map(([, source]) => ({ source })),
@@ -125,23 +96,4 @@ const skinRegistry = defineShadcnRegistry(skinSource, {
       },
     ],
   },
-});
-
-/** Configure the Shadcn source-distribution output consumed by the Skins Vite build. */
-export function createSkinShadcnPlugin(): ShadcnPlugin {
-  return shadcnPlugin({
-    source: skinSource,
-    rootDir,
-    registry: skinRegistry,
-    transformer: {
-      transform: {
-        target: jsx({ importSource: 'react' }),
-        plugins: [registryPlugin(createReactComponentRegistry()), componentTransforms()],
-      },
-    },
-    styles: {
-      mode: 'tailwind',
-      variant: 'default',
-    },
-  });
-}
+} as const satisfies ShadcnRegistryDefinition<SkinModuleMeta>;
