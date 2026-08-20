@@ -144,6 +144,6 @@ The remaining cutover belongs to [#2183](https://github.com/videojs/v10/issues/2
 - Vite and Rolldown adapters: `packages/compiler/src/bundlers/`
 - Catalog resolution and emission: `packages/compiler/src/catalog/`
 - Vite preview configuration: `packages/skins/vite.config.ts`
-- Core schema source descriptor: `packages/core/vjsc.ts`
+- Core schema source descriptor: `packages/core/src/vjsc.ts`
 - React, HTML, and Icon registry metadata: `packages/skins/build/metadata.ts` and package-local `vjsc/` factories
 - Shadcn materialization: `packages/skins/scripts/build-registry.ts`

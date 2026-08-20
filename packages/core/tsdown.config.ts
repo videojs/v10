@@ -6,7 +6,7 @@ import { writeGeneratedFile } from 'vjsc/generate';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import en from './src/core/i18n/locales/en.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
-import { createCoreSchemaModule } from './vjsc.ts';
+import { createCoreSchemaModule } from './src/vjsc.ts';
 
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 const textNamespaces = [...new Set(Object.keys(en).map((key) => key.split('.')[0]))];

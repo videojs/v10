@@ -7,6 +7,7 @@ import {
   type CompilerPipelineStep,
   type CompilerPlugin,
   type CompilerSourceMap,
+  type CompilerTarget,
   type CompilerTransform,
   jsx,
 } from './config';

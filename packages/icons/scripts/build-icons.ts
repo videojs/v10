@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { transform } from '@svgr/core';
 import { transformSync } from 'oxc-transform';
-import { iconNames } from './internal/icon-names.js';
+import { iconNames } from '../vjsc/icon-names.js';
 import { ASSETS_DIR, DIST_DIR, getIconSets, getSvgFiles } from './internal/paths.js';
 import { optimizeSvg } from './internal/svg.js';
 

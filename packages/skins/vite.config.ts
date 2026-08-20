@@ -8,7 +8,7 @@ import { catalogMetaPlugin } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
-import { createCoreSchemaModule } from '../core/vjsc';
+import { createCoreSchemaModule } from '../core/src/vjsc';
 import { createIconElementModule } from './build/icon-element';
 import {
   coreSchemaModule,

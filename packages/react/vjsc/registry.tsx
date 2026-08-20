@@ -43,12 +43,16 @@ export interface ReactRegistryEntries {
   readonly [name: string]: unknown;
 }
 
-type ReactEntryName = 'Popover' | 'Poster' | 'Slider' | 'Tooltip';
-type ReactGeneratedEntry = RegistryEntryReference & Readonly<Record<string, RegistryEntryReference>>;
+interface ReactGeneratedEntries {
+  readonly Popover: Readonly<Record<string, RegistryEntryReference>>;
+  readonly Poster: RegistryEntryReference;
+  readonly Slider: Readonly<Record<string, RegistryEntryReference>>;
+  readonly Tooltip: Readonly<Record<string, RegistryEntryReference>>;
+}
 
 /** Canonical core components rendered through the React component package. */
 export function createRegistry(schema: ComponentSchema, entries: ReactRegistryEntries): ComponentRegistry {
-  const $ = entries as unknown as Readonly<Record<ReactEntryName, ReactGeneratedEntry>>;
+  const $ = entries as unknown as ReactGeneratedEntries;
 
   return defineRegistry({
     schema,
@@ -60,7 +64,9 @@ export function createRegistry(schema: ComponentSchema, entries: ReactRegistryEn
           ...$.Popover,
           Trigger: {
             host: $.Popover.Trigger,
-            render: ({ props }) => <Host render={props.children} {...props} />,
+            render: ({ props }: RegistryRenderContext<Record<string, unknown>>) => (
+              <Host render={props.children} {...props} />
+            ),
           },
         },
       },
@@ -70,7 +76,7 @@ export function createRegistry(schema: ComponentSchema, entries: ReactRegistryEn
           ...$.Poster.props,
           children: 'render',
         },
-        render: ({ props, reference }) => {
+        render: ({ props, reference }: RegistryRenderContext<Record<string, unknown>>) => {
           const PosterPrimitive = reference($.Poster);
 
           return <PosterPrimitive render={props.children} {...props} />;
@@ -96,11 +102,13 @@ export function createRegistry(schema: ComponentSchema, entries: ReactRegistryEn
           ...$.Tooltip,
           Trigger: {
             host: $.Tooltip.Trigger,
-            render: ({ props }) => <Host render={props.children} {...props} />,
+            render: ({ props }: RegistryRenderContext<Record<string, unknown>>) => (
+              <Host render={props.children} {...props} />
+            ),
           },
         },
       },
-    },
+    } as unknown as never,
     props: {
       transform: transformReactProp,
     },

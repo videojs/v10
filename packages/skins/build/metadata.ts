@@ -1,24 +1,27 @@
 import { resolve } from 'node:path';
 
-import { createEntriesModule, createSchemaModule } from 'vjsc';
+import { createEntriesModule, type EntriesModule } from 'vjsc';
+import type { ComponentSchema } from 'vjsc/components';
 import { type ComponentRegistry, extendRegistry } from 'vjsc/registry';
-import { createCoreSchemaModule } from '../../core/vjsc';
+import { createCoreSchemaModule } from '../../core/src/vjsc';
+// @ts-expect-error Tooling executes package-owned registry source; project builds expose declarations only.
 import { createRegistry as createHtmlRegistry, type HtmlRegistryEntries } from '../../html/vjsc/registry';
 import { resolveHtmlEntries } from '../../html/vjsc/resolve';
-import { iconNames } from '../../icons/scripts/internal/icon-names';
 import {
   createHtmlRegistry as createHtmlIconRegistry,
   createReactRegistry as createReactIconRegistry,
+  // @ts-expect-error Tooling executes package-owned registry source; project builds expose declarations only.
 } from '../../icons/vjsc/registry';
+import { createIconSchemaModule } from '../../icons/vjsc/schema';
+// @ts-expect-error Tooling executes package-owned registry source; project builds expose declarations only.
 import { createRegistry as createReactRegistry, type ReactRegistryEntries } from '../../react/vjsc/registry';
 import { resolveReactEntry } from '../../react/vjsc/resolve';
 
 const packagesDir = resolve(import.meta.dirname, '../..');
 const htmlDir = resolve(packagesDir, 'html');
-const iconsDir = resolve(packagesDir, 'icons');
 const reactDir = resolve(packagesDir, 'react');
 
-export function createReactEntriesModule(schema = createCoreSchemaModule().schema) {
+export function createReactEntriesModule(schema: ComponentSchema = createCoreSchemaModule().schema): EntriesModule {
   return createEntriesModule(
     {
       schema,
@@ -29,7 +32,7 @@ export function createReactEntriesModule(schema = createCoreSchemaModule().schem
   );
 }
 
-export function createHtmlEntriesModule() {
+export function createHtmlEntriesModule(): EntriesModule {
   return createEntriesModule(
     {
       files: ['./src/define/{ui,media}/*.ts', './src/define/i18n.ts'],
@@ -41,19 +44,7 @@ export function createHtmlEntriesModule() {
 }
 
 export function getIconSchemaModule(family = 'default') {
-  return createSchemaModule(
-    {
-      source: '@videojs/icons/vjsc',
-      files: [
-        {
-          files: resolve(iconsDir, `src/assets/${family}/*.svg`),
-          name: (filename) => `${iconNames(filename).pascal}Icon`,
-        },
-      ],
-      output: './.vjsc/virtual/icons-schema.ts',
-    },
-    { cwd: iconsDir }
-  );
+  return createIconSchemaModule(family);
 }
 
 export function createReactComponentRegistry(iconFamily = 'default'): ComponentRegistry {

@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "rootDir": ".",
     "declaration": true,
+    "types": ["node"],
     "jsx": "react-jsx"
   },
   "include": ["vjsc"]

@@ -16,5 +16,5 @@
     "vite.config.ts"
   ],
   "exclude": ["canonical/registry/default"],
-  "references": [{ "path": "../html" }, { "path": "../icons" }, { "path": "../react" }]
+  "references": [{ "path": "../core" }, { "path": "../html" }, { "path": "../icons" }, { "path": "../react" }]
 }
