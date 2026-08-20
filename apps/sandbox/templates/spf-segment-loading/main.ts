@@ -8,7 +8,6 @@ import '@app/styles.css';
 //   autoplay=true        Start with autoplay enabled
 //   loop=true            Loop playback
 //   preload=auto|metadata|none  Initial preload mode
-//   avcOnly=true         Filter out HEVC renditions (avoids changeType; see the toggle)
 
 import { SOURCE_IDS, SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
@@ -30,7 +29,6 @@ const playerSizeDiv = document.getElementById('player-size-display') as HTMLDivE
 const srcPreset = document.getElementById('src-preset') as HTMLSelectElement;
 const srcInput = document.getElementById('src-input') as HTMLInputElement;
 const setSrcBtn = document.getElementById('set-src') as HTMLButtonElement;
-const avcOnlyToggle = document.getElementById('avc-only-toggle') as HTMLInputElement;
 const mutedToggle = document.getElementById('muted-toggle') as HTMLInputElement;
 const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLInputElement;
 const loopToggle = document.getElementById('loop-toggle') as HTMLInputElement;
@@ -41,25 +39,16 @@ const shareLink = document.getElementById('share-link') as HTMLAnchorElement;
 const DEFAULT_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
 
 // Preset sources. The non-zero-PTS examples exercise `timestampOffset` relocation
-// (A/V encodes at native PTS ≠ 0, but currentTime/seekable stay 0-based). Apple's
-// example muxes HEVC + AVC renditions, so it needs AVC-only (see `avcOnly`).
+// (A/V encodes at native PTS ≠ 0, but currentTime/seekable stay 0-based).
 // `unsupported`, when set, is the reason SPF can't play the source; such presets
 // are shown disabled (see the picker population) rather than hidden.
-type Preset = { label: string; url: string; avcOnly?: boolean; unsupported?: string };
-
-// Harness-specific sources not in the shared registry. The Apple bipbop example
-// muxes HEVC + AVC, so it needs AVC-only — engine-limitation metadata that
-// doesn't belong in shared SOURCES (no other template needs it).
-const HARNESS_PRESETS: Preset[] = [
-  {
-    label: 'Apple bipbop HEVC (44ms A/V skew + VTT X-TIMESTAMP-MAP · needs AVC-only)',
-    url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
-    avcOnly: true,
-  },
-];
+type Preset = { label: string; url: string; unsupported?: string };
 
 // Dropdown = every HLS source from the shared registry (DASH/raw-mp4 filtered out
-// since the raw SPF HLS engine can't play them) plus the harness-specific extras.
+// since the raw SPF HLS engine can't play them). Mixed-codec sources (the Apple
+// bipbop example, `hls-mixed-codec`) need no special handling here anymore: the
+// engine's default `preferredCodecs` lands the initial pick on AVC/AAC and its
+// sticky codec-family rule keeps ABR there.
 // SPF only demuxes fmp4/CMAF segments, not MPEG-TS, so TS sources are kept visible
 // but flagged unsupported (disabled in the picker) rather than silently dropped.
 // Unsupported presets sort to the end (stable sort preserves registry order otherwise).
@@ -72,14 +61,7 @@ const PRESETS: Preset[] = [
     if (source.subType === 'ts') preset.unsupported = 'TS — unsupported';
     return preset;
   }),
-  ...HARNESS_PRESETS,
 ].sort((a, b) => Number(!!a.unsupported) - Number(!!b.unsupported));
-
-// Apple's bipbop example muxes HEVC (`hvc1`/`hev1`) + AVC renditions of the same content;
-// cross-codec ABR would need `SourceBuffer.changeType()` (not yet implemented), so filtering
-// to AVC keeps ABR within one codec family. Harmless for single-codec Mux sources.
-const avcOnly = (track: { codecs?: string[] }) =>
-  !track.codecs?.some((codec) => codec.startsWith('hvc1') || codec.startsWith('hev1'));
 
 const params = new URLSearchParams(window.location.search);
 const INITIAL_SRC = params.get('src') ?? DEFAULT_STREAM;
@@ -87,10 +69,9 @@ const INITIAL_MUTED = params.get('muted') === 'true';
 const INITIAL_AUTOPLAY = params.get('autoplay') === 'true';
 const INITIAL_LOOP = params.get('loop') === 'true';
 const INITIAL_PRELOAD = (params.get('preload') as 'auto' | 'metadata' | 'none') ?? 'none';
-const INITIAL_AVC_ONLY = params.get('avcOnly') === 'true';
 
-// Populate the preset picker; selecting one loads it (and enables AVC-only if the
-// preset needs it). Reflects the current src when it matches a preset.
+// Populate the preset picker; selecting one loads it. Reflects the current src
+// when it matches a preset.
 for (const preset of PRESETS) {
   const label = preset.unsupported ? `${preset.label} (${preset.unsupported})` : preset.label;
   const option = new Option(label, preset.url);
@@ -105,7 +86,6 @@ mutedToggle.checked = INITIAL_MUTED;
 autoplayToggle.checked = INITIAL_AUTOPLAY;
 loopToggle.checked = INITIAL_LOOP;
 preloadSelect.value = INITIAL_PRELOAD;
-avcOnlyToggle.checked = INITIAL_AVC_ONLY;
 updateShareUrl();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -164,7 +144,6 @@ function updateShareUrl() {
   if (autoplayToggle.checked) p.set('autoplay', 'true');
   if (loopToggle.checked) p.set('loop', 'true');
   if (preloadSelect.value !== 'none') p.set('preload', preloadSelect.value);
-  if (avcOnlyToggle.checked) p.set('avcOnly', 'true');
   const url = `${window.location.origin}${window.location.pathname}${p.size > 0 ? `?${p}` : ''}`;
   shareLink.href = url;
   shareLink.textContent = url;
@@ -775,9 +754,6 @@ function startEngine(src: string) {
 
   engine = createHlsVideoEngine({
     initialBandwidth: 1_000_000,
-    // AVC-only filters HEVC so ABR never crosses codec families (no changeType).
-    // Omitted (not set to undefined) when off, per exactOptionalPropertyTypes.
-    ...(avcOnlyToggle.checked ? { canPlayTrack: avcOnly } : {}),
     onSignalsReady: (refs) => {
       signals = refs;
     },
@@ -980,15 +956,8 @@ srcPreset.addEventListener('change', () => {
   const preset = PRESETS.find((p) => p.url === srcPreset.value);
   if (!preset) return;
   srcInput.value = preset.url;
-  if (preset.avcOnly) avcOnlyToggle.checked = true;
-  log(`Preset: ${preset.label}${preset.avcOnly ? ' (AVC-only enabled)' : ''}`, 'info');
+  log(`Preset: ${preset.label}`, 'info');
   startEngine(preset.url);
-  updateShareUrl();
-});
-
-avcOnlyToggle.addEventListener('change', () => {
-  log(`AVC-only: ${avcOnlyToggle.checked} — re-creating engine`, 'warning');
-  startEngine(srcInput.value.trim() || DEFAULT_STREAM);
   updateShareUrl();
 });
 
