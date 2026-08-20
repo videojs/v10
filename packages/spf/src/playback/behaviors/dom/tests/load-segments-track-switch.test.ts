@@ -33,6 +33,7 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
     currentTime: signal<number | undefined>(initial.currentTime),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
     loadingSuspended: signal<boolean | undefined>(initial.loadingSuspended),
+    awaitingMediaKeys: signal<boolean | undefined>(initial.awaitingMediaKeys),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
