@@ -39,6 +39,11 @@
       "development": "./dist/dev/hls.js",
       "default": "./dist/default/hls.js"
     },
+    "./hls-drm": {
+      "types": "./dist/dev/hls-drm.d.ts",
+      "development": "./dist/dev/hls-drm.js",
+      "default": "./dist/default/hls-drm.js"
+    },
     "./media-tracks": {
       "types": "./dist/dev/media-tracks.d.ts",
       "development": "./dist/dev/media-tracks.js",

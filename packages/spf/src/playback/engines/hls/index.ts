@@ -1,5 +1,6 @@
 // SVTA 2070 error vocabulary — the codes reported on `state.errors` and
 // surfaced through the adapter's `error`.
+
 export type { SvtaError } from '../../../media/errors';
 export { SVTA_UNSUPPORTED_PLAYBACK_FEATURE, svtaCategory, svtaIndex } from '../../../media/errors';
 // HLS media-playlist metadata, including `playlistType` ('VOD' | 'EVENT'). Lets
@@ -48,3 +49,6 @@ export type {
   BackgroundVideoEngineState,
 } from './engine-background-video';
 export { createBackgroundVideoEngine } from './engine-background-video';
+// The DRM-composed variant is NOT here: it lives behind `@videojs/spf/hls-drm`
+// so DRM-free consumers of this entry never carry the EME machinery — the same
+// size-budget separation that keeps the Medias out of this entry.

@@ -6,9 +6,15 @@ import {
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
 } from '../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack, type TrackType } from '../../../media/types';
-import { reportUnsupportedTrackConditions } from '../report-track-conditions';
+import {
+  makeReportUnsupportedTrackConditionsWithDrm,
+  reportUnsupportedTrackConditions,
+} from '../report-track-conditions';
 
-const track = (type: TrackType, opts: { mimeType?: string; encrypted?: boolean } = {}): ResolvedTrack =>
+const track = (
+  type: TrackType,
+  opts: { mimeType?: string; encrypted?: boolean; keys?: object[] } = {}
+): ResolvedTrack =>
   ({
     id: `${type}-1`,
     type,
@@ -24,6 +30,7 @@ const track = (type: TrackType, opts: { mimeType?: string; encrypted?: boolean }
         mediaSequence: 0,
         endList: true,
         encrypted: opts.encrypted ?? false,
+        ...(opts.keys && { keys: opts.keys }),
       },
     },
   }) as unknown as ResolvedTrack;
@@ -99,5 +106,39 @@ describe('reportUnsupportedTrackConditions', () => {
     expect(conditions).not.toHaveLength(0);
 
     for (const condition of conditions) expect(condition.message).toBeUndefined();
+  });
+});
+
+describe('makeReportUnsupportedTrackConditionsWithDrm', () => {
+  const WIDEVINE_KEY = {
+    method: 'SAMPLE-AES',
+    uri: 'data:text/plain;base64,cGluZw==',
+    keyFormat: 'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed',
+  };
+  const FAIRPLAY_KEY = {
+    method: 'SAMPLE-AES',
+    uri: 'skd://mux?keyId=abc',
+    keyFormat: 'com.apple.streamingkeydelivery',
+  };
+  const report = makeReportUnsupportedTrackConditionsWithDrm({
+    'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' },
+  });
+
+  it('reports no DRM cause when the declared keys reach a configured system', () => {
+    expect(report(track('video', { encrypted: true, keys: [WIDEVINE_KEY] }))).toEqual([]);
+  });
+
+  it('keeps the DRM cause when no configured system serves the declared keys', () => {
+    expect(report(track('video', { encrypted: true, keys: [FAIRPLAY_KEY] })).map((error) => error.code)).toEqual([
+      SVTA_UNSUPPORTED_DRM_SYSTEM,
+    ]);
+  });
+
+  it('keeps the format causes independent of key servability', () => {
+    expect(
+      report(track('video', { mimeType: 'video/mp2t', encrypted: true, keys: [WIDEVINE_KEY] })).map(
+        (error) => error.code
+      )
+    ).toEqual([SVTA_UNSUPPORTED_VIDEO_FORMAT]);
   });
 });

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MEDIA_PLAYLIST_METADATA_KEY } from '../../types';
-import { canPlayTrack } from '../capabilities';
+import { canPlayTrack, makeCanPlayTrackWithDrm } from '../capabilities';
 
 describe('canPlayTrack', () => {
   afterEach(() => {
@@ -88,5 +88,51 @@ describe('canPlayTrack', () => {
 
     expect(canPlayTrack(clear)).toBe(true);
     expect(spy).toHaveBeenCalled();
+  });
+});
+
+describe('makeCanPlayTrackWithDrm', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const WIDEVINE_KEY = {
+    method: 'SAMPLE-AES',
+    uri: 'data:text/plain;base64,cGluZw==',
+    keyFormat: 'urn:uuid:edef8ba9-79d6-4ace-a3c8-27dcd51d21ed',
+  };
+  const FAIRPLAY_KEY = {
+    method: 'SAMPLE-AES',
+    uri: 'skd://mux?keyId=abc',
+    keyFormat: 'com.apple.streamingkeydelivery',
+  };
+  const drm = { 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } };
+  const probe = makeCanPlayTrackWithDrm(drm);
+
+  const encryptedTrack = (keys: object[], codecs: string[]) => ({
+    mimeType: 'video/mp4',
+    codecs,
+    metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { encrypted: true, keys } },
+  });
+
+  it('plays an encrypted rendition whose declared keys reach a configured system', () => {
+    vi.spyOn(MediaSource, 'isTypeSupported').mockReturnValue(true);
+    expect(probe(encryptedTrack([WIDEVINE_KEY], ['drm.codec.1']))).toBe(true);
+  });
+
+  it('still refuses an encrypted rendition no configured system serves', () => {
+    const spy = vi.spyOn(MediaSource, 'isTypeSupported').mockReturnValue(true);
+    expect(probe(encryptedTrack([FAIRPLAY_KEY], ['drm.codec.2']))).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('still probes codecs for a servable encrypted rendition', () => {
+    vi.spyOn(MediaSource, 'isTypeSupported').mockReturnValue(false);
+    expect(probe(encryptedTrack([WIDEVINE_KEY], ['drm.codec.3']))).toBe(false);
+  });
+
+  it('matches the standard refusals for clear tracks', () => {
+    expect(probe({ mimeType: 'video/mp2t', codecs: ['avc1.640028'] })).toBe(false);
+    expect(probe({ mimeType: 'video/mp4' })).toBe(true);
   });
 });
