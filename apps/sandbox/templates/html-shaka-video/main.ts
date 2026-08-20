@@ -35,10 +35,10 @@ async function render() {
       <${tag} class="aspect-video max-w-4xl mx-auto">
         <!-- Shaka plays DASH and HLS from the same element, so the source list here is not
              narrowed to one manifest format the way the dash.js sandbox is. -->
-        <shaka-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline>
+        <shaka-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin>
           ${renderStoryboard(storyboard)}
         </shaka-video>
-        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
       </${tag}>
     </video-player>
   `);

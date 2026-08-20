@@ -55,6 +55,7 @@ function App() {
             placeholder ? (
               <img
                 alt=""
+                crossOrigin=""
                 style={{
                   backgroundImage: `url("${placeholder}")`,
                   backgroundPosition: 'var(--media-object-position, center)',
