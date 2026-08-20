@@ -278,5 +278,24 @@ function setupMediaKeysSetup({
 export const setupMediaKeys = defineBehavior({
   stateKeys: ['presentation', 'awaitingMediaKeys'],
   contextKeys: ['mediaElement', 'mediaKeys'],
-  setup: setupMediaKeysSetup,
+  // The wrapper's exact keyed map keeps `defineBehavior`'s stateKeys ≡ keyof
+  // inference intact; the reporter seam (`errors`, optional per
+  // `ErrorEmitterState`) is deliberately not in the typed slice — the setup
+  // helper accepts the map without it, and the live slot reaches it at
+  // runtime when `collectErrors` is composed. Same shape as `resolve-track`.
+  setup: ({
+    state,
+    context,
+    config,
+  }: {
+    state: {
+      presentation: ReadonlySignal<MediaKeysState['presentation']>;
+      awaitingMediaKeys: Signal<MediaKeysState['awaitingMediaKeys']>;
+    };
+    context: {
+      mediaElement: ReadonlySignal<MediaKeysContext['mediaElement']>;
+      mediaKeys: Signal<MediaKeysContext['mediaKeys']>;
+    };
+    config: MediaKeysSetupConfig;
+  }) => setupMediaKeysSetup({ state, context, config }),
 });
