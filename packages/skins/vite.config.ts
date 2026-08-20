@@ -8,7 +8,7 @@ import { catalogMetaPlugin } from 'vjsc/catalog';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { shadcnPlugin } from 'vjsc/shadcn';
 import { plugin as stylesPlugin } from 'vjsc/styles';
-import compiler from 'vjsc/vite';
+import vjscPlugin from 'vjsc/vite';
 import { createIconElementModule } from './build/icon-element';
 import { createReactComponentRegistry } from './build/metadata';
 import { reactOutput } from './build/output/react';
@@ -78,7 +78,7 @@ function createPreviewConfig() {
       __DEV__: 'true',
     },
     plugins: [
-      compiler({
+      vjscPlugin({
         include: `${canonicalDir}/**/*.tsx`,
         entries: [
           { id: 'virtual:vjsc/icons/element/default.js' as const, load: () => defaultIconElementModule },

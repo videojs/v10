@@ -11,12 +11,12 @@ This record separates the canonical Skin authoring model from the tools that pre
 
 `packages/skins/canonical` is the source of truth for Skin composition and styling. Core owns the framework-neutral component schema. React, HTML, and Icons own the registries that lower that schema to their public components. Skins owns catalog discovery and policy, Skin-specific transforms, style/theme policy, and delivery adapters.
 
-Each canonical item describes itself through a colocated `meta` export. The authored catalog configuration tells VJSC where to discover those entries and supplies catalog-wide policy; VJSC analyzes source ownership and dependency closure in memory. A compiler projection selects a framework and a style representation. A delivery adapter then decides whether that projection is served live, emitted as package source, or published as an editable registry.
+Each canonical item describes itself through a colocated `meta` export. The authored catalog configuration tells VJSC where to discover those entries and supplies catalog-wide policy; VJSC analyzes source ownership and dependency closure in memory. A VJSC projection selects a framework and a style representation. A delivery adapter then decides whether that projection is served live, emitted as package source, or published as an editable registry.
 
 ```text
 Core schema + React/HTML/Icon registries
                          │
-Canonical item modules ──┼── catalog analysis ── compiler projection ── React or HTML
+Canonical item modules ──┼── catalog analysis ── VJSC projection ───── React or HTML
 TSX/styles + `meta`      │                                      └─ Tailwind or vanilla CSS
                          │
                          ├── Vite preview: live modules and CSS for every matrix cell
@@ -37,9 +37,9 @@ The full React/HTML × Tailwind/vanilla matrix is a validation surface. Publicat
 | Shadcn adapter | Editable file layout, import rewriting, package and registry dependencies, shared files, metadata, and the final registry manifest. |
 | Turbo | Repository task ordering and caching only while a consumer still requires a materialized intermediate artifact. |
 
-Vite should not reproduce compiler semantics. Conversely, VJSC should not implement a second development server, JavaScript module graph, CSS injector, or HMR runtime.
+Vite should not reproduce VJSC semantics. Conversely, VJSC should not implement a second development server, JavaScript module graph, CSS injector, or HMR runtime.
 
-## Where Vite replaces compiler work
+## Where Vite replaces VJSC work
 
 The active preview does not need catalog emission. Its entry can import a canonical Skin module, allowing Vite to follow normal source imports and run the VJSC transform on each canonical TSX module. This avoids writing a projected React tree to disk before the browser can render it.
 
@@ -55,11 +55,11 @@ The preview should expose one stable module identity per selected Skin, framewor
 
 - A canonical TSX edit invalidates the transformed module. React output then passes through the React plugin so Fast Refresh can preserve state when it is a valid refresh boundary.
 - A style-module or Tailwind-input edit invalidates every transformed owner that consumed it. Vanilla CSS is replaced without retaining rules from the previous virtual module; Tailwind CSS follows the Tailwind Vite graph.
-- A schema or registry edit invalidates every projection that uses it. A compiler configuration edit may restart the Vite server, but must not require a manual generation step or leave the old projection cached.
+- A schema or registry edit invalidates every projection that uses it. A VJSC configuration edit may restart the Vite server, but must not require a manual generation step or leave the old projection cached.
 - HTML output uses a browser-safe VJSC HTML runtime and a preview boundary that replaces the rendered template. Custom-element definition modules remain side-effect imports and must tolerate reevaluation; full reload is acceptable only where platform registration makes state-preserving HMR unsafe.
 - Compiler diagnostics retain canonical source locations and appear through Vite's error overlay. Production preview builds use the same projection configuration as development.
 
-`addWatchFile` makes Vite observe compiler-discovered dependencies, but observation alone is not the contract. The Vite adapter must retain dependency-to-owner relationships and explicitly invalidate affected owner and virtual CSS modules when a dependency changes. Its integration tests must exercise a real Vite dev server, not only repeated calls to the transform hook.
+`addWatchFile` makes Vite observe VJSC-discovered dependencies, but observation alone is not the contract. The Vite adapter must retain dependency-to-owner relationships and explicitly invalidate affected owner and virtual CSS modules when a dependency changes. Its integration tests must exercise a real Vite dev server, not only repeated calls to the transform hook.
 
 ## Compiler configuration and declarations
 
@@ -108,7 +108,7 @@ export const meta = {
 
 VJSC discovers entry modules under configured roots when a Vite entry or build adapter needs the catalog. The catalog is not itself exposed as a virtual module. Modules without `meta` remain ordinary implementation dependencies rather than independently addressable catalog items. Duplicate names, invalid metadata, and import cycles are catalog diagnostics. Adding, removing, or changing an item invalidates affected virtual Skin entries without requiring a generation command.
 
-The `meta` object is authoring-time information, not part of a delivered component. VJSC statically extracts it without executing the canonical module and removes the export from framework and editable Shadcn output. A type-only contract keeps canonical source type-safe without adding a runtime compiler dependency to published files.
+The `meta` object is authoring-time information, not part of a delivered component. VJSC statically extracts it without executing the canonical module and removes the export from framework and editable Shadcn output. A type-only contract keeps canonical source type-safe without adding a runtime VJSC dependency to published files.
 
 Catalog-wide concerns remain explicit authored configuration: discovery roots, shared resources and themes, allowed imports, schema sources, and reference groups. Delivery policy also remains outside item metadata. In particular, the Shadcn adapter owns which items are published, registry paths, shared registry entries, and output-wide metadata. This keeps each item self-describing without coupling canonical components to one publication target.
 
@@ -119,7 +119,7 @@ The development architecture is now in place:
 - Default and Minimal Skins are available as stable virtual entries for React and HTML in Tailwind and vanilla modes.
 - Vite development starts from a clean generated-artifact state, serves all eight matrix cells, applies React Fast Refresh where possible, and invalidates projections for canonical styles, schema inputs, and registry inputs.
 - `vite build` compiles the same matrix. Core emits its virtual schema and exact declaration directly through tsdown/Rolldown; Vite startup and framework registries create no generated files.
-- Catalog inventory comes from static colocated `meta` exports and remains in-memory compiler input rather than an application module.
+- Catalog inventory comes from static colocated `meta` exports and remains in-memory VJSC input rather than an application module.
 - Shadcn output is an explicit, tested React/Tailwind Rolldown adapter run by Vite, with no source staging or standalone build script.
 - The old schema, registry-entry, and framework Skin source trees, their snapshot, generation scripts, and temporary Turbo `generate` tasks have been removed.
 
@@ -130,8 +130,8 @@ The remaining cutover belongs to [#2183](https://github.com/videojs/v10/issues/2
 - Canonical item identity and description: colocated `meta` exports under `packages/skins/canonical/components` and `packages/skins/canonical/skins`
 - Catalog-wide discovery, resource, import, and delivery policy: `packages/skins/canonical/catalog.ts`
 - Framework and style delivery adapters: `packages/skins/build/output/`
-- Vite and Rolldown adapters: `packages/compiler/src/bundlers/`
-- Catalog resolution and emission: `packages/compiler/src/catalog/`
+- Vite and Rolldown adapters: `packages/vjsc/src/bundlers/`
+- Catalog resolution and emission: `packages/vjsc/src/catalog/`
 - Vite preview configuration: `packages/skins/vite.config.ts`
 - Core schema bundler configuration: `packages/core/tsdown.config.ts`
 - React, HTML, and Icon registry metadata: `packages/skins/build/metadata.ts` and package-local `vjsc/` factories

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { CompilerPlugin, CompilerSourceMap } from '../../config';
 import { jsx } from '../../config';
-import { vjsCompiler } from '../vite';
+import { vjscPlugin } from '../vite';
 
 type TestPlugin = {
   config(): { optimizeDeps: { exclude: string[] | undefined } };
@@ -25,8 +25,8 @@ type TestPlugin = {
   ): Promise<{ code: string; map: CompilerSourceMap } | null>;
 };
 
-const createPlugin = (...args: Parameters<typeof vjsCompiler>): TestPlugin =>
-  vjsCompiler(...args) as unknown as TestPlugin;
+const createPlugin = (...args: Parameters<typeof vjscPlugin>): TestPlugin =>
+  vjscPlugin(...args) as unknown as TestPlugin;
 
 const createContext = () => ({
   addWatchFile: vi.fn(),
@@ -48,7 +48,7 @@ const createCssPlugin = (source: string): CompilerPlugin => ({
   },
 });
 
-describe('vjsCompiler', () => {
+describe('vjscPlugin', () => {
   it('uses Vite filter patterns for included and excluded modules', async () => {
     const plugin = createPlugin({
       config: {},

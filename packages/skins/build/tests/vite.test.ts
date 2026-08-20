@@ -44,7 +44,7 @@ describe('canonical Skins Vite workflow', () => {
     const skin = await server.transformRequest(defaultSkinUrl);
     expect(skin?.code).toContain('$RefreshReg$');
     expect(skin?.code).toContain('virtual:vjsc/css');
-    expect(skin?.code).not.toContain('compiler/dist/components/jsx-dev-runtime');
+    expect(skin?.code).not.toContain('vjsc/dist/components/jsx-dev-runtime');
     expect(skin?.code).not.toContain('@videojs/core/vjsc');
 
     await server.transformRequest(playButtonUrl);

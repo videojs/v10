@@ -18,7 +18,7 @@ export interface CompilerDeclarationOutput {
   readonly fileName: `${string}.d.ts`;
 }
 
-export interface VideojsCompilerPluginOptions {
+export interface VjscPluginOptions {
   readonly modules: readonly VirtualModuleDefinition[];
   /** Map public IDs to filesystem-shaped IDs when downstream transforms need an extension. */
   readonly resolveId?: ((id: VirtualModuleDefinition['id']) => string) | undefined;
@@ -39,7 +39,7 @@ export interface SchemaPlugin extends Plugin {
 }
 
 /** Load VJSC virtual modules through Rolldown without materializing their source. */
-export function vjsCompiler(options: VideojsCompilerPluginOptions): Plugin {
+export function vjscPlugin(options: VjscPluginOptions): Plugin {
   const modules = createCompilerModules(options);
 
   return {
@@ -86,7 +86,7 @@ export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
         { cwd }
       ),
   };
-  const plugin = vjsCompiler({
+  const plugin = vjscPlugin({
     modules: [module],
     resolveId: () => sourceFileName,
     declarations:
@@ -98,4 +98,4 @@ export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   return Object.assign(plugin, { moduleId });
 }
 
-export default vjsCompiler;
+export default vjscPlugin;

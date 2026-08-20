@@ -18,7 +18,7 @@ export default {
         'ci',
         'claude',
         'cli',
-        'compiler',
+        'vjsc',
         'core',
         'design',
         'element',

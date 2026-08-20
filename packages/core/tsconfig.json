@@ -6,6 +6,6 @@
     "types": ["node"],
     "declarationDir": "types"
   },
-  "references": [{ "path": "../compiler" }, { "path": "../utils" }, { "path": "../store" }, { "path": "../media" }],
+  "references": [{ "path": "../vjsc" }, { "path": "../utils" }, { "path": "../store" }, { "path": "../media" }],
   "include": ["src/*.ts", "src/core/**/*.ts"]
 }

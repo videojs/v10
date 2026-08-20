@@ -6,7 +6,7 @@ import type { VirtualModuleDefinition } from '../module-graph';
 import { CompilerError, transform } from '../transform';
 import { createCompilerModules } from './modules';
 
-export type VideojsCompilerPluginOptions = {
+export type VjscPluginOptions = {
   include?: FilterPattern | undefined;
   exclude?: FilterPattern | undefined;
   /** Generated entries served by Vite without materializing their source. */
@@ -33,7 +33,7 @@ type VitePluginDiagnostic = ViteTransformContext extends { error: (...args: infe
   ? ErrorParameters[0]
   : string;
 
-export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin {
+export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
   const filter = createFilter(options.include ?? /\.tsx$/, options.exclude);
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
@@ -209,4 +209,4 @@ function viteLogFromDiagnostic(diagnostic: CompilerDiagnostic): VitePluginDiagno
   };
 }
 
-export default vjsCompiler;
+export default vjscPlugin;
