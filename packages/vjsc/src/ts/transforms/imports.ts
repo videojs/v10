@@ -1,7 +1,7 @@
 import { dirname, relative, resolve } from 'node:path';
 import ts from 'typescript';
+import { toPosixPath } from '../../utils/path';
 import { getImportSource } from '../utils/import-declaration';
-import { toPosixPath } from '../utils/path';
 
 /**
  * Per-identifier rewrite target. `source` may be either a bare specifier

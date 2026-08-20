@@ -22,8 +22,8 @@ import {
   jsxChildren,
   readJsxAttributeValue,
 } from '../ts/utils/jsx';
-import { toPosixPath } from '../ts/utils/path';
 import { collectReferencedIdentifiers } from '../ts/utils/references';
+import { toPosixPath } from '../utils/path';
 import {
   type ComponentRegistry,
   isHost,

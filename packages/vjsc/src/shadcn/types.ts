@@ -8,26 +8,19 @@ export type ShadcnRegistry = ShadcnRegistrySchema;
 export type ShadcnRegistryFile = NonNullable<RegistryItem['files']>[number];
 export type ShadcnRegistryFileType = ShadcnRegistryFile['type'];
 
-export interface ShadcnVariant {
-  readonly name: string;
-  /** Included source files projected through this variant. */
-  readonly include: string | readonly string[];
-  readonly exclude?: string | readonly string[] | undefined;
-  /** Query parameters supplied to VJSC and inherited by relative imports. */
-  readonly parameters: Readonly<Record<string, string>>;
-}
-
 export interface ShadcnModule<Item extends ComponentMeta = ComponentMeta> {
   /** Full host module ID, including projection query parameters. */
   readonly id: string;
   /** Absolute physical source filename. */
   readonly filename: string;
-  readonly source: string;
+  /** Query parameters supplied to source transforms. */
+  readonly parameters: URLSearchParams;
   readonly meta?: Item | undefined;
-  readonly variant?: ShadcnVariant | undefined;
 }
 
-export interface ShadcnItem {
+export interface ShadcnItem<Item extends ComponentMeta = ComponentMeta> {
+  /** Discovered module published by this item. */
+  readonly module: ShadcnModule<Item>;
   readonly name: string;
   readonly type: Extract<RegistryItemType, 'registry:block' | 'registry:component' | 'registry:lib'>;
   readonly title: string;
@@ -54,8 +47,13 @@ export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta>
   /** Complete root-relative source inventory loaded through the host graph. */
   readonly include: string | readonly string[];
   readonly exclude?: string | readonly string[] | undefined;
-  /** Optional source projections. Unmatched files are loaded once without a projection. */
-  readonly variants?: readonly ShadcnVariant[] | undefined;
+  /** Select the VJSC query contexts in which each discovered module is transformed. */
+  readonly parameters?:
+    | ((
+        module: ShadcnModule<Item>,
+        modules: readonly ShadcnModule<Item>[]
+      ) => readonly Readonly<Record<string, string>>[])
+    | undefined;
   readonly name: string;
   readonly homepage: string;
   readonly namespace: string;
@@ -68,7 +66,7 @@ export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta>
   /** Editable-source import strings whose installation specifier is exceptional. */
   readonly imports?: Readonly<Record<string, string>> | undefined;
   readonly meta?: RegistryItem['meta'];
-  /** Describe a discovered host module, or return null to keep it as an owned dependency. */
-  readonly item: (module: ShadcnModule<Item>) => ShadcnItem | null;
+  /** Describe the published registry items after every source projection has been transformed. */
+  readonly items: (modules: readonly ShadcnModule<Item>[]) => readonly ShadcnItem<Item>[];
   readonly styles?: ShadcnStyle | undefined;
 }

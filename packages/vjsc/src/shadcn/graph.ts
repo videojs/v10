@@ -4,8 +4,10 @@ import ts from 'typescript';
 
 import type { ComponentMeta } from '../components/meta';
 import { sourceScriptKind } from '../ts/utils/source-module';
+import { moduleFilename } from '../utils/module-id';
+import { escapesRoot, toPosixPath } from '../utils/path';
 import type { ImportReference } from './analyze';
-import type { ShadcnItem, ShadcnVariant } from './types';
+import type { ShadcnItem } from './types';
 
 export interface SourceImport extends ImportReference {
   readonly resolvedId?: string | undefined;
@@ -17,7 +19,6 @@ export interface SourceModule<Item extends ComponentMeta = ComponentMeta> {
   readonly source: string;
   readonly imports: readonly SourceImport[];
   readonly meta?: Item | undefined;
-  readonly variant?: ShadcnVariant | undefined;
 }
 
 export interface SourceGraph<Item extends ComponentMeta = ComponentMeta> {
@@ -31,7 +32,7 @@ export interface RegistrySourceModule<Item extends ComponentMeta = ComponentMeta
 
 export interface PublishedModule<Item extends ComponentMeta = ComponentMeta> {
   readonly module: RegistrySourceModule<Item>;
-  readonly item: ShadcnItem;
+  readonly item: ShadcnItem<Item>;
 }
 
 export function validateSourceGraph<Item extends ComponentMeta>(
@@ -48,7 +49,7 @@ export function validateSourceGraph<Item extends ComponentMeta>(
       throw new Error(`Shadcn graph module filename must be absolute: \`${module.filename}\`.`);
     }
     const filename = resolve(module.filename);
-    const sourcePath = toPosix(relative(root, filename));
+    const sourcePath = toPosixPath(relative(root, filename));
     if (!sourcePath || escapesRoot(sourcePath)) {
       throw new Error(`Shadcn graph module must be inside the graph root: \`${module.filename}\`.`);
     }
@@ -64,9 +65,9 @@ export function validateSourceGraph<Item extends ComponentMeta>(
       if (!sourceImport.resolvedId) continue;
       const dependency = graph.modules.get(sourceImport.resolvedId);
       if (dependency) continue;
-      const dependencyFilename = cleanId(sourceImport.resolvedId);
+      const dependencyFilename = moduleFilename(sourceImport.resolvedId);
       if (!isAbsolute(dependencyFilename)) continue;
-      const dependencyPath = toPosix(relative(root, dependencyFilename));
+      const dependencyPath = toPosixPath(relative(root, dependencyFilename));
       if (dependencyPath && !escapesRoot(dependencyPath)) {
         throw new Error(
           `Shadcn source dependency was not captured: \`${sourceImport.specifier}\` from \`${module.id}\`.`
@@ -122,17 +123,4 @@ function assertMetaRemoved(module: SourceModule): void {
       throw new Error(`Component metadata remains in transformed Shadcn source: \`${module.id}\`.`);
     }
   }
-}
-
-function cleanId(id: string): string {
-  const queryIndex = id.indexOf('?');
-  return queryIndex === -1 ? id : id.slice(0, queryIndex);
-}
-
-function escapesRoot(path: string): boolean {
-  return path === '..' || path.startsWith('../');
-}
-
-function toPosix(path: string): string {
-  return path.replaceAll('\\', '/');
 }

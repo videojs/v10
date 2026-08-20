@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { GeneralHookFilter, HookFilter, Plugin, RolldownLog } from 'rolldown';
+import { isVjscModule, moduleFilename, moduleId, type ParsedModuleId, parseModuleId } from '../utils/module-id';
 import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from './html-runtime';
 import { CompilerError, transform } from './transform';
 import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from './types';
@@ -70,15 +71,19 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
         const inherited = importer ? parseTransformedId(importer) : null;
         if (!transformed && (!inherited || !id.startsWith('.'))) return null;
 
-        const resolved = await this.resolve(transformed?.id ?? id, importer ? cleanId(importer) : undefined, {
-          ...resolveOptions,
-          skipSelf: true,
-        });
-        if (!resolved || resolved.external || !isVjscModule(cleanId(resolved.id))) return resolved;
+        const resolved = await this.resolve(
+          transformed?.filename ?? id,
+          importer ? moduleFilename(importer) : undefined,
+          {
+            ...resolveOptions,
+            skipSelf: true,
+          }
+        );
+        if (!resolved || resolved.external || !isVjscModule(resolved.id)) return resolved;
 
         return {
           ...resolved,
-          id: withParameters(cleanId(resolved.id), transformed?.parameters ?? inherited!.parameters),
+          id: moduleId(moduleFilename(resolved.id), transformed?.parameters ?? inherited!.parameters),
         };
       },
     },
@@ -87,8 +92,8 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
 
       const transformed = parseTransformedId(id);
       if (transformed) {
-        this.addWatchFile(transformed.id);
-        return { code: await readFile(transformed.id, 'utf8'), moduleType: 'tsx' };
+        this.addWatchFile(transformed.filename);
+        return { code: await readFile(transformed.filename, 'utf8'), moduleType: 'tsx' };
       }
 
       const publicId = id.startsWith('\0') ? id.slice(1) : id;
@@ -101,29 +106,35 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
       ...(filter.hook ? { filter: filter.hook } : {}),
       async handler(code, id) {
         if (filter.test && !filter.test(id)) return null;
-        const transformed = parseId(id);
+
+        const transformed = parseModuleId(id);
         const selected = options.transform ?? {};
         const configured =
           typeof selected === 'function'
-            ? await selected({ code, id, filename: transformed.id, parameters: transformed.parameters })
+            ? await selected({ code, id, filename: transformed.filename, parameters: transformed.parameters })
             : selected;
+
         if (!configured) return null;
+
         let result: Awaited<ReturnType<typeof transform>>;
+
         try {
           result = await transform(code, {
-            filename: cleanId(id),
+            filename: moduleFilename(id),
             config: configured,
             configDir: cwd,
-            outputFile: cleanId(id),
+            outputFile: moduleFilename(id),
           });
         } catch (error) {
           if (error instanceof CompilerError) this.error(bundlerLogFromDiagnostic(error.diagnostics[0]!));
           throw error;
         }
+
         for (const diagnostic of result.diagnostics) {
           if (diagnostic.level === 'warning') this.warn(bundlerLogFromDiagnostic(diagnostic));
           else this.error(bundlerLogFromDiagnostic(diagnostic));
         }
+
         for (const file of result.watchFiles) this.addWatchFile(resolve(file));
 
         const previousCssIds = cssIdsByOwner.get(id) ?? new Set<string>();
@@ -162,43 +173,18 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
 /** Read editable VJSC output retained across later host transforms. */
 export function readVjscSource(meta: unknown): string | undefined {
   if (!meta || typeof meta !== 'object') return undefined;
+
   const vjsc = Reflect.get(meta, 'vjsc');
   if (!vjsc || typeof vjsc !== 'object') return undefined;
+
   const source = Reflect.get(vjsc, 'source');
+
   return typeof source === 'string' ? source : undefined;
 }
 
-interface ParsedId {
-  readonly id: string;
-  readonly parameters: URLSearchParams;
-}
-
-function parseTransformedId(id: string): ParsedId | null {
-  const parsed = parseId(id);
+function parseTransformedId(id: string): ParsedModuleId | null {
+  const parsed = parseModuleId(id);
   return parsed.parameters.has('framework') ? parsed : null;
-}
-
-function parseId(id: string): ParsedId {
-  const queryIndex = id.indexOf('?');
-  return queryIndex === -1
-    ? { id, parameters: new URLSearchParams() }
-    : { id: id.slice(0, queryIndex), parameters: new URLSearchParams(id.slice(queryIndex + 1)) };
-}
-
-function cleanId(id: string): string {
-  const queryIndex = id.indexOf('?');
-  return queryIndex === -1 ? id : id.slice(0, queryIndex);
-}
-
-function isVjscModule(id: string): boolean {
-  return /\.(?:[cm]?[jt]s|[jt]sx)$/.test(id);
-}
-
-function withParameters(id: string, parameters: URLSearchParams): string {
-  const normalized = new URLSearchParams(
-    [...parameters.entries()].sort(([left], [right]) => left.localeCompare(right))
-  );
-  return `${id}?${normalized}`;
 }
 
 function cssVirtualId(fileName: string, source: string): string {

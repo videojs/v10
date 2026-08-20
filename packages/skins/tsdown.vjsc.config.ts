@@ -2,6 +2,7 @@ import { basename, resolve } from 'node:path';
 
 import { defineConfig } from 'tsdown';
 import { shadcnPlugin, vjscPlugin } from 'vjsc/rolldown';
+import type { ShadcnItem } from 'vjsc/shadcn';
 
 import { baseConfig } from '../../build/tsdown.ts';
 import type { SkinModuleMeta } from './vjsc/meta';
@@ -43,43 +44,52 @@ export default defineConfig({
     shadcnPlugin<SkinModuleMeta>({
       root: vjscDir,
       include: ['./components/**/*.{ts,tsx}', './skins/*/skin.{ts,tsx}', './registry/utils.ts'],
-      variants: [
-        {
-          name: 'default',
-          include: ['./components/**/*.{ts,tsx}', './skins/default-video/skin.{ts,tsx}'],
-          parameters: { framework: 'react', skin: 'default-video', style: 'tailwind' },
-        },
-        {
-          name: 'minimal',
-          include: ['./components/**/*.{ts,tsx}', './skins/minimal-video/skin.{ts,tsx}'],
-          parameters: { framework: 'react', skin: 'minimal-video', style: 'tailwind' },
-        },
-      ],
+      parameters: (module, modules) => {
+        if (module.filename === registryUtils) return [{}];
+        const skins = modules.flatMap(({ meta }) => (meta?.type === 'skin' ? [meta] : []));
+        const selected = module.meta?.type === 'skin' ? skins.filter((skin) => skin.name === module.meta?.name) : skins;
+        return selected.map((skin) => ({ framework: 'react', skin: skin.name, style: 'tailwind' }));
+      },
       name: 'videojs',
       homepage: 'https://videojs.org',
       namespace: '@videojs',
       paths,
       meta: { framework: 'react', style: 'tailwind' },
-      item: ({ filename, meta, variant }) => {
-        if (filename === registryUtils) {
-          return {
-            name: 'utils',
-            type: 'registry:lib',
-            title: 'Video.js Utilities',
-            description: 'Class-name composition and state resolution utilities used by editable Video.js components.',
-            filename: 'utils.ts',
-          };
-        }
-        if (!meta) return null;
-        return {
-          name: meta.type === 'skin' || variant?.name === 'default' ? meta.name : `${meta.name}-${variant?.name}`,
-          type: meta.type === 'skin' ? 'registry:block' : 'registry:component',
-          title: variant?.name === 'minimal' && meta.type !== 'skin' ? `${meta.title} (Minimal)` : meta.title,
-          description: meta.description,
-          filename: basename(filename),
-          meta: variant ? { variant: variant.name } : undefined,
-        };
-      },
+      items: (modules) =>
+        modules.flatMap<ShadcnItem<SkinModuleMeta>>((module) => {
+          const { filename, meta, parameters } = module;
+          if (filename === registryUtils) {
+            return [
+              {
+                module,
+                name: 'utils',
+                type: 'registry:lib',
+                title: 'Video.js Utilities',
+                description:
+                  'Class-name composition and state resolution utilities used by editable Video.js components.',
+                filename: 'utils.ts',
+              },
+            ];
+          }
+          if (!meta) return [];
+          const skinName = parameters.get('skin');
+          const skin = modules.find(
+            (candidate) => candidate.meta?.type === 'skin' && candidate.meta.name === skinName
+          )?.meta;
+          if (skin?.type !== 'skin') throw new Error(`Unknown projected skin: \`${skinName}\`.`);
+          const variant = skin.style.variant;
+          return [
+            {
+              module,
+              name: meta.type === 'skin' || skin.style.theme === 'default' ? meta.name : `${meta.name}-${variant}`,
+              type: meta.type === 'skin' ? 'registry:block' : 'registry:component',
+              title: skin.style.theme === 'minimal' && meta.type !== 'skin' ? `${meta.title} (Minimal)` : meta.title,
+              description: meta.description,
+              filename: basename(filename),
+              meta: { variant },
+            },
+          ];
+        }),
       styles: {
         input: './styles/tailwind.registry.css',
         filename: 'tailwind.css',

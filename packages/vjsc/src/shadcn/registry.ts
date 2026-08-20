@@ -5,6 +5,8 @@ import { type RegistryItem, registryItemSchema, registrySchema, type Registry as
 
 import type { ComponentMeta } from '../components/meta';
 import { stripScriptExtension } from '../ts/utils/source-module';
+import { parseModuleId } from '../utils/module-id';
+import { escapesRoot, isInsideRoot, toPosixPath } from '../utils/path';
 import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
 import {
   collectOwnedModules,
@@ -90,15 +92,15 @@ function describePublishedModules<Item extends ComponentMeta>(
 ): ReadonlyMap<string, PublishedModule<Item>> {
   const published = new Map<string, PublishedModule<Item>>();
   const names = new Map<string, string>();
-  for (const module of modules.values()) {
-    const item = options.item({
-      id: module.id,
-      filename: module.filename,
-      source: module.source,
-      meta: module.meta,
-      variant: module.variant,
-    });
-    if (!item) continue;
+  const configurable = [...modules.values()].map((module) => ({
+    id: module.id,
+    filename: module.filename,
+    parameters: parseModuleId(module.id).parameters,
+    meta: module.meta,
+  }));
+  for (const item of options.items(configurable)) {
+    const module = modules.get(item.module.id);
+    if (!module) throw new Error(`Shadcn item \`${item.name}\` references an unknown module: \`${item.module.id}\`.`);
     validateItemName(item.name);
     if (item.filename) validateRelativePath(item.filename, `Shadcn item ${item.name} filename`);
     const previous = names.get(item.name);
@@ -161,7 +163,7 @@ function buildPublishedItem<Item extends ComponentMeta>(
 function createLayout<Item extends ComponentMeta>(
   root: RegistrySourceModule<Item>,
   modules: readonly RegistrySourceModule<Item>[],
-  item: ShadcnItem,
+  item: ShadcnItem<Item>,
   options: ShadcnPluginOptions<Item>
 ): ReadonlyMap<string, OwnedModule<Item>> {
   const layout = new Map<string, OwnedModule<Item>>();
@@ -171,7 +173,7 @@ function createLayout<Item extends ComponentMeta>(
   const rootFilename = normalizePath(item.filename ?? basename(root.sourcePath));
 
   for (const module of modules) {
-    const relativeToEntry = toPosix(relative(dirname(root.filename), module.filename));
+    const relativeToEntry = toPosixPath(relative(dirname(root.filename), module.filename));
     const itemPath =
       module.id === root.id
         ? rootFilename
@@ -283,7 +285,7 @@ async function loadStyle<Item extends ComponentMeta>(
   const files = [...visited]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([filename, content]) => {
-      const relativePath = filename === input ? entryName : toPosix(relative(styleRoot, filename));
+      const relativePath = filename === input ? entryName : toPosixPath(relative(styleRoot, filename));
       if (escapesRoot(relativePath)) {
         throw new Error(`Shadcn style dependency must be inside the style entry directory: \`${filename}\`.`);
       }
@@ -384,8 +386,7 @@ function validateItemName(name: string): void {
 }
 
 function assertInsideRoot(root: string, filename: string, source: string): void {
-  const path = toPosix(relative(root, filename));
-  if (!path || escapesRoot(path)) throw new Error(`Shadcn source must be inside the graph root: \`${source}\`.`);
+  if (!isInsideRoot(root, filename)) throw new Error(`Shadcn source must be inside the graph root: \`${source}\`.`);
 }
 
 function assertNoCollision(paths: Map<string, string>, path: string, id: string, kind: string): void {
@@ -410,13 +411,5 @@ function stripRoot(path: string, root: string): string {
 }
 
 function normalizePath(path: string): string {
-  return path ? posix.normalize(toPosix(path)).replace(/^\.\//, '') : '';
-}
-
-function escapesRoot(path: string): boolean {
-  return path === '..' || path.startsWith('../');
-}
-
-function toPosix(path: string): string {
-  return path.replaceAll('\\', '/');
+  return path ? posix.normalize(toPosixPath(path)).replace(/^\.\//, '') : '';
 }

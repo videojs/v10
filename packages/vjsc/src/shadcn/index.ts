@@ -6,5 +6,4 @@ export type {
   ShadcnRegistryFile,
   ShadcnRegistryFileType,
   ShadcnStyle,
-  ShadcnVariant,
 } from './types';
