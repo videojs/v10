@@ -6,12 +6,12 @@ import { type RolldownOutput, rolldown } from 'rolldown';
 import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vitest';
 
-import { componentMetaPlugin } from '../../components';
+import { type ComponentMeta, componentMetaPlugin } from '../../components';
 import { jsx } from '../../config';
 import { shadcnPlugin, vjscPlugin } from '../../rolldown';
 import type { ShadcnRegistryDefinition } from '../../shadcn';
 
-interface FixtureMeta {
+interface FixtureMeta extends ComponentMeta {
   readonly name: string;
   readonly type: 'block' | 'component';
   readonly title: string;
@@ -42,7 +42,8 @@ describe('shadcnPlugin', () => {
     const rootItem = assetJson(output, 'root.json');
     const publicItem = assetJson(output, 'public.json');
     registrySchema.parse(manifest);
-    for (const item of output.output.filter((entry) => entry.type === 'asset' && entry.fileName !== 'registry.json')) {
+    for (const item of output.output) {
+      if (item.type !== 'asset' || item.fileName === 'registry.json') continue;
       registryItemSchema.parse(JSON.parse(String(item.source)));
     }
 
