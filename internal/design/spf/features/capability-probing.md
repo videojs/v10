@@ -40,7 +40,7 @@ DRM, and the unsupported-case error mapping.
   #19 (key-system)](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4).
 - **Foundational** for cluster D — `[hevc-variant-selection]`,
   `[5.1-surround-selection]`, [errors](./errors.md), and
-  [drm-support](./drm-support.md) (GitHub issue #1411) all consume
+  [drm-support](./drm-support.md) (GitHub issue #1776) all consume
   probing output.
 
 ## Phases of complexity
@@ -55,7 +55,7 @@ layer onto specific phases per the
 | Codec / container probing primitive | Uniform API wrapping `MediaSource.isTypeSupported` + `canPlayType`. Helpers for "given a `Track`, can we play it?" Builds on today's `isCodecSupported` | **Implemented** (codec half) — `canPlayTrack` in `media/dom/capabilities.ts`, memoized by MIME. `canPlayType` not wrapped yet |
 | Multivariant CODECS-attribute filtering | Post-parse, drop renditions whose `CODECS` doesn't decode on this browser, before selection. Filtered set is what selection behaviors operate over | **Implemented** — `excludeUnplayableTracks` constraint in `track-switching`'s pre-pass. Tier 1 (spec-compliant). The late-failure path is now a defensive fallback |
 | Media-playlist / segment-level capability checking | Per-segment CODECS verification + container detection at the media-playlist level. Catches mismatches the multivariant didn't declare | Not implemented. Tier 1; largely defensive, rare for well-formed manifests |
-| Key-system capability probing | `requestMediaKeySystemAccess` for each candidate key system (Widevine, PlayReady, FairPlay, FairPlay-AirPlay). Returns supported configurations. **DRM-adjacent boundary:** this feature owns Tier 1 probing only; EME setup, license fetch, key delivery live under [drm-support](./drm-support.md) (GitHub issue #1411) | Not implemented. Async — a slot-writer behavior, *not* the synchronous config-predicate route codec filtering took (see resolved open question) |
+| Key-system capability probing | `requestMediaKeySystemAccess` for each candidate key system (Widevine, PlayReady, FairPlay, FairPlay-AirPlay). Returns supported configurations. **DRM-adjacent boundary:** this feature owns Tier 1 probing only; EME setup, license fetch, key delivery live under [drm-support](./drm-support.md) (GitHub issue #1776) | Not implemented. Async — a slot-writer behavior, *not* the synchronous config-predicate route codec filtering took (see resolved open question). A minimal probe sufficient to gate [drm-support](./drm-support.md)'s first Widevine slice lands with that work; the full probe remains this feature's scope |
 | Cross-codec transition (`changeType()`) probing | Probe whether `SourceBuffer.changeType()` is available, plus pair-wise support for specific codec transitions (AVC ↔ HEVC, AAC stereo ↔ AC-3 5.1, etc.). Browser support is fragile and pair-specific | Not implemented. Consumers decide whether to attempt mid-stream switches based on this probe; the `changeType()` call itself lives in those consumer features |
 | Unsupported-case error surfacing | When no candidate survives filtering, surface a clear state rather than failing late in `createSourceBuffer` | Implemented, but **owned by [errors](./errors.md)** rather than here — this feature is the producer. A speculative per-type `noPlayable{Video,Audio}Tracks` flag was prototyped here and **removed** (no consumer — write-only state + derivation stored as a slot); the shape that landed is an append-only sequence with severity derived at the adapter. When constraints prune a type that *has* tracks to empty, the behavior clears the selection (no pick) and reports the verdict; the late `createSourceBuffer` check remains the backstop |
 | Tier 2: customer probing overrides | Config-driven biases: "force AVC even when HEVC supported," "prefer hardware-backed DRM," "exclude codec X." Layered on top of Tier 1's spec-compliant filtering | Not implemented. The `canPlayTrack` config injection point is the natural seam (override the default probe) |
@@ -78,7 +78,7 @@ layer onto specific phases per the
   *consumer*. Same shape as HEVC, on the audio channel-count axis.
   Adds a 5.1-specific runtime-detection phase (downstream-environment-
   aware channel preference) with no HEVC analog.
-- **[drm-support](./drm-support.md)** (GitHub issue #1411) — EME
+- **[drm-support](./drm-support.md)** (GitHub issue #1776) — EME
   setup, license handling. This feature owns the "what key systems
   are available?" probe; drm-support uses that answer to set up
   keys.
@@ -250,7 +250,7 @@ layer onto specific phases per the
   consumer; selection + cross-codec switching.
 - **[5.1-surround-selection](./5.1-surround-selection.md)** —
   consumer.
-- **[drm-support](./drm-support.md)** (GitHub issue #1411) — owns EME +
+- **[drm-support](./drm-support.md)** (GitHub issue #1776) — owns EME +
   license; consumes key-system probing.
 - **[errors](./errors.md)** — sister; owns the error-surfacing
   primitive this feature produces into, plus the consumer-facing
