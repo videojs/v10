@@ -17,6 +17,7 @@ export function VideoSettingsMenu(props: VideoSettingsMenuProps = {}) {
     </SettingsMenu>
   );
 }
+
 export const meta = {
   name: 'video-settings-menu',
   type: 'component',

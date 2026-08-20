@@ -16,6 +16,7 @@ export function SeekButton({ className, seconds = 10, ...props }: Props<CoreProp
     </ButtonTooltip>
   );
 }
+
 export const meta = {
   name: 'seek-button',
   type: 'component',

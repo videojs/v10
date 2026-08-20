@@ -13,6 +13,7 @@ export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
     </$.VolumeSlider.Root>
   );
 }
+
 export const meta = {
   name: 'volume-slider',
   type: 'component',

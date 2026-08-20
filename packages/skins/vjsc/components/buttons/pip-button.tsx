@@ -15,6 +15,7 @@ export function PiPButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+
 export const meta = {
   name: 'pip-button',
   type: 'component',

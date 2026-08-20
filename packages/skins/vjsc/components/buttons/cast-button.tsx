@@ -15,6 +15,7 @@ export function CastButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+
 export const meta = {
   name: 'cast-button',
   type: 'component',

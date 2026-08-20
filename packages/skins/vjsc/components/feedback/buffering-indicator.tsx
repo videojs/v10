@@ -11,6 +11,7 @@ export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {
     </$.BufferingIndicator>
   );
 }
+
 export const meta = {
   name: 'buffering-indicator',
   type: 'component',

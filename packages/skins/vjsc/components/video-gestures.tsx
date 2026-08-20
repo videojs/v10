@@ -16,6 +16,7 @@ export function VideoGestures({ disabled = false }: VideoGesturesProps = {}) {
     </>
   );
 }
+
 export const meta = {
   name: 'video-gestures',
   type: 'component',

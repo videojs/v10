@@ -73,6 +73,7 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
     </Container>
   );
 }
+
 export const meta = {
   name: 'default-video',
   type: 'skin',

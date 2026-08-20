@@ -15,6 +15,7 @@ export function FullscreenButton({ className, ...props }: Props<CoreProps> = {})
     </ButtonTooltip>
   );
 }
+
 export const meta = {
   name: 'fullscreen-button',
   type: 'component',

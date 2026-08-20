@@ -15,6 +15,7 @@ export function AirPlayButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+
 export const meta = {
   name: 'airplay-button',
   type: 'component',

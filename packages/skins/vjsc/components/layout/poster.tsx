@@ -11,6 +11,7 @@ export function Poster({ children, className, src, ...props }: PropsWithChildren
     </$.Poster>
   );
 }
+
 export const meta = {
   name: 'poster',
   type: 'component',

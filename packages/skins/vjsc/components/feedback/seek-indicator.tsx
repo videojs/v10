@@ -12,6 +12,7 @@ export function SeekIndicator({ className, ...props }: Props<CoreProps> = {}) {
     </$.SeekIndicator.Root>
   );
 }
+
 export const meta = {
   name: 'seek-indicator',
   type: 'component',

@@ -39,6 +39,7 @@ export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<Core
     </$.StatusIndicator.Root>
   );
 }
+
 export const meta = {
   name: 'status-indicator',
   type: 'component',

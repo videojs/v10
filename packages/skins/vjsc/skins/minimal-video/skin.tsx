@@ -71,6 +71,7 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
     </Container>
   );
 }
+
 export const meta = {
   name: 'minimal-video',
   type: 'skin',

@@ -6,6 +6,7 @@ import styles from '../../styles/components/status-announcer.styles';
 export function StatusAnnouncer({ className, ...props }: Props<CoreProps> = {}) {
   return <$.StatusAnnouncer className={[styles.root, className]} {...props} />;
 }
+
 export const meta = {
   name: 'status-announcer',
   type: 'component',

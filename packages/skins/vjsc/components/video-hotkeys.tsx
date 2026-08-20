@@ -28,6 +28,7 @@ export function VideoHotkeys({ disabled = false }: VideoHotkeysProps = {}) {
     </>
   );
 }
+
 export const meta = {
   name: 'video-hotkeys',
   type: 'component',

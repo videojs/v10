@@ -13,6 +13,7 @@ export function MuteButton({ className, ...props }: Props<CoreProps> = {}) {
     </$.MuteButton>
   );
 }
+
 export const meta = {
   name: 'mute-button',
   type: 'component',

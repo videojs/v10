@@ -16,6 +16,7 @@ export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) 
     </$.VolumeIndicator.Root>
   );
 }
+
 export const meta = {
   name: 'volume-indicator',
   type: 'component',

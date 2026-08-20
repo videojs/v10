@@ -31,6 +31,7 @@ export function TimeSlider({ className, ...props }: Props<CoreProps> = {}) {
     </$.TimeSlider.Root>
   );
 }
+
 export const meta = {
   name: 'time-slider',
   type: 'component',

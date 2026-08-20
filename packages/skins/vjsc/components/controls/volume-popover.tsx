@@ -26,6 +26,7 @@ export function VolumePopover({
     </$.Popover.Root>
   );
 }
+
 export const meta = {
   name: 'volume-popover',
   type: 'component',

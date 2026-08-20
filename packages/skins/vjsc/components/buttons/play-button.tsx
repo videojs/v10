@@ -16,6 +16,7 @@ export function PlayButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+
 export const meta = {
   name: 'play-button',
   type: 'component',

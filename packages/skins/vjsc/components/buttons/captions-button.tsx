@@ -15,6 +15,7 @@ export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
     </ButtonTooltip>
   );
 }
+
 export const meta = {
   name: 'captions-button',
   type: 'component',

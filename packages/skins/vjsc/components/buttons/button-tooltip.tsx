@@ -14,6 +14,7 @@ export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipP
     </$.Tooltip.Root>
   );
 }
+
 export const meta = {
   name: 'button-tooltip',
   type: 'component',

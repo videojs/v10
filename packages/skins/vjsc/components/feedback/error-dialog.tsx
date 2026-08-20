@@ -14,6 +14,7 @@ export function ErrorDialog({ className, ...props }: Props = {}) {
     </$.ErrorDialog.Root>
   );
 }
+
 export const meta = {
   name: 'error-dialog',
   type: 'component',
