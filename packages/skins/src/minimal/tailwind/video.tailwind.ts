@@ -103,9 +103,7 @@ export const controls = cn(
   'ease-(--controls-transition-timing-function)',
   'duration-[calc(var(--controls-transition-duration)/2)]',
   'not-data-visible:duration-(--controls-transition-duration)',
-  'pointer-fine:will-change-[translate,filter,opacity]',
   'pointer-fine:transition-[translate,filter,opacity]',
-  'pointer-coarse:will-change-[translate,opacity]',
   'pointer-coarse:transition-[translate,opacity]',
   // Hidden state
   'not-data-visible:opacity-0 not-data-visible:pointer-events-none',

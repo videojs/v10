@@ -5,7 +5,7 @@ import { popup } from './popup';
 const submenuPanel = cn(
   'absolute inset-x-0 top-0 [max-height:inherit] overflow-auto overscroll-none p-(--menu-padding) outline-none',
   'z-10',
-  'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-out will-change-[translate,filter]',
+  'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-out',
   'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
   'data-starting-style:translate-x-full data-ending-style:translate-x-full',
@@ -76,7 +76,6 @@ export const menu = {
     'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
     '[&>:not([data-submenu])]:translate-none [&>:not([data-submenu])]:transition-[translate,filter]',
     '[&>:not([data-submenu])]:duration-(--menu-transition-duration) [&>:not([data-submenu])]:ease-out',
-    '[&>:not([data-submenu])]:will-change-[translate,filter]',
     '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
     '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur',
     // Avoid restarting the covered-content transition in WebKit while the

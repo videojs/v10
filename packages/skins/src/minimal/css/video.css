@@ -190,12 +190,10 @@
 
   @media (pointer: fine) {
     transition-property: translate, filter, opacity;
-    will-change: translate, filter, opacity;
   }
 
   @media (pointer: coarse) {
     transition-property: translate, opacity;
-    will-change: translate, opacity;
   }
 
   &:not([data-visible]) {

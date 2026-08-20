@@ -101,9 +101,7 @@ const controlsBase = cn(
   'peer-data-open/error:hidden!',
   'ease-(--controls-transition-timing-function)',
   'duration-[calc(var(--controls-transition-duration)/2)]',
-  'pointer-fine:will-change-[filter,opacity,scale,translate]',
   'pointer-fine:transition-[filter,opacity,scale,translate]',
-  'pointer-coarse:will-change-[opacity,scale,translate]',
   'pointer-coarse:transition-[opacity,scale,translate]',
   '@2xl/media-root:[--base-boundary-offset:3]'
 );

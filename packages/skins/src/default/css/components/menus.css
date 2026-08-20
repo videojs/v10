@@ -31,7 +31,6 @@
     transition-timing-function: ease-out;
     transition-duration: var(--menu-transition-duration);
     transition-property: translate, filter;
-    will-change: translate, filter;
 
     &:where([data-starting-style], [data-ending-style]) {
       overflow: hidden;
@@ -215,7 +214,6 @@
       transition:
         translate var(--menu-transition-duration) ease-out,
         filter var(--menu-transition-duration) ease-out;
-      will-change: translate, filter;
     }
 
     &[data-submenu-expanded="true"] > :not([data-submenu]) {

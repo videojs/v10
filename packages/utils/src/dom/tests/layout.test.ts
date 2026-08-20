@@ -84,9 +84,18 @@ describe('DOM layout utilities', () => {
     const first = document.createElement('div');
     const second = document.createElement('div');
     container.append(first, second);
-    Object.defineProperty(second, 'offsetTop', { configurable: true, value: 40 });
+    Object.defineProperties(first, {
+      offsetLeft: { configurable: true, value: 5 },
+      offsetTop: { configurable: true, value: 2 },
+    });
+    Object.defineProperties(second, {
+      offsetLeft: { configurable: true, value: 5 },
+      offsetTop: { configurable: true, value: 42 },
+    });
 
     vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue({
+      paddingLeft: '5px',
+      paddingTop: '2px',
       paddingInlineStart: '5px',
       paddingInlineEnd: '5px',
       paddingBlockStart: '2px',
