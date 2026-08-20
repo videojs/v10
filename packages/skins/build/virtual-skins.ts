@@ -3,7 +3,7 @@ import type { VirtualModuleDefinition } from 'vjsc';
 import { resolveCatalog } from 'vjsc/catalog';
 import type { GeneratedModule } from 'vjsc/generate';
 
-import skinCatalog from '../canonical/catalog';
+import type skinCatalog from '../canonical/catalog';
 import { loadSkinCatalog } from './catalog';
 import { frameworkRegistryWatchFiles, getCoreSchemaModule, getIconSchemaModule } from './metadata';
 import { emitHtmlSkin } from './output/html';
@@ -20,8 +20,8 @@ export interface SkinVirtualModule extends GeneratedModule {
 }
 
 /** Create stable Vite module identities for every canonical Skin projection. */
-export function createSkinVirtualModules(): VirtualModuleDefinition[] {
-  return skinCatalog.items
+export function createSkinVirtualModules(definition: typeof skinCatalog): VirtualModuleDefinition[] {
+  return definition.items
     .filter((item) => item.type === 'skin')
     .flatMap((skin) =>
       skinFrameworks.flatMap((framework) =>
@@ -29,7 +29,7 @@ export function createSkinVirtualModules(): VirtualModuleDefinition[] {
           const id = skinVirtualModuleId(framework, skin.name, style);
           return {
             id,
-            load: () => loadSkinVirtualModule(framework, skin.name, style, id),
+            load: () => loadSkinVirtualModule(definition, framework, skin.name, style, id),
           };
         })
       )
@@ -45,12 +45,13 @@ export function skinVirtualModuleId(
 }
 
 async function loadSkinVirtualModule(
+  definition: typeof skinCatalog,
   framework: SkinFramework,
   skinName: string,
   style: SkinStyleMode,
   id: SkinVirtualModule['id']
 ): Promise<SkinVirtualModule> {
-  const catalog = await loadSkinCatalog();
+  const catalog = await loadSkinCatalog(definition);
   const skin = catalog.items.find((item) => item.name === skinName && item.type === 'skin');
   if (skin?.type !== 'skin') throw new Error(`Virtual Skin entry \`${skinName}\` does not exist.`);
 

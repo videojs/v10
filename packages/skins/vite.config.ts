@@ -80,10 +80,10 @@ function createPreviewConfig() {
     plugins: [
       compiler({
         include: `${canonicalDir}/**/*.tsx`,
-        modules: [
+        entries: [
           { id: 'virtual:vjsc/icons/element/default.js' as const, load: () => defaultIconElementModule },
           { id: 'virtual:vjsc/icons/element/minimal.js' as const, load: () => minimalIconElementModule },
-          ...createSkinVirtualModules(),
+          ...createSkinVirtualModules(skinCatalog),
         ],
         config: {
           ...output,

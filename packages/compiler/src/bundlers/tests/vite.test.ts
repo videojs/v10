@@ -154,7 +154,7 @@ describe('vjsCompiler', () => {
   it('loads generated modules and invalidates them when their inputs change', async () => {
     let code = 'export const value = 1;';
     const plugin = createPlugin({
-      modules: [
+      entries: [
         {
           id: 'virtual:vjsc/value',
           load: () => ({ code, watchFiles: ['/workspace/value.ts'] }),
@@ -189,7 +189,7 @@ describe('vjsCompiler', () => {
   it('keeps virtual JSX in Vite transforms and out of dependency optimization', async () => {
     const id = 'virtual:vjsc/skin/default.tsx';
     const plugin = createPlugin({
-      modules: [{ id, load: () => ({ code: 'export const Skin = <div/>;', watchFiles: [] }) }],
+      entries: [{ id, load: () => ({ code: 'export const Skin = <div/>;', watchFiles: [] }) }],
     });
 
     expect(plugin.config().optimizeDeps.exclude).toEqual([id]);

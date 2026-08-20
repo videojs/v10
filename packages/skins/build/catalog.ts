@@ -10,8 +10,8 @@ export const skinsPackageRoot = resolve(import.meta.dirname, '..');
 export const canonicalRoot = resolve(skinsPackageRoot, 'canonical');
 
 /** Load and analyze the authored catalog used by every Skin output. */
-export function loadSkinCatalog(): Promise<SkinCatalog> {
-  return loadCatalog(skinCatalog, { rootDir: canonicalRoot });
+export function loadSkinCatalog(definition: typeof skinCatalog = skinCatalog): Promise<SkinCatalog> {
+  return loadCatalog(definition, { rootDir: canonicalRoot });
 }
 
 export function catalogSourcePath(path: string): string {

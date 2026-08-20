@@ -9,7 +9,8 @@ import { createCompilerModules } from './modules';
 export type VideojsCompilerPluginOptions = {
   include?: FilterPattern | undefined;
   exclude?: FilterPattern | undefined;
-  modules?: readonly VirtualModuleDefinition[] | undefined;
+  /** Generated entries served by Vite without materializing their source. */
+  entries?: readonly VirtualModuleDefinition[] | undefined;
 } & (
   | {
       config?: CompilerConfig | undefined;
@@ -39,7 +40,7 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   const watchFilesByOwner = new Map<string, Set<string>>();
   const ownersByWatchFile = new Map<string, Set<string>>();
   const modules = createCompilerModules({
-    modules: options.modules ?? [],
+    modules: options.entries ?? [],
     resolveId: resolvedVirtualModuleId,
   });
   let root = process.cwd();
