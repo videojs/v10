@@ -26,6 +26,7 @@ const textTrackButtonsDiv = document.getElementById('text-track-buttons') as HTM
 const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivElement;
 const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
 const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
+const playerSizeDiv = document.getElementById('player-size-display') as HTMLDivElement;
 const srcPreset = document.getElementById('src-preset') as HTMLSelectElement;
 const srcInput = document.getElementById('src-input') as HTMLInputElement;
 const setSrcBtn = document.getElementById('set-src') as HTMLButtonElement;
@@ -181,6 +182,34 @@ function updateNowPlayingQuality() {
     nowPlayingQualityDiv.textContent = '';
     nowPlayingQualityDiv.className = '';
   }
+}
+
+// The reading `trackPlayerResolution` writes — the element's rendered size in
+// device pixels — plus the cap it implies: the smallest rendition tier covering
+// it, which is what playerResolutionCap narrows the candidate set to. Drag the
+// video frame's corner to move it.
+function updatePlayerSizeDisplay() {
+  if (!engine) return;
+  const playerResolution = engine.state.playerResolution.get();
+  if (!playerResolution) {
+    playerSizeDiv.textContent = '📐 Player size: not measured (cap inert)';
+    return;
+  }
+  const { width, height } = playerResolution;
+  const area = width * height;
+  const covering = getVideoTracks(engine.state.presentation.get())
+    .map((track) => {
+      const trackWidth = 'width' in track ? (track.width ?? 0) : 0;
+      const trackHeight = 'height' in track ? (track.height ?? 0) : 0;
+      return {
+        label: trackWidth && trackHeight ? `${trackWidth}×${trackHeight}` : 'unsized',
+        area: trackWidth * trackHeight,
+      };
+    })
+    .filter((tier) => tier.area >= area)
+    .sort((a, b) => a.area - b.area);
+  const cap = covering[0]?.label ?? 'none — player exceeds every rendition';
+  playerSizeDiv.textContent = `📐 Player: ${width}×${height} device px  ·  cap: ${cap}`;
 }
 
 // Mirrors getBandwidthEstimate logic from bandwidth-estimator.ts.
@@ -803,6 +832,7 @@ function startEngine(src: string) {
   // clicks/hover. Now the audio picker re-runs only on presentation /
   // selectedAudioTrackId / userAudioTrackSelection changes.
   const stopThroughputUI = effect(() => updateThroughputDisplay());
+  const stopPlayerSizeUI = effect(() => updatePlayerSizeDisplay());
   const stopRenditionUI = effect(() => renderRenditionPicker());
   const stopAudioPickerUI = effect(() => renderAudioTrackPicker());
   const stopTextPickerUI = effect(() => renderTextTrackPicker());
@@ -867,6 +897,7 @@ function startEngine(src: string) {
   cleanupEffects = () => {
     stopStateLogger();
     stopThroughputUI();
+    stopPlayerSizeUI();
     stopRenditionUI();
     stopAudioPickerUI();
     stopTextPickerUI();

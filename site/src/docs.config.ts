@@ -158,6 +158,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/feature-error' },
           { slug: 'reference/feature-fullscreen' },
           { slug: 'reference/feature-live' },
+          { slug: 'reference/feature-metadata' },
           { slug: 'reference/feature-orientation-lock' },
           { slug: 'reference/feature-pip', sidebarLabel: 'Picture-in-picture' },
           { slug: 'reference/feature-playback' },

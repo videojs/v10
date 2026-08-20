@@ -31,6 +31,7 @@ interface MetadataSourceState extends Omit<MediaMetadataState, 'title' | 'poster
 export const metadataFeature = definePlayerFeature({
   name: 'metadata',
   config: {
+    /** The title to display. Takes precedence over the title the media carries. */
     title: {
       action: SET_USER_TITLE,
       state: USER_TITLE,
@@ -38,6 +39,7 @@ export const metadataFeature = definePlayerFeature({
       // another name there.
       html: { attribute: 'content-title' },
     },
+    /** The poster to display. Takes precedence over the poster the media carries. */
     poster: {
       action: SET_USER_POSTER,
       state: USER_POSTER,
@@ -52,7 +54,12 @@ export const metadataFeature = definePlayerFeature({
     [SET_USER_POSTER]: (value) => set({ [USER_POSTER]: value }),
   }),
   derived: {
+    /** The resolved content title. Set it through the player, not through the store. */
     title: ({ get }) => get()[USER_TITLE] ?? get()[MEDIA_TITLE] ?? DEFAULT_TITLE,
+    /**
+     * The resolved poster URL, independent of the media element's own `poster`.
+     * Set it through the player, not through the store.
+     */
     poster: ({ get }) => get()[USER_POSTER] ?? get()[MEDIA_POSTER] ?? DEFAULT_POSTER,
   },
   attach({ target, signal, set }) {

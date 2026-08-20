@@ -51,6 +51,10 @@
  *   volume.ts    — Complex feature. Exercises: numeric state, type alias
  *                  (MediaFeatureAvailability), methods with params + returns,
  *                  interface-level JSDoc → feature description.
+ *   metadata.ts  — Resolved + configured feature. Exercises: `@state` tag
+ *                  naming the published interface when state() annotates
+ *                  private source state, and `config` inputs typed from the
+ *                  symbol-keyed private actions they forward to.
  *   presets.ts   — Feature bundles. Exercises: plural *Features naming
  *                  (filtered out of feature discovery), array resolution
  *                  for preset feature lists.
@@ -92,7 +96,7 @@
  *                   without CustomMediaElement. API reference manually maintained.
  */
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { type FeatureResult, generateFeatureReferences } from '../feature-handler';
 import { generateMediaElementReferences, type MediaElementResult } from '../media-element-handler';
 import { generateComponentReferences } from '../pipeline';
@@ -782,6 +786,11 @@ describe('Util pipeline (end-to-end)', () => {
 //   - Filtering: plural *Features (feature bundles) are excluded
 //   - State extraction: interface properties → state record
 //   - Action extraction: interface methods → actions record
+//   - Published state: derived from the feature when state() annotates a
+//     local interface rather than one from media/state.ts
+//   - Config: `config` inputs → provider props, typed from the action they
+//     forward to — a symbol-keyed private one or a public setter named
+//     outright — defaulted from the state() initializer, described by JSDoc
 //   - JSDoc: member descriptions flow through, interface-level JSDoc
 //     becomes the feature description
 //   - Type aliases: expanded in the output (MediaFeatureAvailability →
@@ -802,8 +811,11 @@ describe('Feature pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers features from the features index', () => {
       const names = results.map((r) => r.name);
+      expect(names).toContain('captionStyle');
+      expect(names).toContain('metadata');
       expect(names).toContain('orientationLock');
       expect(names).toContain('playback');
+      expect(names).toContain('poster');
       expect(names).toContain('volume');
     });
 
@@ -819,7 +831,7 @@ describe('Feature pipeline (end-to-end)', () => {
     });
 
     it('produces one result per feature', () => {
-      expect(results.length).toBe(3);
+      expect(results.length).toBe(6);
     });
   });
 
@@ -829,6 +841,206 @@ describe('Feature pipeline (end-to-end)', () => {
 
       expect(ref.state).toEqual({});
       expect(ref.actions).toEqual({});
+    });
+
+    it('has no configuration', () => {
+      expect(findFeature('orientationLock')!.reference.config).toEqual({});
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // METADATA FEATURE (published state + configuration)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // state() annotates MetadataSourceState, which is local to the feature, so
+  // the published shape is derived. Here the interface omits every member of
+  // the one it extends and keeps the rest behind symbols, so `derived` keys are
+  // the whole published shape and there are no actions at all. `config` maps
+  // two provider inputs onto private state keys and the symbol-keyed actions
+  // that write them.
+
+  describe('metadata (published shape derived from the feature)', () => {
+    it('publishes derived keys with their inferred type and JSDoc', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(ref.state.title).toEqual({
+        type: 'string',
+        description: 'The resolved content title.',
+      });
+      expect(ref.state.poster).toEqual({
+        type: 'string',
+        description: 'The resolved poster URL.',
+      });
+    });
+
+    it('publishes no actions when the source state keeps every writer private', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      // An empty record, not a missing key: the model drops the section on
+      // emptiness, so the reference must say "none" rather than "unknown".
+      expect(ref.actions).toEqual({});
+    });
+
+    it('omits symbol-keyed source state as private', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(Object.keys(ref.state)).toEqual(['title', 'poster']);
+      expect(JSON.stringify(ref)).not.toContain('__@');
+    });
+
+    it('describes itself from the feature export JSDoc', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(ref.description).toBe('Resolves user and media content metadata into player state.');
+    });
+  });
+
+  describe('metadata (configuration)', () => {
+    it('emits one input per config key, in declaration order', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      expect(Object.keys(config)).toEqual(['title', 'poster']);
+    });
+
+    it('types each input from the symbol-keyed action it forwards to', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      // MediaContentValue = string | null | undefined, reached through the
+      // computed `[SET_USER_TITLE]` / `[SET_USER_POSTER]` members.
+      for (const input of Object.values(config)) {
+        expect(input.type).toContain('string');
+        expect(input.type).toContain('null');
+        expect(input.type).toContain('undefined');
+      }
+    });
+
+    it('omits the default for an input whose state key starts at undefined', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      // An unset input is what an absent default already says; printing
+      // "undefined" in the default column would be noise on every row.
+      expect(config.title!.default).toBeUndefined();
+      expect(config.poster!.default).toBeUndefined();
+    });
+
+    it('carries a declared attribute name, and leaves it off when the key is used as-is', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      // `title` is taken on an element, so the feature declares another name for
+      // markup. `poster` isn't, so it takes the kebab-cased key and the
+      // reference stays silent rather than repeating what the renderer derives.
+      expect(config.title!.attribute).toBe('content-title');
+      expect(config.poster!.attribute).toBeUndefined();
+    });
+
+    it('carries JSDoc from the config entry', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      expect(config.title!.description).toBe(
+        'The title to display. Takes precedence over the title the media carries.'
+      );
+      expect(config.poster!.description).toBe(
+        'The poster to display. Takes precedence over the poster the media carries.'
+      );
+    });
+
+    it('leaves state and actions untouched by config extraction', () => {
+      const volume = findFeature('volume')!.reference;
+
+      expect(volume.config).toEqual({});
+      expect(Object.keys(volume.state)).toContain('volume');
+      expect(Object.keys(volume.actions)).toContain('setVolume');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // POSTER FEATURE (published-key defaults and narrow unions)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Metadata covers an input that names its action by string. Poster covers the
+  // two steps that still have to follow a published key the rest of the way:
+  // the initial value behind it, and a value type narrower than plain text.
+
+  describe('poster (published-key defaults and narrow unions)', () => {
+    it('reads the default through a plain state key', () => {
+      const config = findFeature('poster')!.reference.config;
+
+      expect(config.poster!.default).toBe("'/poster.jpg'");
+    });
+
+    // The fixture's PlayerFeatureConfig mirrors production, so a constraint that
+    // drifted back to demanding exactly `string | null | undefined` would fail
+    // this file's own type check before it reached the assertion.
+    it('keeps a narrower union as the input type', () => {
+      const config = findFeature('poster')!.reference.config;
+
+      expect(config.posterFit!.type).toBe("undefined | null | 'contain' | 'cover'");
+      expect(config.posterFit!.default).toBe("'contain'");
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // CAPTION STYLE FEATURE (public setter + config degrade paths)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // `fontFamily` is the working named-action shape: public setters are optional
+  // on a feature, and this is the one that carries an inherited one. The two
+  // failures below produce output that looks fine and is wrong, so the warning
+  // is part of the contract, not a nicety.
+
+  describe('captionStyle (public setter and config degrade paths)', () => {
+    function generateWithWarnings(): { results: FeatureResult[]; warnings: string[] } {
+      const warnings: string[] = [];
+      const spy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+        warnings.push(args.map(String).join(' '));
+      });
+
+      try {
+        return { results: generateFeatureReferences(FIXTURE_ROOT), warnings };
+      } finally {
+        spy.mockRestore();
+      }
+    }
+
+    it('types an input from a public setter named outright, following inheritance', () => {
+      const config = findFeature('captionStyle')!.reference.config;
+
+      // `setFontFamily` is declared on MediaCaptionStyleState, not on the
+      // feature's own interface, so the type has to come from the resolved type
+      // rather than the declaration's members.
+      expect(config.fontFamily!.type).toContain('string');
+      expect(config.fontFamily!.type).toContain('null');
+      expect(config.fontFamily!.type).toContain('undefined');
+    });
+
+    it('resolves a named-constant initializer to its literal, not its identifier', () => {
+      const config = findFeature('captionStyle')!.reference.config;
+
+      // state() initializes this key to FALLBACK_FONT; printing that private
+      // identifier into public docs would be meaningless to a reader.
+      expect(config.fontFamily!.default).toBe("'sans-serif'");
+    });
+
+    it('falls back to an unresolved type when the action has no source-state member', () => {
+      const { results: fresh, warnings } = generateWithWarnings();
+      const config = fresh.find((r) => r.name === 'captionStyle')!.reference.config;
+
+      expect(config.fontStretch!.type).toBe('unknown');
+      expect(warnings.some((w) => w.includes('fontStretch') && w.includes('MISSING_ACTION'))).toBe(true);
+    });
+
+    it('drops an input whose action is neither an identifier nor a string, and says so', () => {
+      const { results: fresh, warnings } = generateWithWarnings();
+      const config = fresh.find((r) => r.name === 'captionStyle')!.reference.config;
+
+      expect(config.fontSize).toBeUndefined();
+      expect(warnings.some((w) => w.includes('fontSize') && w.includes('unreadable'))).toBe(true);
+    });
+
+    it('still publishes the feature state around the broken inputs', () => {
+      const ref = findFeature('captionStyle')!.reference;
+
+      expect(ref.state.fontFamily).toMatchObject({ type: 'string' });
     });
   });
 

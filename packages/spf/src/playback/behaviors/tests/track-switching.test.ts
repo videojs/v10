@@ -34,6 +34,7 @@ interface SwitchVideoTrackState {
   bandwidthState?: BandwidthState;
   selectedVideoTrackId?: string;
   userVideoTrackSelection?: Partial<VideoTrack>;
+  playerResolution?: { readonly width: number; readonly height: number };
 }
 
 function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<SwitchVideoTrackState> {
@@ -42,6 +43,7 @@ function makeState(initial: Partial<SwitchVideoTrackState> = {}): StateSignals<S
     bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(initial.userVideoTrackSelection),
+    playerResolution: signal<SwitchVideoTrackState['playerResolution']>(initial.playerResolution),
   };
 }
 
@@ -425,6 +427,167 @@ describe('switchVideoTrack', () => {
       const reactor = switchVideoTrack.setup({ state });
       await flush();
       expect(state.selectedVideoTrackId.get()).toBe('hd');
+
+      reactor.destroy();
+    });
+  });
+
+  describe('playerResolutionCap (player-resolution cap)', () => {
+    const sized = (id: string, bandwidth: number, width: number, height: number): PartiallyResolvedVideoTrack => ({
+      ...createVideoTrack(id, bandwidth),
+      width,
+      height,
+    });
+
+    // 230_400 / 921_600 / 2_073_600 pixels.
+    const ladder = [
+      sized('360p', 600_000, 640, 360),
+      sized('720p', 2_400_000, 1280, 720),
+      sized('1080p', 4_800_000, 1920, 1080),
+    ];
+
+    // Enough headroom that the ranker would reach for 1080p unprompted, so any
+    // lower pick below is the cap's doing and not the bandwidth threshold's.
+    const ampleBandwidth = createBandwidthState(6_000_000);
+
+    it('is inert without a measurement', async () => {
+      const state = makeState({ presentation: createPresentation(ladder), bandwidthState: ampleBandwidth });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
+
+      reactor.destroy();
+    });
+
+    it('caps to the tier matching the player exactly', async () => {
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: ampleBandwidth,
+        playerResolution: { width: 1280, height: 720 },
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      reactor.destroy();
+    });
+
+    it('caps to the smallest covering tier, not the largest tier below the player', async () => {
+      // An 800×450 player sits between 360p and 720p. Capping at-or-below the
+      // player area would serve 360p and under-serve the display; the covering
+      // tier is 720p.
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: ampleBandwidth,
+        playerResolution: { width: 800, height: 450 },
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('720p');
+
+      reactor.destroy();
+    });
+
+    it('caps to the smallest rendition when the player is smaller than all of them', async () => {
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: ampleBandwidth,
+        playerResolution: { width: 160, height: 90 },
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      reactor.destroy();
+    });
+
+    it('does not cap when no rendition covers the player', async () => {
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: ampleBandwidth,
+        playerResolution: { width: 3840, height: 2160 },
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
+
+      reactor.destroy();
+    });
+
+    it('re-picks when the player is resized', async () => {
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: ampleBandwidth,
+        playerResolution: { width: 1920, height: 1080 },
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
+
+      state.playerResolution.set({ width: 640, height: 360 });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      state.playerResolution.set({ width: 1920, height: 1080 });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
+
+      reactor.destroy();
+    });
+
+    it('does not override a manual selection above the cap', async () => {
+      // The cap governs automatic selection only, matching hls.js's
+      // capLevelToPlayerSize. `filterByUserSelection` narrows to one track and
+      // the chain early-bails before the cap runs.
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: ampleBandwidth,
+        playerResolution: { width: 160, height: 90 },
+        userVideoTrackSelection: { width: 1920, height: 1080, bandwidth: 4_800_000 },
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('1080p');
+
+      reactor.destroy();
+    });
+
+    it('leaves the bandwidth ranker to choose within the capped set', async () => {
+      // Cap admits 360p + 720p; the throughput estimate only fits 360p.
+      const state = makeState({
+        presentation: createPresentation(ladder),
+        bandwidthState: createBandwidthState(800_000),
+        playerResolution: { width: 1280, height: 720 },
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('360p');
+
+      reactor.destroy();
+    });
+
+    it('keeps renditions that declare no resolution', async () => {
+      // RESOLUTION is optional in HLS. An unmeasurable rendition can't be
+      // judged against the player, so the cap must not drop it — here it is the
+      // highest-bitrate survivor and wins the rank.
+      const withUnsized = [sized('360p', 600_000, 640, 360), createVideoTrack('no-resolution', 900_000)];
+      const state = makeState({
+        presentation: createPresentation(withUnsized),
+        bandwidthState: ampleBandwidth,
+        playerResolution: { width: 160, height: 90 },
+      });
+
+      const reactor = switchVideoTrack.setup({ state });
+      await flush();
+      expect(state.selectedVideoTrackId.get()).toBe('no-resolution');
 
       reactor.destroy();
     });

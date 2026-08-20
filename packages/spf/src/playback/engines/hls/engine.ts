@@ -56,6 +56,7 @@ import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-ra
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
+import { type PlayerResolution, trackPlayerResolution } from '../../behaviors/dom/track-player-resolution';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 // Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
 // `video/audio/textMessagePipelines` finalConfig entries, the `mediaContainerData`
@@ -148,6 +149,13 @@ export interface HlsVideoEngineState {
    */
   errors?: SvtaError[];
   currentTime?: number;
+  /**
+   * The player element's rendered pixel dimensions, or `undefined` where there
+   * is nothing to measure. Written by `trackPlayerResolution`, read by the
+   * `playerResolutionCap` selection rule — which treats `undefined` as
+   * "don't cap".
+   */
+  playerResolution?: PlayerResolution;
   loadActivated?: boolean;
   /**
    * One-shot command: start the current source at this position
@@ -303,6 +311,17 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    * ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15).
    */
   quality?: Partial<QualityConfig>;
+  /**
+   * Whether video renditions are capped to the player element's rendered size.
+   * Read by `trackPlayerResolution`; `false` measures nothing, which leaves the
+   * `playerResolutionCap` rule inert. Defaults to `true`.
+   */
+  capRenditionToPlayerSize?: boolean;
+  /**
+   * Whether `state.playerResolution` is reported in device pixels. Read by
+   * `trackPlayerResolution`; defaults to `true`.
+   */
+  useDevicePixelRatio?: boolean;
   /**
    * Multi-CDN failover monitor tuning. `cooldownMs` is how long a CDN stays
    * excluded after a failed fetch trips it. Defaults:
@@ -506,6 +525,10 @@ export function createHlsVideoEngine(
       // After trackCurrentTime: the one-shot currentTime seed must land after
       // the mirror's attach-time sync (see apply-start-position.ts).
       applyStartPosition,
+
+      // Ordering isn't load-bearing — selection is reactive, so a measurement
+      // that lands after the first pick just re-fires it.
+      trackPlayerResolution,
       switchVideoTrack,
       switchAudioTrack,
       // Mid-stream audio-buffer flush on language switch is handled in

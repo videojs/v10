@@ -6,6 +6,7 @@ description: Displays the resolved content title for the current media
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -69,6 +70,8 @@ If neither has a value, there is nothing to show and the title hides itself.
 
 The title is player input, not player state, so change it the way you set it in the
 first place. The store exposes the resolved `title` to read, and nothing to write.
+That resolution belongs to the <DocsLink slug="reference/feature-metadata">metadata
+feature</DocsLink>, which the video and audio presets include.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx

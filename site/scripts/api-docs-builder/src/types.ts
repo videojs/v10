@@ -13,7 +13,12 @@ export type {
 
 export { ComponentReferenceSchema, PartReferenceSchema } from '../../../src/types/component-reference.js';
 
-export type { FeatureActionDef, FeatureReference, FeatureStateDef } from '../../../src/types/feature-reference.js';
+export type {
+  FeatureActionDef,
+  FeatureConfigDef,
+  FeatureReference,
+  FeatureStateDef,
+} from '../../../src/types/feature-reference.js';
 export { FeatureReferenceSchema } from '../../../src/types/feature-reference.js';
 export type {
   HostPropertyDef,

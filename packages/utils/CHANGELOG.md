@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.29...@videojs/utils@10.0.0-beta.30) (2026-08-20)
+
+
+### Features
+
+* **spf:** Cap Rendition to Player Size ([#2242](https://github.com/videojs/v10/issues/2242)) ([357c3a4](https://github.com/videojs/v10/commit/357c3a4ba71155809e34db9f2d78694712283fe5))
+
+
+### Bug Fixes
+
+* **skin:** stabilize menu sizing and motion ([#2283](https://github.com/videojs/v10/issues/2283)) ([191538e](https://github.com/videojs/v10/commit/191538e99935ffdced88e77fef55405410558562))
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.28...@videojs/utils@10.0.0-beta.29) (2026-08-19)
 
 
