@@ -152,7 +152,7 @@ function CaptionsTrigger(): ReactNode {
               value={option.value}
               disabled={option.disabled}
             >
-              <span>{option.label}</span>
+              <bdi dir="auto">{option.label}</bdi>
               <Menu.ItemIndicator
                 checked={option.value === captions.value}
                 forceMount

@@ -1,4 +1,5 @@
 import { getElementSize, resolveCSSLength, supportsAnchorPositioning } from '@videojs/utils/dom';
+import type { TextDirection } from '@videojs/utils/i18n';
 import { clamp } from '@videojs/utils/number';
 import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/popover-core';
 import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
@@ -9,6 +10,7 @@ export { getPositionedSide } from '@videojs/utils/dom';
 export interface PositioningOptions {
   side: PopoverSide;
   align: PopoverAlign;
+  direction?: TextDirection;
 }
 
 export interface PositioningOffsets {
@@ -61,6 +63,11 @@ function formatPixels(value: number): string {
 function shiftCrossAxis(value: number, boundaryStart: number, boundaryEnd: number, size: number): number {
   const max = boundaryEnd - size;
   return max < boundaryStart ? boundaryStart : clamp(value, boundaryStart, max);
+}
+
+function getHorizontalAlign({ align, direction = 'ltr' }: PositioningOptions): PopoverAlign {
+  if (direction !== 'rtl') return align;
+  return align === 'start' ? 'end' : align === 'end' ? 'start' : align;
 }
 
 function getAnchorCrossAxisShift(
@@ -166,6 +173,7 @@ function getAnchorPositionCSS(
   // Side positioning — always use calc() with the CSS var so the offset
   // is resolved at paint time without any JS round-trip.
   if (side === 'top' || side === 'bottom') {
+    const horizontalAlign = getHorizontalAlign(opts);
     style[insetProp] = `calc(anchor(${side}) + ${SIDE_OFFSET_VAR})`;
 
     if (triggerRect && boundaryRect) {
@@ -175,7 +183,7 @@ function getAnchorPositionCSS(
         triggerRect.width,
         boundaryRect.left,
         boundaryRect.right,
-        align,
+        horizontalAlign,
         offsets.alignOffset,
         boundaryOffset
       );
@@ -187,9 +195,9 @@ function getAnchorPositionCSS(
     }
 
     // Alignment along the cross axis
-    if (align === 'start') {
+    if (horizontalAlign === 'start') {
       style.left = `calc(anchor(left) + ${ALIGN_OFFSET_VAR})`;
-    } else if (align === 'end') {
+    } else if (horizontalAlign === 'end') {
       style.right = `calc(anchor(right) + ${ALIGN_OFFSET_VAR})`;
     } else {
       style.justifySelf = 'anchor-center';
@@ -306,9 +314,10 @@ export function getManualPositionStyle(
 
   // Alignment along cross axis
   if (side === 'top' || side === 'bottom') {
-    if (align === 'start') {
+    const horizontalAlign = getHorizontalAlign(opts);
+    if (horizontalAlign === 'start') {
       left = triggerRect.left + alignOffset;
-    } else if (align === 'end') {
+    } else if (horizontalAlign === 'end') {
       left = triggerRect.right - popupRect.width + alignOffset;
     } else {
       left = triggerRect.left + (triggerRect.width - popupRect.width) / 2 + alignOffset;

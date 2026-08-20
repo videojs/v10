@@ -3,18 +3,19 @@ import { cn } from '@videojs/utils/style';
 import { popup } from './popup';
 
 const submenuPanel = cn(
+  '[--submenu-translate:100%] [&:dir(rtl)]:[--submenu-translate:-100%]',
   'absolute inset-x-0 top-0 [max-height:inherit] overflow-auto overscroll-none p-(--menu-padding) outline-none',
   'z-10',
   'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-out',
   'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
-  'data-starting-style:translate-x-full data-ending-style:translate-x-full',
+  'data-starting-style:[translate:var(--submenu-translate)_0] data-ending-style:[translate:var(--submenu-translate)_0]',
   'data-starting-style:blur data-ending-style:blur'
 );
 
 const itemBase = cn(
   'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--menu-item-border-radius) py-1.5 px-2',
-  'text-left',
+  'text-start',
   'text-shadow-2xs text-shadow-(color:--shadow-current-color)',
   'outline-2 -outline-offset-2 outline-transparent',
   'transition-colors duration-100 ease-in-out',
@@ -76,7 +77,8 @@ export const menu = {
     'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
     '[&>:not([data-submenu])]:translate-none [&>:not([data-submenu])]:transition-[translate,filter]',
     '[&>:not([data-submenu])]:duration-(--menu-transition-duration) [&>:not([data-submenu])]:ease-out',
-    '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
+    '[--submenu-parent-translate:-100%] [&:dir(rtl)]:[--submenu-parent-translate:100%]',
+    '[&[data-submenu-expanded=true]>:not([data-submenu])]:[translate:var(--submenu-parent-translate)_0]',
     '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur',
     // Avoid restarting the covered-content transition in WebKit while the
     // anchor-positioned highlight is active.
@@ -93,15 +95,16 @@ export const menu = {
     'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50'
   ),
   separator: 'my-1 border-b border-[oklch(1_0_0/0.1)]',
-  tier: 'pl-0.5 pt-px text-(length:--font-size-tiny) font-semibold leading-none text-current/70',
-  indicator: 'ml-auto -mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
+  tier: 'ps-0.5 pt-px text-(length:--font-size-tiny) font-semibold leading-none text-current/70',
+  indicator: 'ms-auto -me-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
   icon: 'shrink-0 text-current/50 drop-shadow-[0_1px_0_var(--shadow-current-color)] group-hover/menu-item:text-inherit group-data-highlighted/menu-item:text-inherit',
   /** Nested submenu panel. */
   submenuPanel,
   back: cn(itemBase, 'mb-0.5 w-full'),
-  hint: 'ml-auto inline-flex min-w-0 items-center gap-1 pl-2 text-current/65',
+  hint: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2 text-current/65',
   hintLabel: 'max-w-24 overflow-hidden text-ellipsis whitespace-nowrap',
-  chevron: 'size-3.5',
+  chevron: 'size-3.5 [&:dir(rtl)]:[scale:-1_1]',
+  backChevron: '[&:dir(rtl)]:[scale:1_1]',
   settingsGroup: 'group/settings',
   settingsTrigger: 'group',
   settingsIcon: 'transition-transform duration-150 ease-in-out group-aria-expanded:rotate-90 motion-reduce:duration-0',

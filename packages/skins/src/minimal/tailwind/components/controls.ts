@@ -9,7 +9,7 @@ export const controls = cn(
   '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
   '[--media-popover-boundary-offset:calc(var(--spacing)*(var(--base-boundary-offset,0)+var(--controls-padding,1)))]',
   '[--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
-  '[padding:calc(var(--spacing)*var(--controls-padding,1))] flex items-center',
+  '[padding:calc(var(--spacing)*var(--controls-padding,1))] flex items-center [&:dir(rtl)]:flex-row-reverse',
   // Appearance (driven by CSS variables set on the root)
   'bg-(--controls-background-color)',
   '[backdrop-filter:var(--controls-backdrop-filter)]',

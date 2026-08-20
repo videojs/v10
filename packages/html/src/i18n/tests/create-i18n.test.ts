@@ -12,6 +12,7 @@ describe('createI18n (HTML)', () => {
     resetBrowserTranslationCacheForTesting();
     document.body.innerHTML = '';
     document.documentElement.removeAttribute('lang');
+    document.documentElement.removeAttribute('dir');
     await Promise.resolve();
     await Promise.resolve();
     vi.restoreAllMocks();
@@ -24,6 +25,51 @@ describe('createI18n (HTML)', () => {
     document.body.appendChild(provider);
     await Promise.resolve();
     expect(provider.getAttribute('lang')).toBe('fr');
+  });
+
+  it('derives direction from the resolved locale', async () => {
+    const provider = new MediaI18nProviderElement();
+    provider.lang = 'ar';
+    document.body.appendChild(provider);
+    await provider.updateComplete;
+
+    expect(provider.dir).toBe('rtl');
+
+    provider.lang = 'en';
+    await provider.updateComplete;
+    expect(provider.dir).toBe('ltr');
+  });
+
+  it('preserves an explicit direction', async () => {
+    const provider = new MediaI18nProviderElement();
+    provider.lang = 'ar';
+    provider.dir = 'ltr';
+    document.body.appendChild(provider);
+    await provider.updateComplete;
+
+    expect(provider.dir).toBe('ltr');
+  });
+
+  it('inherits ambient language and direction without adding a direction', async () => {
+    document.documentElement.lang = 'ar';
+    document.documentElement.dir = 'ltr';
+    const provider = new MediaI18nProviderElement();
+    document.body.appendChild(provider);
+    await provider.updateComplete;
+
+    expect(provider.hasAttribute('lang')).toBe(false);
+    expect(provider.hasAttribute('dir')).toBe(false);
+  });
+
+  it('clears a derived direction when its explicit language is removed', async () => {
+    const provider = new MediaI18nProviderElement();
+    provider.lang = 'ar';
+    document.body.appendChild(provider);
+    await provider.updateComplete;
+
+    provider.lang = '';
+    await provider.updateComplete;
+    expect(provider.dir).toBe('');
   });
 
   it('media-text translates text content inside provider', async () => {

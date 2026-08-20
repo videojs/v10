@@ -142,6 +142,8 @@ export class ThumbnailCore {
 
   getAttrs(_state: ThumbnailState) {
     return {
+      // Sprite coordinates are physical offsets from the image's left edge.
+      dir: 'ltr' as const,
       role: 'img' as const,
       'aria-hidden': 'true' as const,
     };

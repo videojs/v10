@@ -14,6 +14,7 @@ import {
 import type { PropertyValues, ReactiveElement } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { mergeLocaleOverlays, subscribeAmbientLang } from '@videojs/utils/dom';
+import { getTextDirection, type TextDirection } from '@videojs/utils/i18n';
 import type { Constructor } from '@videojs/utils/types';
 
 import type { I18nContext, I18nContextValue } from './context';
@@ -37,9 +38,11 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
       static properties = {
         ...Base.properties,
         lang: { type: String, reflect: true },
+        dir: { type: String, reflect: true },
       };
 
       lang = '';
+      dir = '';
 
       readonly #i18nProvider = new ContextProvider(this, {
         context,
@@ -65,6 +68,7 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
       #publishedLocale: Locale | undefined;
       #publishedRegistryEpoch = -1;
       #publishedLazyLayer: Partial<FlatTranslations> | undefined;
+      #derivedDirection: TextDirection | undefined;
 
       protected get i18nValue(): I18nContextValue {
         return this.#i18nValue;
@@ -106,6 +110,7 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
             this.#resetLazyAndLoad();
           }
         }
+        this.#syncDirection(locale);
         this.#publish();
       }
 
@@ -131,6 +136,26 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
 
       #resolvedLocale(): Locale {
         return resolveProviderLocale(this);
+      }
+
+      #syncDirection(locale: Locale): void {
+        const current = this.dir.trim().toLowerCase();
+        const isDerived = this.#derivedDirection !== undefined && current === this.#derivedDirection;
+
+        if (!this.lang.trim()) {
+          if (isDerived) this.dir = '';
+          this.#derivedDirection = undefined;
+          return;
+        }
+
+        if (current && !isDerived) {
+          this.#derivedDirection = undefined;
+          return;
+        }
+
+        const direction = getTextDirection(locale);
+        this.#derivedDirection = direction;
+        if (this.dir !== direction) this.dir = direction;
       }
 
       #publish(): void {

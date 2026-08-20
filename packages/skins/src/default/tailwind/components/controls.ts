@@ -9,7 +9,7 @@ export const controls = cn(
   '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
   '[--media-popover-boundary-offset:calc(var(--spacing)*var(--base-boundary-offset,2))]',
   '[--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
-  '[padding:calc(var(--spacing)*var(--controls-padding,1))] flex items-center',
+  '[padding:calc(var(--spacing)*var(--controls-padding,1))] flex items-center [&:dir(rtl)]:flex-row-reverse',
   'rounded-full',
   // Text shadow
   'text-shadow-2xs text-shadow-(color:--shadow-current-color)'

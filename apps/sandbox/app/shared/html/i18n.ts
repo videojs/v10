@@ -1,12 +1,13 @@
 import '@videojs/html/i18n';
 
+import { syncDocumentLocale } from '../i18n/document-locale';
 import { ensureSandboxLocale, type SandboxLocaleTag } from '../i18n/sandbox-locales';
 import { getInitialLocale, onLocaleChange } from '../sandbox-listener';
 
 let locale: SandboxLocaleTag = getInitialLocale();
 let localeApplySeq = 0;
 
-document.documentElement.lang = locale;
+syncDocumentLocale(locale);
 
 export function wrapSandboxHtmlI18n(content: string): string {
   return `<media-i18n>${content}</media-i18n>`;
@@ -21,7 +22,7 @@ export async function applySandboxHtmlLocale(next: SandboxLocaleTag): Promise<vo
   await ensureSandboxLocale(next);
   if (seq !== localeApplySeq) return;
   locale = next;
-  document.documentElement.lang = locale;
+  syncDocumentLocale(locale);
 }
 
 export function bindSandboxHtmlLocaleChange(rerender: () => void): void {
@@ -35,7 +36,7 @@ export function bindSandboxHtmlLocaleChange(rerender: () => void): void {
       await ensureSandboxLocale(next);
       if (seq !== localeApplySeq) return;
       locale = next;
-      document.documentElement.lang = locale;
+      syncDocumentLocale(locale);
       rerender();
     })();
   });

@@ -153,7 +153,7 @@ function CaptionsTrigger(): ReactNode {
               value={option.value}
               disabled={option.disabled}
             >
-              <span>{option.label}</span>
+              <bdi dir="auto">{option.label}</bdi>
               <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
                 <CheckIcon className="media-icon" />
               </Menu.ItemIndicator>
