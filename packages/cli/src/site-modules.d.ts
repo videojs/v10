@@ -9,13 +9,18 @@
 declare module '@/utils/installation/types' {
   export type Renderer =
     | 'background-video'
+    | 'cloudflare'
     | 'dash'
     | 'hls'
     | 'html5-audio'
     | 'html5-video'
     | 'mux-audio'
     | 'mux-video'
-    | 'vimeo';
+    | 'spotify'
+    | 'tiktok'
+    | 'twitch'
+    | 'vimeo'
+    | 'youtube';
   export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
   export type UseCase = 'default-video' | 'default-audio' | 'background-video';
   export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';

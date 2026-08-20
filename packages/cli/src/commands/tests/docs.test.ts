@@ -287,6 +287,20 @@ describe('handleDocs', () => {
         expect(out).toContain("import '@videojs/html/media/vimeo-video'");
       });
 
+      it('generates YouTube media variant via npm', async () => {
+        await handleDocs(htmlFlags({ media: 'youtube' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<youtube-video src=');
+        expect(out).toContain("import '@videojs/html/media/youtube-video'");
+      });
+
+      it('generates Spotify media variant for the audio preset', async () => {
+        await handleDocs(htmlFlags({ preset: 'audio', skin: 'default', media: 'spotify' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<spotify-audio src=');
+        expect(out).toContain("import '@videojs/html/media/spotify-audio'");
+      });
+
       it('generates a CDN media script for renderers with a CDN build (mux)', async () => {
         await handleDocs(htmlFlags({ media: 'mux-video', 'install-method': 'cdn' }), ['how-to/installation']);
         const out = output();

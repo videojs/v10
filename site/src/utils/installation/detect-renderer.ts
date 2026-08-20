@@ -26,25 +26,47 @@ const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Rend
     renderer: 'vimeo',
     label: 'Vimeo',
   },
-  // {
-  //   match: (h) => h === 'youtube.com' || h === 'www.youtube.com' || h === 'youtu.be' || h === 'm.youtube.com',
-  //   renderer: 'youtube',
-  //   label: 'YouTube',
-  // },
-  // {
-  //   match: (h) => h === 'open.spotify.com',
-  //   renderer: 'spotify',
-  //   label: 'Spotify',
-  // },
-  // {
-  //   match: (h) =>
-  //     h === 'watch.videodelivery.net' ||
-  //     h === 'videodelivery.net' ||
-  //     h === 'cloudflarestream.com' ||
-  //     h === 'www.cloudflarestream.com',
-  //   renderer: 'cloudflare',
-  //   label: 'Cloudflare',
-  // },
+  {
+    match: (h) =>
+      h === 'youtube.com' ||
+      h === 'www.youtube.com' ||
+      h === 'youtu.be' ||
+      h === 'm.youtube.com' ||
+      h === 'youtube-nocookie.com' ||
+      h === 'www.youtube-nocookie.com',
+    renderer: 'youtube',
+    label: 'YouTube',
+  },
+  {
+    match: (h) => h === 'open.spotify.com',
+    renderer: 'spotify',
+    label: 'Spotify',
+  },
+  {
+    // Suffix matches, unlike the other rules: Cloudflare serves signed and
+    // access-controlled videos from per-customer subdomains
+    // (`customer-<code>.cloudflarestream.com`), so exact hostnames would miss
+    // the most common real-world URLs.
+    match: (h) =>
+      h === 'videodelivery.net' ||
+      h.endsWith('.videodelivery.net') ||
+      h === 'cloudflarestream.com' ||
+      h.endsWith('.cloudflarestream.com'),
+    renderer: 'cloudflare',
+    label: 'Cloudflare Stream',
+  },
+  {
+    match: (h) => h === 'tiktok.com' || h === 'www.tiktok.com',
+    renderer: 'tiktok',
+    label: 'TikTok',
+  },
+  {
+    // `clips.twitch.tv` is deliberately absent: clips are a different embed
+    // the Twitch media element cannot play.
+    match: (h) => h === 'twitch.tv' || h === 'www.twitch.tv' || h === 'go.twitch.tv',
+    renderer: 'twitch',
+    label: 'Twitch',
+  },
   // {
   //   match: (h) => h === 'cdn.jwplayer.com' || h === 'content.jwplatform.com',
   //   renderer: 'jwplayer',
@@ -127,13 +149,18 @@ export function isRendererValidForUseCase(renderer: Renderer, useCase: UseCase):
 
 const RENDERER_ARTICLES: Record<Renderer, 'a' | 'an'> = {
   'background-video': 'a',
+  cloudflare: 'a',
   dash: 'a',
   hls: 'an',
   'html5-audio': 'an',
   'html5-video': 'an',
   'mux-audio': 'a',
   'mux-video': 'a',
+  spotify: 'a',
+  tiktok: 'a',
+  twitch: 'a',
   vimeo: 'a',
+  youtube: 'a',
 };
 
 export function articleFor(renderer: Renderer): 'a' | 'an' {

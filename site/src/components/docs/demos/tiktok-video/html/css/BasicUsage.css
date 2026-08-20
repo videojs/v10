@@ -1,0 +1,7 @@
+/* TikTok videos are portrait: the element floors itself at 325x578. */
+.tiktok-video {
+  display: block;
+  width: 325px;
+  height: 578px;
+  margin-inline: auto;
+}

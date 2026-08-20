@@ -158,6 +158,35 @@ describe('generateHTMLUsageCode', () => {
     expect(result.js).toContain("import '@videojs/html/media/vimeo-video'");
   });
 
+  it('uses the embed-provider tags and media imports, without playsinline (iframe)', () => {
+    const cases = [
+      { renderer: 'youtube', tag: 'youtube-video', urlPart: 'youtube.com' },
+      { renderer: 'cloudflare', tag: 'cloudflare-video', urlPart: 'videodelivery.net' },
+      { renderer: 'tiktok', tag: 'tiktok-video', urlPart: 'tiktok.com' },
+      { renderer: 'twitch', tag: 'twitch-video', urlPart: 'twitch.tv' },
+    ] as const;
+    for (const { renderer, tag, urlPart } of cases) {
+      const result = generateHTMLUsageCode({ ...baseHTML, renderer });
+      expect(result.html).toContain(`<${tag} src=`);
+      expect(result.html).not.toContain('playsinline');
+      expect(result.html).toContain(urlPart);
+      expect(result.js).toContain(`import '@videojs/html/media/${tag}'`);
+    }
+  });
+
+  it('uses the spotify-audio tag and media import for the audio use case', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      useCase: 'default-audio',
+      skin: 'audio',
+      renderer: 'spotify',
+    });
+    expect(result.html).toContain('<spotify-audio src=');
+    expect(result.html).not.toContain('playsinline');
+    expect(result.html).toContain('open.spotify.com');
+    expect(result.js).toContain("import '@videojs/html/media/spotify-audio'");
+  });
+
   it('uses the mux-audio tag without playsinline for the audio use case', () => {
     const result = generateHTMLUsageCode({
       ...baseHTML,
@@ -238,6 +267,32 @@ describe('generateReactCreateCode', () => {
     expect(code).toContain("import { VimeoVideo } from '@videojs/react/media/vimeo-video'");
     expect(code).toContain('<VimeoVideo src={src} />');
     expect(code).not.toContain('playsInline');
+  });
+
+  it('uses separate media imports for the embed providers without playsInline (iframe)', () => {
+    const cases = [
+      { renderer: 'youtube', component: 'YouTubeVideo', subpath: 'youtube-video' },
+      { renderer: 'cloudflare', component: 'CloudflareVideo', subpath: 'cloudflare-video' },
+      { renderer: 'tiktok', component: 'TikTokVideo', subpath: 'tiktok-video' },
+      { renderer: 'twitch', component: 'TwitchVideo', subpath: 'twitch-video' },
+    ] as const;
+    for (const { renderer, component, subpath } of cases) {
+      const code = generateReactCreateCode({ ...baseReact, renderer })['MyPlayer.tsx'];
+      expect(code).toContain(`import { ${component} } from '@videojs/react/media/${subpath}'`);
+      expect(code).toContain(`<${component} src={src} />`);
+      expect(code).not.toContain('playsInline');
+    }
+  });
+
+  it('uses a separate media import for Spotify in the audio use case', () => {
+    const code = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'default-audio',
+      skin: 'audio',
+      renderer: 'spotify',
+    })['MyPlayer.tsx'];
+    expect(code).toContain("import { SpotifyAudio } from '@videojs/react/media/spotify-audio'");
+    expect(code).toContain('<SpotifyAudio src={src} />');
   });
 
   it('uses audio features and components', () => {

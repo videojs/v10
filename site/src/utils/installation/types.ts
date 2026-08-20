@@ -1,12 +1,17 @@
 export type Renderer =
   | 'background-video'
+  | 'cloudflare'
   | 'dash'
   | 'hls'
   | 'html5-audio'
   | 'html5-video'
   | 'mux-audio'
   | 'mux-video'
-  | 'vimeo';
+  | 'spotify'
+  | 'tiktok'
+  | 'twitch'
+  | 'vimeo'
+  | 'youtube';
 
 export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
 
@@ -18,8 +23,8 @@ export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
 // detection, and the list reads top-to-bottom as what we steer users toward —
 // common files first, then open streaming formats, then hosting services.
 export const VALID_RENDERERS: Record<UseCase, Renderer[]> = {
-  'default-video': ['html5-video', 'hls', 'dash', 'mux-video', 'vimeo'],
-  'default-audio': ['html5-audio', 'mux-audio'],
+  'default-video': ['html5-video', 'hls', 'dash', 'mux-video', 'youtube', 'vimeo', 'cloudflare', 'tiktok', 'twitch'],
+  'default-audio': ['html5-audio', 'mux-audio', 'spotify'],
   'background-video': ['background-video'],
 };
 
@@ -33,6 +38,11 @@ export function getMediaSubpath(renderer: Renderer): string | null {
     'mux-video': 'mux-video',
     'mux-audio': 'mux-audio',
     vimeo: 'vimeo-video',
+    youtube: 'youtube-video',
+    cloudflare: 'cloudflare-video',
+    spotify: 'spotify-audio',
+    tiktok: 'tiktok-video',
+    twitch: 'twitch-video',
   };
   return map[renderer] ?? null;
 }

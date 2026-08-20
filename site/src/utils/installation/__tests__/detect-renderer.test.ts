@@ -34,6 +34,77 @@ describe('detectRenderer', () => {
     it('returns null for a Vimeo URL in an audio use case (no audio fallthrough)', () => {
       expect(detectRenderer('https://vimeo.com/648359100', 'default-audio')).toBeNull();
     });
+
+    it('detects youtube.com and youtu.be as YouTube', () => {
+      expect(detectRenderer('https://www.youtube.com/watch?v=aqz-KE-bpKQ', 'default-video')).toEqual({
+        renderer: 'youtube',
+        label: 'YouTube',
+      });
+      expect(detectRenderer('https://youtu.be/aqz-KE-bpKQ', 'default-video')).toEqual({
+        renderer: 'youtube',
+        label: 'YouTube',
+      });
+    });
+
+    it('detects the privacy-enhanced youtube-nocookie.com host as YouTube', () => {
+      expect(detectRenderer('https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ', 'default-video')).toEqual({
+        renderer: 'youtube',
+        label: 'YouTube',
+      });
+    });
+
+    it('detects open.spotify.com as Spotify in an audio use case', () => {
+      expect(detectRenderer('https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M', 'default-audio')).toEqual({
+        renderer: 'spotify',
+        label: 'Spotify',
+      });
+    });
+
+    it('returns null for a Spotify URL in a video use case (audio-only renderer)', () => {
+      expect(detectRenderer('https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M', 'default-video')).toBeNull();
+    });
+
+    it('detects videodelivery.net and per-customer cloudflarestream.com hosts as Cloudflare Stream', () => {
+      expect(
+        detectRenderer('https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4', 'default-video')
+      ).toEqual({
+        renderer: 'cloudflare',
+        label: 'Cloudflare Stream',
+      });
+      expect(
+        detectRenderer(
+          'https://customer-abc123.cloudflarestream.com/bfbd585059e33391d67b0f1d15fe6ea4/iframe',
+          'default-video'
+        )
+      ).toEqual({
+        renderer: 'cloudflare',
+        label: 'Cloudflare Stream',
+      });
+    });
+
+    it('detects tiktok.com as TikTok', () => {
+      expect(detectRenderer('https://www.tiktok.com/@_luwes/video/7527476667770522893', 'default-video')).toEqual({
+        renderer: 'tiktok',
+        label: 'TikTok',
+      });
+    });
+
+    it('detects twitch.tv as Twitch', () => {
+      expect(detectRenderer('https://www.twitch.tv/videos/106400740', 'default-video')).toEqual({
+        renderer: 'twitch',
+        label: 'Twitch',
+      });
+    });
+
+    it('returns null for clips.twitch.tv (clips are a different embed)', () => {
+      expect(detectRenderer('https://clips.twitch.tv/AwkwardHelplessSalamanderSwiftRage', 'default-video')).toBeNull();
+    });
+
+    it('returns null for the embed-provider hosts in an audio use case (no audio fallthrough)', () => {
+      expect(detectRenderer('https://youtu.be/aqz-KE-bpKQ', 'default-audio')).toBeNull();
+      expect(detectRenderer('https://www.tiktok.com/@_luwes/video/7527476667770522893', 'default-audio')).toBeNull();
+      expect(detectRenderer('https://www.twitch.tv/videos/106400740', 'default-audio')).toBeNull();
+    });
   });
 
   describe('extension rules', () => {
@@ -207,6 +278,18 @@ describe('isRendererValidForUseCase', () => {
   it('vimeo is valid for default-video but not default-audio', () => {
     expect(isRendererValidForUseCase('vimeo', 'default-video')).toBe(true);
     expect(isRendererValidForUseCase('vimeo', 'default-audio')).toBe(false);
+  });
+
+  it('the embed video renderers are valid for default-video but not default-audio', () => {
+    for (const renderer of ['youtube', 'cloudflare', 'tiktok', 'twitch'] as const) {
+      expect(isRendererValidForUseCase(renderer, 'default-video')).toBe(true);
+      expect(isRendererValidForUseCase(renderer, 'default-audio')).toBe(false);
+    }
+  });
+
+  it('spotify is valid for default-audio but not default-video', () => {
+    expect(isRendererValidForUseCase('spotify', 'default-audio')).toBe(true);
+    expect(isRendererValidForUseCase('spotify', 'default-video')).toBe(false);
   });
 
   it('mux-audio is valid for default-audio but not default-video', () => {
