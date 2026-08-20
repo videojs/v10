@@ -210,7 +210,6 @@ export const sidebar: Sidebar = [
           { slug: 'reference/use-quality-options', frameworks: ['react'] },
           { slug: 'reference/use-selector', frameworks: ['react'] },
           { slug: 'reference/use-snapshot', frameworks: ['react'] },
-          { slug: 'reference/container-mixin', frameworks: ['html'] },
           { slug: 'reference/media-attach-mixin', frameworks: ['html'] },
           { slug: 'reference/player-context', frameworks: ['html'] },
           { slug: 'reference/provider-mixin', frameworks: ['html'] },
