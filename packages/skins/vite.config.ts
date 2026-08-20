@@ -7,7 +7,7 @@ import { type CompilerConfig, html, jsx } from 'vjsc';
 import { componentMetaPlugin, discoverComponents } from 'vjsc/components';
 import { plugin as registryPlugin } from 'vjsc/registry';
 import { plugin as stylesPlugin } from 'vjsc/styles';
-import { shadcnPlugin, vjscPlugin } from 'vjsc/vite';
+import { shadcnPlugin, type VjscTransformer, vjscPlugin } from 'vjsc/vite';
 import type { SkinMeta } from './vjsc/meta';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './vjsc/registry/frameworks';
 import { componentTransforms } from './vjsc/registry/react';
@@ -17,6 +17,7 @@ const packageDir = import.meta.dirname;
 const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
+const vjscInclude = new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`);
 
 export default defineConfig(({ mode }) => (mode === 'registry' ? createRegistryConfig() : createPreviewConfig()));
 
@@ -28,7 +29,7 @@ function createRegistryConfig() {
     plugins: [
       vjscPlugin({
         cwd: packageDir,
-        include: new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`),
+        include: vjscInclude,
         transform,
       }),
       shadcnPlugin({
@@ -43,7 +44,7 @@ function createRegistryConfig() {
       emptyOutDir: true,
       rolldownOptions: {
         input: [],
-        external: (id: string) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
+        external: isPackageImport,
       },
     },
   };
@@ -61,7 +62,7 @@ function createPreviewConfig() {
       iconElementPlugin(),
       vjscPlugin({
         cwd: packageDir,
-        include: new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`),
+        include: vjscInclude,
         transform,
       }),
       tailwindcss(),
@@ -115,11 +116,11 @@ function createPreviewConfig() {
   };
 }
 
-function createSkinTransformer() {
+function createSkinTransformer(): VjscTransformer {
   const transforms = new Map<string, CompilerConfig>();
   const skins = discoverComponents<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
 
-  return ({ parameters }: { parameters: URLSearchParams }): CompilerConfig | null => {
+  return ({ parameters }) => {
     const framework = parameters.get('framework');
     const skinName = parameters.get('skin');
     const style = parameters.get('style');
@@ -157,6 +158,10 @@ function createSkinTransformer() {
     transforms.set(key, config);
     return config;
   };
+}
+
+function isPackageImport(id: string): boolean {
+  return !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0');
 }
 
 function escapeRegExp(value: string): string {

@@ -1,4 +1,4 @@
-import type { Plugin } from 'rolldown';
+import type { GeneralHookFilter, Plugin } from 'rolldown';
 import { createVjscPlugin, type VjscTransformContext, type VjscTransformer } from '../bundle/plugin';
 import { createSchemaPlugin, type SchemaPlugin, type SchemaPluginOptions } from '../bundle/schema';
 import { createShadcnPlugin, type ShadcnPluginOptions } from '../bundle/shadcn';
@@ -9,7 +9,7 @@ export type { Plugin, RolldownOutput } from 'rolldown';
 export type { SchemaPlugin, SchemaPluginOptions, ShadcnPluginOptions, VjscTransformContext, VjscTransformer };
 
 /** A native Rolldown ID pattern accepted by include and exclude filters. */
-export type FilterPattern = string | RegExp | readonly (string | RegExp)[];
+export type FilterPattern = Exclude<GeneralHookFilter, { include?: unknown; exclude?: unknown }>;
 
 export interface VjscPluginOptions {
   /** Modules passed to the transform hook. Defaults to TSX modules. */
