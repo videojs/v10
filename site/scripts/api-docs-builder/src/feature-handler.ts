@@ -232,13 +232,6 @@ function parseConfigEntries(node: ts.Expression, featureName: string): FeatureCo
 }
 
 /**
- * Read the source-state member a config entry points at. An identifier names a
- * symbol constant, so the member is keyed by that symbol; a string names the
- * member itself. Both collapse to the written text, and the lookups that
- * consume it try each shape, since a symbol constant's name and a member name
- * never collide.
- */
-/**
  * Read the attribute name out of a config entry's `html` block.
  *
  * The name is text in markup rather than a reference to a state or action key,
@@ -258,6 +251,13 @@ function htmlAttributeName(node: ts.Expression): string | undefined {
   return undefined;
 }
 
+/**
+ * Read the source-state member a config entry points at. An identifier names a
+ * symbol constant, so the member is keyed by that symbol; a string names the
+ * member itself. Both collapse to the written text, and the lookups that
+ * consume it try each shape, since a symbol constant's name and a member name
+ * never collide.
+ */
 function configKeyReference(node: ts.Expression): string | undefined {
   if (ts.isIdentifier(node)) return node.text;
   if (ts.isStringLiteralLike(node)) return node.text;

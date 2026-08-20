@@ -957,7 +957,7 @@ describe('Feature pipeline (end-to-end)', () => {
   // ─────────────────────────────────────────────────────────────────
   //
   // `fontFamily` is the working named-action shape: public setters are optional
-  // on a feature, and this is the one that still has an inherited one. The two
+  // on a feature, and this is the one that carries an inherited one. The two
   // failures below produce output that looks fine and is wrong, so the warning
   // is part of the contract, not a nicety.
 

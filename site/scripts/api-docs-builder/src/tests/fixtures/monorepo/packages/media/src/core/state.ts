@@ -70,9 +70,9 @@ export interface MediaMetadataState {
  *
  * `setFontFamily` accepts `string | null | undefined` because a config input the
  * author omits arrives as `undefined`, which is what makes it addressable from a
- * feature's `config` by name. Public setters are optional, and the metadata
- * feature no longer has one, so the caption-style fixture is where that path
- * stays covered.
+ * feature's `config` by name. Public setters are optional and the metadata
+ * feature has none, so the caption-style fixture is the one that covers this
+ * path.
  */
 export interface MediaCaptionStyleState {
   /** The font family in use. */

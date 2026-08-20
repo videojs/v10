@@ -2,7 +2,7 @@
  * Mock caption-style feature — the paths metadata doesn't use, kept in one place.
  *
  * Exercises: a config input whose action names an inherited public setter
- * outright (public setters are optional, and this is the fixture that still has
+ * outright (public setters are optional, and this is the fixture that carries
  * one), a named constant resolved to its literal in the default column, a state
  * key left at `undefined` and therefore omitted from that column, one input
  * whose action has no matching source-state member (type falls back to
