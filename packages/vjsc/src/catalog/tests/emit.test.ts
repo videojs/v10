@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { defineComponent, defineSchema } from '../../components';
-import { defineConfig, jsx } from '../../config';
+import { jsx } from '../../config';
 import { defineRegistry } from '../../registry';
 import { defineCatalog } from '../define';
 import { emitCatalog } from '../emit';
@@ -31,7 +31,6 @@ describe('emitCatalog', () => {
     });
     const loaded = await loadCatalog(
       defineCatalog({
-        components: [components.source],
         allowedImports: ['@fixture/components'],
         items: [{ name: 'entry', source: './entry.tsx' }],
       }),
@@ -66,7 +65,7 @@ describe('emitCatalog', () => {
     const output = await emitCatalog(loaded, {
       items: ['entry'],
       output: {
-        compiler: defineConfig({ target: jsx() }),
+        compiler: { target: jsx() },
       },
       files: {
         source({ catalogItem, sourceFile }) {
@@ -102,40 +101,6 @@ describe('emitCatalog', () => {
     expect(output.files.style).toEqual([]);
   });
 
-  it('bundles each requested entry without separately emitting its catalog dependencies', async () => {
-    const root = setup({
-      'entry.ts': `import React from 'react'; import { dependency } from './dependency'; export const entry = [dependency + 1, React];`,
-      'dependency.ts': `export const dependency = 1;`,
-    });
-    const loaded = await loadCatalog(
-      defineCatalog({
-        items: [
-          { name: 'entry', source: './entry.ts' },
-          { name: 'dependency', source: './dependency.ts' },
-        ],
-      }),
-      { rootDir: root }
-    );
-
-    const output = await emitCatalog(loaded, {
-      items: ['entry'],
-      output: {
-        mode: 'bundle',
-        compiler: defineConfig({ external: ['react'], target: jsx() }),
-      },
-      files: {
-        source: ({ catalogItem }) => `${catalogItem.name}/bundle.js`,
-      },
-    });
-
-    expect(Object.keys(output.items)).toEqual(['entry']);
-    expect(output.files.source).toHaveLength(1);
-    expect(output.files.source[0]?.path).toBe('entry/bundle.js');
-    expect(output.files.source[0]?.content).toContain('const entry = [2, React]');
-    expect(output.items.entry?.imports).toEqual(['react']);
-    expect(output.items.entry?.dependencies).toEqual(['react']);
-  });
-
   it('projects catalog styles and emits referenced vanilla CSS', async () => {
     const root = setup({
       'entry.tsx': `import styles from './button.styles'; export const entry = <button className={styles.root}/>;`,
@@ -166,7 +131,7 @@ describe('emitCatalog', () => {
     const output = await emitCatalog(loaded, {
       items: ['entry'],
       output: {
-        compiler: defineConfig({ target: jsx() }),
+        compiler: { target: jsx() },
       },
       styles: {
         mode: 'css',

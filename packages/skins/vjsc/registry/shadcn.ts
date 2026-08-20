@@ -1,10 +1,13 @@
 import { resolve } from 'node:path';
 
+import { jsx } from 'vjsc';
+import { defineCatalogOutput } from 'vjsc/catalog';
 import { defineShadcnRegistry, shadcnOutput } from 'vjsc/shadcn';
 
-import { reactOutput } from '../../build/output/react';
 import skinCatalog from '../catalog';
 import { formatGeneratedFile } from '../format';
+import { createReactComponentRegistry } from './frameworks';
+import { componentTransforms } from './react';
 
 const paths = {
   output: 'vjsc/registry',
@@ -96,7 +99,13 @@ export function createSkinShadcnOutput() {
     catalog: skinCatalog,
     rootDir: resolve(import.meta.dirname, '..'),
     registry: skinRegistry,
-    output: reactOutput(),
+    output: defineCatalogOutput({
+      componentRegistry: createReactComponentRegistry(),
+      compiler: {
+        target: jsx({ importSource: 'react' }),
+        plugins: [componentTransforms()],
+      },
+    }),
     styles: {
       mode: 'tailwind',
       variant: 'default',

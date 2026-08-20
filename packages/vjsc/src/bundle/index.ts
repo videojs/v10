@@ -8,6 +8,7 @@ export {
 } from './modules';
 export {
   type VjscDeclarationOutput,
+  type VjscFilterPattern,
   type VjscPluginOptions,
   type VjscProjection,
   type VjscProjectionContext,

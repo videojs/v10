@@ -13,7 +13,6 @@ export type CatalogImportPattern = string | RegExp;
 
 export interface CatalogDefinition {
   readonly items: readonly CatalogItemDefinition[];
-  readonly components?: readonly string[] | undefined;
   readonly resources?: object | undefined;
   readonly imports?: CatalogImports | undefined;
   readonly allowedImports?: readonly CatalogImportPattern[] | undefined;

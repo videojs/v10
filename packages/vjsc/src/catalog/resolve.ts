@@ -45,9 +45,6 @@ export type CatalogItem<Definition extends CatalogDefinition> = DefinedItem<Defi
 /** An authored catalog enriched with direct module and item dependency analysis. */
 export interface Catalog<Definition extends CatalogDefinition = CatalogDefinition> {
   readonly rootDir: string;
-  readonly components: Definition['components'] extends readonly string[]
-    ? Definition['components']
-    : readonly string[];
   readonly resources: CatalogResources<Definition>;
   readonly items: readonly CatalogItem<Definition>[];
   readonly references: CatalogReferences<Definition>;
@@ -135,7 +132,6 @@ export async function loadCatalog<const Definition extends CatalogDefinition>(
 
   return {
     rootDir,
-    components: (definition.components ?? []) as Catalog<Definition>['components'],
     resources: definition.resources as CatalogResources<Definition>,
     items,
     references: freezeGroups(catalogReferences) as CatalogReferences<Definition>,

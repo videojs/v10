@@ -1,7 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { dirname, posix, relative, resolve } from 'node:path';
+import { posix, resolve } from 'node:path';
 
-import { build } from '../build';
 import type { CompilerConfig } from '../config';
 import { type ComponentRegistry, plugin as registryPlugin } from '../registry';
 import { compileStyles } from '../styles/compile';
@@ -75,8 +74,6 @@ export type CatalogStyleTransform =
     };
 
 export interface CatalogOutputAdapter<Definition extends CatalogDefinition = CatalogDefinition> {
-  /** Preserve editable modules by default, or bundle each requested catalog entry. */
-  readonly mode?: 'modules' | 'bundle' | undefined;
   /** Framework mappings used to lower canonical components. */
   readonly componentRegistry?: ComponentRegistry | undefined;
   readonly compiler?: CompilerConfig | ((catalogItem: CatalogItem<Definition>) => CompilerConfig) | undefined;
@@ -152,18 +149,12 @@ export async function emitCatalog<const Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   options: CatalogEmitOptions<Definition>
 ): Promise<CatalogOutput<Definition>> {
-  assertRegistryCompatibility(catalog, options.output.componentRegistry);
-
   const requestedNames = options.items ?? catalog.items.map((catalogItem) => catalogItem.name);
-  const requested = requestedCatalogItems(catalog, requestedNames);
   const resolved = resolveCatalog(catalog, requestedNames);
 
   const styles = options.styles ? await loadStyles(catalog, resolved.items, options.styles, options) : undefined;
 
-  const emitted =
-    options.output.mode === 'bundle'
-      ? await emitBundles(catalog, requested, options, styles?.manifest)
-      : await emitModules(catalog, resolved.items, options, styles?.manifest);
+  const emitted = await emitModules(catalog, resolved.items, options, styles?.manifest);
 
   const emittedItems = emitted.items as Readonly<Record<string, EmittedCatalogItem | undefined>>;
 
@@ -183,21 +174,6 @@ export async function emitCatalog<const Definition extends CatalogDefinition>(
     },
     references: resolved.references,
   };
-}
-
-function assertRegistryCompatibility(catalog: Catalog, registry: ComponentRegistry | undefined): void {
-  if (!registry || catalog.components.length === 0) return;
-
-  const componentSources = new Set(catalog.components);
-  const undeclared = registry.bindings
-    .map(({ schema }) => schema.source)
-    .filter((source) => !componentSources.has(source));
-
-  if (undeclared.length > 0) {
-    throw new Error(
-      `Component registry sources are not declared by this catalog: ${undeclared.map((source) => JSON.stringify(source)).join(', ')}.`
-    );
-  }
 }
 
 async function emitModules<Definition extends CatalogDefinition>(
@@ -249,75 +225,6 @@ async function emitModules<Definition extends CatalogDefinition>(
         })
       );
     }
-
-    const imports = collectItemImports(files);
-    output[catalogItem.name] = {
-      files,
-      imports,
-      dependencies: collectPackageDependencies(imports),
-    };
-  }
-
-  return {
-    items: output as CatalogOutput<Definition>['items'],
-    styles: uniqueStyleFiles(assets),
-  };
-}
-
-async function emitBundles<Definition extends CatalogDefinition>(
-  catalog: Catalog<Definition>,
-  catalogItems: readonly CatalogItem<Definition>[],
-  options: CatalogEmitOptions<Definition>,
-  styles: StyleManifest | undefined
-): Promise<EmittedCatalogSources<Definition>> {
-  const output: Record<string, EmittedCatalogItem> = {};
-  const assets: CatalogOutputFile[] = [];
-
-  for (const catalogItem of catalogItems) {
-    const outputFile = toPosixPath(options.files.source({ catalogItem, sourceFile: catalogItem.source }));
-    const configDir = compilerConfigDir(options.output.configDir, catalogItem) ?? catalog.rootDir;
-    const config = compilerConfig(options.output, options.styles, catalogItem, styles);
-    const result = await build(
-      {
-        ...config,
-        input: resolve(catalog.rootDir, catalogItem.source),
-        output: {
-          ...config.output,
-          file: resolve(catalog.rootDir, outputFile),
-        },
-      },
-      { configDir }
-    );
-
-    if (result.diagnostics.some((diagnostic) => diagnostic.level === 'error')) {
-      throw new Error(`Catalog item \`${catalogItem.name}\` failed to bundle.`);
-    }
-
-    const chunks = result.files.filter((file) => file.type === 'chunk');
-
-    if (chunks.length !== 1 || !chunks[0]) {
-      throw new Error(
-        `Catalog item \`${catalogItem.name}\` bundle expected one output chunk, but received ${chunks.length}.`
-      );
-    }
-
-    const files = [
-      withModuleImports({
-        path: outputFile,
-        content: chunks[0].source,
-        ...(chunks[0].imports.length ? { imports: chunks[0].imports } : {}),
-      }),
-    ];
-    const outputDir = dirname(resolve(catalog.rootDir, outputFile));
-
-    assets.push(
-      ...result.files
-        .filter((file) => file.type === 'asset')
-        .map((asset) => ({
-          path: styleOutputPath(toPosixPath(relative(outputDir, asset.fileName)), options),
-          content: asset.source,
-        }))
-    );
 
     const imports = collectItemImports(files);
     output[catalogItem.name] = {
@@ -406,15 +313,6 @@ function compilerConfigDir<Definition extends CatalogDefinition>(
   catalogItem: CatalogItem<Definition>
 ): string | undefined {
   return typeof configDir === 'function' ? configDir(catalogItem) : configDir;
-}
-
-function requestedCatalogItems<Definition extends CatalogDefinition>(
-  catalog: Catalog<Definition>,
-  itemNames: readonly CatalogItem<Definition>['name'][]
-): CatalogItem<Definition>[] {
-  const itemsByName = new Map(catalog.items.map((catalogItem) => [catalogItem.name, catalogItem]));
-
-  return [...new Set(itemNames)].sort().map((name) => itemsByName.get(name) ?? missingItem(name));
 }
 
 function createLayouts<Definition extends CatalogDefinition>(
@@ -561,8 +459,4 @@ function packageName(specifier: string): string {
 
 function isPackageSpecifier(specifier: string): boolean {
   return Boolean(specifier) && !specifier.startsWith('.') && !specifier.startsWith('@/') && !specifier.startsWith('~/');
-}
-
-function missingItem(name: string): never {
-  throw new Error(`Catalog output references missing item \`${name}\`.`);
 }

@@ -1,12 +1,4 @@
 export {
-  type BuildOptions,
-  type BuildResult,
-  build,
-  type OutputAssetFile,
-  type OutputChunkFile,
-  type OutputFile,
-} from './build';
-export {
   defineVirtualModule,
   VIRTUAL_MODULE_PREFIX,
   type VirtualModuleDefinition,
@@ -26,13 +18,9 @@ export type {
 export { createSchemaModule } from './components/generate/schema';
 export {
   type CompilerAsset,
-  type CompilerBuildConfig,
   type CompilerConfig,
   type CompilerContext,
   type CompilerDiagnostic,
-  type CompilerExternal,
-  type CompilerInput,
-  type CompilerOutputOptions,
   type CompilerPipelineStep,
   type CompilerPlugin,
   type CompilerPluginEnforce,
@@ -40,7 +28,6 @@ export {
   type CompilerTarget,
   type CompilerTargetOptions,
   type CompilerTransform,
-  defineConfig,
   type HtmlTarget,
   html,
   type JsxTarget,

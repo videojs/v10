@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import type { GeneralHookFilter, Plugin, RolldownLog } from 'rolldown';
+import type { Plugin, RolldownLog } from 'rolldown';
 
 import type { CompilerDiagnostic, CompilerPlugin, CompilerSourceMap, CompilerTarget } from '../config';
 import { type ComponentRegistry, plugin as registryPlugin } from '../registry';
@@ -22,8 +22,8 @@ export interface VjscDeclarationOutput {
 
 export interface VjscPluginOptions {
   /** Source modules transformed by VJSC. Defaults to TSX files. */
-  readonly include?: GeneralHookFilter | undefined;
-  readonly exclude?: GeneralHookFilter | undefined;
+  readonly include?: VjscFilterPattern | undefined;
+  readonly exclude?: VjscFilterPattern | undefined;
   /** Default transformation applied to included source modules without a projection query. */
   readonly transform?: VjscTransformConfig | undefined;
   /** Named transformations selected by the `framework` module query parameter. */
@@ -39,6 +39,8 @@ export interface VjscPluginOptions {
   /** Build-only asset projections activated through their virtual entry modules. */
   readonly outputs?: readonly VjscOutputAdapter[] | undefined;
 }
+
+export type VjscFilterPattern = string | RegExp | Array<string | RegExp>;
 
 export interface VjscTransformConfig {
   readonly target?: CompilerTarget | undefined;

@@ -44,7 +44,6 @@ const skinCatalog = defineDiscoveredCatalog<SkinCatalogMeta>()({
     rootDir: dirname(fileURLToPath(import.meta.url)),
     files: ['./components/**/*.tsx', './skins/*/skin.tsx'],
   },
-  components: ['@videojs/core/vjsc', '@videojs/icons/vjsc'],
   resources,
   allowedImports: [
     '@videojs/core',

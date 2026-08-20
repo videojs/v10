@@ -90,29 +90,9 @@ export interface HtmlTarget {
 
 export type CompilerTarget = JsxTarget | HtmlTarget;
 
-export type CompilerExternal = readonly string[] | ((source: string, importer: string | undefined) => boolean);
-
 export interface CompilerConfig {
-  input?: CompilerInput | undefined;
-  external?: CompilerExternal | undefined;
-  output?: CompilerOutputOptions | undefined;
   plugins?: readonly CompilerPlugin[] | undefined;
   target?: CompilerTarget | undefined;
-}
-
-export type CompilerBuildConfig = CompilerConfig | readonly CompilerConfig[];
-
-export type CompilerInput = string | readonly string[] | Record<string, string>;
-
-export interface CompilerOutputOptions {
-  dir?: string | undefined;
-  file?: string | undefined;
-  entryFileNames?: string | undefined;
-  banner?: string | undefined;
-}
-
-export function defineConfig<const Config extends CompilerBuildConfig>(config: Config): Config {
-  return config;
 }
 
 export function jsx(options: JsxTargetOptions = {}): JsxTarget {
@@ -124,7 +104,7 @@ export function jsx(options: JsxTargetOptions = {}): JsxTarget {
   };
 }
 
-/** Emit a statically rendered HTML entry when used with `build()`. */
+/** Transform canonical JSX into the static HTML runtime representation. */
 export function html(options: CompilerTargetOptions = {}): HtmlTarget {
   return {
     name: 'html',

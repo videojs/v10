@@ -39,15 +39,15 @@ VJSC's compiled result is transformed module source plus any imported semantic C
 
 Normal React and HTML projection no longer needs catalog traversal: the host graph supplies dependency closure, ordering, and invalidation. Colocated item metadata can still support stable virtual item names and Shadcn descriptions, but it should be discovered only when those features are used.
 
-The remaining catalog responsibilities are source-distribution concerns: item metadata, editable file ownership, publication policy, shared resources, install paths, and Shadcn dependency metadata. These may collapse into a smaller item inventory plus Shadcn configuration. The existing catalog API should not survive merely to preserve its name; it remains only until the Shadcn transform proves which information cannot be obtained from the host module graph.
+The remaining catalog responsibilities are source-distribution concerns: item metadata, editable file ownership, dependency analysis, allowed package imports, shared resources, and component-reference collection. Shadcn publication names, descriptions, install paths, shared items, and package dependencies live in its registry definition. The preview uses only the discovered item inventory to create thin source facades; it does not load the catalog graph.
 
 ## Consequences
 
-- Remove VJSC's generic `build()` and nested Rolldown path after HTML and Shadcn use host-backed transforms.
+- VJSC has no generic `build()` or nested Rolldown path. HTML preview modules render through the virtual HTML runtime in the outer Vite graph, while Shadcn projects editable modules with VJSC transforms and lets Vite emit the final JSON assets.
 - Remove VJSC module-result caching, reverse dependency maps, and custom Vite HMR together; every non-imported schema, registry, style, or Icon input read by a transform must still be registered with `addWatchFile`.
 - Replace precompiled virtual Skin modules with thin virtual item facades or direct included source entries.
 - Move retained compiler terminology toward transforms: transform configuration, transform plugins, and transform diagnostics.
-- Keep static HTML rendering and editable Shadcn projection as semantic transforms until host-backed replacements preserve their current contracts.
+- Keep HTML runtime rendering and editable Shadcn projection as semantic transforms; neither is ordinary bundling policy.
 - Keep Core's generated declaration as a real package artifact even when its schema module is virtual.
 
 ## Implementation sequence
@@ -55,8 +55,8 @@ The remaining catalog responsibilities are source-distribution concerns: item me
 1. Consolidate the Vite and Rolldown adapters into `vjscPlugin` under `packages/vjsc/src/bundle`, without changing output.
 2. Move framework defaults and import references into registries; replace normal `resolveImport` callbacks with host aliases.
 3. Add projection-aware source transforms and thin virtual item entries, then let Vite own their imported graph and HMR.
-4. Remove the cached VJSC graph, nested React build, virtual compiled Skin modules, and obsolete Skins build wiring.
-5. Reduce catalog code to the metadata and source-distribution facts Shadcn demonstrably needs; delete it if no independent catalog contract remains.
+4. Remove the cached VJSC graph, nested builds, virtual compiled Skin modules, and obsolete Skins build wiring.
+5. Reduce catalog code to the metadata and source-distribution facts Shadcn demonstrably needs.
 6. Run a dependency and dead-code audit in every touched package after each removal.
 
 Current source and configuration entry points are

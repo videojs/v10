@@ -9,7 +9,7 @@ import { vjscPlugin } from '../../bundle/plugin';
 import { defineCatalog } from '../../catalog/define';
 import { defineCatalogOutput } from '../../catalog/emit';
 import { loadCatalog } from '../../catalog/resolve';
-import { defineConfig, jsx } from '../../config';
+import { jsx } from '../../config';
 import { createShadcnRegistryFiles, defineShadcnRegistry, emitShadcnRegistry, shadcnOutput } from '../index';
 
 const roots: string[] = [];
@@ -105,7 +105,7 @@ describe('emitShadcnRegistry', () => {
       },
     });
     const output = await emitShadcnRegistry(loaded, registry, {
-      output: defineCatalogOutput({ compiler: defineConfig({ external: ['private-package'], target: jsx() }) }),
+      output: defineCatalogOutput({ compiler: { target: jsx() } }),
     });
 
     expect(output.files.map((file) => file.path)).toEqual([
@@ -171,7 +171,7 @@ describe('emitShadcnRegistry', () => {
       catalog: definition,
       rootDir: root,
       registry,
-      output: defineCatalogOutput({ compiler: defineConfig({ external: [], target: jsx() }) }),
+      output: defineCatalogOutput({ compiler: { target: jsx() } }),
     });
 
     const bundle = await rolldown({

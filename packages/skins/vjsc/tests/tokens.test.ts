@@ -3,11 +3,11 @@ import { resolve } from 'node:path';
 
 import { describe, expect, test } from 'vitest';
 
-import { tokens } from '../../vjsc/styles/tokens';
+import { tokens } from '../styles/tokens';
 
 describe('tokens', () => {
   test('classifies every canonical --media-* custom property', async () => {
-    const root = resolve(import.meta.dirname, '../../vjsc');
+    const root = resolve(import.meta.dirname, '..');
     const entries = await readdir(root, { recursive: true, withFileTypes: true });
     const files = entries
       .filter(
@@ -15,7 +15,8 @@ describe('tokens', () => {
           entry.isFile() &&
           /\.(?:css|ts|tsx)$/.test(entry.name) &&
           entry.name !== 'tokens.ts' &&
-          !entry.parentPath.includes('/vjsc/registry')
+          !entry.parentPath.includes('/vjsc/registry') &&
+          !entry.parentPath.includes('/vjsc/tests')
       )
       .map((entry) => resolve(entry.parentPath, entry.name));
     const referenced = new Set<string>();
@@ -30,7 +31,7 @@ describe('tokens', () => {
   });
 
   test('prefixes skin-local custom properties', async () => {
-    const stylesRoot = resolve(import.meta.dirname, '../../vjsc/styles');
+    const stylesRoot = resolve(import.meta.dirname, '../styles');
     const entries = await readdir(stylesRoot, { recursive: true, withFileTypes: true });
     const files = entries
       .filter((entry) => entry.isFile() && /\.(?:css|ts)$/.test(entry.name) && entry.name !== 'tokens.ts')
