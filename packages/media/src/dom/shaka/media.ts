@@ -337,6 +337,10 @@ class ShakaMediaBase
     this.#error = null;
     this.#disarmPlayIntent();
     this.#isLoadDeferred = false;
+    // Each load decides its own clamping. Lifting the previous load's clamp
+    // first keeps a fresh clamp from capturing the clamped goals as the ones
+    // to restore, and lets a load with play intent run at full goals.
+    this.#restoreBuffering(engine);
 
     const { src } = this;
     if (!src) {

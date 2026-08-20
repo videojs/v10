@@ -434,6 +434,32 @@ describe('ShakaMedia', () => {
       expect(engine.config.streaming).toEqual({ bufferingGoal: 1, rebufferingGoal: 1 });
     });
 
+    it('restores the real goals when a source replaces a clamped one', async () => {
+      const { video, media, engine } = setup({ preload: 'metadata' });
+
+      media.source = { src: MANIFEST };
+      await flush();
+      media.source = { src: OTHER_MANIFEST };
+      await flush();
+
+      video.dispatchEvent(new Event('play'));
+
+      expect(engine.config.streaming).toEqual({ bufferingGoal: 10, rebufferingGoal: 2 });
+    });
+
+    it('lifts the clamp when a replacing load starts with play intent', async () => {
+      const { video, media, engine } = setup({ preload: 'metadata' });
+
+      media.source = { src: MANIFEST };
+      await flush();
+
+      video.autoplay = true;
+      media.source = { src: OTHER_MANIFEST };
+      await flush();
+
+      expect(engine.config.streaming).toEqual({ bufferingGoal: 10, rebufferingGoal: 2 });
+    });
+
     it('holds the load for none until the first play', async () => {
       const { video, media, engine } = setup({ preload: 'none' });
 
