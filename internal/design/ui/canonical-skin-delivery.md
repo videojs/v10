@@ -9,19 +9,19 @@ This record separates the canonical Skin authoring model from the tools that pre
 
 ## One source, several projections
 
-`packages/skins/canonical` is the source of truth for Skin composition and styling. Core owns the framework-neutral component schema. React, HTML, and Icons own the registries that lower that schema to their public components. Skins owns the catalog, Skin-specific transforms, style/theme policy, and delivery adapters.
+`packages/skins/canonical` is the source of truth for Skin composition and styling. Core owns the framework-neutral component schema. React, HTML, and Icons own the registries that lower that schema to their public components. Skins owns catalog discovery and policy, Skin-specific transforms, style/theme policy, and delivery adapters.
 
-The catalog describes named items and their dependency closure. A compiler projection selects a framework and a style representation. A delivery adapter then decides whether that projection is served live, emitted as package source, or published as an editable registry.
+Each canonical item describes itself through a colocated `meta` export. VJSC discovers those entries and generates the catalog index, including their source ownership and dependency closure. A compiler projection selects a framework and a style representation. A delivery adapter then decides whether that projection is served live, emitted as package source, or published as an editable registry.
 
 ```text
 Core schema + React/HTML/Icon registries
-                    │
-Canonical catalog ──┼── compiler projection ── React or HTML
-Canonical TSX/styles│                         └─ Tailwind classes or vanilla CSS
-                    │
-                    ├── Vite preview: live modules and CSS for every matrix cell
-                    ├── package output: public modules, declarations, and CSS
-                    └── Shadcn output: editable React/Tailwind files and registry metadata
+                         │
+Canonical item modules ──┼── generated catalog ── compiler projection ── React or HTML
+TSX/styles + `meta`      │                                      └─ Tailwind or vanilla CSS
+                         │
+                         ├── Vite preview: live modules and CSS for every matrix cell
+                         ├── package output: public modules, declarations, and CSS
+                         └── Shadcn output: editable React/Tailwind files and registry metadata
 ```
 
 The full React/HTML × Tailwind/vanilla matrix is a validation surface. Publication policy may select only some cells. In particular, the Shadcn registry is a React/Tailwind source distribution; it is not another framework package build.
@@ -31,7 +31,7 @@ The full React/HTML × Tailwind/vanilla matrix is a validation surface. Publicat
 | Owner | Responsibility |
 | --- | --- |
 | VJSC transforms | Schema-aware component lowering, Skin-specific AST transforms, style-token projection, scoped vanilla CSS, diagnostics, and source maps. |
-| VJSC catalog | Item identity, source ownership, dependency closure, allowed imports, and reference collection needed by source-preserving outputs. |
+| VJSC catalog | Item discovery, static `meta` extraction, source ownership, dependency closure, allowed imports, and reference collection needed by source-preserving outputs. |
 | Vite | Development module graph, source transforms, virtual CSS delivery, dependency invalidation, HMR, React Fast Refresh, and the production preview build. |
 | Package build | Stable public entry layout, development/default builds, declarations, side effects, and copied CSS for `@videojs/react` and `@videojs/html`. |
 | Shadcn adapter | Editable file layout, import rewriting, package and registry dependencies, shared files, metadata, and the final registry manifest. |
@@ -85,6 +85,7 @@ virtual:vjsc/core-schema               .vjsc/types/core-schema.d.ts
 virtual:vjsc/icons-schema              .vjsc/types/icons-schema.d.ts
 virtual:vjsc/registry/react            .vjsc/types/registry-react.d.ts
 virtual:vjsc/registry/html             .vjsc/types/registry-html.d.ts
+virtual:vjsc/catalog                   .vjsc/types/catalog.d.ts
 virtual:vjsc/skin/<target>/<skin>      declarations for public build entries
 ```
 
@@ -99,15 +100,34 @@ component or icon definition
   -> virtual schema and synchronized declaration
     -> framework registry
       -> affected virtual Skin entries and CSS
+
+canonical item `meta` or module graph
+  -> virtual catalog and synchronized declaration
+    -> affected virtual Skin entries and catalog consumers
 ```
 
 Implementation-only changes may preserve React state through Fast Refresh. Registry mappings, exported schema shape, and HTML templates may remount or trigger a full browser reload, but they must update automatically without a manual generation step or server restart.
 
 ## Catalog boundary
 
-The authored catalog remains the initial source of item identity, resources, publication metadata, and policy. Its resolved dependency graph may be exposed as a virtual module, but generating the catalog itself is not required for the Vite workflow.
+The catalog item inventory is generated from canonical modules rather than maintained as a second authored list. Every catalog entry exports a statically analyzable `meta` object containing its `name`, `type`, title, description, and type-specific properties such as Skin style configuration. Its source path comes from the owning module; dependencies, files, and component or icon references come from the analyzed module graph.
 
-A future file-based catalog is possible if each canonical entry owns a colocated `defineCatalogItem` declaration and VJSC aggregates those declarations into a virtual catalog plus an item-name declaration. This follows the same pattern as generated content collections, but should be evaluated only after virtual schemas and registries prove the module and type lifecycle. Moving authored policy out of the current catalog merely to make the aggregate generated would add indirection without removing responsibility.
+```tsx
+import type { CatalogItemMeta } from 'vjsc/catalog';
+
+export const meta = {
+  name: 'play-button',
+  type: 'component',
+  title: 'Play Button',
+  description: 'A state-aware play, pause, and restart control.',
+} as const satisfies CatalogItemMeta;
+```
+
+VJSC aggregates entry modules found under configured discovery roots into `virtual:vjsc/catalog` and synchronizes its item-name and metadata types under `.vjsc/types`. Modules without `meta` remain ordinary implementation dependencies rather than independently addressable catalog items. Duplicate names, invalid metadata, and import cycles are catalog diagnostics. Adding, removing, or changing an item invalidates the virtual catalog and its affected consumers without requiring a generation command.
+
+The `meta` object is authoring-time information, not part of a delivered component. VJSC statically extracts it without executing the canonical module and removes the export from framework and editable Shadcn output. A type-only contract keeps canonical source type-safe without adding a runtime compiler dependency to published files.
+
+Catalog-wide concerns remain explicit authored configuration: discovery roots, shared resources and themes, allowed imports, schema sources, and reference groups. Delivery policy also remains outside item metadata. In particular, the Shadcn adapter owns which items are published, registry paths, shared registry entries, and output-wide metadata. This keeps each item self-describing without coupling canonical components to one publication target.
 
 ## Current state and validation sequence
 
@@ -117,12 +137,13 @@ The current Vite preview proves only React with compiler-emitted vanilla CSS and
 
 1. Extract a Rolldown-compatible VJSC module-graph plugin shared by Vite, package builds, tests, and source emitters.
 2. Generate the Core and Icon schemas as virtual modules and synchronize their declarations under `.vjsc`; stop importing their disk artifacts from compiler configuration.
-3. Load React and HTML registries through that graph and replace generated entry modules with resolver-backed virtual data.
-4. Expose stable virtual entries for Default/Minimal × React/HTML × Tailwind/vanilla without materializing framework Skin trees.
-5. Implement dependency-to-owner invalidation for canonical source, styles, themes, schemas, registries, and compiler configuration, then verify React refresh and HTML remount behavior through a real Vite server.
-6. Run the same matrix through `vite build`, and make React and HTML package builds consume the shared virtual entries while materializing only public `dist` output and declarations.
-7. Keep explicit catalog/Shadcn emission tests, then use [#2183](https://github.com/videojs/v10/issues/2183) for visual, style, interaction, and accessibility parity before the source-of-truth cutover.
-8. Remove each source-tree artifact, generation script, and temporary Turbo dependency after its preview, package, test, typecheck, and Shadcn consumers use the new graph.
+3. Move item identity and descriptive fields into canonical `meta` exports; generate the virtual catalog, its synchronized declarations, and dependency graph from discovered modules.
+4. Load React and HTML registries through that graph and replace generated entry modules with resolver-backed virtual data.
+5. Expose stable virtual entries for Default/Minimal × React/HTML × Tailwind/vanilla without materializing framework Skin trees.
+6. Implement dependency-to-owner invalidation for canonical source, item metadata, styles, themes, schemas, registries, and compiler configuration, then verify React refresh and HTML remount behavior through a real Vite server.
+7. Run the same matrix through `vite build`, and make React and HTML package builds consume the shared virtual entries while materializing only public `dist` output and declarations.
+8. Keep explicit catalog/Shadcn emission tests, then use [#2183](https://github.com/videojs/v10/issues/2183) for visual, style, interaction, and accessibility parity before the source-of-truth cutover.
+9. Remove each source-tree artifact, generation script, and temporary Turbo dependency after its preview, package, test, typecheck, and Shadcn consumers use the new graph.
 
 ## Current sources of truth
 
