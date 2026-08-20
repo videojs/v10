@@ -1,5 +1,5 @@
 ---
-status: draft
+status: partial
 date: 2026-08-19
 ---
 
@@ -16,7 +16,7 @@ Each canonical item describes itself through a colocated `meta` export. VJSC dis
 ```text
 Core schema + React/HTML/Icon registries
                          │
-Canonical item modules ──┼── generated catalog ── compiler projection ── React or HTML
+Canonical item modules ──┼── virtual catalog ── compiler projection ── React or HTML
 TSX/styles + `meta`      │                                      └─ Tailwind or vanilla CSS
                          │
                          ├── Vite preview: live modules and CSS for every matrix cell
@@ -61,42 +61,32 @@ The preview should expose one stable module identity per selected Skin, framewor
 
 `addWatchFile` makes Vite observe compiler-discovered dependencies, but observation alone is not the contract. The Vite adapter must retain dependency-to-owner relationships and explicitly invalidate affected owner and virtual CSS modules when a dependency changes. Its integration tests must exercise a real Vite dev server, not only repeated calls to the transform hook.
 
-## Generated metadata is a separate problem
+## Compiler metadata and declarations
 
-The Core schema and React, HTML, and Icon registry-entry modules are compiler metadata, not Skin delivery outputs. Vite constructs them from source descriptors before registering virtual modules, so loading `vite.config.ts` no longer imports generated files. Invalidating a schema or registry input reconstructs that metadata before the affected Skin projection is compiled again.
+Core and Icon schemas, catalog discovery, and projected Skin entries are virtual modules shared by the Vite and Rolldown adapters. React and HTML registries resolve those schemas directly from framework-owned configuration and are checked against Core's exact emitted schema type; generated registry entry tables are unnecessary. Loading the Skins Vite configuration performs no source or declaration generation.
 
-Vite-only modules cannot satisfy a separate TypeScript declaration process. The Core package build therefore creates its schema entry automatically under `.vjsc/virtual` before tsdown runs; tsdown emits the public JavaScript and declarations from that disposable workspace. This is package-build plumbing, not an authored or published intermediate. React and HTML registry entries remain entirely in memory because their package builds do not expose compiler metadata.
+The Core package is the one place a virtual compiler module needs public declarations. Its tsdown build resolves the schema to a filesystem-shaped identity for relative imports, loads the implementation from VJSC, and asks the same Rolldown plugin to emit the final `dist/dev/vjsc.d.ts` asset from memory. It does not materialize a TypeScript staging entry. Icon schema types already belong to the published Icons package and need no Vite-local declaration copy.
 
-Shadcn remains deliberately different: editable files and its manifest are the delivery product. The explicit registry build materializes those files under its ignored staging directory and then builds `dist/registry`. No generic `generate` task or Turbo dependency is required by dev, test, or build.
+Shadcn remains a distinct source-distribution product, but it also needs no staging tree. The adapter holds editable files and registry metadata in memory and writes the final `dist/registry/*.json` assets with embedded source content. Turbo orders and caches package tasks; it does not order compiler generation.
 
-## Virtual modules and synchronized types
+Any VJSC virtual import must be evaluated through the shared Vite/Rolldown module graph. Source descriptors are safe to load from plain configuration, while generated implementations remain behind stable virtual IDs. Compiler-discovered watch files invalidate the owning schema, registry, catalog, and Skin projections.
 
-VJSC should follow the framework pattern of separating runtime modules from editor types. Vite resolves generated runtime code through virtual modules, while VJSC writes only a hidden, gitignored type workspace such as `.vjsc/types`. [Astro sync](https://docs.astro.build/en/reference/cli-reference/#astro-sync) generates `.astro/types.d.ts` automatically before dev, build, and check; [SvelteKit sync](https://svelte.dev/docs/kit/cli#svelte-kit-sync) generates `.svelte-kit` types and a TypeScript configuration that exposes them through `rootDirs`. VJSC should provide the equivalent lifecycle rather than generating implementation modules inside package source directories.
+## Authoring flow
 
-```text
-Runtime module                         Type declaration
-virtual:vjsc/core-schema               .vjsc/types/core-schema.d.ts
-virtual:vjsc/icons-schema              .vjsc/types/icons-schema.d.ts
-virtual:vjsc/registry/react            .vjsc/types/registry-react.d.ts
-virtual:vjsc/registry/html             .vjsc/types/registry-html.d.ts
-virtual:vjsc/catalog                   .vjsc/types/catalog.d.ts
-virtual:vjsc/skin/<target>/<skin>      declarations for public build entries
-```
+An author adds or edits a canonical TSX module, its colocated `meta`, or a canonical style. The Skins Vite server discovers catalog items, projects the selected React/HTML and Tailwind/vanilla cell, and serves it from a stable virtual module. Normal Vite transforms, React Fast Refresh, CSS replacement, diagnostics, and production bundling then apply. Core schema, framework registry, and Icon asset edits invalidate the projections that consume them without a generation command or server restart.
 
-Vite's [`resolveId` and `load` hooks](https://vite.dev/guide/api-plugin.html#importing-a-virtual-file) supply runtime modules. VJSC synchronizes declarations when the Vite configuration starts, while the Core package build creates the hidden source needed by tsdown's independent declaration process. The result is zero generated intermediates in `src`; transient declarations, build inputs, and caches may exist under `.vjsc`.
-
-Any module that imports a VJSC virtual module must be evaluated through the VJSC module graph. Vite and Vitest receive the Vite adapter, and other Rolldown consumers can use the bundler-neutral virtual-module adapter. Plain Node configuration passes source descriptors to VJSC instead of eagerly importing generated registries. Direct emitters such as Shadcn use the same in-memory schema, registry, catalog, and projection factories without routing through Vite.
+`pnpm -F @videojs/skins dev` is the end-to-end authoring surface today. The established React and HTML package Skin exports still have richer public APIs and additional audio/live variants, so replacing those entries is a separate compatibility cutover. The package builders should consume the same projection graph only after each public export has an explicit canonical mapping and API-parity decision.
 
 Schema, registry, and virtual entry changes participate in one invalidation graph:
 
 ```text
 component or icon definition
-  -> virtual schema and synchronized declaration
+  -> virtual schema
     -> framework registry
       -> affected virtual Skin entries and CSS
 
 canonical item `meta` or module graph
-  -> virtual catalog and synchronized declaration
+  -> virtual catalog
     -> affected virtual Skin entries and catalog consumers
 ```
 
@@ -117,7 +107,7 @@ export const meta = {
 } as const satisfies CatalogItemMeta;
 ```
 
-VJSC aggregates entry modules found under configured discovery roots into `virtual:vjsc/catalog` and synchronizes its item-name and metadata types under `.vjsc/types`. Modules without `meta` remain ordinary implementation dependencies rather than independently addressable catalog items. Duplicate names, invalid metadata, and import cycles are catalog diagnostics. Adding, removing, or changing an item invalidates the virtual catalog and its affected consumers without requiring a generation command.
+VJSC aggregates entry modules found under configured discovery roots into `virtual:vjsc/catalog`. Modules without `meta` remain ordinary implementation dependencies rather than independently addressable catalog items. Duplicate names, invalid metadata, and import cycles are catalog diagnostics. Adding, removing, or changing an item invalidates the virtual catalog and its affected consumers without requiring a generation command.
 
 The `meta` object is authoring-time information, not part of a delivered component. VJSC statically extracts it without executing the canonical module and removes the export from framework and editable Shadcn output. A type-only contract keeps canonical source type-safe without adding a runtime compiler dependency to published files.
 
@@ -129,9 +119,9 @@ The development architecture is now in place:
 
 - Default and Minimal Skins are available as stable virtual entries for React and HTML in Tailwind and vanilla modes.
 - Vite development starts from a clean generated-artifact state, serves all eight matrix cells, applies React Fast Refresh where possible, and invalidates projections for canonical styles, schema inputs, and registry inputs.
-- `vite build` compiles the same matrix. The Core package build creates its compiler schema automatically in `.vjsc`; React, HTML, and Icons build without VJSC source generation.
-- Catalog inventory comes from static colocated `meta` exports and is also available as `virtual:vjsc/catalog` with synchronized hidden declarations.
-- Shadcn output remains an explicit, tested React/Tailwind delivery adapter.
+- `vite build` compiles the same matrix. Core emits its virtual schema and exact declaration directly through tsdown/Rolldown; Vite startup and framework registries create no generated files.
+- Catalog inventory comes from static colocated `meta` exports and is available as `virtual:vjsc/catalog`.
+- Shadcn output is an explicit, tested React/Tailwind delivery adapter that writes final registry JSON without source staging or a Shadcn CLI build pass.
 - The old schema, registry-entry, and framework Skin source trees, their snapshot, generation scripts, and temporary Turbo `generate` tasks have been removed.
 
 The remaining cutover belongs to [#2183](https://github.com/videojs/v10/issues/2183): the existing public React and HTML Skin modules still come from their established package sources while canonical output reaches visual, interaction, accessibility, and API parity. Replacing those public entries requires an explicit publication mapping—for example, how `DefaultVideoSkin` maps to the existing `VideoSkin` API—and should not be inferred by the build. Once that mapping is approved, the package configs can consume the same projection factories and materialize only their public `dist` modules, declarations, and CSS.
@@ -144,6 +134,6 @@ The remaining cutover belongs to [#2183](https://github.com/videojs/v10/issues/2
 - Vite and Rolldown adapters: `packages/compiler/src/bundlers/`
 - Catalog resolution and emission: `packages/compiler/src/catalog/`
 - Vite preview configuration: `packages/skins/vite.config.ts`
-- Core schema source descriptor: `packages/core/src/vjsc.ts`
+- Core schema source descriptor: `packages/core/src/vjsc.config.ts`
 - React, HTML, and Icon registry metadata: `packages/skins/build/metadata.ts` and package-local `vjsc/` factories
 - Shadcn materialization: `packages/skins/scripts/build-registry.ts`
