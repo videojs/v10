@@ -6,7 +6,7 @@ import { defineComponent, defineSchema } from '../../components';
 import { jsx } from '../../config';
 import { defineRegistry } from '../../registry';
 import { defineCatalog } from '../define';
-import { emitCatalog } from '../emit';
+import { projectCatalog } from '../project';
 import { loadCatalog } from '../resolve';
 
 const roots: string[] = [];
@@ -15,8 +15,8 @@ afterEach(() => {
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 
-describe('emitCatalog', () => {
-  it('uses a component registry without exposing compiler configuration', async () => {
+describe('projectCatalog', () => {
+  it('uses a component registry without exposing transform configuration', async () => {
     const root = setup({
       'entry.tsx': `import { PlayButton } from '@fixture/components'; export const entry = <PlayButton disabled />;`,
     });
@@ -37,8 +37,8 @@ describe('emitCatalog', () => {
       { rootDir: root }
     );
 
-    const output = await emitCatalog(loaded, {
-      output: { componentRegistry: registry },
+    const output = await projectCatalog(loaded, {
+      projection: { componentRegistry: registry },
       files: { source: ({ sourceFile }) => sourceFile },
     });
 
@@ -62,10 +62,10 @@ describe('emitCatalog', () => {
     });
     const loaded = await loadCatalog(definition, { rootDir: root });
 
-    const output = await emitCatalog(loaded, {
+    const output = await projectCatalog(loaded, {
       items: ['entry'],
-      output: {
-        compiler: { target: jsx() },
+      projection: {
+        transform: { target: jsx() },
       },
       files: {
         source({ catalogItem, sourceFile }) {
@@ -128,10 +128,10 @@ describe('emitCatalog', () => {
       { rootDir: root }
     );
 
-    const output = await emitCatalog(loaded, {
+    const output = await projectCatalog(loaded, {
       items: ['entry'],
-      output: {
-        compiler: { target: jsx() },
+      projection: {
+        transform: { target: jsx() },
       },
       styles: {
         mode: 'css',
@@ -155,7 +155,7 @@ describe('emitCatalog', () => {
 });
 
 function setup(files: Readonly<Record<string, string>>): string {
-  const root = mkdtempSync(join(tmpdir(), 'videojs-compiler-catalog-output-'));
+  const root = mkdtempSync(join(tmpdir(), 'vjsc-catalog-projection-'));
   roots.push(root);
   for (const [file, source] of Object.entries(files)) {
     const path = join(root, file);

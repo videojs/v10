@@ -2,7 +2,7 @@ import { format } from 'oxfmt';
 import ts from 'typescript';
 import type { VjscOutputFile } from 'vjsc/bundle';
 
-export async function formatGeneratedFile({ path, content }: VjscOutputFile): Promise<string> {
+export async function formatOutputFile({ path, content }: VjscOutputFile): Promise<string> {
   const result = await format(path, content, {
     printWidth: 120,
     singleQuote: true,

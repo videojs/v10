@@ -10,24 +10,24 @@ export {
   defineDiscoveredCatalog,
 } from './define';
 export {
-  type CatalogEmitOptions,
-  type CatalogImportContext,
-  type CatalogOutput,
-  type CatalogOutputAdapter,
-  type CatalogOutputFile,
-  type CatalogOutputFiles,
-  type CatalogSourceContext,
-  type CatalogStyleContext,
-  type CatalogStyleTransform,
-  defineCatalogOutput,
-  type EmittedCatalogItem,
-  emitCatalog,
-  resolveCatalogCompilerConfig,
-} from './emit';
-export {
   type CatalogItemMeta,
   catalogMetaPlugin,
 } from './meta';
+export {
+  type CatalogImportContext,
+  type CatalogOutputFile,
+  type CatalogOutputFiles,
+  type CatalogProjection,
+  type CatalogProjectionOptions,
+  type CatalogProjectionResult,
+  type CatalogSourceContext,
+  type CatalogStyleContext,
+  type CatalogStyleTransform,
+  defineCatalogProjection,
+  type ProjectedCatalogItem,
+  projectCatalog,
+  resolveCatalogTransformConfig,
+} from './project';
 export {
   type Catalog,
   type CatalogFiles,

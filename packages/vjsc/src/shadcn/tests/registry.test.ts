@@ -7,10 +7,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { vjscPlugin } from '../../bundle/plugin';
 import { defineCatalog } from '../../catalog/define';
-import { defineCatalogOutput } from '../../catalog/emit';
+import { defineCatalogProjection } from '../../catalog/project';
 import { loadCatalog } from '../../catalog/resolve';
 import { jsx } from '../../config';
-import { createShadcnRegistryFiles, defineShadcnRegistry, emitShadcnRegistry, shadcnOutput } from '../index';
+import { createShadcnRegistryFiles, defineShadcnRegistry, projectShadcnRegistry, shadcnOutput } from '../index';
 
 const roots: string[] = [];
 
@@ -48,7 +48,7 @@ describe('defineShadcnRegistry', () => {
   });
 });
 
-describe('emitShadcnRegistry', () => {
+describe('projectShadcnRegistry', () => {
   it('emits a catalog and partitions published, private, and shared dependencies', async () => {
     const root = setup({
       'root.ts': `import { Public } from './public'; import { Private } from './private'; import { cn } from '@/example/utils'; export const Root = [Public, Private, cn];`,
@@ -104,8 +104,8 @@ describe('emitShadcnRegistry', () => {
         ],
       },
     });
-    const output = await emitShadcnRegistry(loaded, registry, {
-      output: defineCatalogOutput({ compiler: { target: jsx() } }),
+    const output = await projectShadcnRegistry(loaded, registry, {
+      projection: defineCatalogProjection({ transform: { target: jsx() } }),
     });
 
     expect(output.files.map((file) => file.path)).toEqual([
@@ -171,7 +171,7 @@ describe('emitShadcnRegistry', () => {
       catalog: definition,
       rootDir: root,
       registry,
-      output: defineCatalogOutput({ compiler: { target: jsx() } }),
+      projection: defineCatalogProjection({ transform: { target: jsx() } }),
     });
 
     const bundle = await rolldown({
@@ -186,7 +186,7 @@ describe('emitShadcnRegistry', () => {
 });
 
 function setup(files: Readonly<Record<string, string>>): string {
-  const root = mkdtempSync(join(tmpdir(), 'videojs-compiler-shadcn-'));
+  const root = mkdtempSync(join(tmpdir(), 'vjsc-shadcn-'));
   roots.push(root);
 
   for (const [file, source] of Object.entries(files)) {

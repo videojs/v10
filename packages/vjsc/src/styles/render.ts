@@ -20,13 +20,13 @@ const encoder = new TextEncoder();
 
 const decoder = new TextDecoder();
 
-interface EmitStylesheetsOptions {
+interface RenderStylesheetsOptions {
   design: DesignSystem;
   scope?: string | undefined;
   files: readonly StyleOutputFile[];
 }
 
-export async function emitStylesheets(options: EmitStylesheetsOptions): Promise<Map<string, string>> {
+export async function renderStylesheets(options: RenderStylesheetsOptions): Promise<Map<string, string>> {
   const analyzedFiles = new Map<StyleOutputFile, AnalyzedFile>();
 
   for (const file of options.files) {
@@ -44,7 +44,7 @@ export async function emitStylesheets(options: EmitStylesheetsOptions): Promise<
 
     if (!analyzed) throw new Error(`Style output '${file.name}' was not compiled.`);
 
-    files.set(file.name, wrapFileCss(emitFile(analyzed, file), options.scope, file));
+    files.set(file.name, wrapFileCss(renderFile(analyzed, file), options.scope, file));
   }
 
   return files;
@@ -152,7 +152,7 @@ interface AnalyzedFile {
   tailwindDefaults: ReadonlyMap<string, readonly TokenOrValue[]>;
 }
 
-function emitFile(analyzed: AnalyzedFile, file: StyleOutputFile): string {
+function renderFile(analyzed: AnalyzedFile, file: StyleOutputFile): string {
   const relationshipOwners = new Map([...file.groupOwners, ...file.peerOwners]);
   const rules = [...file.rules]
     .sort((a, b) => a.className.localeCompare(b.className))
@@ -161,14 +161,14 @@ function emitFile(analyzed: AnalyzedFile, file: StyleOutputFile): string {
 
       if (!source) throw new Error(`Tailwind did not emit the semantic style '.${rule.className}'.`);
 
-      const emittedRule = replaceRuleClasses(source, relationshipOwners);
+      const renderedRule = replaceRuleClasses(source, relationshipOwners);
 
-      assertNoRelationshipMarkers(emittedRule, relationshipOwners);
+      assertNoRelationshipMarkers(renderedRule, relationshipOwners);
 
-      return emittedRule;
+      return renderedRule;
     });
 
-  return inlinePrivateTailwindVariables(emitRuleSet(analyzed.template, rules), analyzed.tailwindDefaults);
+  return inlinePrivateTailwindVariables(renderRuleSet(analyzed.template, rules), analyzed.tailwindDefaults);
 }
 
 function analyzeCompiledFile(css: string, file: StyleOutputFile): AnalyzedFile {
@@ -218,9 +218,9 @@ function semanticRootClass(rule: Rule, semanticClassNames: ReadonlySet<string>):
   return semanticClassNames.has(selector[0].name) ? selector[0].name : undefined;
 }
 
-function emitRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
+function renderRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
   const result = transform({
-    filename: 'emitted.css',
+    filename: 'rendered.css',
     code: encoder.encode(''),
     include: Features.Nesting,
     visitor: {

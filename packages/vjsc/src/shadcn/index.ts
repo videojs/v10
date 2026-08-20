@@ -16,12 +16,12 @@ import {
 } from '../bundle/source';
 import type { CatalogDefinition } from '../catalog/define';
 import {
-  type CatalogOutputAdapter,
   type CatalogOutputFile,
+  type CatalogProjection,
   type CatalogStyleTransform,
-  type EmittedCatalogItem,
-  emitCatalog,
-} from '../catalog/emit';
+  type ProjectedCatalogItem,
+  projectCatalog,
+} from '../catalog/project';
 import { type Catalog, type CatalogItem, loadCatalog, resolveCatalog } from '../catalog/resolve';
 
 type RegistryItemType = RegistryItem['type'];
@@ -93,8 +93,8 @@ export function defineShadcnRegistry<
   return config;
 }
 
-export interface EmitShadcnRegistryOptions<Definition extends CatalogDefinition = CatalogDefinition> {
-  readonly output: CatalogOutputAdapter<Definition>;
+export interface ShadcnProjectionOptions<Definition extends CatalogDefinition = CatalogDefinition> {
+  readonly projection: CatalogProjection<Definition>;
   readonly styles?: CatalogStyleTransform | undefined;
 }
 
@@ -111,7 +111,7 @@ export interface ShadcnOutputOptions<Definition extends CatalogDefinition> {
   readonly catalog: Definition;
   readonly rootDir: string;
   readonly registry: ShadcnRegistryDefinition<Definition>;
-  readonly output: CatalogOutputAdapter<Definition>;
+  readonly projection: CatalogProjection<Definition>;
   readonly styles?: CatalogStyleTransform | undefined;
   readonly format?: VjscOutputFormatter | undefined;
   readonly id?: `virtual:vjsc/${string}` | undefined;
@@ -126,8 +126,8 @@ export function shadcnOutput<const Definition extends CatalogDefinition>(
     moduleId,
     async build() {
       const catalog = await loadCatalog(options.catalog, { rootDir: options.rootDir });
-      const output = await emitShadcnRegistry(catalog, options.registry, {
-        output: options.output,
+      const output = await projectShadcnRegistry(catalog, options.registry, {
+        projection: options.projection,
         ...(options.styles ? { styles: options.styles } : {}),
       });
 
@@ -151,7 +151,7 @@ export function shadcnOutput<const Definition extends CatalogDefinition>(
   });
 }
 
-/** Build final Shadcn registry JSON assets directly from in-memory emitted sources. */
+/** Assemble final Shadcn registry JSON assets from projected source. */
 export function createShadcnRegistryFiles<Definition extends CatalogDefinition>(
   output: ShadcnRegistryOutput,
   definition: ShadcnRegistryDefinition<Definition>
@@ -180,21 +180,21 @@ export function createShadcnRegistryFiles<Definition extends CatalogDefinition>(
   return [{ path: 'registry.json', content: JSON.stringify(output.registry) }, ...items];
 }
 
-/** Emit editable catalog modules, shared files, and a validated shadcn registry. */
-export async function emitShadcnRegistry<const Definition extends CatalogDefinition>(
+/** Project editable catalog modules, shared files, and a validated Shadcn registry. */
+export async function projectShadcnRegistry<const Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   definition: ShadcnRegistryDefinition<Definition>,
-  options: EmitShadcnRegistryOptions<Definition>
+  options: ShadcnProjectionOptions<Definition>
 ): Promise<ShadcnRegistryOutput> {
   validateDefinition(catalog, definition);
 
   const resolved = resolveCatalog(catalog, definition.items.published);
   const itemNames = resolved.items.map((item) => item.name);
-  const output = await emitCatalog(catalog, {
+  const output = await projectCatalog(catalog, {
     items: itemNames,
-    output: {
-      ...withRegistryImports(options.output, definition.imports),
-      configDir: (item) => resolve(catalog.rootDir, itemOutputDir(item, definition)),
+    projection: {
+      ...withRegistryImports(options.projection, definition.imports),
+      cwd: (item) => resolve(catalog.rootDir, itemOutputDir(item, definition)),
     },
     ...(options.styles ? { styles: options.styles } : {}),
     files: {
@@ -206,11 +206,11 @@ export async function emitShadcnRegistry<const Definition extends CatalogDefinit
       },
     },
   });
-  const emitted = mapEmittedItems(output.items);
+  const projected = mapProjectedItems(output.items);
   const shared = await loadSharedFiles(catalog, definition);
   const files = uniqueOutputFiles([
     ...shared.flatMap((item) => item.files.map((file) => file.output)),
-    ...(Object.values(emitted) as Array<EmittedCatalogItem<ShadcnRegistryOutputFile> | undefined>).flatMap(
+    ...(Object.values(projected) as Array<ProjectedCatalogItem<ShadcnRegistryOutputFile> | undefined>).flatMap(
       (item) => item?.files ?? []
     ),
     ...output.files.style.map((file) => ({ ...file, kind: 'style' as const })),
@@ -218,20 +218,21 @@ export async function emitShadcnRegistry<const Definition extends CatalogDefinit
 
   return {
     files,
-    registry: createManifest(catalog, definition, emitted, shared),
+    registry: createManifest(catalog, definition, projected, shared),
   };
 }
 
 function withRegistryImports<Definition extends CatalogDefinition>(
-  output: CatalogOutputAdapter<Definition>,
+  projection: CatalogProjection<Definition>,
   imports: ShadcnRegistryDefinition<Definition>['imports']
-): CatalogOutputAdapter<Definition> {
-  if (!imports || Object.keys(imports).length === 0) return output;
+): CatalogProjection<Definition> {
+  if (!imports || Object.keys(imports).length === 0) return projection;
 
   return {
-    ...output,
-    compiler: (item) => {
-      const config = typeof output.compiler === 'function' ? output.compiler(item) : (output.compiler ?? {});
+    ...projection,
+    transform: (item) => {
+      const configured = projection.transform;
+      const config = typeof configured === 'function' ? configured(item) : (configured ?? {});
       if (!config.target) return config;
 
       return {
@@ -255,10 +256,10 @@ interface LoadedSharedItem {
   readonly files: readonly LoadedSharedFile[];
 }
 
-function mapEmittedItems<Definition extends CatalogDefinition>(
-  items: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem>>>
-): Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<ShadcnRegistryOutputFile>>>> {
-  const entries = Object.entries(items) as Array<[string, EmittedCatalogItem | undefined]>;
+function mapProjectedItems<Definition extends CatalogDefinition>(
+  items: Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem>>>
+): Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem<ShadcnRegistryOutputFile>>>> {
+  const entries = Object.entries(items) as Array<[string, ProjectedCatalogItem | undefined]>;
 
   return Object.fromEntries(
     entries.map(([name, item]) => [
@@ -270,7 +271,7 @@ function mapEmittedItems<Definition extends CatalogDefinition>(
           }
         : undefined,
     ])
-  ) as Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<ShadcnRegistryOutputFile>>>>;
+  ) as Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem<ShadcnRegistryOutputFile>>>>;
 }
 
 async function loadSharedFiles<Definition extends CatalogDefinition>(
@@ -301,7 +302,7 @@ async function loadSharedFiles<Definition extends CatalogDefinition>(
 function createManifest<Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   definition: ShadcnRegistryDefinition<Definition>,
-  emitted: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem<ShadcnRegistryOutputFile>>>>,
+  projected: Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem<ShadcnRegistryOutputFile>>>>,
   shared: readonly LoadedSharedItem[]
 ): ShadcnRegistry {
   const itemsByName = new Map(catalog.items.map((item) => [item.name, item]));
@@ -313,7 +314,7 @@ function createManifest<Definition extends CatalogDefinition>(
 
     const partition = partitionItemDependencies(item, itemsByName, published);
     const sources = partition.includedItems.map((included) => {
-      const source = emitted[included.name as CatalogItem<Definition>['name']];
+      const source = projected[included.name as CatalogItem<Definition>['name']];
 
       if (!source) throw new Error(`shadcn registry output is missing catalog item \`${included.name}\`.`);
       return source;
@@ -334,7 +335,7 @@ function createManifest<Definition extends CatalogDefinition>(
       ...description,
       files: uniqueRegistryFiles(
         partition.includedItems.flatMap((included) => {
-          const source = emitted[included.name as CatalogItem<Definition>['name']]!;
+          const source = projected[included.name as CatalogItem<Definition>['name']]!;
           const owner = definition.items.describe(included);
 
           return source.files.map((file) => registryFile(file, included.name, owner.type, definition));

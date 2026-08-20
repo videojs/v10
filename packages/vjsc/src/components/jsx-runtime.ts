@@ -38,7 +38,7 @@ export type Props<CoreProps extends object = EmptyProps> = CoreProps & Pick<Base
 
 export type PropsWithChildren<CoreProps extends object = EmptyProps> = Props<CoreProps> & Pick<BaseProps, 'children'>;
 
-/** Props accepted by another canonical component. Output targets replace this with its emitted props export. */
+/** Props accepted by another VJSC component. Projections replace this with its target props export. */
 export type PropsOf<Component extends (props: never) => unknown> = NonNullable<Parameters<Component>[0]>;
 
 type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> & {

@@ -1,11 +1,11 @@
 import { resolve } from 'node:path';
 
 import { jsx } from 'vjsc';
-import { defineCatalogOutput } from 'vjsc/catalog';
+import { defineCatalogProjection } from 'vjsc/catalog';
 import { defineShadcnRegistry, shadcnOutput } from 'vjsc/shadcn';
 
 import skinCatalog from '../catalog';
-import { formatGeneratedFile } from '../format';
+import { formatOutputFile } from '../format';
 import { createReactComponentRegistry } from './frameworks';
 import { componentTransforms } from './react';
 
@@ -99,9 +99,9 @@ export function createSkinShadcnOutput() {
     catalog: skinCatalog,
     rootDir: resolve(import.meta.dirname, '..'),
     registry: skinRegistry,
-    output: defineCatalogOutput({
+    projection: defineCatalogProjection({
       componentRegistry: createReactComponentRegistry(),
-      compiler: {
+      transform: {
         target: jsx({ importSource: 'react' }),
         plugins: [componentTransforms()],
       },
@@ -110,7 +110,7 @@ export function createSkinShadcnOutput() {
       mode: 'tailwind',
       variant: 'default',
     },
-    format: formatGeneratedFile,
+    format: formatOutputFile,
   });
 }
 

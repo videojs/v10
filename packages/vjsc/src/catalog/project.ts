@@ -29,16 +29,16 @@ export interface CatalogOutputFiles {
   readonly style: readonly CatalogOutputFile[];
 }
 
-export interface EmittedCatalogItem<File extends CatalogOutputFile = CatalogOutputFile> {
+export interface ProjectedCatalogItem<File extends CatalogOutputFile = CatalogOutputFile> {
   readonly files: readonly File[];
-  /** Exact non-relative module specifiers retained by every emitted file. */
+  /** Exact non-relative module specifiers retained by every projected file. */
   readonly imports: readonly string[];
   /** Package names derived from `imports`. */
   readonly dependencies: readonly string[];
 }
 
-export interface CatalogOutput<Definition extends CatalogDefinition = CatalogDefinition> {
-  readonly items: Readonly<Partial<Record<CatalogItem<Definition>['name'], EmittedCatalogItem>>>;
+export interface CatalogProjectionResult<Definition extends CatalogDefinition = CatalogDefinition> {
+  readonly items: Readonly<Partial<Record<CatalogItem<Definition>['name'], ProjectedCatalogItem>>>;
   readonly files: CatalogOutputFiles;
   readonly references: CatalogResolution<Definition>['references'];
 }
@@ -73,22 +73,22 @@ export type CatalogStyleTransform =
       readonly variant?: string | undefined;
     };
 
-export interface CatalogOutputAdapter<Definition extends CatalogDefinition = CatalogDefinition> {
-  /** Framework mappings used to lower canonical components. */
+export interface CatalogProjection<Definition extends CatalogDefinition = CatalogDefinition> {
+  /** Framework mappings used to lower VJSC components. */
   readonly componentRegistry?: ComponentRegistry | undefined;
-  readonly compiler?: CompilerConfig | ((catalogItem: CatalogItem<Definition>) => CompilerConfig) | undefined;
-  readonly configDir?: string | ((catalogItem: CatalogItem<Definition>) => string | undefined) | undefined;
+  readonly transform?: CompilerConfig | ((catalogItem: CatalogItem<Definition>) => CompilerConfig) | undefined;
+  readonly cwd?: string | ((catalogItem: CatalogItem<Definition>) => string | undefined) | undefined;
 }
 
-interface StaticCatalogOutputAdapter<Definition extends CatalogDefinition = CatalogDefinition>
-  extends CatalogOutputAdapter<Definition> {
-  readonly compiler: CompilerConfig;
+interface StaticCatalogProjection<Definition extends CatalogDefinition = CatalogDefinition>
+  extends CatalogProjection<Definition> {
+  readonly transform: CompilerConfig;
 }
 
-export interface CatalogEmitOptions<Definition extends CatalogDefinition = CatalogDefinition> {
-  /** Entry items. Module emission includes their transitive catalog dependencies. */
+export interface CatalogProjectionOptions<Definition extends CatalogDefinition = CatalogDefinition> {
+  /** Entry items. Projection includes their transitive catalog dependencies. */
   readonly items?: readonly CatalogItem<Definition>['name'][] | undefined;
-  readonly output: CatalogOutputAdapter<Definition>;
+  readonly projection: CatalogProjection<Definition>;
   readonly styles?: CatalogStyleTransform | undefined;
   readonly files: {
     source(context: CatalogSourceContext<Definition>): string;
@@ -101,25 +101,29 @@ export interface CatalogEmitOptions<Definition extends CatalogDefinition = Catal
   };
 }
 
-/** Define a reusable catalog output adapter while preserving its inferred configuration. */
-export function defineCatalogOutput<const Adapter extends StaticCatalogOutputAdapter>(adapter: Adapter): Adapter;
-export function defineCatalogOutput<const Definition extends CatalogDefinition>(
-  adapter: CatalogOutputAdapter<Definition>
-): CatalogOutputAdapter<Definition>;
-export function defineCatalogOutput(adapter: CatalogOutputAdapter<any>): CatalogOutputAdapter<any> {
+/** Define a reusable editable-source projection while preserving its inferred configuration. */
+export function defineCatalogProjection<const Adapter extends StaticCatalogProjection>(adapter: Adapter): Adapter;
+export function defineCatalogProjection<const Definition extends CatalogDefinition>(
+  adapter: CatalogProjection<Definition>
+): CatalogProjection<Definition>;
+export function defineCatalogProjection(adapter: CatalogProjection<any>): CatalogProjection<any> {
   return adapter;
 }
 
-/** Resolve the compiler configuration contributed by a catalog output adapter. */
-export function resolveCatalogCompilerConfig<Definition extends CatalogDefinition>(
-  output: CatalogOutputAdapter<Definition>,
+/** Resolve the transform configuration contributed by a catalog projection. */
+export function resolveCatalogTransformConfig<Definition extends CatalogDefinition>(
+  projection: CatalogProjection<Definition>,
   catalogItem?: CatalogItem<Definition>
 ): CompilerConfig {
-  const compiler = output.compiler;
+  const configured = projection.transform;
   const config =
-    typeof compiler === 'function' ? (catalogItem ? compiler(catalogItem) : missingOutputItem()) : (compiler ?? {});
+    typeof configured === 'function'
+      ? catalogItem
+        ? configured(catalogItem)
+        : missingProjectionItem()
+      : (configured ?? {});
   const plugins = [
-    ...(output.componentRegistry ? [registryPlugin(output.componentRegistry)] : []),
+    ...(projection.componentRegistry ? [registryPlugin(projection.componentRegistry)] : []),
     ...(config.plugins ?? []),
   ];
 
@@ -139,35 +143,35 @@ interface LoadedCatalogStyles {
   files: CatalogOutputFile[];
 }
 
-interface EmittedCatalogSources<Definition extends CatalogDefinition> {
-  items: CatalogOutput<Definition>['items'];
+interface ProjectedCatalogSources<Definition extends CatalogDefinition> {
+  items: CatalogProjectionResult<Definition>['items'];
   styles: CatalogOutputFile[];
 }
 
-/** Resolve, transform, and emit source and style files for requested catalog entries. */
-export async function emitCatalog<const Definition extends CatalogDefinition>(
+/** Resolve and transform editable source and style files for requested catalog entries. */
+export async function projectCatalog<const Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
-  options: CatalogEmitOptions<Definition>
-): Promise<CatalogOutput<Definition>> {
+  options: CatalogProjectionOptions<Definition>
+): Promise<CatalogProjectionResult<Definition>> {
   const requestedNames = options.items ?? catalog.items.map((catalogItem) => catalogItem.name);
   const resolved = resolveCatalog(catalog, requestedNames);
 
   const styles = options.styles ? await loadStyles(catalog, resolved.items, options.styles, options) : undefined;
 
-  const emitted = await emitModules(catalog, resolved.items, options, styles?.manifest);
+  const projected = await projectModules(catalog, resolved.items, options, styles?.manifest);
 
-  const emittedItems = emitted.items as Readonly<Record<string, EmittedCatalogItem | undefined>>;
+  const projectedItems = projected.items as Readonly<Record<string, ProjectedCatalogItem | undefined>>;
 
-  const source = Object.values(emittedItems)
+  const source = Object.values(projectedItems)
     .flatMap((item) => item?.files ?? [])
     .sort((a, b) => a.path.localeCompare(b.path));
 
-  const style = uniqueStyleFiles([...(styles?.files ?? []), ...emitted.styles]);
+  const style = uniqueStyleFiles([...(styles?.files ?? []), ...projected.styles]);
 
   assertUniqueFiles(source, 'source');
 
   return {
-    items: emitted.items,
+    items: projected.items,
     files: {
       source,
       style,
@@ -176,27 +180,27 @@ export async function emitCatalog<const Definition extends CatalogDefinition>(
   };
 }
 
-async function emitModules<Definition extends CatalogDefinition>(
+async function projectModules<Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   catalogItems: readonly CatalogItem<Definition>[],
-  options: CatalogEmitOptions<Definition>,
+  options: CatalogProjectionOptions<Definition>,
   styles: StyleManifest | undefined
-): Promise<EmittedCatalogSources<Definition>> {
+): Promise<ProjectedCatalogSources<Definition>> {
   const layoutsByItem = new Map(
     catalogItems.map((catalogItem) => [catalogItem.name, createLayouts(catalog, catalogItem, options)] as const)
   );
   const entriesByInput = new Map(
     catalog.items.map((catalogItem) => [resolve(catalog.rootDir, catalogItem.source), catalogItem] as const)
   );
-  const output: Record<string, EmittedCatalogItem> = {};
+  const output: Record<string, ProjectedCatalogItem> = {};
   const assets: CatalogOutputFile[] = [];
 
   for (const catalogItem of catalogItems) {
     const layouts = layoutsByItem.get(catalogItem.name)!;
     const layoutsByInput = new Map(layouts.map((layout) => [layout.inputFile, layout]));
     const files: CatalogOutputFile[] = [];
-    const config = compilerConfig(options.output, options.styles, catalogItem, styles);
-    const configDir = compilerConfigDir(options.output.configDir, catalogItem) ?? catalog.rootDir;
+    const config = transformConfig(options.projection, options.styles, catalogItem, styles);
+    const configDir = transformCwd(options.projection.cwd, catalogItem) ?? catalog.rootDir;
 
     for (const layout of layouts) {
       const source = await readFile(layout.inputFile, 'utf8');
@@ -235,7 +239,7 @@ async function emitModules<Definition extends CatalogDefinition>(
   }
 
   return {
-    items: output as CatalogOutput<Definition>['items'],
+    items: output as CatalogProjectionResult<Definition>['items'],
     styles: uniqueStyleFiles(assets),
   };
 }
@@ -244,7 +248,7 @@ async function loadStyles<Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   catalogItems: readonly CatalogItem<Definition>[],
   styles: CatalogStyleTransform,
-  options: CatalogEmitOptions<Definition>
+  options: CatalogProjectionOptions<Definition>
 ): Promise<LoadedCatalogStyles> {
   const itemNames = catalogItems.map((catalogItem) => catalogItem.name);
   const manifest = await loadCatalogStyles(catalog, itemNames);
@@ -274,13 +278,13 @@ async function loadStyles<Definition extends CatalogDefinition>(
   return { manifest, files };
 }
 
-function compilerConfig<Definition extends CatalogDefinition>(
-  output: CatalogOutputAdapter<Definition>,
+function transformConfig<Definition extends CatalogDefinition>(
+  projection: CatalogProjection<Definition>,
   styles: CatalogStyleTransform | undefined,
   catalogItem: CatalogItem<Definition>,
   manifest: StyleManifest | undefined
 ): CompilerConfig {
-  const config = resolveCatalogCompilerConfig(output, catalogItem);
+  const config = resolveCatalogTransformConfig(projection, catalogItem);
   const plugins = [catalogMetaPlugin()];
 
   if (!manifest || !styles) return { ...config, plugins: [...plugins, ...(config.plugins ?? [])] };
@@ -304,21 +308,21 @@ function compilerConfig<Definition extends CatalogDefinition>(
   };
 }
 
-function missingOutputItem(): never {
-  throw new Error('Catalog output adapters with dynamic compiler configuration require a catalog item.');
+function missingProjectionItem(): never {
+  throw new Error('Catalog projections with dynamic transform configuration require a catalog item.');
 }
 
-function compilerConfigDir<Definition extends CatalogDefinition>(
-  configDir: CatalogOutputAdapter<Definition>['configDir'],
+function transformCwd<Definition extends CatalogDefinition>(
+  cwd: CatalogProjection<Definition>['cwd'],
   catalogItem: CatalogItem<Definition>
 ): string | undefined {
-  return typeof configDir === 'function' ? configDir(catalogItem) : configDir;
+  return typeof cwd === 'function' ? cwd(catalogItem) : cwd;
 }
 
 function createLayouts<Definition extends CatalogDefinition>(
   catalog: Catalog<Definition>,
   catalogItem: CatalogItem<Definition>,
-  options: CatalogEmitOptions<Definition>
+  options: CatalogProjectionOptions<Definition>
 ): CatalogLayout<Definition>[] {
   const outputs = new Set<string>();
 
@@ -348,7 +352,7 @@ function rewriteRelativeImports<Definition extends CatalogDefinition>(
   layoutsByInput: ReadonlyMap<string, CatalogLayout<Definition>>,
   layoutsByItem: ReadonlyMap<string, readonly CatalogLayout<Definition>[]>,
   entriesByInput: ReadonlyMap<string, CatalogItem<Definition>>,
-  options: CatalogEmitOptions<Definition>
+  options: CatalogProjectionOptions<Definition>
 ): string {
   return rewriteModuleSpecifiers(source, {
     filename: importer.outputFile,
@@ -446,7 +450,7 @@ function uniqueStyleFiles(files: readonly CatalogOutputFile[]): CatalogOutputFil
 
 function styleOutputPath<Definition extends CatalogDefinition>(
   fileName: string,
-  options: CatalogEmitOptions<Definition>
+  options: CatalogProjectionOptions<Definition>
 ): string {
   return toPosixPath(options.files.style?.({ fileName }) ?? fileName);
 }

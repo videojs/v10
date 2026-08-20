@@ -1,5 +1,4 @@
 import type { DesignSystem } from './design-system';
-import { emitStylesheets } from './emitter';
 import {
   isGroupMarker,
   isGroupPeerMarker,
@@ -9,6 +8,7 @@ import {
   utilitiesForRule,
 } from './manifest';
 import type { StyleOutputFile, StyleOutputRule } from './output';
+import { renderStylesheets } from './render';
 
 export interface CompileStylesOptions {
   readonly design: DesignSystem;
@@ -48,7 +48,7 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
     });
   }
 
-  const emitted = await emitStylesheets({
+  const rendered = await renderStylesheets({
     design: options.design,
     ...(options.scope ? { scope: options.scope } : {}),
     files: [...byFile.values()],
@@ -56,7 +56,7 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
 
   const outputFiles = new Set(options.manifest.rules.map((rule) => rule.file));
 
-  return new Map([...outputFiles].sort().map((file) => [file, emitted.get(file) ?? '']));
+  return new Map([...outputFiles].sort().map((file) => [file, rendered.get(file) ?? '']));
 }
 
 function compileRule(rule: StyleManifestRule, design: DesignSystem, variant?: string): StyleOutputRule {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { formatGeneratedFile } from '../format';
+import { formatOutputFile } from '../format';
 
-describe('formatGeneratedFile', () => {
+describe('formatOutputFile', () => {
   it('separates generated TypeScript statements while keeping imports together', async () => {
-    const output = await formatGeneratedFile({
+    const output = await formatOutputFile({
       path: 'component.tsx',
       content: `import { A } from './a'; import { B } from './b'; const value = 1; export interface Props { value: number; } export function Component() { return <A>{value}<B /></A>; }`,
     });
@@ -14,7 +14,7 @@ describe('formatGeneratedFile', () => {
   });
 
   it('leaves non-TypeScript output to oxfmt', async () => {
-    await expect(formatGeneratedFile({ path: 'styles.css', content: '.a{color:red}.b{color:blue}' })).resolves.toBe(
+    await expect(formatOutputFile({ path: 'styles.css', content: '.a{color:red}.b{color:blue}' })).resolves.toBe(
       '.a {\n  color: red;\n}\n.b {\n  color: blue;\n}\n'
     );
   });
