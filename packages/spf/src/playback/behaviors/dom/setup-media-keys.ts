@@ -12,9 +12,11 @@
  * MediaKeys attach. Appending encrypted data with no MediaKeys attached
  * misbehaves on Chromium, so the segment-load dispatchers park while the gate
  * is up (see `load-segments.ts`); compose this behavior ahead of them so the
- * gate is up before their first dispatch. A refused negotiation or failed
- * license warns and leaves the gate up — playback stays parked rather than
- * failing decode.
+ * gate is up before their first dispatch. Failures report onto the errors
+ * sequence via `emitError` (SVTA 4008 no usable key system, 4010 MediaKeys
+ * init, 4004 license request, 4016 license rejected, 4021 request
+ * generation); a refused negotiation leaves the gate up — playback stays
+ * parked rather than failing decode, and severity is the adapter's call.
  *
  * Single-positive-state reactor riding the resolver's resolved/unresolved
  * lifecycle, like `setupMediaSource`: source replacement routes through
@@ -30,7 +32,7 @@
  * Out of scope for the first slice (tracked in drm-support.md):
  * `encrypted`-event fallback for keys with no manifest init data (FairPlay
  * `skd://`), server-certificate fetch, key rotation / keys declared after
- * entry, `keystatuschange` reactivity, and error-sequence reporting.
+ * entry, and `keystatuschange` reactivity.
  */
 import { listen } from '@videojs/utils/dom';
 import { defineBehavior } from '../../../core/composition/create-composition';
@@ -49,7 +51,15 @@ import {
   keySystemCandidates,
   requestKeySystemAccess,
 } from '../../../media/dom/eme';
+import {
+  SVTA_BAD_LICENSE_REQUEST,
+  SVTA_DRM_INITIALIZATION_ERROR,
+  SVTA_DRM_LICENSE_REJECTED,
+  SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+} from '../../../media/errors';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
+import { type ErrorEmitterState, emitError } from '../collect-errors';
 
 /** State shape for MediaKeys setup. */
 export interface MediaKeysState {
@@ -84,7 +94,7 @@ function setupMediaKeysSetup({
   state: {
     presentation: ReadonlySignal<MediaKeysState['presentation']>;
     awaitingMediaKeys: Signal<MediaKeysState['awaitingMediaKeys']>;
-  };
+  } & ErrorEmitterState;
   context: {
     mediaElement: ReadonlySignal<MediaKeysContext['mediaElement']>;
     mediaKeys: Signal<MediaKeysContext['mediaKeys']>;
@@ -129,8 +139,8 @@ function setupMediaKeysSetup({
             if (controller.signal.aborted) return;
             if (!result) {
               // Gate stays up: parked playback beats guaranteed decode
-              // failure. Error-sequence reporting is the slice follow-up.
-              console.warn('[setupMediaKeys] no configured key system is usable for this source:', candidates);
+              // failure. Severity is the adapter's call, per errors.md.
+              emitError(state, { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { keySystems: candidates } });
               return;
             }
 
@@ -147,36 +157,48 @@ function setupMediaKeysSetup({
             // One session per manifest-carried init data of the chosen
             // system. Keys without inline init data (FairPlay `skd://`) wait
             // on the encrypted-event fallback (out of slice).
-            const { licenseUrl } = config.drm[result.keySystem]!;
+            const { keySystem } = result;
+            const { licenseUrl } = config.drm[keySystem]!;
+            const exchange = async (session: MediaKeySession, message: BufferSource) => {
+              let license: Uint8Array<ArrayBuffer>;
+              try {
+                license = await fetchLicense(licenseUrl, message, controller.signal);
+              } catch (error) {
+                if (controller.signal.aborted) return;
+                emitError(state, { code: SVTA_BAD_LICENSE_REQUEST, data: { keySystem, reason: String(error) } });
+                return;
+              }
+              try {
+                await session.update(license);
+              } catch (error) {
+                if (controller.signal.aborted) return;
+                emitError(state, { code: SVTA_DRM_LICENSE_REJECTED, data: { keySystem, reason: String(error) } });
+              }
+            };
             for (const key of keys) {
-              if (key.keyFormat === undefined || KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat] !== result.keySystem) continue;
+              if (key.keyFormat === undefined || KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat] !== keySystem) continue;
               const initData = key.uri === undefined ? undefined : initDataFromKeyUri(key.uri);
               if (!initData) continue;
 
               const session = mediaKeys.createSession();
               sessions.push(session);
-              listen(
-                session,
-                'message',
-                (event) => {
-                  const { message } = event as MediaKeyMessageEvent;
-                  fetchLicense(licenseUrl, message, controller.signal)
-                    .then((license) => session.update(license))
-                    .catch((error) => {
-                      if (controller.signal.aborted) return;
-                      console.warn('[setupMediaKeys] license exchange failed:', error);
-                    });
-                },
-                { signal: controller.signal }
-              );
+              listen(session, 'message', (event) => void exchange(session, (event as MediaKeyMessageEvent).message), {
+                signal: controller.signal,
+              });
               session.generateRequest('cenc', initData).catch((error) => {
                 if (controller.signal.aborted) return;
-                console.warn('[setupMediaKeys] license request could not be generated:', error);
+                emitError(state, {
+                  code: SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+                  data: { keySystem, reason: String(error) },
+                });
               });
             }
           };
 
-          negotiate().catch((error) => console.error('[setupMediaKeys] EME setup failed:', error));
+          negotiate().catch((error) => {
+            if (controller.signal.aborted) return;
+            emitError(state, { code: SVTA_DRM_INITIALIZATION_ERROR, data: { reason: String(error) } });
+          });
 
           // State-exit cleanup — source unload, element detach, or destroy.
           // Order: abort first (kills the negotiation and the message
