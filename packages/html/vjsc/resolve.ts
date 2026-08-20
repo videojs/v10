@@ -1,76 +1,134 @@
-import { basename, relative, resolve } from 'node:path';
+import type { SchemaEntryResolver } from 'vjsc/registry';
 
-import type { ResolvedEntry, SourceEntryContext } from 'vjsc';
-import {
-  collectClassDeclarations,
-  collectModuleReferences,
-  findClassDeclaration,
-  readStaticStringProperty,
-} from 'vjsc/ast';
+const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  Controls: {
+    Root: 'Controls',
+    Group: 'ControlsGroup',
+  },
+  ErrorDialog: {
+    Root: 'ErrorDialog',
+    Popup: 'ErrorDialog',
+    Title: 'AlertDialogTitle',
+    Description: 'AlertDialogDescription',
+    Close: 'AlertDialogClose',
+  },
+  Menu: {
+    Root: 'Menu',
+    Trigger: 'MenuItem',
+    SubmenuTrigger: 'MenuItem',
+    Content: 'Menu',
+    Group: 'MenuGroup',
+    GroupLabel: 'MenuGroupLabel',
+    Item: 'MenuItem',
+    ItemIndicator: 'MenuItemIndicator',
+    RadioGroup: 'MenuRadioGroup',
+    RadioItem: 'MenuRadioItem',
+    Separator: 'MenuSeparator',
+    CheckboxItem: 'MenuCheckboxItem',
+  },
+  Popover: {
+    Root: 'Popover',
+    Trigger: 'Popover',
+    Popup: 'Popover',
+    Arrow: 'Popover',
+  },
+  SeekIndicator: {
+    Root: 'SeekIndicator',
+    Value: 'SeekIndicatorValue',
+  },
+  Slider: {
+    Root: 'Slider',
+    Track: 'SliderTrack',
+    Fill: 'SliderFill',
+    Buffer: 'SliderBuffer',
+    Thumb: 'SliderThumb',
+    'Thumbnail.Root': 'SliderThumbnail',
+    'Thumbnail.Image': 'SliderThumbnail',
+    Preview: 'SliderPreview',
+    Value: 'SliderValue',
+  },
+  StatusIndicator: {
+    Root: 'StatusIndicator',
+    Value: 'StatusIndicatorValue',
+  },
+  Time: {
+    Group: 'TimeGroup',
+    Separator: 'TimeSeparator',
+    Value: 'Time',
+  },
+  TimeSlider: {
+    Root: 'TimeSlider',
+    Track: 'SliderTrack',
+    Fill: 'SliderFill',
+    Buffer: 'SliderBuffer',
+    Thumb: 'SliderThumb',
+    Chapters: 'TimeSliderChapters',
+    ChapterTitle: 'TimeSliderChapterTitle',
+    Preview: 'SliderPreview',
+    Value: 'SliderValue',
+  },
+  Tooltip: {
+    Provider: 'TooltipGroup',
+    Root: 'Tooltip',
+    Trigger: 'Tooltip',
+    Popup: 'Tooltip',
+    Arrow: 'Tooltip',
+    Label: 'TooltipLabel',
+    Shortcut: 'TooltipShortcut',
+  },
+  VolumeIndicator: {
+    Root: 'VolumeIndicator',
+    Fill: 'VolumeIndicatorFill',
+    Value: 'VolumeIndicatorValue',
+  },
+  VolumeSlider: {
+    Root: 'VolumeSlider',
+    Track: 'SliderTrack',
+    Fill: 'SliderFill',
+    Thumb: 'SliderThumb',
+    Preview: 'SliderPreview',
+    Value: 'SliderValue',
+  },
+};
 
-const packageDir = resolve(import.meta.dirname, '..');
-const elementSuffix = 'Element';
+const groupedModules: Readonly<Record<string, string>> = {
+  MenuCheckboxItem: 'menu',
+  MenuGroup: 'menu',
+  MenuGroupLabel: 'menu',
+  MenuItem: 'menu',
+  MenuItemIndicator: 'menu',
+  MenuRadioGroup: 'menu',
+  MenuRadioItem: 'menu',
+  MenuSeparator: 'menu',
+  SliderPreview: 'slider',
+  TooltipLabel: 'tooltip',
+  TooltipShortcut: 'tooltip',
+};
 
-export function resolveHtmlEntries({ fileName, sourceFile, resolveModule }: SourceEntryContext): ResolvedEntry[] {
-  const defineFile = relative(packageDir, fileName);
-  if (defineFile.endsWith('/compounds.ts')) return [];
+const publicNames: Readonly<Record<string, string>> = {
+  AirPlayButton: 'airplay-button',
+  PiPButton: 'pip-button',
+};
 
-  const source = publicModule(defineFile);
-  const entries: ResolvedEntry[] = [];
+/** Map one canonical component or part to its public custom-element definition. */
+export const resolveHtmlEntry: SchemaEntryResolver = ({ component, part }) => {
+  const name = part ? componentParts[component]?.[part] : component === 'Container' ? 'MediaContainer' : component;
+  if (!name) return undefined;
 
-  for (const declaration of collectClassDeclarations(sourceFile)) {
-    const name = declaration.name?.text;
-    const tagName = readStaticStringProperty(declaration, 'tagName');
+  return htmlEntry(name);
+};
 
-    if (name?.endsWith(elementSuffix) && tagName) {
-      entries.push(createEntry(defineFile, source, name, tagName));
-    }
-  }
-
-  for (const reference of collectModuleReferences(sourceFile)) {
-    const imported = resolveModule(reference.source);
-    if (!imported) continue;
-
-    for (const name of reference.names) {
-      if (!name.endsWith(elementSuffix)) continue;
-
-      const declaration = findClassDeclaration(imported.sourceFile, name);
-      const tagName = declaration && readStaticStringProperty(declaration, 'tagName');
-
-      if (tagName) entries.push(createEntry(defineFile, source, name, tagName));
-    }
-  }
-
-  return entries;
-}
-
-function createEntry(defineFile: string, source: string, className: string, tagName: string): ResolvedEntry {
-  const name = className.slice(0, -elementSuffix.length);
+export function htmlEntry(name: string) {
+  const publicName = publicNames[name] ?? kebabCase(name === 'MediaContainer' ? 'container' : name);
+  const moduleName = groupedModules[name] ?? publicName;
+  const source = name === 'MediaContainer' ? `@videojs/html/media/${moduleName}` : `@videojs/html/ui/${moduleName}`;
 
   return {
-    name,
-    priority: entryPriority(defineFile, name),
-    entry: {
-      tagName,
-      import: { from: source, sideEffect: true },
-    },
+    tagName: `media-${publicName}`,
+    import: { from: source, sideEffect: true as const },
   };
-}
-
-function publicModule(defineFile: string): string {
-  if (defineFile === 'src/define/i18n.ts') return '@videojs/html/i18n';
-
-  return `@videojs/html/${defineFile.replace(/^src\/define\//, '').replace(/\.ts$/, '')}`;
 }
 
 function kebabCase(value: string): string {
   return value.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-}
-
-function entryPriority(defineFile: string, name: string): number {
-  const moduleName = basename(defineFile, '.ts');
-  const entryName = kebabCase(name);
-
-  if (moduleName === entryName) return 2;
-  return entryName.startsWith(`${moduleName}-`) ? 1 : 0;
 }

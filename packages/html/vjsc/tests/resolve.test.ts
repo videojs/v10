@@ -1,59 +1,35 @@
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parse } from 'vjsc/ast';
 
-import { resolveHtmlEntries } from '../resolve';
+import { resolveHtmlEntry } from '../resolve';
 
-describe('resolveHtmlEntries', () => {
-  it('resolves imported element classes', () => {
-    const fileName = resolve(import.meta.dirname, '../../src/define/ui/example.ts');
-    const sourceFile = parse(`import { ExampleElement } from '../../ui/example-element';\nExampleElement;`, {
-      filename: fileName,
-    }).ast;
-    const importedFile = resolve(import.meta.dirname, '../../src/ui/example-element.ts');
-    const importedSource = parse(`export class ExampleElement { static readonly tagName = 'media-example'; }`, {
-      filename: importedFile,
-    }).ast;
-
-    expect(
-      resolveHtmlEntries({
-        fileName,
-        sourceFile,
-        resolveModule: () => ({ fileName: importedFile, sourceFile: importedSource }),
-      })
-    ).toEqual([
-      {
-        name: 'Example',
-        priority: 2,
-        entry: {
-          tagName: 'media-example',
-          import: { from: '@videojs/html/ui/example', sideEffect: true },
-        },
-      },
-    ]);
+describe('resolveHtmlEntry', () => {
+  it('maps leaf components to their public custom elements', () => {
+    expect(resolveHtmlEntry({ component: 'PlayButton', part: null })).toEqual({
+      tagName: 'media-play-button',
+      import: { from: '@videojs/html/ui/play-button', sideEffect: true },
+    });
+    expect(resolveHtmlEntry({ component: 'Container', part: null })).toEqual({
+      tagName: 'media-container',
+      import: { from: '@videojs/html/media/container', sideEffect: true },
+    });
+    expect(resolveHtmlEntry({ component: 'AirPlayButton', part: null })).toEqual({
+      tagName: 'media-airplay-button',
+      import: { from: '@videojs/html/ui/airplay-button', sideEffect: true },
+    });
+    expect(resolveHtmlEntry({ component: 'PiPButton', part: null })).toEqual({
+      tagName: 'media-pip-button',
+      import: { from: '@videojs/html/ui/pip-button', sideEffect: true },
+    });
   });
 
-  it('resolves element classes declared by the define module', () => {
-    const fileName = resolve(import.meta.dirname, '../../src/define/media/example-video.ts');
-    const sourceFile = parse(`export class ExampleVideoElement { static readonly tagName = 'example-video'; }`, {
-      filename: fileName,
-    }).ast;
-
-    expect(
-      resolveHtmlEntries({
-        fileName,
-        sourceFile,
-        resolveModule: () => undefined,
-      })
-    ).toEqual([
-      {
-        name: 'ExampleVideo',
-        priority: 2,
-        entry: {
-          tagName: 'example-video',
-          import: { from: '@videojs/html/media/example-video', sideEffect: true },
-        },
-      },
-    ]);
+  it('maps compound parts to grouped and individual definition modules', () => {
+    expect(resolveHtmlEntry({ component: 'Menu', part: 'Item' })).toEqual({
+      tagName: 'media-menu-item',
+      import: { from: '@videojs/html/ui/menu', sideEffect: true },
+    });
+    expect(resolveHtmlEntry({ component: 'Slider', part: 'Thumb' })).toEqual({
+      tagName: 'media-slider-thumb',
+      import: { from: '@videojs/html/ui/slider-thumb', sideEffect: true },
+    });
   });
 });

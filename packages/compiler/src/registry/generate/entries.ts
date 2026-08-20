@@ -13,6 +13,7 @@ import {
 } from '../../generate';
 import { resolveSourceModule, sourceScriptKind } from '../../utils/source-module';
 import type { RegistryEntryReference } from '../definition';
+import type { SchemaEntryResolver } from '../resolve';
 
 export interface ResolvedEntry {
   readonly name: string;
@@ -32,12 +33,6 @@ export interface SourceEntryContext {
   readonly resolveModule: (specifier: string) => ResolvedSourceModule | undefined;
 }
 
-export interface SchemaEntryContext {
-  readonly component: string;
-  readonly part: string | null;
-}
-
-export type SchemaEntryResolver = (context: SchemaEntryContext) => RegistryEntryReference | undefined;
 export type SourceEntryResolver = (context: SourceEntryContext) => readonly ResolvedEntry[];
 
 export interface GenerateSchemaEntriesConfig {

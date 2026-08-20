@@ -1,1 +1,2 @@
-export { createRegistry, type HtmlRegistryEntries } from './registry';
+export { createRegistry } from './registry';
+export { htmlEntry, resolveHtmlEntry } from './resolve';

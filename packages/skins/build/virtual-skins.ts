@@ -5,7 +5,7 @@ import type { GeneratedModule } from 'vjsc/generate';
 
 import { skinCatalog } from '../canonical/catalog';
 import { loadSkinCatalog } from './catalog';
-import { coreSchemaModule, getIconSchemaModule, htmlEntriesModule, reactEntriesModule } from './metadata';
+import { coreSchemaModule, frameworkRegistryWatchFiles, getIconSchemaModule } from './metadata';
 import { emitHtmlSkin } from './output/html';
 import { emitReactSkinModule } from './output/react';
 
@@ -76,7 +76,7 @@ async function loadSkinVirtualModule(
     : [];
   const metadataFiles = [
     ...coreSchemaModule.watchFiles,
-    ...(framework === 'react' ? reactEntriesModule.watchFiles : htmlEntriesModule.watchFiles),
+    ...frameworkRegistryWatchFiles[framework],
     ...getIconSchemaModule(iconFamily).watchFiles,
   ];
 

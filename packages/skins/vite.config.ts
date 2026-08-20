@@ -10,15 +10,7 @@ import { plugin as stylesPlugin } from 'vjsc/styles';
 import compiler from 'vjsc/vite';
 import { createCoreSchemaModule } from '../core/src/vjsc';
 import { createIconElementModule } from './build/icon-element';
-import {
-  coreSchemaModule,
-  createHtmlEntriesModule,
-  createReactComponentRegistry,
-  createReactEntriesModule,
-  getIconSchemaModule,
-  htmlEntriesModule,
-  reactEntriesModule,
-} from './build/metadata';
+import { coreSchemaModule, createReactComponentRegistry, getIconSchemaModule } from './build/metadata';
 import { componentTransforms } from './build/output/react/transform';
 import { createSkinVirtualModules } from './build/virtual-skins';
 import { skinCatalog } from './canonical/catalog';
@@ -27,7 +19,6 @@ const packageDir = import.meta.dirname;
 const canonicalDir = normalizePath(resolve(packageDir, 'canonical'));
 const coreDir = resolve(packageDir, '../core');
 const iconsDir = resolve(packageDir, '../icons');
-const reactDir = resolve(packageDir, '../react');
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
 
@@ -43,26 +34,6 @@ await Promise.all([
         fileName: resolve(coreDir, '.vjsc/virtual/core-schema.ts'),
         outputPath: 'core-schema.d.ts',
         module: coreSchemaModule,
-      },
-    ],
-  }),
-  syncGeneratedModuleTypes({
-    rootDir: reactDir,
-    modules: [
-      {
-        fileName: resolve(reactDir, '.vjsc/virtual/registry-react.ts'),
-        outputPath: 'registry-react.d.ts',
-        module: reactEntriesModule,
-      },
-    ],
-  }),
-  syncGeneratedModuleTypes({
-    rootDir: resolve(packageDir, '../html'),
-    modules: [
-      {
-        fileName: resolve(packageDir, '../html/.vjsc/virtual/registry-html.ts'),
-        outputPath: 'registry-html.d.ts',
-        module: htmlEntriesModule,
       },
     ],
   }),
@@ -99,8 +70,6 @@ export default defineConfig({
       modules: [
         { id: 'virtual:vjsc/core-schema', load: createCoreSchemaModule },
         { id: 'virtual:vjsc/icons-schema', load: () => getIconSchemaModule() },
-        { id: 'virtual:vjsc/registry/react', load: createReactEntriesModule },
-        { id: 'virtual:vjsc/registry/html', load: createHtmlEntriesModule },
         catalogVirtualModule(skinCatalog),
         { id: 'virtual:vjsc/icons/element/default.js', load: () => defaultIconElementModule },
         { id: 'virtual:vjsc/icons/element/minimal.js', load: () => minimalIconElementModule },

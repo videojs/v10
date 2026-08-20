@@ -10,5 +10,5 @@
     "declarationDir": "types"
   },
   "include": ["src", "vjsc"],
-  "references": [{ "path": "../icons" }]
+  "references": [{ "path": "../core" }, { "path": "../icons" }]
 }

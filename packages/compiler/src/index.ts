@@ -88,12 +88,11 @@ export type {
   GenerateSourceEntriesConfig,
   ResolvedEntry,
   ResolvedSourceModule,
-  SchemaEntryContext,
-  SchemaEntryResolver,
   SourceEntryContext,
   SourceEntryResolver,
 } from './registry/generate/entries';
 export { createEntriesModule } from './registry/generate/entries';
+export type { SchemaEntryContext, SchemaEntryResolver } from './registry/resolve';
 export {
   type ConstStatementOptions,
   type FunctionPropSpec,

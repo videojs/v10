@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defineComponent, defineSchema } from '../../components/definition';
-import { defineRegistry, extendRegistry, type RegistryEntryReference } from '../index';
+import { defineRegistry, extendRegistry, type RegistryEntryReference, resolveRegistryEntries } from '../index';
 
 const schema = defineSchema('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),
@@ -102,6 +102,21 @@ describe('defineRegistry', () => {
       from: '@fixture/react',
       name: 'ExtensionNode',
     });
+  });
+});
+
+describe('resolveRegistryEntries', () => {
+  it('resolves schema leaves into a matching entry tree', () => {
+    const entries = resolveRegistryEntries(schema, ({ component, part }) => fixtureEntry(component, part ?? undefined));
+
+    expect(entries.PlayButton).toEqual(fixtureEntry('PlayButton'));
+    expect(entries.Tooltip.Popup).toEqual(fixtureEntry('Tooltip', 'Popup'));
+  });
+
+  it('rejects unresolved schema leaves', () => {
+    expect(() => resolveRegistryEntries(schema, () => undefined)).toThrow(
+      'Entry resolver did not provide an implementation for <PlayButton>.'
+    );
   });
 });
 

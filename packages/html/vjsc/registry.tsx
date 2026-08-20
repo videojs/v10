@@ -1,76 +1,27 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/registry */
 
-import type { ComponentDefinition, ComponentSchema } from 'vjsc/components';
+import type { schema as coreSchema } from '@videojs/core/vjsc';
 import { Fragment } from 'vjsc/components';
 import {
   type ComponentRegistry,
   defineElement,
   defineRegistry,
   Host,
-  type RegistryComponentContext,
+  type RegistryEntries,
   type RegistryEntry,
-  type RegistryEntryReference,
-  type RegistryRenderContext,
+  resolveRegistryEntries,
 } from 'vjsc/registry';
+import { resolveHtmlEntry } from './resolve';
 
-export interface HtmlRegistryEntries {
-  readonly entries: Readonly<Record<string, RegistryEntryReference>>;
-  readonly [name: string]: unknown;
-}
-
-type OverlayParts = {
-  readonly Root: ComponentDefinition<Record<string, unknown>>;
-  readonly Trigger: ComponentDefinition<Record<string, unknown>>;
-  readonly Popup: ComponentDefinition<Record<string, unknown>>;
-};
-
-type HtmlEntryName =
-  | 'AlertDialogClose'
-  | 'AlertDialogDescription'
-  | 'AlertDialogTitle'
-  | 'Controls'
-  | 'ControlsGroup'
-  | 'ErrorDialog'
-  | 'MediaContainer'
-  | 'Menu'
-  | 'MenuCheckboxItem'
-  | 'MenuGroupLabel'
-  | 'MenuItem'
-  | 'MenuItemIndicator'
-  | 'MenuRadioGroup'
-  | 'MenuRadioItem'
-  | 'Popover'
-  | 'SeekIndicator'
-  | 'SeekIndicatorValue'
-  | 'Slider'
-  | 'SliderBuffer'
-  | 'SliderFill'
-  | 'SliderPreview'
-  | 'SliderThumb'
-  | 'SliderThumbnail'
-  | 'SliderTrack'
-  | 'SliderValue'
-  | 'StatusIndicator'
-  | 'StatusIndicatorValue'
-  | 'Text'
-  | 'Time'
-  | 'TimeGroup'
-  | 'TimeSeparator'
-  | 'TimeSlider'
-  | 'TimeSliderChapterTitle'
-  | 'TimeSliderChapters'
-  | 'Tooltip'
-  | 'TooltipGroup'
-  | 'TooltipLabel'
-  | 'TooltipShortcut'
-  | 'VolumeIndicator'
-  | 'VolumeIndicatorFill'
-  | 'VolumeIndicatorValue'
-  | 'VolumeSlider';
+type CoreSchema = typeof coreSchema;
+type CoreDefinitions = CoreSchema['definitions'];
 
 const Button = defineElement('button');
 const Div = defineElement('div');
+const I18nText = defineElement('media-text', {
+  import: { from: '@videojs/html/i18n', sideEffect: true },
+});
 const Slot = defineElement('slot');
 const Span = defineElement('span');
 const Sup = defineElement('sup');
@@ -81,169 +32,163 @@ const optionLabel: RegistryEntry = {
 };
 
 /** Canonical core components rendered through registered Video.js custom elements. */
-export function createRegistry(schema: ComponentSchema, entries: HtmlRegistryEntries): ComponentRegistry {
-  // The generated entries are validated against the schema by VJSC. Treating
-  // references as `never` keeps this factory independent of generated source
-  // declarations while remaining assignable to each concrete schema entry.
-  const $ = entries as unknown as Readonly<Record<HtmlEntryName, never>>;
+export function createRegistry(schema: CoreSchema): ComponentRegistry {
+  const $ = resolveRegistryEntries(schema, resolveHtmlEntry);
+  const entries = {
+    ...$,
+
+    Container: $.Container,
+    Controls: {
+      parts: {
+        Root: $.Controls.Root,
+        Group: $.Controls.Group,
+      },
+    },
+    ErrorDialog: {
+      parts: {
+        Root: Fragment,
+        Popup: $.ErrorDialog.Popup,
+        Title: $.ErrorDialog.Title,
+        Description: $.ErrorDialog.Description,
+        Close: $.ErrorDialog.Close,
+      },
+    },
+    Menu: {
+      parts: {
+        Root: {
+          host: $.Menu.Root,
+          render: ({ props }) => <Host {...props}>{props.children}</Host>,
+        },
+        Trigger: ({ props, id }) => (
+          <Button commandfor={id('content')} {...props}>
+            {props.children}
+          </Button>
+        ),
+        SubmenuTrigger: ({ props, id, reference }) => {
+          const MenuItem = reference($.Menu.Item);
+
+          return (
+            <MenuItem commandfor={id('content')} data-has-submenu="" {...props}>
+              {props.children}
+            </MenuItem>
+          );
+        },
+        Content: ({ props, id, reference }) => {
+          const Menu = reference($.Menu.Content);
+
+          return (
+            <Menu id={id('content')} {...props}>
+              {props.children}
+            </Menu>
+          );
+        },
+        Group: Fragment,
+        GroupLabel: $.Menu.GroupLabel,
+        Item: $.Menu.Item,
+        ItemIndicator: $.Menu.ItemIndicator,
+        RadioGroup: $.Menu.RadioGroup,
+        RadioItem: $.Menu.RadioItem,
+        Separator: Div,
+        CheckboxItem: $.Menu.CheckboxItem,
+      },
+    },
+    Popover: {
+      parts: {
+        Popup: $.Popover.Popup,
+      },
+      render: ({ root, parts, reference }) => {
+        const Popover = reference($.Popover.Popup);
+
+        return (
+          <>
+            {parts.Trigger.one().props.children}
+            <Popover {...root.props} {...parts.Popup.one().props}>
+              {parts.Popup.one().props.children}
+            </Popover>
+          </>
+        );
+      },
+    },
+    SeekIndicator: {
+      Root: $.SeekIndicator.Root,
+      Value: $.SeekIndicator.Value,
+    },
+    Slider: {
+      Root: $.Slider.Root,
+      Track: $.Slider.Track,
+      Fill: $.Slider.Fill,
+      Buffer: $.Slider.Buffer,
+      Thumb: $.Slider.Thumb,
+      Thumbnail: {
+        Root: Div,
+        Image: $.Slider.Thumbnail.Image,
+      },
+      Preview: $.Slider.Preview,
+      Value: $.Slider.Value,
+    },
+    StatusIndicator: {
+      Root: $.StatusIndicator.Root,
+      Value: $.StatusIndicator.Value,
+    },
+    Time: {
+      Group: $.Time.Group,
+      Separator: $.Time.Separator,
+      Value: $.Time.Value,
+    },
+    TimeSlider: {
+      Root: $.TimeSlider.Root,
+      Track: $.TimeSlider.Track,
+      Fill: $.TimeSlider.Fill,
+      Buffer: $.TimeSlider.Buffer,
+      Thumb: $.TimeSlider.Thumb,
+      Chapters: $.TimeSlider.Chapters,
+      ChapterTitle: $.TimeSlider.ChapterTitle,
+      Preview: $.TimeSlider.Preview,
+      Value: $.TimeSlider.Value,
+    },
+    Tooltip: {
+      parts: {
+        Provider: $.Tooltip.Provider,
+        Popup: $.Tooltip.Popup,
+        Label: $.Tooltip.Label,
+        Shortcut: $.Tooltip.Shortcut,
+      },
+      render: ({ root, parts, id, reference }) => {
+        const Tooltip = reference($.Tooltip.Popup);
+
+        return (
+          <>
+            <Host id={id('trigger')}>{parts.Trigger.one().props.children}</Host>
+            <Tooltip trigger={id('trigger')} {...root.props} {...parts.Popup.one().props}>
+              {parts.Popup.one().props.children}
+            </Tooltip>
+          </>
+        );
+      },
+    },
+    VolumeIndicator: {
+      Root: $.VolumeIndicator.Root,
+      Fill: $.VolumeIndicator.Fill,
+      Value: $.VolumeIndicator.Value,
+    },
+    VolumeSlider: {
+      Root: $.VolumeSlider.Root,
+      Track: $.VolumeSlider.Track,
+      Fill: $.VolumeSlider.Fill,
+      Thumb: $.VolumeSlider.Thumb,
+      Preview: $.VolumeSlider.Preview,
+      Value: $.VolumeSlider.Value,
+    },
+  } satisfies RegistryEntries<CoreDefinitions>;
 
   return defineRegistry({
     schema,
-    entries: {
-      ...(entries.entries as Readonly<Record<string, never>>),
-
-      Container: $.MediaContainer,
-      Controls: {
-        parts: {
-          Root: $.Controls,
-          Group: $.ControlsGroup,
-        },
-      },
-      ErrorDialog: {
-        parts: {
-          Root: Fragment,
-          Popup: $.ErrorDialog,
-          Title: $.AlertDialogTitle,
-          Description: $.AlertDialogDescription,
-          Close: $.AlertDialogClose,
-        },
-      },
-      Menu: {
-        parts: {
-          Root: {
-            host: $.Menu,
-            render: ({ props }: RegistryRenderContext<Record<string, unknown>>) => (
-              <Host {...props}>{props.children}</Host>
-            ),
-          },
-          Trigger: ({ props, id }: RegistryRenderContext<Record<string, unknown>>) => (
-            <Button commandfor={id('content')} {...props}>
-              {props.children}
-            </Button>
-          ),
-          SubmenuTrigger: ({ props, id, reference }: RegistryRenderContext<Record<string, unknown>>) => {
-            const MenuItem = reference($.MenuItem);
-
-            return (
-              <MenuItem commandfor={id('content')} data-has-submenu="" {...props}>
-                {props.children}
-              </MenuItem>
-            );
-          },
-          Content: ({ props, id, reference }: RegistryRenderContext<Record<string, unknown>>) => {
-            const Menu = reference($.Menu);
-
-            return (
-              <Menu id={id('content')} {...props}>
-                {props.children}
-              </Menu>
-            );
-          },
-          Group: Fragment,
-          GroupLabel: $.MenuGroupLabel,
-          Item: $.MenuItem,
-          ItemIndicator: $.MenuItemIndicator,
-          RadioGroup: $.MenuRadioGroup,
-          RadioItem: $.MenuRadioItem,
-          Separator: Div,
-          CheckboxItem: $.MenuCheckboxItem,
-        },
-      },
-      Popover: {
-        parts: {
-          Popup: $.Popover,
-        },
-        render: ({ root, parts, reference }: RegistryComponentContext<OverlayParts, 'Root'>) => {
-          const Popover = reference($.Popover);
-
-          return (
-            <>
-              {parts.Trigger.one().props.children}
-              <Popover {...root.props} {...parts.Popup.one().props}>
-                {parts.Popup.one().props.children}
-              </Popover>
-            </>
-          );
-        },
-      },
-      SeekIndicator: {
-        Root: $.SeekIndicator,
-        Value: $.SeekIndicatorValue,
-      },
-      Slider: {
-        Root: $.Slider,
-        Track: $.SliderTrack,
-        Fill: $.SliderFill,
-        Buffer: $.SliderBuffer,
-        Thumb: $.SliderThumb,
-        Thumbnail: {
-          Root: Div,
-          Image: $.SliderThumbnail,
-        },
-        Preview: $.SliderPreview,
-        Value: $.SliderValue,
-      },
-      StatusIndicator: {
-        Root: $.StatusIndicator,
-        Value: $.StatusIndicatorValue,
-      },
-      Time: {
-        Group: $.TimeGroup,
-        Separator: $.TimeSeparator,
-        Value: $.Time,
-      },
-      TimeSlider: {
-        Root: $.TimeSlider,
-        Track: $.SliderTrack,
-        Fill: $.SliderFill,
-        Buffer: $.SliderBuffer,
-        Thumb: $.SliderThumb,
-        Chapters: $.TimeSliderChapters,
-        ChapterTitle: $.TimeSliderChapterTitle,
-        Preview: $.SliderPreview,
-        Value: $.SliderValue,
-      },
-      Tooltip: {
-        parts: {
-          Provider: $.TooltipGroup,
-          Popup: $.Tooltip,
-          Label: $.TooltipLabel,
-          Shortcut: $.TooltipShortcut,
-        },
-        render: ({ root, parts, id, reference }: RegistryComponentContext<OverlayParts, 'Root'>) => {
-          const Tooltip = reference($.Tooltip);
-
-          return (
-            <>
-              <Host id={id('trigger')}>{parts.Trigger.one().props.children}</Host>
-              <Tooltip trigger={id('trigger')} {...root.props} {...parts.Popup.one().props}>
-                {parts.Popup.one().props.children}
-              </Tooltip>
-            </>
-          );
-        },
-      },
-      VolumeIndicator: {
-        Root: $.VolumeIndicator,
-        Fill: $.VolumeIndicatorFill,
-        Value: $.VolumeIndicatorValue,
-      },
-      VolumeSlider: {
-        Root: $.VolumeSlider,
-        Track: $.SliderTrack,
-        Fill: $.SliderFill,
-        Thumb: $.SliderThumb,
-        Preview: $.SliderPreview,
-        Value: $.SliderValue,
-      },
-    } as unknown as never,
+    entries,
     primitives: {
       Group: Div,
       Slot,
       Text: {
-        render: ({ props, reference }) => {
-          const I18nText = reference($.Text);
-
+        render: ({ props }) => {
           return props.token ? (
             <I18nText {...props}>{props.children}</I18nText>
           ) : (

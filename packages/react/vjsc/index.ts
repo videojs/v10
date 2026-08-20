@@ -1,2 +1,2 @@
-export { createRegistry, type ReactRegistryEntries } from './registry';
+export { createRegistry } from './registry';
 export { resolveReactEntry } from './resolve';

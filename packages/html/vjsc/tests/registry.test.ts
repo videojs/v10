@@ -1,10 +1,9 @@
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { createEntriesModule, createSchemaModule, html, transform } from 'vjsc';
+import { createSchemaModule, html, transform } from 'vjsc';
 import { plugin } from 'vjsc/registry';
-import { createRegistry, type HtmlRegistryEntries } from '../registry';
-import { resolveHtmlEntries } from '../resolve';
+import { createRegistry } from '../registry';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const coreDir = resolve(packageDir, '../core');
@@ -16,15 +15,7 @@ const schema = createSchemaModule(
   },
   { cwd: coreDir }
 );
-const entries = createEntriesModule(
-  {
-    files: ['./src/define/{ui,media}/*.ts', './src/define/i18n.ts'],
-    output: './.vjsc/virtual/registry-html.ts',
-    resolve: resolveHtmlEntries,
-  },
-  { cwd: packageDir }
-);
-const registry = createRegistry(schema.schema, entries.exports as HtmlRegistryEntries);
+const registry = createRegistry(schema.schema as Parameters<typeof createRegistry>[0]);
 
 function compile(source: string, filename = '/project/src/view.tsx') {
   return transform(source, {

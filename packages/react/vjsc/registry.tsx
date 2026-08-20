@@ -1,19 +1,22 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/registry */
 
+import type { schema as coreSchema } from '@videojs/core/vjsc';
 import ts from 'typescript';
 import { createArrowFunction } from 'vjsc/ast';
-import type { ComponentSchema, TemplatePartProps, TemplateProps } from 'vjsc/components';
+import type { TemplatePartProps, TemplateProps } from 'vjsc/components';
 import {
   type ComponentRegistry,
   defineElement,
   defineRegistry,
   Host,
+  type RegistryEntries,
   type RegistryEntry,
-  type RegistryEntryReference,
   type RegistryPropTransformContext,
   type RegistryRenderContext,
+  resolveRegistryEntries,
 } from 'vjsc/registry';
+import { resolveReactEntry } from './resolve';
 
 const Div = defineElement('div', {
   props: {
@@ -38,77 +41,65 @@ const optionLabel: RegistryEntry<OptionPartProps> = {
   render: ({ props }) => <Span {...props}>{props.item.label}</Span>,
 };
 
-export interface ReactRegistryEntries {
-  readonly entries: Readonly<Record<string, RegistryEntryReference>>;
-  readonly [name: string]: unknown;
-}
-
-interface ReactGeneratedEntries {
-  readonly Popover: Readonly<Record<string, RegistryEntryReference>>;
-  readonly Poster: RegistryEntryReference;
-  readonly Slider: Readonly<Record<string, RegistryEntryReference>>;
-  readonly Tooltip: Readonly<Record<string, RegistryEntryReference>>;
-}
+type CoreSchema = typeof coreSchema;
+type CoreDefinitions = CoreSchema['definitions'];
 
 /** Canonical core components rendered through the React component package. */
-export function createRegistry(schema: ComponentSchema, entries: ReactRegistryEntries): ComponentRegistry {
-  const $ = entries as unknown as ReactGeneratedEntries;
+export function createRegistry(schema: CoreSchema): ComponentRegistry {
+  const $ = resolveRegistryEntries(schema, resolveReactEntry);
+  const entries = {
+    ...$,
+
+    Popover: {
+      parts: {
+        ...$.Popover,
+        Trigger: {
+          host: $.Popover.Trigger,
+          render: ({ props }) => <Host render={props.children} {...props} />,
+        },
+      },
+    },
+
+    Poster: {
+      props: {
+        ...$.Poster.props,
+        children: 'render',
+      },
+      render: ({ props, reference }) => {
+        const PosterPrimitive = reference($.Poster);
+
+        return <PosterPrimitive render={props.children} {...props} />;
+      },
+    },
+
+    Slider: {
+      ...$.Slider,
+      Thumbnail: {
+        Root: Div,
+        Image: {
+          import: {
+            from: '@videojs/react',
+            name: 'Slider',
+            path: ['Thumbnail'],
+          },
+        },
+      },
+    },
+
+    Tooltip: {
+      parts: {
+        ...$.Tooltip,
+        Trigger: {
+          host: $.Tooltip.Trigger,
+          render: ({ props }) => <Host render={props.children} {...props} />,
+        },
+      },
+    },
+  } satisfies RegistryEntries<CoreDefinitions>;
 
   return defineRegistry({
     schema,
-    entries: {
-      ...(entries.entries as Readonly<Record<string, never>>),
-
-      Popover: {
-        parts: {
-          ...$.Popover,
-          Trigger: {
-            host: $.Popover.Trigger,
-            render: ({ props }: RegistryRenderContext<Record<string, unknown>>) => (
-              <Host render={props.children} {...props} />
-            ),
-          },
-        },
-      },
-
-      Poster: {
-        props: {
-          ...$.Poster.props,
-          children: 'render',
-        },
-        render: ({ props, reference }: RegistryRenderContext<Record<string, unknown>>) => {
-          const PosterPrimitive = reference($.Poster);
-
-          return <PosterPrimitive render={props.children} {...props} />;
-        },
-      },
-
-      Slider: {
-        ...$.Slider,
-        Thumbnail: {
-          Root: Div,
-          Image: {
-            import: {
-              from: '@videojs/react',
-              name: 'Slider',
-              path: ['Thumbnail'],
-            },
-          },
-        },
-      },
-
-      Tooltip: {
-        parts: {
-          ...$.Tooltip,
-          Trigger: {
-            host: $.Tooltip.Trigger,
-            render: ({ props }: RegistryRenderContext<Record<string, unknown>>) => (
-              <Host render={props.children} {...props} />
-            ),
-          },
-        },
-      },
-    } as unknown as never,
+    entries,
     props: {
       transform: transformReactProp,
     },

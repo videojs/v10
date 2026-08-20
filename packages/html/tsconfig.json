@@ -12,5 +12,5 @@
   },
   "include": ["src", "vjsc"],
   "exclude": ["src/cdn/locales"],
-  "references": [{ "path": "../icons" }]
+  "references": [{ "path": "../core" }, { "path": "../icons" }]
 }
