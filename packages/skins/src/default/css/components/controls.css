@@ -10,4 +10,8 @@
   container: media-controls / inline-size;
   text-shadow: 0 1px 0 var(--shadow-current-color);
   border-radius: calc(Infinity * 1px);
+
+  &:dir(rtl) {
+    flex-direction: row-reverse;
+  }
 }

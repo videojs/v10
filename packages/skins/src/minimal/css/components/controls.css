@@ -11,4 +11,8 @@
   text-shadow: 0 1px 0 var(--shadow-current-color);
   background-color: var(--controls-background-color);
   backdrop-filter: var(--controls-backdrop-filter);
+
+  &:dir(rtl) {
+    flex-direction: row-reverse;
+  }
 }

@@ -5,12 +5,20 @@
   gap: calc(var(--spacing) * 3);
   align-items: center;
   container: media-time-controls / inline-size;
+
+  &:dir(rtl) {
+    flex-direction: row;
+  }
 }
 
 .media-minimal-skin .media-time-group {
   display: flex;
   gap: calc(var(--spacing) * 1);
   align-items: center;
+
+  &:dir(rtl) {
+    flex-direction: row-reverse;
+  }
 }
 
 .media-minimal-skin .media-time {
@@ -45,6 +53,10 @@
 @container media-root (width > 42rem) {
   .media-minimal-skin .media-time-controls {
     flex-direction: row;
+
+    &:dir(rtl) {
+      flex-direction: row-reverse;
+    }
   }
 
   .media-minimal-skin .media-time--duration,

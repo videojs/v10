@@ -3,7 +3,7 @@ import { cn } from '@videojs/utils/style';
 import { popup } from './popup';
 
 const submenuPanel = cn(
-  '[--submenu-translate:100%] rtl:[--submenu-translate:-100%]',
+  '[--submenu-translate:100%] [&:dir(rtl)]:[--submenu-translate:-100%]',
   'absolute inset-x-0 top-0 [max-height:inherit] overflow-auto overscroll-none p-(--menu-padding) outline-none',
   'z-10',
   'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-out',
@@ -77,7 +77,7 @@ export const menu = {
     'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
     '[&>:not([data-submenu])]:translate-none [&>:not([data-submenu])]:transition-[translate,filter]',
     '[&>:not([data-submenu])]:duration-(--menu-transition-duration) [&>:not([data-submenu])]:ease-out',
-    '[--submenu-parent-translate:-100%] rtl:[--submenu-parent-translate:100%]',
+    '[--submenu-parent-translate:-100%] [&:dir(rtl)]:[--submenu-parent-translate:100%]',
     '[&[data-submenu-expanded=true]>:not([data-submenu])]:[translate:var(--submenu-parent-translate)_0]',
     '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur',
     // Avoid restarting the covered-content transition in WebKit while the
@@ -103,8 +103,8 @@ export const menu = {
   back: cn(itemBase, 'mb-0.5 w-full'),
   hint: 'ms-auto inline-flex min-w-0 items-center gap-1 ps-2 text-current/65',
   hintLabel: 'max-w-24 overflow-hidden text-ellipsis whitespace-nowrap',
-  chevron: 'size-3.5 rtl:[scale:-1_1]',
-  backChevron: 'rtl:[scale:1_1]',
+  chevron: 'size-3.5 [&:dir(rtl)]:[scale:-1_1]',
+  backChevron: '[&:dir(rtl)]:[scale:1_1]',
   settingsGroup: 'group/settings',
   settingsTrigger: 'group',
   settingsIcon: 'transition-transform duration-150 ease-in-out group-aria-expanded:rotate-90 motion-reduce:duration-0',
