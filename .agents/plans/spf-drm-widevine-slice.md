@@ -9,6 +9,14 @@ Goal: the sandbox's Mux DRM source (`apps/sandbox/app/shared/sources.ts`,
 `DRM_PLAYBACK_ID` + `DRM_SYSTEMS`) plays end-to-end on Chrome/Widevine through an
 SPF DRM-composed engine variant. FairPlay/PlayReady adapters are shaped but not built.
 
+**Status 2026-08-20: VERIFIED end-to-end.** Steps 1–7 and 9 done (steps 2–4 as one
+`setupMediaKeys` behavior; the variant ships behind its own `@videojs/spf/hls-drm`
+entry — the `./hls` entry was already at its size budget). Smoke on Chrome/Widevine
+via the `spf-drm` sandbox template: license POSTs to license.mux.com, 893 frames
+decoded / 0 dropped, ABR upgraded to 2048x914 on the encrypted track. Step 8
+(errors-sequence reporting) remains, plus the out-of-slice list below. Smoke gotcha:
+Chrome 150 never fires `sourceopen` in hidden tabs — keep the tab visible.
+
 ## Steps (TDD; narrowest test per step)
 
 1. **Parser: structured key metadata.** Extend `media/hls/parse-media-playlist.ts`
