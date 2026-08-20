@@ -13,5 +13,6 @@ declare module 'virtual:vjsc/skin/react/minimal-video/*.tsx' {
 }
 
 declare module 'virtual:vjsc/skin/html/*.tsx' {
-  export const skin: string;
+  export function DefaultVideoSkin(props?: { className?: string }): { toString(): string };
+  export function MinimalVideoSkin(props?: { className?: string }): { toString(): string };
 }

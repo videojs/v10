@@ -25,11 +25,12 @@ export function discoverVjscModules<Item extends VjscModuleMeta = VjscModuleMeta
 ): readonly (Item & { readonly source: string })[] {
   const rootDir = resolve(options.rootDir);
   const patterns = typeof options.include === 'string' ? [options.include] : options.include;
+  const exclude = typeof options.exclude === 'string' ? [options.exclude] : options.exclude;
   const exportName = options.exportName ?? 'meta';
   const sourceFiles = [
     ...new Set(
       patterns.flatMap((pattern) =>
-        globSync(pattern, { cwd: rootDir, ...(options.exclude ? { exclude: options.exclude } : {}) }).map((path) =>
+        globSync(pattern, { cwd: rootDir, ...(exclude ? { exclude } : {}) }).map((path) =>
           isAbsolute(path) ? path : resolve(rootDir, path)
         )
       )

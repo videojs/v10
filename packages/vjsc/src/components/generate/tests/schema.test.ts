@@ -67,6 +67,22 @@ describe('createSchemaModule', () => {
     expect(module.code).toContain("export default defineSchema('@fixture/components', DEFINITIONS);");
   });
 
+  it('excludes matching component sources', () => {
+    const { dir, output, pattern } = setup();
+    const generated = createSchemaModule(
+      {
+        source: '@fixture/components',
+        include: [pattern],
+        exclude: [join(dir, 'slider/**')],
+        output,
+      },
+      { cwd: dir }
+    );
+
+    expect(generated.code).toContain('PlayButton');
+    expect(generated.code).not.toContain('Slider');
+  });
+
   it('rejects duplicate component names', () => {
     const { dir, output, pattern } = setup();
     mkdirSync(join(dir, 'duplicate'));

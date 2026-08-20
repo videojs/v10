@@ -28,6 +28,16 @@ describe('VJSC module metadata', () => {
     ]);
   });
 
+  it('excludes matching VJSC modules', () => {
+    const rootDir = mkdtempSync(join(tmpdir(), 'vjsc-meta-'));
+    writeFileSync(join(rootDir, 'included.tsx'), `export const meta = { name: 'included' };`);
+    writeFileSync(join(rootDir, 'excluded.tsx'), `export const meta = { name: 'excluded' };`);
+
+    expect(
+      discoverVjscModules({ rootDir, include: '*.tsx', exclude: ['excluded.tsx'] }).map((item) => item.name)
+    ).toEqual(['included']);
+  });
+
   it('removes metadata exports from projected modules', async () => {
     const result = await transform(
       `import type { VjscModuleMeta } from 'vjsc';\nexport const meta = { name: 'play' } satisfies VjscModuleMeta;\nexport function Play() { return <button />; }`,

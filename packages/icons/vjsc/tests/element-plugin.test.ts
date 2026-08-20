@@ -9,7 +9,7 @@ describe('iconElementPlugin', () => {
     const plugin = iconElementPlugin();
     const load = typeof plugin.load === 'object' ? plugin.load.handler : plugin.load;
     const addWatchFile = vi.fn();
-    const code = load?.call({ addWatchFile } as never, '\0@videojs/icons/element/minimal', { moduleType: 'js' });
+    const code = load?.call({ addWatchFile } as never, '\0@videojs/icons/element/minimal');
 
     expect(code).toContain('MediaIconElement.register(family, icons)');
     expect(code).toContain('"play":"<svg');

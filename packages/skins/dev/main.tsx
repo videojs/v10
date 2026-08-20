@@ -58,7 +58,7 @@ if (framework === 'react') {
         ? loaded.MinimalVideoSkin
         : null;
   if (!Skin) throw new Error(`React Skin module \`${key}\` did not export a Skin component.`);
-  createRoot(root).render(<App Skin={Skin} />);
+  createRoot(root).render(<App Skin={Skin as React.ComponentType<React.PropsWithChildren<{ className?: string }>>} />);
 } else {
   const Skin =
     'DefaultVideoSkin' in loaded
@@ -68,7 +68,8 @@ if (framework === 'react') {
         : null;
   if (!Skin) throw new Error(`HTML Skin module \`${key}\` did not export a Skin component.`);
   await import('../../html/src/define/video/player');
-  const skin = String(Skin({})).replace(
+  const render = Skin as (props?: { className?: string }) => { toString(): string };
+  const skin = String(render({})).replace(
     '<slot></slot>',
     '<video src="https://stream.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA.m3u8" playsinline crossorigin="anonymous"></video>'
   );

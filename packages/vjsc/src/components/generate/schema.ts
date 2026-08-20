@@ -121,7 +121,8 @@ function resolveManifestEntry(
   outputFile: string,
   watchFiles: Set<string>
 ): ManifestComponent[] {
-  return globSync(pattern, { cwd, ...(exclude ? { exclude } : {}) }).map((path) => {
+  const excluded = typeof exclude === 'string' ? [exclude] : exclude;
+  return globSync(pattern, { cwd, ...(excluded ? { exclude: excluded } : {}) }).map((path) => {
     const manifestPath = isAbsolute(path) ? path : resolve(cwd, path);
     const manifest = parseComponentManifest(manifestPath);
     watchFiles.add(manifestPath);
@@ -135,7 +136,8 @@ function resolveManifestEntry(
 }
 
 function resolveFileSet(entry: ComponentFileSet, cwd: string, watchFiles: Set<string>): InlineComponent[] {
-  return globSync(entry.include, { cwd, ...(entry.exclude ? { exclude: entry.exclude } : {}) }).map((file) => {
+  const exclude = typeof entry.exclude === 'string' ? [entry.exclude] : entry.exclude;
+  return globSync(entry.include, { cwd, ...(exclude ? { exclude } : {}) }).map((file) => {
     watchFiles.add(isAbsolute(file) ? file : resolve(cwd, file));
     return {
       kind: 'inline',
