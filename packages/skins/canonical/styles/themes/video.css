@@ -1,0 +1,29 @@
+@layer videojs.theme.base, videojs.theme.variant, videojs.theme.preferences;
+
+@layer videojs.theme.base {
+  :is(.media-theme-default, .media-theme-minimal) {
+    --media-controls-transition-duration: 100ms;
+    --media-scale: 1;
+    --media-spacing: calc(var(--media-scale-unit, 16px) * var(--media-scale) / 4);
+  }
+}
+
+@layer videojs.theme.preferences {
+  @media (pointer: fine) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
+      --media-controls-transition-duration: 300ms;
+    }
+  }
+
+  @media (pointer: coarse) {
+    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
+      --media-controls-transition-duration: 150ms;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :is(.media-theme-default, .media-theme-minimal) {
+      --media-controls-transition-duration: 50ms;
+    }
+  }
+}

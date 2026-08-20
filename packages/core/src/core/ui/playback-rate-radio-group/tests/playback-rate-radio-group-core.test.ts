@@ -15,8 +15,10 @@ function createMediaState(overrides: Partial<MediaPlaybackRateState> = {}): Medi
 function createState(overrides: Partial<PlaybackRateRadioGroupState> = {}): PlaybackRateRadioGroupState {
   return {
     rate: 1,
-    rates: [0.5, 1, 1.5, 2],
+    value: '1',
+    options: [0.5, 1, 1.5, 2].map((rate) => ({ rate, value: String(rate), label: `${rate}×`, disabled: false })),
     disabled: false,
+    hidden: false,
     availability: 'available',
     label: '',
     ...overrides,
@@ -32,7 +34,11 @@ describe('PlaybackRateRadioGroupCore', () => {
       const state = core.getState();
 
       expect(state.rate).toBe(1.5);
-      expect(state.rates).toEqual([1, 1.5]);
+      expect(state.value).toBe('1.5');
+      expect(state.options).toEqual([
+        { rate: 1, value: '1', label: '1×', disabled: false },
+        { rate: 1.5, value: '1.5', label: '1.5×', disabled: false },
+      ]);
     });
 
     it('marks state disabled when no rates are available', () => {
@@ -47,23 +53,23 @@ describe('PlaybackRateRadioGroupCore', () => {
       const core = new PlaybackRateRadioGroupCore();
       core.setMedia(createMediaState({ playbackRates: [] }));
 
-      expect(core.getState().availability).toBe('unavailable');
+      expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
     });
 
     it('marks availability available when rates exist', () => {
       const core = new PlaybackRateRadioGroupCore();
       core.setMedia(createMediaState());
 
-      expect(core.getState().availability).toBe('available');
+      expect(core.getState()).toMatchObject({ availability: 'available', hidden: false });
     });
   });
 
   describe('getLabel', () => {
-    it('returns default label with rate', () => {
+    it('returns a stable default group label', () => {
       const core = new PlaybackRateRadioGroupCore();
       expect(core.getLabel(createState({ rate: 1.5 }))).toMatchObject({
-        key: 'playback.rate',
-        text: 'Playback rate {rate}',
+        key: 'menu.playbackRate',
+        text: 'Playback rate',
       });
     });
 
@@ -81,14 +87,9 @@ describe('PlaybackRateRadioGroupCore', () => {
   });
 
   describe('getLabelParams', () => {
-    it('returns rate for default label', () => {
+    it('returns no parameters for the stable group label', () => {
       const core = new PlaybackRateRadioGroupCore();
-      expect(core.getLabelParams(createState({ rate: 2 }))).toEqual({ rate: 2 });
-    });
-
-    it('returns undefined when custom label is set', () => {
-      const core = new PlaybackRateRadioGroupCore({ label: 'Speed' });
-      expect(core.getLabelParams(createState())).toBeUndefined();
+      expect(core.getLabelParams(createState({ rate: 2 }))).toBeUndefined();
     });
   });
 
@@ -111,13 +112,19 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('returns aria-label', () => {
       const core = new PlaybackRateRadioGroupCore();
       const attrs = core.getAttrs(createState({ rate: 1.5 }));
-      expect(attrs['aria-label']).toMatchObject({ key: 'playback.rate', text: 'Playback rate {rate}' });
+      expect(attrs['aria-label']).toMatchObject({ key: 'menu.playbackRate', text: 'Playback rate' });
     });
 
     it('sets aria-disabled when disabled', () => {
       const core = new PlaybackRateRadioGroupCore();
       const attrs = core.getAttrs(createState({ disabled: true }));
       expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('sets hidden when unavailable', () => {
+      const core = new PlaybackRateRadioGroupCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs.hidden).toBe('');
     });
   });
 

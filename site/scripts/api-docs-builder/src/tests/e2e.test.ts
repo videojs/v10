@@ -93,15 +93,10 @@
  */
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import {
-  type FeatureResult,
-  generateComponentReferences,
-  generateFeatureReferences,
-  generateMediaElementReferences,
-  generatePresetReferences,
-  type MediaElementResult,
-  type PresetResult,
-} from '../pipeline';
+import { type FeatureResult, generateFeatureReferences } from '../feature-handler';
+import { generateMediaElementReferences, type MediaElementResult } from '../media-element-handler';
+import { generateComponentReferences } from '../pipeline';
+import { generatePresetReferences, type PresetResult } from '../preset-handler';
 import { getUtilEntries, type UtilEntry } from '../util-handler';
 
 const FIXTURE_ROOT = path.resolve(import.meta.dirname, 'fixtures/monorepo');
@@ -261,7 +256,9 @@ describe('Component pipeline (end-to-end)', () => {
 
       // Parts record exists
       expect(ref.parts).toBeDefined();
-      expect(Object.keys(ref.parts!)).toEqual(expect.arrayContaining(['indicator', 'track', 'fill', 'label']));
+      expect(Object.keys(ref.parts!)).toEqual(
+        expect.arrayContaining(['indicator', 'track', 'fill', 'label', 'marker'])
+      );
     });
 
     it('primary part (Indicator) gets core props, state, data-attrs, CSS vars', () => {
@@ -329,10 +326,18 @@ describe('Component pipeline (end-to-end)', () => {
       const fill = findComponent('Gauge')!.reference.parts!.fill!;
 
       expect(fill.name).toBe('Fill');
-      // Sub-part custom React props: extracted from `FillProps` interface.
-      // `children` is auto-excluded by the builder.
-      expect(fill.props.color).toMatchObject({ type: 'string' });
-      expect(fill.props.children).toBeUndefined();
+      // Props inherited by the matching custom element are shared with HTML.
+      expect(fill.props.color).toEqual({
+        type: 'string',
+        description: 'The color of the fill bar.',
+        frameworks: ['html', 'react'],
+      });
+      // Documented `children` is included because it is an explicit React contract.
+      expect(fill.props.children).toEqual({
+        type: 'unknown',
+        description: 'Fallback content displayed before the gauge is ready.',
+        frameworks: ['react'],
+      });
       expect(fill.state).toEqual({});
 
       // Fill's React source references `stateAttrMap`, so it gets the
@@ -354,6 +359,15 @@ describe('Component pipeline (end-to-end)', () => {
       // React-only: has platforms.react but NOT platforms.html
       expect(label.platforms.react).toEqual({});
       expect(label.platforms.html).toBeUndefined();
+    });
+
+    it('nested sub-part (Marker) resolves its React and HTML files', () => {
+      const marker = findComponent('Gauge')!.reference.parts!.marker!;
+
+      expect(marker.name).toBe('Marker');
+      expect(marker.description).toBe('A nested marker for the current gauge value.');
+      expect(marker.platforms.html).toEqual({ tagName: 'media-gauge-marker' });
+      expect(marker.platforms.react).toEqual({});
     });
 
     // Extra data-attrs files ({component}-{x}-data-attrs.ts, next to the
@@ -1345,7 +1359,7 @@ describe('Media element pipeline (end-to-end)', () => {
       // MediaStreamTypeEvents, but SimpleVideo has no @fires tag for it (and no
       // streamType event documentation). A custom event must never leak into the standard list
       // (which points readers at MDN) — with no @fires it appears in NEITHER
-      // bucket. Mirrors dash-video / simple-hls-video in the real monorepo.
+      // bucket. Mirrors dash-video / hls-video in the real monorepo.
       const ref = findElement('SimpleVideo')!.reference;
       expect(ref.platforms.html.events.standard).not.toContain('streamtypechange');
       const elementSpecificNames = ref.platforms.html.events.custom.map((e) => e.name);
@@ -1729,8 +1743,7 @@ describe('Media element pipeline (end-to-end)', () => {
   //
   // An audio element whose host's only mixin lives in a different workspace
   // package (spf), reached through that package's barrel file — mirrors
-  // SimpleHlsAudioOnlyMedia extending SimpleHlsAudioOnlyMediaMixin from
-  // @videojs/spf/hls.
+  // HlsAudioMedia extending HlsAudioMediaMixin from @videojs/spf/hls.
   //
   // Also exercises:
   //   - @fires-declared event descriptions for events outside the native

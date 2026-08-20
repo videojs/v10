@@ -76,6 +76,16 @@ describe('formatTime', () => {
     expect(formatTime(Infinity)).toBe('0:00');
     expect(formatTime(-Infinity)).toBe('0:00');
   });
+
+  it('defaults to English digital formatting', () => {
+    const english = formatTime(90, undefined, { locale: 'en' });
+    expect(formatTime(90)).toBe(english);
+  });
+
+  it.runIf(hasDurationFormat)('uses locale digits', () => {
+    expect(formatTime(90, undefined, { locale: 'fa' })).toBe('۱:۳۰');
+    expect(formatTime(35, 600, { locale: 'fa' })).toBe('۰۰:۳۵');
+  });
 });
 
 describe('formatTimeAsPhrase', () => {
@@ -85,6 +95,10 @@ describe('formatTimeAsPhrase', () => {
     expect(formatTimeAsPhrase(90)).toMatch(/30/);
     expect(formatTimeAsPhrase(300)).toMatch(/5/);
     expect(formatTimeAsPhrase(300)).toMatch(/minute/i);
+  });
+
+  it('formats zero duration', () => {
+    expect(formatTimeAsPhrase(0)).toBe('0 seconds');
   });
 
   it('adds remaining suffix for negative seconds', () => {
@@ -173,6 +187,11 @@ describe('createFallbackFormatter', () => {
     it('forces hours display when guided by an hours-long duration', async () => {
       const { formatTime: format } = await loadWithFallback();
       expect(format(35, 3600)).toBe('0:00:35');
+    });
+
+    it('uses locale digits', async () => {
+      const { formatTime: format } = await loadWithFallback();
+      expect(format(90, undefined, { locale: 'fa' })).toBe('۱:۳۰');
     });
   });
 

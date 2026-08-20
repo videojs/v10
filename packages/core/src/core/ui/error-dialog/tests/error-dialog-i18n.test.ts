@@ -59,6 +59,30 @@ describe('resolveErrorDialogDescription', () => {
     });
   });
 
+  it('maps the engine unsupported-playback-feature code to its own copy', () => {
+    // SVTA 99001, reported by an engine that has no pipeline for the source.
+    // The engine deliberately sends no message, so the code is all there is to
+    // go on — and it must not fall through to `errors.unexpected`.
+    expect(resolveErrorDialogDescription({ code: 99001, message: '' }, null)).toMatchObject({
+      key: 'errors.unplayable',
+      text: 'This media is unsupported by the player.',
+    });
+  });
+
+  it('distinguishes an unplayable source from a browser-unsupported one', () => {
+    // Both are "can't play it", but only one is about the browser. Showing
+    // `errors.source` here would send a viewer to a different browser that
+    // behaves identically.
+    const unplayable = resolveErrorDialogDescription({ code: 99001, message: '' }, null);
+    const unsupportedSource = resolveErrorDialogDescription(
+      { code: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, message: '' },
+      null
+    );
+
+    expect(unplayable).not.toEqual(unsupportedSource);
+    expect(unplayable).toMatchObject({ key: 'errors.unplayable' });
+  });
+
   it('falls back to cached message then generic key', () => {
     expect(resolveErrorDialogDescription(null, 'Cached')).toBe('Cached');
     expect(resolveErrorDialogDescription(null, null)).toMatchObject({

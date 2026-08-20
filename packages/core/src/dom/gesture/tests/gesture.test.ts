@@ -464,6 +464,24 @@ describe('interactive child filtering', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it('does not fire from any child inside a marked controls surface', () => {
+    const container = setup();
+    const controls = document.createElement('div');
+    const label = document.createElement('span');
+    controls.setAttribute('data-interactive', '');
+    controls.appendChild(label);
+    container.appendChild(controls);
+
+    const handler = vi.fn();
+    createTapGesture(container, handler);
+
+    pointerDown(label);
+    vi.advanceTimersByTime(50);
+    pointerUp(label, { pointerType: 'mouse', clientX: 150 });
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
   it('fires when event originates from a non-interactive child', () => {
     const container = setup();
     const overlay = document.createElement('div');

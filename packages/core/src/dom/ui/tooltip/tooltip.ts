@@ -9,6 +9,7 @@ import {
   type PopoverPopupProps,
   type PopoverTriggerProps,
 } from '../popover/popover';
+import type { PopupGroup } from '../popover/popup-group';
 import type { TransitionApi } from '../transition';
 
 export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur' | 'imperative-action';
@@ -27,6 +28,7 @@ export interface TooltipOptions {
   disableHoverablePopup?: () => boolean;
   disabled?: () => boolean;
   group?: () => TooltipGroupCore | undefined;
+  popupGroup?: () => PopupGroup | undefined;
 }
 
 export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'> {
@@ -89,21 +91,50 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
   // suppressed during tap. The browser fires pointerdown → focus → pointerup,
   // so the flag is true during tap-triggered focus but false during keyboard Tab.
   let isPointerDown = false;
+  let popupGroup: PopupGroup | undefined;
+  let unsubscribe: (() => void) | undefined;
+
+  function isTriggerPopupOpen(): boolean {
+    return popupGroup?.isOpenFor(popover.triggerElement) ?? false;
+  }
+
+  function syncPopupGroup(): void {
+    const next = options.popupGroup?.();
+    if (next === popupGroup) return;
+
+    unsubscribe?.();
+    popupGroup = next;
+    unsubscribe = popupGroup?.subscribe(() => {
+      if (isTriggerPopupOpen()) popover.close('imperative-action');
+    });
+  }
+
+  function setTriggerElement(el: HTMLElement | null): void {
+    popover.setTriggerElement(el);
+    syncPopupGroup();
+    if (isTriggerPopupOpen()) popover.close('imperative-action');
+  }
 
   // Spread popover trigger props, omit onClick, guard disabled/touch on open handlers.
   const { onClick: _, ...baseTriggerProps } = popover.triggerProps;
   const triggerProps: TooltipTriggerProps = {
     ...baseTriggerProps,
     onPointerDown() {
+      syncPopupGroup();
       isPointerDown = true;
+      popover.close('imperative-action');
     },
     onPointerEnter(event) {
+      syncPopupGroup();
       if (options.disabled?.()) return;
+      if (isTriggerPopupOpen()) return;
       if (event.pointerType === 'touch') return;
       baseTriggerProps.onPointerEnter(event);
     },
     onFocusIn(event) {
+      syncPopupGroup();
       if (options.disabled?.()) return;
+      if (isTriggerPopupOpen()) return;
       if (isPointerDown) {
         isPointerDown = false;
         return;
@@ -128,7 +159,15 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     get triggerElement() {
       return popover.triggerElement;
     },
-    open: () => popover.open('hover'),
+    setTriggerElement,
+    open: () => {
+      syncPopupGroup();
+      if (!isTriggerPopupOpen()) popover.open('hover');
+    },
     close: (reason: TooltipOpenChangeReason = 'hover') => popover.close(reason),
+    destroy() {
+      unsubscribe?.();
+      popover.destroy();
+    },
   };
 }

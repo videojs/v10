@@ -45,10 +45,14 @@ export default {
     current: 'An ùine làithreach',
     duration: 'Faide',
     remaining: 'An ùine air fhàgail',
+    elapsedSuffix: '{duration} den ùine a chaidh seachad',
+    durationSuffix: '{duration} de dh’fhaid',
     remainingSuffix: '{duration} air fhàgail',
-    showElapsed: '{duration}. Seall an ùine a chaidh seachad.',
-    showDuration: '{duration}. Seall an ùine iomlan.',
-    showRemaining: '{duration}. Seall an ùine air fhàgail.',
+    showElapsed: 'Seall an ùine a chaidh seachad, {duration}.',
+    showDuration: 'Seall an ùine iomlan, {duration}.',
+    showRemaining: 'Seall an ùine air fhàgail, {duration}.',
+    toggleElapsed: 'Toglaich eadar an ùine a chaidh seachad agus an ùine air fhàgail.',
+    toggleDuration: 'Toglaich eadar an fhaid agus an ùine air fhàgail.',
     position: '{current} à {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Làn-sgrìn',
     pip: 'Dealbh beag anns a’ dealbh mhòr',
     exitPip: 'Fàg dealbh beag',
+    seekedTo: 'Air a leum gu {time}',
+  },
+  container: {
+    label: 'Cluicheadair mheadhanan',
   },
   errors: {
     aborted: 'Sguir thu de chluich a’ mheadhain',
@@ -77,6 +85,7 @@ export default {
     source:
       'Cha b’ urrainn dhuinn am meadhan a luchdadh – dh’fhaoidte gun do dh’fhàillig leis an fhrithealaiche no an lìonra no nach cuir sinn taic ris an fhòrmat.',
     encrypted: 'Tha am meadhan crioptaichte ’s chan eil iuchair dì-chrioptachaidh againn dha.',
+    unplayable: 'Cha toir an cluicheadair taic dhan mheadhan seo.',
     title: 'Chaidh rudeigin ceàrr.',
     unexpected: 'Thachair mearachd. Feuch ris a-rithist.',
   },

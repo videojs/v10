@@ -45,10 +45,14 @@ export default {
     current: 'Aktuell tid',
     duration: 'Total tid',
     remaining: 'Återstående tid',
+    elapsedSuffix: '{duration} förfluten tid',
+    durationSuffix: '{duration} varaktighet',
     remainingSuffix: '{duration} kvar',
-    showElapsed: '{duration}. Visa förfluten tid.',
-    showDuration: '{duration}. Visa längd.',
-    showRemaining: '{duration}. Visa återstående tid.',
+    showElapsed: 'Visa förfluten tid, {duration}.',
+    showDuration: 'Visa längd, {duration}.',
+    showRemaining: 'Visa återstående tid, {duration}.',
+    toggleElapsed: 'Växla mellan förfluten och återstående tid.',
+    toggleDuration: 'Växla mellan varaktighet och återstående tid.',
     position: '{current} av {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Fullskärm',
     pip: 'Bild i bild',
     exitPip: 'Avsluta bild i bild',
+    seekedTo: 'Hoppade till {time}',
+  },
+  container: {
+    label: 'Mediaspelare',
   },
   errors: {
     aborted: 'Du har avbrutit videouppspelningen.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Det gick inte att ladda videon, antingen på grund av ett server- eller nätverksfel, eller för att formatet inte stöds.',
     encrypted: 'Mediat är krypterat och vi har inte nycklarna för att dekryptera det.',
+    unplayable: 'Det här mediet stöds inte av spelaren.',
     title: 'Något gick fel.',
     unexpected: 'Ett fel uppstod. Försök igen.',
   },

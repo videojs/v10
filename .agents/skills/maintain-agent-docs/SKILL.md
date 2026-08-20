@@ -15,7 +15,7 @@ Keep agent guidance as a routing and correction layer over project sources, not 
 - Keep checked-in skills as direct children of `.agents/skills/`; treat `.claude/skills/` and `.opencode/skills/` as generated directory aliases.
 - Put conditional detail in a directly linked skill reference.
 - Put rules that can be mechanically checked in code, tests, lint, hooks, or `build/scripts/check-workspace.mjs`.
-- Put architecture rationale in `internal/design/`, `internal/decisions/`, or `rfc/`.
+- When the user explicitly requests a durable record, put architecture rationale in `internal/design/`, `internal/decisions/`, or `rfc/`; never create one as a default by-product of other work.
 
 ## Process
 

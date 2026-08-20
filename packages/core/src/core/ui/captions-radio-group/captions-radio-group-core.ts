@@ -4,13 +4,12 @@ import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text } from '../../i18n';
-import { disableText, enableText } from '../../i18n/text/captions';
-import { captionsText, subtitlesText } from '../../i18n/text/menu';
-import type { ButtonState } from '../types';
+import { captionsText, offText, subtitlesText } from '../../i18n/text/menu';
+import type { RadioOption, RadioOptionsState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface CaptionsRadioGroupProps {
-  /** Custom label for the menu trigger. */
+  /** Custom label for the options group. */
   label?: Text | string | ((state: CaptionsRadioGroupState) => Text | string) | undefined;
   /** Custom formatter for visible track labels. */
   formatTrack?: ((track: MediaTextTrack) => Text | string) | undefined;
@@ -18,17 +17,11 @@ export interface CaptionsRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-export interface CaptionsRadioGroupTrack {
-  value: string;
-  label: Text | string;
-}
+export interface CaptionsRadioGroupOption extends RadioOption {}
 
-export interface CaptionsRadioGroupState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
-  tracks: readonly CaptionsRadioGroupTrack[];
-  value: string;
-  disabled: boolean;
-  availability: 'available' | 'unavailable';
-}
+export interface CaptionsRadioGroupState
+  extends Pick<MediaTextTrackState, 'subtitlesShowing'>,
+    RadioOptionsState<CaptionsRadioGroupOption> {}
 
 export const CAPTIONS_OFF_VALUE = 'off';
 
@@ -54,10 +47,11 @@ export class CaptionsRadioGroupCore {
   };
 
   readonly state = createState<CaptionsRadioGroupState>({
-    tracks: [],
+    options: [{ value: CAPTIONS_OFF_VALUE, label: offText, disabled: false }],
     value: CAPTIONS_OFF_VALUE,
     subtitlesShowing: false,
-    disabled: false,
+    disabled: true,
+    hidden: true,
     availability: 'unavailable',
     label: '',
   });
@@ -77,7 +71,7 @@ export class CaptionsRadioGroupCore {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    return state.subtitlesShowing ? disableText : enableText;
+    return captionsText;
   }
 
   getTrackLabel(track: MediaTextTrack): Text | string {
@@ -88,6 +82,7 @@ export class CaptionsRadioGroupCore {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -99,19 +94,24 @@ export class CaptionsRadioGroupCore {
     const media = this.#media!;
     const captionTracks = getCaptionTracks(media.textTrackList);
     const showingIndex = captionTracks.findIndex((track) => track.mode === 'showing');
-    const tracks = captionTracks.map((track, index) => ({
-      value: track.id || String(index),
-      label: this.getTrackLabel(track),
-    }));
+    const options: CaptionsRadioGroupOption[] = [
+      { value: CAPTIONS_OFF_VALUE, label: offText, disabled: false },
+      ...captionTracks.map((track, index) => ({
+        value: track.id || String(index),
+        label: this.getTrackLabel(track),
+        disabled: false,
+      })),
+    ];
 
     const availability: CaptionsRadioGroupState['availability'] =
       captionTracks.length > 0 ? 'available' : 'unavailable';
 
     this.state.patch({
-      tracks,
+      options,
       value: showingIndex === -1 ? CAPTIONS_OFF_VALUE : captionTracks[showingIndex]!.id || String(showingIndex),
       subtitlesShowing: media.subtitlesShowing,
       disabled: this.#props.disabled || captionTracks.length === 0,
+      hidden: availability === 'unavailable',
       availability,
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });

@@ -1,11 +1,43 @@
+import { DEFAULT_LOCALE } from '@videojs/utils/i18n';
 import type { FlatTranslations, Locale, Translations } from './params';
 import { flattenTranslations } from './utils';
 
-const registry = new Map<Locale, Partial<FlatTranslations>>();
-const subscribers = new Set<() => void>();
+interface I18nRegistry {
+  readonly layers: Map<Locale, Partial<FlatTranslations>>;
+  readonly subscribers: Set<() => void>;
+}
+
+/**
+ * Well-known key for the shared registry. Its name and value shape are a cross-version contract:
+ * every copy of this module in a realm must agree on them, so change the key when the shape changes.
+ */
+const I18N_REGISTRY_KEY = Symbol.for('@videojs/i18n-registry');
+
+type I18nRegistryHost = { [I18N_REGISTRY_KEY]?: I18nRegistry };
+
+/**
+ * The registry is realm-global rather than module-global so duplicate copies of this module
+ * converge on one set of translations.
+ *
+ * Duplication is normal, not a bug to fix upstream: separately loaded CDN bundles, a pinned and an
+ * unpinned URL for the same file, and two bundlers' output on one page all yield distinct module
+ * instances. With module-scoped state, a `registerI18n` call on one instance is invisible to the
+ * player reading from another, and the locale silently falls back to English.
+ */
+function getRegistry(): I18nRegistry {
+  const host = globalThis as I18nRegistryHost;
+  const existing = host[I18N_REGISTRY_KEY];
+  if (existing) {
+    return existing;
+  }
+
+  const registry: I18nRegistry = { layers: new Map(), subscribers: new Set() };
+  host[I18N_REGISTRY_KEY] = registry;
+  return registry;
+}
 
 function notify(): void {
-  for (const cb of subscribers) {
+  for (const cb of getRegistry().subscribers) {
     cb();
   }
 }
@@ -47,7 +79,7 @@ export function getCanonicalLocaleKey(locale: Locale): Locale {
 export function findLocaleKeys(locale: Locale): Locale[] {
   const base = getCanonicalLocaleKey(locale);
   if (!base) {
-    return ['en'];
+    return [DEFAULT_LOCALE];
   }
 
   const segments = base.split('-').filter(Boolean);
@@ -71,18 +103,19 @@ export function findLocaleKeys(locale: Locale): Locale[] {
       out.push(tag);
     }
   }
-  if (!seen.has('en')) {
-    out.push('en');
+  if (!seen.has(DEFAULT_LOCALE)) {
+    out.push(DEFAULT_LOCALE);
   }
 
   return out;
 }
 
 function mergeI18nTranslations(chain: Locale[]): FlatTranslations {
+  const { layers } = getRegistry();
   const merged: Partial<FlatTranslations> = {};
   for (let i = chain.length - 1; i >= 0; i--) {
     const tag = chain[i]!;
-    const layer = registry.get(tag);
+    const layer = layers.get(tag);
     if (layer) {
       Object.assign(merged, layer);
     }
@@ -98,9 +131,10 @@ function mergeI18nTranslations(chain: Locale[]): FlatTranslations {
  * @public
  */
 export function registerI18n(locale: Locale, translations: Partial<Translations>): void {
+  const { layers } = getRegistry();
   const tag = getCanonicalLocaleKey(locale);
-  const existing = registry.get(tag) ?? {};
-  registry.set(tag, { ...existing, ...flattenTranslations(translations) });
+  const existing = layers.get(tag) ?? {};
+  layers.set(tag, { ...existing, ...flattenTranslations(translations) });
   notify();
 }
 
@@ -121,6 +155,7 @@ export function getI18nTranslations(locale: Locale): FlatTranslations {
  * @public
  */
 export function onI18nRegistryChange(callback: () => void): () => void {
+  const { subscribers } = getRegistry();
   subscribers.add(callback);
   return () => {
     subscribers.delete(callback);
@@ -134,11 +169,12 @@ export function onI18nRegistryChange(callback: () => void): () => void {
  * @public
  */
 export function hasRegisteredLocale(locale: Locale): boolean {
-  return registry.has(getCanonicalLocaleKey(locale));
+  return getRegistry().layers.has(getCanonicalLocaleKey(locale));
 }
 
 /** Clears registered locale overlays (test isolation). */
 export function resetI18nRegistry(): void {
-  registry.clear();
+  const { layers, subscribers } = getRegistry();
+  layers.clear();
   subscribers.clear();
 }

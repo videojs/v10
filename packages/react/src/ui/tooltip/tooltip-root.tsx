@@ -1,5 +1,3 @@
-'use client';
-
 import { type TooltipProps as CoreTooltipProps, TooltipCore, TooltipDataAttrs } from '@videojs/core';
 import {
   createTooltip,
@@ -12,6 +10,7 @@ import { isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useOptionalContainer } from '../../player/context';
+import { useOptionalPopupGroup } from '../../player/popup-group-context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
@@ -44,6 +43,7 @@ export function TooltipRoot({
   ...coreProps
 }: TooltipRootProps): ReactNode {
   const container = useOptionalContainer();
+  const popupGroup = useOptionalPopupGroup();
   const controls = useOptionalControlsContext();
   const [core] = useState(() => new TooltipCore(coreProps));
   core.setProps(coreProps);
@@ -61,6 +61,7 @@ export function TooltipRoot({
   const disableHoverablePopupRef = useLatestRef(disableHoverablePopup);
   const disabledRef = useLatestRef(disabled);
   const groupRef = useLatestRef(groupFromContext);
+  const popupGroupRef = useLatestRef(popupGroup);
 
   const [tooltip] = useState(() => {
     const instance = createTooltip({
@@ -76,6 +77,7 @@ export function TooltipRoot({
       disableHoverablePopup: () => disableHoverablePopupRef.current,
       disabled: () => disabledRef.current,
       group: () => groupRef.current,
+      popupGroup: () => popupGroupRef.current,
     });
 
     // Apply defaultOpen on creation (uncontrolled only)

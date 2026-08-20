@@ -227,10 +227,10 @@ function checkReleasePleaseConfig() {
   const linkedVersions = config.plugins.find((p) => p.type === 'linked-versions');
   const components = new Set(linkedVersions?.components ?? []);
 
-  // Every package with a version field should be registered.
+  // Every publishable package with a version field should be registered.
   for (const dir of getPackageDirs()) {
     const pkg = readPackageJson(dir);
-    if (!pkg.version) continue;
+    if (pkg.private || !pkg.version) continue;
 
     const pkgPath = `packages/${dir}`;
     if (!configPackages.has(pkgPath)) {
@@ -248,7 +248,7 @@ function checkReleasePleaseConfig() {
 
 /**
  * `@videojs/html` and `@videojs/react` ship the per-framework markdown docs
- * subtree inside their tarballs (see `site/scripts/copy-package-docs.js`).
+ * subtree inside their tarballs (see `site/scripts/copy-package-docs.ts`).
  * Both wires (the `files[]` entry and the `prepack` script) must stay in sync
  * — without one, publishing silently drops the docs.
  */
@@ -265,6 +265,12 @@ function checkBundledDocs() {
     if (prepack !== expected) {
       warnings.push(`${pkg.name}: prepack script should be \`${expected}\` (got: ${prepack ?? 'missing'})`);
     }
+  }
+
+  const cli = readPackageJson('cli');
+  const expectedCliCopy = 'node --import tsx ../../site/scripts/copy-package-docs.ts cli';
+  if (cli.scripts?.['copy-docs'] !== expectedCliCopy) {
+    warnings.push(`${cli.name}: copy-docs script should be \`${expectedCliCopy}\``);
   }
 
   return { ok: warnings.length === 0, warnings };

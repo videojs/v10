@@ -1,0 +1,36 @@
+<video-player class="video-player">
+    <media-container>
+        <video
+            src="{{VJS10_DEMO_VIDEO_MP4}}"
+            autoplay
+            muted
+            playsinline
+            loop
+            crossorigin="anonymous"
+        >
+            <track
+                kind="chapters"
+                src="/docs/demos/time-slider/chapters.vtt"
+                srclang="en"
+                default
+            />
+        </video>
+        <media-time-slider class="media-time-slider">
+            <media-time-slider-chapters class="media-slider-chapters">
+                <template>
+                    <div class="media-slider-chapter">
+                        <media-slider-track class="media-slider-track">
+                            <media-slider-buffer class="media-slider-buffer"></media-slider-buffer>
+                            <media-slider-fill class="media-slider-fill"></media-slider-fill>
+                        </media-slider-track>
+                    </div>
+                </template>
+            </media-time-slider-chapters>
+            <media-slider-thumb class="media-slider-thumb"></media-slider-thumb>
+            <media-slider-preview class="media-slider-preview">
+                <media-time-slider-chapter-title class="media-slider-chapter-title"></media-time-slider-chapter-title>
+                <media-slider-value type="pointer"></media-slider-value>
+            </media-slider-preview>
+        </media-time-slider>
+    </media-container>
+</video-player>

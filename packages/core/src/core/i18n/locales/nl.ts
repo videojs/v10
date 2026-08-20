@@ -21,8 +21,8 @@ export default {
     disable: 'Ondertiteling uitschakelen',
   },
   pip: {
-    enter: 'Picture-in-Picture',
-    exit: 'Picture-in-Picture uit',
+    enter: 'Beeld-in-beeld starten',
+    exit: 'Beeld-in-beeld stoppen',
   },
   live: {
     playing: 'Speelt live',
@@ -45,10 +45,14 @@ export default {
     current: 'Huidige tijd',
     duration: 'Tijdsduur',
     remaining: 'Resterende tijd',
+    elapsedSuffix: '{duration} verstreken tijd',
+    durationSuffix: '{duration} duur',
     remainingSuffix: 'Nog {duration}',
-    showElapsed: '{duration}. Verstreken tijd tonen.',
-    showDuration: '{duration}. Duur tonen.',
-    showRemaining: '{duration}. Resterende tijd tonen.',
+    showElapsed: 'Verstreken tijd tonen, {duration}.',
+    showDuration: 'Duur tonen, {duration}.',
+    showRemaining: 'Resterende tijd tonen, {duration}.',
+    toggleElapsed: 'Schakel tussen verstreken en resterende tijd.',
+    toggleDuration: 'Schakel tussen duur en resterende tijd.',
     position: '{current} van {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Volledig scherm',
     pip: 'Beeld-in-beeld',
     exitPip: 'Beeld-in-beeld verlaten',
+    seekedTo: 'Gesprongen naar {time}',
+  },
+  container: {
+    label: 'Mediaspeler',
   },
   errors: {
     aborted: 'U heeft het afspelen van de media afgebroken',
@@ -77,6 +85,7 @@ export default {
     source:
       'De media kon niet worden geladen, doordat de server of het netwerk faalde of doordat het formaat niet wordt ondersteund.',
     encrypted: 'De media is gecodeerd en we hebben niet de sleutels om het te decoderen.',
+    unplayable: 'Deze media wordt niet ondersteund door de speler.',
     title: 'Er is iets misgegaan.',
     unexpected: 'Er is een fout opgetreden. Probeer het opnieuw.',
   },

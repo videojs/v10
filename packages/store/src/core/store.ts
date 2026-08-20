@@ -2,20 +2,40 @@ import { isNull, isObject } from '@videojs/utils/predicate';
 import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
 import { throwDestroyedError, throwNoTargetError } from './errors';
-import type { AttachContext, Slice, StateContext } from './slice';
+import type {
+  AnySlice,
+  AttachContext,
+  InferSliceDerivedState,
+  InferSliceSourceState,
+  InferSliceState,
+  Slice,
+  StateContext,
+} from './slice';
 import type { StateChange, State as StateContainer, SubscribeOptions, UnknownState, WritableState } from './state';
 import { createState } from './state';
 
 const STORE_SYMBOL = Symbol.for('@videojs/store');
+const hasOwnProp = Object.prototype.hasOwnProperty;
 
 export interface StoreOptions<Target, State> extends StoreCallbacks<Target, State> {}
 
-export function createStore<Target = unknown>(): <State>(
-  slice: Slice<Target, State>,
-  options?: StoreOptions<Target, State>
-) => Store<Target, State> {
-  return <State>(slice: Slice<Target, State>, options: StoreOptions<Target, State> = {}): Store<Target, State> => {
-    type TargetStore = Store<Target, State>;
+export interface StoreFactory<Target> {
+  <S extends AnySlice<Target>>(
+    slice: S,
+    options?: StoreOptions<Target, InferSliceState<S>>
+  ): Store<Target, InferSliceState<S>>;
+  <State>(slice: Slice<Target, State>, options?: StoreOptions<Target, State>): Store<Target, State>;
+}
+
+export function createStore<Target = unknown>(): StoreFactory<Target> {
+  return (<S extends AnySlice<Target>>(
+    slice: S,
+    options: StoreOptions<Target, InferSliceState<S>> = {}
+  ): Store<Target, InferSliceState<S>> => {
+    type SourceState = InferSliceSourceState<S>;
+    type DerivedState = InferSliceDerivedState<S>;
+    type PublicState = InferSliceState<S>;
+    type TargetStore = Store<Target, PublicState>;
 
     // Closure state
     let target: Target | null = null;
@@ -24,25 +44,31 @@ export function createStore<Target = unknown>(): <State>(
     const setupAbort = new AbortController();
     const signals = new AbortControllerRegistry();
 
-    // Reactive state - initialized after building slice state
-    let state: WritableState<State>;
+    let sourceState: Readonly<SourceState>;
+
+    // Reactive public state - initialized after building slice source state.
+    let state: WritableState<PublicState>;
 
     function validate() {
       if (destroyed) throwDestroyedError();
       if (!target) throwNoTargetError();
     }
 
-    const initialState = slice.state({
-      target: () => {
-        validate();
-        return target!;
-      },
-      signals,
-      get: () => state.current as Readonly<Record<string, unknown>>,
-      set: (partial) => state.patch(partial as Partial<State>),
-    } satisfies StateContext<Target>);
+    const initialSourceState = freezeCopy(
+      slice.state({
+        target: () => {
+          validate();
+          return target!;
+        },
+        signals,
+        get: () => sourceState as Readonly<Record<PropertyKey, unknown>>,
+        set: (partial) => setSource(partial as Partial<SourceState>),
+      } satisfies StateContext<Target>)
+    );
 
-    state = createState(initialState);
+    sourceState = initialSourceState;
+    const initialDerivedState = derive(sourceState);
+    state = createState(publish(sourceState, initialDerivedState));
 
     const store = {
       [STORE_SYMBOL]: true,
@@ -63,10 +89,19 @@ export function createStore<Target = unknown>(): <State>(
       subscribe,
     } as unknown as TargetStore;
 
-    for (const key of Object.keys(initialState as object)) {
+    for (const key of Object.keys(state.current as object)) {
       Object.defineProperty(store, key, {
-        get: () => state.current[key as keyof State],
+        get: () => state.current[key as keyof PublicState],
         enumerable: true,
+      });
+    }
+
+    // Private symbol-backed source actions remain available to feature-owned
+    // configuration adapters without becoming part of the public state snapshot.
+    for (const key of Object.getOwnPropertySymbols(sourceState as object)) {
+      if (typeof sourceState[key as keyof SourceState] !== 'function') continue;
+      Object.defineProperty(store, key, {
+        get: () => sourceState[key as keyof SourceState],
       });
     }
 
@@ -78,6 +113,43 @@ export function createStore<Target = unknown>(): <State>(
 
     return store;
 
+    function derive(source: Readonly<SourceState>): DerivedState {
+      const result: Record<string, unknown> = {};
+      const definitions = slice.derived as
+        | Record<string, (ctx: { get: () => Readonly<SourceState> }) => unknown>
+        | undefined;
+      if (!definitions) return result as DerivedState;
+
+      const ctx = { get: () => source };
+
+      for (const key of Object.keys(definitions)) {
+        result[key] = definitions[key]!(ctx);
+      }
+
+      return result as DerivedState;
+    }
+
+    function publish(source: Readonly<SourceState>, derived: DerivedState): PublicState {
+      const result: Record<string, unknown> = {};
+
+      // Object.keys intentionally excludes symbol-backed internal source state.
+      for (const key of Object.keys(source as object)) {
+        result[key] = source[key as keyof SourceState];
+      }
+
+      return Object.assign(result, derived) as PublicState;
+    }
+
+    function setSource(partial: Partial<SourceState>): void {
+      const patched = patchSource(sourceState, partial);
+      if (!patched) return;
+
+      // Derive before committing so a thrown formula leaves every snapshot unchanged.
+      const nextDerived = derive(patched.next);
+      sourceState = patched.next;
+      state.replace(publish(sourceState, nextDerived));
+    }
+
     function attach(newTarget: Target): () => void {
       if (destroyed) throwDestroyedError();
 
@@ -85,16 +157,23 @@ export function createStore<Target = unknown>(): <State>(
       signals.reset();
       target = newTarget;
 
-      // Create attach context
-      const attachContext: AttachContext<Target, State> = {
+      const attachContext: AttachContext<Target, SourceState> = {
         target: newTarget,
         signal: signals.base,
-        get: () => state.current,
-        set: (partial) => state.patch(partial),
+        get: () => sourceState,
+        // Attach itself has an error boundary, but event listeners keep this
+        // context after attach returns and must report update errors too.
+        set: (partial) => {
+          try {
+            setSource(partial);
+          } catch (error) {
+            reportError(error);
+          }
+        },
         reportError,
         store: {
           get state() {
-            return state.current;
+            return state.current as UnknownState;
           },
           subscribe,
         },
@@ -123,7 +202,12 @@ export function createStore<Target = unknown>(): <State>(
       if (isNull(target)) return;
       signals.reset();
       target = null;
-      state.patch(initialState);
+
+      const resetState = { ...initialSourceState } as SourceState;
+      for (const key of slice.preserve ?? []) {
+        (resetState as Record<PropertyKey, unknown>)[key] = (sourceState as Record<PropertyKey, unknown>)[key];
+      }
+      setSource(resetState);
     }
 
     function destroy(): void {
@@ -144,7 +228,26 @@ export function createStore<Target = unknown>(): <State>(
         console.error('[vjs-store]', error);
       }
     }
-  };
+  }) as StoreFactory<Target>;
+}
+
+function freezeCopy<T>(value: T): Readonly<T> {
+  return Object.freeze({ ...value });
+}
+
+function patchSource<State>(current: Readonly<State>, partial: Partial<State>): { next: Readonly<State> } | null {
+  const next = { ...current } as State;
+  let changed = false;
+
+  for (const key of Reflect.ownKeys(partial as object) as (keyof State)[]) {
+    if (!hasOwnProp.call(partial, key)) continue;
+    const value = partial[key];
+    if (Object.is(current[key], value)) continue;
+    (next as { -readonly [Key in keyof State]: State[Key] })[key] = value!;
+    changed = true;
+  }
+
+  return changed ? { next: Object.freeze(next) } : null;
 }
 
 export function isStore(value: unknown): value is AnyStore {
@@ -172,6 +275,6 @@ export type AnyStore<Target = any> = BaseStore<Target, object>;
 
 export type UnknownStore<Target = unknown> = Store<Target, UnknownState>;
 
-export type InferStoreTarget<S extends AnyStore> = S extends Store<infer T, any> ? T : never;
+export type InferStoreTarget<S extends AnyStore> = S extends { readonly target: infer Target | null } ? Target : never;
 
-export type InferStoreState<S extends AnyStore> = S extends Store<any, infer State> ? State : never;
+export type InferStoreState<S extends AnyStore> = S extends { readonly state: infer State } ? State : never;

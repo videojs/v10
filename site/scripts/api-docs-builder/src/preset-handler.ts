@@ -24,7 +24,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
-import type { PresetFeatureRef, PresetReference, PresetResult, PresetSkinDef } from './pipeline.js';
+import type { PresetFeatureRef, PresetReference, PresetSkinDef } from './types.js';
+import { getJSDocDescription } from './utils.js';
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -38,6 +39,11 @@ interface PresetInfo {
     barrelPath: string;
     scanDir: string;
   };
+}
+
+export interface PresetResult {
+  name: string;
+  reference: PresetReference;
 }
 
 // ─── Package.json Discovery ─────────────────────────────────────────
@@ -375,12 +381,7 @@ function extractFileDescription(filePath: string): string | undefined {
   const firstStatement = sourceFile.statements[0];
   if (!firstStatement) return undefined;
 
-  const jsDocNodes = (firstStatement as { jsDoc?: ts.JSDoc[] }).jsDoc;
-  if (!jsDocNodes || jsDocNodes.length === 0) return undefined;
-
-  const doc = jsDocNodes[0]!;
-  if (typeof doc.comment === 'string') return doc.comment;
-  return undefined;
+  return getJSDocDescription(firstStatement);
 }
 
 // ─── Directory Scanning ─────────────────────────────────────────────

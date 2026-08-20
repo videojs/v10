@@ -4,6 +4,6 @@
   { "id": "mux-audio" },
   { "id": "mux-video" },
   { "id": "native-hls-video" },
-  { "id": "simple-hls-audio-only" },
-  { "id": "simple-hls-video" }
+  { "id": "hls-audio" },
+  { "id": "hls-video" }
 ]

@@ -1,0 +1,27 @@
+---
+title: media-text
+description: HTML custom element that renders a translated string by semantic key
+---
+
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+<FrameworkCase frameworks={["html"]}>
+
+`<media-text>` renders a translated value inside a <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink> (or any ancestor with the i18n provider mixin). Set `token` to the semantic translation key and use the text content as its English fallback. Use it for authored component content, standalone labels, tooltips, or demos.
+
+```html
+<media-i18n lang="ja">
+  <media-text token="buttons.play">Play</media-text>
+</media-i18n>
+```
+
+## Token and fallback
+
+The `token` attribute accepts an opaque key such as `buttons.play`. The initial text content is the fallback shown when the active locale has no value for that key. See <DocsLink slug="reference/translation-phrases">Translation keys</DocsLink> for the supported keys and English defaults.
+
+Without `token`, `<media-text>` keeps its text content unchanged. This is useful for literal copy that should not be translated.
+
+Parametric translations are not yet supported on `<media-text>`. Use `createTranslator` in script for interpolated strings.
+
+</FrameworkCase>

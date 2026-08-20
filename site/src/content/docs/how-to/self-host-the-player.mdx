@@ -8,6 +8,10 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 By default, the <DocsLink slug="how-to/installation">installation</DocsLink> flow loads the player from a public CDN. For offline, air-gapped, or locked-down deployments, you can serve everything from your own origin instead. Pick one of the options below.
 
+<Aside type="tip" title="Which option?">
+Bundle a single file when you already build your front end. Download the release archive when you install outside npm, like Composer or Drupal. Mirror the CDN files when you want the published layout as-is.
+</Aside>
+
 ## Bundle a single file (recommended)
 
 Install the package, put the player's imports into an entry file, then let any bundler produce one self-contained module you can host anywhere. For the default video player, that's:
@@ -29,6 +33,51 @@ Load the output with `type="module"`:
 ```
 
 You get one file (plus a sourcemap), no runtime requests to a CDN, and only the features you import. Any bundler works (Vite, Rollup, webpack) as long as the output stays ESM.
+
+## Download the release archive
+
+Every [release](https://github.com/videojs/v10/releases) ships a `videojs-html-<version>.zip` (and a `.tar.gz`) holding the prebuilt player. Use it when your deployment installs dependencies outside npm, or when you want a versioned artifact to vendor into your own repository.
+
+Unpack it into whatever your server treats as static files:
+
+```bash
+curl -LO https://github.com/videojs/v10/releases/download/@videojs/html@10.0.0-beta.26/videojs-html-10.0.0-beta.26.zip
+unzip videojs-html-10.0.0-beta.26.zip -d public/
+```
+
+Then point a script tag at the player you want:
+
+```html
+<script type="module" src="/videojs-html-10.0.0-beta.26/video.js"></script>
+```
+
+The archive holds the same production bundles the CDN serves, minus sourcemaps and development builds. Every path inside it is relative, so it runs from any origin with no outbound requests. `SHA256SUMS` on the release verifies the download.
+
+For Composer-based projects such as Drupal, declare the archive as a package:
+
+```json title="composer.json"
+{
+  "repositories": [
+    {
+      "type": "package",
+      "package": {
+        "name": "videojs/html",
+        "version": "10.0.0-beta.26",
+        "type": "drupal-library",
+        "dist": {
+          "type": "zip",
+          "url": "https://github.com/videojs/v10/releases/download/@videojs/html@10.0.0-beta.26/videojs-html-10.0.0-beta.26.zip"
+        }
+      }
+    }
+  ],
+  "require": {
+    "videojs/html": "10.0.0-beta.26"
+  }
+}
+```
+
+Composer strips the archive's top-level directory, so the player lands directly in your libraries path.
 
 ## Mirror the prebuilt CDN files
 

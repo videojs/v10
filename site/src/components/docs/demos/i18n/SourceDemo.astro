@@ -1,0 +1,19 @@
+---
+import type { BundledLanguage } from 'shiki';
+
+import ServerCode from '@/components/Code/ServerCode.astro';
+
+interface Props {
+  code: string;
+  lang: BundledLanguage;
+}
+
+const { code, lang } = Astro.props;
+---
+
+<div class="bg-manila-light dark:bg-faded-black">
+  <slot />
+</div>
+<div class="max-h-96 overflow-auto bg-faded-black p-6 dark:bg-soot">
+  <ServerCode code={code} lang={lang} />
+</div>

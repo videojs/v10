@@ -1,5 +1,3 @@
-'use client';
-
 import type { VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 

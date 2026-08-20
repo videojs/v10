@@ -1,27 +1,12 @@
-'use client';
-
+import type { GestureProps as CoreGestureProps } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
-import {
-  createDoubleTapGesture,
-  createTapGesture,
-  type GestureActionName,
-  type GesturePointerType,
-  type GestureRegion,
-  resolveGestureAction,
-} from '@videojs/core/dom';
+import { createDoubleTapGesture, createTapGesture, resolveGestureAction } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
 import { useContainer, usePlayer } from '../../player/context';
 
-export interface GestureProps {
-  type: 'tap' | 'doubletap' | (string & {});
-  action: GestureActionName | (string & {});
-  value?: number;
-  pointer?: GesturePointerType;
-  region?: GestureRegion;
-  disabled?: boolean;
-}
+export interface GestureProps extends CoreGestureProps {}
 
 export function Gesture({ type, action, value, pointer, region, disabled }: GestureProps): ReactNode {
   const store = usePlayer() as AnyPlayerStore;

@@ -1,5 +1,3 @@
-'use client';
-
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
 import { isText, translateText } from '@videojs/core/i18n';
@@ -22,10 +20,12 @@ interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   core: { new (): Core; defaultProps: Record<string, unknown> };
   stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   selector: Selector<object, InferMediaState<Core> | undefined>;
-  action: (core: Core, state: InferMediaState<Core>) => void;
+  action: (core: Core, state: InferMediaState<Core>) => void | Promise<void>;
   hotkeyAction?: string;
   hotkeyValue?: (props: Record<string, unknown>) => number | undefined;
   tooltipLabel?: (core: Core, state: InferComponentState<Core>) => string | undefined;
+  /** Returns `false` to render `null` (e.g., when the underlying feature is unsupported). */
+  isSupported?: (state: InferComponentState<Core>) => boolean;
 }
 
 type LabelParams = Record<string, string | number>;
@@ -53,6 +53,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     hotkeyAction,
     hotkeyValue,
     tooltipLabel,
+    isSupported,
   } = config;
 
   // Props that exist in the core's defaultProps are routed to setProps; the rest go to the DOM element.
@@ -92,7 +93,14 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
 
     const { getButtonProps, buttonRef } = useButton({
       displayName,
-      onActivate: () => action(core, feature!),
+      // `useButton` invokes `onActivate` synchronously from click/keyup
+      // handlers, so any rejection here would be unhandled. Log in dev for
+      // visibility but absorb the failure at this UI boundary.
+      onActivate: () => {
+        Promise.resolve(action(core, feature!)).catch((error) => {
+          if (__DEV__) console.error(`[${displayName}]`, error);
+        });
+      },
       isDisabled: () => !!coreProps.disabled || !feature,
     });
 
@@ -101,8 +109,10 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     type State = InferComponentState<Core>;
     if (feature) core.setMedia(feature);
     const state = feature ? (core.getState() as State) : null;
-    const label = state ? translateText(core.getLabel(state), translator, getLabelParams(core, state)) : undefined;
-    const tooltipText = state ? (tooltipLabel?.(core, state) ?? label) : undefined;
+    const supported = state ? (isSupported?.(state) ?? true) : false;
+    const label =
+      state && supported ? translateText(core.getLabel(state), translator, getLabelParams(core, state)) : undefined;
+    const tooltipText = state && supported ? (tooltipLabel?.(core, state) ?? label) : undefined;
 
     // Forward label to tooltip popup content when inside a Tooltip.Root.
     useLayoutEffect(() => {
@@ -115,6 +125,8 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
       return null;
     }
+
+    if (!supported) return null;
 
     const attrs = core.getAttrs(state) as Record<string, unknown>;
     const ariaLabel = attrs['aria-label'];
@@ -133,7 +145,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
         state,
         stateAttrMap,
         ref: [forwardedRef, buttonRef],
-        props: [getButtonProps(), elementProps, resolvedAttrs],
+        props: [getButtonProps(), resolvedAttrs, elementProps],
       }
     );
   });

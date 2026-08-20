@@ -45,10 +45,14 @@ export default {
     current: 'Aktualny czas',
     duration: 'Czas trwania',
     remaining: 'Pozostały czas',
+    elapsedSuffix: '{duration} czasu, który upłynął',
+    durationSuffix: '{duration} czasu trwania',
     remainingSuffix: 'Pozostało {duration}',
-    showElapsed: '{duration}. Pokaż upływ czasu.',
-    showDuration: '{duration}. Pokaż czas trwania.',
-    showRemaining: '{duration}. Pokaż pozostały czas.',
+    showElapsed: 'Pokaż upływ czasu, {duration}.',
+    showDuration: 'Pokaż czas trwania, {duration}.',
+    showRemaining: 'Pokaż pozostały czas, {duration}.',
+    toggleElapsed: 'Przełącz między czasem, który upłynął, a pozostałym czasem.',
+    toggleDuration: 'Przełącz między czasem trwania a pozostałym czasem.',
     position: '{current} z {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Pełny ekran',
     pip: 'Obraz w obrazie',
     exitPip: 'Wyjdź z obrazu w obrazie',
+    seekedTo: 'Przewinięto do {time}',
+  },
+  container: {
+    label: 'Odtwarzacz multimediów',
   },
   errors: {
     aborted: 'Odtwarzanie zostało przerwane',
@@ -77,6 +85,7 @@ export default {
     source:
       'Materiał wideo nie może zostać załadowany, ponieważ wystąpił problem z serwerem lub siecią albo format materiału wideo nie jest obsługiwany',
     encrypted: 'Materiał jest zaszyfrowany, a nie mamy kluczy do jego odszyfrowania.',
+    unplayable: 'Ten materiał nie jest obsługiwany przez odtwarzacz.',
     title: 'Coś poszło nie tak.',
     unexpected: 'Wystąpił błąd. Spróbuj ponownie.',
   },

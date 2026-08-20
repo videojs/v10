@@ -1,5 +1,3 @@
-'use client';
-
 import { MuteButtonCore, MuteButtonDataAttrs } from '@videojs/core';
 import { selectVolume } from '@videojs/core/dom';
 
@@ -16,6 +14,7 @@ export const MuteButton = createMediaButton<MuteButtonCore, MuteButtonProps>({
   selector: selectVolume,
   action: (core, state) => core.toggle(state),
   hotkeyAction: 'toggleMuted',
+  isSupported: (state) => !state.hidden,
 });
 
 export namespace MuteButton {

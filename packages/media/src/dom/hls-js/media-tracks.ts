@@ -34,6 +34,10 @@ function getLevelKey(level: HlsJsMediaTrackLevel): string {
   return `${level.url[0] ?? ''}|${level.width}x${level.height}|${level.videoCodec}|${level.bitrate}`;
 }
 
+function getAudioTrackKind(audioTrack: HlsJsMediaAudioTrack): string {
+  return audioTrack.default ? 'main' : 'alternative';
+}
+
 /**
  * Mirrors hls.js manifest levels and alternate audio into the media element's
  * `videoRenditions` / `audioTracks` lists, and wires user selection back to
@@ -56,6 +60,8 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
       engine.on(Hls.Events.MANIFEST_PARSED, this.#onManifestParsed);
       engine.on(Hls.Events.AUDIO_TRACKS_UPDATED, this.#onAudioTracksUpdated);
+      engine.on(Hls.Events.AUDIO_TRACK_SWITCHING, this.#onAudioTrackSwitch);
+      engine.on(Hls.Events.AUDIO_TRACK_SWITCHED, this.#onAudioTrackSwitch);
       engine.on(Hls.Events.LEVELS_UPDATED, this.#onLevelsUpdated);
       engine.on(Hls.Events.LEVEL_SWITCHED, this.#onLevelSwitched);
       engine.once(Hls.Events.DESTROYING, this.#teardown);
@@ -86,16 +92,47 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       }
     };
 
+    // hls.js re-emits this whenever the active audio group changes, which a
+    // rendition switch can trigger mid-playback. Skip the rebuild when the set
+    // is unchanged so the list (and its selection) survives the group switch.
     #onAudioTracksUpdated = (_event: string, data: { audioTracks: HlsJsMediaAudioTrack[] }) => {
+      if (this.#audioTracksMatch(data.audioTracks)) return;
+
       this.#removeAudioTracks();
 
       for (const hlsAudioTrack of data.audioTracks) {
-        const kind = hlsAudioTrack.default ? 'main' : 'alternative';
-        const audioTrack = this.addAudioTrack(kind, hlsAudioTrack.name, hlsAudioTrack.lang);
+        const audioTrack = this.addAudioTrack(getAudioTrackKind(hlsAudioTrack), hlsAudioTrack.name, hlsAudioTrack.lang);
         audioTrack.id = `${hlsAudioTrack.id}`;
-        audioTrack.enabled = Boolean(hlsAudioTrack.default);
       }
     };
+
+    // `enabled` is owned by the engine's switch events rather than seeded from
+    // `.default`, because hls.js already carries a selection across audio groups
+    // and re-announces it here.
+    #onAudioTrackSwitch = (_event: string, data: { id: number }) => {
+      const selectedId = `${data.id}`;
+
+      for (const audioTrack of this.audioTracks) {
+        audioTrack.enabled = audioTrack.id === selectedId;
+      }
+    };
+
+    // hls.js reindexes track ids per audio group, so compare the identifying
+    // attributes rather than relying on object identity or ids alone.
+    #audioTracksMatch(hlsAudioTracks: HlsJsMediaAudioTrack[]): boolean {
+      const currentTracks = [...this.audioTracks];
+      if (currentTracks.length !== hlsAudioTracks.length) return false;
+
+      return hlsAudioTracks.every((hlsAudioTrack, index) => {
+        const audioTrack = currentTracks[index];
+        return (
+          audioTrack?.id === `${hlsAudioTrack.id}` &&
+          audioTrack.kind === getAudioTrackKind(hlsAudioTrack) &&
+          audioTrack.label === (hlsAudioTrack.name ?? '') &&
+          audioTrack.language === (hlsAudioTrack.lang ?? '')
+        );
+      });
+    }
 
     #switchAudioTrack = () => {
       const { engine } = this;
@@ -153,6 +190,8 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
       engine?.off(Hls.Events.MANIFEST_PARSED, this.#onManifestParsed);
       engine?.off(Hls.Events.AUDIO_TRACKS_UPDATED, this.#onAudioTracksUpdated);
+      engine?.off(Hls.Events.AUDIO_TRACK_SWITCHING, this.#onAudioTrackSwitch);
+      engine?.off(Hls.Events.AUDIO_TRACK_SWITCHED, this.#onAudioTrackSwitch);
       engine?.off(Hls.Events.LEVELS_UPDATED, this.#onLevelsUpdated);
       engine?.off(Hls.Events.LEVEL_SWITCHED, this.#onLevelSwitched);
       engine?.off(Hls.Events.DESTROYING, this.#teardown);

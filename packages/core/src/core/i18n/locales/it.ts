@@ -21,8 +21,8 @@ export default {
     disable: 'Disattiva sottotitoli',
   },
   pip: {
-    enter: 'Picture-in-Picture',
-    exit: 'Esci dalla modalità Picture-in-Picture',
+    enter: 'Riproduzione in finestra',
+    exit: 'Chiudi riproduzione in finestra',
   },
   live: {
     playing: 'Riproduzione in diretta',
@@ -45,10 +45,14 @@ export default {
     current: 'Orario attuale',
     duration: 'Durata',
     remaining: 'Tempo rimanente',
+    elapsedSuffix: '{duration} di tempo trascorso',
+    durationSuffix: '{duration} di durata',
     remainingSuffix: 'Restano {duration}',
-    showElapsed: '{duration}. Mostra tempo trascorso.',
-    showDuration: '{duration}. Mostra durata.',
-    showRemaining: '{duration}. Mostra tempo rimanente.',
+    showElapsed: 'Mostra tempo trascorso, {duration}.',
+    showDuration: 'Mostra durata, {duration}.',
+    showRemaining: 'Mostra tempo rimanente, {duration}.',
+    toggleElapsed: 'Alterna tra il tempo trascorso e il tempo rimanente.',
+    toggleDuration: 'Alterna tra la durata e il tempo rimanente.',
     position: '{current} di {duration}',
   },
   playback: {
@@ -66,8 +70,12 @@ export default {
     paused: 'In pausa',
     playing: 'In riproduzione',
     fullscreen: 'Schermo intero',
-    pip: 'Picture-in-picture',
-    exitPip: 'Esci dalla modalità Picture-in-picture',
+    pip: 'Riproduzione in finestra',
+    exitPip: 'Chiudi riproduzione in finestra',
+    seekedTo: 'Posizione di riproduzione: {time}',
+  },
+  container: {
+    label: 'Lettore multimediale',
   },
   errors: {
     aborted: 'La riproduzione del contenuto multimediale è stata interrotta.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Il contenuto multimediale non può essere caricato a causa di un errore nel server o nella rete o perché il formato non viene supportato.',
     encrypted: 'Il contenuto multimediale è criptato e non disponiamo delle chiavi per decifrarlo.',
+    unplayable: 'Questo contenuto multimediale non è supportato dal lettore.',
     title: 'Qualcosa è andato storto.',
     unexpected: 'Si è verificato un errore. Riprova.',
   },

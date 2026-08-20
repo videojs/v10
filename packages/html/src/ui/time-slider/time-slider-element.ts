@@ -7,6 +7,7 @@ import {
   logMissingFeature,
   type SliderApi,
   selectBuffer,
+  selectControls,
   selectPlayback,
   selectTime,
 } from '@videojs/core/dom';
@@ -47,6 +48,7 @@ export class TimeSliderElement extends MediaElement {
   pauseOnDrag = TimeSliderCore.defaultProps.pauseOnDrag;
 
   readonly #core = new TimeSliderCore();
+  readonly #controlsState = new PlayerController(this, playerContext, selectControls);
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
@@ -55,6 +57,7 @@ export class TimeSliderElement extends MediaElement {
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
+  #releaseControlsLock: (() => void) | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -82,10 +85,12 @@ export class TimeSliderElement extends MediaElement {
       },
       changeThrottle: this.changeThrottle,
       onDragStart: () => {
+        this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
         this.#core.startDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
+        this.#releaseControlsVisibilityLock();
         this.#core.endDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
@@ -103,6 +108,7 @@ export class TimeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
+    this.#releaseControlsVisibilityLock();
     this.#resumeIfDragPaused();
     super.disconnectedCallback();
     this.#disconnect?.abort();
@@ -110,6 +116,7 @@ export class TimeSliderElement extends MediaElement {
   }
 
   override destroyCallback(): void {
+    this.#releaseControlsVisibilityLock();
     this.#resumeIfDragPaused();
     this.#slider?.destroy();
     super.destroyCallback();
@@ -120,6 +127,11 @@ export class TimeSliderElement extends MediaElement {
   // before super so the PlayerController is still attached.
   #resumeIfDragPaused(): void {
     this.#core.endDrag(this.#playbackState.value);
+  }
+
+  #releaseControlsVisibilityLock(): void {
+    this.#releaseControlsLock?.();
+    this.#releaseControlsLock = null;
   }
 
   protected override willUpdate(_changed: PropertyValues): void {
@@ -162,7 +174,7 @@ export class TimeSliderElement extends MediaElement {
     this.#provider.setValue({
       state,
       stateAttrMap: TimeSliderDataAttrs,
-      pointerValue: this.#core.valueFromPercent(state.pointerPercent),
+      pointerValue: this.#core.rawValueFromPercent(state.pointerPercent),
       thumbAttrs: {
         ...thumbAttrs,
         'aria-label': translateText(thumbAttrs['aria-label'], this.#i18n.value),
@@ -173,7 +185,7 @@ export class TimeSliderElement extends MediaElement {
         ),
       },
       thumbProps: this.#slider.thumbProps,
-      formatValue: (value) => formatTime(value, state.duration),
+      formatValue: (value) => formatTime(value, state.duration, { locale: this.#i18n.locale }),
     });
   }
 }

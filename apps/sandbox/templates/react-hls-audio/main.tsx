@@ -1,0 +1,45 @@
+import '@app/styles.css';
+import { AudioPlayer } from '@app/shared/react/players';
+import { AudioSkinComponent } from '@app/shared/react/skins';
+import { useAutoplay } from '@app/shared/react/use-autoplay';
+import { useLoop } from '@app/shared/react/use-loop';
+import { useMuted } from '@app/shared/react/use-muted';
+import { usePreload } from '@app/shared/react/use-preload';
+import { useSkin } from '@app/shared/react/use-skin';
+import { useSource } from '@app/shared/react/use-source';
+import { SOURCES } from '@app/shared/sources';
+import type { Styling } from '@app/types';
+import { HlsAudio } from '@videojs/react/media/hls-audio';
+import { useMemo } from 'react';
+import { createRoot } from 'react-dom/client';
+
+function readStyling(): Styling {
+  return new URLSearchParams(location.search).get('styling') === 'tailwind' ? 'tailwind' : 'css';
+}
+
+function App() {
+  const skin = useSkin();
+  const source = useSource();
+  const styling = useMemo(readStyling, []);
+  const autoplay = useAutoplay();
+  const muted = useMuted();
+  const loop = useLoop();
+  const preload = usePreload();
+
+  return (
+    <AudioPlayer>
+      <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
+        <HlsAudio
+          src={SOURCES[source].url ?? ''}
+          autoPlay={autoplay}
+          muted={muted}
+          loop={loop}
+          preload={preload}
+          crossOrigin="anonymous"
+        />
+      </AudioSkinComponent>
+    </AudioPlayer>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);

@@ -6,11 +6,11 @@ export const overlay = cn(
   'pointer-events-none rounded-[inherit]',
   // Default: hidden
   'opacity-0',
-  'bg-linear-to-t from-black/70 via-black/50 via-[7.5rem] to-transparent',
+  'bg-linear-to-t from-black/70 via-black/50 via-[--spacing(30)] to-transparent',
   'backdrop-blur-none backdrop-saturate-100',
   // Transitions
   'transition-[opacity,backdrop-filter]',
-  'duration-(--media-controls-transition-duration)',
+  'duration-(--controls-transition-duration)',
   'ease-out',
   // Shown when controls visible
   'peer-data-visible/controls:opacity-100',
@@ -21,7 +21,7 @@ export const overlay = cn(
   // Shown when error visible (+ blur)
   // Light DOM: peer/error is a direct sibling (React)
   'peer-data-open/error:opacity-100',
-  'peer-data-open/error:duration-(--media-error-dialog-transition-duration)',
-  'peer-data-open/error:delay-(--media-error-dialog-transition-delay)',
+  'peer-data-open/error:duration-(--error-dialog-transition-duration)',
+  'peer-data-open/error:delay-(--error-dialog-transition-delay)',
   'peer-data-open/error:backdrop-blur-lg peer-data-open/error:backdrop-saturate-120'
 );

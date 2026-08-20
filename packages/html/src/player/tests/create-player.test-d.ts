@@ -4,6 +4,7 @@ import {
   backgroundFeatures,
   definePlayerFeature,
   features,
+  metadataFeature,
   type PlayerStore,
   type PlayerTarget,
   type VideoPlayerStore,
@@ -12,6 +13,7 @@ import {
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 
+import { MediaElement } from '../../ui/media-element';
 import { type CreatePlayerResult, createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
@@ -19,6 +21,8 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: videoFeatures });
 
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
+    // @ts-expect-error ContainerMixin is imported from the package root, not created per player.
+    result.ContainerMixin;
   });
 
   it('resolves audio features to AudioPlayerStore', () => {
@@ -51,6 +55,21 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: [customFeature] });
 
     assertType<CreatePlayerResult<PlayerStore<[Slice<PlayerTarget, CustomState>]>>>(result);
+  });
+
+  it('infers config properties from selected features', () => {
+    const withMetadata = createPlayer({ features: [metadataFeature] });
+    const withoutMetadata = createPlayer({ features: [features.playback] });
+    const MetadataProvider = withMetadata.ProviderMixin(MediaElement);
+    const PlainProvider = withoutMetadata.ProviderMixin(MediaElement);
+    const metadataProvider = new MetadataProvider();
+    const plainProvider = new PlainProvider();
+
+    // The store calls this `title`; on an element that name is the tooltip.
+    assertType<string | null | undefined>(metadataProvider.contentTitle);
+
+    // @ts-expect-error metadata properties are absent when the feature is absent.
+    plainProvider.contentTitle;
   });
 
   it('accepts the orientation lock feature alias with and without config', () => {

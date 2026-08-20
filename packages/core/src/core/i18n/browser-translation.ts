@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE } from '@videojs/utils/i18n';
 import en from './locales/en';
 import type { FlatTranslations, Locale } from './params';
 import { findLocaleKeys, hasRegisteredLocale } from './registry';
@@ -70,7 +71,7 @@ async function translateProtectingPlaceholders(translator: BrowserTranslatorInst
 const cache = new Map<string, Partial<FlatTranslations>>();
 
 function isEnglishLocaleTag(tag: string): boolean {
-  return tag === 'en' || tag.startsWith('en-');
+  return tag === DEFAULT_LOCALE || tag.startsWith(`${DEFAULT_LOCALE}-`);
 }
 
 function getBrowserTranslator(): BrowserTranslatorConstructor | undefined {
@@ -126,7 +127,7 @@ export async function getBrowserTranslations(
   const downloadIfNeeded = options?.downloadIfNeeded ?? false;
 
   const availability = await Translator.availability({
-    sourceLanguage: 'en',
+    sourceLanguage: DEFAULT_LOCALE,
     targetLanguage: target,
   });
   if (availability === 'unavailable') return {};
@@ -145,7 +146,7 @@ export async function getBrowserTranslations(
   const english = flattenTranslations(en);
   const keys = Object.keys(english) as (keyof FlatTranslations)[];
   const translator = await Translator.create({
-    sourceLanguage: 'en',
+    sourceLanguage: DEFAULT_LOCALE,
     targetLanguage: target,
     ...(downloadIfNeeded
       ? {

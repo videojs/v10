@@ -9,8 +9,11 @@ export type PreloadType = '' | 'none' | 'metadata' | 'auto';
  * attribute to hls.js `startLoad` / buffer-limit configuration.
  *
  * - `'auto'` or already playing → full buffer limits, immediate start.
- * - `'metadata'` → minimal buffer (1 byte / 1 second), deferred full load on play.
- * - `'none'` / `''` → no start, deferred full load on play.
+ * - `'metadata'` → minimal buffer (1 byte / 1 second), limits raised on play.
+ * - `'none'` / `''` → no start, deferred load on play.
+ *
+ * Loading is started at most once per source. Widening the limits afterwards is
+ * a plain config write, never a second `startLoad()`.
  */
 export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaPreload extends (BaseClass as Constructor<HlsEngineHost>) {
@@ -18,11 +21,17 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
     #preload: PreloadType = 'metadata';
     #defaultMaxBufferLength: number | undefined;
     #defaultMaxBufferSize: number | undefined;
+    #loadStarted = false;
 
     constructor(...args: any[]) {
       super(...args);
 
-      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#init());
+      this.engine?.on(Hls.Events.MANIFEST_LOADING, () => {
+        // `loadSource()` stops loading before announcing the manifest, so the
+        // next start for this source has to be a real `startLoad()` again.
+        this.#loadStarted = false;
+        this.#init();
+      });
       this.engine?.on(Hls.Events.MEDIA_ATTACHED, () => this.#init());
       this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#destroy());
       this.engine?.on(Hls.Events.DESTROYING, () => this.#destroy());
@@ -40,6 +49,7 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
     #destroy(): void {
       this.#preloadAbort?.abort();
       this.#preloadAbort = null;
+      this.#loadStarted = false;
     }
 
     #init(): void {
@@ -62,25 +72,45 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
       const defaultLength = this.#defaultMaxBufferLength;
       const defaultSize = this.#defaultMaxBufferSize;
 
-      const startLoad = (length?: number, size?: number) => {
+      /**
+       * Applies buffer limits, and starts loading only if this source has not
+       * been started yet.
+       *
+       * Once loading is under way, writing the limits is enough: hls.js reads
+       * both off `config` on every tick and its ticker is already armed. A
+       * second `startLoad()` would open with hls.js's own `stopLoad()`, which
+       * aborts the in-flight segment — and that abort resets the controller to
+       * IDLE a task later, so the next tick re-requests and re-aborts, forever.
+       */
+      const load = (length?: number, size?: number) => {
         const { engine } = this;
         if (!engine) return;
+
         engine.config.maxBufferLength = length ?? defaultLength;
         engine.config.maxBufferSize = size ?? defaultSize;
+
+        if (this.#loadStarted) {
+          // No-op unless something paused buffering; ManagedMediaSource does,
+          // on `endstreaming`.
+          engine.resumeBuffering?.();
+          return;
+        }
+
+        this.#loadStarted = true;
         engine.startLoad();
       };
 
       if (this.preload === 'auto' || !target.paused) {
-        startLoad();
+        load();
         return;
       }
 
       if (this.preload === 'metadata') {
-        startLoad(1, 1);
+        load(1, 1);
       }
 
       this.#preloadAbort = new AbortController();
-      target.addEventListener('play', () => startLoad(), {
+      target.addEventListener('play', () => load(), {
         signal: this.#preloadAbort.signal,
         once: true,
       });

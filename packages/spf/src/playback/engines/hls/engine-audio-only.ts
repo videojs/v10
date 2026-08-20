@@ -8,6 +8,8 @@ import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composi
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { canPlayTrack } from '../../../media/dom/capabilities';
+import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
+import type { SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
@@ -18,7 +20,10 @@ import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
+import { collectErrors } from '../../behaviors/collect-errors';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
+import { setupAirPlay } from '../../behaviors/dom/airplay';
+import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
@@ -41,6 +46,10 @@ import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behavior
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
 import { relocationPipelinesFor } from '../../primitives/relocation-pipelines';
+import {
+  type ReportUnsupportedTrackConditions,
+  reportUnsupportedTrackConditions,
+} from '../../primitives/report-track-conditions';
 
 // ============================================================================
 // Audio-Only HLS Engine State & Context
@@ -49,11 +58,11 @@ import { relocationPipelinesFor } from '../../primitives/relocation-pipelines';
 /**
  * State shape for the audio-only HLS playback engine.
  *
- * Subset of `SimpleHlsEngineState` covering only the slots written and read
+ * Subset of `HlsVideoEngineState` covering only the slots written and read
  * by audio-side behaviors. Video and text-track slots are absent —
  * subtractive composition removes the behaviors that declare them.
  */
-export interface SimpleHlsAudioOnlyEngineState {
+export interface HlsAudioEngineState {
   presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedAudioTrackId?: string;
@@ -81,36 +90,67 @@ export interface SimpleHlsAudioOnlyEngineState {
    * scope falls to the next CDN. Empty / absent means all CDNs are eligible.
    */
   failedCdns?: string[];
+  /**
+   * Conditions reported during playback, in order — appended by whichever
+   * behavior detects one, owned and cleared per source by `collectErrors`.
+   * Severity is decided above the engine. Audio-only makes an all-audio-pruned
+   * source unrecoverable: there's no video fallback to fall back to.
+   */
+  errors?: SvtaError[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * One-shot command: start the current source at this position
+   * (presentation-timeline seconds). Written by consumers or by
+   * `setupAirPlay`'s session-end snapshot; consumed (cleared) by
+   * `applyStartPosition` once the element seeks. See
+   * `behaviors/dom/apply-start-position.ts`.
+   */
+  startPosition?: number;
+  /**
+   * Intent-level loading policy: initiate no new loading work while `true`.
+   * Written by `setupAirPlay` (the only behavior declaring the key) while a
+   * remote-playback session owns presentation; observed by `loadAudioSegments`
+   * (parks in `'dormant'`) and by `setupMediaSource` (a pending rebuild
+   * waits). See `SegmentLoadingState['loadingSuspended']`.
+   */
+  loadingSuspended?: boolean;
+  /**
+   * Author intent for the AirPlay/remote-playback picker, written by the media
+   * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
+   * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
+   * element's remote playback disabled. Distinct from the underlying media
+   * element's own `disableRemotePlayback`, which stays programmatically managed
+   * (ManagedMediaSource / AirPlay).
+   */
+  disableRemotePlayback?: boolean;
 }
 
 /**
  * Context shape for the audio-only HLS playback engine.
  *
- * Subset of `SimpleHlsEngineContext` covering only the platform objects and
+ * Subset of `HlsVideoEngineContext` covering only the platform objects and
  * actor refs managed by audio-side behaviors.
  */
-export interface SimpleHlsAudioOnlyEngineContext {
+export interface HlsAudioEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   audioBufferActor?: SourceBufferActor;
   audioSegmentLoaderActor?: SegmentLoaderActor;
 }
 
-export type SimpleHlsAudioOnlyEngineSignals = {
-  state: StateSignals<SimpleHlsAudioOnlyEngineState>;
-  context: ContextSignals<SimpleHlsAudioOnlyEngineContext>;
+export type HlsAudioEngineSignals = {
+  state: StateSignals<HlsAudioEngineState>;
+  context: ContextSignals<HlsAudioEngineContext>;
 };
 
 /**
  * Configuration for the audio-only HLS playback engine.
  *
- * Subset of `SimpleHlsEngineConfig` — video-quality, bandwidth-estimator,
+ * Subset of `HlsVideoEngineConfig` — video-quality, bandwidth-estimator,
  * and text-track config fields are omitted (no behavior consumes them).
  */
-export interface SimpleHlsAudioOnlyEngineConfig
-  extends ShareSignalsConfig<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
+export interface HlsAudioEngineConfig extends ShareSignalsConfig<HlsAudioEngineState, HlsAudioEngineContext> {
   preferredAudioLanguage?: string;
   /**
    * Codec capability probe read by `track-switching`'s `excludeUnplayableTracks`
@@ -120,6 +160,14 @@ export interface SimpleHlsAudioOnlyEngineConfig
    * be inert for audio-only playback.
    */
   canPlayTrack?: CanPlayTrack;
+  /**
+   * Conditions reported about each rendition as it resolves — the *causes* behind
+   * a later verdict, and the copy a verdict reuses when they agree. Defaults to
+   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
+   * and encryption; supply your own to report a different set (a provider that
+   * never ships MPEG-TS can drop that check) or `() => []` to report nothing.
+   */
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
   resolveDuration?: PresentationDurationResolver;
   parsePresentation?: ParsePresentation;
   forwardBuffer?: Partial<ForwardBufferConfig>;
@@ -141,17 +189,19 @@ export interface SimpleHlsAudioOnlyEngineConfig
 // ============================================================================
 
 // Materializes input slots no composed behavior produces — `userAudioTrackSelection`
-// (switchAudioTrack only reads it) — in addition to forwarding refs. `failedCdns`
-// is owned by `setupFailoverMonitor`, so it's already materialized and reachable
-// on the `onSignalsReady` refs without being listed here.
-const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>([
+// (switchAudioTrack only reads it) and `disableRemotePlayback` (setupAirPlay only
+// reads it) — in addition to forwarding refs. `failedCdns` is owned by
+// `setupFailoverMonitor`, so it's already materialized and reachable on the
+// `onSignalsReady` refs without being listed here.
+const shareSignals = makeShareSignals<HlsAudioEngineState, HlsAudioEngineContext>([
   'userAudioTrackSelection',
+  'disableRemotePlayback',
 ]);
 
 /**
  * Create an audio-only HLS playback engine.
  *
- * Subtractive composition variant of `createSimpleHlsEngine`: omits
+ * Subtractive composition variant of `createHlsVideoEngine`: omits
  * video-side behaviors (`resolveVideoTrack`, `switchVideoTrack`,
  * `setupVideoBufferActors`, `loadVideoSegments`) and text-track behaviors
  * (`switchTextTrack`, `resolveTextTrack`, `syncTextTracks`,
@@ -166,8 +216,8 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
  *
  * @example
  * ```ts
- * let signals: SimpleHlsAudioOnlyEngineSignals;
- * const engine = createHlsAudioOnlyEngine({
+ * let signals: HlsAudioEngineSignals;
+ * const engine = createHlsAudioEngine({
  *   preferredAudioLanguage: 'en',
  *   onSignalsReady: (refs) => {
  *     signals = refs;
@@ -178,14 +228,21 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
  * signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
  * ```
  */
-export function createHlsAudioOnlyEngine(
-  config: SimpleHlsAudioOnlyEngineConfig = {}
-): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
+export function createHlsAudioEngine(
+  config: HlsAudioEngineConfig = {}
+): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
   const deriveStartMediaTime = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
   const finalConfig = {
     ...config,
     deriveStartMediaTime,
+    // Baked (not user-overridable): this engine composes `setupAirPlay`,
+    // whose native fallback `<source>` requires the MSE attachment to keep
+    // sibling source alternatives part of resource selection. The helper's
+    // `video/mp4` source type is inert here — resource selection probes it
+    // with `canPlayType`, which answers `'maybe'` on an audio element too.
+    attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
+    reportUnsupportedTrackConditions: config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditions,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     // Non-zero-PTS relocation (spike): pair the audio loader with the relocation steps
@@ -216,6 +273,9 @@ export function createHlsAudioOnlyEngine(
       // once its cooldown lapses.
       setupFailoverMonitor,
 
+      // Owns `errors` and its per-source lifecycle; reporters append into it.
+      collectErrors,
+
       // Audio track selection — slot owner with filter reactivity.
       // Mid-stream flush on language switch is handled in segment-loader's
       // planTasks, not here.
@@ -240,8 +300,18 @@ export function createHlsAudioOnlyEngine(
 
       setupAudioBufferActors,
 
+      // AirPlay/MSE bridge (WebKit only; no-op elsewhere). Audio-only sources
+      // AirPlay to audio receivers (HomePod, AirPlay speakers) through the same
+      // native-HLS fallback `<source>`; `webkitCurrentPlaybackTargetIsWireless`
+      // and the picker are HTMLMediaElement-level, so an `<audio>` host is
+      // AirPlay-capable on the same terms as a `<video>` one.
+      setupAirPlay,
+
       // Playback tracking
       trackCurrentTime,
+      // After trackCurrentTime: the one-shot currentTime seed must land after
+      // the mirror's attach-time sync (see apply-start-position.ts).
+      applyStartPosition,
 
       // Segment loading — audio only.
       loadAudioSegments,

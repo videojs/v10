@@ -1,5 +1,3 @@
-'use client';
-
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
@@ -71,46 +69,47 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
 
     const duration = time?.duration ?? 0;
 
-    const { state, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } = useSlider<TimeSliderCore.State>({
-      computeState: (input) => {
-        core.setInput(input);
-        if (!time || !buffer) {
-          core.setMedia({
-            currentTime: 0,
-            duration: 0,
-            seeking: false,
-            seek: noopSeek,
-            buffered: [],
-            seekable: [],
-          });
-        } else {
-          core.setMedia({ ...time, ...buffer });
-        }
+    const { state, input, cssVars, rootRef, thumbRef, rootProps, rootStyle, thumbProps } =
+      useSlider<TimeSliderCore.State>({
+        computeState: (input) => {
+          core.setInput(input);
+          if (!time || !buffer) {
+            core.setMedia({
+              currentTime: 0,
+              duration: 0,
+              seeking: false,
+              seek: noopSeek,
+              buffered: [],
+              seekable: [],
+            });
+          } else {
+            core.setMedia({ ...time, ...buffer });
+          }
 
-        return core.getState();
-      },
-      getPercent: () => (duration > 0 ? ((time?.currentTime ?? 0) / duration) * 100 : 0),
-      getStepPercent: () => core.getStepPercent(),
-      getLargeStepPercent: () => core.getLargeStepPercent(),
-      orientation,
-      disabled,
-      changeThrottle,
-      adjustPercent: (rawPercent, thumbSize, trackSize) =>
-        core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
-      getCSSVars: getTimeSliderCSSVars,
-      onValueCommit: (percent) => {
-        const media = mediaRef.current;
-        if (media) media.seek(core.rawValueFromPercent(percent));
-      },
-      onDragStart: () => {
-        core.startDrag(playbackRef.current);
-        onDragStart?.();
-      },
-      onDragEnd: () => {
-        core.endDrag(playbackRef.current);
-        onDragEnd?.();
-      },
-    });
+          return core.getState();
+        },
+        getPercent: () => core.percentFromValue(time?.currentTime ?? 0),
+        getStepPercent: () => core.getStepPercent(),
+        getLargeStepPercent: () => core.getLargeStepPercent(),
+        orientation,
+        disabled,
+        changeThrottle,
+        adjustPercent: (rawPercent, thumbSize, trackSize) =>
+          core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
+        getCSSVars: getTimeSliderCSSVars,
+        onValueCommit: (percent) => {
+          const media = mediaRef.current;
+          if (media) media.seek(core.rawValueFromPercent(percent));
+        },
+        onDragStart: () => {
+          core.startDrag(playbackRef.current);
+          onDragStart?.();
+        },
+        onDragEnd: () => {
+          core.endDrag(playbackRef.current);
+          onDragEnd?.();
+        },
+      });
 
     if (!time) {
       if (__DEV__) logMissingFeature('TimeSlider', 'time');
@@ -121,7 +120,9 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       <SliderProvider
         value={{
           state,
-          pointerValue: core.valueFromPercent(state.pointerPercent),
+          pointerValue: core.rawValueFromPercent(state.pointerPercent),
+          input,
+          getPointerValue: (percent) => core.rawValueFromPercent(percent),
           thumbRef,
           thumbProps,
           stateAttrMap: TimeSliderDataAttrs,
@@ -137,7 +138,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
               ),
             };
           },
-          formatValue: (value) => formatTime(value, duration),
+          formatValue: (value) => formatTime(value, duration, { locale }),
         }}
       >
         {renderElement(

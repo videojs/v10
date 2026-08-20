@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
+import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import type {
   AudioSelectionSet,
   AudioTrack,
@@ -16,9 +17,6 @@ import type {
 import { applyContainerMimeType } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import {
-  applyConstraints,
-  applyRules,
-  type SelectionRule,
   type SwitchVideoTrackConfig,
   setupTrackSwitching,
   switchAudioTrack,
@@ -694,93 +692,6 @@ describe('switchAudioTrack — userAudioTrackSelection filter', () => {
 });
 
 // ============================================================================
-// applyRules — the rule-chain composer (pure; no signals)
-// ============================================================================
-
-describe('applyRules', () => {
-  const track = (id: string) => ({ id });
-  const all = [track('a'), track('b'), track('c')];
-
-  const noDeps = { state: {}, context: {}, config: {} };
-
-  it('applies rules in order; the pick is the first survivor', () => {
-    const dropA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
-    const reverse: SelectionRule<{ id: string }> = (tracks) => [...tracks].reverse();
-    const result = applyRules([dropA, reverse], all, noDeps);
-    expect(result.map((t) => t.id)).toEqual(['c', 'b']);
-  });
-
-  it('skips a rule that returns nothing (fall-through), keeping the prior set', () => {
-    const matchNone: SelectionRule<{ id: string }> = () => [];
-    const result = applyRules([matchNone], all, noDeps);
-    expect(result.map((t) => t.id)).toEqual(['a', 'b', 'c']);
-  });
-
-  it('stops at one survivor and does not run later rules (early-bail)', () => {
-    const toA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id === 'a');
-    let laterCalled = false;
-    const later: SelectionRule<{ id: string }> = (tracks) => {
-      laterCalled = true;
-      return tracks;
-    };
-    const result = applyRules([toA, later], all, noDeps);
-    expect(result.map((t) => t.id)).toEqual(['a']);
-    expect(laterCalled).toBe(false);
-  });
-
-  it('passes the candidate list and deps (state, context, config) through to each rule', () => {
-    const deps = { state: { marker: 1 }, context: { other: 2 }, config: { tuning: 3 } };
-    let received: unknown[] = [];
-    const rule: SelectionRule<{ id: string }, typeof deps.state, typeof deps.context, typeof deps.config> = (
-      tracks,
-      ruleDeps
-    ) => {
-      received = [tracks, ruleDeps];
-      return tracks;
-    };
-    applyRules([rule], all, deps);
-    expect(received).toEqual([all, deps]);
-  });
-});
-
-// ============================================================================
-// applyConstraints — the hard-constraints pre-pass (pure; no signals)
-// ============================================================================
-
-describe('applyConstraints', () => {
-  const track = (id: string) => ({ id });
-  const all = [track('a'), track('b'), track('c')];
-  const noDeps = { state: {}, context: {}, config: {} };
-
-  const noA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
-  const noC: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'c');
-
-  it('removes what each constraint excludes (pooled)', () => {
-    expect(applyConstraints([noA, noC], all, noDeps).map((t) => t.id)).toEqual(['b']);
-  });
-
-  it('is order-independent', () => {
-    expect(applyConstraints([noA, noC], all, noDeps)).toEqual(applyConstraints([noC, noA], all, noDeps));
-  });
-
-  it('preserves an empty result — no fall-through, unlike applyRules', () => {
-    const none: SelectionRule<{ id: string }> = () => [];
-    expect(applyConstraints([none], all, noDeps)).toEqual([]);
-  });
-
-  it('runs every constraint — no early-bail at a single survivor', () => {
-    const toA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id === 'a');
-    let laterCalled = false;
-    const later: SelectionRule<{ id: string }> = (tracks) => {
-      laterCalled = true;
-      return tracks;
-    };
-    applyConstraints([toA, later], all, noDeps);
-    expect(laterCalled).toBe(true);
-  });
-});
-
-// ============================================================================
 // preferActiveCdn — active-CDN scope (shared by video + audio)
 // ============================================================================
 
@@ -977,7 +888,6 @@ describe('excludeFailedCdns (failover constraint)', () => {
   });
 
   it('clears the selection when every CDN is in cooldown, re-picking on recovery', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const state = makeState(undefined);
     const reactor = switchVideoTrack.setup({ state });
     await flush();
@@ -988,14 +898,12 @@ describe('excludeFailedCdns (failover constraint)', () => {
     state.failedCdns.set(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
     await flush();
     expect(state.selectedVideoTrackId.get()).toBeUndefined();
-    expect(errorSpy).toHaveBeenCalled();
 
     // A CDN recovers → its tracks reappear → the candidate set refills and re-picks.
     state.failedCdns.set(['https://cdn-b.example.com']);
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
 
-    errorSpy.mockRestore();
     reactor.destroy();
   });
 });
@@ -1064,21 +972,17 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
   });
 
   it('makes no pick when the constraint prunes every rendition', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const state = makeState();
     const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
     await flush();
     // Every codec rejected from a cold start → empty candidate set → nothing
-    // selected, and the empty-from-constraints case is flagged. The late
-    // createSourceBuffer check stays as the backstop.
+    // selected. The late createSourceBuffer check stays as the backstop; the
+    // no-supported-track emission is covered by its own describe block.
     expect(state.selectedVideoTrackId.get()).toBeUndefined();
-    expect(errorSpy).toHaveBeenCalled();
-    errorSpy.mockRestore();
     reactor.destroy();
   });
 
   it('clears a prior pick when a later relabel prunes every rendition to empty', async () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const state = makeState();
     // Accepts fMP4; rejects the non-fMP4 container MIME resolve-track relabels to.
     const canPlayTrack = (track: { mimeType?: string }) => track.mimeType !== 'video/mp2t';
@@ -1093,9 +997,145 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
     state.presentation.set(applyContainerMimeType(mixedCodecPresentation(), 'video', 'video/mp2t'));
     await flush();
     expect(state.selectedVideoTrackId.get()).toBeUndefined();
-    expect(errorSpy).toHaveBeenCalled();
 
-    errorSpy.mockRestore();
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// no-supported-track error emission (SVTA 2011 / 2012)
+// ============================================================================
+
+describe('setupTrackSwitching (no-supported-track emission)', () => {
+  const codecVideoTrack = (id: string, codec: string): PartiallyResolvedVideoTrack => ({
+    type: 'video',
+    codecs: [codec],
+    id,
+    url: `https://cdn-a.example.com/${id}.m3u8`,
+    bandwidth: 2_400_000,
+    mimeType: 'video/mp4',
+  });
+
+  const makeState = (failedCdns?: string[]) => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(
+      createPresentation([codecVideoTrack('720p', 'avc1.4d401f'), codecVideoTrack('1080p', 'avc1.640028')])
+    ),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    failedCdns: signal<string[] | undefined>(failedCdns),
+    errors: signal<SvtaError[] | undefined>(undefined),
+  });
+
+  it('emits SVTA 2011 when capability prunes every video rendition', async () => {
+    const state = makeState();
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
+    await flush();
+
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+    reactor.destroy();
+  });
+
+  it('emits regardless of which constraint emptied the set', async () => {
+    // Every CDN in cooldown empties the set just as capability rejection does.
+    // The behavior reports generically rather than reading any constraint's
+    // state: a type with renditions but none selectable can't play, and every
+    // CDN having failed is not a benign condition either.
+    const state = makeState(['https://cdn-a.example.com']);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+
+    reactor.destroy();
+  });
+
+  it('emits nothing for a type that simply has no tracks', async () => {
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(createPresentation([])),
+      bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+      selectedVideoTrackId: signal<string | undefined>(undefined),
+      userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+      errors: signal<SvtaError[] | undefined>(undefined),
+    };
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+
+    // A video-less source is legitimate, not an error.
+    expect(state.errors.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('emits SVTA 2012 for the audio variant', async () => {
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(
+        createAudioPresentation([makeAudioTrack('aud-en', { url: 'https://cdn-a.example.com/aud.m3u8' })])
+      ),
+      bandwidthState: signal<BandwidthState | undefined>(undefined),
+      selectedAudioTrackId: signal<string | undefined>(undefined),
+      userAudioTrackSelection: signal<Partial<AudioTrack> | undefined>(undefined),
+      errors: signal<SvtaError[] | undefined>(undefined),
+    };
+    const reactor = switchAudioTrack.setup({ state, config: { canPlayTrack: () => false } });
+    await flush();
+
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_AUDIO_TRACK]);
+    reactor.destroy();
+  });
+
+  it('emits nothing for the text variant — absent subtitles are not an error', async () => {
+    const subtitle: PartiallyResolvedTextTrack = {
+      type: 'text',
+      id: 'sub-en',
+      url: 'https://cdn-a.example.com/sub-en.m3u8',
+      bandwidth: 256,
+      mimeType: 'application/mp4',
+      groupId: 'text',
+      label: 'en',
+      kind: 'subtitles',
+      language: 'en',
+    };
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>({
+        id: 'presentation-text',
+        url: 'https://example.com/playlist.m3u8',
+        selectionSets: [
+          {
+            id: 'text-set',
+            type: 'text' as const,
+            switchingSets: [{ id: 'text-switching', type: 'text' as const, tracks: [subtitle] }],
+          } as TextSelectionSet,
+        ],
+      } as Presentation),
+      selectedTextTrackId: signal<string | undefined>(undefined),
+      userTextTrackSelection: signal<Partial<TextTrack> | 'off' | undefined>(undefined),
+      failedCdns: signal<string[] | undefined>(['https://cdn-a.example.com']),
+      errors: signal<SvtaError[] | undefined>(undefined),
+    };
+    const reactor = switchTextTrack.setup({ state });
+    await flush();
+
+    // The text variant configures no code: an unavailable subtitle track is not
+    // a playback failure, so nothing is reported even though the set is empty.
+    expect(state.errors.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  it('no-ops when no errors slot is composed', async () => {
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(
+        createPresentation([codecVideoTrack('720p', 'avc1.4d401f')])
+      ),
+      bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+      selectedVideoTrackId: signal<string | undefined>(undefined),
+      userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    };
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
+    await expect(flush()).resolves.not.toThrow();
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
     reactor.destroy();
   });
 });

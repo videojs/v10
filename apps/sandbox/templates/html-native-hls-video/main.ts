@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { renderChapters } from '@app/shared/html/chapters';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/video/player';
 import '@videojs/html/media/native-hls-video';
@@ -13,7 +14,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getChapters, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -32,16 +33,28 @@ async function render() {
   const mediaAttrs = renderMediaAttrs(state);
   const playerTag = live ? 'live-video-player' : 'video-player';
 
+  // A source carrying DRM license servers has no room in the `src` attribute, so
+  // it is assigned as an object below instead. Only the FairPlay entry of its
+  // `drm` is read here — the systems the same object names for hls.js are
+  // ignored.
+  const { source, url } = SOURCES[state.source];
+  const srcAttr = source ? '' : ` src="${url}"`;
+
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <native-hls-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
+        <native-hls-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
+          ${renderChapters(getChapters(state.source))}
           ${renderStoryboard(storyboard)}
         </native-hls-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </${playerTag}>
   `);
+
+  if (source) {
+    document.querySelector('native-hls-video')!.source = source;
+  }
 }
 
 render();

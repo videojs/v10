@@ -26,11 +26,17 @@ is the narrower "deliver video-only despite mixed source" use case.
 ## Status
 
 Phase 1 implemented ([#1586](https://github.com/videojs/v10/issues/1586)):
-`createBackgroundVideoEngine`, `BackgroundVideoMediaElement`,
-and the `pickMaxResolutionVideoTrack` primitive ship under
-`@videojs/spf/background-video`. Phases 2-3 (decorator composition
-of audio and preload) and Phase 4 (Video.js component shell — out of SPF
-scope) stay coarser.
+`createBackgroundVideoEngine` ships under `@videojs/spf/hls`, beside the other
+HLS engines; `HlsBackgroundVideoMediaElement` and the host-bound
+`HlsBackgroundVideoMedia` ship under `@videojs/spf/hls-background-video`, with
+`@videojs/spf/mux-background-video` re-exporting them under Mux-flavored names.
+The adapter carries no client-side cap: it pins the largest rendition the
+manifest offers, and narrowing that set is a delivery param on the URL. The
+max-resolution picker primitives (`maxResolutionToPixelArea`,
+`pickTrackUnderPixelArea`) remain in `media/primitives/select-tracks.ts`, where
+screen-resolution-derived capping will read them. Phases 2-3 (decorator
+composition of audio and preload) and Phase 4 (Video.js component shell — out of
+SPF scope) stay coarser.
 
 ## Phases
 
@@ -39,7 +45,7 @@ phase structure — phases map to discrete epic deliverables.
 
 | Phase | What |
 |---|---|
-| **1 — Composition + adapter** ([#1586](https://github.com/videojs/v10/issues/1586)) | Subtractive composition removing audio, text, ABR, preload-monitoring, and play/seek-monitoring behaviors; adds `selectVideoTrack` with a max-resolution picker; seeds `loadActivated: true`; ships independent adapter parallel to `SimpleHlsMediaElement`. HLS multivariant source; native `mediaElement.loop = true`. |
+| **1 — Composition + adapter** ([#1586](https://github.com/videojs/v10/issues/1586)) | Subtractive composition removing audio, text, ABR, preload-monitoring, and play/seek-monitoring behaviors; adds `selectVideoTrack` with a max-resolution picker; seeds `loadActivated: true`; ships independent adapter parallel to `HlsVideoMediaElement`. HLS multivariant source; native `mediaElement.loop = true`. |
 | **2 — `withAudio()` decoration** | Composes audio-side behaviors back in for surfaces needing audio (user-initiated unmute, audible ambient). Decorator shape TBD. |
 | **3 — `withPreload()` + optimizations** | Composes preload-state monitoring back in for lazy/viewport-gated tiles. Co-scoped with loop-around forward-buffer fetching, GPU/thermal-aware quality caps, and a sampling-strip alt-impl of `loadVideoSegments`. |
 | **4 — Video.js component** | Full `<mux-background-video>` integration. **Out of SPF scope** — adapter / consumer territory. |
@@ -51,7 +57,7 @@ configuration. Alternative-implementation buckets surface in Phase 3.
 
 ### Subtracted
 
-From [`createSimpleHlsEngine`](../../../../packages/spf/src/playback/engines/hls/engine.ts):
+From [`createHlsVideoEngine`](../../../../packages/spf/src/playback/engines/hls/engine.ts):
 
 - `syncPreload`, `trackLoadTriggers` — no preload-state monitoring or DOM `play`/`seeking` activation; replaced by `loadActivated: true` initial state.
 - `selectAudioTrack`, `resolveAudioTrack`, `setupAudioBufferActors`, `loadAudioSegments` — no audio side.
@@ -79,10 +85,10 @@ tree-shakes out the ABR code path."* — exactly the affordance Phase 1 wants.
 
 ## Customer-policy surface
 
-Independent adapter parallel to `SimpleHlsMediaElement`:
+Independent adapter parallel to `HlsVideoMediaElement`:
 
 ```ts
-const bgPlayer = new BackgroundVideoMediaElement({ picker: maxResolutionPicker });
+const bgPlayer = new HlsBackgroundVideoMediaElement({ config: { picker: maxResolutionPicker } });
 bgPlayer.src = sourceUrl;
 bgPlayer.loop = true;        // native HTMLMediaElement.loop
 bgPlayer.muted = true;       // browser autoplay policy
@@ -97,7 +103,7 @@ Video.js component shell) live above the SPF engine.
 
 ## Variant-decision signal source
 
-**Adapter-upfront.** Selecting `BackgroundVideoMediaElement` *is*
+**Adapter-upfront.** Selecting `HlsBackgroundVideoMediaElement` *is*
 the variant choice — no parser detection, no runtime config branch. Same
 resolution as [`video-only-mode-override`](./video-only-mode-override.md)
 and [`audio-only-mode-override`](./audio-only-mode-override.md): Case-2
@@ -108,7 +114,7 @@ use cases resolve via adapter choice.
 Phase 1 baseline:
 
 - **`video-only-composition`** — used at the *composition-mechanism* level; same audio-side subtraction pattern as the Case-1 feature, driven by adapter choice instead of source-shape detection. Plus further subtractions (text, ABR, preload).
-- **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** — variant adapter parallels `SimpleHlsMediaElement` via the same `SimpleHlsMediaMixin` / `shareSignals` pattern.
+- **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** — variant adapter parallels `HlsVideoMediaElement` via the same `HlsVideoMediaMixin` / `shareSignals` pattern.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is. Firefox `mozHasAudio=false` verification under subtractive-audio composition is **joint Phase 1 scope** with `video-only-mode-override` and the Case-1 `video-only-composition` feature.
 - **[`buffer-management`](../features/buffer-management.md)** — as-is in Phase 1; Phase 3 surfaces back-buffer tuning and loop-around forward-buffer fetching (the "loop-around buffer fetching" candidate in that feature's *What's not implemented* directly targets this use case).
 - **[`preload-modes`](../features/preload-modes.md)** — alternative initial state (`loadActivated: true`) plus subtraction of `syncPreload` + `trackLoadTriggers`. Semantic contract preserved; the variant just seeds the gate-passable state from composition time.
@@ -125,7 +131,7 @@ Phase 2 (decorations TBD): **[`audio-playback`](../features/audio-playback.md)**
 
 - **Shared engine factory.** Three use cases now want subtractive-audio composition (this, `video-only-mode-override`, Case-1 `video-only-composition`). Lean: shared factory at the subtractive-audio level, with this use case layering further subtractions (text, ABR, preload) and an initial-state override on top.
 - **Firefox `mozHasAudio` verification.** Joint scope with the two sibling cases — same mixed-source-with-audio-subtracted permutation.
-- **Adapter proliferation.** N+1 adapter parallel to `SimpleHlsMediaElement`; three adapters share the `SimpleHlsMediaMixin` / `shareSignals` pattern — cost is configuration surface, not architecture.
+- **Adapter proliferation.** N+1 adapter parallel to `HlsVideoMediaElement`; three adapters share the `HlsVideoMediaMixin` / `shareSignals` pattern — cost is configuration surface, not architecture.
 - **`loadActivated: true` initial-state pattern.** Pioneered here. If a second use case wants the same shape, consider a shared `withAutoLoad()`-style helper or document treatment in [`preload-modes`](../features/preload-modes.md).
 
 ## Open questions
@@ -135,7 +141,7 @@ Phase 2 (decorations TBD): **[`audio-playback`](../features/audio-playback.md)**
 - **Sampling-strip alt-impl Path A vs B.** Likely Path B per [`README.md` § Implementation note](./README.md#implementation-note-customizing-behaviors-for-use-cases).
 - **GPU/thermal-aware quality caps boundary.** Engine-variant (compose a thermal-aware behavior) or adapter (cap the picker candidate set). Likely engine-variant given the product context.
 
-Resolved Phase 1: ~~picker location~~ (`pickMaxResolutionVideoTrack` ships in [`media/primitives/select-tracks.ts`](../../../../packages/spf/src/media/primitives/select-tracks.ts) next to `pickFirstTrackId`); ~~adapter naming~~ (`BackgroundVideoMediaElement`; product-shell naming `<mux-background-video>` lives in the adapter layer).
+Resolved Phase 1: ~~picker location~~ (`pickMaxResolutionVideoTrack` ships in [`media/primitives/select-tracks.ts`](../../../../packages/spf/src/media/primitives/select-tracks.ts) next to `pickFirstTrackId`); ~~adapter naming~~ (`HlsBackgroundVideoMediaElement`, named for the delivery format like the other HLS adapters; the product-shell name `<mux-background-video>` is an alias over it rather than a variant, at every layer).
 
 ## See also
 

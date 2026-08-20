@@ -45,10 +45,14 @@ export default {
     current: 'Aktuell tid',
     duration: 'Varigheit',
     remaining: 'Tid attende',
+    elapsedSuffix: '{duration} avspelt tid',
+    durationSuffix: '{duration} varigheit',
     remainingSuffix: '{duration} att',
-    showElapsed: '{duration}. Vis avspelt tid.',
-    showDuration: '{duration}. Vis lengd.',
-    showRemaining: '{duration}. Vis tid att.',
+    showElapsed: 'Vis avspelt tid, {duration}.',
+    showDuration: 'Vis lengd, {duration}.',
+    showRemaining: 'Vis tid att, {duration}.',
+    toggleElapsed: 'Byt mellom avspelt tid og tid att.',
+    toggleDuration: 'Byt mellom varigheit og tid att.',
     position: '{current} av {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Fullskjerm',
     pip: 'Bilete i bilete',
     exitPip: 'Avslutt bilete i bilete',
+    seekedTo: 'Hoppa til {time}',
+  },
+  container: {
+    label: 'Mediespelar',
   },
   errors: {
     aborted: 'Du avbraut avspelinga.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Videoen kunne ikkje lastas ned, på grunn av ein nettverksfeil eller serverfeil, eller av di formatet ikkje er stoda.',
     encrypted: 'Mediefila er kryptert og vi manglar nyklar for å dekryptere ho.',
+    unplayable: 'Denne mediefila er ikkje støtta av spelaren.',
     title: 'Noko gjekk gale.',
     unexpected: 'Det oppstod ein feil. Ver venleg prøv igjen.',
   },

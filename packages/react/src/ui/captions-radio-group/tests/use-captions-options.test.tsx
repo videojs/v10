@@ -1,5 +1,3 @@
-'use client';
-
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
@@ -86,23 +84,30 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
 
 function CaptionsAvailability(): ReactNode {
   const captions = useCaptionsOptions();
-  return <div data-testid="availability">{captions?.state.availability ?? 'missing'}</div>;
+  return (
+    <div data-testid="availability">
+      {captions ? `${captions.state.availability}:${captions.hidden ? 'hidden' : 'visible'}` : 'missing'}
+    </div>
+  );
 }
 
 function CaptionsRadioGroup(): ReactNode {
   const captions = useCaptionsOptions();
   if (!captions?.showMenu) return null;
 
-  const { options, setValue, value } = captions;
+  const { options, selectedLabel, setValue, value } = captions;
 
   return (
-    <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Captions">
-      {options.map((option) => (
-        <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
-          {option.label}
-        </Menu.RadioItem>
-      ))}
-    </Menu.RadioGroup>
+    <>
+      <span data-testid="selected-label">{selectedLabel}</span>
+      <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Captions">
+        {options.map((option) => (
+          <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+            {option.label}
+          </Menu.RadioItem>
+        ))}
+      </Menu.RadioGroup>
+    </>
   );
 }
 
@@ -113,6 +118,7 @@ describe('useCaptionsOptions', () => {
     expect(screen.getByRole('menuitemradio', { name: 'Off' }).getAttribute('aria-checked')).toBe('false');
     expect(screen.getByRole('menuitemradio', { name: 'English' }).getAttribute('aria-checked')).toBe('false');
     expect(screen.getByRole('menuitemradio', { name: 'Spanish' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByTestId('selected-label').textContent).toBe('Spanish');
   });
 
   it('center aligns the popup by default', () => {
@@ -168,7 +174,7 @@ describe('useCaptionsOptions', () => {
 
     render(<CaptionsAvailability />, { wrapper: Wrapper });
 
-    expect(screen.getByTestId('availability').textContent).toBe('unavailable');
+    expect(screen.getByTestId('availability').textContent).toBe('unavailable:hidden');
 
     act(() => {
       updateState({
@@ -185,6 +191,6 @@ describe('useCaptionsOptions', () => {
       });
     });
 
-    expect(screen.getByTestId('availability').textContent).toBe('available');
+    expect(screen.getByTestId('availability').textContent).toBe('available:visible');
   });
 });

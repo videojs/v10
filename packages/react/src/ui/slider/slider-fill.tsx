@@ -1,5 +1,3 @@
-'use client';
-
 import type { SliderState } from '@videojs/core';
 
 import type { UIComponentProps } from '../../utils/types';

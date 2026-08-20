@@ -1,3 +1,5 @@
+'use client';
+
 import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
@@ -23,6 +25,7 @@ import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { PlaybackRateRadioGroup as PlaybackRateRadioGroupComponent } from '@/ui/playback-rate-radio-group';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { StatusAnnouncer } from '@/ui/status-announcer';
@@ -48,7 +51,7 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
 });
 
 function VolumePopover(): ReactNode {
-  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
+  const volumeUnavailable = usePlayer((s) => s.volumeAvailability !== 'available');
 
   const muteButton = (
     <MuteButton className="media-button--mute" render={<Button />}>
@@ -58,7 +61,7 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnsupported) return muteButton;
+  if (volumeUnavailable) return muteButton;
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="left" boundary="viewport">
@@ -77,27 +80,20 @@ function VolumePopover(): ReactNode {
 
 function PlaybackRateRadioGroup(): ReactNode {
   const t = useTranslator();
-  const state = usePlaybackRateOptions();
-  if (!state) return null;
-
-  const { options, setValue, value } = state;
 
   return (
-    <Menu.RadioGroup
+    <PlaybackRateRadioGroupComponent
       className="media-menu__group"
-      value={value}
-      onValueChange={setValue}
       aria-label={t(playbackRateText)}
-    >
-      {options.map((option) => (
-        <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
-          <span>{option.label}</span>
-          <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
+      renderItem={(props, item) => (
+        <Menu.RadioItem {...props} className="media-menu__item">
+          <span>{item.label}</span>
+          <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
             <CheckIcon className="media-icon" />
           </Menu.ItemIndicator>
         </Menu.RadioItem>
-      ))}
-    </Menu.RadioGroup>
+      )}
+    />
   );
 }
 
@@ -206,8 +202,8 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
 
             <TimeSlider.Root className="media-slider">
               <TimeSlider.Track className="media-slider__track">
-                <TimeSlider.Fill className="media-slider__fill" />
                 <TimeSlider.Buffer className="media-slider__buffer" />
+                <TimeSlider.Fill className="media-slider__fill" />
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
               <TimeSlider.Preview className="media-slider__preview">
@@ -217,14 +213,14 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
           </div>
 
           <div className="media-button-group">
+            <VolumePopover />
+
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
               <Menu.Content className="media-popover media-menu media-menu--playback-rate">
                 <PlaybackRateRadioGroup />
               </Menu.Content>
             </Menu.Root>
-
-            <VolumePopover />
           </div>
         </Tooltip.Provider>
       </div>
@@ -246,7 +242,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
       <Hotkey keys="<" action="speedDown" />
 
       {/* Input Feedback */}
-      <StatusAnnouncer />
+      <StatusAnnouncer className="media-sr-only" />
     </Container>
   );
 }

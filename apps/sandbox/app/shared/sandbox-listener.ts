@@ -1,11 +1,18 @@
 import { SKINS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { Skin } from '@app/types';
+import type { MediaResolution } from '@videojs/media';
 import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
 
 export const PRELOAD_VALUES = ['none', 'metadata', 'auto'] as const;
 export type PreloadValue = (typeof PRELOAD_VALUES)[number];
 export const DEFAULT_PRELOAD: PreloadValue = 'metadata';
+
+// Any `{height}p`, not just the rungs `MediaResolution` names.
+const RESOLUTION_PATTERN = /^\d+p$/;
+
+export const PREFER_PLAYBACK_VALUES = ['mse', 'native'] as const;
+export type PreferPlaybackValue = (typeof PREFER_PLAYBACK_VALUES)[number];
 
 const params = new URLSearchParams(window.location.search);
 
@@ -30,6 +37,26 @@ function readPreload(): PreloadValue {
   return PRELOAD_VALUES.includes(value as PreloadValue) ? (value as PreloadValue) : DEFAULT_PRELOAD;
 }
 
+function readResolution(name: string): MediaResolution | undefined {
+  const value = params.get(name);
+  if (!value || !RESOLUTION_PATTERN.test(value) || Number.parseInt(value, 10) <= 0) return undefined;
+
+  return value as MediaResolution;
+}
+
+/** Absent unless named, so the source default is what runs otherwise. */
+function readOptionalBoolean(name: string): boolean | undefined {
+  const value = params.get(name);
+  if (value === null) return undefined;
+
+  return value !== '0' && value !== 'false';
+}
+
+function readPreferPlayback(): PreferPlaybackValue | undefined {
+  const value = params.get('preferPlayback');
+  return PREFER_PLAYBACK_VALUES.includes(value as PreferPlaybackValue) ? (value as PreferPlaybackValue) : undefined;
+}
+
 let currentSkin = readSkin();
 let currentSource = readSource();
 let currentAutoplay = readBoolean('autoplay');
@@ -37,10 +64,58 @@ let currentMuted = readBoolean('muted');
 let currentLoop = readBoolean('loop');
 let currentPreload = readPreload();
 let currentLocale = readLocale();
+const initialMaxAutoResolution = readResolution('maxAutoResolution');
+const initialMinAutoResolution = readResolution('minAutoResolution');
+const initialCapRenditionToPlayerSize = readOptionalBoolean('capRenditionToPlayerSize');
+const initialPreferPlayback = readPreferPlayback();
+
+function applyAccentColor(value: string) {
+  if (value) {
+    document.documentElement.style.setProperty('--media-accent-color', value);
+  } else {
+    document.documentElement.style.removeProperty('--media-accent-color');
+  }
+}
+
+applyAccentColor(params.get('accent')?.trim() ?? '');
+
+window.addEventListener('message', (event) => {
+  if (event.data?.type !== 'accent-color-change' || typeof event.data.accentColor !== 'string') return;
+
+  applyAccentColor(event.data.accentColor.trim());
+});
 
 function readLocale(): SandboxLocaleTag {
   const value = params.get('locale');
   return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag) ? (value as SandboxLocaleTag) : DEFAULT_SANDBOX_LOCALE;
+}
+
+/**
+ * Playback options read once from the query string and folded into the *initial*
+ * `source`, so the engine is built with them instead of having them switched in
+ * afterwards. Every key is absent unless named, leaving the default sandbox
+ * behavior untouched.
+ *
+ * - `?maxAutoResolution=720p` caps automatic rendition selection.
+ * - `?capRenditionToPlayerSize=0` stops the element's size from capping it.
+ * - `?minAutoResolution=270p` lowers the floor on that size cap, whose default
+ *   is `720p` — low enough here to leave a small player uncapped.
+ * - `?preferPlayback=native` forces the browser's own HLS.
+ */
+export function getInitialPlaybackOverrides(): {
+  maxAutoResolution?: MediaResolution;
+  capRenditionToPlayerSize?: boolean;
+  minAutoResolution?: MediaResolution;
+  preferPlayback?: PreferPlaybackValue;
+} {
+  return {
+    ...(initialMaxAutoResolution && { maxAutoResolution: initialMaxAutoResolution }),
+    ...(initialCapRenditionToPlayerSize !== undefined && {
+      capRenditionToPlayerSize: initialCapRenditionToPlayerSize,
+    }),
+    ...(initialMinAutoResolution && { minAutoResolution: initialMinAutoResolution }),
+    ...(initialPreferPlayback && { preferPlayback: initialPreferPlayback }),
+  };
 }
 
 export function getInitialSkin(): Skin {

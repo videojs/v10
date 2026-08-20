@@ -23,53 +23,161 @@ import basicUsageHtmlTs from "@/components/docs/demos/poster/html/css/BasicUsage
 
 ## Anatomy
 
-Import the component:
-
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <Poster src="poster.jpg" alt="Video preview" />
+  <Poster />
   ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   ```html
   <media-poster>
-    <img src="poster.jpg" alt="Video preview" />
+    <img alt="" />
   </media-poster>
   ```
 </FrameworkCase>
 
 ## Behavior
 
-The poster is visible before playback starts. Once the user plays or seeks, the poster hides permanently — pausing does not bring it back. The poster reappears when a new source is loaded.
+The poster shows before playback starts. Once the user plays or seeks, it hides; pausing does not bring it back. Loading a new source shows it again.
+
+You can set the poster URL on the player. This is useful when you want to change the poster from inside a skin, or keep all your media metadata in one place:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<VideoPlayer poster="poster.jpg" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player poster="poster.jpg"></video-player>
+```
+</FrameworkCase>
+
+## Supply your own image
+
+The component fills in a source only when you leave one out. `srcset`, `sizes`, `loading`, `<picture>`, and framework image components all stay available.
+
+<FrameworkCase frameworks={["react"]}>
+The component is the `<img>`, so image attributes go straight on it:
+
+```tsx
+<Poster srcSet="poster-480.jpg 480w, poster-1080.jpg 1080w" sizes="100vw" />
+```
+
+To render something else, use `render`. It receives the poster URL as `src`, undefined until one resolves:
+
+```tsx
+<Poster
+  render={({ src, ...props }: ComponentProps<'img'>) =>
+    src ? <Image {...props} src={src} alt="" fill /> : null
+  }
+/>
+```
+
+Inside a skin, pass the same function as `renderPoster`. The skin draws your image in place of its own:
+
+```tsx
+<VideoSkin
+  renderPoster={({ src, ...props }: ComponentProps<'img'>) =>
+    src ? <Image {...props} src={src} alt="" fill /> : null
+  }
+/>
+```
+
+A skin styles the `<img>` it draws directly. Render something that is not an `<img>` and its sizing is yours.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-poster>` renders no image of its own. It fills in the `src` of the image you put inside it:
+
+```html
+<media-poster>
+  <img alt="" />
+</media-poster>
+```
+
+Give that image a `src`, a `srcset`, or `<source>` candidates and it is yours; the component leaves it alone:
+
+```html
+<media-poster>
+  <img src="poster.jpg" srcset="poster-480.jpg 480w, poster-1080.jpg 1080w" alt="Keynote speaker" />
+</media-poster>
+```
+
+Inside a skin, slot your image instead. The skin carries a plain one that yours replaces:
+
+```html
+<video-skin>
+  <video src="video.mp4" playsinline></video>
+  <img slot="poster" src="poster.jpg" alt="Keynote speaker" />
+</video-skin>
+```
+
+A skin can only style an `<img>` you slot directly. Wrap one in a `<picture>` or a framework component and its sizing is yours.
+</FrameworkCase>
 
 ## Styling
 
-Style the poster with the `[data-visible]` attribute:
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `data-visible` | Present / absent | Present before playback starts |
+| `data-loading` | Present / absent | Present while the image is fetching |
+| `data-loaded` | Present / absent | Present once the image has loaded |
+| `data-error` | Present / absent | Present when the image failed |
+
+The three load attributes track the image on screen, including one you supplied yourself.
 
 <FrameworkCase frameworks={["html"]}>
 ```css
 media-poster:not([data-visible]) {
-  display: none;
+  opacity: 0;
 }
 ```
+
+The image is an ordinary child, so style it as a descendant:
+
+```css
+media-poster img {
+  object-fit: cover;
+}
+```
+
+From inside a skin's shadow root, an image slotted from outside needs `::slotted(img)` as well.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 React renders an `<img>` element. Add a `className` to style it:
 
 ```css
-.poster:not([data-visible]) {
-  display: none;
+.media-poster:not([data-visible]) {
+  opacity: 0;
 }
 ```
 </FrameworkCase>
 
-You control the child `<img>` — this means `srcset`, `sizes`, `loading="lazy"`, and framework image components all work naturally.
-
 ## Accessibility
 
-Unlike the native `<video poster>` attribute, this component allows you to provide accessible text alternatives for screen readers via the `alt` attribute on your child `<img>`. This means you can describe the poster image (e.g., `alt="Keynote speaker at a conference"`) or mark it as decorative with `alt=""` if it doesn't convey meaningful information. 
+Unlike the native `<video poster>` attribute, this component lets you describe the poster for screen readers.
+
+The image is decorative by default (`alt=""`), since a URL says nothing about what the image shows. When the poster carries meaning, say so:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Poster alt="Keynote speaker at a conference" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-poster>
+  <img src="poster.jpg" alt="Keynote speaker at a conference" />
+</media-poster>
+```
+</FrameworkCase>
+
+Whether a poster is informative or decorative is your judgment, per the [WAI guidelines](https://www.w3.org/WAI/tutorials/images/decorative/).
 
 ## Examples
 

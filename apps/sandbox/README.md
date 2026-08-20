@@ -14,7 +14,7 @@ Open the printed URL. The root route renders an interactive shell — a navbar w
 
 **Language** is in **Player settings** (gear icon) for every preset (HTML, React, and CDN). **CDN** registers copy through `@videojs/html/cdn/i18n` (the same registry as the CDN player bundle), not source `@videojs/html/i18n`. After pulling template changes, restart `pnpm dev:sandbox` so `scripts/setup.ts` refreshes `src/` from `templates/`.
 
-The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `simple-hls-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
+The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `hls-video-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
 
 ## How it works
 
@@ -66,6 +66,17 @@ pnpm -F @videojs/sandbox reset
 ```
 
 This previews every change first and prompts before doing anything. It overwrites modified files, deletes files that exist only in `src/`, and restores any missing template files. **Cannot be undone**, so commit or `sync` anything you want to keep first.
+
+## Running outside the monorepo
+
+Every pull request publishes this directory as a StackBlitz template through [pkg.pr.new](https://github.com/stackblitz-labs/pkg.pr.new), booting it against that commit's preview packages. That makes the sandbox the one app here that must also run as a standalone project, which constrains it in two ways:
+
+- **Nothing may reference a path outside this directory.** `vite.config.ts` locates the prebuilt `@videojs/html` CDN bundle through Node resolution rather than `../../packages/html`, and `tsconfig.json` is self-contained instead of extending `../../tsconfig.base.json` — Vite fails to start if that `extends` cannot be resolved.
+- **Only published packages may be dependencies.** Private workspace packages such as `@videojs/icons` and `@videojs/skins` cannot be installed outside the monorepo; their code already ships inlined inside `@videojs/html` and `@videojs/react`.
+- **The package manager has to be declared here.** Only the repo root says pnpm, and the root is never uploaded, so StackBlitz would otherwise default to npm. The `stackblitz` field in `package.json` turns off its automatic install and boots with pnpm instead. `--ignore-scripts` is there because pnpm refuses to silently skip dependency build scripts and fails the install if it has to; the sandbox needs none of them, esbuild's native binary included.
+- **Tailwind has to be able to scan the installed packages.** The skin utility classes live inside `@videojs/html` and `@videojs/react`, so `app/styles.css` points `@source` at them in `node_modules`. Under pnpm's default layout those entries are symlinks into `node_modules/.pnpm`, and Tailwind's scanner comes up empty on them inside StackBlitz — the generated CSS drops from ~250 kB to ~29 kB and every Tailwind skin renders unstyled. `--config.nodeLinker=hoisted` gives the preview a flat, npm-shaped `node_modules` of real directories instead.
+
+`src/` is gitignored and so never part of the upload. That is fine: the `dev` script runs `setup.ts` first, which recreates `src/` from `templates/` on boot.
 
 ## Adding a new sandbox
 

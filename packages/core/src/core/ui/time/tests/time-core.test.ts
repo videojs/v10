@@ -101,6 +101,14 @@ describe('TimeCore', () => {
 
       expect(state.text).toBe('0:01:30');
     });
+
+    it('formats digital time with locale digits', () => {
+      const core = new TimeCore({ type: 'current' });
+      core.setFormatLocale('fa');
+      core.setMedia(createMediaState({ currentTime: 90 }));
+
+      expect(core.getState().text).toBe('۱:۳۰');
+    });
   });
 
   describe('getLabel', () => {
@@ -148,22 +156,34 @@ describe('TimeCore', () => {
       const state = core.getState();
       expect(core.getLabel(state)).toMatchObject({
         key: 'time.showRemaining',
-        text: '{duration}. Show remaining time.',
+        text: 'Show remaining time, {duration}.',
       });
-      expect(core.getLabelParams(state)).toEqual({ duration: '1 minute, 30 seconds' });
+      expect(core.getLabelParams(state)).toEqual({ duration: '1 minute, 30 seconds elapsed' });
       expect(translateText(core.getLabel(state), t, core.getLabelParams(state))).toBe(
-        '1 minute, 30 seconds. Show remaining time.'
+        'Show remaining time, 1 minute, 30 seconds elapsed.'
       );
+    });
+
+    it.each([
+      ['current', { currentTime: 0 }, 'Show remaining time, 0 seconds elapsed.'],
+      ['duration', { duration: 0 }, 'Show remaining time, 0 seconds duration.'],
+      ['remaining', { currentTime: 300 }, 'Show duration, 0 seconds remaining.'],
+    ] as const)('includes zero in the %s toggle label', (type, media, expected) => {
+      const core = new TimeCore({ type, toggle: true });
+      core.setMedia(createMediaState(media));
+      const state = core.getState();
+
+      expect(translateText(core.getLabel(state), t, core.getLabelParams(state))).toBe(expected);
     });
 
     it('returns toggle label for remaining', () => {
       const core = new TimeCore({ type: 'remaining', toggle: true });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toMatchObject({ key: 'time.showDuration', text: '{duration}. Show duration.' });
+      expect(core.getLabel(state)).toMatchObject({ key: 'time.showDuration', text: 'Show duration, {duration}.' });
       expect(core.getLabelParams(state)).toEqual({ duration: '3 minutes, 30 seconds remaining' });
       expect(translateText(core.getLabel(state), t, core.getLabelParams(state))).toBe(
-        '3 minutes, 30 seconds remaining. Show duration.'
+        'Show duration, 3 minutes, 30 seconds remaining.'
       );
     });
 
@@ -173,10 +193,10 @@ describe('TimeCore', () => {
       const state = core.getState();
       expect(core.getLabel(state, 'current')).toMatchObject({
         key: 'time.showElapsed',
-        text: '{duration}. Show elapsed time.',
+        text: 'Show elapsed time, {duration}.',
       });
       expect(translateText(core.getLabel(state, 'current'), t, core.getLabelParams(state))).toBe(
-        '3 minutes, 30 seconds remaining. Show elapsed time.'
+        'Show elapsed time, 3 minutes, 30 seconds remaining.'
       );
     });
   });
@@ -200,56 +220,70 @@ describe('TimeCore', () => {
       expect(attrs['aria-label']).toMatchObject({ key: 'time.remaining', text: 'Remaining' });
     });
 
-    it('returns button attributes when current time is toggleable', () => {
+    it('returns toggle attributes for current time', () => {
       const core = new TimeCore({ type: 'current', toggle: true });
       core.setMedia(createMediaState({ currentTime: 90 }));
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs.role).toBe('button');
-      expect(attrs.tabIndex).toBe(0);
       expect(attrs['aria-label']).toMatchObject({
         key: 'time.showRemaining',
-        text: '{duration}. Show remaining time.',
+        text: 'Show remaining time, {duration}.',
       });
-      expect(core.getLabelParams(state)).toEqual({ duration: '1 minute, 30 seconds' });
+      expect(attrs['aria-description']).toMatchObject({
+        key: 'time.toggleElapsed',
+        text: 'Toggle between elapsed and remaining time.',
+      });
+      expect(attrs.role).toBe('button');
+      expect(attrs.tabIndex).toBe(0);
+      expect(core.getLabelParams(state)).toEqual({ duration: '1 minute, 30 seconds elapsed' });
     });
 
-    it('returns button attributes when remaining time is toggleable', () => {
+    it('returns toggle attributes for remaining time', () => {
       const core = new TimeCore({ type: 'remaining', toggle: true });
       core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
       const state = core.getState();
       const attrs = core.getAttrs(state, 'current');
 
-      expect(attrs.role).toBe('button');
-      expect(attrs.tabIndex).toBe(0);
       expect(attrs['aria-label']).toMatchObject({
         key: 'time.showElapsed',
-        text: '{duration}. Show elapsed time.',
+        text: 'Show elapsed time, {duration}.',
       });
+      expect(attrs['aria-description']).toMatchObject({
+        key: 'time.toggleElapsed',
+        text: 'Toggle between elapsed and remaining time.',
+      });
+      expect(attrs.role).toBe('button');
+      expect(attrs.tabIndex).toBe(0);
       expect(core.getLabelParams(state)).toEqual({ duration: '3 minutes, 30 seconds remaining' });
     });
 
-    it('returns button attributes when duration is toggleable', () => {
+    it('returns toggle attributes for duration', () => {
       const core = new TimeCore({ type: 'duration', toggle: true });
       core.setMedia(createMediaState({ duration: 300 }));
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs.role).toBe('button');
-      expect(attrs.tabIndex).toBe(0);
       expect(attrs['aria-label']).toMatchObject({
         key: 'time.showRemaining',
-        text: '{duration}. Show remaining time.',
+        text: 'Show remaining time, {duration}.',
       });
+      expect(attrs['aria-description']).toMatchObject({
+        key: 'time.toggleDuration',
+        text: 'Toggle between duration and remaining time.',
+      });
+      expect(attrs.role).toBe('button');
+      expect(attrs.tabIndex).toBe(0);
+      expect(core.getLabelParams(state)).toEqual({ duration: '5 minutes duration' });
     });
 
-    it('does not return button attributes without toggle', () => {
+    it('does not return a description without toggle', () => {
       const core = new TimeCore({ type: 'duration' });
       core.setMedia(createMediaState({ duration: 300 }));
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
+      expect(attrs['aria-description']).toBeUndefined();
       expect(attrs.role).toBeUndefined();
       expect(attrs.tabIndex).toBeUndefined();
     });

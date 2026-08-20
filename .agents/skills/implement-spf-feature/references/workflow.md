@@ -340,7 +340,7 @@ Downstream skills routed-to:
   compose into the variant factory (per `use-cases/`); the default factory
   stays clean. Cross-ref to use-cases/README composition discipline. If a
   use case has a Case-2-only behavior, it doesn't belong in
-  `createSimpleHlsEngine`.
+  `createHlsVideoEngine`.
 
 - **Status / Implementation-surface update skipped** — feature doc
   transitions from coarse → sketched as code lands. The doc must be
@@ -400,13 +400,13 @@ boundary:
 **1d. Confirm composition target.** (Once routing is confirmed.)
 
 The implementation effort's composition target shapes scope considerably.
-Default is **standard composition** (`createSimpleHlsEngine`); use-case
-compositions (`createHlsAudioOnlyEngine`, etc.) follow a narrower frame.
+Default is **standard composition** (`createHlsVideoEngine`); use-case
+compositions (`createHlsAudioEngine`, etc.) follow a narrower frame.
 
 If not explicit in the invocation, surface and confirm. Three answers:
 
 - **Standard composition** *(default)* — feature lands in
-  `createSimpleHlsEngine` (or its constituents). Step 2's
+  `createHlsVideoEngine` (or its constituents). Step 2's
   destination-architecture frame applies in full.
 - **Use-case composition: `<use-case-name>`** — feature lands in the
   use case's variant engine. Step 2's destination-architecture frame
@@ -974,8 +974,8 @@ design decisions.
   `/change-spf-behavior`.
 - **You want to split or merge behaviors** → `/change-spf-behavior`'s
   decomposition check.
-- **You want to write an architectural design doc** → `design` skill.
-- **You want to write an RFC** → `rfc` skill.
+- **The user requests a durable record** → treat it as a separate explicit
+  task. Do not create it from this workflow.
 
 ## How the failure-mode catalog grows
 

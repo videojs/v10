@@ -10,6 +10,9 @@ export const MenuItemDataAttrs = {
    * Use `[data-item]` as a shared selector to target all item types at once.
    */
   item: 'data-item',
-  /** Present when the item has keyboard or pointer focus (via roving tabindex). */
+  /**
+   * Present when the item is highlighted. Set to `pointer` when pointer
+   * movement caused the highlight; otherwise empty.
+   */
   highlighted: 'data-highlighted',
 } as const;

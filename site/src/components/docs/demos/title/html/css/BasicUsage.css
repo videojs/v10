@@ -1,0 +1,54 @@
+.html-title-basic {
+  position: relative;
+  display: block;
+}
+
+.html-title-basic video {
+  display: block;
+  width: 100%;
+}
+
+/* The element sets native `hidden` until a title resolves, so the gradient
+   never sits over empty space without this demo doing anything. */
+.html-title-basic__title {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  padding: 16px 20px 48px;
+  font-size: 16px;
+  font-weight: 500;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+}
+
+.html-title-basic__button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.html-title-basic__button .show-when-paused {
+  display: none;
+}
+
+.html-title-basic__button .show-when-playing {
+  display: none;
+}
+
+.html-title-basic__button[data-paused] .show-when-paused {
+  display: inline;
+}
+
+.html-title-basic__button:not([data-paused]) .show-when-playing {
+  display: inline;
+}

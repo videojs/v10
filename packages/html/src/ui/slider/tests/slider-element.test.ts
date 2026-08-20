@@ -1,4 +1,10 @@
+import type { AnyPlayerStore } from '@videojs/core/dom';
+import { ContextProvider } from '@videojs/element/context';
+import type { MediaControlsState } from '@videojs/media';
+import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { playerContext } from '../../../player/context';
+import { MediaElement } from '../../media-element';
 import { SliderBufferElement } from '../slider-buffer-element';
 import { SliderElement } from '../slider-element';
 import { SliderFillElement } from '../slider-fill-element';
@@ -17,6 +23,28 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   const tag = uniqueTag('test-el');
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
+}
+
+function createControlsStore(requestControlsLock: MediaControlsState['requestControlsLock']): AnyPlayerStore {
+  return createStore<unknown>()<MediaControlsState>({
+    name: 'controls',
+    state: () => ({
+      userActive: true,
+      controlsVisible: true,
+      requestControlsLock,
+      toggleControls: () => true,
+    }),
+  }) as unknown as AnyPlayerStore;
+}
+
+class TestPlayerProviderElement extends MediaElement {
+  readonly releaseControlsLock = vi.fn();
+  readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
+  readonly store = createControlsStore(this.requestControlsLock);
+  readonly provider = new ContextProvider(this, {
+    context: playerContext,
+    initialValue: this.store,
+  });
 }
 
 afterEach(() => {
@@ -126,6 +154,28 @@ describe('SliderElement', () => {
 
     // pointerdown triggers onValueChange via rootProps.
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('holds a controls visibility lock for the duration of a drag', async () => {
+    const provider = createElement(TestPlayerProviderElement);
+    const slider = createElement(SliderElement);
+
+    provider.append(slider);
+    document.body.append(provider);
+    await slider.updateComplete;
+
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+
+    expect(provider.requestControlsLock).toHaveBeenCalledTimes(1);
+    expect(provider.releaseControlsLock).not.toHaveBeenCalled();
+
+    slider.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('lostpointercapture', { bubbles: true, pointerId: 1 }));
+
+    expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
   });
 
   it('supports vertical orientation', async () => {

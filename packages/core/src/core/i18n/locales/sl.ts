@@ -45,10 +45,14 @@ export default {
     current: 'Trenutni čas',
     duration: 'Trajanje',
     remaining: 'Preostali čas',
+    elapsedSuffix: '{duration} preteklega časa',
+    durationSuffix: '{duration} trajanja',
     remainingSuffix: 'Preostane {duration}',
-    showElapsed: '{duration}. Prikaži pretekli čas.',
-    showDuration: '{duration}. Prikaži trajanje.',
-    showRemaining: '{duration}. Prikaži preostali čas.',
+    showElapsed: 'Prikaži pretekli čas, {duration}.',
+    showDuration: 'Prikaži trajanje, {duration}.',
+    showRemaining: 'Prikaži preostali čas, {duration}.',
+    toggleElapsed: 'Preklopi med preteklim in preostalim časom.',
+    toggleDuration: 'Preklopi med trajanjem in preostalim časom.',
     position: '{current} od {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Celozaslonski prikaz',
     pip: 'Slika v sliki',
     exitPip: 'Izhod iz slike v sliki',
+    seekedTo: 'Premaknjeno na {time}',
+  },
+  container: {
+    label: 'Medijski predvajalnik',
   },
   errors: {
     aborted: 'Prekinili ste predvajanje.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Multimedijske datoteke ni bilo mogoče naložiti zaradi napake na strežniku oziroma omrežju ali ker ta oblika ni podprta.',
     encrypted: 'Datoteka je šifrirana in predvajalnik nima ključev za njeno dešifriranje.',
+    unplayable: 'Predvajalnik ne podpira tega medija.',
     title: 'Nekaj je šlo narobe.',
     unexpected: 'Prišlo je do napake. Poskusite znova.',
   },

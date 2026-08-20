@@ -47,11 +47,13 @@
  * *constraint* is the failover half — prune the cooled-down CDN, the scope falls
  * to the next.)
  *
- * When the pre-pass prunes a type's candidates to empty, the behavior leaves any
- * prior pick in place and makes no new pick; the late `createSourceBuffer` check
- * stays as the structural backstop for an unplayable rendition reaching the
- * pipeline. Surfacing "nothing playable" as observable state is deferred until a
- * consumer (error mapping) needs it.
+ * When the pre-pass prunes a type that *has* tracks to empty, the behavior
+ * clears the selection (so a now-unplayable pick can't linger and stall) and
+ * reports the type's `noSupportedTrackCode`. Which constraint emptied the set is
+ * deliberately not consulted — the behavior reads no constraint's state, so the
+ * chain stays composable. A type with no tracks at all is left alone; that's a
+ * legitimate source shape, not a failure. The late `createSourceBuffer` check
+ * stays as the structural backstop.
  *
  * Deferred: audio's preferred-language / default-track selection as standing
  * soft-filter rules (previously the empty-slot picker, dropped in the move to
@@ -62,6 +64,7 @@ import { type AnySlotMap, defineBehavior } from '../../core/composition/create-c
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { DEFAULT_QUALITY_CONFIG, type QualityConfig, resolutionArea } from '../../media/abr/quality-selection';
+import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../media/errors';
 import {
   matchesPartialTrack,
   pickTextTrackFromTracks,
@@ -82,6 +85,9 @@ import { getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cd
 import { getTracksByType } from '../../media/utils/tracks';
 import type { BandwidthConfig, BandwidthState } from '../../network/bandwidth-estimator';
 import { DEFAULT_BANDWIDTH_CONFIG, getBandwidthEstimate } from '../../network/bandwidth-estimator';
+import type { SelectionRule, SelectionRuleDeps } from '../primitives/selection-rules';
+import { applyConstraints, applyRules, excludeUnplayableTracks, sameCandidateSet } from '../primitives/selection-rules';
+import { type ErrorEmitterState, emitError } from './collect-errors';
 
 // ============================================================================
 // State + Config
@@ -134,83 +140,12 @@ export const DEFAULT_INITIAL_BANDWIDTH = 5_000_000;
 // Rule chain
 // ============================================================================
 
-/**
- * Deps handed to each rule and to `applyRules`, mirroring a behavior's setup
- * deps so a rule reads from the same surfaces a behavior does. `context` is
- * optional — it's threaded through but absent on direct setup calls (and
- * unread by today's rules), so the whole deps object can pass straight through.
- */
-export interface SelectionRuleDeps<State = unknown, Context = unknown, Config = unknown> {
-  state: State;
-  context?: Context;
-  config: Config;
-}
-
-/**
- * A selection rule narrows or reorders the candidate list. It reads the state,
- * context, and config it needs at apply time (tightly-coupled reads), so a
- * rule's `.get()`s subscribe the running effect to exactly what it consulted.
- * Returning an empty list means "no match" — the composer skips it, so a soft
- * filter never narrows the set to nothing. A ranker returns the list with its
- * pick at the head.
- */
-export type SelectionRule<T, State = unknown, Context = unknown, Config = unknown> = (
-  tracks: readonly T[],
-  deps: SelectionRuleDeps<State, Context, Config>
-) => readonly T[];
-
-/**
- * Apply rules to a candidate list in order; the pick is the first survivor.
- * Two responsibilities the rules don't carry: a rule that returns nothing is
- * skipped (fall-through — a preference never empties the set), and once one
- * survivor remains the chain stops (early-bail — later rules, including the
- * bandwidth ranker, never run, so the effect doesn't subscribe to their
- * signals while the choice is fixed).
- *
- * @param rules - Rules to apply, most authoritative first
- * @param tracks - Candidate tracks
- * @param deps - The behavior's `{ state, context, config }`, passed through to each rule
- * @returns The surviving candidates, pick first
- */
-export function applyRules<T, State, Context, Config>(
-  rules: readonly SelectionRule<T, State, Context, Config>[],
-  tracks: readonly T[],
-  deps: SelectionRuleDeps<State, Context, Config>
-): readonly T[] {
-  let current = tracks;
-  for (const rule of rules) {
-    const remaining = rule(current, deps);
-    if (remaining.length === 0) continue;
-    current = remaining;
-    if (current.length === 1) break;
-  }
-  return current;
-}
-
-/**
- * Apply hard constraints to a candidate list — the pre-pass that runs before the
- * rule chain. A constraint shares a rule's signature but its exclusion is
- * *hard*: it removes the unplayable (a codec the environment can't decode, a CDN
- * in failover cooldown) and a removed track is never attempted. Unlike
- * `applyRules`, this never skips an empty result and never early-bails — every
- * constraint always applies, and an empty survivor set is a real outcome
- * ("nothing playable here"), not a fall-through. Because each constraint only
- * removes, the order they run in can't change the result.
- *
- * @param constraints - Constraints to apply (pooled, order-independent)
- * @param tracks - Candidate tracks
- * @param deps - The behavior's `{ state, context, config }`, passed to each constraint
- * @returns The playable survivors (possibly empty)
- */
-export function applyConstraints<T, State, Context, Config>(
-  constraints: readonly SelectionRule<T, State, Context, Config>[],
-  tracks: readonly T[],
-  deps: SelectionRuleDeps<State, Context, Config>
-): readonly T[] {
-  let current = tracks;
-  for (const constraint of constraints) current = constraint(current, deps);
-  return current;
-}
+// Re-exported so a consumer typing against this module's rules doesn't need a
+// second import; the definitions live in `../primitives/selection-rules` so the
+// simple `selectVideoTrack` variant can share them without pulling the ABR path
+// in with them. See that module's note.
+export type { SelectionRule, SelectionRuleDeps } from '../primitives/selection-rules';
+export { applyConstraints, applyRules, excludeUnplayableTracks } from '../primitives/selection-rules';
 
 // ============================================================================
 // Specialization helper
@@ -298,6 +233,14 @@ export type TrackSwitchingStateMap<S extends SelectionKey> = {
 } & { [P in S]: Signal<TrackSwitchingState[P]> };
 
 /**
+ * The lifecycle map plus the *optional* `errors` slot reporters append to. Owned
+ * by `collectErrors`; optional so a composition without it still type-checks and
+ * emission no-ops. The behavior reads no constraint's state — see
+ * `noSupportedTrackCode`.
+ */
+type TrackSwitchingReporterStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & ErrorEmitterState;
+
+/**
  * Config `setupTrackSwitching` itself reads — its own wiring: which selection
  * slot to write and clear (`selectionKey`), how to enumerate candidate tracks
  * (`getTracks`), the optional **hard-constraints pre-pass** (`constraints`,
@@ -322,6 +265,15 @@ interface TrackSwitchingConfig<S extends SelectionKey, T extends SwitchableTrack
    * may return `undefined`.
    */
   resolveSelection?: ResolveSelection<T, TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>;
+  /**
+   * SVTA code to report when this type *has* tracks but the constraints pruned
+   * every one. Per-variant because the condition isn't universally an error:
+   * video and audio supply {@link SVTA_NO_SUPPORTED_VIDEO_TRACK} /
+   * {@link SVTA_NO_SUPPORTED_AUDIO_TRACK}, while text supplies none — an
+   * unavailable subtitle track is a legitimate outcome, not a playback failure.
+   * Absent → the selection still clears, nothing is reported.
+   */
+  noSupportedTrackCode?: number;
 }
 
 /**
@@ -401,17 +353,6 @@ type CdnRuleConfig<S extends SelectionKey, T extends SwitchableTrack> = TrackSwi
   getCdnId?: GetCdnId;
 };
 
-/**
- * Config the capability constraint reads: the base config plus an *optional*
- * `canPlayTrack` codec probe. Optional → an unwired probe means "no codec
- * filtering" and the constraint passes everything through, so the base config
- * (without it) stays assignable. The engine defaults it to the DOM-bound
- * `canPlayTrack`.
- */
-type CapabilityConstraintConfig<S extends SelectionKey, T extends SwitchableTrack> = TrackSwitchingConfig<S, T> & {
-  canPlayTrack?: CanPlayTrack;
-};
-
 type VideoTrackCandidate = PartiallyResolvedVideoTrack | VideoTrack;
 type AudioTrackCandidate = PartiallyResolvedAudioTrack | AudioTrack;
 type TextTrackCandidate = PartiallyResolvedTextTrack | TextTrack;
@@ -459,31 +400,6 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
   const getCdnId = config.getCdnId ?? defaultGetCdnId;
   const failedSet = new Set(failed);
   return tracks.filter((track) => !failedSet.has(getCdnId(track.url)));
-}
-
-/**
- * Capability constraint — a *hard* filter (constraints pre-pass), shared by
- * video and audio. Removes renditions this environment can't decode, probed via
- * the injected `canPlayTrack` (codec → `MediaSource.isTypeSupported`). Moving
- * the check here — before selection — means an unplayable variant (e.g. HEVC on
- * a browser without HEVC) is pruned upstream and never picked, instead of
- * surviving into the pipeline to fail late at `createSourceBuffer`. That late
- * throw stays as a defensive structural guarantee; with this constraint it
- * should rarely fire.
- *
- * Passes everything through when there's no `canPlayTrack` probe (a composition
- * that didn't wire it, or DOM-free tests). When it prunes *every* track (no
- * decodable rendition), the empty result is preserved (per `applyConstraints`)
- * — "nothing playable," so the behavior clears the selection (no pick) and the
- * late `createSourceBuffer` check stays as the backstop.
- */
-function excludeUnplayableTracks<S extends SelectionKey, T extends SwitchableTrack>(
-  tracks: readonly T[],
-  { config }: SelectionRuleDeps<TrackSwitchingStateMap<S>, AnySlotMap, CapabilityConstraintConfig<S, T>>
-): readonly T[] {
-  const canPlay = config.canPlayTrack;
-  if (!canPlay) return tracks;
-  return tracks.filter((track) => canPlay(track));
 }
 
 /**
@@ -612,7 +528,7 @@ type TextTerminalConfig = TrackSwitchingConfig<'selectedTextTrackId', TextTrackC
  *     stale pick whose match is gone (e.g. the language dropped on a source
  *     change) falls through to the default policy.
  *   - auto (`undefined`) → the opt-in default policy (`preferredSubtitleLanguage`
- *     → `DEFAULT=YES + AUTOSELECT=YES` → none), shared with `pickTextTrack`.
+ *     → `DEFAULT=YES + AUTOSELECT=YES` → none), via `pickTextTrackFromTracks`.
  *
  * Returning `undefined` is a real outcome (captions are opt-in), which is why the
  * text variant relies on `setupTrackSwitching`'s no-selection seam.
@@ -643,9 +559,9 @@ export function setupTrackSwitching<
   S extends SelectionKey,
   T extends SwitchableTrack,
   C extends TrackSwitchingConfig<S, T>,
->(deps: { state: TrackSwitchingStateMap<S>; context?: AnySlotMap; config: C }) {
+>(deps: { state: TrackSwitchingReporterStateMap<S>; context?: AnySlotMap; config: C }) {
   const { state, config } = deps;
-  const { selectionKey, getTracks, rules, resolveSelection = selectChainHead } = config;
+  const { selectionKey, getTracks, rules, resolveSelection = selectChainHead, noSupportedTrackCode } = config;
 
   const derivedStateSignal = computed(() =>
     isResolvedPresentation(state.presentation.get())
@@ -675,7 +591,7 @@ export function setupTrackSwitching<
       if (!isResolvedPresentation(presentation)) return [];
       return applyConstraints(config.constraints ?? [], getTracks(presentation), deps);
     },
-    { equals: (a, b) => a.length === b.length && a.every((track) => b.some((other) => other.id === track.id)) }
+    { equals: sameCandidateSet }
   );
 
   return createMachineReactor({
@@ -706,15 +622,21 @@ export function setupTrackSwitching<
             //     before resolve-track relabeled the type to a non-fMP4
             //     container — can't linger as a now-unplayable selection and
             //     silently stall the pipeline.
-            // The `console.error` is a placeholder until the planned error
-            // behaviors surface "nothing playable" as observable state.
             if (!tracks.length) {
               const presentation = peek(state.presentation);
               const hasTracksOfType = isResolvedPresentation(presentation) && getTracks(presentation).length > 0;
               if (hasTracksOfType) {
-                console.error(
-                  `[track-switching] every ${selectionKey} candidate was filtered out by constraints; clearing selection`
-                );
+                // Reported generically: *why* the set emptied is the constraints'
+                // business, not this behavior's, so no constraint's state is read
+                // here and no cause is distinguished. Whatever the reason, a type
+                // that has renditions but none selectable can't play — a codec
+                // this environment can't decode, or every CDN failed, which is
+                // itself fatal-or-nearly so. Finer causes (container vs codec)
+                // would need `CanPlayTrack` to report a reason; see
+                // `internal/design/spf/features/errors.md`.
+                if (noSupportedTrackCode !== undefined) {
+                  emitError(state, { code: noSupportedTrackCode, data: { selectionKey } });
+                }
                 state[selectionKey].set(undefined);
               }
               return;
@@ -786,6 +708,7 @@ export const switchVideoTrack = defineBehavior({
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks],
         rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
+        noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
     }),
 });
@@ -837,6 +760,7 @@ export const switchAudioTrack = defineBehavior({
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks],
         rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
+        noSupportedTrackCode: SVTA_NO_SUPPORTED_AUDIO_TRACK,
       },
     }),
 });

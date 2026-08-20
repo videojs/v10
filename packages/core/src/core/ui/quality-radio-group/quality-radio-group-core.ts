@@ -2,9 +2,9 @@ import type { MediaQualityState, MediaVideoRendition } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-import { resolveText, type Text, type TextParams } from '../../i18n';
+import { resolveText, type Text } from '../../i18n';
 import { autoText, autoWithLabelText, qualityText } from '../../i18n/text/menu';
-import type { ButtonState } from '../types';
+import type { RadioOption, RadioOptionsState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface QualityRadioGroupProps {
@@ -16,21 +16,12 @@ export interface QualityRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-export interface QualityRadioGroupRendition {
-  value: string;
-  label: Text | string;
+export interface QualityRadioGroupOption extends RadioOption {
   tier?: string | undefined;
   badge?: string | undefined;
 }
 
-export interface QualityRadioGroupState extends ButtonState {
-  renditions: readonly QualityRadioGroupRendition[];
-  autoLabel: Text | string;
-  autoLabelParams?: TextParams;
-  value: string;
-  disabled: boolean;
-  availability: 'available' | 'unavailable';
-}
+export interface QualityRadioGroupState extends RadioOptionsState<QualityRadioGroupOption> {}
 
 export const QUALITY_AUTO_VALUE = 'auto';
 
@@ -116,10 +107,10 @@ export class QualityRadioGroupCore {
   };
 
   readonly state = createState<QualityRadioGroupState>({
-    renditions: [],
-    autoLabel: autoText,
+    options: [{ value: QUALITY_AUTO_VALUE, label: autoText, disabled: false }],
     value: QUALITY_AUTO_VALUE,
-    disabled: false,
+    disabled: true,
+    hidden: true,
     availability: 'unavailable',
     label: '',
   });
@@ -173,6 +164,7 @@ export class QualityRadioGroupCore {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -185,13 +177,14 @@ export class QualityRadioGroupCore {
     const selectedIndex = media.videoRenditionList.findIndex((rendition) => rendition.selected);
     const availability: QualityRadioGroupState['availability'] =
       media.videoRenditionList.length > 1 ? 'available' : 'unavailable';
-    const toRendition = (rendition: MediaVideoRendition, index: number): QualityRadioGroupRendition => {
+    const toOption = (rendition: MediaVideoRendition, index: number): QualityRadioGroupOption => {
       const tier = this.getRenditionTier(rendition);
       const badge = this.getRenditionBadge(rendition, media.videoRenditionList);
 
       return {
         value: this.getRenditionValue(rendition, index),
         label: this.getRenditionLabel(rendition),
+        disabled: false,
         ...(tier && { tier }),
         ...(badge && { badge }),
       };
@@ -201,19 +194,22 @@ export class QualityRadioGroupCore {
         ? -1
         : media.videoRenditionList.findIndex((rendition) => isSameRendition(rendition, media.activeVideoRendition!));
     const active =
-      media.activeVideoRendition && activeIndex !== -1
-        ? toRendition(media.activeVideoRendition, activeIndex)
-        : undefined;
+      media.activeVideoRendition && activeIndex !== -1 ? toOption(media.activeVideoRendition, activeIndex) : undefined;
+    const autoOption: QualityRadioGroupOption = {
+      value: QUALITY_AUTO_VALUE,
+      label: selectedIndex === -1 && active ? autoWithLabelText : autoText,
+      disabled: false,
+      ...(selectedIndex === -1 && active && { labelParams: { label: resolveText(active.label) } }),
+    };
 
     this.state.patch({
-      renditions: media.videoRenditionList.map(toRendition),
-      autoLabel: selectedIndex === -1 && active ? autoWithLabelText : autoText,
-      ...(selectedIndex === -1 && active && { autoLabelParams: { label: resolveText(active.label) } }),
+      options: [autoOption, ...media.videoRenditionList.map(toOption)],
       value:
         selectedIndex === -1
           ? QUALITY_AUTO_VALUE
           : this.getRenditionValue(media.videoRenditionList[selectedIndex]!, selectedIndex),
       disabled: this.#props.disabled || availability === 'unavailable',
+      hidden: availability === 'unavailable',
       availability,
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });

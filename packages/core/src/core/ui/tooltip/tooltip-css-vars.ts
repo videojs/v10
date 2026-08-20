@@ -14,5 +14,3 @@ export const TooltipCSSVars = {
   /** Available height between the trigger and the boundary edge. */
   availableHeight: '--media-tooltip-available-height',
 } as const;
-
-export type TooltipCSSVarKey = (typeof TooltipCSSVars)[keyof typeof TooltipCSSVars];

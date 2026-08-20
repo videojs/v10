@@ -3,6 +3,7 @@
   .astro-code {
     font-family: var(--font-mono), monospace;
     font-variant-ligatures: none;
+    color: var(--color-manila-light);
   }
 
   /* reinforcing shared.codeBlock */
@@ -75,4 +76,16 @@
   .astro-code:has(.line.focused):focus-within .line:not(.focused) span {
     opacity: 1;
   }
+}
+
+/*
+ * Markdown component overrides also decorate fenced code in recent Sätteri
+ * versions. Keep the inline-code treatment out of Shiki blocks.
+ */
+.astro-code > code {
+  padding: 0;
+  overflow-wrap: normal;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
 }

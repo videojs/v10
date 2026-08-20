@@ -307,7 +307,7 @@ agent or read code directly to map:
 
 - **Composition specifics.** Which engine factory composes the variant?
   Which behaviors are subtracted, added, or swapped vs the default
-  composition? Compare against `createSimpleHlsEngine`'s behavior list
+  composition? Compare against `createHlsVideoEngine`'s behavior list
   in `packages/spf/src/playback/engines/hls/engine.ts` as the baseline.
 - **Constituent features grounded.** For each constituent feature
   identified at Step 1, map the specific behaviors / actors / state
@@ -407,6 +407,9 @@ composition specifics, or (c) independent timeline. Worked example:
 `video-only-mode-override` vs `background-video` — both
 exercise video-only delivery composition, distinct customer
 stories, distinct composition specifics.
+
+Name any additional record as a candidate only. Do not create it unless
+the user explicitly requests that separate record.
 
 ### Step 6 — Draft (or update) the doc
 
@@ -609,10 +612,8 @@ ambiguities are genuinely resolved by Step 1's gathering.
 - **You want to split or merge behaviors** → `/change-spf-behavior`'s
   Step 3 / Step 6a may route you to `/change-spf-behavior` or
   `/change-spf-behavior`.
-- **You want to write an architectural design doc** → `design` skill.
-  Architectural concerns live in `internal/design/spf/` directly, not
-  under `use-cases/`.
-- **You want to write an RFC for a cross-team decision** → `rfc` skill.
+- **The user requests a different durable record** → treat it as a separate
+  explicit task. Do not create it from this workflow.
 - **You want to write user-facing documentation** → `docs` skill.
 
 ## How the failure-mode catalog grows

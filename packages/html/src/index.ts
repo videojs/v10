@@ -107,18 +107,15 @@ export {
   menuGroupContext,
   menuRadioGroupContext,
 } from './ui/menu/context';
-export { MenuBackElement } from './ui/menu/menu-back-element';
 export { MenuCheckboxItemElement } from './ui/menu/menu-checkbox-item-element';
 export { MenuElement } from './ui/menu/menu-element';
 export { MenuGroupElement } from './ui/menu/menu-group-element';
 export { MenuGroupLabelElement } from './ui/menu/menu-group-label-element';
 export { MenuItemElement } from './ui/menu/menu-item-element';
 export { MenuItemIndicatorElement } from './ui/menu/menu-item-indicator-element';
-export { MenuItemValueElement } from './ui/menu/menu-item-value-element';
 export { MenuRadioGroupElement } from './ui/menu/menu-radio-group-element';
 export { MenuRadioItemElement } from './ui/menu/menu-radio-item-element';
 export { MenuSeparatorElement } from './ui/menu/menu-separator-element';
-export { MenuViewElement } from './ui/menu/menu-view-element';
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
 export { PiPButtonElement } from './ui/pip-button/pip-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
@@ -147,7 +144,10 @@ export { ThumbnailElement } from './ui/thumbnail/thumbnail-element';
 export { TimeElement } from './ui/time/time-element';
 export { TimeGroupElement } from './ui/time/time-group-element';
 export { TimeSeparatorElement } from './ui/time/time-separator-element';
+export { TimeSliderChapterTitleElement } from './ui/time-slider/time-slider-chapters/time-slider-chapter-title-element';
+export { TimeSliderChaptersElement } from './ui/time-slider/time-slider-chapters/time-slider-chapters-element';
 export { TimeSliderElement } from './ui/time-slider/time-slider-element';
+export { TitleElement } from './ui/title/title-element';
 export { tooltipGroupContext } from './ui/tooltip/context';
 export { TooltipElement } from './ui/tooltip/tooltip-element';
 export { TooltipGroupElement } from './ui/tooltip/tooltip-group-element';

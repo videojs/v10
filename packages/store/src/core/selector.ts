@@ -28,7 +28,7 @@ const stateContext: StateContext<unknown> = {
  */
 export function createSelector<S extends AnySlice>(slice: S): Selector<object, InferSliceState<S> | undefined> {
   const initialState = slice.state(stateContext);
-  const keys = Object.keys(initialState as object);
+  const keys = [...Object.keys(initialState as object), ...Object.keys(slice.derived ?? {})];
 
   const firstKey = keys[0];
 

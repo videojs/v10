@@ -7,7 +7,7 @@ import FeatureReference from "@/components/docs/api-reference/FeatureReference.a
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-Controls volume level and mute state.
+Controls volume level and mute state. These capabilities have independent availability values because media can support mute without supporting volume-level changes.
 
 <FeatureReference feature="volume" />
 
@@ -15,10 +15,14 @@ Controls volume level and mute state.
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectVolume` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+
+Check `volumeAvailability` before showing a volume-level control, and check `mutedAvailability` before showing a mute control.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 Pass `selectVolume` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to volume state. Returns `undefined` if the volume feature is not configured.
+
+Check `volumeAvailability` before showing a volume-level control, and check `mutedAvailability` before showing a mute control.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -27,7 +31,7 @@ import { selectVolume, usePlayer } from '@videojs/react';
 
 function VolumeSlider() {
   const vol = usePlayer(selectVolume);
-  if (!vol) return null;
+  if (!vol || vol.volumeAvailability !== 'available') return null;
 
   return (
     <input

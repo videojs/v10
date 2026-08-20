@@ -1,5 +1,5 @@
 /**
- * Mock audio-only host — mirrors SimpleHlsAudioOnlyMedia.
+ * Mock audio-only host — mirrors HlsAudioMedia.
  *
  * Exercises: a host whose only mixin lives in a different workspace package
  * (spf), reached through that package's barrel file, composed onto the

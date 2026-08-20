@@ -1,5 +1,3 @@
-'use client';
-
 import type { AlertDialogCore } from '@videojs/core';
 
 import type { UIComponentProps } from '../../utils/types';

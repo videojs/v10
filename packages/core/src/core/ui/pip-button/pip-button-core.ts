@@ -17,6 +17,10 @@ export interface PiPButtonProps {
 export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'>, ButtonState {
   /** Whether picture-in-picture can be requested on this platform. */
   availability: MediaPictureInPictureState['pipAvailability'];
+  /** Non-interactive but still focusable (mirrors `aria-disabled`). */
+  disabled: boolean;
+  /** Whether the button is hidden until picture-in-picture is available. */
+  hidden: boolean;
 }
 
 export class PiPButtonCore {
@@ -27,7 +31,9 @@ export class PiPButtonCore {
 
   readonly state = createState<PiPButtonState>({
     pip: false,
-    availability: 'available',
+    availability: 'unavailable',
+    disabled: true,
+    hidden: true,
     label: '',
   });
 
@@ -52,7 +58,8 @@ export class PiPButtonCore {
   getAttrs(state: PiPButtonState) {
     return {
       'aria-label': this.getLabel(state),
-      'aria-disabled': this.#props.disabled ? 'true' : undefined,
+      'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -62,25 +69,23 @@ export class PiPButtonCore {
 
   getState(): PiPButtonState {
     const media = this.#media!;
-    this.state.patch({ pip: media.pip, availability: media.pipAvailability });
+    const availability = media.pipAvailability;
+
+    this.state.patch({
+      pip: media.pip,
+      availability,
+      disabled: this.#props.disabled || availability !== 'available',
+      hidden: availability !== 'available',
+    });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }
 
   async toggle(media: MediaPictureInPictureState): Promise<void> {
-    if (this.#props.disabled) return;
-    if (media.pipAvailability !== 'available') return;
-
-    try {
-      if (media.pip) {
-        await media.exitPictureInPicture();
-      } else {
-        await media.requestPictureInPicture();
-      }
-    } catch {
-      // PiP requests can fail (user gesture required, permissions, etc.)
-    }
+    this.setMedia(media);
+    if (this.getState().disabled) return;
+    return media.pip ? media.exitPictureInPicture() : media.requestPictureInPicture();
   }
 }
 

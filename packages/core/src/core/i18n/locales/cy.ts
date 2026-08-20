@@ -45,10 +45,14 @@ export default {
     current: 'Amser Cyfredol',
     duration: 'Parhad',
     remaining: 'Amser ar ôl',
+    elapsedSuffix: "{duration} o'r amser a aeth heibio",
+    durationSuffix: '{duration} o hyd',
     remainingSuffix: '{duration} yn weddill',
-    showElapsed: '{duration}. Dangos yr amser a aeth heibio.',
-    showDuration: '{duration}. Dangos hyd.',
-    showRemaining: "{duration}. Dangos yr amser sy'n weddill.",
+    showElapsed: 'Dangos yr amser a aeth heibio, {duration}.',
+    showDuration: 'Dangos hyd, {duration}.',
+    showRemaining: "Dangos yr amser sy'n weddill, {duration}.",
+    toggleElapsed: "Toglo rhwng yr amser a aeth heibio a'r amser sy'n weddill.",
+    toggleDuration: "Toglo rhwng yr hyd a'r amser sy'n weddill.",
     position: '{current} o {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Sgrîn lawn',
     pip: 'Llun mewn llun',
     exitPip: 'Gadael llun mewn llun',
+    seekedTo: 'Wedi symud i {time}',
+  },
+  container: {
+    label: 'Chwaraewr cyfryngau',
   },
   errors: {
     aborted: 'Atalwyd y fideo gennych',
@@ -77,6 +85,7 @@ export default {
     source:
       "Ni lwythodd y fideo, oherwydd methiant gweinydd neu rwydwaith, neu achos nid yw'r system yn cefnogi'r fformat.",
     encrypted: "Mae'r fideo wedi ei amgryptio ac nid oes allweddion gennym.",
+    unplayable: "Nid yw'r chwaraewr yn cefnogi'r cyfrwng hwn.",
     title: "Aeth rhywbeth o'i le.",
     unexpected: 'Digwyddodd gwall. Ceisiwch eto.',
   },

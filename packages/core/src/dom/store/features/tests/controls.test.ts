@@ -1,5 +1,6 @@
 import { createStore, flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getGestureCoordinator } from '../../../gesture/coordinator';
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { controlsFeature } from '../controls';
@@ -369,6 +370,60 @@ describe('controlsFeature', () => {
     });
   });
 
+  describe('touch tap on interactive controls', () => {
+    it('resets the idle timer when tapping a control button while a toggleControls gesture is registered', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+      addToggleControlsGesture(container!);
+
+      // A real control button (e.g. mute, seek ±10s) inside the player.
+      const button = document.createElement('button');
+      container!.appendChild(button);
+
+      // Advance partway through the idle delay.
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+
+      // Quick touch tap on the button.
+      button.dispatchEvent(createPointerEvent('pointerdown', { pointerType: 'touch' }));
+      vi.advanceTimersByTime(100);
+      button.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+
+      // Advance past the original deadline — still active because the tap reset the
+      // timer. Without the fix a control tap wouldn't count as activity and the
+      // controls would hide here.
+      vi.advanceTimersByTime(500);
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+
+    it('does not reset the idle timer when tapping the video area (gesture owns the toggle)', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+      addToggleControlsGesture(container!);
+
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+
+      // Quick touch tap on the bare container (non-interactive). The gesture
+      // coordinator handles the toggle here — controls.ts must not reset.
+      container!.dispatchEvent(createPointerEvent('pointerdown', { pointerType: 'touch' }));
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      vi.advanceTimersByTime(500);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+    });
+  });
+
   describe('playback state interaction', () => {
     it('shows controls when media pauses', () => {
       const video = createMockVideo({ paused: false });
@@ -422,6 +477,127 @@ describe('controlsFeature', () => {
       expect(store.state.controlsVisible).toBe(true);
 
       // After idle delay, should hide
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+  });
+
+  describe('controls visibility locks', () => {
+    it('keeps actions stable across attachment', () => {
+      const video = createMockVideo({ paused: false });
+      const store = createStore<PlayerTarget>()(controlsFeature);
+      const requestControlsLock = store.state.requestControlsLock;
+      const toggleControls = store.state.toggleControls;
+      const target = { media: video, container: createContainer() };
+
+      const detach = store.attach(target);
+      flush();
+
+      expect(store.state.requestControlsLock).toBe(requestControlsLock);
+      expect(store.state.toggleControls).toBe(toggleControls);
+
+      detach();
+      flush();
+
+      expect(store.state.requestControlsLock).toBe(requestControlsLock);
+      expect(store.state.toggleControls).toBe(toggleControls);
+
+      store.attach(target);
+      flush();
+
+      expect(store.state.requestControlsLock).toBe(requestControlsLock);
+      expect(store.state.toggleControls).toBe(toggleControls);
+    });
+
+    it('keeps a pre-attach lock active across reattachment', () => {
+      const video = createMockVideo({ paused: false });
+      const store = createStore<PlayerTarget>()(controlsFeature);
+      const target = { media: video, container: createContainer() };
+      const release = store.state.requestControlsLock();
+
+      const detach = store.attach(target);
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY * 2);
+      flush();
+      expect(store.state.controlsVisible).toBe(true);
+
+      detach();
+      flush();
+      store.attach(target);
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY * 2);
+      flush();
+      expect(store.state.controlsVisible).toBe(true);
+
+      release();
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('shows hidden controls and suspends the idle timeout while locked', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+      expect(store.state.controlsVisible).toBe(false);
+
+      const release = store.state.requestControlsLock();
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      vi.advanceTimersByTime(IDLE_DELAY * 2);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      release();
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY - 1);
+      flush();
+      expect(store.state.controlsVisible).toBe(true);
+
+      vi.advanceTimersByTime(1);
+      flush();
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('keeps controls visible when activity is explicitly cleared while locked', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+      const release = store.state.requestControlsLock();
+
+      container!.dispatchEvent(new Event('mouseleave'));
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(true);
+
+      release();
+    });
+
+    it('waits for every lock to release and treats releases as idempotent', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+      const releaseFirst = store.state.requestControlsLock();
+      const releaseSecond = store.state.requestControlsLock();
+
+      releaseFirst();
+      releaseFirst();
+      vi.advanceTimersByTime(IDLE_DELAY * 2);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      releaseSecond();
       vi.advanceTimersByTime(IDLE_DELAY);
       flush();
 
@@ -632,6 +808,16 @@ function createPointerEvent(type: string, init?: { pointerType?: string }): Even
   const event = new Event(type, { bubbles: true });
   (event as unknown as Record<string, unknown>).pointerType = init?.pointerType ?? '';
   return event;
+}
+
+function addToggleControlsGesture(container: HTMLElement): () => void {
+  return getGestureCoordinator(container).add({
+    type: 'tap',
+    action: 'toggleControls',
+    pointer: 'touch',
+    recognizer: { handleUp() {}, reset() {} },
+    onActivate() {},
+  });
 }
 
 function createMockRemote(): EventTarget & { state: string; prompt: () => Promise<void> } {

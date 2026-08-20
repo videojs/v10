@@ -50,7 +50,16 @@ import volumeLevelsHtmlTs from "@/components/docs/demos/mute-button/html/css/Vol
 
 Toggles mute on and off, and exposes a derived `volumeLevel` based on the current volume and mute state.
 
+Mute availability is separate from volume-level availability because some media can accept a mute command without supporting volume changes. When mute is unavailable or unsupported, the HTML custom element receives the native `hidden` attribute and the React component returns `null`. Toggling is also ignored while mute is unavailable.
+
 ## Styling
+
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `data-muted` | Present / absent | Present when the media is muted |
+| `data-volume-level` | `"off"` \| `"low"` \| `"medium"` \| `"high"` | Current volume level |
+| `data-availability` | `"available"` \| `"unavailable"` \| `"unsupported"` | Whether the media can be muted |
+| `data-hidden` | Present / absent | Present on the HTML element while mute is unavailable or unsupported |
 
 Style the button based on muted state:
 
@@ -89,6 +98,8 @@ media-mute-button[data-volume-level="high"] .icon-high { display: inline; }
 .mute-button[data-volume-level="high"] .icon-high { display: inline; }
 ```
 </FrameworkCase>
+
+Unavailable and unsupported buttons are hidden automatically. No availability selector or extra hiding CSS is required.
 
 ## Accessibility
 

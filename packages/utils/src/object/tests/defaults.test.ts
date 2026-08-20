@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { defaults } from '../defaults';
 
@@ -68,5 +68,49 @@ describe('defaults', () => {
     const result = defaults({ config: undefined }, { config: nested });
 
     expect(result.config).toBe(nested);
+  });
+
+  it('ignores keys absent from the default values', () => {
+    const input = { a: 'custom', extra: 'ignored' };
+    const result = defaults(input, { a: 'default' });
+
+    expect(result).toEqual({ a: 'custom' });
+    expect(result).not.toHaveProperty('extra');
+  });
+
+  it('reads default keys from inherited accessors on the input', () => {
+    // Mirrors ReactiveElement, which installs reactive properties as enumerable
+    // accessors on the class prototype rather than as own properties.
+    const proto = {};
+    Object.defineProperty(proto, 'delay', { get: () => 900, enumerable: true });
+
+    const input = Object.create(proto) as { delay?: number };
+
+    expect(Object.hasOwn(input, 'delay')).toBe(false);
+    expect(defaults(input, { delay: 600, timeout: 400 })).toEqual({ delay: 900, timeout: 400 });
+  });
+
+  it('does not read inherited properties absent from the default values', () => {
+    const inherited = vi.fn(() => 'inherited');
+    const proto = {};
+    Object.defineProperty(proto, 'inherited', { get: inherited, enumerable: true });
+
+    const input = Object.create(proto) as { a?: number };
+    input.a = 2;
+
+    const result = defaults(input, { a: 1 });
+
+    expect(result).toEqual({ a: 2 });
+    expect(inherited).not.toHaveBeenCalled();
+  });
+
+  it('reads each default key from the input exactly once', () => {
+    const a = vi.fn(() => 2);
+    const input = {};
+    Object.defineProperty(input, 'a', { get: a, enumerable: true });
+
+    defaults(input as { a?: number }, { a: 1, b: 0 });
+
+    expect(a).toHaveBeenCalledTimes(1);
   });
 });

@@ -28,12 +28,14 @@ Creates radio items from the player audio track state and selects the enabled tr
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <Menu.RadioGroup>
-    <Menu.GroupLabel />
-    <Menu.RadioItem>
-      <Menu.ItemIndicator />
-    </Menu.RadioItem>
-  </Menu.RadioGroup>
+  <AudioTrackRadioGroup
+    renderItem={(props, item) => (
+      <Menu.RadioItem {...props}>
+        {item.label}
+        <Menu.ItemIndicator checked={item.checked} />
+      </Menu.RadioItem>
+    )}
+  />
   ```
 </FrameworkCase>
 
@@ -55,7 +57,7 @@ Creates radio items from the player audio track state and selects the enabled tr
 The group is available when the configured media exposes more than one audio track. Labels use the track label, then language, then kind. Pass `formatTrack` to customize the visible labels.
 
 <FrameworkCase frameworks={["react"]}>
-<DocsLink slug="reference/use-audio-track-options">`useAudioTrackOptions`</DocsLink> returns `null` when the <DocsLink slug="reference/feature-audio-track">audio track feature</DocsLink> is not configured. Use the returned options with <DocsLink slug="reference/menu">`Menu.RadioGroup`</DocsLink>.
+`AudioTrackRadioGroup` uses <DocsLink slug="reference/use-audio-track-options">`useAudioTrackOptions`</DocsLink> to own selection and generate each item. Its required `renderItem` callback renders the <DocsLink slug="reference/menu">`Menu.RadioItem`</DocsLink> root and receives item state containing the translated `label` and current `checked` value. It returns `null` when the <DocsLink slug="reference/feature-audio-track">audio track feature</DocsLink> is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -68,22 +70,17 @@ The group is available when the configured media exposes more than one audio tra
 | --- | --- | --- |
 | `data-audio-track` | `string` | Current audio track value. |
 | `data-disabled` | Present / absent | Present when audio track selection is disabled. |
+| `data-hidden` | Present / absent | Present when multiple audio tracks are unavailable. |
 | `data-availability` | `"available"` / `"unavailable"` | Whether multiple audio tracks are available. |
 
-<FrameworkCase frameworks={["html"]}>
-  ```css
-  media-audio-track-radio-group[data-availability="unavailable"] {
-    display: none;
-  }
-  ```
-</FrameworkCase>
+Unavailable groups receive the native `hidden` attribute.
 
 ## Accessibility
 
 The group uses the menu radio group pattern.
 
 <FrameworkCase frameworks={["react"]}>
-Give `Menu.RadioGroup` an accessible name with `aria-label` or a nested `Menu.GroupLabel`.
+The component receives an accessible label from the `label` prop or defaults to `Audio`. Override it with `aria-label` or `aria-labelledby`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -117,6 +114,4 @@ The element receives an accessible label from the `label` property or defaults t
   </StyleCase>
 </FrameworkCase>
 
-<FrameworkCase frameworks={["html"]}>
-  <ComponentReference component="AudioTrackRadioGroup" />
-</FrameworkCase>
+<ComponentReference component="AudioTrackRadioGroup" />

@@ -1,5 +1,5 @@
 import '@app/styles.css';
-import { VideoProvider } from '@app/shared/react/providers';
+import { VideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
@@ -11,6 +11,7 @@ import { useSource } from '@app/shared/react/use-source';
 import { SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { DashVideo } from '@videojs/react/media/dash-video';
+import { MuxData } from '@videojs/react/media/mux-data';
 import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -29,18 +30,22 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <VideoProvider>
+      <VideoPlayer>
         <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <DashVideo
-            src={SOURCES[source].url}
+            src={SOURCES[source].url ?? ''}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}
             preload={preload}
             playsInline
           />
+          {/* Mux Data is an opt-in media component. It hands the dash.js engine to the Mux Data
+              SDK, so views carry stream-level detail. These streams aren't Mux-hosted, so the
+              sandbox env key is what attributes the views. */}
+          <MuxData playerSoftwareName="dash-video" envKey="o9b7ge20gji31ao0rub18505f" />
         </VideoSkinComponent>
-      </VideoProvider>
+      </VideoPlayer>
     </SandboxI18nProvider>
   );
 }

@@ -12,12 +12,13 @@ import '@app/styles.css';
 
 import { SOURCE_IDS, SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
-import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
-import { createSimpleHlsEngine } from '@videojs/spf/hls';
+import type { HlsVideoEngineSignals, HlsVideoEngineState } from '@videojs/spf/hls';
+import { createHlsVideoEngine, getMediaPlaylistMetadata } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
+const liveStatusDiv = document.getElementById('live-status') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
 const audioTrackButtonsDiv = document.getElementById('audio-track-buttons') as HTMLDivElement;
@@ -62,10 +63,12 @@ const HARNESS_PRESETS: Preset[] = [
 // but flagged unsupported (disabled in the picker) rather than silently dropped.
 // Unsupported presets sort to the end (stable sort preserves registry order otherwise).
 const PRESETS: Preset[] = [
-  ...SOURCE_IDS.filter((id) => SOURCES[id].type === 'hls').map((id) => {
+  // A source with no plain `url` needs a structured source this harness has no
+  // way to hand over — DRM, for one, which SPF cannot play anyway.
+  ...SOURCE_IDS.filter((id) => SOURCES[id].type === 'hls' && SOURCES[id].url).map((id) => {
     const source = SOURCES[id];
-    const preset: Preset = { label: source.label, url: source.url };
-    if ('subType' in source && source.subType === 'ts') preset.unsupported = 'TS — unsupported';
+    const preset: Preset = { label: source.label, url: source.url ?? '' };
+    if (source.subType === 'ts') preset.unsupported = 'TS — unsupported';
     return preset;
   }),
   ...HARNESS_PRESETS,
@@ -126,15 +129,15 @@ function formatFrameRate(frameRate: { frameRateNumerator: number; frameRateDenom
   return `${Number.parseFloat(fps.toFixed(2))} fps`;
 }
 
-function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
+function getVideoTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
 }
 
-function getAudioTracks(presentation: SimpleHlsEngineState['presentation']) {
+function getAudioTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ?? [];
 }
 
-function getTextTracks(presentation: SimpleHlsEngineState['presentation']) {
+function getTextTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks ?? [];
 }
 
@@ -315,7 +318,7 @@ function buildVideoTrackButtons(groups: VideoSelectionGroup[]) {
 function updateVideoTrackSelection(
   tracks: ReturnType<typeof getVideoTracks>,
   selectedVideoTrackId: string | undefined,
-  userFilter: SimpleHlsEngineState['userVideoTrackSelection']
+  userFilter: HlsVideoEngineState['userVideoTrackSelection']
 ) {
   const isManual = userFilter !== undefined;
 
@@ -450,7 +453,7 @@ function buildAudioTrackButtons(groups: AudioSelectionGroup[]) {
 function updateAudioTrackSelection(
   tracks: ReturnType<typeof getAudioTracks>,
   selectedAudioTrackId: string | undefined,
-  userFilter: SimpleHlsEngineState['userAudioTrackSelection']
+  userFilter: HlsVideoEngineState['userAudioTrackSelection']
 ) {
   const isPinned = userFilter !== undefined;
 
@@ -596,6 +599,68 @@ function renderResolutionStatus() {
   }
 }
 
+// ── Live status ───────────────────────────────────────────────────────────────
+
+/** The selected timeline-bearing track (video ?? audio) from the live state. */
+function selectedTimelineTrack() {
+  if (!signals) return undefined;
+  const state = snapshot(signals.state);
+  const trackId = state.selectedVideoTrackId ?? state.selectedAudioTrackId;
+  if (!state.presentation?.selectionSets || !trackId) return undefined;
+  for (const selectionSet of state.presentation.selectionSets) {
+    for (const switchingSet of selectionSet.switchingSets) {
+      const track = switchingSet.tracks.find((t) => t.id === trackId);
+      if (track) return track;
+    }
+  }
+  return undefined;
+}
+
+/** HOLD-BACK live latency for the current source: 3 × targetDuration (the engine's rule, incl. its 6s fallback). */
+function liveHoldBack(): number {
+  const track = selectedTimelineTrack();
+  const targetDuration = track ? getMediaPlaylistMetadata(track)?.targetDuration : undefined;
+  return (targetDuration || 6) * 3;
+}
+
+/** The live-edge seek target: seekable end − HOLD-BACK, clamped into the window. */
+function liveEdgeTarget(): number | undefined {
+  const { seekable } = video;
+  if (!seekable.length) return undefined;
+  const end = seekable.end(seekable.length - 1);
+  return Math.max(seekable.start(0), end - liveHoldBack());
+}
+
+/**
+ * Live status strip: stream type, the seekable (live) window as declared to
+ * the element, and how far the playhead trails the edge. Interval-driven (not
+ * an effect) because the window slides via reloads *and* the playhead moves —
+ * both need reflecting even while nothing signal-shaped changes.
+ */
+function updateLiveStatus() {
+  const streamType = signals ? snapshot(signals.state).presentation?.streamType : undefined;
+  if (streamType !== 'live') {
+    liveStatusDiv.className = '';
+    liveStatusDiv.textContent = streamType === 'on-demand' ? 'stream: on-demand' : '';
+    return;
+  }
+
+  const track = selectedTimelineTrack();
+  const playlistType = track ? getMediaPlaylistMetadata(track)?.playlistType : undefined;
+  const { seekable } = video;
+  const window = seekable.length
+    ? `[${seekable.start(0).toFixed(2)} … ${seekable.end(seekable.length - 1).toFixed(2)}]`
+    : '(none yet)';
+  const behindEdge = seekable.length ? (seekable.end(seekable.length - 1) - video.currentTime).toFixed(2) : '—';
+
+  liveStatusDiv.className = 'is-live';
+  liveStatusDiv.textContent =
+    `stream: live${playlistType === 'EVENT' ? ' (EVENT/DVR)' : ''} · ` +
+    `window: ${window} · behind edge: ${behindEdge}s · hold-back: ${liveHoldBack().toFixed(1)}s`;
+}
+
+setInterval(updateLiveStatus, 500);
+
 function inspectState() {
   if (!engine) {
     stateDiv.innerHTML = '<h2>State Inspector</h2><div class="error">Engine not initialized</div>';
@@ -671,15 +736,15 @@ function inspectState() {
 log('=== SPF Segment Loading POC Test ===');
 log(`Stream: ${INITIAL_SRC}`);
 
-let engine: ReturnType<typeof createSimpleHlsEngine>;
-let signals: SimpleHlsEngineSignals;
+let engine: ReturnType<typeof createHlsVideoEngine>;
+let signals: HlsVideoEngineSignals;
 let cleanupEffects: () => void = () => {};
 
 function startEngine(src: string) {
   cleanupEffects();
   if (engine) engine.destroy();
 
-  engine = createSimpleHlsEngine({
+  engine = createHlsVideoEngine({
     initialBandwidth: 1_000_000,
     // AVC-only filters HEVC so ABR never crosses codec families (no changeType).
     // Omitted (not set to undefined) when off, per exactOptionalPropertyTypes.
@@ -848,6 +913,22 @@ document.getElementById('pause')!.addEventListener('click', () => {
   video.pause();
   log('Video paused');
 });
+document.getElementById('seek-to-edge')!.addEventListener('click', () => {
+  const target = liveEdgeTarget();
+  if (target === undefined) return log('Seek to live edge: no seekable window', 'warning');
+  video.currentTime = target;
+  log(`Seek to live edge: ${target.toFixed(2)}s`, 'success');
+});
+document.getElementById('seek-behind-window')!.addEventListener('click', () => {
+  const { seekable } = video;
+  if (!seekable.length) return log('Seek out of window: no seekable window', 'warning');
+  // 30s behind the window start. The browser clamps the seek to `seekable`, so
+  // while playing this exercises the window-exit rescue as the window slides
+  // past — watch the playhead snap back to the edge on the next reload.
+  const target = Math.max(0, seekable.start(0) - 30);
+  video.currentTime = target;
+  log(`Seek out of window: requested ${target.toFixed(2)}s (browser may clamp to seekable)`, 'warning');
+});
 document.getElementById('inspect')!.addEventListener('click', inspectState);
 document.getElementById('clearLogs')!.addEventListener('click', () => {
   logsDiv.innerHTML = '';
@@ -919,5 +1000,7 @@ video.addEventListener('canplaythrough', () => log('📺 Video: canplaythrough',
 video.addEventListener('playing', () => log('📺 Video: playing', 'success'));
 video.addEventListener('pause', () => log('📺 Video: pause'));
 video.addEventListener('waiting', () => log('📺 Video: waiting', 'warning'));
+video.addEventListener('seeking', () => log(`📺 Video: seeking → ${video.currentTime.toFixed(2)}s`));
+video.addEventListener('seeked', () => log(`📺 Video: seeked @ ${video.currentTime.toFixed(2)}s`, 'success'));
 video.addEventListener('ended', () => log('📺 Video: ended ✅ endOfStream() worked!', 'success'));
 video.addEventListener('error', () => log(`📺 Video: error - ${video.error?.message}`, 'error'));

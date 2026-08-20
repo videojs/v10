@@ -1,72 +1,76 @@
 import { cn } from '@videojs/utils/style';
 import { bufferingIndicator as baseBufferingIndicator } from './components/buffering';
 import { buttonGroup as baseButtonGroup } from './components/button-group';
+import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
-import { inputFeedback as baseInputFeedback } from './components/input-feedback';
 import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
-import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
+import { statusIndicator as baseStatusIndicator } from './components/status-indicator';
 import { surface } from './components/surface';
 import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
+import { volumeIndicator as baseVolumeIndicator } from './components/volume-indicator';
 
-/* ==========================================================================
-   Root
-   ========================================================================== */
+/* Container */
 
-export const root = (isShadowDOM: boolean) =>
+export const container = (isShadowDOM: boolean) =>
   cn(
-    baseRoot,
+    baseContainer,
+    'group/skin',
     'bg-black overflow-clip',
     // Inner border ring
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
-    'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10 dark:after:ring-white/15',
+    '[&:fullscreen]:after:hidden',
+    'after:inset-0 after:ring-1 after:ring-inset after:ring-(color:--border-color)',
     // Video element
     {
-      '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--media-video-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,contain)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
+      '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--container-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,contain)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
         isShadowDOM,
       '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit] [&_video]:[object-fit:var(--media-object-fit,contain)] [&_video]:[object-position:var(--media-object-position,center)]':
         !isShadowDOM,
     },
-    '[--media-spring-timing-function:linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
-    '[--media-video-border-radius:var(--media-border-radius,2rem)]',
-    '[--media-controls-transition-duration:100ms]',
-    '[--media-controls-transition-timing-function:ease-out]',
-    '[--media-error-dialog-transition-duration:350ms]',
-    '[--media-error-dialog-transition-delay:100ms]',
-    '[--media-error-dialog-transition-timing-function:var(--media-spring-timing-function)]',
-    '[--media-popup-transition-duration:100ms]',
-    '[--media-popup-transition-timing-function:ease-out]',
-    '[--media-surface-background-color:oklch(1_0_0/0.1)]',
-    '[--media-surface-inner-border-color:oklch(1_0_0/0.05)]',
-    '[--media-surface-outer-border-color:oklch(0_0_0/0.1)]',
-    '[--media-surface-shadow-color:oklch(0_0_0/0.15)]',
-    '[--media-surface-backdrop-filter:blur(16px)_saturate(1.5)]',
-    'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
-    'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
-    'motion-reduce:[--media-error-dialog-transition-timing-function:ease-out]',
-    '[--media-tooltip-side-offset:0.75rem]',
-    '[--media-tooltip-boundary-offset:0.5rem]',
-    '[--media-popover-side-offset:0.5rem]',
-    '[--media-popover-boundary-offset:0.5rem]',
-    'motion-reduce:[--media-popup-transition-duration:0ms]',
-    '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
-    'contrast-more:[--media-surface-background-color:oklch(0_0_0)]',
-    '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-inner-border-color:oklch(1_0_0/0.25)]',
-    'contrast-more:[--media-surface-inner-border-color:oklch(1_0_0/0.25)]',
-    '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-outer-border-color:transparent]',
-    'contrast-more:[--media-surface-outer-border-color:transparent]',
-    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
-    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
+    '[--default-accent-color:oklch(1_0_0)]',
+    '[--border-color:light-dark(oklch(0_0_0/0.1),oklch(1_0_0/0.15))]',
+    '[--focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
+    '**:[--focus-ring-color:oklch(1_0_0)]',
+    '[--container-border-radius:var(--media-border-radius,1.75rem)]',
+    '[--media-video-border-radius:var(--container-border-radius)]',
+    '[--controls-transition-duration:100ms]',
+    '[--controls-transition-timing-function:ease-out]',
+    '[--error-dialog-transition-duration:350ms]',
+    '[--error-dialog-transition-delay:100ms]',
+    '[--error-dialog-transition-timing-function:ease-out]',
+    '[--popup-transition-duration:100ms]',
+    '[--popup-transition-timing-function:ease-out]',
+    '[--surface-background-color:oklch(1_0_0/0.1)]',
+    '[--surface-inner-border-color:oklch(1_0_0/0.1)]',
+    '[--surface-outer-border-color:oklch(0_0_0/0.1)]',
+    '[--surface-shadow-color:oklch(0_0_0/0.15)]',
+    '[--surface-backdrop-filter:blur(16px)_saturate(1.5)]',
+    // Fullscreen scale
+    'min-[1280px]:[&:fullscreen]:[--scale:1.25]',
+    'min-[1536px]:[&:fullscreen]:[--scale:1.5]',
+    'min-[1920px]:[&:fullscreen]:[--scale:1.75]',
+    'motion-reduce:[--error-dialog-transition-duration:50ms]',
+    'motion-reduce:[--error-dialog-transition-delay:0ms]',
+    'motion-reduce:[--error-dialog-transition-timing-function:ease-out]',
+    'motion-reduce:[--popup-transition-duration:0ms]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--surface-background-color:oklch(0_0_0)]',
+    'contrast-more:[--surface-background-color:oklch(0_0_0)]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--surface-inner-border-color:oklch(1_0_0/0.25)]',
+    'contrast-more:[--surface-inner-border-color:oklch(1_0_0/0.25)]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--surface-outer-border-color:transparent]',
+    'contrast-more:[--surface-outer-border-color:transparent]',
+    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:300ms]',
+    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:150ms]',
+    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
-    '[--media-caption-track-y:-0.5rem]',
+    '[--media-caption-track-y:--spacing(-2)]',
     '[--media-caption-track-delay:25ms]',
-    '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-    'has-[[data-controls][data-visible]]:[--media-caption-track-y:-5.5rem]',
-    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:-3.5rem]',
+    '[--media-caption-track-duration:var(--controls-transition-duration)]',
+    'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-14)]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -80,111 +84,96 @@ export const root = (isShadowDOM: boolean) =>
           '[&_video::-webkit-media-text-track-container]:font-[inherit]',
         ]
       : [],
-    // Poster placeholder (blur-up) — React path only; HTML path uses media-poster::before
-    !isShadowDOM
-      ? [
-          'before:absolute before:inset-0 before:pointer-events-none',
-          'before:[background-image:var(--media-poster-placeholder,none)]',
-          'before:bg-no-repeat',
-          'before:[background-position:var(--media-object-position,center)]',
-          'before:[background-size:var(--media-object-fit,contain)]',
-          'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
-          'before:transition-opacity before:duration-250',
-          'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
-        ]
-      : [],
     // Fullscreen
-    '[&:fullscreen]:[--media-border-radius:0]',
+    '[&:fullscreen]:[--container-border-radius:0]',
     {
       '[&:fullscreen_video]:object-contain': !isShadowDOM,
       '[&:fullscreen_::slotted(video)]:object-contain': isShadowDOM,
     }
   );
 
-/* ==========================================================================
-   Controls (hide/show behavior)
-   ========================================================================== */
+/* Controls (hide/show behavior) */
 
-export const controls = cn(
+const controlsBase = cn(
   baseControls,
   surface,
-  // Position & wrapping layout (small)
-  'absolute bottom-2 inset-x-2 flex-wrap',
-  '[color:var(--media-color-primary,oklch(1_0_0))] z-10',
-  'peer-data-open/error:hidden',
-  'ease-(--media-controls-transition-timing-function) origin-bottom',
-  'duration-(--media-controls-transition-duration)',
-  'pointer-fine:will-change-[scale,filter,opacity]',
-  'pointer-fine:transition-[scale,filter,opacity]',
-  'pointer-coarse:will-change-[scale,opacity]',
-  'pointer-coarse:transition-[scale,opacity]',
-  // Hidden state
-  'not-data-visible:pointer-events-none not-data-visible:opacity-0',
-  'motion-safe:not-data-visible:scale-90',
-  'pointer-fine:motion-safe:not-data-visible:blur-sm',
-  // Single-row layout (large)
-  '@2xl/media-root:bottom-3 @2xl/media-root:inset-x-3 @2xl/media-root:flex-nowrap @2xl/media-root:gap-x-0.5 @2xl/media-root:p-1'
+  'text-white z-10',
+  'peer-data-open/error:hidden!',
+  'ease-(--controls-transition-timing-function)',
+  'duration-[calc(var(--controls-transition-duration)/2)]',
+  'pointer-fine:transition-[filter,opacity,scale,translate]',
+  'pointer-coarse:transition-[opacity,scale,translate]',
+  '@2xl/media-root:[--base-boundary-offset:3]'
 );
 
-/* ==========================================================================
-   Button groups
-   ========================================================================== */
+export const controls = cn(
+  controlsBase,
+  'group/controls contents! after:hidden',
+  '@lg/media-root:absolute @lg/media-root:flex!',
+  '@lg/media-root:bottom-2 @lg/media-root:inset-x-2',
+  '@2xl/media-root:bottom-3 @2xl/media-root:inset-x-3',
+  '@lg/media-root:after:block @lg/media-root:origin-bottom',
+  // Hidden state (large)
+  '@lg/media-root:not-data-visible:pointer-events-none',
+  '@lg/media-root:not-data-visible:opacity-0',
+  '@lg/media-root:not-data-visible:duration-(--controls-transition-duration)',
+  '@lg/media-root:motion-safe:not-data-visible:scale-95',
+  '@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm',
+  '@lg/media-root:motion-safe:not-data-visible:translate-y-1'
+);
 
-export const buttonGroupStart = cn(baseButtonGroup, 'flex-1 @2xl/media-root:flex-none');
-export const buttonGroupEnd = cn(baseButtonGroup, 'flex-1 justify-end @2xl/media-root:flex-none');
+const splitControls = cn(
+  controlsBase,
+  'absolute @max-lg/media-root:duration-[inherit] @max-lg/media-root:ease-[inherit]',
+  '@lg/media-root:contents! @lg/media-root:after:hidden',
+  '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
+  '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
+  '@max-lg/media-root:group-[:not([data-visible])]/controls:duration-(--controls-transition-duration)',
+  '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
+  '@max-lg/media-root:pointer-fine:motion-safe:group-[:not([data-visible])]/controls:blur-sm'
+);
 
-/* ==========================================================================
-   Time
-   ========================================================================== */
+export const primaryControls = cn(
+  splitControls,
+  'z-20 bottom-2 inset-x-2 origin-bottom',
+  '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1'
+);
+
+export const secondaryControls = cn(
+  splitControls,
+  'top-2 right-2 origin-top @container-normal',
+  '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1'
+);
+
+/* Button groups */
+
+export const buttonGroupStart = baseButtonGroup;
+export const buttonGroupEnd = baseButtonGroup;
+
+export const spacer = 'grow';
+
+/* Time */
 
 export const time = {
   ...baseTime,
-  group: cn(
-    baseTime.group,
-    'grow-0 shrink-0 basis-full order-[-1] px-2.5',
-    '@2xl/media-root:grow @2xl/media-root:shrink @2xl/media-root:basis-0 @2xl/media-root:order-[unset]'
-  ),
+  group: cn(baseTime.group, 'px-2 @lg/media-root:px-3'),
 };
 
-/* ==========================================================================
-   Thumbnail (with video surface)
-   ========================================================================== */
+/* Thumbnail (with video surface) */
 
 export const thumbnail = {
   ...baseThumbnail,
-  root: cn(
-    baseThumbnail.root,
-    surface,
-    '[--media-slider-thumbnail-max-width:11rem]',
-    '[--media-slider-thumbnail-max-height:8rem]',
-    '[--media-slider-thumbnail-padding:-1.125rem]',
-    '[--media-slider-thumbnail-inset:calc((100cqi-100%)/2)]',
-    'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)-var(--media-slider-thumbnail-inset)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-[calc(100%+1.2rem)] -translate-x-1/2',
-    'opacity-0 scale-80 blur-sm origin-bottom',
-    'transition-[scale,opacity,filter] duration-150',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none'
-  ),
-  image: cn(
-    baseThumbnail.image,
-    'max-w-(--media-slider-thumbnail-max-width)',
-    'max-h-(--media-slider-thumbnail-max-height)'
-  ),
+  root: cn(baseThumbnail.root, surface),
 };
 
-/* ==========================================================================
-   Sliders
-   ========================================================================== */
+/* Sliders */
 
 export const slider = {
   ...baseSlider,
-  track: cn(baseSlider.track, 'bg-white/20 ring-1 ring-black/5'),
+  track: cn(baseSlider.track, 'bg-white/20'),
 };
 
-/* ==========================================================================
-   Popup (with video surface)
-   ========================================================================== */
+/* Popup (with video surface) */
 
 export const popup = {
   ...basePopup,
@@ -192,57 +181,49 @@ export const popup = {
   tooltip: cn(surface, basePopup.tooltip),
 };
 
-/* ==========================================================================
-   Menu
-   ========================================================================== */
-
-const menuOffsets = '[--media-popover-side-offset:0.5rem] [--media-popover-boundary-offset:0.5rem]';
+/* Menu */
 
 export const menu = {
   ...baseMenu,
-  root: cn(baseMenu.root, menuOffsets),
-  settings: cn(baseMenu.settings, menuOffsets),
+  root: baseMenu.root,
+  settings: baseMenu.settings,
 };
 
-/* ==========================================================================
-   Buffering
-   ========================================================================== */
+/* Buffering */
 
 export const bufferingIndicator = baseBufferingIndicator;
 
-/* ==========================================================================
-   Error (with video surface)
-   ========================================================================== */
+/* Error (with video surface) */
 
 export const error = {
   ...baseError,
-  dialog: cn(baseError.dialog, surface, 'text-shadow-2xs text-shadow-black/25'),
+  dialog: cn(baseError.dialog, surface, 'w-full text-shadow-2xs text-shadow-black/25'),
   content: cn(baseError.content, 'text-shadow-inherit'),
-  title: cn(baseError.title, 'text-base'),
+  title: cn(baseError.title, 'text-(length:--font-size-medium)'),
 };
 
-/* ==========================================================================
-   Input Feedback (islands use video surface)
-   ========================================================================== */
+/* Input indicators (top indicators use video surface) */
 
-export const inputFeedback = {
-  ...baseInputFeedback,
-  island: {
-    ...baseInputFeedback.island,
-    base: cn(baseInputFeedback.island.base, surface),
-  },
+export const volumeIndicator = {
+  ...baseVolumeIndicator,
+  root: cn(baseVolumeIndicator.root, surface),
 };
 
-/* ==========================================================================
-   Shared components (no overrides)
-   ========================================================================== */
+export const statusIndicator = {
+  ...baseStatusIndicator,
+  root: cn(baseStatusIndicator.root, surface),
+};
+
+/* Shared components (no overrides) */
 
 export { iconState } from '../../shared/tailwind/icon-state';
 export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { inputIndicatorOverlay } from './components/input-indicator-overlay';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';
+export { seekIndicator } from './components/seek-indicator';

@@ -1,5 +1,36 @@
-import { describe, expect, it } from 'vitest';
-import { type Framework, rewriteLinks, stripFooter, synthesizeReadme } from '../copy-package-docs.ts';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+  type Framework,
+  packageDocumentation,
+  rewriteLinks,
+  stripFooter,
+  synthesizeReadme,
+} from '../copy-package-docs.ts';
+
+const temporaryDirectories: string[] = [];
+
+function createFixture() {
+  const root = mkdtempSync(join(tmpdir(), 'package-docs-'));
+  temporaryDirectories.push(root);
+  return {
+    root,
+    siteDist: join(root, 'site-dist'),
+    packagesDirectory: join(root, 'packages'),
+  };
+}
+
+function writeDoc(siteDist: string, framework: Framework, relativePath: string, content: string): void {
+  const path = join(siteDist, 'docs', 'framework', framework, relativePath);
+  mkdirSync(join(path, '..'), { recursive: true });
+  writeFileSync(path, content);
+}
+
+afterEach(() => {
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true });
+});
 
 describe('stripFooter', () => {
   it('removes a page-style breadcrumb footer', () => {
@@ -113,5 +144,72 @@ describe('synthesizeReadme', () => {
         version: '1.0.0',
       })
     ).toThrow();
+  });
+});
+
+describe('packageDocumentation', () => {
+  const footer =
+    '\n\n---\n\nReact documentation: https://videojs.org/docs/framework/react/llms.txt\nAll documentation: https://videojs.org/llms.txt\n';
+
+  it('packages framework docs with local links and a README', () => {
+    const fixture = createFixture();
+    writeDoc(
+      fixture.siteDist,
+      'react',
+      'concepts/overview.md',
+      `[Install](https://videojs.org/docs/framework/react/how-to/installation.md)${footer}`
+    );
+
+    expect(
+      packageDocumentation({
+        target: 'react',
+        siteDist: fixture.siteDist,
+        packagesDirectory: fixture.packagesDirectory,
+        version: '10.0.0-test',
+      })
+    ).toBe(1);
+    expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/concepts/overview.md'), 'utf-8')).toBe(
+      '[Install](../how-to/installation.md)'
+    );
+    expect(readFileSync(join(fixture.packagesDirectory, 'react/docs/README.md'), 'utf-8')).toContain('v10.0.0-test');
+  });
+
+  it('packages both CLI frameworks while preserving online links', () => {
+    const fixture = createFixture();
+    const link = '[Install](https://videojs.org/docs/framework/react/how-to/installation.md)';
+    writeDoc(
+      fixture.siteDist,
+      'html',
+      'llms.txt',
+      '# HTML\n\n---\n\nAll documentation: https://videojs.org/llms.txt\n'
+    );
+    writeDoc(fixture.siteDist, 'react', 'concepts/overview.md', link + footer);
+
+    expect(
+      packageDocumentation({
+        target: 'cli',
+        siteDist: fixture.siteDist,
+        packagesDirectory: fixture.packagesDirectory,
+      })
+    ).toBe(2);
+    expect(readFileSync(join(fixture.packagesDirectory, 'cli/docs/react/concepts/overview.md'), 'utf-8')).toBe(link);
+    expect(readFileSync(join(fixture.packagesDirectory, 'cli/docs/html/llms.txt'), 'utf-8')).toBe('# HTML');
+  });
+
+  it('validates every source before replacing existing output', () => {
+    const fixture = createFixture();
+    writeDoc(fixture.siteDist, 'html', 'llms.txt', '# HTML');
+    const sentinel = join(fixture.packagesDirectory, 'cli/docs/sentinel.txt');
+    mkdirSync(join(sentinel, '..'), { recursive: true });
+    writeFileSync(sentinel, 'keep');
+
+    expect(() =>
+      packageDocumentation({
+        target: 'cli',
+        siteDist: fixture.siteDist,
+        packagesDirectory: fixture.packagesDirectory,
+      })
+    ).toThrow(/react/);
+    expect(existsSync(sentinel)).toBe(true);
   });
 });

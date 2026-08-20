@@ -262,16 +262,19 @@ Util reference JSON is at `site/src/content/generated-util-reference/{slug}.json
 
 ## Add to the sidebar
 
-Open `site/src/docs.config.ts` and add your page alphabetically within the appropriate section:
+Open `site/src/docs.config.ts` and add your page to the appropriate category under **API Reference**:
 
-- **Components** — UI component reference pages
-- **Selectors** — State selectors (visible to both frameworks)
-- **Hooks & Utilities** (`frameworks: ['react']`) — React hooks and utilities
-- **Controllers & Mixins** (`frameworks: ['html']`) — HTML controllers and mixins
+- **UI Components** — UI component reference pages, sorted alphabetically
+- **Media Components** — media elements that handle streaming protocols and playback
+- **Player Features** — feature modules passed to `createPlayer`
+- **Utilities** — hooks, utilities, controllers, and mixins. Commonly used entries
+  go at the top of the list; everything else follows.
+
+The categories are flat by design, so don't nest a new subsection inside them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
 
 ```ts
 {
-  sidebarLabel: 'Components',
+  sidebarLabel: 'UI Components',
   contents: [
     // sorted alphabetically
     { slug: 'reference/play-button' },

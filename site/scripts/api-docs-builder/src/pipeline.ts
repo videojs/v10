@@ -1,13 +1,12 @@
 /**
- * Testable pipeline functions for the API docs builder.
+ * Component reference discovery, extraction, and building.
  *
- * Extracted from index.ts so that E2E tests can run the full pipeline
+ * Kept separate from the CLI so E2E tests can run the component pipeline
  * against a fixture monorepo by passing a custom root path.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
-import * as tae from 'typescript-api-extractor';
 import { NAME_OVERRIDES } from '../../../src/utils/api-reference-overrides.js';
 import { extractCore } from './core-handler.js';
 import { extractCSSVars } from './css-vars-handler.js';
@@ -29,6 +28,7 @@ import type {
   PropDef,
   StateDef,
 } from './types.js';
+import { createTypeScriptProgram } from './typescript.js';
 import { getJSDocTagValue, kebabToPascal, log, partKebabFromSource, sortProps } from './utils.js';
 
 // ─── Overrides ─────────────────────────────────────────────────────
@@ -148,6 +148,22 @@ function discoverExtraDataAttrs(componentDir: string, componentKebab: string): E
   return extras;
 }
 
+function findFiles(directory: string, matches: (name: string) => boolean): string[] {
+  const files: string[] = [];
+
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const entryPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      if (entry.name !== 'tests') files.push(...findFiles(entryPath, matches));
+    } else if (matches(entry.name)) {
+      files.push(entryPath);
+    }
+  }
+
+  return files;
+}
+
 export function discoverComponents(monorepoRoot: string): ComponentSource[] {
   const coreUiPath = path.join(monorepoRoot, 'packages/core/src/core/ui');
   const htmlUiPath = path.join(monorepoRoot, 'packages/html/src/ui');
@@ -213,9 +229,8 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
     if (source.partsIndexPath) {
       const htmlDir = path.join(htmlUiPath, source.kebab);
       if (fs.existsSync(htmlDir)) {
-        const elementFiles = fs.readdirSync(htmlDir).filter((f) => f.endsWith('-element.ts'));
-        for (const file of elementFiles) {
-          const fullPath = path.join(htmlDir, file);
+        const elementFiles = findFiles(htmlDir, (file) => file.endsWith('-element.ts'));
+        for (const fullPath of elementFiles) {
           if (!files.includes(fullPath)) {
             files.push(fullPath);
           }
@@ -223,9 +238,8 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
       }
 
       const reactDir = path.dirname(source.partsIndexPath);
-      const reactFiles = fs.readdirSync(reactDir).filter((f) => f.endsWith('.tsx'));
-      for (const file of reactFiles) {
-        const fullPath = path.join(reactDir, file);
+      const reactFiles = findFiles(reactDir, (file) => file.endsWith('.tsx'));
+      for (const fullPath of reactFiles) {
         if (!files.includes(fullPath)) {
           files.push(fullPath);
         }
@@ -241,9 +255,8 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
 
           const originHtmlDir = path.join(htmlUiPath, originKebab);
           if (fs.existsSync(originHtmlDir)) {
-            const originElementFiles = fs.readdirSync(originHtmlDir).filter((f) => f.endsWith('-element.ts'));
-            for (const file of originElementFiles) {
-              const fullPath = path.join(originHtmlDir, file);
+            const originElementFiles = findFiles(originHtmlDir, (file) => file.endsWith('-element.ts'));
+            for (const fullPath of originElementFiles) {
               if (!files.includes(fullPath)) {
                 files.push(fullPath);
               }
@@ -251,9 +264,8 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
           }
 
           if (fs.existsSync(originDir)) {
-            const originReactFiles = fs.readdirSync(originDir).filter((f) => f.endsWith('.tsx'));
-            for (const file of originReactFiles) {
-              const fullPath = path.join(originDir, file);
+            const originReactFiles = findFiles(originDir, (file) => file.endsWith('.tsx'));
+            for (const fullPath of originReactFiles) {
               if (!files.includes(fullPath)) {
                 files.push(fullPath);
               }
@@ -264,11 +276,7 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
     }
   }
 
-  const tsconfigPath = path.join(monorepoRoot, 'tsconfig.base.json');
-  const config = tae.loadConfig(tsconfigPath);
-  config.options.rootDir = monorepoRoot;
-
-  return ts.createProgram(files, config.options);
+  return createTypeScriptProgram(monorepoRoot, files);
 }
 
 // ─── Part Discovery ────────────────────────────────────────────────
@@ -288,6 +296,12 @@ function usesDataAttrs(filePath: string): boolean {
   } catch {
     return false;
   }
+}
+
+function resolvePartElement(htmlDir: string, componentKebab: string, source: string, partKebab: string): string {
+  const override = PART_ELEMENT_OVERRIDES[`${componentKebab}/${partKebab}`];
+  const relative = source.replace(/^\.\//, '');
+  return path.join(htmlDir, override ? `${override}.ts` : `${relative}-element.ts`);
 }
 
 export function discoverParts(source: ComponentSource, program: ts.Program, monorepoRoot: string): PartSource[] {
@@ -312,9 +326,7 @@ export function discoverParts(source: ComponentSource, program: ts.Program, mono
   for (const partExport of localExports) {
     const kebab = partKebabFromSource(partExport.source, componentKebab);
 
-    const overrideKey = `${componentKebab}/${kebab}`;
-    const elementBasename = PART_ELEMENT_OVERRIDES[overrideKey] ?? `${componentKebab}-${kebab}-element`;
-    const subPartElementFile = path.join(htmlDir, `${elementBasename}.ts`);
+    const subPartElementFile = resolvePartElement(htmlDir, componentKebab, partExport.source, kebab);
     const hasSubPartElement = fs.existsSync(subPartElementFile);
 
     const reactFile = path.join(path.dirname(source.partsIndexPath!), `${partExport.source.replace('./', '')}.tsx`);
@@ -364,7 +376,7 @@ export function discoverParts(source: ComponentSource, program: ts.Program, mono
 
         const kebab = partKebabFromSource(originExport.source, originKebab);
 
-        const subPartElementFile = path.join(originHtmlDir, `${originKebab}-${kebab}-element.ts`);
+        const subPartElementFile = resolvePartElement(originHtmlDir, originKebab, originExport.source, kebab);
         const hasSubPartElement = fs.existsSync(subPartElementFile);
 
         const reactFile = path.join(originReactDir, `${originExport.source.replace('./', '')}.tsx`);
@@ -484,6 +496,11 @@ function buildMultiPartReference(
           : null;
 
       const subPartProps = part.reactPath ? extractSubPartProps(part.reactPath, program, part.localName) : {};
+      if (htmlData) {
+        for (const [name, prop] of Object.entries(subPartProps)) {
+          if (htmlData.properties.includes(name)) prop.frameworks = ['html', 'react'];
+        }
+      }
 
       const partRef: PartReference = {
         name: part.name,
@@ -578,135 +595,3 @@ export function generateComponentReferences(monorepoRoot: string): ComponentResu
 
   return results;
 }
-
-// ═══════════════════════════════════════════════════════════════════════
-// FEATURE REFERENCE PIPELINE
-// ═══════════════════════════════════════════════════════════════════════
-
-export interface FeatureStateDef {
-  type: string;
-  detailedType?: string;
-  description?: string;
-}
-
-export interface FeatureActionDef {
-  type: string;
-  detailedType?: string;
-  description?: string;
-}
-
-export interface FeatureReference {
-  name: string;
-  slug: string;
-  description?: string;
-  state: Record<string, FeatureStateDef>;
-  actions: Record<string, FeatureActionDef>;
-}
-
-export interface FeatureResult {
-  name: string;
-  slug: string;
-  reference: FeatureReference;
-}
-
-export { generateFeatureReferences } from './feature-handler.js';
-
-// ═══════════════════════════════════════════════════════════════════════
-// PRESET REFERENCE PIPELINE
-// ═══════════════════════════════════════════════════════════════════════
-
-export interface PresetSkinDef {
-  name: string;
-  tagName?: string;
-  cssImport?: string;
-}
-
-export interface PresetFeatureRef {
-  name: string;
-  slug: string;
-  hasReference: boolean;
-}
-
-export interface PresetReference {
-  name: string;
-  description?: string;
-  featureBundle: string;
-  features: PresetFeatureRef[];
-  html: {
-    skins: PresetSkinDef[];
-    mediaElement?: string;
-  };
-  react: {
-    skins: PresetSkinDef[];
-    mediaElement: string;
-  };
-}
-
-export interface PresetResult {
-  name: string;
-  reference: PresetReference;
-}
-
-export { generatePresetReferences } from './preset-handler.js';
-
-// ═══════════════════════════════════════════════════════════════════════
-// MEDIA ELEMENT REFERENCE PIPELINE
-// ═══════════════════════════════════════════════════════════════════════
-
-export interface HostPropertyDef {
-  type: string;
-  description?: string;
-  readonly: boolean;
-  overridesNative?: boolean;
-  /** Serialized default value from the host's `*DefaultProps` export. */
-  default?: string;
-}
-
-export interface MediaEventDef {
-  name: string;
-  /** Description from a `@fires` JSDoc tag on the dispatching class or mixin. */
-  description?: string;
-}
-
-export type MediaTargetTag = 'video' | 'audio' | 'iframe';
-
-export interface HtmlMediaReference {
-  target: MediaTargetTag;
-  attributes: {
-    standard: string[];
-    custom: Record<string, HostPropertyDef>;
-  };
-  properties: {
-    definitions: Record<string, HostPropertyDef>;
-    native: string[];
-  };
-  events: {
-    standard: string[];
-    custom: MediaEventDef[];
-  };
-  methods: string[];
-  cssCustomProperties: Record<string, { description: string }>;
-}
-
-export interface ReactMediaReference {
-  target: MediaTargetTag;
-  acceptsNativeProps: boolean;
-  props: Record<string, HostPropertyDef>;
-}
-
-export interface MediaElementReference {
-  name: string;
-  tagName: string;
-  mediaType: 'video' | 'audio';
-  platforms: {
-    html: HtmlMediaReference;
-    react?: ReactMediaReference;
-  };
-}
-
-export interface MediaElementResult {
-  name: string;
-  reference: MediaElementReference;
-}
-
-export { generateMediaElementReferences } from './media-element-handler.js';

@@ -19,8 +19,8 @@ const timeState = {
   seek: vi.fn(),
 };
 
-function setup(props: Value.Props = {}) {
-  const { Wrapper } = createPlayerWrapper(timeState);
+function setup(props: Value.Props = {}, state = timeState) {
+  const { Wrapper } = createPlayerWrapper(state);
 
   return render(
     <Wrapper>
@@ -36,6 +36,8 @@ describe('Time.Value', () => {
     setup();
 
     const time = screen.getByTestId('time');
+    expect(time.tagName).toBe('TIME');
+    expect(time.getAttribute('datetime')).toBe('PT1M30S');
     expect(time.textContent).toBe('1:30');
     expect(time.getAttribute('data-type')).toBe('current');
   });
@@ -44,17 +46,28 @@ describe('Time.Value', () => {
     setup({ toggle: true });
 
     const time = screen.getByTestId('time');
+    expect(time.tagName).toBe('TIME');
+    expect(time.getAttribute('role')).toBe('button');
+    expect(time.getAttribute('tabindex')).toBe('0');
+    expect(time.getAttribute('datetime')).toBeNull();
+    expect(time.getAttribute('aria-description')).toBe('Toggle between elapsed and remaining time.');
     fireEvent.click(time);
 
     expect(time.textContent).toBe('-3:30');
     expect(time.getAttribute('data-type')).toBe('remaining');
-    expect(time.getAttribute('aria-label')).toBe('3 minutes, 30 seconds remaining. Show elapsed time.');
+    expect(time.getAttribute('aria-label')).toBe('Show elapsed time, 3 minutes, 30 seconds remaining.');
 
     fireEvent.click(time);
 
     expect(time.textContent).toBe('1:30');
     expect(time.getAttribute('data-type')).toBe('current');
-    expect(time.getAttribute('aria-label')).toBe('1 minute, 30 seconds. Show remaining time.');
+    expect(time.getAttribute('aria-label')).toBe('Show remaining time, 1 minute, 30 seconds elapsed.');
+  });
+
+  it('includes zero in the toggle label', () => {
+    setup({ toggle: true }, { ...timeState, currentTime: 0 });
+
+    expect(screen.getByTestId('time').getAttribute('aria-label')).toBe('Show remaining time, 0 seconds elapsed.');
   });
 
   it('formats toggle labels with the active locale', () => {
@@ -62,24 +75,59 @@ describe('Time.Value', () => {
 
     const { rerender } = render(
       <Wrapper>
-        <I18nProvider locale="fr" translations={{ time: { showRemaining: '{duration}. Afficher restant.' } }}>
+        <I18nProvider
+          locale="fr"
+          translations={{
+            time: {
+              showRemaining: 'Afficher restant, {duration}.',
+              elapsedSuffix: '{duration} écoulé',
+              durationSuffix: '{duration} durée',
+            },
+          }}
+        >
           <Value data-testid="time" toggle />
         </I18nProvider>
       </Wrapper>
     );
 
     const time = screen.getByTestId('time');
-    expect(time.getAttribute('aria-label')).toBe(`${formatTimeAsPhrase(90, { locale: 'fr' })}. Afficher restant.`);
+    expect(time.getAttribute('aria-label')).toBe(
+      `Afficher restant, ${formatTimeAsPhrase(90, { locale: 'fr' })} écoulé.`
+    );
 
     rerender(
       <Wrapper>
-        <I18nProvider locale="fr" translations={{ time: { showRemaining: '{duration}. Afficher restant.' } }}>
+        <I18nProvider
+          locale="fr"
+          translations={{
+            time: {
+              showRemaining: 'Afficher restant, {duration}.',
+              elapsedSuffix: '{duration} écoulé',
+              durationSuffix: '{duration} durée',
+            },
+          }}
+        >
           <Value data-testid="time" toggle type="duration" />
         </I18nProvider>
       </Wrapper>
     );
 
-    expect(time.getAttribute('aria-label')).toBe(`${formatTimeAsPhrase(300, { locale: 'fr' })}. Afficher restant.`);
+    expect(time.getAttribute('aria-label')).toBe(
+      `Afficher restant, ${formatTimeAsPhrase(300, { locale: 'fr' })} durée.`
+    );
+  });
+
+  it('formats digital time with locale digits', () => {
+    const { Wrapper } = createPlayerWrapper(timeState);
+    render(
+      <Wrapper>
+        <I18nProvider locale="fa">
+          <Value data-testid="time" />
+        </I18nProvider>
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId('time').textContent).toBe('۱:۳۰');
   });
 
   it('toggles with Enter and Space', () => {
@@ -114,7 +162,8 @@ describe('Time.Value', () => {
     const time = screen.getByTestId('time');
     expect(time.textContent).toBe('-3:30');
     expect(time.getAttribute('data-type')).toBe('remaining');
-    expect(time.getAttribute('aria-label')).toBe('3 minutes, 30 seconds remaining. Show duration.');
+    expect(time.getAttribute('aria-label')).toBe('Show duration, 3 minutes, 30 seconds remaining.');
+    expect(time.getAttribute('aria-description')).toBe('Toggle between duration and remaining time.');
   });
 
   it('toggles remaining time to duration on click', () => {
@@ -125,6 +174,7 @@ describe('Time.Value', () => {
 
     expect(time.textContent).toBe('5:00');
     expect(time.getAttribute('data-type')).toBe('duration');
+    expect(time.tagName).toBe('TIME');
     expect(time.getAttribute('role')).toBe('button');
 
     fireEvent.click(time);
@@ -153,8 +203,9 @@ describe('Time.Value', () => {
       </Wrapper>
     );
 
-    expect(time.textContent).toBe('1:30');
-    expect(time.getAttribute('data-type')).toBe('current');
+    expect(screen.getByTestId('time').tagName).toBe('TIME');
+    expect(screen.getByTestId('time').textContent).toBe('1:30');
+    expect(screen.getByTestId('time').getAttribute('data-type')).toBe('current');
 
     rerender(
       <Wrapper>
@@ -162,8 +213,10 @@ describe('Time.Value', () => {
       </Wrapper>
     );
 
-    expect(time.textContent).toBe('1:30');
-    expect(time.getAttribute('data-type')).toBe('current');
+    expect(screen.getByTestId('time').tagName).toBe('TIME');
+    expect(screen.getByTestId('time').getAttribute('role')).toBe('button');
+    expect(screen.getByTestId('time').textContent).toBe('1:30');
+    expect(screen.getByTestId('time').getAttribute('data-type')).toBe('current');
   });
 
   it('toggles duration to remaining time on click', () => {

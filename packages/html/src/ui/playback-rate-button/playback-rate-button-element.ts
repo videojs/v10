@@ -5,7 +5,6 @@ import type { MediaPlaybackRateState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { toggleCommandTarget } from '../command-for';
 import { MediaButtonElement } from '../media-button-element';
 
 export class PlaybackRateButtonElement extends MediaButtonElement<PlaybackRateButtonCore> {
@@ -27,7 +26,9 @@ export class PlaybackRateButtonElement extends MediaButtonElement<PlaybackRateBu
   protected activate(state: MediaPlaybackRateState, event?: UIEvent): void {
     if (this.commandfor) {
       if (event instanceof KeyboardEvent) {
-        toggleCommandTarget(this, this.commandfor);
+        // Custom elements do not synthesize a click from keyboard activation.
+        // Dispatch one so the linked menu follows its normal open lifecycle.
+        this.click();
       }
       return;
     }

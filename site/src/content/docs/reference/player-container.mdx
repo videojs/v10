@@ -1,5 +1,5 @@
 ---
-title: Player.Container
+title: Container
 frameworkTitle:
   html: media-container
 description: The player's interaction surface — handles layout, fullscreen, media attachment, and user activity detection.
@@ -10,7 +10,7 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 
 <FrameworkCase frameworks={["react"]}>
-The `Player.Container` is the player's physical surface. It defines the visual boundary, attaches the media element, and detects user interaction like activity and (eventually) gestures and keyboard input. It lives inside a <DocsLink slug="reference/player-provider">`Player.Provider`</DocsLink>.
+The `Container` is the player's physical surface. It defines the visual boundary, attaches the media element, and detects user interaction like activity and (eventually) gestures and keyboard input. It lives inside a <DocsLink slug="reference/player-provider">`Player`</DocsLink>.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 The `<media-container>` is the player's physical surface. It defines the visual boundary, attaches the media element, and detects user interaction like activity and (eventually) gestures and keyboard input. It lives inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
@@ -18,14 +18,14 @@ The `<media-container>` is the player's physical surface. It defines the visual 
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Player.Provider>
-  <Player.Container> {/* [!code focus] */}
+<Player>
+  <Container> {/* [!code focus] */}
     <video src="video.mp4" />
     <Controls.Root>
       {/* ... */}
     </Controls.Root>
-  </Player.Container> {/* [!code focus] */}
-</Player.Provider>
+  </Container> {/* [!code focus] */}
+</Player>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -42,13 +42,13 @@ The `<media-container>` is the player's physical surface. It defines the visual 
 ## How it's created
 
 <FrameworkCase frameworks={["react"]}>
-The `Player.Container` comes from the same `createPlayer()` call that creates the `Player.Provider`. They're a matched pair wired to the same feature set.
+Import `Container` from the main React package. It connects to whichever `Player` contains it, so it does not need to be created for a specific feature set.
 
 ```tsx
-import { createPlayer } from '@videojs/react';
+import { Container, createPlayer } from '@videojs/react';
 import { videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 ```
 
 <DocsLinkCard slug="reference/create-player">`createPlayer` reference</DocsLinkCard>
@@ -69,19 +69,15 @@ import '@videojs/html/video/player';
 </video-player>
 ```
 
-For custom behavior, use `ContainerMixin` from `createPlayer()`:
+For custom behavior, import the preconfigured `ContainerMixin` from the main HTML package:
 
 ```ts title="my-player.ts"
-import { createPlayer, MediaElement } from '@videojs/html';
-import { videoFeatures } from '@videojs/html/video';
-
-const { ContainerMixin } = createPlayer({ features: videoFeatures });
+import { ContainerMixin, MediaElement } from '@videojs/html';
 
 class MyContainer extends ContainerMixin(MediaElement) {}
 customElements.define('my-container', MyContainer);
 ```
 
-<DocsLinkCard slug="reference/html-create-player">createPlayer reference</DocsLinkCard>
 <DocsLinkCard slug="reference/container-mixin">ContainerMixin reference</DocsLinkCard>
 </FrameworkCase>
 
@@ -89,16 +85,16 @@ customElements.define('my-container', MyContainer);
 
 ### Layout & fullscreen
 
-The container is the visual box around your media and controls. Sizing, aspect ratio, and visual boundaries all go here — on the container, not the provider.
+The container is the visual box around your media and controls. Sizing, aspect ratio, and visual boundaries all go here — on `Container`, not `Player`.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Player.Container style={{ width: 640, aspectRatio: '16/9' }}>
+<Container style={{ width: 640, aspectRatio: '16/9' }}>
   <video src="video.mp4" />
   <Controls.Root>
     {/* ... */}
   </Controls.Root>
-</Player.Container>
+</Container>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -115,7 +111,7 @@ When the user goes fullscreen, the **container** goes fullscreen — not the vid
 ### Media attachment
 
 <FrameworkCase frameworks={["react"]}>
-Media discovery is handled by the provider, not the container. When a media component like `<Video>` registers itself via context, the provider wires it to the store and all of the player's features.
+Media discovery is handled by `Player`, not `Container`. When a media component like `<Video>` registers itself via context, `Player` wires it to the store and all of the player's features.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 Media discovery is handled by the provider, not the container. Custom media elements like `<hlsjs-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are picked up automatically via a `querySelector` fallback. No `slot="media"` attribute is needed.
@@ -136,19 +132,19 @@ A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI control
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 {/* Packaged skin — container is inside VideoSkin */}
-<Player.Provider>
+<Player>
   <VideoSkin>
     <Video src="video.mp4" />
   </VideoSkin>
-</Player.Provider>
+</Player>
 
-{/* Custom UI — you use Player.Container directly */}
-<Player.Provider>
-  <Player.Container>
+{/* Custom UI — you use Container directly */}
+<Player>
+  <Container>
     <video src="video.mp4" />
     <PlayButton />
-  </Player.Container>
-</Player.Provider>
+  </Container>
+</Player>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -172,21 +168,21 @@ A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI control
 
 ## Inside vs. outside the container
 
-The <DocsLink slug="reference/player-provider">provider</DocsLink> gives components access to state and actions. The container layers on physical behaviors — fullscreen, activity detection, gesture handling. Components work in both places; the container just adds those extras.
+<DocsLink slug="reference/player-provider">`Player`</DocsLink> gives components access to state and actions. `Container` layers on physical behaviors — fullscreen, activity detection, and gesture handling. Components work in both places; the container just adds those extras.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Player.Provider>
-  <Player.Container>
+<Player>
+  <Container>
     <video src="video.mp4" />
     <Controls.Root>          {/* fullscreen, activity detection, gestures */}
       {/* ... */}
     </Controls.Root>
-  </Player.Container>
+  </Container>
 
   <Transcript />          {/* state & actions, but no container behaviors */}
   <PlaylistSidebar />     {/* state & actions, but no container behaviors */}
-</Player.Provider>
+</Player>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>

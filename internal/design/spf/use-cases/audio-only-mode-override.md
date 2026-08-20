@@ -10,7 +10,7 @@ Engine variant that delivers audio-only playback. Composes regardless of
 source shape: handles both truly audio-only HLS sources (manifests with
 no video stream-inf entries) and mixed-AV sources (video / subtitle
 renditions ignored at composition time). The variant decision is encoded
-in the adapter choice — instantiating `SimpleHlsAudioOnlyMediaElement`
+in the adapter choice — instantiating `HlsAudioMediaElement`
 opts the consumer into audio-only delivery.
 
 This is a Player-level composition variant per [`../features/clusters.md` §
@@ -23,8 +23,8 @@ single composition with two variant-decision-source paths
 
 ## Status
 
-- **Composition:** Phase 1 implemented. `createHlsAudioOnlyEngine` and
-  `SimpleHlsAudioOnlyMediaElement` ship in `packages/spf/src/playback/engines/hls/`
+- **Composition:** Phase 1 implemented. `createHlsAudioEngine` and
+  `HlsAudioMediaElement` ship in `packages/spf/src/playback/engines/hls/`
   and re-export from `@videojs/spf/hls`. The adapter handles both truly
   audio-only HLS sources and mixed-AV sources (video / subtitle renditions
   ignored at composition time). Phases 2 (audio-abr, multi-language-audio)
@@ -47,7 +47,7 @@ single composition with two variant-decision-source paths
 declares only audio renditions):
 
 - **Audio-only HLS assets** — sources published as audio-only (podcasts,
-  music, audio articles). The current default `createSimpleHlsEngine` *tolerates*
+  music, audio articles). The current default `createHlsVideoEngine` *tolerates*
   these via `setupVideoBufferActors` / `loadVideoSegments` no-op-ing when
   `presentation.videoTracks` is empty; this variant composes the audio-only
   pipeline *explicitly*, saving the no-op overhead and making the "no video"
@@ -75,7 +75,7 @@ below).
 
 | Phase | What |
 |---|---|
-| **1 — Basic functionality** *(implemented)* | Parallel engine-factory + adapter pair. `createHlsAudioOnlyEngine` composes the audio-side subset of `createSimpleHlsEngine`'s behavior list, subtracting video-side and text-track behaviors entirely (Phase 1 ships without subtitle support). `SimpleHlsAudioOnlyMediaElement` wraps the engine with the same `shareSignals`-based pattern as `SimpleHlsMediaElement`. See *Implementation surface* below |
+| **1 — Basic functionality** *(implemented)* | Parallel engine-factory + adapter pair. `createHlsAudioEngine` composes the audio-side subset of `createHlsVideoEngine`'s behavior list, subtracting video-side and text-track behaviors entirely (Phase 1 ships without subtitle support). `HlsAudioMediaElement` wraps the engine with the same `shareSignals`-based pattern as `HlsVideoMediaElement`. See *Implementation surface* below |
 | **2 — Features/functionality relevant to the use case** | Compose constituent feature behaviors as they land: [`audio-abr`](../features/audio-abr.md) when implemented (multi-bitrate audio support in the variant), [`multi-language-audio`](../features/multi-language-audio.md) when implemented (language selection within the variant). Both are additive — the variant gains capability as the constituent features get built |
 | **3 — Optimizations** | Alternative default configurations for the audio-only delivery context: shorter forward-buffer targets (audio is lower-bandwidth; less ahead-buffering needed), possibly different `preload` defaults. The Path-A (update existing behavior's defaults) vs Path-B (audio-only-specific buffer-management behavior) judgment call applies — see [`README.md` § Implementation note](./README.md#implementation-note-customizing-behaviors-for-use-cases) |
 
@@ -85,7 +85,7 @@ Phase 1 is subtractive-only; Phases 2 and 3 surface the other mechanisms.
 
 ### Behaviors subtracted (Phase 1)
 
-From `createSimpleHlsEngine`'s composition, omit:
+From `createHlsVideoEngine`'s composition, omit:
 
 **Video-side:**
 - `resolveVideoTrack` — no video media playlist fetch
@@ -112,7 +112,7 @@ bandwidth, the seed becomes unnecessary and is omitted. Returns when
 
 **None.** This use case ships as an *independent adapter* paired with its own
 engine factory. The variant-decision is encoded in the adapter choice itself —
-consumers instantiate `SimpleHlsAudioOnlyMediaElement` to opt in. No runtime
+consumers instantiate `HlsAudioMediaElement` to opt in. No runtime
 variant-decision behavior is needed.
 
 ### Alternative implementations (Phase 3 candidates)
@@ -139,8 +139,8 @@ Phase 1 baseline:
   inherits all of it.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
   used with an alternative adapter shape. The variant ships its own
-  `SimpleHlsAudioOnlyMediaElement`-style adapter parallel to
-  `SimpleHlsMediaElement`. The `shareSignals` mechanism + mixin pattern compose
+  `HlsAudioMediaElement`-style adapter parallel to
+  `HlsVideoMediaElement`. The `shareSignals` mechanism + mixin pattern compose
   unchanged; the consumer-facing API differs.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is.
   `MediaSource` + `endOfStream` gate compose unchanged across variants (per the
@@ -163,15 +163,15 @@ Phase 2:
 ## Customer-policy surface
 
 The variant ships as an **independent adapter** parallel to
-`SimpleHlsMediaElement`:
+`HlsVideoMediaElement`:
 
 ```ts
 // Default (mixed AV delivery)
-const player = new SimpleHlsMediaElement();
+const player = new HlsVideoMediaElement();
 player.src = mixedSourceUrl;
 
 // Audio-only mode override
-const audioPlayer = new SimpleHlsAudioOnlyMediaElement();
+const audioPlayer = new HlsAudioMediaElement();
 audioPlayer.src = sameMixedSourceUrl;
 ```
 
@@ -187,23 +187,23 @@ actually call.
 ## Variant-decision signal source
 
 The variant composes identically regardless of signal source. Two paths
-exist; both target the same `createHlsAudioOnlyEngine` factory:
+exist; both target the same `createHlsAudioEngine` factory:
 
 **1. Adapter-upfront (implemented; Phase 1).** Selecting
-`SimpleHlsAudioOnlyMediaElement` over `SimpleHlsMediaElement` *is* the
+`HlsAudioMediaElement` over `HlsVideoMediaElement` *is* the
 variant choice. No detect-from-parser logic, no runtime config branch.
 Used by consumers that know they want audio-only delivery (the
 delivery-mode-choice scenarios in *Target delivery context*).
 
 **2. Detect-from-parser (future).** A routing-from-default-adapter path
-where `SimpleHlsMediaElement` (or a higher-level adapter) detects an
+where `HlsVideoMediaElement` (or a higher-level adapter) detects an
 audio-only source shape from the parsed presentation
 (`presentation.videoTracks` empty) and switches its internal engine
-factory to `createHlsAudioOnlyEngine` for that source. Targets the
+factory to `createHlsAudioEngine` for that source. Targets the
 source-shape-correctness scenario without forcing consumers of
 audio-only sources to opt into a separate adapter type. The default
-adapter would default to `createSimpleHlsEngine` for mixed sources and
-`createHlsAudioOnlyEngine` for audio-only ones; existing tolerance
+adapter would default to `createHlsVideoEngine` for mixed sources and
+`createHlsAudioEngine` for audio-only ones; existing tolerance
 behavior would be supplanted by explicit composition. Not yet built.
 
 Both paths can coexist. The shared factory is the load-bearing
@@ -214,13 +214,13 @@ artifact; how the variant is signaled is orthogonal.
 - **Adapter shape proliferation.** Each use-case composition that gets its own
   adapter multiplies the adapter surface. As more use cases land
   (background-video, video-only-mode-override, audio-podcast mode,
-  etc.), the inventory of `SimpleXHlsMediaElement` classes grows. Worth flagging
+  etc.), the inventory of `Hls*MediaElement` classes grows. Worth flagging
   as a registry-level concern; may surface a future "use-case adapter factory"
   pattern.
 - **Default-adapter routing change (when Variant-decision path 2 lands).**
-  Detect-from-parser routing in `SimpleHlsMediaElement` would change the
-  default engine for audio-only sources from `createSimpleHlsEngine` (current
-  tolerance) to `createHlsAudioOnlyEngine` (explicit composition). Compatible
+  Detect-from-parser routing in `HlsVideoMediaElement` would change the
+  default engine for audio-only sources from `createHlsVideoEngine` (current
+  tolerance) to `createHlsAudioEngine` (explicit composition). Compatible
   in observable behavior — both produce working audio playback — but the
   composition shape changes structurally. Worth a test-fixture pass when the
   routing lands.
@@ -261,12 +261,12 @@ Phase 1 implementation pass (kept for traceability):
   Case-1 source-shape concern and the Case-2 delivery-mode concern were
   documented as separate features+use-case (`audio-only-composition` +
   `audio-only-mode-override`); the Phase 1 implementation pass landed a
-  single `createHlsAudioOnlyEngine` serving both, and the two docs
+  single `createHlsAudioEngine` serving both, and the two docs
   consolidated into this one. Variant-decision source remains the
   orthogonal axis (see *Variant-decision signal source* above).
-- **Adapter naming** — `SimpleHlsAudioOnlyMediaElement` (with
-  `SimpleHlsAudioOnlyMediaMixin` for mixin consumers and
-  `simpleHlsAudioOnlyMediaDefaultProps` for default values), matching the
+- **Adapter naming** — `HlsAudioMediaElement` (with
+  `HlsAudioMediaMixin` for mixin consumers and
+  `hlsAudioMediaDefaultProps` for default values), matching the
   `Simple{Variant}HlsMediaElement` naming pattern.
 - **Subtitle / text-track handling for Phase 1** — *subtracted entirely.*
   Phase 1 ships without subtitles to keep the initial surface lean; future
@@ -275,55 +275,55 @@ Phase 1 implementation pass (kept for traceability):
 ## Implementation surface
 
 Phase 1 landed across the full SPF→core→html/react→sandbox cascade,
-parallel to the existing `simple-hls-video` pair.
+parallel to the existing `hls-video` pair.
 
 **SPF — engine factory** (`packages/spf/src/playback/engines/hls/`):
 
 | Export | File | Purpose |
 |---|---|---|
-| `createHlsAudioOnlyEngine` | `engine-audio-only.ts` | Subtractive composition variant; omits all video + text-track behaviors |
-| `SimpleHlsAudioOnlyEngineState` | `engine-audio-only.ts` | Trimmed state — no `selectedVideoTrackId` / `selectedTextTrackId` / `userVideoTrackSelection` / `bandwidthState` |
-| `SimpleHlsAudioOnlyEngineContext` | `engine-audio-only.ts` | Trimmed context — no video buffer / video segment loader / text-track actor slots |
-| `SimpleHlsAudioOnlyEngineConfig` | `engine-audio-only.ts` | Trimmed config — no video-quality, bandwidth, or text-track fields |
-| `SimpleHlsAudioOnlyEngineSignals` | `engine-audio-only.ts` | `onSignalsReady` callback type |
+| `createHlsAudioEngine` | `engine-audio-only.ts` | Subtractive composition variant; omits all video + text-track behaviors |
+| `HlsAudioEngineState` | `engine-audio-only.ts` | Trimmed state — no `selectedVideoTrackId` / `selectedTextTrackId` / `userVideoTrackSelection` / `bandwidthState` |
+| `HlsAudioEngineContext` | `engine-audio-only.ts` | Trimmed context — no video buffer / video segment loader / text-track actor slots |
+| `HlsAudioEngineConfig` | `engine-audio-only.ts` | Trimmed config — no video-quality, bandwidth, or text-track fields |
+| `HlsAudioEngineSignals` | `engine-audio-only.ts` | `onSignalsReady` callback type |
 
 **SPF — adapter** (`packages/spf/src/playback/engines/hls/`):
 
 | Export | File | Purpose |
 |---|---|---|
-| `SimpleHlsAudioOnlyMediaElement` | `adapter-audio-only.ts` | Standalone adapter, no base class |
-| `SimpleHlsAudioOnlyMediaMixin` | `adapter-audio-only.ts` | Mixin for adapters with a custom base |
-| `SimpleHlsAudioOnlyMediaProps` / `…API` | `adapter-audio-only.ts` | Adapter API surface — same WHATWG src/preload/play contract as `SimpleHlsMediaElement` |
-| `simpleHlsAudioOnlyMediaDefaultProps` | `adapter-audio-only.ts` | Default-prop constants |
+| `HlsAudioMediaElement` | `hls-audio/adapter.ts` | Standalone adapter, no base class |
+| `HlsAudioMediaMixin` | `hls-audio/adapter.ts` | Mixin for adapters with a custom base |
+| `HlsAudioMediaProps` / `…API` | `hls-audio/adapter.ts` | Adapter API surface — same WHATWG src/preload/play contract as `HlsVideoMediaElement` |
+| `hlsAudioMediaDefaultProps` | `hls-audio/adapter.ts` | Default-prop constants |
 
 Public re-export: `@videojs/spf/hls` — all of the above ship via
 `packages/spf/src/playback/engines/hls/index.ts`.
 
-**Core — media wrapper** (`packages/media/src/dom/simple-hls-audio-only/`):
+**Media** (`packages/spf/src/playback/adapters/hls-audio/`):
 
 | Export | File | Purpose |
 |---|---|---|
-| `SimpleHlsAudioOnlyMedia` | `index.ts` | Applies `SimpleHlsAudioOnlyMediaMixin` to `HTMLAudioElementHost` (audio host, not video — symmetric with `mux-audio`) |
+| `HlsAudioMedia` | `index.ts` | Applies `HlsAudioMediaMixin` to `HTMLAudioElementHost` (audio host, not video — symmetric with `mux-audio`) |
 
-Public re-export: `@videojs/media/dom/simple-hls-audio-only`.
+Public re-export: `@videojs/spf/hls-audio`.
 
-**HTML — custom element** (`packages/html/src/media/simple-hls-audio-only/`):
-
-| Export | File | Purpose |
-|---|---|---|
-| `SimpleHlsAudioOnly` | `media/simple-hls-audio-only/media.ts` | Applies `MediaAttachMixin` + `CustomMediaElement('audio', SimpleHlsAudioOnlyMedia)` |
-| `SimpleHlsAudioOnlyElement` (tag `simple-hls-audio-only`) | `define/media/simple-hls-audio-only.ts` | Custom-element definition; registers `<simple-hls-audio-only>` via `safeDefine` |
-
-CDN entry: `packages/html/src/cdn/media/simple-hls-audio-only.ts` →
-`@videojs/html/cdn/media/simple-hls-audio-only`.
-
-**React — component** (`packages/react/src/media/simple-hls-audio-only/`):
+**HTML — custom element** (`packages/html/src/media/hls-audio/`):
 
 | Export | File | Purpose |
 |---|---|---|
-| `SimpleHlsAudioOnly` | `index.tsx` | React component rendering an `<audio>` element bound to `SimpleHlsAudioOnlyMedia`; props mirror the HTML element's WHATWG-style attribute surface |
+| `HlsAudio` | `media/hls-audio/media.ts` | Applies `MediaAttachMixin` + `CustomMediaElement('audio', HlsAudioMedia)` |
+| `HlsAudioElement` (tag `hls-audio`) | `define/media/hls-audio.ts` | Custom-element definition; registers `<hls-audio>` via `safeDefine` |
 
-Public re-export: `@videojs/react/media/simple-hls-audio-only`.
+CDN entry: `packages/html/src/cdn/media/hls-audio.ts` →
+`@videojs/html/cdn/media/hls-audio`.
+
+**React — component** (`packages/react/src/media/hls-audio/`):
+
+| Export | File | Purpose |
+|---|---|---|
+| `HlsAudio` | `index.tsx` | React component rendering an `<audio>` element bound to `HlsAudioMedia`; props mirror the HTML element's WHATWG-style attribute surface |
+
+Public re-export: `@videojs/react/media/hls-audio`.
 
 **Composed behaviors (current):** `syncPreload`, `trackLoadTriggers`,
 `resolvePresentation`, `resolveAudioTrack`, `calculatePresentationDuration`,
@@ -359,22 +359,22 @@ configuration drives end-of-stream correctly with no per-type changes.
     `TYPE=SUBTITLES` rendition
   - `"cleans up on destroy"` — `engine.destroy()` does not throw
 
-- `adapter-audio-only.test.ts` — 28 tests covering the WHATWG
+- `hls-audio/tests/adapter.test.ts` — 28 tests covering the WHATWG
   `src`/`preload`/`play()`/`attach`/`detach`/`destroy` contract on
-  `SimpleHlsAudioOnlyMediaElement`. Mirrors `adapter.test.ts` semantically
+  `HlsAudioMediaElement`. Mirrors `adapter.test.ts` semantically
   (the variant differs in composition, not in adapter contract).
 
 **Sandbox demos** (templates checked in; `src/` is mirrored from
 `templates/` by `pnpm dev:sandbox` per the sandbox README):
 
-- `apps/sandbox/templates/html-simple-hls-audio-only/` — exercises
-  `<simple-hls-audio-only>` against the shared `SOURCES` registry,
+- `apps/sandbox/templates/html-hls-audio/` — exercises
+  `<hls-audio>` against the shared `SOURCES` registry,
   wrapped in the standard `audio-player` skin shell. Sandbox parity with
-  `html-mux-audio` / `html-simple-hls-video`.
-- `apps/sandbox/templates/react-simple-hls-audio-only/` — exercises
-  `<SimpleHlsAudioOnly>` against the same registry through the React
+  `html-mux-audio` / `html-hls-video`.
+- `apps/sandbox/templates/react-hls-audio/` — exercises
+  `<HlsAudio>` against the same registry through the React
   audio skin component. Sandbox parity with `react-mux-audio` /
-  `react-simple-hls-video`.
+  `react-hls-video`.
 
 **Out of scope for Phase 1 (deferred):**
 
@@ -386,7 +386,7 @@ configuration drives end-of-stream correctly with no per-type changes.
 
 - **[`audio-playback`](../features/audio-playback.md)** — constituent baseline.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** —
-  constituent; variant adapter parallels `SimpleHlsMediaElement`.
+  constituent; variant adapter parallels `HlsVideoMediaElement`.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — constituent;
   composes unchanged.
 - **[`buffer-management`](../features/buffer-management.md)** — constituent;
@@ -412,11 +412,11 @@ configuration drives end-of-stream correctly with no per-type changes.
 - [SPF Epics Working Doc](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4) — Notion epic #4b
 - [`packages/spf/docs/hls-engine.md`](../../../../packages/spf/docs/hls-engine.md) — current HLS engine composition walkthrough; the variant subtracts from this baseline
 - [`packages/spf/src/playback/engines/hls/engine-audio-only.ts`](../../../../packages/spf/src/playback/engines/hls/engine-audio-only.ts) — Phase 1 engine factory
-- [`packages/spf/src/playback/engines/hls/adapter-audio-only.ts`](../../../../packages/spf/src/playback/engines/hls/adapter-audio-only.ts) — Phase 1 adapter
+- [`packages/spf/src/playback/adapters/hls-audio/adapter.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/adapter.ts) — Phase 1 adapter
 - [`packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts) — Phase 1 engine integration tests
-- [`packages/spf/src/playback/engines/hls/tests/adapter-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/adapter-audio-only.test.ts) — Phase 1 adapter tests
-- [`packages/media/src/dom/simple-hls-audio-only/media.ts`](../../../../packages/media/src/dom/simple-hls-audio-only/media.ts) — Phase 1 media wrapper
-- [`packages/html/src/media/simple-hls-audio-only/media.ts`](../../../../packages/html/src/media/simple-hls-audio-only/media.ts) — Phase 1 HTML custom element
-- [`packages/react/src/media/simple-hls-audio-only/media.tsx`](../../../../packages/react/src/media/simple-hls-audio-only/media.tsx) — Phase 1 React component
-- [`apps/sandbox/templates/html-simple-hls-audio-only/`](../../../../apps/sandbox/templates/html-simple-hls-audio-only/) — Phase 1 HTML sandbox demo template
-- [`apps/sandbox/templates/react-simple-hls-audio-only/`](../../../../apps/sandbox/templates/react-simple-hls-audio-only/) — Phase 1 React sandbox demo template
+- [`packages/spf/src/playback/adapters/hls-audio/tests/adapter.test.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/tests/adapter.test.ts) — Phase 1 adapter tests
+- [`packages/spf/src/playback/adapters/hls-audio/media.ts`](../../../../packages/spf/src/playback/adapters/hls-audio/media.ts) — Phase 1 media wrapper
+- [`packages/html/src/media/hls-audio/media.ts`](../../../../packages/html/src/media/hls-audio/media.ts) — Phase 1 HTML custom element
+- [`packages/react/src/media/hls-audio/media.tsx`](../../../../packages/react/src/media/hls-audio/media.tsx) — Phase 1 React component
+- [`apps/sandbox/templates/html-hls-audio/`](../../../../apps/sandbox/templates/html-hls-audio/) — Phase 1 HTML sandbox demo template
+- [`apps/sandbox/templates/react-hls-audio/`](../../../../apps/sandbox/templates/react-hls-audio/) — Phase 1 React sandbox demo template

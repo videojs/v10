@@ -1,6 +1,6 @@
 ---
 status: draft
-date: 2026-05-20
+date: 2026-08-03
 definition: technical
 ---
 
@@ -26,19 +26,35 @@ low-latency the producer optimized the stream for.
 
 ## Status
 
-- **Composition:** not implemented. Hard prerequisite [live-stream-support](./live-stream-support.md)
-  is also not implemented. None of `parseMediaPlaylist`, the reload
-  loop (which doesn't exist yet), `forward-buffer`'s planner, or
-  `createTrackedFetch` currently handle LL-HLS shapes.
+- **Composition:** not implemented. The hard prerequisite
+  [live-stream-support](./live-stream-support.md) has since landed, so
+  the reload loop, sliding window, live-edge tracking, and `Infinity`
+  duration now exist — but none of the LL-HLS mechanisms themselves do.
+  `parseMediaPlaylist` ignores `#EXT-X-PART`, `#EXT-X-PART-INF`,
+  `#EXT-X-SERVER-CONTROL`, and `#EXT-X-PRELOAD-HINT`; reload pacing is
+  interval-based (`mediaPlaylistReloadDelay`) with no blocking-reload
+  `_HLS_msn` / `_HLS_part` query support; `forward-buffer`'s planner and
+  `createTrackedFetch` handle whole segments only. `EXT-X-SERVER-CONTROL`
+  is parsed, but only for `HOLD-BACK` — `PART-HOLD-BACK` is deliberately
+  unread until partial-segment playback exists, since seating the playhead
+  there while fetching whole segments would put it ahead of the last
+  complete segment. Capturing `PART-HOLD-BACK` (and `PART-TARGET`) in the
+  playlist metadata belongs to this feature's partial-segments phase.
+- **Note:** live playback has been *validated against* Mux LL-HLS
+  sources, which advertise `CAN-BLOCK-RELOAD=YES` and `PART-TARGET`.
+  That is the interval-reload path working on an LL-HLS-capable server —
+  not LL-HLS support. Latency is whatever the holdback gives, not
+  part-level.
 - **Definition depth:** technical — scope and SPF touchpoints
   articulated against the HLS LL-HLS spec extensions; implementation
   specifics open. Source material: [SPF Epics Working Doc — LL-HLS
   Support (epic #1)](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
   (cluster A, eng size XL, validation M-L, "Largest single gap").
-- **Hard prerequisite:** [live-stream-support](./live-stream-support.md).
-  The four LL-HLS mechanisms all build on the reload-loop, sliding-
-  window, live-edge-tracking, and `Infinity`-duration primitives that
-  feature introduces. LL-HLS is not independently scopable.
+- **Hard prerequisite:** [live-stream-support](./live-stream-support.md)
+  — **satisfied.** The four LL-HLS mechanisms all build on the
+  reload-loop, sliding-window, live-edge-tracking, and
+  `Infinity`-duration primitives that feature introduces, all of which
+  have landed. LL-HLS is now unblocked rather than un-scopable.
 
 ## Phases of complexity
 

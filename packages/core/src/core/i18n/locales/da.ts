@@ -45,10 +45,14 @@ export default {
     current: 'Aktuel tid',
     duration: 'Varighed',
     remaining: 'Resterende tid',
+    elapsedSuffix: '{duration} forløbet tid',
+    durationSuffix: '{duration} varighed',
     remainingSuffix: '{duration} tilbage',
-    showElapsed: '{duration}. Vis forløbet tid.',
-    showDuration: '{duration}. Vis varighed.',
-    showRemaining: '{duration}. Vis resterende tid.',
+    showElapsed: 'Vis forløbet tid, {duration}.',
+    showDuration: 'Vis varighed, {duration}.',
+    showRemaining: 'Vis resterende tid, {duration}.',
+    toggleElapsed: 'Skift mellem forløbet og resterende tid.',
+    toggleDuration: 'Skift mellem varighed og resterende tid.',
     position: '{current} af {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Fuldskærm',
     pip: 'Billede i billede',
     exitPip: 'Afslut billede i billede',
+    seekedTo: 'Sprunget til {time}',
+  },
+  container: {
+    label: 'Medieafspiller',
   },
   errors: {
     aborted: 'Du afbrød videoafspilningen.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Videoen kunne ikke indlæses, enten fordi serveren eller netværket fejlede, eller fordi formatet ikke er understøttet.',
     encrypted: 'Mediet er krypteret, og der er ingen nøgler til at dekryptere det.',
+    unplayable: 'Denne mediefil understøttes ikke af afspilleren.',
     title: 'Noget gik galt.',
     unexpected: 'Der opstod en fejl. Prøv igen.',
   },

@@ -1,15 +1,15 @@
-import type {
-  AnyPlayerFeature,
-  AudioFeatures,
-  AudioPlayerStore,
-  PlayerStore,
-  PlayerTarget,
-  VideoFeatures,
-  VideoPlayerStore,
+import {
+  type AnyPlayerFeature,
+  type AudioFeatures,
+  type AudioPlayerStore,
+  combinePlayerFeatureConfigs,
+  type PlayerStore,
+  type PlayerTarget,
+  type VideoFeatures,
+  type VideoPlayerStore,
 } from '@videojs/core/dom';
 import { combine, createStore } from '@videojs/store';
 
-import { type ContainerMixin, createContainerMixin } from '../store/container-mixin';
 import { createProviderMixin, type ProviderMixin } from '../store/provider-mixin';
 import { containerContext, mediaContext, type PlayerContext, playerContext } from './context';
 import { PlayerController } from './player-controller';
@@ -30,20 +30,17 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
 
   /** Mixin that provides player context to descendants. */
   ProviderMixin: ProviderMixin<Store>;
-
-  /** Mixin that consumes player context and registers as the container element. */
-  ContainerMixin: ContainerMixin<Store>;
 }
 
 /**
- * Creates a player factory with typed store, mixins, and controller.
+ * Creates a player factory with a typed store, provider mixin, and controller.
  *
  * @example
  * ```ts
  * import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
  * import { videoFeatures } from '@videojs/html/video';
  *
- * const { ProviderMixin, ContainerMixin, PlayerController, context } = createPlayer({
+ * const { ProviderMixin, PlayerController, context } = createPlayer({
  *   features: videoFeatures,
  * });
  *
@@ -81,7 +78,8 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 ): CreatePlayerResult<PlayerStore<Features>>;
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<PlayerStore> {
-  const slice = combine<PlayerTarget, AnyPlayerFeature[]>(...config.features);
+  const slice = combine(...config.features);
+  const featureConfig = combinePlayerFeatureConfigs(config.features);
 
   function create(): PlayerStore {
     return createStore<PlayerTarget>()(slice);
@@ -92,11 +90,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     mediaContext,
     containerContext,
     factory: create,
-  });
-
-  const ContainerMixin = createContainerMixin<PlayerStore>({
-    playerContext,
-    containerContext,
+    config: featureConfig,
   });
 
   return {
@@ -104,6 +98,5 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     create,
     PlayerController,
     ProviderMixin,
-    ContainerMixin,
   };
 }

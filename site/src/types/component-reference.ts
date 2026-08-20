@@ -12,6 +12,7 @@ export const PropDefSchema = z.object({
   description: z.string().optional(),
   default: z.string().optional(),
   required: z.boolean().optional(),
+  frameworks: z.array(z.enum(['html', 'react'])).optional(),
 });
 
 export const StateDefSchema = z.object({

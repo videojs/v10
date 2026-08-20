@@ -3,11 +3,12 @@ import { MediaError } from '../../../core/media-error';
 import type { RemotePlaybackLike } from '../../../core/types';
 import { addMediaComponent, type MediaComponent } from '../../media-host';
 import { NativeHlsMedia } from '../../native-hls';
-import { ContentTypes, Hls, HlsJsMedia } from '../index';
+import { ContentTypes, Hls, HlsJsMedia, type HlsSource } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function fireDurationChange(video: HTMLVideoElement, duration: number) {
@@ -33,7 +34,7 @@ function setup() {
   const handler = vi.fn();
   media.addEventListener('error', handler);
 
-  media.config = { preferPlayback: 'native', contentType: ContentTypes.M3U8 };
+  media.source = { type: ContentTypes.M3U8, preferPlayback: 'native' };
   media.load();
 
   return { media, video, handler };
@@ -88,7 +89,7 @@ describe('HlsJsMedia', () => {
       const pauseHandler = vi.fn();
       media.addEventListener('pause', pauseHandler);
 
-      media.config = { preferPlayback: 'native', contentType: ContentTypes.M3U8 };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native' };
       media.load();
 
       video.dispatchEvent(new Event('pause'));
@@ -125,8 +126,8 @@ describe('HlsJsMedia', () => {
     });
   });
 
-  describe('config', () => {
-    it('recreates the engine when a new hlsJs config is assigned', () => {
+  describe('source', () => {
+    it('recreates the engine when new engine options are assigned', () => {
       const { media, video } = setup();
 
       fireDurationChange(video, Infinity);
@@ -135,8 +136,12 @@ describe('HlsJsMedia', () => {
       const handler = vi.fn();
       media.addEventListener('streamtypechange', handler);
 
-      // New `hlsJs` option values must recreate the engine to take effect.
-      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
+      // New hls.js option values must recreate the engine to take effect.
+      media.source = {
+        type: ContentTypes.M3U8,
+        preferPlayback: 'native',
+        engine: { hlsJs: { maxBufferLength: 60 } },
+      };
       media.load();
 
       // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
@@ -144,10 +149,16 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
     });
 
-    it('does not recreate the engine for an equivalent hlsJs config', () => {
+    it('does not recreate the engine for a structurally equal source', () => {
       const { media, video } = setup();
 
-      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
+      const source = {
+        type: ContentTypes.M3U8,
+        preferPlayback: 'native',
+        engine: { hlsJs: { maxBufferLength: 60 } },
+      } as const;
+
+      media.source = { ...source };
       media.load();
 
       fireDurationChange(video, Infinity);
@@ -155,11 +166,39 @@ describe('HlsJsMedia', () => {
       media.addEventListener('streamtypechange', handler);
 
       // Same option values in a new object (e.g. an inline React prop).
-      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
+      media.source = { ...source };
       media.load();
 
       // No engine teardown → no streamType churn.
       expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('preserves engine options when src changes', () => {
+      const { media } = setup();
+
+      media.src = 'https://example.com/video.m3u8';
+
+      expect(media.source).toEqual({
+        src: 'https://example.com/video.m3u8',
+        type: ContentTypes.M3U8,
+        preferPlayback: 'native',
+      });
+    });
+
+    it('derives src from source and fires sourcechange', () => {
+      const media = new HlsJsMedia();
+      const handler = vi.fn();
+      media.addEventListener('sourcechange', handler);
+
+      media.source = { src: 'https://example.com/video.m3u8' };
+
+      expect(media.src).toBe('https://example.com/video.m3u8');
+      expect(handler).toHaveBeenCalledOnce();
+
+      media.source = null;
+
+      expect(media.src).toBe('');
+      expect(handler).toHaveBeenCalledTimes(2);
     });
 
     it('recreates the engine when inferred content type changes', () => {
@@ -182,16 +221,536 @@ describe('HlsJsMedia', () => {
       expect(media.engine).not.toBeNull();
     });
 
-    it('resets free-form config when a new object is assigned', () => {
+    it('replaces the source rather than merging it', () => {
       const { media } = setup();
 
-      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.source = { engine: { hlsJs: { maxBufferLength: 60 } } };
 
-      // A new config object signals a fresh start: prior free-form keys
-      // (set in `setup()`) are dropped rather than merged.
-      expect(media.config.preferPlayback).toBeUndefined();
-      expect(media.config.contentType).toBeUndefined();
-      expect(media.config.hlsJs).toEqual({ maxBufferLength: 60 });
+      // A new source object signals a fresh start: options set in `setup()` are
+      // dropped rather than merged.
+      expect(media.source).toEqual({ engine: { hlsJs: { maxBufferLength: 60 } } });
+    });
+  });
+
+  describe('drm', () => {
+    const WIDEVINE_LICENSE = 'https://license.test/widevine';
+    const FAIRPLAY_LICENSE = 'https://license.test/fairplay';
+
+    function setupMse(source: HlsSource) {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+      const video = document.createElement('video');
+      document.body.appendChild(video);
+
+      const media = new HlsJsMedia();
+      media.attach(video);
+      media.source = { ...source, src: 'https://example.com/video.m3u8' };
+      media.load();
+
+      return { media, video };
+    }
+
+    const drmEngine = { emeEnabled: true, drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } };
+    const drm = {
+      'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE, serverCertificateUrl: 'https://license.test/appcert' },
+      'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE },
+    };
+
+    it('licenses the hls.js engine from `source.drm`', () => {
+      const { media } = setupMse({ drm });
+
+      // hls.js takes the same shape, and only negotiates keys while EME is on.
+      expect(media.engine!.config.emeEnabled).toBe(true);
+      expect(media.engine!.config.drmSystems).toEqual(drm);
+    });
+
+    it('leaves EME alone when `source.drm` names nothing', () => {
+      const { media } = setupMse({ drm: {} });
+      expect(media.engine!.config.emeEnabled).toBe(false);
+    });
+
+    it('describes licensing without acting on it for an explicit `emeEnabled: false`', () => {
+      const { media } = setupMse({ drm, engine: { hlsJs: { emeEnabled: false } } });
+
+      expect(media.engine!.config.emeEnabled).toBe(false);
+      expect(media.engine!.config.drmSystems).toEqual(drm);
+    });
+
+    it('lets `engine.hlsJs.drmSystems` replace `source.drm`', () => {
+      const { media } = setupMse({ drm, engine: { hlsJs: { drmSystems: drmEngine.drmSystems } } });
+
+      // An escape hatch replaces what it is an escape from, rather than merging:
+      // the FairPlay server named in `drm` is gone.
+      expect(media.engine!.config.drmSystems).toEqual({ 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } });
+      expect(media.engine!.config.emeEnabled).toBe(true);
+    });
+
+    it('recreates the engine when a `source.drm` license server changes', () => {
+      const { media } = setupMse({ drm });
+      const engine = media.engine;
+
+      // Same license servers in a new object (e.g. an inline React prop).
+      media.source = { src: media.src, drm: { ...drm } };
+      media.load();
+      expect(media.engine).toBe(engine);
+
+      media.source = { src: media.src, drm: { 'com.widevine.alpha': { licenseUrl: 'https://other.test/widevine' } } };
+      media.load();
+      expect(media.engine).not.toBe(engine);
+    });
+
+    it('hands DRM options straight to the hls.js engine', () => {
+      const { media } = setupMse({ engine: { hlsJs: drmEngine } });
+
+      expect(media.engine!.config.emeEnabled).toBe(true);
+      expect(media.engine!.config.drmSystems).toEqual({ 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } });
+    });
+
+    it('leaves EME disabled for unprotected playback', () => {
+      const { media } = setupMse({});
+      expect(media.engine!.config.emeEnabled).toBe(false);
+    });
+
+    it('reuses the engine for an equivalent DRM config', () => {
+      const { media } = setupMse({ engine: { hlsJs: drmEngine } });
+      const engine = media.engine;
+
+      // Same license servers in a new object (e.g. an inline React prop).
+      media.source = {
+        src: media.src,
+        engine: {
+          hlsJs: { emeEnabled: true, drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } },
+        },
+      };
+      media.load();
+
+      expect(media.engine).toBe(engine);
+    });
+
+    it('recreates the engine when a license server changes', () => {
+      const { media } = setupMse({ engine: { hlsJs: drmEngine } });
+      const engine = media.engine;
+
+      media.source = {
+        src: media.src,
+        engine: {
+          hlsJs: {
+            emeEnabled: true,
+            drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://other.test/widevine' } },
+          },
+        },
+      };
+      media.load();
+
+      expect(media.engine).not.toBe(engine);
+      expect(media.engine!.config.drmSystems).toEqual({
+        'com.widevine.alpha': { licenseUrl: 'https://other.test/widevine' },
+      });
+    });
+
+    it('warns when native playback is taken and no FairPlay server is named', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { media } = setup();
+      media.source = { ...media.source, engine: { hlsJs: drmEngine } };
+      media.load();
+
+      expect(media.engine).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.drm`'));
+    });
+
+    it('names the configuration it is licensing against when it warns', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { media } = setup();
+      // `source.drm` names FairPlay, but the escape hatch replaces it and does
+      // not — so the field to go and look at is the escape hatch.
+      media.source = {
+        ...media.source,
+        drm,
+        engine: { nativeHls: { drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } } },
+      };
+      media.load();
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.engine.nativeHls.drmSystems`'));
+    });
+
+    it('hands `source.drm` to the native delegate', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const requestMediaKeySystemAccess = vi.fn(() => new Promise<never>(() => {}));
+      vi.stubGlobal('navigator', { ...navigator, requestMediaKeySystemAccess });
+
+      const { media, video } = setup();
+      // Every system named, as a source describing both paths would: the native
+      // delegate takes the FairPlay entry and leaves the rest to an MSE engine.
+      media.source = { ...media.source, drm };
+      media.load();
+
+      // jsdom has no `MediaEncryptedEvent`; only these two fields are read.
+      video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new ArrayBuffer(8) }));
+      await Promise.resolve();
+
+      expect(media.engine).toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+      expect(requestMediaKeySystemAccess).toHaveBeenCalledWith('com.apple.fps', expect.any(Array));
+    });
+
+    it('recreates the native delegate when `source.drm` changes', () => {
+      const { media, video } = setup();
+      media.source = { ...media.source, drm };
+      media.load();
+
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.source = { ...media.source, drm: { ...drm } };
+      media.load();
+      // Structurally equal, so the delegate playing it is left alone.
+      expect(handler).not.toHaveBeenCalled();
+
+      media.source = { ...media.source, drm: { 'com.apple.fps': { licenseUrl: 'https://other.test/fairplay' } } };
+      media.load();
+
+      // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
+      expect(handler).toHaveBeenCalledTimes(2);
+    });
+
+    it('hands `nativeHls` to the native delegate', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const requestMediaKeySystemAccess = vi.fn(() => new Promise<never>(() => {}));
+      vi.stubGlobal('navigator', { ...navigator, requestMediaKeySystemAccess });
+
+      const { media, video } = setup();
+      media.source = {
+        ...media.source,
+        engine: {
+          hlsJs: drmEngine,
+          nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } },
+        },
+      };
+      media.load();
+
+      // jsdom has no `MediaEncryptedEvent`; only these two fields are read.
+      video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new ArrayBuffer(8) }));
+      await Promise.resolve();
+
+      expect(media.engine).toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+      expect(requestMediaKeySystemAccess).toHaveBeenCalledWith('com.apple.fps', expect.any(Array));
+    });
+
+    it('recreates the native delegate when `nativeHls` changes', () => {
+      const { media, video } = setup();
+      media.source = {
+        ...media.source,
+        engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } } },
+      };
+      media.load();
+
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.source = {
+        ...media.source,
+        engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: 'https://other.test/fairplay' } } } },
+      };
+      media.load();
+
+      // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
+      expect(handler).toHaveBeenCalledTimes(2);
+    });
+
+    it('leaves the native delegate alone for a structurally equal `nativeHls`', () => {
+      const { media, video } = setup();
+      const nativeHls = { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } };
+
+      media.source = { ...media.source, engine: { nativeHls: { ...nativeHls } } };
+      media.load();
+
+      fireDurationChange(video, Infinity);
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.source = { ...media.source, engine: { nativeHls: { ...nativeHls } } };
+      media.load();
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('rendition caps', () => {
+    const M3U8 = 'https://example.com/video.m3u8';
+    const built: HlsJsMedia[] = [];
+
+    afterEach(async () => {
+      // Let any queued load settle, then tear the engines down, so no manifest
+      // request outlives the test that started it.
+      await Promise.resolve();
+      while (built.length) built.pop()!.destroy();
+    });
+
+    function setupMse(source: HlsSource = {}) {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+      const video = document.createElement('video');
+      document.body.appendChild(video);
+
+      const media = new HlsJsMedia();
+      built.push(media);
+      media.attach(video);
+      media.source = { ...source, src: M3U8 };
+      media.load();
+
+      return { media, video };
+    }
+
+    /**
+     * Minimal stand-in for an `Hls` instance, enough to build the controller the
+     * element installed and ask it what the current policy resolves to.
+     */
+    function probeEngine(levels: Array<{ width: number; height: number; bitrate: number }>) {
+      const listeners = new Map<string, Array<{ fn: (...args: any[]) => void; ctx: unknown }>>();
+      return {
+        levels,
+        autoLevelCapping: -1,
+        autoLevelEnabled: true,
+        logger: { log: () => {} },
+        config: { capLevelToPlayerSize: false, ignoreDevicePixelRatio: true, maxDevicePixelRatio: Infinity },
+        on(event: string, fn: (...args: any[]) => void, ctx?: unknown) {
+          listeners.set(event, [...(listeners.get(event) ?? []), { fn, ctx }]);
+        },
+        off: () => {},
+        emit(event: string, data: unknown) {
+          for (const { fn, ctx } of listeners.get(event) ?? []) fn.call(ctx, event, data);
+        },
+      } as unknown as Hls;
+    }
+
+    const LADDER = [
+      { width: 640, height: 360, bitrate: 800_000 },
+      { width: 1280, height: 720, bitrate: 2_800_000 },
+      { width: 1920, height: 1080, bitrate: 5_000_000 },
+    ];
+
+    /**
+     * What the engine's installed cap controller resolves the policy to now.
+     *
+     * The probe defaults to a viewport larger than the whole ladder, so the
+     * player-size ceiling never binds and a requested resolution is what is
+     * being measured. Pass a smaller one to measure the size cap itself.
+     */
+    function cappedIndex(media: HlsJsMedia, playerSize = { width: 4096, height: 2160 }) {
+      const engine = probeEngine(LADDER);
+      const Controller = media.engine!.config.capLevelController;
+      const controller = new Controller(engine);
+
+      const probeVideo = document.createElement('video');
+      probeVideo.width = playerSize.width;
+      probeVideo.height = playerSize.height;
+      (engine as any).emit(Hls.Events.MEDIA_ATTACHING, { media: probeVideo });
+
+      const index = controller.getMaxLevel(LADDER.length - 1);
+      controller.destroy();
+      return index;
+    }
+
+    /** Small enough that every rung but the lowest is above what it needs. */
+    const SMALL_PLAYER = { width: 320, height: 180 };
+
+    it('installs its own cap-level controller over the hls.js default', () => {
+      const { media } = setupMse();
+
+      expect(media.engine!.config.capLevelController).not.toBe(Hls.DefaultConfig.capLevelController);
+    });
+
+    it('caps automatic selection at the requested resolution', () => {
+      const { media } = setupMse({ maxAutoResolution: '720p' });
+
+      expect(cappedIndex(media)).toBe(1);
+    });
+
+    it('does not recreate the engine when only the cap changes', () => {
+      const { media } = setupMse({ maxAutoResolution: '1080p' });
+      const engine = media.engine;
+
+      media.source = { src: M3U8, maxAutoResolution: '720p' };
+      media.load();
+
+      // Capping is a playback preference, not engine construction: rebuilding
+      // here would tear down the buffer and lose ABR's bandwidth estimate.
+      expect(media.engine).toBe(engine);
+      expect(cappedIndex(media)).toBe(1);
+    });
+
+    it('applies a cap added after playback started', () => {
+      const { media } = setupMse();
+      const engine = media.engine;
+
+      expect(cappedIndex(media)).toBe(2);
+
+      media.source = { src: M3U8, maxAutoResolution: '360p' };
+
+      expect(media.engine).toBe(engine);
+      expect(cappedIndex(media)).toBe(0);
+    });
+
+    it('returns to uncapped selection when the key is removed', () => {
+      const { media } = setupMse({ maxAutoResolution: '360p' });
+
+      media.source = { src: M3U8 };
+
+      expect(cappedIndex(media)).toBe(2);
+    });
+
+    it('keeps the cap when only src changes', () => {
+      const { media } = setupMse({ maxAutoResolution: '720p' });
+
+      media.src = 'https://example.com/other.m3u8';
+
+      expect(media.source).toEqual({ src: 'https://example.com/other.m3u8', maxAutoResolution: '720p' });
+      expect(cappedIndex(media)).toBe(1);
+    });
+
+    it('carries the cap onto an engine rebuilt for new hls.js options', () => {
+      const { media } = setupMse({ maxAutoResolution: '720p' });
+      const engine = media.engine;
+
+      media.source = { src: M3U8, maxAutoResolution: '720p', engine: { hlsJs: { maxBufferLength: 60 } } };
+      media.load();
+
+      expect(media.engine).not.toBe(engine);
+      expect(cappedIndex(media)).toBe(1);
+    });
+
+    it('warns and ignores the cap on native playback', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const media = new HlsJsMedia();
+      built.push(media);
+      media.attach(document.createElement('video'));
+      media.source = { src: M3U8, type: ContentTypes.M3U8, preferPlayback: 'native', maxAutoResolution: '720p' };
+      media.load();
+
+      expect(media.engine).toBeNull();
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('`maxAutoResolution` requires the hls.js (MSE) engine')
+      );
+    });
+
+    describe('capRenditionToPlayerSize', () => {
+      it('caps to the element size by default', () => {
+        const { media } = setupMse();
+
+        // 320 device px is covered by the 640×360 rung, but the default floor
+        // holds the ceiling at 720p rather than dropping that far.
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(1);
+      });
+
+      it('stops capping to the element size when switched off', () => {
+        const { media } = setupMse({ capRenditionToPlayerSize: false });
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('does not recreate the engine when only the toggle changes', () => {
+        const { media } = setupMse();
+        const engine = media.engine;
+
+        media.source = { src: M3U8, capRenditionToPlayerSize: false };
+        media.load();
+
+        expect(media.engine).toBe(engine);
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('keeps a false toggle when only src changes', () => {
+        // A falsy value still has to survive the carry-over, which a truthiness
+        // check on the way through would drop.
+        const { media } = setupMse({ capRenditionToPlayerSize: false });
+
+        media.src = 'https://example.com/other.m3u8';
+
+        expect(media.source?.capRenditionToPlayerSize).toBe(false);
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('returns to capping when the key is removed', () => {
+        const { media } = setupMse({ capRenditionToPlayerSize: false });
+
+        media.source = { src: M3U8 };
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(1);
+      });
+    });
+
+    describe('minAutoResolution', () => {
+      it('floors the size cap at the resolution named', () => {
+        const { media } = setupMse({ minAutoResolution: '1080p' });
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('does not raise an explicit maxAutoResolution', () => {
+        const { media } = setupMse({ maxAutoResolution: '360p', minAutoResolution: '1080p' });
+
+        // The ceiling the caller asked for is the stricter instruction. A floor
+        // bounds how far the element's size may cap, and nothing else.
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(0);
+      });
+
+      it('weakens to nothing at the bottom of the ladder', () => {
+        // There is no rung under 270p, so naming it lifts the floor for any
+        // real ladder — the way to ask for strict player-size capping.
+        const { media } = setupMse({ minAutoResolution: '270p' });
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(0);
+      });
+
+      it('does not recreate the engine when only the floor changes', () => {
+        const { media } = setupMse({ minAutoResolution: '720p' });
+        const engine = media.engine;
+
+        media.source = { src: M3U8, minAutoResolution: '1080p' };
+        media.load();
+
+        expect(media.engine).toBe(engine);
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('keeps the floor when only src changes', () => {
+        const { media } = setupMse({ minAutoResolution: '1080p' });
+
+        media.src = 'https://example.com/other.m3u8';
+
+        expect(media.source?.minAutoResolution).toBe('1080p');
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+    });
+
+    it('warns about every cap native playback ignores', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const media = new HlsJsMedia();
+      built.push(media);
+      media.attach(document.createElement('video'));
+      media.source = {
+        src: M3U8,
+        type: ContentTypes.M3U8,
+        preferPlayback: 'native',
+        capRenditionToPlayerSize: false,
+        minAutoResolution: '720p',
+      };
+      media.load();
+
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('`capRenditionToPlayerSize`, `minAutoResolution` require the hls.js (MSE) engine')
+      );
     });
   });
 
@@ -323,9 +882,9 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
 
       handler.mockClear();
-      // `config.hlsJs.debug` is part of `HlsJsMedia`'s engine props — toggling it
+      // `engine.hlsJs.debug` is part of `HlsJsMedia`'s engine key — toggling it
       // recreates the native delegate without switching playback engines.
-      media.config = { ...media.config, hlsJs: { debug: true } };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', engine: { hlsJs: { debug: true } } };
       media.load();
 
       // Teardown: a single `live` → `unknown`, then the new delegate re-detects
@@ -347,7 +906,7 @@ describe('HlsJsMedia', () => {
       });
 
       // Recreates the native delegate; duration would otherwise sync-detect as `on-demand`.
-      media.config = { ...media.config, hlsJs: { debug: true } };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', engine: { hlsJs: { debug: true } } };
       media.load();
 
       expect(seen).not.toContain('on-demand');
@@ -416,7 +975,7 @@ describe('HlsJsMedia', () => {
       media.streamType = 'live';
       expect(media.streamType).toBe('live');
 
-      media.config = { ...media.config, preferPlayback: 'mse' };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'mse' };
       media.load();
 
       expect(media.streamType).toBe('live');
@@ -428,7 +987,7 @@ describe('HlsJsMedia', () => {
       media.streamType = 'live';
       media.streamType = 'unknown';
 
-      media.config = { ...media.config, preferPlayback: 'mse' };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'mse' };
       media.load();
 
       expect(media.streamType).toBe('unknown');

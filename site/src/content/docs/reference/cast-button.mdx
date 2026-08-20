@@ -6,6 +6,7 @@ description: Accessible Cast toggle button with state reflection and keyboard su
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -39,11 +40,17 @@ import basicUsageHtmlTs from "@/components/docs/demos/cast-button/html/css/Basic
 
 Toggles a Google Cast session. Clicking the button while `disconnected` opens the Cast device picker; clicking while `connected` ends the session.
 
-The button does nothing when `availability` is not `'available'` — for example, when no Chromecast is on the network, or on browsers that don't support Cast.
+The button derives its presentation from `availability`:
+
+- **`"unsupported"`** — the HTML custom element receives the native `hidden` attribute; the React component returns `null`.
+- **`"unavailable"`** — the button remains visible and focusable with `aria-disabled="true"` and `data-disabled`, but does not open the picker. This lets a tooltip explain that no Cast device is reachable.
+- **`"available"`** — the button is fully interactive unless the `disabled` prop is set.
+
+Cast sessions come from the <DocsLink slug="concepts/cast">Google Cast</DocsLink> component. Add it to the player next to your media element; without it the button drives the browser's native Remote Playback API instead, which offers no receiver or load-request configuration.
 
 ## Styling
 
-Style based on cast state and availability:
+Style based on cast and disabled state:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
@@ -52,9 +59,10 @@ media-cast-button[data-cast-state="connected"] {
   color: blue;
 }
 
-/* Hide when Cast is unsupported (non-Chromium browsers) */
-media-cast-button[data-availability="unsupported"] {
-  display: none;
+/* Cast is supported, but no device is reachable */
+media-cast-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 ```
 </FrameworkCase>
@@ -68,12 +76,15 @@ React renders a `<button>` element. Add a `className` to style it:
   color: blue;
 }
 
-/* Hide when Cast is unsupported (non-Chromium browsers) */
-.cast-button[data-availability="unsupported"] {
-  display: none;
+/* Cast is supported, but no device is reachable */
+.cast-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 ```
 </FrameworkCase>
+
+Unsupported buttons are hidden automatically. No availability selector or extra hiding CSS is required.
 
 ## Accessibility
 

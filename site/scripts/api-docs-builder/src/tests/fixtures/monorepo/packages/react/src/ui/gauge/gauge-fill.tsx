@@ -7,7 +7,7 @@
  *      contains "stateAttrMap", the sub-part gets shared data attributes.
  *   2. Sub-part custom React props. The builder extracts own members from the
  *      `{LocalName}Props` interface (must be `interface`, not `type`).
- *      `children` and React DOM attributes are excluded.
+ *      Undocumented `children` and React DOM attributes are excluded.
  */
 
 import type { GaugeDataAttrs } from '../../../../core/src/core/ui/gauge/gauge-data-attrs';
@@ -20,9 +20,9 @@ export function Fill() {
 }
 
 // Must be `interface` (not `type`) for extractSubPartProps to detect it.
-// `children` is auto-excluded by the builder.
 export interface FillProps {
   /** The color of the fill bar. */
   color: string;
+  /** Fallback content displayed before the gauge is ready. */
   children: unknown;
 }

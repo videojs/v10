@@ -1,6 +1,25 @@
-import { describe, expect, it, vi } from 'vitest';
-import { HlsJsMedia } from '../../hls-js';
-import { MuxMedia } from '..';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Hls, HlsJsMedia } from '../../hls-js';
+import { MuxMedia, type MuxSource } from '..';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+// Header `{"alg":"HS256"}`, body sets `aud`, empty signature. Unpadded base64url,
+// like a real JWT, so it survives a query string untouched.
+function fakeJwt(payload: Record<string, unknown>): string {
+  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
+}
+
+// `source` and `src` request a load on a microtask, so give it a chance to run.
+function flushLoad() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
 
 describe('MuxMedia', () => {
   it('extends HlsJsMedia', () => {
@@ -88,62 +107,317 @@ describe('MuxMedia', () => {
     });
   });
 
-  it('passes non-Mux src through with a null source', () => {
+  it('keeps a non-Mux src as a plain source url', () => {
     const media = new MuxMedia();
     media.src = 'https://example.com/custom.m3u8';
 
     expect(media.src).toBe('https://example.com/custom.m3u8');
-    expect(media.source).toBeNull();
+    expect(media.source).toEqual({ src: 'https://example.com/custom.m3u8' });
   });
 
-  it('derives the thumbnail URL from source', () => {
+  it('plays a non-Mux source url given through source', () => {
     const media = new MuxMedia();
-    media.source = { playbackId: 'abc123', thumbnail: { time: 5, ext: 'jpg' } };
+    media.source = { src: 'https://example.com/custom.m3u8', preferPlayback: 'native' };
 
-    expect(media.thumbnail).toBe('https://image.mux.com/abc123/thumbnail.jpg?time=5');
+    expect(media.src).toBe('https://example.com/custom.m3u8');
   });
 
-  it('uses the first entry when source.thumbnail is an array', () => {
+  it('preserves engine options across a src change', () => {
     const media = new MuxMedia();
-    media.source = {
-      playbackId: 'abc123',
-      thumbnail: [
-        { time: 5, ext: 'webp' },
-        { time: 5, ext: 'jpg' },
-      ],
-    };
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
 
-    expect(media.thumbnail).toBe('https://image.mux.com/abc123/thumbnail.webp?time=5');
+    media.src = 'https://stream.mux.com/other.m3u8';
+
+    expect(media.source).toEqual({ playbackId: 'other', preferPlayback: 'native' });
   });
 
-  it('prefers an explicitly set thumbnail URL', () => {
+  it('keeps source.poster as data, without applying it to the media poster', () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+
+    media.source = { playbackId: 'abc123', poster: { time: 5 } };
+
+    expect(media.source?.poster).toEqual({ time: 5 });
+    expect(media.poster).toBe('');
+  });
+
+  it('exposes the content poster and storyboard derived from source', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123', poster: { time: 5, ext: 'jpg' }, storyboard: { format: 'jpg' } };
+
+    expect(media.contentData).toEqual({
+      poster: 'https://image.mux.com/abc123/thumbnail.jpg?time=5',
+      storyboard: 'https://image.mux.com/abc123/storyboard.vtt?format=jpg',
+    });
+  });
+
+  it('tracks source changes in the content data', () => {
     const media = new MuxMedia();
     media.source = { playbackId: 'abc123' };
-    media.thumbnail = 'https://image.mux.com/other/thumbnail.webp';
+    media.source = { playbackId: 'xyz789' };
 
-    expect(media.thumbnail).toBe('https://image.mux.com/other/thumbnail.webp');
+    expect(media.contentData.poster).toBe('https://image.mux.com/xyz789/thumbnail.webp');
+    expect(media.contentData.storyboard).toBe('https://image.mux.com/xyz789/storyboard.vtt?format=webp');
   });
 
-  it('derives the storyboard URL from source', () => {
+  it('has no content data without a playback id', () => {
     const media = new MuxMedia();
-    media.source = { playbackId: 'abc123' };
 
-    expect(media.storyboard).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
+    expect(media.contentData).toEqual({});
+
+    media.src = 'https://example.com/custom.m3u8';
+
+    expect(media.contentData).toEqual({});
   });
 
-  it('prefers an explicitly set storyboard URL', () => {
-    const media = new MuxMedia();
-    media.source = { playbackId: 'abc123' };
-    media.storyboard = 'https://image.mux.com/other/storyboard.vtt';
-
-    expect(media.storyboard).toBe('https://image.mux.com/other/storyboard.vtt');
-  });
-
-  it('returns no storyboard for signed playback without a storyboard token', () => {
+  it('has no content data for signed playback without image tokens', () => {
     const media = new MuxMedia();
     media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
 
-    expect(media.storyboard).toBe('');
+    expect(media.contentData).toEqual({});
+  });
+
+  it('dispatches `contentdatachange` when the derived urls change', () => {
+    const media = new MuxMedia();
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    media.source = { playbackId: 'abc123' };
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(media.contentData.poster).toBe('https://image.mux.com/abc123/thumbnail.webp');
+
+    media.source = { playbackId: 'xyz789' };
+
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(media.contentData.poster).toBe('https://image.mux.com/xyz789/thumbnail.webp');
+  });
+
+  it('dedupes `contentdatachange` when a source change leaves the urls alone', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    // A new object, so `sourcechange` still fires, but nothing the images are
+    // built from moved.
+    media.source = { playbackId: 'abc123', playback: { maxResolution: '720p' } };
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('clears the content data and announces it when the source is dropped', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    media.source = null;
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(media.contentData).toEqual({});
+  });
+
+  it('has the content data in step when `sourcechange` fires', () => {
+    const media = new MuxMedia();
+    const seen: (string | null | undefined)[] = [];
+    media.addEventListener('sourcechange', () => seen.push(media.contentData.poster));
+
+    media.source = { playbackId: 'abc123' };
+
+    expect(seen).toEqual(['https://image.mux.com/abc123/thumbnail.webp']);
+  });
+
+  it('hands back the same content data object until it changes', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const first = media.contentData;
+
+    expect(media.contentData).toBe(first);
+
+    media.source = { playbackId: 'xyz789' };
+
+    expect(media.contentData).not.toBe(first);
+  });
+
+  it('does not reload when only image params change', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    // `poster` describes an image, not the stream, so playback must not restart.
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', poster: { time: 5 } };
+    await flushLoad();
+
+    expect(loadstart).not.toHaveBeenCalled();
+  });
+
+  it('inherits maxAutoResolution without restarting playback', async () => {
+    vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', maxAutoResolution: '1080p' };
+    await flushLoad();
+
+    const engine = media.engine;
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'abc123', maxAutoResolution: '720p' };
+    await flushLoad();
+
+    expect(media.source?.maxAutoResolution).toBe('720p');
+    expect(media.engine).toBe(engine);
+    expect(loadstart).not.toHaveBeenCalled();
+
+    media.destroy();
+  });
+
+  it('keeps the client-side cap separate from the server-side manifest filter', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    // `playback.maxResolution` asks Mux to leave higher renditions out of the
+    // manifest; `maxAutoResolution` caps what ABR picks from the ones that
+    // arrive. Only the former belongs in the URL.
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      playback: { maxResolution: '1080p' },
+      maxAutoResolution: '720p',
+    };
+    await flushLoad();
+
+    expect(media.src).toBe('https://stream.mux.com/abc123.m3u8?max_resolution=1080p');
+    expect(media.source?.maxAutoResolution).toBe('720p');
+
+    media.destroy();
+  });
+
+  it('inherits the player-size caps without restarting playback', async () => {
+    vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', capRenditionToPlayerSize: false };
+    await flushLoad();
+
+    const engine = media.engine;
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'abc123', capRenditionToPlayerSize: true, minAutoResolution: '1080p' };
+    await flushLoad();
+
+    expect(media.source?.capRenditionToPlayerSize).toBe(true);
+    expect(media.source?.minAutoResolution).toBe('1080p');
+    expect(media.engine).toBe(engine);
+    expect(loadstart).not.toHaveBeenCalled();
+
+    media.destroy();
+  });
+
+  it('keeps the client-side floor separate from the server-side one it resembles', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    // `playback.minResolution` asks Mux which renditions to put in the manifest.
+    // `minAutoResolution` is unrelated: it bounds how far the element's own size
+    // may cap what arrives. Only the former belongs in the URL.
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      playback: { minResolution: '480p' },
+      minAutoResolution: '720p',
+    };
+    await flushLoad();
+
+    expect(media.src).toBe('https://stream.mux.com/abc123.m3u8?min_resolution=480p');
+    expect(media.source?.minAutoResolution).toBe('720p');
+
+    media.destroy();
+  });
+
+  it('reloads when the playback id changes', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'xyz789', preferPlayback: 'native' };
+    await flushLoad();
+
+    expect(loadstart).toHaveBeenCalled();
+  });
+
+  it('does not reload for an equivalent nested engine option', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    const hlsJs = { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } };
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { hlsJs } };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    // Same values, new object identity all the way down — as React would hand it
+    // over. A flat comparison would call this an engine change and restart.
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      engine: { hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } } },
+      poster: { time: 5 },
+    };
+    await flushLoad();
+
+    expect(loadstart).not.toHaveBeenCalled();
+  });
+
+  it('reloads when a nested engine option changes', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      engine: { hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } } },
+    };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      engine: { hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/other' } } } },
+    };
+    await flushLoad();
+
+    expect(loadstart).toHaveBeenCalled();
+  });
+
+  it('reloads when engine options change', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { hlsJs: { maxBufferLength: 60 } } };
+    await flushLoad();
+
+    expect(loadstart).toHaveBeenCalled();
   });
 
   it('fires sourcechange when source is set', () => {
@@ -162,7 +436,7 @@ describe('MuxMedia', () => {
     expect(onSourceChange).toHaveBeenCalledTimes(2);
   });
 
-  it('does not fire sourcechange for the same source reference', () => {
+  it('ignores the same source object', () => {
     const media = new MuxMedia();
     const source = { playbackId: 'abc123' };
     media.source = source;
@@ -174,19 +448,35 @@ describe('MuxMedia', () => {
     expect(onSourceChange).not.toHaveBeenCalled();
   });
 
-  it('does not fire sourcechange for a structurally equal source', () => {
+  it('announces a new source object even when it is equal', () => {
     const media = new MuxMedia();
-    media.source = { playbackId: 'abc123', playback: { maxResolution: '1080p' } };
+    media.source = { playbackId: 'abc123' };
 
     const onSourceChange = vi.fn();
     media.addEventListener('sourcechange', onSourceChange);
-    media.source = { playbackId: 'abc123', playback: { maxResolution: '1080p' } };
+    media.source = { playbackId: 'abc123' };
 
-    expect(onSourceChange).not.toHaveBeenCalled();
+    expect(onSourceChange).toHaveBeenCalledOnce();
+  });
 
-    media.source = { playbackId: 'abc123', playback: { maxResolution: '720p' } };
+  it('does not reload for a structurally equal source', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
 
-    expect(onSourceChange).toHaveBeenCalledTimes(1);
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
+
+    expect(loadstart).not.toHaveBeenCalled();
+
+    media.source = { playbackId: 'other', preferPlayback: 'native' };
+    await flushLoad();
+
+    expect(loadstart).toHaveBeenCalledOnce();
   });
 
   it('parses typed playback params from a Mux stream src', () => {
@@ -209,7 +499,7 @@ describe('MuxMedia', () => {
     expect(onSourceChange).toHaveBeenCalledTimes(1);
   });
 
-  it('does not fire sourcechange when a non-Mux src replaces another', () => {
+  it('fires sourcechange when a non-Mux src replaces another', () => {
     const media = new MuxMedia();
     media.src = 'https://example.com/a.m3u8';
 
@@ -217,6 +507,197 @@ describe('MuxMedia', () => {
     media.addEventListener('sourcechange', onSourceChange);
     media.src = 'https://example.com/b.m3u8';
 
+    expect(onSourceChange).toHaveBeenCalledOnce();
+    expect(media.source).toEqual({ src: 'https://example.com/b.m3u8' });
+  });
+
+  it('ignores a src that already describes the current source', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123', poster: { time: 5 } };
+
+    const onSourceChange = vi.fn();
+    media.addEventListener('sourcechange', onSourceChange);
+
+    // `<mux-video>` reflects the derived URL back to the host, so this has to be
+    // a no-op rather than re-deriving and dropping `poster`.
+    media.src = 'https://stream.mux.com/abc123.m3u8';
+
     expect(onSourceChange).not.toHaveBeenCalled();
+    expect(media.source).toEqual({ playbackId: 'abc123', poster: { time: 5 } });
+  });
+
+  describe('drm', () => {
+    const DRM_TOKEN = fakeJwt({ aud: 'd' });
+    const PLAYBACK_TOKEN = fakeJwt({ aud: 'v' });
+
+    function setupMse() {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+      const media = new MuxMedia();
+      media.attach(document.createElement('video'));
+      return media;
+    }
+
+    /** A CDM that grants access, so key exchange gets as far as the certificate. */
+    function stubNativeKeySystem() {
+      const session = { addEventListener() {}, generateRequest: async () => {}, close: async () => {} };
+      const mediaKeys = { createSession: () => session, setServerCertificate: async () => true };
+
+      vi.stubGlobal('navigator', {
+        ...navigator,
+        requestMediaKeySystemAccess: async () => ({ createMediaKeys: async () => mediaKeys }),
+      });
+
+      const fetchMock = vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4) }) as Response);
+      vi.stubGlobal('fetch', fetchMock);
+      return fetchMock;
+    }
+
+    async function setupNative(source: MuxSource) {
+      const media = new MuxMedia();
+      const video = document.createElement('video');
+      video.setMediaKeys = async () => {};
+      media.attach(video);
+      media.source = { playbackId: 'abc123', preferPlayback: 'native', ...source };
+      await flushLoad();
+      return { media, video };
+    }
+
+    /** jsdom has no `MediaEncryptedEvent`; only these two fields are read. */
+    function fireEncrypted(video: HTMLVideoElement) {
+      video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new ArrayBuffer(8) }));
+    }
+
+    it('configures the hls.js engine from a DRM token', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123', playback: { token: PLAYBACK_TOKEN }, drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      expect(media.engine!.config.emeEnabled).toBe(true);
+      expect(media.engine!.config.drmSystems).toEqual({
+        'com.apple.fps': {
+          licenseUrl: `https://license.mux.com/license/fairplay/abc123?token=${DRM_TOKEN}`,
+          serverCertificateUrl: `https://license.mux.com/appcert/fairplay/abc123?token=${DRM_TOKEN}`,
+        },
+        'com.widevine.alpha': { licenseUrl: `https://license.mux.com/license/widevine/abc123?token=${DRM_TOKEN}` },
+        'com.microsoft.playready': {
+          licenseUrl: `https://license.mux.com/license/playready/abc123?token=${DRM_TOKEN}`,
+        },
+      });
+    });
+
+    it('leaves EME alone without a DRM token', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123' };
+      await flushLoad();
+
+      expect(media.engine!.config.emeEnabled).toBe(false);
+    });
+
+    it('keeps the Mux token out of the source handed to the engine', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      // `drm` stays Mux's own authoring input; only the derived license servers
+      // reach the HLS layer.
+      expect(media.source).toEqual({ playbackId: 'abc123', drm: { token: DRM_TOKEN } });
+    });
+
+    it('configures native FairPlay from the same DRM token', async () => {
+      const fetchMock = stubNativeKeySystem();
+      const { video } = await setupNative({ drm: { token: DRM_TOKEN }, playback: { token: PLAYBACK_TOKEN } });
+
+      fireEncrypted(video);
+      await flushLoad();
+
+      // Which engine plays is decided later, so one token configures both paths:
+      // the native one reaches Mux's servers rather than failing for want of them.
+      expect(fetchMock).toHaveBeenCalledWith(
+        `https://license.mux.com/appcert/fairplay/abc123?token=${DRM_TOKEN}`,
+        expect.anything()
+      );
+    });
+
+    it('lets an explicit nativeHls.drmSystems override the derived one', async () => {
+      const fetchMock = stubNativeKeySystem();
+      const { video } = await setupNative({
+        drm: { token: DRM_TOKEN },
+        engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: 'https://drm.example/fairplay' } } } },
+      });
+
+      fireEncrypted(video);
+      await flushLoad();
+
+      // The caller named no certificate URL, so nothing is fetched — least of all
+      // from the servers the token would have derived.
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('lets a license server named alongside the token replace the derived one', async () => {
+      const media = setupMse();
+      media.source = {
+        playbackId: 'abc123',
+        drm: { token: DRM_TOKEN, 'com.widevine.alpha': { licenseUrl: 'https://drm.example/widevine' } },
+      };
+      await flushLoad();
+
+      // `drm` is the standard shape with a Mux token folded in, so the two mix:
+      // Widevine is licensed by the caller, the rest by Mux.
+      expect(media.engine!.config.drmSystems).toEqual({
+        'com.apple.fps': {
+          licenseUrl: `https://license.mux.com/license/fairplay/abc123?token=${DRM_TOKEN}`,
+          serverCertificateUrl: `https://license.mux.com/appcert/fairplay/abc123?token=${DRM_TOKEN}`,
+        },
+        'com.widevine.alpha': { licenseUrl: 'https://drm.example/widevine' },
+        'com.microsoft.playready': {
+          licenseUrl: `https://license.mux.com/license/playready/abc123?token=${DRM_TOKEN}`,
+        },
+      });
+    });
+
+    it('lets an explicit hlsJs.drmSystems override the derived one', async () => {
+      const media = setupMse();
+      media.source = {
+        playbackId: 'abc123',
+        drm: { token: DRM_TOKEN },
+        engine: { hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } } },
+      };
+      await flushLoad();
+
+      // EME still switches on, but the caller's license servers stand.
+      expect(media.engine!.config.emeEnabled).toBe(true);
+      expect(media.engine!.config.drmSystems).toEqual({
+        'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' },
+      });
+    });
+
+    it('does not reload for an equivalent DRM token', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      const loadstart = vi.fn();
+      media.addEventListener('loadstart', loadstart);
+
+      media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      expect(loadstart).not.toHaveBeenCalled();
+    });
+
+    it('reloads when the DRM token changes', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      const loadstart = vi.fn();
+      media.addEventListener('loadstart', loadstart);
+
+      media.source = { playbackId: 'abc123', drm: { token: fakeJwt({ aud: 'd', exp: 1 }) } };
+      await flushLoad();
+
+      expect(loadstart).toHaveBeenCalled();
+    });
   });
 });

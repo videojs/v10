@@ -9,6 +9,8 @@ import MediaReference from "@/components/docs/api-reference/MediaReference.astro
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import DocsLinkCard from "@/components/docs/DocsLinkCard.astro";
 
 {/* React demos */}
 import BasicUsageDemoReact from "@/components/docs/demos/mux-video/react/css/BasicUsage";
@@ -22,6 +24,118 @@ import basicUsageHtmlCss from "@/components/docs/demos/mux-video/html/css/BasicU
 import basicUsageHtmlTs from "@/components/docs/demos/mux-video/html/css/BasicUsage.ts?raw";
 
 Video element for playing Mux-hosted HLS streams. Built on hls.js with Mux-specific optimizations.
+
+## Load a source
+
+<FrameworkCase frameworks={["react"]}>
+The `source` param builds the URL for you from a playback ID, an optional custom domain, and `playback` params. Playback params are just camelCased [Mux playback query params](https://www.mux.com/docs/api-reference/stream/streaming/get-hls-manifest); for example, `max_resolution` becomes `maxResolution`.
+
+```tsx
+<MuxVideo
+  source={{ 
+    playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+    customDomain: 'media.example.com',
+    playback: { maxResolution: '1080p' }
+  }} 
+/>
+```
+
+If for some reason you need a bit more control, you can use the `src` param with a plain 'ol URL, too:
+
+```tsx
+<MuxVideo
+  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
+/>
+```
+
+MuxVideo fires a `sourcechange` event when the source actually changes. Setting the same values again, like a fresh object on a React re-render, doesn't fire it.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+MuxVideo takes Mux content two ways: a stream URL through `src`, or a structured `source` object.
+
+```html
+<mux-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></mux-video>
+```
+
+The `source` object builds the URL for you from a playback ID, an optional custom domain, and `playback` params. Playback params are just camelCased [Mux playback query params](https://www.mux.com/docs/api-reference/stream/streaming/get-hls-manifest); for example, `max_resolution` becomes `maxResolution`.
+
+```ts
+const video = document.querySelector('mux-video');
+video.source = {
+  playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+  customDomain: 'media.example.com',
+  playback: { maxResolution: '1080p' },
+};
+```
+
+MuxVideo fires a `sourcechange` event when the source actually changes. Setting the same values again doesn't fire it.
+</FrameworkCase>
+
+## Thumbnails and storyboards
+
+`thumbnail` and `storyboard` default to URLs derived from `source`: the poster image and the storyboard VTT that drives hover previews on the time slider. MuxVideo injects the storyboard `<track>` automatically, skipping it for live streams. Set either prop to a URL to override the derived one.
+
+## Signed playback
+
+For [signed playback](https://www.mux.com/docs/guides/secure-video-playback), put the playback token on `source.playback.token`. The token replaces every other playback param, so bake modifiers like resolution and time bounds into the token when you sign it.
+
+Thumbnail and storyboard URLs need their own audience-scoped tokens, `source.thumbnail.token` (`aud: 't'`) and `source.storyboard.token` (`aud: 's'`). Without a matching image token, MuxVideo derives no thumbnail or storyboard URL, since an unsigned request would be rejected.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxVideo
+  source={{
+    playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+    playback: { token: playbackToken },
+    thumbnail: { token: thumbnailToken },
+    storyboard: { token: storyboardToken },
+  }}
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+const video = document.querySelector('mux-video');
+video.source = {
+  playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+  playback: { token: playbackToken },
+  thumbnail: { token: thumbnailToken },
+  storyboard: { token: storyboardToken },
+};
+```
+</FrameworkCase>
+
+## Analytics and casting
+
+MuxVideo plays Mux streams. It doesn't monitor them or cast them — <DocsLink slug="concepts/mux-data">Mux Data</DocsLink> and <DocsLink slug="concepts/cast">Google Cast</DocsLink> are separate components you add to the player alongside it. Mux Data needs no environment key here, since Mux attributes the views to the environment that owns the playback ID:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { GoogleCast } from '@videojs/react/media/google-cast';
+import { MuxData } from '@videojs/react/media/mux-data';
+import { MuxVideo } from '@videojs/react/media/mux-video';
+
+<MuxVideo source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }} playsInline />
+<MuxData playerSoftwareName="mux-video" />
+<GoogleCast />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<mux-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" playsinline></mux-video>
+<mux-data player-software-name="mux-video"></mux-data>
+<google-cast></google-cast>
+```
+
+Register the elements by importing `@videojs/html/media/mux-data` and `@videojs/html/media/google-cast`.
+</FrameworkCase>
+
+<DocsLinkCard slug="concepts/mux-data" description="Metadata, options, and configuration">Mux Data</DocsLinkCard>
+<DocsLinkCard slug="concepts/cast" description="Receivers, load requests, and session state">Google Cast</DocsLinkCard>
 
 ## Examples
 

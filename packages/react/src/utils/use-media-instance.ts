@@ -1,5 +1,3 @@
-'use client';
-
 import type { Media } from '@videojs/media';
 import { useState } from 'react';
 

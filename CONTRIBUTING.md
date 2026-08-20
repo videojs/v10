@@ -199,6 +199,18 @@ On `pnpm dev:sandbox`, `setup.ts` copies any file from `templates/` that doesn't
 
 See [`apps/sandbox/README.md`](./apps/sandbox/README.md) for the full model, including the `app/` shell, the `@app/*` alias for shared code, and how to add a new sandbox entry point.
 
+### 🚚 Preview Releases
+
+Pull requests and commits on `main` publish an installable preview of the public packages to [pkg.pr.new][pkg-pr-new] — nothing is published to npm. A bot comment on the PR lists the install commands, and the same URLs work by commit SHA:
+
+```sh
+pnpm add https://pkg.pr.new/@videojs/html@<pr-number-or-sha>
+```
+
+Use this to try a change in a real project before it is released. Previews are versioned `0.0.0-preview-<sha>` so they can never satisfy a semver range for a real release, and they ship without the bundled markdown docs that real releases include.
+
+Because a preview is an installable artifact carrying the Video.js name, it is only published for code someone with repository access pushed or vouched for. Pull requests from a branch in this repo publish automatically; **pull requests from a fork publish only once a maintainer approves them**. The approval has to be written against the pull request's latest commit, so any new commit needs a fresh approval before it is published.
+
 ### ✅ Workspace Consistency
 
 Before opening a PR, run the workspace consistency check to catch common mistakes (CI coverage, scope mismatches, broken define imports, etc.):
@@ -227,6 +239,7 @@ pnpm up <package>@<version> -r
 > We try to be very intentional with any dependencies we add to this project. This is true of both developer/tooling dependencies and especially package-level (source) dependencies. If you find yourself needing to add a dependency, we strongly encourage you to check in with the core maintainers before proceeding to avoid wasted time and effort for everyone involved (yourself included!).
 
 [pnpm-filtering]: https://pnpm.io/filtering
+[pkg-pr-new]: https://github.com/stackblitz-labs/pkg.pr.new
 
 ## Using AI
 
@@ -251,8 +264,15 @@ Focused workflows live as direct children of `.agents/skills/`; host-specific di
 | ------------------------ | ------------------------------------------------------- |
 | `design-api`             | Designing public APIs and TypeScript contracts          |
 | `review-api`             | Auditing API and architecture changes                   |
-| `build-ui-component`     | Building HTML or React components                       |
-| `review-ui-component`    | Reviewing component architecture                        |
+| `create-html-component`  | Building custom-element UI components                   |
+| `create-react-component` | Building React UI components                            |
+| `implement-ui-transition`| Implementing UI transition and rendered-presence logic  |
+| `review-html-component`  | Reviewing custom-element component architecture         |
+| `review-react-component` | Reviewing React component architecture                  |
+| `write-html-component-design`  | Writing custom-element component design records    |
+| `write-react-component-design` | Writing React component design records             |
+| `review-html-component-design` | Reviewing proposed custom-element designs           |
+| `review-react-component-design`| Reviewing proposed React component designs           |
 | `implement-accessible-ui`| Implementing accessible interaction                     |
 | `review-accessibility`   | Auditing accessibility                                  |
 | `write-docs`             | Writing guides, READMEs, and JSDoc                      |
@@ -277,11 +297,11 @@ When your changes introduce new patterns:
 
 We use two types of design documents:
 
-**Design Docs** (`internal/design/`) — Decisions you own, documented for posterity. Write one when making significant decisions in your area, choosing between approaches, or documenting architecture. See [`internal/design/README.md`](./internal/design/README.md).
+**Design Docs** (`internal/design/`) — Compact records of architecture or feature rationale that cannot be inferred from code and tests. Create one only when a maintainer explicitly requests it. See [`internal/design/README.md`](./internal/design/README.md).
 
 **RFCs** (`rfc/`) — Proposals needing buy-in from others. Write one when the decision affects multiple areas, changes shared API surface, or is hard to reverse. See [`rfc/README.md`](./rfc/README.md).
 
-**Rule of thumb:** If you need someone else's approval, it's an RFC. If you're documenting your own decision, it's a Design Doc.
+**Rule of thumb:** If you need someone else's approval, explicitly request an RFC. If you intentionally want durable rationale for a decision you own, explicitly request a Design Doc or decision record.
 
 **Skip both for:** Bug fixes, small contained features, implementation details.
 

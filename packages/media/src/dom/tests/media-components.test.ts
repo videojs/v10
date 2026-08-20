@@ -1,9 +1,45 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { HTMLAudioElementHost } from '../audio-host';
-import { getMediaProp } from '../utils';
+import type { MediaComponent } from '../media-host';
+import { addMediaComponent, getMediaProp } from '../utils';
 
 afterEach(() => {
   document.body.innerHTML = '';
+});
+
+class DetachableComponent implements MediaComponent {
+  detachCount = 0;
+  detach() {
+    this.detachCount++;
+  }
+}
+
+describe('addMediaComponent', () => {
+  it('detaches the component when it is unregistered', () => {
+    const host = new HTMLAudioElementHost();
+    host.attach(document.createElement('audio'));
+    const component = new DetachableComponent();
+
+    const remove = addMediaComponent(host, component);
+    remove();
+
+    expect(component.detachCount).toBe(1);
+  });
+
+  it('detaches the previous component when another instance replaces it', () => {
+    const host = new HTMLAudioElementHost();
+    host.attach(document.createElement('audio'));
+    const first = new DetachableComponent();
+    const second = new DetachableComponent();
+
+    const removeFirst = addMediaComponent(host, first);
+    addMediaComponent(host, second);
+    removeFirst();
+
+    expect(first.detachCount).toBe(1);
+    // The stale cleanup does not detach the replacement.
+    expect(second.detachCount).toBe(0);
+  });
 });
 
 describe('getMediaProp', () => {

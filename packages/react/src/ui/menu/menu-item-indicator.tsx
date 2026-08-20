@@ -1,11 +1,9 @@
-'use client';
-
 import type { MenuState } from '@videojs/core';
 import { forwardRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useMenuContext } from './context';
+import { useMenuContext, useOptionalMenuRadioItemContext } from './context';
 
 export interface MenuItemIndicatorProps extends UIComponentProps<'span', MenuState> {
   /** Whether the indicator is currently shown. Typically bound to the parent item's checked state. */
@@ -20,8 +18,10 @@ export const MenuItemIndicator = forwardRef<HTMLSpanElement, MenuItemIndicatorPr
   forwardedRef
 ) {
   const { state } = useMenuContext();
+  const itemChecked = useOptionalMenuRadioItemContext();
+  const resolvedChecked = checked ?? itemChecked;
 
-  if (!checked && !forceMount) return null;
+  if (!resolvedChecked && !forceMount) return null;
 
   return renderElement(
     'span',

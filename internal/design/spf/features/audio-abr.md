@@ -25,7 +25,7 @@ bandwidth conditions).
 
 ## Status
 
-- **Composition:** not implemented in `createSimpleHlsEngine`. Today
+- **Composition:** not implemented in `createHlsVideoEngine`. Today
   [`audio-playback`](./audio-playback.md) is the single-rendition
   baseline; `setupAudioBufferActors`
   (`packages/spf/src/playback/behaviors/dom/setup-buffer-actors.ts`)

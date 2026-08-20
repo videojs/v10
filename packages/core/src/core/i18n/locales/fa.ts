@@ -45,10 +45,14 @@ export default {
     current: 'زمان فعلی',
     duration: 'مدت',
     remaining: 'زمان باقی‌مانده',
+    elapsedSuffix: '{duration} زمان سپری‌شده',
+    durationSuffix: '{duration} مدت‌زمان',
     remainingSuffix: '{duration} باقی‌مانده',
-    showElapsed: '{duration}. نمایش زمان سپری‌شده.',
-    showDuration: '{duration}. نمایش مدت.',
-    showRemaining: '{duration}. نمایش زمان باقی‌مانده.',
+    showElapsed: 'نمایش زمان سپری‌شده, {duration}.',
+    showDuration: 'نمایش مدت, {duration}.',
+    showRemaining: 'نمایش زمان باقی‌مانده, {duration}.',
+    toggleElapsed: 'تغییر بین زمان سپری‌شده و زمان باقی‌مانده.',
+    toggleDuration: 'تغییر بین مدت‌زمان و زمان باقی‌مانده.',
     position: '{current} از {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'تمام‌صفحه',
     pip: 'تصویر در تصویر',
     exitPip: 'خروج از حالت تصویر در تصویر',
+    seekedTo: 'پرش به {time}',
+  },
+  container: {
+    label: 'پخش‌کننده رسانه',
   },
   errors: {
     aborted: 'شما پخش رسانه را قطع نمودید',
@@ -76,6 +84,7 @@ export default {
     source:
       'رسانه قابل بارگیری نیست. ممکن است مشکلی در شبکه یا سرور رخ داده باشد یا قالب رسانه در دستگاه شما پشتیبانی نشود.',
     encrypted: 'این رسانه رمزنگاری شده‌است و کلیدهای رمزگشایی آن موجود نیست.',
+    unplayable: 'این رسانه توسط پخش‌کننده پشتیبانی نمی‌شود.',
     title: 'مشکلی پیش آمد.',
     unexpected: 'خطایی رخ داد. لطفاً دوباره امتحان کنید.',
   },

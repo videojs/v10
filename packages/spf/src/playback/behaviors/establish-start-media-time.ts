@@ -1,33 +1,47 @@
 /**
- * Establish each track's `startMediaTime` (its media-timeline origin) once per
- * source, so a non-zero-PTS source relocates onto a 0-based presentation timeline.
- * The VOD sibling of `anchor-presentation-timeline`: both are per-source
- * establishment units that write a coordinate base value onto every track (the
- * anchor writes `startDate`/`startTime` from wall clock; this writes
- * `startMediaTime` from the container's decode-time origin).
+ * Establish the presentation's coordinate origin — the `startTime` /
+ * `startMediaTime` / `startDate` triple — once per source, so every track lands
+ * on one 0-based presentation timeline. One establishment unit with an internal
+ * order: the wall-clock **anchor** settles (live PDT sources), gated parses
+ * align to it, then `startMediaTime` latches — see
+ * `internal/design/spf/live-presentation-timeline-model.md`.
  *
- * This is the **DOM-free reactor half**: it owns the transient `mediaContainerData`
- * slot lifecycle (`inactive` clears it per source), runs the injected
- * {@link DeriveStartMediaTime} seam over it in `monitoring`, and stamps the settled
- * `startMediaTime` onto the model — the coordinate *consume* — until `established`.
- * The byte-level discover/stamp steps that fill the slot are a separate,
- * config `messagePipelines` array (`primitives/relocation-pipelines`);
- * the two coordinate only through the shared `state.mediaContainerData` slot, never
- * by import. See `internal/design/spf/presentation-timeline-model.md`.
+ * The two coordinate stamps it owns:
+ * - **`startDate` (wall-clock anchor).** The designated *reference track*
+ *   (selected video, else audio) resolves first; its parser-computed
+ *   `startDate` — PDT at presentation-0 — is frozen as the anchor and stamped
+ *   onto every other track that lacks one, so their first parses place via
+ *   `placeOnAnchor` (the pre-applied-anchor path in `parse-media-playlist`)
+ *   and later-selected renditions resolve already aligned. Ordering is
+ *   enforced by {@link gateFirstParseOnAnchor}, which `resolve-track` awaits
+ *   through its injected gate seam. Absent PDT (ordinary VOD), no anchor is
+ *   stamped and local-from-0 placement is already correct.
+ * - **`startMediaTime` (decode origin).** Runs the injected
+ *   {@link DeriveStartMediaTime} seam over the transient `mediaContainerData`
+ *   slot (owned here; `inactive` clears it per source) and stamps the settled
+ *   value onto the model until `established`. The byte-level discover/stamp
+ *   steps that fill the slot are a separate, config `messagePipelines` array
+ *   (`primitives/relocation-pipelines`); the two coordinate only through the
+ *   shared `state.mediaContainerData` slot, never by import. See
+ *   `internal/design/spf/presentation-timeline-model.md`.
+ *
+ * DOM-free reactor; sticky per source (`inactive → monitoring → established`).
  */
 import type { Behavior } from '../../core/composition/create-composition';
 import { createMachineReactor, type Reactor } from '../../core/reactors/create-machine-reactor';
 import { type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import {
   isResolvedPresentation,
+  isResolvedTrack,
   type MaybeResolvedPresentation,
   type MediaContainerData,
   type Presentation,
 } from '../../media/types';
 import { findTrackById } from '../../media/utils/tracks';
 import type { DeriveStartMediaTime, DeriveStartMediaTimeContext } from '../primitives/derive-start-media-time';
+import type { GateFirstParse, GateFirstParseContext } from '../primitives/gate-first-parse';
 
-export type { DeriveStartMediaTime, DeriveStartMediaTimeContext };
+export type { DeriveStartMediaTime, DeriveStartMediaTimeContext, GateFirstParse, GateFirstParseContext };
 
 // ============================================================================
 // STATE / CONFIG
@@ -116,6 +130,11 @@ export const deriveSharedMinStartMediaTime: DeriveStartMediaTime = (containerDat
  * the default: it flattens real A/V skew (see {@link deriveSharedMinStartMediaTime}).
  * Kept as an opt-in for compositions that know their A/V is aligned and want to skip
  * the shared-`min` barrier (each type stamps as soon as its own origin is discovered).
+ *
+ * Caution: {@link NEAR_ZERO_ORIGIN_THRESHOLD} applies independently per type here — if
+ * two types' origins straddle it, one snaps to `0` and the other doesn't, injecting up
+ * to a threshold's worth of A/V offset. Safe for the intended aligned-A/V opt-in; see
+ * `internal/design/spf/live-presentation-timeline-model.md` (collision 5).
  */
 export const derivePerTypeStartMediaTime: DeriveStartMediaTime = (containerData) => {
   const out: Record<string, number | undefined> = {};
@@ -126,6 +145,40 @@ export const derivePerTypeStartMediaTime: DeriveStartMediaTime = (containerData)
   return out;
 };
 
+/**
+ * The anchor-source track: the selected video track, falling back to audio
+ * (audio-only). Deterministic — never "first resolved", which is race-dependent
+ * under concurrent resolves.
+ */
+function referenceTrackId(ctx: GateFirstParseContext): string | undefined {
+  return ctx.selectedVideoTrackId ?? ctx.selectedAudioTrackId;
+}
+
+/**
+ * The live-anchor first-parse gate (the "parses align" step of the establishment
+ * order). Open for the reference track itself — its local-from-0 placement *is*
+ * the presentation timeline (presentation-0 = the join point). Every other track
+ * holds until the reference's first parse settles the anchor question: no PDT →
+ * local placement is already correct, proceed; PDT anchor → hold until the
+ * establishment reactor stamps it onto this track, so the parse takes the
+ * `placeOnAnchor` path. Establishment is sticky-once, so an unanchored first
+ * parse would be permanently misaligned — that's the race this gate closes.
+ *
+ * Pairs with the {@link establishStartMediaTime} reactor (the stamp that opens
+ * the anchored branch); wire both or neither.
+ */
+export const gateFirstParseOnAnchor: GateFirstParse = (presentation, ctx, trackId) => {
+  const referenceId = referenceTrackId(ctx);
+  if (referenceId === undefined || referenceId === trackId) return true;
+  if (!isResolvedPresentation(presentation)) return false;
+  const reference = findTrackById(presentation, referenceId);
+  // A dangling reference id can never anchor — don't deadlock on it.
+  if (!reference) return true;
+  if (!isResolvedTrack(reference)) return false;
+  if (reference.startDate === undefined) return true;
+  return findTrackById(presentation, trackId)?.startDate !== undefined;
+};
+
 export interface EstablishStartMediaTimeConfig {
   /** The reduce seam (coordination knob). Defaults to {@link deriveSharedMinStartMediaTime}. */
   deriveStartMediaTime?: DeriveStartMediaTime;
@@ -134,6 +187,30 @@ export interface EstablishStartMediaTimeConfig {
 // ============================================================================
 // REACTOR (owns the transient slot; derives + consumes onto the model)
 // ============================================================================
+
+/**
+ * Stamp the frozen wall-clock anchor as `startDate` onto every track that lacks
+ * one (idempotent — same reference when nothing moved). Unresolved shells pick
+ * it up as the `placeOnAnchor` preset; covering *all* tracks in one pass means
+ * any track selected later — an ABR rung, another audio language, late captions
+ * — resolves already anchored. The reference track's own parser-computed
+ * `startDate` reads back as the anchor, so it's naturally left untouched.
+ */
+function stampStartDates(presentation: Presentation, anchor: number): Presentation {
+  let changed = false;
+  const selectionSets = presentation.selectionSets.map((selectionSet) => ({
+    ...selectionSet,
+    switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
+      ...switchingSet,
+      tracks: switchingSet.tracks.map((track) => {
+        if (track.startDate !== undefined) return track;
+        changed = true;
+        return { ...track, startDate: anchor };
+      }),
+    })),
+  }));
+  return changed ? ({ ...presentation, selectionSets } as Presentation) : presentation;
+}
 
 /** Stamp the derived per-track `startMediaTime` onto the model (idempotent — same reference when nothing moved). */
 function stampTracks(presentation: Presentation, startMediaTimes: Record<string, number | undefined>): Presentation {
@@ -197,22 +274,44 @@ function establishStartMediaTimeSetup({
     states: {
       // Fresh per source: clear the transient slot so a new source re-discovers.
       inactive: { entry: () => state.mediaContainerData.set(undefined) },
-      // Derive: reduce the accumulating container data into per-track startMediaTime
-      // and stamp it onto the model. Re-runs as discover fills the slot; the update
-      // reads presentation untracked, so no self-loop. Disabled on entry to
-      // `established` (establish-once, sticky per source).
+      // The establishment order, as two effects: anchor first, derive second.
+      // Both stamps are sticky per source — disabled on entry to `established`,
+      // and a new source re-enters through `inactive`.
       monitoring: {
-        effects: () => {
-          const containerData = state.mediaContainerData.get();
-          if (!containerData) return;
-          const startMediaTimes = derive(containerData, selectionContext());
-          // `current` is always resolved here — the monitor gates `monitoring` on a
-          // resolved presentation and transitions before effects re-run — so we cast
-          // to `Presentation` rather than re-narrowing.
-          update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
-            stampTracks(current as Presentation, startMediaTimes)
-          );
-        },
+        effects: [
+          // Anchor: freeze the wall-clock origin from the reference track's
+          // first parse and stamp it onto every other track (the gate's open
+          // condition + the `placeOnAnchor` preset for shells). Reads the
+          // presentation tracked — it must see the reference resolve — and its
+          // own write converges immediately (the stamp is idempotent, so the
+          // re-run sets an identical value and stops).
+          () => {
+            const presentation = state.presentation.get();
+            if (!isResolvedPresentation(presentation)) return;
+            const referenceId = referenceTrackId(selectionContext());
+            const reference = referenceId === undefined ? undefined : findTrackById(presentation, referenceId);
+            if (!reference || !isResolvedTrack(reference)) return;
+            const anchor = reference.startDate;
+            if (anchor === undefined) return;
+            update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
+              stampStartDates(current as Presentation, anchor)
+            );
+          },
+          // Derive: reduce the accumulating container data into per-track startMediaTime
+          // and stamp it onto the model. Re-runs as discover fills the slot; the update
+          // reads presentation untracked, so no self-loop.
+          () => {
+            const containerData = state.mediaContainerData.get();
+            if (!containerData) return;
+            const startMediaTimes = derive(containerData, selectionContext());
+            // `current` is always resolved here — the monitor gates `monitoring` on a
+            // resolved presentation and transitions before effects re-run — so we cast
+            // to `Presentation` rather than re-narrowing.
+            update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
+              stampTracks(current as Presentation, startMediaTimes)
+            );
+          },
+        ],
       },
       established: {},
     },

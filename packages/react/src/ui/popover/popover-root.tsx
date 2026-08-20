@@ -1,5 +1,3 @@
-'use client';
-
 import { type PopoverProps as CorePopoverProps, PopoverCore, PopoverDataAttrs } from '@videojs/core';
 import {
   createPopover,
@@ -11,7 +9,8 @@ import { useSnapshot } from '@videojs/store/react';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
-import { useOptionalContainer, useOptionalPopupGroup } from '../../player/context';
+import { useOptionalContainer } from '../../player/context';
+import { useOptionalPopupGroup } from '../../player/popup-group-context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';

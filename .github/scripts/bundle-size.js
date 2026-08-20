@@ -4,9 +4,9 @@
  * Auto-discovers packages from `packages/`, reads their `exports` field to find
  * entry points, and externalizes `peerDependencies`.
  *
- * JS sizes are initial static graph totals (minified + brotli). Lazy dynamic
- * chunks are measured separately so they stay visible without counting as
- * eager entry cost.
+ * Each JS export is bundled independently. Sizes are initial static graph
+ * totals (minified + brotli); lazy dynamic chunks are measured separately so
+ * they stay visible without counting as eager entry cost.
  *
  * Wildcard exports (e.g., `./ui/*`, `./media/⁕/index.js`) are resolved to
  * actual files on disk. Supports both file-level (`*.js`) and directory-level
@@ -40,6 +40,7 @@ const ROOT =
 const PACKAGES_DIR = join(ROOT, 'packages');
 
 const SKIP_PACKAGES = new Set([
+  'compiler',
   'react-native',
   'skins',
   'icons',
@@ -155,12 +156,9 @@ function buildPresetEntry(pkgShortName, config, distDir) {
  * @property {'root' | 'subpath'} type
  * @property {string} [category] - preset, media, player, skin, ui, feature (only for html/react)
  * @property {'js' | 'css'} format
- * @property {number} [standaloneSize] - For UI components: standalone size used for stable diff gating
  * @property {number} [totalSize] - Initial + lazy dynamic chunk size
  * @property {number} [lazySize] - Lazy dynamic chunk size
  * @property {number} [chunkCount] - Number of dynamic chunks
- * @property {number} [standaloneTotalSize] - Standalone initial + lazy dynamic chunk size
- * @property {number} [standaloneLazySize] - Standalone lazy dynamic chunk size
  */
 
 function compressSize(code) {
@@ -179,17 +177,11 @@ function entryKey(path) {
   return relative(ROOT, path).replaceAll('\\', '/');
 }
 
-function staticOutputs(metafile, entryPoints) {
-  const entryPointsSet = entryPoints
-    ? new Set(entryPoints.map((entry) => entryKey(entry)))
-    : null;
+function staticOutputs(metafile, entryPoint) {
+  const entryPointKey = entryPoint ? entryKey(entryPoint) : '<stdin>';
   const outputs = new Set();
   const queue = Object.entries(metafile.outputs)
-    .filter(([, output]) =>
-      entryPointsSet
-        ? entryPointsSet.has(output.entryPoint)
-        : output.entryPoint === '<stdin>',
-    )
+    .filter(([, output]) => output.entryPoint === entryPointKey)
     .map(([path]) => path);
 
   for (const path of queue) {
@@ -219,10 +211,10 @@ function sizeFields(measurement) {
   };
 }
 
-/** Bundle entry points with esbuild and return initial and lazy sizes. */
-async function measure(entryPoints, external = []) {
+/** Bundle one entry point with esbuild and return initial and lazy sizes. */
+async function measure(entryPoint, external = []) {
   const result = await build({
-    entryPoints,
+    entryPoints: [entryPoint],
     bundle: true,
     minify: true,
     treeShaking: true,
@@ -239,7 +231,7 @@ async function measure(entryPoints, external = []) {
   const sizeByPath = new Map(
     result.outputFiles.map((file) => [file.path, compressSize(file.text)]),
   );
-  const staticPaths = staticOutputs(result.metafile, entryPoints);
+  const staticPaths = staticOutputs(result.metafile, entryPoint);
   let size = 0;
   let totalSize = 0;
 
@@ -534,13 +526,8 @@ async function main() {
 
     const rootCat = categorize(pkg.name);
 
-    // Always measure root — needed for UI marginal calculations even when
-    // the root itself is excluded from results (categorized packages skip
-    // root because presets are measured as virtual bundles instead).
-    const rootMeasurement = await measure([pkg.rootPath], pkg.external);
-    const rootSize = rootMeasurement.size;
-
     if (rootCat !== '_skip') {
+      const rootMeasurement = await measure(pkg.rootPath, pkg.external);
       results.push({
         name: pkg.name,
         ...sizeFields(rootMeasurement),
@@ -565,57 +552,14 @@ async function main() {
         continue;
       }
 
-      // UI components are measured as marginal over root (size) for display,
-      // plus standalone (standaloneSize) for stable cross-build diff gating.
-      // Marginal sizes shift when root content changes due to brotli
-      // compression non-linearity, so diffs must gate on standalone.
-      let size;
-      let standaloneSize;
-      let measurement;
-      let standaloneMeasurement;
-      if (cat === 'ui') {
-        const combined = await measure([pkg.rootPath, sub.path], pkg.external);
-        standaloneMeasurement = await measure([sub.path], pkg.external);
-        size = Math.max(0, combined.size - rootSize);
-        const lazySize = Math.max(
-          0,
-          combined.lazySize - rootMeasurement.lazySize,
-        );
-        measurement = {
-          size,
-          totalSize: size + lazySize,
-          lazySize,
-          chunkCount: Math.max(
-            0,
-            combined.chunkCount - rootMeasurement.chunkCount,
-          ),
-        };
-        standaloneSize = standaloneMeasurement.size;
-      } else {
-        measurement = await measure([sub.path], pkg.external);
-        size = measurement.size;
-      }
+      const measurement = await measure(sub.path, pkg.external);
 
       results.push({
         name: sub.name,
-        size,
+        ...sizeFields(measurement),
         type: 'subpath',
         ...(cat ? { category: cat } : {}),
         format: 'js',
-        ...(measurement && measurement.lazySize > 0
-          ? {
-              totalSize: measurement.totalSize,
-              lazySize: measurement.lazySize,
-              chunkCount: measurement.chunkCount,
-            }
-          : {}),
-        ...(standaloneSize !== undefined ? { standaloneSize } : {}),
-        ...(standaloneMeasurement && standaloneMeasurement.lazySize > 0
-          ? {
-              standaloneTotalSize: standaloneMeasurement.totalSize,
-              standaloneLazySize: standaloneMeasurement.lazySize,
-            }
-          : {}),
       });
     }
 

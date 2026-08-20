@@ -1,6 +1,6 @@
 import type { CSSProperties, PropsWithChildren } from 'react';
+
 import type { Poster } from '@/ui/poster';
-import type { RenderProp } from '@/utils/types';
 
 export type BaseSkinProps<T = unknown> = PropsWithChildren<
   T & {
@@ -10,7 +10,19 @@ export type BaseSkinProps<T = unknown> = PropsWithChildren<
 >;
 
 export type BaseVideoSkinProps<T = unknown> = BaseSkinProps<T> & {
-  poster?: string | RenderProp<Poster.State> | undefined;
-  /** Low-resolution placeholder shown behind the poster while it loads (blur-up effect). */
-  placeholder?: string | undefined;
+  /**
+   * Draws the poster image, in place of the `<img>` the skin renders. The URL
+   * still comes from the player, as `src` alongside the rest of the image
+   * props — undefined until one resolves.
+   *
+   * @example
+   * ```tsx
+   * <VideoSkin
+   *   renderPoster={({ src, ...props }: ComponentProps<'img'>) =>
+   *     src ? <Image {...props} src={src} alt="" fill /> : null
+   *   }
+   * />
+   * ```
+   */
+  renderPoster?: Poster.Props['render'];
 };

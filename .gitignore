@@ -41,6 +41,16 @@ site/src/content/cdn-media.json
 packages/cli/docs/
 packages/html/docs/
 packages/react/docs/
+packages/html/src/__generated__/skins/
+packages/react/src/__generated__/skins/
+packages/skins/canonical/registry/default/
+packages/skins/canonical/registry/registry.json
+
+# -------------------------
+# Merge & Patch Backups
+# -------------------------
+*.orig
+*.rej
 
 # -------------------------
 # Environment

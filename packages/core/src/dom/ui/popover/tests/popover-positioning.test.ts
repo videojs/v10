@@ -1,13 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import { PopoverCSSVars } from '../../../../core/ui/popover/popover-css-vars';
 import {
-  getAnchorNameStyle,
   getAnchorPositionStyle,
   getManualPositionStyle,
-  getPopoverCSSVars,
   getPopupPositionRect,
   getPositioningCSSVars,
-  type ManualOffsets,
+  type PositioningOffsets,
   resolveOffsets,
 } from '../popover-positioning';
 
@@ -81,14 +79,14 @@ describe('getManualPositionStyle', () => {
   });
 
   it('applies sideOffset from resolved CSS vars', () => {
-    const offsets: ManualOffsets = { sideOffset: 8, alignOffset: 0 };
+    const offsets: PositioningOffsets = { sideOffset: 8, alignOffset: 0 };
     const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'center' }, offsets);
 
     expect(style.bottom).toBe('calc(100% - 200px + 8px)');
   });
 
   it('applies sideOffset for bottom side', () => {
-    const offsets: ManualOffsets = { sideOffset: 8, alignOffset: 0 };
+    const offsets: PositioningOffsets = { sideOffset: 8, alignOffset: 0 };
     const style = getManualPositionStyle(trigger, popup, { side: 'bottom', align: 'center' }, offsets);
 
     // top = 240 + 8 = 248
@@ -110,7 +108,7 @@ describe('getManualPositionStyle', () => {
   });
 
   it('applies alignOffset from resolved CSS vars', () => {
-    const offsets: ManualOffsets = { sideOffset: 0, alignOffset: 10 };
+    const offsets: PositioningOffsets = { sideOffset: 0, alignOffset: 10 };
     const style = getManualPositionStyle(trigger, popup, { side: 'top', align: 'start' }, offsets);
 
     // left = trigger.left + alignOffset = 100 + 10 = 110
@@ -182,7 +180,7 @@ describe('getManualPositionStyle', () => {
     const boundary = makeDOMRect(0, 0, 300, 200);
     const edgeTrigger = makeDOMRect(250, 100, 40, 20);
     const edgePopup = makeDOMRect(0, 0, 100, 50);
-    const offsets: ManualOffsets = { sideOffset: 0, alignOffset: 0, boundaryOffset: 12 };
+    const offsets: PositioningOffsets = { sideOffset: 0, alignOffset: 0, boundaryOffset: 12 };
 
     const style = getManualPositionStyle(
       edgeTrigger,
@@ -212,48 +210,6 @@ describe('getManualPositionStyle', () => {
 
     expect(style.top).toBe('230px');
     expect(style.left).toBe('80px');
-  });
-});
-
-describe('getPopoverCSSVars', () => {
-  const boundary = makeDOMRect(0, 0, 800, 600);
-  const trigger = makeDOMRect(100, 200, 120, 40);
-
-  it('includes anchor dimensions', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'top');
-
-    expect(vars[PopoverCSSVars.anchorWidth]).toBe('120px');
-    expect(vars[PopoverCSSVars.anchorHeight]).toBe('40px');
-  });
-
-  it('computes available height for top side', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'top');
-
-    // availableHeight = trigger.top - boundary.top = 200
-    expect(vars[PopoverCSSVars.availableHeight]).toBe('200px');
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('800px');
-  });
-
-  it('computes available height for bottom side', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'bottom');
-
-    // availableHeight = boundary.bottom - trigger.bottom = 600 - 240 = 360
-    expect(vars[PopoverCSSVars.availableHeight]).toBe('360px');
-  });
-
-  it('computes available width for left side', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'left');
-
-    // availableWidth = trigger.left - boundary.left = 100
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('100px');
-    expect(vars[PopoverCSSVars.availableHeight]).toBe('600px');
-  });
-
-  it('computes available width for right side', () => {
-    const vars = getPopoverCSSVars(trigger, boundary, 'right');
-
-    // availableWidth = boundary.right - trigger.right = 800 - 220 = 580
-    expect(vars[PopoverCSSVars.availableWidth]).toBe('580px');
   });
 });
 
@@ -309,13 +265,6 @@ describe('getPositioningCSSVars', () => {
 
     expect(vars[PopoverCSSVars.availableHeight]).toBe('12px');
     expect(vars[PopoverCSSVars.availableWidth]).toBe('280px');
-  });
-});
-
-describe('getAnchorNameStyle', () => {
-  it('returns empty object when anchor positioning is not supported', () => {
-    const style = getAnchorNameStyle('my-anchor');
-    expect(style).toEqual({});
   });
 });
 

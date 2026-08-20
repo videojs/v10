@@ -1,12 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createSelector } from '../selector';
 import { defineSlice } from '../slice';
+
+const NativeAbortController = globalThis.AbortController;
 
 interface MockMedia {
   volume: number;
 }
 
 describe('createSelector', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
   const volumeSlice = defineSlice<MockMedia>()({
     name: 'volume',
     state: ({ target }) => ({
@@ -113,5 +120,25 @@ describe('createSelector', () => {
 
     expect(selector({})).toBeUndefined();
     expect(selector.displayName).toBe('empty');
+  });
+
+  // Runtimes such as Cloudflare Workers throw when I/O-bound objects are created during
+  // module evaluation. See https://github.com/videojs/v10/issues/2041.
+  it('does not construct an AbortController on module evaluation', async () => {
+    let constructed = 0;
+
+    class CountingAbortController extends NativeAbortController {
+      constructor() {
+        super();
+        constructed++;
+      }
+    }
+
+    vi.stubGlobal('AbortController', CountingAbortController);
+    vi.resetModules();
+
+    await import('../selector');
+
+    expect(constructed).toBe(0);
   });
 });

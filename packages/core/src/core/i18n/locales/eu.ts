@@ -45,10 +45,14 @@ export default {
     current: 'Uneko denbora',
     duration: 'Iraupena',
     remaining: 'Gelditzen den denbora',
+    elapsedSuffix: '{duration} igarotako denbora',
+    durationSuffix: '{duration} iraupena',
     remainingSuffix: 'Geratzen den {duration}',
-    showElapsed: '{duration}. Erakutsi igarotako denbora.',
-    showDuration: '{duration}. Erakutsi iraupena.',
-    showRemaining: '{duration}. Erakutsi geratzen den denbora.',
+    showElapsed: 'Erakutsi igarotako denbora, {duration}.',
+    showDuration: 'Erakutsi iraupena, {duration}.',
+    showRemaining: 'Erakutsi geratzen den denbora, {duration}.',
+    toggleElapsed: 'Txandakatu igarotako denboraren eta geratzen den denboraren artean.',
+    toggleDuration: 'Txandakatu iraupenaren eta geratzen den denboraren artean.',
     position: '{current} / {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Pantaila osoa',
     pip: 'Irudiz irudi',
     exitPip: 'Irten irudiz irudiztik',
+    seekedTo: '{time} denborara jauzi egin da',
+  },
+  container: {
+    label: 'Multimedia-erreproduzitzailea',
   },
   errors: {
     aborted: 'Bertan behera utzi duzu',
@@ -77,6 +85,7 @@ export default {
     source:
       'Media ezin izan da kargatu, zerbitzariak edo sareak huts egin duelako edo formatu horretako media erabili ezin delako.',
     encrypted: 'Media zifratuta dago eta ez ditugu beharrezko gakoak.',
+    unplayable: 'Erreproduzitzaileak ez du media hau onartzen.',
     title: 'Zerbait gaizki joan da.',
     unexpected: 'Errore bat gertatu da. Saiatu berriro.',
   },

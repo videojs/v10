@@ -20,6 +20,7 @@ function createMediaState(overrides: Partial<MediaVolumeState> = {}): MediaVolum
     volume: 1,
     muted: false,
     volumeAvailability: 'available',
+    mutedAvailability: 'available',
     setVolume: vi.fn((v: number) => v),
     toggleMuted: vi.fn(() => false),
     ...overrides,
@@ -121,14 +122,19 @@ describe('VolumeSliderCore', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
       core.setMedia(createMediaState({ volumeAvailability: 'unsupported' }));
-      expect(core.getState().availability).toBe('unsupported');
+      const state = core.getState();
+
+      expect(state.availability).toBe('unsupported');
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(true);
+      expect(core.getAttrs(state)).toMatchObject({ 'aria-disabled': 'true', tabIndex: -1 });
     });
 
     it('reflects available availability', () => {
       const core = new VolumeSliderCore();
       core.setInput(createInput());
       core.setMedia(createMediaState({ volumeAvailability: 'available' }));
-      expect(core.getState().availability).toBe('available');
+      expect(core.getState()).toMatchObject({ availability: 'available', disabled: false, hidden: false });
     });
   });
 

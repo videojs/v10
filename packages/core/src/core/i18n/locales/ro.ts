@@ -45,10 +45,14 @@ export default {
     current: 'Ora curentă',
     duration: 'Durată',
     remaining: 'Timp rămas',
+    elapsedSuffix: '{duration} de timp scurs',
+    durationSuffix: '{duration} durată',
     remainingSuffix: 'Mai rămân {duration}',
-    showElapsed: '{duration}. Afișează timpul scurs.',
-    showDuration: '{duration}. Afișează durata.',
-    showRemaining: '{duration}. Afișează timpul rămas.',
+    showElapsed: 'Afișează timpul scurs, {duration}.',
+    showDuration: 'Afișează durata, {duration}.',
+    showRemaining: 'Afișează timpul rămas, {duration}.',
+    toggleElapsed: 'Comută între timpul scurs și timpul rămas.',
+    toggleDuration: 'Comută între durată și timpul rămas.',
     position: '{current} din {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Ecran complet',
     pip: 'Imagine în imagine',
     exitPip: 'Închidere imagine în imagine',
+    seekedTo: 'S-a trecut la {time}',
+  },
+  container: {
+    label: 'Player media',
   },
   errors: {
     aborted: 'Ați abandonat redarea media',
@@ -77,6 +85,7 @@ export default {
     source:
       'Conținutul media nu a putut fi încărcat, fie pentru că serverul sau rețeaua a eșuat, fie pentru că formatul nu este acceptat.',
     encrypted: 'Conținutul media este criptat și nu avem cheile pentru decriptare.',
+    unplayable: 'Acest fișier media nu este acceptat de player.',
     title: 'Ceva a mers greșit.',
     unexpected: 'A apărut o eroare. Vă rugăm să încercați din nou.',
   },

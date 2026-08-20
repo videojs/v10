@@ -21,20 +21,25 @@ export const VimeoVideo = forwardRef<HTMLIFrameElement, VimeoVideoProps>(functio
   const props: Partial<VimeoMediaProps> & Record<string, unknown> = { ...rawProps };
   const attachRef = useAttachIframe(media);
   const composedRef = useComposedRefs(attachRef, ref);
-  const [initialSrc] = useState(() => buildVimeoIframeSrc(props.src ?? '', { ...vimeoMediaDefaultProps, ...props }));
+  const [initialSrc] = useState(() =>
+    // `source.src` is the only other way to name a video, so honor it when `src` is absent.
+    buildVimeoIframeSrc(props.src || props.source?.src || '', { ...vimeoMediaDefaultProps, ...props })
+  );
   const iframeProps = useSyncProps<VimeoMediaProps, Record<string, unknown>>(media, props, vimeoMediaDefaultProps);
 
   return (
     <iframe
       title="Vimeo video player"
-      src={initialSrc}
+      // Empty means there is no embed to point at yet; React warns about `src=""`,
+      // and the media builds the URL itself once a source resolves.
+      src={initialSrc || undefined}
       data-cross-origin-frame
       allow="accelerometer; fullscreen; autoplay; encrypted-media; gyroscope; picture-in-picture"
       allowFullScreen
       frameBorder={0}
       width="100%"
       height="100%"
-      referrerPolicy={props.config?.referrerPolicy}
+      referrerPolicy={props.source?.engine?.vimeo?.referrerPolicy}
       {...iframeProps}
       ref={composedRef}
     >

@@ -1,0 +1,129 @@
+name: Preview Releases
+
+# Publishes an installable preview of every public package to pkg.pr.new so
+# changes can be tried out without waiting for a release. Nothing is published
+# to npm. See https://github.com/stackblitz-labs/pkg.pr.new
+#
+# Requires the pkg.pr.new GitHub App to be installed on the repository:
+# https://github.com/apps/pkg-pr-new
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches-ignore:
+      - 'rfc/**'
+  # Lets a maintainer opt a fork's pull request into previews by approving it.
+  pull_request_review:
+    types: [submitted]
+
+# A preview URL is an installable artifact carrying the Video.js name, and this
+# job builds whatever code it checks out. Never grant scopes or expose secrets
+# here: `pull_request_review` runs in the base-repo context, so a fork's code
+# would inherit them.
+permissions: {}
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    # Only publish code that someone with repository access either pushed
+    # themselves or explicitly approved:
+    #   - push: only maintainers can land on main.
+    #   - pull_request: branch lives in this repo, so its author has write access.
+    #   - pull_request_review: a fork's pull request, approved by an owner, org
+    #     member, or collaborator. Re-approve after new commits to refresh it.
+    #
+    # An approval only counts for the exact commit it was written against, so a
+    # fork cannot land new commits between the review being started and
+    # submitted and have them published on the back of the earlier approval.
+    if: >-
+      ${{
+        github.event_name == 'push'
+        || (github.event_name == 'pull_request'
+            && github.event.pull_request.head.repo.full_name == github.repository)
+        || (github.event_name == 'pull_request_review'
+            && github.event.review.state == 'approved'
+            && github.event.review.commit_id == github.event.pull_request.head.sha
+            && github.event.pull_request.head.repo.full_name != github.repository
+            && !startsWith(github.event.pull_request.base.ref, 'rfc/')
+            && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.review.author_association))
+      }}
+    runs-on: ubuntu-latest
+
+    steps:
+      # pkg.pr.new keys previews by the head commit, so check out that commit
+      # rather than the pull request's merge ref. On an approval, build the exact
+      # commit that was reviewed.
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event.review.commit_id || github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Cache turbo build setup
+        uses: actions/cache@v5
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Build packages
+        run: pnpm build:packages
+
+      # `build:packages` runs the `build` task, which does not produce
+      # @videojs/html's `cdn/` tree; `build:cdn` is a separate task. `cdn` is in
+      # that package's `files`, and the sandbox resolves its CDN demos through
+      # the published export map, so skipping this leaves `./cdn/*` pointing at
+      # nothing in the preview tarball.
+      - name: Build CDN bundles
+        run: pnpm build:cdn
+
+      # Keep this list in sync with the public packages built by `build:packages`.
+      # @videojs/cli is excluded because it is built separately and depends on a
+      # full site build, which is too slow for a per-commit preview.
+      #
+      # VIDEOJS_SKIP_PACKAGE_DOCS lets the @videojs/html and @videojs/react
+      # prepack scripts pack without site-generated markdown; previews don't need
+      # bundled docs. --previewVersion rewrites versions to 0.0.0-preview-<sha>
+      # so a preview can never satisfy a semver range for a real npm release.
+      #
+      # --peerDeps matters because @videojs/store peer-depends on @videojs/element:
+      # `pnpm pack` resolves that `workspace:*` to the current release, so without
+      # it an install pulls a published @videojs/element alongside the preview one
+      # and ends up with two copies of the custom-element base.
+      #
+      # --template uploads apps/sandbox as a StackBlitz project, so a reviewer can
+      # open a running player built from the pull request. Its `dev` script
+      # regenerates the gitignored src/ from templates/ on boot, so the sandbox
+      # still works even though src/ is never part of the upload.
+      - name: Publish preview packages
+        env:
+          VIDEOJS_SKIP_PACKAGE_DOCS: '1'
+        run: >
+          pnpm exec pkg-pr-new publish --pnpm --previewVersion --peerDeps --packageManager=pnpm
+          './packages/core'
+          './packages/element'
+          './packages/html'
+          './packages/media'
+          './packages/react'
+          './packages/spf'
+          './packages/store'
+          './packages/utils'
+          --template './apps/sandbox'

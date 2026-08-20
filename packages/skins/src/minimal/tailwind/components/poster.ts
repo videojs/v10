@@ -9,24 +9,21 @@ export const poster = (isShadowDOM: boolean) =>
     // In the shadow DOM, the class applies to the parent so we have to set styles on the slotted img.
     isShadowDOM
       ? [
-          // Placeholder (blur-up) — rides on media-poster opacity/transition
-          'before:absolute before:inset-0 before:pointer-events-none',
-          'before:[background-image:var(--media-poster-placeholder,none)]',
-          'before:bg-no-repeat',
-          'before:[background-position:var(--media-object-position,center)]',
-          'before:[background-size:var(--media-object-fit,contain)]',
-          'before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
           '[&_::slotted(img)]:absolute',
           '[&_::slotted(img)]:inset-0',
           '[&_::slotted(img)]:w-full',
           '[&_::slotted(img)]:h-full',
           '[&_::slotted(img)]:[object-fit:var(--media-object-fit,contain)]',
           '[&_::slotted(img)]:[object-position:var(--media-object-position,center)]',
-          '[&_::slotted(img)]:rounded-(--media-video-border-radius)',
+          '[&_::slotted(img)]:rounded-(--container-border-radius)',
+          // The image this skin carries as slot fallback content, which `::slotted` cannot reach.
+          '[&_img]:absolute',
+          '[&_img]:inset-0',
+          '[&_img]:w-full',
+          '[&_img]:h-full',
+          '[&_img]:[object-fit:var(--media-object-fit,contain)]',
+          '[&_img]:[object-position:var(--media-object-position,center)]',
+          '[&_img]:rounded-(--container-border-radius)',
         ]
-      : [
-          'rounded-[inherit] [object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]',
-          // Hide until the image has loaded so the placeholder shows first
-          '[&[data-visible]:not([data-loaded])]:opacity-0',
-        ]
+      : 'rounded-[inherit] [object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]'
   );

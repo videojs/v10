@@ -45,10 +45,14 @@ export default {
     current: 'Durada passada',
     duration: 'Durada',
     remaining: 'Temps restant',
+    elapsedSuffix: '{duration} de temps passat',
+    durationSuffix: '{duration} de durada',
     remainingSuffix: 'Demòra {duration}',
-    showElapsed: '{duration}. Afichar lo temps passat.',
-    showDuration: '{duration}. Afichar la durada.',
-    showRemaining: '{duration}. Afichar lo temps que demòra.',
+    showElapsed: 'Afichar lo temps passat, {duration}.',
+    showDuration: 'Afichar la durada, {duration}.',
+    showRemaining: 'Afichar lo temps que demòra, {duration}.',
+    toggleElapsed: 'Alternar entre lo temps passat e lo temps que demòra.',
+    toggleDuration: 'Alternar entre la durada e lo temps que demòra.',
     position: '{current} sus {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Ecran complèt',
     pip: 'Vidèo incrustada',
     exitPip: 'Sortir de la vidèo incrustada',
+    seekedTo: 'Avançat fins a {time}',
+  },
+  container: {
+    label: 'Lector multimèdia',
   },
   errors: {
     aborted: 'Avètz copat la lectura del mèdia.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Lo mèdia a pas pogut èsser cargat, siá perque lo servidor o lo ret a fracassat siá perque lo format es pas compatible.',
     encrypted: 'Lo mèdia es chifrat e avèm pas las claus per lo deschifrar.',
+    unplayable: 'Aqueste mèdia es pas pres en carga pel lector.',
     title: "Quaucarèn s'es mal passat.",
     unexpected: "Una error s'es produsida. Provatz d'un autre còp.",
   },

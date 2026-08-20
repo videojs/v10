@@ -21,8 +21,15 @@ at all*.
 ## Status
 
 - **Composition:** not implemented. SPF engine assumes fMP4 segments
-  throughout the segment-loading + MSE pipeline. MPEG-TS sources
-  served to the engine would fail at `SourceBuffer.appendBuffer`.
+  throughout the segment-loading + MSE pipeline. Non-fMP4 *detection*
+  has since landed, though: `parse-media-playlist.ts` derives a
+  container MIME from the segment extension when no `EXT-X-MAP` is
+  present, and `media/dom/capabilities.ts`'s `canPlayTrack` asserts
+  `NON_FMP4_CONTAINER_MIMES` (`video/mp2t`, `audio/aac`) unsupported.
+  So MPEG-TS renditions are now pruned before selection rather than
+  reaching `SourceBuffer.appendBuffer` — surfacing that outcome is
+  [errors](./errors.md)'s phase 2, and *playing* it is still this
+  feature.
 - **Definition depth:** coarse — scope sketched at the strategic-
   posture level. Concrete implementation work would require an RFC
   (per Notion epic #5) given the major code footprint.

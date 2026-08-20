@@ -1,15 +1,12 @@
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-
 /* Base button */
 .media-default-skin .media-button {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  height: calc(var(--spacing) * 9);
   min-height: 0;
-  padding: 0.5rem 1rem;
+  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
   text-align: center;
   touch-action: manipulation;
   cursor: pointer;
@@ -17,40 +14,34 @@
   outline: 2px solid transparent;
   outline-offset: -2px;
   border: none;
-  border-radius: calc(infinity * 1px);
+  border-radius: calc(Infinity * 1px);
   transition-timing-function: ease-out;
   transition-duration: 150ms;
-  transition-property: background-color, outline-offset, scale;
+  transition-property: background-color, color, outline-offset, scale;
   /* Fix weird jumping when clicking on the buttons in Safari. */
   will-change: scale;
 
   &:focus-visible {
-    outline-color: currentColor;
+    outline-color: var(--focus-ring-color);
     outline-offset: 2px;
   }
 
-  &:active {
-    scale: 0.98;
+  &:active:not([aria-disabled="true"]) {
+    scale: 0.97;
   }
 
-  &[disabled] {
+  &[aria-disabled="true"] {
     cursor: not-allowed;
     opacity: 0.5;
-    filter: grayscale(1);
-  }
-
-  &[data-availability="unavailable"],
-  &[data-availability="unsupported"] {
-    display: none;
   }
 }
 
 /* Primary button variant */
 .media-default-skin .media-button--primary {
   font-weight: 500;
-  color: oklch(0 0 0);
+  color: var(--accent-contrast-color);
   text-shadow: none;
-  background: oklch(1 0 0);
+  background: var(--accent-color);
 }
 
 /* Subtle button variant */
@@ -59,46 +50,47 @@
   text-shadow: inherit;
   background: transparent;
 
-  &:hover,
-  &:focus-visible,
-  &[aria-expanded="true"] {
-    text-decoration: none;
-    background-color: oklch(from currentColor l c h / 0.1);
+  &:not([aria-disabled="true"]) {
+    &:hover,
+    &:focus-visible,
+    &[aria-expanded="true"] {
+      color: var(--accent-text-color);
+      text-decoration: none;
+      background-color: var(--accent-background-color);
+    }
   }
 }
 
 /* Icon button variant */
 .media-default-skin .media-button--icon {
   display: grid;
-  width: 2.25rem;
   aspect-ratio: 1;
   padding: 0;
 
-  &:active {
-    scale: 0.9;
+  &:active:not([aria-disabled="true"]) {
+    scale: 0.97;
   }
 
-  & .media-icon__container {
+  .media-icon__container {
     display: grid;
   }
 
-  & .media-icon {
+  .media-icon {
     grid-area: 1 / 1;
-    transition-behavior: allow-discrete;
-    transition-property: display, opacity;
-    transition-duration: 150ms;
+    filter: drop-shadow(0 1px 0 var(--shadow-current-color));
     transition-timing-function: ease-out;
-    filter: drop-shadow(0 1px 0 var(--media-current-shadow-color));
+    transition-duration: 150ms;
+    transition-property: opacity, scale;
   }
 }
 
 /* Seek button */
 .media-default-skin .media-button--seek {
-  & .media-icon__label {
+  .media-icon__label {
     position: absolute;
     right: -1px;
     bottom: -3px;
-    font-size: 10px;
+    font-size: 0.715em; /* 10px */
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.05em;
@@ -127,9 +119,7 @@
 
 /* Settings button */
 .media-default-skin .media-button--settings {
-  display: none;
-
-  & .media-icon--settings {
+  .media-icon--settings {
     transition: transform 150ms ease-in-out;
 
     @media (prefers-reduced-motion: reduce) {
@@ -142,21 +132,17 @@
   }
 }
 
-.media-default-skin .media-button-group:has([data-availability="available"]) .media-button--settings {
-  display: grid;
-}
-
 /* Live button — wide pill button with a status dot (gray → red at the live
    edge) rendered via ::before, and "LIVE" text rendered as the button's own
    text content. */
 .media-default-skin .media-button--live {
   display: inline-flex;
-  gap: 0.4rem;
+  gap: calc(var(--spacing) * 1.5);
   align-items: center;
   width: auto;
   aspect-ratio: auto;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
+  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+  font-size: var(--font-size-small);
   font-weight: 600;
   line-height: 1;
   text-transform: uppercase;
@@ -165,8 +151,8 @@
   &::before {
     display: inline-block;
     flex-shrink: 0;
-    width: 0.5rem;
-    height: 0.5rem;
+    width: calc(var(--spacing) * 2);
+    height: calc(var(--spacing) * 2);
     content: "";
     background-color: oklch(from currentColor l c h / 0.4);
     border-radius: 50%;
@@ -175,5 +161,13 @@
 
   &[data-live-edge]::before {
     background-color: oklch(0.65 0.22 27);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .media-default-skin .media-button {
+    scale: 1;
+    transition-property: background-color, color;
+    will-change: auto;
   }
 }

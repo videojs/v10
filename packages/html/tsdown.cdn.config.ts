@@ -7,7 +7,6 @@ import { cdnI18nExternalPlugin } from '../../build/plugins/cdn-i18n-external-plu
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { baseConfig } from '../../build/tsdown.ts';
-import pkg from './package.json' with { type: 'json' };
 
 type BuildMode = 'dev' | 'prod';
 
@@ -30,26 +29,59 @@ const presets = [
   'audio-minimal-ui',
   'background',
 ];
-const media = [
-  'hlsjs-video',
-  'mux-audio',
-  'mux-video',
-  'native-hls-video',
-  'simple-hls-audio-only',
-  'simple-hls-video',
-  'dash-video',
-];
+
+const mediaDir = 'src/define/media';
+
+/**
+ * Media entries, one bundle per module under `src/define/media` — or per flavor,
+ * for a module that is a directory.
+ *
+ * Discovered from the definitions so the two delivery surfaces cannot drift:
+ * whatever ships on npm as `@videojs/html/media/<name>` also ships as
+ * `cdn/media/<name>.js`, and as a file in the archive cut from this output.
+ *
+ * A directory ships its index as the flavor-neutral bundle and each flavor
+ * beside it, so `media/mux-video/spf` reads the same as the npm subpath it
+ * mirrors. The installation page derives CDN URLs from npm media subpaths, so
+ * the two layouts matching is what keeps a flavor reachable there without a
+ * translation step.
+ *
+ * A CDN page picks bundles at runtime rather than by import path, so this is
+ * where two flavors of one element can end up in a single realm — see the
+ * tag-collision note in `define/media/mux-video/spf`.
+ */
+const mediaEntries = readdirSync(mediaDir, { withFileTypes: true })
+  .flatMap((entry) => {
+    if (entry.isDirectory()) {
+      return globSync(`${mediaDir}/${entry.name}/*.ts`).map((src) => {
+        const flavor = basename(src, '.ts');
+        return { src, name: flavor === 'index' ? `media/${entry.name}` : `media/${entry.name}/${flavor}` };
+      });
+    }
+
+    return entry.name.endsWith('.ts')
+      ? [{ src: `${mediaDir}/${entry.name}`, name: `media/${basename(entry.name, '.ts')}` }]
+      : [];
+  })
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 const localeEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
   src: file,
   name: `locales/${basename(file, '.ts')}`,
 }));
 
-const entries = [
+/**
+ * Every CDN bundle the build emits, as `{ src, name }` where `name` is the output path without
+ * its extension. Exported so the distribution archive can take its entry points from the build
+ * definition rather than guessing which built files are entries and which are shared chunks.
+ *
+ * The `src` paths are relative to this package, so importers must run from the package root.
+ */
+export const entries = [
   { src: 'src/cdn/i18n.ts', name: 'i18n' },
   ...localeEntries,
   ...presets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
-  ...media.map((name) => ({ src: `src/cdn/media/${name}.ts`, name: `media/${name}` })),
+  ...mediaEntries,
 ];
 
 /**
@@ -117,7 +149,7 @@ for (const mode of buildModes) {
       __DEV__: isProd ? 'false' : 'true',
     },
     plugins: [
-      cdnI18nExternalPlugin({ prod: isProd, version: pkg.version }),
+      cdnI18nExternalPlugin({ prod: isProd }),
       inlineCssPlugin({ skinsDir, minify: isProd }),
       inlineTemplatePlugin({ minify: isProd }),
       ...(!isProd ? [dtsStubsPlugin(outDir)] : []),

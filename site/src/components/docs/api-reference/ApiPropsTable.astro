@@ -10,15 +10,17 @@ import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import type { PropDef } from '@/types/component-reference';
+import type { SupportedFramework } from '@/types/docs';
 import PropRow from './PropRow.astro';
 
 interface Props {
   props: Record<string, PropDef>;
   componentName: string;
+  framework: SupportedFramework;
   showAttributeName?: boolean;
 }
 
-const { props, componentName, showAttributeName } = Astro.props;
+const { props, componentName, framework, showAttributeName } = Astro.props;
 ---
 
 <Table maxWidth={false} outerClass="my-6">
@@ -32,18 +34,22 @@ const { props, componentName, showAttributeName } = Astro.props;
   </Thead>
   <Tbody>
     {
-      Object.entries(props).map(([name, prop]) => (
-        <PropRow
-          name={name}
-          type={prop.type}
-          detailedType={prop.detailedType}
-          description={prop.description}
-          defaultValue={prop.default}
-          required={prop.required}
-          showAttributeName={showAttributeName}
-          componentName={componentName}
-        />
-      ))
+      Object.entries(props)
+        .filter(
+          ([, prop]) => !prop.frameworks || prop.frameworks.includes(framework),
+        )
+        .map(([name, prop]) => (
+          <PropRow
+            name={name}
+            type={prop.type}
+            detailedType={prop.detailedType}
+            description={prop.description}
+            defaultValue={prop.default}
+            required={prop.required}
+            showAttributeName={showAttributeName}
+            componentName={componentName}
+          />
+        ))
     }
   </Tbody>
 </Table>

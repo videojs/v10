@@ -1,18 +1,37 @@
+import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
+import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
-import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
+import { MediaError } from '../../core/media-error';
+
+import type { ErrorLike, MediaContentData, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
+import { createTimeRange, serializeEmbedParams } from '../utils';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
-/** Public Vimeo embed configuration. Forwarded to `@vimeo/player`. */
-export interface VimeoConfig extends VimeoEmbedParameters {
+/** Vimeo engine options: embed parameters forwarded verbatim to `@vimeo/player` and the embed URL. */
+export interface VimeoEngineConfig extends VimeoEmbedParameters {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Parsed pieces of a Vimeo source URL. */
+/** Structured Vimeo source: which source to play, plus how to play it. */
 export interface VimeoSource {
+  /** Vimeo URL or id. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /** Playback options, keyed by the engine that reads them. */
+  engine?: VimeoSourceEngineConfig | undefined;
+}
+
+/** The engines a Vimeo source can configure. */
+export interface VimeoSourceEngineConfig {
+  /** Vimeo's own embed parameters, passed through untouched. */
+  vimeo?: VimeoEngineConfig | undefined;
+}
+
+/** Parsed pieces of a Vimeo source URL. */
+export interface ParsedVimeoSource {
   id: number;
   /** `'video'` for regular clips, `'event'` for live events. */
   kind: 'video' | 'event';
@@ -30,7 +49,7 @@ export interface VimeoMediaProps {
   playsInline: boolean;
   preload: MediaPreloadType;
   poster: string;
-  config: VimeoConfig;
+  source: VimeoSource | null;
 }
 
 export const vimeoMediaDefaultProps: VimeoMediaProps = {
@@ -43,14 +62,19 @@ export const vimeoMediaDefaultProps: VimeoMediaProps = {
   playsInline: true,
   preload: 'metadata',
   poster: '',
-  config: {},
+  source: null,
 };
 
 const VimeoMediaBase = MediaPlayedRangesMixin(EventTarget);
 
+/**
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ * @fires contentdatachange - Fired when the embed reports a title and when that title is cleared. Read `contentData` for the new value.
+ */
 export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
   #player: VimeoPlayer | null = null;
+  // Barrier for the load in progress; its identity also tells a late response whether it still owns the load.
   #loadComplete = createPublicPromise<void>();
 
   #src = vimeoMediaDefaultProps.src;
@@ -61,7 +85,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #playsInline = vimeoMediaDefaultProps.playsInline;
   #preload = vimeoMediaDefaultProps.preload;
   #poster = vimeoMediaDefaultProps.poster;
-  #config = vimeoMediaDefaultProps.config;
+  #source: VimeoSource | null = vimeoMediaDefaultProps.source;
 
   #paused = true;
   #ended = false;
@@ -75,6 +99,8 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #videoWidth = Number.NaN;
   #videoHeight = Number.NaN;
   #readyState = READY_STATE_HAVE_NOTHING;
+  #title = '';
+  #contentData: MediaContentData = {};
   #error: ErrorLike | null = null;
   #isFullscreen = false;
   #isPictureInPicture = false;
@@ -84,7 +110,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   static PLAYER_SOFTWARE_NAME = 'vimeo-video';
 
-  /** Underlying `@vimeo/player` instance (null before attach). */
+  /** Underlying `@vimeo/player` instance. Null until an embed URL can be resolved, which may be after `attach()`. */
   get engine() {
     return this.#player;
   }
@@ -93,20 +119,13 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     return this.#target;
   }
 
-  /** Bind the iframe hosting the embed, creating a `@vimeo/player` instance. */
+  /** Bind the iframe hosting the embed. The player follows once an embed URL resolves, maybe not until `load()`. */
   attach(target: HTMLIFrameElement | null): void {
     if (!target || this.#target === target) return;
     if (this.#target) this.detach();
     this.#target = target;
-    if (!target.src) {
-      const initialSrc = buildVimeoIframeSrc(this.#src, this.#snapshotProps());
-      if (initialSrc) target.src = initialSrc;
-    }
-    this.#loadComplete = createPublicPromise<void>();
-    this.#player = new VimeoPlayer(target);
-    this.#bindPlayerEvents(this.#player);
-    this.#setupTextTracks(this.#player);
-    this.dispatchEvent(new Event('loadstart'));
+    this.#beginLoad();
+    this.#createPlayer();
   }
 
   detach(): void {
@@ -115,6 +134,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#player?.destroy().catch(() => {});
     this.#player = null;
     this.#target = null;
+    this.#loadComplete.resolve();
     this.#resetState();
   }
 
@@ -126,14 +146,18 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   get src() {
     return this.#src;
   }
+  /** Vimeo URL or id. Setting it re-derives `source`, carrying its embed options over. */
   set src(value) {
-    if (this.#src === value) return;
-    this.#src = value;
-    void this.load();
+    const { engine } = this.#source ?? {};
+    const next: VimeoSource = { ...(engine && { engine }), ...(value && { src: value }) };
+
+    // The `source` setter is the single path for storing it, deciding on a load, and dispatching `sourcechange`.
+    this.source = Object.keys(next).length > 0 ? next : null;
   }
 
   get currentSrc() {
-    return this.#target?.src ?? '';
+    // The `src` property resolves an empty attribute to the document URL; only the attribute reports an unbuilt embed.
+    return this.#target?.getAttribute('src') ?? '';
   }
 
   get readyState() {
@@ -142,15 +166,78 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   /** Reload the current source via Vimeo's `loadVideo`; no-op until `attach()`. */
   async load() {
-    if (!this.#player || !this.#src) return;
+    if (!this.#player) {
+      // Nothing to reload without a target, and no load to wait on either.
+      if (!this.#target) return;
+      // The target attached with nothing to embed; wait a microtask so the one embed URL sees every prop set this task.
+      const load = this.#beginLoad();
+      this.#resetState();
+      await Promise.resolve();
+      // A later load took over while waiting; building the embed is its job now.
+      if (load !== this.#loadComplete) return;
+      this.#createPlayer();
+      return;
+    }
+    const load = this.#beginLoad();
+    // Reset before the empty-src bail: a cleared source has nothing to load, but the old video's state still has to go.
     this.#resetState();
-    this.#loadComplete = createPublicPromise<void>();
+    // `emptied` announces that reset, so it precedes the bail; a cleared source is the one case reporting nothing more.
     this.dispatchEvent(new Event('emptied'));
+    if (!this.#src) {
+      // Stop the embed too; left running it keeps playing and writes the cleared state back through its own events.
+      load.resolve();
+      await this.#player.unload().catch(() => {});
+      return;
+    }
     this.dispatchEvent(new Event('loadstart'));
-    const loadOptions = toLoadVideoOptions(this.#src, this.#config);
-    if (!loadOptions) return;
+    const loadOptions = toLoadVideoOptions(this.#src, this.#source?.engine?.vimeo);
+    // An unparsable src never reaches the player, so no `loaded` will ever settle this load.
+    if (!loadOptions) {
+      load.resolve();
+      return;
+    }
     // Vimeo dispatches an `error` event separately on failure.
     await this.#player.loadVideo(loadOptions).catch(() => {});
+  }
+
+  // Take over as the current load; settling the outgoing barrier releases its waiters.
+  #beginLoad(): PublicPromise<void> {
+    this.#loadComplete.resolve();
+    this.#loadComplete = createPublicPromise<void>();
+    return this.#loadComplete;
+  }
+
+  // Create the player for the attached target, building its embed URL when the target arrived without one.
+  // `attach()` can run in a custom element constructor, where a throw breaks the element outright, so an unresolvable
+  // target leaves the player null and settles the load. Returns whether a player was created.
+  #createPlayer(): boolean {
+    const target = this.#target;
+    if (!target || this.#player) return false;
+
+    // The `src` property resolves an empty attribute to the document URL, so only the attribute spots a placeholder.
+    if (!target.getAttribute('src')) {
+      const initialSrc = buildVimeoIframeSrc(this.#src, this.#snapshotProps());
+      // No embed means no `loaded` is coming to settle this load.
+      if (!initialSrc) {
+        this.#loadComplete.resolve();
+        return false;
+      }
+      target.src = initialSrc;
+    }
+
+    try {
+      this.#player = new VimeoPlayer(target);
+    } catch {
+      this.#error = new MediaError('The attached iframe is not a Vimeo embed.', MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
+      this.dispatchEvent(new Event('error'));
+      this.#loadComplete.resolve();
+      return false;
+    }
+
+    this.#bindPlayerEvents(this.#player);
+    this.#setupTextTracks(this.#player);
+    this.dispatchEvent(new Event('loadstart'));
+    return true;
   }
 
   get paused() {
@@ -264,20 +351,63 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#poster = value;
   }
 
-  get config() {
-    return this.#config as Record<string, unknown>;
+  /** Structured source: `src` plus embed options under `engine.vimeo`. Replacing it re-derives `src`. */
+  get source(): VimeoSource | null {
+    return this.#source;
   }
-  set config(value) {
-    this.#config = value as VimeoConfig;
+  set source(value: VimeoSource | null) {
+    const source = value ?? null;
+    // Changing anything takes a new object, so handing the same one back costs nothing.
+    if (source === this.#source) return;
+
+    const src = source?.src ?? '';
+    const srcChanged = this.#src !== src;
+    // Embed options are read at load time, so changing them needs a reload even when the URL is unchanged.
+    const engineChanged = !deepEqual(this.#source?.engine?.vimeo ?? null, source?.engine?.vimeo ?? null);
+
+    this.#source = source;
+    this.#src = src;
+
+    if (srcChanged || engineChanged) void this.load();
+
+    // Assigning is always a source change, so it is always announced.
+    this.dispatchEvent(new Event('sourcechange'));
+  }
+
+  /**
+   * Metadata Vimeo reports about the loaded video, keyed by what it is — `title`
+   * for now. Unlike a Mux source, none of it can be derived from `src`; the embed
+   * has to report it, so the key is absent until then and empties again across a
+   * source change. `contentdatachange` announces both.
+   */
+  get contentData(): MediaContentData {
+    return this.#contentData;
+  }
+
+  /**
+   * Store the title the embed reported, reporting whether the content data
+   * changed. Announcing is left to the caller, which knows when the rest of what
+   * it is writing is in step.
+   *
+   * Vimeo cannot tell "no title yet" from "the title is blank" — a failed read
+   * falls back to the current value — and a blank would read as a deliberate one,
+   * stopping a consumer's fallback chain. So an empty title is reported as an
+   * absent key rather than an empty string.
+   */
+  #setTitle(value: string): boolean {
+    if (this.#title === value) return false;
+    this.#title = value;
+    this.#contentData = value ? { title: value } : {};
+    return true;
   }
 
   get buffered() {
-    return this.#progress > 0 ? createTimeRanges(0, this.#progress) : EMPTY_TIME_RANGES;
+    return this.#progress > 0 ? createTimeRange(0, this.#progress) : EMPTY_TIME_RANGES;
   }
 
   get seekable() {
     return this.#duration > 0 && Number.isFinite(this.#duration)
-      ? createTimeRanges(0, this.#duration)
+      ? createTimeRange(0, this.#duration)
       : EMPTY_TIME_RANGES;
   }
 
@@ -339,7 +469,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     }, console.error);
   }
 
-  /** Defer a player call until `loadComplete` resolves, swallowing rejections. */
+  // Defer a player call until the load settles, swallowing rejections.
   #afterLoad(fn: (player: VimeoPlayer) => Promise<unknown>) {
     this.#loadComplete.then(
       () => this.#player && void fn(this.#player).catch(() => {}),
@@ -355,7 +485,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
       controls: this.#controls,
       playsInline: this.#playsInline,
       preload: this.#preload || vimeoMediaDefaultProps.preload,
-      config: this.#config,
+      source: this.#source,
     };
   }
 
@@ -375,26 +505,37 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#videoHeight = Number.NaN;
     this.#isFullscreen = false;
     this.#isPictureInPicture = false;
+
+    // Last, and apart from the plain assignments above: this one announces, and
+    // a listener reading a half-reset media would still see the old video.
+    if (this.#setTitle('')) this.dispatchEvent(new Event('contentdatachange'));
   }
 
   async #onLoaded() {
+    const load = this.#loadComplete;
     this.#readyState = READY_STATE_HAVE_METADATA;
     const player = this.#player;
+    let contentDataChanged = false;
     if (player) {
       // Each value falls back to the current one so a single failure isn't fatal.
-      const [muted, volume, duration] = await Promise.all([
+      const [muted, volume, duration, title] = await Promise.all([
         player.getMuted().catch(() => this.#muted),
         player.getVolume().catch(() => this.#volume),
         player.getDuration().catch(() => this.#duration),
+        player.getVideoTitle().catch(() => this.#title),
       ]);
+      // A source change or clear invalidates these reads; #beginLoad settled this load, its replacement settles itself.
+      if (load !== this.#loadComplete) return;
       this.#muted = muted;
       this.#volume = volume;
       this.#duration = duration;
+      contentDataChanged = this.#setTitle(title);
     }
+    if (contentDataChanged) this.dispatchEvent(new Event('contentdatachange'));
     for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
       this.dispatchEvent(new Event(type));
     }
-    this.#loadComplete.resolve();
+    load.resolve();
   }
 
   #bindPlayerEvents(player: VimeoPlayer) {
@@ -484,11 +625,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
       .then((tracks) => {
         for (const track of tracks) {
           if (!isString(track.kind) || isNull(track.kind)) continue;
-          try {
-            host.addTextTrack?.(track.kind as TextTrackKind, track.label ?? '', track.language ?? '');
-          } catch {
-            // jsdom or unsupported environments.
-          }
+          tryCall(() => host.addTextTrack?.(track.kind as TextTrackKind, track.label ?? '', track.language ?? ''));
         }
       })
       .catch(() => {});
@@ -517,11 +654,10 @@ export function parseVimeoVideoId(src: string) {
 }
 
 /**
- * Parse a Vimeo source string. Recognizes numeric ids, `vimeo.com/<id>`,
- * `vimeo.com/video/<id>`, `player.vimeo.com/video/<id>`, `vimeo.com/event/<id>`
- * (live events), and unlisted/event hashes via `?h=` or a `/<hash>` segment.
+ * Parse a Vimeo source: a numeric id, `vimeo.com/<id>`, `vimeo.com/video/<id>`, `player.vimeo.com/video/<id>`, or
+ * `vimeo.com/event/<id>` (live events), plus unlisted/event hashes from `?h=` or a `/<hash>` segment.
  */
-export function parseVimeoSource(src: string): VimeoSource | null {
+export function parseVimeoSource(src: string): ParsedVimeoSource | null {
   if (!src) return null;
   if (/^\d+$/.test(src)) return { id: Number(src), kind: 'video', hash: null };
   const match = MATCH_SRC.exec(src);
@@ -531,7 +667,7 @@ export function parseVimeoSource(src: string): VimeoSource | null {
   try {
     queryHash = new URL(src).searchParams.get('h');
   } catch {
-    // src isn't a valid URL — ignore.
+    // Bare ids and paths are not valid URLs.
   }
   return { id: Number(match[2]), kind, hash: queryHash ?? match[3] ?? null };
 }
@@ -551,14 +687,14 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps>
     transparent: false,
     h: parsed.hash,
     // Vimeo-specific knobs (`autopause`, `byline`, `dnt`, …) flow through here.
-    ...(props.config ?? undefined),
+    ...(props.source?.engine?.vimeo ?? undefined),
   };
   if (parsed.kind === 'event') {
     const hashPath = parsed.hash ? `/${parsed.hash}` : '';
     delete params.h;
-    return `${EMBED_EVENT_BASE}/${parsed.id}/embed${hashPath}?${serialize(params)}`;
+    return `${EMBED_EVENT_BASE}/${parsed.id}/embed${hashPath}?${serializeEmbedParams(params)}`;
   }
-  return `${EMBED_VIDEO_BASE}/${parsed.id}?${serialize(params)}`;
+  return `${EMBED_VIDEO_BASE}/${parsed.id}?${serializeEmbedParams(params)}`;
 }
 
 const EMBED_VIDEO_BASE = 'https://player.vimeo.com/video';
@@ -569,42 +705,10 @@ const READY_STATE_HAVE_NOTHING = 0;
 const READY_STATE_HAVE_METADATA = 1;
 const READY_STATE_HAVE_FUTURE_DATA = 3;
 
-function createTimeRanges(start: number, end: number) {
-  return { length: 1, start: () => start, end: () => end };
-}
-
-function toLoadVideoOptions(src: string, config: VimeoConfig) {
+function toLoadVideoOptions(src: string, vimeo?: VimeoEngineConfig) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return null;
   const base = parsed.kind === 'event' ? `${EMBED_EVENT_BASE}/${parsed.id}/embed` : `${EMBED_VIDEO_BASE}/${parsed.id}`;
   const url = `${base}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
-  return { url, ...config } as LoadVideoOptions;
-}
-
-function serialize(props: Record<string, unknown>) {
-  const params = new URLSearchParams();
-  for (const key in props) {
-    const val = props[key];
-    if (val === true || val === '') params.set(key, '1');
-    else if (val === false) params.set(key, '0');
-    else if (val != null) params.set(key, String(val));
-  }
-  return params.toString();
-}
-
-interface PublicPromise<T> extends Promise<T> {
-  resolve: (value: T) => void;
-  reject: (reason?: unknown) => void;
-}
-
-function createPublicPromise<T>(): PublicPromise<T> {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  }) as PublicPromise<T>;
-  promise.resolve = resolve;
-  promise.reject = reject;
-  return promise;
+  return { url, ...vimeo } as LoadVideoOptions;
 }

@@ -1,7 +1,6 @@
-'use client';
-
 import { getStateDataAttrs, type StateAttrMap } from '@videojs/core/dom';
 import { isFunction } from '@videojs/utils/predicate';
+import { resolveClassName } from '@videojs/utils/style';
 import type { CSSProperties, ReactElement, Ref } from 'react';
 import { cloneElement, createElement, isValidElement } from 'react';
 import { mergeProps } from './merge-props';
@@ -26,13 +25,6 @@ export interface UseRenderParameters<State, RenderedElementType extends Element>
   ref?: Ref<RenderedElementType> | Ref<RenderedElementType>[] | undefined;
   props?: object | object[] | undefined;
   stateAttrMap?: StateAttrMap<State> | undefined;
-}
-
-function resolveClassName<State>(
-  className: string | ((state: State) => string | undefined) | undefined,
-  state: State
-): string | undefined {
-  return isFunction(className) ? className(state) : className;
 }
 
 function resolveStyle<State>(

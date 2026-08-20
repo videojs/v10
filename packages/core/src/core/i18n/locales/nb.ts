@@ -45,10 +45,14 @@ export default {
     current: 'Aktuell tid',
     duration: 'Varighet',
     remaining: 'Gjenstående tid',
+    elapsedSuffix: '{duration} avspilt tid',
+    durationSuffix: '{duration} varighet',
     remainingSuffix: '{duration} igjen',
-    showElapsed: '{duration}. Vis avspilt tid.',
-    showDuration: '{duration}. Vis varighet.',
-    showRemaining: '{duration}. Vis gjenstående tid.',
+    showElapsed: 'Vis avspilt tid, {duration}.',
+    showDuration: 'Vis varighet, {duration}.',
+    showRemaining: 'Vis gjenstående tid, {duration}.',
+    toggleElapsed: 'Bytt mellom avspilt og gjenstående tid.',
+    toggleDuration: 'Bytt mellom varighet og gjenstående tid.',
     position: '{current} av {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Fullskjerm',
     pip: 'Bilde i bilde',
     exitPip: 'Avslutt bilde i bilde',
+    seekedTo: 'Hoppet til {time}',
+  },
+  container: {
+    label: 'Mediespiller',
   },
   errors: {
     aborted: 'Du avbrøt avspillingen.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Videoen kunne ikke lastes ned, på grunn av nettverksfeil eller serverfeil, eller fordi formatet ikke er støttet.',
     encrypted: 'Mediefilen er kryptert og vi mangler nøkler for å dekryptere den.',
+    unplayable: 'Denne mediefilen støttes ikke av spilleren.',
     title: 'Noe gikk galt.',
     unexpected: 'En feil oppstod. Vennligst prøv igjen.',
   },

@@ -16,12 +16,13 @@ function createMediaState(overrides: Partial<MediaAudioTrackState> = {}): MediaA
 
 function createState(overrides: Partial<AudioTrackRadioGroupState> = {}): AudioTrackRadioGroupState {
   return {
-    tracks: [
-      { value: '0', label: 'English' },
-      { value: '1', label: 'Spanish' },
+    options: [
+      { value: '0', label: 'English', disabled: false },
+      { value: '1', label: 'Spanish', disabled: false },
     ],
     value: '0',
     disabled: false,
+    hidden: false,
     availability: 'available',
     label: '',
     ...overrides,
@@ -37,9 +38,9 @@ describe('AudioTrackRadioGroupCore', () => {
 
       const state = core.getState();
 
-      expect(state.tracks).toEqual([
-        { value: '0', label: 'English' },
-        { value: '1', label: 'Spanish' },
+      expect(state.options).toEqual([
+        { value: '0', label: 'English', disabled: false },
+        { value: '1', label: 'Spanish', disabled: false },
       ]);
       expect(state.value).toBe('0');
     });
@@ -55,10 +56,10 @@ describe('AudioTrackRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().tracks).toEqual([
-        { value: '0', label: 'en' },
-        { value: '1', label: 'commentary' },
-        { value: '2', label: { key: 'menu.audio', text: 'Audio' } },
+      expect(core.getState().options).toEqual([
+        { value: '0', label: 'en', disabled: false },
+        { value: '1', label: 'commentary', disabled: false },
+        { value: '2', label: { key: 'menu.audio', text: 'Audio' }, disabled: false },
       ]);
     });
 
@@ -72,7 +73,7 @@ describe('AudioTrackRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().tracks.map((track) => track.value)).toEqual(['0', '1']);
+      expect(core.getState().options.map((track) => track.value)).toEqual(['0', '1']);
       expect(core.getState().value).toBe('1');
     });
 
@@ -82,8 +83,7 @@ describe('AudioTrackRadioGroupCore', () => {
         createMediaState({ audioTrackList: [{ id: '0', label: 'English', language: 'en', enabled: true }] })
       );
 
-      expect(core.getState().availability).toBe('unavailable');
-      expect(core.getState().disabled).toBe(true);
+      expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
     });
   });
 

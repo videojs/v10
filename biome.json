@@ -97,6 +97,26 @@
   },
   "overrides": [
     {
+      "includes": [
+        "packages/{html,react}/src/__generated__/skins/**",
+        "packages/skins/canonical/registry/default/**",
+        "packages/skins/canonical/styles/base.css"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          }
+        }
+      }
+    },
+    {
       "includes": ["site/src/**", "!site/src/utils/twMerge.ts"],
       "linter": {
         "rules": {

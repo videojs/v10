@@ -7,11 +7,12 @@ export const error = {
     'text-shadow-2xs text-shadow-black/50',
     // Animation
     'transition-[opacity,scale,transform]',
-    'duration-(--media-error-dialog-transition-duration)',
-    'delay-(--media-error-dialog-transition-delay)',
-    'ease-(--media-error-dialog-transition-timing-function)',
-    'group-data-starting-style/error:opacity-0 group-data-starting-style/error:scale-50',
-    'group-data-ending-style/error:opacity-0 group-data-ending-style/error:scale-50',
+    'duration-(--error-dialog-transition-duration)',
+    'delay-(--error-dialog-transition-delay)',
+    'ease-(--error-dialog-transition-timing-function)',
+    'group-data-starting-style/error:opacity-0 group-data-starting-style/error:scale-95',
+    'group-data-ending-style/error:opacity-0 group-data-ending-style/error:scale-95',
+    'motion-reduce:scale-100 motion-reduce:transition-opacity',
     'group-data-ending-style/error:delay-0'
   ),
   content: 'flex flex-col gap-2 py-1.5',

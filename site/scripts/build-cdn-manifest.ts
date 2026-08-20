@@ -3,7 +3,7 @@
  *
  * Scans the built `@videojs/html` CDN media bundles and records which media
  * subpaths actually ship a CDN build. The installation page uses this to hide
- * the CDN install option for renderers that have no CDN bundle (e.g. Vimeo).
+ * the CDN install option for a renderer that has no CDN bundle.
  *
  * Produces `site/src/content/cdn-media.json` as an array of `{ id }` entries
  * (one per media subpath), consumed via the `cdnMedia` content collection.
@@ -35,6 +35,22 @@ const log = {
 
 const ManifestSchema = z.array(z.object({ id: z.string() }));
 
+/**
+ * Media subpaths that ship a production bundle, walking the flavor directories.
+ *
+ * An element with more than one engine ships its flavors in a directory named
+ * for the element, so the id keeps the slash and stays equal to the npm media
+ * subpath the installation page resolves against.
+ */
+function collectSubpaths(dir: string, prefix = ''): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.isDirectory()) return collectSubpaths(resolve(dir, entry.name), `${prefix}${entry.name}/`);
+    // Skip dev bundles (`.dev.js`), sourcemaps, and type stubs.
+    if (!entry.name.endsWith('.js') || entry.name.endsWith('.dev.js')) return [];
+    return [`${prefix}${entry.name.replace(/\.js$/, '')}`];
+  });
+}
+
 function main() {
   if (!existsSync(CDN_MEDIA_DIR)) {
     log.error(`CDN media build not found at ${CDN_MEDIA_DIR}.`);
@@ -42,12 +58,7 @@ function main() {
     process.exit(1);
   }
 
-  // Production bundles are `<subpath>.js`; skip dev (`.dev.js`), sourcemaps,
-  // and type stubs.
-  const subpaths = readdirSync(CDN_MEDIA_DIR)
-    .filter((file) => file.endsWith('.js') && !file.endsWith('.dev.js'))
-    .map((file) => file.replace(/\.js$/, ''))
-    .sort();
+  const subpaths = collectSubpaths(CDN_MEDIA_DIR).sort();
 
   if (subpaths.length === 0) {
     log.error(`No CDN media bundles found in ${CDN_MEDIA_DIR}.`);

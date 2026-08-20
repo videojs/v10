@@ -45,10 +45,14 @@ export default {
     current: 'Temps actual',
     duration: 'Durada',
     remaining: 'Temps restant',
+    elapsedSuffix: '{duration} de temps transcorregut',
+    durationSuffix: '{duration} de durada',
     remainingSuffix: 'Queden {duration}',
-    showElapsed: '{duration}. Mostra el temps transcorregut.',
-    showDuration: '{duration}. Mostra la durada.',
-    showRemaining: '{duration}. Mostra el temps restant.',
+    showElapsed: 'Mostra el temps transcorregut, {duration}.',
+    showDuration: 'Mostra la durada, {duration}.',
+    showRemaining: 'Mostra el temps restant, {duration}.',
+    toggleElapsed: 'Alterna entre el temps transcorregut i el temps restant.',
+    toggleDuration: 'Alterna entre la durada i el temps restant.',
     position: '{current} de {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Pantalla completa',
     pip: 'Imatge en imatge',
     exitPip: 'Surt de la imatge en imatge',
+    seekedTo: "S'ha saltat a {time}",
+  },
+  container: {
+    label: 'Reproductor multimèdia',
   },
   errors: {
     aborted: 'Has interromput la reproducció del contingut',
@@ -77,6 +85,7 @@ export default {
     source:
       "No s'ha pogut carregar el contingut, ja sigui perquè el servidor o la xarxa han fallat o perquè el format no està suportat.",
     encrypted: 'El contingut està xifrat i no disposem de les claus per desxifrar-lo.',
+    unplayable: 'El reproductor no admet aquest mitjà.',
     title: 'Alguna cosa ha anat malament.',
     unexpected: "S'ha produït un error. Torneu-ho a intentar.",
   },

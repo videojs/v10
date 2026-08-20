@@ -1,6 +1,6 @@
 ---
 status: draft
-date: 2026-05-20
+date: 2026-08-03
 definition: technical
 ---
 
@@ -30,22 +30,60 @@ client-side engine surface.
 
 ## Status
 
-- **Composition:** not implemented. Hard prerequisite
-  [live-stream-support](./live-stream-support.md) is also not
-  implemented. Today's `parseMediaPlaylist` recognizes
-  `#EXT-X-PLAYLIST-TYPE:` as a known-tag pass-through but doesn't
-  surface the value to the track output.
+- **Composition:** not implemented. The hard prerequisite
+  [live-stream-support](./live-stream-support.md) has since landed, and
+  `parseMediaPlaylist` now surfaces `#EXT-X-PLAYLIST-TYPE` as
+  `playlistType` in the media-playlist metadata — the adapter already
+  maps `EVENT` to `targetLiveWindow: Infinity` (the media-ui-extensions
+  DVR signal). The windowing semantics themselves are not implemented,
+  and driving the engine at a real `EVENT` source fails (below).
+- **Failures on a real `EVENT` source** (a Mux recording-during-live
+  asset, `#EXT-X-PLAYLIST-TYPE:EVENT`, growing window, CMAF) — the
+  concrete starting point for implementation, replacing the earlier
+  "manifest re-polling unverified" guess. Observed against the
+  **pre-re-landing** live implementation, so each item is tagged with
+  what has since been re-confirmed:
+  - The presentation **anchor never establishes**, leaving the model ~2s
+    behind native. *Observed previously; not re-tested against current
+    code.* Root cause undiagnosed — the same code path anchors correctly
+    on the live playback id, so the divergence is specific to the EVENT /
+    asset source shape. **This is the first task for DVR**, ahead of any
+    windowing work.
+  - Consequently `setLiveSeekableRange(negative, …)` **throws on every
+    reload**. *Mechanism re-confirmed on current code* by
+    `playback/primitives/tests/live-window.test.ts` → "yields a negative
+    start when every selected window is negative": `liveWindowFromState`
+    does not floor the start at 0 when the *reference* window is
+    negative, and `syncLiveSeekableRange` writes it with no try/catch. So
+    any mis-anchored source still throws, once per window update. See
+    [live-stream-support § Still open](./live-stream-support.md#still-open).
+  - **DVR back-seek stalls** in the resulting gap. *Observed previously.*
+    Note `seekable` does not go empty when the range call throws — under
+    `duration === Infinity` the UA falls back to the buffered-derived
+    union — so the failure is a mismatched/narrow window, not an absent
+    one.
+  - The source **starts at the live edge**, because `seekToLiveEdge`
+    commands a start position for any derivable live window regardless
+    of `playlistType`. Start-in-place is an unimplemented seam. *Still
+    true by construction on current code.*
+- **Decision (2026-08-03): DVR starts at the live edge.** Treating DVR
+  like sliding-window live for the initial position is the intended
+  default — it matches viewer expectation for a stream still being
+  produced, and it keeps `seekToLiveEdge` free of a live-vs-DVR branch.
+  Start-in-place stays an unimplemented seam rather than a half-built
+  conditional. Note this is currently inert on the EVENT source above:
+  with the anchor failing, no window is derivable, so nothing is
+  commanded and it starts at 0 regardless.
 - **Definition depth:** technical — scope and SPF touchpoints
   articulated against live-stream-support's structure; implementation
   specifics open. Source material: [SPF Epics Working Doc — epic #3
   DVR / Event Stream Support](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
   (cluster A, Media-src, eng M, validation M; "Growing playlist;
   extension of #2 (live-stream-support).").
-- **Hard prerequisite:** [live-stream-support](./live-stream-support.md).
-  The reload loop, target-duration pacing, `Infinity` duration
-  semantics, and `setLiveSeekableRange` writer-behavior shape all
-  come from that feature; DVR/event-stream supplies the windowing
-  variance. The "DVR / event boundary" open question in
+- **Hard prerequisite:** [live-stream-support](./live-stream-support.md)
+  — **satisfied.** The reload loop, target-duration pacing, `Infinity`
+  duration semantics, and the `syncLiveSeekableRange` writer behavior all
+  landed there; DVR/event-stream supplies the windowing variance. The "DVR / event boundary" open question in
   live-stream-support.md's Open questions section is **resolved by
   this doc's existence**: DVR is its own feature, not a phase of
   live-stream-support.
@@ -58,10 +96,10 @@ capability slice of "DVR/event-stream supported."
 | Phase | What | Notes |
 |---|---|---|
 | Growing-window playlist semantics | Playlist grows from the recording / event start; no roll-off. Engine retains full history. `setLiveSeekableRange` start value derives from the playlist's first segment media time (or `0`) rather than the sliding-back-N derivation live uses. The reload-loop and target-duration-pacing machinery is unchanged from live | The core windowing difference. Variant-specific producer behavior (computes `seekableStart` from the playlist's first retained segment) feeds the variant-agnostic `setLiveSeekableRange` writer that live also uses |
-| Event-stream recognition (`PLAYLIST-TYPE:EVENT`) | Parser surfaces `#EXT-X-PLAYLIST-TYPE:EVENT` from the media playlist (today the tag is recognized but not extracted; track output gains `playlistType: 'EVENT' \| 'VOD' \| undefined`). Engine uses the value to distinguish event-stream from live-with-large-window — semantically distinct even if structurally similar | Parser-side change; the value isn't yet surfaced. `PLAYLIST-TYPE:VOD` is the orthogonal case (already-finished recording) that the parser would surface uniformly |
+| Event-stream recognition (`PLAYLIST-TYPE:EVENT`) | Parser surfaces `#EXT-X-PLAYLIST-TYPE` from the media playlist as `playlistType` in the media-playlist metadata. Engine uses the value to distinguish event-stream from live-with-large-window — semantically distinct even if structurally similar | **Implemented** (parser side) — landed with live-stream-support; the adapter reads it to map `EVENT` → `targetLiveWindow: Infinity`. No engine behavior branches on it yet |
 | Back-seek through history | User can seek arbitrarily far back into the recorded portion. Buffer-management's seek phase already handles non-contiguous gap-fill (per [buffer-management.md](./buffer-management.md)'s "Seek handling" phase); DVR exercises this aggressively with large seek distances. No new behavior; existing seek code path under different load | The "DVR works" experience surface. Stress-tests the existing seek-from-arbitrary-position planning |
-| DVR-aware back-buffer policy | Default `backBuffer.keepSegments: 2` from buffer-management is too aggressive for DVR (history is evicted before user can seek back to it). Either configurable (large value for DVR variants) or a variant-specific policy ("retain N seconds back" or "retain indefinitely") | Variant-specific behavior. Affects buffer-management.md's back-buffer eviction phase. Open question: shape of the policy (configurable threshold vs subtractive composition) |
-| Event-stream termination → VOD transition | When `#EXT-X-ENDLIST` appears on an event-stream, live-stream-support's terminated-state-transition phase handles the mechanics (reload loop stops, last segment stabilizes, `mediaSource.duration` flips from `Infinity` to the finite value, `clearLiveSeekableRange()` paired with the transition). This phase notes the additional semantic that the stream now behaves equivalently to VOD: seekable to start, finite duration, normal `endOfStream` gating | Composes with live-stream-support's termination phases. No new termination behavior; this phase is the semantic note about what post-termination means for event-stream specifically |
+| DVR-aware back-buffer policy | Default `backBuffer.keepSegments: 2` from buffer-management retains almost no history. This does **not** make back-seek fail — an `EVENT` playlist never drops segments, so evicted history is still listed and re-fetchable, and the seek re-buffers rather than stalling. The cost is a re-buffer pause per deep scrub and repeated fetches for repeated scrubbing. Either configurable (larger value for DVR) or a variant-specific policy ("retain N seconds back") | Variant-specific behavior; a UX/bandwidth tune, not a correctness fix. Affects buffer-management.md's back-buffer eviction phase. Note the ceiling: retaining a multi-hour event outright risks `QuotaExceededError`, so "retain indefinitely" is not a safe target. Open question: shape of the policy (configurable threshold vs subtractive composition) |
+| Event-stream termination → VOD transition | When `#EXT-X-ENDLIST` appears on an event-stream, live-stream-support's terminated-state-transition phase handles the mechanics (reload loop stops, last segment stabilizes, `mediaSource.duration` flips from `Infinity` to the finite value — no `clearLiveSeekableRange()` needed, since MSE ignores the live range once duration is finite). This phase notes the additional semantic that the stream now behaves equivalently to VOD: seekable to start, finite duration, normal `endOfStream` gating | Composes with live-stream-support's termination phases. No new termination behavior; this phase is the semantic note about what post-termination means for event-stream specifically |
 
 ## What's in scope vs out of scope
 
@@ -150,9 +188,8 @@ Things this feature probably forces decisions on, not just additions:
   engine references segments via URI; if a back-seek targets a
   segment URI that 404s, the fetch fails. Whether this falls under
   this feature's scope (recover gracefully — surface a "history
-  expired" error to the consumer) or under
-  `[unsupported-case-error-mapping]` (generic fetch-failure mapping)
-  is an open boundary.
+  expired" error to the consumer) or under [errors](./errors.md)
+  (generic fetch-failure mapping) is an open boundary.
 - **DVR + LL-HLS composition.** Both are cluster A extensions on the
   same reload loop. Composition order: LL-HLS replaces the standard
   reload-loop behavior with its variant; DVR replaces the back-buffer
@@ -181,7 +218,7 @@ Things this feature probably forces decisions on, not just additions:
   producer needs to read the playlist's current first-segment, not
   a constant `0`.
 - **Server-side retention error handling.** Segment 404 on back-seek
-  fetch. Scope of this feature vs `[unsupported-case-error-mapping]`.
+  fetch. Scope of this feature vs [errors](./errors.md).
 - **`PLAYLIST-TYPE:VOD` semantics.** When a media playlist arrives
   with `PLAYLIST-TYPE:VOD` from the start (fully-resolved at first
   fetch, no reload needed), the engine should recognize this and
@@ -234,9 +271,10 @@ Things this feature probably forces decisions on, not just additions:
   event streams typically have PTS far from zero (recording starts
   at wall-clock time, not at PTS 0). `currentTime` / `seekable`
   semantics require non-zero-PTS support to be correct.
-- **`[unsupported-case-error-mapping]`** *(candidate)* — server-
-  side retention 404 errors on back-seek fall under this candidate's
-  scope for consumer-facing mapping.
+- **[errors](./errors.md)** — server-side retention 404 errors on
+  back-seek fall under that feature's scope for consumer-facing
+  mapping. Its phase 5 also covers DVR-as-degraded-but-playable
+  (SVTA 2039) while this feature is partially implemented.
 
 ## See also
 

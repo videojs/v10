@@ -15,5 +15,3 @@ export const EMPTY_TEXT_TRACKS: TextTrackListLike = Object.assign(new EventTarge
 }) as unknown as TextTrackListLike;
 
 export const EMPTY_REMOTE = new EventTarget() as unknown as RemotePlaybackLike;
-
-export const EMPTY_CONFIG: Record<string, unknown> = Object.freeze({});

@@ -14,6 +14,7 @@ export {
   getI18nTranslations,
   hasRegisteredLocale,
   isText,
+  LOCALES,
   onI18nRegistryChange,
   registerI18n,
 } from '@videojs/core/i18n';
@@ -26,3 +27,4 @@ export type {
   I18nProviderProps,
 } from './create-i18n';
 export { createI18n, I18nProvider } from './create-i18n';
+export { Text, type TextProps } from './text';

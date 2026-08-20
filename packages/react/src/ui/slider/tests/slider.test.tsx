@@ -2,6 +2,7 @@ import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderBuffer } from '../slider-buffer';
 import { SliderFill } from '../slider-fill';
 import { SliderRoot } from '../slider-root';
@@ -9,51 +10,69 @@ import { SliderThumb } from '../slider-thumb';
 import { SliderTrack } from '../slider-track';
 import { SliderValue } from '../slider-value';
 
-const { mockSliderApi } = vi.hoisted(() => ({
-  mockSliderApi: (options?: {
-    getElement?: () => HTMLElement;
-    getThumbElement?: () => HTMLElement | null;
-    adjustPercent?: (raw: number, thumb: number, track: number) => number;
-  }) => ({
-    input: {
-      current: {
-        pointerPercent: 0,
-        dragPercent: 0,
-        dragging: false,
-        pointing: false,
-        focused: false,
-      },
-      subscribe: vi.fn(() => vi.fn()),
-    },
-    rootProps: {
-      onPointerDown: vi.fn(),
-      onPointerMove: vi.fn(),
-      onPointerLeave: vi.fn(),
-    },
-    thumbProps: {
-      onKeyDown: vi.fn(),
-      onFocus: vi.fn(),
-      onBlur: vi.fn(),
-    },
-    adjustForAlignment<
-      S extends { thumbAlignment?: string; orientation?: string; fillPercent: number; pointerPercent: number },
-    >(state: S): S {
-      if (!options?.adjustPercent || state.thumbAlignment !== 'edge') return state;
-      const thumbEl = options.getThumbElement?.();
-      if (!thumbEl) return state;
-      const rootEl = options.getElement!();
-      const isHorizontal = state.orientation === 'horizontal';
-      const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
-      const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
+const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
+  const sliderOptionsRef: {
+    current:
+      | {
+          onDragStart?: () => void;
+          onDragEnd?: () => void;
+        }
+      | undefined;
+  } = { current: undefined };
+
+  return {
+    sliderOptionsRef,
+    mockSliderApi: (options?: {
+      getElement?: () => HTMLElement;
+      getThumbElement?: () => HTMLElement | null;
+      adjustPercent?: (raw: number, thumb: number, track: number) => number;
+      onDragStart?: () => void;
+      onDragEnd?: () => void;
+    }) => {
+      sliderOptionsRef.current = options;
+
       return {
-        ...state,
-        fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
-        pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
+        input: {
+          current: {
+            pointerPercent: 0,
+            dragPercent: 0,
+            dragging: false,
+            pointing: false,
+            focused: false,
+          },
+          subscribe: vi.fn(() => vi.fn()),
+        },
+        rootProps: {
+          onPointerDown: vi.fn(),
+          onPointerMove: vi.fn(),
+          onPointerLeave: vi.fn(),
+        },
+        thumbProps: {
+          onKeyDown: vi.fn(),
+          onFocus: vi.fn(),
+          onBlur: vi.fn(),
+        },
+        adjustForAlignment<
+          S extends { thumbAlignment?: string; orientation?: string; fillPercent: number; pointerPercent: number },
+        >(state: S): S {
+          if (!options?.adjustPercent || state.thumbAlignment !== 'edge') return state;
+          const thumbEl = options.getThumbElement?.();
+          if (!thumbEl) return state;
+          const rootEl = options.getElement!();
+          const isHorizontal = state.orientation === 'horizontal';
+          const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
+          const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
+          return {
+            ...state,
+            fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
+            pointerPercent: options.adjustPercent(state.pointerPercent, thumbSize, trackSize),
+          };
+        },
+        destroy: vi.fn(),
       };
     },
-    destroy: vi.fn(),
-  }),
-}));
+  };
+});
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
   const orig: Record<string, unknown> = await importOriginal();
@@ -62,7 +81,9 @@ vi.mock('@videojs/core/dom', async (importOriginal) => {
 
 vi.mock('@videojs/store/react', () => ({
   useSnapshot: vi.fn((state: { current: unknown }) => state.current),
-  useStore: vi.fn(),
+  useStore: vi.fn((store: { state: object }, selector?: (state: object) => unknown) =>
+    selector ? selector(store.state) : store
+  ),
 }));
 
 afterEach(cleanup);
@@ -103,6 +124,26 @@ describe('SliderRoot', () => {
 
     expect(el.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
+  });
+
+  it('holds a controls visibility lock for the duration of a drag', () => {
+    const releaseControlsLock = vi.fn();
+    const requestControlsLock = vi.fn(() => releaseControlsLock);
+    const { Wrapper } = createPlayerWrapper({
+      userActive: true,
+      controlsVisible: true,
+      requestControlsLock,
+      toggleControls: vi.fn(),
+    });
+
+    render(<SliderRoot />, { wrapper: Wrapper });
+
+    sliderOptionsRef.current?.onDragStart?.();
+    expect(requestControlsLock).toHaveBeenCalledTimes(1);
+    expect(releaseControlsLock).not.toHaveBeenCalled();
+
+    sliderOptionsRef.current?.onDragEnd?.();
+    expect(releaseControlsLock).toHaveBeenCalledTimes(1);
   });
 });
 

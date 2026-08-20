@@ -45,10 +45,14 @@ export default {
     current: 'Tempo reproducido',
     duration: 'Duración',
     remaining: 'Tempo restante',
+    elapsedSuffix: '{duration} de tempo transcorrido',
+    durationSuffix: '{duration} de duración',
     remainingSuffix: 'Quedan {duration}',
-    showElapsed: '{duration}. Amosar tempo transcorrido.',
-    showDuration: '{duration}. Amosar duración.',
-    showRemaining: '{duration}. Amosar tempo restante.',
+    showElapsed: 'Amosar tempo transcorrido, {duration}.',
+    showDuration: 'Amosar duración, {duration}.',
+    showRemaining: 'Amosar tempo restante, {duration}.',
+    toggleElapsed: 'Alternar entre o tempo transcorrido e o tempo restante.',
+    toggleDuration: 'Alternar entre a duración e o tempo restante.',
     position: '{current} de {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Pantalla completa',
     pip: 'Imaxe en imaxe',
     exitPip: 'Saír de imaxe en imaxe',
+    seekedTo: 'Saltouse a {time}',
+  },
+  container: {
+    label: 'Reprodutor multimedia',
   },
   errors: {
     aborted: 'Vostede interrompeu a reprodución do medio.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Non foi posíbel cargar o medio por mor dun fallo de rede ou do servidor ou porque o formato non é compatíbel.',
     encrypted: 'O medio está cifrado e non temos as chaves para descifralo.',
+    unplayable: 'O reprodutor non admite este medio.',
     title: 'Algo saíu mal.',
     unexpected: 'Produciuse un erro. Por favor, ténteo de novo.',
   },

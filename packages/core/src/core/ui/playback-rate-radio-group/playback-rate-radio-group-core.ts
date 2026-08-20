@@ -4,8 +4,8 @@ import { defaults } from '@videojs/utils/object';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text } from '../../i18n';
-import { rateText } from '../../i18n/text/playback';
-import type { ButtonState } from '../types';
+import { playbackRateText } from '../../i18n/text/menu';
+import type { RadioOption, RadioOptionsState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface PlaybackRateRadioGroupProps {
@@ -17,11 +17,12 @@ export interface PlaybackRateRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-export interface PlaybackRateRadioGroupState extends ButtonState {
+export interface PlaybackRateRadioGroupOption extends RadioOption {
   rate: number;
-  rates: readonly number[];
-  disabled: boolean;
-  availability: 'available' | 'unavailable';
+}
+
+export interface PlaybackRateRadioGroupState extends RadioOptionsState<PlaybackRateRadioGroupOption> {
+  rate: number;
 }
 
 function formatPlaybackRate(rate: number): string {
@@ -37,8 +38,10 @@ export class PlaybackRateRadioGroupCore {
 
   readonly state = createState<PlaybackRateRadioGroupState>({
     rate: 1,
-    rates: [],
-    disabled: false,
+    value: '1',
+    options: [],
+    disabled: true,
+    hidden: true,
     availability: 'unavailable',
     label: '',
   });
@@ -57,12 +60,11 @@ export class PlaybackRateRadioGroupCore {
   getLabel(state: PlaybackRateRadioGroupState): Text | string {
     const custom = resolveLabel(this.#props.label, state);
     if (custom !== undefined) return custom;
-    return rateText;
+    return playbackRateText;
   }
 
-  getLabelParams(state: PlaybackRateRadioGroupState): { rate: number } | undefined {
-    if (resolveLabel(this.#props.label, state) !== undefined) return undefined;
-    return { rate: state.rate };
+  getLabelParams(_state: PlaybackRateRadioGroupState): undefined {
+    return undefined;
   }
 
   getRateLabel(rate: number): string {
@@ -77,6 +79,7 @@ export class PlaybackRateRadioGroupCore {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -92,8 +95,15 @@ export class PlaybackRateRadioGroupCore {
 
     this.state.patch({
       rate: media.playbackRate,
-      rates: media.playbackRates,
+      value: this.getRateValue(media.playbackRate),
+      options: media.playbackRates.map((rate) => ({
+        rate,
+        value: this.getRateValue(rate),
+        label: this.getRateLabel(rate),
+        disabled: false,
+      })),
       disabled: this.#props.disabled || media.playbackRates.length === 0,
+      hidden: availability === 'unavailable',
       availability,
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });

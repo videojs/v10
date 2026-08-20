@@ -73,8 +73,8 @@ Primary:
 
 Secondary:
 
-- Existing engine factory + adapter as templates (`createSimpleHlsEngine`
-  and `SimpleHlsMediaElement` — the canonical pair the variant parallels).
+- Existing engine factory + adapter as templates (`createHlsVideoEngine`
+  and `HlsVideoMediaElement` — the canonical pair the variant parallels).
 - `internal/decisions/*.md` — past tactical decisions.
 
 Downstream skills routed-to:
@@ -189,7 +189,7 @@ Discipline:
 
 9. **Composing variant-specific behaviors into default factory** —
    variant-specific behaviors go in the variant factory, not the
-   default `createSimpleHlsEngine`. Same failure mode as
+   default `createHlsVideoEngine`. Same failure mode as
    `/implement-spf-feature`'s catalog, but more pointed here: the
    *whole point* of a use-case implementation is the variant assembly,
    so misrouting at the factory level is the canonical first-pass bug.
@@ -369,14 +369,14 @@ After Step 1's report:
   - **Media wrapper** — `packages/media/src/dom/<key>/`
     (~5 LOC; applies the SPF mixin to `HTMLVideoElementHost`). The
     minimum bridge between the SPF adapter and the player packages.
-    Worked example: `simple-hls/media.ts` →
-    `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}`.
+    Worked example: `hls-video/media.ts` →
+    `class HlsVideoMedia extends HlsVideoMediaMixin(HTMLVideoElementHost) {}`.
   - **HTML custom element** — `packages/html/src/media/<key>-video/`
     (~5 LOC; wraps the media host in `CustomMediaElement` +
     `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`
     + `packages/html/src/cdn/media/<key>-video.ts` for the CDN entry.
-    Worked example: `simple-hls-video/media.ts` →
-    `class SimpleHlsVideo extends MediaAttachMixin(CustomMediaElement('video', SimpleHlsMedia)) {}`.
+    Worked example: `hls-video/media.ts` →
+    `class HlsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsVideoMedia)) {}`.
   - **React component** — `packages/react/src/media/<key>-video/`
     (~37 LOC; React adapter exposing props matching the HTML
     surface). Pairs with the HTML custom element.
@@ -420,10 +420,10 @@ typical for use-case implementations:
 **Core SPF layer (always present):**
 
 - **Engine variant factory creation** (new) — typically the first chunk;
-  parallels `createSimpleHlsEngine` shape with the composition mechanism
+  parallels `createHlsVideoEngine` shape with the composition mechanism
   applied (subtract / add / swap / configure).
-- **Adapter creation** (new) — parallels `SimpleHlsMediaElement` /
-  `SimpleHlsMediaMixin`; uses `shareSignals` unchanged.
+- **Adapter creation** (new) — parallels `HlsVideoMediaElement` /
+  `HlsVideoMediaMixin`; uses `shareSignals` unchanged.
 - **Constituent feature implementation chunks** (if bundling per Step
   2) — route to `/implement-spf-feature`.
 - **Use-case-specific behavior creation** (if any) — route to
@@ -515,9 +515,9 @@ Iterate per chunk:
    - **Subtractive composition / wiring** — handle inline.
    - **Config-driven** — handle inline.
    - **Engine variant factory creation** — handle inline (typically; the
-     factory shape parallels `createSimpleHlsEngine`).
+     factory shape parallels `createHlsVideoEngine`).
    - **Adapter creation** — handle inline (typically; the adapter shape
-     parallels `SimpleHlsMediaElement` + `SimpleHlsMediaMixin`).
+     parallels `HlsVideoMediaElement` + `HlsVideoMediaMixin`).
    - **New use-case-specific behavior** → route to `/create-spf-behavior`.
    - **Behavior update (purpose changing)** → route to
      `/change-spf-behavior`.
@@ -558,6 +558,10 @@ Cumulative audit after all chunks:
 
 Doc updates for **both** the use-case doc and its constituent feature
 docs (cascade):
+
+Update only records that already exist. If implementation reveals a
+missing record, report it as a candidate and create it only when the user
+explicitly requests it.
 
 **Use-case doc updates:**
 
@@ -737,8 +741,8 @@ isn't; building a factory twice; silent doc drift).
   scope** → `/change-spf-behavior`.
 - **You want to split or merge behaviors** → `/change-spf-behavior`'s
   decomposition check.
-- **You want to write an architectural design doc** → `design` skill.
-- **You want to write an RFC** → `rfc` skill.
+- **The user requests a durable record** → treat it as a separate explicit
+  task. Do not create it from this workflow.
 
 ## How the failure-mode catalog grows
 

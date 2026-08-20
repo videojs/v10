@@ -1,5 +1,3 @@
-'use client';
-
 import { PlayButtonCore, PlayButtonDataAttrs } from '@videojs/core';
 import { selectPlayback } from '@videojs/core/dom';
 

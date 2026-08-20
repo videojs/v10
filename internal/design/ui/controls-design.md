@@ -13,7 +13,7 @@ Video players need to:
 
 1. **Track user activity** — pointer movement, keyboard input, touch gestures
 2. **Auto-hide controls** — fade out after inactivity while playing
-3. **Keep controls visible** — when paused or interacting
+3. **Keep controls visible** — when paused, casting, or sustaining an interaction
 4. **Expose visibility state** — for cursor hiding, overlays
 
 ## Solution
@@ -23,7 +23,7 @@ Split into **feature** (state management) and **component** (UI):
 | Concern | Location | Responsibility |
 |---------|----------|----------------|
 | Activity tracking | `controlsFeature` | Pointer/keyboard events, idle timer (internal) |
-| Visibility computation | `controlsFeature` | `controlsVisible = userActive \|\| paused` |
+| Visibility computation | `controlsFeature` | `controlsVisible = userActive \|\| paused \|\| casting \|\| locked` |
 | Auto-hide timing | `controlsFeature` | Idle timer, configurable delay |
 | Layout | `<media-controls-group>` | Visual grouping of controls |
 
@@ -34,12 +34,17 @@ interface ControlsSlice {
   /** Raw activity state — true if user recently interacted */
   userActive: boolean;
 
-  /** Computed visibility: userActive || paused */
+  /** Computed visibility: userActive || paused || casting || locked */
   controlsVisible: boolean;
+
+  /** Hold controls visible until the returned idempotent release is called. */
+  requestControlsLock(): () => void;
 }
 ```
 
 Activity is tracked on the **player container**, not the controls element — activity anywhere in the player should reset the idle timer. Focus inside controls resets the timer but does not prevent auto-hide; focus is treated like any other activity signal.
+
+Sustained interactions acquire a reference-counted visibility lock. Root menus hold a lock while open, and sliders hold one for the complete pointer drag lifecycle. Releasing the final lock starts a full idle delay so the controls do not disappear immediately when an interaction finishes. Components release locks on teardown as well as normal interaction completion.
 
 ## Accessibility
 
@@ -59,7 +64,6 @@ Features reviewed but intentionally deferred:
 
 | Feature | Use case | Why deferred |
 |---------|----------|-------------|
-| Lock API (`requestControlsLock`) | Menus/popovers holding controls visible | Neither MC nor Vidstack expose public lock API |
 | `reportUserActivity()` | External controls, testing | Activity is auto-tracked; neither MC nor Vidstack expose this |
 | `showControls()` / `hideControls()` | Imperative show/hide | Activity tracking sufficient for most cases |
 | `userInputType` in state | Expose `'mouse' \| 'touch' \| 'pen' \| 'keyboard'` | Used internally; keep as implementation detail |

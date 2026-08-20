@@ -1,6 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
-import { HlsJsMedia } from '../../hls-js';
-import { addMediaComponent } from '../../media-host';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
 
@@ -14,8 +12,30 @@ function createSdk() {
 }
 
 class FakeMedia extends EventTarget {
-  engine: HlsJsMedia['engine'] = null;
+  engine: unknown = null;
   src = '';
+}
+
+/** Shaped like an hls.js instance, class statics included. */
+class FakeHlsJsEngine {
+  static Events = { MANIFEST_LOADED: 'hlsManifestLoaded' };
+  static ErrorDetails = { MANIFEST_LOAD_ERROR: 'manifestLoadError' };
+  static version = '1.6.15';
+  levels: unknown[] = [];
+  on() {}
+  off() {}
+}
+
+/** Shaped like a dash.js `MediaPlayerClass`. */
+class FakeDashJsEngine {
+  getCurrentTrackFor() {
+    return null;
+  }
+  getRepresentationsByType() {
+    return [];
+  }
+  on() {}
+  off() {}
 }
 
 // Initialization is deferred by a microtask so all props settle first.
@@ -23,6 +43,10 @@ async function settle() {
   await Promise.resolve();
   await Promise.resolve();
 }
+
+afterEach(() => {
+  document.body.innerHTML = '';
+});
 
 describe('MuxData', () => {
   it('accepts a player software name', () => {
@@ -75,7 +99,7 @@ describe('MuxData', () => {
 
     expect(monitor).toHaveBeenCalledTimes(1);
 
-    const engine = {} as NonNullable<HlsJsMedia['engine']>;
+    const engine = new FakeHlsJsEngine();
     media.engine = engine;
     media.src = 'https://stream.mux.com/abc123.m3u8';
     media.dispatchEvent(new Event('loadstart'));
@@ -87,29 +111,81 @@ describe('MuxData', () => {
       video,
       expect.objectContaining({
         hlsjs: engine,
+        Hls: FakeHlsJsEngine,
         data: expect.objectContaining({ video_id: 'abc123' }),
       })
     );
   });
 
-  it('exposes mux config under host.config.muxData with inferred types', () => {
-    const media = new HlsJsMedia();
-    const muxData = new MuxData();
-    addMediaComponent(media, muxData);
+  it('monitors a dash.js engine through the dash.js integration', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+    const media = new FakeMedia();
+    media.engine = new FakeDashJsEngine();
+    media.src = 'https://example.com/manifest.mpd';
 
-    // Type-level: `config.muxData` infers `Partial<MuxDataProps>` via the
-    // component's `configKey` augmentation, so the assignment/read are checked.
-    // This fails to compile if inference regresses.
-    media.config = { muxData: { envKey: 'key', debug: true } };
-    const envKey: string | undefined = media.config.muxData?.envKey;
+    data.setMedia(media);
+    data.attach(video);
 
-    expect(envKey).toBe('key');
-    // `config` stores the plain namespace POJO, not the component instance.
-    expect(media.config.muxData).toEqual({ envKey: 'key', debug: true });
-    expect(media.config.muxData).not.toBeInstanceOf(MuxData);
-    // The setter still routed those values onto the live component instance.
-    expect(muxData.envKey).toBe('key');
-    expect(muxData.debug).toBe(true);
+    await settle();
+
+    const [, options] = monitor.mock.lastCall!;
+    expect(options.dashjs).toBe(media.engine);
+    expect(options).not.toHaveProperty('hlsjs');
+    expect(options).not.toHaveProperty('Hls');
+  });
+
+  it('monitors media with no engine from the media element alone', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+    const media = new FakeMedia();
+    media.src = 'https://example.com/video.mp4';
+
+    data.setMedia(media);
+    data.attach(video);
+
+    await settle();
+
+    const [, options] = monitor.mock.lastCall!;
+    expect(options).not.toHaveProperty('hlsjs');
+    expect(options).not.toHaveProperty('Hls');
+    expect(options).not.toHaveProperty('dashjs');
+  });
+
+  it('moves its media listener when registered with another host', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk });
+    const video = document.createElement('video');
+    const first = new FakeMedia();
+    const second = new FakeMedia();
+
+    data.setMedia(first);
+    data.attach(video);
+    await settle();
+
+    data.setMedia(second);
+    first.dispatchEvent(new Event('loadstart'));
+    await settle();
+    expect(monitor).toHaveBeenCalledTimes(1);
+
+    second.dispatchEvent(new Event('loadstart'));
+    await settle();
+    expect(monitor).toHaveBeenCalledTimes(2);
+  });
+
+  it('destroys active monitoring on destroy', () => {
+    const data = new MuxData();
+    const video = document.createElement('video');
+    const destroy = vi.fn();
+    Object.defineProperty(video, 'mux', { value: { destroy }, writable: true, configurable: true });
+
+    data.attach(video);
+    data.destroy();
+
+    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(video.mux).toBeUndefined();
   });
 
   it('stops re-monitoring after destroy', async () => {

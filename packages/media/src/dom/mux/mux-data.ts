@@ -1,6 +1,6 @@
 import Mux from 'mux-embed';
-import { Hls, type HlsJsMedia } from '../hls-js';
 import { getPlayerVersion } from './env';
+import { toMuxDataEngineOptions } from './mux-data-engine';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
 export interface MuxDataProps {
@@ -15,31 +15,47 @@ export interface MuxDataProps {
   metadata: MuxDataOptions['data'] | undefined;
 }
 
+export const muxDataDefaultProps: MuxDataProps = {
+  MuxDataSdk: Mux,
+  beaconCollectionDomain: undefined,
+  debug: false,
+  disableCookies: false,
+  envKey: undefined,
+  playerSoftwareName: undefined,
+  playerSoftwareVersion: getPlayerVersion(),
+  // Generated per instance; see `#generatePlayerInitTime()`.
+  playerInitTime: undefined,
+  metadata: undefined,
+};
+
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
+/**
+ * What Mux Data needs from the media it monitors: the source being played, a
+ * `loadstart` to re-monitor on, and — for engine-backed playback — the engine
+ * itself.
+ *
+ * `engine` is deliberately untyped. Every engine-backed media host exposes one,
+ * but they are unrelated types (an hls.js instance, a dash.js player, an SPF
+ * composition), and which of them Mux Data can hook is decided by
+ * {@link toMuxDataEngineOptions}, not by this contract. Media with no JS engine
+ * simply omit it.
+ */
 export interface MuxDataMedia extends EventTarget {
-  readonly engine?: HlsJsMedia['engine'];
+  readonly engine?: unknown;
   readonly src: string;
 }
 
-declare module '../media-host' {
-  interface MediaComponentConfig {
-    muxData: Partial<MuxDataProps>;
-  }
-}
-
 export class MuxData implements MuxDataProps {
-  static readonly configKey = 'muxData';
-
-  #MuxDataSdk: MuxDataSdk | undefined = Mux;
+  #MuxDataSdk: MuxDataSdk | undefined = muxDataDefaultProps.MuxDataSdk;
   #pendingInitialize: Promise<void> | null = null;
-  #beaconCollectionDomain: string | undefined;
-  #debug = false;
-  #disableCookies = false;
-  #metadata: MuxDataOptions['data'] | undefined;
-  #envKey: string | undefined;
-  #playerSoftwareName: string | undefined;
-  #playerSoftwareVersion: string | undefined = getPlayerVersion();
+  #beaconCollectionDomain: string | undefined = muxDataDefaultProps.beaconCollectionDomain;
+  #debug = muxDataDefaultProps.debug;
+  #disableCookies = muxDataDefaultProps.disableCookies;
+  #metadata: MuxDataOptions['data'] | undefined = muxDataDefaultProps.metadata;
+  #envKey: string | undefined = muxDataDefaultProps.envKey;
+  #playerSoftwareName: string | undefined = muxDataDefaultProps.playerSoftwareName;
+  #playerSoftwareVersion: string | undefined = muxDataDefaultProps.playerSoftwareVersion;
   #playerInitTime: number | undefined = this.#generatePlayerInitTime();
   #media: MuxDataMedia | null = null;
   #target: HTMLVideoElement | null = null;
@@ -49,6 +65,8 @@ export class MuxData implements MuxDataProps {
   }
 
   setMedia(media: MuxDataMedia) {
+    if (this.#media === media) return;
+    this.#media?.removeEventListener('loadstart', this.#reinitialize);
     this.#media = media;
     this.#media.addEventListener('loadstart', this.#reinitialize);
   }
@@ -67,9 +85,9 @@ export class MuxData implements MuxDataProps {
   }
 
   destroy() {
+    this.detach();
     this.#media?.removeEventListener('loadstart', this.#reinitialize);
     this.#media = null;
-    this.#target = null;
   }
 
   get MuxDataSdk() {
@@ -112,6 +130,12 @@ export class MuxData implements MuxDataProps {
     this.#reinitialize();
   }
 
+  /**
+   * Mux Data environment key. Omitted from the beacon when unset, which is the
+   * norm for Mux-hosted playback: the view reports the Mux playback ID as its
+   * `video_id` (see {@link toVideoId}) and Mux attributes it to the owning
+   * environment. Set this to monitor sources Mux doesn't host.
+   */
   get envKey() {
     return this.#envKey;
   }
@@ -191,7 +215,6 @@ export class MuxData implements MuxDataProps {
       playerInitTime: player_init_time,
       metadata = {},
     } = this;
-    const { engine: hlsjs } = media;
 
     const { view_session_id = this.MuxDataSdk?.utils.generateUUID() } = metadata;
     const video_id = toVideoId({ metadata, src: media.src });
@@ -202,8 +225,7 @@ export class MuxData implements MuxDataProps {
       debug,
       ...(beaconCollectionDomain ? { beaconCollectionDomain } : {}),
       ...(disableCookies ? { disableCookies } : {}),
-      ...(hlsjs ? { hlsjs } : {}),
-      Hls,
+      ...toMuxDataEngineOptions(media.engine),
       data: {
         ...(env_key ? { env_key } : {}),
         ...(player_software_name ? { player_software_name } : {}),

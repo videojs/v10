@@ -45,10 +45,14 @@ export default {
     current: 'Temps actuel',
     duration: 'Durée',
     remaining: 'Temps restant',
+    elapsedSuffix: '{duration} de temps écoulé',
+    durationSuffix: '{duration} de durée',
     remainingSuffix: 'Il reste {duration}',
-    showElapsed: '{duration}. Afficher le temps écoulé.',
-    showDuration: '{duration}. Afficher la durée.',
-    showRemaining: '{duration}. Afficher le temps restant.',
+    showElapsed: 'Afficher le temps écoulé, {duration}.',
+    showDuration: 'Afficher la durée, {duration}.',
+    showRemaining: 'Afficher le temps restant, {duration}.',
+    toggleElapsed: 'Basculer entre le temps écoulé et le temps restant.',
+    toggleDuration: 'Basculer entre la durée et le temps restant.',
     position: '{current} de {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Plein écran',
     pip: 'Image dans l’image',
     exitPip: 'Quitter l’image dans l’image',
+    seekedTo: 'Position de lecture : {time}',
+  },
+  container: {
+    label: 'Lecteur multimédia',
   },
   errors: {
     aborted: 'Vous avez interrompu la lecture de la vidéo.',
@@ -77,6 +85,7 @@ export default {
     source:
       "Cette vidéo n'a pas pu être chargée, soit parce que le serveur ou le réseau a échoué ou parce que le format n'est pas reconnu.",
     encrypted: "Le média est chiffré et nous n'avons pas les clés pour le déchiffrer.",
+    unplayable: "Ce média n'est pas pris en charge par le lecteur.",
     title: 'Une erreur s’est produite.',
     unexpected: 'Une erreur s’est produite. Veuillez réessayer.',
   },

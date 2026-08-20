@@ -45,10 +45,14 @@ export default {
     current: 'Aktuálny čas',
     duration: 'Čas trvania',
     remaining: 'Zostávajúci čas',
+    elapsedSuffix: '{duration} uplynulého času',
+    durationSuffix: '{duration} trvania',
     remainingSuffix: 'Zostáva {duration}',
-    showElapsed: '{duration}. Zobraziť uplynulý čas.',
-    showDuration: '{duration}. Zobraziť trvanie.',
-    showRemaining: '{duration}. Zobraziť zostávajúci čas.',
+    showElapsed: 'Zobraziť uplynulý čas, {duration}.',
+    showDuration: 'Zobraziť trvanie, {duration}.',
+    showRemaining: 'Zobraziť zostávajúci čas, {duration}.',
+    toggleElapsed: 'Prepínanie medzi uplynulým a zostávajúcim časom.',
+    toggleDuration: 'Prepínanie medzi trvaním a zostávajúcim časom.',
     position: '{current} z {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Celá obrazovka',
     pip: 'Obraz v obraze',
     exitPip: 'Zavrieť obraz v obraze',
+    seekedTo: 'Presunuté na {time}',
+  },
+  container: {
+    label: 'Prehrávač médií',
   },
   errors: {
     aborted: 'Prerušili ste prehrávanie',
@@ -77,6 +85,7 @@ export default {
     source:
       'Súbor sa nepodarilo načítať pre chybu servera, sieťového pripojenia, alebo je formát súboru nepodporovaný.',
     encrypted: 'Súbor je zašifrovaný a nie je k dispozícii kľúč na rozšifrovanie.',
+    unplayable: 'Toto médium prehrávač nepodporuje.',
     title: 'Niečo sa pokazilo.',
     unexpected: 'Vyskytla sa chyba. Skúste to znova.',
   },

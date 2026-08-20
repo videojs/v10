@@ -1,3 +1,4 @@
+import { findLastAtOrBefore } from '@videojs/utils/array';
 import type {
   ThumbnailConstraints,
   ThumbnailCrossOrigin,
@@ -23,31 +24,13 @@ export interface ThumbnailState {
   loading: boolean;
   /** The thumbnail image failed to load. */
   error: boolean;
-  /** No thumbnail is available and not loading — the component should be hidden. */
+  /** Whether the component is hidden because no thumbnail is available and it is not loading. */
   hidden: boolean;
 }
 
 export class ThumbnailCore {
   findActiveThumbnail(thumbnails: ThumbnailImage[], time: number): ThumbnailImage | undefined {
-    if (thumbnails.length === 0) return undefined;
-
-    let low = 0;
-    let high = thumbnails.length - 1;
-    let result: ThumbnailImage | undefined;
-
-    while (low <= high) {
-      const mid = (low + high) >>> 1;
-      const image = thumbnails[mid]!;
-
-      if (time >= image.startTime) {
-        result = image;
-        low = mid + 1;
-      } else {
-        high = mid - 1;
-      }
-    }
-
-    return result;
+    return findLastAtOrBefore(thumbnails, time, (thumbnail) => thumbnail.startTime);
   }
 
   /**

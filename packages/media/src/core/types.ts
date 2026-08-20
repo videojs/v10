@@ -28,6 +28,15 @@ export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike
 
 export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
+/**
+ * Rendition height, as the `{height}p` shorthand streaming providers use.
+ *
+ * Options that accept one match renditions by pixel area rather than by
+ * literal height, so anamorphic variants land in the bucket their source
+ * material belongs to.
+ */
+export type MediaResolution = '270p' | '360p' | '480p' | '540p' | '720p' | '1080p' | '1440p' | '2160p';
+
 // ----------------------------------------
 // Controls
 // ----------------------------------------
@@ -502,6 +511,54 @@ export interface MediaPosterCapability {
 }
 
 // ----------------------------------------
+// Content metadata
+// ----------------------------------------
+
+/** A media-owned content value. `undefined` means the key is absent; `null` means it has no current value. */
+export type MediaContentValue = string | null | undefined;
+
+/**
+ * Standardized content metadata reported by a media implementation. The named
+ * keys are the shared vocabulary player features read; a media may report keys
+ * of its own alongside them.
+ *
+ * Report a key only for a value the media can vouch for. Omit it otherwise —
+ * an empty string is a deliberate blank that stops a feature's fallback chain,
+ * so reporting `''` for "not loaded yet" suppresses the author's fallback.
+ */
+export interface MediaContentData {
+  /** Title of the content. */
+  readonly title?: MediaContentValue;
+  /** URL of a still image representing the content. */
+  readonly poster?: MediaContentValue;
+  /** URL of a WebVTT storyboard describing thumbnail sprites for the content. */
+  readonly storyboard?: MediaContentValue;
+  readonly [key: string]: MediaContentValue;
+}
+
+/** Events emitted when a media implementation's content data changes. */
+export interface MediaContentDataEvents {
+  contentdatachange: EventLike;
+}
+
+/**
+ * Optional media-owned content metadata.
+ *
+ * `undefined` means the media does not support content data at all. A defined
+ * bag — including an empty one — means it does, and its keys may come and go
+ * as a source loads or is replaced.
+ *
+ * Implementations dispatch `contentdatachange` when the bag changes, and only
+ * then; an assignment that leaves every key and value alone stays quiet. They
+ * are also expected to clear content data when the source is replaced. Nothing
+ * enforces that second half, so a media that skips it reports stale metadata
+ * across a source change.
+ */
+export interface MediaContentDataCapability {
+  readonly contentData: MediaContentData | undefined;
+}
+
+// ----------------------------------------
 // Video dimensions (video-only)
 // ----------------------------------------
 
@@ -512,14 +569,6 @@ export interface MediaVideoDimensionsEvents {
 export interface MediaVideoDimensionsCapability {
   readonly videoWidth: number;
   readonly videoHeight: number;
-}
-
-// ----------------------------------------
-// Config
-// ----------------------------------------
-
-export interface MediaConfigCapability {
-  config: Record<string, unknown>;
 }
 
 // ----------------------------------------
@@ -547,7 +596,8 @@ export interface MediaFullEvents
     MediaErrorEvents,
     TextTrackListEvents,
     MediaStreamTypeEvents,
-    MediaLiveEvents {}
+    MediaLiveEvents,
+    MediaContentDataEvents {}
 
 export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
   extends Media<Events>,
@@ -562,10 +612,10 @@ export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = M
     MediaTextTrackCapability,
     MediaStreamTypeCapability,
     MediaLiveCapability,
+    MediaContentDataCapability,
     MediaRemotePlaybackCapability,
     MediaControlsCapability,
-    MediaAutoplayCapability,
-    MediaConfigCapability {}
+    MediaAutoplayCapability {}
 
 export interface VideoEvents extends MediaFullEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
 
@@ -601,7 +651,7 @@ export interface MediaTargetLike
     MediaAutoplayCapability,
     Partial<MediaLiveCapability>,
     Partial<MediaStreamTypeCapability>,
-    Partial<MediaConfigCapability> {
+    Partial<MediaContentDataCapability> {
   title: string;
 }
 

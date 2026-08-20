@@ -1,6 +1,4 @@
-'use client';
-
-import type { MediaContainer, PopupGroup } from '@videojs/core/dom';
+import type { MediaContainer } from '@videojs/core/dom';
 import type { Media } from '@videojs/media';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
@@ -13,7 +11,6 @@ export interface PlayerContextValue {
   setMedia: Dispatch<SetStateAction<Media | null>>;
   container: MediaContainer | null;
   setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
-  popupGroup?: PopupGroup;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -33,15 +30,15 @@ export function PlayerContextProvider({
   return <PlayerContext.Provider value={value}>{children}</PlayerContext.Provider>;
 }
 
-/** Access the full player context value. Throws if used outside a Player Provider. */
+/** Access the full player context value. Throws if used outside a Player. */
 export function usePlayerContext(): PlayerContextValue {
   const ctx = useContext(PlayerContext);
-  if (!ctx) throw new Error('usePlayerContext must be used within a Player Provider');
+  if (!ctx) throw new Error('usePlayerContext must be used within a Player');
   return ctx;
 }
 
 /**
- * Access the player store from within a Player Provider.
+ * Access the player store from within a Player.
  *
  * This standalone hook has no knowledge of your configured features, so it
  * returns an untyped `UnknownStore` whose state properties are typed as
@@ -67,7 +64,7 @@ export function usePlayer<R>(selector?: (state: UnknownState) => R) {
 }
 
 /**
- * Access player state when available, but return `undefined` outside Provider.
+ * Access player state when available, but return `undefined` outside a Player.
  *
  * This is useful for components that can operate without player context
  * (e.g. they accept fully explicit props as a fallback).
@@ -83,28 +80,22 @@ export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
   return ctx ? value : undefined;
 }
 
-/** Access the media element from within a Player Provider. */
+/** Access the media element from within a Player. */
 export function useMedia(): Media | null {
   const { media } = usePlayerContext();
   return media;
 }
 
-/** Access the container element from within a Player Provider. */
+/** Access the container element from within a Player. */
 export function useContainer(): MediaContainer | null {
   const { container } = usePlayerContext();
   return container;
 }
 
-/** Access the container element when a Player Provider is available. */
+/** Access the container element when a Player is available. */
 export function useOptionalContainer(): MediaContainer | null {
   const ctx = useContext(PlayerContext);
   return ctx?.container ?? null;
-}
-
-/** Access the interactive popup group when a Player Provider is available. */
-export function useOptionalPopupGroup(): PopupGroup | undefined {
-  const ctx = useContext(PlayerContext);
-  return ctx?.popupGroup;
 }
 
 /** Access the media attach setter for connecting a media element to the player. */

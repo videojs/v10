@@ -73,11 +73,11 @@ function getTemplateHTML() {
             <media-time type="current" class="media-time"></media-time>
             <media-time-slider class="media-slider">
               <media-slider-track class="media-slider__track">
-                <media-slider-fill class="media-slider__fill"></media-slider-fill>
                 <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
+                <media-slider-fill class="media-slider__fill"></media-slider-fill>
               </media-slider-track>
               <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
-              <media-slider-preview class="media-slider__preview">
+              <media-slider-preview overflow="visible" class="media-slider__preview">
                 <media-slider-value type="pointer" class="media-slider__value media-time"></media-slider-value>
               </media-slider-preview>
             </media-time-slider>

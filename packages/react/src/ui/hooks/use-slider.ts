@@ -1,5 +1,3 @@
-'use client';
-
 import type { SliderInput, SliderState } from '@videojs/core';
 import {
   createSlider,
@@ -8,10 +6,12 @@ import {
   type SliderRootProps,
   type SliderRootStyle,
   type SliderThumbProps,
+  selectControls,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
-import { isRTL } from '@videojs/utils/dom';
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { applyStyles, isRTL } from '@videojs/utils/dom';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useOptionalPlayer } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useForceRender } from '../../utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -39,6 +39,7 @@ export interface UseSliderOptions<State extends SliderState = SliderState>
 
 export interface UseSliderReturnValue<State extends SliderState = SliderState> {
   state: State;
+  input: SliderApi['input'];
   cssVars: Record<string, string>;
   rootRef: React.RefCallback<HTMLElement>;
   thumbRef: React.RefCallback<HTMLElement>;
@@ -58,6 +59,16 @@ export function useSlider<State extends SliderState = SliderState>(
   options: UseSliderOptions<State>
 ): UseSliderReturnValue<State> {
   const optionsRef = useLatestRef(options);
+  const controls = useOptionalPlayer(selectControls);
+  const requestControlsLock = controls?.requestControlsLock;
+  const releaseControlsLockRef = useRef<(() => void) | null>(null);
+
+  const releaseControlsLock = useCallback(() => {
+    releaseControlsLockRef.current?.();
+    releaseControlsLockRef.current = null;
+  }, []);
+
+  useEffect(() => releaseControlsLock, [releaseControlsLock]);
 
   const rootElementRef = useRef<HTMLElement | null>(null);
   const thumbElementRef = useRef<HTMLElement | null>(null);
@@ -78,8 +89,14 @@ export function useSlider<State extends SliderState = SliderState>(
       adjustPercent: optionsRef.current.adjustPercent,
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),
-      onDragStart: () => optionsRef.current.onDragStart?.(),
-      onDragEnd: () => optionsRef.current.onDragEnd?.(),
+      onDragStart: () => {
+        releaseControlsLockRef.current ??= requestControlsLock?.() ?? null;
+        optionsRef.current.onDragStart?.();
+      },
+      onDragEnd: () => {
+        releaseControlsLock();
+        optionsRef.current.onDragEnd?.();
+      },
     };
 
     return createSlider(stableOptions);
@@ -87,8 +104,14 @@ export function useSlider<State extends SliderState = SliderState>(
 
   useDestroy(slider);
 
-  // Subscribe to slider input state.
-  const input = useSnapshot(slider.input);
+  // Percentage changes are rendered directly below. React only needs to
+  // re-render when interaction state changes.
+  const interaction = useSnapshot(slider.input, ({ dragging, pointing, focused }) => ({
+    dragging,
+    pointing,
+    focused,
+  }));
+  const input = { ...slider.input.current, ...interaction };
 
   // Compute derived state from input + caller-provided projection.
   const state = options.computeState(input);
@@ -104,10 +127,28 @@ export function useSlider<State extends SliderState = SliderState>(
   // Adjust CSS var percents for edge thumb alignment using live DOM measurements.
   const cssVars = options.getCSSVars(slider.adjustForAlignment(state));
 
+  const syncStyles = useCallback(
+    (element = rootElementRef.current) => {
+      if (!element) return;
+      const next = optionsRef.current.computeState(slider.input.current);
+      applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
+    },
+    [slider]
+  );
+
+  useLayoutEffect(() => {
+    syncStyles();
+    return slider.input.subscribe(syncStyles);
+  }, [slider, syncStyles]);
+
   // Ref callbacks for root and thumb elements.
-  const rootRef = useCallback((element: HTMLElement | null) => {
-    rootElementRef.current = element;
-  }, []);
+  const rootRef = useCallback(
+    (element: HTMLElement | null) => {
+      rootElementRef.current = element;
+      syncStyles(element);
+    },
+    [syncStyles]
+  );
 
   const thumbRef = useCallback((element: HTMLElement | null) => {
     thumbElementRef.current = element;
@@ -115,6 +156,7 @@ export function useSlider<State extends SliderState = SliderState>(
 
   return {
     state,
+    input: slider.input,
     cssVars,
     rootRef,
     thumbRef,

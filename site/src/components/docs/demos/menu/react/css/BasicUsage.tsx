@@ -1,4 +1,5 @@
 import {
+  Container,
   createPlayer,
   Menu,
   useAudioTrackOptions,
@@ -10,7 +11,7 @@ import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 const src = '{{VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS}}';
 
 function SettingsMenu(): ReactNode {
@@ -31,27 +32,26 @@ function SettingsMenu(): ReactNode {
         Settings
       </Menu.Trigger>
       <Menu.Content className="menu">
-        <Menu.View className="menu-panel">
+        <div className="menu-panel">
           {hasQuality ? (
             <Menu.Root>
               <Menu.Trigger
-                type="quality"
                 className="menu-item"
                 render={(props) => (
                   <div {...props}>
                     <span>Quality</span>
                     <span className="menu-value">
-                      <Menu.ItemValue />
+                      {quality.selectedLabel}
                       <span aria-hidden="true">›</span>
                     </span>
                   </div>
                 )}
               />
               <Menu.Content className="menu-panel">
-                <Menu.Back className="menu-back">
+                <Menu.Item className="menu-back">
                   <span aria-hidden="true">‹</span>
                   Quality
-                </Menu.Back>
+                </Menu.Item>
                 <Menu.RadioGroup
                   className="menu-group"
                   value={quality.value}
@@ -87,23 +87,22 @@ function SettingsMenu(): ReactNode {
           {hasAudioTrack ? (
             <Menu.Root>
               <Menu.Trigger
-                type="audio-track"
                 className="menu-item"
                 render={(props) => (
                   <div {...props}>
                     <span>Audio</span>
                     <span className="menu-value">
-                      <Menu.ItemValue />
+                      {audioTrack.selectedLabel}
                       <span aria-hidden="true">›</span>
                     </span>
                   </div>
                 )}
               />
               <Menu.Content className="menu-panel">
-                <Menu.Back className="menu-back">
+                <Menu.Item className="menu-back">
                   <span aria-hidden="true">‹</span>
                   Audio
-                </Menu.Back>
+                </Menu.Item>
                 <Menu.RadioGroup
                   className="menu-group"
                   value={audioTrack.value}
@@ -135,23 +134,22 @@ function SettingsMenu(): ReactNode {
           {hasPlaybackRate ? (
             <Menu.Root>
               <Menu.Trigger
-                type="playback-rate"
                 className="menu-item"
                 render={(props) => (
                   <div {...props}>
                     <span>Speed</span>
                     <span className="menu-value">
-                      <Menu.ItemValue />
+                      {playbackRate.selectedLabel}
                       <span aria-hidden="true">›</span>
                     </span>
                   </div>
                 )}
               />
               <Menu.Content className="menu-panel">
-                <Menu.Back className="menu-back">
+                <Menu.Item className="menu-back">
                   <span aria-hidden="true">‹</span>
                   Speed
-                </Menu.Back>
+                </Menu.Item>
                 <Menu.RadioGroup
                   className="menu-group"
                   value={playbackRate.value}
@@ -183,23 +181,22 @@ function SettingsMenu(): ReactNode {
           {hasCaptions ? (
             <Menu.Root>
               <Menu.Trigger
-                type="captions"
                 className="menu-item"
                 render={(props) => (
                   <div {...props}>
                     <span>Captions</span>
                     <span className="menu-value">
-                      <Menu.ItemValue />
+                      {captions.selectedLabel}
                       <span aria-hidden="true">›</span>
                     </span>
                   </div>
                 )}
               />
               <Menu.Content className="menu-panel">
-                <Menu.Back className="menu-back">
+                <Menu.Item className="menu-back">
                   <span aria-hidden="true">‹</span>
                   Captions
-                </Menu.Back>
+                </Menu.Item>
                 <Menu.RadioGroup
                   className="menu-group"
                   value={captions.value}
@@ -231,7 +228,7 @@ function SettingsMenu(): ReactNode {
           <Menu.Item className="menu-item" onSelect={() => navigator.clipboard?.writeText(window.location.href)}>
             Copy link
           </Menu.Item>
-        </Menu.View>
+        </div>
       </Menu.Content>
     </Menu.Root>
   );
@@ -239,8 +236,8 @@ function SettingsMenu(): ReactNode {
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <HlsJsVideo src={src} autoPlay crossOrigin="anonymous" muted playsInline loop>
           <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srcLang="en" label="English" />
           <track kind="subtitles" src="/docs/demos/captions-button/captions.vtt" srcLang="es" label="Spanish" />
@@ -248,7 +245,7 @@ export default function BasicUsage() {
         <div className="menu-bar">
           <SettingsMenu />
         </div>
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

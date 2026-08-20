@@ -45,10 +45,14 @@ export default {
     current: 'Aktueller Zeitpunkt',
     duration: 'Dauer',
     remaining: 'Verbleibende Zeit',
+    elapsedSuffix: '{duration} verstrichene Zeit',
+    durationSuffix: '{duration} Dauer',
     remainingSuffix: 'Noch {duration}',
-    showElapsed: '{duration}. Verstrichene Zeit anzeigen.',
-    showDuration: '{duration}. Dauer anzeigen.',
-    showRemaining: '{duration}. Verbleibende Zeit anzeigen.',
+    showElapsed: 'Verstrichene Zeit anzeigen, {duration}.',
+    showDuration: 'Dauer anzeigen, {duration}.',
+    showRemaining: 'Verbleibende Zeit anzeigen, {duration}.',
+    toggleElapsed: 'Zwischen verstrichener und verbleibender Zeit wechseln.',
+    toggleDuration: 'Zwischen Dauer und verbleibender Zeit wechseln.',
     position: '{current} von {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Vollbild',
     pip: 'Bild-in-Bild',
     exitPip: 'Bild-in-Bild beenden',
+    seekedTo: 'Zu {time} gesprungen',
+  },
+  container: {
+    label: 'Mediaplayer',
   },
   errors: {
     aborted: 'Sie haben die Videowiedergabe abgebrochen.',
@@ -77,6 +85,7 @@ export default {
     source:
       'Das Video konnte nicht geladen werden, da entweder ein Server- oder Netzwerkfehler auftrat oder das Format nicht unterstützt wird.',
     encrypted: 'Die Entschlüsselungsschlüssel für den verschlüsselten Medieninhalt sind nicht verfügbar.',
+    unplayable: 'Dieses Medium wird vom Player nicht unterstützt.',
     title: 'Etwas ist schiefgelaufen.',
     unexpected: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
   },

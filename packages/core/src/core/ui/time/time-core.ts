@@ -10,6 +10,8 @@ import {
   showDurationText,
   showElapsedText,
   showRemainingText,
+  toggleDurationText,
+  toggleElapsedText,
 } from '../../i18n/text/time';
 import { resolveLabel } from '../utils/resolve-label';
 
@@ -54,6 +56,12 @@ const DEFAULT_LABELS: Record<TimeType, Text> = {
   remaining: remainingText,
 };
 
+const TOGGLE_DESCRIPTIONS: Record<TimeType, Text> = {
+  current: toggleElapsedText,
+  duration: toggleDurationText,
+  remaining: toggleDurationText,
+};
+
 export class TimeCore {
   static readonly defaultProps: NonNullableObject<TimeProps> = {
     type: 'current',
@@ -64,6 +72,7 @@ export class TimeCore {
 
   #props: NonNullableObject<TimeProps> = { ...TimeCore.defaultProps };
   #media: MediaTimeState | null = null;
+  #formatLocale: string | string[] | undefined;
 
   constructor(props?: TimeProps) {
     if (props) this.setProps(props);
@@ -75,6 +84,11 @@ export class TimeCore {
 
   setMedia(media: MediaTimeState): void {
     this.#media = media;
+  }
+
+  /** @internal Platform adapters set the active i18n locale for digital time formatting. */
+  setFormatLocale(locale: string | string[] | undefined): void {
+    this.#formatLocale = locale;
   }
 
   #getSeconds(): number {
@@ -95,7 +109,8 @@ export class TimeCore {
   #getText(): string {
     const media = this.#media!;
     const seconds = this.#getSeconds();
-    return formatTime(Math.abs(seconds), media.duration);
+    const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };
+    return formatTime(Math.abs(seconds), media.duration, options);
   }
 
   #getPhrase(): string {
@@ -137,12 +152,29 @@ export class TimeCore {
 
   getLabelParams(state: TimeState): { duration: string } | undefined {
     const custom = resolveLabel(this.#props.label, state);
-    return custom === undefined && this.#props.toggle ? { duration: state.phrase } : undefined;
+    if (custom !== undefined || !this.#props.toggle) return undefined;
+
+    const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };
+    const duration = formatTimeAsPhrase(Math.abs(state.seconds), options);
+
+    switch (state.type) {
+      case 'current':
+        return { duration: `${duration} elapsed` };
+      case 'duration':
+        return { duration: `${duration} duration` };
+      case 'remaining':
+        return { duration: `${duration} remaining` };
+    }
+  }
+
+  getDescription(type = this.#props.type): Text | undefined {
+    return this.#props.toggle ? TOGGLE_DESCRIPTIONS[type] : undefined;
   }
 
   getAttrs(state: TimeState, type = this.#props.type) {
     return {
       'aria-label': this.getLabel(state, type),
+      'aria-description': this.getDescription(type),
       role: this.#props.toggle ? 'button' : undefined,
       tabIndex: this.#props.toggle ? 0 : undefined,
     };

@@ -1,9 +1,7 @@
-'use client';
-
 import { TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
-import { remainingSuffixText } from '@videojs/core/i18n/text/time';
+import { durationSuffixText, elapsedSuffixText, remainingSuffixText } from '@videojs/core/i18n/text/time';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { ForwardedRef, KeyboardEvent, MouseEvent } from 'react';
@@ -58,17 +56,20 @@ export const Value = forwardRef(function Value(
   }
 
   core.setMedia(time);
+  core.setFormatLocale(locale);
   const state = core.getState();
   const attrs = core.getAttrs(state, defaultType);
   const labelParams = core.getLabelParams(state);
+  const suffixText = {
+    current: elapsedSuffixText,
+    duration: durationSuffixText,
+    remaining: remainingSuffixText,
+  }[state.type];
   const resolvedLabelParams = labelParams
     ? {
-        duration:
-          state.type === 'remaining'
-            ? translateText(remainingSuffixText, translator, {
-                duration: formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
-              })
-            : formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
+        duration: translateText(suffixText, translator, {
+          duration: formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
+        }),
       }
     : undefined;
 
@@ -112,10 +113,13 @@ export const Value = forwardRef(function Value(
       ref: [forwardedRef],
       props: [
         {
-          dateTime: state.datetime,
+          dateTime: toggle ? undefined : state.datetime,
           children: content,
           ...attrs,
           'aria-label': translateText(attrs['aria-label'], translator, resolvedLabelParams),
+          'aria-description': attrs['aria-description']
+            ? translateText(attrs['aria-description'], translator)
+            : undefined,
           ...(toggle ? { onClick: handleClick, onKeyDown: handleKeyDown } : undefined),
         },
         elementProps,

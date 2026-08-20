@@ -8,6 +8,10 @@ on:
     branches-ignore:
       - 'rfc/**'
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   install:
     runs-on: ubuntu-latest
@@ -86,8 +90,11 @@ jobs:
       matrix:
         package:
           - '@videojs/cli'
+          - 'vjsc'
           - '@videojs/core'
+          - '@videojs/icons'
           - '@videojs/media'
+          - '@videojs/skins'
           - '@videojs/store'
           - '@videojs/utils'
           - '@videojs/element'
@@ -204,3 +211,8 @@ jobs:
 
       - name: Build CDN bundles
         run: pnpm build:cdn
+
+      # Mirroring cdn/ onto another origin is supported, so the output must not
+      # reference an external CDN or resolve outside the directory.
+      - name: Check CDN bundles are self-contained
+        run: pnpm -F @videojs/html check:cdn

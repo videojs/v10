@@ -59,11 +59,11 @@ export class MenuRadioItemElement extends MediaElement {
             if (!currentMenuCtx || !currentGroupCtx || this.disabled) return;
 
             currentGroupCtx.onValueChange(this.value);
-            completeMenuItemSelection(currentMenuCtx.menu, currentMenuCtx.parentMenu);
+            completeMenuItemSelection(currentMenuCtx.menu);
           },
           onPointerenter: () => {
             const currentMenuCtx = this.#menuCtx.value;
-            if (!this.disabled) currentMenuCtx?.menu.highlight(this, { focus: false });
+            if (!this.disabled) currentMenuCtx?.menu.highlight(this, { focus: false, pointer: true });
           },
         },
         { signal: this.#disconnect.signal }

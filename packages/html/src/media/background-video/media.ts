@@ -1,41 +1,7 @@
 import type { Media } from '@videojs/media/dom';
-import { namedNodeMapToObject, serializeAttributes } from '@videojs/utils/dom';
-import { pick } from '@videojs/utils/object';
+import { namedNodeMapToObject } from '@videojs/utils/dom';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
-
-const VideoAttributes = [
-  'autoplay',
-  'controls',
-  'controlslist',
-  'crossorigin',
-  'disablepictureinpicture',
-  'disableremoteplayback',
-  'loop',
-  'muted',
-  'playsinline',
-  'preload',
-] as const;
-
-function getTemplateHTML(attrs: Record<string, string>) {
-  return /*html*/ `
-    <style>
-      :host {
-        position: relative;
-      }
-
-      video {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: var(--media-object-fit, inherit);
-        object-position: var(--media-object-position, 50% 50%);
-      }
-    </style>
-    <slot></slot>
-    <video${serializeAttributes(pick(attrs, [...VideoAttributes]))}></video>
-  `;
-}
+import { getTemplateHTML } from './template';
 
 // Don't extend CustomMediaMixin to save some bytes, background videos don't need the full Media API.
 export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {

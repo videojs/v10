@@ -1,0 +1,44 @@
+---
+description: "Caps hls.js renditions by resolution and player size, prefers locale-matched captions, and publishes four migration guides."
+date: 2026-08-19
+version: "10.0.0-beta.28"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.27...@videojs/core@10.0.0-beta.28"
+---
+
+Beta.28 is about the choices the player makes for you: which rendition adaptive bitrate settles on, which caption track turns on first, and where focus lands when you tab through the controls.
+
+## Renditions you can put a ceiling on
+
+hls.js-backed media gained three source options for steering automatic quality selection. `source.maxAutoResolution` caps the highest rendition ABR will pick on its own ([#2061](https://github.com/videojs/v10/pull/2061)). Renditions above the cap stay in `videoRenditions` and stay selectable by hand, so this is a ceiling on automatic selection rather than a filter on availability. Levels are ranked by pixel area instead of height, so an ultrawide rendition is judged on the pixels it actually costs.
+
+`source.capRenditionToPlayerSize` and `source.minAutoResolution` build on the same machinery ([#2243](https://github.com/videojs/v10/pull/2243)). The player-size cap itself isn't new — hls.js's `capLevelToPlayerSize` has shipped on by default since the beginning, undocumented and only reachable by rebuilding the engine. It's a normalized option now, it applies to the running engine, and it comes with the floor hls.js has no concept of. `minAutoResolution` defaults to `'720p'`: the low rungs of a ladder exist for bad network conditions, and capping a small player onto them looks worse than its size alone suggests. Name a lower rung to weaken the floor.
+
+All three keys ride a mutable policy the media element owns, so changing one reaches the running engine instead of rebuilding it, and `<mux-video>` and `<mux-audio>` inherit them unchanged. Native HLS has no equivalent lever, so it warns in development and does nothing. The normalized options are documented in the media sources concept for [HTML](/docs/framework/html/concepts/media-sources/) and [React](/docs/framework/react/concepts/media-sources/).
+
+## Captions, keyboard, and copy
+
+Enabling captions for the first time now prefers a track that matches the browser locale ([#2237](https://github.com/videojs/v10/pull/2237)). Matching walks the same BCP 47 chain as i18n, exact tag first and then progressively broader, and a remembered or explicitly chosen track still wins. When nothing matches you get the existing first-track fallback, and the English translation fallback is stripped so a non-English viewer doesn't land on English captions just because UI strings would. See the text tracks feature for [HTML](/docs/framework/html/reference/feature-text-tracks/) and [React](/docs/framework/react/reference/feature-text-tracks/).
+
+Two keyboard regressions are fixed. Standalone menu triggers — the playback rate button on the audio skin, for one — stopped opening on Enter and Space ([#2235](https://github.com/videojs/v10/pull/2235)). React triggers now run the same open path as a click while still honoring disabled state and a consumer's `preventDefault`, and the HTML playback-rate button clicks its `commandfor` target rather than toggling the menu directly, so the menu follows its normal lifecycle and focus lands on the checked rate. Separately, root menu triggers carry `tabIndex: 0`, which keeps Settings in the tab sequence on WebKit; submenu triggers still leave tabindex to roving focus ([#2238](https://github.com/videojs/v10/pull/2238)). Details in the menu reference for [HTML](/docs/framework/html/reference/menu/) and [React](/docs/framework/react/reference/menu/), and the accessibility concept for [HTML](/docs/framework/html/concepts/accessibility/) and [React](/docs/framework/react/concepts/accessibility/).
+
+Bengali got a rewrite from the reporter who filed the issue ([#2236](https://github.com/videojs/v10/pull/2236)). Control labels, status announcements, time strings, error messages, and menu copy all read more naturally and stay consistent with each other. Read the i18n concept for [HTML](/docs/framework/html/concepts/i18n/) and [React](/docs/framework/react/concepts/i18n/).
+
+## Fixes
+
+- TikTok's embedded player never came up, so pressing play in our controls did nothing and hovering the player never revealed them ([#2218](https://github.com/videojs/v10/pull/2218)). The embed now boots its player on load and parks it back at a paused start, and the frame is kept out of hit-testing like the four sibling embed hosts, so pointer events reach the skin.
+- Eight media elements published on npm never got a CDN bundle: YouTube, Vimeo, Cloudflare, Spotify, TikTok, Twitch, background video, and container ([#2252](https://github.com/videojs/v10/pull/2252)). CDN entries are read from the element definitions now, so anything published as `@videojs/html/media/<name>` also ships as `cdn/media/<name>.js` and lands in the release archive. See installation for [HTML](/docs/framework/html/how-to/installation/) and [React](/docs/framework/react/how-to/installation/), or self-hosting for [HTML](/docs/framework/html/how-to/self-host-the-player/) and [React](/docs/framework/react/how-to/self-host-the-player/).
+- Chaptered sliders render in Safari again. It doesn't accept `calc(Infinity * 1px)` as the `round` value of a `clip-path` `inset()`, so the track radius is finite and the chapter inset math is spelled out in real lengths ([#2253](https://github.com/videojs/v10/pull/2253)).
+- Skin polish: wider padding on the chapter title in the slider preview, a preview that closes when the slider is focused but not `:focus-visible`, and a focus ring that isn't too dark against the player chrome ([#2232](https://github.com/videojs/v10/pull/2232)).
+- `@videojs/react` dropped the `use client` directives that its entry point boundaries already cover, and added them to the preset skin modules you can import directly ([#2231](https://github.com/videojs/v10/pull/2231)).
+
+## Migration guides, on the site
+
+All four migration guides moved out of the repository and onto the docs site, under a new "Migrate to Video.js 10" group in Getting started. Coming from Video.js 8, start with the options-to-attributes mapping and the imperative API table ([#2165](https://github.com/videojs/v10/pull/2165)): [HTML](/docs/framework/html/how-to/migrate-from-video-js-8/) and [React](/docs/framework/react/how-to/migrate-from-video-js-8/). The Mux Player guide maps every `mux-player` attribute onto the `source` object and explains the hls.js and SPF engine split ([#2163](https://github.com/videojs/v10/pull/2163)): [HTML](/docs/framework/html/how-to/migrate-from-mux-player/) and [React](/docs/framework/react/how-to/migrate-from-mux-player/). Plyr ([#2166](https://github.com/videojs/v10/pull/2166)) and Media Chrome ([#2167](https://github.com/videojs/v10/pull/2167)) round it out: [HTML](/docs/framework/html/how-to/migrate-from-plyr/) and [React](/docs/framework/react/how-to/migrate-from-plyr/), [HTML](/docs/framework/html/how-to/migrate-from-media-chrome/) and [React](/docs/framework/react/how-to/migrate-from-media-chrome/). All four are framework-aware, so you read the half of each guide that applies to you.
+
+Mute and volume availability are documented as the separate signals they became with the Spotify work ([#2239](https://github.com/videojs/v10/pull/2239)). iOS can mute without letting you set a volume level, so a custom control should read `mutedAvailability` or `volumeAvailability` rather than assuming one implies the other. Covered in the features concept for [HTML](/docs/framework/html/concepts/features/) and [React](/docs/framework/react/concepts/features/), with the specifics on the mute button for [HTML](/docs/framework/html/reference/mute-button/) and [React](/docs/framework/react/reference/mute-button/) and the volume slider for [HTML](/docs/framework/html/reference/volume-slider/) and [React](/docs/framework/react/reference/volume-slider/).
+
+## Try a pull request before it lands
+
+Every pull request and every commit on `main` now publishes installable preview packages through pkg.pr.new, with a bot comment listing the install commands ([#2225](https://github.com/videojs/v10/pull/2225)). Previews are versioned so one can never satisfy a semver range for a real release, and a pull request from a fork only publishes after someone with repository access approves it. The same comment opens the sandbox in StackBlitz, booted against that commit's packages, so you get a running player rather than a list of commands ([#2229](https://github.com/videojs/v10/pull/2229)).

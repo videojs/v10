@@ -4,18 +4,15 @@ import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-titl
 import { ControlsElement } from '../../ui/controls/controls-element';
 import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
-import { MenuBackElement } from '../../ui/menu/menu-back-element';
 import { MenuCheckboxItemElement } from '../../ui/menu/menu-checkbox-item-element';
 import { MenuElement } from '../../ui/menu/menu-element';
 import { MenuGroupElement } from '../../ui/menu/menu-group-element';
 import { MenuGroupLabelElement } from '../../ui/menu/menu-group-label-element';
 import { MenuItemElement } from '../../ui/menu/menu-item-element';
 import { MenuItemIndicatorElement } from '../../ui/menu/menu-item-indicator-element';
-import { MenuItemValueElement } from '../../ui/menu/menu-item-value-element';
 import { MenuRadioGroupElement } from '../../ui/menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
 import { MenuSeparatorElement } from '../../ui/menu/menu-separator-element';
-import { MenuViewElement } from '../../ui/menu/menu-view-element';
 import { SeekIndicatorElement } from '../../ui/seek-indicator/seek-indicator-element';
 import { SeekIndicatorValueElement } from '../../ui/seek-indicator/seek-indicator-value-element';
 import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
@@ -33,6 +30,10 @@ import { TimeElement } from '../../ui/time/time-element';
 import { TimeGroupElement } from '../../ui/time/time-group-element';
 import { TimeSeparatorElement } from '../../ui/time/time-separator-element';
 import { TimeSliderElement } from '../../ui/time-slider/time-slider-element';
+import { TooltipElement } from '../../ui/tooltip/tooltip-element';
+import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
+import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
+import { TooltipShortcutElement } from '../../ui/tooltip/tooltip-shortcut-element';
 import { VolumeIndicatorElement } from '../../ui/volume-indicator/volume-indicator-element';
 import { VolumeIndicatorFillElement } from '../../ui/volume-indicator/volume-indicator-fill-element';
 import { VolumeIndicatorValueElement } from '../../ui/volume-indicator/volume-indicator-value-element';
@@ -44,17 +45,14 @@ import { safeDefine } from '../safe-define';
 export function defineMenu(): void {
   // Root first — part elements consume its context.
   safeDefine(MenuElement);
-  safeDefine(MenuBackElement);
   safeDefine(MenuItemElement);
   safeDefine(MenuGroupLabelElement);
-  safeDefine(MenuItemValueElement);
   safeDefine(MenuSeparatorElement);
   safeDefine(MenuGroupElement);
   safeDefine(MenuRadioGroupElement);
   safeDefine(MenuRadioItemElement);
   safeDefine(MenuCheckboxItemElement);
   safeDefine(MenuItemIndicatorElement);
-  safeDefine(MenuViewElement);
 }
 
 export function defineControls(): void {
@@ -106,6 +104,13 @@ export function defineTimeSlider(): void {
   defineSliderParts();
   safeDefine(SliderBufferElement);
   safeDefine(SliderThumbnailElement);
+}
+
+export function defineTooltip(): void {
+  safeDefine(TooltipGroupElement);
+  safeDefine(TooltipLabelElement);
+  safeDefine(TooltipShortcutElement);
+  safeDefine(TooltipElement);
 }
 
 export function defineVolumeSlider(): void {

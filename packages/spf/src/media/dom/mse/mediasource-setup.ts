@@ -57,19 +57,41 @@ export function createMediaSource(options: CreateMediaSourceOptions = {}): Media
 }
 
 /**
- * Result of attaching a MediaSource to a media element.
+ * Options for `detach`.
  */
-export interface AttachMediaSourceResult {
-  /** The object URL created for the MediaSource (empty string for ManagedMediaSource). */
-  url: string;
-  /** Detach the MediaSource and clean up resources. */
-  detach: () => void;
+export interface DetachOptions {
+  /**
+   * Run the `load()` reset on the next microtask instead of synchronously.
+   *
+   * Required whenever another owner contributes sibling `<source>` children to
+   * the same element and drops them from a signal effect: effects re-run on a
+   * microtask, so a synchronous reset would run resource selection while those
+   * siblings are still in the DOM and commit the element to one of them.
+   * Canonical caller: `setupMediaSource`, whose compositions may include
+   * `setupAirPlay`'s native-HLS fallback source.
+   *
+   * The ownership guard is evaluated when the reset actually fires, so a
+   * re-attach landing in the interim correctly suppresses it.
+   */
+  deferReset?: boolean;
 }
 
 /**
- * Attach a MediaSource to an HTMLMediaElement.
+ * Result of attaching a MediaSource to a media element.
+ */
+export interface AttachMediaSourceResult {
+  /** The object URL created for the MediaSource. */
+  url: string;
+  /** Detach the MediaSource and clean up resources. */
+  detach: (options?: DetachOptions) => void;
+}
+
+/**
+ * Attach a MediaSource to an HTMLMediaElement via the `src` attribute.
  *
- * Uses srcObject for ManagedMediaSource (Safari), or createObjectURL for regular MediaSource.
+ * The object URL on the `src` attribute is the industry-hardened MSE attach
+ * across the browser matrix, and works for ManagedMediaSource too (`srcObject`
+ * buys nothing over it and forfeits the uniform URL lifecycle).
  *
  * @param mediaSource - The MediaSource to attach
  * @param mediaElement - The media element to attach to
@@ -83,36 +105,103 @@ export interface AttachMediaSourceResult {
  * detach();
  */
 export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMediaElement): AttachMediaSourceResult {
-  // ManagedMediaSource requires srcObject instead of createObjectURL
-  const isManagedMediaSource = supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!;
-
-  if (isManagedMediaSource) {
-    // ManagedMediaSource requires disableRemotePlayback — without it Safari
-    // will not fire sourceopen.
-    (mediaElement as HTMLMediaElement & { disableRemotePlayback: boolean }).disableRemotePlayback = true;
-
-    // Use srcObject for ManagedMediaSource
-    (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = mediaSource;
-
-    const detach = (): void => {
-      (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = null;
-      mediaElement.load(); // Reset the element
-    };
-
-    return { url: '', detach };
+  // ManagedMediaSource requires disableRemotePlayback — without it Safari
+  // will not fire sourceopen. (MMS-only: on other platforms the flag governs
+  // the standard Remote Playback API and must be left alone.)
+  if (supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!) {
+    mediaElement.disableRemotePlayback = true;
   }
 
-  // Use createObjectURL for regular MediaSource
   const url = URL.createObjectURL(mediaSource);
   mediaElement.src = url;
 
-  const detach = (): void => {
+  const detach = ({ deferReset }: DetachOptions = {}): void => {
     mediaElement.removeAttribute('src');
-    mediaElement.load(); // Reset the element
+    scheduleReset(mediaSource, mediaElement, url, deferReset);
     URL.revokeObjectURL(url);
   };
 
   return { url, detach };
+}
+
+/**
+ * Attach a MediaSource as a `<source>` child element.
+ *
+ * The object URL rides a `<source type="video/mp4">` inserted as the
+ * element's FIRST child (any bare `src` attribute is dropped; `load()`
+ * re-runs resource selection). Unlike `srcObject`/`src` — which commit the
+ * element to the MSE resource and ignore every `<source>` child — this
+ * keeps sibling `<source>` alternatives part of resource selection, so a
+ * composition can offer the element a natively-playable alternative next to
+ * MSE. Canonical consumer: `setupAirPlay`'s native-HLS fallback source,
+ * wired through `setupMediaSource`'s `attachMediaSource` config
+ * (https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/).
+ */
+export function attachMediaSourceAsSourceElement(
+  mediaSource: MediaSource,
+  mediaElement: HTMLMediaElement
+): AttachMediaSourceResult {
+  // ManagedMediaSource requires disableRemotePlayback — without it Safari
+  // will not fire sourceopen. (MMS-only: on other platforms the flag governs
+  // the standard Remote Playback API and must be left alone.) Features that
+  // need it false flip it once the source is open.
+  if (supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!) {
+    mediaElement.disableRemotePlayback = true;
+  }
+
+  const url = URL.createObjectURL(mediaSource);
+  const sourceEl = document.createElement('source');
+  sourceEl.type = 'video/mp4';
+  sourceEl.src = url;
+
+  mediaElement.removeAttribute('src');
+  mediaElement.prepend(sourceEl);
+  mediaElement.load();
+
+  const detach = ({ deferReset }: DetachOptions = {}): void => {
+    sourceEl.remove();
+    scheduleReset(mediaSource, mediaElement, url, deferReset);
+    URL.revokeObjectURL(url);
+  };
+
+  return { url, detach };
+}
+
+/**
+ * Detach's `load()` reset, applied only when tearing down an **unclosed**
+ * attachment the element is still committed to:
+ *
+ * - **Closed MediaSource**: skip. The attachment is already dead, and the
+ *   element deliberately keeps whatever playback state it carries for
+ *   whatever attaches next — that attach's own `load()` performs the reset.
+ * - **Element moved to another resource**: skip — resetting would rip that
+ *   resource out from under its owner.
+ */
+function resetIfOwnedAndNotClosed(mediaSource: MediaSource, mediaElement: HTMLMediaElement, url: string): void {
+  if (mediaSource.readyState !== 'closed' && mediaElement.currentSrc === url) {
+    mediaElement.load();
+  }
+}
+
+/**
+ * Run the reset now, or on the next microtask when the caller has sibling
+ * `<source>` owners that clear on an effect (see {@link DetachOptions.deferReset}).
+ *
+ * Deferring is safe because removing this attachment's own source does not by
+ * itself re-run resource selection: the element stays committed to the object
+ * URL until something calls `load()`, so nothing starts playing in the gap.
+ */
+function scheduleReset(
+  mediaSource: MediaSource,
+  mediaElement: HTMLMediaElement,
+  url: string,
+  deferReset: boolean | undefined
+): void {
+  if (deferReset) {
+    queueMicrotask(() => resetIfOwnedAndNotClosed(mediaSource, mediaElement, url));
+    return;
+  }
+  resetIfOwnedAndNotClosed(mediaSource, mediaElement, url);
 }
 
 /**

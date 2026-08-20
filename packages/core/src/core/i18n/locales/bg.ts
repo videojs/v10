@@ -45,10 +45,14 @@ export default {
     current: 'Текущо време',
     duration: 'Продължителност',
     remaining: 'Оставащо време',
+    elapsedSuffix: '{duration} изминало време',
+    durationSuffix: '{duration} продължителност',
     remainingSuffix: 'Остават {duration}',
-    showElapsed: '{duration}. Показване на изминалото време.',
-    showDuration: '{duration}. Показване на продължителността.',
-    showRemaining: '{duration}. Показване на оставащото време.',
+    showElapsed: 'Показване на изминалото време, {duration}.',
+    showDuration: 'Показване на продължителността, {duration}.',
+    showRemaining: 'Показване на оставащото време, {duration}.',
+    toggleElapsed: 'Превключване между изминалото и оставащото време.',
+    toggleDuration: 'Превключване между продължителността и оставащото време.',
     position: '{current} от {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Цял екран',
     pip: 'Картина в картина',
     exitPip: 'Изход от картина в картина',
+    seekedTo: 'Преместено на {time}',
+  },
+  container: {
+    label: 'Медиен плейър',
   },
   errors: {
     aborted: 'Спряхте възпроизвеждането на видеото',
@@ -77,6 +85,7 @@ export default {
     source:
       'Видеото не може да бъде заредено заради проблем със сървъра или мрежата или защото този формат не е поддържан.',
     encrypted: 'Медията е шифрована и няма ключове за дешифриране.',
+    unplayable: 'Този медиен файл не се поддържа от плейъра.',
     title: 'Нещо се обърка.',
     unexpected: 'Възникна грешка. Моля, опитайте отново.',
   },

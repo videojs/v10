@@ -4,23 +4,17 @@ import {
   applyStateDataAttrs,
   createPopover,
   createTransition,
-  getAnchorNameStyle,
-  getAnchorPositionStyle,
-  getPopupPositionRect,
-  getPositionedSide,
-  getPositioningBoundaryRect,
   type PopoverApi,
   type PopoverChangeDetails,
   type PopoverOpenChangeReason,
   type PositioningBoundary,
-  resolveOffsets,
-  resolvePositioningBoundary,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
-import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+import { tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { containerContext } from '../../player/context';
+import { popupGroupContext } from '../../player/popup-group-context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 export class PopoverElement extends MediaElement {
@@ -54,6 +48,7 @@ export class PopoverElement extends MediaElement {
 
   readonly #core = new PopoverCore();
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
+  readonly #popupGroupCtx = new ContextConsumer(this, { context: popupGroupContext });
   readonly #position = new PositionController(this);
   #popover: PopoverApi | null = null;
   #snapshot: SnapshotController<PopoverInput> | null = null;
@@ -82,7 +77,7 @@ export class PopoverElement extends MediaElement {
       openOnHover: () => this.openOnHover,
       delay: () => this.delay,
       closeDelay: () => this.closeDelay,
-      group: () => this.#containerCtx.value?.popupGroup,
+      group: () => this.#popupGroupCtx.value,
     });
 
     // Register self as the popup element — the element IS the popup.
@@ -169,10 +164,9 @@ export class PopoverElement extends MediaElement {
       tryHidePopover(this);
     }
 
-    // Apply trigger ARIA and anchor-name to the discovered trigger.
+    // Apply trigger ARIA to the discovered trigger.
     if (this.#currentTrigger) {
       applyElementProps(this.#currentTrigger, this.#core.getTriggerAttrs(state, this.id));
-      applyStyles(this.#currentTrigger, getAnchorNameStyle(this.id));
     }
 
     // Skip positioning when closed — no rects to measure.
@@ -181,28 +175,14 @@ export class PopoverElement extends MediaElement {
       return;
     }
 
-    // Apply positioning styles to self.
-    const preferredOpts = { side: state.side, align: state.align };
-    const boundaryElement = this.#getBoundaryElement();
-    const triggerRect = this.#currentTrigger?.getBoundingClientRect();
-    const boundaryRect = getPositioningBoundaryRect(boundaryElement);
-    const offsets = resolveOffsets(this);
-    const popupRect = getPopupPositionRect(this, preferredOpts.side);
-
-    if (!triggerRect) return;
-
-    const side = getPositionedSide(triggerRect, popupRect, boundaryRect, preferredOpts, offsets);
-    const posOpts = { ...preferredOpts, side };
-    this.setAttribute(PopoverDataAttrs.side, side);
-
-    if (supportsAnchorPositioning()) {
-      applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, undefined, boundaryRect, offsets));
-    } else {
-      // JS fallback: measure rects and resolve CSS var offsets.
-      applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, popupRect, boundaryRect, offsets));
-    }
-
-    this.#position.sync(this.#currentTrigger, boundaryElement);
+    this.#position.sync({
+      anchorName: this.id,
+      position: { side: state.side, align: state.align },
+      trigger: this.#currentTrigger,
+      boundary: this.boundary,
+      container: this.#containerCtx.value?.container ?? null,
+      onSideChange: (side) => this.setAttribute(PopoverDataAttrs.side, side),
+    });
   }
 
   // --- Trigger management ---
@@ -223,24 +203,15 @@ export class PopoverElement extends MediaElement {
 
   #cleanupTrigger(): void {
     if (this.#currentTrigger) {
-      // Remove ARIA attributes and anchor-name style from the old trigger.
       applyElementProps(this.#currentTrigger, {
         'aria-expanded': undefined,
         'aria-haspopup': undefined,
         'aria-controls': undefined,
       });
-      this.#currentTrigger.style.removeProperty('anchor-name');
     }
 
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
-  }
-
-  #getBoundaryElement(): Element | null {
-    return resolvePositioningBoundary(this.boundary, {
-      container: this.#containerCtx.value?.container ?? null,
-      root: this.getRootNode() as Document | ShadowRoot,
-    });
   }
 }

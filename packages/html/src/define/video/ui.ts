@@ -24,10 +24,8 @@ import { PosterElement } from '../../ui/poster/poster-element';
 import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TextElement } from '../../ui/text/text-element';
-import { TooltipElement } from '../../ui/tooltip/tooltip-element';
-import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
-import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
-import { TooltipShortcutElement } from '../../ui/tooltip/tooltip-shortcut-element';
+import { TimeSliderChapterTitleElement } from '../../ui/time-slider/time-slider-chapters/time-slider-chapter-title-element';
+import { TimeSliderChaptersElement } from '../../ui/time-slider/time-slider-chapters/time-slider-chapters-element';
 import { safeDefine } from '../safe-define';
 import {
   defineControls,
@@ -36,6 +34,7 @@ import {
   defineMenu,
   defineSliders,
   defineTime,
+  defineTooltip,
 } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
@@ -52,8 +51,11 @@ defineControls();
 defineErrorDialog();
 defineInputIndicators();
 defineSliders();
+safeDefine(TimeSliderChaptersElement);
+safeDefine(TimeSliderChapterTitleElement);
 defineTime();
 defineMenu();
+defineTooltip();
 
 // Standalone elements.
 safeDefine(AirPlayButtonElement);
@@ -76,7 +78,3 @@ safeDefine(PosterElement);
 safeDefine(QualityRadioGroupElement);
 safeDefine(SeekButtonElement);
 safeDefine(TextElement);
-safeDefine(TooltipLabelElement);
-safeDefine(TooltipShortcutElement);
-safeDefine(TooltipElement);
-safeDefine(TooltipGroupElement);

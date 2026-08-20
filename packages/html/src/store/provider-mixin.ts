@@ -1,21 +1,56 @@
-import { createPopupGroup, type MediaContainer, type PlayerStore, type PlayerTarget } from '@videojs/core/dom';
+import {
+  type MediaContainer,
+  type PlayerFeatureConfig,
+  type PlayerStore,
+  type PlayerTarget,
+  setPlayerConfigValue,
+} from '@videojs/core/dom';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { isNull } from '@videojs/utils/predicate';
+import { camelCase, kebabCase } from '@videojs/utils/string';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { ContainerContext, MediaContext, PlayerContext } from '../player/context';
-import type { PlayerProvider, PlayerProviderConstructor } from './types';
+import type { PlayerProviderConstructor } from './types';
 
 export interface ProviderMixinConfig<Store extends PlayerStore> {
   playerContext: PlayerContext<Store>;
   mediaContext: MediaContext;
   containerContext: ContainerContext;
   factory: () => Store;
+  config: PlayerFeatureConfig;
 }
 
 export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
   BaseClass: Class
 ) => Class & PlayerProviderConstructor<Store>;
+
+/** One configuration input, under the names it goes by on the element. */
+interface ConfigInput {
+  /** Reactive property mirroring the attribute. */
+  property: string;
+  attribute: string;
+  entry: PlayerFeatureConfig[string];
+}
+
+/**
+ * Name each input on the element. A key whose own name is taken there declares
+ * an `html.attribute` instead, and the property follows from that.
+ */
+function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
+  return Object.entries(config).map(([key, entry]) => {
+    const declared = entry.html?.attribute;
+    const attribute = declared ?? kebabCase(key);
+
+    if (__DEV__ && declared && declared !== kebabCase(declared)) {
+      // Markup lowercases attribute names, so an uppercase letter here never matches.
+      console.warn(`[vjs-html] config html.attribute "${declared}" is not kebab-case and will never match`);
+    }
+
+    return { property: camelCase(attribute), attribute, entry };
+  });
+}
 
 /**
  * Create a mixin that provides player context to descendant elements and
@@ -28,18 +63,25 @@ export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaEleme
  * As a fallback for plain `<video>`/`<audio>` that can't consume context,
  * the provider queries its subtree after a microtask.
  *
- * @param config - Provider configuration with contexts and store factory.
+ * @param options - Provider options with contexts, store factory, and feature configuration.
  */
 export function createProviderMixin<Store extends PlayerStore>(
-  config: ProviderMixinConfig<Store>
+  options: ProviderMixinConfig<Store>
 ): ProviderMixin<Store> {
+  const inputs = resolveInputs(options.config);
+
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
-    class PlayerProviderElement extends BaseClass implements PlayerProvider<Store> {
-      #store: Store | null = config.factory();
+    class PlayerProviderElement extends BaseClass {
+      static properties = {
+        ...(BaseClass as unknown as { properties: PropertyDeclarationMap }).properties,
+        ...Object.fromEntries(inputs.map(({ property, attribute }) => [property, { type: String, attribute }])),
+      };
+
+      #store: Store | null = options.factory();
+      #configuredStore: Store | null = null;
       #detach: (() => void) | null = null;
       #media: Media | null = null;
       #container: MediaContainer | null = null;
-      #popupGroup = createPopupGroup();
       #fallbackQueued = false;
 
       #setMedia = (media: Media | null): void => {
@@ -55,46 +97,44 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#containerProvider.setValue({
           container,
           setContainer: this.#setContainer,
-          popupGroup: this.#popupGroup,
         });
         this.#tryAttach();
       };
 
       #playerProvider = new ContextProvider(this, {
-        context: config.playerContext,
+        context: options.playerContext,
         initialValue: this.store,
       });
 
       #mediaProvider = new ContextProvider(this, {
-        context: config.mediaContext,
+        context: options.mediaContext,
         initialValue: { media: this.#media, setMedia: this.#setMedia },
       });
 
       #containerProvider = new ContextProvider(this, {
-        context: config.containerContext,
+        context: options.containerContext,
         initialValue: {
           container: this.#container,
           setContainer: this.#setContainer,
-          popupGroup: this.#popupGroup,
         },
       });
 
       get store(): Store {
         if (isNull(this.#store)) {
-          this.#store = config.factory();
+          this.#store = options.factory();
         }
 
         return this.#store;
       }
 
       override connectedCallback() {
+        this.#syncInitialConfig();
         super.connectedCallback();
         this.#playerProvider.setValue(this.store);
         this.#mediaProvider.setValue({ media: this.#media, setMedia: this.#setMedia });
         this.#containerProvider.setValue({
           container: this.#container,
           setContainer: this.#setContainer,
-          popupGroup: this.#popupGroup,
         });
         this.#tryAttach();
         this.#queueFallbackDiscovery();
@@ -110,6 +150,17 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#store?.destroy();
         this.#store = null;
         super.destroyCallback();
+      }
+
+      protected override willUpdate(changed: PropertyValues): void {
+        super.willUpdate(changed);
+
+        // Configuration flows one way: only actual reactive property changes
+        // write to the store. Store-side writers do not reflect back here.
+        for (const { property, entry } of inputs) {
+          if (!changed.has(property)) continue;
+          setPlayerConfigValue(this.store, entry, (this as unknown as Record<string, unknown>)[property]);
+        }
       }
 
       #tryAttach(): void {
@@ -140,6 +191,16 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#detach = null;
       }
 
+      #syncInitialConfig(): void {
+        const store = this.store;
+        if (this.#configuredStore === store) return;
+
+        for (const { property, entry } of inputs) {
+          setPlayerConfigValue(store, entry, (this as unknown as Record<string, unknown>)[property]);
+        }
+        this.#configuredStore = store;
+      }
+
       #queueFallbackDiscovery(): void {
         if (this.#media || this.#fallbackQueued) return;
         this.#fallbackQueued = true;
@@ -158,6 +219,6 @@ export function createProviderMixin<Store extends PlayerStore>(
       }
     }
 
-    return PlayerProviderElement;
+    return PlayerProviderElement as unknown as Class & PlayerProviderConstructor<Store>;
   };
 }

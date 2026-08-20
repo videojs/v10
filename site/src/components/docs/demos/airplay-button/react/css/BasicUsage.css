@@ -20,9 +20,8 @@
   backdrop-filter: blur(10px);
 }
 
-/* Inactive states: the toggle is a no-op unless availability is "available". */
-.media-airplay-button[data-availability="unavailable"],
-.media-airplay-button[data-availability="unsupported"] {
+/* Explicitly disabled while AirPlay is available. */
+.media-airplay-button[data-disabled] {
   cursor: not-allowed;
   opacity: 0.5;
   filter: grayscale(1);

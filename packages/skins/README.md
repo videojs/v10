@@ -8,6 +8,9 @@ The package is private (`"private": true` in `package.json`) and is not publishe
 
 ## Structure
 
+- `canonical/` — target-neutral Skin sources, style definitions, catalog metadata, and registry configuration.
+- `build/` — catalog analysis plus framework, registry, and vanilla CSS generation.
+- `scripts/` — generation and checked-output verification entry points.
 - `src/default/` — default skin tokens and CSS.
 - `src/minimal/` — minimal skin tokens and CSS.
 - `src/shared/` — tokens shared between skins.

@@ -38,6 +38,10 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.timeSlider).first();
   }
 
+  get timeSliderThumb(): Locator {
+    return this.timeSlider.getByRole('slider');
+  }
+
   get muteButton(): Locator {
     return this.page.locator(SELECTORS.muteButton).first();
   }
@@ -46,12 +50,24 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.volumeSlider).first();
   }
 
+  get volumeSliderThumb(): Locator {
+    return this.volumeSlider.getByRole('slider');
+  }
+
   get fullscreenButton(): Locator {
     return this.page.locator(SELECTORS.fullscreenButton).first();
   }
 
   get pipButton(): Locator {
     return this.page.locator(SELECTORS.pipButton).first();
+  }
+
+  get castButton(): Locator {
+    return this.page.locator(SELECTORS.castButton).first();
+  }
+
+  get airPlayButton(): Locator {
+    return this.page.locator(SELECTORS.airPlayButton).first();
   }
 
   get captionsButton(): Locator {
@@ -74,6 +90,11 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.settingsSpeedItem).first();
   }
 
+  /** The scrollable panel of the menu view that is currently on screen. */
+  get activeMenuPanel(): Locator {
+    return this.page.locator(SELECTORS.activeMenuPanel).first();
+  }
+
   get poster(): Locator {
     return this.page.locator(SELECTORS.poster).first();
   }
@@ -94,8 +115,24 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.duration).first();
   }
 
+  get timeToggle(): Locator {
+    return this.page.locator(SELECTORS.timeToggle).first();
+  }
+
   get thumbnail(): Locator {
     return this.page.locator(SELECTORS.thumbnail).first();
+  }
+
+  get tooltip(): Locator {
+    return this.page.locator(SELECTORS.tooltip);
+  }
+
+  get playTooltip(): Locator {
+    return this.tooltip.filter({ hasText: 'Play' }).first();
+  }
+
+  get settingsTooltip(): Locator {
+    return this.tooltip.filter({ hasText: 'Settings' }).first();
   }
 
   get popover(): Locator {
@@ -120,9 +157,21 @@ export class PlayerPage {
   /** Wait for the player to load media and show controls. */
   async waitForMediaReady({ muted = true }: { muted?: boolean } = {}): Promise<void> {
     await this.playButton.waitFor({ state: 'attached', timeout: 20_000 });
+    await this.playerRoot.evaluate(async (root) => {
+      const elements = [root, ...root.querySelectorAll<HTMLElement>('*')].filter((element) =>
+        element.localName.includes('-')
+      );
+
+      await Promise.all(
+        [...new Set(elements.map((element) => element.localName))].map((name) => customElements.whenDefined(name))
+      );
+      await Promise.all(
+        elements.map((element) => (element as HTMLElement & { updateComplete?: Promise<unknown> }).updateComplete)
+      );
+    });
 
     // Wait for the media element to have at least metadata loaded.
-    // SPF-based renderers (simple-hls-video) with preload="metadata" need
+    // SPF-based renderers (hls-video) with preload="metadata" need
     // time to resolve the manifest before seeks or other interactions work.
     await this.page.waitForFunction(
       (selector) => {
@@ -149,6 +198,16 @@ export class PlayerPage {
   /** Click play and wait for the paused attribute to be removed. */
   async play(): Promise<void> {
     await this.playButton.click();
+    await expect(this.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
+  }
+
+  /** Start the media without interacting with controls. */
+  async playMedia(): Promise<void> {
+    await this.page.evaluate(async (selector) => {
+      const media = document.querySelector(selector) as HTMLMediaElement | null;
+      const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+      await actual?.play();
+    }, SELECTORS.media);
     await expect(this.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
   }
 
@@ -246,14 +305,11 @@ export class PlayerPage {
     await expect.poll(async () => this.getPlaybackRate()).not.toBe(initialRate);
   }
 
-  /** Hover over the player area to trigger user-active state and show controls. */
+  /** Signal pointer activity to show controls and reset the idle timer. */
   async showControls(): Promise<void> {
-    // Use the play button as anchor — it's always inside the player
-    const btn = this.playButton;
-    const box = await btn.boundingBox();
-    if (!box) throw new Error('Play button not visible — cannot show controls');
-
-    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await this.page.waitForTimeout(200);
+    await this.playerRoot.dispatchEvent('pointermove', { pointerType: 'mouse' });
+    if ((await this.videoPlayer.count()) > 0) {
+      await expect(this.controls).toHaveAttribute(DATA_ATTRS.visible, '');
+    }
   }
 }

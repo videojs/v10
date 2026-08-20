@@ -19,7 +19,10 @@
  *
  * - `'preconditions-unmet'` — no loader actor in context, or the selected
  *   track hasn't resolved.
- * - `'dormant'` — `preload === 'none' && !loadActivated`. Nothing fires.
+ * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended`
+ *   (highest precedence) or `preload === 'none' && !loadActivated`. Nothing
+ *   fires; already-queued loader work drains. Auto-resumes into the derived
+ *   state when the policy lifts.
  * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`.
  *   Fires an init-segment-only `load` message **once on entry**. The
  *   variant's loader actor decides what to do — v/a's actor fetches the
@@ -73,6 +76,17 @@ export interface SegmentLoadingState {
   currentTime?: number;
   /** True once a preload-overriding event has fired for the current source. */
   loadActivated?: boolean;
+  /**
+   * Intent-level policy input: initiate no new loading work while `true`.
+   * Read here by the `loadXSegments` dispatchers (park in `'dormant'`,
+   * highest precedence) and by `setupMediaSource` (a pending MediaSource
+   * rebuild waits — attach runs the element's load algorithm). **Observed,
+   * never declared**: no reader lists this key in `stateKeys`, so the slot
+   * exists only in compositions where a feature behavior declares and
+   * writes it (e.g. `setupAirPlay`, while a remote-playback session owns
+   * presentation). An absent slot means never suspended.
+   */
+  loadingSuspended?: boolean;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
@@ -133,7 +147,10 @@ function setupSegmentLoading<
   context,
   config,
 }: {
-  state: SegmentLoadingStateMap<K>;
+  // `loadingSuspended` is observed, never declared (see its state-shape doc):
+  // optional here so variant maps — which omit it from their contracts — are
+  // assignable as-is, while compositions with a writer expose the live slot.
+  state: SegmentLoadingStateMap<K> & { loadingSuspended?: ReadonlySignal<SegmentLoadingState['loadingSuspended']> };
   context: { [P in L]: ReadonlySignal<SegmentLoaderLike<Track> | undefined> };
   config: {
     selectedKey: K;
@@ -162,6 +179,9 @@ function setupSegmentLoading<
   });
 
   const derivedStateSignal = computed<SegmentLoadingFsmState>(() => {
+    // Policy-off wins even over preconditions: a loader arriving while
+    // suspended must not dispatch.
+    if (state.loadingSuspended?.get()) return 'dormant';
     if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
     if (state.loadActivated.get() || state.preload.get() === 'auto') return 'full-range';
     if (state.preload.get() === 'none') return 'dormant';

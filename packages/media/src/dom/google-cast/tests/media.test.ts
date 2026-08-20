@@ -6,6 +6,16 @@ import { GoogleCast } from '../index';
 const mocks = vi.hoisted(() => {
   class FakeRemote extends EventTarget {
     state: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+    listenerCounts = new Map<string, number>();
+
+    override addEventListener(
+      type: string,
+      listener: EventListenerOrEventListenerObject | null,
+      options?: boolean | AddEventListenerOptions
+    ) {
+      this.listenerCounts.set(type, (this.listenerCounts.get(type) ?? 0) + 1);
+      super.addEventListener(type, listener, options);
+    }
   }
 
   class FakeProvider {
@@ -64,6 +74,26 @@ afterEach(() => {
 });
 
 describe('GoogleCast', () => {
+  it('registers remote state listeners only once across media changes', () => {
+    const { googleCast, provider } = setup();
+    const nextHost = new HTMLVideoElementHost();
+
+    googleCast.setMedia(nextHost);
+
+    expect(provider.remote.listenerCounts.get('connect')).toBe(1);
+    expect(provider.remote.listenerCounts.get('disconnect')).toBe(1);
+  });
+
+  it('keeps the provider override when media changes during a connected session', () => {
+    const { googleCast, provider } = setup();
+    const nextHost = new HTMLVideoElementHost();
+
+    connect(provider);
+    googleCast.setMedia(nextHost);
+
+    expect(googleCast.targetOverride).toBe(provider);
+  });
+
   describe('override swap on connect/disconnect', () => {
     it('routes host reads to the target while disconnected', () => {
       const { host, googleCast, provider } = setup();

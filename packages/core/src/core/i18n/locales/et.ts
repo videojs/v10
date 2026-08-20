@@ -45,10 +45,14 @@ export default {
     current: 'Praegune aeg',
     duration: 'Kestus',
     remaining: 'Järelejäänud aeg',
+    elapsedSuffix: '{duration} möödunud aega',
+    durationSuffix: '{duration} kestust',
     remainingSuffix: 'Jäänud {duration}',
-    showElapsed: '{duration}. Kuva möödunud aeg.',
-    showDuration: '{duration}. Kuva kestus.',
-    showRemaining: '{duration}. Kuva järelejäänud aeg.',
+    showElapsed: 'Kuva möödunud aeg, {duration}.',
+    showDuration: 'Kuva kestus, {duration}.',
+    showRemaining: 'Kuva järelejäänud aeg, {duration}.',
+    toggleElapsed: 'Lülita möödunud ja järelejäänud aja vahel.',
+    toggleDuration: 'Lülita kestuse ja järelejäänud aja vahel.',
     position: '{current} / {duration}',
   },
   playback: {
@@ -68,6 +72,10 @@ export default {
     fullscreen: 'Täisekraan',
     pip: 'Pilt pildis',
     exitPip: 'Välju funktsioonist pilt pildis',
+    seekedTo: 'Liigutud ajale {time}',
+  },
+  container: {
+    label: 'Meediumipleier',
   },
   errors: {
     aborted: 'Katkestasid taasesituse',
@@ -77,6 +85,7 @@ export default {
     source:
       'Seda meediumifaili ei õnnestunud laadida, kuna serveris või võrgus esines tõrge või kuna vormingut ei toetata.',
     encrypted: 'See meediumifail on krüpteeritud ja meil pole dekrüpteerimiseks vajalikku võtit.',
+    unplayable: 'Pleier ei toeta seda meediat.',
     title: 'Midagi läks valesti.',
     unexpected: 'Esines viga. Palun proovige uuesti.',
   },

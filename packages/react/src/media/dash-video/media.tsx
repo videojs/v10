@@ -2,8 +2,6 @@
 
 import type { DashMediaProps } from '@videojs/media/dom/dash';
 import { DashMedia, dashMediaDefaultProps } from '@videojs/media/dom/dash';
-import { GoogleCast } from '@videojs/media/dom/google-cast';
-import { addMediaComponent } from '@videojs/media/dom/media-host';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
@@ -18,9 +16,7 @@ export interface DashVideoProps
 }
 
 export const DashVideo = forwardRef<HTMLVideoElement, DashVideoProps>(function DashVideo({ children, ...props }, ref) {
-  const media = useMediaInstance(DashMedia, (media) => {
-    addMediaComponent(media, new GoogleCast());
-  });
+  const media = useMediaInstance(DashMedia);
   const attachRef = useAttachMedia(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const htmlProps = useSyncProps(media, props, dashMediaDefaultProps);

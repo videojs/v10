@@ -53,6 +53,13 @@ test.describe('Mouse Gestures', () => {
     await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
   });
 
+  test('click on controls container does not trigger container gesture', async () => {
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
+    await player.controls.dispatchEvent('pointerdown', { button: 0, pointerType: 'mouse' });
+    await player.controls.dispatchEvent('pointerup', { button: 0, pointerType: 'mouse' });
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
+  });
+
   test('click on slider does not trigger container gesture', async ({ page }) => {
     // Start playback so the slider has a seekable range
     await player.play();
@@ -89,6 +96,13 @@ test.describe('React Mouse Gestures', () => {
     await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
     await player.playButton.click();
     await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
+  });
+
+  test('click on controls container does not trigger container gesture', async () => {
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
+    await player.controls.dispatchEvent('pointerdown', { button: 0, pointerType: 'mouse' });
+    await player.controls.dispatchEvent('pointerup', { button: 0, pointerType: 'mouse' });
+    await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
   });
 
   test('click on slider does not trigger container gesture', async ({ page }) => {

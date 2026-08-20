@@ -1,5 +1,3 @@
-'use client';
-
 import { createInputIndicatorLabels, StatusIndicatorCore, StatusIndicatorDataAttrs } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
@@ -7,7 +5,7 @@ import { forwardRef } from 'react';
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useInputIndicatorRoot } from '../input-indicators/use-input-indicator-root';
+import { useInputIndicatorRoot } from '../input-indicator/use-input-indicator-root';
 import { StatusIndicatorProvider } from './context';
 
 export interface StatusIndicatorRootProps
@@ -20,11 +18,15 @@ export const StatusIndicatorRoot = forwardRef(function StatusIndicatorRoot(
 ) {
   const { render, className, style, actions, closeDelay, ...elementProps } = componentProps;
   const translator = useTranslator();
-  const { elementRef, present, state } = useInputIndicatorRoot(() => new StatusIndicatorCore(), {
-    actions,
-    closeDelay,
-    labels: createInputIndicatorLabels(translator),
-  });
+  const { elementRef, present, state } = useInputIndicatorRoot(
+    () => new StatusIndicatorCore(),
+    {
+      actions,
+      closeDelay,
+      labels: createInputIndicatorLabels(translator),
+    },
+    { replayOnUpdate: false }
+  );
 
   if (!present) return null;
 

@@ -1,4 +1,4 @@
-import { clamp, roundToStep } from '@videojs/utils/number';
+import { clamp, roundToStep, toPercent } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import type { Text } from '../../i18n';
@@ -25,6 +25,13 @@ export interface SliderProps {
   min?: number | undefined;
   /** Maximum value of the slider range. */
   max?: number | undefined;
+}
+
+export type SliderPreviewOverflow = 'clamp' | 'visible';
+
+export interface SliderPreviewProps {
+  /** Whether the preview is clamped to the slider bounds. */
+  overflow?: SliderPreviewOverflow | undefined;
 }
 
 /** Current pointer/drag input state, typically provided by a DOM controller. */
@@ -156,8 +163,7 @@ export class SliderCore {
 
   percentFromValue(value: number): number {
     const { min, max } = this.#props;
-    if (max === min) return 0;
-    return ((value - min) / (max - min)) * 100;
+    return toPercent(value, min, max);
   }
 
   /** Step as a percentage of the slider range. */
