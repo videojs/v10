@@ -94,6 +94,33 @@ export function declaredEncryptionScheme(keys: readonly MediaPlaylistKey[]): 'cb
   return schemes.size === 1 ? [...schemes][0] : undefined;
 }
 
+/** PlayReady's CENC system id, 9a04f079-9840-4286-ab92-e65be0885f95, as bytes. */
+const PLAYREADY_SYSTEM_ID = Uint8Array.from([
+  0x9a, 0x04, 0xf0, 0x79, 0x98, 0x40, 0x42, 0x86, 0xab, 0x92, 0xe6, 0x5b, 0xe0, 0x88, 0x5f, 0x95,
+]);
+
+function isPsshBox(bytes: Uint8Array): boolean {
+  return bytes.length >= 8 && bytes[4] === 0x70 && bytes[5] === 0x73 && bytes[6] === 0x73 && bytes[7] === 0x68;
+}
+
+/**
+ * Project a manifest-carried key payload into `cenc` init data. Widevine ships
+ * a complete PSSH box in its `data:` URI; PlayReady ships a raw PlayReady
+ * Object (WRMHEADER), which `generateRequest('cenc', …)` refuses — wrap it in
+ * a v0 PSSH box under PlayReady's system id, as hls.js and Shaka do.
+ */
+export function toCencInitData(keySystem: string, bytes: Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer> {
+  if (keySystem !== 'com.microsoft.playready' || isPsshBox(bytes)) return bytes;
+  const box = new Uint8Array(32 + bytes.length);
+  const view = new DataView(box.buffer);
+  view.setUint32(0, box.length);
+  box.set([0x70, 0x73, 0x73, 0x68], 4); // 'pssh'; version + flags stay zeroed at offset 8
+  box.set(PLAYREADY_SYSTEM_ID, 12);
+  view.setUint32(28, bytes.length);
+  box.set(bytes, 32);
+  return box;
+}
+
 /**
  * The key systems worth asking the CDM for: declared by the presentation's
  * keys *and* holding a configured license server, in {@link KEY_SYSTEM_PREFERENCE}
