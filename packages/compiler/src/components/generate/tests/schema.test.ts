@@ -36,6 +36,16 @@ describe('generateSchema', () => {
     const generated = createSchemaModule({ source: '@fixture/components', files: [pattern], output }, { cwd: dir });
 
     expect(generated.code).toContain('export const PlayButton');
+    expect(generated.schema).toMatchObject({
+      source: '@fixture/components',
+      definitions: {
+        PlayButton: { name: 'PlayButton' },
+        Slider: {
+          name: 'Slider',
+          parts: { Root: {}, Track: {} },
+        },
+      },
+    });
     expect(generated.watchFiles).toEqual([
       join(dir, 'play-button', 'play-button-component.ts'),
       join(dir, 'slider', 'slider-component.ts'),

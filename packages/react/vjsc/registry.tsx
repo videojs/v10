@@ -1,10 +1,9 @@
 /** @jsxRuntime automatic */
 /** @jsxImportSource vjsc/registry */
 
-import { schema } from '@videojs/core/vjsc';
 import ts from 'typescript';
 import { createArrowFunction } from 'vjsc/ast';
-import type { TemplatePartProps, TemplateProps } from 'vjsc/components';
+import type { ComponentSchema, TemplatePartProps, TemplateProps } from 'vjsc/components';
 import {
   type ComponentRegistry,
   defineElement,
@@ -14,7 +13,7 @@ import {
   type RegistryPropTransformContext,
   type RegistryRenderContext,
 } from 'vjsc/registry';
-import * as $ from './entries.generated';
+import type * as GeneratedEntries from './entries.generated';
 
 const Div = defineElement('div', {
   props: {
@@ -40,130 +39,136 @@ const optionLabel: RegistryEntry<OptionPartProps> = {
 };
 
 /** Canonical core components rendered through the React component package. */
-export const registry: ComponentRegistry = defineRegistry({
-  schema,
-  entries: {
-    ...$.entries,
+export type ReactRegistryEntries = typeof GeneratedEntries;
 
-    Popover: {
-      parts: {
-        ...$.Popover,
-        Trigger: {
-          host: $.Popover.Trigger,
-          render: ({ props }) => <Host render={props.children} {...props} />,
-        },
-      },
-    },
+export function createRegistry(schema: ComponentSchema, entries: ReactRegistryEntries): ComponentRegistry {
+  const $ = entries;
 
-    Poster: {
-      props: {
-        ...$.Poster.props,
-        children: 'render',
-      },
-      render: ({ props, reference }) => {
-        const PosterPrimitive = reference($.Poster);
+  return defineRegistry({
+    schema,
+    entries: {
+      ...$.entries,
 
-        return <PosterPrimitive render={props.children} {...props} />;
-      },
-    },
-
-    Slider: {
-      ...$.Slider,
-      Thumbnail: {
-        Root: Div,
-        Image: {
-          import: {
-            from: '@videojs/react',
-            name: 'Slider',
-            path: ['Thumbnail'],
+      Popover: {
+        parts: {
+          ...$.Popover,
+          Trigger: {
+            host: $.Popover.Trigger,
+            render: ({ props }) => <Host render={props.children} {...props} />,
           },
         },
       },
-    },
 
-    Tooltip: {
-      parts: {
-        ...$.Tooltip,
-        Trigger: {
-          host: $.Tooltip.Trigger,
-          render: ({ props }) => <Host render={props.children} {...props} />,
+      Poster: {
+        props: {
+          ...$.Poster.props,
+          children: 'render',
         },
-      },
-    },
-  },
-  props: {
-    transform: transformReactProp,
-  },
-  types: (name) =>
-    name === 'VjscNode'
-      ? { from: 'react', name: 'ReactNode' }
-      : name === 'VjscElement'
-        ? { from: 'react', name: 'ReactElement' }
-        : false,
-  primitives: {
-    Group: Div,
-    Slot: ({ props }) => props.children,
-    Text: {
-      render: ({ props, reference }) => {
-        const I18nText = reference({
-          import: {
-            from: '@videojs/react',
-            name: 'Text',
-          },
-        });
-
-        return props.token ? (
-          <I18nText {...props}>{props.children}</I18nText>
-        ) : (
-          <Span {...props}>{props.children}</Span>
-        );
-      },
-    },
-    Template: {
-      chapter: {
         render: ({ props, reference }) => {
-          const RenderChapter = reference(renderCallback(['props']));
+          const PosterPrimitive = reference($.Poster);
 
-          return (
-            <Host
-              renderChapter={
-                <RenderChapter>
-                  <Div {...props}>{props.children}</Div>
-                </RenderChapter>
-              }
-            />
+          return <PosterPrimitive render={props.children} {...props} />;
+        },
+      },
+
+      Slider: {
+        ...$.Slider,
+        Thumbnail: {
+          Root: Div,
+          Image: {
+            import: {
+              from: '@videojs/react',
+              name: 'Slider',
+              path: ['Thumbnail'],
+            },
+          },
+        },
+      },
+
+      Tooltip: {
+        parts: {
+          ...$.Tooltip,
+          Trigger: {
+            host: $.Tooltip.Trigger,
+            render: ({ props }) => <Host render={props.children} {...props} />,
+          },
+        },
+      },
+    },
+    props: {
+      transform: transformReactProp,
+    },
+    types: (name) =>
+      name === 'VjscNode'
+        ? { from: 'react', name: 'ReactNode' }
+        : name === 'VjscElement'
+          ? { from: 'react', name: 'ReactElement' }
+          : false,
+    primitives: {
+      Group: Div,
+      Slot: ({ props }) => props.children,
+      Text: {
+        render: ({ props, reference }) => {
+          const I18nText = reference({
+            import: {
+              from: '@videojs/react',
+              name: 'Text',
+            },
+          });
+
+          return props.token ? (
+            <I18nText {...props}>{props.children}</I18nText>
+          ) : (
+            <Span {...props}>{props.children}</Span>
           );
         },
       },
-      'quality-option': {
-        render: renderOption,
-        parts: {
-          label: optionLabel,
-          tier: {
-            when: ({ props }) => props.item.tier,
-            render: ({ props }) => <Sup {...props}>{props.item.tier}</Sup>,
-          },
-          badge: {
-            when: ({ props }) => props.item.badge,
-            render: ({ props }) => <Span {...props}>{props.item.badge}</Span>,
+      Template: {
+        chapter: {
+          render: ({ props, reference }) => {
+            const RenderChapter = reference(renderCallback(['props']));
+
+            return (
+              <Host
+                renderChapter={
+                  <RenderChapter>
+                    <Div {...props}>{props.children}</Div>
+                  </RenderChapter>
+                }
+              />
+            );
           },
         },
-      },
-      'audio-track-option': {
-        render: renderOption,
-        parts: { label: optionLabel },
-      },
-      'playback-rate-option': {
-        render: renderOption,
-        parts: { label: optionLabel },
-      },
-      'captions-option': {
-        render: renderOption,
-        parts: { label: optionLabel },
+        'quality-option': {
+          render: renderOption,
+          parts: {
+            label: optionLabel,
+            tier: {
+              when: ({ props }) => props.item.tier,
+              render: ({ props }) => <Sup {...props}>{props.item.tier}</Sup>,
+            },
+            badge: {
+              when: ({ props }) => props.item.badge,
+              render: ({ props }) => <Span {...props}>{props.item.badge}</Span>,
+            },
+          },
+        },
+        'audio-track-option': {
+          render: renderOption,
+          parts: { label: optionLabel },
+        },
+        'playback-rate-option': {
+          render: renderOption,
+          parts: { label: optionLabel },
+        },
+        'captions-option': {
+          render: renderOption,
+          parts: { label: optionLabel },
+        },
       },
     },
-  },
-});
+  });
+}
 
 function renderCallback(parameters: readonly string[]) {
   return {

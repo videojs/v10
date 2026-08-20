@@ -1,2 +1,4 @@
 export { resolvePackageImport } from './imports';
-export { registry } from './registry';
+export { createRegistry, type ReactRegistryEntries } from './registry';
+export { registry } from './registry.generated';
+export { resolveReactEntry } from './resolve';

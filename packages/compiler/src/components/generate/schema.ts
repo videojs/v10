@@ -3,7 +3,6 @@ import { basename, dirname, extname, isAbsolute, resolve } from 'node:path';
 
 import { isPlainObject } from '@videojs/utils/predicate';
 import ts from 'typescript';
-
 import {
   type GeneratedFileOptions,
   type GeneratedFileResult,
@@ -13,6 +12,7 @@ import {
 } from '../../generate';
 import { toPosixPath } from '../../utils/path';
 import { relativeModuleSpecifier, sourceScriptKind } from '../../utils/source-module';
+import { type ComponentDefinition, type ComponentRecord, type ComponentSchema, defineSchema } from '../definition';
 
 export interface ComponentFileSet {
   readonly files: string;
@@ -31,17 +31,21 @@ export interface GenerateSchemaConfig {
 export type GenerateSchemaOptions = GeneratedFileOptions;
 export type GenerateSchemaResult = GeneratedFileResult;
 export type CreateSchemaModuleOptions = GeneratedModuleOptions;
-export type SchemaModule = GeneratedModule;
+export interface SchemaModule extends GeneratedModule {
+  readonly schema: ComponentSchema;
+}
 
 interface ManifestComponent {
   readonly kind: 'manifest';
   readonly name: string;
   readonly manifestFrom: string;
+  readonly definition: ComponentDefinition<object, ComponentRecord | undefined>;
 }
 
 interface InlineComponent {
   readonly kind: 'inline';
   readonly name: string;
+  readonly definition: ComponentDefinition<object, undefined>;
 }
 
 type ResolvedComponent = ManifestComponent | InlineComponent;
@@ -79,7 +83,11 @@ export function createSchemaModule(
   if (duplicate) throw new Error(`Duplicate component name: ${duplicate.name}`);
 
   const generated = `${[emitHeader(entries), emitComponents(entries), emitMetadata(entries, source)].join('\n\n')}\n`;
-  return { code: generated, watchFiles: [...watchFiles].sort() };
+  return {
+    code: generated,
+    schema: defineSchema(source, Object.fromEntries(entries.map((entry) => [entry.name, entry.definition]))),
+    watchFiles: [...watchFiles].sort(),
+  };
 }
 
 export function parseGenerateSchemaConfig(value: unknown, location: string): readonly GenerateSchemaConfig[] {
@@ -106,7 +114,10 @@ function findDefaultExportCall(sourceFile: ts.SourceFile): ts.CallExpression | n
   return null;
 }
 
-function parseComponentName(manifestPath: string): string {
+function parseComponentManifest(manifestPath: string): {
+  name: string;
+  definition: ComponentDefinition<object, ComponentRecord | undefined>;
+} {
   const sourceText = readFileSync(manifestPath, 'utf8');
   const sourceFile = ts.createSourceFile(
     manifestPath,
@@ -121,23 +132,9 @@ function parseComponentName(manifestPath: string): string {
     throw new Error(`No \`export default defineComponent(...)\` found in ${manifestPath}`);
   }
 
-  const argument = call.arguments[0];
-  if (!argument || !ts.isObjectLiteralExpression(argument)) {
-    throw new Error(`defineComponent() in ${manifestPath} must take an object literal`);
-  }
-
-  for (const property of argument.properties) {
-    if (
-      ts.isPropertyAssignment(property) &&
-      ts.isIdentifier(property.name) &&
-      property.name.text === 'name' &&
-      ts.isStringLiteral(property.initializer)
-    ) {
-      return property.initializer.text;
-    }
-  }
-
-  throw new Error(`defineComponent() in ${manifestPath} is missing a literal \`name:\` field`);
+  const definition = parseComponentDefinition(call, manifestPath);
+  if (!definition.name) throw new Error(`defineComponent() in ${manifestPath} is missing a literal \`name:\` field`);
+  return { name: definition.name, definition };
 }
 
 function resolveManifestEntry(
@@ -148,11 +145,12 @@ function resolveManifestEntry(
 ): ManifestComponent[] {
   return globSync(pattern, { cwd }).map((path) => {
     const manifestPath = isAbsolute(path) ? path : resolve(cwd, path);
+    const manifest = parseComponentManifest(manifestPath);
     watchFiles.add(manifestPath);
 
     return {
       kind: 'manifest',
-      name: parseComponentName(manifestPath),
+      ...manifest,
       manifestFrom: relativeModuleSpecifier(toPosixPath(dirname(outputFile)), toPosixPath(manifestPath)),
     };
   });
@@ -164,8 +162,58 @@ function resolveFileSet(entry: ComponentFileSet, cwd: string, watchFiles: Set<st
     return {
       kind: 'inline',
       name: entry.name(fileStem(file)),
+      definition: { name: entry.name(fileStem(file)) },
     };
   });
+}
+
+function parseComponentDefinition(
+  call: ts.CallExpression,
+  manifestPath: string
+): ComponentDefinition<object, ComponentRecord | undefined> {
+  const argument = call.arguments[0];
+  if (!argument) return {};
+  if (!ts.isObjectLiteralExpression(argument)) {
+    throw new Error(`defineComponent() in ${manifestPath} must take an object literal`);
+  }
+
+  const definition: {
+    name?: string;
+    root?: string;
+    parts?: Record<string, ComponentDefinition<object, ComponentRecord | undefined>>;
+  } = {};
+
+  for (const property of argument.properties) {
+    if (!ts.isPropertyAssignment(property)) continue;
+    const name = propertyName(property.name);
+    if (name === 'name' || name === 'root') {
+      if (!ts.isStringLiteral(property.initializer)) {
+        throw new Error(`defineComponent() in ${manifestPath} requires a literal \`${name}:\` field`);
+      }
+      definition[name] = property.initializer.text;
+      continue;
+    }
+    if (name !== 'parts') continue;
+    if (!ts.isObjectLiteralExpression(property.initializer)) {
+      throw new Error(`defineComponent() in ${manifestPath} requires an object literal \`parts:\` field`);
+    }
+
+    definition.parts = Object.fromEntries(
+      property.initializer.properties.map((part) => {
+        if (!ts.isPropertyAssignment(part) || !isDefineComponentCall(part.initializer)) {
+          throw new Error(`defineComponent() in ${manifestPath} requires literal component parts`);
+        }
+        return [propertyName(part.name), parseComponentDefinition(part.initializer, manifestPath)];
+      })
+    );
+  }
+
+  return definition as ComponentDefinition<object, ComponentRecord | undefined>;
+}
+
+function propertyName(name: ts.PropertyName): string {
+  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) return name.text;
+  throw new Error('Component definition property names must be static.');
 }
 
 function fileStem(filePath: string): string {

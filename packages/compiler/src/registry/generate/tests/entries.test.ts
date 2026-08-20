@@ -23,6 +23,11 @@ describe('generateEntries', () => {
     );
 
     expect(generated.code).toContain('export const Target');
+    expect(generated.entries).toEqual({ Target: { tagName: 'media-target' } });
+    expect(generated.exports).toEqual({
+      Target: { tagName: 'media-target' },
+      entries: { Target: { tagName: 'media-target' } },
+    });
     expect(generated.watchFiles).toEqual([join(dir, 'element.ts')]);
     expect(existsSync(output)).toBe(false);
   });

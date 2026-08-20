@@ -81,6 +81,7 @@ export {
 export type {
   CreateEntriesModuleOptions,
   EntriesModule,
+  GeneratedRegistryEntries,
   GenerateEntriesConfig,
   GenerateSchemaEntriesConfig,
   GenerateSourceEntriesConfig,

@@ -58,7 +58,13 @@ export type GenerateEntriesConfig = GenerateSchemaEntriesConfig | GenerateSource
 export type GenerateEntriesOptions = GeneratedFileOptions;
 export type GenerateEntriesResult = GeneratedFileResult;
 export type CreateEntriesModuleOptions = GeneratedModuleOptions;
-export type EntriesModule = GeneratedModule;
+export interface GeneratedRegistryEntries {
+  readonly [name: string]: RegistryEntryReference | GeneratedRegistryEntries;
+}
+export interface EntriesModule extends GeneratedModule {
+  readonly entries: GeneratedRegistryEntries;
+  readonly exports: GeneratedRegistryEntries & { readonly entries: GeneratedRegistryEntries };
+}
 
 type EntryNode =
   | { readonly name: string; readonly entry: RegistryEntryReference }
@@ -84,7 +90,13 @@ export function createEntriesModule(
 
   if (generated.nodes.length === 0) throw new Error('No registry entries were generated.');
 
-  return { code: emitEntries(generated.nodes), watchFiles: generated.watchFiles };
+  const entries = runtimeEntries(generated.nodes);
+  return {
+    code: emitEntries(generated.nodes),
+    entries,
+    exports: { ...entries, entries },
+    watchFiles: generated.watchFiles,
+  };
 }
 
 function isSchemaEntriesConfig(config: GenerateEntriesConfig): config is GenerateSchemaEntriesConfig {
@@ -209,6 +221,12 @@ export const entries = {
 ${names}
 } as const;
 `;
+}
+
+function runtimeEntries(nodes: readonly EntryNode[]): GeneratedRegistryEntries {
+  return Object.fromEntries(
+    nodes.map((node) => [node.name, 'entry' in node ? node.entry : runtimeEntries(node.children)])
+  );
 }
 
 function emitNode(node: EntryNode, depth: number): string {
