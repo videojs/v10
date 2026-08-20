@@ -414,11 +414,12 @@ describe('ThumbnailCore', () => {
   });
 
   describe('getAttrs', () => {
-    it('returns role img and aria-hidden', () => {
+    it('returns image attributes with physical LTR cropping', () => {
       const core = new ThumbnailCore();
       const state = core.getState(false, false, createImage());
       const attrs = core.getAttrs(state);
 
+      expect(attrs.dir).toBe('ltr');
       expect(attrs.role).toBe('img');
       expect(attrs['aria-hidden']).toBe('true');
     });
