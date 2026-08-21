@@ -38,6 +38,7 @@ Recheck both installed types and official documentation when the dependency chan
 
 ## Output ownership
 
+- With native MagicString enabled, `renderChunk` receives a lazy `magicString` through its fourth metadata argument. Return that object directly after editing it; retain a JavaScript fallback only when the plugin supports hosts that omit the metadata.
 - Emit arbitrary content as assets. Use `originalFileName` for file-backed assets when useful so Rolldown can connect watching and metadata.
 - `emitFile({ type: 'chunk', id })` creates an entry through the normal graph and may split or deduplicate chunks.
 - If a private trigger creates helper chunks, track ownership precisely. Removing every JavaScript chunk is only safe for a dedicated asset-only build; otherwise preserve application entries and assets.

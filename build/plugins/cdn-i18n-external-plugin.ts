@@ -37,14 +37,15 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
       return null;
     },
 
-    renderChunk(code, chunk) {
+    renderChunk(code, chunk, _outputOptions, meta) {
       if (!code.includes(CDN_I18N_REGISTRY)) return null;
 
       // Resolve against the chunk's own depth: `i18n` sits at the output root, and chunks are
       // emitted at varying depths (`locales/es.js`, `media/mux-video/spf.js`).
       const depth = chunk.fileName.split('/').length - 1;
       const target = depth === 0 ? `./${file}` : `${'../'.repeat(depth)}${file}`;
-      const output = new MagicString(code);
+      const hostMagicString = meta?.magicString;
+      const output = hostMagicString ?? new MagicString(code);
 
       for (const quote of ['"', "'"]) {
         const source = `${quote}${CDN_I18N_REGISTRY}${quote}`;
@@ -56,6 +57,8 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
           index = code.indexOf(source, index + source.length);
         }
       }
+
+      if (hostMagicString) return { code: hostMagicString };
 
       return {
         code: output.toString(),

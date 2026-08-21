@@ -6,7 +6,7 @@ import { inlineTemplatePlugin } from '../inline-template-plugin.ts';
 function transform(code: string): string {
   const plugin = inlineTemplatePlugin({ minify: true });
   const result = plugin.transform?.(code, 'test.ts');
-  return result?.code ?? code;
+  return result?.code.toString() ?? code;
 }
 
 // Helper: extract the minified template body (between the backticks).

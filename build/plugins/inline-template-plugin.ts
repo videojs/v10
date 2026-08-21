@@ -1,6 +1,6 @@
 import { transform } from 'lightningcss';
 import MagicString from 'magic-string';
-import type { BuildPlugin } from './types.ts';
+import type { BuildMagicString, BuildPlugin } from './types.ts';
 
 const HTML_MARKER = '/*html*/';
 const CSS_MARKER = '/* css */';
@@ -25,17 +25,19 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
   return {
     name: 'inline-template',
 
-    transform(code, id) {
+    transform(code, id, meta) {
       if (!minify) return null;
       if (!code.includes(HTML_MARKER) && !code.includes(CSS_MARKER)) return null;
 
-      const result = processTemplates(code);
+      const hostMagicString = meta?.magicString;
+      const output = hostMagicString ?? new MagicString(code);
 
-      if (!result) return null;
+      if (!processTemplates(code, output)) return null;
+      if (hostMagicString) return { code: hostMagicString };
 
       return {
-        code: result.toString(),
-        map: result.generateMap({
+        code: output.toString(),
+        map: output.generateMap({
           hires: 'boundary',
           includeContent: true,
           source: id,
@@ -53,8 +55,7 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
  * Walk `code` looking for known markers followed by a backtick template
  * literal. For each match, minify the static parts and reassemble.
  */
-function processTemplates(code: string): MagicString | null {
-  const output = new MagicString(code);
+function processTemplates(code: string, output: BuildMagicString): boolean {
   let changed = false;
   let pos = 0;
 
@@ -106,7 +107,7 @@ function processTemplates(code: string): MagicString | null {
     pos = end;
   }
 
-  return changed ? output : null;
+  return changed;
 }
 
 // ---------------------------------------------------------------------------
