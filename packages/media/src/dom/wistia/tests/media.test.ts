@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { WistiaMedia } from '../media';
 
 // Wistia's package registers `<wistia-player>` as it evaluates and reaches for browser APIs the test
@@ -29,6 +30,7 @@ vi.mock('@wistia/wistia-player', () => {
 
     attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
       if (name === 'media-id') this.mediaId = newValue;
+
       if (name === 'player-color') this.playerColor = newValue;
     }
   }
@@ -44,8 +46,10 @@ type WistiaMediaElement = HTMLElement & Record<string, any>;
 
 function create(): WistiaMediaElement {
   const tag = `test-wistia-media-${tagCounter++}`;
+
   customElements.define(tag, class extends WistiaMedia {});
   const element = document.createElement(tag) as WistiaMediaElement;
+
   document.body.append(element);
   return element;
 }
@@ -82,7 +86,7 @@ describe('WistiaMedia', () => {
   });
 
   it('hides Wistia chrome when no controls attribute was written', () => {
-    // Wistia draws its chrome by default, and an absent attribute reports no change to act on, so without a
+    // Wistia draws chrome by default and an absent attribute reports no change to act on, so without a
     // default of our own the controls would show for markup that never asked for them.
     const element = create();
 
@@ -99,6 +103,7 @@ describe('WistiaMedia', () => {
 
   it('lets a source set before connecting outrank the defaults', () => {
     const tag = `test-wistia-media-${tagCounter++}`;
+
     customElements.define(tag, class extends WistiaMedia {});
     const element = document.createElement(tag) as WistiaMediaElement;
 
@@ -110,6 +115,7 @@ describe('WistiaMedia', () => {
 
   it('turns the controls attribute into the group of switches Wistia hides chrome behind', () => {
     const element = create();
+
     element.setAttribute('controls', '');
     expect(element.playBarControl).toBe(true);
     expect(element.bigPlayButton).toBe(true);
@@ -133,6 +139,7 @@ describe('WistiaMedia', () => {
 
   it('stops a chromeless player taking the pointer events the skin is listening for', () => {
     const element = create();
+
     expect(element.style.pointerEvents).toBe('none');
 
     element.setAttribute('controls', '');
@@ -145,6 +152,7 @@ describe('WistiaMedia', () => {
   it('keeps the chrome a controls attribute asked for on connect', () => {
     // The attribute lands before the first connect, which must not then overwrite it with the default.
     const tag = `test-wistia-media-${tagCounter++}`;
+
     customElements.define(tag, class extends WistiaMedia {});
     document.body.innerHTML = `<${tag} controls></${tag}>`;
     const element = document.body.firstElementChild as WistiaMediaElement;
@@ -188,10 +196,10 @@ describe('WistiaMedia', () => {
 
   it('keeps a source’s options through a later attribute change', () => {
     const element = create();
+
     element.source = { mediaId: 'oifkgmxnkb', roundedPlayer: 12 };
 
-    // Every attribute is worked out from scratch, so the source has to outrank the defaults every time and
-    // not only on the connect that first applied them.
+    // Every attribute is worked out from scratch, so a source has to outrank the defaults every time.
     element.setAttribute('controls', '');
 
     expect(element.roundedPlayer).toBe(12);
@@ -199,6 +207,7 @@ describe('WistiaMedia', () => {
 
   it('does not put a mute back when something else about the player changes', () => {
     const element = create();
+
     element.setAttribute('muted', '');
     element.muted = false;
 
@@ -219,6 +228,7 @@ describe('WistiaMedia', () => {
   it('speaks the media event vocabulary', () => {
     const element = create();
     const types: string[] = [];
+
     for (const type of ['timeupdate', 'volumechange']) {
       element.addEventListener(type, () => types.push(type));
     }

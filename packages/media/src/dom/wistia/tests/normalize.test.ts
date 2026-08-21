@@ -1,4 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+  normalizeWistiaPlayer,
+  parseWistiaMediaId,
+  parseWistiaStartTime,
+  type WistiaPlayerLike,
+  type WistiaPlayerMembers,
+  wistiaControlProps,
+} from '..';
 import {
   isMediaBufferCapable,
   isMediaContentDataCapable,
@@ -8,24 +17,13 @@ import {
   isMediaSourceCapable,
   isMediaVolumeCapable,
 } from '../../../core/predicate';
-import {
-  normalizeWistiaPlayer,
-  parseWistiaMediaId,
-  parseWistiaStartTime,
-  type WistiaPlayerLike,
-  type WistiaPlayerMembers,
-  wistiaControlProps,
-} from '..';
 
 const HASHED_ID = 'abcde12345';
 const MEDIA_URL = `https://videojs.wistia.com/medias/${HASHED_ID}`;
 
 /**
- * Stands in for `<wistia-player>`.
- *
- * Typed against `WistiaPlayerMembers` on purpose: the normalizer is only as honest as this stub, so the
- * stub is held to the same contract the platform packages hold Wistia's real class to. Inventing a member
- * the player does not have would otherwise make these tests pass over a media that cannot work.
+ * Stands in for `<wistia-player>`, typed against `WistiaPlayerMembers` on purpose: the normalizer is only as honest as
+ * this stub, and a member invented here would pass these tests over a media that cannot work.
  */
 class StubWistiaPlayer extends HTMLElement implements WistiaPlayerMembers {
   mediaId = '';
@@ -58,6 +56,7 @@ customElements.define('stub-wistia-player', StubWistiaPlayer);
 
 function createPlayer(): WistiaPlayerLike & StubWistiaPlayer {
   const player = document.createElement('stub-wistia-player') as StubWistiaPlayer;
+
   document.body.append(player);
   return normalizeWistiaPlayer(player as unknown as WistiaPlayerLike) as WistiaPlayerLike & StubWistiaPlayer;
 }
@@ -123,12 +122,14 @@ describe('wistiaControlProps', () => {
 describe('normalizeWistiaPlayer', () => {
   it('leaves the player it normalized as the object it was', () => {
     const player = createPlayer();
+
     expect(player.localName).toBe('stub-wistia-player');
     expect(normalizeWistiaPlayer(player)).toBe(player);
   });
 
   it('does not touch controls, which Wistia already uses for something else', () => {
     const player = createPlayer();
+
     // Wistia's `controls` is the player's control instances, and its internals read it.
     expect(Object.getOwnPropertyDescriptor(player, 'controls')).toBeUndefined();
   });
@@ -147,6 +148,7 @@ describe('normalizeWistiaPlayer', () => {
     it('announces the change the way a media does', () => {
       const player = createPlayer();
       const types: string[] = [];
+
       for (const type of ['emptied', 'sourcechange']) {
         player.addEventListener(type, () => types.push(type));
       }
@@ -158,6 +160,7 @@ describe('normalizeWistiaPlayer', () => {
 
     it('clears the media when set to null', () => {
       const player = createPlayer();
+
       player.source = { mediaId: HASHED_ID };
 
       player.source = null;
@@ -188,6 +191,7 @@ describe('normalizeWistiaPlayer', () => {
 
     it('keeps the options already on the source', () => {
       const player = createPlayer();
+
       player.source = { mediaId: HASHED_ID, playerColor: '54bbff' };
 
       player.src = 'https://videojs.wistia.com/medias/zyxwv98765';
@@ -212,8 +216,7 @@ describe('normalizeWistiaPlayer', () => {
     it('reports a player that has never played as paused', () => {
       const player = createPlayer();
 
-      // Wistia answers `state === 'paused'` here, which is false. A play/pause toggle reading that would
-      // pause a player the viewer was trying to start.
+      // Wistia answers `state === 'paused'` here — false — so a toggle would pause what nobody started.
       expect(player.state).toBe('beforeplay');
       expect(player.paused).toBe(true);
     });
@@ -247,6 +250,7 @@ describe('normalizeWistiaPlayer', () => {
 
   it('derives a seekable range from the duration Wistia reports', () => {
     const player = createPlayer();
+
     expect(player.seekable.length).toBe(0);
 
     player.duration = 60;
@@ -258,6 +262,7 @@ describe('normalizeWistiaPlayer', () => {
   describe('seeking', () => {
     it('tracks the events Wistia brackets a seek with, having no property for it', () => {
       const player = createPlayer();
+
       expect(player.seeking).toBe(false);
 
       player.dispatchEvent(new Event('seeking'));
@@ -270,13 +275,13 @@ describe('normalizeWistiaPlayer', () => {
     it('closes a seek Wistia never says ended, and announces it', () => {
       const player = createPlayer();
       const seeked = vi.fn();
+
       player.addEventListener('seeked', seeked);
 
       player.dispatchEvent(new Event('seeking'));
       expect(player.seeking).toBe(true);
 
-      // Left stuck on, this is a clock that never runs again: the store skips every playhead sync while a
-      // seek is in flight.
+      // Left stuck on, this is a clock that never runs again: the store skips a playhead sync mid-seek.
       player.dispatchEvent(new Event('time-update'));
 
       expect(player.seeking).toBe(false);
@@ -286,6 +291,7 @@ describe('normalizeWistiaPlayer', () => {
     it('leaves a seek Wistia did end alone', () => {
       const player = createPlayer();
       const seeked = vi.fn();
+
       player.addEventListener('seeked', seeked);
 
       player.dispatchEvent(new Event('seeking'));
@@ -299,19 +305,21 @@ describe('normalizeWistiaPlayer', () => {
     it('closes the seek before reporting the playhead that closed it', () => {
       const player = createPlayer();
       const types: string[] = [];
+
       for (const type of ['seeked', 'timeupdate']) player.addEventListener(type, () => types.push(type));
 
       player.dispatchEvent(new Event('seeking'));
       player.dispatchEvent(new Event('time-update'));
 
-      // The store re-reads `seeking` on `seeked` and skips the playhead sync while it is set, so the order
-      // is what lets one `time-update` both end the seek and be acted on.
+      // The store re-reads `seeking` on `seeked` and skips the sync while it is set, so the order is what
+      // lets one `time-update` both end the seek and be acted on.
       expect(types).toEqual(['seeked', 'timeupdate']);
     });
 
     it('says nothing about a seek that never happened', () => {
       const player = createPlayer();
       const seeked = vi.fn();
+
       player.addEventListener('seeked', seeked);
 
       player.dispatchEvent(new Event('time-update'));
@@ -322,16 +330,15 @@ describe('normalizeWistiaPlayer', () => {
   });
 
   describe('capabilities the store gates its features on', () => {
-    // Each of these is read once, when the store attaches. A missing member does not degrade a feature —
-    // it skips it outright, which is why an absent `seeking` costs the whole time state.
+    // Read once, as the store attaches. A missing member skips a feature outright rather than degrading it.
     it('reports itself able to seek', () => {
       expect(isMediaSeekCapable(createPlayer())).toBe(true);
     });
 
     it('reports itself able to buffer before a duration is known', () => {
-      // The shared `EMPTY_TIME_RANGES` is read as "no buffer surface at all", so an empty `seekable` has to
-      // be an empty range of its own.
+      // `EMPTY_TIME_RANGES` reads as "no buffer surface", so an empty `seekable` needs a range of its own.
       const player = createPlayer();
+
       expect(player.duration).toBe(0);
       expect(isMediaBufferCapable(player)).toBe(true);
     });
@@ -342,6 +349,7 @@ describe('normalizeWistiaPlayer', () => {
 
     it('reports itself able to name a source, pause, and carry a volume', () => {
       const player = createPlayer();
+
       expect(isMediaSourceCapable(player)).toBe(true);
       expect(isMediaPauseCapable(player)).toBe(true);
       expect(isMediaVolumeCapable(player)).toBe(true);
@@ -352,6 +360,7 @@ describe('normalizeWistiaPlayer', () => {
   describe('contentData', () => {
     it('reports the media name Wistia knows as the title', () => {
       const player = createPlayer();
+
       expect(player.contentData).toEqual({ title: null });
 
       player.name = 'Lenny Delivers Video';
@@ -362,6 +371,7 @@ describe('normalizeWistiaPlayer', () => {
     it('announces the content when the media data that carries the name lands', () => {
       const player = createPlayer();
       const contentdatachange = vi.fn();
+
       player.addEventListener('contentdatachange', contentdatachange);
 
       player.dispatchEvent(new Event('loaded-media-data'));
@@ -395,6 +405,7 @@ describe('normalizeWistiaPlayer', () => {
     it('re-dispatches the ones Wistia spells its own way', () => {
       const player = createPlayer();
       const types: string[] = [];
+
       for (const type of ['timeupdate', 'volumechange', 'ratechange', 'canplay', 'loadeddata', 'loadstart']) {
         player.addEventListener(type, () => types.push(type));
       }
@@ -409,12 +420,13 @@ describe('normalizeWistiaPlayer', () => {
     it('stands in for the ones Wistia has none of', () => {
       const player = createPlayer();
       const types: string[] = [];
+
       for (const type of ['durationchange', 'progress', 'playing']) {
         player.addEventListener(type, () => types.push(type));
       }
 
-      // Metadata is where a duration arrives, a moving playhead is the only news that `buffered` may have
-      // moved, and Wistia's `play` already means playback has begun.
+      // A moving playhead is the only news that `buffered` may have moved, and Wistia's `play` already means
+      // playback has begun.
       player.dispatchEvent(new Event('loaded-metadata'));
       player.dispatchEvent(new Event('time-update'));
       player.dispatchEvent(new Event('play'));
@@ -425,10 +437,10 @@ describe('normalizeWistiaPlayer', () => {
     it('runs the clock from either event that carries a playhead', () => {
       const player = createPlayer();
       const timeupdate = vi.fn();
+
       player.addEventListener('timeupdate', timeupdate);
 
-      // `second-change` is the same news once a second, and is what keeps the clock running if the
-      // continuous one does not turn up.
+      // `second-change` is the same news once a second, and keeps the clock running if the other goes quiet.
       player.dispatchEvent(new Event('time-update'));
       expect(timeupdate).toHaveBeenCalledTimes(1);
 
@@ -439,10 +451,11 @@ describe('normalizeWistiaPlayer', () => {
     it('announces a duration from every moment Wistia can first have one', () => {
       const player = createPlayer();
       const durationchange = vi.fn();
+
       player.addEventListener('durationchange', durationchange);
 
-      // `duration` reads 0 until `api-ready`, and `loaded-metadata` may wait for the viewer to click — so a
-      // media nobody touches would never report a duration if that were the only signal.
+      // `duration` reads 0 until `api-ready`, and `loaded-metadata` may wait on a click — so a media nobody
+      // touches would never report one if that were the only signal.
       player.dispatchEvent(new Event('api-ready'));
       expect(durationchange).toHaveBeenCalledTimes(1);
 
@@ -456,6 +469,7 @@ describe('normalizeWistiaPlayer', () => {
     it('announces metadata once per source, whichever moment gets there first', () => {
       const player = createPlayer();
       const loadedmetadata = vi.fn();
+
       player.addEventListener('loadedmetadata', loadedmetadata);
 
       player.dispatchEvent(new Event('api-ready'));
@@ -471,6 +485,7 @@ describe('normalizeWistiaPlayer', () => {
     it('leaves alone the ones Wistia already spells the way a media element does', () => {
       const player = createPlayer();
       const types: string[] = [];
+
       for (const type of ['play', 'pause', 'ended', 'seeking', 'seeked']) {
         player.addEventListener(type, () => types.push(type));
       }

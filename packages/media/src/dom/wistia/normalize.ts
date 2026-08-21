@@ -4,12 +4,9 @@ import { createTimeRange } from '../utils';
 import { parseWistiaMediaId, parseWistiaStartTime, type WistiaSource } from './source';
 
 /**
- * The members of Wistia's `<wistia-player>` that {@link normalizeWistiaPlayer} reads.
- *
- * Described structurally rather than imported, so `@videojs/media` carries the contract without carrying a
- * dependency on the player only its platform packages embed. It is the argument type of the normalizer for
- * that reason: the platforms pass Wistia's own class, so a member it renames or drops fails to compile
- * there instead of quietly disabling a store feature at runtime.
+ * The members of Wistia's `<wistia-player>` that {@link normalizeWistiaPlayer} reads, described structurally and used
+ * as its argument type: `WistiaMedia` and React both pass Wistia's own element, so a member Wistia renames or drops
+ * fails to compile rather than quietly disabling a store feature at runtime.
  */
 export interface WistiaPlayerMembers {
   mediaId: string;
@@ -30,24 +27,15 @@ export interface WistiaPlayerLike extends HTMLElement, WistiaPlayerMembers {
 }
 
 /**
- * Wistia's spellings for the media events it renames, against the ones a media element uses.
+ * Wistia's spellings for the media events it renames, against the ones a media element uses. `play`, `pause`, `ended`,
+ * `seeking`, and `seeked` are absent because Wistia already spells those the way a media does.
  *
- * Some carry an event Wistia has none of. It announces no `progress`, so the only news that `buffered` may
- * have moved is that the playhead did; and no `playing`, since its `play` already means playback has begun.
- *
- * `durationchange` is the awkward one, because Wistia has no single moment where a duration appears.
- * `duration` reads `0` until `api-ready`, its media data lands on `loaded-media-data`, and `loaded-metadata`
- * is documented as possibly delayed until the viewer interacts with the player — so a media that is never
- * clicked may never see it. All three therefore announce a duration that may have changed, which is what
- * `durationchange` is for; `loadedmetadata` is held to once per source below, since that one is not.
- *
- * `timeupdate` comes from two of them. Wistia documents `second-change` as a subset of `time-update` — the
- * same news, once a second rather than continuously — so taking both means the clock still runs if only one
- * turns up, at whatever resolution is on offer. A repeated `timeupdate` costs nothing: every listener for it
- * is a sync that reads the playhead back off the player.
- *
- * `play`, `pause`, `ended`, `seeking`, and `seeked` are absent because Wistia already spells them the way a
- * media element does.
+ * `durationchange` comes from three, because Wistia has no single moment where a duration appears: `duration` reads `0`
+ * until `api-ready`, the media data lands on `loaded-media-data`, and `loaded-metadata` may wait on the viewer
+ * interacting. `loadedmetadata` is held to once per source below, since that one is not repeatable. `timeupdate` comes
+ * from two: `second-change` is a coarser subset of `time-update`, so taking both keeps the clock running at whatever
+ * resolution is on offer, and a repeat costs one re-read of the playhead. `progress` and `playing` ride along because
+ * Wistia announces neither.
  */
 export const WISTIA_EVENT_ALIASES: Readonly<Record<string, readonly string[]>> = {
   'api-ready': ['loadedmetadata', 'durationchange'],
@@ -65,34 +53,29 @@ export const WISTIA_EVENT_ALIASES: Readonly<Record<string, readonly string[]>> =
 };
 
 /**
- * Give a `<wistia-player>` the surface the rest of Video.js expects of a media: the members
- * `HTMLMediaElement` has that Wistia names differently or not at all, and the events it spells its own way.
+ * Give a `<wistia-player>` the surface the rest of Video.js expects of a media: the members `HTMLMediaElement` has that
+ * Wistia names differently or not at all, and the events it spells its own way.
  *
- * Applied to the element itself rather than wrapped around it, so the player a consumer holds and the media
- * the player store drives are one object. Both platform packages call this — the custom element on itself,
- * the React component on the element its wrapper renders — which is what keeps the two in step.
+ * Applied to the element rather than wrapped around it, so the player a consumer holds and the media the store drives
+ * are one object — `WistiaMedia` calls this on itself, React on the element it renders. Idempotent.
  *
- * `controls` is deliberately not among the members it defines. Wistia already has a `controls` of its own,
- * and it means something else entirely: the player's defined control instances, which its internals read.
- * Turning chrome on and off is `wistiaControlProps` instead, which each platform applies from the
- * `controls` prop it accepts.
- *
- * Idempotent: normalizing an element twice is a no-op.
+ * `controls` is deliberately not among the members: Wistia has one already and it means the player's control instances,
+ * which its internals read. Turning chrome on and off is `wistiaControlProps`.
  */
 export function normalizeWistiaPlayer<T extends HTMLElement & WistiaPlayerMembers>(player: T): T {
   // Strict on the way in, loose inside: the members installed below do not exist on the argument yet.
   const target = player as unknown as WistiaPlayerLike;
   if (normalized.has(target)) return player;
+
   normalized.add(target);
 
-  // Wistia reports no `seeking` property, only events, and it does not reliably follow a `seeking` with a
-  // `seeked`. Tracking one without the other wedges the flag on: the store stops syncing the playhead while
-  // a seek is in flight, so a seek that never ends is a clock that never runs again. The first playhead
-  // report after a seek therefore closes it — and says so, because the store waits on `seeked` to settle a
-  // seek of its own and to re-read the flag.
+  // Wistia reports no `seeking` property and does not reliably follow a `seeking` with a `seeked`, which
+  // would wedge the flag on and stop the store syncing the playhead for good. The first playhead report after
+  // a seek closes it, and says so, because the store waits on `seeked` to settle a seek of its own.
   const endSeek = () => {
     const state = stateOf(target);
     if (!state.seeking) return;
+
     state.seeking = false;
     target.dispatchEvent(new Event('seeked'));
   };
@@ -104,6 +87,7 @@ export function normalizeWistiaPlayer<T extends HTMLElement & WistiaPlayerMember
     // A real one leaves nothing for the fallback below to announce.
     stateOf(target).seeking = false;
   });
+
   for (const type of ['second-change', 'time-update']) target.addEventListener(type, endSeek);
 
   for (const [from, to] of Object.entries(WISTIA_EVENT_ALIASES)) {
@@ -114,8 +98,10 @@ export function normalizeWistiaPlayer<T extends HTMLElement & WistiaPlayerMember
         if (type === 'loadedmetadata') {
           const state = stateOf(target);
           if (state.announcedMetadata) continue;
+
           state.announcedMetadata = true;
         }
+
         target.dispatchEvent(new Event(type));
       }
     });
@@ -136,19 +122,20 @@ const shadowState = new WeakMap<
 
 function stateOf(player: WistiaPlayerLike) {
   let state = shadowState.get(player);
+
   if (!state) {
     const initial = { announcedMetadata: false, defaultMuted: false, playsInline: true, seeking: false };
+
     shadowState.set(player, (state = initial));
   }
+
   return state;
 }
 
 /**
- * An empty range that is not the shared `EMPTY_TIME_RANGES`.
- *
- * `isMediaBufferCapable` reads that exact object as "this media has no buffer surface at all" and the store
- * skips its buffer feature for good — where a Wistia player has one, and merely has nothing in it until a
- * duration arrives.
+ * An empty range that is not the shared `EMPTY_TIME_RANGES`: `isMediaBufferCapable` reads that exact object as "no
+ * buffer surface at all" and skips the feature for good, where a Wistia player has one and merely has nothing in it
+ * until a duration arrives.
  */
 const NO_RANGE: TimeRangeLike = Object.freeze({ length: 0, start: () => 0, end: () => 0 });
 
@@ -157,6 +144,18 @@ function accessor(
   set?: (this: WistiaPlayerLike, value: any) => void
 ): PropertyDescriptor {
   return { configurable: true, enumerable: true, get, ...(set && { set }) };
+}
+
+/** Always reports this, and swallows what the store writes back: Wistia has nowhere to put it. */
+function inert(value: unknown): PropertyDescriptor {
+  return accessor(
+    () => value,
+    () => {}
+  );
+}
+
+function method(value: (this: WistiaPlayerLike, ...args: any[]) => unknown): PropertyDescriptor {
+  return { configurable: true, value };
 }
 
 const WISTIA_MEDIA_DESCRIPTORS: PropertyDescriptorMap = {
@@ -169,6 +168,7 @@ const WISTIA_MEDIA_DESCRIPTORS: PropertyDescriptorMap = {
       this.source = { ...this.source, mediaId: parseWistiaMediaId(value) ?? '' };
       // A `wtime` in the URL is the one thing the id does not carry over.
       const startTime = parseWistiaStartTime(value);
+
       if (startTime != null) this.currentTime = startTime;
     }
   ),
@@ -188,19 +188,18 @@ const WISTIA_MEDIA_DESCRIPTORS: PropertyDescriptorMap = {
       // media gets to announce its metadata in turn.
       stateOf(this).announcedMetadata = false;
       this.dispatchEvent(new Event('emptied'));
+
       if (value) Object.assign(this, value);
       else this.mediaId = '';
+
       this.dispatchEvent(new Event('sourcechange'));
     }
   ),
 
   /**
-   * True unless the media is playing.
-   *
-   * Wistia answers `state === 'paused'`, which is `false` in the `beforeplay` state a player opens in — and
-   * `false` again before its API is ready — where a media element reports `true`. A play/pause toggle reads
-   * this to decide which of the two to call, so left alone, the first click on an untouched player pauses
-   * something that was never playing.
+   * True unless the media is playing. Wistia answers `state === 'paused'`, which is `false` in the `beforeplay` state a
+   * player opens in and `false` again before its API is ready — so left alone, the first click on an untouched player
+   * pauses something that was never playing.
    */
   paused: accessor(function () {
     return this.state !== 'playing';
@@ -216,10 +215,7 @@ const WISTIA_MEDIA_DESCRIPTORS: PropertyDescriptorMap = {
     }
   ),
 
-  /**
-   * The player is live from the moment it exists, so it keeps no default to apply later: setting this mutes
-   * it now, and `muted` is what changes it afterwards.
-   */
+  /** The player is live from the moment it exists, so this mutes it now and `muted` changes it afterwards. */
   defaultMuted: accessor(
     function () {
       return stateOf(this).defaultMuted;
@@ -240,10 +236,7 @@ const WISTIA_MEDIA_DESCRIPTORS: PropertyDescriptorMap = {
     }
   ),
 
-  /**
-   * Whether a seek is in flight. Wistia has no property for it, so it is tracked from its events — and it
-   * has to exist at all, because the store reads it to decide the media can seek.
-   */
+  /** Whether a seek is in flight: tracked from events, and defined at all because the store gates seeking on it. */
   seeking: accessor(function () {
     return stateOf(this).seeking;
   }),
@@ -251,6 +244,7 @@ const WISTIA_MEDIA_DESCRIPTORS: PropertyDescriptorMap = {
   /** Wistia reports no seekable range of its own, and every Wistia media is seekable end to end. */
   seekable: accessor(function () {
     const duration = this.duration;
+
     return duration > 0 && Number.isFinite(duration) ? createTimeRange(0, duration) : NO_RANGE;
   }),
 
@@ -259,67 +253,42 @@ const WISTIA_MEDIA_DESCRIPTORS: PropertyDescriptorMap = {
     return { title: this.name ?? null };
   }),
 
-  // Nothing behind these, but whether they exist still matters: the store gates each of its features on a
-  // predicate that asks only whether the members are defined, so a missing one skips the feature outright
-  // rather than degrading it. These are defined because an empty answer is the honest one and the features
-  // reading them cope with it. `textTracks` is the opposite case — the shared `EMPTY_TEXT_TRACKS` is the
-  // sentinel that tells the store to skip text tracks, which is what should happen.
+  // Nothing behind these, but whether they exist still matters: the store gates each feature on a predicate
+  // that asks only whether the members are defined, so a missing one skips the feature outright rather than
+  // degrading it. An empty answer is the honest one and the features reading it cope. `textTracks` is the
+  // opposite case — the shared `EMPTY_TEXT_TRACKS` is the sentinel that tells the store to skip them.
   played: accessor(() => NO_RANGE),
   textTracks: accessor(() => EMPTY_TEXT_TRACKS),
   videoWidth: accessor(() => 0),
   videoHeight: accessor(() => 0),
   error: accessor(() => null),
-  crossOrigin: accessor(
-    () => null,
-    () => {}
-  ),
+  crossOrigin: inert(null),
 
-  // Remote playback and picture-in-picture belong to the `<video>` inside Wistia's shadow root, which is
-  // not ours to reach. Reported as unavailable rather than left undefined.
+  // Remote playback and picture-in-picture belong to the `<video>` in Wistia's shadow root, which is not ours
+  // to reach. Reported as unavailable rather than left undefined.
   remote: accessor(() => EMPTY_REMOTE),
-  disableRemotePlayback: accessor(
-    () => true,
-    () => {}
-  ),
-  disablePictureInPicture: accessor(
-    () => true,
-    () => {}
-  ),
   isPictureInPicture: accessor(() => false),
+  disableRemotePlayback: inert(true),
+  disablePictureInPicture: inert(true),
 
   /** Wistia serves on-demand media only. */
-  streamType: accessor(
-    () => 'on-demand',
-    () => {}
-  ),
+  streamType: inert('on-demand'),
 
   isFullscreen: accessor(function () {
     return this.inFullscreen === true;
   }),
 
-  exitFullscreen: {
-    configurable: true,
-    value: function (this: WistiaPlayerLike) {
-      return this.cancelFullscreen();
-    },
-  },
+  exitFullscreen: method(function () {
+    return this.cancelFullscreen();
+  }),
 
   /** Re-apply the current source, which is all a Wistia player can be asked to reload. */
-  load: {
-    configurable: true,
-    value: function (this: WistiaPlayerLike) {
-      const source = this.source;
-      this.source = source;
-    },
-  },
+  load: method(function () {
+    const source = this.source;
 
-  canPlayType: {
-    configurable: true,
-    value: () => '',
-  },
+    this.source = source;
+  }),
 
-  addTextTrack: {
-    configurable: true,
-    value: () => undefined,
-  },
+  canPlayType: method(() => ''),
+  addTextTrack: method(() => undefined),
 };
