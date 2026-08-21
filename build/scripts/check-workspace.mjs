@@ -496,6 +496,7 @@ const SKILL_ACTIONS = new Set([
   'maintain',
   'migrate',
   'review',
+  'transform',
   'write',
 ]);
 

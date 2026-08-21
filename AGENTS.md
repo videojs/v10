@@ -71,7 +71,7 @@ Use the narrowest relevant test/build while iterating. Before handoff, run check
 Checked-in skills are direct children of `.agents/skills/`. `pnpm install` exposes that canonical catalog through generated `.claude/skills/` and `.opencode/skills/` directory aliases. Load only the specialized workflow needed after inspecting relevant project sources.
 
 - API: `design-api`, `review-api`
-- Bundler plugins: `create-rolldown-plugin`, `create-vite-plugin`
+- Bundler plugins: `create-rolldown-plugin`, `create-vite-plugin`, `transform-rolldown-code`
 - UI implementation: `create-html-component`, `create-react-component`, `implement-ui-transition`, `implement-accessible-ui`
 - UI review: `review-html-component`, `review-react-component`, `review-accessibility`
 - UI design: `write-html-component-design`, `write-react-component-design`, `review-html-component-design`, `review-react-component-design`
