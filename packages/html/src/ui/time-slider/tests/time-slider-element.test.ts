@@ -1,7 +1,11 @@
 import { SliderDataAttrs, type SliderState } from '@videojs/core';
+import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaPlaybackState, MediaTimeState } from '@videojs/media';
+import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { playerContext } from '../../../player/context';
 import { sliderContext } from '../../slider/context';
 import { SliderThumbElement } from '../../slider/slider-thumb-element';
 import { SliderValueElement } from '../../slider/slider-value-element';
@@ -9,6 +13,23 @@ import { UIElement } from '../../ui-element';
 import { TimeSliderChapterTitleElement } from '../time-slider-chapters/time-slider-chapter-title-element';
 import { TimeSliderChaptersElement } from '../time-slider-chapters/time-slider-chapters-element';
 import { TimeSliderElement } from '../time-slider-element';
+
+class ResizeObserverStub {
+  static instances: ResizeObserverStub[] = [];
+
+  readonly observe = vi.fn();
+  readonly unobserve = vi.fn();
+  readonly disconnect = vi.fn();
+
+  constructor(_callback: ResizeObserverCallback) {
+    ResizeObserverStub.instances.push(this);
+  }
+}
+
+function stubResizeObserver(): void {
+  ResizeObserverStub.instances.length = 0;
+  vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+}
 
 let tagCounter = 0;
 
@@ -27,6 +48,31 @@ class TestSliderProviderElement extends UIElement {
   readonly provider = new ContextProvider(this, {
     context: sliderContext,
     initialValue: createSliderContext(),
+  });
+}
+
+class TestPlayerProviderElement extends UIElement {
+  readonly pause = vi.fn();
+  readonly play = vi.fn(async () => {});
+  readonly store = createStore<unknown>()<MediaTimeState & MediaPlaybackState>({
+    name: 'time-slider',
+    state: () => ({
+      currentTime: 0,
+      duration: 100,
+      seeking: false,
+      seek: vi.fn(),
+      paused: false,
+      ended: false,
+      started: true,
+      waiting: false,
+      play: this.play,
+      pause: this.pause,
+      togglePaused: vi.fn(),
+    }),
+  }) as unknown as AnyPlayerStore;
+  readonly provider = new ContextProvider(this, {
+    context: playerContext,
+    initialValue: this.store,
   });
 }
 
@@ -52,6 +98,7 @@ function createSliderContext(state: Partial<SliderState> = {}, pointerValue = 0)
 }
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   document.body.innerHTML = '';
 });
 
@@ -158,6 +205,88 @@ describe('TimeSliderElement', () => {
     // Without store, context is not populated so thumb has no ARIA.
     // This verifies no errors occur in the context chain.
     expect(thumb.isConnected).toBe(true);
+  });
+
+  it('recreates its API and rebinds pointer listeners once after a reconnect', async () => {
+    stubResizeObserver();
+    const provider = createElement(TestPlayerProviderElement);
+    const slider = createElement(TimeSliderElement);
+    const onDragStart = vi.fn();
+
+    slider.addEventListener('drag-start', onDragStart);
+    provider.append(slider);
+    document.body.append(provider);
+    await slider.updateComplete;
+
+    const firstObserver = ResizeObserverStub.instances[0]!;
+
+    expect(ResizeObserverStub.instances).toHaveLength(1);
+
+    slider.remove();
+    provider.append(slider);
+    await slider.updateComplete;
+
+    expect(firstObserver.disconnect).toHaveBeenCalledOnce();
+    expect(ResizeObserverStub.instances).toHaveLength(2);
+    expect(ResizeObserverStub.instances[1]!.disconnect).not.toHaveBeenCalled();
+
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, clientX: 55, buttons: 1 }));
+
+    expect(onDragStart).toHaveBeenCalledOnce();
+  });
+
+  it('releases its API and pointer listeners when destroyed while connected', async () => {
+    stubResizeObserver();
+    const provider = createElement(TestPlayerProviderElement);
+    const slider = createElement(TimeSliderElement);
+    const onDragStart = vi.fn();
+
+    slider.addEventListener('drag-start', onDragStart);
+    provider.append(slider);
+    document.body.append(provider);
+    await slider.updateComplete;
+
+    const observer = ResizeObserverStub.instances[0]!;
+
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+
+    slider.destroy();
+
+    expect(observer.disconnect).toHaveBeenCalledOnce();
+
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, clientX: 55, buttons: 1 }));
+    expect(onDragStart).not.toHaveBeenCalled();
+  });
+
+  it('resumes playback and discards its API when disconnected during a paused drag', async () => {
+    stubResizeObserver();
+    const provider = createElement(TestPlayerProviderElement);
+    const slider = createElement(TimeSliderElement);
+
+    slider.pauseOnDrag = true;
+
+    provider.append(slider);
+    document.body.append(provider);
+    await slider.updateComplete;
+
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+    slider.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 1, clientX: 55, buttons: 1 }));
+
+    const observer = ResizeObserverStub.instances[0]!;
+
+    expect(provider.pause).toHaveBeenCalledOnce();
+
+    slider.remove();
+
+    expect(provider.play).toHaveBeenCalledOnce();
+    expect(observer.disconnect).toHaveBeenCalledOnce();
   });
 });
 

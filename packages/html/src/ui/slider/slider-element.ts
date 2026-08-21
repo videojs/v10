@@ -71,7 +71,7 @@ export class SliderElement extends UIElement {
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
-      isDisabled: () => this.disabled,
+      isDisabled: () => this.destroyed || this.disabled,
       getPercent: () => this.#core.percentFromValue(this.value),
       getStepPercent: () => this.#core.getStepPercent(),
       getLargeStepPercent: () => this.#core.getLargeStepPercent(),
@@ -100,19 +100,29 @@ export class SliderElement extends UIElement {
     applyElementProps(this, this.#slider.rootProps, { signal });
     applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
+    this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
-    this.#releaseControlsVisibilityLock();
+    this.#disposeSlider();
     super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
   }
 
   override destroyCallback(): void {
-    this.#releaseControlsVisibilityLock();
-    this.#slider?.destroy();
+    this.#disposeSlider();
     super.destroyCallback();
+  }
+
+  // Each connection owns one slider API. Destroying it on disconnect releases
+  // the ResizeObserver and pointer capture instead of leaking them on reconnect.
+  #disposeSlider(): void {
+    this.#releaseControlsVisibilityLock();
+
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+
+    this.#slider?.destroy();
+    this.#slider = null;
   }
 
   #releaseControlsVisibilityLock(): void {
