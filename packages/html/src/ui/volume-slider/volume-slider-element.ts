@@ -62,13 +62,13 @@ export class VolumeSliderElement extends MediaElement {
 
     const isDisabled = () => {
       const volume = this.#volumeState.value;
-      return this.disabled || !volume || volume.volumeAvailability !== 'available';
+      return this.destroyed || this.disabled || !volume || volume.volumeAvailability !== 'available';
     };
     const getPercent = () => (this.#volumeState.value?.volume ?? 0) * 100;
     const getStepPercent = () => this.#core.getStepPercent();
     const setVolume = (percent: number) => this.#setVolume(percent);
 
-    this.#slider = createSlider({
+    this.#slider ??= createSlider({
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
@@ -101,6 +101,7 @@ export class VolumeSliderElement extends MediaElement {
     applyElementProps(this, wheelProps, { signal });
     applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
+    this.requestUpdate();
 
     if (__DEV__ && !this.#volumeState.value) {
       logMissingFeature(this.localName, this.#volumeState.displayName!);
@@ -108,16 +109,30 @@ export class VolumeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
-    this.#releaseControlsVisibilityLock();
+    this.#disposeConnection();
     super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
   }
 
   override destroyCallback(): void {
-    this.#releaseControlsVisibilityLock();
+    this.#disposeConnection();
     this.#slider?.destroy();
+    this.#slider = null;
     super.destroyCallback();
+  }
+
+  #disposeConnection(): void {
+    this.#releaseControlsVisibilityLock();
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+
+    const slider = this.#slider;
+    const input = slider?.input.current;
+    if (!input || (!input.dragging && !input.pointing && !input.focused)) return;
+
+    // Discard transient interaction state without committing the interrupted
+    // drag. Idle slider APIs remain durable across ordinary DOM moves.
+    slider.destroy();
+    this.#slider = null;
   }
 
   #releaseControlsVisibilityLock(): void {

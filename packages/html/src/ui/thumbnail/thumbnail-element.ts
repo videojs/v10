@@ -81,19 +81,18 @@ export class ThumbnailElement extends MediaElement {
     super.connectedCallback();
     if (this.destroyed) return;
 
-    this.#api = createThumbnail({
+    this.#api ??= createThumbnail({
       getContainer: () => this,
       getImg: () => this.#img,
       onStateChange: () => this.requestUpdate(),
     });
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
+    this.#api.connect();
+    this.requestUpdate();
   }
 
   override destroyCallback(): void {
     this.#api?.destroy();
+    this.#api = null;
     super.destroyCallback();
   }
 

@@ -8,6 +8,23 @@ import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { ThumbnailElement } from '../thumbnail-element';
 
+class ResizeObserverStub {
+  static instances: ResizeObserverStub[] = [];
+
+  readonly observe = vi.fn();
+  readonly unobserve = vi.fn();
+  readonly disconnect = vi.fn();
+
+  constructor(_callback: ResizeObserverCallback) {
+    ResizeObserverStub.instances.push(this);
+  }
+}
+
+function stubResizeObserver(): void {
+  ResizeObserverStub.instances.length = 0;
+  vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+}
+
 function createTextTrackStore(
   thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin']
 ): AnyPlayerStore {
@@ -73,7 +90,51 @@ async function renderCrossOrigin(
 
 describe('ThumbnailElement', () => {
   afterEach(() => {
+    vi.unstubAllGlobals();
     document.body.innerHTML = '';
+  });
+
+  it('reuses one API and its bindings across a rapid reconnect', async () => {
+    stubResizeObserver();
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    thumbnail.thumbnails = [{ url: 'thumbnail.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const observer = ResizeObserverStub.instances[0]!;
+    expect(ResizeObserverStub.instances).toHaveLength(1);
+
+    thumbnail.remove();
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    expect(ResizeObserverStub.instances).toHaveLength(1);
+    expect(observer.disconnect).not.toHaveBeenCalled();
+
+    const requestUpdate = vi.spyOn(thumbnail, 'requestUpdate');
+    requestUpdate.mockClear();
+    thumbnail.shadowRoot!.querySelector('img')!.dispatchEvent(new Event('load'));
+
+    expect(requestUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('releases its observer and image listeners when destroyed while connected', async () => {
+    stubResizeObserver();
+    const thumbnail = document.createElement(ThumbnailElement.tagName) as ThumbnailElement;
+    thumbnail.thumbnails = [{ url: 'thumbnail.jpg', startTime: 0 }];
+    document.body.append(thumbnail);
+    await thumbnail.updateComplete;
+
+    const observer = ResizeObserverStub.instances[0]!;
+    const requestUpdate = vi.spyOn(thumbnail, 'requestUpdate');
+    requestUpdate.mockClear();
+
+    thumbnail.destroy();
+
+    expect(observer.disconnect).toHaveBeenCalledOnce();
+
+    thumbnail.shadowRoot!.querySelector('img')!.dispatchEvent(new Event('load'));
+    expect(requestUpdate).not.toHaveBeenCalled();
   });
 
   describe('crossorigin', () => {

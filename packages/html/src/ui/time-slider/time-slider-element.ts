@@ -66,11 +66,11 @@ export class TimeSliderElement extends MediaElement {
     this.#disconnect = new AbortController();
     const signal = this.#disconnect.signal;
 
-    this.#slider = createSlider({
+    this.#slider ??= createSlider({
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
-      isDisabled: () => this.disabled || !this.#timeState.value,
+      isDisabled: () => this.destroyed || this.disabled || !this.#timeState.value,
       getPercent: () => {
         const media = this.#timeState.value;
         if (!media) return 0;
@@ -100,6 +100,7 @@ export class TimeSliderElement extends MediaElement {
     applyElementProps(this, this.#slider.rootProps, { signal });
     applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
+    this.requestUpdate();
 
     if (__DEV__ && !this.#timeState.value) {
       logMissingFeature(this.localName, this.#timeState.displayName!);
@@ -107,18 +108,31 @@ export class TimeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
-    this.#releaseControlsVisibilityLock();
-    this.#resumeIfDragPaused();
+    this.#disposeConnection();
     super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
   }
 
   override destroyCallback(): void {
+    this.#disposeConnection();
+    this.#slider?.destroy();
+    this.#slider = null;
+    super.destroyCallback();
+  }
+
+  #disposeConnection(): void {
     this.#releaseControlsVisibilityLock();
     this.#resumeIfDragPaused();
-    this.#slider?.destroy();
-    super.destroyCallback();
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+
+    const slider = this.#slider;
+    const input = slider?.input.current;
+    if (!input || (!input.dragging && !input.pointing && !input.focused)) return;
+
+    // Discard transient interaction state without committing the interrupted
+    // drag. Idle slider APIs remain durable across ordinary DOM moves.
+    slider.destroy();
+    this.#slider = null;
   }
 
   // createSlider's destroy() does not fire onDragEnd, so a teardown mid-drag

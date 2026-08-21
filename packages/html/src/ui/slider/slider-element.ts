@@ -59,11 +59,11 @@ export class SliderElement extends MediaElement {
     this.#disconnect = new AbortController();
     const signal = this.#disconnect.signal;
 
-    this.#slider = createSlider({
+    this.#slider ??= createSlider({
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
-      isDisabled: () => this.disabled,
+      isDisabled: () => this.destroyed || this.disabled,
       getPercent: () => this.#core.percentFromValue(this.value),
       getStepPercent: () => this.#core.getStepPercent(),
       getLargeStepPercent: () => this.#core.getLargeStepPercent(),
@@ -90,19 +90,35 @@ export class SliderElement extends MediaElement {
     applyElementProps(this, this.#slider.rootProps, { signal });
     applyStyles(this, this.#slider.rootStyle);
     this.#slider.input.subscribe(() => this.requestUpdate(), { signal });
+    this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
-    this.#releaseControlsVisibilityLock();
+    this.#disposeConnection();
     super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
   }
 
   override destroyCallback(): void {
-    this.#releaseControlsVisibilityLock();
+    this.#disposeConnection();
     this.#slider?.destroy();
+    this.#slider = null;
     super.destroyCallback();
+  }
+
+  #disposeConnection(): void {
+    this.#releaseControlsVisibilityLock();
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+
+    const slider = this.#slider;
+    const input = slider?.input.current;
+    if (!input || (!input.dragging && !input.pointing && !input.focused)) return;
+
+    // createSlider intentionally has no reconnect reset API. Discard an API
+    // with transient interaction state so a reconnect cannot resume a stale
+    // pointer capture, while preserving the durable idle API in the common case.
+    slider.destroy();
+    this.#slider = null;
   }
 
   #releaseControlsVisibilityLock(): void {

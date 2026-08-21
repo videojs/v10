@@ -12,6 +12,23 @@ import { SliderThumbElement } from '../slider-thumb-element';
 import { SliderTrackElement } from '../slider-track-element';
 import { SliderValueElement } from '../slider-value-element';
 
+class ResizeObserverStub {
+  static instances: ResizeObserverStub[] = [];
+
+  readonly observe = vi.fn();
+  readonly unobserve = vi.fn();
+  readonly disconnect = vi.fn();
+
+  constructor(_callback: ResizeObserverCallback) {
+    ResizeObserverStub.instances.push(this);
+  }
+}
+
+function stubResizeObserver(): void {
+  ResizeObserverStub.instances.length = 0;
+  vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+}
+
 // Unique tag names to avoid customElements.define collisions across tests.
 let tagCounter = 0;
 
@@ -48,6 +65,7 @@ class TestPlayerProviderElement extends MediaElement {
 }
 
 afterEach(() => {
+  vi.unstubAllGlobals();
   document.body.innerHTML = '';
 });
 
@@ -176,6 +194,86 @@ describe('SliderElement', () => {
     slider.dispatchEvent(new PointerEvent('lostpointercapture', { bubbles: true, pointerId: 1 }));
 
     expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses one API while rebinding pointer listeners after a rapid reconnect', async () => {
+    stubResizeObserver();
+    const slider = createElement(SliderElement);
+    const onValueChange = vi.fn();
+
+    slider.addEventListener('value-change', onValueChange);
+    document.body.append(slider);
+    await slider.updateComplete;
+
+    const observer = ResizeObserverStub.instances[0]!;
+    expect(ResizeObserverStub.instances).toHaveLength(1);
+
+    slider.remove();
+    document.body.append(slider);
+    await slider.updateComplete;
+
+    expect(ResizeObserverStub.instances).toHaveLength(1);
+    expect(observer.disconnect).not.toHaveBeenCalled();
+
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+
+    expect(onValueChange).toHaveBeenCalledOnce();
+  });
+
+  it('releases its API and disables interaction listeners when destroyed while connected', async () => {
+    stubResizeObserver();
+    const slider = createElement(SliderElement);
+    const thumb = createElement(SliderThumbElement);
+    const onValueChange = vi.fn();
+
+    slider.addEventListener('value-change', onValueChange);
+    slider.append(thumb);
+    document.body.append(slider);
+    await slider.updateComplete;
+    await thumb.updateComplete;
+
+    const observer = ResizeObserverStub.instances[0]!;
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+
+    slider.destroy();
+
+    expect(observer.disconnect).toHaveBeenCalledOnce();
+
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+    thumb.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowRight' }));
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it('discards interrupted drag state and releases its controls lock before reconnecting', async () => {
+    stubResizeObserver();
+    const provider = createElement(TestPlayerProviderElement);
+    const slider = createElement(SliderElement);
+
+    provider.append(slider);
+    document.body.append(provider);
+    await slider.updateComplete;
+
+    slider.setPointerCapture = vi.fn();
+    slider.releasePointerCapture = vi.fn();
+    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
+
+    const firstObserver = ResizeObserverStub.instances[0]!;
+    expect(provider.requestControlsLock).toHaveBeenCalledOnce();
+
+    slider.remove();
+
+    expect(provider.releaseControlsLock).toHaveBeenCalledOnce();
+    expect(firstObserver.disconnect).toHaveBeenCalledOnce();
+
+    provider.append(slider);
+    await slider.updateComplete;
+
+    expect(ResizeObserverStub.instances).toHaveLength(2);
+    expect(ResizeObserverStub.instances[1]!.disconnect).not.toHaveBeenCalled();
+    expect(slider.hasAttribute('data-dragging')).toBe(false);
   });
 
   it('supports vertical orientation', async () => {
