@@ -1,7 +1,13 @@
 import type { VjscModule, VjscModuleConfig } from 'vjsc/plugins';
+import { type SkinName, skinStyles } from './meta';
 import { createStyleOptions } from './style';
 import { createComponentTargets } from './target';
-import { validateSkinConfig } from './transform';
+
+export interface SkinConfig {
+  readonly target: 'html' | 'react';
+  readonly skin: SkinName;
+  readonly style: 'tailwind' | 'vanilla';
+}
 
 export function configureSkinModule({ parameters }: VjscModule): VjscModuleConfig | null {
   const config = validateSkinConfig(parameters);
@@ -11,4 +17,21 @@ export function configureSkinModule({ parameters }: VjscModule): VjscModuleConfi
     targets: createComponentTargets(config),
     styles: createStyleOptions(config),
   };
+}
+
+export function validateSkinConfig(parameters: URLSearchParams): SkinConfig | null {
+  const target = parameters.get('target');
+  const skin = parameters.get('skin');
+  const style = parameters.get('style');
+
+  if (
+    (target !== 'react' && target !== 'html') ||
+    !skin ||
+    !(skin in skinStyles) ||
+    (style !== 'tailwind' && style !== 'vanilla')
+  ) {
+    return null;
+  }
+
+  return { target, skin: skin as SkinName, style };
 }
