@@ -25,8 +25,17 @@ const createConfig = (mode: PackageBuildMode): UserConfig => {
 
   return {
     ...packageBuildConfig(mode, 'neutral'),
-    dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json', entry: ['src/**/*.ts'] } : false,
-    deps: { neverBundle: ['vjsc/components'] },
+    dts:
+      mode === 'dev'
+        ? {
+            tsgo: true,
+            tsconfig: 'tsconfig.dts.json',
+            entry: ['src/**/*.ts'],
+          }
+        : false,
+    deps: {
+      neverBundle: ['vjsc/components'],
+    },
     plugins: [schema],
     entry: {
       index: './src/core/index.ts',
