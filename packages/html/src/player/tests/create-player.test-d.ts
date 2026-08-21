@@ -87,19 +87,17 @@ describe('createPlayer', () => {
     );
   });
 
-  it('exposes orientation lock configuration as a provider property', () => {
+  it('exposes orientation lock configuration as a player property', () => {
     const withOrientationLock = createPlayer({ features: [features.orientationLock] });
     const withoutOrientationLock = createPlayer({ features: [features.playback] });
-    const OrientationProvider = withOrientationLock.ProviderMixin(MediaElement);
-    const PlainProvider = withoutOrientationLock.ProviderMixin(MediaElement);
-    const orientationProvider = new OrientationProvider();
-    const plainProvider = new PlainProvider();
+    const orientationPlayer = new withOrientationLock.PlayerElement();
+    const plainPlayer = new withoutOrientationLock.PlayerElement();
 
     assertType<CreatePlayerResult<PlayerStore<[typeof features.orientationLock]>>>(withOrientationLock);
-    assertType<ScreenOrientationLockType | null | undefined>(orientationProvider.orientationLockType);
+    assertType<ScreenOrientationLockType | null | undefined>(orientationPlayer.orientationLockType);
 
     // @ts-expect-error orientation lock properties are absent when the feature is absent.
-    plainProvider.orientationLockType;
+    plainPlayer.orientationLockType;
   });
 
   it('resolves extended video features to generic PlayerStore', () => {
