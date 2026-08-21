@@ -152,6 +152,7 @@
     "@types/react": "^19.2.17",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
+    "@wistia/wistia-player": "^0.7.12",
     "jsdom": "^26.1.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
