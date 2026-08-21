@@ -130,7 +130,7 @@ Everything that needs player state goes inside `Player`: skins, containers, UI c
 <FrameworkCase frameworks={["html"]}>
 Packaged skins make `<video-player>` boxless with `display: contents`. Width, height, positioning, transforms, and `getBoundingClientRect()` do not describe a visible player box there. Put layout and measurements on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> instead.
 
-A headless import does not load the skin styles that set `display: contents`. The provider still owns state, not layout, so add and style a container instead of relying on the provider's default display.
+If you omit `<video-skin>` and import only the player and media elements, those skin styles are not loaded. The provider still owns state, not layout, so add and style a `<media-container>` instead of relying on the provider's default display.
 </FrameworkCase>
 
 ## Accessing state

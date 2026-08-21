@@ -118,7 +118,7 @@ The container is the visual box around your media and controls. Put sizing, aspe
 When the user goes fullscreen, the **container** goes fullscreen — not the video element. This keeps controls and other UI visible on top of the video, since they're children of the container.
 
 <FrameworkCase frameworks={["html"]}>
-Custom video elements such as `<mux-video>` and `<hlsjs-video>` are also boxless: their inner `<video>` fills the parent. Size and measure the container, not the custom media host. Native `<video>` and `<audio>` elements still render their own boxes.
+Custom video elements such as `<mux-video>` and `<hlsjs-video>` do not create their own layout boxes: their inner `<video>` fills the parent. Size and measure `<media-container>`, not `<mux-video>` or `<hlsjs-video>`. Native `<video>` and `<audio>` elements still render their own boxes.
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
 React media components such as `MuxVideo` render a native media element, so the media itself has a box. The container remains the shared layout and fullscreen target for the media and its overlays.
@@ -145,22 +145,22 @@ The container is where user intent enters the player. It listens for physical in
 
 A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI controls. When you use a packaged skin, the container is built in — you don't need to add one yourself.
 
-Style the skin for the player's outer size and aspect ratio. The packaged skin CSS makes its container fill that space and supplies the positioning rules for media, controls, posters, and overlays. React loads those rules from the skin CSS import; importing an HTML skin registers the styles with the skin element.
-
-Headless player and media imports do not include skin layout. Render `Container` or `<media-container>` yourself and supply its display, size, and positioning styles.
-
 <FrameworkCase frameworks={["react"]}>
+Style `VideoSkin` for the player's outer size and aspect ratio. Its `skin.css` import makes the built-in container fill that space and positions the media, controls, poster, and overlays.
+
+If you omit `VideoSkin` to build custom UI, render `Container` yourself and supply its size and positioning styles:
+
 ```tsx
 {/* Packaged skin — container is inside VideoSkin */}
 <Player>
-  <VideoSkin>
+  <VideoSkin style={{ width: '100%', aspectRatio: '16/9' }}>
     <Video src="video.mp4" />
   </VideoSkin>
 </Player>
 
 {/* Custom UI — you use Container directly */}
 <Player>
-  <Container>
+  <Container style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
     <video src="video.mp4" />
     <PlayButton />
   </Container>
@@ -168,21 +168,34 @@ Headless player and media imports do not include skin layout. Render `Container`
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
+Style `<video-skin>` for the player's outer size and aspect ratio. Importing the skin registers the styles that make the built-in container fill that space and position the media, controls, poster, and overlays.
+
+If you omit `<video-skin>` to build custom UI, render `<media-container>` yourself and supply its display, size, and positioning styles:
+
 ```html
 <!-- Packaged skin — container is inside video-skin -->
 <video-player>
-  <video-skin>
+  <video-skin class="player-surface">
     <video src="video.mp4"></video>
   </video-skin>
 </video-player>
 
 <!-- Custom UI — you use media-container directly -->
 <video-player>
-  <media-container>
+  <media-container class="player-surface">
     <video src="video.mp4"></video>
     <media-play-button></media-play-button>
   </media-container>
 </video-player>
+```
+
+```css
+.player-surface {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
 ```
 </FrameworkCase>
 

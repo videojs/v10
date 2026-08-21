@@ -154,9 +154,53 @@ A few things worth calling out:
 - **The poster is yours to build.** Mux Player derived one from the playback ID; here you point the skin at an `image.mux.com` URL, and `thumbnail-time="2"` becomes `?time=2`. <DocsLink slug="reference/mux-video">`MuxVideo`</DocsLink> derives the same URL and reports it, but the poster is a skin concern today, so nothing reads it for you.
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
 - **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>.
-- **Move layout off the player provider.** Mux Player was one visible, measurable element. React's `VideoPlayer` renders no DOM of its own, and packaged HTML skins make `<video-player>` boxless with `display: contents`. Put width, height, aspect ratio, positioning, and DOM measurements on the skin's built-in <DocsLink slug="reference/player-container">container</DocsLink>, not the provider.
-- **Packaged skins supply layout CSS.** Set the outer size or aspect ratio on `VideoSkin` or `<video-skin>`; the skin CSS makes its container fill that space and positions the media, controls, poster, and overlays. React needs the `skin.css` import shown above. Importing the HTML skin registers its styles.
-- **Headless imports leave layout to your app.** Add `Container` or `<media-container>`, style it as the visible and positioned box, and put overlays inside it. HTML custom video hosts such as `<mux-video>` use `display: contents`, so size and measure the container rather than the media host. React media components render a native media element, but the container remains the shared layout and fullscreen target.
+
+### Move your layout styles
+
+Mux Player was one visible, measurable element. Video.js separates player state from the visible surface.
+
+<FrameworkCase frameworks={["react"]}>
+If you use `VideoSkin`, put width, height, aspect ratio, positioning, and DOM measurements on `VideoSkin`. The `skin.css` import shown above makes the media, controls, poster, and overlays fill and layer within it. `VideoPlayer` renders no DOM element of its own.
+
+If you leave out `VideoSkin` to build your own UI, add a <DocsLink slug="reference/player-container">`Container`</DocsLink>. Style and measure that element, and put overlays inside it:
+
+```tsx
+import { Container } from '@videojs/react';
+
+<VideoPlayer>
+  <Container style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
+    <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} />
+    <MyOverlay />
+  </Container>
+</VideoPlayer>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+If you use `<video-skin>`, put width, height, aspect ratio, positioning, and DOM measurements on `<video-skin>`. Importing the skin registers the styles that make the media, controls, poster, and overlays fill and layer within it. The skin also makes `<video-player>` boxless.
+
+If you leave out `<video-skin>` to build your own UI, add a <DocsLink slug="reference/player-container">`<media-container>`</DocsLink>. Style and measure that element, and put overlays inside it:
+
+```html
+<video-player>
+  <media-container class="player-surface">
+    <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8"></mux-video>
+    <my-overlay></my-overlay>
+  </media-container>
+</video-player>
+```
+
+```css
+.player-surface {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+```
+
+`<mux-video>` and the other custom video elements do not create their own layout box. They fill their parent, so size and measure `<media-container>`, not the video element.
+</FrameworkCase>
 
 Two things are opt-in that used to be automatic. Analytics is the <DocsLink slug="reference/mux-data">Mux Data</DocsLink> component, and Chromecast is a <DocsLink slug="concepts/cast">Cast</DocsLink> component. Leave either out and you don't ship its code. That, incidentally, is the answer to Mux Player's `disable-tracking`: don't include Mux Data.
 
