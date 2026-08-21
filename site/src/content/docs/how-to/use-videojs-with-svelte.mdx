@@ -7,9 +7,52 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 Follow the <DocsLink slug="how-to/installation">installation guide</DocsLink> first. Keep its `@videojs/html` imports and player markup in your Svelte component, then apply the Svelte-specific patterns below.
 
+## Read player state in `onMount`
+
+If your component needs to react to player state or call a player action, wait until Svelte has mounted and bound `<video-player>`. The React API's `usePlayer` hook is not part of `@videojs/html`, so bind the element to a variable and subscribe to its store in `onMount`:
+
+```svelte
+<script lang="ts">
+  import type { VideoPlayerElement } from '@videojs/html/video/player';
+  import { onMount } from 'svelte';
+
+  let player: VideoPlayerElement;
+  let paused = $state(true);
+
+  onMount(() => {
+    const sync = () => (paused = player.store.paused);
+    sync();
+    return player.store.subscribe(sync);
+  });
+</script>
+
+<video-player bind:this={player}><!-- skin and media --></video-player>
+<p>{paused ? 'Paused' : 'Playing'}</p>
+```
+
+Return the store's unsubscribe function from `onMount` so Svelte cleans up the subscription. Use the store for player state and actions. You can still listen for native media events on the `<video>`, `<audio>`, or media custom element when you need the event itself.
+
+## Keep runtime styles global
+
+If a style depends on a Video.js `data-*` state, Svelte may remove its selector because that attribute is not present in your component markup. Wrap these runtime-state selectors in Svelte's [`:global(...)`](https://svelte.dev/docs/svelte/global-styles#global) modifier:
+
+```svelte
+<style>
+  :global(media-mute-button:not(:defined)) {
+    visibility: hidden;
+  }
+
+  :global(media-mute-button:defined[data-muted]) {
+    color: var(--muted-control-color);
+  }
+</style>
+```
+
+`:defined` applies the state style only after the browser loads the element. These selectors matter when you eject a skin or compose controls yourself. Styles cannot reach controls inside a packaged skin; use its CSS custom properties, or <DocsLink slug="how-to/customize-skins">eject the skin</DocsLink> to own its markup and CSS.
+
 ## Pass objects as properties
 
-HTML attributes contain text. Assign structured values, such as a Mux source, to the element's JavaScript property from a Svelte effect:
+If you need to pass structured data, such as a Mux source, an HTML attribute will not work because attributes contain text. Bind the element to a variable and assign the object to its JavaScript property from a Svelte effect:
 
 ```svelte
 <script lang="ts">
@@ -38,57 +81,8 @@ HTML attributes contain text. Assign structured values, such as a Mux source, to
 
 The effect runs in the browser, so Svelte does not turn the object into a text attribute during server rendering. Video.js also preserves properties assigned before the custom element finishes loading.
 
-## Read player state
+## Use SvelteKit
 
-The React API's `usePlayer` hook is not part of `@videojs/html`. In Svelte, bind `<video-player>` to a variable and subscribe to its store:
+If you use server rendering, keep the element imports from the installation guide static. SvelteKit renders the custom-element markup on the server, and the browser upgrades it when the page loads. Put code that needs the bound element or browser APIs in `onMount`, as shown above.
 
-```svelte
-<script lang="ts">
-  import type { VideoPlayerElement } from '@videojs/html/video/player';
-  import { onMount } from 'svelte';
-
-  let player: VideoPlayerElement;
-  let paused = $state(true);
-
-  onMount(() => {
-    const sync = () => (paused = player.store.paused);
-    sync();
-    return player.store.subscribe(sync);
-  });
-</script>
-
-<video-player bind:this={player}><!-- skin and media --></video-player>
-<p>{paused ? 'Paused' : 'Playing'}</p>
-```
-
-Use the store for player state and actions. You can still listen for native media events on the `<video>`, `<audio>`, or media custom element when you need the event itself.
-
-## Keep runtime styles global
-
-Svelte can remove a scoped selector when its matching `data-*` attribute only appears at runtime. Wrap these selectors in Svelte's [`:global(...)`](https://svelte.dev/docs/svelte/global-styles#global) modifier:
-
-```svelte
-<style>
-  :global(media-mute-button:not(:defined)) {
-    visibility: hidden;
-  }
-
-  :global(media-mute-button:defined[data-muted]) {
-    color: var(--muted-control-color);
-  }
-</style>
-```
-
-`:defined` applies the state style only after the browser loads the element. These selectors matter when you eject a skin or compose controls yourself. Styles cannot reach controls inside a packaged skin; use its CSS custom properties, or <DocsLink slug="how-to/customize-skins">eject the skin</DocsLink> to own its markup and CSS.
-
-## Use SvelteKit and wrapper libraries
-
-Keep the element imports from the installation guide static. SvelteKit renders the custom-element markup on the server, and the browser upgrades it when the page loads. If you intentionally import Video.js later from `onMount`, wait for `customElements.whenDefined('video-player')` before reading its store or calling its methods.
-
-For a published wrapper, declare `@videojs/html` as a peer dependency and externalize its root and deep imports:
-
-```ts
-const external = (id: string) => id === '@videojs/html' || id.startsWith('@videojs/html/');
-```
-
-Let the consuming app import the global skin CSS. If Svelte reports a type error for a custom tag or event, add it to `SvelteHTMLElements` by following Svelte's [DOM type guidance](https://svelte.dev/docs/svelte/typescript#enhancing-built-in-dom-types).
+If you intentionally import Video.js later from `onMount`, wait for `customElements.whenDefined('video-player')` before reading its store or calling its methods. If Svelte reports a type error for a custom tag or event, add it to `SvelteHTMLElements` by following Svelte's [DOM type guidance](https://svelte.dev/docs/svelte/typescript#enhancing-built-in-dom-types).
