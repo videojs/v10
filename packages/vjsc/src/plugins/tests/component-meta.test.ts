@@ -1,7 +1,7 @@
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
 import { describe, expect, it } from 'vitest';
 
-import { componentMetaPlugin, editableSourcePlugin, readVjscMeta, readVjscSource } from '..';
+import { componentMetaPlugin, componentSourcePlugin, readComponentMeta, readComponentSource } from '..';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 
@@ -11,14 +11,14 @@ describe('componentMetaPlugin', () => {
       `export const meta = { name: 'poster', type: 'component', flags: ['visual'], priority: -1 } as const satisfies { name: string }, retained = 42;\nexport const value = retained;`
     );
 
-    expect(readVjscMeta(result.meta)?.component).toEqual({
+    expect(readComponentMeta(result.meta)).toEqual({
       name: 'poster',
       type: 'component',
       flags: ['visual'],
       priority: -1,
     });
-    expect(readVjscSource(result.meta)).not.toContain('const meta');
-    expect(readVjscSource(result.meta)).toContain('export const retained = 42;');
+    expect(readComponentSource(result.meta)).not.toContain('const meta');
+    expect(readComponentSource(result.meta)).toContain('export const retained = 42;');
     expect(result.code).not.toContain('meta');
     expect(result.code).toContain('retained');
   });
@@ -40,7 +40,7 @@ async function build(source: string): Promise<{ code: string; meta: unknown }> {
   };
   const bundle = await rolldown({
     input: 'fixture',
-    plugins: [fixturePlugin(source), componentMetaPlugin(), editableSourcePlugin(), inspect],
+    plugins: [fixturePlugin(source), componentMetaPlugin(), componentSourcePlugin(), inspect],
   });
   const output = await bundle.generate({ format: 'es' });
   const chunk = output.output.find((item): item is OutputChunk => item.type === 'chunk');

@@ -7,11 +7,11 @@ import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vitest';
 
 import { moduleFilename } from '../../utils/module-id';
-import { sourceModulesPlugin } from '..';
+import { componentModulesPlugin } from '..';
 
-describe('sourceModulesPlugin', () => {
+describe('componentModulesPlugin', () => {
   it('propagates the full transform query through relative source dependencies', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-source-modules-'));
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-component-modules-'));
     const entry = join(root, 'entry.tsx');
     const child = join(root, 'child.tsx');
     const model = join(root, 'model.ts');
@@ -39,7 +39,7 @@ describe('sourceModulesPlugin', () => {
     const bundle = await rolldown({
       input: `${entry}?style=tailwind&target=react`,
       transform: { jsx: 'preserve' },
-      plugins: [sourceModulesPlugin(), capture],
+      plugins: [componentModulesPlugin(), capture],
     });
 
     await bundle.generate({ format: 'es' });

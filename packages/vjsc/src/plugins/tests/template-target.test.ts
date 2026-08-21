@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
 import { Host, jsx } from '../../target/jsx-runtime';
-import { editableSourcePlugin, readVjscSource, templateTargetPlugin } from '..';
+import { componentSourcePlugin, readComponentSource, templateTargetPlugin } from '..';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const schema = defineSchema('@fixture/components', {});
@@ -79,11 +79,11 @@ async function transform(source: string): Promise<string> {
     input: 'fixture',
     external: ['vjsc/components'],
     transform: { jsx: 'preserve' },
-    plugins: [fixturePlugin(source), templateTargetPlugin({ targets: [target] }), editableSourcePlugin(), inspect],
+    plugins: [fixturePlugin(source), templateTargetPlugin({ targets: [target] }), componentSourcePlugin(), inspect],
   });
 
   await bundle.generate({ format: 'es' });
-  const output = readVjscSource(meta);
+  const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
   return output;
 }

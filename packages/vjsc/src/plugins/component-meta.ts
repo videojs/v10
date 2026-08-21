@@ -10,9 +10,14 @@ import type {
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
 import type { ComponentMeta } from '../components/meta';
-import { mergeVjscMeta } from './meta';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
+
+export interface ComponentModuleMeta {
+  readonly componentMeta?: ComponentMeta | undefined;
+  readonly componentSource?: string | undefined;
+  readonly [key: string]: unknown;
+}
 
 interface ExportedMeta {
   readonly declaration: VariableDeclaration;
@@ -20,6 +25,18 @@ interface ExportedMeta {
   readonly statement: Program['body'][number];
 }
 
+/**
+ * Extract static component metadata and remove its export from runtime code.
+ * Use before source capture when registry tooling needs a component's `meta` export.
+ *
+ * @example
+ * ```diff
+ * - export const meta = { name: 'play-button' };
+ *   export function PlayButton() {}
+ * ```
+ *
+ * @param exportName - Metadata export to extract. Defaults to `meta`.
+ */
 export function componentMetaPlugin(exportName = 'meta'): Plugin {
   return {
     name: 'vjsc:component-meta',
@@ -29,7 +46,7 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
         const exported = findExportedMeta(transform.ast, exportName);
         if (!exported?.declarator.init) return null;
 
-        const component = readComponentMeta(exported.declarator.init, id, exportName);
+        const componentMeta = parseComponentMeta(exported.declarator.init, id, exportName);
         const magicString = transform.magicString;
         if (!magicString) {
           throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
@@ -39,10 +56,38 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
 
         return {
           code: magicString,
-          meta: mergeVjscMeta(this.getModuleInfo(id)?.meta, { component }),
+          meta: mergeComponentModuleMeta(this.getModuleInfo(id)?.meta, { componentMeta }),
         };
       },
     },
+  };
+}
+
+export function readComponentModuleMeta(meta: unknown): ComponentModuleMeta | undefined {
+  if (!isRecord(meta)) return undefined;
+
+  const componentMeta = isComponentMeta(meta.componentMeta) ? meta.componentMeta : undefined;
+  const componentSource = typeof meta.componentSource === 'string' ? meta.componentSource : undefined;
+  if (!componentMeta && componentSource === undefined) return undefined;
+
+  return { ...meta, componentMeta, componentSource };
+}
+
+export function readComponentMeta(meta: unknown): ComponentMeta | undefined {
+  return readComponentModuleMeta(meta)?.componentMeta;
+}
+
+export function readComponentSource(meta: unknown): string | undefined {
+  return readComponentModuleMeta(meta)?.componentSource;
+}
+
+export function mergeComponentModuleMeta(
+  meta: unknown,
+  update: Partial<ComponentModuleMeta>
+): Readonly<Record<string, unknown>> {
+  return {
+    ...(isRecord(meta) ? meta : {}),
+    ...update,
   };
 }
 
@@ -76,7 +121,7 @@ function removeDeclarator(magicString: RolldownMagicString, exported: ExportedMe
   }
 }
 
-function readComponentMeta(expression: Expression, id: string, exportName: string): ComponentMeta {
+function parseComponentMeta(expression: Expression, id: string, exportName: string): ComponentMeta {
   const value = staticValue(expression, id);
 
   if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
@@ -160,4 +205,8 @@ function nonStaticMeta(id: string): Error {
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isComponentMeta(value: unknown): value is ComponentMeta {
+  return isRecord(value) && typeof value.name === 'string';
 }

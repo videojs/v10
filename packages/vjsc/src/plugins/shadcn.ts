@@ -11,11 +11,11 @@ import type { ShadcnModule, ShadcnPluginOptions } from '../shadcn/types';
 import { toArray } from '../utils/array';
 import { moduleFilename, moduleId, normalizeResolvedId } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
-import { readVjscMeta, readVjscSource } from './meta';
+import { readComponentMeta, readComponentSource } from './component-meta';
 
 export type { ShadcnPluginOptions } from '../shadcn/types';
 
-/** Discover editable sources, capture their VJSC transformations, and emit Shadcn JSON assets. */
+/** Discover component sources, collect their transformed graphs, and emit Shadcn JSON assets. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
   const root = resolveModulePath(options.root);
   const sources = new Map<string, ShadcnModule<Item>>();
@@ -59,9 +59,9 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
 
       for (const module of sources.values()) {
         const info = this.getModuleInfo(module.id);
-        const source = readVjscSource(info?.meta);
-        if (source === undefined) this.error(`Shadcn source has no editable VJSC output: \`${module.id}\`.`);
-        const meta = readVjscMeta(info?.meta)?.component as Item | undefined;
+        const source = readComponentSource(info?.meta);
+        if (source === undefined) this.error(`Shadcn source has no captured component output: \`${module.id}\`.`);
+        const meta = readComponentMeta(info?.meta) as Item | undefined;
         const imports: SourceImport[] = [];
         for (const reference of analyzeImports(source, module.filename)) {
           const resolved = await this.resolve(reference.specifier, module.id);

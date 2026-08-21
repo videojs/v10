@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';
 import type { StyleManifest, StyleManifestRule } from '../../styles/manifest';
-import { editableSourcePlugin, readVjscSource, type StylePluginConfig, stylePlugin } from '..';
+import { componentSourcePlugin, readComponentSource, type StylePluginConfig, stylePlugin } from '..';
 
 const filename = resolve(import.meta.dirname, 'component.tsx');
 const modulePath = resolve(import.meta.dirname, 'fixtures/button.styles.ts');
@@ -74,12 +74,12 @@ async function transform(
     input: 'fixture',
     external: /^virtual:vjsc\/css\//,
     transform: { jsx: 'preserve' },
-    plugins: [fixturePlugin(source), stylePlugin(config), editableSourcePlugin(), inspect],
+    plugins: [fixturePlugin(source), stylePlugin(config), componentSourcePlugin(), inspect],
   });
 
   await bundle.generate({ format: 'es' });
 
-  const output = readVjscSource(meta);
+  const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
   return { source: output };
 }

@@ -7,19 +7,31 @@ import type { ModuleType, Plugin } from 'rolldown';
 
 import { isVjscModule, moduleFilename, moduleId, type ParsedModuleId, parseModuleId } from '../utils/module-id';
 
-export interface SourceModuleContext extends ParsedModuleId {
+export interface ComponentModuleContext extends ParsedModuleId {
   readonly id: string;
 }
 
-export interface SourceModulesPluginOptions {
-  readonly ignore?: ((module: SourceModuleContext) => boolean) | undefined;
+export interface ComponentModulesPluginOptions {
+  readonly ignore?: ((module: ComponentModuleContext) => boolean) | undefined;
 }
 
-export function sourceModulesPlugin(options: SourceModulesPluginOptions = {}): Plugin {
+/**
+ * Carry a component transform query through relative imports and retain type-only modules.
+ * Use before component transforms when one source tree is built for multiple targets.
+ *
+ * @example An import from `entry.tsx?target=react` inherits its transform query:
+ * ```diff
+ * - icon.tsx
+ * + icon.tsx?target=react
+ * ```
+ *
+ * @param options - Controls which query-bearing modules participate.
+ */
+export function componentModulesPlugin(options: ComponentModulesPluginOptions = {}): Plugin {
   const typeEntries = new Map<string, string>();
 
   return {
-    name: 'vjsc:source-modules',
+    name: 'vjsc:component-modules',
     buildStart() {
       typeEntries.clear();
     },
@@ -79,8 +91,8 @@ export function sourceModulesPlugin(options: SourceModulesPluginOptions = {}): P
 
 function selectedModule(
   id: string,
-  ignore: SourceModulesPluginOptions['ignore']
-): (SourceModuleContext & ParsedModuleId) | null {
+  ignore: ComponentModulesPluginOptions['ignore']
+): (ComponentModuleContext & ParsedModuleId) | null {
   const parsed = parseModuleId(id);
   const module = { id, ...parsed };
 

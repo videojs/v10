@@ -1,6 +1,6 @@
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
-import { schemaPlugin } from 'vjsc/plugins';
+import { componentSchemaPlugin } from 'vjsc/plugins';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import en from './src/core/i18n/locales/en.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
@@ -30,7 +30,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => {
       neverBundle: ['vjsc/components'],
     },
     plugins: [
-      schemaPlugin({
+      componentSchemaPlugin({
         file: 'vjsc',
         declaration: mode === 'dev',
         source: '@videojs/core/vjsc',

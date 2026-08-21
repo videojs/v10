@@ -4,9 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
 import {
+  componentSourcePlugin,
   componentTargetPlugin,
-  editableSourcePlugin,
-  readVjscSource,
+  readComponentSource,
   targetImportCleanupPlugin,
   targetTypePlugin,
 } from '..';
@@ -103,13 +103,13 @@ async function transform(source: string): Promise<string> {
       targetTypePlugin({ targets: [target] }),
       componentTargetPlugin({ targets: [target] }),
       targetImportCleanupPlugin({ targets: [target] }),
-      editableSourcePlugin(),
+      componentSourcePlugin(),
       inspect,
     ],
   });
 
   await bundle.generate({ format: 'es' });
-  const output = readVjscSource(meta);
+  const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
   return output;
 }

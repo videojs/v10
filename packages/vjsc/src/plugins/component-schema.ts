@@ -5,21 +5,34 @@ import type { Plugin } from 'rolldown';
 import { type CreateSchemaModuleOptions, createSchemaModule } from '../components/schema/generate';
 import { addInputEntries } from './input';
 
-export interface SchemaPluginOptions extends Omit<CreateSchemaModuleOptions, 'cwd' | 'output'> {
+export interface ComponentSchemaPluginOptions extends Omit<CreateSchemaModuleOptions, 'cwd' | 'output'> {
   readonly file?: string | undefined;
   /** Add a companion declaration entry when the host has a declaration pipeline. */
   readonly declaration?: boolean | undefined;
 }
 
-/** Create component-schema entries inside a Rolldown-compatible build. */
-export function schemaPlugin(config: SchemaPluginOptions): Plugin {
-  const entry = config.file ?? 'vjsc';
-  const moduleId = `\0vjsc:schema:${entry}`;
+/**
+ * Generate a build entry that exports schemas for matching components.
+ * Use in package builds that publish a typed component schema.
+ *
+ * @example
+ * ```ts
+ * componentSchemaPlugin({
+ *   source: '@videojs/core/vjsc',
+ *   include: ['./src/components/*-component.ts'],
+ * });
+ * ```
+ *
+ * @param config - Component discovery and output settings.
+ */
+export function componentSchemaPlugin(config: ComponentSchemaPluginOptions): Plugin {
+  const entry = config.file ?? 'component-schema';
+  const moduleId = `\0vjsc:component-schema:${entry}`;
 
   let cwd: string, output: string, declarationOutput: string;
 
   return {
-    name: 'vjsc:schema',
+    name: 'vjsc:component-schema',
     options(options) {
       cwd = resolve(options.cwd ?? process.cwd());
       output = resolve(cwd, `${entry}.ts`);

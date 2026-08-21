@@ -6,11 +6,11 @@ import { rolldown } from 'rolldown';
 import { build } from 'tsdown';
 import { describe, expect, it } from 'vitest';
 
-import { schemaPlugin } from '..';
+import { componentSchemaPlugin } from '..';
 
-describe('schemaPlugin', () => {
+describe('componentSchemaPlugin', () => {
   it('creates a schema entry directly from inline bundler configuration', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-schema-plugin-'));
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-component-schema-plugin-'));
     const sourceDir = join(root, 'play-button');
     const source = join(sourceDir, 'play-button-component.ts');
     const existing = join(root, 'existing.ts');
@@ -20,8 +20,7 @@ describe('schemaPlugin', () => {
       source,
       `const defineComponent: any = (value: any) => value; export default defineComponent({ name: 'PlayButton' });`
     );
-    const plugin = schemaPlugin({
-      file: 'schema',
+    const plugin = componentSchemaPlugin({
       source: '@fixture/components',
       include: ['./*/*-component.ts'],
     });
@@ -29,14 +28,14 @@ describe('schemaPlugin', () => {
     const bundle = await rolldown({ cwd: root, input: { existing }, plugins: [plugin] });
     const output = await bundle.generate({ format: 'es' });
     const chunks = output.output.filter((item) => item.type === 'chunk');
-    const schema = chunks.find((chunk) => chunk.fileName === 'schema.js');
+    const schema = chunks.find((chunk) => chunk.fileName === 'component-schema.js');
 
-    expect(chunks.map((chunk) => chunk.fileName).sort()).toEqual(['existing.js', 'schema.js']);
+    expect(chunks.map((chunk) => chunk.fileName).sort()).toEqual(['component-schema.js', 'existing.js']);
     expect(schema?.code).toContain('PlayButton');
   });
 
   it('provides its companion declaration to the host build', async () => {
-    const root = mkdtempSync(join(tmpdir(), 'vjsc-schema-plugin-'));
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-component-schema-plugin-'));
     const sourceDir = join(root, 'play-button');
     mkdirSync(sourceDir);
     writeFileSync(
@@ -47,7 +46,7 @@ describe('schemaPlugin', () => {
       join(sourceDir, 'play-button-component.d.ts'),
       `declare const manifest: { name: 'PlayButton' }; export default manifest;`
     );
-    const plugin = schemaPlugin({
+    const plugin = componentSchemaPlugin({
       file: 'schema',
       declaration: true,
       source: '@fixture/components',

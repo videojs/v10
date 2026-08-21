@@ -5,11 +5,11 @@ import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import {
   componentMetaPlugin,
+  componentModulesPlugin,
   componentTargetPlugin,
   htmlRuntimePlugin,
   primitiveTargetPlugin,
   reactTargetPropsPlugin,
-  sourceModulesPlugin,
   stylePlugin,
   targetImportCleanupPlugin,
   targetJsxPlugin,
@@ -38,7 +38,7 @@ function createPreviewConfig() {
     plugins: [
       iconElementPlugin(),
       htmlRuntimePlugin(),
-      sourceModulesPlugin({
+      componentModulesPlugin({
         ignore: ({ parameters }) => !isSkinModule(parameters),
       }),
       componentMetaPlugin(),

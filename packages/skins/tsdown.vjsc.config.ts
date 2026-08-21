@@ -3,12 +3,12 @@ import { basename, resolve } from 'node:path';
 import { defineConfig } from 'tsdown';
 import {
   componentMetaPlugin,
+  componentModulesPlugin,
+  componentSourcePlugin,
   componentTargetPlugin,
-  editableSourcePlugin,
   primitiveTargetPlugin,
   reactTargetPropsPlugin,
   shadcnPlugin,
-  sourceModulesPlugin,
   stylePlugin,
   targetImportCleanupPlugin,
   targetJsxPlugin,
@@ -25,7 +25,7 @@ import { isSkinModule } from './vjsc/transform';
 
 const packageDir = import.meta.dirname;
 const vjscDir = resolve(packageDir, 'vjsc');
-const registryUtils = resolve(vjscDir, 'registry/utils.ts');
+const registryUtils = resolve(vjscDir, 'utils.ts');
 
 const paths = {
   output: 'vjsc/registry',
@@ -57,7 +57,7 @@ export default defineConfig({
     onlyBundle: false,
   },
   plugins: [
-    sourceModulesPlugin({
+    componentModulesPlugin({
       ignore: ({ parameters }) => !isSkinModule(parameters),
     }),
     componentMetaPlugin(),
@@ -84,10 +84,10 @@ export default defineConfig({
     targetImportCleanupPlugin({
       targets: ({ parameters }) => resolveComponentTargets(parameters),
     }),
-    editableSourcePlugin(),
+    componentSourcePlugin(),
     shadcnPlugin<SkinModuleMeta>({
       root: vjscDir,
-      include: ['./components/**/*.{ts,tsx}', './skins/*/skin.{ts,tsx}', './registry/utils.ts'],
+      include: ['./components/**/*.{ts,tsx}', './skins/*/skin.{ts,tsx}', './utils.ts'],
       name: 'videojs',
       homepage: 'https://videojs.org',
       namespace: '@videojs',

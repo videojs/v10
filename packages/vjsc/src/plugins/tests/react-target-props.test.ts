@@ -3,7 +3,7 @@ import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vitest';
 
 import type { ComponentTarget } from '../../target/definition';
-import { editableSourcePlugin, reactTargetPropsPlugin, readVjscSource } from '..';
+import { componentSourcePlugin, reactTargetPropsPlugin, readComponentSource } from '..';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const reactTarget = {
@@ -37,14 +37,14 @@ describe('reactTargetPropsPlugin', () => {
           </>;
         `),
         reactTargetPropsPlugin({ targets: [reactTarget] }),
-        editableSourcePlugin(),
+        componentSourcePlugin(),
         inspect,
       ],
     });
 
     await bundle.generate({ format: 'es' });
 
-    const source = readVjscSource(meta);
+    const source = readComponentSource(meta);
     expect(source).toContain(`import { cn, resolveClassName } from "@videojs/utils/style";`);
     expect(source).toContain(`className={state => cn('poster', resolveClassName(className, state))}`);
     expect(source).toContain(`className={cn('container', className)}`);
