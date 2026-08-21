@@ -40,5 +40,12 @@ function createPreviewConfig() {
       include: ['react', 'react-dom'],
       exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
     },
+    build: {
+      rolldownOptions: {
+        experimental: {
+          nativeMagicString: true,
+        },
+      },
+    },
   };
 }

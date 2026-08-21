@@ -240,6 +240,7 @@ async function transform(
   };
   const bundle = await rolldown({
     input: 'fixture',
+    experimental: { nativeMagicString: true },
     external: /^(?:@fixture\/|vjsc\/html-runtime\/)/,
     transform: { jsx: 'preserve' },
     plugins: [

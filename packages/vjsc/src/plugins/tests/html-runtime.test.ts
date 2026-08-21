@@ -63,6 +63,7 @@ describe('htmlRuntimePlugin', () => {
 async function loadRuntime(): Promise<HtmlRuntime> {
   const build = await rolldown({
     input: 'runtime',
+    experimental: { nativeMagicString: true },
     plugins: [
       {
         name: 'test-runtime',

@@ -41,6 +41,7 @@ async function build(source: string): Promise<{ code: string; meta: unknown }> {
   };
   const bundle = await rolldown({
     input: 'fixture',
+    experimental: { nativeMagicString: true },
     plugins: [fixturePlugin(source), componentMetaPlugin(), componentSourcePlugin(), inspect],
   });
   const output = await bundle.generate({ format: 'es' });

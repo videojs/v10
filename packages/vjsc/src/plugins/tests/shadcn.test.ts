@@ -199,6 +199,7 @@ async function build(
   const plugins = order.flatMap((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin));
   const bundle = await rolldown({
     input: typeof input === 'string' ? input : [...input],
+    experimental: { nativeMagicString: true },
     external: (id) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
     plugins,
   });

@@ -5,6 +5,11 @@ export const packageBuildModes: PackageBuildMode[] = ['dev', 'default'];
 
 /** Applied to every tsdown config in the monorepo. */
 export const baseConfig = {
+  inputOptions: {
+    experimental: {
+      nativeMagicString: true,
+    },
+  },
   report: process.env.CI === 'true',
 } as const;
 

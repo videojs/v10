@@ -94,6 +94,7 @@ async function transform(source: string): Promise<string> {
   };
   const bundle = await rolldown({
     input: 'fixture',
+    experimental: { nativeMagicString: true },
     external: () => true,
     transform: { jsx: 'preserve' },
     plugins: [

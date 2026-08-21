@@ -57,7 +57,10 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
+      experimental: {
+        nativeMagicString: true,
+      },
       input: {
         main: resolve(__dirname, 'src/index.html'),
         ...getPageEntries(),

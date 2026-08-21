@@ -79,6 +79,7 @@ async function transform(source: string): Promise<string> {
   };
   const bundle = await rolldown({
     input: 'fixture',
+    experimental: { nativeMagicString: true },
     external: ['vjsc/components'],
     transform: { jsx: 'preserve' },
     plugins: [fixturePlugin(source), templateTargetPlugin({ targets: [target] }), componentSourcePlugin(), inspect],

@@ -10,6 +10,7 @@ Read this reference only for graph-sensitive, virtual-module, declaration, or ou
 - Plugin interface: <https://rolldown.rs/reference/Interface.Plugin>
 - Plugin context and graph/output methods: <https://rolldown.rs/reference/Interface.PluginContext>
 - Module types: <https://rolldown.rs/in-depth/module-types>
+- Native MagicString: <https://rolldown.rs/in-depth/native-magic-string>
 
 Recheck both installed types and official documentation when the dependency changes. Rolldown is evolving quickly, and a documented current behavior may not exist in the pinned runtime.
 
@@ -26,7 +27,8 @@ Recheck both installed types and official documentation when the dependency chan
 
 ## Repository-proven constraints
 
-- In the pinned Rolldown 1.1.x hosts, a build-start `this.load({ resolveDependencies: true })` did not reliably populate an otherwise unreachable graph. Use a real configured or emitted entry and prove traversal in both direct Rolldown and Vite tests before depending on it.
+- In the pinned Rolldown 1.2.x hosts, a build-start `this.load({ resolveDependencies: true })` did not reliably populate an otherwise unreachable graph. Use a real configured or emitted entry and prove traversal in both direct Rolldown and Vite tests before depending on it.
+- Explicitly enable `experimental.nativeMagicString: true` in repository-owned Rolldown input configs that run MagicString transforms; tsdown places Rolldown input options under `inputOptions`. Do not rely on an observed default from the pinned runtime.
 - An emitted chunk without `fileName` follows `output.chunkFileNames`, not `entryFileNames`. Add a named input when package exports require entry naming; emit a chunk when graph inclusion matters and chunk naming is acceptable.
 - Treat a full query-bearing resolved ID as module identity. Keep the physical filename separately. Stripping queries cross-wires multiple transformations of the same source file.
 - Capture editable transformed source before runtime JSX lowering. Later `ModuleInfo.code` is host-dependent; namespaced transform metadata is the portable handoff.

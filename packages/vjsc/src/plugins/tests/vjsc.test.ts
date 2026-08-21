@@ -37,6 +37,7 @@ describe('vjscPlugin', () => {
 
     const bundle = await rolldown({
       input: id,
+      experimental: { nativeMagicString: true },
       plugins: vjscPlugin({
         configure(module) {
           configurations.set(module.id, (configurations.get(module.id) ?? 0) + 1);

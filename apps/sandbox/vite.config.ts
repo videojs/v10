@@ -165,6 +165,9 @@ export default defineConfig({
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
     rolldownOptions: {
+      experimental: {
+        nativeMagicString: true,
+      },
       // This resolver substitutes the prebuilt CDN graph, whose downstream
       // processing time is attributed to the plugin rather than its fast hooks.
       checks: {

@@ -285,7 +285,10 @@ async function evaluateStyleModule(
   const bundle = await rolldown({
     input: modulePath,
     platform: 'node',
-    experimental: { attachDebugInfo: 'none' },
+    experimental: {
+      attachDebugInfo: 'none',
+      nativeMagicString: true,
+    },
     plugins: [
       {
         name: 'vjsc:styles-runtime',

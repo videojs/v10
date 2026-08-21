@@ -23,6 +23,20 @@ For true AST-to-AST transforms, use an appropriate parser, transformer, and code
 
 Guard `meta.ast` and `meta.magicString` when the plugin must remain compatible with hosts that type or provide those Rolldown-specific fields as optional.
 
+## Host setup
+
+Explicitly enable Rolldown's native implementation in every repository-owned input config that runs these transforms:
+
+```ts
+experimental: {
+  nativeMagicString: true,
+}
+```
+
+For tsdown, put the same option under `inputOptions.experimental`. Keep returning the native object directly so Rolldown can generate source maps off the main thread. See the [native MagicString guide](https://rolldown.rs/in-depth/native-magic-string).
+
+Vite does not forward Rolldown's `ast` or `magicString` transform metadata in the pinned version, even when its build enables native MagicString. Continue to adapt these transforms through `packages/vjsc/src/vite/oxc.ts` for Vite serve and build.
+
 ## Pattern
 
 ```ts
@@ -69,7 +83,7 @@ incoming code
 
 ## Validation
 
-Run the transform through a real Rolldown build. Assert changed and unchanged modules, relevant JS/JSX/TS/TSX forms, source maps when consumers need them, and compatibility behavior when either metadata field is unavailable.
+Run the transform through a real Rolldown build with native MagicString explicitly enabled. Assert changed and unchanged modules, relevant JS/JSX/TS/TSX forms, source maps when consumers need them, and compatibility behavior when either metadata field is unavailable.
 
 ## Example
 
