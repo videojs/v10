@@ -23,14 +23,16 @@ export function createReactRegistry(schema: ComponentSchema, options: IconRegist
           props: { from: source, name: 'IconProps' },
         },
       ])
-    ) as never,
+    ) as any,
   });
 }
 
 /** Create canonical icon mappings for a lazy HTML icon family. */
 export function createHtmlRegistry(schema: ComponentSchema, options: IconRegistryOptions = {}) {
   const family = options.family ?? 'default';
+
   const source = family === 'default' ? '@videojs/html/icons/element' : `@videojs/html/icons/element/${family}`;
+
   const Icon = defineElement('media-icon', {
     import: {
       from: source,
@@ -56,6 +58,6 @@ export function createHtmlRegistry(schema: ComponentSchema, options: IconRegistr
           ),
         },
       ])
-    ) as never,
+    ) as any,
   });
 }

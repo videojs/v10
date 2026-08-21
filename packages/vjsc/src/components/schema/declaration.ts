@@ -3,6 +3,7 @@ import ts from 'typescript';
 /** Emit one generated module declaration entirely in memory. */
 export function createGeneratedModuleDeclaration(module: { code: string }, fileName: string): string {
   const code = module.code;
+
   const compilerOptions: ts.CompilerOptions = {
     declaration: true,
     emitDeclarationOnly: true,
@@ -13,8 +14,10 @@ export function createGeneratedModuleDeclaration(module: { code: string }, fileN
     target: ts.ScriptTarget.ES2022,
     verbatimModuleSyntax: true,
   };
+
   const host = ts.createCompilerHost(compilerOptions);
   const getSourceFile = host.getSourceFile.bind(host);
+
   let outputText = '';
 
   host.fileExists = (path) => path === fileName || ts.sys.fileExists(path);

@@ -20,10 +20,6 @@ const frameworkRegistryWatchFiles = {
   react: [resolve(packagesDir, 'react/vjsc/registry.tsx'), resolve(packagesDir, 'react/vjsc/resolve.ts')],
 } as const;
 
-export function getIconSchemaModule(family = 'default') {
-  return createIconSchemaModule(family);
-}
-
 export function createReactComponentRegistry(iconFamily = 'default'): ComponentRegistry {
   const core = getCoreSchemaModule();
   const icons = getIconSchemaModule(iconFamily);
@@ -57,4 +53,8 @@ export function getCoreSchemaModule() {
     include: ['./src/core/ui/*/*-component.ts'],
     output: resolve(corePackageDir, 'vjsc.ts'),
   });
+}
+
+export function getIconSchemaModule(family = 'default') {
+  return createIconSchemaModule(family);
 }

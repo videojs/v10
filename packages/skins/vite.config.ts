@@ -10,6 +10,7 @@ const packageDir = import.meta.dirname;
 const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
+
 const vjscInclude = new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`);
 
 export default defineConfig(createPreviewConfig());

@@ -10,29 +10,37 @@ import type { SkinMeta } from './meta';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './registry/frameworks';
 import { componentTransforms } from './registry/react';
 
-export interface SkinProjection {
+export interface SkinConfig {
   readonly framework: 'html' | 'react';
   readonly skin: string;
   readonly style: 'tailwind' | 'vanilla';
 }
 
-/** Create the compiler configuration for one concrete Skin projection. */
-export function createSkinCompilerConfig(projection: SkinProjection): CompilerConfig {
+export function createSkinCompilerConfig(config: SkinConfig): CompilerConfig {
   const vjscDir = import.meta.dirname;
-  const skins = discoverComponents<SkinMeta>({ rootDir: vjscDir, include: './skins/*/skin.tsx' });
-  const skin = skins.find((item) => item.name === projection.skin);
-  if (!skin) throw new Error(`Unknown VJSC skin: \`${projection.skin}\`.`);
+
+  const skins = discoverComponents<SkinMeta>({
+    rootDir: vjscDir,
+    include: './skins/*/skin.tsx',
+  });
+
+  const skin = skins.find((item) => item.name === config.skin);
+  if (!skin) throw new Error(`Unknown VJSC skin: \`${config.skin}\`.`);
 
   const registry =
-    projection.framework === 'react'
+    config.framework === 'react'
       ? createReactComponentRegistry(skin.style.theme)
       : createHtmlComponentRegistry(skin.style.theme);
+
   return {
-    target: projection.framework === 'react' ? jsx({ importSource: 'react' }) : html(),
+    target: config.framework === 'react' ? jsx({ importSource: 'react' }) : html(),
     plugins: [
       registryPlugin(registry),
-      projection.style === 'tailwind'
-        ? stylesPlugin({ mode: 'tailwind', variant: skin.style.variant })
+      config.style === 'tailwind'
+        ? stylesPlugin({
+            mode: 'tailwind',
+            variant: skin.style.variant,
+          })
         : stylesPlugin({
             mode: 'css',
             variant: skin.style.variant,
@@ -42,12 +50,11 @@ export function createSkinCompilerConfig(projection: SkinProjection): CompilerCo
             },
           }),
       componentMetaPlugin(),
-      ...(projection.framework === 'react' ? [componentTransforms()] : []),
+      ...(config.framework === 'react' ? [componentTransforms()] : []),
     ],
   };
 }
 
-/** Select and cache Skin compiler configurations from VJSC query parameters. */
 export function createSkinTransformer(): VjscTransformer {
   const transforms = new Map<string, CompilerConfig>();
 
@@ -55,15 +62,20 @@ export function createSkinTransformer(): VjscTransformer {
     const framework = parameters.get('framework');
     const skin = parameters.get('skin');
     const style = parameters.get('style');
+
     if ((framework !== 'react' && framework !== 'html') || !skin || (style !== 'tailwind' && style !== 'vanilla')) {
       return null;
     }
 
     const key = parameters.toString();
+
     const cached = transforms.get(key);
     if (cached) return cached;
+
     const config = createSkinCompilerConfig({ framework, skin, style });
+
     transforms.set(key, config);
+
     return config;
   };
 }
