@@ -18,6 +18,7 @@ const MediaTargetTagSchema = z.enum(['video', 'audio', 'iframe']);
 export const EngineOptionDefSchema = z.object({
   name: z.string(),
   type: z.string(),
+  detailedType: z.string().optional(),
   description: z.string().optional(),
 });
 

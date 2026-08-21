@@ -1,15 +1,13 @@
 ---
 import { getEntry } from 'astro:content';
-import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import Table from '@/components/typography/Table.astro';
 import Tbody from '@/components/typography/Tbody.astro';
-import Td from '@/components/typography/Td.astro';
 import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import type { MediaReference } from '@/types/media-reference';
 import { resolveReferenceSlug } from '@/utils/api-reference-overrides';
-import InlineMarkdown from './InlineMarkdown.astro';
+import StateRow from './StateRow.astro';
 
 /**
  * Renders the options a media accepts under `source.engine.<engine>`, generated
@@ -20,9 +18,11 @@ import InlineMarkdown from './InlineMarkdown.astro';
  * page — the table is only useful next to the paragraph naming the provider's
  * own documentation.
  *
- * Renders nothing when the media exposes no engine options at all. An option
- * with no JSDoc still gets a row: it exists in the API surface, so a reader
- * setting it should be able to find it.
+ * Shares StateRow with the generated tables, so descriptions and long types sit
+ * in the expandable detail row instead of widening the table. Renders nothing
+ * when the media exposes no engine options. An option with no JSDoc still gets
+ * a row: it exists in the API surface, so a reader setting it should be able to
+ * find it.
  */
 interface Props {
   /** Media class name, e.g. `YouTubeVideo`. */
@@ -45,22 +45,19 @@ const options = ref?.engineOptions?.[engine] ?? [];
         <Tr>
           <Th>Option</Th>
           <Th>Type</Th>
-          <Th>Description</Th>
+          <Th>Details</Th>
         </Tr>
       </Thead>
       <Tbody>
         {options.map((option) => (
-          <Tr>
-            <Td class="align-top">
-              <MarkdownCode>{option.name}</MarkdownCode>
-            </Td>
-            <Td class="align-top">
-              <MarkdownCode>{option.type}</MarkdownCode>
-            </Td>
-            <Td class="align-top">
-              <InlineMarkdown content={option.description} fallback="—" />
-            </Td>
-          </Tr>
+          <StateRow
+            name={option.name}
+            type={option.type}
+            detailedType={option.detailedType}
+            description={option.description}
+            componentName={media}
+            kind={`engine-${engine}`}
+          />
         ))}
       </Tbody>
     </Table>

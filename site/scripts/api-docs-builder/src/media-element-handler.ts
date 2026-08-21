@@ -24,6 +24,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import { extractCSSVars } from './css-vars-handler.js';
+import { abbreviateType } from './formatter.js';
 import type {
   EngineOptionDef,
   HostPropertyDef,
@@ -835,10 +836,13 @@ function extractEngineOptions(
     const options = configType
       .getProperties()
       .map((member) => {
-        const def: EngineOptionDef = {
-          name: member.getName(),
-          type: checker.typeToString(checker.getTypeOfSymbolAtLocation(member, anchor)),
-        };
+        const name = member.getName();
+        const type = checker.typeToString(checker.getTypeOfSymbolAtLocation(member, anchor));
+        // Same abbreviation the props table uses, so a 200-character engine
+        // setting collapses in the row and reads in full in the detail panel.
+        const abbreviated = abbreviateType(name, type);
+        const def: EngineOptionDef = { name, type: abbreviated ?? type };
+        if (abbreviated && abbreviated !== type) def.detailedType = type;
         // Collapse whitespace: multi-line JSDoc renders into one table cell.
         const description = ts
           .displayPartsToString(member.getDocumentationComment(checker))

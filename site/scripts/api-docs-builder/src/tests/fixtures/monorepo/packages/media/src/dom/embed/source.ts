@@ -15,8 +15,8 @@ export interface EmbedEngineConfig extends Record<string, unknown> {
   cc_load_policy?: 0 | 1;
   /** `referrerpolicy` for the embed iframe. Not an embed parameter. */
   referrerPolicy?: ReferrerPolicy;
-  // No JSDoc: the builder documents only members that carry a description, so
-  // this one must not reach the generated reference.
+  // No JSDoc: every member reaches the generated reference, described or not,
+  // so this one appears with a name and type and no description.
   undocumented?: string;
 }
 
