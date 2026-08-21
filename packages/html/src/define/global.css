@@ -2,6 +2,8 @@
 /* Global styles for the host document, outside of the Shadow DOM             */
 /* -------------------------------------------------------------------------- */
 
+video-player,
+live-video-player,
 media-i18n {
   display: contents;
 }
