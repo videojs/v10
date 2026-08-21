@@ -80,7 +80,7 @@ Here's a standard v8 setup: one file, captions, a poster, and the default skin.
 v10 ships web components, so the migration keeps its declarative feel. One script from the CDN gives you the video <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together.
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
 
 <video-player>
   <video-skin class="aspect-video">
@@ -286,7 +286,7 @@ Each needs its own import.
 For HLS from the CDN:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/hls-video.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/hls-video.js"></script>
 ```
 
 Then swap the tag:

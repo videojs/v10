@@ -27,6 +27,7 @@ import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
+import { satteriCdnVersion } from './src/utils/satteriCdnVersion';
 import { satteriCodeFrame } from './src/utils/satteriCodeFrame';
 import { satteriConditionalHeadings } from './src/utils/satteriConditionalHeadings';
 import { satteriReadingTime } from './src/utils/satteriReadingTime';
@@ -150,7 +151,7 @@ export default defineConfig({
     // independently of the Markdown processor, so highlighting is configured
     // here while the processor's custom transforms live in `mdastPlugins`.
     processor: satteri({
-      mdastPlugins: [satteriReadingTime(), satteriConditionalHeadings(), satteriCodeFrame()],
+      mdastPlugins: [satteriReadingTime(), satteriConditionalHeadings(), satteriCdnVersion(), satteriCodeFrame()],
     }),
   },
 
