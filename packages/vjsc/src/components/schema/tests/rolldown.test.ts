@@ -19,13 +19,12 @@ describe('schemaPlugin', () => {
       `const defineComponent: any = (value: any) => value; export default defineComponent({ name: 'PlayButton' });`
     );
     const plugin = schemaPlugin({
-      cwd: root,
       entry: 'schema',
       source: '@fixture/components',
       include: ['./*/*-component.ts'],
     });
 
-    const bundle = await rolldown({ input: {}, plugins: [plugin] });
+    const bundle = await rolldown({ cwd: root, input: {}, plugins: [plugin] });
     const output = await bundle.generate({ format: 'es' });
 
     expect(output.output[0]?.code).toContain('PlayButton');
@@ -45,7 +44,6 @@ describe('schemaPlugin', () => {
       `declare const manifest: { name: 'PlayButton' }; export default manifest;`
     );
     const plugin = schemaPlugin({
-      cwd: root,
       entry: 'schema',
       declaration: true,
       source: '@fixture/components',

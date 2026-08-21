@@ -4,7 +4,7 @@ import type { InputOption, Plugin } from 'rolldown';
 import ts from 'typescript';
 import { type CreateSchemaModuleOptions, createSchemaModule } from './generate';
 
-export interface SchemaPluginOptions extends Omit<CreateSchemaModuleOptions, 'output'> {
+export interface SchemaPluginOptions extends Omit<CreateSchemaModuleOptions, 'cwd' | 'output'> {
   /** Output entry name without its JavaScript or declaration extension. */
   readonly entry?: string | undefined;
   /** Whether to add the companion declaration as a host build entry. */
@@ -13,53 +13,68 @@ export interface SchemaPluginOptions extends Omit<CreateSchemaModuleOptions, 'ou
 
 /** Create a virtual component-schema entry directly inside a bundler config. */
 export function schemaPlugin(config: SchemaPluginOptions): Plugin {
-  const cwd = resolve(config.cwd ?? process.cwd());
   const entry = config.entry ?? 'vjsc';
   const moduleId = `\0vjsc:schema:${entry}`;
-  const sourceFileName = resolve(cwd, `${entry}.ts`);
-  const declarationFileName = resolve(cwd, `${entry}.d.ts`);
+  let state: SchemaPluginState | undefined;
 
-  const loadSchema = () =>
+  const loadSchema = (current: SchemaPluginState) =>
     createSchemaModule({
-      cwd,
+      cwd: current.cwd,
       source: config.source,
       include: config.include,
       ...(config.exclude ? { exclude: config.exclude } : {}),
-      output: sourceFileName,
+      output: current.sourceFileName,
     });
 
   return {
     name: 'vjsc:schema',
     options(options) {
+      const cwd = resolve(options.cwd ?? process.cwd());
+      state = {
+        cwd,
+        sourceFileName: resolve(cwd, `${entry}.ts`),
+        declarationFileName: resolve(cwd, `${entry}.d.ts`),
+      };
+
       return {
         ...options,
         input: addEntries(options.input, {
           [entry]: moduleId,
-          ...(config.declaration ? { [`${entry}.d`]: declarationFileName } : {}),
+          ...(config.declaration ? { [`${entry}.d`]: state.declarationFileName } : {}),
         }),
       };
     },
-    resolveId: {
-      filter: { id: exactIds(moduleId, declarationFileName) },
-      handler(id) {
-        if (id === moduleId) return sourceFileName;
-        return id === declarationFileName ? declarationFileName : null;
-      },
+    resolveId(id) {
+      const current = requireState(state);
+      if (id === moduleId) return current.sourceFileName;
+      return id === current.declarationFileName ? current.declarationFileName : null;
     },
     load: {
       order: 'pre',
-      filter: { id: exactIds(sourceFileName, declarationFileName) },
       handler(id) {
-        if (id !== sourceFileName && id !== declarationFileName) return null;
-        const generated = loadSchema();
+        const current = requireState(state);
+        if (id !== current.sourceFileName && id !== current.declarationFileName) return null;
+        const generated = loadSchema(current);
         for (const file of generated.watchFiles) this.addWatchFile(file);
         return {
-          code: id === sourceFileName ? generated.code : createDeclaration(generated.code, sourceFileName),
+          code:
+            id === current.sourceFileName ? generated.code : createDeclaration(generated.code, current.sourceFileName),
           moduleType: 'ts',
         };
       },
     },
   };
+}
+
+interface SchemaPluginState {
+  readonly cwd: string;
+  readonly sourceFileName: string;
+  readonly declarationFileName: string;
+}
+
+function requireState(state: SchemaPluginState | undefined): SchemaPluginState {
+  if (!state) throw new Error('The schema plugin was used before Rolldown initialized its input options.');
+  return state;
 }
 
 function addEntries(input: InputOption | undefined, entries: Record<string, string>): InputOption {
@@ -73,10 +88,6 @@ function addEntries(input: InputOption | undefined, entries: Record<string, stri
   }
 
   return { ...input, ...entries };
-}
-
-function exactIds(...ids: readonly string[]): RegExp {
-  return new RegExp(`^(?:${ids.map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})$`);
 }
 
 function createDeclaration(code: string, fileName: string): string {

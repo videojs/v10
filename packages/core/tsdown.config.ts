@@ -17,7 +17,6 @@ const localeEntries = Object.fromEntries([
 
 const createConfig = (mode: PackageBuildMode): UserConfig => {
   const schema = schemaPlugin({
-    cwd: import.meta.dirname,
     entry: 'vjsc',
     declaration: mode === 'dev',
     source: '@videojs/core/vjsc',
