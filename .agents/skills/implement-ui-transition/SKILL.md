@@ -1,6 +1,6 @@
 ---
 name: implement-ui-transition
-description: Implement or change Video.js UI transition and rendered-presence behavior. Use for open or close animation lifecycles, starting or ending data attributes, exit retention, cancellation, rapid reopen, or HTML and React parity.
+description: Implement UI transitions and rendered presence. Use for lifecycle, cancellation, rapid reopen, or HTML/React parity.
 ---
 
 # UI transition implementation

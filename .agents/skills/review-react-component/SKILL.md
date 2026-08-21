@@ -1,6 +1,6 @@
 ---
 name: review-react-component
-description: Review Video.js React UI components without editing code. Use for React data flow, component boundaries, compound APIs, render customization, styling APIs, transitions, rendered presence, opt-outs, exports, or bundle impact.
+description: Review React UI without editing code. Use for data flow, APIs, customization, styling, transitions, or bundles.
 ---
 
 # React component review
