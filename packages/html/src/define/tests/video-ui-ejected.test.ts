@@ -32,6 +32,7 @@ describe('video/ui ejected registration', () => {
       </video-player>
     `;
 
+    await import('../video/player');
     await import('../video/ui');
 
     const volumeSlider = document.querySelector('media-volume-slider')! as HTMLElement & { orientation: string };

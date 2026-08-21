@@ -354,9 +354,10 @@ This is where v8's `controlBar` config and `addChild` calls end up, and honestly
 
 <FrameworkCase frameworks={["html"]}>
 
-Swap the skin import for `video/ui`, which registers the player, the container, and every UI element without wrapping them in a skin:
+Import the player separately, then swap the skin import for `video/ui`, which registers the container and every UI element without wrapping them in a skin:
 
 ```js
+import '@videojs/html/video/player';
 import '@videojs/html/video/ui';
 ```
 

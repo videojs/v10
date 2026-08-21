@@ -1,6 +1,6 @@
-// Registers the video player, container, and all video UI custom elements
-// used by the minimal skin without creating a skin element. Use this entry
-// when building an ejected (light DOM) player layout.
+// Registers the container and all video UI custom elements used by the minimal
+// skin without creating a player or skin element. Use this entry when building
+// an ejected (light DOM) player layout.
 
 import { MediaContainerElement } from '../../media/container-element';
 import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
@@ -36,12 +36,8 @@ import {
 } from '../ui/compounds';
 import '../i18n';
 
-// Value import — player.ts body runs before this module's body.
-import { VideoPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(VideoPlayerElement);
 safeDefine(MediaContainerElement);
 
 // Compound groups.

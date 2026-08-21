@@ -17,7 +17,7 @@ import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 
-// Register the live audio player, container, and all UI custom elements.
+// Register the container and all live audio UI custom elements.
 import './ui';
 
 function getTemplateHTML() {

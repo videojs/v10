@@ -1,10 +1,10 @@
-// Registers the live video player, container, and all video UI custom
-// elements without creating a skin element. Use this entry when building an
-// ejected (light DOM) player layout for live HLS / DASH streams.
+// Registers the container and all live video UI custom elements without
+// creating a player or skin element. Use this entry when building an ejected
+// (light DOM) player layout for live HLS / DASH streams.
 
-import { AirPlayButtonElement } from '@/ui/airplay-button/airplay-button-element';
 import { I18nProviderElement } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../../media/container-element';
+import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
 import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
@@ -30,12 +30,8 @@ import {
   defineTooltip,
 } from '../ui/compounds';
 
-// Value import — player.ts body runs before this module's body.
-import { LiveVideoPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(LiveVideoPlayerElement);
 safeDefine(MediaContainerElement);
 safeDefine(I18nProviderElement);
 

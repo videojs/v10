@@ -1,6 +1,6 @@
-// Registers the audio player, container, and all audio UI custom elements
-// without creating a skin element. Use this entry when building an ejected
-// (light DOM) player layout.
+// Registers the container and all audio UI custom elements without creating a
+// player or skin element. Use this entry when building an ejected (light DOM)
+// player layout.
 import { I18nProviderElement } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
@@ -17,12 +17,8 @@ import { TextElement } from '../../ui/text/text-element';
 import { safeDefine } from '../safe-define';
 import { defineErrorDialog, defineMenu, defineSliders, defineTime, defineTooltip } from '../ui/compounds';
 
-// Value import — player.ts body runs before this module's body.
-import { AudioPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(AudioPlayerElement);
 safeDefine(MediaContainerElement);
 safeDefine(I18nProviderElement);
 

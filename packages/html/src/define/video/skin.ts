@@ -6,7 +6,7 @@ import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 import styles from './skin.css?inline';
 
-// Register the player, container, and all UI custom elements.
+// Register the container and all UI custom elements.
 import './ui';
 
 function getTemplateHTML() {
