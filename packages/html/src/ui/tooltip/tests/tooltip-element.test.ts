@@ -98,6 +98,7 @@ defineElement(TestPlayerProviderElement.tagName, TestPlayerProviderElement);
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   resetI18nRegistry();
   document.body.innerHTML = '';
 });
@@ -311,5 +312,55 @@ describe('TooltipElement', () => {
     await tooltip.updateComplete;
 
     expect(tooltip.textContent).toBe('Reproducir');
+  });
+
+  it('restores open state and trigger behavior after a rapid reconnect', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(hover: hover)' || query === '(pointer: fine)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const { tooltip, trigger } = setup();
+    const onOpenChange = vi.fn();
+
+    tooltip.open = true;
+    tooltip.addEventListener('open-change', onOpenChange);
+    await tooltip.updateComplete;
+    onOpenChange.mockClear();
+
+    tooltip.remove();
+    document.body.append(tooltip);
+    await tooltip.updateComplete;
+
+    expect(tooltip.open).toBe(true);
+    expect(tooltip.hasAttribute('data-open')).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    tooltip.close();
+    trigger.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+
+    expect(tooltip.open).toBe(true);
+    expect(onOpenChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('releases trigger behavior when destroyed while connected', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(hover: hover)' || query === '(pointer: fine)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    const { tooltip, trigger } = setup();
+    const onOpenChange = vi.fn();
+
+    tooltip.addEventListener('open-change', onOpenChange);
+    await tooltip.updateComplete;
+
+    tooltip.destroy();
+    trigger.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+
+    expect(tooltip.open).toBe(false);
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 });

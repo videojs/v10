@@ -57,6 +57,7 @@ export class PopoverElement extends MediaElement {
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
+  #restoringOpen = false;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -69,6 +70,7 @@ export class PopoverElement extends MediaElement {
     this.#popover = createPopover({
       transition: createTransition(),
       onOpenChange: (nextOpen: boolean, details: PopoverChangeDetails) => {
+        if (this.#restoringOpen) return;
         this.open = nextOpen;
         this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
       },
@@ -94,6 +96,9 @@ export class PopoverElement extends MediaElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#popover.input);
     }
+
+    this.#restoreOpen();
+    this.requestUpdate();
   }
 
   protected override firstUpdated(changed: PropertyValues): void {
@@ -108,13 +113,12 @@ export class PopoverElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#disconnect?.abort();
-    this.#disconnect = null;
+    this.#disposeConnection();
   }
 
   override destroyCallback(): void {
-    this.#cleanupTrigger();
-    this.#popover?.destroy();
+    this.#releaseSnapshot();
+    this.#disposeConnection();
     super.destroyCallback();
   }
 
@@ -210,8 +214,37 @@ export class PopoverElement extends MediaElement {
       });
     }
 
+    this.#popover?.setTriggerElement(null);
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #restoreOpen(): void {
+    if (!this.hasUpdated || !this.open || !this.#popover) return;
+
+    this.#restoringOpen = true;
+    try {
+      this.#popover.open('imperative-action');
+    } finally {
+      this.#restoringOpen = false;
+    }
+  }
+
+  #disposeConnection(): void {
+    this.#cleanupTrigger();
+    this.#popover?.setPopupElement(null);
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+    this.#popover?.destroy();
+    this.#popover = null;
+  }
+
+  #releaseSnapshot(): void {
+    if (!this.#snapshot) return;
+
+    this.#snapshot.hostDisconnected();
+    this.removeController(this.#snapshot);
+    this.#snapshot = null;
   }
 }

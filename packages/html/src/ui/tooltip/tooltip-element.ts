@@ -85,6 +85,7 @@ export class TooltipElement extends MediaElement {
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
   #currentTrigger: HTMLElement | null = null;
+  #restoringOpen = false;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -97,6 +98,7 @@ export class TooltipElement extends MediaElement {
     this.#tooltip = createTooltip({
       transition: createTransition(),
       onOpenChange: (nextOpen: boolean, details: TooltipChangeDetails) => {
+        if (this.#restoringOpen) return;
         this.open = nextOpen;
         this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
       },
@@ -121,6 +123,9 @@ export class TooltipElement extends MediaElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#tooltip.input);
     }
+
+    this.#restoreOpen();
+    this.requestUpdate();
   }
 
   protected override firstUpdated(changed: PropertyValues): void {
@@ -135,11 +140,13 @@ export class TooltipElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#cleanupTrigger();
-    this.#tooltip?.destroy();
-    this.#tooltip = null;
-    this.#disconnect?.abort();
-    this.#disconnect = null;
+    this.#disposeConnection();
+  }
+
+  override destroyCallback(): void {
+    this.#releaseSnapshot();
+    this.#disposeConnection();
+    super.destroyCallback();
   }
 
   close(reason: TooltipOpenChangeReason = 'imperative-action'): void {
@@ -262,8 +269,37 @@ export class TooltipElement extends MediaElement {
   }
 
   #cleanupTrigger(): void {
+    this.#tooltip?.setTriggerElement(null);
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #restoreOpen(): void {
+    if (!this.hasUpdated || !this.open || !this.#tooltip) return;
+
+    this.#restoringOpen = true;
+    try {
+      this.#tooltip.open();
+    } finally {
+      this.#restoringOpen = false;
+    }
+  }
+
+  #disposeConnection(): void {
+    this.#cleanupTrigger();
+    this.#tooltip?.setPopupElement(null);
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+    this.#tooltip?.destroy();
+    this.#tooltip = null;
+  }
+
+  #releaseSnapshot(): void {
+    if (!this.#snapshot) return;
+
+    this.#snapshot.hostDisconnected();
+    this.removeController(this.#snapshot);
+    this.#snapshot = null;
   }
 }

@@ -119,11 +119,24 @@ export class MenuElement extends MediaElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#menu.input);
     }
+
+    if (this.hasUpdated) this.#menu.syncOpen(this.open);
+    this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
-    this.#releaseControlsVisibilityLock();
     super.disconnectedCallback();
+    this.#disposeConnection();
+  }
+
+  override destroyCallback(): void {
+    this.#releaseSnapshot();
+    this.#disposeConnection();
+    super.destroyCallback();
+  }
+
+  #disposeConnection(): void {
+    this.#releaseControlsVisibilityLock();
     this.#cleanupSizeObserver?.();
     this.#cleanupSizeObserver = null;
     this.#syncTriggerState(null);
@@ -131,10 +144,12 @@ export class MenuElement extends MediaElement {
     this.#cleanupParentRegistration?.();
     this.#cleanupParentRegistration = null;
     this.#registeredParentMenu = null;
+    this.#menu?.setContentElement(null);
     this.#menu?.destroy();
     this.#menu = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
+    this.#submenuActive = false;
   }
 
   close(reason: MenuOpenChangeReason = 'imperative-action'): void {
@@ -395,9 +410,18 @@ export class MenuElement extends MediaElement {
       });
     }
 
+    this.#menu?.setTriggerElement(null);
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #releaseSnapshot(): void {
+    if (!this.#snapshot) return;
+
+    this.#snapshot.hostDisconnected();
+    this.removeController(this.#snapshot);
+    this.#snapshot = null;
   }
 }
 

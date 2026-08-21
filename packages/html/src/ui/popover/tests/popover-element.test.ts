@@ -120,4 +120,54 @@ describe('PopoverElement', () => {
 
     expect(popover.getAttribute('data-side')).toBe('bottom');
   });
+
+  it('restores open state and trigger behavior after a rapid reconnect', async () => {
+    const trigger = document.createElement('button');
+    const popover = createPopover();
+    const onOpenChange = vi.fn();
+
+    popover.id = 'reconnecting-popover';
+    popover.open = true;
+    trigger.setAttribute('commandfor', popover.id);
+    popover.addEventListener('open-change', onOpenChange);
+    document.body.append(trigger, popover);
+    await popover.updateComplete;
+    onOpenChange.mockClear();
+
+    popover.remove();
+    trigger.click();
+
+    expect(popover.open).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    document.body.append(popover);
+    await popover.updateComplete;
+
+    expect(popover.open).toBe(true);
+    expect(popover.hasAttribute('data-open')).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    trigger.click();
+
+    expect(popover.open).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+  });
+
+  it('releases trigger behavior when destroyed while connected', async () => {
+    const trigger = document.createElement('button');
+    const popover = createPopover();
+    const onOpenChange = vi.fn();
+
+    popover.id = 'destroyed-popover';
+    trigger.setAttribute('commandfor', popover.id);
+    popover.addEventListener('open-change', onOpenChange);
+    document.body.append(trigger, popover);
+    await popover.updateComplete;
+
+    popover.destroy();
+    trigger.click();
+
+    expect(popover.open).toBe(false);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
 });

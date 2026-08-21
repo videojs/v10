@@ -31,6 +31,7 @@ export class AlertDialogElement extends MediaElement {
 
   #dialog: AlertDialogApi | null = null;
   #snapshot: SnapshotController<AlertDialogInput> | null = null;
+  #restoringOpen = false;
 
   constructor() {
     super();
@@ -45,6 +46,7 @@ export class AlertDialogElement extends MediaElement {
     this.#dialog = createAlertDialog({
       transition: createTransition(),
       onOpenChange: (nextOpen: boolean) => {
+        if (this.#restoringOpen) return;
         this.open = nextOpen;
         this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen } }));
       },
@@ -58,12 +60,20 @@ export class AlertDialogElement extends MediaElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#dialog.input);
     }
+
+    this.#restoreOpen();
+    this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#dialog?.destroy();
-    this.#dialog = null;
+    this.#disposeConnection();
+  }
+
+  override destroyCallback(): void {
+    this.#releaseSnapshot();
+    this.#disposeConnection();
+    super.destroyCallback();
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -98,5 +108,30 @@ export class AlertDialogElement extends MediaElement {
       stateAttrMap: AlertDialogDataAttrs,
       close: () => this.#dialog?.close(),
     });
+  }
+
+  #restoreOpen(): void {
+    if (!this.hasUpdated || !this.open || !this.#dialog) return;
+
+    this.#restoringOpen = true;
+    try {
+      this.#dialog.open();
+    } finally {
+      this.#restoringOpen = false;
+    }
+  }
+
+  #disposeConnection(): void {
+    this.#dialog?.setElement(null);
+    this.#dialog?.destroy();
+    this.#dialog = null;
+  }
+
+  #releaseSnapshot(): void {
+    if (!this.#snapshot) return;
+
+    this.#snapshot.hostDisconnected();
+    this.removeController(this.#snapshot);
+    this.#snapshot = null;
   }
 }

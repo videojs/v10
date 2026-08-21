@@ -76,12 +76,19 @@ export class ErrorDialogElement extends MediaElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#dialog.input);
     }
+
+    this.requestUpdate();
   }
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#dialog?.destroy();
-    this.#dialog = null;
+    this.#disposeConnection();
+  }
+
+  override destroyCallback(): void {
+    this.#releaseSnapshot();
+    this.#disposeConnection();
+    super.destroyCallback();
   }
 
   protected override willUpdate(_changed: PropertyValues): void {
@@ -160,5 +167,19 @@ export class ErrorDialogElement extends MediaElement {
       }
     }
     return this.#authoredCopyParts.has(el);
+  }
+
+  #disposeConnection(): void {
+    this.#dialog?.setElement(null);
+    this.#dialog?.destroy();
+    this.#dialog = null;
+  }
+
+  #releaseSnapshot(): void {
+    if (!this.#snapshot) return;
+
+    this.#snapshot.hostDisconnected();
+    this.removeController(this.#snapshot);
+    this.#snapshot = null;
   }
 }

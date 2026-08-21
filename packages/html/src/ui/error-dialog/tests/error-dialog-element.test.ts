@@ -1,10 +1,16 @@
+import { type AnyPlayerStore, errorFeature, type PlayerTarget } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
+import { ContextProvider } from '@videojs/element/context';
+import type { ErrorLike } from '@videojs/media';
+import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n';
+import { playerContext } from '../../../player/context';
 import { AlertDialogCloseElement } from '../../alert-dialog/alert-dialog-close-element';
 import { AlertDialogDescriptionElement } from '../../alert-dialog/alert-dialog-description-element';
 import { AlertDialogTitleElement } from '../../alert-dialog/alert-dialog-title-element';
+import { MediaElement } from '../../media-element';
 import { ErrorDialogElement } from '../error-dialog-element';
 
 let tagCounter = 0;
@@ -24,6 +30,34 @@ function ensureDefined(tagName: string, Base: CustomElementConstructor): void {
     customElements.define(tagName, Base);
   }
 }
+
+class TestErrorProviderElement extends MediaElement {
+  static readonly tagName = 'test-error-dialog-player';
+
+  #error: ErrorLike | null = null;
+  readonly #media = document.createElement('video');
+  readonly store = createStore<PlayerTarget>()(errorFeature) as unknown as AnyPlayerStore;
+  readonly #provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
+
+  constructor() {
+    super();
+    Object.defineProperty(this.#media, 'error', { configurable: true, get: () => this.#error });
+    this.store.attach({ media: this.#media, container: null });
+  }
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#provider.setValue(this.store);
+  }
+
+  setError(error: ErrorLike): void {
+    this.#error = error;
+    this.#media.dispatchEvent(new Event('error'));
+    flush();
+  }
+}
+
+ensureDefined(TestErrorProviderElement.tagName, TestErrorProviderElement);
 
 afterEach(() => {
   resetI18nRegistry();
@@ -135,5 +169,47 @@ describe('ErrorDialogElement', () => {
     document.body.removeChild(el);
 
     expect(el.isConnected).toBe(false);
+  });
+
+  it('restores the error and button behavior after a rapid reconnect', async () => {
+    const provider = document.createElement(TestErrorProviderElement.tagName) as TestErrorProviderElement;
+    const el = createElement(ErrorDialogElement);
+    const button = document.createElement('button');
+
+    provider.setError({ code: 4, message: 'Unsupported source' });
+    el.append(button);
+    provider.append(el);
+    document.body.append(provider);
+    await el.updateComplete;
+
+    expect(el.hasAttribute('data-open')).toBe(true);
+
+    el.remove();
+    provider.append(el);
+    await el.updateComplete;
+
+    expect(el.hasAttribute('data-open')).toBe(true);
+
+    button.click();
+
+    expect(provider.store.state).toMatchObject({ error: null });
+  });
+
+  it('releases button behavior when destroyed while connected', async () => {
+    const provider = document.createElement(TestErrorProviderElement.tagName) as TestErrorProviderElement;
+    const el = createElement(ErrorDialogElement);
+    const button = document.createElement('button');
+    const error = { code: 4, message: 'Unsupported source' };
+
+    provider.setError(error);
+    el.append(button);
+    provider.append(el);
+    document.body.append(provider);
+    await el.updateComplete;
+
+    el.destroy();
+    button.click();
+
+    expect(provider.store.state).toMatchObject({ error });
   });
 });

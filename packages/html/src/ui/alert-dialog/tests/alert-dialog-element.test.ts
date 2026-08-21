@@ -183,4 +183,50 @@ describe('AlertDialogElement', () => {
     // Dialog was destroyed on disconnect, so open should still be true.
     expect(el.open).toBe(true);
   });
+
+  it('restores open state and button behavior after a rapid reconnect', async () => {
+    const el = createElement(AlertDialogElement);
+    const button = document.createElement('button');
+    const onOpenChange = vi.fn();
+
+    el.open = true;
+    el.append(button);
+    el.addEventListener('open-change', onOpenChange);
+    document.body.append(el);
+    await el.updateComplete;
+    onOpenChange.mockClear();
+
+    el.remove();
+    document.body.append(el);
+    await el.updateComplete;
+
+    expect(el.open).toBe(true);
+    expect(el.hasAttribute('data-open')).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    button.click();
+
+    expect(el.open).toBe(false);
+    expect(onOpenChange).toHaveBeenCalledOnce();
+  });
+
+  it('releases button and document behavior when destroyed while connected', async () => {
+    const el = createElement(AlertDialogElement);
+    const button = document.createElement('button');
+    const onOpenChange = vi.fn();
+
+    el.open = true;
+    el.append(button);
+    el.addEventListener('open-change', onOpenChange);
+    document.body.append(el);
+    await el.updateComplete;
+    onOpenChange.mockClear();
+
+    el.destroy();
+    button.click();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(el.open).toBe(true);
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
 });
