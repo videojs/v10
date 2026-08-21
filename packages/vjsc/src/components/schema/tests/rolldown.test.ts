@@ -7,6 +7,7 @@ import { build } from 'tsdown';
 import { describe, expect, it } from 'vitest';
 
 import { schemaPlugin } from '../../../rolldown';
+import { schemaPlugin as schemaTsdownPlugin } from '../../../tsdown';
 
 describe('schemaPlugin', () => {
   it('creates a schema entry directly from inline bundler configuration', async () => {
@@ -21,7 +22,7 @@ describe('schemaPlugin', () => {
       `const defineComponent: any = (value: any) => value; export default defineComponent({ name: 'PlayButton' });`
     );
     const plugin = schemaPlugin({
-      entry: 'schema',
+      file: 'schema',
       source: '@fixture/components',
       include: ['./*/*-component.ts'],
     });
@@ -47,8 +48,8 @@ describe('schemaPlugin', () => {
       join(sourceDir, 'play-button-component.d.ts'),
       `declare const manifest: { name: 'PlayButton' }; export default manifest;`
     );
-    const plugin = schemaPlugin({
-      entry: 'schema',
+    const plugin = schemaTsdownPlugin({
+      file: 'schema',
       declaration: true,
       source: '@fixture/components',
       include: ['./*/*-component.ts'],
@@ -73,6 +74,6 @@ describe('schemaPlugin', () => {
     const declaration = results[0]?.chunks.find((chunk) => /\.d\.[cm]?ts$/.test(chunk.fileName));
 
     if (declaration?.type !== 'chunk') throw new Error('The host build did not emit the schema declaration');
-    expect(declaration?.code).toContain('declare const PlayButton');
+    expect(declaration.code).toContain('declare const PlayButton');
   });
 });

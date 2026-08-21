@@ -207,6 +207,7 @@ function transformReactProp({
   }
 
   const resolveClassName = requestImport({ from: '@videojs/utils/style', name: 'resolveClassName' });
+
   return createArrowFunction(
     ['state'],
     factory.createCallExpression(cn, undefined, [

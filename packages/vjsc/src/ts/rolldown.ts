@@ -9,10 +9,18 @@ import { CompilerError, transform } from './transform';
 import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from './types';
 
 interface TransformPluginOptions {
-  /** Select a VJSC transform for each module, or return null to defer. */
+  /** Select a VJSC transform for each module, or return null to retain its editable source unchanged. */
   readonly transform?: CompilerConfig | VjscTransformer | undefined;
   /** Directory used to resolve relative transform configuration. */
   readonly cwd?: string | undefined;
+  /** Select query-bearing modules whose parameters propagate through relative imports. */
+  readonly isVjscModule?: ((context: VjscModuleContext) => boolean) | undefined;
+}
+
+export interface VjscModuleContext {
+  readonly id: string;
+  readonly filename: string;
+  readonly parameters: URLSearchParams;
 }
 
 export interface VjscTransformContext {
@@ -45,7 +53,7 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
   return createVjscPlugin(transformOptions, {
     hook: {
       id: {
-        include: normalizeFilter(include ?? [/\.tsx(?:\?|$)/, /\.[cm]?[jt]sx?\?[^#]*framework=/]),
+        include: normalizeFilter(include ?? [/\.tsx(?:\?|$)/, /\.[cm]?[jt]sx?\?[^#]+$/]),
         ...(exclude ? { exclude: normalizeFilter(exclude) } : {}),
       },
     },
@@ -53,12 +61,16 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
 }
 
 function createVjscPlugin(options: TransformPluginOptions = {}, filter: TransformPluginFilter = {}): Plugin {
-  const cwd = resolve(options.cwd ?? process.cwd());
+  let cwd = options.cwd ? resolve(options.cwd) : undefined;
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
 
   return {
     name: 'vjsc',
+    options(inputOptions) {
+      cwd ??= resolve(inputOptions.cwd ?? process.cwd());
+      return null;
+    },
     resolveId: {
       order: 'pre',
       async handler(id, importer, resolveOptions) {
@@ -67,8 +79,8 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
         }
         if (cssById.has(id)) return `\0${id}`;
 
-        const transformed = parseTransformedId(id);
-        const inherited = importer ? parseTransformedId(importer) : null;
+        const transformed = parseTransformedId(id, options.isVjscModule);
+        const inherited = importer ? parseTransformedId(importer, options.isVjscModule) : null;
         if (!transformed && (!inherited || !id.startsWith('.'))) return null;
 
         const resolved = await this.resolve(
@@ -90,7 +102,7 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
     async load(id) {
       if (id === HTML_RUNTIME_ID) return { code: HTML_RUNTIME, moduleType: 'js' };
 
-      const transformed = parseTransformedId(id);
+      const transformed = parseTransformedId(id, options.isVjscModule);
       if (transformed) {
         this.addWatchFile(transformed.filename);
         return { code: await readFile(transformed.filename, 'utf8'), moduleType: 'tsx' };
@@ -108,13 +120,16 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
         if (filter.test && !filter.test(id)) return null;
 
         const transformed = parseModuleId(id);
+        if (transformed.parameters.size > 0 && options.isVjscModule?.({ id, ...transformed }) !== true) {
+          return null;
+        }
         const selected = options.transform ?? {};
         const configured =
           typeof selected === 'function'
             ? await selected({ code, id, filename: transformed.filename, parameters: transformed.parameters })
             : selected;
 
-        if (!configured) return null;
+        if (!configured) return { meta: { vjsc: { source: code } } };
 
         let result: Awaited<ReturnType<typeof transform>>;
 
@@ -122,7 +137,7 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
           result = await transform(code, {
             filename: moduleFilename(id),
             config: configured,
-            configDir: cwd,
+            configDir: cwd ?? resolve(process.cwd()),
             outputFile: moduleFilename(id),
           });
         } catch (error) {
@@ -135,7 +150,7 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
           else this.error(bundlerLogFromDiagnostic(diagnostic));
         }
 
-        for (const file of result.watchFiles) this.addWatchFile(resolve(file));
+        for (const file of result.watchFiles) this.addWatchFile(resolve(cwd ?? process.cwd(), file));
 
         const previousCssIds = cssIdsByOwner.get(id) ?? new Set<string>();
         const nextCssIds = new Set<string>();
@@ -182,9 +197,14 @@ export function readVjscSource(meta: unknown): string | undefined {
   return typeof source === 'string' ? source : undefined;
 }
 
-function parseTransformedId(id: string): ParsedModuleId | null {
+function parseTransformedId(
+  id: string,
+  matchesVjscModule: TransformPluginOptions['isVjscModule']
+): ParsedModuleId | null {
   const parsed = parseModuleId(id);
-  return parsed.parameters.has('framework') ? parsed : null;
+  return parsed.parameters.size > 0 && isVjscModule(id) && matchesVjscModule?.({ id, ...parsed }) === true
+    ? parsed
+    : null;
 }
 
 function cssVirtualId(fileName: string, source: string): string {

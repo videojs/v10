@@ -23,7 +23,9 @@ export default defineConfig({
   report: process.env.CI === 'true',
   name: 'skins-shadcn-registry',
   cwd: packageDir,
-  entry: { registry: registryUtils },
+  entry: {
+    registry: registryUtils,
+  },
   outDir: 'dist/registry',
   clean: true,
   dts: false,
@@ -43,6 +45,7 @@ export default defineConfig({
     vjscPlugin({
       cwd: packageDir,
       include: sourceFilter,
+      isVjscModule: ({ parameters }) => parameters.has('framework'),
       transform: createSkinTransformer(),
     }),
     shadcnPlugin<SkinModuleMeta>({
@@ -61,6 +64,7 @@ export default defineConfig({
           if (module.filename === registryUtils) return [{}];
 
           const skins = modules.flatMap(({ meta }) => (meta?.type === 'skin' ? [meta] : []));
+
           const selected =
             module.meta?.type === 'skin' ? skins.filter((skin) => skin.name === module.meta?.name) : skins;
 

@@ -99,6 +99,18 @@ describe('shadcnPlugin', () => {
     expect(output.output.filter((entry) => entry.type === 'chunk')).toEqual([]);
   });
 
+  it('preserves unrelated application output', async () => {
+    const root = setup({
+      'app.ts': `export const app = 'retained';`,
+      'components/root.tsx': `export function Root() { return <main/>; } ${meta('root', 'block')}`,
+    });
+    const output = await build(root, { styles: undefined }, ['vjsc', 'shadcn'], join(root, 'app.ts'));
+
+    expect(output.output.filter((entry) => entry.type === 'chunk').map((entry) => entry.fileName)).toEqual(['app.js']);
+    expect(output.output.find((entry) => entry.fileName === 'app.js')).toMatchObject({ type: 'chunk' });
+    expect(assetJson(output, 'root.json').files[0].content).toContain('<main />');
+  });
+
   it('keeps transformed module identities and dependencies transform-specific', async () => {
     const root = setup({
       'components/root.tsx': `import { Child } from './child'; export function Root() { return <main>{Child}</main>; } ${meta('root', 'block')}`,
@@ -177,17 +189,19 @@ type PluginOrder = readonly ('vjsc' | 'shadcn' | ReturnType<typeof shadcnPlugin>
 async function build(
   root: string,
   overrides: Partial<FixtureOptions> = {},
-  order: PluginOrder = ['vjsc', 'shadcn']
+  order: PluginOrder = ['vjsc', 'shadcn'],
+  input: string | readonly string[] = []
 ): Promise<RolldownOutput> {
   const options = baseOptions(overrides);
   const transform = vjscPlugin({
     include: /\.[cm]?[jt]sx?(?:\?|$)/,
+    isVjscModule: ({ parameters }) => parameters.has('framework'),
     transform: { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] },
   });
   const output = shadcnPlugin({ root, ...options });
   const plugins = order.map((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin));
   const bundle = await rolldown({
-    input: [],
+    input: typeof input === 'string' ? input : [...input],
     external: (id) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
     plugins,
   });

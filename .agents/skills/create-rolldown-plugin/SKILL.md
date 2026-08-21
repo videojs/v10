@@ -20,7 +20,7 @@ Inspect the installed Rolldown version, relevant package config and exports, nei
 
 Read [references/api-and-host-contracts.md](references/api-and-host-contracts.md) when the plugin uses virtual entries, graph inspection, editable source capture, declarations, or output replacement.
 
-Use `packages/vjsc/src/ts/rolldown.ts` as the transform/filter/query-context anchor, `packages/vjsc/src/components/schema/rolldown.ts` for virtual package entries, and `packages/vjsc/src/shadcn/rolldown.ts` for a dedicated asset build.
+Use `packages/vjsc/src/ts/rolldown.ts` as the transform/filter/query-context anchor, `packages/vjsc/src/components/schema/rolldown.ts` for virtual package entries, its `tsdown.ts` sibling when declaration bundling is required, and `packages/vjsc/src/shadcn/rolldown.ts` for a dedicated asset build.
 
 ## Validation
 

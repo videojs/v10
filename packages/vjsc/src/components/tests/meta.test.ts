@@ -47,4 +47,13 @@ describe('component metadata', () => {
     expect(result.code).not.toContain('const meta');
     expect(result.code).toContain('function Play');
   });
+
+  it('preserves declarations exported beside metadata', async () => {
+    const result = await transform(`export const meta = { name: 'play' }, retained = 42;`, {
+      config: { plugins: [componentMetaPlugin()] },
+    });
+
+    expect(result.code).not.toContain('meta =');
+    expect(result.code).toContain('export const retained = 42;');
+  });
 });

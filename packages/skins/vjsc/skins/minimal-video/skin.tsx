@@ -1,5 +1,4 @@
 import * as $ from '@videojs/core/vjsc';
-import type { ComponentMeta } from 'vjsc/components';
 import { type PropsOf, Slot, type VjscNode } from 'vjsc/components';
 import { AirPlayButton } from '../../components/buttons/airplay-button';
 import { CaptionsButton } from '../../components/buttons/captions-button';
@@ -18,6 +17,7 @@ import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
 import { VideoGestures } from '../../components/video-gestures';
 import { VideoHotkeys } from '../../components/video-hotkeys';
+import type { SkinMeta } from '../../meta';
 import styles from '../../styles/skins/minimal-video.styles';
 
 export interface MinimalVideoSkinProps extends Omit<PropsOf<typeof Container>, 'children'> {
@@ -82,4 +82,4 @@ export const meta = {
   },
   title: 'Minimal Video Skin',
   description: 'A compact on-demand video skin with wrapping controls and the complete video component set.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinMeta;

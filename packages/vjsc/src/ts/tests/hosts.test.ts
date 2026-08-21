@@ -66,6 +66,7 @@ describe('vjscPlugin', () => {
       external: /^react\//,
       plugins: [
         vjscPlugin({
+          isVjscModule: ({ parameters }) => parameters.has('framework'),
           transform: ({ parameters }) =>
             parameters.get('framework') === 'react' ? { target: jsx({ importSource: 'react' }) } : null,
         }),
@@ -91,6 +92,85 @@ describe('vjscPlugin', () => {
         expect.stringMatching(/\/label\.ts\?framework=react&style=vanilla$/),
       ])
     );
+  });
+
+  it('propagates generic transform parameters without reserving a parameter name', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-parameters-'));
+    const entry = join(root, 'entry.tsx');
+    const child = join(root, 'child.ts');
+    writeFileSync(entry, `import { child } from './child'; export const entry = child;`);
+    writeFileSync(child, `export const child = 'minimal';`);
+    const transformed: string[] = [];
+
+    const bundle = await rolldown({
+      input: `${entry}?skin=minimal`,
+      plugins: [
+        vjscPlugin({
+          isVjscModule: ({ parameters }) => parameters.has('skin'),
+          transform: ({ parameters }) => {
+            transformed.push(parameters.toString());
+            return {};
+          },
+        }),
+      ],
+    });
+    await bundle.generate({ format: 'es' });
+
+    expect(transformed).toEqual(['skin=minimal', 'skin=minimal']);
+  });
+
+  it('leaves unrelated query modules to the Vite host', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-raw-'));
+    const app = join(root, 'app.ts');
+    const source = join(root, 'source.tsx');
+    writeFileSync(app, `import source from './source.tsx?raw'; console.log(source);`);
+    writeFileSync(source, `export const source = <main>raw-source</main>;`);
+
+    const output = (await viteBuild({
+      configFile: false,
+      logLevel: 'silent',
+      plugins: [viteVjscPlugin({ transform: { target: jsx({ importSource: 'react' }) } })],
+      build: {
+        write: false,
+        rolldownOptions: { input: app, output: { format: 'es' } },
+      },
+    })) as RolldownOutput;
+    const code = output.output.find((item) => item.type === 'chunk')?.code;
+
+    expect(code).toContain('raw-source');
+    expect(code).not.toContain('jsx-runtime');
+  });
+
+  it('uses the host cwd for relative compiler configuration and watch files', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'vjsc-cwd-'));
+    const entry = join(root, 'entry.tsx');
+    writeFileSync(entry, `export const entry = <main/>;`);
+    let configDir: string | undefined;
+
+    const bundle = await rolldown({
+      cwd: root,
+      input: entry,
+      plugins: [
+        vjscPlugin({
+          transform: {
+            plugins: [
+              {
+                name: 'host-cwd',
+                setup(context) {
+                  configDir = context.configDir;
+                  context.addWatchFile('compiler.config.ts');
+                  return {};
+                },
+              },
+            ],
+          },
+        }),
+      ],
+    });
+    await bundle.generate({ format: 'es' });
+
+    expect(configDir).toBe(root);
+    await expect(bundle.watchFiles).resolves.toContain(join(root, 'compiler.config.ts'));
   });
 
   it.each([
@@ -119,6 +199,7 @@ describe('vjscPlugin', () => {
       app,
       plugins: [
         {
+          isVjscModule: ({ parameters }) => parameters.has('framework'),
           transform: ({ parameters }) =>
             parameters.get('framework') === 'react'
               ? { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] }

@@ -265,33 +265,35 @@ function buildElementBaseTypes(): string {
   ].join('\n');
 }
 
-function buildVitePlugin(): void {
-  const sourceFile = join(import.meta.dirname, '../vite/index.ts');
+function buildBundlerPlugin(name: 'rolldown' | 'vite'): void {
+  const sourceFile = join(import.meta.dirname, `../${name}/index.ts`);
   const result = transformSync(sourceFile, readFileSync(sourceFile, 'utf8'), {
     lang: 'ts',
     sourceType: 'module',
   });
   if (result.errors.length > 0 || !result.code) {
     throw new Error(
-      `Could not transpile the Vite plugin:\n${result.errors.map((error) => error.codeframe ?? error.message).join('\n')}`
+      `Could not transpile the ${name} plugin:\n${result.errors.map((error) => error.codeframe ?? error.message).join('\n')}`
     );
   }
 
-  const outputDir = join(DIST_DIR, 'vite');
+  const outputDir = join(DIST_DIR, name);
   ensureDir(outputDir);
   writeFileSync(join(outputDir, 'index.js'), result.code);
   writeFileSync(
     join(outputDir, 'index.d.ts'),
-    [
-      `import type { Plugin } from 'vite';`,
-      ``,
-      `export interface IconElementPluginOptions {`,
-      `  readonly cwd?: string | undefined;`,
-      `}`,
-      ``,
-      `export declare function iconElementPlugin(options?: IconElementPluginOptions): Plugin;`,
-      ``,
-    ].join('\n')
+    name === 'vite'
+      ? `export { type IconElementPluginOptions, iconElementPlugin } from '../rolldown/index.js';\n`
+      : [
+          `import type { Plugin } from 'rolldown';`,
+          ``,
+          `export interface IconElementPluginOptions {`,
+          `  readonly cwd?: string | undefined;`,
+          `}`,
+          ``,
+          `export declare function iconElementPlugin(options?: IconElementPluginOptions): Plugin;`,
+          ``,
+        ].join('\n')
   );
 }
 
@@ -403,7 +405,8 @@ async function build(): Promise<void> {
   const elementDir = join(DIST_DIR, 'element');
   writeFileSync(join(elementDir, 'index.js'), buildElementIndex(sets));
   writeFileSync(join(elementDir, 'index.d.ts'), `export {};\n`);
-  buildVitePlugin();
+  buildBundlerPlugin('rolldown');
+  buildBundlerPlugin('vite');
 }
 
 function debounce(fn: () => void, ms: number): () => void {

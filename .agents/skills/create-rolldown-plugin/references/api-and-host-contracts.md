@@ -32,7 +32,7 @@ Recheck both installed types and official documentation when the dependency chan
 - Capture editable transformed source before runtime JSX lowering. Later `ModuleInfo.code` is host-dependent; namespaced transform metadata is the portable handoff.
 - Discovery globs need watches for both matched files and a containing directory so add/remove events rebuild. Watch each additional source at the hook that consumes it.
 - Mutable maps belong to one plugin instance and one build lifecycle. Clear them on rebuild. Do not reuse a stateful instance across concurrent builds unless state is partitioned explicitly.
-- tsdown declaration generation runs through a separate declaration program and may not discover a Rolldown-only virtual TypeScript entry. Expose or emit a declaration companion and verify the exact exported `.d.ts` path.
+- tsdown declaration generation runs through a separate declaration program and may not discover a Rolldown-only virtual TypeScript entry. Keep declaration-entry wiring in an explicit tsdown adapter and verify the exact exported `.d.ts` path.
 
 ## Output ownership
 

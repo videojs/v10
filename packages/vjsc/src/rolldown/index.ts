@@ -4,6 +4,7 @@ export { type SchemaPluginOptions, schemaPlugin } from '../components/schema/rol
 export { type ShadcnPluginOptions, shadcnPlugin } from '../shadcn/rolldown';
 export {
   type FilterPattern,
+  type VjscModuleContext,
   type VjscPluginOptions,
   type VjscTransformContext,
   type VjscTransformer,

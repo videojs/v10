@@ -1,18 +1,23 @@
-import { resolve } from 'node:path';
-
-import { describe, expect, it, vi } from 'vitest';
+import type { RolldownOutput } from 'rolldown';
+import { build } from 'vite';
+import { describe, expect, it } from 'vitest';
 
 import { iconElementPlugin } from '../index';
 
-describe('iconElementPlugin', () => {
-  it('loads an element family directly from SVG source', () => {
-    const plugin = iconElementPlugin();
-    const load = typeof plugin.load === 'object' ? plugin.load.handler : plugin.load;
-    const addWatchFile = vi.fn();
-    const code = load?.call({ addWatchFile } as never, '\0@videojs/icons/element/minimal');
+describe('iconElementPlugin in Vite', () => {
+  it('accepts the Rolldown plugin through the Vite plugin API', async () => {
+    const output = (await build({
+      configFile: false,
+      logLevel: 'silent',
+      plugins: [iconElementPlugin()],
+      build: {
+        write: false,
+        rolldownOptions: { input: '@videojs/icons/element/minimal' },
+      },
+    })) as RolldownOutput;
+    const chunk = output.output.find((item) => item.type === 'chunk');
 
-    expect(code).toContain('MediaIconElement.register(family, icons)');
-    expect(code).toContain('"play":"<svg');
-    expect(addWatchFile).toHaveBeenCalledWith(resolve(import.meta.dirname, '../../src/assets/minimal/play.svg'));
+    expect(chunk?.code).toContain('customElements.define');
+    expect(chunk?.code).toContain('m13.473');
   });
 });

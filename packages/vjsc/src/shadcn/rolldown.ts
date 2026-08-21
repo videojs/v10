@@ -1,11 +1,12 @@
 import { globSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 
-import type { Plugin } from 'rolldown';
+import type { OutputBundle, Plugin, PluginContext } from 'rolldown';
 
 import { type ComponentMeta, extractComponentMeta } from '../components/meta';
+import { readVjscSource } from '../ts/rolldown';
 import { toArray } from '../utils/array';
-import { moduleFilename, moduleId, normalizeModuleId, normalizeResolvedId } from '../utils/module-id';
+import { moduleFilename, moduleId, normalizeResolvedId } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
 import { analyzeImports } from './analyze';
 import type { SourceGraph, SourceImport, SourceModule } from './graph';
@@ -17,7 +18,8 @@ export type { ShadcnPluginOptions } from './types';
 /** Discover editable sources, capture their VJSC transformations, and emit Shadcn JSON assets. */
 export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOptions<Item>): Plugin {
   const root = resolveModulePath(options.root);
-  const sources = new Map<string, SourceState<Item>>();
+  const sources = new Map<string, ShadcnModule<Item>>();
+  const sourceEntries = new Set<string>();
   let graph: SourceGraph<Item> | undefined;
 
   return {
@@ -25,6 +27,7 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
     buildStart() {
       graph = undefined;
       sources.clear();
+      sourceEntries.clear();
 
       const files = discoverFiles(root, options.include, options.exclude);
       this.addWatchFile(root);
@@ -47,26 +50,18 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
           const id = moduleId(module.filename, transform);
           if (sources.has(id)) this.error(`Shadcn source transformation is declared twice: \`${id}\`.`);
           sources.set(id, { ...module, id, transform: { ...transform } });
-          this.emitFile({ type: 'chunk', id });
+          sourceEntries.add(this.emitFile({ type: 'chunk', id }));
         }
       }
-    },
-    transform(code, id) {
-      const normalizedId = normalizeModuleId(id);
-      const module = sources.get(normalizedId);
-      if (!module) return null;
-      module.source = code;
-      return null;
     },
     async buildEnd(error) {
       if (error) return;
       const modules: SourceModule<Item>[] = [];
 
       for (const module of sources.values()) {
-        const source = module.source;
-        if (source === undefined) {
-          this.error(`Shadcn source was not transformed by the host graph: \`${module.id}\`.`);
-        }
+        const info = this.getModuleInfo(module.id);
+        const source = readVjscSource(info?.meta);
+        if (source === undefined) this.error(`Shadcn source has no editable VJSC output: \`${module.id}\`.`);
         const imports: SourceImport[] = [];
         for (const reference of analyzeImports(source, module.filename)) {
           const resolved = await this.resolve(reference.specifier, module.id);
@@ -94,7 +89,7 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
     },
     async generateBundle(_outputOptions, bundle) {
       if (!graph) this.error('Shadcn source graph was not collected before output generation.');
-      for (const fileName of Object.keys(bundle)) delete bundle[fileName];
+      removeSourceEntryChunks(this, bundle, sourceEntries);
       for (const file of await createShadcnRegistryFiles(graph, options)) {
         this.emitFile({ type: 'asset', fileName: file.path, source: file.content });
       }
@@ -102,8 +97,30 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
   };
 }
 
-interface SourceState<Item extends ComponentMeta> extends ShadcnModule<Item> {
-  source?: string | undefined;
+function removeSourceEntryChunks(context: PluginContext, bundle: OutputBundle, references: ReadonlySet<string>): void {
+  const sourceChunks = new Set([...references].map((reference) => context.getFileName(reference)));
+  const owned = collectChunkDependencies(bundle, sourceChunks);
+  const retainedRoots = Object.values(bundle).flatMap((output) =>
+    output.type === 'chunk' && !owned.has(output.fileName) ? [output.fileName] : []
+  );
+  const retained = collectChunkDependencies(bundle, retainedRoots);
+
+  for (const fileName of owned) {
+    if (!retained.has(fileName)) delete bundle[fileName];
+  }
+}
+
+function collectChunkDependencies(bundle: OutputBundle, roots: Iterable<string>): Set<string> {
+  const collected = new Set<string>();
+  const visit = (fileName: string): void => {
+    if (collected.has(fileName)) return;
+    const output = bundle[fileName];
+    if (output?.type !== 'chunk') return;
+    collected.add(fileName);
+    for (const dependency of [...output.imports, ...output.dynamicImports]) visit(dependency);
+  };
+  for (const root of roots) visit(root);
+  return collected;
 }
 
 function discoverFiles(

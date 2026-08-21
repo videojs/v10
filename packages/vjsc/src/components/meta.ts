@@ -63,11 +63,30 @@ export function componentMetaPlugin(exportName = 'meta'): CompilerPlugin {
         transform: (context) => (sourceFile) =>
           context.factory.updateSourceFile(
             sourceFile,
-            sourceFile.statements.filter((statement) => !isExportedMetaStatement(statement, exportName))
+            sourceFile.statements.flatMap((statement) => removeExportedMeta(context.factory, statement, exportName))
           ),
       };
     },
   };
+}
+
+function removeExportedMeta(
+  factory: ts.NodeFactory,
+  statement: ts.Statement,
+  exportName: string
+): readonly ts.Statement[] {
+  if (!isExportedMetaStatement(statement, exportName)) return [statement];
+  const declarations = statement.declarationList.declarations.filter(
+    (declaration) => !ts.isIdentifier(declaration.name) || declaration.name.text !== exportName
+  );
+  if (declarations.length === 0) return [];
+  return [
+    factory.updateVariableStatement(
+      statement,
+      statement.modifiers,
+      factory.updateVariableDeclarationList(statement.declarationList, declarations)
+    ),
+  ];
 }
 
 export function extractComponentMeta(source: string, fileName: string, exportName = 'meta'): ComponentMeta {

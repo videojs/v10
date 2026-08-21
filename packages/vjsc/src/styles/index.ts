@@ -25,12 +25,14 @@ export type { StyleMode } from './transform';
 
 /** Create the compiler styles plugin without loading its Node-only backend into authored style modules. */
 export function stylesPlugin(options: StylePluginOptions): CompilerPlugin {
+  let implementation: Promise<CompilerPlugin> | undefined;
+
   return {
     name: 'vjsc:styles',
     enforce: 'pre',
     async setup(context) {
-      const implementation = await import('./plugin');
-      return implementation.plugin(options).setup?.(context) ?? {};
+      implementation ??= import('./plugin').then((module) => module.plugin(options));
+      return (await implementation).setup?.(context) ?? {};
     },
   };
 }

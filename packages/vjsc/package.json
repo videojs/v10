@@ -56,6 +56,10 @@
       "types": "./dist/rolldown/index.d.ts",
       "default": "./dist/rolldown/index.js"
     },
+    "./tsdown": {
+      "types": "./dist/tsdown/index.d.ts",
+      "default": "./dist/tsdown/index.js"
+    },
     "./vite": {
       "types": "./dist/vite/index.d.ts",
       "default": "./dist/vite/index.js"

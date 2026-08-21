@@ -1,6 +1,6 @@
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
-import { schemaPlugin } from 'vjsc/rolldown';
+import { schemaPlugin } from 'vjsc/tsdown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import en from './src/core/i18n/locales/en.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
@@ -16,13 +16,6 @@ const localeEntries = Object.fromEntries([
 ]);
 
 const createConfig = (mode: PackageBuildMode): UserConfig => {
-  const schema = schemaPlugin({
-    entry: 'vjsc',
-    declaration: mode === 'dev',
-    source: '@videojs/core/vjsc',
-    include: ['./src/core/ui/*/*-component.ts'],
-  });
-
   return {
     ...packageBuildConfig(mode, 'neutral'),
     dts:
@@ -36,7 +29,14 @@ const createConfig = (mode: PackageBuildMode): UserConfig => {
     deps: {
       neverBundle: ['vjsc/components'],
     },
-    plugins: [schema],
+    plugins: [
+      schemaPlugin({
+        file: 'vjsc',
+        declaration: mode === 'dev',
+        source: '@videojs/core/vjsc',
+        include: ['./src/core/ui/*/*-component.ts'],
+      }),
+    ],
     entry: {
       index: './src/core/index.ts',
       i18n: './src/core/i18n/index.ts',
