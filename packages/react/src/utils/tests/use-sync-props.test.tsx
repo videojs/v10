@@ -1,6 +1,9 @@
-import { cleanup, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vite-plus/test';
+import { cleanup, render, renderHook } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { renderToString } from 'react-dom/server';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { MockErrorBoundary } from '../../testing/mocks';
 import { useSyncProps } from '../use-sync-props';
 
 afterEach(cleanup);
@@ -101,5 +104,69 @@ describe('useSyncProps', () => {
 
     // `volume` was set outside of props; omitting it from props never resets it.
     expect(target.volume).toBe(0.5);
+  });
+
+  it('does not write props from an abandoned render', () => {
+    const target: TargetProps = { ...defaults };
+
+    function Sync({ src, fail = false }: { src: string; fail?: boolean }) {
+      useSyncProps(target, { src }, defaults);
+
+      if (fail) throw new Error('abandon render');
+
+      return null;
+    }
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = render(
+      <MockErrorBoundary>
+        <Sync src="committed.mp4" />
+      </MockErrorBoundary>
+    );
+
+    rerender(
+      <MockErrorBoundary>
+        <Sync src="abandoned.mp4" fail />
+      </MockErrorBoundary>
+    );
+
+    expect(target.src).toBe('committed.mp4');
+    consoleError.mockRestore();
+  });
+
+  it('does not write props during server rendering', () => {
+    const target: TargetProps = { ...defaults };
+
+    function Sync() {
+      const rest = useSyncProps(target, { src: 'server.mp4', id: 'player' }, defaults);
+
+      return <div {...rest} />;
+    }
+
+    expect(renderToString(<Sync />)).toContain('id="player"');
+    expect(target.src).toBe('');
+  });
+
+  it('keeps committed writes idempotent under StrictMode effect replay', () => {
+    let src = '';
+    const write = vi.fn((value: string) => {
+      src = value;
+    });
+    const target = {
+      get src() {
+        return src;
+      },
+      set src(value: string) {
+        write(value);
+      },
+      volume: 1 as number | undefined,
+    };
+
+    renderHook(() => useSyncProps(target, { src: 'video.mp4' }, defaults), {
+      wrapper: StrictMode,
+    });
+
+    expect(write).toHaveBeenCalledOnce();
+    expect(target.src).toBe('video.mp4');
   });
 });
