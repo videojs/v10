@@ -2,9 +2,12 @@
 title: Menu
 frameworkTitle:
   html: media-menu
-description: A composable menu component for settings, option selection, and actions
+description: >-
+  A composable menu component. Keep panels intrinsically block-sized: bottom: 0, inset: 0, or height:
+  100% cause measurement cycles; --media-menu-width and --media-menu-height are observer outputs
 ---
 
+import Aside from "@/components/Aside.astro";
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
@@ -113,6 +116,12 @@ Set `type="playback-rate"`, `type="quality"`, `type="audio-track"`, or `type="ca
 ## Styling
 
 Use data attributes to style open state, highlighted items, selected radio items, and submenu views:
+
+<Aside type="caution" title="Keep menu panels intrinsically sized">
+`--media-menu-width` and `--media-menu-height` are outputs from the menu's observer-driven measurement system, not ordinary author-controlled sizing variables. Consume them on the menu viewport, but let each panel keep an intrinsic block-size so Video.js can measure its content.
+
+Do not constrain a panel's block-size to the viewport with `bottom: 0`, `inset: 0`, or `height: 100%`. That makes the panel depend on the measured viewport while the viewport depends on the panel, creating a measurement cycle. For an absolutely positioned panel, use `inset-inline: 0; top: 0` and leave block-end unconstrained.
+</Aside>
 
 `data-highlighted` is added to the current menu item. The highlighted item is the item that keyboard selection will act on. It changes when the menu opens, when the pointer moves over another item, when the user presses arrow keys, or when type-ahead search finds a match.
 

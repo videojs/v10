@@ -71,9 +71,16 @@
   transition-property: width, height, opacity, filter;
 }
 
+.menu:is([data-starting-style], [data-ending-style]) {
+  /* Only animate size while navigating between already-open menu views. */
+  transition-property: opacity, filter;
+}
+
 .menu-panel {
   position: absolute;
-  inset: 0;
+  /* Keep block-end unconstrained so the menu can measure intrinsic panel height. */
+  inset-inline: 0;
+  top: 0;
   display: grid;
   gap: 2px;
   padding: 6px;

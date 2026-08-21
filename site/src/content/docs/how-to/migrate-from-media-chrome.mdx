@@ -206,6 +206,16 @@ media-play-button[data-paused] .play-icon { display: inline; }
 
 Continuous values use CSS custom properties: sliders expose `--media-slider-fill` and `--media-slider-pointer`.
 
+### Keep menu panels intrinsically sized
+
+Video.js measures the active menu panel with an observer and publishes the result through `--media-menu-width` and `--media-menu-height`. These properties are measurement outputs, not ordinary author-controlled sizing variables. Use them to size the menu viewport, while leaving each panel's block-size intrinsic.
+
+<Aside type="caution">
+Do not constrain a panel to the menu viewport with `bottom: 0`, `inset: 0`, or `height: 100%`. That makes the panel's size depend on the viewport while the viewport's measured size depends on the panel, creating a cycle that can make the menu grow continuously.
+
+For an absolutely positioned panel, use `inset-inline: 0; top: 0` and leave block-end unconstrained.
+</Aside>
+
 ## Themes become skins
 
 Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then eject and customize with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
