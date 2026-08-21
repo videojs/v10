@@ -185,7 +185,6 @@
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
-    "vjsc": "workspace:*",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "happy-dom": "^20.11.1",

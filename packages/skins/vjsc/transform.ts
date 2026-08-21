@@ -6,7 +6,7 @@ import { stylesPlugin } from 'vjsc/styles';
 
 import { type SkinName, skinStyles } from './meta';
 import { createHtmlComponentRegistry, createReactComponentRegistry } from './registry/frameworks';
-import { createReactTransformPlugin } from './registry/react';
+import { createReactTransformPlugin } from './registry/react/transform';
 
 export interface SkinConfig {
   readonly framework: 'html' | 'react';

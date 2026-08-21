@@ -33,7 +33,7 @@ const optionLabel: RegistryEntry = {
 };
 
 /** Canonical core components rendered through registered Video.js custom elements. */
-export default function createRegistry(schema: CoreSchema): ComponentRegistry {
+export default function createHtmlRegistry(schema: CoreSchema): ComponentRegistry {
   const $ = resolveRegistryEntries(schema, resolveHtmlEntry);
 
   const entries = {

@@ -11,6 +11,5 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "../tsdown.vjsc.config.ts"],
-  "exclude": ["registry/default"]
+  "include": ["**/*.ts", "**/*.tsx", "../tsdown.vjsc.config.ts"]
 }

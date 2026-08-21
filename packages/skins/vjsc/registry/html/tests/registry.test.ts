@@ -3,9 +3,9 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createSchemaModule, transform } from 'vjsc';
 import { registryPlugin } from 'vjsc/registry';
-import createRegistry from '../registry';
+import createHtmlRegistry from '..';
 
-const packageDir = resolve(import.meta.dirname, '../..');
+const packageDir = resolve(import.meta.dirname, '../../../..');
 const coreDir = resolve(packageDir, '../core');
 const schema = createSchemaModule({
   cwd: coreDir,
@@ -13,7 +13,7 @@ const schema = createSchemaModule({
   include: ['./src/core/ui/*/*-component.ts'],
   output: './.vjsc/virtual/core-schema.ts',
 });
-const registry = createRegistry(schema.schema as Parameters<typeof createRegistry>[0]);
+const registry = createHtmlRegistry(schema.schema as Parameters<typeof createHtmlRegistry>[0]);
 
 function compile(source: string, filename = '/project/src/view.tsx') {
   return transform(source, {

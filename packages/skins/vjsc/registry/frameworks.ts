@@ -3,21 +3,21 @@ import { resolve } from 'node:path';
 import type coreSchema from '@videojs/core/vjsc';
 import { createSchemaModule } from 'vjsc';
 import { type ComponentRegistry, extendRegistry } from 'vjsc/registry';
-import createHtmlRegistry from '../../../html/vjsc/registry';
 import {
   createHtmlRegistry as createHtmlIconRegistry,
   createReactRegistry as createReactIconRegistry,
 } from '../../../icons/vjsc/registry';
 import { createIconSchemaModule } from '../../../icons/vjsc/schema';
-import createReactRegistry from '../../../react/vjsc/registry';
+import createHtmlRegistry from './html';
+import createReactRegistry from './react';
 
 const packagesDir = resolve(import.meta.dirname, '../../..');
 const corePackageDir = resolve(packagesDir, 'core');
 type CoreSchema = typeof coreSchema;
 
 const frameworkRegistryWatchFiles = {
-  html: [resolve(packagesDir, 'html/vjsc/registry.tsx'), resolve(packagesDir, 'html/vjsc/resolve.ts')],
-  react: [resolve(packagesDir, 'react/vjsc/registry.tsx'), resolve(packagesDir, 'react/vjsc/resolve.ts')],
+  html: [resolve(import.meta.dirname, 'html/index.tsx'), resolve(import.meta.dirname, 'html/resolve.ts')],
+  react: [resolve(import.meta.dirname, 'react/index.tsx'), resolve(import.meta.dirname, 'react/resolve.ts')],
 } as const;
 
 export function createReactComponentRegistry(iconFamily = 'default'): ComponentRegistry {

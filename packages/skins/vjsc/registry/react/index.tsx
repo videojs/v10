@@ -45,7 +45,7 @@ type CoreSchema = typeof coreSchema;
 type CoreDefinitions = CoreSchema['definitions'];
 
 /** Canonical core components rendered through the React component package. */
-export default function createRegistry(schema: CoreSchema): ComponentRegistry {
+export default function createReactRegistry(schema: CoreSchema): ComponentRegistry {
   const $ = resolveRegistryEntries(schema, resolveReactEntry);
 
   const entries = {
