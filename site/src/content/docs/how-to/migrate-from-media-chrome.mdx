@@ -6,6 +6,7 @@ description: Map Media Chrome's controller, elements, and attributes onto Video.
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 
 Video.js v10's HTML player uses the same `media-*` custom-element convention as Media Chrome, so most of the work is **renaming and reshaping**, not rewriting. This guide maps Media Chrome's API to Video.js v10.
 
@@ -15,7 +16,7 @@ Scoped to apps that compose their own player from Media Chrome elements. If you 
 
 ## Before you begin
 
-Install Video.js and pick a preset and skin (see <DocsLink slug="how-to/installation">Installation</DocsLink>). The fastest path is to start from a <DocsLink slug="concepts/presets">preset</DocsLink>, then replace its controls with your migrated markup.
+Install Video.js and choose a <DocsLink slug="concepts/presets">preset</DocsLink> (see <DocsLink slug="how-to/installation">Installation</DocsLink>). Start with its ready-made skin if those controls fit your player. If you need to keep a custom control bar, build it from the individual Video.js UI components instead.
 
 <FrameworkCase frameworks={["html"]}>
 ```bash
@@ -44,17 +45,52 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
 ```
 
 <FrameworkCase frameworks={["html"]}>
-```html
-<!-- Video.js -->
-<video-player>
-  <media-container>
-    <video src="video.mp4"></video>
-    <media-controls>
-      <media-play-button></media-play-button>
-    </media-controls>
-  </media-container>
-</video-player>
-```
+<TabsRoot client:idle>
+  <TabsList client:idle label="Video.js HTML player source">
+    <Tab client:idle value="javascript" initial>JavaScript</Tab>
+    <Tab client:idle value="html">HTML</Tab>
+    <Tab client:idle value="css">CSS</Tab>
+  </TabsList>
+  <TabsPanel client:idle value="javascript" initial>
+    ```js
+    import '@videojs/html/video/player';
+    import '@videojs/html/ui/controls';
+    import '@videojs/html/ui/play-button';
+    import '@videojs/html/icons/element';
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="html">
+    ```html
+    <!-- Video.js -->
+    <video-player>
+      <media-container>
+        <video src="video.mp4"></video>
+        <media-controls>
+          <media-play-button class="player-play-button">
+            <media-icon class="player-play-icon" name="play"></media-icon>
+            <media-icon class="player-pause-icon" name="pause"></media-icon>
+          </media-play-button>
+        </media-controls>
+      </media-container>
+    </video-player>
+    ```
+  </TabsPanel>
+  <TabsPanel client:idle value="css">
+    ```css
+    .player-pause-icon {
+      display: none;
+    }
+
+    .player-play-button:defined:not([data-paused]) .player-play-icon {
+      display: none;
+    }
+
+    .player-play-button:defined:not([data-paused]) .player-pause-icon {
+      display: inline-flex;
+    }
+    ```
+  </TabsPanel>
+</TabsRoot>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -72,7 +108,13 @@ export function MyPlayer() {
     <VideoPlayer>
       <Container>
         <Video src="video.mp4" />
-        <PlayButton />
+        <PlayButton
+          render={(props, state) => (
+            <button {...props} className="play-button">
+              {state.paused ? <span className="play-icon">Play</span> : <span className="pause-icon">Pause</span>}
+            </button>
+          )}
+        />
       </Container>
     </VideoPlayer>
   );
@@ -93,12 +135,14 @@ Where Media Chrome asks you to restyle a shadow root, Video.js components take a
 ```tsx
 <PlayButton
   render={(props, state) => (
-    <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>
+    <button {...props} className="play-button">
+      {state.paused ? <span className="play-icon">Play</span> : <span className="pause-icon">Pause</span>}
+    </button>
   )}
 />
 ```
 
-Read player state with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>, <DocsLink slug="reference/use-media">`useMedia`</DocsLink>, and <DocsLink slug="reference/use-store">`useStore`</DocsLink>.
+Read player state with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>, <DocsLink slug="reference/use-media">`useMedia`</DocsLink>, and <DocsLink slug="reference/use-store">`useStore`</DocsLink>. Player hooks must run in a descendant component rendered inside `VideoPlayer` or the `Player` returned by `createPlayer`. A hook in the same component that returns the provider is still outside that provider.
 
 </FrameworkCase>
 
@@ -170,7 +214,19 @@ Most names match. These are the renames that bite:
 
 Unchanged names: `media-play-button`, `media-mute-button`, `media-fullscreen-button`, `media-pip-button`, `media-airplay-button`, `media-cast-button`, `media-captions-button`, `media-playback-rate-button`, `media-tooltip`, and `media-thumbnail`.
 
-Sliders are compound in both, using `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`.
+<Aside type="caution">
+Matching tag names do not mean matching appearance. Media Chrome buttons include default icons and styles. Individual Video.js buttons provide behavior, state, and an accessible name, but no visible content or finished styling. Add text, an SVG, or a `<media-icon>`, plus your own CSS. Without visible content, a button can work while showing nothing. Sliders also need their child elements and CSS. Use a ready-made skin when you want finished controls.
+</Aside>
+
+Video.js sliders use `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`. See <DocsLink slug="reference/time-slider">`media-time-slider`</DocsLink> and <DocsLink slug="reference/volume-slider">`media-volume-slider`</DocsLink> for copy-paste markup and CSS.
+
+<FrameworkCase frameworks={["html"]}>
+Media Chrome's named icon slots do not carry over. Remove attributes such as `slot="play"` and put the icon directly inside the Video.js button. Import `@videojs/html/icons/element` to use `<media-icon>`, as shown in [Map the controller](#map-the-controller). Set `family="minimal"` to use the Minimal skin's icon designs. You can also use your own text or SVG.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React buttons do not include visible content either. Use a button's `render` prop to add it, as shown in [Map the controller](#map-the-controller). Build sliders from parts such as `TimeSlider.Track`, `TimeSlider.Fill`, and `TimeSlider.Thumb`, then add your own CSS.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 `media-poster` is the one rename that changes shape. Where `media-poster-image` took its own `src`, `media-poster` wraps the image you bring:
@@ -185,10 +241,14 @@ Sliders are compound in both, using `media-slider-track`, `media-slider-fill`, a
 <FrameworkCase frameworks={["react"]}>
 These are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider`, `BufferingIndicator`, `Poster`, `QualityRadioGroup` — and the compound parts are namespaced, so `media-slider-track` becomes `TimeSlider.Track`. See the <DocsLink slug="concepts/ui-components">UI components</DocsLink> concept for the full set.
 
-`Poster` is the one rename that changes shape. It *is* the image rather than a wrapper around one, so `media-poster-image`'s attributes go straight on it:
+`Poster` is the one rename that changes shape. Put the poster URL on `VideoPlayer`; `Poster` renders the image and accepts image attributes such as `alt`, `srcSet`, and `sizes`:
 
 ```tsx
-<Poster src="/poster.jpg" alt="" />
+<VideoPlayer poster="/poster.jpg">
+  <Container>
+    <Poster alt="" />
+  </Container>
+</VideoPlayer>
 ```
 </FrameworkCase>
 
@@ -199,16 +259,54 @@ Media Chrome reflects state as `media*` attributes such as `mediapaused`; Video.
 ```css
 /* Media Chrome */
 media-play-button[mediapaused] .play-icon { display: inline; }
-
-/* Video.js */
-media-play-button[data-paused] .play-icon { display: inline; }
 ```
 
+<FrameworkCase frameworks={["html"]}>
+```css
+/* Video.js HTML */
+media-play-button[data-paused] .play-icon { display: inline; }
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+/* Video.js React: target the className on your rendered button */
+.play-button[data-paused] .play-icon { display: inline; }
+```
+</FrameworkCase>
+
 Continuous values use CSS custom properties: sliders expose `--media-slider-fill` and `--media-slider-pointer`.
+
+### Map theme variables by meaning
+
+Media Chrome and Video.js both use names beginning with `--media-`, but that shared prefix is a naming convention, not a compatibility layer. Keep a variable only when its documented meaning matches.
+
+| Media Chrome theme variable | Packaged Video.js skin | Migration |
+|---|---|---|
+| `--media-accent-color` or `--media-range-bar-color` | `--media-accent-color` | Closest match for slider fills and accented controls. |
+| `--media-primary-color` | no direct equivalent | Often colors every control icon in Media Chrome; Video.js's accent variable has narrower semantics. |
+| `--media-secondary-color` | no direct equivalent | Author CSS or eject when you need this palette role. |
+| `--media-control-background` | no direct equivalent | Author CSS or eject. |
+| `--media-control-hover-background` | no direct equivalent | Author CSS or eject. |
+| `--media-range-track-height` | no direct equivalent | Author slider CSS or eject. |
+
+The packaged Video.js skins expose `--media-accent-color`, `--media-accent-text-color`, `--media-border-radius`, and `--media-scale-unit` for broad customization. Do not assume another Media Chrome variable will work because its name starts with `--media-`.
 
 ## Themes become skins
 
 Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then eject and customize with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
+
+<FrameworkCase frameworks={["html"]}>
+Ready-made HTML skins keep their controls inside Shadow DOM. Code outside the skin sees a click as coming from the skin, not the button inside it. Some control events also stay inside the skin. Do not use an outside listener to identify which built-in button was clicked.
+
+Keep playback event handlers on your `<video>` or `<audio>`. When you build a custom control bar, attach click and input handlers directly to those controls. With a ready-made skin, read media or player state instead of listening for clicks inside the skin.
+
+Keep the skin when its CSS variables and content slots cover your changes. Build a custom control bar when you want to start from scratch. Eject the skin when you want its existing layout and styles but need to change the controls inside it.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React skins do not use Shadow DOM. Use `render` props when you build individual controls. Eject a ready-made skin when you need to change its control set or layout.
+</FrameworkCase>
 
 ## Known gaps
 
