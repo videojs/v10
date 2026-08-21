@@ -2,7 +2,7 @@ import { isUndefined } from '@videojs/utils/predicate';
 import { useLayoutEffect, useRef } from 'react';
 
 export function useSyncProps<Props extends object, Rest extends Record<string, unknown>>(
-  target: Props,
+  target: Props | null,
   props: Partial<Props> & Rest,
   defaults: Props
 ): Omit<Rest, keyof Props> {
@@ -22,6 +22,8 @@ export function useSyncProps<Props extends object, Rest extends Record<string, u
   }
 
   useLayoutEffect(() => {
+    if (!target) return;
+
     const sync = (key: string, value: unknown) => {
       if (target[key as keyof Props] !== value) target[key as keyof Props] = value as Props[keyof Props];
     };

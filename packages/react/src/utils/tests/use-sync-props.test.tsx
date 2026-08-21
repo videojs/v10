@@ -156,6 +156,19 @@ describe('useSyncProps', () => {
     expect(target.src).toBe('');
   });
 
+  it('waits until a nullable target is committed', () => {
+    const target: TargetProps = { ...defaults };
+    const { rerender } = renderHook(({ current }) => useSyncProps(current, { src: 'video.mp4' }, defaults), {
+      initialProps: { current: null as TargetProps | null },
+    });
+
+    expect(target.src).toBe('');
+
+    rerender({ current: target });
+
+    expect(target.src).toBe('video.mp4');
+  });
+
   it('keeps committed writes idempotent under StrictMode effect replay', () => {
     let src = '';
     const write = vi.fn((value: string) => {

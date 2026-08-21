@@ -34,7 +34,7 @@ export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function Mux
 
   return (
     <video ref={composedRef} {...htmlProps}>
-      <MuxStoryboard media={media} />
+      {media && <MuxStoryboard media={media} />}
       {children}
     </video>
   );

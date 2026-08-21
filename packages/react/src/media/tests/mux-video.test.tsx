@@ -1,7 +1,8 @@
 import { render } from '@testing-library/react';
 import { HlsJsMedia } from '@videojs/media/dom/hls-js';
 import { MuxMedia } from '@videojs/media/dom/mux';
-import type { ReactElement } from 'react';
+import { createRef, type ReactElement } from 'react';
+import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { MuxVideo } from '../mux-video';
 
@@ -19,6 +20,36 @@ function renderWithMedia(ui: ReactElement) {
 }
 
 describe('MuxVideo', () => {
+  it('server-renders its host without acquiring or attaching media', () => {
+    const attach = vi.spyOn(MuxMedia.prototype, 'attach');
+    const source = vi.spyOn(MuxMedia.prototype, 'source', 'set');
+
+    const html = renderToString(<MuxVideo source={{ playbackId: 'abc123' }} data-testid="mux-video" />);
+
+    expect(html).toContain('<video');
+    expect(html).toContain('data-testid="mux-video"');
+    expect(attach).not.toHaveBeenCalled();
+    expect(source).not.toHaveBeenCalled();
+    attach.mockRestore();
+    source.mockRestore();
+  });
+
+  it('forwards its host ref after media acquisition', () => {
+    const ref = createRef<HTMLVideoElement>();
+
+    render(<MuxVideo ref={ref} />);
+
+    expect(ref.current).toBeInstanceOf(HTMLVideoElement);
+  });
+
+  it('attaches the acquired media to the existing host', () => {
+    const attach = vi.spyOn(MuxMedia.prototype, 'attach');
+    const { container } = render(<MuxVideo />);
+
+    expect(attach).toHaveBeenCalledWith(container.querySelector('video'));
+    attach.mockRestore();
+  });
+
   it('does not spread the source prop onto the element', () => {
     const { container } = render(<MuxVideo source={{ playbackId: 'abc123', preferPlayback: 'native' }} />);
 
