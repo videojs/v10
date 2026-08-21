@@ -44,17 +44,19 @@ npx @videojs/cli docs how-to/installation \
   --framework <html|react> \
   --preset <video|audio|live-video|live-audio|background-video> \
   --skin <default|minimal|none> \
-  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|background-video> \
+  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify|background-video> \
   --source-url <url> \
   --install-method <cdn|npm|pnpm|yarn|bun>
 ```
+
+The CLI does not currently detect non-interactive stdin. In automation, agents, and CI, include `--framework` and all five installation flags so no prompt starts. Pass `--source-url ''` to use the built-in demo without prompting.
 
 Here's what the flags mean:
 - *Framework*: Pick whether you're working in React or if you'd like to use HTML custom elements. (More to come!)
 - *Preset*: Pick a pre-built player. The default presets work well for general website playback; the live presets add a Live button and drop the on-demand time displays.
 - *Skin*: Pick what your player looks like
 - *Media*: Pick what kind of media you have. The `live-video` preset supports HLS and Mux video; `live-audio` supports Mux audio.
-- *Source URL*: Define where your media comes from (or omit for a sample URL)
+- *Source URL*: Define where your media comes from. In an interactive terminal, omit it to choose a sample URL. In automation, pass an empty value to choose the sample without prompting.
 - *Install method*: How do you want to install your package? (CDN is HTML-only<NoCdnMediaNote />.)
 
 If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
