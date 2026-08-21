@@ -32,6 +32,18 @@ However, you should consider placing your components in `<player-container>`. Co
 
 <FrameworkCase frameworks={["react"]}>
 
+For components you add yourself, use the documented props, state `data-*` attributes, and CSS custom properties. Add your own `className` when you need a selector.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+For components you add yourself, select them by their custom element name. Use the documented state `data-*` attributes and CSS custom properties to style them.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
 ### The `render` prop
 
 The `render` prop is the primary customization mechanism. It accepts a function that receives `props` and `state`, and returns your element. The `props` object includes event handlers, ARIA attributes, data attributes, and a ref — always spread `{...props}` to keep everything working:

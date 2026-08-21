@@ -210,6 +210,8 @@ Continuous values use CSS custom properties: sliders expose `--media-slider-fill
 
 Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then eject and customize with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
 
+Media Chrome theme variables do not carry over by name. Use the packaged skin's documented CSS custom properties for common visual changes. If your theme changes control visibility, layout, overlays, icons, or interactions, eject the closest skin and edit it directly.
+
 ## Known gaps
 
 These Media Chrome features have no direct equivalent yet. Several can be approximated; see [Workarounds](#workarounds).
@@ -219,7 +221,7 @@ These Media Chrome features have no direct equivalent yet. Several can be approx
 - No preference persistence, so Media Chrome's `novolumepref`, `nomutedpref`, and `nosubtitleslangpref` opt-outs have nothing to opt out of. Persistence is out of scope for GA; tracked at [#944](https://github.com/videojs/v10/issues/944), with subtitle language at [#1423](https://github.com/videojs/v10/issues/1423)
 - No `breakpoints` or container-breakpoint attributes; use CSS container queries instead
 - No `seektoliveoffset` or `noautoseektolive` controls, and live-edge offset and tolerance aren't configurable ([#1730](https://github.com/videojs/v10/issues/1730))
-- Chapters render, but there's no active-chapter state, no `chapterchange` event, and no menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
+- Chapters render and each time-slider segment reflects `data-active`, but there's no player-level active chapter value, `chapterchange` event, or menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
 - Cue points are not supported ([#1442](https://github.com/videojs/v10/issues/1442))
 
 Chapters themselves do work. Add a default `<track kind="chapters">` and the packaged skins segment the time slider and show the chapter title on hover, via `media-time-slider-chapters` and `media-time-slider-chapter-title`.
@@ -228,30 +230,7 @@ Chapters themselves do work. Add a default `<track kind="chapters">` and the pac
 
 ### Disable autohide (`autohide="-1"`)
 
-The skin hides controls by removing `data-visible` from the root `<media-controls>`. Which element then fades depends on the player's width: below `32rem` it's the `--primary` and `--secondary` groups inside the root, and at or above `32rem` it's the root itself. Override both, plus the hidden cursor, in your player CSS:
-
-```css
-.media-default-skin--video .media-controls--root:not([data-visible]) {
-  opacity: 1;
-  scale: 1;
-  filter: none;
-  pointer-events: auto;
-
-  .media-controls--primary,
-  .media-controls--secondary {
-    opacity: 1;
-    scale: 1;
-    filter: none;
-    pointer-events: auto;
-  }
-}
-
-.media-default-skin--video:has(.media-controls--root:not([data-visible])) {
-  cursor: auto;
-}
-```
-
-Two things make this fragile. It matches the skin's own selectors exactly, so it only wins on source order — load your stylesheet after the skin's. And the class names are the default skin's; the minimal skin fades `.media-minimal-skin--video .media-controls` instead, with no groups to reach.
+Packaged skins don't expose an autohide switch. Eject the closest skin and remove its hidden-control styles. That's safer than overriding internal selectors in a skin you don't own.
 
 To change the *delay* rather than disable it, note that the idle timer is a constant inside `controlsFeature`. Fork that feature, swap it into a custom feature list, and pass that list to `createPlayer`:
 

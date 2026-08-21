@@ -1,15 +1,45 @@
 ---
 title: Customize skins
-description: Learn how to customize Video.js v10 skins by copying and modifying them
+description: Learn the public customization surface for packaged Video.js skins and when to eject
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import StyleCase from '@/components/docs/StyleCase.astro';
 import EjectedSkin from '@/components/docs/EjectedSkin.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
 
 Video.js v10 comes with two pre-built skins; Default and Minimal. Basic customization is possible with CSS custom properties, but if you want more control over the design and functionality of your player, you can copy the skin's code into your project and modify it as needed. We call this "ejecting" the skin, since you're taking the internal code that makes up the skin and making it your own.
 
 ## Basic customization
+
+Set these CSS custom properties directly on the skin:
+
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-skin style="--media-accent-color: #f5c518; --media-border-radius: 1rem">
+  <video src="video.mp4"></video>
+</video-skin>
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+<VideoSkin
+  style={
+    {
+      '--media-accent-color': '#f5c518',
+      '--media-border-radius': '1rem',
+    } as React.CSSProperties
+  }
+>
+  <Video src="video.mp4" />
+</VideoSkin>
+```
+
+</FrameworkCase>
 
 | Property Name | Description | Type | Example |
 | ------------- | ----------- | ---- | ------- |
@@ -48,11 +78,35 @@ Vanilla CSS skins use `--media-scale-unit` as the base for control spacing, icon
 
 You can of course also add your own classnames to the skins themselves.
 
+## Where packaged customization stops
+
+The four properties above are the public styling controls for packaged skins. Don't depend on the elements, classnames, or other custom properties inside a packaged skin. They may change between releases.
+
+<FrameworkCase frameworks={["html"]}>
+
+Packaged video skins also let you replace the poster through the `poster` slot.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+Packaged video skins also let you replace the poster through the `renderPoster` prop.
+
+</FrameworkCase>
+
+See <DocsLink slug="reference/poster">Poster</DocsLink>.
+
+For anything deeper, eject instead of reaching into the packaged skin. There are no packaged-skin options for adding, removing, or rearranging controls, or replacing its built-in feedback and interactions.
+
 ## Ejecting
 
 If you'd like to customize them you can fully customize them by "ejecting" the code and making it your own.
 
-While eventually we’ll have a CLI that will eject skins in your preferred framework and style, for now we invite you to try it out with these copy-paste-ready implementations.
+Eject as soon as the packaged skin no longer matches the player you need. Once ejected, removing a control is removing a component, and changing an overlay or interaction is editing code you own.
+
+An ejected skin is app code, so its markup, classnames, and styles are yours to change. If none of the packaged skins is a useful starting point, build a custom UI from the player, container, and individual <DocsLink slug="concepts/ui-components">UI components</DocsLink> instead.
+
+Soon, we'll have a CLI that ejects skins in your preferred framework and style. For now, we invite you to try these copy-paste-ready implementations.
 
 {/*TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840)*/}
 
