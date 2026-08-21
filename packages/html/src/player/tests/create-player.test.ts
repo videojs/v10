@@ -9,6 +9,7 @@ import {
 import { ContextConsumer } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { BackgroundVideo } from '../../media/background-video';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { ContainerElement } from '../../ui/container/container-element';
 import { MediaElement } from '../../ui/media-element';
@@ -172,6 +173,24 @@ describe('createPlayer', () => {
 
     second.remove();
     await vi.waitFor(() => expect(player.store.target).toBeNull());
+  });
+
+  it('does not retain disconnected context media as a native fallback', async () => {
+    const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
+    const PlayerElement = ProviderMixin(MediaElement);
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+    const background = document.createElement(defineTestElement(BackgroundVideo));
+    const video = document.createElement('video');
+    video.slot = 'media';
+
+    background.append(video);
+    player.append(background);
+    document.body.append(player);
+
+    await vi.waitFor(() => expect(player.store.target?.media).toBe(video));
+
+    background.remove();
+    expect(player.store.target).toBeNull();
   });
 
   it('creates audio player with expected exports', () => {

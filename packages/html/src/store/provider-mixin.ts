@@ -101,6 +101,7 @@ export function createProviderMixin<Store extends PlayerStore>(
           const index = this.#mediaRegistrations.indexOf(registration);
           if (index < 0) return;
           this.#mediaRegistrations.splice(index, 1);
+          this.#syncNativeMedia();
           this.#syncMedia();
         };
       };
