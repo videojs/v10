@@ -6,6 +6,8 @@ import {
   type ThumbnailImage,
 } from '@videojs/core';
 import { createThumbnail, selectTextTrack } from '@videojs/core/dom';
+import type { MediaTextTrackState } from '@videojs/media';
+import { isNull, isUndefined } from '@videojs/utils/predicate';
 import type { CSSProperties } from 'react';
 import { forwardRef, useMemo, useRef, useState } from 'react';
 
@@ -17,6 +19,27 @@ import { renderElement } from '../../utils/use-render';
 export interface ThumbnailProps extends UIComponentProps<'div', ThumbnailCore.State>, ThumbnailCore.Props {
   /** Pre-parsed thumbnail images — bypasses the automatic `<track>` detection. */
   thumbnails?: ThumbnailImage[] | undefined;
+}
+
+/**
+ * Leaving `crossOrigin` unset means "follow the media element", so thumbnails
+ * keep working on a CORS-enabled player without a skin having to thread a prop
+ * through. `null` opts out and fetches the sprites no-CORS. `''` is passed
+ * straight through, since the CORS-settings attribute reads it as Anonymous.
+ *
+ * Only the `<track>` path inherits: `thumbnails` passed directly may point at a
+ * host that has nothing to do with the media element.
+ */
+function resolveCrossOrigin(
+  explicit: ThumbnailCore.Props['crossOrigin'],
+  external: ThumbnailImage[] | undefined,
+  inherited: MediaTextTrackState['thumbnailTrackCrossOrigin'] | undefined
+) {
+  if (isNull(explicit)) return undefined;
+  if (!isUndefined(explicit)) return explicit;
+  if (external?.length) return undefined;
+
+  return inherited ?? undefined;
 }
 
 export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thumbnail(componentProps, forwardedRef) {
@@ -59,6 +82,8 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
   }, [externalThumbnails, textTrack]);
 
   const thumbnail = useMemo(() => core.findActiveThumbnail(thumbnails, time), [core, thumbnails, time]);
+
+  const resolvedCrossOrigin = resolveCrossOrigin(crossOrigin, externalThumbnails, textTrack?.thumbnailTrackCrossOrigin);
 
   // Track src changes via the handle.
   handle.updateSrc(thumbnail?.url);
@@ -108,7 +133,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
               aria-hidden="true"
               decoding="async"
               src={thumbnail?.url}
-              crossOrigin={crossOrigin === '' || crossOrigin === null ? undefined : crossOrigin}
+              crossOrigin={resolvedCrossOrigin}
               loading={loading}
               style={imgStyle}
               // React's types omit `| undefined` from fetchPriority — cast to satisfy exactOptionalPropertyTypes.

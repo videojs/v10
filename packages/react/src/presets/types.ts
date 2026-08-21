@@ -25,6 +25,4 @@ export type BaseVideoSkinProps<T = unknown> = BaseSkinProps<T> & {
    * ```
    */
   renderPoster?: Poster.Props['render'];
-  /** Low-resolution placeholder shown behind the poster while it loads (blur-up effect). */
-  placeholder?: string | undefined;
 };

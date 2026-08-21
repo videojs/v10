@@ -1,5 +1,48 @@
 # Changelog
 
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.30...@videojs/skins@10.0.0-beta.31) (2026-08-21)
+
+
+### Features
+
+* **packages:** add right-to-left player support ([#2281](https://github.com/videojs/v10/issues/2281)) ([caf179b](https://github.com/videojs/v10/commit/caf179b83260a242a7ff284d1d474f97a91988a9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.31
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.31
+    * @videojs/icons bumped to 10.0.0-beta.31
+
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.29...@videojs/skins@10.0.0-beta.30) (2026-08-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** remove built-in poster placeholders ([#2063](https://github.com/videojs/v10/issues/2063))
+
+### Bug Fixes
+
+* **skin:** stabilize menu sizing and motion ([#2283](https://github.com/videojs/v10/issues/2283)) ([191538e](https://github.com/videojs/v10/commit/191538e99935ffdced88e77fef55405410558562))
+
+
+### Code Refactoring
+
+* **packages:** remove built-in poster placeholders ([#2063](https://github.com/videojs/v10/issues/2063)) ([e7de7a7](https://github.com/videojs/v10/commit/e7de7a78c4806403a2416926bdbeddb171de1fed))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.30
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.30
+    * @videojs/icons bumped to 10.0.0-beta.30
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.28...@videojs/skins@10.0.0-beta.29) (2026-08-19)
 
 

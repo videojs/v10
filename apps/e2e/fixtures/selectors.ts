@@ -94,7 +94,7 @@ export const SELECTORS = {
   errorDialog: 'media-error-dialog, .media-error',
 
   // Media element — matches all renderer custom elements and native media
-  media: 'video, audio, hlsjs-video, hls-video, native-hls-video, dash-video, mux-video, mux-audio',
+  media: 'video, audio, hlsjs-video, hls-video, native-hls-video, dash-video, shaka-video, mux-video, mux-audio',
 } as const;
 
 /** Data attributes used for player state (same across both renderers). */

@@ -1,16 +1,12 @@
 import type { Constructor } from '@videojs/utils/types';
-import type shaka from 'shaka-player';
+import type shaka from 'shaka-player/dist/shaka-player.compiled-es2021';
 
 import type {
   MediaAudioTrackCapability,
   MediaVideoRenditionCapability,
   MediaVideoTrackCapability,
 } from '../../core/types';
-import type { HTMLVideoElementHost } from '../video-host';
-
-type ShakaEngineHost = HTMLVideoElementHost & {
-  readonly engine?: shaka.Player | null;
-};
+import type { ShakaEngineHost } from './types';
 
 type MediaTracksHost = ShakaEngineHost &
   MediaVideoTrackCapability &

@@ -4,7 +4,7 @@ import { Select } from '@/components/Select';
 import { renderer, sourceUrl, useCase } from '@/stores/installation';
 import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
 import { buildOptions } from '@/utils/installation/renderer-options';
-import { VALID_RENDERERS } from '@/utils/installation/types';
+import { getInstallationPreset } from '@/utils/installation/types';
 
 export default function RendererSelect() {
   const $renderer = useStore(renderer);
@@ -25,7 +25,7 @@ export default function RendererSelect() {
     } else {
       // No valid detection — ensure current renderer is valid for use case
       const current = renderer.get();
-      const validRenderers = VALID_RENDERERS[$useCase];
+      const validRenderers = getInstallationPreset($useCase).renderers;
       if (!validRenderers.includes(current)) {
         renderer.set(validRenderers[0]!);
       }

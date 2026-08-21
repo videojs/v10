@@ -1,5 +1,40 @@
 # Changelog
 
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.30...@videojs/spf@10.0.0-beta.31) (2026-08-21)
+
+
+### Miscellaneous Chores
+
+* **@videojs/spf:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.31
+    * @videojs/utils bumped to 10.0.0-beta.31
+
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.29...@videojs/spf@10.0.0-beta.30) (2026-08-20)
+
+
+### Features
+
+* **spf:** Cap Rendition to Player Size ([#2242](https://github.com/videojs/v10/issues/2242)) ([357c3a4](https://github.com/videojs/v10/commit/357c3a4ba71155809e34db9f2d78694712283fe5))
+
+
+### Bug Fixes
+
+* **spf:** report a verdict when the background ladder is undecodable ([#2286](https://github.com/videojs/v10/issues/2286)) ([57b8148](https://github.com/videojs/v10/commit/57b8148bba30f41ab7f1ec95842f7299351656c3))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.30
+    * @videojs/utils bumped to 10.0.0-beta.30
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.28...@videojs/spf@10.0.0-beta.29) (2026-08-19)
 
 

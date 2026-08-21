@@ -84,6 +84,14 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
     hasPoster: false,
     isAudio: false,
   },
+  'shaka-video': {
+    element: 'shaka-video',
+    imports: ['@videojs/html/media/shaka-video'],
+    attrs: 'playsinline',
+    hasStoryboard: false,
+    hasPoster: false,
+    isAudio: false,
+  },
   audio: {
     element: 'audio',
     imports: [],
@@ -117,6 +125,7 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
 const REACT_MEDIA: Record<string, { component: string; importPath: string }> = {
   video: { component: 'Video', importPath: '@videojs/react/video' },
   'hlsjs-video': { component: 'HlsJsVideo', importPath: '@videojs/react/media/hlsjs-video' },
+  'shaka-video': { component: 'ShakaVideo', importPath: '@videojs/react/media/shaka-video' },
   audio: { component: 'Audio', importPath: '@videojs/react/audio' },
   'hls-background-video': {
     component: 'HlsBackgroundVideo',
@@ -459,8 +468,13 @@ document.getElementById('root')!.innerHTML = html\`
   <video-player poster="\${MEDIA.${resource}.poster}">
     <source-video-skin
       data-source-skin
-      style="display: block; max-width: 800px; aspect-ratio: 16/9; --media-poster-placeholder: url(\${MEDIA.${resource}.poster})"
+      style="display: block; max-width: 800px; aspect-ratio: 16/9"
     >
+      <img
+        slot="poster"
+        alt=""
+        style="background: url('\${MEDIA.${resource}.poster}') var(--media-object-position, center) / contain no-repeat"
+      >
       <video src="\${MEDIA.${resource}.url}" playsinline muted crossorigin="anonymous"></video>
     </source-video-skin>
   </video-player>
@@ -474,7 +488,6 @@ function sourceReactPage(resource: string): string {
   return `import { createPlayer } from '@/player/create-player';
 import { Video } from '@/media/video';
 import { videoFeatures } from '@videojs/core/dom';
-import type { CSSProperties } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DefaultVideoSkin } from '${generatedRoot}/skin';
 import '${generatedRoot}/styles/styles.css';
@@ -487,11 +500,18 @@ function App() {
     <Player poster={MEDIA.${resource}.poster}>
       <DefaultVideoSkin
         data-source-skin
-        style={{
-          maxWidth: 800,
-          aspectRatio: '16/9',
-          '--media-poster-placeholder': \`url(\${MEDIA.${resource}.poster})\`,
-        } as CSSProperties}
+        renderPoster={
+          <img
+            alt=""
+            style={{
+              backgroundImage: \`url("\${MEDIA.${resource}.poster}")\`,
+              backgroundPosition: 'var(--media-object-position, center)',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: 'contain',
+            }}
+          />
+        }
+        style={{ maxWidth: 800, aspectRatio: '16/9' }}
       >
         <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />
       </DefaultVideoSkin>
@@ -551,6 +571,20 @@ const PAGES: PageDef[] = [
   },
   { name: 'HTML DASH Video', path: 'html-dash-video', framework: 'html', media: 'dash-video', resource: 'dash' },
   {
+    name: 'HTML Shaka Video HLS',
+    path: 'html-shaka-video-hls',
+    framework: 'html',
+    media: 'shaka-video',
+    resource: 'hlsTs',
+  },
+  {
+    name: 'HTML Shaka Video DASH',
+    path: 'html-shaka-video-dash',
+    framework: 'html',
+    media: 'shaka-video',
+    resource: 'dash',
+  },
+  {
     name: 'HTML Native HLS Video',
     path: 'html-native-hls-video',
     framework: 'html',
@@ -566,6 +600,13 @@ const PAGES: PageDef[] = [
   // React Video
   { name: 'React Video MP4', path: 'react-video-mp4', framework: 'react', media: 'video', resource: 'mp4' },
   { name: 'React Video HLS', path: 'react-video-hls', framework: 'react', media: 'hlsjs-video', resource: 'hlsTs' },
+  {
+    name: 'React Shaka Video HLS',
+    path: 'react-shaka-video-hls',
+    framework: 'react',
+    media: 'shaka-video',
+    resource: 'hlsTs',
+  },
 
   // React Audio
   { name: 'React Audio MP4', path: 'react-audio-mp4', framework: 'react', media: 'audio', resource: 'mp4' },

@@ -167,7 +167,7 @@
 @media (prefers-reduced-motion: reduce) {
   .media-default-skin .media-button {
     scale: 1;
-    transition-property: background-color, color, outline-offset;
+    transition-property: background-color, color;
     will-change: auto;
   }
 }

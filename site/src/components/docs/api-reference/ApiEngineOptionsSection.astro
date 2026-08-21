@@ -1,0 +1,51 @@
+---
+import H3 from '@/components/typography/H3Markdown.astro';
+import H4 from '@/components/typography/H4Markdown.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import type { EngineOptionDef } from '@/types/media-reference';
+import ApiEngineOptionsTable from './ApiEngineOptionsTable.astro';
+
+/**
+ * Renders the `source.engine` section of a media API reference: one subsection
+ * per engine, each with the prose its page supplied and the generated table.
+ *
+ * The prose arrives as rendered HTML rather than a slot because engine keys vary
+ * per media, and `<slot name>` cannot be dynamic. MediaReference resolves the
+ * `engine-<key>` slots and passes the results down.
+ */
+interface Props {
+  media: string;
+  section: { id: string; title: string };
+  engines: { key: string; id: string; title: string }[];
+  engineOptions: Record<string, EngineOptionDef[]>;
+  /** Rendered HTML per engine key, from the page's `engine-<key>` slot. */
+  prose: Record<string, string>;
+}
+
+const { media, section, engines, engineOptions, prose } = Astro.props;
+---
+
+<H3 id={section.id}>{section.title}</H3>
+
+{
+  engines.map((engine) => (
+    <>
+      <H4 id={engine.id}>
+        <MarkdownCode>{engine.title}</MarkdownCode>
+      </H4>
+      {prose[engine.key] ? (
+        <Fragment set:html={prose[engine.key]} />
+      ) : (
+        <P>
+          Options passed under <MarkdownCode>{engine.title}</MarkdownCode>.
+        </P>
+      )}
+      <ApiEngineOptionsTable
+        options={engineOptions[engine.key] ?? []}
+        componentName={media}
+        engine={engine.key}
+      />
+    </>
+  ))
+}

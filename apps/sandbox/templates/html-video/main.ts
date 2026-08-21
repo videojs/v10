@@ -33,11 +33,11 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <video-player>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
+        <video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin>
           ${renderChapters(getChapters(state.source))}
           ${renderStoryboard(storyboard)}
         </video>
-        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
       </${tag}>
     </video-player>
   `);

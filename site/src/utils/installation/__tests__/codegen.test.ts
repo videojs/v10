@@ -44,9 +44,11 @@ describe('validateInstallationOptions', () => {
     }
   });
 
-  it('accepts any renderer regardless of use case', () => {
-    expect(validateInstallationOptions({ ...baseHTML, useCase: 'default-audio', renderer: 'hls' })).toEqual({
-      valid: true,
+  it('rejects media that does not support the preset', () => {
+    const result = validateInstallationOptions({ ...baseHTML, useCase: 'live-audio', renderer: 'hls' });
+    expect(result).toEqual({
+      valid: false,
+      reason: 'Invalid media type "hls" for the "live-audio" preset. Valid options: mux-audio',
     });
   });
 });
@@ -158,6 +160,35 @@ describe('generateHTMLUsageCode', () => {
     expect(result.js).toContain("import '@videojs/html/media/vimeo-video'");
   });
 
+  it('uses the embed-provider tags and media imports, without playsinline (iframe)', () => {
+    const cases = [
+      { renderer: 'youtube', tag: 'youtube-video', urlPart: 'youtube.com' },
+      { renderer: 'cloudflare', tag: 'cloudflare-video', urlPart: 'videodelivery.net' },
+      { renderer: 'tiktok', tag: 'tiktok-video', urlPart: 'tiktok.com' },
+      { renderer: 'twitch', tag: 'twitch-video', urlPart: 'twitch.tv' },
+    ] as const;
+    for (const { renderer, tag, urlPart } of cases) {
+      const result = generateHTMLUsageCode({ ...baseHTML, renderer });
+      expect(result.html).toContain(`<${tag} src=`);
+      expect(result.html).not.toContain('playsinline');
+      expect(result.html).toContain(urlPart);
+      expect(result.js).toContain(`import '@videojs/html/media/${tag}'`);
+    }
+  });
+
+  it('uses the spotify-audio tag and media import for the audio use case', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      useCase: 'default-audio',
+      skin: 'audio',
+      renderer: 'spotify',
+    });
+    expect(result.html).toContain('<spotify-audio src=');
+    expect(result.html).not.toContain('playsinline');
+    expect(result.html).toContain('open.spotify.com');
+    expect(result.js).toContain("import '@videojs/html/media/spotify-audio'");
+  });
+
   it('uses the mux-audio tag without playsinline for the audio use case', () => {
     const result = generateHTMLUsageCode({
       ...baseHTML,
@@ -192,6 +223,61 @@ describe('generateHTMLUsageCode', () => {
   it('uses default demo URL when source URL is empty', () => {
     const result = generateHTMLUsageCode(baseHTML);
     expect(result.html).toContain('stream.mux.com');
+  });
+
+  it('uses live-video tags and imports for the live video use case', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', renderer: 'hls' });
+    expect(result.html).toContain('<live-video-player>');
+    expect(result.html).toContain('<live-video-skin>');
+    expect(result.html).toContain('<hlsjs-video src=');
+    expect(result.html).toContain('playsinline');
+    expect(result.js).toContain("import '@videojs/html/live-video/player'");
+    expect(result.js).toContain("import '@videojs/html/live-video/skin'");
+    expect(result.js).toContain("import '@videojs/html/media/hlsjs-video'");
+  });
+
+  it('uses the minimal live video skin tag', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      useCase: 'live-video',
+      skin: 'minimal-video',
+      renderer: 'hls',
+    });
+    expect(result.html).toContain('<live-video-minimal-skin>');
+    expect(result.js).toContain("import '@videojs/html/live-video/minimal-skin'");
+  });
+
+  it('omits the skin for a headless live video player', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', skin: 'none', renderer: 'hls' });
+    expect(result.html).toContain('<live-video-player>');
+    expect(result.html).not.toContain('<live-video-skin>');
+    expect(result.js).toContain("import '@videojs/html/live-video/player'");
+    expect(result.js).not.toContain("import '@videojs/html/live-video/skin'");
+  });
+
+  it('uses live-audio tags and imports without playsinline', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      useCase: 'live-audio',
+      skin: 'audio',
+      renderer: 'mux-audio',
+    });
+    expect(result.html).toContain('<live-audio-player>');
+    expect(result.html).toContain('<live-audio-skin>');
+    expect(result.html).toContain('<mux-audio src=');
+    expect(result.html).not.toContain('playsinline');
+    expect(result.js).toContain("import '@videojs/html/live-audio/player'");
+    expect(result.js).toContain("import '@videojs/html/live-audio/skin'");
+    expect(result.js).toContain("import '@videojs/html/media/mux-audio'");
+  });
+
+  it('defaults live use cases to a live source URL', () => {
+    const live = generateHTMLUsageCode({ ...baseHTML, useCase: 'live-video', renderer: 'hls' });
+    const onDemand = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
+    expect(live.html).toContain('.m3u8');
+    // A distinct asset from the on-demand demo, so the live player actually
+    // reports live-edge state.
+    expect(live.html).not.toEqual(onDemand.html);
   });
 });
 
@@ -240,6 +326,32 @@ describe('generateReactCreateCode', () => {
     expect(code).not.toContain('playsInline');
   });
 
+  it('uses separate media imports for the embed providers without playsInline (iframe)', () => {
+    const cases = [
+      { renderer: 'youtube', component: 'YouTubeVideo', subpath: 'youtube-video' },
+      { renderer: 'cloudflare', component: 'CloudflareVideo', subpath: 'cloudflare-video' },
+      { renderer: 'tiktok', component: 'TikTokVideo', subpath: 'tiktok-video' },
+      { renderer: 'twitch', component: 'TwitchVideo', subpath: 'twitch-video' },
+    ] as const;
+    for (const { renderer, component, subpath } of cases) {
+      const code = generateReactCreateCode({ ...baseReact, renderer })['MyPlayer.tsx'];
+      expect(code).toContain(`import { ${component} } from '@videojs/react/media/${subpath}'`);
+      expect(code).toContain(`<${component} src={src} />`);
+      expect(code).not.toContain('playsInline');
+    }
+  });
+
+  it('uses a separate media import for Spotify in the audio use case', () => {
+    const code = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'default-audio',
+      skin: 'audio',
+      renderer: 'spotify',
+    })['MyPlayer.tsx'];
+    expect(code).toContain("import { SpotifyAudio } from '@videojs/react/media/spotify-audio'");
+    expect(code).toContain('<SpotifyAudio src={src} />');
+  });
+
   it('uses audio features and components', () => {
     const opts: InstallationOptions = {
       ...baseReact,
@@ -271,6 +383,64 @@ describe('generateReactCreateCode', () => {
     expect(code).not.toContain('skin.css');
     expect(code).toContain('<Video src={src} playsInline />');
     expect(code).toContain("from '@videojs/react/video'");
+  });
+
+  it('uses the live video player, skin, and CSS import', () => {
+    const result = generateReactCreateCode({ ...baseReact, useCase: 'live-video', renderer: 'hls' });
+    const code = result['MyPlayer.tsx'];
+    expect(code).toContain('<LiveVideoPlayer>');
+    expect(code).toContain('<LiveVideoSkin>');
+    expect(code).toContain("import { LiveVideoPlayer, LiveVideoSkin } from '@videojs/react/live-video'");
+    expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
+    expect(code).toContain("import '@videojs/react/live-video/skin.css'");
+    expect(code).toContain('<HlsJsVideo src={src} playsInline />');
+  });
+
+  it('uses the minimal live video skin component', () => {
+    const result = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'live-video',
+      skin: 'minimal-video',
+      renderer: 'hls',
+    });
+    const code = result['MyPlayer.tsx'];
+    expect(code).toContain('<MinimalLiveVideoSkin>');
+    expect(code).toContain("import '@videojs/react/live-video/minimal-skin.css'");
+  });
+
+  it('omits the skin for a headless live video player', () => {
+    const result = generateReactCreateCode({ ...baseReact, useCase: 'live-video', skin: 'none', renderer: 'hls' });
+    const code = result['MyPlayer.tsx'];
+    expect(code).toContain("import { LiveVideoPlayer } from '@videojs/react/live-video'");
+    expect(code).toContain('<LiveVideoPlayer>');
+    expect(code).not.toContain('LiveVideoSkin');
+    expect(code).not.toContain('skin.css');
+  });
+
+  it('uses the live audio player and skin without playsInline', () => {
+    const result = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'live-audio',
+      skin: 'audio',
+      renderer: 'mux-audio',
+    });
+    const code = result['MyPlayer.tsx'];
+    expect(code).toContain('<LiveAudioPlayer>');
+    expect(code).toContain('<LiveAudioSkin>');
+    expect(code).toContain("import { LiveAudioPlayer, LiveAudioSkin } from '@videojs/react/live-audio'");
+    expect(code).toContain("import { MuxAudio } from '@videojs/react/media/mux-audio'");
+    expect(code).toContain("import '@videojs/react/live-audio/skin.css'");
+    expect(code).not.toContain('playsInline');
+  });
+
+  it('uses the minimal live audio skin component', () => {
+    const result = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'live-audio',
+      skin: 'minimal-audio',
+      renderer: 'mux-audio',
+    });
+    expect(result['MyPlayer.tsx']).toContain('<MinimalLiveAudioSkin>');
   });
 
   it('uses background video components', () => {
@@ -311,5 +481,12 @@ describe('generateReactUsageCode', () => {
     const result = generateReactUsageCode({ ...baseReact, sourceUrl: 'https://example.com/stream.m3u8' });
     const code = result['App.tsx'];
     expect(code).toContain('https://example.com/stream.m3u8');
+  });
+
+  it('uses the live sample for live use cases', () => {
+    const live = generateReactUsageCode({ ...baseReact, useCase: 'live-video', renderer: 'hls' });
+    const onDemand = generateReactUsageCode({ ...baseReact, renderer: 'hls' });
+    expect(live['App.tsx']).toContain('.m3u8');
+    expect(live['App.tsx']).not.toEqual(onDemand['App.tsx']);
   });
 });

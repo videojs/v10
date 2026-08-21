@@ -383,7 +383,7 @@ export function withMuxMaxResolution(url: string, maxResolution: string): string
   return capped.href;
 }
 
-export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
+export const VIMEO_VIDEO_SRC = 'https://vimeo.com/76979871';
 
 export const YOUTUBE_VIDEO_SRC = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
 
@@ -438,6 +438,10 @@ export function getPosterSrc(source: SourceId): string | undefined {
   return id ? `https://image.mux.com/${id}/thumbnail.webp${imageQuery(source, 'poster')}` : undefined;
 }
 
+/**
+ * A CSS image to sit behind the poster while it loads. This upscales a 20px
+ * thumbnail, and the browser's own smoothing does the blurring.
+ */
 export function getPlaceholderSrc(source: SourceId): string | undefined {
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/thumbnail.webp${imageQuery(source, 'poster', 'width=20')}` : undefined;

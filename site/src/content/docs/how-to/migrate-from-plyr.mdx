@@ -129,6 +129,7 @@ export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
 - `@videojs/react/video` is a <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together. `VideoPlayer` is the piece that owns the state, built from the standard set of <DocsLink slug="concepts/features">features</DocsLink> for video.
 - The poster is a prop on the skin rather than a `poster` attribute on the media, which gives the skin control over how it appears. That's much like Plyr's `data-poster`.
 - This example assumes all your files for a given asset live in the same path, using consistent filenames. This will almost certainly need adjusting for your implementation.
+- If `origin` points somewhere other than your page's origin, add `crossOrigin="anonymous"` to `<Video>` and serve those files with CORS headers. A cross-origin thumbnail track only loads when the media element is CORS-enabled. See <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
 
 </FrameworkCase>
@@ -213,10 +214,6 @@ Replace `<video>` with `<vimeo-video>` and add the module import:
 import '@videojs/html/media/vimeo-video';
 ```
 
-<Aside type="note">
-Vimeo and YouTube don't have prebuilt CDN scripts yet, so these two need a bundler.
-</Aside>
-
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -229,7 +226,7 @@ import { VimeoVideo } from '@videojs/react/media/vimeo-video';
 
 </FrameworkCase>
 
-Set the `src` to the URL for the Vimeo video, for example `https://vimeo.com/648359100`.
+Set the `src` to the URL for the Vimeo video, for example `https://vimeo.com/76979871`.
 
 ### YouTube
 

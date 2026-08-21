@@ -53,6 +53,7 @@ function createTextTrackStore({
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       textTrackList,
       subtitlesShowing,
       toggleSubtitles: vi.fn(),

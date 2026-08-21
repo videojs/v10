@@ -45,16 +45,48 @@ describe('generateCdnCode', () => {
     );
   });
 
-  it('generates headless video CDN tag when skin is none', () => {
+  it('generates the skinless video CDN tag when skin is none', () => {
     expect(generateCdnCode('default-video', 'none', 'html5-video', manifest)).toEqual(
-      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-headless.js"></script>`
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-player.js"></script>`
     );
   });
 
-  it('generates headless audio CDN tag when skin is none', () => {
+  it('generates the skinless audio CDN tag when skin is none', () => {
     expect(generateCdnCode('default-audio', 'none', 'html5-audio', manifest)).toEqual(
-      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/audio-headless.js"></script>`
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/audio-player.js"></script>`
     );
+  });
+
+  it('generates live video CDN tags alongside the media bundle', () => {
+    expect(generateCdnCode('live-video', 'video', 'hls', manifest)).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/live-video.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/hlsjs-video.js"></script>`
+    );
+  });
+
+  it('generates the minimal live video CDN tag', () => {
+    expect(generateCdnCode('live-video', 'minimal-video', 'mux-video', manifest)).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/live-video-minimal.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/mux-video.js"></script>`
+    );
+  });
+
+  it('generates the skinless live video CDN tag when skin is none', () => {
+    expect(generateCdnCode('live-video', 'none', 'hls', manifest)).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/live-video-player.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/hlsjs-video.js"></script>`
+    );
+  });
+
+  it('generates live audio CDN tags for each skin variant', () => {
+    expect(generateCdnCode('live-audio', 'audio', 'mux-audio', manifest)).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/live-audio.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/mux-audio.js"></script>`
+    );
+    expect(generateCdnCode('live-audio', 'minimal-audio', 'mux-audio', manifest)).toContain(
+      'cdn/live-audio-minimal.js'
+    );
+    expect(generateCdnCode('live-audio', 'none', 'mux-audio', manifest)).toContain('cdn/live-audio-player.js');
   });
 });
 

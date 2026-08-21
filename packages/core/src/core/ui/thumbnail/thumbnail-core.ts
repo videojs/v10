@@ -11,7 +11,18 @@ import type {
 export interface ThumbnailProps {
   /** Time in seconds to display the thumbnail for. */
   time?: number | undefined;
-  /** CORS setting forwarded to the inner `<img>`. */
+  /**
+   * CORS setting forwarded to the inner `<img>`.
+   *
+   * Left unset, this follows the media element: a cross-origin thumbnail
+   * `<track>` only loads when the media is CORS-enabled, so the sprite sheets
+   * its cues point at are fetched with that same mode. Pass `null` to opt out
+   * and fetch them without CORS. Thumbnails supplied directly never inherit,
+   * since they need not be related to the media element at all.
+   *
+   * `''` is a value like any other, read as Anonymous by the CORS-settings
+   * attribute rules — it does not opt out.
+   */
   crossOrigin?: ThumbnailCrossOrigin | undefined;
   /** Image loading strategy forwarded to the inner `<img>`. */
   loading?: ThumbnailLoading | undefined;
@@ -131,6 +142,8 @@ export class ThumbnailCore {
 
   getAttrs(_state: ThumbnailState) {
     return {
+      // Sprite coordinates are physical offsets from the image's left edge.
+      dir: 'ltr' as const,
       role: 'img' as const,
       'aria-hidden': 'true' as const,
     };

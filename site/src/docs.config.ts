@@ -66,6 +66,7 @@ export const sidebar: Sidebar = [
       'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
     contents: [
       { slug: 'how-to/customize-skins' },
+      { slug: 'how-to/add-a-poster-placeholder' },
       { slug: 'how-to/build-your-own-component' },
       { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
       {
@@ -119,6 +120,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/thumbnail' },
           { slug: 'reference/time' },
           { slug: 'reference/time-slider' },
+          { slug: 'reference/title' },
           { slug: 'reference/tooltip' },
           { slug: 'reference/volume-slider' },
         ],
@@ -129,6 +131,7 @@ export const sidebar: Sidebar = [
         llmsDescription: 'API Reference for media components that handle streaming protocols and media playback.',
         contents: [
           { slug: 'reference/background-video' },
+          { slug: 'reference/cloudflare-video' },
           { slug: 'reference/dash-video' },
           { slug: 'reference/hls-audio' },
           { slug: 'reference/hls-video' },
@@ -136,6 +139,12 @@ export const sidebar: Sidebar = [
           { slug: 'reference/mux-audio' },
           { slug: 'reference/mux-video' },
           { slug: 'reference/native-hls-video' },
+          { slug: 'reference/shaka-video' },
+          { slug: 'reference/spotify-audio' },
+          { slug: 'reference/tiktok-video' },
+          { slug: 'reference/twitch-video' },
+          { slug: 'reference/vimeo-video' },
+          { slug: 'reference/youtube-video' },
         ],
       },
       {
@@ -150,6 +159,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/feature-error' },
           { slug: 'reference/feature-fullscreen' },
           { slug: 'reference/feature-live' },
+          { slug: 'reference/feature-metadata' },
           { slug: 'reference/feature-orientation-lock' },
           { slug: 'reference/feature-pip', sidebarLabel: 'Picture-in-picture' },
           { slug: 'reference/feature-playback' },

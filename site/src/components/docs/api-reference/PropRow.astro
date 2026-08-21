@@ -1,8 +1,8 @@
 ---
-import { kebabCase } from 'es-toolkit/string';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import Td from '@/components/typography/Td.astro';
 import DetailRow from './DetailRow.astro';
+import { getPropReferenceNames } from './prop-reference-names';
 
 interface Props {
   name: string;
@@ -12,18 +12,21 @@ interface Props {
   defaultValue?: string;
   required?: boolean;
   showAttributeName?: boolean;
+  /** Overrides the name derived from the prop, for a feature that declares one. */
+  attribute?: string;
   componentName: string;
 }
 
-const { name, type, detailedType, description, defaultValue, required, showAttributeName, componentName } = Astro.props;
+const { name, type, detailedType, description, defaultValue, required, showAttributeName, attribute, componentName } =
+  Astro.props;
 
 const id = `${componentName}-${name}`;
-const attributeName = showAttributeName ? kebabCase(name) : undefined;
+const { propertyName, attributeName } = getPropReferenceNames(name, attribute, showAttributeName);
 ---
 
 <DetailRow
   id={id}
-  name={name}
+  name={propertyName}
   type={type}
   attributeName={attributeName}
   detailedType={detailedType}
@@ -32,7 +35,7 @@ const attributeName = showAttributeName ? kebabCase(name) : undefined;
 >
   <Td class="align-top">
     <MarkdownCode>
-      {name}
+      {propertyName}
       {required && <span class="text-orange">*</span>}
     </MarkdownCode>
   </Td>

@@ -43,6 +43,39 @@ describe('syncMenuSize', () => {
     expect(content.style.getPropertyValue('--media-menu-height')).toBe('240px');
   });
 
+  it('does not count submenu start padding twice', () => {
+    const content = document.createElement('div');
+    const root = document.createElement('div');
+    const submenu = document.createElement('div');
+    const first = document.createElement('div');
+    const second = document.createElement('div');
+    submenu.setAttribute('data-submenu', '');
+    submenu.style.paddingLeft = '4px';
+    submenu.style.paddingTop = '4px';
+    submenu.style.paddingInlineStart = '4px';
+    submenu.style.paddingInlineEnd = '4px';
+    submenu.style.paddingBlockStart = '4px';
+    submenu.style.paddingBlockEnd = '4px';
+    submenu.append(first, second);
+    content.append(root, submenu);
+    setSize(root, 180, 120);
+    setSize(first, 220, 28);
+    setSize(second, 220, 28);
+    Object.defineProperties(first, {
+      offsetLeft: { configurable: true, value: 4 },
+      offsetTop: { configurable: true, value: 4 },
+    });
+    Object.defineProperties(second, {
+      offsetLeft: { configurable: true, value: 4 },
+      offsetTop: { configurable: true, value: 32 },
+    });
+
+    syncMenuSize(content);
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('228px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('64px');
+  });
+
   it('restores authored accessibility state after a submenu closes', () => {
     const content = document.createElement('div');
     const root = document.createElement('div');

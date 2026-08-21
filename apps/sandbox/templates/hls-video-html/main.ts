@@ -85,6 +85,7 @@ document.getElementById('root')!.innerHTML = html`
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
           preload="auto"
           playsinline
+          crossorigin
         ></hls-video>
       </media-container>
 

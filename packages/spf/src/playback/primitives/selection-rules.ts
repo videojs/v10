@@ -77,9 +77,10 @@ export function applyRules<T, State, Context, Config>(
  * `applyRules`, this never skips an empty result and never early-bails — every
  * constraint always applies, and an empty survivor set is a real outcome
  * ("nothing playable here"), not a fall-through. Because each constraint only
- * removes, the order they run in can't change the result.
+ * removes, the order they run in can't change which tracks survive — though one
+ * that also *reports* reads the list at its own position, so placement matters.
  *
- * @param constraints - Constraints to apply (pooled, order-independent)
+ * @param constraints - Constraints to apply, in order
  * @param tracks - Candidate tracks
  * @param deps - The behavior's `{ state, context, config }`, passed to each constraint
  * @returns The playable survivors (possibly empty)
@@ -139,7 +140,7 @@ export interface CapabilityConstraintConfig {
  * Passes everything through when there's no probe (a composition that didn't
  * wire one, or DOM-free tests). When it prunes *every* track, the empty result is
  * preserved (per `applyConstraints`) — "nothing playable" — which each consuming
- * behavior answers by clearing its selection and reporting the type's verdict.
+ * behavior answers by clearing its selection; reporting the verdict is separate.
  */
 export function excludeUnplayableTracks<T, State, Context, Config>(
   tracks: readonly T[],

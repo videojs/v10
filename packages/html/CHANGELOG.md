@@ -1,5 +1,67 @@
 # Changelog
 
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.30...@videojs/html@10.0.0-beta.31) (2026-08-21)
+
+
+### Features
+
+* **packages:** add live presets to installation and skin tools ([#1919](https://github.com/videojs/v10/issues/1919)) ([44a398c](https://github.com/videojs/v10/commit/44a398c3a0c7084bedabd77123742f9521d2b052))
+* **packages:** add right-to-left player support ([#2281](https://github.com/videojs/v10/issues/2281)) ([caf179b](https://github.com/videojs/v10/commit/caf179b83260a242a7ff284d1d474f97a91988a9))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.31
+    * @videojs/element bumped to 10.0.0-beta.31
+    * @videojs/media bumped to 10.0.0-beta.31
+    * @videojs/spf bumped to 10.0.0-beta.31
+    * @videojs/store bumped to 10.0.0-beta.31
+    * @videojs/utils bumped to 10.0.0-beta.31
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.31
+    * @videojs/skins bumped to 10.0.0-beta.31
+
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.29...@videojs/html@10.0.0-beta.30) (2026-08-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** configure orientation lock through providers ([#1999](https://github.com/videojs/v10/issues/1999))
+* **packages:** remove built-in poster placeholders ([#2063](https://github.com/videojs/v10/issues/2063))
+
+### Features
+
+* **packages:** add shaka player media ([#2276](https://github.com/videojs/v10/issues/2276)) ([c5895ec](https://github.com/videojs/v10/commit/c5895ecb0887369badffb19d4798207185c02e4e))
+* **packages:** add title component ([#1997](https://github.com/videojs/v10/issues/1997)) ([0841131](https://github.com/videojs/v10/commit/0841131c293a77662ab3417b8ccbb9839d69fb12))
+* **packages:** configure orientation lock through providers ([#1999](https://github.com/videojs/v10/issues/1999)) ([e8829a2](https://github.com/videojs/v10/commit/e8829a2ccf95c0a244bd40134b4f244ad6ccdeaf))
+
+
+### Bug Fixes
+
+* **packages:** load posters and storyboard thumbnails in cross-origin-isolated pages ([#2273](https://github.com/videojs/v10/issues/2273)) ([459fddb](https://github.com/videojs/v10/commit/459fddb7282770963bd28d42ed6c7a572845b88b))
+
+
+### Code Refactoring
+
+* **packages:** remove built-in poster placeholders ([#2063](https://github.com/videojs/v10/issues/2063)) ([e7de7a7](https://github.com/videojs/v10/commit/e7de7a78c4806403a2416926bdbeddb171de1fed))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.30
+    * @videojs/element bumped to 10.0.0-beta.30
+    * @videojs/media bumped to 10.0.0-beta.30
+    * @videojs/spf bumped to 10.0.0-beta.30
+    * @videojs/store bumped to 10.0.0-beta.30
+    * @videojs/utils bumped to 10.0.0-beta.30
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.30
+    * @videojs/skins bumped to 10.0.0-beta.30
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.28...@videojs/html@10.0.0-beta.29) (2026-08-19)
 
 

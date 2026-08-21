@@ -1,15 +1,29 @@
+// Keep this import first: it lends shaka's UMD evaluation the `self` global a
+// server runtime lacks. See `server-shim.ts`.
+import './server-shim';
+
 import { deepEqual } from '@videojs/utils/object';
 import { isObject } from '@videojs/utils/predicate';
-import shaka from 'shaka-player';
-
+// The es2021 bundle is the same everything-but-UI API as the package default,
+// minus the ES5 down-compilation nothing this repo targets needs. Shaka ships
+// no `exports` map, so the deep path is public surface — and `dist/*.ui*` is
+// where the UI library lives; never import those.
+import shaka from 'shaka-player/dist/shaka-player.compiled-es2021';
 import type { DrmSystemsConfig } from '../../core/drm';
 import { MediaError } from '../../core/media-error';
 import { MediaTracksMixin } from '../../core/media-tracks';
-import type { MediaEngineHost } from '../../core/types';
+import { type MediaEngineHost, type MediaPreloadType, type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
+import { ShakaMediaLiveMixin } from './live';
 import { ShakaMediaMediaTracksMixin } from './media-tracks';
+import { didShimSelf } from './server-shim';
+import { ShakaMediaStreamTypeMixin } from './stream-type';
 
 export { shaka };
+
+if (didShimSelf) {
+  Reflect.deleteProperty(globalThis, 'self');
+}
 
 type Opaque = string | number | boolean | bigint | symbol | null | undefined | ArrayBufferView;
 
@@ -63,22 +77,40 @@ export interface ShakaEngineConfig {
 export interface ShakaMediaProps {
   src: string;
   source: ShakaSource | null;
+  preload: MediaPreloadType;
+  streamType: MediaStreamType;
 }
 
 export const shakaMediaDefaultProps: ShakaMediaProps = {
   src: '',
   source: null,
+  preload: 'metadata',
+  streamType: MediaStreamTypes.UNKNOWN,
+};
+
+/**
+ * Configuration this element applies on top of Shaka's own defaults — the
+ * Shaka spelling of what the hls.js media ships (`capLevelToPlayerSize`):
+ * adaptation stays within renditions no larger than the element rendering
+ * them. Anything under `source.engine.shaka` overrides it.
+ */
+const defaultShakaConfig: ShakaConfig = {
+  abr: { restrictToElementSize: true },
 };
 
 const ShakaMediaHost = MediaTracksMixin(HTMLVideoElementHost);
 
 class ShakaMediaBase
   extends ShakaMediaHost
-  implements MediaEngineHost<shaka.Player, HTMLVideoElement>, ShakaMediaProps
+  implements MediaEngineHost<shaka.Player, HTMLVideoElement>, Omit<ShakaMediaProps, 'streamType'>
 {
   #engine: shaka.Player | null = null;
   #src = shakaMediaDefaultProps.src;
   #source: ShakaSource | null = shakaMediaDefaultProps.source;
+  #preload: MediaPreloadType = shakaMediaDefaultProps.preload;
+  #playIntentAbort: AbortController | null = null;
+  #isLoadDeferred = false;
+  #clampedGoals: { bufferingGoal: number; rebufferingGoal: number } | null = null;
   #error: MediaError | null = null;
   // The raw Shaka failures already announced. Held weakly: it answers nothing
   // but "seen before", and each failure is a fresh object.
@@ -87,6 +119,10 @@ class ShakaMediaBase
 
   constructor() {
     super();
+
+    // A server render has no DOM to probe or play into; the client constructs
+    // an instance of its own. Even the support check needs browser globals.
+    if (typeof document === 'undefined') return;
 
     installPolyfills();
 
@@ -98,6 +134,7 @@ class ShakaMediaBase
     }
 
     this.#engine = new shaka.Player();
+    this.#engine.configure(defaultShakaConfig);
     this.#engine.addEventListener('error', this.#onEngineError);
   }
 
@@ -112,6 +149,9 @@ class ShakaMediaBase
 
     super.attach(target);
 
+    // The stored preload may predate the target; the element reads its own.
+    if (target.preload !== this.#preload) target.preload = this.#preload;
+
     const engine = this.#engine;
     if (!engine || !isNewTarget) return;
 
@@ -125,6 +165,9 @@ class ShakaMediaBase
     const engine = this.#engine;
     const wasAttached = this.target !== null;
 
+    // The play listener belongs to the target that is leaving.
+    this.#disarmPlayIntent();
+
     super.detach();
 
     if (engine && wasAttached) this.#run(engine.detach());
@@ -132,6 +175,7 @@ class ShakaMediaBase
 
   destroy() {
     this.detach();
+    this.#disarmPlayIntent();
 
     const engine = this.#engine;
     // Anything still in flight has nothing left to report to.
@@ -194,6 +238,44 @@ class ShakaMediaBase
   }
 
   /**
+   * How much to fetch before playback is asked for, mirroring the media
+   * element's own `preload`. Shaka has no split between "know the source" and
+   * "buffer it", so this maps onto when and how `engine.load()` runs:
+   *
+   * - `'auto'` — load immediately with the configured buffering goals.
+   * - `'metadata'` — load immediately, holding buffering to about a segment;
+   *   the configured goals come back on the first play intent.
+   * - `'none'` / `''` — hold the load entirely until the first play intent.
+   *
+   * A play intent is a `play` event, a target that is already playing, or
+   * `autoplay` — which the spec lets override `preload` for good reason: with
+   * nothing fetched there is nothing whose readiness could ever fire it.
+   * Widening (`none` → `auto`) takes effect immediately; narrowing after a
+   * load began cannot un-fetch and leaves it alone.
+   */
+  get preload(): MediaPreloadType {
+    return this.#preload;
+  }
+
+  set preload(value: MediaPreloadType) {
+    if (this.#preload === value) return;
+    this.#preload = value;
+
+    const { target } = this;
+    if (target && target.preload !== value) target.preload = value;
+
+    const engine = this.#engine;
+    if (!engine) return;
+
+    if (this.#isLoadDeferred && (value === 'metadata' || value === 'auto')) {
+      this.#loadSource(engine);
+      return;
+    }
+
+    if (this.#clampedGoals && value === 'auto') this.#restoreBuffering(engine);
+  }
+
+  /**
    * Structured source: what to play (`src`, an optional `type`) plus how to
    * play it (`drm`, `engine.shaka`). Replacing it re-derives `src`.
    *
@@ -233,9 +315,14 @@ class ShakaMediaBase
     if (!engine) return;
 
     engine.resetConfiguration();
+    engine.configure(defaultShakaConfig);
 
     const config = withDrmConfig(this.#source?.engine?.shaka, this.#source?.drm);
     if (config) engine.configure(config);
+
+    // A wholesale re-apply raised the buffering goals a pending `'metadata'`
+    // clamp held down; clamp again against the configuration now in force.
+    if (this.#clampedGoals) this.#clampBuffering(engine);
   }
 
   #requestLoad() {
@@ -248,8 +335,82 @@ class ShakaMediaBase
 
   #loadSource(engine: shaka.Player) {
     this.#error = null;
+    this.#disarmPlayIntent();
+    this.#isLoadDeferred = false;
+    // Each load decides its own clamping. Lifting the previous load's clamp
+    // first keeps a fresh clamp from capturing the clamped goals as the ones
+    // to restore, and lets a load with play intent run at full goals.
+    this.#restoreBuffering(engine);
+
     const { src } = this;
-    this.#run(src ? engine.load(src, undefined, this.#source?.type) : engine.unload());
+    if (!src) {
+      this.#run(engine.unload());
+      return;
+    }
+
+    const { target } = this;
+    const hasPlayIntent = Boolean(target && (!target.paused || target.autoplay));
+    const preload = this.#preload;
+
+    if (!hasPlayIntent && (preload === 'none' || preload === '')) {
+      this.#isLoadDeferred = true;
+      // The `play` is itself the intent — no second look at the target.
+      this.#armPlayIntent(() => {
+        const deferredEngine = this.#engine;
+        if (deferredEngine) this.#startLoad(deferredEngine);
+      });
+      return;
+    }
+
+    if (!hasPlayIntent && preload === 'metadata') {
+      this.#clampBuffering(engine);
+      this.#armPlayIntent(() => {
+        const clampedEngine = this.#engine;
+        if (clampedEngine) this.#restoreBuffering(clampedEngine);
+      });
+    }
+
+    this.#startLoad(engine);
+  }
+
+  #startLoad(engine: shaka.Player) {
+    this.#isLoadDeferred = false;
+    this.#error = null;
+    this.#run(engine.load(this.src, undefined, this.#source?.type));
+  }
+
+  /**
+   * Holds Shaka's buffering to about one segment — the closest analog of
+   * fetching "metadata" an engine that always buffers through MSE has. The
+   * goals in force are captured first so the first play intent can put back
+   * exactly what configuration produced them.
+   */
+  #clampBuffering(engine: shaka.Player) {
+    const { bufferingGoal, rebufferingGoal } = engine.getConfiguration().streaming;
+    this.#clampedGoals = { bufferingGoal, rebufferingGoal };
+    engine.configure({ streaming: { bufferingGoal: 1, rebufferingGoal: 1 } });
+  }
+
+  #restoreBuffering(engine: shaka.Player) {
+    const goals = this.#clampedGoals;
+    if (!goals) return;
+    this.#clampedGoals = null;
+    engine.configure({ streaming: goals });
+  }
+
+  #armPlayIntent(onPlay: () => void) {
+    this.#disarmPlayIntent();
+
+    const { target } = this;
+    if (!target) return;
+
+    this.#playIntentAbort = new AbortController();
+    target.addEventListener('play', onPlay, { signal: this.#playIntentAbort.signal, once: true });
+  }
+
+  #disarmPlayIntent() {
+    this.#playIntentAbort?.abort();
+    this.#playIntentAbort = null;
   }
 
   /**
@@ -297,8 +458,12 @@ class ShakaMediaBase
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
  * @fires error - Fired when playback fails in a way Shaka could not recover from. Read `error` for the failure.
+ * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
+ * @fires targetlivewindowchange - Fired when the live window duration changes. Read `targetLiveWindow` for the new value.
  */
-export class ShakaMedia extends ShakaMediaMediaTracksMixin(ShakaMediaBase) {}
+export class ShakaMedia extends ShakaMediaLiveMixin(
+  ShakaMediaStreamTypeMixin(ShakaMediaMediaTracksMixin(ShakaMediaBase))
+) {}
 
 let arePolyfillsInstalled = false;
 

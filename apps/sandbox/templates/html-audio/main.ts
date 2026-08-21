@@ -30,7 +30,7 @@ async function render() {
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <audio src="${SOURCES[state.source].url}" ${mediaAttrs}></audio>
+          <audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin></audio>
         </${tag}>
       </audio-player>
     </div>

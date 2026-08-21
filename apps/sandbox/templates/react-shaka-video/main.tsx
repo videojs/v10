@@ -40,6 +40,7 @@ function App() {
             loop={loop}
             preload={preload}
             playsInline
+            crossOrigin=""
           />
         </VideoSkinComponent>
       </VideoPlayer>

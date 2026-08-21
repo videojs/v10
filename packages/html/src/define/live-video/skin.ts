@@ -79,7 +79,7 @@ function getTemplateHTML() {
                 <media-captions-radio-group class="media-menu__group">
                   <template>
                     <media-menu-radio-item class="media-menu__item">
-                      <span data-part="label"></span>
+                      <bdi data-part="label" dir="auto"></bdi>
                       <media-menu-item-indicator force-mount class="media-menu__indicator">
                         ${renderIcon('check', { class: 'media-icon' })}
                       </media-menu-item-indicator>

@@ -32,7 +32,7 @@ export class TimeElement extends MediaElement {
   readonly #i18n = new I18nController(this, i18nContext);
 
   readonly #signSpan = document.createElement('span');
-  readonly #textNode = document.createTextNode('');
+  readonly #textNode = new Text();
 
   #disconnect: AbortController | null = null;
   #listening = false;
@@ -47,8 +47,7 @@ export class TimeElement extends MediaElement {
     if (!this.#signSpan.parentNode) {
       this.#signSpan.setAttribute('aria-hidden', 'true');
       this.#signSpan.hidden = true;
-      this.appendChild(this.#signSpan);
-      this.appendChild(this.#textNode);
+      this.append(this.#signSpan, this.#textNode);
     }
 
     if (__DEV__ && !this.#state.value) {

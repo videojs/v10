@@ -50,6 +50,14 @@ export const VJS10_MULTI_AUDIO_DEMO_VIDEO: StreamingVideoSource = {
   hls: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8',
 };
 
+// A continuously-running live stream, so the live presets' demo snippets show a
+// player that actually reports live-edge state. Matches the `hls-live` source in
+// the sandbox.
+export const VJS10_DEMO_LIVE: StreamingVideoSource = {
+  id: 'v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM',
+  hls: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',
+};
+
 export const VJS10_DEMO_BACKGROUND_VIDEO_MP4 =
   'https://stream.mux.com/601n4w1fq88NJiVpzvrQQeQfNnnjjfKMIN7dCGAEarTs/highest.mp4';
 export const VJS10_DEMO_POSTER = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/thumbnail.jpg`;
@@ -59,4 +67,13 @@ export const VJS10_DEMO_STORYBOARD = `https://image.mux.com/${VJS10_DEMO_VIDEO.i
 // asset above: Mux doesn't serve DASH, and Vimeo is a hosting service. The DASH
 // value matches the sample used by the site's DASH reference demo.
 export const VJS10_DEMO_DASH = 'https://dash.akamaized.net/akamai/streamroot/050714/Spring_4Ktest.mpd';
-export const VJS10_DEMO_VIMEO = 'https://vimeo.com/648359100';
+export const VJS10_DEMO_VIMEO = 'https://vimeo.com/76979871';
+export const VJS10_DEMO_YOUTUBE = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
+export const VJS10_DEMO_CLOUDFLARE = 'https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4';
+// An episode rather than a track: Spotify plays episodes in full for a
+// signed-out listener, where a track is a 30 second preview.
+export const VJS10_DEMO_SPOTIFY = 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5';
+export const VJS10_DEMO_TIKTOK = 'https://www.tiktok.com/@_luwes/video/7527476667770522893';
+// A VOD rather than a channel: a channel embed only plays while its streamer
+// is live, so it would show an offline banner most of the time.
+export const VJS10_DEMO_TWITCH = 'https://www.twitch.tv/videos/106400740';

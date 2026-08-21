@@ -43,7 +43,7 @@ function App() {
             muted={muted}
             loop={loop}
             preload={preload}
-            crossOrigin="anonymous"
+            crossOrigin=""
           />
           {/* Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. */}
           <MuxData playerSoftwareName="mux-audio" />

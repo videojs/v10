@@ -36,6 +36,7 @@ function renderCaptionsMenu({
     chaptersCues: [],
     thumbnailCues: [],
     thumbnailTrackSrc: null,
+    thumbnailTrackCrossOrigin: null,
     toggleSubtitles: vi.fn(),
   });
   const content = (
@@ -166,6 +167,7 @@ describe('useCaptionsOptions', () => {
       chaptersCues: [],
       thumbnailCues: [],
       thumbnailTrackSrc: null,
+      thumbnailTrackCrossOrigin: null,
       textTrackList: [],
       subtitlesShowing: false,
       selectSubtitlesTrack: vi.fn(),
@@ -181,6 +183,7 @@ describe('useCaptionsOptions', () => {
         chaptersCues: [],
         thumbnailCues: [],
         thumbnailTrackSrc: null,
+        thumbnailTrackCrossOrigin: null,
         textTrackList: [
           { kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
           { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },

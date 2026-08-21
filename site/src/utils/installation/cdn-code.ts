@@ -1,13 +1,23 @@
-import { getMediaSubpath, type Renderer, type Skin, type UseCase } from '@/utils/installation/types';
+import {
+  getInstallationPreset,
+  getMediaSubpath,
+  RENDERERS,
+  type Renderer,
+  type Skin,
+  type UseCase,
+} from '@/utils/installation/types';
 
 const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
 
+// Every installation preset ships default, minimal, and skinless CDN bundles.
+// The skinless bundle is named for the element it defines (e.g. `video-player`).
+// Background video is the exception: all skin choices resolve to one bundle.
 function getCdnFileName(useCase: UseCase, skin: Skin): string {
-  if (useCase === 'background-video') return 'background';
-  if (skin === 'none') return useCase === 'default-audio' ? 'audio-headless' : 'video-headless';
-  if (skin === 'minimal-video') return 'video-minimal';
-  if (skin === 'minimal-audio') return 'audio-minimal';
-  return skin;
+  const { group } = getInstallationPreset(useCase);
+  if (useCase === 'background-video') return group;
+  if (skin === 'none') return `${group}-player`;
+  if (skin === 'minimal-video' || skin === 'minimal-audio') return `${group}-minimal`;
+  return group;
 }
 
 // Whether a renderer can be installed via CDN, given the set of media subpaths
@@ -17,6 +27,13 @@ function getCdnFileName(useCase: UseCase, skin: Skin): string {
 export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean {
   const subpath = getMediaSubpath(renderer);
   return subpath === null || cdnMediaSubpaths.includes(subpath);
+}
+
+// Renderers with no CDN install path at all, given the manifest. Prose that
+// needs to name them reads this instead of listing them, so a media type that
+// gains a CDN bundle drops out of the docs with the manifest and no edit.
+export function renderersWithoutCdn(cdnMediaSubpaths: readonly string[]): Renderer[] {
+  return RENDERERS.filter((renderer) => !rendererSupportsCdn(renderer, cdnMediaSubpaths));
 }
 
 export function generateCdnCode(

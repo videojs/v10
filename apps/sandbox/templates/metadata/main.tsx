@@ -1,7 +1,7 @@
 import '@app/styles.css';
 
 import { SOURCES } from '@app/shared/sources';
-import { createPlayer, metadataFeature } from '@videojs/react';
+import { createPlayer, metadataFeature, Title } from '@videojs/react';
 import { Video } from '@videojs/react/video';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -43,7 +43,7 @@ function MetadataVideo({ mediaTitle }: { mediaTitle: string | null | undefined }
     <Video
       className="aspect-video w-full bg-black object-cover"
       controls
-      crossOrigin="anonymous"
+      crossOrigin=""
       playsInline
       ref={configureMedia}
       src={SOURCES['mp4-1'].url}
@@ -58,11 +58,9 @@ function PlayerPreview({ mediaTitle }: { mediaTitle: string | null | undefined }
     <div className="relative mt-6 overflow-hidden rounded-lg bg-black shadow-lg">
       <MetadataVideo mediaTitle={mediaTitle} />
       <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 to-transparent px-5 pb-12 pt-4">
-        {title ? (
-          <h2 className="text-xl font-semibold text-white drop-shadow">{title}</h2>
-        ) : (
-          <span className="text-sm text-white/70">No content title is defined</span>
-        )}
+        {/* Renders nothing until a title resolves, which is what the fallback below covers. */}
+        <Title className="block text-xl font-semibold text-white drop-shadow" />
+        {!title && <span className="text-sm text-white/70">No content title is defined</span>}
       </div>
     </div>
   );

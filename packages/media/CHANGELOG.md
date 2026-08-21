@@ -1,5 +1,39 @@
 # Changelog
 
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.30...@videojs/media@10.0.0-beta.31) (2026-08-21)
+
+
+### Miscellaneous Chores
+
+* **@videojs/media:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.31
+
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.29...@videojs/media@10.0.0-beta.30) (2026-08-20)
+
+
+### Features
+
+* **media:** bring the shaka media to parity with the hls.js media ([#2285](https://github.com/videojs/v10/issues/2285)) ([d9e92af](https://github.com/videojs/v10/commit/d9e92af48c2d52378794991884f826023e601874))
+* **packages:** add shaka player media ([#2276](https://github.com/videojs/v10/issues/2276)) ([c5895ec](https://github.com/videojs/v10/commit/c5895ecb0887369badffb19d4798207185c02e4e))
+
+
+### Bug Fixes
+
+* **packages:** load posters and storyboard thumbnails in cross-origin-isolated pages ([#2273](https://github.com/videojs/v10/issues/2273)) ([459fddb](https://github.com/videojs/v10/commit/459fddb7282770963bd28d42ed6c7a572845b88b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.30
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.28...@videojs/media@10.0.0-beta.29) (2026-08-19)
 
 

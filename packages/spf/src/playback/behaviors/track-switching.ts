@@ -9,8 +9,8 @@
  * failed-CDN constraint (`excludeFailedCdns`, failover cooldown) and the
  * capability constraint (`excludeUnplayableTracks`, codec support). Then a small
  * ordered chain of rules (`applyRules`) picks among the survivors. Each constraint/rule reads the signals it needs at apply
- * time, so the effect subscribes to exactly what was consulted. The chain is
- * three rules, most authoritative first:
+ * time, so the effect subscribes to exactly what was consulted. The chain runs
+ * most authoritative first:
  *
  *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
  *      partial-track match; an empty match falls through to the full set.
@@ -18,7 +18,12 @@
  *      narrow to the highest-priority CDN that still has tracks; an empty match
  *      falls through. Shared by video and audio, so every type stays on one CDN
  *      (`deriveCdnPriority` owns the list). No-op for non-redundant sources.
- *   3. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
+ *   3. **player resolution** — a soft filter on `playerResolution`
+ *      (`playerResolutionCap`, video only): narrow to the smallest rendition
+ *      tier covering the player element, plus everything below it. No-op
+ *      without a measurement. Ahead of the ranker but behind the CDN scope, so
+ *      the cap chooses *within* a host rather than between hosts.
+ *   4. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
  *      audio. Fitting tracks (within the throughput threshold) first, highest
  *      bitrate first; over-throughput tracks after, least-over first. Hysteresis
  *      via boosting the current track's sort weight by `upgradeMargin`.
@@ -38,8 +43,9 @@
  * `setupTrackSwitching` owns only the lifecycle and runs what it's given. Video
  * and audio run constraints `[excludeFailedCdns, excludeUnplayableTracks]` then
  * rules `[filterByUserSelection, preferActiveCdn, rankByBandwidth]` and take the
- * head; `switchVideoTrack` also accepts ABR tuning config, `switchAudioTrack`
- * takes none. `switchTextTrack` differs — selection is *optional* (captions are
+ * head; video inserts `playerResolutionCap` after the active-CDN scope, and
+ * `switchVideoTrack` also accepts ABR tuning config, `switchAudioTrack` takes
+ * none. `switchTextTrack` differs — selection is *optional* (captions are
  * opt-in / off-able), so it runs `[excludeFailedCdns]` + `[preferActiveCdn]` and
  * supplies a text terminal (`pickResolvedTextTrack`) that resolves standing user
  * intent (`userTextTrackSelection`, incl. `'off'`) and may yield no selection.
@@ -65,10 +71,13 @@ import { createMachineReactor } from '../../core/reactors/create-machine-reactor
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { DEFAULT_QUALITY_CONFIG, type QualityConfig, resolutionArea } from '../../media/abr/quality-selection';
 import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../media/errors';
+import type { Resolution } from '../../media/primitives/resolution';
 import {
   matchesPartialTrack,
   pickTextTrackFromTracks,
+  smallestCoveringPixelArea,
   type TextSelectionConfig,
+  tracksUnderPixelArea,
 } from '../../media/primitives/select-tracks';
 import {
   type AudioTrack,
@@ -322,6 +331,14 @@ type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = 
   SwitchVideoTrackConfig;
 
 /**
+ * State the player-resolution cap reads: TrackSwitchingStateMap plus the
+ * *optional* player measurement, manifested by `trackPlayerResolution`.
+ */
+type PlayerResolutionCapStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
+  playerResolution?: ReadonlySignal<Resolution | undefined>;
+};
+
+/**
  * State the active-CDN scope reads: the lifecycle map plus an *optional*
  * `cdnPriority` — the manifest-ordered CDN list (most-preferred first). The
  * signal exists only when the composition includes `deriveCdnPriority` (which
@@ -377,6 +394,50 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
   if (!key) return tracks;
   const filter = state[key]?.get();
   return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
+}
+
+/**
+ * Player-resolution cap — a soft filter, video only. Narrows to the renditions
+ * worth delivering at the player element's rendered size, so a small embed
+ * doesn't pull segments nobody can perceive. The tighter sibling of
+ * `screenResolutionCap`: the element's box, not the screen behind it.
+ *
+ * The cap is the *smallest tier that still covers the player*, and everything at
+ * or below it survives — not "everything at or below the player's area," which
+ * under-serves a player falling between two tiers. Take an 800×450 player
+ * against a 360p/720p/1080p ladder: only 360p is below it, so capping at the
+ * player's area would hold an 800-px-wide box to a 640-px-wide picture. The
+ * honest answer is the tier above, 720p, with 360p left in for the ranker.
+ * `smallestCoveringPixelArea` picks that cap; `tracksUnderPixelArea` — the same
+ * filter `screenResolutionCap` narrows with — applies it.
+ *
+ * Renditions declaring no width or height compare as area `0` and are never capped
+ * out — they can't be judged against the player, and dropping them could strand
+ * a source whose renditions all omit it.
+ *
+ * Runs *after* `preferActiveCdn`, so it narrows within the host already chosen.
+ * Ahead of it, a cap that pruned every rendition of the preferred CDN would leave
+ * the scope to fall to the next one with survivors — a size preference silently
+ * moving playback to another host. Redundant streams normally mirror the same
+ * ladder, which makes that a nonstandard-but-legal mismatch across CDNs rather
+ * than an everyday case; the ordering costs nothing either way.
+ *
+ * Reading `state.playerResolution` through its signal is what subscribes the
+ * chain to resizes; `undefined` — no signal composed, or nothing to measure —
+ * means "don't cap" rather than a cap of zero, so the chain proceeds unnarrowed.
+ */
+function playerResolutionCap<S extends SelectionKey, T extends SwitchableTrack>(
+  tracks: readonly T[],
+  { state }: SelectionRuleDeps<PlayerResolutionCapStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
+): readonly T[] {
+  const playerResolution = state.playerResolution?.get();
+  if (!playerResolution) return tracks;
+
+  // A player larger than every rendition has no covering tier, so the cap is
+  // `undefined` and the filter's unbounded default narrows nothing.
+  const cap = smallestCoveringPixelArea(tracks, playerResolution.width * playerResolution.height);
+
+  return tracksUnderPixelArea(tracks, cap);
 }
 
 /**
@@ -707,7 +768,7 @@ export const switchVideoTrack = defineBehavior({
         userSelectionKey: 'userVideoTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
         constraints: [excludeFailedCdns, excludeUnplayableTracks],
-        rules: [filterByUserSelection, preferActiveCdn, rankByBandwidth],
+        rules: [filterByUserSelection, preferActiveCdn, playerResolutionCap, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
     }),

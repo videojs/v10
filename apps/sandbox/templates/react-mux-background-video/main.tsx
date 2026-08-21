@@ -21,7 +21,7 @@ function App() {
     <SandboxI18nProvider>
       <BackgroundVideoPlayer>
         <BackgroundVideoSkin>
-          <MuxBackgroundVideo src={withMuxMaxResolution(SOURCES[source].url ?? '', '720p')} />
+          <MuxBackgroundVideo src={withMuxMaxResolution(SOURCES[source].url ?? '', '720p')} crossOrigin="" />
         </BackgroundVideoSkin>
       </BackgroundVideoPlayer>
     </SandboxI18nProvider>

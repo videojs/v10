@@ -1,0 +1,167 @@
+---
+title: Add a poster placeholder
+description: Show a lightweight placeholder while the poster image loads
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+To show something while your video's poster loads, customize the image drawn by the skin or the <DocsLink slug="reference/poster">Poster</DocsLink> component.
+
+The examples keep the placeholder aligned with the poster position. Change `contain` to `cover` if your poster fills its container.
+
+<DocsLinkCard slug="reference/poster" description="Configure your own poster URL">Set your own poster</DocsLinkCard>
+
+<FrameworkCase frameworks={["react"]}>
+
+## Use a framework image component
+
+Many frameworks have image components that render both an image and a placeholder while it loads. Pass one to `renderPoster`; it receives `src` from Video.js when the media provides a poster.
+
+```tsx
+import NextImage from 'next/image';
+import type { ComponentProps } from 'react';
+import { MuxVideo } from '@videojs/react/media/mux-video';
+import { VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export function MyPlayer() {
+  return (
+    <VideoPlayer>
+      <VideoSkin
+        renderPoster={({ src, ...props }: ComponentProps<'img'>) =>
+          src ? (
+            <NextImage
+              {...props}
+              src={src}
+              alt=""
+              fill
+              placeholder="blur"
+              blurDataURL="data:image/webp;base64,…"
+            />
+          ) : null
+        }
+      >
+        <MuxVideo
+          source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }}
+          playsInline
+        />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+Next.js generates blur data for static imports. Because this poster URL arrives at runtime, pass `blurDataURL` yourself.
+
+## Use a plain image
+
+A background image on the poster works well for a lightweight placeholder:
+
+```tsx
+import { MuxVideo } from '@videojs/react/media/mux-video';
+import { VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+export function MyPlayer() {
+  return (
+    <VideoPlayer>
+      <VideoSkin
+        renderPoster={(props) => (
+          <img
+            {...props}
+            style={{
+              ...props.style,
+              background:
+                "url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat",
+            }}
+          />
+        )}
+      >
+        <MuxVideo
+          source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }}
+          playsInline
+        />
+      </VideoSkin>
+    </VideoPlayer>
+  );
+}
+```
+
+## Use the Poster component
+
+If you built your own UI, use the same `render` prop directly on `Poster`:
+
+```tsx
+import { Container, Poster } from '@videojs/react';
+import { MuxVideo } from '@videojs/react/media/mux-video';
+import { VideoPlayer } from '@videojs/react/video';
+
+export function MyPlayer() {
+  return (
+    <VideoPlayer>
+      <Container style={{ position: 'relative', aspectRatio: '16 / 9' }}>
+        <MuxVideo
+          source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }}
+          playsInline
+        />
+        <Poster
+          render={(props) => (
+            <img
+              {...props}
+              style={{
+                ...props.style,
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                background:
+                  "url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat",
+                objectFit: 'contain',
+              }}
+            />
+          )}
+        />
+      </Container>
+    </VideoPlayer>
+  );
+}
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+## Use a packaged skin
+
+Put your image in the skin's `poster` slot. If you leave off `src`, the poster component fills it from the player while your background shows underneath:
+
+```html
+<video-player>
+  <video-skin>
+    <mux-video
+      src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
+      playsinline
+    ></mux-video>
+    <img
+      slot="poster"
+      alt=""
+      style="background: url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat"
+    >
+  </video-skin>
+</video-player>
+```
+
+## Use an ejected skin
+
+When you own the skin template, put the placeholder on its fallback poster image instead:
+
+```html
+<media-poster>
+  <img
+    alt=""
+    style="background: url('data:image/webp;base64,…') var(--media-object-position, center) / contain no-repeat"
+  >
+</media-poster>
+```
+
+</FrameworkCase>

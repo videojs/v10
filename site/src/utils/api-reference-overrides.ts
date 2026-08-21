@@ -13,6 +13,8 @@ export const NAME_OVERRIDES: Record<string, string> = {
   'pip-button': 'PiPButton',
   'airplay-button': 'AirPlayButton',
   'hlsjs-video': 'HlsJsVideo',
+  'youtube-video': 'YouTubeVideo',
+  'tiktok-video': 'TikTokVideo',
 };
 
 const NAME_TO_SLUG: Record<string, string> = Object.fromEntries(

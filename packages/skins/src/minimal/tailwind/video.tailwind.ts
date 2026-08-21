@@ -81,19 +81,6 @@ export const container = (isShadowDOM: boolean) =>
           '[&_video::-webkit-media-text-track-container]:font-[inherit]',
         ]
       : [],
-    // Poster placeholder (blur-up) — React path only; HTML path uses media-poster::before
-    !isShadowDOM
-      ? [
-          'before:absolute before:inset-0 before:pointer-events-none',
-          'before:[background-image:var(--media-poster-placeholder,none)]',
-          'before:bg-no-repeat',
-          'before:[background-position:var(--media-object-position,center)]',
-          'before:[background-size:var(--media-object-fit,contain)]',
-          'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
-          'before:transition-opacity before:duration-250',
-          'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
-        ]
-      : [],
     // Fullscreen
     '[&:fullscreen]:[--container-border-radius:0]',
     {
@@ -116,9 +103,7 @@ export const controls = cn(
   'ease-(--controls-transition-timing-function)',
   'duration-[calc(var(--controls-transition-duration)/2)]',
   'not-data-visible:duration-(--controls-transition-duration)',
-  'pointer-fine:will-change-[translate,filter,opacity]',
   'pointer-fine:transition-[translate,filter,opacity]',
-  'pointer-coarse:will-change-[translate,opacity]',
   'pointer-coarse:transition-[translate,opacity]',
   // Hidden state
   'not-data-visible:opacity-0 not-data-visible:pointer-events-none',

@@ -30,7 +30,14 @@ function App() {
     <SandboxI18nProvider>
       <AudioPlayer>
         <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
-          <Audio src={SOURCES[source].url} autoPlay={autoplay} muted={muted} loop={loop} preload={preload} />
+          <Audio
+            src={SOURCES[source].url}
+            autoPlay={autoplay}
+            muted={muted}
+            loop={loop}
+            preload={preload}
+            crossOrigin=""
+          />
         </AudioSkinComponent>
       </AudioPlayer>
     </SandboxI18nProvider>

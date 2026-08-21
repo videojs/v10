@@ -13,7 +13,7 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <background-video-player>
       <background-video-skin>
-        <background-video src="${BACKGROUND_VIDEO_SRC}"></background-video>
+        <background-video src="${BACKGROUND_VIDEO_SRC}" crossorigin></background-video>
       </background-video-skin>
     </background-video-player>
   `);

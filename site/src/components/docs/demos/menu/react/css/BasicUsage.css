@@ -84,7 +84,6 @@
   transition-timing-function: ease-in-out;
   transition-duration: var(--menu-transition-duration);
   transition-property: translate, filter;
-  will-change: translate;
 }
 
 .menu[data-submenu-expanded="true"] > :not([data-submenu]) {

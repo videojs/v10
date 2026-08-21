@@ -10,7 +10,7 @@ export const button = {
     'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
     'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2',
     'not-aria-disabled:active:scale-[0.97]',
-    'motion-reduce:scale-100 motion-reduce:transition-[background-color,outline-offset] motion-reduce:will-change-auto',
+    'motion-reduce:scale-100 motion-reduce:transition-[background-color] motion-reduce:will-change-auto',
     'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
     'supports-[corner-shape:squircle]:rounded-[--spacing(4)]',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]'

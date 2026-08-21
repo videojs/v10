@@ -120,7 +120,7 @@ function getTemplateHTML() {
                     ${renderIcon('switches', { class: 'media-icon' })}
                     ${renderText(qualityText)}
                     <span class="media-menu__hint">
-                      <span data-part="hint" class="media-menu__hint-label"></span>
+                      <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
                     </span>
                   </media-menu-item>
@@ -128,7 +128,7 @@ function getTemplateHTML() {
                     ${renderIcon('speech', { class: 'media-icon' })}
                     ${renderText(audioText)}
                     <span class="media-menu__hint">
-                      <span data-part="hint" class="media-menu__hint-label"></span>
+                      <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
                     </span>
                   </media-menu-item>
@@ -136,7 +136,7 @@ function getTemplateHTML() {
                     ${renderIcon('speed', { class: 'media-icon' })}
                     ${renderText(speedText)}
                     <span class="media-menu__hint">
-                      <span data-part="hint" class="media-menu__hint-label"></span>
+                      <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
                     </span>
                   </media-menu-item>
@@ -144,7 +144,7 @@ function getTemplateHTML() {
                     ${renderIcon('captions-off', { class: 'media-icon' })}
                     ${renderText(captionsText)}
                     <span class="media-menu__hint">
-                      <span data-part="hint" class="media-menu__hint-label"></span>
+                      <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
                     </span>
                   </media-menu-item>
@@ -160,7 +160,7 @@ function getTemplateHTML() {
                   <template>
                     <media-menu-radio-item class="media-menu__item">
                       <span>
-                        <span data-part="label"></span>
+                        <bdi data-part="label" dir="auto"></bdi>
                         <sup data-part="tier" class="media-menu__tier"></sup>
                       </span>
                       <span data-part="badge" class="media-badge"></span>
@@ -181,7 +181,7 @@ function getTemplateHTML() {
                 <media-audio-track-radio-group class="media-menu__group">
                   <template>
                     <media-menu-radio-item class="media-menu__item">
-                      <span data-part="label"></span>
+                      <bdi data-part="label" dir="auto"></bdi>
                       <media-menu-item-indicator force-mount class="media-menu__indicator">
                         ${renderIcon('check', { class: 'media-icon' })}
                       </media-menu-item-indicator>
@@ -199,7 +199,7 @@ function getTemplateHTML() {
                 <media-playback-rate-radio-group class="media-menu__group">
                   <template>
                     <media-menu-radio-item class="media-menu__item">
-                      <span data-part="label"></span>
+                      <bdi data-part="label" dir="auto"></bdi>
                       <media-menu-item-indicator force-mount class="media-menu__indicator">
                         ${renderIcon('check', { class: 'media-icon' })}
                       </media-menu-item-indicator>
@@ -217,7 +217,7 @@ function getTemplateHTML() {
                 <media-captions-radio-group class="media-menu__group">
                   <template>
                     <media-menu-radio-item class="media-menu__item">
-                      <span data-part="label"></span>
+                      <bdi data-part="label" dir="auto"></bdi>
                       <media-menu-item-indicator force-mount class="media-menu__indicator">
                         ${renderIcon('check', { class: 'media-icon' })}
                       </media-menu-item-indicator>

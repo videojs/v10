@@ -1,0 +1,28 @@
+---
+import { getCollection } from 'astro:content';
+import { renderersWithoutCdn } from '@/utils/installation/cdn-code';
+import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
+
+/**
+ * The clause naming the media types that have no CDN build, derived from the
+ * generated CDN media manifest rather than written out in prose.
+ *
+ * Renders nothing when every media type ships a CDN bundle, so the sentence it
+ * completes has to read correctly without it.
+ */
+const cdnMedia = (await getCollection('cdnMedia')).map((entry) => entry.id);
+
+// Two renderers can share a label (both Mux medias are "Mux"), so dedupe.
+const labels = [...new Set(renderersWithoutCdn(cdnMedia).map((renderer) => RENDERER_LABELS[renderer]))];
+
+const list = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' }).format(labels);
+const verb = labels.length === 1 ? 'has' : 'have';
+---
+
+{
+  labels.length > 0 && (
+    <>
+      , and {list} {verb} no CDN build
+    </>
+  )
+}

@@ -10,7 +10,7 @@ import {
 import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
-import { applyStyles, isRTL } from '@videojs/utils/dom';
+import { applyStyles } from '@videojs/utils/dom';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
@@ -63,7 +63,6 @@ export class SliderElement extends MediaElement {
       getElement: () => this,
       getThumbElement: () => this.querySelector<HTMLElement>('media-slider-thumb'),
       getOrientation: () => this.orientation,
-      isRTL: () => isRTL(this),
       isDisabled: () => this.disabled,
       getPercent: () => this.#core.percentFromValue(this.value),
       getStepPercent: () => this.#core.getStepPercent(),

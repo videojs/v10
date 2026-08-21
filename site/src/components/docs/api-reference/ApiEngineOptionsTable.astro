@@ -1,0 +1,49 @@
+---
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { EngineOptionDef } from '@/types/media-reference';
+import StateRow from './StateRow.astro';
+
+/**
+ * Renders one engine's options table for API reference.
+ *
+ * Shares StateRow with the props and state tables, so descriptions and long
+ * types sit in the expandable detail row rather than widening the table. An
+ * option with no JSDoc still gets a row: it exists in the API surface, so a
+ * reader setting it should be able to find it.
+ */
+interface Props {
+  options: EngineOptionDef[];
+  componentName: string;
+  engine: string;
+}
+
+const { options, componentName, engine } = Astro.props;
+---
+
+<Table maxWidth={false} outerClass="my-6">
+  <Thead>
+    <Tr>
+      <Th>Option</Th>
+      <Th>Type</Th>
+      <Th>Details</Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {
+      options.map((option) => (
+        <StateRow
+          name={option.name}
+          type={option.type}
+          detailedType={option.detailedType}
+          description={option.description}
+          componentName={componentName}
+          kind={`engine-${engine}`}
+        />
+      ))
+    }
+  </Tbody>
+</Table>

@@ -24,7 +24,15 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import { extractCSSVars } from './css-vars-handler.js';
-import type { HostPropertyDef, MediaEventDef, MediaReference, MediaTargetTag, ReactMediaReference } from './types.js';
+import { abbreviateType } from './formatter.js';
+import type {
+  EngineOptionDef,
+  HostPropertyDef,
+  MediaEventDef,
+  MediaReference,
+  MediaTargetTag,
+  ReactMediaReference,
+} from './types.js';
 import { loadCompilerOptions } from './typescript.js';
 import { getJSDocDescription } from './utils.js';
 
@@ -292,7 +300,12 @@ function parseCustomMediaElementCall(
         const tagArg = node.arguments[0]!;
         if (ts.isStringLiteral(tagArg) && ['video', 'audio', 'iframe'].includes(tagArg.text)) {
           targetTag = tagArg.text as MediaTargetTag;
-          mediaType = targetTag === 'audio' ? 'audio' : 'video';
+          // A `video`/`audio` target names the media type outright. An
+          // `iframe` target says nothing about what plays inside it, so fall
+          // back to the element's own name: `SpotifyAudio` is audio-only, and
+          // documenting it against the video event contract would be wrong.
+          mediaType =
+            targetTag === 'audio' || (targetTag === 'iframe' && className.endsWith('Audio')) ? 'audio' : 'video';
         }
         // Second arg: host class identifier
         const hostArg = node.arguments[1]!;
@@ -768,6 +781,83 @@ function resolveInferredTypes(
   return types;
 }
 
+/**
+ * Collect the options a media accepts under `source.engine`, keyed by engine name.
+ *
+ * Walks the host's `source` property type to `engine`, then lists each engine's
+ * own members with their declared type and JSDoc. Driven by the type rather than
+ * by file or name convention: the config interfaces sit in different files per
+ * provider (`source.ts` for most, `media.ts` for Vimeo) and one extends a
+ * third-party type (`@vimeo/player`), which the checker resolves the same way.
+ *
+ * Every member is emitted, described or not: an option in the API surface is one
+ * a reader can set, and a name with its type still says what exists and what
+ * shape it takes. JSDoc is the only source of prose, so a missing or wrong
+ * description is fixed on the interface member, never in the docs page.
+ */
+function extractEngineOptions(
+  hostFilePath: string,
+  hostClassName: string,
+  program: ts.Program,
+  checker: ts.TypeChecker
+): Record<string, EngineOptionDef[]> | undefined {
+  const sourceFile = program.getSourceFile(hostFilePath);
+  if (!sourceFile) return undefined;
+
+  let classNode: ts.ClassDeclaration | undefined;
+  const visit = (node: ts.Node) => {
+    if (ts.isClassDeclaration(node) && node.name?.text === hostClassName) classNode = node;
+    if (!classNode) ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  if (!classNode?.name) return undefined;
+  // Bind the narrowed node to a const: the closures below lose the narrowing on
+  // the mutable `classNode` the visitor assigns.
+  const anchor = classNode;
+  const anchorName = classNode.name;
+
+  const classSymbol = checker.getSymbolAtLocation(anchorName);
+  if (!classSymbol) return undefined;
+
+  const sourceProperty = checker.getDeclaredTypeOfSymbol(classSymbol).getProperty('source');
+  if (!sourceProperty) return undefined;
+
+  const engineProperty = checker
+    .getTypeOfSymbolAtLocation(sourceProperty, anchor)
+    .getNonNullableType()
+    .getProperty('engine');
+  if (!engineProperty) return undefined;
+
+  const engines: Record<string, EngineOptionDef[]> = {};
+  const engineType = checker.getTypeOfSymbolAtLocation(engineProperty, anchor).getNonNullableType();
+
+  for (const engine of engineType.getProperties()) {
+    const configType = checker.getTypeOfSymbolAtLocation(engine, anchor).getNonNullableType();
+    const options = configType
+      .getProperties()
+      .map((member) => {
+        const name = member.getName();
+        const type = checker.typeToString(checker.getTypeOfSymbolAtLocation(member, anchor));
+        // Same abbreviation the props table uses, so a 200-character engine
+        // setting collapses in the row and reads in full in the detail panel.
+        const abbreviated = abbreviateType(name, type);
+        const def: EngineOptionDef = { name, type: abbreviated ?? type };
+        if (abbreviated && abbreviated !== type) def.detailedType = type;
+        // Collapse whitespace: multi-line JSDoc renders into one table cell.
+        const description = ts
+          .displayPartsToString(member.getDocumentationComment(checker))
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (description) def.description = description;
+        return def;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+    if (options.length > 0) engines[engine.getName()] = options;
+  }
+
+  return Object.keys(engines).length > 0 ? engines : undefined;
+}
+
 function findImportPath(sourceFile: ts.SourceFile, name: string): string | undefined {
   let importPath: string | undefined;
   ts.forEachChild(sourceFile, (node) => {
@@ -867,17 +957,26 @@ function resolveObjectLiteralEntries(
 }
 
 /**
- * Resolve an identifier to a `const name = { ... }` object literal declared
- * in the same file or in an imported file.
+ * Resolve an identifier to a `const name = { ... }` object literal declared in
+ * the same file or reachable by following the imports that provide it.
+ *
+ * The chain is walked rather than hopped once: a React media file imports its
+ * defaults from a package barrel, `mapDistToSource` rewrites that barrel to the
+ * sibling `media.ts`, and a host module that keeps its props in a separate
+ * `props.ts` only re-imports the const from there.
  */
 function resolveConstObjectLiteral(
   name: string,
   sourceFile: ts.SourceFile,
   filePath: string,
-  compilerOptions: ts.CompilerOptions
+  compilerOptions: ts.CompilerOptions,
+  visitedFiles = new Set<string>()
 ): { objectLiteral: ts.ObjectLiteralExpression; sourceFile: ts.SourceFile; filePath: string } | undefined {
   const local = findConstObjectLiteral(sourceFile, name);
   if (local) return { objectLiteral: local, sourceFile, filePath };
+
+  if (visitedFiles.has(filePath)) return undefined;
+  visitedFiles.add(filePath);
 
   const importPath = findImportPath(sourceFile, name);
   if (!importPath) return undefined;
@@ -886,9 +985,7 @@ function resolveConstObjectLiteral(
 
   const content = fs.readFileSync(importedFilePath, 'utf-8');
   const importedSourceFile = ts.createSourceFile(importedFilePath, content, ts.ScriptTarget.Latest, true);
-  const imported = findConstObjectLiteral(importedSourceFile, name);
-  if (!imported) return undefined;
-  return { objectLiteral: imported, sourceFile: importedSourceFile, filePath: importedFilePath };
+  return resolveConstObjectLiteral(name, importedSourceFile, importedFilePath, compilerOptions, visitedFiles);
 }
 
 function findConstObjectLiteral(sourceFile: ts.SourceFile, name: string): ts.ObjectLiteralExpression | undefined {
@@ -1722,10 +1819,13 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
     const react = extractReactReference(monorepoRoot, source, compilerOptions, publicProperties);
 
+    const engineOptions = extractEngineOptions(source.hostFilePath, source.hostClassName, program, checker);
+
     const reference: MediaReference = {
       name: source.className,
       tagName: source.tagName,
       mediaType: source.mediaType,
+      ...(engineOptions ? { engineOptions } : {}),
       platforms: {
         html: {
           target: source.targetTag,

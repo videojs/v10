@@ -2,7 +2,7 @@
 
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -153,7 +153,7 @@ function CaptionsTrigger(): ReactNode {
               value={option.value}
               disabled={option.disabled}
             >
-              <span>{option.label}</span>
+              <bdi dir="auto">{option.label}</bdi>
               <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
                 <CheckIcon className="media-icon" />
               </Menu.ItemIndicator>
@@ -166,18 +166,10 @@ function CaptionsTrigger(): ReactNode {
 }
 
 export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
-  const { children, className, renderPoster, placeholder, style, ...rest } = props;
-
-  const containerStyle = placeholder
-    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
-    : style;
+  const { children, className, renderPoster, style, ...rest } = props;
 
   return (
-    <Container
-      className={cn('media-default-skin media-default-skin--video', className)}
-      style={containerStyle}
-      {...rest}
-    >
+    <Container className={cn('media-default-skin media-default-skin--video', className)} style={style} {...rest}>
       {children}
 
       <Poster render={renderPoster} />

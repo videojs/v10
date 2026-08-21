@@ -1,7 +1,13 @@
 import * as p from '@clack/prompts';
 import { validateInstallationOptions } from '@/utils/installation/codegen';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
-import type { InstallMethod, Renderer, UseCase } from '@/utils/installation/types';
+import {
+  getInstallationPreset,
+  type InstallMethod,
+  type Renderer,
+  USE_CASES,
+  type UseCase,
+} from '@/utils/installation/types';
 import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../utils/docs.js';
@@ -46,14 +52,10 @@ async function resolveFramework(flags: ParsedFlags): Promise<Framework> {
 }
 
 function mapPresetToUseCase(preset: string): UseCase {
-  const map: Record<string, UseCase> = {
-    video: 'default-video',
-    audio: 'default-audio',
-    'background-video': 'background-video',
-  };
-  const result = map[preset];
+  const result = USE_CASES.find((useCase) => getInstallationPreset(useCase).flag === preset);
   if (!result) {
-    console.error(`Invalid preset: "${preset}". Must be "video", "audio", or "background-video".`);
+    const valid = USE_CASES.map((useCase) => `"${getInstallationPreset(useCase).flag}"`).join(', ');
+    console.error(`Invalid preset: "${preset}". Valid options: ${valid}`);
     process.exit(1);
   }
   return result;
@@ -112,11 +114,14 @@ const DOCS_HELP = `Usage: @videojs/cli docs <slug> [--framework <html|react>]
        @videojs/cli docs --list [--framework <html|react>]
 
 Installation flags (for docs how-to/installation):
-  --preset <video|audio|background-video>
+  --preset <video|audio|live-video|live-audio|background-video>
   --skin <default|minimal|none>
   --source-url <url>
-  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|background-video>
-  --install-method <cdn|npm|pnpm|yarn|bun>`;
+  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|youtube|cloudflare|tiktok|twitch|spotify|background-video>
+  --install-method <cdn|npm|pnpm|yarn|bun>
+
+The live presets accept HLS or Mux video for live-video, and Mux audio for
+live-audio.`;
 
 export async function handleDocs(flags: ParsedFlags, positionals: string[]): Promise<void> {
   if (flags.help) {
@@ -184,9 +189,8 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
       process.exit(1);
     }
 
-    // The interactive prompt hides CDN for renderers without a CDN build; guard
-    // the non-interactive flag path so a `--install-method cdn` request for one
-    // can't emit a broken snippet.
+    // The interactive prompt hides CDN for media without a CDN build. Guard the
+    // non-interactive flag path too, so it cannot emit an incomplete snippet.
     if (opts.installMethod === 'cdn' && !supportsCdnInstall(opts.renderer)) {
       console.error(
         `Error: ${RENDERER_LABELS[opts.renderer]} has no CDN build. Install it with npm, pnpm, yarn, or bun.`

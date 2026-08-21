@@ -77,6 +77,26 @@ MuxVideo fires a `sourcechange` event when the source actually changes. Setting 
 
 `thumbnail` and `storyboard` default to URLs derived from `source`: the poster image and the storyboard VTT that drives hover previews on the time slider. MuxVideo injects the storyboard `<track>` automatically, skipping it for live streams. Set either prop to a URL to override the derived one.
 
+The storyboard lives on a Mux domain, so MuxVideo has to be CORS-enabled for that cross-origin `<track>` to load at all. <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink> then fetches the sprite sheets its cues point at the same way:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxVideo
+  source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }}
+  crossOrigin="anonymous"
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<mux-video
+  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
+  crossorigin="anonymous"
+></mux-video>
+```
+</FrameworkCase>
+
 ## Signed playback
 
 For [signed playback](https://www.mux.com/docs/guides/secure-video-playback), put the playback token on `source.playback.token`. The token replaces every other playback param, so bake modifiers like resolution and time bounds into the token when you sign it.

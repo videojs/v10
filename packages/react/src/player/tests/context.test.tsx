@@ -22,6 +22,7 @@ import { useOptionalPopupGroup } from '../popup-group-context';
 afterEach(() => {
   cleanup();
   document.documentElement.removeAttribute('lang');
+  document.documentElement.removeAttribute('dir');
 });
 
 function createWrapper(value: PlayerContextValue) {
@@ -289,6 +290,97 @@ describe('Container', () => {
     );
 
     expect(container.firstElementChild?.getAttribute('aria-label')).toBe('Lecteur multimédia');
+  });
+
+  it('applies the provider locale and direction to the container', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="ar">
+        <PlayerContextProvider value={value}>
+          <Container />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('lang')).toBe('ar');
+    expect(container.firstElementChild?.getAttribute('dir')).toBe('rtl');
+  });
+
+  it('applies an explicit locale through a translations-only provider', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="ar">
+        <I18nProvider translations={{}}>
+          <PlayerContextProvider value={value}>
+            <Container />
+          </PlayerContextProvider>
+        </I18nProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('lang')).toBe('ar');
+    expect(container.firstElementChild?.getAttribute('dir')).toBe('rtl');
+  });
+
+  it('inherits ambient language and direction without adding attributes', () => {
+    document.documentElement.lang = 'ar';
+    document.documentElement.dir = 'ltr';
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider>
+        <PlayerContextProvider value={value}>
+          <Container />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.hasAttribute('lang')).toBe(false);
+    expect(container.firstElementChild?.hasAttribute('dir')).toBe(false);
+  });
+
+  it('derives direction from an explicit container language', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="ar">
+        <PlayerContextProvider value={value}>
+          <Container lang="en" />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('lang')).toBe('en');
+    expect(container.firstElementChild?.getAttribute('dir')).toBe('ltr');
+  });
+
+  it('preserves explicit container language and direction', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="ar">
+        <PlayerContextProvider value={value}>
+          <Container lang="en" dir="ltr" />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('lang')).toBe('en');
+    expect(container.firstElementChild?.getAttribute('dir')).toBe('ltr');
+  });
+
+  it('does not add language attributes without a provider', () => {
+    const value = createContextValue();
+    const { container } = render(
+      <PlayerContextProvider value={value}>
+        <Container />
+      </PlayerContextProvider>
+    );
+
+    expect(container.firstElementChild?.hasAttribute('lang')).toBe(false);
+    expect(container.firstElementChild?.hasAttribute('dir')).toBe(false);
   });
 
   it('preserves explicit accessible naming', () => {

@@ -14,8 +14,10 @@ export type AddLocaleRoot = () => () => void;
 export interface I18nContextValue {
   translator: Translator;
   locale: Locale;
-  /** True when a provider received an explicit locale prop. */
+  /** True when the locale resolves from an explicit provider prop. */
   localeFromProp: boolean;
+  /** @internal True when the nearest provider received an explicit locale prop. */
+  localeFromOwnProp?: boolean;
   /** Overrides passed to this provider. */
   translations?: Partial<Translations>;
   /** Callback inherited by nested locale roots. */

@@ -51,7 +51,20 @@ function App() {
     <SandboxI18nProvider>
       <Player poster={poster}>
         <VideoSkinComponent
-          placeholder={placeholder}
+          renderPoster={
+            placeholder ? (
+              <img
+                alt=""
+                crossOrigin=""
+                style={{
+                  backgroundImage: `url("${placeholder}")`,
+                  backgroundPosition: 'var(--media-object-position, center)',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: 'contain',
+                }}
+              />
+            ) : undefined
+          }
           skin={skin}
           styling={styling}
           live={live}
@@ -65,7 +78,7 @@ function App() {
             loop={loop}
             preload={preload}
             playsInline
-            crossOrigin="anonymous"
+            crossOrigin=""
           />
           {/* Opt-in media components; no env key is needed for Mux-hosted sources. */}
           <MuxData playerSoftwareName="mux-video" />

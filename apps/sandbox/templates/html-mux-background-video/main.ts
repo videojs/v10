@@ -31,7 +31,7 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <background-video-player>
       <background-video-skin>
-        <mux-background-video src="${src}"></mux-background-video>
+        <mux-background-video src="${src}" crossorigin></mux-background-video>
       </background-video-skin>
     </background-video-player>
   `);

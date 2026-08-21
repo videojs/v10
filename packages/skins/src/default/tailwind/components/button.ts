@@ -9,7 +9,7 @@ export const button = {
     'outline-2 outline-transparent -outline-offset-2',
     'transition-[background-color,color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
     'not-aria-disabled:active:scale-[0.97]',
-    'motion-reduce:scale-100 motion-reduce:transition-[background-color,color,outline-offset] motion-reduce:will-change-auto',
+    'motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto',
     'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
     'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2'
   ),

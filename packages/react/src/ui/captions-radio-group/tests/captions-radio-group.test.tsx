@@ -38,6 +38,7 @@ function renderCaptionsRadioGroup({
     chaptersCues: [],
     thumbnailCues: [],
     thumbnailTrackSrc: null,
+    thumbnailTrackCrossOrigin: null,
     toggleSubtitles: vi.fn(),
   });
   const content = (

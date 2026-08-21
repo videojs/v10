@@ -70,6 +70,15 @@ export function getBlockExtent(edges: LogicalBoxEdges): number {
   return edges.blockStart + edges.blockEnd;
 }
 
+function getPaddingOrigin(element: Element): { x: number; y: number } {
+  const style = getComputedStyle(element);
+
+  return {
+    x: Number.parseFloat(style.paddingLeft) || 0,
+    y: Number.parseFloat(style.paddingTop) || 0,
+  };
+}
+
 export interface ChildMeasurement {
   element: HTMLElement;
   size: ElementSize;
@@ -123,6 +132,7 @@ export function measureElementChildren(
     : { inlineStart: 0, inlineEnd: 0, blockStart: 0, blockEnd: 0 };
   const inlinePadding = getInlineExtent(padding);
   const blockPadding = getBlockExtent(padding);
+  const paddingOrigin = includePadding ? getPaddingOrigin(container) : { x: 0, y: 0 };
 
   if (elements.length === 0) return { width: inlinePadding, height: blockPadding };
 
@@ -130,8 +140,8 @@ export function measureElementChildren(
     elements.map((element) => ({
       element,
       size: measure(element, width),
-      offsetLeft: element.offsetLeft,
-      offsetTop: element.offsetTop,
+      offsetLeft: element.offsetLeft - paddingOrigin.x,
+      offsetTop: element.offsetTop - paddingOrigin.y,
     }));
 
   let measurements = collect();

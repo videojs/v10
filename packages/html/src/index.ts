@@ -147,6 +147,7 @@ export { TimeSeparatorElement } from './ui/time/time-separator-element';
 export { TimeSliderChapterTitleElement } from './ui/time-slider/time-slider-chapters/time-slider-chapter-title-element';
 export { TimeSliderChaptersElement } from './ui/time-slider/time-slider-chapters/time-slider-chapters-element';
 export { TimeSliderElement } from './ui/time-slider/time-slider-element';
+export { TitleElement } from './ui/title/title-element';
 export { tooltipGroupContext } from './ui/tooltip/context';
 export { TooltipElement } from './ui/tooltip/tooltip-element';
 export { TooltipGroupElement } from './ui/tooltip/tooltip-group-element';

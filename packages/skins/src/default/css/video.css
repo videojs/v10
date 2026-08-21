@@ -215,12 +215,10 @@
 
       @media (pointer: fine) {
         transition-property: filter, opacity, scale, translate;
-        will-change: filter, opacity, scale, translate;
       }
 
       @media (pointer: coarse) {
         transition-property: opacity, scale, translate;
-        will-change: opacity, scale, translate;
       }
     }
 
@@ -305,12 +303,10 @@
 
   @media (pointer: fine) {
     transition-property: filter, opacity, scale, translate;
-    will-change: filter, opacity, scale, translate;
   }
 
   @media (pointer: coarse) {
     transition-property: opacity, scale, translate;
-    will-change: opacity, scale, translate;
   }
 
   @container media-root (width > 42rem) {

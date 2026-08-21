@@ -6,6 +6,7 @@ import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-t
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
 import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
+import { syncDocumentLocale } from '@app/shared/i18n/document-locale';
 import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import {
   getInitialLocale,
@@ -123,7 +124,7 @@ async function applyLocale(next: SandboxLocaleTag): Promise<void> {
   await ensureCdnSandboxLocale(next);
   if (seq !== localeApplySeq) return;
   locale = next;
-  document.documentElement.lang = locale;
+  syncDocumentLocale(locale);
   await syncCdnI18nProvider(locale, seq);
 }
 
@@ -395,7 +396,7 @@ async function render() {
   // it preloads, so the settings menu has nothing to attach to — same as the
   // per-embed pages on the html and react platforms.
   const mediaAttrs = isEmbedPreset(preset) ? '' : renderMediaAttrs(state);
-  const crossoriginAttr = isEmbedPreset(preset) ? '' : 'crossorigin="anonymous"';
+  const crossoriginAttr = isEmbedPreset(preset) ? '' : 'crossorigin';
   const mediaClassAttr = isEmbedPreset(preset) ? `class="${getEmbedMediaClass(preset)}"` : '';
 
   // Background video needs viewport dimensions instead of flex centering.
@@ -440,7 +441,7 @@ async function render() {
         ${isVideoPreset(preset) ? renderChapters(getChapters(state.source)) : ''}
         ${renderStoryboard(storyboard)}
       </${mediaTag}>
-      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" crossorigin />` : ''}
     </${skinTag}>
   `;
 
@@ -456,7 +457,7 @@ async function render() {
 }
 
 async function init(): Promise<void> {
-  document.documentElement.lang = locale;
+  syncDocumentLocale(locale);
   await render();
 }
 
@@ -504,7 +505,7 @@ onLocaleChange((next) => {
     await ensureCdnSandboxLocale(next);
     if (seq !== localeApplySeq) return;
     locale = next;
-    document.documentElement.lang = locale;
+    syncDocumentLocale(locale);
     await render();
   })();
 });

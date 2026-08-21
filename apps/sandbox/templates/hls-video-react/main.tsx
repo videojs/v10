@@ -43,6 +43,7 @@ function App() {
             src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
             preload="auto"
             playsInline
+            crossOrigin=""
             style={{ width: '640px', aspectRatio: '16/9', display: 'block' }}
           />
         </Container>

@@ -43,7 +43,14 @@ function App() {
   return (
     <SandboxI18nProvider>
       <Player poster={poster}>
-        <VideoSkinComponent skin={skin} styling={styling} live={live} className="w-full aspect-video max-w-4xl mx-auto">
+        {/* The skin renders its own <img> from `poster`; supplying one is what lets it carry a CORS mode. */}
+        <VideoSkinComponent
+          renderPoster={<img alt="" crossOrigin="" />}
+          skin={skin}
+          styling={styling}
+          live={live}
+          className="w-full aspect-video max-w-4xl mx-auto"
+        >
           <NativeHlsVideo
             {...(hlsSource ? { source: hlsSource } : { src: url ?? '' })}
             autoPlay={autoplay}
@@ -51,7 +58,7 @@ function App() {
             loop={loop}
             preload={preload}
             playsInline
-            crossOrigin="anonymous"
+            crossOrigin=""
           >
             <Chapters tracks={getChapters(source)} />
             <Storyboard src={storyboard} />

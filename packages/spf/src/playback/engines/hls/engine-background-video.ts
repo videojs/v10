@@ -111,9 +111,9 @@ export interface BackgroundVideoEngineConfig
   extends ShareSignalsConfig<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   /**
    * Hard-constraint pre-pass handed to `selectVideoTrack`. Defaults to
-   * `[reportAbsentTrackType(2011), excludeUnplayableTracks]` — report a source
-   * offering no video at all (this engine composes only video, so it can never
-   * play one), then prune the renditions this environment can't decode.
+   * `[excludeUnplayableTracks, reportAbsentTrackType(2011)]` — prune the renditions
+   * this environment can't decode, then report 2011 if nothing is left (this engine
+   * composes only video, so a source with none playable can never play).
    */
   constraints?: SelectVideoTrackConfig['constraints'];
   /**
@@ -199,7 +199,7 @@ export function createBackgroundVideoEngine(
 ): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   const finalConfig = {
     ...config,
-    constraints: config.constraints ?? [reportAbsentTrackType(SVTA_NO_SUPPORTED_VIDEO_TRACK), excludeUnplayableTracks],
+    constraints: config.constraints ?? [excludeUnplayableTracks, reportAbsentTrackType(SVTA_NO_SUPPORTED_VIDEO_TRACK)],
     rules: config.rules ?? [screenResolutionCap, preferHighestResolution],
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     resolveDuration: getResolvedSelectedTrackDuration,

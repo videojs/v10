@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.30...@videojs/cli@10.0.0-beta.31) (2026-08-21)
+
+
+### Features
+
+* **packages:** add live presets to installation and skin tools ([#1919](https://github.com/videojs/v10/issues/1919)) ([44a398c](https://github.com/videojs/v10/commit/44a398c3a0c7084bedabd77123742f9521d2b052))
+
+## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.29...@videojs/cli@10.0.0-beta.30) (2026-08-20)
+
+
+### Miscellaneous Chores
+
+* **@videojs/cli:** Synchronize videojs versions
+
 ## [10.0.0-beta.29](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.28...@videojs/cli@10.0.0-beta.29) (2026-08-19)
 
 

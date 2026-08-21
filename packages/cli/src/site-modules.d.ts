@@ -9,17 +9,33 @@
 declare module '@/utils/installation/types' {
   export type Renderer =
     | 'background-video'
+    | 'cloudflare'
     | 'dash'
     | 'hls'
     | 'html5-audio'
     | 'html5-video'
     | 'mux-audio'
     | 'mux-video'
-    | 'vimeo';
+    | 'spotify'
+    | 'tiktok'
+    | 'twitch'
+    | 'vimeo'
+    | 'youtube';
   export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
-  export type UseCase = 'default-video' | 'default-audio' | 'background-video';
+  export type UseCase = 'default-video' | 'default-audio' | 'live-video' | 'live-audio' | 'background-video';
   export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
-  export const VALID_RENDERERS: Record<UseCase, Renderer[]>;
+  export interface InstallationPreset {
+    label: string;
+    flag: string;
+    group: string;
+    tagPrefix: string;
+    componentPrefix: string;
+    mediaType: 'video' | 'audio';
+    live: boolean;
+    renderers: readonly Renderer[];
+  }
+  export const USE_CASES: UseCase[];
+  export function getInstallationPreset(useCase: UseCase): InstallationPreset;
 }
 
 declare module '@/utils/installation/codegen' {
@@ -54,7 +70,7 @@ declare module '@/utils/installation/codegen' {
   ): Record<'MyPlayer.tsx', string>;
 
   export function generateReactUsageCode(
-    opts: Pick<InstallationOptions, 'renderer' | 'sourceUrl'>
+    opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
   ): Record<'App.tsx', string>;
 }
 
