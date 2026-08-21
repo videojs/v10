@@ -5,8 +5,13 @@ import {
   wistiaPlayerDefaultOptions,
   wistiaPlayerStyle,
 } from '@videojs/media/dom/wistia';
+// Keep this above `@wistia/wistia-player`: the package reads browser globals as it evaluates, and this is
+// what a server runtime has to lend it. See `server-shim.ts`.
+import { restoreWistiaGlobals } from '@videojs/media/dom/wistia/server-shim';
 import { WistiaPlayer } from '@wistia/wistia-player';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
+
+restoreWistiaGlobals();
 
 /**
  * Wistia is the one media here that ships a web component of its own, so `<wistia-video>` is that component
