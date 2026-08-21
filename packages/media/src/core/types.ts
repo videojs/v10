@@ -454,20 +454,21 @@ export interface MediaLiveEvents {
 
 export interface MediaLiveCapability {
   /**
-   * Presentation time marking the start of the Live Edge Window. Playing at
-   * the live edge when `currentTime >= liveEdgeStart`. `NaN` when the stream
-   * isn't live or the value is unknown.
+   * Playback time where the live edge begins. Playback is live when
+   * `currentTime >= liveEdgeStart`. `NaN` when the stream is not live or the
+   * value is unknown.
    *
-   * Derived — no dedicated change event; re-read when `seekable`,
-   * `targetLiveWindow`, or `streamType` change.
+   * No change event fires for this value alone. Read it again when `seekable`,
+   * `targetLiveWindow`, or `streamType` changes.
    *
    * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
    */
   readonly liveEdgeStart: number;
   /**
-   * Offset representing the seekable range size for live content. `0` for
-   * standard latency live, `Infinity` for DVR, `NaN` for on-demand or
-   * unknown. Fires `targetlivewindowchange` when the value changes.
+   * Describes the kind of live window available. `0` for a sliding live
+   * window, `Infinity` for a live event with playback history, and `NaN` for
+   * on-demand or unknown. This value is not a duration. Fires
+   * `targetlivewindowchange` when it changes.
    */
   readonly targetLiveWindow: number;
 }

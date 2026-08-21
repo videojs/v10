@@ -459,7 +459,7 @@ class ShakaMediaBase
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
  * @fires error - Fired when playback fails in a way Shaka could not recover from. Read `error` for the failure.
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
- * @fires targetlivewindowchange - Fired when the live window duration changes. Read `targetLiveWindow` for the new value.
+ * @fires targetlivewindowchange - Fired when `targetLiveWindow` changes. Read it for the new value.
  */
 export class ShakaMedia extends ShakaMediaLiveMixin(
   ShakaMediaStreamTypeMixin(ShakaMediaMediaTracksMixin(ShakaMediaBase))
