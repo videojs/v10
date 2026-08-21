@@ -1,18 +1,20 @@
 import { backgroundFeatures } from '@videojs/core/dom';
 import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
-import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
-const { ProviderMixin } = createPlayer({
+const { PlayerElement, PlayerController: BackgroundVideoPlayerController } = createPlayer({
   features: backgroundFeatures,
 });
 
-export class BackgroundVideoPlayerElement extends ProviderMixin(MediaElement) {
+/** Player controller bound to the background video player store. */
+export const PlayerController = BackgroundVideoPlayerController;
+
+export class BackgroundVideoPlayerElement extends PlayerElement {
   static readonly tagName = 'background-video-player';
 }
 
-// Provider must be defined before consumer for context handshake during upgrade.
+// The player must be defined before consumers for context handshakes during upgrade.
 safeDefine(BackgroundVideoPlayerElement);
 safeDefine(ContainerElement);
 

@@ -92,7 +92,7 @@ export const sidebar: Sidebar = [
         defaultOpen: false,
         llmsDescription: 'API Reference for UI components for building media player interfaces.',
         contents: [
-          { slug: 'reference/player-provider' },
+          { slug: 'reference/player' },
           { slug: 'reference/player-container' },
           { slug: 'reference/i18n-provider', frameworks: ['react'] },
           // sorted alphabetically
@@ -212,7 +212,6 @@ export const sidebar: Sidebar = [
           { slug: 'reference/use-snapshot', frameworks: ['react'] },
           { slug: 'reference/media-attach-mixin', frameworks: ['html'] },
           { slug: 'reference/player-context', frameworks: ['html'] },
-          { slug: 'reference/provider-mixin', frameworks: ['html'] },
           { slug: 'reference/snapshot-controller', frameworks: ['html'] },
           { slug: 'reference/store-controller', frameworks: ['html'] },
         ],

@@ -43,10 +43,10 @@ function PiPButton() {
 import { createPlayer, MediaElement, selectPiP } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const { PlayerController } = createPlayer({ features: videoFeatures });
 
 class PiPButton extends MediaElement {
-  readonly #pip = new PlayerController(this, context, selectPiP);
+  readonly #pip = new PlayerController(this, selectPiP);
 }
 ```
 </FrameworkCase>

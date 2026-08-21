@@ -45,10 +45,10 @@ function LiveEdgeIndicator() {
 import { createPlayer, MediaElement, selectLive } from '@videojs/html';
 import { liveVideoFeatures } from '@videojs/html/live-video';
 
-const { PlayerController, context } = createPlayer({ features: liveVideoFeatures });
+const { PlayerController } = createPlayer({ features: liveVideoFeatures });
 
 class LiveEdgeButton extends MediaElement {
-  readonly #live = new PlayerController(this, context, selectLive);
+  readonly #live = new PlayerController(this, selectLive);
 }
 ```
 </FrameworkCase>

@@ -4,24 +4,19 @@ import {
   createButton,
   createPlayer,
   MediaElement,
-  PlayerController,
   selectPlayback,
 } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 import '@videojs/html/ui/container';
 
-const { ProviderMixin, context } = createPlayer({
+const { PlayerElement: VideoPlayerElement, PlayerController } = createPlayer({
   features: videoFeatures,
 });
-
-class VideoPlayer extends ProviderMixin(MediaElement) {
-  static readonly tagName = 'demo-video-player';
-}
 
 class PlayToggle extends MediaElement {
   static readonly tagName = 'demo-play-toggle';
 
-  readonly #player = new PlayerController(this, context, selectPlayback);
+  readonly #player = new PlayerController(this, selectPlayback);
 
   #disconnect: AbortController | null = null;
 
@@ -55,5 +50,5 @@ class PlayToggle extends MediaElement {
   }
 }
 
-customElements.define(VideoPlayer.tagName, VideoPlayer);
+customElements.define('demo-video-player', VideoPlayerElement);
 customElements.define(PlayToggle.tagName, PlayToggle);

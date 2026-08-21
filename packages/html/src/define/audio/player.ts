@@ -1,18 +1,20 @@
 import { audioFeatures } from '@videojs/core/dom';
 import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
-import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
-const { ProviderMixin } = createPlayer({
+const { PlayerElement, PlayerController: AudioPlayerController } = createPlayer({
   features: audioFeatures,
 });
 
-export class AudioPlayerElement extends ProviderMixin(MediaElement) {
+/** Player controller bound to the standard audio player store. */
+export const PlayerController = AudioPlayerController;
+
+export class AudioPlayerElement extends PlayerElement {
   static readonly tagName = 'audio-player';
 }
 
-// Provider must be defined before consumer for context handshake during upgrade.
+// The player must be defined before consumers for context handshakes during upgrade.
 safeDefine(AudioPlayerElement);
 safeDefine(ContainerElement);
 
