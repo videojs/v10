@@ -59,11 +59,37 @@ describe('stylePlugin', () => {
     expect(design.watchFiles).toContain(designDependency);
     expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('virtual:vjsc/css'));
   });
+
+  it('releases stale hashed CSS modules when an owner is recompiled', async () => {
+    let scope = '.first';
+    const styles = stylePlugin(() => ({
+      manifest,
+      mode: 'css',
+      stylesheet: { input: designPath, scope },
+    }));
+    const input = `
+      import styles from './fixtures/button.styles';
+      export const button = <button className={styles.button} />;
+    `;
+
+    const first = await transform(input, undefined, styles);
+    scope = '.second';
+    const second = await transform(input, undefined, styles);
+    const firstId = virtualCssIds(first.source)[0];
+    const secondId = virtualCssIds(second.source)[0];
+
+    expect(firstId).toBeDefined();
+    expect(secondId).toBeDefined();
+    expect(secondId).not.toBe(firstId);
+    expect(await resolvePluginId(styles, firstId!)).toBeNull();
+    expect(await resolvePluginId(styles, secondId!)).toBe(`\0${secondId}`);
+  });
 });
 
 async function transform(
   source: string,
-  config: StylePluginConfig = { manifest, mode: 'tailwind' }
+  config: StylePluginConfig = { manifest, mode: 'tailwind' },
+  styles: Plugin = stylePlugin(config)
 ): Promise<{ readonly source: string }> {
   let meta: unknown;
   const inspect: Plugin = {
@@ -76,7 +102,7 @@ async function transform(
     input: 'fixture',
     external: /^virtual:vjsc\/css\//,
     transform: { jsx: 'preserve' },
-    plugins: [fixturePlugin(source), stylePlugin(config), componentSourcePlugin(), inspect],
+    plugins: [fixturePlugin(source), styles, componentSourcePlugin(), inspect],
   });
 
   await bundle.generate({ format: 'es' });
@@ -84,6 +110,18 @@ async function transform(
   const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
   return { source: output };
+}
+
+function virtualCssIds(source: string): string[] {
+  return [...source.matchAll(/["'](virtual:vjsc\/css\/[^"']+)["']/g)].map((match) => match[1]!);
+}
+
+async function resolvePluginId(plugin: Plugin, id: string): Promise<unknown> {
+  const hook = plugin.resolveId;
+  if (!hook) return null;
+
+  const handler = typeof hook === 'function' ? hook : hook.handler;
+  return (handler as (id: string) => unknown)(id);
 }
 
 function fixturePlugin(source: string): Plugin {

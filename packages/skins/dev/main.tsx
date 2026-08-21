@@ -1,6 +1,7 @@
-import { Video, VideoPlayer } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
+import { Video } from '../../react/src/media/video';
+import { VideoPlayer } from '../../react/src/presets/video/player';
 import './styles.css';
 
 const modules = {

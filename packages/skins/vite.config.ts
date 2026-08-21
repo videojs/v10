@@ -8,7 +8,6 @@ import { configureSkinModule } from './vjsc/config';
 
 const packageDir = import.meta.dirname;
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
-const reactVideoSource = normalizePath(resolve(reactSourceDir, 'presets/video/index.ts'));
 const htmlDefineDir = normalizePath(resolve(packageDir, '../html/src/define'));
 const htmlIconElementDir = normalizePath(resolve(packageDir, '../html/src/icons/element'));
 
@@ -30,7 +29,6 @@ function createPreviewConfig() {
     ],
     resolve: {
       alias: [
-        { find: /^@videojs\/react\/video$/, replacement: reactVideoSource },
         { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
         { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: htmlIconElementDir },
         { find: /^@videojs\/html(?=\/|$)/, replacement: htmlDefineDir },

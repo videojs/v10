@@ -47,10 +47,16 @@ interface StyleBinding {
   readonly modulePath: string;
 }
 
+interface VirtualCssModule {
+  readonly source: string;
+  readonly owners: Set<string>;
+}
+
 export function stylePlugin(config: StylePluginConfig): Plugin {
   const designs = new Map<string, Promise<CachedDesignSystem>>();
   const manifests = new Map<string, CachedManifest>();
-  const cssById = new Map<string, string>();
+  const cssById = new Map<string, VirtualCssModule>();
+  const cssByOwner = new Map<string, ReadonlySet<string>>();
   let cwd = process.cwd();
 
   return {
@@ -64,24 +70,36 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
     },
     load(id) {
       const publicId = id.startsWith('\0') ? id.slice(1) : id;
-      return cssById.get(publicId) ?? null;
+      return cssById.get(publicId)?.source ?? null;
     },
     transform: {
       filter: { id: SCRIPT_ID, code: '.styles' },
       async handler(_code, id, transform) {
         const options = typeof config === 'function' ? await config({ id, ...parseModuleId(id) }) : config;
-        if (!options || !transform.ast || !transform.magicString) return null;
+        if (!options || !transform.ast || !transform.magicString) {
+          replaceVirtualCss(cssById, cssByOwner, id, []);
+          return null;
+        }
 
         const filename = moduleFilename(id);
         const files = importedStyleFiles(filename, transform.ast);
-        if (files.length === 0) return null;
+        if (files.length === 0) {
+          replaceVirtualCss(cssById, cssByOwner, id, []);
+          return null;
+        }
 
         const manifest = options.manifest ?? (await cachedManifest(manifests, files));
-        if (manifest.rules.length === 0) return null;
+        if (manifest.rules.length === 0) {
+          replaceVirtualCss(cssById, cssByOwner, id, []);
+          return null;
+        }
         for (const file of manifest.watchFiles) this.addWatchFile(file);
 
         const changed = transformStyles(filename, transform.ast, transform.magicString, manifest, options);
-        if (!changed) return null;
+        if (!changed) {
+          replaceVirtualCss(cssById, cssByOwner, id, []);
+          return null;
+        }
 
         if (options.mode === 'css' && options.stylesheet) {
           const input = resolve(cwd, options.stylesheet.input);
@@ -95,20 +113,53 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
           cachedDesign.versions = await fileVersions(cachedDesign.design.watchFiles);
           for (const file of cachedDesign.design.watchFiles) this.addWatchFile(file);
           const imports: string[] = [];
+          const modules: Array<readonly [string, string]> = [];
 
           for (const [fileName, source] of assets) {
             const publicId = cssVirtualId(fileName, source);
-            cssById.set(publicId, source);
+            modules.push([publicId, source]);
             imports.push(`import ${JSON.stringify(publicId)};`);
           }
 
+          replaceVirtualCss(cssById, cssByOwner, id, modules);
           insertModuleImports(transform.ast, transform.magicString, imports);
+        } else {
+          replaceVirtualCss(cssById, cssByOwner, id, []);
         }
 
         return { code: transform.magicString };
       },
     },
   };
+}
+
+function replaceVirtualCss(
+  cssById: Map<string, VirtualCssModule>,
+  cssByOwner: Map<string, ReadonlySet<string>>,
+  owner: string,
+  modules: readonly (readonly [id: string, source: string])[]
+): void {
+  const nextIds = new Set(modules.map(([id]) => id));
+
+  for (const id of cssByOwner.get(owner) ?? []) {
+    if (nextIds.has(id)) continue;
+
+    const module = cssById.get(id);
+    module?.owners.delete(owner);
+    if (module?.owners.size === 0) cssById.delete(id);
+  }
+
+  for (const [id, source] of modules) {
+    const module = cssById.get(id);
+    if (module) {
+      module.owners.add(owner);
+    } else {
+      cssById.set(id, { source, owners: new Set([owner]) });
+    }
+  }
+
+  if (nextIds.size > 0) cssByOwner.set(owner, nextIds);
+  else cssByOwner.delete(owner);
 }
 
 function transformStyles(

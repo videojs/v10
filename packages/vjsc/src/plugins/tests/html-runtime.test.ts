@@ -1,3 +1,6 @@
+import { resolve } from 'node:path';
+
+import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vitest';
 
 import { HTML_RUNTIME } from '../html-runtime';
@@ -33,9 +36,50 @@ describe('htmlRuntimePlugin', () => {
 
     expect(String(output)).toBe('<button class="button active" id="trigger"></button>');
   });
+
+  it('escapes attribute and child text with the shared HTML contract', async () => {
+    const runtime = await loadRuntime();
+    const value = `&<>"'\``;
+    const output = runtime.jsx('span', { title: value, children: value });
+
+    expect(String(output)).toBe('<span title="&amp;&lt;&gt;&quot;&#39;&#96;">&amp;&lt;&gt;&quot;&#39;&#96;</span>');
+  });
+
+  it('serializes SVG attribute names without corrupting case-sensitive names', async () => {
+    const runtime = await loadRuntime();
+    const output = runtime.jsx('svg', {
+      viewBox: '0 0 18 18',
+      preserveAspectRatio: 'xMidYMid meet',
+      strokeWidth: 2,
+      xlinkHref: '#icon',
+    });
+
+    expect(String(output)).toBe(
+      '<svg viewBox="0 0 18 18" preserveAspectRatio="xMidYMid meet" stroke-width="2" xlink:href="#icon"></svg>'
+    );
+  });
 });
 
 async function loadRuntime(): Promise<HtmlRuntime> {
-  const url = `data:text/javascript;base64,${Buffer.from(HTML_RUNTIME).toString('base64')}`;
+  const build = await rolldown({
+    input: 'runtime',
+    plugins: [
+      {
+        name: 'test-runtime',
+        resolveId(id) {
+          if (id === 'runtime') return id;
+          return id === 'vjsc/target' ? resolve(import.meta.dirname, '../../target/index.ts') : null;
+        },
+        load(id) {
+          return id === 'runtime' ? HTML_RUNTIME : null;
+        },
+      },
+    ],
+  });
+  const { output } = await build.generate({ format: 'esm' });
+  const chunk = output.find((item) => item.type === 'chunk');
+  if (!chunk) throw new Error('Expected the HTML runtime bundle to contain a chunk.');
+
+  const url = `data:text/javascript;base64,${Buffer.from(chunk.code).toString('base64')}`;
   return (await import(url)) as HtmlRuntime;
 }

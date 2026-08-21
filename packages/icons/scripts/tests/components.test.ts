@@ -55,7 +55,9 @@ describe('generated icon modules', () => {
     };
 
     expect(renderIcon('play')).toContain('aria-hidden="true"');
-    expect(renderIcon('play', { class: 'icon', title: 'a & b' })).toContain('class="icon" title="a &amp; b"');
+    expect(renderIcon('play', { class: 'icon', title: `&<>"'\`` })).toContain(
+      'class="icon" title="&amp;&lt;&gt;&quot;&#39;&#96;"'
+    );
     expect(renderIcon('missing')).toBe('');
   });
 

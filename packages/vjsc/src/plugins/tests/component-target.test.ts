@@ -74,6 +74,7 @@ const reactTarget = defineComponentTarget<typeof schema>()(({ target, element, i
 
 const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element }) => {
   const Button = element('button');
+  const Svg = element('svg');
 
   return {
     source: '@fixture/components',
@@ -82,6 +83,13 @@ const htmlTarget = defineComponentTarget<typeof schema>()(({ target, element }) 
         import: { from: '@fixture/elements', sideEffect: true },
       }),
     components: {
+      PlayButton: () =>
+        jsx(Svg, {
+          viewBox: '0 0 18 18',
+          preserveAspectRatio: 'xMidYMid meet',
+          strokeWidth: 2,
+          xlinkHref: '#icon',
+        }),
       Menu: {
         Trigger: ({ props, children, id }) => jsx(Button, { commandfor: id('content'), ...props, children }),
         Content: ({ props, children, id }) => jsx(target.Menu.Content, { id: id('content'), ...props, children }),
@@ -164,6 +172,16 @@ describe('componentTargetPlugin', () => {
     expect(source).toContain('import { Scope } from "vjsc/html-runtime/jsx-runtime";');
     expect(source).toContain('import "@fixture/elements";');
     expect(source).toContain('<Scope prefix=');
+  });
+
+  it('preserves SVG attribute spelling in HTML target output', async () => {
+    const source = await transform(`import * as $ from '@fixture/components'; export const icon = <$.PlayButton />;`, {
+      targets: [htmlTarget],
+    });
+
+    expect(source).toContain(
+      '<svg viewBox="0 0 18 18" preserveAspectRatio="xMidYMid meet" stroke-width={2} xlink:href="#icon" />'
+    );
   });
 
   it('lowers canonical components retained by an outer rewrite', async () => {

@@ -22,6 +22,9 @@ export function htmlRuntimePlugin(): Plugin {
 }
 
 export const HTML_RUNTIME = `
+import { escapeHtml } from '@videojs/utils/string';
+import { htmlAttributeName } from 'vjsc/target';
+
 export const Fragment = Symbol('Fragment');
 const raw = Symbol('raw-html');
 const element = Symbol('html-element');
@@ -68,8 +71,8 @@ function renderAttributes(attributes, context) {
     const normalized = name === 'className'
       ? [value].flat(Infinity).filter(Boolean).join(' ')
       : resolveScopedId(value, context);
-    const attribute = name === 'className' ? 'class' : name.replace(/[A-Z]/g, (letter) => '-' + letter.toLowerCase());
-    output += normalized === true ? ' ' + attribute : ' ' + attribute + '="' + escape(normalized) + '"';
+    const attribute = htmlAttributeName(name);
+    output += normalized === true ? ' ' + attribute : ' ' + attribute + '="' + escapeHtml(String(normalized)) + '"';
   }
 
   return output;
@@ -84,7 +87,7 @@ function renderChildren(children, context) {
 }
 
 function renderValue(value, context) {
-  if (!value || typeof value !== 'object') return escape(value);
+  if (!value || typeof value !== 'object') return escapeHtml(String(value));
 
   if (element in value) {
     const current = value[element];
@@ -102,7 +105,7 @@ function renderValue(value, context) {
     return renderChildren(current.children, { counts: context.counts, scopes });
   }
   if (raw in value) return value[raw];
-  return escape(value);
+  return escapeHtml(String(value));
 }
 
 function resolveScopedId(value, context) {
@@ -114,10 +117,6 @@ function resolveScopedId(value, context) {
   }
 
   throw new Error('HTML scoped identifier was rendered outside its component scope.');
-}
-
-function escape(value) {
-  return String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
 function htmlElement(type, attributes, children) {

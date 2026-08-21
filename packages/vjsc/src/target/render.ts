@@ -1,4 +1,5 @@
 import { type ModuleImports, sliceSource } from '../ast';
+import { htmlAttributeName } from './attributes';
 import {
   type ComponentTarget,
   type ComponentTargetPath,
@@ -248,9 +249,7 @@ function renderTargetReference(
 
 function targetAttributeName(name: string, attributes: ComponentTarget['jsx']['attributes']): string {
   if (attributes === 'react') return name;
-  if (name === 'className') return 'class';
-  if (name === 'htmlFor') return 'for';
-  return name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+  return htmlAttributeName(name);
 }
 
 export function isTargetNode(value: unknown): value is TargetNode {
