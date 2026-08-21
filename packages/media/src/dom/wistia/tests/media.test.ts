@@ -82,7 +82,7 @@ describe('WistiaMedia', () => {
   });
 
   it('hides Wistia chrome when no controls attribute was written', () => {
-    // Wistia draws its chrome by default, and an absent attribute reports no change to act on, so without a
+    // Wistia draws chrome by default and an absent attribute reports no change to act on, so without a
     // default of our own the controls would show for markup that never asked for them.
     const element = create();
 
@@ -190,8 +190,7 @@ describe('WistiaMedia', () => {
     const element = create();
     element.source = { mediaId: 'oifkgmxnkb', roundedPlayer: 12 };
 
-    // Every attribute is worked out from scratch, so the source has to outrank the defaults every time and
-    // not only on the connect that first applied them.
+    // Every attribute is worked out from scratch, so a source has to outrank the defaults every time.
     element.setAttribute('controls', '');
 
     expect(element.roundedPlayer).toBe(12);

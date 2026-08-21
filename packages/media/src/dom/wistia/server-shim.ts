@@ -1,57 +1,40 @@
 /**
- * `@wistia/wistia-player` is the element, not a library that happens to register one: it reads `location`,
- * measures the `screen`, binds to the `document` and calls `customElements.define` while it evaluates. There
- * is no server build and no entry that stops short of that, so importing the package on a server throws
- * before any of it can be feature-detected away — and importing it lazily instead is what this project moved
- * off, since an element defined a tick late reaches React and the store as a bare `HTMLElement`.
+ * `@wistia/wistia-player` is the element, not a library that registers one: it reads `location`, measures the
+ * `screen`, binds to the `document` and calls `customElements.define` while it evaluates, and ships no server
+ * build that stops short of that. Importing it lazily instead is what this project moved off, since an
+ * element defined a tick late reaches React and the store as a bare `HTMLElement`.
  *
- * So the import stays static, and this lends that evaluation the globals it reaches for. `media.ts` is the
- * only importer and the only caller, which is the point: a module is evaluated before the one importing it,
- * so the stubs are in place by the time Wistia runs and gone again before anything else looks, and there is
- * one file to keep that order in. Leaving them would be worse than the crash they prevent — every framework
- * decides it is in a browser by asking whether `window` exists.
- *
- * In a browser nothing is installed and nothing is taken away.
+ * So `media.ts` imports it statically, above everything, and this lends that evaluation what it reaches for.
+ * A module is evaluated before the one importing it, so the stubs are in place by the time Wistia runs — and
+ * `media.ts` takes them back the moment Wistia is through, because a `window` left behind is every framework
+ * downstream deciding it is in a browser. In a browser nothing is installed and nothing is taken away.
  */
 export const restoreWistiaGlobals: () => void = shimWistiaGlobals();
 
 function shimWistiaGlobals(): () => void {
-  /**
-   * What Wistia's evaluation reads, and no more: every member here was arrived at by importing the package
-   * on a server and answering what it asked for. Guessing past that would be guessing about a bundle Wistia
-   * rebuilds on its own schedule, and a stub nothing reads is a stub nothing keeps honest. They are inert —
-   * getting through evaluation is the whole job, and the code that would call any of this needs a browser.
-   */
-  const shims: Record<string, () => unknown> = {
-    window: () => globalThis,
-    location: () => new URL('http://localhost/'),
-    // 24 is the color depth of a screen that is not HDR, which is the answer for having no screen at all.
-    screen: () => ({ colorDepth: 24 }),
-    document: () => ({
-      createElement: () => ({ style: {} }),
-      getElementsByTagName: () => [],
-      addEventListener: noop,
-    }),
-    HTMLElement: () => class {},
-    customElements: () => ({
-      define: noop,
-      get: () => undefined,
-      upgrade: noop,
-      whenDefined: () => Promise.resolve(undefined),
-    }),
+  // What Wistia's evaluation reads and no more, each one arrived at by importing the package on a server and
+  // answering what it asked for. Inert: getting through evaluation is the whole job.
+  const shims: Record<string, unknown> = {
+    window: globalThis,
+    location: new URL('http://localhost/'),
+    // The color depth of a screen that is not HDR, which is the answer for having no screen at all.
+    screen: { colorDepth: 24 },
+    document: { createElement: () => ({ style: {} }), getElementsByTagName: () => [], addEventListener: noop },
+    HTMLElement: class {},
+    customElements: { define: noop, get: () => undefined },
   };
 
   const globals = globalThis as Record<string, unknown>;
   const installed: string[] = [];
 
-  for (const [name, create] of Object.entries(shims)) {
+  for (const [name, stub] of Object.entries(shims)) {
     if (name in globals) continue;
-    globals[name] = create();
+    globals[name] = stub;
     installed.push(name);
   }
 
+  // Emptied as it goes, so a second call cannot take away a global this one did not install.
   return () => {
-    // Emptied as it goes, so a second call cannot take away a global this one did not install.
     for (const name of installed.splice(0)) Reflect.deleteProperty(globals, name);
   };
 }

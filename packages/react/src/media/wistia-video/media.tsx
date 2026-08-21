@@ -1,8 +1,7 @@
 'use client';
 
 import type { WistiaMediaProps, WistiaPlayer, WistiaSource } from '@videojs/media/dom/wistia';
-// Importing this entry is what registers `<wistia-player>`: it is where `@wistia/wistia-player` is imported,
-// so the tag this renders cannot outrun the definition that makes it a player.
+// This entry is where `@wistia/wistia-player` is imported, so the tag below cannot outrun its definition.
 import {
   normalizeWistiaPlayer,
   parseWistiaMediaId,
@@ -24,19 +23,15 @@ export interface WistiaVideoProps extends Partial<Omit<WistiaMediaProps, 'source
 
 /**
  * Wistia is the one media here that ships a web component of its own, so this renders that component rather
- * than a player of its own making. `@videojs/media/dom/wistia` is what registers it — statically, so
- * the element React hands this component's ref is already upgraded and already a Wistia player. Wistia's own
- * React wrapper defines it from an effect instead, which is a tick too late: the store reads a media once,
- * as it attaches, and a bare `HTMLElement` is a media that cannot seek, buffer, or name a source.
+ * than a player of its own making, and `@videojs/media/dom/wistia` registers it statically — the element the
+ * ref hands back is already a Wistia player. Wistia's own React wrapper defines it from an effect, a tick too
+ * late: the store reads a media once, as it attaches, and a bare `HTMLElement` is a media that cannot seek,
+ * buffer, or name a source.
  *
  * The translation is one layer thin. `source` carries Wistia's own options — `mediaId`, `playerColor`,
- * `qualityMin`, and the rest — straight through, so anything the player understands stays reachable without
- * this component knowing about it. What it does know about is the handful a media names differently: `src`
- * for the media id, `loop` for `endVideoBehavior`, `defaultMuted` for the muted state to start in, and
- * `controls` for the group of switches Wistia hides its chrome behind.
- *
- * The element itself is what the player store attaches to, normalized in place, so the ref hands back one
- * object that is both Wistia's player and this project's media.
+ * `qualityMin` — straight through, so anything the player understands stays reachable without this component
+ * knowing about it; the rest is the handful a media names differently. The element itself is what the store
+ * attaches to, normalized in place, so the ref hands back one object that is both.
  */
 export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttributes<WistiaPlayer>> = forwardRef<
   WistiaPlayer,
@@ -64,12 +59,8 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
 
   const attachRef = useCallback<RefCallback<WistiaPlayer>>(
     (element) => {
-      if (!element) {
-        setMedia?.(null);
-        return;
-      }
       // No cast: this is where Wistia's real class is held to the contract the normalizer describes.
-      normalizeWistiaPlayer(element);
+      if (element) normalizeWistiaPlayer(element);
       setMedia?.(element as never);
     },
     [setMedia]
@@ -79,20 +70,16 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
   // A Wistia URL is accepted where a media id is expected, the way every other media here accepts a `src`.
   const { mediaId, ...options } = source ?? {};
   const resolved = mediaId ?? (src ? parseWistiaMediaId(src) : null);
-  // A `wtime` in the URL is the one thing the id does not carry over, and it is a start position rather
-  // than a live playhead, so it is read once from the source this component opened with.
+  // A `wtime` is a start position rather than a live playhead, so it is read once from the opening source.
   const [startTime] = useState(() => (src ? parseWistiaStartTime(src) : null));
-  // The muted state the player *starts* in. Sent on every render it would fight the viewer: unmuting through
-  // the skin drives the element, and the next parent render would put the mute straight back.
+  // Likewise the muted state the player *starts* in: re-sent on a later render it would put the mute back
+  // after the viewer cleared it through the skin.
   const [initialMuted] = useState(() => defaultMuted ?? muted);
 
   return createElement(WISTIA_PLAYER_TAG, {
-    // A new media is a new element. What announces a source change on the element is the normalizer's
-    // `source` setter — `emptied`, then `sourcechange`, and the metadata latch reset — and writing an
-    // attribute goes around it, so the player would swap media with nothing saying so and the store would
-    // hold the last one's duration and title. Remounting says it the other way, as a detach and an attach.
-    // Wistia's own React wrapper keys its element too; a source that only recolors the player keeps this id
-    // and so keeps the player.
+    // A new media is a new element. Writing an attribute goes around the normalizer's `source` setter, which
+    // is what announces a source change, so the store would hold the last media's duration and title;
+    // remounting says it as a detach and an attach. A source that only recolors keeps this id and the player.
     key: resolved,
     ...wistiaAttributes({
       mediaId: resolved ?? '',

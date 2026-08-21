@@ -2,14 +2,12 @@ import { VideoCSSVars } from '../custom-media-element';
 
 /**
  * Wistia player options, spelled the way `<wistia-player>` spells its JavaScript properties
- * (https://docs.wistia.com/docs/player-attributes-and-properties). They are assigned to the player
- * verbatim, so what you write here is what it reads, and they stay live: the player is an element on the
- * page, so changing one reaches it.
+ * (https://docs.wistia.com/docs/player-attributes-and-properties). Assigned to the player verbatim and live:
+ * it is an element on the page, so changing one reaches it.
  *
- * The members a media element already has a name for are deliberately absent — `autoplay`, `muted`,
- * `poster`, `preload`, `volume`, `currentTime`, and `playbackRate` are props of their own, `endVideoBehavior`
- * is `loop`, and the eight control-bar switches are `controls`. The index signature still carries anything
- * not listed here, so undocumented knobs and whatever Wistia adds next keep working.
+ * The members a media element already names are deliberately absent — `endVideoBehavior` is `loop`, the eight
+ * control-bar switches are `controls`, and `autoplay`, `muted`, `poster`, `preload`, `volume`, `currentTime`,
+ * and `playbackRate` are props of their own. The index signature carries whatever Wistia adds next.
  */
 export interface WistiaSource extends Record<string, unknown> {
   /** **Required**. The hashed id of the media to play. */
@@ -62,39 +60,29 @@ export interface WistiaSource extends Record<string, unknown> {
 export type WistiaQuality = 224 | 360 | 540 | 720 | 1080 | 2160;
 
 /**
- * What a Wistia player is started with here, whatever Wistia's own default or the media's customizations in
- * the Wistia app say. A source overrides any of them.
- *
- * Only corner radius so far. Wistia rounds a player to whatever the account configured for the media, and
- * the skin is what rounds it here — see `wistiaPlayerStyle`. `roundedPlayer` is the one radius to square:
- * `playerBorderRadius`, `controlBarBorderRadius`, and `bigPlayButtonBorderRadius` are read-only and derived
- * from it.
+ * What a Wistia player is started with here, whatever Wistia's default or the Wistia app says; a source
+ * overrides it. Only the corner radius so far, squared because the skin is what rounds a media — see
+ * `wistiaPlayerStyle`. `roundedPlayer` is the one to set: the three `*BorderRadius` options derive from it.
  */
 export const wistiaPlayerDefaultOptions = {
   roundedPlayer: 0,
 } as const satisfies WistiaSource;
 
 /**
- * The style a Wistia player is given.
+ * The style a Wistia player is given: the skin's corners, and no pointer events without chrome.
  *
- * `borderRadius` reads the same custom property a `<video>` does, so a Wistia player is cropped to the
- * skin's corners the way every other media is. `overflow` goes with it: a `<video>` is replaced content and
- * the radius alone clips what it paints, where Wistia paints into child elements, so the box has to clip
- * them too. This is the skin's rounding, and the reason `wistiaPlayerDefaultOptions` squares Wistia's own
- * — two radii on one player would round it twice.
- *
- * `pointerEvents` is off for a chromeless player: it is a video surface under a skin, and the skin is what
- * the viewer is clicking. Left interactive, the player swallows those clicks and answers them with chrome
- * of its own that is not supposed to be there. Every embed here does the same thing — the iframe ones
- * through a `:host(:not([controls]))` rule in a template they own, which a player that brings its own
+ * `borderRadius` reads the same custom property a `<video>` does, and `overflow` goes with it — a `<video>`
+ * is replaced content that the radius alone clips, where Wistia paints into children the box has to clip too.
+ * `pointerEvents` is off for a chromeless player because the skin over it is what the viewer is clicking;
+ * left interactive it swallows those clicks and answers them with chrome of its own. The iframe embeds do the
+ * same through a `:host(:not([controls]))` rule in a template they own, which a player that brings its own
  * element has no equivalent of.
  */
 export function wistiaPlayerStyle(controls: boolean) {
   return {
     borderRadius: `var(${VideoCSSVars.borderRadius})`,
     overflow: 'hidden',
-    // `auto` rather than an empty string: it is the initial value of `pointer-events`, so it restores the
-    // player as reliably as clearing the declaration would, and it is a value a stylesheet can state.
+    // `auto` rather than an empty string: the initial value of `pointer-events`, and one a stylesheet can say.
     pointerEvents: controls ? 'auto' : 'none',
   } as const;
 }
@@ -129,31 +117,27 @@ export function parseWistiaMediaId(src: string): string | null {
 }
 
 /**
- * Parse the `wtime` parameter of a Wistia URL and convert it to seconds. Wistia spells timestamps the way
- * it spells them elsewhere: `90`, `90s`, `1m30s`, `1h2m3s`.
+ * Parse the `wtime` parameter of a Wistia URL into seconds. Wistia spells timestamps the way it spells them
+ * elsewhere: `90`, `90s`, `1m30s`, `1h2m3s`.
  */
 export function parseWistiaStartTime(src: string): number | null {
   const value = /[?&]wtime=([\dhms]+)/i.exec(src)?.[1]?.toLowerCase();
   if (!value) return null;
-  let totalSeconds = 0;
-  let hasValue = false;
-  const hours = /(\d+)h/.exec(value)?.[1];
-  if (hours) {
-    totalSeconds += Number.parseInt(hours, 10) * 3600;
-    hasValue = true;
+
+  let seconds: number | null = null;
+  for (const [pattern, multiplier] of WTIME_UNITS) {
+    const amount = pattern.exec(value)?.[1];
+    if (amount) seconds = (seconds ?? 0) + Number.parseInt(amount, 10) * multiplier;
   }
-  const minutes = /(\d+)m/.exec(value)?.[1];
-  if (minutes) {
-    totalSeconds += Number.parseInt(minutes, 10) * 60;
-    hasValue = true;
-  }
-  const seconds = /(\d+)s?$/.exec(value)?.[1];
-  if (seconds) {
-    totalSeconds += Number.parseInt(seconds, 10);
-    hasValue = true;
-  }
-  return hasValue ? totalSeconds : null;
+  return seconds;
 }
+
+/** The trailing `s` is optional, so the bare-number form (`90`) lands on the same pattern. */
+const WTIME_UNITS: readonly (readonly [RegExp, number])[] = [
+  [/(\d+)h/, 3600],
+  [/(\d+)m/, 60],
+  [/(\d+)s?$/, 1],
+];
 
 const MATCH_HASHED_ID = /^[a-z\d]{10}$/i;
 // The id sits in the same position on every embed path, so the optional segment in front of it covers

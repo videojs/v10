@@ -2,11 +2,8 @@ import type { Video } from '../../core/types';
 import type { WistiaSource } from './source';
 
 /**
- * The `Video` members a Wistia player accepts, plus the source that names the media and carries Wistia's
- * own options.
- *
- * Everything here is live: `<wistia-player>` is an element on the page, so a change reaches it. The one
- * exception is `preload`, which Wistia reads only as the player is created.
+ * The `Video` members a Wistia player accepts, plus the source that names the media and carries Wistia's own
+ * options. All live — the player is an element on the page — except `preload`, read only as it is created.
  */
 export interface WistiaMediaProps
   extends Pick<

@@ -2,12 +2,9 @@ import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { WistiaVideo } from '../wistia-video';
 
-// The real package is the player: connecting one reaches for Wistia's CDN and runs an embed. Stubbed down
-// to an element that registers under the same tag, which is all this component asks of it — it renders
-// `<wistia-player>` and writes attributes, and none of that needs a player behind it.
-//
-// `@videojs/media` is what depends on the package; this one names it only so this line can resolve, which
-// is why it is a devDependency here and nothing imports it outside these tests.
+// Connecting a real player reaches for Wistia's CDN and runs an embed, where this component only renders
+// the tag and writes attributes. `@videojs/media` is what depends on the package; this one names it as a
+// devDependency so the specifier below can resolve, and imports it nowhere else.
 vi.mock('@wistia/wistia-player', () => {
   class WistiaPlayer extends HTMLElement {
     static observedAttributes: string[] = [];
@@ -98,8 +95,7 @@ describe('WistiaVideo', () => {
     expect(player.getAttribute('muted')).toBe('true');
     player.removeAttribute('muted');
 
-    // Unmuting drives the element, not this prop. Re-sending it on a later render — for any reason, from
-    // anywhere up the tree — would re-mute the player under the viewer.
+    // Unmuting drives the element, not this prop: re-sending it on any later render would re-mute the viewer.
     rerender(<WistiaVideo src={SRC} defaultMuted className="changed" />);
 
     expect(player.hasAttribute('muted')).toBe(false);
@@ -146,8 +142,7 @@ describe('WistiaVideo', () => {
   });
 
   it('normalizes the element as it mounts, since the store reads a media only once', () => {
-    // Statically imported, so the element React hands the ref is already upgraded and there is nothing to
-    // wait for. Wistia's own React wrapper defines it from an effect, and this would be a tick late.
+    // Statically imported, so the element the ref gets is already upgraded and there is nothing to wait for.
     const player = renderPlayer(<WistiaVideo src={SRC} />);
 
     expect('seeking' in player).toBe(true);
