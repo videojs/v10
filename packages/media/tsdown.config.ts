@@ -23,6 +23,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/tiktok/index': './src/dom/tiktok/index.ts',
     'dom/twitch/index': './src/dom/twitch/index.ts',
     'dom/vimeo/index': './src/dom/vimeo/index.ts',
+    'dom/wistia/index': './src/dom/wistia/index.ts',
     'dom/youtube/index': './src/dom/youtube/index.ts',
     'dom/mux/index': './src/dom/mux/index.ts',
     'dom/mux/source/index': './src/dom/mux/source/index.ts',

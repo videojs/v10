@@ -66,6 +66,10 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     ],
   },
   noExternal: [/^@videojs\/icons/, /^@videojs\/skins/],
+  // `<wistia-video>` extends Wistia's own element, so its declarations reach for the package's types. Those
+  // do not bundle: they import a file the published package omits, and pull in `preact`'s CommonJS ones.
+  // Left as an import for the consumer's compiler to resolve, which is where it resolves correctly.
+  external: [/^@wistia\//, /^preact/],
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },

@@ -399,6 +399,8 @@ export const TIKTOK_VIDEO_SRC = 'https://www.tiktok.com/@_luwes/video/7527476667
 // live, so it would show an offline banner most of the time.
 export const TWITCH_VIDEO_SRC = 'https://www.twitch.tv/videos/106400740';
 
+export const WISTIA_VIDEO_SRC = 'https://wesleyluyten.wistia.com/medias/oifkgmxnkb';
+
 /** Returns true when the given source represents a live stream and should use the live-video skin. */
 export function isLiveSource(id: SourceId): boolean {
   return SOURCES[id].live === true;

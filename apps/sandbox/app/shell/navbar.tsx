@@ -119,6 +119,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'spotify-audio': 'Spotify Audio',
   'tiktok-video': 'TikTok Video',
   'twitch-video': 'Twitch Video',
+  'wistia-video': 'Wistia Video',
 };
 
 export function Navbar({

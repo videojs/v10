@@ -23,6 +23,7 @@ export const PRESETS = [
   'spotify-audio',
   'tiktok-video',
   'twitch-video',
+  'wistia-video',
 ] as const;
 
 /**
@@ -37,4 +38,5 @@ export const EMBED_PRESETS = [
   'spotify-audio',
   'tiktok-video',
   'twitch-video',
+  'wistia-video',
 ] as const;
