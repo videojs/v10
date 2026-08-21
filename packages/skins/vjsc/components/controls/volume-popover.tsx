@@ -1,6 +1,7 @@
 import type { PopoverProps as CoreProps, VolumeSliderProps as CoreVolumeSliderProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
-import type { ComponentMeta, Props } from 'vjsc/components';
+import type { Props } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/popup.styles';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
@@ -32,4 +33,4 @@ export const meta = {
   type: 'component',
   title: 'Volume Control',
   description: 'A mute toggle with a vertical slider for adjusting playback volume in a popover.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

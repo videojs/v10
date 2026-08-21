@@ -1,6 +1,7 @@
 import type { VolumeSliderProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
-import type { ComponentMeta, Props } from 'vjsc/components';
+import type { Props } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/slider.styles';
 
 export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
@@ -20,4 +21,4 @@ export const meta = {
   title: 'Volume Slider',
   description:
     'A horizontal or vertical slider for adjusting playback volume by dragging, using the keyboard, or scrolling.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

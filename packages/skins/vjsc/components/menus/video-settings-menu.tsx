@@ -1,4 +1,5 @@
-import type { ComponentMeta, PropsOf } from 'vjsc/components';
+import type { PropsOf } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';
 import { PlaybackRateMenu } from './playback-rate-menu';
@@ -23,4 +24,4 @@ export const meta = {
   type: 'component',
   title: 'Video Settings Menu',
   description: 'Nested video quality, audio track, playback rate, and captions settings menus.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

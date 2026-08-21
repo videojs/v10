@@ -1,7 +1,8 @@
 import type { BufferingIndicatorProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { SpinnerIcon } from '@videojs/icons/vjsc';
-import type { ComponentMeta, Props } from 'vjsc/components';
+import type { Props } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/buffering.styles';
 
 export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {}) {
@@ -17,4 +18,4 @@ export const meta = {
   type: 'component',
   title: 'Buffering Indicator',
   description: 'A delayed spinner displayed while media is waiting for data.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

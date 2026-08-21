@@ -1,5 +1,5 @@
-import type { ComponentMeta } from 'vjsc/components';
 import { Group, type Props } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/overlay.styles';
 
 export function Overlay({ className, ...props }: Props = {}) {
@@ -11,4 +11,4 @@ export const meta = {
   type: 'component',
   title: 'Overlay',
   description: 'The inert video scrim rendered behind visible controls and feedback UI.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

@@ -1,7 +1,7 @@
 import type { PosterProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
-import type { ComponentMeta } from 'vjsc/components';
 import { type PropsWithChildren, Slot } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/poster.styles';
 
 export function Poster({ children, className, src, ...props }: PropsWithChildren<CoreProps> = {}) {
@@ -17,4 +17,4 @@ export const meta = {
   type: 'component',
   title: 'Poster',
   description: 'The video poster and its presentation styling shared by Skin compositions.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

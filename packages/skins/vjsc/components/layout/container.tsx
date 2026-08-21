@@ -1,5 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
-import type { ComponentMeta, PropsWithChildren } from 'vjsc/components';
+import type { PropsWithChildren } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/container.styles';
 
 export function Container({ children, className, ...props }: PropsWithChildren) {
@@ -15,4 +16,4 @@ export const meta = {
   type: 'component',
   title: 'Container',
   description: 'The player layout container shared by Skin compositions.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

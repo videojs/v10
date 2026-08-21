@@ -1,5 +1,6 @@
 import * as $ from '@videojs/core/vjsc';
-import type { ComponentMeta, Props } from 'vjsc/components';
+import type { Props } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import buttonStyles from '../../styles/components/button.styles';
 import styles from '../../styles/components/error-dialog.styles';
 
@@ -20,4 +21,4 @@ export const meta = {
   type: 'component',
   title: 'Error Dialog',
   description: 'An alert dialog that presents and dismisses playback errors.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

@@ -1,7 +1,8 @@
 import type { CastButtonProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { CastEnterIcon, CastExitIcon } from '@videojs/icons/vjsc';
-import type { ComponentMeta, Props } from 'vjsc/components';
+import type { Props } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/button.styles';
 import { ButtonTooltip } from './button-tooltip';
 
@@ -21,4 +22,4 @@ export const meta = {
   type: 'component',
   title: 'Cast Button',
   description: 'A state-aware button that starts and stops Google Cast playback.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;

@@ -1,6 +1,7 @@
 import type { StatusAnnouncerProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
-import type { ComponentMeta, Props } from 'vjsc/components';
+import type { Props } from 'vjsc/components';
+import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/status-announcer.styles';
 
 export function StatusAnnouncer({ className, ...props }: Props<CoreProps> = {}) {
@@ -12,4 +13,4 @@ export const meta = {
   type: 'component',
   title: 'Status Announcer',
   description: 'A polite live region that announces media state changes.',
-} as const satisfies ComponentMeta;
+} as const satisfies SkinComponentMeta;
