@@ -36,9 +36,9 @@ function runPending() {
  * through it propagates and wakes the effect normally. The guarantee is
  * liveness, not immediacy — the effect is deliberately not re-run just
  * because it wrote into its own graph (that would double-run every writing
- * effect); it catches up on the next genuine change, which is exactly what
- * used to be lost. Sources that are clean, or whose recomputation is
- * equals-gated to the same value, cost a cached read and notify no one.
+ * effect); it catches up on the next genuine change. Sources that are clean,
+ * or whose recomputation is equals-gated to the same value, cost a cached
+ * read and notify no one.
  */
 function revalidateSources(c: Signal.Computed<void>): void {
   for (const source of Signal.subtle.introspectSources(c)) {

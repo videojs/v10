@@ -1293,8 +1293,7 @@ describe('stickToSelectedCodecs (codec-family sticky constraint)', () => {
     state.userVideoTrackSelection.set({ id: 'hvc-4k' });
     await flush();
     // The constraint prunes the HEVC pick in the pre-pass, so the user filter
-    // never sees it and falls through. (A soft rule couldn't guarantee this:
-    // the filter's single-match early-bail would win.)
+    // never sees it and falls through.
     expect(state.selectedVideoTrackId.get()).toBe('avc-high');
 
     state.userVideoTrackSelection.set({ id: 'avc-low' });
@@ -1364,9 +1363,7 @@ describe('stickToSelectedCodecs (codec-family sticky constraint)', () => {
 
   it('reports and clears when the selected family vanishes, re-picking on recovery', async () => {
     // AVC only on cdn-a, HEVC only on cdn-b: the shape where failover can
-    // remove a whole codec family from the playable set. This is the
-    // observable difference constraint placement buys over the old soft rule,
-    // which would have silently cross-picked HEVC into an AVC buffer.
+    // remove a whole codec family from the playable set.
     const cdnFamilyTrack = (id: string, host: string, bandwidth: number, codecs: string[]) => ({
       ...createVideoTrack(id, bandwidth),
       url: `https://${host}/${id}.m3u8`,

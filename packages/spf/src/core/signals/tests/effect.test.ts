@@ -7,21 +7,20 @@ const flush = () => Promise.resolve().then(() => Promise.resolve());
 
 describe('effect', () => {
   describe('self-write through an intermediate computed (lost-wakeup regression)', () => {
-    // An effect that writes a signal one of its own dependency computeds
-    // reads used to end its run *clean but stale*: the write marked the
-    // intermediate dirty while the effect was the in-flight consumer, so no
-    // watcher notification fired — and every later external change routed
-    // through that intermediate was deduped against its standing dirty flag,
-    // leaving the effect permanently deaf on that path. The
-    // `revalidateSources` pass in `effect.ts` closes the hole; these tests
-    // pin it for both places a run can happen. The concrete SPF shape: a
-    // track-selection effect writing `selected*TrackId`, which the
-    // candidate-set computed's `stickToSelectedCodecs` constraint reads.
+    // An effect body may write a signal that an intermediate computed in its
+    // own dependency graph reads (the concrete SPF shape: a track-selection
+    // effect writing `selected*TrackId`, which the candidate-set computed's
+    // `stickToSelectedCodecs` constraint reads). The write dirties the
+    // intermediate mid-run with no watcher notification; unless the run
+    // revalidates its sources (`revalidateSources` in `effect.ts`), later
+    // external changes routed through that intermediate are deduped against
+    // the standing dirty flag and the effect goes deaf on that path. These
+    // tests pin the recovery for both places a run can happen.
     //
     // The guarantee is *liveness*, not immediacy: the effect is not re-run
     // just because it wrote into its own graph (deliberately — that would
     // double-run every writing effect); it catches up on the next genuine
-    // change through the path, which is what used to be lost.
+    // change through the path.
     it('recovers when the self-write happens during the initial run', async () => {
       const external = signal(1);
       const own = signal<string | undefined>(undefined);
@@ -34,8 +33,8 @@ describe('effect', () => {
       await flush();
       external.set(2);
       await flush();
-      // The change through the intermediate is heard — before the fix the
-      // effect stayed on '1:none' forever.
+      // The external change routed through the self-written intermediate
+      // still wakes the effect.
       expect(runs.at(-1)).toBe('2:locked');
       stop();
     });

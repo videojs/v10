@@ -46,9 +46,9 @@ type Preset = { label: string; url: string; unsupported?: string };
 
 // Dropdown = every HLS source from the shared registry (DASH/raw-mp4 filtered out
 // since the raw SPF HLS engine can't play them). Mixed-codec sources (the Apple
-// bipbop example, `hls-mixed-codec`) need no special handling here anymore: the
-// engine's default `preferredCodecs` lands the initial pick on AVC/AAC and its
-// sticky codec-family constraint keeps ABR there.
+// bipbop example, `hls-mixed-codec`) need no special handling: the engine's
+// default `preferredCodecs` lands the initial pick on AVC/AAC and its sticky
+// codec-family constraint keeps ABR there.
 // SPF only demuxes fmp4/CMAF segments, not MPEG-TS, so TS sources are kept visible
 // but flagged unsupported (disabled in the picker) rather than silently dropped.
 // Unsupported presets sort to the end (stable sort preserves registry order otherwise).

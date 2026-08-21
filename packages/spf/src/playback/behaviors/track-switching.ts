@@ -569,8 +569,8 @@ function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(
  * Reading the selection here — a slot the picking effect itself writes, from
  * inside the candidate-set computed — is safe only because the effect
  * scheduler revalidates an effect's sources after each run; see
- * `core/signals/effect.ts` (`revalidateSources`) for the lost-wakeup this
- * once caused and the regression test that pins it.
+ * `core/signals/effect.ts` (`revalidateSources`) for the lost-wakeup it
+ * prevents.
  *
  * Composed only into the re-evaluating `switch*` variants: the pinned
  * `selectVideoTrack` (background compositions) evaluates once and never
