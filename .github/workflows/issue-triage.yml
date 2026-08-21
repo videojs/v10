@@ -28,7 +28,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          model: gpt-5.6-sol
+          model: gpt-5.6-terra
           effort: medium
           sandbox: workspace-write
           safety-strategy: drop-sudo

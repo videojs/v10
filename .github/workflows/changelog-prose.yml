@@ -91,7 +91,7 @@ jobs:
           # workflow_dispatch actor is the Actions bot.
           allow-bots: 'github-actions[bot]'
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          model: gpt-5.6-sol
+          model: gpt-5.6-terra
           effort: high
           sandbox: workspace-write
           safety-strategy: drop-sudo
