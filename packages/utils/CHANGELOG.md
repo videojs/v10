@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.30...@videojs/utils@10.0.0-beta.31) (2026-08-21)
+
+
+### Features
+
+* **packages:** add right-to-left player support ([#2281](https://github.com/videojs/v10/issues/2281)) ([caf179b](https://github.com/videojs/v10/commit/caf179b83260a242a7ff284d1d474f97a91988a9))
+
 ## [10.0.0-beta.30](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.29...@videojs/utils@10.0.0-beta.30) (2026-08-20)
 
 
