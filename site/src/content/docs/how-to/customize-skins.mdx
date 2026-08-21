@@ -12,12 +12,12 @@ Video.js v10 comes with two pre-built skins; Default and Minimal. Basic customiz
 
 ## Basic customization
 
-Set these CSS custom properties on the skin, an ancestor, or a classname you add to the skin:
+Set these CSS custom properties directly on the skin:
 
 <FrameworkCase frameworks={["html"]}>
 
 ```html
-<video-skin class="brand-player">
+<video-skin style="--media-accent-color: #f5c518; --media-border-radius: 1rem">
   <video src="video.mp4"></video>
 </video-skin>
 ```
@@ -27,29 +27,25 @@ Set these CSS custom properties on the skin, an ancestor, or a classname you add
 <FrameworkCase frameworks={["react"]}>
 
 ```tsx
-<VideoSkin className="brand-player">
+<VideoSkin
+  style={
+    {
+      '--media-accent-color': '#f5c518',
+      '--media-border-radius': '1rem',
+    } as React.CSSProperties
+  }
+>
   <Video src="video.mp4" />
 </VideoSkin>
 ```
 
 </FrameworkCase>
 
-```css
-.brand-player {
-  --media-accent-color: #f5c518;
-  --media-border-radius: 1rem;
-}
-```
-
 | Property Name | Description | Type | Example |
 | ------------- | ----------- | ---- | ------- |
 | `--media-accent-color` | The color of slider fills and accented controls | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#f5c518` |
 | `--media-accent-text-color` | The color of text and icons shown on the accent color | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `black` |
 | `--media-border-radius` | The border radius of the media player | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
-| `--media-icon-size` | The shared control icon size | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1.5rem` |
-| `--media-object-fit` | How video and poster content fit their box | A valid [`object-fit`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-fit#values) value | `cover` |
-| `--media-object-position` | Where video and poster content sit in their box | A valid [`object-position`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/object-position#values) value | `center top` |
-| `--media-poster-placeholder-blur` | The blur radius of a video poster placeholder | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `12px` |
 | `--media-scale-unit` | The base sizing unit for Vanilla CSS skins | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1rem` |
 
 If you omit `--media-accent-text-color`, the skins choose a contrasting text color from `--media-accent-color` using [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/contrast-color). You only need to set it when you want to override that result.
@@ -84,9 +80,21 @@ You can of course also add your own classnames to the skins themselves.
 
 ## Where packaged customization stops
 
-The properties above are the public styling controls for packaged skins. Packaged skins don't expose CSS shadow parts. Their internal markup, built-in classnames, `data-part` markers, and other custom properties are implementation details.
+The four properties above are the public styling controls for packaged skins. Don't depend on the elements, classnames, or other custom properties inside a packaged skin. They may change between releases.
 
-The stable selector is the skin element itself or a classname you add. Packaged video skins also let you replace the poster through the HTML `poster` slot or React `renderPoster` prop. See <DocsLink slug="reference/poster">Poster</DocsLink>.
+<FrameworkCase frameworks={["html"]}>
+
+Packaged video skins also let you replace the poster through the `poster` slot.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+Packaged video skins also let you replace the poster through the `renderPoster` prop.
+
+</FrameworkCase>
+
+See <DocsLink slug="reference/poster">Poster</DocsLink>.
 
 For anything deeper, eject instead of reaching into the packaged skin. There are no packaged-skin options for adding, removing, or rearranging controls, or replacing its built-in feedback and interactions.
 

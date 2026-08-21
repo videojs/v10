@@ -30,7 +30,17 @@ However, you should consider placing your components in `<player-container>`. Co
 
 ## Styling and customization
 
-The hooks documented on each component are public: the HTML element name, a React `className` you supply, state `data-*` attributes, and any listed CSS custom properties. This applies to components you compose yourself. It does not make a packaged skin's internal component tree or classnames public.
+<FrameworkCase frameworks={["react"]}>
+
+For components you add yourself, use the documented props, state `data-*` attributes, and CSS custom properties. Add your own `className` when you need a selector.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+For components you add yourself, select them by their custom element name. Use the documented state `data-*` attributes and CSS custom properties to style them.
+
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -109,8 +119,6 @@ Some components also expose **CSS custom properties** for continuous values like
 ## Compound components
 
 Complex interactions are split into composable parts. A parent manages shared state while children consume it. Each part is still one element.
-
-Here, a **part** is a component you compose, not a CSS shadow part exposed by a packaged skin.
 
 <FrameworkCase frameworks={["react"]}>
 
