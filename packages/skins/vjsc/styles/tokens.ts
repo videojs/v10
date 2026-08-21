@@ -109,7 +109,7 @@ export const tokens = {
   },
   '--media-poster-placeholder': {
     kind: 'runtime',
-    description: 'Poster placeholder image populated by the HTML or React projection.',
+    description: 'Poster placeholder image populated by the HTML or React target.',
   },
   '--media-slider-buffer': {
     kind: 'runtime',

@@ -8,8 +8,6 @@ import {
   transform,
 } from 'lightningcss';
 
-import { DiagnosticError } from '../ts/diagnostics';
-
 import { cloneCssAst, collectRuleClasses, withoutNullValues } from './css-ast';
 import type { DesignSystem } from './design-system';
 import type { StyleOutputFile } from './output';
@@ -242,7 +240,5 @@ function assertNoRelationshipMarkers(rule: Rule, bindings: ReadonlyMap<string, s
 
   if (remaining.length === 0) return;
 
-  throw new DiagnosticError(`style emission: relationship markers leaked into semantic CSS: ${remaining.join(', ')}`, {
-    diagnosticCode: 'style-relationship-marker-leak',
-  });
+  throw new Error(`style emission: relationship markers leaked into semantic CSS: ${remaining.join(', ')}`);
 }

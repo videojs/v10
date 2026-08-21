@@ -1,6 +1,5 @@
-import { dirname } from 'node:path';
+import { dirname, posix } from 'node:path';
 
-import { relativeModuleSpecifier } from '../../ts/utils/source-module';
 import { absolutePath, toPosixPath } from '../../utils/path';
 import { type ComponentSchema, defineSchema } from '../definition';
 import { type ComponentSource, discoverSchema, type ManifestSchemaComponent, type SchemaComponent } from './discover';
@@ -19,6 +18,7 @@ export interface CreateSchemaModuleOptions {
 
 export interface SchemaModule {
   readonly code: string;
+  readonly declaration: string;
   readonly schema: ComponentSchema;
   readonly watchFiles: readonly string[];
 }
@@ -48,6 +48,12 @@ export function createSchemaModule(options: CreateSchemaModuleOptions): SchemaMo
 
   return {
     code,
+    declaration: `${[
+      emitDeclarationHeader(entries, outputAbsolute),
+      emitDeclarationDefinitions(entries),
+      emitDeclarationComponents(entries),
+      emitDeclarationSchema(source),
+    ].join('\n\n')}\n`,
     schema: defineSchema(source, Object.fromEntries(entries.map((entry) => [entry.name, entry.definition]))),
     watchFiles: discovered.watchFiles,
   };
@@ -71,7 +77,12 @@ import { type ComponentSchema, type CreateComponentResult, createComponent, defi
 }
 
 function manifestFrom(entry: ManifestSchemaComponent, outputFile: string): string {
-  return relativeModuleSpecifier(toPosixPath(dirname(outputFile)), toPosixPath(entry.fileName));
+  const path = posix.relative(
+    toPosixPath(dirname(outputFile)),
+    toPosixPath(entry.fileName).replace(/\.(?:[cm]?[jt]s|[jt]sx)$/, '')
+  );
+
+  return path.startsWith('.') ? path : `./${path}`;
 }
 
 function manifestRef(entry: SchemaComponent): string {
@@ -103,4 +114,34 @@ function emitSchema(source: string): string {
   return `const schema: ComponentSchema<typeof DEFINITIONS, ${sourceLiteral}> = defineSchema(${sourceLiteral}, DEFINITIONS);
 
 export default schema;`;
+}
+
+function emitDeclarationHeader(entries: readonly SchemaComponent[], outputFile: string): string {
+  const manifestLines = entries
+    .filter((entry): entry is ManifestSchemaComponent => entry.kind === 'manifest')
+    .sort((a, b) => compareImportSpecifiers(manifestFrom(a, outputFile), manifestFrom(b, outputFile)))
+    .map((entry) => `import ${entry.name}Def from '${manifestFrom(entry, outputFile)}';`)
+    .join('\n');
+  const header = `import { type ComponentSchema, type CreateComponentResult } from 'vjsc/components';`;
+
+  return manifestLines ? `${header}\n\n${manifestLines}` : header;
+}
+
+function emitDeclarationDefinitions(entries: readonly SchemaComponent[]): string {
+  const lines = entries.map((entry) => {
+    const type = entry.kind === 'manifest' ? `typeof ${entry.name}Def` : `{ readonly name: '${entry.name}' }`;
+    return `  readonly ${entry.name}: ${type};`;
+  });
+
+  return `declare const DEFINITIONS: {\n${lines.join('\n')}\n};`;
+}
+
+function emitDeclarationComponents(entries: readonly SchemaComponent[]): string {
+  return entries
+    .map((entry) => `export declare const ${entry.name}: CreateComponentResult<(typeof DEFINITIONS)['${entry.name}']>;`)
+    .join('\n');
+}
+
+function emitDeclarationSchema(source: string): string {
+  return `declare const schema: ComponentSchema<typeof DEFINITIONS, ${JSON.stringify(source)}>;\n\nexport default schema;`;
 }

@@ -4,7 +4,6 @@ import { basename, dirname, isAbsolute, posix, relative, resolve } from 'node:pa
 import { type RegistryItem, registryItemSchema, registrySchema, type Registry as ShadcnRegistry } from 'shadcn/schema';
 
 import type { ComponentMeta } from '../components/meta';
-import { stripScriptExtension } from '../ts/utils/source-module';
 import { parseModuleId } from '../utils/module-id';
 import { escapesRoot, isInsideRoot, toPosixPath } from '../utils/path';
 import { type ImportReplacement, replaceImportSpecifiers } from './analyze';
@@ -250,6 +249,10 @@ function publishedImport<Item extends ComponentMeta>(
 function relativeImport(importerTarget: string, dependencyTarget: string): string {
   const specifier = posix.relative(posix.dirname(importerTarget), stripScriptExtension(dependencyTarget));
   return specifier.startsWith('.') ? specifier : `./${specifier}`;
+}
+
+function stripScriptExtension(path: string): string {
+  return path.replace(/\.(?:[cm]?[jt]sx?)$/, '');
 }
 
 async function loadStyle<Item extends ComponentMeta>(

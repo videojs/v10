@@ -57,10 +57,6 @@
     "./rolldown": {
       "types": "./dist/rolldown/index.d.ts",
       "default": "./dist/rolldown/index.js"
-    },
-    "./vite": {
-      "types": "./dist/vite/index.d.ts",
-      "default": "./dist/vite/index.js"
     }
   },
   "files": [
@@ -85,9 +81,8 @@
     "@videojs/utils": "workspace:*",
     "oxc-transform": "0.143.0",
     "react": "^19.2.8",
-    "rolldown": "~1.1.5",
+    "rolldown": "~1.2.5",
     "tsx": "^4.23.1",
-    "vite": "^8.1.5",
     "vitest": "^4.1.10"
   },
   "publishConfig": {

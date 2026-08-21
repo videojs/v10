@@ -13,7 +13,7 @@ export const VIDEOJS_NODE = Symbol.for('@videojs/node');
 
 export type ComponentType = Component<never> | typeof Fragment;
 
-/** One canonical JSX element produced by the compiler authoring runtime. */
+/** One canonical JSX element produced by the VJSC authoring runtime. */
 export interface VjscElement {
   readonly [VIDEOJS_NODE]: true;
   readonly type: ComponentType;
@@ -38,7 +38,7 @@ export type Props<CoreProps extends object = EmptyProps> = CoreProps & Pick<Base
 
 export type PropsWithChildren<CoreProps extends object = EmptyProps> = Props<CoreProps> & Pick<BaseProps, 'children'>;
 
-/** Props accepted by another VJSC component. Projections replace this with its target props export. */
+/** Props accepted by another VJSC component. Targets replace this with their public props export. */
 export type PropsOf<Component extends (props: never) => unknown> = NonNullable<Parameters<Component>[0]>;
 
 type ComponentAttributes<Props extends object> = Omit<PropsWithChildren<Props>, 'className'> & {
@@ -51,12 +51,12 @@ export interface SlotProps {
 }
 
 export interface TemplateProps extends BaseProps {
-  /** Static compiler key identifying this repeated subtree within its containing component. */
+  /** Static source key identifying this repeated subtree within its containing component. */
   name: string;
 }
 
 export interface TemplatePartProps extends BaseProps {
-  /** Static compiler key identifying this value outlet within its containing template or component. */
+  /** Static source key identifying this value outlet within its containing template or component. */
   name: string;
 }
 
@@ -98,7 +98,7 @@ export type CreateComponentResult<M> =
 
 function createRuntimeComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
   const component = (_props: ComponentAttributes<Props>): VjscElement => {
-    throw new Error(`vjsc/components: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
+    throw new Error(`vjsc/components: <${name}${part ? `.${part}` : ''}> can only be evaluated by a VJSC transform.`);
   };
 
   Object.assign(component, { $$component: { name, part } });

@@ -1,9 +1,8 @@
 import { isAbsolute, relative, resolve } from 'node:path';
 
-import ts from 'typescript';
+import { parseSync } from 'oxc-parser';
 
 import type { ComponentMeta } from '../components/meta';
-import { parseSourceFile } from '../ts/utils/source-file';
 import { moduleFilename } from '../utils/module-id';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import type { ImportReference } from './analyze';
@@ -105,13 +104,14 @@ export function collectOwnedModules<Item extends ComponentMeta>(
 }
 
 function assertMetaRemoved(module: SourceModule): void {
-  const sourceFile = parseSourceFile(module.source, module.filename);
-  for (const statement of sourceFile.statements) {
+  const parsed = parseSync(module.filename, module.source);
+  if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
+  for (const statement of parsed.program.body) {
     if (
-      ts.isVariableStatement(statement) &&
-      statement.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) &&
-      statement.declarationList.declarations.some(
-        (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === 'meta'
+      statement.type === 'ExportNamedDeclaration' &&
+      statement.declaration?.type === 'VariableDeclaration' &&
+      statement.declaration.declarations.some(
+        (declaration) => declaration.id.type === 'Identifier' && declaration.id.name === 'meta'
       )
     ) {
       throw new Error(`Component metadata remains in transformed Shadcn source: \`${module.id}\`.`);

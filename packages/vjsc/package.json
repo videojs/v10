@@ -2,7 +2,7 @@
   "name": "vjsc",
   "version": "0.0.0",
   "type": "module",
-  "description": "Video.js Compiler",
+  "description": "Video.js source transforms",
   "license": "Apache-2.0",
   "private": true,
   "repository": {
@@ -16,10 +16,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./ts": {
-      "types": "./dist/ts/index.d.ts",
-      "default": "./dist/ts/index.js"
-    },
     "./components": {
       "types": "./dist/components/index.d.ts",
       "default": "./dist/components/index.js"
@@ -32,17 +28,17 @@
       "types": "./dist/components/jsx-dev-runtime.d.ts",
       "default": "./dist/components/jsx-dev-runtime.js"
     },
-    "./registry": {
-      "types": "./dist/registry/index.d.ts",
-      "default": "./dist/registry/index.js"
+    "./target": {
+      "types": "./dist/target/index.d.ts",
+      "default": "./dist/target/index.js"
     },
-    "./registry/jsx-runtime": {
-      "types": "./dist/registry/jsx-runtime.d.ts",
-      "default": "./dist/registry/jsx-runtime.js"
+    "./target/jsx-runtime": {
+      "types": "./dist/target/jsx-runtime.d.ts",
+      "default": "./dist/target/jsx-runtime.js"
     },
-    "./registry/jsx-dev-runtime": {
-      "types": "./dist/registry/jsx-dev-runtime.d.ts",
-      "default": "./dist/registry/jsx-dev-runtime.js"
+    "./target/jsx-dev-runtime": {
+      "types": "./dist/target/jsx-dev-runtime.d.ts",
+      "default": "./dist/target/jsx-dev-runtime.js"
     },
     "./shadcn": {
       "types": "./dist/shadcn/index.d.ts",
@@ -52,9 +48,9 @@
       "types": "./dist/styles/index.d.ts",
       "default": "./dist/styles/index.js"
     },
-    "./rolldown": {
-      "types": "./dist/rolldown/index.d.ts",
-      "default": "./dist/rolldown/index.js"
+    "./plugins": {
+      "types": "./dist/plugins/index.d.ts",
+      "default": "./dist/plugins/index.js"
     },
     "./vite": {
       "types": "./dist/vite/index.d.ts",
@@ -73,19 +69,21 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
+    "@oxc-project/types": "0.146.0",
     "@tailwindcss/node": "4.2.1",
     "@videojs/utils": "workspace:*",
-    "kleur": "^4.1.5",
     "lightningcss": "^1.32.0",
-    "rolldown": "~1.1.5",
+    "magic-string": "^0.30.21",
+    "oxc-parser": "0.146.0",
+    "oxc-walker": "^1.1.1",
+    "rolldown": "~1.2.5",
     "shadcn": "^4.16.2",
     "tailwind-merge": "^3.5.0",
-    "tailwindcss": "4.2.1",
-    "typescript": "6.0.2"
+    "tailwindcss": "4.2.1"
   },
   "devDependencies": {
     "tsdown": "^0.22.14",
-    "vite": "^8.1.5",
+    "vite": "^8.2.2",
     "vitest": "^4.1.10"
   }
 }

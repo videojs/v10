@@ -1,17 +1,31 @@
 import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
-import { iconElementPlugin } from '@videojs/icons/vite';
+import { iconElementPlugin } from '@videojs/icons/rolldown';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import { vjscPlugin } from 'vjsc/vite';
-import { createSkinPlugins, isSkinModule } from './vjsc/transform';
+import {
+  componentMetaPlugin,
+  componentTargetPlugin,
+  htmlRuntimePlugin,
+  primitiveTargetPlugin,
+  reactTargetPropsPlugin,
+  sourceModulesPlugin,
+  stylePlugin,
+  targetImportCleanupPlugin,
+  targetJsxPlugin,
+  targetTypePlugin,
+  templateTargetPlugin,
+  viteOxcPlugin,
+} from 'vjsc/vite';
+import { resolveStyleOptions } from './vjsc/style';
+import { resolveComponentTargets } from './vjsc/target';
+import { createReactBehaviorPlugins } from './vjsc/target/react-behavior';
+import { isSkinModule } from './vjsc/transform';
 
 const packageDir = import.meta.dirname;
 const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));
 const htmlSourceDir = normalizePath(resolve(packageDir, '../html/src'));
-
-const vjscInclude = new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`);
 
 export default defineConfig(createPreviewConfig());
 
@@ -23,11 +37,33 @@ function createPreviewConfig() {
     },
     plugins: [
       iconElementPlugin(),
-      vjscPlugin({
-        cwd: packageDir,
-        include: vjscInclude,
+      htmlRuntimePlugin(),
+      sourceModulesPlugin({
         ignore: ({ parameters }) => !isSkinModule(parameters),
-        plugins: createSkinPlugins(),
+      }),
+      componentMetaPlugin(),
+      targetJsxPlugin({
+        targets: ({ parameters }) => resolveComponentTargets(parameters),
+      }),
+      stylePlugin(({ parameters }) => resolveStyleOptions(parameters)),
+      ...createReactBehaviorPlugins().map(viteOxcPlugin),
+      targetTypePlugin({
+        targets: ({ parameters }) => resolveComponentTargets(parameters),
+      }),
+      primitiveTargetPlugin({
+        targets: ({ parameters }) => resolveComponentTargets(parameters),
+      }),
+      componentTargetPlugin({
+        targets: ({ parameters }) => resolveComponentTargets(parameters),
+      }),
+      reactTargetPropsPlugin({
+        targets: ({ parameters }) => resolveComponentTargets(parameters),
+      }),
+      templateTargetPlugin({
+        targets: ({ parameters }) => resolveComponentTargets(parameters),
+      }),
+      targetImportCleanupPlugin({
+        targets: ({ parameters }) => resolveComponentTargets(parameters),
       }),
       tailwindcss(),
       react({ jsxImportSource: 'react' }),
@@ -36,7 +72,7 @@ function createPreviewConfig() {
       alias: [
         {
           find: /^virtual:vjsc\/skin\/(react|html)\/([^/]+)\/(vanilla|tailwind)\.tsx$/,
-          replacement: `${vjscDir}/skins/$2/skin.tsx?framework=$1&skin=$2&style=$3`,
+          replacement: `${vjscDir}/skins/$2/skin.tsx?target=$1&skin=$2&style=$3`,
         },
         { find: /^@videojs\/react$/, replacement: resolve(reactSourceDir, 'index.ts') },
         {
@@ -78,8 +114,4 @@ function createPreviewConfig() {
       exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
     },
   };
-}
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

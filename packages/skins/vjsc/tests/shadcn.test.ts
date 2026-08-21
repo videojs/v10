@@ -28,9 +28,11 @@ describe('Skins Shadcn registry', () => {
     const defaultVideo = assetJson<BuiltItem>(assets, 'default-video.json');
     const minimalVideo = assetJson<BuiltItem>(assets, 'minimal-video.json');
     const container = assetJson<BuiltItem>(assets, 'container.json');
+    const poster = assetJson<BuiltItem>(assets, 'poster.json');
     const styles = assetJson<BuiltItem>(assets, 'styles.json');
     const utils = assetJson<BuiltItem>(assets, 'utils.json');
     const playSource = playButton.files.find((file) => file.target?.endsWith('/play-button.tsx'))?.content;
+    const posterSource = poster.files.find((file) => file.target?.endsWith('/poster.tsx'))?.content;
 
     expect(registry.items).toHaveLength(52);
     expect(registry.items.map((item: { name: string }) => item.name)).toEqual(
@@ -59,6 +61,8 @@ describe('Skins Shadcn registry', () => {
     expect(minimalVideo.registryDependencies).not.toContain('@videojs/play-button');
     expect(container.dependencies).toEqual(['@videojs/react', 'react']);
     expect(container.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);
+    expect(posterSource).toContain('<PosterPrimitive render={children}');
+    expect(posterSource).not.toContain('@videojs/core/vjsc');
     expect(styles.files.map((file) => file.target)).toEqual([
       'components/videojs/styles/base.css',
       'components/videojs/styles/captions.css',

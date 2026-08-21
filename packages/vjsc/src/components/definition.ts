@@ -54,6 +54,7 @@ export type InferPartProps<T, K extends string> =
     : never;
 
 export function defineComponent<Props extends object = EmptyProps>(): ComponentDefinition<Props>;
+
 export function defineComponent<
   Props extends object = EmptyProps,
   const Parts extends ComponentRecord = ComponentRecord,
@@ -61,17 +62,31 @@ export function defineComponent<
 >(
   options: Omit<ComponentOptions<Props, Parts>, 'root'> & { name: string; root: Root }
 ): ComponentManifest<Props, Parts> & { readonly root: Root };
+
+export function defineComponent<
+  Props extends object = EmptyProps,
+  const Parts extends ComponentRecord = ComponentRecord,
+  const Root extends keyof Parts & string = keyof Parts & string,
+>(
+  options: Omit<ComponentOptions<Props, Parts>, 'root'> & { root: Root }
+): ComponentDefinition<Props, Parts> & {
+  readonly root: Root;
+};
+
 export function defineComponent<
   Props extends object = EmptyProps,
   const Parts extends ComponentRecord = ComponentRecord,
 >(options: ComponentOptions<Props, Parts> & { name: string; parts: Parts }): ComponentManifest<Props, Parts>;
+
 export function defineComponent<Props extends object = EmptyProps>(
   options: ComponentOptions<Props, undefined> & { name: string }
 ): ComponentManifest<Props, undefined>;
+
 export function defineComponent<
   Props extends object = EmptyProps,
   const Parts extends ComponentRecord | undefined = undefined,
 >(options: ComponentOptions<Props, Parts>): ComponentDefinition<Props, Parts>;
+
 export function defineComponent<
   Props extends object = EmptyProps,
   const Parts extends ComponentRecord | undefined = undefined,

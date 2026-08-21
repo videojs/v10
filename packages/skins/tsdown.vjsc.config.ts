@@ -1,16 +1,31 @@
 import { basename, resolve } from 'node:path';
 
 import { defineConfig } from 'tsdown';
-import { shadcnPlugin, vjscPlugin } from 'vjsc/rolldown';
+import {
+  componentMetaPlugin,
+  componentTargetPlugin,
+  editableSourcePlugin,
+  primitiveTargetPlugin,
+  reactTargetPropsPlugin,
+  shadcnPlugin,
+  sourceModulesPlugin,
+  stylePlugin,
+  targetImportCleanupPlugin,
+  targetJsxPlugin,
+  targetTypePlugin,
+  templateTargetPlugin,
+} from 'vjsc/plugins';
 import type { ShadcnItem } from 'vjsc/shadcn';
 
 import { type SkinModuleMeta, skinStyles } from './vjsc/meta';
-import { createSkinPlugins, isSkinModule } from './vjsc/transform';
+import { resolveStyleOptions } from './vjsc/style';
+import { resolveComponentTargets } from './vjsc/target';
+import { createReactBehaviorPlugins } from './vjsc/target/react-behavior';
+import { isSkinModule } from './vjsc/transform';
 
 const packageDir = import.meta.dirname;
 const vjscDir = resolve(packageDir, 'vjsc');
 const registryUtils = resolve(vjscDir, 'registry/utils.ts');
-const sourceFilter = new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.[cm]?[jt]sx?(?:\\?.*)?$`);
 
 const paths = {
   output: 'vjsc/registry',
@@ -42,12 +57,34 @@ export default defineConfig({
     onlyBundle: false,
   },
   plugins: [
-    vjscPlugin({
-      cwd: packageDir,
-      include: sourceFilter,
-      plugins: createSkinPlugins(),
+    sourceModulesPlugin({
       ignore: ({ parameters }) => !isSkinModule(parameters),
     }),
+    componentMetaPlugin(),
+    targetJsxPlugin({
+      targets: ({ parameters }) => resolveComponentTargets(parameters),
+    }),
+    stylePlugin(({ parameters }) => resolveStyleOptions(parameters)),
+    ...createReactBehaviorPlugins(),
+    targetTypePlugin({
+      targets: ({ parameters }) => resolveComponentTargets(parameters),
+    }),
+    primitiveTargetPlugin({
+      targets: ({ parameters }) => resolveComponentTargets(parameters),
+    }),
+    componentTargetPlugin({
+      targets: ({ parameters }) => resolveComponentTargets(parameters),
+    }),
+    reactTargetPropsPlugin({
+      targets: ({ parameters }) => resolveComponentTargets(parameters),
+    }),
+    templateTargetPlugin({
+      targets: ({ parameters }) => resolveComponentTargets(parameters),
+    }),
+    targetImportCleanupPlugin({
+      targets: ({ parameters }) => resolveComponentTargets(parameters),
+    }),
+    editableSourcePlugin(),
     shadcnPlugin<SkinModuleMeta>({
       root: vjscDir,
       include: ['./components/**/*.{ts,tsx}', './skins/*/skin.{ts,tsx}', './registry/utils.ts'],
@@ -68,7 +105,7 @@ export default defineConfig({
           const selected = ownedSkin ? [ownedSkin] : skins;
 
           return selected.map((skin) => ({
-            framework: 'react',
+            target: 'react',
             skin,
             style: 'tailwind',
           }));
@@ -125,7 +162,3 @@ export default defineConfig({
     }),
   ],
 });
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}

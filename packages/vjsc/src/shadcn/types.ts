@@ -49,7 +49,7 @@ export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta>
   readonly exclude?: string | readonly string[] | undefined;
   readonly publish: {
     /**
-     * Select the query projections loaded for each discovered file. Component metadata is captured later from
+     * Select the target configurations loaded for each discovered file. Component metadata is captured later from
      * transformed host modules and is therefore not available in this inventory hook.
      */
     readonly modules?:

@@ -8,8 +8,6 @@ import {
   transform,
 } from 'lightningcss';
 
-import { DiagnosticError } from '../ts/diagnostics';
-
 import { cloneCssAst, hasNestedCssRules, visitCssRules, withoutNullValues } from './css-ast';
 import { foldGroupDescendantSelectors } from './selectors';
 
@@ -184,9 +182,8 @@ function inlineTailwindDeclarations(
     if (declaration.property === 'custom' || declaration.property === 'unparsed') {
       declaration.value.value = resolveTailwindTokens(declaration.value.value, environment, []);
     } else if (JSON.stringify(declaration).includes('--tw-')) {
-      throw new DiagnosticError(
-        `style emission: cannot inline Tailwind variables in parsed declaration '${declaration.property}'.`,
-        { diagnosticCode: 'style-tailwind-variable-unsupported' }
+      throw new Error(
+        `style emission: cannot inline Tailwind variables in parsed declaration '${declaration.property}'.`
       );
     }
     output.push(declaration);
@@ -206,16 +203,12 @@ function resolveTailwindTokens(
       const name = token.value.name.ident;
       if (name.startsWith('--tw-')) {
         if (stack.includes(name)) {
-          throw new DiagnosticError(`style emission: Tailwind variable cycle: ${[...stack, name].join(' -> ')}.`, {
-            diagnosticCode: 'style-tailwind-variable-cycle',
-          });
+          throw new Error(`style emission: Tailwind variable cycle: ${[...stack, name].join(' -> ')}.`);
         }
         const local = environment.get(name);
         const replacement = local ?? token.value.fallback;
         if (replacement == null) {
-          throw new DiagnosticError(`style emission: cannot resolve Tailwind variable '${name}'.`, {
-            diagnosticCode: 'style-tailwind-variable-unresolved',
-          });
+          throw new Error(`style emission: cannot resolve Tailwind variable '${name}'.`);
         }
         output.push(...resolveTailwindTokens(replacement, environment, [...stack, name]));
         continue;
@@ -393,10 +386,7 @@ function assertNoPrivateTailwindVariables(css: string): void {
     },
   });
   if (names.size === 0) return;
-  throw new DiagnosticError(
-    `style emission: Tailwind variables leaked into inline output: ${[...names].sort().join(', ')}.`,
-    { diagnosticCode: 'style-tailwind-variable-leak' }
-  );
+  throw new Error(`style emission: Tailwind variables leaked into inline output: ${[...names].sort().join(', ')}.`);
 }
 
 function isEmptyStyleRule(block: DeclarationBlock | undefined, rules: readonly Rule[] | undefined): boolean {

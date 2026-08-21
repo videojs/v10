@@ -5,6 +5,8 @@ import { __unstable__loadDesignSystem, compile, normalizePath } from '@tailwindc
 
 /** Operations style generation needs from a loaded Tailwind v4 design system. */
 export interface DesignSystem {
+  /** Files that contribute to the loaded Tailwind design. */
+  readonly watchFiles: ReadonlySet<string>;
   /** Return whether Tailwind recognizes a candidate. */
   recognizesCandidate(candidate: string): boolean;
   /** Compile semantic CSS containing Tailwind directives such as `@apply`. */
@@ -19,13 +21,20 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
   const reference = `@reference "${normalizePath(absolute)}";`;
   const design = await __unstable__loadDesignSystem(raw, { base });
   const candidateCache = new Map<string, boolean>();
+  const watchFiles = new Set([absolute]);
 
   const compileReferencedCss = async (css: string): Promise<string> => {
-    const compiler = await compile(`${reference}\n${css}`, { base, onDependency() {} });
+    const compiler = await compile(`${reference}\n${css}`, {
+      base,
+      onDependency(path) {
+        watchFiles.add(resolve(path));
+      },
+    });
     return compiler.build([]);
   };
 
   return {
+    watchFiles,
     recognizesCandidate(candidate: string): boolean {
       const cached = candidateCache.get(candidate);
       if (cached !== undefined) return cached;

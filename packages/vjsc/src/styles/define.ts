@@ -11,7 +11,7 @@ export interface StyleRule {
   readonly scopeRoot?: boolean | undefined;
   /** Tailwind utilities shared by every configured variant. */
   readonly utilities: StyleValue;
-  /** Utilities appended when the compiler selects a matching variant. */
+  /** Utilities appended when a source transform selects a matching variant. */
   readonly variants?: Readonly<Record<string, StyleValue>> | undefined;
 }
 
@@ -20,7 +20,7 @@ export type StyleTree = {
 };
 
 export interface StyleDefinition<Rules extends StyleTree = StyleTree> {
-  /** CSS asset path used when the compiler emits vanilla CSS. */
+  /** CSS asset path used when the style transform emits vanilla CSS. */
   readonly file: string;
   /** Cascade layer containing the emitted rules. */
   readonly layer: string;
@@ -40,7 +40,7 @@ type DefinedStyles<Rules extends StyleTree> = StyleReferences<Rules> & {
   readonly [styleDefinition]: StyleDefinition<Rules>;
 };
 
-/** Define statically projectable styles while exposing semantic class references to consumers. */
+/** Define statically transformable styles while exposing semantic class references to consumers. */
 export function styles<const Rules extends StyleTree>(definition: StyleDefinition<Rules>): StyleReferences<Rules> {
   validateStyleDefinition(definition);
 

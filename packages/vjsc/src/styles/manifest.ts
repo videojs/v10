@@ -1,16 +1,15 @@
 import { readFile, realpath } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import type { Expression, Program } from '@oxc-project/types';
+import { parseSync } from 'oxc-parser';
+import { walk } from 'oxc-walker';
 import { type OutputChunk, rolldown } from 'rolldown';
 import { twMerge } from 'tailwind-merge';
-import ts from 'typescript';
 
-import { readAccessPath } from '../ts/utils/jsx';
-import { parseSourceFile } from '../ts/utils/source-file';
 import { toArray } from '../utils/array';
 import { splitClassNames } from './class-names';
 import { getStyleDefinition, type StyleDefinition, type StyleValue, validateStyleDefinition } from './define';
-import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';
 import { resolveManifestStyleModule } from './modules';
 import { visitStyleRules } from './tree';
 
@@ -89,22 +88,38 @@ export async function collectReferencedStyleRules(
 
   for (const file of files.filter((entry) => /\.(?:[cm]?ts|tsx)$/.test(entry))) {
     const sourceText = await readFile(file, 'utf8');
-    const sourceFile = parseSourceFile(sourceText, file);
-    const bindings = styleBindings(sourceFile, manifest);
+    const parsed = parseSync(file, sourceText);
+    if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
+    const bindings = styleBindings(parsed.program, file, manifest);
 
     if (bindings.size === 0) continue;
 
-    const visit = (node: ts.Node): void => {
-      if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
-        const info = readClassName(node);
+    walk(parsed.program, {
+      enter(node) {
+        if (
+          node.type !== 'JSXAttribute' ||
+          node.name.type !== 'JSXIdentifier' ||
+          node.name.name !== 'className' ||
+          node.value?.type !== 'JSXExpressionContainer' ||
+          node.value.expression.type === 'JSXEmptyExpression'
+        ) {
+          return;
+        }
 
-        if (info) collectClassNameRules(info, bindings, manifest, referenced);
-      }
-
-      ts.forEachChild(node, visit);
-    };
-
-    visit(sourceFile);
+        walk(node.value.expression, {
+          enter(expression) {
+            if (expression.type !== 'MemberExpression') return;
+            const path = readAccessPath(expression);
+            const [root, ...tokenPath] = path ?? [];
+            const modulePath = root ? bindings.get(root) : undefined;
+            const rule = modulePath ? ruleForToken(manifest, modulePath, tokenPath) : undefined;
+            if (!rule) return;
+            referenced.add(rule.className);
+            this.skip();
+          },
+        });
+      },
+    });
   }
 
   return referenced;
@@ -196,61 +211,30 @@ function createStyleManifest(
   });
 }
 
-function collectClassNameRules(
-  info: ClassNameInfo,
-  bindings: ReadonlyMap<string, string>,
-  manifest: StyleManifest,
-  referenced: Set<string>
-): void {
-  collectExpressionRules(info.expression, bindings, manifest, referenced);
-}
-
-function collectExpressionRules(
-  expression: ts.Expression,
-  bindings: ReadonlyMap<string, string>,
-  manifest: StyleManifest,
-  referenced: Set<string>
-): void {
-  const visit = (node: ts.Node): void => {
-    if (ts.isExpression(node)) collectSegmentRule(classNameSegment(node), bindings, manifest, referenced);
-    ts.forEachChild(node, visit);
-  };
-
-  visit(expression);
-}
-
-function collectSegmentRule(
-  segment: ClassNameSegment,
-  bindings: ReadonlyMap<string, string>,
-  manifest: StyleManifest,
-  referenced: Set<string>
-): void {
-  if (segment.kind === 'literal') return;
-
-  const path = readAccessPath(segment.node);
-  const [root, ...tokenPath] = path ?? [];
-  const modulePath = root ? bindings.get(root) : undefined;
-  const rule = modulePath ? ruleForToken(manifest, modulePath, tokenPath) : undefined;
-
-  if (rule) referenced.add(rule.className);
-}
-
-function styleBindings(sourceFile: ts.SourceFile, manifest: StyleManifest): ReadonlyMap<string, string> {
+function styleBindings(ast: Program, filename: string, manifest: StyleManifest): ReadonlyMap<string, string> {
   const bindings = new Map<string, string>();
 
-  for (const statement of sourceFile.statements) {
-    if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
-
-    const importClause = statement.importClause;
-
-    if (!importClause?.name || importClause.namedBindings || !statement.moduleSpecifier.text.startsWith('.')) continue;
-
-    const modulePath = resolveManifestStyleModule(sourceFile.fileName, statement.moduleSpecifier.text, manifest);
-
-    if (modulePath) bindings.set(importClause.name.text, modulePath);
+  for (const statement of ast.body) {
+    if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
+    const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
+    if (defaults.length !== 1 || statement.specifiers.length !== 1) continue;
+    const modulePath = resolveManifestStyleModule(filename, statement.source.value, manifest);
+    if (modulePath) bindings.set(defaults[0]!.local.name, modulePath);
   }
 
   return bindings;
+}
+
+function readAccessPath(expression: Expression): string[] | undefined {
+  if (expression.type === 'Identifier') return [expression.name];
+  if (expression.type !== 'MemberExpression') return undefined;
+  const object = readAccessPath(expression.object);
+  if (!object) return undefined;
+  if (!expression.computed) return [...object, expression.property.name];
+  if (expression.property.type === 'Literal' && typeof expression.property.value === 'string') {
+    return [...object, expression.property.value];
+  }
+  return undefined;
 }
 
 function splitUtilityGroups(value: StyleValue): string[] {

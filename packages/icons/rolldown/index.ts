@@ -34,11 +34,14 @@ export function iconElementPlugin(options: IconElementPluginOptions = {}): Plugi
 
         const familyRoot = resolve(cwd, 'src/assets', family);
         this.addWatchFile(familyRoot);
+
         const files = globSync(resolve(familyRoot, '*.svg')).sort();
         if (files.length === 0) throw new Error(`Icon family \`${family}\` does not contain any SVG assets.`);
+
         for (const file of files) this.addWatchFile(file);
 
         const icons = Object.fromEntries(files.map((file) => [basename(file, '.svg'), readFileSync(file, 'utf8')]));
+
         return elementModule(family, icons);
       },
     },

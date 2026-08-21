@@ -1,7 +1,5 @@
-import { realpathSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-
-import { resolveSourceModule, stripScriptExtension } from '../ts/utils/source-module';
+import { existsSync, realpathSync } from 'node:fs';
+import { dirname, extname, resolve } from 'node:path';
 
 import type { StyleManifest } from './manifest';
 
@@ -39,4 +37,29 @@ export function resolveManifestStyleModule(
   }
 
   return undefined;
+}
+
+const sourceExtensions = ['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs'] as const;
+const sourceExtensionSet = new Set<string>(sourceExtensions);
+
+function resolveSourceModule(importer: string, specifier: string): string | undefined {
+  const candidate = resolve(dirname(importer), specifier);
+
+  if (sourceExtensionSet.has(extname(candidate)) && existsSync(candidate)) return candidate;
+
+  for (const extension of sourceExtensions) {
+    const filename = `${candidate}${extension}`;
+    if (existsSync(filename)) return filename;
+  }
+
+  for (const extension of sourceExtensions) {
+    const filename = resolve(candidate, `index${extension}`);
+    if (existsSync(filename)) return filename;
+  }
+
+  return undefined;
+}
+
+function stripScriptExtension(path: string): string {
+  return path.replace(/\.(?:[cm]?[jt]s|[jt]sx)$/, '');
 }

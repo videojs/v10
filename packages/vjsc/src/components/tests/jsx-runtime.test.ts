@@ -32,7 +32,7 @@ describe('createComponent', () => {
     expect(Slider.Thumbnail.Image.$$component).toEqual({ name: 'Slider', part: 'Thumbnail.Image' });
   });
 
-  it('creates inert compiler nodes without evaluating components', () => {
+  it('creates inert source nodes without evaluating components', () => {
     const PlayButton = createComponent(defineComponent({ name: 'PlayButton' }));
     const node = jsx(PlayButton, { className: 'play' }, 'control');
 
@@ -54,9 +54,9 @@ describe('createComponent', () => {
     expectTypeOf<Parameters<typeof PlayButton>[0]['className']>().toEqualTypeOf<ClassNameValue>();
   });
 
-  it('fails when a canonical component is evaluated outside the compiler runtime', () => {
+  it('fails when a canonical component is evaluated outside a VJSC transform', () => {
     const PlayButton = createComponent(defineComponent({ name: 'PlayButton' }));
 
-    expect(() => PlayButton({})).toThrow('<PlayButton> can only be evaluated by the compiler');
+    expect(() => PlayButton({})).toThrow('<PlayButton> can only be evaluated by a VJSC transform');
   });
 });

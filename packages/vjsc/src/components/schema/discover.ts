@@ -1,8 +1,7 @@
 import { globSync, readFileSync } from 'node:fs';
 
-import ts from 'typescript';
-import { propertyNameText } from '../../ts/utils/declarations';
-import { parseSourceFile } from '../../ts/utils/source-file';
+import type { CallExpression, ExportDefaultDeclaration, PropertyKey } from '@oxc-project/types';
+import { parseSync } from 'oxc-parser';
 import { toArray } from '../../utils/array';
 import { absolutePath, fileStem } from '../../utils/path';
 import type { ComponentDefinition, ComponentRecord } from '../definition';
@@ -79,12 +78,16 @@ function discoverFiles(source: ComponentFileSet, cwd: string): FileSchemaCompone
 }
 
 function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent, 'definition' | 'name'> {
-  const sourceFile = parseSourceFile(readFileSync(fileName, 'utf8'), fileName);
-  const call = findDefaultExportCall(sourceFile);
+  const parsed = parseSync(fileName, readFileSync(fileName, 'utf8'));
+  if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
+  const exported = parsed.program.body.find(
+    (statement): statement is ExportDefaultDeclaration =>
+      statement.type === 'ExportDefaultDeclaration' && isDefineComponentCall(statement.declaration)
+  );
 
-  if (!call) throw new Error(`No \`export default defineComponent(...)\` found in ${fileName}`);
+  if (!exported) throw new Error(`No \`export default defineComponent(...)\` found in ${fileName}`);
 
-  const definition = parseComponentDefinition(call, fileName);
+  const definition = parseComponentDefinition(exported.declaration as CallExpression, fileName);
   if (!definition.name) throw new Error(`defineComponent() in ${fileName} is missing a literal \`name:\` field`);
 
   return {
@@ -93,28 +96,22 @@ function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent,
   };
 }
 
-function findDefaultExportCall(sourceFile: ts.SourceFile): ts.CallExpression | undefined {
-  for (const statement of sourceFile.statements) {
-    if (ts.isExportAssignment(statement) && !statement.isExportEquals && isDefineComponentCall(statement.expression)) {
-      return statement.expression;
-    }
-  }
-
-  return undefined;
-}
-
-function isDefineComponentCall(node: ts.Node): node is ts.CallExpression {
-  return ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'defineComponent';
+function isDefineComponentCall(node: unknown): node is CallExpression {
+  if (!node || typeof node !== 'object') return false;
+  const candidate = node as { readonly type?: unknown; readonly callee?: unknown };
+  if (candidate.type !== 'CallExpression' || !candidate.callee || typeof candidate.callee !== 'object') return false;
+  const callee = candidate.callee as { readonly type?: unknown; readonly name?: unknown };
+  return callee.type === 'Identifier' && callee.name === 'defineComponent';
 }
 
 function parseComponentDefinition(
-  call: ts.CallExpression,
+  call: CallExpression,
   fileName: string
 ): ComponentDefinition<object, ComponentRecord | undefined> {
   const argument = call.arguments[0];
   if (!argument) return {};
 
-  if (!ts.isObjectLiteralExpression(argument)) {
+  if (argument.type !== 'ObjectExpression') {
     throw new Error(`defineComponent() in ${fileName} must take an object literal`);
   }
 
@@ -125,28 +122,28 @@ function parseComponentDefinition(
   } = {};
 
   for (const property of argument.properties) {
-    if (!ts.isPropertyAssignment(property)) continue;
-    const name = staticPropertyName(property.name);
+    if (property.type !== 'Property' || property.kind !== 'init' || property.method) continue;
+    const name = staticPropertyName(property.key);
 
     if (name === 'name' || name === 'root') {
-      if (!ts.isStringLiteral(property.initializer)) {
+      if (property.value.type !== 'Literal' || typeof property.value.value !== 'string') {
         throw new Error(`defineComponent() in ${fileName} requires a literal \`${name}:\` field`);
       }
-      definition[name] = property.initializer.text;
+      definition[name] = property.value.value;
       continue;
     }
     if (name !== 'parts') continue;
 
-    if (!ts.isObjectLiteralExpression(property.initializer)) {
+    if (property.value.type !== 'ObjectExpression') {
       throw new Error(`defineComponent() in ${fileName} requires an object literal \`parts:\` field`);
     }
 
     definition.parts = Object.fromEntries(
-      property.initializer.properties.map((part) => {
-        if (!ts.isPropertyAssignment(part) || !isDefineComponentCall(part.initializer)) {
+      property.value.properties.map((part) => {
+        if (part.type !== 'Property' || part.kind !== 'init' || part.method || !isDefineComponentCall(part.value)) {
           throw new Error(`defineComponent() in ${fileName} requires literal component parts`);
         }
-        return [staticPropertyName(part.name), parseComponentDefinition(part.initializer, fileName)];
+        return [staticPropertyName(part.key), parseComponentDefinition(part.value, fileName)];
       })
     );
   }
@@ -154,8 +151,10 @@ function parseComponentDefinition(
   return definition as ComponentDefinition<object, ComponentRecord | undefined>;
 }
 
-function staticPropertyName(name: ts.PropertyName): string {
-  const value = propertyNameText(name);
-  if (value === undefined) throw new Error('Component definition property names must be static.');
-  return value;
+function staticPropertyName(name: PropertyKey): string {
+  if (name.type === 'Identifier') return name.name;
+  if (name.type === 'Literal' && (typeof name.value === 'string' || typeof name.value === 'number')) {
+    return String(name.value);
+  }
+  throw new Error('Component definition property names must be static.');
 }

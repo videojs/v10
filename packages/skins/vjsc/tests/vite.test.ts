@@ -5,12 +5,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'vite.config.ts');
-const reactProjection = '?framework=react&skin=default-video&style=vanilla';
-const defaultSkinUrl = `/../vjsc/skins/default-video/skin.tsx${reactProjection}`;
-const playButtonUrl = `/../vjsc/components/buttons/play-button.tsx${reactProjection}`;
+const reactTarget = '?target=react&skin=default-video&style=vanilla';
+const defaultSkinUrl = `/../vjsc/skins/default-video/skin.tsx${reactTarget}`;
+const playButtonUrl = `/../vjsc/components/buttons/play-button.tsx${reactTarget}`;
 const buttonStyles = resolve(packageDir, 'vjsc/styles/components/button.styles.ts');
+const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
 const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
-const corePlayButton = resolve(packageDir, '../core/src/core/ui/play-button/play-button-component.ts');
 const reactVirtualSkin = 'virtual:vjsc/skin/react/default-video/vanilla.tsx';
 const htmlVirtualSkin = 'virtual:vjsc/skin/html/minimal-video/tailwind.tsx';
 
@@ -31,9 +31,7 @@ describe('Skins Vite workflow', () => {
 
     await server.environments.client.depsOptimizer?.scanProcessing;
     const resolved = await server.pluginContainer.resolveId(reactVirtualSkin);
-    expect(resolved?.id).toContain(
-      '/vjsc/skins/default-video/skin.tsx?framework=react&skin=default-video&style=vanilla'
-    );
+    expect(resolved?.id).toContain('/vjsc/skins/default-video/skin.tsx?skin=default-video&style=vanilla&target=react');
   }, 30_000);
 
   it('transforms the React/vanilla entry and invalidates style owners', async () => {
@@ -60,7 +58,7 @@ describe('Skins Vite workflow', () => {
     expect(owner?.transformResult).toBeNull();
   }, 30_000);
 
-  it('serves framework and style transforms through stable Vite aliases', async () => {
+  it('serves target and style transforms through stable Vite aliases', async () => {
     server = await createServer({
       configFile,
       logLevel: 'silent',
@@ -81,35 +79,35 @@ describe('Skins Vite workflow', () => {
     const virtualModule = resolved && server.moduleGraph.getModuleById(resolved.id);
     expect(virtualModule?.transformResult).not.toBeNull();
     await server.transformRequest(playButtonUrl);
-    const projectedPlayButtonId = await server.pluginContainer.resolveId(`${vjscPlayButton}${reactProjection}`);
-    const projectedPlayButton = projectedPlayButtonId && server.moduleGraph.getModuleById(projectedPlayButtonId.id);
-    expect(projectedPlayButton).toBeDefined();
-    expect(projectedPlayButton?.transformResult).not.toBeNull();
-    if (!virtualModule || !projectedPlayButton) throw new Error('Expected projected VJSC modules.');
+    const targetedPlayButtonId = await server.pluginContainer.resolveId(`${vjscPlayButton}${reactTarget}`);
+    const targetedPlayButton = targetedPlayButtonId && server.moduleGraph.getModuleById(targetedPlayButtonId.id);
+    expect(targetedPlayButton).toBeDefined();
+    expect(targetedPlayButton?.transformResult).not.toBeNull();
+    if (!virtualModule || !targetedPlayButton) throw new Error('Expected targeted VJSC modules.');
 
     const styleInvalidation = {
       skin: virtualModule.lastInvalidationTimestamp,
-      component: projectedPlayButton.lastInvalidationTimestamp,
+      component: targetedPlayButton.lastInvalidationTimestamp,
     };
     server.watcher.emit('change', buttonStyles);
     await vi.waitFor(() => {
       expect(virtualModule.lastInvalidationTimestamp).toBeGreaterThan(styleInvalidation.skin);
-      expect(projectedPlayButton.lastInvalidationTimestamp).toBeGreaterThan(styleInvalidation.component);
+      expect(targetedPlayButton.lastInvalidationTimestamp).toBeGreaterThan(styleInvalidation.component);
     });
 
     await server.transformRequest(playButtonUrl);
-    expect(projectedPlayButton.transformResult).not.toBeNull();
+    expect(targetedPlayButton.transformResult).not.toBeNull();
 
-    const schemaInvalidation = projectedPlayButton.lastInvalidationTimestamp;
-    server.watcher.emit('change', corePlayButton);
-    await vi.waitFor(() => expect(projectedPlayButton.lastInvalidationTimestamp).toBeGreaterThan(schemaInvalidation));
+    const designInvalidation = targetedPlayButton.lastInvalidationTimestamp;
+    server.watcher.emit('change', designStyles);
+    await vi.waitFor(() => expect(targetedPlayButton.lastInvalidationTimestamp).toBeGreaterThan(designInvalidation));
 
     await server.transformRequest(playButtonUrl);
-    expect(projectedPlayButton.transformResult).not.toBeNull();
+    expect(targetedPlayButton.transformResult).not.toBeNull();
 
-    const sourceInvalidation = projectedPlayButton.lastInvalidationTimestamp;
+    const sourceInvalidation = targetedPlayButton.lastInvalidationTimestamp;
     server.watcher.emit('change', vjscPlayButton);
-    await vi.waitFor(() => expect(projectedPlayButton.lastInvalidationTimestamp).toBeGreaterThan(sourceInvalidation));
+    await vi.waitFor(() => expect(targetedPlayButton.lastInvalidationTimestamp).toBeGreaterThan(sourceInvalidation));
   }, 30_000);
 
   it('builds the same VJSC configuration for production', async () => {

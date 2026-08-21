@@ -1,2 +1,2 @@
-export { createHtmlRegistry, createReactRegistry, type IconRegistryOptions } from './registry';
 export { createIconSchemaModule } from './schema';
+export { createHtmlIconTarget, createReactIconTarget, type IconTargetOptions } from './target';
