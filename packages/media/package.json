@@ -18,9 +18,7 @@
     "dist"
   ],
   "type": "module",
-  "sideEffects": [
-    "./dist/*/dom/wistia/*.js"
-  ],
+  "sideEffects": false,
   "main": "dist/default/index.js",
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
