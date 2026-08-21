@@ -411,9 +411,6 @@ importers:
       mux-embed:
         specifier: ^5.17.10
         version: 5.17.10
-      shaka-player:
-        specifier: ^5.2.4
-        version: 5.2.6
     devDependencies:
       '@types/chrome':
         specifier: ^0.1.40
@@ -424,6 +421,9 @@ importers:
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@7.2.0)
+      shaka-player:
+        specifier: ^5.2.4
+        version: 5.2.6
       tsdown:
         specifier: ^0.21.9
         version: 0.21.10(@typescript/native-preview@7.0.0-dev.20260421.2)(typescript@6.0.2)

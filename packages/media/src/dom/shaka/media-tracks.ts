@@ -1,5 +1,5 @@
 import type { Constructor } from '@videojs/utils/types';
-import type shaka from 'shaka-player/dist/shaka-player.compiled-es2021';
+import type shaka from '#shaka';
 
 import type {
   MediaAudioTrackCapability,

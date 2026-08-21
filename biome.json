@@ -196,6 +196,7 @@
       "!**/examples",
       "!site/scripts/api-docs-builder/src/tests/fixtures",
       "!**/packages/html/cdn",
+      "!packages/media/vendor",
       "!**/styles/vjs.css",
       "!**/packages/*/types"
     ]

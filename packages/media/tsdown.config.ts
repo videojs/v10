@@ -5,6 +5,9 @@ import packageJson from './package.json' with { type: 'json' };
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
+  // The vendored shaka bundle resolves through the `#shaka` package import at
+  // consume time; bundling it here would copy ~600 kB into every dist mode.
+  external: ['#shaka'],
   entry: {
     index: './src/core/index.ts',
     'media-tracks': './src/core/media-tracks/index.ts',

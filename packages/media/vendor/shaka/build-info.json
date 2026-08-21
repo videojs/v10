@@ -1,0 +1,28 @@
+{
+  "shakaVersion": "5.2.6",
+  "langout": "ECMASCRIPT_2021",
+  "groups": [
+    "+@complete",
+    "-@msf",
+    "-@dashJson",
+    "-@ui",
+    "-@polyfillForUI",
+    "-@cast",
+    "-@ads",
+    "-@offline",
+    "-@queue",
+    "-@optionalText"
+  ],
+  "artifacts": {
+    "js": {
+      "file": "shaka-player.vjs.js",
+      "bytes": 587717,
+      "sha256": "7e25ac54306509b3487c08106bd9a5aeb015e002d85c15b7272b1bac064474c1"
+    },
+    "dts": {
+      "file": "shaka-player.vjs.d.ts",
+      "bytes": 258901,
+      "sha256": "b9c0143f92e11bcc16223b6766676685875891880f2f191fdba54d3aba64424a"
+    }
+  }
+}

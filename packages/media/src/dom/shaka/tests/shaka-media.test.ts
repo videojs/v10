@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
+vi.mock('#shaka', () => {
   const CONFIG_DEFAULTS = { streaming: { bufferingGoal: 10, rebufferingGoal: 2 } };
 
   /** Shaka merges every `configure()` call into the current configuration. */
