@@ -1,7 +1,7 @@
 import { BufferingIndicatorCore, BufferingIndicatorDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useState, useSyncExternalStore } from 'react';
+import { forwardRef, useLayoutEffect, useState, useSyncExternalStore } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -40,15 +40,17 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
 
   const [core] = useState(() => new BufferingIndicatorCore());
   useDestroy(core);
-  core.setProps({ delay });
-
-  if (playback) core.update(playback);
 
   const state = useSyncExternalStore(
     (cb) => core.state.subscribe(cb),
     () => core.state.current,
     () => core.state.current
   );
+
+  useLayoutEffect(() => {
+    core.setProps({ delay });
+    if (playback) core.update(playback);
+  }, [core, delay, playback]);
 
   if (!playback) {
     if (__DEV__) logMissingFeature('BufferingIndicator', 'playback');

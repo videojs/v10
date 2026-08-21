@@ -3,6 +3,7 @@
 import type { MuxDataProps as MuxDataComponentProps } from '@videojs/media/dom/mux';
 import { MuxData as MuxDataComponent, muxDataDefaultProps } from '@videojs/media/dom/mux';
 import type { ReactNode } from 'react';
+import { useLayoutEffect } from 'react';
 
 import { useMediaComponent } from '../../utils/use-media-component';
 import { useSyncProps } from '../../utils/use-sync-props';
@@ -42,7 +43,9 @@ export function MuxData(props: MuxDataProps): ReactNode {
   // instead: passing the prop wins even when its value is `undefined`, and only
   // omitting it falls back to the default SDK.
   const sdk = 'MuxDataSdk' in props ? MuxDataSdk : muxDataDefaultProps.MuxDataSdk;
-  if (component.MuxDataSdk !== sdk) component.MuxDataSdk = sdk;
+  useLayoutEffect(() => {
+    if (component.MuxDataSdk !== sdk) component.MuxDataSdk = sdk;
+  }, [component, sdk]);
 
   useSyncProps(component, rest, muxDataDefaultProps);
 

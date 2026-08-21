@@ -2,9 +2,24 @@ import { render } from '@testing-library/react';
 import type { Media } from '@videojs/media';
 import { addMediaComponent, getMediaComponents } from '@videojs/media/dom/media-host';
 import { MuxData as MuxDataComponent, MuxMedia } from '@videojs/media/dom/mux';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { createPlayerWrapper } from '../../testing/mocks';
 import { MuxData } from '../mux-data';
+
+class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  override componentDidCatch(_error: Error, _info: ErrorInfo) {}
+
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 function setup() {
   const media = new MuxMedia();
@@ -49,6 +64,46 @@ describe('MuxData', () => {
 
     rerender(<MuxData />);
     expect(component.MuxDataSdk).toBeDefined();
+  });
+
+  it('does not apply MuxDataSdk from an abandoned render', () => {
+    const { media, Wrapper } = setup();
+    const committedSdk = {
+      monitor: vi.fn(),
+      utils: { now: () => 0 },
+    } as unknown as NonNullable<MuxDataComponent['MuxDataSdk']>;
+    const abandonedSdk = {
+      monitor: vi.fn(),
+      utils: { now: () => 1 },
+    } as unknown as NonNullable<MuxDataComponent['MuxDataSdk']>;
+
+    function Throw({ fail = false }: { fail?: boolean }) {
+      if (fail) throw new Error('abandon render');
+      return null;
+    }
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = render(
+      <Boundary>
+        <Wrapper>
+          <MuxData MuxDataSdk={committedSdk} />
+          <Throw />
+        </Wrapper>
+      </Boundary>
+    );
+    const component = getMediaComponents(media).get(MuxDataComponent)!;
+
+    rerender(
+      <Boundary>
+        <Wrapper>
+          <MuxData MuxDataSdk={abandonedSdk} />
+          <Throw fail />
+        </Wrapper>
+      </Boundary>
+    );
+
+    expect(component.MuxDataSdk).toBe(committedSdk);
+    consoleError.mockRestore();
   });
 
   it('resets a removed prop to its default', () => {
