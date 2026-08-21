@@ -81,6 +81,41 @@ function getCommonTemplateHTML(tag: string) {
 
 const excludedProperties = ['attach', 'detach', 'destroy'];
 
+/** How a property declares the content attribute that drives it. */
+type PropertyConfig = { type: any; attribute?: string; empty?: unknown };
+type PropertyConfigs = Record<string, PropertyConfig>;
+
+/**
+ * The content attribute a property is driven by.
+ *
+ * Attributes HTML already defines are squashed lowercase
+ * (`playsInline` -> `playsinline`), while the custom ones are kebab-case
+ * (`streamType` -> `stream-type`) and name themselves through `attribute`.
+ * Undeclared properties are this library's own, so they take kebab-case too.
+ */
+function attributeName(prop: string, properties: PropertyConfigs): string {
+  const config = properties[prop];
+  return config ? (config.attribute ?? prop.toLowerCase()) : kebabCase(prop);
+}
+
+/**
+ * Whether a property's declared attribute is really another property's.
+ *
+ * For example: `defaultMuted` declares `attribute: 'muted'`, but `muted` is a property in its
+ * own right and owns that attribute, so the alias defers to it.
+ */
+function isAttributeAlias(prop: string, properties: PropertyConfigs, hostPrototype: object): boolean {
+  const { attribute } = properties[prop] ?? {};
+  return !!attribute && attribute in hostPrototype;
+}
+
+/** Coerce an attribute string to the type the host property already holds. */
+function propertyValueFor(attrValue: string | null, current: unknown, config?: PropertyConfig): unknown {
+  if (typeof current === 'boolean') return attrValue !== null;
+  if (typeof current === 'number') return Number(attrValue);
+  return attrValue ?? (config && 'empty' in config ? config.empty : '');
+}
+
 export interface MediaHost extends EventTarget {
   attach(target: EventTarget | null): void;
   detach(): void;
@@ -121,7 +156,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       autoplay: { type: Boolean },
       controls: { type: Boolean },
       controlsList: { type: String },
-      crossOrigin: { type: String },
+      crossOrigin: { type: String, empty: null },
       defaultMuted: { type: Boolean, attribute: 'muted' },
       disablePictureInPicture: { type: Boolean },
       disableRemotePlayback: { type: Boolean },
@@ -147,19 +182,14 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (isDefined) return;
       isDefined = true;
 
-      const properties = ctor.properties as Record<string, { type: any; attribute?: string; empty?: unknown }>;
+      const properties = ctor.properties as PropertyConfigs;
 
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
-          // Defer to the explicit `ctor.properties` loop when its attribute
-          // mapping diverges from `kebabCase(prop)`. Covers multi-word camelCase
-          // props (`playsInline` → `'playsinline'`) and explicit overrides
-          // (`defaultMuted` → `attribute: 'muted'`). Single-word props in
-          // `properties` (like `loop`, `preload`) keep their legacy proto-walk
-          // path so the mediaHost still receives the setter call.
-          const propConfig = properties[prop];
-          if (propConfig && (propConfig.attribute ?? prop.toLowerCase()) !== kebabCase(prop)) continue;
+          // An alias keeps reflecting its attribute through the `properties`
+          // loop below rather than reaching the host.
+          if (isAttributeAlias(prop, properties, MediaHost.prototype)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
           if (!descriptor) continue;
@@ -179,7 +209,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
             };
 
             if (descriptor.set) {
-              const attr = kebabCase(prop);
+              const attr = attributeName(prop, properties);
               if (ctor.observedAttributes.includes(attr)) {
                 mediaHostAttrToProp.set(attr, prop);
 
@@ -323,15 +353,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       const prop = mediaHostAttrToProp.get(attrName);
       if (prop) {
         if (oldValue !== newValue) {
-          const valueType = typeof this.#mediaHost[prop];
           const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
-          const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
-          this.#mediaHost[prop] =
-            valueType === 'boolean'
-              ? newValue !== null
-              : valueType === 'number'
-                ? Number(newValue)
-                : (newValue ?? emptyValue);
+          this.#mediaHost[prop] = propertyValueFor(newValue, this.#mediaHost[prop], propConfig);
         }
         return;
       }

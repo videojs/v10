@@ -384,16 +384,21 @@ describe('CustomMediaElement', () => {
       expect(el.target!.getAttribute('controlslist')).toBe('nodownload');
     });
 
+    // These two reach the target through the media host, which assigns the IDL
+    // property; browsers reflect that back to the attribute, but jsdom
+    // implements neither property, so only the assignment is observable here.
     it('forwards disableremoteplayback to the target video element', () => {
       const el = create(defineVideoElement());
       el.setAttribute('disableremoteplayback', '');
-      expect(el.target!.hasAttribute('disableremoteplayback')).toBe(true);
+      expect(el.host.disableRemotePlayback).toBe(true);
+      expect((el.target as HTMLVideoElement).disableRemotePlayback).toBe(true);
     });
 
     it('forwards disablepictureinpicture to the target video element', () => {
       const el = create(defineVideoElement());
       el.setAttribute('disablepictureinpicture', '');
-      expect(el.target!.hasAttribute('disablepictureinpicture')).toBe(true);
+      expect(el.host.disablePictureInPicture).toBe(true);
+      expect((el.target as HTMLVideoElement).disablePictureInPicture).toBe(true);
     });
 
     it('forwards autopictureinpicture to the target video element', () => {
@@ -412,15 +417,14 @@ describe('CustomMediaElement', () => {
       const el = create(defineVideoElement());
       const target = el.target!;
 
-      const booleanAttrs = [
-        'autoplay',
-        'controls',
-        'disableremoteplayback',
-        'loop',
-        'playsinline',
-        'autopictureinpicture',
-        'disablepictureinpicture',
-      ] as const;
+      const booleanAttrs = ['autoplay', 'controls', 'loop', 'playsinline', 'autopictureinpicture'] as const;
+
+      // Host-routed properties jsdom does not implement, so the browser's
+      // reflection back to the attribute is not observable here.
+      const propertyOnlyAttrs = {
+        disableremoteplayback: 'disableRemotePlayback',
+        disablepictureinpicture: 'disablePictureInPicture',
+      } as const;
 
       const valueAttrs = {
         controlslist: 'nodownload',
@@ -430,7 +434,7 @@ describe('CustomMediaElement', () => {
         poster: 'https://example.com/poster.jpg',
       } as const;
 
-      for (const attr of booleanAttrs) {
+      for (const attr of [...booleanAttrs, ...Object.keys(propertyOnlyAttrs)]) {
         el.setAttribute(attr, '');
       }
       for (const [attr, value] of Object.entries(valueAttrs)) {
@@ -439,6 +443,9 @@ describe('CustomMediaElement', () => {
 
       for (const attr of booleanAttrs) {
         expect(target.hasAttribute(attr), `expected ${attr} to be present on target`).toBe(true);
+      }
+      for (const [attr, prop] of Object.entries(propertyOnlyAttrs)) {
+        expect((target as any)[prop], `expected ${attr} to set ${prop} on target`).toBe(true);
       }
       for (const [attr, value] of Object.entries(valueAttrs)) {
         expect(target.getAttribute(attr), `expected ${attr}="${value}" on target`).toBe(value);
