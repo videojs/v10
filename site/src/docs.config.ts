@@ -139,6 +139,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/mux-audio' },
           { slug: 'reference/mux-video' },
           { slug: 'reference/native-hls-video' },
+          { slug: 'reference/shaka-video' },
           { slug: 'reference/spotify-audio' },
           { slug: 'reference/tiktok-video' },
           { slug: 'reference/twitch-video' },

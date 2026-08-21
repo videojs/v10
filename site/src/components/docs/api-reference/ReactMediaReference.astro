@@ -3,7 +3,8 @@ import A from '@/components/typography/A.astro';
 import H3 from '@/components/typography/H3Markdown.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
-import type { ReactMediaReference } from '@/types/media-reference';
+import type { EngineOptionDef, ReactMediaReference } from '@/types/media-reference';
+import ApiEngineOptionsSection from './ApiEngineOptionsSection.astro';
 import MediaHostPropsTable from './MediaHostPropsTable.astro';
 
 interface Section {
@@ -16,10 +17,14 @@ interface Props {
   media: string;
   data: ReactMediaReference;
   sections: Section[];
+  engines: { key: string; id: string; title: string }[];
+  engineOptions: Record<string, EngineOptionDef[]>;
+  engineProse: Record<string, string>;
 }
 
-const { media, data, sections } = Astro.props;
+const { media, data, sections, engines, engineOptions, engineProse } = Astro.props;
 const propsSection = sections.find((section) => section.key === 'props');
+const engineSection = sections.find((section) => section.key === 'engineOptions');
 const refSection = sections.find((section) => section.key === 'ref');
 const eventsSection = sections.find((section) => section.key === 'events');
 const hasVideoJsProps = Object.keys(data.props).length > 0;
@@ -59,6 +64,18 @@ const mdnApiUrl = `https://developer.mozilla.org/en-US/docs/Web/API/${nativeInte
         />
       )}
     </>
+  )
+}
+
+{
+  engineSection && (
+    <ApiEngineOptionsSection
+      media={media}
+      section={engineSection}
+      engines={engines}
+      engineOptions={engineOptions}
+      prose={engineProse}
+    />
   )
 }
 

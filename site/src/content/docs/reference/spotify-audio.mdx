@@ -6,7 +6,6 @@ description: Audio component that plays Spotify tracks, episodes, playlists, and
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
-import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -53,35 +52,6 @@ The Spotify embed exposes less than a native `<audio>` element:
 - No playback rate and no text tracks.
 - `loop` replays the entity from the top when it ends; without it, the embed continues into whatever Spotify queues next.
 
-## Engine options
-
-Pass [Spotify embed options](https://developer.spotify.com/documentation/embeds) under `source.engine.spotify`, spelled exactly as Spotify spells them. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
-
-<EngineOptions media="SpotifyAudio" engine="spotify" />
-
-Anything Spotify adds next passes through the same way.
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-<SpotifyAudio
-  source={{
-    src: 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5',
-    engine: { spotify: { t: 90, theme: 0 } },
-  }}
-/>
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```ts
-const audio = document.querySelector('spotify-audio');
-audio.source = {
-  src: 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5',
-  engine: { spotify: { t: 90, theme: 0 } },
-};
-```
-</FrameworkCase>
-
 ## Examples
 
 ### Basic Usage
@@ -109,4 +79,29 @@ audio.source = {
   </StyleCase>
 </FrameworkCase>
 
-<MediaReference media="SpotifyAudio" />
+<MediaReference media="SpotifyAudio">
+  <Fragment slot="engine-spotify">
+    Pass [Spotify embed options](https://developer.spotify.com/documentation/embeds) under `source.engine.spotify`, spelled exactly as Spotify spells them, plus anything Spotify adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <SpotifyAudio
+      source={{
+        src: 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5',
+        engine: { spotify: { t: 90, theme: 0 } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const audio = document.querySelector('spotify-audio');
+    audio.source = {
+      src: 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5',
+      engine: { spotify: { t: 90, theme: 0 } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

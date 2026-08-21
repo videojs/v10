@@ -6,7 +6,6 @@ description: Video component that plays Twitch videos and live channels through 
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
-import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -83,14 +82,6 @@ video.source = {
 - `controls` is read when the embed is built; changing it later doesn't take effect, since rebuilding the iframe would lose the playback session.
 - Fullscreen targets the iframe, so Twitch's own chrome shows in fullscreen.
 
-## Engine options
-
-Pass [Twitch embed parameters](https://dev.twitch.tv/docs/embed/video-and-clips/) under `source.engine.twitch`, spelled exactly as Twitch spells them. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
-
-<EngineOptions media="TwitchVideo" engine="twitch" />
-
-Anything Twitch adds next passes through the same way. `controls`, `autoplay`, and `muted` come from the props of the same name, and the video or channel comes from `src`, so none of those have an `engine.twitch` spelling.
-
 ## Examples
 
 ### Basic Usage
@@ -118,4 +109,10 @@ Anything Twitch adds next passes through the same way. `controls`, `autoplay`, a
   </StyleCase>
 </FrameworkCase>
 
-<MediaReference media="TwitchVideo" />
+<MediaReference media="TwitchVideo">
+  <Fragment slot="engine-twitch">
+    Pass [Twitch embed parameters](https://dev.twitch.tv/docs/embed/video-and-clips/) under `source.engine.twitch`, spelled exactly as Twitch spells them, plus anything Twitch adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    `controls`, `autoplay`, and `muted` come from the props of the same name, and the video or channel comes from `src`, so none of those have an `engine.twitch` spelling.
+  </Fragment>
+</MediaReference>

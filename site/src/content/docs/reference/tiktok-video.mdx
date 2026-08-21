@@ -6,7 +6,6 @@ description: Video component that plays TikTok videos through the TikTok embed p
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
-import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -58,35 +57,6 @@ Two settings opt out. `preload="none"` skips the warm-up, leaving the network un
 - `poster` and `playsInline` never reach the embed: it always plays inline and draws the video's own cover image.
 - Changing `controls` or `loop` after the embed is up rebuilds it; rewriting the iframe URL is the only reload TikTok allows.
 
-## Engine options
-
-Pass [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) under `source.engine.tiktok`, spelled exactly as TikTok spells them — each one `0` or `1`. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
-
-<EngineOptions media="TikTokVideo" engine="tiktok" />
-
-`autoplay`, `controls`, `loop`, and `muted` come from the props of the same name, so they have no `engine.tiktok` spelling. Anything TikTok adds next passes through the same way.
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-<TikTokVideo
-  source={{
-    src: 'https://www.tiktok.com/@_luwes/video/7527476667770522893',
-    engine: { tiktok: { closed_caption: 0, rel: 1 } },
-  }}
-/>
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```ts
-const video = document.querySelector('tiktok-video');
-video.source = {
-  src: 'https://www.tiktok.com/@_luwes/video/7527476667770522893',
-  engine: { tiktok: { closed_caption: 0, rel: 1 } },
-};
-```
-</FrameworkCase>
-
 ## Examples
 
 ### Basic Usage
@@ -114,4 +84,31 @@ video.source = {
   </StyleCase>
 </FrameworkCase>
 
-<MediaReference media="TikTokVideo" />
+<MediaReference media="TikTokVideo">
+  <Fragment slot="engine-tiktok">
+    Pass [TikTok player parameters](https://developers.tiktok.com/doc/embed-player) under `source.engine.tiktok`, spelled exactly as TikTok spells them, each one `0` or `1`, plus anything TikTok adds next. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    `autoplay`, `controls`, `loop`, and `muted` come from the props of the same name, so they have no `engine.tiktok` spelling.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <TikTokVideo
+      source={{
+        src: 'https://www.tiktok.com/@_luwes/video/7527476667770522893',
+        engine: { tiktok: { closed_caption: 0, rel: 1 } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('tiktok-video');
+    video.source = {
+      src: 'https://www.tiktok.com/@_luwes/video/7527476667770522893',
+      engine: { tiktok: { closed_caption: 0, rel: 1 } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

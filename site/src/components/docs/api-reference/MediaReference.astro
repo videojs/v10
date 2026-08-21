@@ -22,6 +22,16 @@ const model = createMediaReferenceModel(media, ref);
 if (!model) return;
 const platform = model.platforms[framework];
 if (!platform) return;
+
+// Engine prose comes from the page as `engine-<key>` slots: the paragraph that
+// names the provider's own docs belongs with the page, not the generator. Slot
+// names cannot be dynamic in markup, so resolve them here and hand the rendered
+// HTML to whichever platform renderer runs.
+const engineProse: Record<string, string> = {};
+for (const engine of model.engines) {
+  const slot = `engine-${engine.key}`;
+  if (Astro.slots.has(slot)) engineProse[engine.key] = await Astro.slots.render(slot);
+}
 ---
 
 <ContentWidth>
@@ -33,12 +43,18 @@ if (!platform) return;
         mediaType={ref.mediaType}
         data={platform.data}
         sections={platform.sections}
+        engines={model.engines}
+        engineOptions={ref.engineOptions ?? {}}
+        engineProse={engineProse}
       />
     ) : (
       <ReactMediaReference
         media={media}
         data={platform.data}
         sections={platform.sections}
+        engines={model.engines}
+        engineOptions={ref.engineOptions ?? {}}
+        engineProse={engineProse}
       />
     )
   }

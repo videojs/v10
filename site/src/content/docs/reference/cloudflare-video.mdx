@@ -6,7 +6,6 @@ description: Video component that plays Cloudflare Stream videos through the Str
 ---
 
 import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
-import EngineOptions from "@/components/docs/api-reference/EngineOptions.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -54,35 +53,6 @@ A few things work differently from a native `<video>` element, because the Strea
 - Fullscreen targets the iframe, so Cloudflare's own chrome shows in fullscreen.
 - `playsInline` has no effect: the Stream embed always plays inline.
 
-## Engine options
-
-Pass [Stream player parameters](https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/) under `source.engine.cloudflare`, spelled exactly as Cloudflare spells them. They're serialized onto the embed URL untouched, and the embed reads them once, when its URL is built. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
-
-<EngineOptions media="CloudflareVideo" engine="cloudflare" />
-
-Anything Cloudflare adds next passes through the same way. `controls`, `autoplay`, `loop`, `muted`, `preload`, and `poster` come from the props of the same name, so they have no `engine.cloudflare` spelling.
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-<CloudflareVideo
-  source={{
-    src: 'bfbd585059e33391d67b0f1d15fe6ea4',
-    engine: { cloudflare: { primaryColor: '#f03e3e', startTime: '5m30s' } },
-  }}
-/>
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```ts
-const video = document.querySelector('cloudflare-video');
-video.source = {
-  src: 'bfbd585059e33391d67b0f1d15fe6ea4',
-  engine: { cloudflare: { primaryColor: '#f03e3e', startTime: '5m30s' } },
-};
-```
-</FrameworkCase>
-
 ## Examples
 
 ### Basic Usage
@@ -110,4 +80,31 @@ video.source = {
   </StyleCase>
 </FrameworkCase>
 
-<MediaReference media="CloudflareVideo" />
+<MediaReference media="CloudflareVideo">
+  <Fragment slot="engine-cloudflare">
+    Pass [Stream player parameters](https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/) under `source.engine.cloudflare`, spelled exactly as Cloudflare spells them, plus anything Cloudflare adds next. They're serialized onto the embed URL untouched, and the embed reads them once, when its URL is built. <DocsLink slug="concepts/media-sources">Media Sources</DocsLink> covers how engine options fit into a structured source.
+
+    `controls`, `autoplay`, `loop`, `muted`, `preload`, and `poster` come from the props of the same name, so they have no `engine.cloudflare` spelling.
+
+    <FrameworkCase frameworks={["react"]}>
+    ```tsx
+    <CloudflareVideo
+      source={{
+        src: 'bfbd585059e33391d67b0f1d15fe6ea4',
+        engine: { cloudflare: { primaryColor: '#f03e3e', startTime: '5m30s' } },
+      }}
+    />
+    ```
+    </FrameworkCase>
+
+    <FrameworkCase frameworks={["html"]}>
+    ```ts
+    const video = document.querySelector('cloudflare-video');
+    video.source = {
+      src: 'bfbd585059e33391d67b0f1d15fe6ea4',
+      engine: { cloudflare: { primaryColor: '#f03e3e', startTime: '5m30s' } },
+    };
+    ```
+    </FrameworkCase>
+  </Fragment>
+</MediaReference>

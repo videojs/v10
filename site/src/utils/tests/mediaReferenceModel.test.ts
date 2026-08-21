@@ -43,6 +43,11 @@ function makeRef(overrides = {}) {
   };
 }
 
+const ENGINE_OPTIONS = {
+  hlsJs: [{ name: 'maxBufferLength', type: 'number', description: 'Buffer length.' }],
+  nativeHls: [{ name: 'drmSystems', type: 'object' }],
+};
+
 describe('createMediaReferenceModel', () => {
   it('returns null without a reference', () => {
     expect(createMediaReferenceModel('HlsJsVideo', null)).toBeNull();
@@ -56,6 +61,40 @@ describe('createMediaReferenceModel', () => {
       'methods',
       'events',
       'cssCustomProperties',
+    ]);
+  });
+
+  it('places engine options after the properties they extend', () => {
+    const model = createMediaReferenceModel('HlsJsVideo', makeRef({ engineOptions: ENGINE_OPTIONS }));
+    expect(model.platforms.html.sections.map((section) => section.key)).toEqual([
+      'attributes',
+      'properties',
+      'engineOptions',
+      'methods',
+      'events',
+      'cssCustomProperties',
+    ]);
+    expect(model.platforms.react.sections.map((section) => section.key)).toEqual([
+      'props',
+      'engineOptions',
+      'ref',
+      'events',
+    ]);
+  });
+
+  it('omits engine options for a media with no structured source', () => {
+    const model = createMediaReferenceModel('HlsJsVideo', makeRef());
+    expect(model.engines).toEqual([]);
+    for (const platform of ['html', 'react']) {
+      expect(model.platforms[platform].sections.map((section) => section.key)).not.toContain('engineOptions');
+    }
+  });
+
+  it('describes one engine per key under source.engine', () => {
+    const model = createMediaReferenceModel('HlsJsVideo', makeRef({ engineOptions: ENGINE_OPTIONS }));
+    expect(model.engines).toEqual([
+      { key: 'hlsJs', id: 'engine-options-hlsjs', title: 'source.engine.hlsJs' },
+      { key: 'nativeHls', id: 'engine-options-nativehls', title: 'source.engine.nativeHls' },
     ]);
   });
 
@@ -117,5 +156,28 @@ describe('buildMediaReferenceTocHeadings', () => {
       frameworks: ['html'],
     });
     expect(headings).toContainEqual({ depth: 3, text: 'Props', slug: 'props', frameworks: ['react'] });
+  });
+
+  it('nests each engine under the engine options heading', () => {
+    const model = createMediaReferenceModel('HlsJsVideo', makeRef({ engineOptions: ENGINE_OPTIONS }));
+    const headings = buildMediaReferenceTocHeadings(model);
+    const html = headings.filter((heading) => heading.frameworks?.includes('html')).map((heading) => heading.slug);
+
+    expect(html).toEqual([
+      'attributes',
+      'properties',
+      'engine-options',
+      'engine-options-hlsjs',
+      'engine-options-nativehls',
+      'methods',
+      'events',
+      'css-custom-properties',
+    ]);
+    expect(headings).toContainEqual({
+      depth: 4,
+      text: 'source.engine.hlsJs',
+      slug: 'engine-options-hlsjs',
+      frameworks: ['html'],
+    });
   });
 });
