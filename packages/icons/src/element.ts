@@ -79,7 +79,7 @@ export class MediaIconElement extends HTMLElement {
     }
 
     this.replaceChildren();
-    if (familyIcons || !name) return;
+    if (familyIcons || !name || !MediaIconElement.#loaders.has(family)) return;
 
     void MediaIconElement.load(family).then(
       () => {
