@@ -3,6 +3,7 @@ import type { UnknownStore } from '@videojs/store';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
+import { createVideoPlayerState } from '../../../testing/mocks';
 import { StatusAnnouncer } from '../status-announcer';
 
 afterEach(cleanup);
@@ -146,7 +147,7 @@ describe('StatusAnnouncer', () => {
 });
 
 function createTestStore(initialState: Record<string, unknown> = {}) {
-  let state = initialState;
+  let state = createVideoPlayerState(initialState);
   const target = {};
   const listeners = new Set<() => void>();
   const store = {

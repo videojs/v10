@@ -1,5 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { fullscreenFeature } from '../../store/features/fullscreen';
+import { pipFeature } from '../../store/features/pip';
+import { playbackFeature } from '../../store/features/playback';
+import { playbackRateFeature } from '../../store/features/playback-rate';
+import { textTrackFeature } from '../../store/features/text-track';
+import { timeFeature } from '../../store/features/time';
+import { volumeFeature } from '../../store/features/volume';
+import { createTestPlayerStore } from '../../tests/test-helpers';
 import {
   getIndicatorVisibilityCoordinator,
   getMediaSnapshot,
@@ -9,7 +17,10 @@ import {
 import { isSliderFocused } from '../slider-focus';
 
 function mockStore(state: Record<string, unknown>): MediaSnapshotStore {
-  return { state };
+  return createTestPlayerStore(
+    [playbackFeature, volumeFeature, playbackRateFeature, fullscreenFeature, textTrackFeature, pipFeature, timeFeature],
+    state
+  );
 }
 
 describe('input-action', () => {

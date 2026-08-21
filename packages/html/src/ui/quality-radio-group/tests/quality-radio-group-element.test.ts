@@ -1,12 +1,13 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { qualityFeature } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaQualityState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
@@ -64,14 +65,11 @@ function createQualityStore({
   activeVideoRendition?: MediaQualityState['activeVideoRendition'] | undefined;
   selectVideoRendition?: MediaQualityState['selectVideoRendition'] | undefined;
 } = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaQualityState>({
-    name: 'quality',
-    state: () => ({
-      videoRenditionList,
-      activeVideoRendition,
-      selectVideoRendition,
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([qualityFeature], {
+    videoRenditionList,
+    activeVideoRendition,
+    selectVideoRendition,
+  });
 }
 
 class TestPlayerProviderElement extends MediaElement {

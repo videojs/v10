@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { StatusAnnouncerCore } from '../../../core/ui/status-announcer/status-announcer-core';
+import { playbackFeature } from '../../store/features/playback';
+import { timeFeature } from '../../store/features/time';
+import { volumeFeature } from '../../store/features/volume';
+import { createTestPlayerStore } from '../../tests/test-helpers';
 import { type StatusAnnouncerStore, subscribeToStatusAnnouncer } from '../status-announcer';
 
 describe('subscribeToStatusAnnouncer', () => {
@@ -47,12 +51,12 @@ describe('subscribeToStatusAnnouncer', () => {
 });
 
 function createStore(initialState: Record<string, unknown>) {
-  let state = initialState;
+  const source = createTestPlayerStore([playbackFeature, volumeFeature, timeFeature], initialState);
   let target: unknown | null = null;
   const listeners = new Set<() => void>();
   const store: StatusAnnouncerStore = {
     get state() {
-      return state;
+      return source.state;
     },
     get target() {
       return target;
@@ -64,7 +68,7 @@ function createStore(initialState: Record<string, unknown>) {
   };
 
   const setState = (partial: Record<string, unknown>) => {
-    state = { ...state, ...partial };
+    source.setState(partial);
     for (const listener of listeners) listener();
   };
 

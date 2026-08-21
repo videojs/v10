@@ -11,6 +11,7 @@ import type {
   Slice,
   StateContext,
 } from './slice';
+import { getSliceMembership, registerSnapshot } from './slice-identity';
 import type { StateChange, State as StateContainer, SubscribeOptions, UnknownState, WritableState } from './state';
 import { createState } from './state';
 
@@ -36,6 +37,8 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
     type DerivedState = InferSliceDerivedState<S>;
     type PublicState = InferSliceState<S>;
     type TargetStore = Store<Target, PublicState>;
+
+    const sliceMembership = getSliceMembership(slice);
 
     // Closure state
     let target: Target | null = null;
@@ -69,6 +72,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
     sourceState = initialSourceState;
     const initialDerivedState = derive(sourceState);
     state = createState(publish(sourceState, initialDerivedState));
+    registerSnapshot(state.current as object, sliceMembership);
 
     const store = {
       [STORE_SYMBOL]: true,
@@ -148,6 +152,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       const nextDerived = derive(patched.next);
       sourceState = patched.next;
       state.replace(publish(sourceState, nextDerived));
+      registerSnapshot(state.current as object, sliceMembership);
     }
 
     function attach(newTarget: Target): () => void {

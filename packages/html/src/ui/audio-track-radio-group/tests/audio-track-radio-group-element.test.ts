@@ -1,12 +1,13 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { audioTrackFeature } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaAudioTrackState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
@@ -62,13 +63,10 @@ function createAudioTrackStore({
   audioTrackList?: MediaAudioTrackState['audioTrackList'] | undefined;
   selectAudioTrack?: MediaAudioTrackState['selectAudioTrack'] | undefined;
 } = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaAudioTrackState>({
-    name: 'audioTrack',
-    state: () => ({
-      audioTrackList,
-      selectAudioTrack,
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([audioTrackFeature], {
+    audioTrackList,
+    selectAudioTrack,
+  });
 }
 
 class TestPlayerProviderElement extends MediaElement {

@@ -1,12 +1,13 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { textTrackFeature } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
 import { MenuRadioItemElement } from '../../menu/menu-radio-item-element';
@@ -47,19 +48,12 @@ function createTextTrackStore({
   subtitlesShowing?: boolean | undefined;
   selectSubtitlesTrack?: MediaTextTrackState['selectSubtitlesTrack'] | undefined;
 } = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaTextTrackState>({
-    name: 'textTrack',
-    state: () => ({
-      chaptersCues: [],
-      thumbnailCues: [],
-      thumbnailTrackSrc: null,
-      thumbnailTrackCrossOrigin: null,
-      textTrackList,
-      subtitlesShowing,
-      toggleSubtitles: vi.fn(),
-      selectSubtitlesTrack,
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([textTrackFeature], {
+    textTrackList,
+    subtitlesShowing,
+    toggleSubtitles: vi.fn(),
+    selectSubtitlesTrack,
+  });
 }
 
 class TestPlayerProviderElement extends MediaElement {

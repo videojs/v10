@@ -9,6 +9,7 @@ import type {
   UnionSliceDerivedState,
   UnionSliceSourceState,
 } from './slice';
+import { registerCombinedSlice } from './slice-identity';
 
 type CombinedTarget<Slices extends readonly AnySlice[]> = Slices extends readonly []
   ? unknown
@@ -32,7 +33,7 @@ export function combine<const Slices extends readonly AnySlice[]>(
     warnDuplicates('derived', derivedDefinitions);
   }
 
-  return {
+  const combined: Slice<Target, SourceState, UnionSliceDerivedState<Slices>> = {
     state: (ctx: StateContext<Target>) => {
       const states = slices.map((slice) => slice.state(ctx));
 
@@ -58,6 +59,10 @@ export function combine<const Slices extends readonly AnySlice[]>(
       }
     },
   };
+
+  registerCombinedSlice(combined, slices);
+
+  return combined;
 }
 
 function warnDuplicates(namespace: string, objects: readonly object[]): void {

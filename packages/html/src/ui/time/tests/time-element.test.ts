@@ -1,13 +1,14 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { timeFeature } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTimeState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MediaElement } from '../../media-element';
 import { TimeElement } from '../time-element';
 
@@ -50,16 +51,13 @@ async function waitForAssertion(assertion: () => void): Promise<void> {
 }
 
 function createTimeStore(overrides: Partial<MediaTimeState> = {}): AnyPlayerStore {
-  return createStore<unknown>()<MediaTimeState>({
-    name: 'time',
-    state: () => ({
-      currentTime: 90,
-      duration: 300,
-      seeking: false,
-      seek: vi.fn(),
-      ...overrides,
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([timeFeature], {
+    currentTime: 90,
+    duration: 300,
+    seeking: false,
+    seek: vi.fn(),
+    ...overrides,
+  });
 }
 
 class TestPlayerProviderElement extends MediaElement {
