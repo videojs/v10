@@ -22,6 +22,6 @@ export type StylePluginOptions =
     })
   | (StylePluginBaseOptions & {
       readonly mode: 'css';
-      /** Create vanilla CSS modules in addition to transforming semantic class names. */
+      /** Create CSS modules in addition to transforming semantic class names. */
       readonly stylesheet?: StylesheetOptions | undefined;
     });

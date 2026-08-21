@@ -10,7 +10,10 @@ export function createStyleOptions(config: SkinConfig): StylePluginOptions {
   const skin = skinStyles[config.skin];
 
   return config.style === 'tailwind'
-    ? { mode: 'tailwind', variant: skin.variant }
+    ? {
+        mode: 'tailwind',
+        variant: skin.variant,
+      }
     : {
         mode: 'css',
         variant: skin.variant,

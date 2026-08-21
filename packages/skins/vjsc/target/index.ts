@@ -11,7 +11,9 @@ const htmlIcons = new Map<string, ComponentTarget>();
 export function createComponentTargets(config: SkinConfig): readonly ComponentTarget[] {
   const family = skinStyles[config.skin].theme;
   const cache = config.target === 'react' ? reactIcons : htmlIcons;
+
   let icons = cache.get(family);
+
   if (!icons) {
     const created = config.target === 'react' ? createReactIconTarget({ family }) : createHtmlIconTarget({ family });
     cache.set(family, created);

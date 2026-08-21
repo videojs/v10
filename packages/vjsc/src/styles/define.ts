@@ -20,7 +20,7 @@ export type StyleTree = {
 };
 
 export interface StyleDefinition<Rules extends StyleTree = StyleTree> {
-  /** CSS asset path used when the style transform emits vanilla CSS. */
+  /** CSS asset path used when the style transform emits CSS. */
   readonly file: string;
   /** Cascade layer containing the emitted rules. */
   readonly layer: string;

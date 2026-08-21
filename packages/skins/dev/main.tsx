@@ -4,22 +4,30 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 
 const modules = {
-  'react/default-video/vanilla': () => import('virtual:vjsc/skin/react/default-video/vanilla.tsx'),
-  'react/default-video/tailwind': () => import('virtual:vjsc/skin/react/default-video/tailwind.tsx'),
-  'react/minimal-video/vanilla': () => import('virtual:vjsc/skin/react/minimal-video/vanilla.tsx'),
-  'react/minimal-video/tailwind': () => import('virtual:vjsc/skin/react/minimal-video/tailwind.tsx'),
-  'html/default-video/vanilla': () => import('virtual:vjsc/skin/html/default-video/vanilla.tsx'),
-  'html/default-video/tailwind': () => import('virtual:vjsc/skin/html/default-video/tailwind.tsx'),
-  'html/minimal-video/vanilla': () => import('virtual:vjsc/skin/html/minimal-video/vanilla.tsx'),
-  'html/minimal-video/tailwind': () => import('virtual:vjsc/skin/html/minimal-video/tailwind.tsx'),
+  'react/default-video/css': () =>
+    import('../vjsc/skins/default-video/skin.tsx?style=css&target=react&skin=default-video'),
+  'react/default-video/tailwind': () =>
+    import('../vjsc/skins/default-video/skin.tsx?style=tailwind&target=react&skin=default-video'),
+  'react/minimal-video/css': () =>
+    import('../vjsc/skins/minimal-video/skin.tsx?style=css&target=react&skin=minimal-video'),
+  'react/minimal-video/tailwind': () =>
+    import('../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=react&skin=minimal-video'),
+  'html/default-video/css': () =>
+    import('../vjsc/skins/default-video/skin.tsx?style=css&target=html&skin=default-video'),
+  'html/default-video/tailwind': () =>
+    import('../vjsc/skins/default-video/skin.tsx?style=tailwind&target=html&skin=default-video'),
+  'html/minimal-video/css': () =>
+    import('../vjsc/skins/minimal-video/skin.tsx?style=css&target=html&skin=minimal-video'),
+  'html/minimal-video/tailwind': () =>
+    import('../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=html&skin=minimal-video'),
 } as const;
 
 type ModuleKey = keyof typeof modules;
 
 const params = new URLSearchParams(location.search);
-const requested = `${params.get('framework') ?? 'react'}/${params.get('skin') ?? 'default-video'}/${params.get('style') ?? 'vanilla'}`;
-const key: ModuleKey = requested in modules ? (requested as ModuleKey) : 'react/default-video/vanilla';
-const [framework, , styleMode] = key.split('/') as ['react' | 'html', string, 'vanilla' | 'tailwind'];
+const requested = `${params.get('framework') ?? 'react'}/${params.get('skin') ?? 'default-video'}/${params.get('style') ?? 'css'}`;
+const key: ModuleKey = requested in modules ? (requested as ModuleKey) : 'react/default-video/css';
+const [framework, , styleMode] = key.split('/') as ['react' | 'html', string, 'css' | 'tailwind'];
 const loaded = await modules[key]();
 
 if (styleMode === 'tailwind') await import('../vjsc/styles/tailwind.css');

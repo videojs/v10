@@ -6,7 +6,7 @@ import { createComponentTargets } from './target';
 export interface SkinConfig {
   readonly target: 'html' | 'react';
   readonly skin: SkinName;
-  readonly style: 'tailwind' | 'vanilla';
+  readonly style: 'tailwind' | 'css';
 }
 
 export function configureSkinModule({ parameters }: VjscModule): VjscModuleConfig | null {
@@ -28,10 +28,14 @@ export function validateSkinConfig(parameters: URLSearchParams): SkinConfig | nu
     (target !== 'react' && target !== 'html') ||
     !skin ||
     !(skin in skinStyles) ||
-    (style !== 'tailwind' && style !== 'vanilla')
+    (style !== 'tailwind' && style !== 'css')
   ) {
     return null;
   }
 
-  return { target, skin: skin as SkinName, style };
+  return {
+    target,
+    skin: skin as SkinName,
+    style,
+  };
 }
