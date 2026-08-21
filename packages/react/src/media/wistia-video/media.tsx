@@ -70,10 +70,11 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
   // A Wistia URL is accepted where a media id is expected, the way every other media here accepts a `src`.
   const { mediaId, ...options } = source ?? {};
   const resolved = mediaId ?? (src ? parseWistiaMediaId(src) : null);
-  // A `wtime` is a start position rather than a live playhead, so it is read once from the opening source.
-  const [startTime] = useState(() => (src ? parseWistiaStartTime(src) : null));
-  // Likewise the muted state the player *starts* in: re-sent on a later render it would put the mute back
-  // after the viewer cleared it through the skin.
+  // A `wtime` is a start position rather than a live playhead, and it belongs to the source it was written
+  // on — read again for each one, since this component outlives them. Not frozen: an unchanged `src` renders
+  // an unchanged attribute, which React leaves alone, so a playing media is never sent back to its start.
+  const startTime = src ? parseWistiaStartTime(src) : null;
+  // The muted state the player *starts* in, which is this component's to decide rather than the source's.
   const [initialMuted] = useState(() => defaultMuted ?? muted);
 
   return createElement(WISTIA_PLAYER_TAG, {

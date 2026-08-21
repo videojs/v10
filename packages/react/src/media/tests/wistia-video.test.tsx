@@ -106,6 +106,26 @@ describe('WistiaVideo', () => {
     expect(renderPlayer(<WistiaVideo src={`${SRC}?wtime=30`} />).getAttribute('current-time')).toBe('30');
   });
 
+  it('gives a new media the start time its own URL asked for, and no other', () => {
+    const { rerender, container } = render(<WistiaVideo src={`${SRC}?wtime=30`} />);
+    expect(container.querySelector('wistia-player')?.getAttribute('current-time')).toBe('30');
+
+    rerender(<WistiaVideo source={{ mediaId: 'abcde12345' }} />);
+
+    expect(container.querySelector('wistia-player')?.hasAttribute('current-time')).toBe(false);
+  });
+
+  it('does not send a playing media back to its start time on a later render', () => {
+    const { rerender, container } = render(<WistiaVideo src={`${SRC}?wtime=30`} />);
+    const player = container.querySelector('wistia-player') as HTMLElement;
+    player.removeAttribute('current-time');
+
+    // The attribute is read fresh every render, and React writes one only when its value changed.
+    rerender(<WistiaVideo src={`${SRC}?wtime=30`} className="changed" />);
+
+    expect(player.hasAttribute('current-time')).toBe(false);
+  });
+
   it('leaves currentTime alone for a source with no start time', () => {
     expect(renderPlayer(<WistiaVideo src={SRC} />).hasAttribute('current-time')).toBe(false);
   });
