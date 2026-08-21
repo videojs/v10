@@ -15,9 +15,7 @@
     "streaming",
     "videojs"
   ],
-  "sideEffects": [
-    "./dist/*/dom/wistia/*.js"
-  ],
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",

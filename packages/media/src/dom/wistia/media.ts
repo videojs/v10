@@ -11,6 +11,16 @@ import { type WistiaSource, wistiaPlayerStyle } from './source';
 restoreWistiaGlobals();
 
 /**
+ * The tag Wistia registers its player element under.
+ *
+ * Declared here rather than beside the rest of the Wistia helpers, and it has to stay here. This is the
+ * module whose evaluation registers the element, and this constant is the only thing React takes from it —
+ * it renders the tag rather than the class. Move the name somewhere that pulls none of Wistia in and a
+ * bundler is free to drop this module from React's build, leaving it rendering a tag nothing has defined.
+ */
+export const WISTIA_PLAYER_TAG = 'wistia-player';
+
+/**
  * Wistia's own player element: what `<wistia-player>` is, and so the type of the node React renders and
  * hands back. Named from here rather than from `@wistia/wistia-player`, which is the dependency this module
  * exists to keep in one place.
