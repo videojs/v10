@@ -221,7 +221,7 @@ These Media Chrome features have no direct equivalent yet. Several can be approx
 - No preference persistence, so Media Chrome's `novolumepref`, `nomutedpref`, and `nosubtitleslangpref` opt-outs have nothing to opt out of. Persistence is out of scope for GA; tracked at [#944](https://github.com/videojs/v10/issues/944), with subtitle language at [#1423](https://github.com/videojs/v10/issues/1423)
 - No `breakpoints` or container-breakpoint attributes; use CSS container queries instead
 - No `seektoliveoffset` or `noautoseektolive` controls, and live-edge offset and tolerance aren't configurable ([#1730](https://github.com/videojs/v10/issues/1730))
-- Chapters render, but there's no active-chapter state, no `chapterchange` event, and no menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
+- Chapters render and each time-slider segment reflects `data-active`, but there's no player-level active chapter value, `chapterchange` event, or menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
 - Cue points are not supported ([#1442](https://github.com/videojs/v10/issues/1442))
 
 Chapters themselves do work. Add a default `<track kind="chapters">` and the packaged skins segment the time slider and show the chapter title on hover, via `media-time-slider-chapters` and `media-time-slider-chapter-title`.

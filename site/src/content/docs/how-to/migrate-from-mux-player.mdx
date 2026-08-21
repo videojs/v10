@@ -320,7 +320,7 @@ video-skin {
 
 `--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar at once. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
 
-Mux Player's separate primary and secondary colors don't map one-to-one to these four properties. If your design relies on both, eject the skin and style those surfaces directly.
+Mux Player's separate primary and secondary colors don't map one-to-one to Video.js's documented properties. If your design relies on both, eject the skin and style those surfaces directly.
 
 ### Level 3: eject
 
@@ -499,7 +499,7 @@ Chapters are content, not an API call. Add a chapters track inside your media an
 
 There's no `addChapters()`. If you were building that VTT on the fly, you'll still need to, but you point the player at it instead of passing an array ([#1268](https://github.com/videojs/v10/issues/1268)).
 
-Two gaps to plan around. The player exposes `chaptersCues` as a read-only array, but there's no active-chapter state and no `chapterchange` event, and no menu to jump between chapters ([#1873](https://github.com/videojs/v10/issues/1873)). If your app highlights the current chapter in its own UI, derive it from `currentTime` and `chaptersCues`. Cue points aren't implemented at all ([#1442](https://github.com/videojs/v10/issues/1442)).
+Two gaps to plan around. Time-slider chapter segments reflect `data-active`, but the player doesn't expose an active chapter value or `chapterchange` event, and there's no menu to jump between chapters ([#1873](https://github.com/videojs/v10/issues/1873)). If your app highlights the current chapter outside the slider, derive it from `currentTime` and `chaptersCues`. Cue points aren't implemented at all ([#1442](https://github.com/videojs/v10/issues/1442)).
 
 ## Signed playback and DRM
 
@@ -559,7 +559,7 @@ Ordered roughly by how many migrations they'll touch.
 - No skin draws `content-title`, so setting it alone won't put a title on screen ([#1123](https://github.com/videojs/v10/issues/1123)).
 - Playback rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — and you can't choose your own yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade, fewer looks each of which you can eject, but it's a real difference if you shipped `theme="classic"`.
-- Chapters render on the time slider, but there's no active-chapter state, no `chapterchange` event, and no chapter menu ([#1873](https://github.com/videojs/v10/issues/1873)). No `addChapters()` either ([#1268](https://github.com/videojs/v10/issues/1268)).
+- Chapters render on the time slider and its segments reflect `data-active`, but there's no player-level active chapter value, `chapterchange` event, or chapter menu ([#1873](https://github.com/videojs/v10/issues/1873)). No `addChapters()` either ([#1268](https://github.com/videojs/v10/issues/1268)).
 - Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442)).
 - No `playback-id` attribute; use a `src` URL or the `source` object.
 - Lazy loading (`loading="viewport|page"`) has no equivalent.
