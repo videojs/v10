@@ -87,7 +87,7 @@ describe('createPlayer', () => {
     );
   });
 
-  it('exposes orientation lock configuration as a provider property', () => {
+  it('exposes orientation lock configuration as a player property', () => {
     const withOrientationLock = createPlayer({ features: [features.orientationLock] });
     const withoutOrientationLock = createPlayer({ features: [features.playback] });
     const orientationPlayer = new withOrientationLock.PlayerElement();

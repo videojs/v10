@@ -271,12 +271,11 @@ describe('createPlayer', () => {
 
   it('applies orientation lock configuration through attributes and properties', async () => {
     const { PlayerElement } = createPlayer({ features: [features.orientationLock] });
-    const tagName = 'test-orientation-lock-provider';
+    const tagName = 'test-orientation-lock-player';
 
     customElements.define(tagName, PlayerElement);
 
     const player = document.createElement(tagName) as InstanceType<typeof PlayerElement>;
-
     player.setAttribute('orientation-lock-type', 'portrait');
     document.body.append(player);
 
