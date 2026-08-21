@@ -3,7 +3,7 @@ import { isAbsolute, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 import type { ComponentMeta } from '../components/meta';
-import { sourceScriptKind } from '../ts/utils/source-module';
+import { parseSourceFile } from '../ts/utils/source-file';
 import { moduleFilename } from '../utils/module-id';
 import { escapesRoot, toPosixPath } from '../utils/path';
 import type { ImportReference } from './analyze';
@@ -105,13 +105,7 @@ export function collectOwnedModules<Item extends ComponentMeta>(
 }
 
 function assertMetaRemoved(module: SourceModule): void {
-  const sourceFile = ts.createSourceFile(
-    module.filename,
-    module.source,
-    ts.ScriptTarget.Latest,
-    true,
-    sourceScriptKind(module.filename)
-  );
+  const sourceFile = parseSourceFile(module.source, module.filename);
   for (const statement of sourceFile.statements) {
     if (
       ts.isVariableStatement(statement) &&

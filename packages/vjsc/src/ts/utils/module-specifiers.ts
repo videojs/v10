@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { sourceScriptKind } from './source-module';
+import { parseSourceFile } from './source-file';
 
 export interface RewriteModuleSpecifiersOptions {
   filename: string;
@@ -7,13 +7,7 @@ export interface RewriteModuleSpecifiersOptions {
 }
 
 export function rewriteModuleSpecifiers(source: string, options: RewriteModuleSpecifiersOptions): string {
-  const sourceFile = ts.createSourceFile(
-    options.filename,
-    source,
-    ts.ScriptTarget.Latest,
-    true,
-    sourceScriptKind(options.filename)
-  );
+  const sourceFile = parseSourceFile(source, options.filename);
   const result = ts.transform(sourceFile, [moduleSpecifierTransform(options.resolve)]);
   try {
     return ts.createPrinter({ newLine: ts.NewLineKind.LineFeed }).printFile(result.transformed[0]!);
@@ -23,7 +17,7 @@ export function rewriteModuleSpecifiers(source: string, options: RewriteModuleSp
 }
 
 export function collectModuleSpecifiers(source: string, filename: string): string[] {
-  const sourceFile = ts.createSourceFile(filename, source, ts.ScriptTarget.Latest, true, sourceScriptKind(filename));
+  const sourceFile = parseSourceFile(source, filename);
   const specifiers: string[] = [];
   const visit = (node: ts.Node): void => {
     const specifier = moduleSpecifier(node);

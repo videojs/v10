@@ -4,7 +4,7 @@ import { isAbsolute, relative, resolve } from 'node:path';
 import ts from 'typescript';
 
 import type { CompilerPlugin } from '../ts/types';
-import { sourceScriptKind } from '../ts/utils/source-module';
+import { parseSourceFile } from '../ts/utils/source-file';
 import { toPosixPath } from '../utils/path';
 
 export interface ComponentMeta {
@@ -78,7 +78,7 @@ export function extractComponentMeta(source: string, fileName: string, exportNam
 }
 
 function findComponentMeta(source: string, fileName: string, exportName: string): ComponentMeta | undefined {
-  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, sourceScriptKind(fileName));
+  const sourceFile = parseSourceFile(source, fileName);
 
   for (const statement of sourceFile.statements) {
     if (!isExportedMetaStatement(statement, exportName)) continue;

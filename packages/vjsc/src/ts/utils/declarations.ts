@@ -1,5 +1,11 @@
 import ts from 'typescript';
 
+/** Read a static identifier, string, or numeric property name. */
+export function propertyNameText(name: ts.PropertyName | undefined): string | undefined {
+  if (!name) return undefined;
+  return ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name) ? name.text : undefined;
+}
+
 export interface InterfacePropertySpec {
   name: string;
   type: ts.TypeNode;

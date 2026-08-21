@@ -12,6 +12,7 @@ import {
   createInterfaceDeclaration,
   createLiteralType,
   createNamedType,
+  propertyNameText,
 } from '../ts/utils/declarations';
 import { getImportSource } from '../ts/utils/import-declaration';
 import {
@@ -483,12 +484,6 @@ function projectedPropertySignature(property: ProjectedProperty, state: Transfor
     property.name === 'className' ? state.factory.createToken(ts.SyntaxKind.QuestionToken) : undefined,
     createIndexedAccessType(entry, createLiteralType(property.property, state.factory), state.factory)
   );
-}
-
-function propertyNameText(name: ts.PropertyName | undefined): string | undefined {
-  if (!name) return undefined;
-  if (ts.isIdentifier(name) || ts.isStringLiteral(name) || ts.isNumericLiteral(name)) return name.text;
-  return undefined;
 }
 
 function hasTypeMember(members: readonly ts.TypeElement[], name: string): boolean {

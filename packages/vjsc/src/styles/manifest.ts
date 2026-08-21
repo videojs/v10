@@ -6,7 +6,7 @@ import { twMerge } from 'tailwind-merge';
 import ts from 'typescript';
 
 import { readAccessPath } from '../ts/utils/jsx';
-import { sourceScriptKind } from '../ts/utils/source-module';
+import { parseSourceFile } from '../ts/utils/source-file';
 import { splitClassNames } from './class-names';
 import { getStyleDefinition, type StyleDefinition, type StyleValue, validateStyleDefinition } from './define';
 import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';
@@ -88,7 +88,7 @@ export async function collectReferencedStyleRules(
 
   for (const file of files.filter((entry) => /\.(?:[cm]?ts|tsx)$/.test(entry))) {
     const sourceText = await readFile(file, 'utf8');
-    const sourceFile = ts.createSourceFile(file, sourceText, ts.ScriptTarget.Latest, true, sourceScriptKind(file));
+    const sourceFile = parseSourceFile(sourceText, file);
     const bindings = styleBindings(sourceFile, manifest);
 
     if (bindings.size === 0) continue;

@@ -1,4 +1,10 @@
 import ts from 'typescript';
+import { sourceScriptKind } from './source-module';
+
+/** Parse a TypeScript-family source file using the syntax implied by its filename. */
+export function parseSourceFile(source: string, fileName: string): ts.SourceFile {
+  return ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, sourceScriptKind(fileName));
+}
 
 export function insertStatementsAfterImports(
   sourceFile: ts.SourceFile,

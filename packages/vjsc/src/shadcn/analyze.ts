@@ -1,6 +1,6 @@
 import ts from 'typescript';
 
-import { sourceScriptKind } from '../ts/utils/source-module';
+import { parseSourceFile } from '../ts/utils/source-file';
 
 export interface ImportReference {
   readonly specifier: string;
@@ -16,7 +16,7 @@ export interface ImportReplacement extends ImportReference {
 
 /** Locate editable ESM import specifiers without changing source formatting. */
 export function analyzeImports(source: string, fileName: string): ImportReference[] {
-  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, sourceScriptKind(fileName));
+  const sourceFile = parseSourceFile(source, fileName);
   const references: ImportReference[] = [];
   const visit = (node: ts.Node): void => {
     const reference = importReference(node);
