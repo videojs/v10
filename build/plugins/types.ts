@@ -1,7 +1,6 @@
 export interface BuildMagicString {
   overwrite(start: number, end: number, content: string): unknown;
   toString(): string;
-  generateMap(options: { hires: boolean | 'boundary'; includeContent: boolean; source: string }): object;
 }
 
 interface BuildTransformMeta {

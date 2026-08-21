@@ -31,13 +31,12 @@ describe('inlineTemplatePlugin', () => {
     expect(map.sources.length).toBeGreaterThan(0);
   });
 
-  it('falls back to JavaScript MagicString when host metadata is unavailable', () => {
+  it('fails clearly when native MagicString is unavailable', () => {
     const source = 'export const template = /*html*/ `<div>  </div>`;';
-    const result = inlineTemplatePlugin().transform?.(source, 'fixture.ts');
 
-    expect(typeof result?.code).toBe('string');
-    expect(result?.code.toString()).toContain('`<div></div>`');
-    expect(result?.map).toBeDefined();
+    expect(() => inlineTemplatePlugin().transform?.(source, 'fixture.ts')).toThrow(
+      'inline-template requires experimental.nativeMagicString: true.'
+    );
   });
 });
 
@@ -68,13 +67,12 @@ describe('cdnI18nExternalPlugin', () => {
     expect(map.sources.length).toBeGreaterThan(0);
   });
 
-  it('falls back to JavaScript MagicString when render metadata is unavailable', () => {
+  it('fails clearly when native render metadata is unavailable', () => {
     const source = `export { getI18n } from "${CDN_I18N_REGISTRY}";`;
-    const result = cdnI18nExternalPlugin({ prod: true }).renderChunk?.(source, { fileName: 'media/video.js' });
 
-    expect(typeof result?.code).toBe('string');
-    expect(result?.code.toString()).toContain('from "../i18n.js"');
-    expect(result?.map).toBeDefined();
+    expect(() => cdnI18nExternalPlugin({ prod: true }).renderChunk?.(source, { fileName: 'media/video.js' })).toThrow(
+      'cdn-i18n-external requires experimental.nativeMagicString: true.'
+    );
   });
 });
 

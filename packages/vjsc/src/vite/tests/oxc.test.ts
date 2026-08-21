@@ -8,7 +8,9 @@ import { viteOxcPlugin } from '../oxc';
 const ENTRY_ID = 'vite-oxc-fixture.js';
 
 describe('viteOxcPlugin', () => {
-  it('uses JavaScript MagicString fallback and returns its source map', async () => {
+  it('supplies the AST and MagicString metadata omitted by Vite', async () => {
+    let topLevelHasOxcMetadata = true;
+    let rolldownOptionsHasOxcMetadata = true;
     let usedFallback = false;
     const transform: Plugin = {
       name: 'vite-oxc-transform',
@@ -24,13 +26,24 @@ describe('viteOxcPlugin', () => {
     const result = await build({
       configFile: false,
       logLevel: 'silent',
-      plugins: [fixturePlugin(), viteOxcPlugin(transform)],
+      plugins: [
+        fixturePlugin(),
+        metadataProbe((hasMetadata) => {
+          topLevelHasOxcMetadata = hasMetadata;
+        }),
+        viteOxcPlugin(transform),
+      ],
       build: {
         write: false,
         sourcemap: true,
         rolldownOptions: {
           input: ENTRY_ID,
           experimental: { nativeMagicString: true },
+          plugins: [
+            metadataProbe((hasMetadata) => {
+              rolldownOptionsHasOxcMetadata = hasMetadata;
+            }),
+          ],
         },
       },
     });
@@ -40,6 +53,8 @@ describe('viteOxcPlugin', () => {
     const map = output.find((item): item is OutputAsset => item.type === 'asset' && item.fileName.endsWith('.map'));
     const sourceMap = map ? (JSON.parse(String(map.source)) as { mappings: string; sources: string[] }) : undefined;
 
+    expect(topLevelHasOxcMetadata).toBe(false);
+    expect(rolldownOptionsHasOxcMetadata).toBe(false);
     expect(usedFallback).toBe(true);
     expect(chunk?.code).toContain('after');
     expect(sourceMap).toBeDefined();
@@ -47,6 +62,18 @@ describe('viteOxcPlugin', () => {
     expect(sourceMap?.sources.length).toBeGreaterThan(0);
   });
 });
+
+function metadataProbe(record: (hasMetadata: boolean) => void): Plugin {
+  return {
+    name: 'vite-oxc-metadata-probe',
+    transform(_code, id, options) {
+      if (id === ENTRY_ID) {
+        record('ast' in (options ?? {}) || 'magicString' in (options ?? {}));
+      }
+      return null;
+    },
+  };
+}
 
 function fixturePlugin(): Plugin {
   return {

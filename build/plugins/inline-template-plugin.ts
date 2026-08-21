@@ -1,5 +1,4 @@
 import { transform } from 'lightningcss';
-import MagicString from 'magic-string';
 import type { BuildMagicString, BuildPlugin } from './types.ts';
 
 const HTML_MARKER = '/*html*/';
@@ -25,24 +24,18 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
   return {
     name: 'inline-template',
 
-    transform(code, id, meta) {
+    transform(code, _id, meta) {
       if (!minify) return null;
       if (!code.includes(HTML_MARKER) && !code.includes(CSS_MARKER)) return null;
 
-      const hostMagicString = meta?.magicString;
-      const output = hostMagicString ?? new MagicString(code);
+      const magicString = meta?.magicString;
+      if (!magicString) {
+        throw new Error('inline-template requires experimental.nativeMagicString: true.');
+      }
 
-      if (!processTemplates(code, output)) return null;
-      if (hostMagicString) return { code: hostMagicString };
+      if (!processTemplates(code, magicString)) return null;
 
-      return {
-        code: output.toString(),
-        map: output.generateMap({
-          hires: 'boundary',
-          includeContent: true,
-          source: id,
-        }),
-      };
+      return { code: magicString };
     },
   };
 }

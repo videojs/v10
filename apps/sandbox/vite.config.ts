@@ -164,6 +164,7 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
+    sourcemap: true,
     rolldownOptions: {
       experimental: {
         nativeMagicString: true,

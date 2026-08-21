@@ -41,6 +41,7 @@ function createPreviewConfig() {
       exclude: ['vjsc', 'vjsc/styles', '@videojs/core', '@videojs/icons', '@videojs/react', '@videojs/utils'],
     },
     build: {
+      sourcemap: true,
       rolldownOptions: {
         experimental: {
           nativeMagicString: true,
