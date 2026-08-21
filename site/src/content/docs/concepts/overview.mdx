@@ -7,7 +7,6 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
-import Aside from '@/components/Aside.astro';
 
 Video.js v10 is built around a three-part architecture that separates concerns and maximizes flexibility. Each part is designed to work independently or together, allowing you to use as much or as little of Video.js as you need.
 
@@ -119,10 +118,6 @@ Media components can be format specific (HLS, DASH), service specific (YouTube, 
 <FrameworkCase frameworks={["html"]}>
 Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`, while custom media elements like `<hlsjs-video>` register themselves.
 </FrameworkCase>
-
-<Aside type="note">
-DASH, YouTube, Vimeo, Mux, and more media elements are currently under development.
-</Aside>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
