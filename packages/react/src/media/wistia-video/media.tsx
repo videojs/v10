@@ -13,6 +13,7 @@ import {
 } from '@videojs/media/dom/wistia';
 import type { ForwardRefExoticComponent, HTMLAttributes, RefAttributes, RefCallback } from 'react';
 import { createElement, forwardRef, useCallback, useState } from 'react';
+
 import { useMediaAttach } from '../../player/context';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 
@@ -22,16 +23,15 @@ export interface WistiaVideoProps extends Partial<Omit<WistiaMediaProps, 'source
 }
 
 /**
- * Wistia is the one media here that ships a web component of its own, so this renders that component rather
- * than a player of its own making, and `@videojs/media/dom/wistia` registers it statically — the element the
- * ref hands back is already a Wistia player. Wistia's own React wrapper defines it from an effect, a tick too
- * late: the store reads a media once, as it attaches, and a bare `HTMLElement` is a media that cannot seek,
- * buffer, or name a source.
+ * Wistia is the one media here that ships a web component of its own, so this renders that component rather than a
+ * player of its own making, and `@videojs/media/dom/wistia` registers it statically — the element the ref hands back is
+ * already a Wistia player. Wistia's own React wrapper defines it from an effect, a tick too late: the store reads a
+ * media once, as it attaches, and a bare `HTMLElement` is a media that cannot seek, buffer, or name a source.
  *
- * The translation is one layer thin. `source` carries Wistia's own options — `mediaId`, `playerColor`,
- * `qualityMin` — straight through, so anything the player understands stays reachable without this component
- * knowing about it; the rest is the handful a media names differently. The element itself is what the store
- * attaches to, normalized in place, so the ref hands back one object that is both.
+ * The translation is one layer thin. `source` carries Wistia's own options — `mediaId`, `playerColor`, `qualityMin` —
+ * straight through, so anything the player understands stays reachable without this component knowing about it; the
+ * rest is the handful a media names differently. The element itself is what the store attaches to, normalized in place,
+ * so the ref hands back one object that is both.
  */
 export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttributes<WistiaPlayer>> = forwardRef<
   WistiaPlayer,
@@ -61,6 +61,7 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
     (element) => {
       // No cast: this is where Wistia's real class is held to the contract the normalizer describes.
       if (element) normalizeWistiaPlayer(element);
+
       setMedia?.(element as never);
     },
     [setMedia]
@@ -70,10 +71,11 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
   // A Wistia URL is accepted where a media id is expected, the way every other media here accepts a `src`.
   const { mediaId, ...options } = source ?? {};
   const resolved = mediaId ?? (src ? parseWistiaMediaId(src) : null);
-  // A `wtime` is a start position rather than a live playhead, so it is read once from the opening source.
-  const [startTime] = useState(() => (src ? parseWistiaStartTime(src) : null));
-  // Likewise the muted state the player *starts* in: re-sent on a later render it would put the mute back
-  // after the viewer cleared it through the skin.
+  // A `wtime` is a start position rather than a live playhead, and it belongs to the source it was written
+  // on — read again for each one, since this component outlives them. Not frozen: an unchanged `src` renders
+  // an unchanged attribute, which React leaves alone, so a playing media is never sent back to its start.
+  const startTime = src ? parseWistiaStartTime(src) : null;
+  // The muted state the player *starts* in, which is this component's to decide rather than the source's.
   const [initialMuted] = useState(() => defaultMuted ?? muted);
 
   return createElement(WISTIA_PLAYER_TAG, {
