@@ -1,5 +1,5 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
-import { features, metadataFeature, type PlayerStore } from '@videojs/core/dom';
+import { definePlayerFeature, features, metadataFeature, type PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import { Component, type ErrorInfo, type ReactNode, StrictMode, useState } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -21,6 +21,22 @@ describe('createPlayer', () => {
       muted: false,
       paused: true,
     }),
+  });
+
+  it('rejects ambiguous player feature state when rendering a player', () => {
+    const first = definePlayerFeature({
+      name: 'react-first',
+      state: () => ({ shared: 1 }),
+    });
+    const second = definePlayerFeature({
+      name: 'react-second',
+      state: () => ({ shared: 2 }),
+    });
+    const { Player } = createPlayer({ features: [first, second] });
+
+    expect(() => render(<Player>{null}</Player>)).toThrowError(
+      /key "shared".*feature "react-first".*feature "react-second"/
+    );
   });
 
   describe('Player', () => {

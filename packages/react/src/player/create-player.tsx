@@ -3,7 +3,7 @@ import {
   type AnyPlayerStore,
   type AudioFeatures,
   type AudioPlayerStore,
-  combinePlayerFeatureConfigs,
+  combinePlayerFeatures,
   type InferPlayerConfig,
   type PlayerFeatureConfig,
   type PlayerStore,
@@ -14,7 +14,7 @@ import {
 } from '@videojs/core/dom';
 import type { Media } from '@videojs/media/dom';
 import type { InferStoreState } from '@videojs/store';
-import { combine, createStore } from '@videojs/store';
+import { createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import { pick } from '@videojs/utils/object';
 import type { FC, ReactNode } from 'react';
@@ -72,8 +72,7 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 ): CreatePlayerResult<PlayerStore<Features>>;
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<AnyPlayerStore> {
-  const slice = combine(...config.features);
-  const featureConfig = combinePlayerFeatureConfigs(config.features);
+  const { slice, config: featureConfig } = combinePlayerFeatures(config.features);
   const configKeys = Object.keys(featureConfig);
 
   function createConfiguredStore(values: Record<string, unknown>) {

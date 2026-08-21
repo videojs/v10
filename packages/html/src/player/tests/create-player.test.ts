@@ -1,6 +1,7 @@
 import {
   audioFeatures,
   backgroundFeatures,
+  definePlayerFeature,
   features,
   metadataFeature,
   type PopupGroup,
@@ -35,6 +36,88 @@ describe('createPlayer', () => {
     expect(result.PlayerController).toBeDefined();
     expect(result.ProviderMixin).toBeInstanceOf(Function);
     expect(result).not.toHaveProperty('ContainerMixin');
+  });
+
+  it('rejects ambiguous player feature state when creating a store', () => {
+    const first = definePlayerFeature({
+      name: 'html-first',
+      state: () => ({ shared: 1 }),
+    });
+    const second = definePlayerFeature({
+      name: 'html-second',
+      state: () => ({ shared: 2 }),
+    });
+    const player = createPlayer({ features: [first, second] });
+
+    expect(() => player.create()).toThrowError(/key "shared".*feature "html-first".*feature "html-second"/);
+  });
+
+  it('rejects configuration aliases that resolve to the same provider attribute', () => {
+    const first = definePlayerFeature({
+      name: 'html-first',
+      config: {
+        firstInput: {
+          action: 'setFirst',
+          state: 'first',
+          html: { attribute: 'shared-input' },
+        },
+      },
+      state: ({ set }) => ({
+        first: '',
+        setFirst: (value: string | null | undefined) => set({ first: value ?? '' }),
+      }),
+    });
+    const second = definePlayerFeature({
+      name: 'html-second',
+      config: {
+        secondInput: {
+          action: 'setSecond',
+          state: 'second',
+          html: { attribute: 'shared-input' },
+        },
+      },
+      state: ({ set }) => ({
+        second: '',
+        setSecond: (value: string | null | undefined) => set({ second: value ?? '' }),
+      }),
+    });
+
+    expect(() => createPlayer({ features: [first, second] })).toThrowError(
+      '[vjs-html] Cannot create player provider: config inputs "firstInput" and "secondInput" resolve to the same provider attribute "shared-input".'
+    );
+  });
+
+  it('rejects configuration aliases that resolve to the same provider property', () => {
+    const first = definePlayerFeature({
+      config: {
+        firstInput: {
+          action: 'setFirst',
+          state: 'first',
+          html: { attribute: 'shared-1input' },
+        },
+      },
+      state: ({ set }) => ({
+        first: '',
+        setFirst: (value: string | null | undefined) => set({ first: value ?? '' }),
+      }),
+    });
+    const second = definePlayerFeature({
+      config: {
+        secondInput: {
+          action: 'setSecond',
+          state: 'second',
+          html: { attribute: 'shared1input' },
+        },
+      },
+      state: ({ set }) => ({
+        second: '',
+        setSecond: (value: string | null | undefined) => set({ second: value ?? '' }),
+      }),
+    });
+
+    expect(() => createPlayer({ features: [first, second] })).toThrowError(
+      '[vjs-html] Cannot create player provider: config inputs "firstInput" and "secondInput" resolve to the same provider property "shared1input".'
+    );
   });
 
   it('create() returns a store instance', () => {

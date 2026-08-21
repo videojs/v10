@@ -2,13 +2,13 @@ import {
   type AnyPlayerFeature,
   type AudioFeatures,
   type AudioPlayerStore,
-  combinePlayerFeatureConfigs,
+  combinePlayerFeatures,
   type PlayerStore,
   type PlayerTarget,
   type VideoFeatures,
   type VideoPlayerStore,
 } from '@videojs/core/dom';
-import { combine, createStore } from '@videojs/store';
+import { createStore } from '@videojs/store';
 
 import { createProviderMixin, type ProviderMixin } from '../store/provider-mixin';
 import { containerContext, mediaContext, type PlayerContext, playerContext } from './context';
@@ -78,8 +78,7 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 ): CreatePlayerResult<PlayerStore<Features>>;
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<PlayerStore> {
-  const slice = combine(...config.features);
-  const featureConfig = combinePlayerFeatureConfigs(config.features);
+  const { slice, config: featureConfig } = combinePlayerFeatures(config.features);
 
   function create(): PlayerStore {
     return createStore<PlayerTarget>()(slice);

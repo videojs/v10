@@ -28,6 +28,8 @@ export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaEleme
 
 /** One configuration input, under the names it goes by on the element. */
 interface ConfigInput {
+  /** Key declared by the owning player feature. */
+  key: string;
   /** Reactive property mirroring the attribute. */
   property: string;
   attribute: string;
@@ -39,7 +41,7 @@ interface ConfigInput {
  * an `html.attribute` instead, and the property follows from that.
  */
 function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
-  return Object.entries(config).map(([key, entry]) => {
+  const inputs = Object.entries(config).map(([key, entry]) => {
     const declared = entry.html?.attribute;
     const attribute = declared ?? kebabCase(key);
 
@@ -48,8 +50,30 @@ function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
       console.warn(`[vjs-html] config html.attribute "${declared}" is not kebab-case and will never match`);
     }
 
-    return { property: camelCase(attribute), attribute, entry };
+    return { key, property: camelCase(attribute), attribute, entry };
   });
+
+  validateResolvedNames(inputs, 'attribute');
+  validateResolvedNames(inputs, 'property');
+
+  return inputs;
+}
+
+function validateResolvedNames(inputs: readonly ConfigInput[], name: 'attribute' | 'property'): void {
+  const owners = new Map<string, string>();
+
+  for (const input of inputs) {
+    const value = input[name];
+    const previous = owners.get(value);
+
+    if (previous !== undefined) {
+      throw new TypeError(
+        `[vjs-html] Cannot create player provider: config inputs ${JSON.stringify(previous)} and ${JSON.stringify(input.key)} resolve to the same provider ${name} ${JSON.stringify(value)}.`
+      );
+    }
+
+    owners.set(value, input.key);
+  }
 }
 
 /**
