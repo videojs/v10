@@ -430,9 +430,6 @@ importers:
       '@wistia/wistia-player':
         specifier: ^0.7.12
         version: 0.7.13(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))
-      '@wistia/wistia-player-react':
-        specifier: ^0.7.12
-        version: 0.7.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))
     devDependencies:
       '@testing-library/react':
         specifier: ^16.3.0
@@ -4896,16 +4893,6 @@ packages:
     resolution: {integrity: sha512-kMwLlxUbduttIgaPdSkmEarFpP+mSY8FEm+QWMBRJwxOHWkri+cxd8KZHO9EMrB9vgUuz+5WEaCawaL5wGVoXg==}
     engines: {node: '>=18.0.0'}
 
-  '@wistia/type-guards@0.9.3':
-    resolution: {integrity: sha512-8Bifv3DlnexZqzolk/BEQK4/Es9RAny6y3hQafryQxPxfDFObDC1undhf7KaDdFeIlAoc52ti6oZ9xo3Dmj1SQ==}
-    engines: {node: '>=22.16.0'}
-
-  '@wistia/wistia-player-react@0.7.13':
-    resolution: {integrity: sha512-E1qUIVzaf3/Fx/C3XRZGh8IVAJmkUROEL3FX1FsH+FpbFqQYWrRnodijfb5W9lleHLIDLqMImuVmMdUAhcHeyg==}
-    peerDependencies:
-      react: '>=18.0.0 <20.0.0'
-      react-dom: '>=18.0.0 <20.0.0'
-
   '@wistia/wistia-player@0.7.13':
     resolution: {integrity: sha512-BE+nRBTZnE3YSL648FX4brog1Z465dWXmUAvlHoezC5Y+ZAmsb0v52OCvI49VnlVQabWyf/lc62byXZnAvWnMA==}
 
@@ -9104,10 +9091,6 @@ packages:
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
 
-  tagged-tag@1.0.0:
-    resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
-    engines: {node: '>=20'}
-
   tailwind-merge@3.5.0:
     resolution: {integrity: sha512-I8K9wewnVDkL1NTGoqWmVEIlUcB9gFriAEkXkfCjX5ib8ezGxtR3xD7iZIxrfArjEsH7F1CHD4RFUtxefdqV/A==}
 
@@ -9281,10 +9264,6 @@ packages:
   type-fest@4.41.0:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
-
-  type-fest@5.8.0:
-    resolution: {integrity: sha512-YGYEVz3Fm5iy/AybuA0oyNFq7H4CgQNfRp/qfe8nurE1kuCeNm3/vfm9X4Mtl+qLyaKJUh5xrFZwogr41SMjYA==}
-    engines: {node: '>=20'}
 
   type-is@2.1.0:
     resolution: {integrity: sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==}
@@ -14290,19 +14269,6 @@ snapshots:
       '@whatwg-node/fetch': 0.10.13
       '@whatwg-node/promise-helpers': 1.3.2
       tslib: 2.8.1
-
-  '@wistia/type-guards@0.9.3':
-    dependencies:
-      type-fest: 5.8.0
-
-  '@wistia/wistia-player-react@0.7.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))':
-    dependencies:
-      '@wistia/type-guards': 0.9.3
-      '@wistia/wistia-player': 0.7.13(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-    transitivePeerDependencies:
-      - webpack
 
   '@wistia/wistia-player@0.7.13(webpack@5.109.2(csso@5.0.5)(esbuild@0.28.1)(lightningcss@1.33.0)(postcss@8.5.26))':
     dependencies:
@@ -19480,8 +19446,6 @@ snapshots:
 
   systeminformation@5.33.1: {}
 
-  tagged-tag@1.0.0: {}
-
   tailwind-merge@3.5.0: {}
 
   tailwindcss@4.2.1: {}
@@ -19640,10 +19604,6 @@ snapshots:
       '@mixmark-io/domino': 2.2.0
 
   type-fest@4.41.0: {}
-
-  type-fest@5.8.0:
-    dependencies:
-      tagged-tag: 1.0.0
 
   type-is@2.1.0:
     dependencies:
