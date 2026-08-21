@@ -44,11 +44,15 @@ In prior versions of Video.js, skins were CSS-only themes applied to the same se
 
 When you choose a skin you have two options for how you use it: **packaged** or **ejected**. It's usually easiest to start with a packaged skin and later eject its internal components into your project when you need more customization.
 
+Packaged skins cover common visual changes through documented CSS custom properties. When you need more than that, eject and change the components and styles directly.
+
 | Packaged | Ejected |
 |----------|-----------------|
 | Single component | Many UI components |
-| Limited customization | Complete customization |
+| Documented CSS custom properties | Components and styles you own |
 | Future design updates auto-applied by bumping the version | Future design updates manually applied, or intentionally ignored |
+
+Treat the packaged skin's internal markup, class names, and undocumented custom properties as implementation details.
 
 <DocsLinkCard slug="how-to/customize-skins">Read more about ejecting skins</DocsLinkCard>
 <DocsLinkCard slug="concepts/ui-components">Read more about UI Components</DocsLinkCard>
