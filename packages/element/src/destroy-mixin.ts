@@ -11,8 +11,9 @@ export interface Destroyable {
  * Mixin that adds a deferred destruction lifecycle to a `ReactiveElement`.
  *
  * On disconnect, schedules destruction after two animation frames.
- * If the element reconnects before the frames fire (e.g. DOM shuffling,
- * framework reconciliation), the `isConnected` check prevents destruction.
+ * Reconnecting before the frames fire (e.g. DOM shuffling or framework
+ * reconciliation) invalidates that work, so a later disconnect receives a
+ * new two-frame grace period.
  *
  * The `keep-alive` attribute prevents automatic destruction entirely —
  * call `destroy()` manually when done.
@@ -28,6 +29,7 @@ export interface Destroyable {
 export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElement>(SuperClass: Base) {
   class DestroyableElement extends SuperClass {
     #destroyed = false;
+    #lifecycleGeneration = 0;
     #trackedControllers = new Set<ReactiveController>();
 
     get destroyed(): boolean {
@@ -57,17 +59,21 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
     }
 
     connectedCallback(): void {
+      this.#lifecycleGeneration++;
       if (this.#destroyed) return;
       super.connectedCallback();
     }
 
     disconnectedCallback(): void {
       super.disconnectedCallback();
+      const generation = ++this.#lifecycleGeneration;
 
       if (!this.#destroyed && !this.hasAttribute('keep-alive')) {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            if (!this.isConnected) this.destroy();
+            // A later reconnect and disconnect must receive its own full grace
+            // period instead of being destroyed by this stale callback.
+            if (generation === this.#lifecycleGeneration && !this.isConnected) this.destroy();
           });
         });
       }

@@ -126,6 +126,25 @@ describe('DestroyMixin deferred destruction', () => {
     expect(el.destroyed).toBe(false);
   });
 
+  it('waits 2 new animation frames after a reconnected element disconnects again', () => {
+    const el = createElement(DestroyableElement);
+
+    document.body.appendChild(el);
+    el.remove();
+    vi.advanceTimersByTime(16); // 1st rAF for the original disconnect
+
+    document.body.appendChild(el);
+    el.remove();
+
+    // The original disconnect's 2nd rAF and the latest disconnect's 1st rAF.
+    vi.advanceTimersByTime(16);
+    expect(el.destroyed).toBe(false);
+
+    // The latest disconnect has now received its full grace period.
+    vi.advanceTimersByTime(16);
+    expect(el.destroyed).toBe(true);
+  });
+
   it('keep-alive attribute prevents deferred destruction', () => {
     const el = createElement(DestroyableElement);
     el.setAttribute('keep-alive', '');
