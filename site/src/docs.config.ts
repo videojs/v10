@@ -65,6 +65,14 @@ export const sidebar: Sidebar = [
     llmsDescription:
       'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
     contents: [
+      {
+        sidebarLabel: 'Integrate with a framework',
+        defaultOpen: false,
+        contents: [
+          { slug: 'how-to/use-videojs-with-vue', sidebarLabel: 'Vue and Nuxt', frameworks: ['html'] },
+          { slug: 'how-to/use-videojs-with-svelte', sidebarLabel: 'Svelte and SvelteKit', frameworks: ['html'] },
+        ],
+      },
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/add-a-poster-placeholder' },
       { slug: 'how-to/build-your-own-component' },
