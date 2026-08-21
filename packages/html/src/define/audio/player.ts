@@ -3,12 +3,12 @@ import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
 import { safeDefine } from '../safe-define';
 
-const { PlayerElement, PlayerController: ConfiguredPlayerController } = createPlayer({
+const { PlayerElement, PlayerController: AudioPlayerController } = createPlayer({
   features: audioFeatures,
 });
 
 /** Player controller bound to the standard audio player store. */
-export const PlayerController = ConfiguredPlayerController;
+export const PlayerController = AudioPlayerController;
 
 export class AudioPlayerElement extends PlayerElement {
   static readonly tagName = 'audio-player';
