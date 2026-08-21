@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createState, flush } from '../../../core/state';
 import { createTestHost } from '../../tests/test-utils';
@@ -160,6 +160,58 @@ describe('SnapshotController', () => {
       await Promise.resolve();
 
       expect(host.updateCount).toBe(countAfterTrack);
+    });
+
+    it('does not subscribe to a new state until a disconnected host reconnects', () => {
+      const state1 = createState({ volume: 1 });
+      const state2 = createState({ volume: 0.5 });
+      const subscribe = vi.spyOn(state2, 'subscribe');
+      const host = createTestHost();
+
+      const controller = new SnapshotController(host, state1, (s) => s.volume);
+      controller.track(state2);
+
+      expect(controller.value).toBe(0.5);
+      expect(subscribe).not.toHaveBeenCalled();
+
+      document.body.appendChild(host);
+
+      expect(subscribe).toHaveBeenCalledOnce();
+    });
+
+    it('does not resubscribe when already tracking the same state', () => {
+      const state = createState({ volume: 1 });
+      const subscribe = vi.spyOn(state, 'subscribe');
+      const host = createTestHost();
+      const controller = new SnapshotController(host, state, (s) => s.volume);
+
+      document.body.appendChild(host);
+      expect(subscribe).toHaveBeenCalledOnce();
+
+      controller.track(state);
+
+      expect(subscribe).toHaveBeenCalledOnce();
+    });
+
+    it('can stop and resume tracking the same state', () => {
+      const state = createState({ volume: 1 });
+      const host = createTestHost();
+      const controller = new SnapshotController(host, state, (s) => s.volume);
+
+      document.body.appendChild(host);
+      controller.untrack();
+
+      const updateCount = host.updateCount;
+      state.replace({ volume: 0.5 });
+      flush();
+      expect(host.updateCount).toBe(updateCount);
+
+      controller.track(state);
+      state.replace({ volume: 0.25 });
+      flush();
+
+      expect(host.updateCount).toBe(updateCount + 1);
+      expect(controller.value).toBe(0.25);
     });
   });
 });

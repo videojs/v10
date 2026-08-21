@@ -23,6 +23,8 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
 
   #state: State<T>;
   #cached: R | undefined;
+  #connected = false;
+  #tracking = true;
   #unsubscribe = noop;
 
   /**
@@ -56,15 +58,31 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
 
   /** Switch to tracking a different state container. */
   track(state: State<T>): void {
+    if (this.#tracking && this.#state === state) return;
+
     this.#state = state;
-    this.#subscribe();
+    this.#tracking = true;
+    this.#cached = undefined;
+
+    if (this.#connected) this.#subscribe();
+  }
+
+  /** Stop tracking until {@linkcode track} supplies a state container. */
+  untrack(): void {
+    if (!this.#tracking) return;
+
+    this.#tracking = false;
+    this.#unsubscribe();
+    this.#unsubscribe = noop;
   }
 
   hostConnected(): void {
-    this.#subscribe();
+    this.#connected = true;
+    if (this.#tracking) this.#subscribe();
   }
 
   hostDisconnected(): void {
+    this.#connected = false;
     this.#unsubscribe();
     this.#unsubscribe = noop;
     this.#cached = undefined;
