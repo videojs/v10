@@ -181,8 +181,7 @@
     "@videojs/media": "workspace:*",
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*",
-    "@wistia/wistia-player": "^0.7.12"
+    "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",

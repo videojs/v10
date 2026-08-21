@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { WistiaVideo } from '../wistia-video/media';
+import { WistiaMedia } from '../media';
 
 // Wistia's package registers `<wistia-player>` as it evaluates and reaches for browser APIs the test
-// environment has none of, so the class the element extends is stubbed down to what it is extended for.
+// environment has none of, so the class the media extends is stubbed down to what it is extended for.
 vi.mock('@wistia/wistia-player', () => {
   class WistiaPlayer extends HTMLElement {
     static observedAttributes = ['media-id', 'player-color'];
@@ -40,12 +40,12 @@ const SRC = 'https://wesleyluyten.wistia.com/medias/oifkgmxnkb';
 
 let tagCounter = 0;
 
-type WistiaVideoElement = HTMLElement & Record<string, any>;
+type WistiaMediaElement = HTMLElement & Record<string, any>;
 
-function create(): WistiaVideoElement {
-  const tag = `test-wistia-video-${tagCounter++}`;
-  customElements.define(tag, class extends WistiaVideo {});
-  const element = document.createElement(tag) as WistiaVideoElement;
+function create(): WistiaMediaElement {
+  const tag = `test-wistia-media-${tagCounter++}`;
+  customElements.define(tag, class extends WistiaMedia {});
+  const element = document.createElement(tag) as WistiaMediaElement;
   document.body.append(element);
   return element;
 }
@@ -54,7 +54,7 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-describe('WistiaVideo', () => {
+describe('WistiaMedia', () => {
   it('is Wistia’s own player, normalized rather than wrapped', () => {
     const element = create();
 
@@ -98,9 +98,9 @@ describe('WistiaVideo', () => {
   });
 
   it('lets a source set before connecting outrank the defaults', () => {
-    const tag = `test-wistia-video-${tagCounter++}`;
-    customElements.define(tag, class extends WistiaVideo {});
-    const element = document.createElement(tag) as WistiaVideoElement;
+    const tag = `test-wistia-media-${tagCounter++}`;
+    customElements.define(tag, class extends WistiaMedia {});
+    const element = document.createElement(tag) as WistiaMediaElement;
 
     element.source = { mediaId: 'oifkgmxnkb', roundedPlayer: 12 };
     document.body.append(element);
@@ -144,10 +144,10 @@ describe('WistiaVideo', () => {
 
   it('keeps the chrome a controls attribute asked for on connect', () => {
     // The attribute lands before the first connect, which must not then overwrite it with the default.
-    const tag = `test-wistia-video-${tagCounter++}`;
-    customElements.define(tag, class extends WistiaVideo {});
+    const tag = `test-wistia-media-${tagCounter++}`;
+    customElements.define(tag, class extends WistiaMedia {});
     document.body.innerHTML = `<${tag} controls></${tag}>`;
-    const element = document.body.firstElementChild as WistiaVideoElement;
+    const element = document.body.firstElementChild as WistiaMediaElement;
 
     expect(element.playBarControl).toBe(true);
   });
@@ -174,6 +174,37 @@ describe('WistiaVideo', () => {
     element.muted = false;
     expect(element.muted).toBe(false);
     expect(element.hasAttribute('muted')).toBe(true);
+  });
+
+  it('resolves an empty preload, which is what a bare attribute means and not a word Wistia knows', () => {
+    const element = create();
+
+    element.setAttribute('preload', 'none');
+    expect(element.preload).toBe('none');
+
+    element.setAttribute('preload', '');
+    expect(element.preload).toBe('metadata');
+  });
+
+  it('keeps a source’s options through a later attribute change', () => {
+    const element = create();
+    element.source = { mediaId: 'oifkgmxnkb', roundedPlayer: 12 };
+
+    // Every attribute is worked out from scratch, so the source has to outrank the defaults every time and
+    // not only on the connect that first applied them.
+    element.setAttribute('controls', '');
+
+    expect(element.roundedPlayer).toBe(12);
+  });
+
+  it('does not put a mute back when something else about the player changes', () => {
+    const element = create();
+    element.setAttribute('muted', '');
+    element.muted = false;
+
+    element.setAttribute('controls', '');
+
+    expect(element.muted).toBe(false);
   });
 
   it('accepts a source of Wistia’s own options', () => {

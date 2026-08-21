@@ -5,11 +5,11 @@
  * before any of it can be feature-detected away — and importing it lazily instead is what this project moved
  * off, since an element defined a tick late reaches React and the store as a bare `HTMLElement`.
  *
- * So the import stays static, and this lends that evaluation the globals it reaches for. Import this module
- * above `@wistia/wistia-player` and call what it hands back below: a module is evaluated before the one
- * importing it, so the stubs are in place by the time Wistia runs and gone again before anything else looks.
- * Leaving them would be worse than the crash they prevent — every framework decides it is in a browser by
- * asking whether `window` exists.
+ * So the import stays static, and this lends that evaluation the globals it reaches for. `media.ts` is the
+ * only importer and the only caller, which is the point: a module is evaluated before the one importing it,
+ * so the stubs are in place by the time Wistia runs and gone again before anything else looks, and there is
+ * one file to keep that order in. Leaving them would be worse than the crash they prevent — every framework
+ * decides it is in a browser by asking whether `window` exists.
  *
  * In a browser nothing is installed and nothing is taken away.
  */
@@ -51,7 +51,7 @@ function shimWistiaGlobals(): () => void {
   }
 
   return () => {
-    // Emptied as it goes: both platform packages import this one, and the second is owed no second cleanup.
+    // Emptied as it goes, so a second call cannot take away a global this one did not install.
     for (const name of installed.splice(0)) Reflect.deleteProperty(globals, name);
   };
 }
