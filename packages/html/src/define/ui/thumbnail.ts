@@ -5,6 +5,6 @@ safeDefine(ThumbnailElement);
 
 declare global {
   interface HTMLElementTagNameMap {
-    [ThumbnailElement.tagName]: ThumbnailElement;
+    'media-thumbnail': ThumbnailElement;
   }
 }

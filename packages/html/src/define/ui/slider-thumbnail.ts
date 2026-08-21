@@ -5,6 +5,6 @@ safeDefine(SliderThumbnailElement);
 
 declare global {
   interface HTMLElementTagNameMap {
-    [SliderThumbnailElement.tagName]: SliderThumbnailElement;
+    'media-slider-thumbnail': SliderThumbnailElement;
   }
 }

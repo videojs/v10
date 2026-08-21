@@ -1,4 +1,19 @@
 // Core
+
+// Explicit type exports keep declaration bundles for leaf entries linked to
+// the public barrel instead of a synthesized namespace that omits star exports.
+export type {
+  AnyPlayerStore,
+  AudioPlayerStore,
+  BackgroundPlayerStore,
+  LiveAudioFeatures,
+  LiveAudioPlayerStore,
+  LiveVideoFeatures,
+  LiveVideoPlayerStore,
+  PlayerStore,
+  TransitionApi,
+  VideoPlayerStore,
+} from '@videojs/core/dom';
 export * from '@videojs/core/dom';
 export type {
   Destroyable,

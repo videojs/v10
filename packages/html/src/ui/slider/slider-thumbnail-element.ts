@@ -4,7 +4,6 @@ import { ContextConsumer } from '@videojs/element/context';
 import { ThumbnailElement } from '../thumbnail/thumbnail-element';
 import { sliderContext } from './context';
 
-// @ts-expect-error TS2417 — tagName narrows to a different literal for custom element registration.
 export class SliderThumbnailElement extends ThumbnailElement {
   static override readonly tagName = 'media-slider-thumbnail';
 
