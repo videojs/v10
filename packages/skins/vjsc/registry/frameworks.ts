@@ -15,11 +15,6 @@ const packagesDir = resolve(import.meta.dirname, '../../..');
 const corePackageDir = resolve(packagesDir, 'core');
 type CoreSchema = typeof coreSchema;
 
-const frameworkRegistryWatchFiles = {
-  html: [resolve(import.meta.dirname, 'html/index.tsx'), resolve(import.meta.dirname, 'html/resolve.ts')],
-  react: [resolve(import.meta.dirname, 'react/index.tsx'), resolve(import.meta.dirname, 'react/resolve.ts')],
-} as const;
-
 export function createReactComponentRegistry(iconFamily = 'default'): ComponentRegistry {
   const core = getCoreSchemaModule();
   const icons = getIconSchemaModule(iconFamily);
@@ -29,7 +24,7 @@ export function createReactComponentRegistry(iconFamily = 'default'): ComponentR
       createReactRegistry(core.schema as CoreSchema),
       createReactIconRegistry(icons.schema, { family: iconFamily })
     ),
-    watchFiles: [...core.watchFiles, ...icons.watchFiles, ...frameworkRegistryWatchFiles.react],
+    watchFiles: [...core.watchFiles, ...icons.watchFiles],
   };
 }
 
@@ -42,7 +37,7 @@ export function createHtmlComponentRegistry(iconFamily = 'default'): ComponentRe
       createHtmlRegistry(core.schema as CoreSchema),
       createHtmlIconRegistry(icons.schema, { family: iconFamily })
     ),
-    watchFiles: [...core.watchFiles, ...icons.watchFiles, ...frameworkRegistryWatchFiles.html],
+    watchFiles: [...core.watchFiles, ...icons.watchFiles],
   };
 }
 
