@@ -2,6 +2,7 @@ import type { ImportDeclaration, JSXElement, JSXOpeningElement, Program } from '
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
+import { findJsxAttribute, type ModuleImports } from '../ast';
 import {
   type ComponentTarget,
   isTargetElement,
@@ -13,8 +14,8 @@ import {
   type TemplateTargetDefinition,
   type TemplateTargetRule,
 } from '../target/definition';
-import { TargetImports } from '../target/imports';
 import { jsx } from '../target/jsx-runtime';
+import { createTargetModuleImports } from '../target/module-imports';
 import { isTargetNode, renderTargetAttributes, renderTargetOutput } from '../target/render';
 import { createSourceChildren, createSourceProps, type SourceChildrenToken } from '../target/source';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
@@ -44,7 +45,7 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
         const binding = collectTemplateBinding(transform.ast, targets);
         if (!binding) return null;
 
-        const imports = new TargetImports(transform.ast, transform.magicString);
+        const imports = createTargetModuleImports(transform.ast, transform.magicString);
         let changed = false;
         let occurrence = 0;
 
@@ -150,7 +151,7 @@ function templateChildren(
   local: string,
   definition: TemplateTargetDefinition,
   target: ComponentTarget,
-  imports: TargetImports
+  imports: ModuleImports
 ): SourceChildrenToken {
   const root = template.children.find((child): child is JSXElement => child.type === 'JSXElement');
   const closingStart = template.closingElement?.start ?? template.openingElement.end;
@@ -221,11 +222,7 @@ function isTemplatePart(node: JSXElement, local: string): boolean {
 }
 
 function staticName(node: JSXElement, code: string): string {
-  const attribute = node.openingElement.attributes.find(
-    (candidate) =>
-      candidate.type === 'JSXAttribute' && candidate.name.type === 'JSXIdentifier' && candidate.name.name === 'name'
-  );
-  const value = attribute?.type === 'JSXAttribute' ? attribute.value : undefined;
+  const value = findJsxAttribute(node, 'name')?.value;
 
   if (value?.type === 'Literal' && typeof value.value === 'string') return value.value;
   if (value?.type === 'JSXExpressionContainer') {

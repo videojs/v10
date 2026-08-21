@@ -6,6 +6,8 @@ import type { Expression, ImportDeclaration, Node, Program } from '@oxc-project/
 import { walk } from 'oxc-walker';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
+import type { SourceEdit } from '../ast';
+import { insertModuleImports } from '../ast/imports';
 import { compileStyles } from '../styles/compile';
 import { type DesignSystem, loadDesignSystem } from '../styles/design-system';
 import {
@@ -18,7 +20,6 @@ import {
 } from '../styles/manifest';
 import { isStyleModulePath, resolveManifestStyleModule, resolveStyleModuleFile } from '../styles/modules';
 import type { StylePluginOptions } from '../styles/options';
-import { insertModuleImports } from '../target/imports';
 import { moduleFilename, type ParsedModuleId, parseModuleId } from '../utils/module-id';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -44,12 +45,6 @@ interface CachedDesignSystem {
 interface StyleBinding {
   readonly declaration: ImportDeclaration;
   readonly modulePath: string;
-}
-
-interface SourceEdit {
-  readonly start: number;
-  readonly end: number;
-  readonly content: string;
 }
 
 export function stylePlugin(config: StylePluginConfig): Plugin {

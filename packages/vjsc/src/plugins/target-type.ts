@@ -10,6 +10,8 @@ import type {
 import { walk } from 'oxc-walker';
 import type { Plugin, RolldownMagicString } from 'rolldown';
 
+import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, type SourceEdit } from '../ast';
+import { collectIdentifierNames, insertModuleImports } from '../ast/imports';
 import {
   type ComponentTarget,
   type ComponentTargetRule,
@@ -20,8 +22,7 @@ import {
   type TargetPropsReference,
   type TargetReference,
 } from '../target/definition';
-import { collectIdentifierNames, insertModuleImports, TargetImports } from '../target/imports';
-import { createSourceText, renderSourceRange, type SourceEdit } from '../utils/source-text';
+import { createTargetModuleImports } from '../target/module-imports';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -64,7 +65,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
         const bindings = collectBindings(transform.ast, targets);
         if (bindings.sourceTypes.size === 0) return null;
 
-        const imports = new TargetImports(transform.ast, transform.magicString);
+        const imports = createTargetModuleImports(transform.ast, transform.magicString);
         const typeImports = new TargetTypeImports(transform.ast, transform.magicString);
         let changed = transformSourceTypes(code, transform.ast, bindings, targets, typeImports, transform.magicString);
 
@@ -313,7 +314,7 @@ function openingTarget(
 
 function targetProps(
   resolved: { readonly target: ComponentTarget; readonly element: TargetElement },
-  imports: TargetImports,
+  imports: ModuleImports,
   typeImports: TargetTypeImports
 ): ResolvedProps | undefined {
   return targetReferenceProps(resolved.element[TARGET_ELEMENT], resolved.target, imports, typeImports, new Set());
@@ -322,7 +323,7 @@ function targetProps(
 function targetReferenceProps(
   reference: TargetReference,
   target: ComponentTarget,
-  imports: TargetImports,
+  imports: ModuleImports,
   typeImports: TargetTypeImports,
   seen: Set<TargetReference>
 ): ResolvedProps | undefined {
@@ -346,7 +347,7 @@ function targetReferenceProps(
 function renderPropsReference(
   reference: Exclude<TargetReference, { kind: 'component' }>,
   props: TargetPropsReference,
-  imports: TargetImports,
+  imports: ModuleImports,
   typeImports: TargetTypeImports
 ): string {
   let local: string;
@@ -393,12 +394,6 @@ function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | unde
     rule = (rule as Readonly<Record<string, ComponentTargetRule<object> | undefined>>)[part];
   }
   return rule;
-}
-
-function jsxNamePath(name: JSXElementName): string[] {
-  if (name.type === 'JSXIdentifier') return [name.name];
-  if (name.type === 'JSXNamespacedName') return [];
-  return [...jsxNamePath(name.object), name.property.name];
 }
 
 function sameTargetElement(

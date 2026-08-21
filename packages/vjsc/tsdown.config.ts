@@ -5,6 +5,7 @@ export default defineConfig({
   ...baseConfig,
   entry: {
     index: './src/index.ts',
+    'ast/index': './src/ast/index.ts',
     'components/index': './src/components/index.ts',
     'components/jsx-runtime': './src/components/jsx-runtime.ts',
     'components/jsx-dev-runtime': './src/components/jsx-dev-runtime.ts',

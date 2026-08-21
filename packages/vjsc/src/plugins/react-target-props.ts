@@ -2,7 +2,7 @@ import type { ImportDeclaration, JSXElementName, Program } from '@oxc-project/ty
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
-import { TargetImports } from '../target/imports';
+import { createTargetModuleImports } from '../target/module-imports';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -23,7 +23,7 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
         if (!transform.ast || !transform.magicString) return null;
 
         const bindings = importBindings(transform.ast);
-        const imports = new TargetImports(transform.ast, transform.magicString);
+        const imports = createTargetModuleImports(transform.ast, transform.magicString);
         let changed = false;
 
         walk(transform.ast, {

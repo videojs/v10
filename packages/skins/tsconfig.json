@@ -10,6 +10,6 @@
     "types": ["node"],
     "declarationDir": "types"
   },
-  "include": ["src", "dev", "vjsc/*.ts", "vite.config.ts"],
+  "include": ["src", "dev", "vjsc/*.ts", "vjsc/target", "vite.config.ts"],
   "references": [{ "path": "../core" }, { "path": "../html" }, { "path": "../icons" }, { "path": "../react" }]
 }

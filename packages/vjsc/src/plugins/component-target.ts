@@ -4,6 +4,7 @@ import type { ImportDeclaration, JSXElement, JSXElementName, Program } from '@ox
 import { walk } from 'oxc-walker';
 import type { Plugin } from 'rolldown';
 
+import { createSourceText, jsxNamePath, type ModuleImports, renderSourceRange, type SourceEdit } from '../ast';
 import type { ComponentDefinition, ComponentRecord } from '../components/definition';
 import {
   type ComponentRewrite,
@@ -18,11 +19,10 @@ import {
   type SourcePartFor,
   type TargetOutput,
 } from '../target/definition';
-import { TargetImports } from '../target/imports';
+import { createTargetModuleImports } from '../target/module-imports';
 import { renderTargetElement, renderTargetOutput } from '../target/render';
 import { createSourceChildren, createSourceProps } from '../target/source';
 import { type ParsedModuleId, parseModuleId } from '../utils/module-id';
-import { createSourceText, renderSourceRange, type SourceEdit } from '../utils/source-text';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
 
@@ -77,7 +77,7 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
         if (bindings.namespaces.size === 0 && bindings.named.size === 0) return null;
 
         const scopes = collectComponentScopes(transform.ast, bindings, id);
-        const imports = new TargetImports(transform.ast, transform.magicString);
+        const imports = createTargetModuleImports(transform.ast, transform.magicString);
         const descendants = new Map<JSXElement, readonly SourceEdit[]>();
         const edits = collectJsxEdits(transform.ast, descendants, (node, childEdits) => {
           const path = canonicalPath(node.openingElement.name, bindings);
@@ -150,7 +150,7 @@ export function primitiveTargetPlugin(options: ComponentTargetPluginOptions): Pl
         const bindings = collectPrimitiveBindings(transform.ast, targets);
         if (bindings.size === 0) return null;
 
-        const imports = new TargetImports(transform.ast, transform.magicString);
+        const imports = createTargetModuleImports(transform.ast, transform.magicString);
         let occurrence = 0;
         const edits = collectJsxEdits(transform.ast, new Map(), (node, childEdits) => {
           const path = jsxNamePath(node.openingElement.name);
@@ -352,12 +352,6 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
   };
 }
 
-function jsxNamePath(name: JSXElementName): string[] {
-  if (name.type === 'JSXIdentifier') return [name.name];
-  if (name.type === 'JSXNamespacedName') return [];
-  return [...jsxNamePath(name.object), name.property.name];
-}
-
 function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | undefined {
   let rule = path.target.components[path.component] as ComponentTargetRule<object> | undefined;
   if (!path.part || !rule) return rule;
@@ -479,7 +473,7 @@ function sourceId(scope: ComponentSourceScope, name: string): string {
   return scope.target.jsx.scope ? `__vjsc-id-${scope.prefix}-${name}` : `vjsc-${scope.prefix}-${name}`;
 }
 
-function renderSourceScope(source: string, scope: ComponentSourceScope, imports: TargetImports): string {
+function renderSourceScope(source: string, scope: ComponentSourceScope, imports: ModuleImports): string {
   const runtime = scope.target.jsx.scope;
   if (!runtime) return source;
   const name = imports.reference(runtime);
@@ -491,7 +485,7 @@ function wrapSourceScope(
   node: JSXElement,
   edits: readonly SourceEdit[],
   scope: ComponentSourceScope,
-  imports: TargetImports
+  imports: ModuleImports
 ): readonly SourceEdit[] {
   if (scope.root !== node || !scope.used || !scope.target.jsx.scope) return edits;
   const source = renderSourceRange(createSourceText(code, edits), node.start, node.end).value;

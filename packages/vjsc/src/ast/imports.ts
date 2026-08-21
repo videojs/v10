@@ -2,19 +2,31 @@ import type { ImportDeclaration, Program } from '@oxc-project/types';
 import { walk } from 'oxc-walker';
 import type { RolldownMagicString } from 'rolldown';
 
-import type { TargetImport } from './definition';
+export interface ModuleImport {
+  readonly from: string;
+  readonly name: string;
+  readonly path?: readonly string[] | undefined;
+}
 
-export class TargetImports {
+export interface ModuleImportsOptions {
+  readonly collisionSuffix?: string | undefined;
+  readonly defaultImportName?: string | undefined;
+}
+
+/** Collect collision-safe runtime imports and insert them together. */
+export class ModuleImports {
   readonly #ast: Program;
   readonly #magicString: RolldownMagicString;
   readonly #usedNames: Set<string>;
   readonly #existing = new Map<string, string>();
   readonly #requested = new Map<string, Map<string, string>>();
   readonly #sideEffects = new Set<string>();
+  readonly #options: ModuleImportsOptions;
 
-  constructor(ast: Program, magicString: RolldownMagicString) {
+  constructor(ast: Program, magicString: RolldownMagicString, options: ModuleImportsOptions = {}) {
     this.#ast = ast;
     this.#magicString = magicString;
+    this.#options = options;
     this.#usedNames = collectIdentifierNames(ast);
 
     for (const statement of ast.body) {
@@ -23,25 +35,25 @@ export class TargetImports {
     }
   }
 
-  reference(target: TargetImport): string {
-    const key = importKey(target.from, target.name);
+  reference(moduleImport: ModuleImport): string {
+    const key = importKey(moduleImport.from, moduleImport.name);
     let local = this.#existing.get(key);
 
     if (!local) {
-      let imports = this.#requested.get(target.from);
+      let imports = this.#requested.get(moduleImport.from);
       if (!imports) {
         imports = new Map();
-        this.#requested.set(target.from, imports);
+        this.#requested.set(moduleImport.from, imports);
       }
 
-      local = imports.get(target.name);
+      local = imports.get(moduleImport.name);
       if (!local) {
-        local = this.#allocateName(target.name);
-        imports.set(target.name, local);
+        local = this.#allocateName(moduleImport.name);
+        imports.set(moduleImport.name, local);
       }
     }
 
-    return target.path?.length ? `${local}.${target.path.join('.')}` : local;
+    return moduleImport.path?.length ? `${local}.${moduleImport.path.join('.')}` : local;
   }
 
   sideEffect(source: string): void {
@@ -75,17 +87,17 @@ export class TargetImports {
   }
 
   #allocateName(imported: string): string {
-    const base = imported === 'default' ? 'Target' : imported;
+    const base = imported === 'default' ? (this.#options.defaultImportName ?? 'Imported') : imported;
     if (!this.#usedNames.has(base)) {
       this.#usedNames.add(base);
       return base;
     }
 
-    const primitive = `${base}Primitive`;
-    let candidate = primitive;
+    const importedName = `${base}${this.#options.collisionSuffix ?? 'Import'}`;
+    let candidate = importedName;
     let suffix = 2;
 
-    while (this.#usedNames.has(candidate)) candidate = `${primitive}${suffix++}`;
+    while (this.#usedNames.has(candidate)) candidate = `${importedName}${suffix++}`;
 
     this.#usedNames.add(candidate);
     return candidate;

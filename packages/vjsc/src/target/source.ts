@@ -1,5 +1,5 @@
 import type { JSXAttribute, JSXOpeningElement } from '@oxc-project/types';
-import { createSourceText, renderSourceRange, type SourceText } from '../utils/source-text';
+import { createSourceText, renderSourceRange, type SourceText } from '../ast';
 import type { SourceProps } from './definition';
 
 export const SOURCE_PROPS = Symbol('vjsc/source-props');

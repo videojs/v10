@@ -10,7 +10,10 @@ import { Host, jsx } from 'vjsc/target/jsx-runtime';
 type CoreSchema = typeof coreSchema;
 
 const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  Controls: { Root: 'Controls', Group: 'ControlsGroup' },
+  Controls: {
+    Root: 'Controls',
+    Group: 'ControlsGroup',
+  },
   ErrorDialog: {
     Root: 'ErrorDialog',
     Popup: 'ErrorDialog',
@@ -32,8 +35,16 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
     Separator: 'MenuSeparator',
     CheckboxItem: 'MenuCheckboxItem',
   },
-  Popover: { Root: 'Popover', Trigger: 'Popover', Popup: 'Popover', Arrow: 'Popover' },
-  SeekIndicator: { Root: 'SeekIndicator', Value: 'SeekIndicatorValue' },
+  Popover: {
+    Root: 'Popover',
+    Trigger: 'Popover',
+    Popup: 'Popover',
+    Arrow: 'Popover',
+  },
+  SeekIndicator: {
+    Root: 'SeekIndicator',
+    Value: 'SeekIndicatorValue',
+  },
   Slider: {
     Root: 'Slider',
     Track: 'SliderTrack',
@@ -45,8 +56,15 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
     Preview: 'SliderPreview',
     Value: 'SliderValue',
   },
-  StatusIndicator: { Root: 'StatusIndicator', Value: 'StatusIndicatorValue' },
-  Time: { Group: 'TimeGroup', Separator: 'TimeSeparator', Value: 'Time' },
+  StatusIndicator: {
+    Root: 'StatusIndicator',
+    Value: 'StatusIndicatorValue',
+  },
+  Time: {
+    Group: 'TimeGroup',
+    Separator: 'TimeSeparator',
+    Value: 'Time',
+  },
   TimeSlider: {
     Root: 'TimeSlider',
     Track: 'SliderTrack',
@@ -67,7 +85,11 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
     Label: 'TooltipLabel',
     Shortcut: 'TooltipShortcut',
   },
-  VolumeIndicator: { Root: 'VolumeIndicator', Fill: 'VolumeIndicatorFill', Value: 'VolumeIndicatorValue' },
+  VolumeIndicator: {
+    Root: 'VolumeIndicator',
+    Fill: 'VolumeIndicatorFill',
+    Value: 'VolumeIndicatorValue',
+  },
   VolumeSlider: {
     Root: 'VolumeSlider',
     Track: 'SliderTrack',
@@ -105,9 +127,11 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
     const Span = element('span');
     const Sup = element('sup');
     const HtmlTemplate = element('template');
+
     const I18nText = element('media-text', {
       import: { from: '@videojs/html/i18n', sideEffect: true },
     });
+
     const optionTemplate: TemplateTargetDefinition = {
       render: ({ children }) => jsx(HtmlTemplate, { children }),
       parts: {

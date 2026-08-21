@@ -1,5 +1,6 @@
 import type { Program } from '@oxc-project/types';
 import type { RolldownMagicString } from 'rolldown';
+import type { ModuleImport } from '../ast/imports';
 import type {
   ComponentDefinition,
   ComponentRecord,
@@ -18,11 +19,7 @@ export const TARGET_EXPRESSION = Symbol.for('vjsc/target-expression');
 export const TARGET_SPREAD = Symbol.for('vjsc/target-spread');
 export const TARGET_WITH_PROPS = Symbol.for('vjsc/target-with-props');
 
-export interface TargetImport {
-  readonly from: string;
-  readonly name: string;
-  readonly path?: readonly string[] | undefined;
-}
+export type TargetImport = ModuleImport;
 
 export interface TargetSideEffectImport {
   readonly from: string;

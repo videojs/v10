@@ -1,4 +1,4 @@
-import { sliceSource } from '../utils/source-text';
+import { type ModuleImports, sliceSource } from '../ast';
 import {
   type ComponentTarget,
   type ComponentTargetPath,
@@ -15,7 +15,6 @@ import {
   type TargetReference,
 } from './definition';
 import { isTargetExpression, isTargetWithProps, readTargetExpression } from './expression';
-import type { TargetImports } from './imports';
 import {
   isSourceChildrenToken,
   isSourcePropsToken,
@@ -28,7 +27,7 @@ import {
 
 export interface TargetRenderContext {
   readonly target: ComponentTarget;
-  readonly imports: TargetImports;
+  readonly imports: ModuleImports;
 }
 
 export function renderTargetElement(element: TargetElement, context: TargetRenderContext): string {
