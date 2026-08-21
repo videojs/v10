@@ -9,7 +9,7 @@
     "url": "https://github.com/videojs/v10",
     "directory": "packages/html"
   },
-  "main": "dist/default/index.js",
+  "main": "dist/server/index.js",
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
@@ -29,98 +29,227 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./dist/dev/index.d.ts",
-      "development": "./dist/dev/index.js",
-      "default": "./dist/default/index.js"
+      "react-server": "./dist/server/index.js",
+      "edge-light": "./dist/server/index.js",
+      "workerd": "./dist/server/index.js",
+      "worker": "./dist/server/index.js",
+      "browser": {
+        "development": "./dist/dev/index.js",
+        "default": "./dist/default/index.js"
+      },
+      "default": "./dist/server/index.js"
     },
     "./icons": {
       "types": "./dist/dev/icons/index.d.ts",
       "development": "./dist/dev/icons/index.js",
       "default": "./dist/default/icons/index.js"
     },
+    "./icons/default": {
+      "types": "./dist/dev/icons/default/index.d.ts",
+      "development": "./dist/dev/icons/default/index.js",
+      "default": "./dist/default/icons/default/index.js"
+    },
+    "./icons/minimal": {
+      "types": "./dist/dev/icons/minimal/index.d.ts",
+      "development": "./dist/dev/icons/minimal/index.js",
+      "default": "./dist/default/icons/minimal/index.js"
+    },
     "./icons/*": {
       "types": "./dist/dev/icons/*/index.d.ts",
-      "development": "./dist/dev/icons/*/index.js",
-      "default": "./dist/default/icons/*/index.js"
+      "react-server": "./dist/server/icons/*/index.js",
+      "edge-light": "./dist/server/icons/*/index.js",
+      "workerd": "./dist/server/icons/*/index.js",
+      "worker": "./dist/server/icons/*/index.js",
+      "browser": {
+        "development": "./dist/dev/icons/*/index.js",
+        "default": "./dist/default/icons/*/index.js"
+      },
+      "default": "./dist/server/icons/*/index.js"
     },
     "./video": {
       "types": "./dist/dev/presets/video.d.ts",
-      "development": "./dist/dev/presets/video.js",
-      "default": "./dist/default/presets/video.js"
+      "react-server": "./dist/server/presets/video.js",
+      "edge-light": "./dist/server/presets/video.js",
+      "workerd": "./dist/server/presets/video.js",
+      "worker": "./dist/server/presets/video.js",
+      "browser": {
+        "development": "./dist/dev/presets/video.js",
+        "default": "./dist/default/presets/video.js"
+      },
+      "default": "./dist/server/presets/video.js"
     },
     "./video/*.css": "./dist/default/define/video/*.css",
     "./video/*": {
       "types": "./dist/dev/define/video/*.d.ts",
-      "development": "./dist/dev/define/video/*.js",
-      "default": "./dist/default/define/video/*.js"
+      "react-server": "./dist/server/define/video/*.js",
+      "edge-light": "./dist/server/define/video/*.js",
+      "workerd": "./dist/server/define/video/*.js",
+      "worker": "./dist/server/define/video/*.js",
+      "browser": {
+        "development": "./dist/dev/define/video/*.js",
+        "default": "./dist/default/define/video/*.js"
+      },
+      "default": "./dist/server/define/video/*.js"
     },
     "./audio": {
       "types": "./dist/dev/presets/audio.d.ts",
-      "development": "./dist/dev/presets/audio.js",
-      "default": "./dist/default/presets/audio.js"
+      "react-server": "./dist/server/presets/audio.js",
+      "edge-light": "./dist/server/presets/audio.js",
+      "workerd": "./dist/server/presets/audio.js",
+      "worker": "./dist/server/presets/audio.js",
+      "browser": {
+        "development": "./dist/dev/presets/audio.js",
+        "default": "./dist/default/presets/audio.js"
+      },
+      "default": "./dist/server/presets/audio.js"
     },
     "./audio/*.css": "./dist/default/define/audio/*.css",
     "./audio/*": {
       "types": "./dist/dev/define/audio/*.d.ts",
-      "development": "./dist/dev/define/audio/*.js",
-      "default": "./dist/default/define/audio/*.js"
+      "react-server": "./dist/server/define/audio/*.js",
+      "edge-light": "./dist/server/define/audio/*.js",
+      "workerd": "./dist/server/define/audio/*.js",
+      "worker": "./dist/server/define/audio/*.js",
+      "browser": {
+        "development": "./dist/dev/define/audio/*.js",
+        "default": "./dist/default/define/audio/*.js"
+      },
+      "default": "./dist/server/define/audio/*.js"
     },
     "./background": {
       "types": "./dist/dev/presets/background.d.ts",
-      "development": "./dist/dev/presets/background.js",
-      "default": "./dist/default/presets/background.js"
+      "react-server": "./dist/server/presets/background.js",
+      "edge-light": "./dist/server/presets/background.js",
+      "workerd": "./dist/server/presets/background.js",
+      "worker": "./dist/server/presets/background.js",
+      "browser": {
+        "development": "./dist/dev/presets/background.js",
+        "default": "./dist/default/presets/background.js"
+      },
+      "default": "./dist/server/presets/background.js"
     },
     "./background/*.css": "./dist/default/define/background/*.css",
     "./background/*": {
       "types": "./dist/dev/define/background/*.d.ts",
-      "development": "./dist/dev/define/background/*.js",
-      "default": "./dist/default/define/background/*.js"
+      "react-server": "./dist/server/define/background/*.js",
+      "edge-light": "./dist/server/define/background/*.js",
+      "workerd": "./dist/server/define/background/*.js",
+      "worker": "./dist/server/define/background/*.js",
+      "browser": {
+        "development": "./dist/dev/define/background/*.js",
+        "default": "./dist/default/define/background/*.js"
+      },
+      "default": "./dist/server/define/background/*.js"
     },
     "./live-video": {
       "types": "./dist/dev/presets/live-video.d.ts",
-      "development": "./dist/dev/presets/live-video.js",
-      "default": "./dist/default/presets/live-video.js"
+      "react-server": "./dist/server/presets/live-video.js",
+      "edge-light": "./dist/server/presets/live-video.js",
+      "workerd": "./dist/server/presets/live-video.js",
+      "worker": "./dist/server/presets/live-video.js",
+      "browser": {
+        "development": "./dist/dev/presets/live-video.js",
+        "default": "./dist/default/presets/live-video.js"
+      },
+      "default": "./dist/server/presets/live-video.js"
     },
     "./live-video/*.css": "./dist/default/define/live-video/*.css",
     "./live-video/*": {
       "types": "./dist/dev/define/live-video/*.d.ts",
-      "development": "./dist/dev/define/live-video/*.js",
-      "default": "./dist/default/define/live-video/*.js"
+      "react-server": "./dist/server/define/live-video/*.js",
+      "edge-light": "./dist/server/define/live-video/*.js",
+      "workerd": "./dist/server/define/live-video/*.js",
+      "worker": "./dist/server/define/live-video/*.js",
+      "browser": {
+        "development": "./dist/dev/define/live-video/*.js",
+        "default": "./dist/default/define/live-video/*.js"
+      },
+      "default": "./dist/server/define/live-video/*.js"
     },
     "./live-audio": {
       "types": "./dist/dev/presets/live-audio.d.ts",
-      "development": "./dist/dev/presets/live-audio.js",
-      "default": "./dist/default/presets/live-audio.js"
+      "react-server": "./dist/server/presets/live-audio.js",
+      "edge-light": "./dist/server/presets/live-audio.js",
+      "workerd": "./dist/server/presets/live-audio.js",
+      "worker": "./dist/server/presets/live-audio.js",
+      "browser": {
+        "development": "./dist/dev/presets/live-audio.js",
+        "default": "./dist/default/presets/live-audio.js"
+      },
+      "default": "./dist/server/presets/live-audio.js"
     },
     "./live-audio/*.css": "./dist/default/define/live-audio/*.css",
     "./live-audio/*": {
       "types": "./dist/dev/define/live-audio/*.d.ts",
-      "development": "./dist/dev/define/live-audio/*.js",
-      "default": "./dist/default/define/live-audio/*.js"
+      "react-server": "./dist/server/define/live-audio/*.js",
+      "edge-light": "./dist/server/define/live-audio/*.js",
+      "workerd": "./dist/server/define/live-audio/*.js",
+      "worker": "./dist/server/define/live-audio/*.js",
+      "browser": {
+        "development": "./dist/dev/define/live-audio/*.js",
+        "default": "./dist/default/define/live-audio/*.js"
+      },
+      "default": "./dist/server/define/live-audio/*.js"
     },
     "./ui/*": {
       "types": "./dist/dev/define/ui/*.d.ts",
-      "development": "./dist/dev/define/ui/*.js",
-      "default": "./dist/default/define/ui/*.js"
+      "react-server": "./dist/server/define/ui/*.js",
+      "edge-light": "./dist/server/define/ui/*.js",
+      "workerd": "./dist/server/define/ui/*.js",
+      "worker": "./dist/server/define/ui/*.js",
+      "browser": {
+        "development": "./dist/dev/define/ui/*.js",
+        "default": "./dist/default/define/ui/*.js"
+      },
+      "default": "./dist/server/define/ui/*.js"
     },
     "./feature/*": {
       "types": "./dist/dev/define/feature/*.d.ts",
-      "development": "./dist/dev/define/feature/*.js",
-      "default": "./dist/default/define/feature/*.js"
+      "react-server": "./dist/server/define/feature/*.js",
+      "edge-light": "./dist/server/define/feature/*.js",
+      "workerd": "./dist/server/define/feature/*.js",
+      "worker": "./dist/server/define/feature/*.js",
+      "browser": {
+        "development": "./dist/dev/define/feature/*.js",
+        "default": "./dist/default/define/feature/*.js"
+      },
+      "default": "./dist/server/define/feature/*.js"
     },
     "./media/mux-video": {
       "types": "./dist/dev/define/media/mux-video/index.d.ts",
-      "development": "./dist/dev/define/media/mux-video/index.js",
-      "default": "./dist/default/define/media/mux-video/index.js"
+      "react-server": "./dist/server/define/media/mux-video/index.js",
+      "edge-light": "./dist/server/define/media/mux-video/index.js",
+      "workerd": "./dist/server/define/media/mux-video/index.js",
+      "worker": "./dist/server/define/media/mux-video/index.js",
+      "browser": {
+        "development": "./dist/dev/define/media/mux-video/index.js",
+        "default": "./dist/default/define/media/mux-video/index.js"
+      },
+      "default": "./dist/server/define/media/mux-video/index.js"
     },
     "./media/mux-audio": {
       "types": "./dist/dev/define/media/mux-audio/index.d.ts",
-      "development": "./dist/dev/define/media/mux-audio/index.js",
-      "default": "./dist/default/define/media/mux-audio/index.js"
+      "react-server": "./dist/server/define/media/mux-audio/index.js",
+      "edge-light": "./dist/server/define/media/mux-audio/index.js",
+      "workerd": "./dist/server/define/media/mux-audio/index.js",
+      "worker": "./dist/server/define/media/mux-audio/index.js",
+      "browser": {
+        "development": "./dist/dev/define/media/mux-audio/index.js",
+        "default": "./dist/default/define/media/mux-audio/index.js"
+      },
+      "default": "./dist/server/define/media/mux-audio/index.js"
     },
     "./media/*": {
       "types": "./dist/dev/define/media/*.d.ts",
-      "development": "./dist/dev/define/media/*.js",
-      "default": "./dist/default/define/media/*.js"
+      "react-server": "./dist/server/define/media/*.js",
+      "edge-light": "./dist/server/define/media/*.js",
+      "workerd": "./dist/server/define/media/*.js",
+      "worker": "./dist/server/define/media/*.js",
+      "browser": {
+        "development": "./dist/dev/define/media/*.js",
+        "default": "./dist/default/define/media/*.js"
+      },
+      "default": "./dist/server/define/media/*.js"
     },
     "./cdn/media/*": {
       "types": "./cdn/media/*.dev.d.ts",
@@ -149,8 +278,27 @@
     },
     "./i18n": {
       "types": "./dist/dev/i18n/index.d.ts",
-      "development": "./dist/dev/i18n/index.js",
-      "default": "./dist/default/i18n/index.js"
+      "react-server": "./dist/server/i18n/index.js",
+      "edge-light": "./dist/server/i18n/index.js",
+      "workerd": "./dist/server/i18n/index.js",
+      "worker": "./dist/server/i18n/index.js",
+      "browser": {
+        "development": "./dist/dev/i18n/index.js",
+        "default": "./dist/default/i18n/index.js"
+      },
+      "default": "./dist/server/i18n/index.js"
+    },
+    "./i18n/locales/*/register": {
+      "types": "./dist/dev/i18n/locales/*/register.d.ts",
+      "react-server": "./dist/server/i18n/locales/*/register.js",
+      "edge-light": "./dist/server/i18n/locales/*/register.js",
+      "workerd": "./dist/server/i18n/locales/*/register.js",
+      "worker": "./dist/server/i18n/locales/*/register.js",
+      "browser": {
+        "development": "./dist/dev/i18n/locales/*/register.js",
+        "default": "./dist/default/i18n/locales/*/register.js"
+      },
+      "default": "./dist/server/i18n/locales/*/register.js"
     },
     "./i18n/locales/*": {
       "types": "./dist/dev/i18n/locales/*.d.ts",
@@ -160,17 +308,25 @@
     "./*.css": "./dist/default/define/*.css",
     "./*": {
       "types": "./dist/dev/define/*.d.ts",
-      "development": "./dist/dev/define/*.js",
-      "default": "./dist/default/define/*.js"
+      "react-server": "./dist/server/define/*.js",
+      "edge-light": "./dist/server/define/*.js",
+      "workerd": "./dist/server/define/*.js",
+      "worker": "./dist/server/define/*.js",
+      "browser": {
+        "development": "./dist/dev/define/*.js",
+        "default": "./dist/default/define/*.js"
+      },
+      "default": "./dist/server/define/*.js"
     }
   },
   "scripts": {
     "generate:vjsc": "vjsc generate",
     "check:vjsc": "vjsc generate --check",
     "prebuild": "pnpm run generate:vjsc",
-    "build": "tsdown",
+    "build": "tsdown && node --import tsx ./scripts/build-server.ts && pnpm run check:server",
     "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
     "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts",
+    "check:server": "node --import tsx ./scripts/check-server.ts",
     "build:archive": "node --import tsx ./scripts/build-dist-archive.ts",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",

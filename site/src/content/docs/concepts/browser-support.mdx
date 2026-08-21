@@ -38,4 +38,29 @@ TV platforms run embedded browsers with limited standards support. Video.js 10's
 
 ### Server-side rendering
 
-Video.js components render valid markup on the server. Interactivity — state management, media playback, and event handling — requires the browser and kicks in after hydration.
+Video.js components render valid markup on the server. Interactivity — custom-element registration, state management, media playback, and event handling — requires the browser and begins after hydration.
+
+`@videojs/html` publishes a DOM-free module facade for server-oriented conditions: `react-server`, `edge-light`, `workerd`, `worker`, and the server default. Browser builds select the real implementation through the `browser` condition. This means a framework can evaluate preset, UI, Media, and custom `createPlayer` imports while rendering or prerendering without requiring `window`, `document`, or `HTMLElement`.
+
+```tsx title="VideoPlayer.tsx"
+'use client';
+
+import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
+
+export function VideoPlayer() {
+  return (
+    <video-player>
+      <video-skin>
+        <video src="movie.mp4" />
+      </video-skin>
+    </video-player>
+  );
+}
+```
+
+In the Next.js App Router, a normal Client Component boundary is enough; a delayed `dynamic(..., { ssr: false })` import is not required. The server facade preserves import and composition shapes, but it does not register elements or render DOM on the server. The browser bundle performs the upgrade.
+
+<Aside type="note">
+  A browser Web Worker is not a playback environment. Some bundlers, including Vite, select the `browser` condition for Web Worker bundles unless you configure worker-specific resolution. Keep `@videojs/html` in the document bundle; use runtime-neutral `@videojs/core`, `@videojs/media`, and `@videojs/store` APIs for worker logic.
+</Aside>
