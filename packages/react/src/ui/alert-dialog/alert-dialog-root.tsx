@@ -2,7 +2,7 @@ import { AlertDialogCore, AlertDialogDataAttrs, type AlertDialogProps } from '@v
 import { createAlertDialog, createTransition } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -27,6 +27,7 @@ export function AlertDialogRoot({
   const [core] = useState(() => new AlertDialogCore());
 
   const isControlled = controlledOpen !== undefined;
+  const initialOpenRef = useRef(!isControlled && defaultOpen);
 
   const onOpenChangeRef = useLatestRef(onOpenChangeProp);
   const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
@@ -42,10 +43,6 @@ export function AlertDialogRoot({
       },
     });
 
-    if (!isControlled && defaultOpen) {
-      instance.open();
-    }
-
     return instance;
   });
 
@@ -55,14 +52,21 @@ export function AlertDialogRoot({
   core.setTitleId(titleId);
   core.setDescriptionId(descriptionId);
 
-  // Sync controlled open prop -> internal input state.
-  useEffect(() => {
-    if (controlledOpen === undefined) return;
+  // Commit the initial uncontrolled default or the current controlled value.
+  // Keeping this out of the initializer prevents server/abandoned renders from
+  // reading focus, scheduling animation frames, or notifying consumers.
+  useLayoutEffect(() => {
+    let nextOpen = controlledOpen;
+    if (nextOpen === undefined) {
+      if (!initialOpenRef.current) return;
+      initialOpenRef.current = false;
+      nextOpen = true;
+    }
 
     const { active: inputOpen } = dialog.input.current;
-    if (controlledOpen === inputOpen) return;
+    if (nextOpen === inputOpen) return;
 
-    if (controlledOpen) {
+    if (nextOpen) {
       dialog.open();
     } else {
       dialog.close();
