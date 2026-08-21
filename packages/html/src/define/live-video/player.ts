@@ -3,12 +3,12 @@ import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
 import { safeDefine } from '../safe-define';
 
-const { PlayerElement, PlayerController: ConfiguredPlayerController } = createPlayer({
+const { PlayerElement, PlayerController: LiveVideoPlayerController } = createPlayer({
   features: liveVideoFeatures,
 });
 
 /** Player controller bound to the live video player store. */
-export const PlayerController = ConfiguredPlayerController;
+export const PlayerController = LiveVideoPlayerController;
 
 export class LiveVideoPlayerElement extends PlayerElement {
   static readonly tagName = 'live-video-player';

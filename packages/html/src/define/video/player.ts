@@ -3,12 +3,12 @@ import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
 import { safeDefine } from '../safe-define';
 
-const { PlayerElement, PlayerController: ConfiguredPlayerController } = createPlayer({
+const { PlayerElement, PlayerController: VideoPlayerController } = createPlayer({
   features: videoFeatures,
 });
 
 /** Player controller bound to the standard video player store. */
-export const PlayerController = ConfiguredPlayerController;
+export const PlayerController = VideoPlayerController;
 
 export class VideoPlayerElement extends PlayerElement {
   static readonly tagName = 'video-player';

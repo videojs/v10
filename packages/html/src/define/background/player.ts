@@ -3,12 +3,12 @@ import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
 import { safeDefine } from '../safe-define';
 
-const { PlayerElement, PlayerController: ConfiguredPlayerController } = createPlayer({
+const { PlayerElement, PlayerController: BackgroundVideoPlayerController } = createPlayer({
   features: backgroundFeatures,
 });
 
 /** Player controller bound to the background video player store. */
-export const PlayerController = ConfiguredPlayerController;
+export const PlayerController = BackgroundVideoPlayerController;
 
 export class BackgroundVideoPlayerElement extends PlayerElement {
   static readonly tagName = 'background-video-player';
