@@ -21,7 +21,7 @@ import {
 } from '../target/definition';
 import { createTargetModuleImports } from '../target/module-imports';
 import { renderTargetElement, renderTargetOutput } from '../target/render';
-import { createSourceChildren, createSourceProps } from '../target/source';
+import { createSourceChildren, createSourceProps, singleJsxElementChild } from '../target/source';
 import { type ParsedModuleId, parseModuleId } from '../utils/module-id';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -94,7 +94,7 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
               source,
               node.openingElement,
               node.closingElement?.start ?? node.openingElement.end,
-              firstElementChild(node)?.openingElement
+              singleJsxElementChild(node)?.openingElement
             );
             const context: ComponentRewriteContext<RuntimeComponentDefinition> = {
               props: createSourceProps(source, node.openingElement, children),
@@ -453,7 +453,7 @@ function createSourceParts(
         source,
         node.openingElement,
         node.closingElement?.start ?? node.openingElement.end,
-        firstElementChild(node)?.openingElement
+        singleJsxElementChild(node)?.openingElement
       );
 
       group!.values.push({
@@ -493,10 +493,6 @@ function sourcePartCollection(name: string, group: CollectedPartGroup): RuntimeS
   }
 
   return collection;
-}
-
-function firstElementChild(node: JSXElement): JSXElement | undefined {
-  return node.children.find((child): child is JSXElement => child.type === 'JSXElement');
 }
 
 function sourceId(scope: ComponentSourceScope, name: string): string {

@@ -190,8 +190,24 @@ describe('componentTargetPlugin', () => {
       export const poster = <$.Poster><$.PlayButton /></$.Poster>;
     `);
 
-    expect(source).toContain('<Poster render={<><PlayButton /></>} />');
+    expect(source).toContain('<Poster render={<PlayButton />} />');
     expect(source).not.toContain('<$.');
+  });
+
+  it('keeps fragments when a render prop contains multiple children', async () => {
+    const source = await transform(`
+      import * as $ from '@fixture/components';
+      export const poster = (
+        <$.Poster>
+          <$.PlayButton />
+          <span>Caption</span>
+        </$.Poster>
+      );
+    `);
+
+    expect(source).toContain('<Poster render={<>');
+    expect(source).toContain('<PlayButton />');
+    expect(source).toContain('<span>Caption</span>');
   });
 
   it('keeps nested component roots out of the parent part collection', async () => {

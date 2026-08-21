@@ -3,13 +3,15 @@ import type { StyleManifest } from './manifest';
 export interface StylesheetOptions {
   /** Tailwind CSS entry used to resolve utilities, theme tokens, and variants. */
   readonly input: string;
+  /** Runtime base CSS entry imported before generated semantic styles. */
+  readonly base?: string | undefined;
   /** Optional selector wrapped around emitted CSS with `@scope`. */
   readonly scope?: string | undefined;
 }
 
 interface StylePluginBaseOptions {
-  /** Variant utilities to append to every rule's base utilities. */
-  readonly variant?: string | undefined;
+  /** Ordered variant utilities to append to each rule's base utilities when defined. */
+  readonly variants?: readonly string[] | undefined;
   /** Preloaded definitions for programmatic builds; imports are discovered by default. */
   readonly manifest?: StyleManifest | undefined;
 }

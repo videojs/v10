@@ -38,10 +38,56 @@ describe('stylePlugin', () => {
     expect(source).toContain('className={["grid", "p-0", active && "size-4 shrink-0", \'hook\']}');
   });
 
+  it('combines normalized variants in selection order', async () => {
+    const input = `
+      import styles from './fixtures/button.styles';
+      export const button = <button className={styles.root} />;
+    `;
+    const base = await transform(input, undefined, stylePlugin({ mode: 'tailwind' }));
+    const selected = await transform(
+      input,
+      undefined,
+      stylePlugin({ mode: 'tailwind', variants: ['compact', 'disabled'] })
+    );
+
+    expect(base.source).toContain('p-3');
+    expect(base.source).not.toContain('pointer-events-none');
+    expect(selected.source).toContain('p-1');
+    expect(selected.source).not.toContain('p-3');
+    expect(selected.source).toContain('pointer-events-none');
+  });
+
+  it('forwards multiple variants to generated CSS', async () => {
+    const styles = stylePlugin({
+      mode: 'css',
+      variants: ['compact', 'disabled'],
+      stylesheet: { input: designPath },
+    });
+    const { source } = await transform(
+      `
+        import styles from './fixtures/button.styles';
+        export const button = <button className={styles.root} />;
+      `,
+      undefined,
+      styles
+    );
+    const id = virtualCssIds(source)[0];
+    if (!id) throw new Error('Expected a generated semantic stylesheet.');
+
+    expect(await loadPlugin(styles, id)).toContain('pointer-events: none');
+  });
+
   it('rejects style references outside className', async () => {
-    await expect(
-      transform(`import styles from './fixtures/button.styles'; export const value = styles.button;`)
-    ).rejects.toThrow('must use static className references');
+    const source = `import styles from './fixtures/button.styles'; export const value = styles.button;`;
+
+    await expect(transform(source)).rejects.toMatchObject({
+      errors: [
+        {
+          message: expect.stringContaining('must use static className references'),
+          pos: source.indexOf('styles.button'),
+        },
+      ],
+    });
   });
 
   it('tracks imported design-system files and preserves directives', async () => {
@@ -59,6 +105,26 @@ describe('stylePlugin', () => {
 
     expect(design.watchFiles).toContain(designDependency);
     expect(source.indexOf(`'use client'`)).toBeLessThan(source.indexOf('virtual:vjsc/css'));
+  });
+
+  it('imports runtime base CSS before generated semantic styles', async () => {
+    const { source } = await transform(
+      `
+        import styles from './fixtures/button.styles';
+        export const button = <button className={styles.button} />;
+      `,
+      {
+        manifest,
+        mode: 'css',
+        stylesheet: { input: designPath, base: designDependency },
+      }
+    );
+
+    const base = source.indexOf('/base.css');
+    const semantic = source.indexOf('/buttons.css');
+
+    expect(base).toBeGreaterThanOrEqual(0);
+    expect(semantic).toBeGreaterThan(base);
   });
 
   it('releases stale hashed CSS modules when an owner is recompiled', async () => {
@@ -127,6 +193,17 @@ async function resolvePluginId(plugin: Plugin, id: string): Promise<unknown> {
   const handler = typeof hook === 'function' ? hook : hook.handler;
 
   return (handler as (id: string) => unknown)(id);
+}
+
+async function loadPlugin(plugin: Plugin, id: string): Promise<string> {
+  const resolved = await resolvePluginId(plugin, id);
+  if (typeof resolved !== 'string') throw new Error(`Could not resolve ${id}.`);
+  const hook = plugin.load;
+  if (!hook) throw new Error('Expected the style plugin to provide a load hook.');
+  const handler = typeof hook === 'function' ? hook : hook.handler;
+  const result = await (handler as (id: string) => unknown)(resolved);
+  if (typeof result !== 'string') throw new Error(`Could not load ${id}.`);
+  return result;
 }
 
 function fixturePlugin(source: string): Plugin {

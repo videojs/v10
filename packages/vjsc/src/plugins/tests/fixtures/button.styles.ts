@@ -12,6 +12,7 @@ export default styles({
       utilities: base,
       variants: {
         compact: 'p-1',
+        disabled: 'pointer-events-none',
       },
     },
     icon: {

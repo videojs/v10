@@ -17,7 +17,12 @@ import {
 import { jsx } from '../target/jsx-runtime';
 import { createTargetModuleImports } from '../target/module-imports';
 import { isTargetNode, renderTargetAttributes, renderTargetOutput } from '../target/render';
-import { createSourceChildren, createSourceProps, type SourceChildrenToken } from '../target/source';
+import {
+  createSourceChildren,
+  createSourceProps,
+  type SourceChildrenToken,
+  singleJsxElementChild,
+} from '../target/source';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -162,7 +167,7 @@ function templateChildren(
   target: ComponentTarget,
   imports: ModuleImports
 ): SourceChildrenToken {
-  const root = template.children.find((child): child is JSXElement => child.type === 'JSXElement');
+  const root = singleJsxElementChild(template);
   const closingStart = template.closingElement?.start ?? template.openingElement.end;
   const children = createSourceChildren(code, template.openingElement, closingStart, root?.openingElement);
   const replacements: Replacement[] = [];

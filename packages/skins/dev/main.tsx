@@ -32,7 +32,7 @@ const key: ModuleKey = requested in modules ? (requested as ModuleKey) : 'react/
 const [framework, , styleMode] = key.split('/') as ['react' | 'html', string, 'css' | 'tailwind'];
 const loaded = await modules[key]();
 
-if (styleMode === 'tailwind') await import('../vjsc/styles/tailwind.css');
+if (styleMode === 'tailwind') await import('../vjsc/styles/tailwind.design.css');
 
 function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ className?: string }>> }) {
   return (

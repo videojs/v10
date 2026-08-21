@@ -109,7 +109,7 @@ export const shadcnPackConfig: PackUserConfig = {
           }),
       },
       styles: {
-        input: './styles/tailwind.registry.css',
+        input: './styles/tailwind.css',
         filename: 'tailwind.css',
         title: 'Video.js Skin Styles',
         description: 'Shared Tailwind input, base behavior, and Default and Minimal video themes.',

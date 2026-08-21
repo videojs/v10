@@ -1,4 +1,4 @@
-import type { JSXAttribute, JSXOpeningElement } from '@oxc-project/types';
+import type { JSXAttribute, JSXElement, JSXOpeningElement } from '@oxc-project/types';
 
 import { createSourceText, renderSourceRange, type SourceText } from '../ast';
 import type { SourceProps } from './definition';
@@ -25,7 +25,13 @@ export interface SourceChildrenToken {
   readonly [SOURCE_CHILDREN]: true;
   readonly source: SourceText;
   readonly value: string;
+  /** Opening-tag offset when the children contain exactly one JSX element. */
   readonly rootOpeningEnd?: number | undefined;
+}
+
+export function singleJsxElementChild(node: JSXElement): JSXElement | undefined {
+  const children = node.children.filter((child) => child.type !== 'JSXText' || child.value.trim() !== '');
+  return children.length === 1 && children[0]?.type === 'JSXElement' ? children[0] : undefined;
 }
 
 export function createSourceProps<Props extends object>(

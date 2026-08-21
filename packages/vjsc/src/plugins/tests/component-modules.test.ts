@@ -46,8 +46,11 @@ describe('componentModulesPlugin', () => {
 
     await bundle.generate({ format: 'es' });
 
-    expect(
-      transformed.filter((id) => id.includes('?style=tailwind&target=react')).map((id) => basename(moduleFilename(id)))
-    ).toEqual(expect.arrayContaining(['entry.tsx', 'child.tsx', 'model.ts']));
+    const selected = transformed
+      .filter((id) => id.includes('?style=tailwind&target=react'))
+      .map((id) => basename(moduleFilename(id)));
+
+    expect(selected).toEqual(expect.arrayContaining(['entry.tsx', 'child.tsx']));
+    expect(selected).not.toContain('model.ts');
   });
 });

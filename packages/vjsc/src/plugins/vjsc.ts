@@ -35,6 +35,10 @@ export interface VjscPluginOptions {
  * @param options - Resolves targets and styles once for each module identity.
  */
 export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
+  return createVjscPluginPipeline(options);
+}
+
+export function createVjscPluginPipeline(options: VjscPluginOptions): Plugin[] {
   const configurations = new Map<string, VjscModuleConfig | null>();
   const configure = (module: VjscModule): VjscModuleConfig | null => {
     if (configurations.has(module.id)) return configurations.get(module.id) ?? null;
@@ -53,7 +57,9 @@ export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
         configurations.clear();
       },
     },
-    componentModulesPlugin({ ignore: (module) => configure(module) === null }),
+    componentModulesPlugin({
+      ignore: (module) => configure(module) === null,
+    }),
     htmlRuntimePlugin(),
     componentMetaPlugin(),
     targetJsxPlugin({ targets }),

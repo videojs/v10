@@ -7,7 +7,7 @@ import { defineConfig } from 'vite-plus';
 
 import { iconElementSourcePlugin } from '../../icons/vjsc/vite.ts';
 import { vjscPlugin } from '../../vjsc/src/vite/index.ts';
-import { configureSkinModule } from '../vjsc/config';
+import { configureSkinModule } from '../vjsc/config.ts';
 
 const packageDir = resolve(import.meta.dirname, '..');
 const reactSourceDir = normalizePath(resolve(packageDir, '../react/src'));

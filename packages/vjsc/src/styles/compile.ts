@@ -14,21 +14,24 @@ export interface CompileStylesOptions {
   readonly design: DesignSystem;
   readonly manifest: StyleManifest;
   readonly scope?: string | undefined;
-  readonly variant?: string | undefined;
+  /** Ordered variant utilities to append to each rule's base utilities when defined. */
+  readonly variants?: readonly string[] | undefined;
   /** Restrict CSS emission to semantic class names referenced by the compiled source graph. */
   readonly ruleClassNames?: ReadonlySet<string> | undefined;
 }
 
 /** Compile semantic rules and group the resulting CSS by each definition's explicit output file. */
 export async function compileStyles(options: CompileStylesOptions): Promise<Map<string, string>> {
-  const relationships = collectRelationships(options.manifest.rules, options.variant);
+  const variants = options.variants ?? [];
+  const relationships = collectRelationships(options.manifest.rules, variants);
 
   const byFile = new Map<string, StyleOutputFile & { rules: StyleOutputRule[] }>();
 
   for (const rule of [...options.manifest.rules].sort((a, b) => a.className.localeCompare(b.className))) {
     if (options.ruleClassNames && !options.ruleClassNames.has(rule.className)) continue;
 
-    const compiled = compileRule(rule, options.design, options.variant);
+    const compiled = compileRule(rule, options.design, variants);
+
     if (compiled.candidates.length === 0) continue;
 
     const existing = byFile.get(rule.file);
@@ -53,16 +56,18 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
     files: [...byFile.values()],
   });
 
-  const outputFiles = new Set(options.manifest.rules.map((rule) => rule.file));
+  const outputFiles = options.ruleClassNames
+    ? new Set([...byFile.keys()])
+    : new Set(options.manifest.rules.map((rule) => rule.file));
 
   return new Map([...outputFiles].sort().map((file) => [file, rendered.get(file) ?? '']));
 }
 
-function compileRule(rule: StyleManifestRule, design: DesignSystem, variant?: string): StyleOutputRule {
+function compileRule(rule: StyleManifestRule, design: DesignSystem, variants: readonly string[]): StyleOutputRule {
   const candidates: string[] = [];
   const unsupported: string[] = [];
 
-  for (const utility of utilitiesForRule(rule, variant)) {
+  for (const utility of utilitiesForRule(rule, variants)) {
     if (isGroupPeerMarker(utility)) continue;
 
     if (design.recognizesCandidate(utility)) candidates.push(utility);
@@ -81,7 +86,7 @@ function compileRule(rule: StyleManifestRule, design: DesignSystem, variant?: st
 
 function collectRelationships(
   rules: readonly StyleManifestRule[],
-  variant?: string
+  variants: readonly string[]
 ): {
   groupOwners: ReadonlyMap<string, string>;
   peerOwners: ReadonlyMap<string, string>;
@@ -90,7 +95,7 @@ function collectRelationships(
   const peerOwners = new Map<string, string>();
 
   for (const rule of rules) {
-    for (const utility of utilitiesForRule(rule, variant)) {
+    for (const utility of utilitiesForRule(rule, variants)) {
       if (isPeerMarker(utility)) {
         registerRelationshipOwner(peerOwners, utility, rule);
         continue;

@@ -3,7 +3,7 @@ import { basename, resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
 
-import { optimizeSvg } from '../scripts/internal/svg.js';
+import { optimizeSvg } from '../scripts/internal/svg.ts';
 
 const elementId = '@videojs/icons/element';
 const elementRuntimeId = 'virtual:videojs/icons/element-runtime';

@@ -1,18 +1,26 @@
 import { resolve } from 'node:path';
 
-import { build, createServer, type ViteDevServer } from 'vite';
+import { build, createLogger, createServer, type ViteDevServer } from 'vite';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'dev/vite.config.ts');
 const reactTarget = '?style=css&target=react&skin=default-video';
 const defaultSkinUrl = `/../vjsc/skins/default-video/skin.tsx${reactTarget}`;
-const htmlSkinUrl = '/../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=html&skin=minimal-video';
 const htmlContainerUrl = '/../vjsc/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video';
 const playButtonUrl = `/../vjsc/components/buttons/play-button.tsx${reactTarget}`;
+const settingsMenuUrl = `/../vjsc/components/menus/settings-menu.tsx${reactTarget}`;
+const volumePopoverUrl = `/../vjsc/components/controls/volume-popover.tsx${reactTarget}`;
 const buttonStyles = resolve(packageDir, 'vjsc/styles/components/button.styles.ts');
 const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
+const skinConfig = resolve(packageDir, 'vjsc/config.ts');
 const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
+const frameworks = ['react', 'html'] as const;
+const skins = ['default-video', 'minimal-video'] as const;
+const styles = ['css', 'tailwind'] as const;
+const variants = frameworks.flatMap((framework) =>
+  skins.flatMap((skin) => styles.map((style) => ({ framework, skin, style })))
+);
 
 describe('Skins Vite workflow', () => {
   let server: ViteDevServer | undefined;
@@ -35,7 +43,7 @@ describe('Skins Vite workflow', () => {
     expect(resolved?.id).toContain('/vjsc/skins/default-video/skin.tsx?skin=default-video&style=css&target=react');
   }, 30_000);
 
-  it('transforms the React/css entry and invalidates style owners', async () => {
+  it('serves every framework, Skin, and style combination', async () => {
     server = await createServer({
       configFile,
       logLevel: 'silent',
@@ -43,42 +51,58 @@ describe('Skins Vite workflow', () => {
       server: { middlewareMode: true },
     });
 
-    const skin = await server.transformRequest(defaultSkinUrl);
+    for (const variant of variants) {
+      const url = skinUrl(variant);
+      const result = await server.transformRequest(url);
+      const skinExport = variant.skin === 'default-video' ? 'DefaultVideoSkin' : 'MinimalVideoSkin';
+      const skinClass = variant.skin === 'default-video' ? 'media-skin-video' : 'media-skin-video-minimal';
 
-    expect(skin?.code).toContain('$RefreshReg$');
-    expect(skin?.code).toContain('virtual:vjsc/css');
-    expect(skin?.code).not.toContain('vjsc/dist/components/jsx-dev-runtime');
-    expect(skin?.code).not.toContain('@videojs/core/vjsc');
+      expect(result?.code, url).toContain(skinExport);
+      expect(result?.code, url).toContain(skinClass);
+      expect(result?.code, url).not.toContain('vjsc/dist/components/jsx-dev-runtime');
+      expect(result?.code, url).not.toContain('@videojs/core/vjsc');
 
-    await server.transformRequest(playButtonUrl);
-    const owner = await server.moduleGraph.getModuleByUrl(playButtonUrl);
+      if (variant.framework === 'react') expect(result?.code, url).toContain('$RefreshReg$');
 
-    expect(owner?.transformResult).not.toBeNull();
+      if (variant.style === 'css') expect(result?.code, url).toContain('virtual:vjsc/css');
+      else expect(result?.code, url).not.toContain('virtual:vjsc/css');
+    }
 
-    server.watcher.emit('change', buttonStyles);
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(owner?.transformResult).toBeNull();
-  }, 30_000);
-
-  it('serves target and style transforms through queried source modules', async () => {
-    server = await createServer({
-      configFile,
-      logLevel: 'silent',
-      optimizeDeps: { include: [], noDiscovery: true },
-      server: { middlewareMode: true },
-    });
-
-    const reactSkin = await server.transformRequest(defaultSkinUrl);
-    const htmlSkin = await server.transformRequest(htmlSkinUrl);
     const htmlContainer = await server.transformRequest(htmlContainerUrl);
 
-    expect(reactSkin?.code).toContain('$RefreshReg$');
-    expect(reactSkin?.code).toContain('DefaultVideoSkin');
-    expect(htmlSkin?.code).toContain('MinimalVideoSkin');
-    expect(htmlSkin?.code).toContain('media-skin-video-minimal');
     expect(htmlContainer?.code).toContain('/src/define/ui/container.ts');
-    expect(htmlSkin?.code).not.toContain('@videojs/core/vjsc');
+  }, 30_000);
+
+  it('passes trigger props to the concrete React render element', async () => {
+    const logger = createLogger('silent');
+    const warn = vi.spyOn(logger, 'warn');
+    const warnOnce = vi.spyOn(logger, 'warnOnce');
+
+    server = await createServer({
+      configFile,
+      customLogger: logger,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    const settingsMenu = await server.transformRequest(settingsMenuUrl);
+    const volumePopover = await server.transformRequest(volumePopoverUrl);
+
+    expect(settingsMenu?.code).toContain('Tooltip.Trigger, { render: /* @__PURE__ */ _jsxDEV(Menu.Trigger');
+    expect(volumePopover?.code).toContain('Popover.Trigger, { render: /* @__PURE__ */ _jsxDEV(MuteButton');
+    expect([...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n')).not.toContain('emitFile() is not supported');
+  }, 30_000);
+
+  it('invalidates transformed owners for component, style, and design changes', async () => {
+    server = await createServer({
+      configFile,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    await server.transformRequest(defaultSkinUrl);
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
 
     expect(resolved?.id).toContain('/vjsc/skins/default-video/skin.tsx');
@@ -122,6 +146,21 @@ describe('Skins Vite workflow', () => {
     await vi.waitFor(() => expect(targetedPlayButton.lastInvalidationTimestamp).toBeGreaterThan(sourceInvalidation));
   }, 30_000);
 
+  it('restarts when compiler configuration changes', async () => {
+    server = await createServer({
+      configFile,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    expect(server.config.configFileDependencies).toContain(skinConfig);
+    const restart = vi.spyOn(server, 'restart').mockResolvedValue();
+
+    server.watcher.emit('change', skinConfig);
+    await vi.waitFor(() => expect(restart).toHaveBeenCalledOnce());
+  }, 30_000);
+
   it('serves optimized icon families with the authored element runtime', async () => {
     server = await createServer({
       configFile,
@@ -144,12 +183,28 @@ describe('Skins Vite workflow', () => {
 
   it('builds the same VJSC configuration for production', async () => {
     const result = await build({
+      configLoader: 'native',
       configFile,
       logLevel: 'silent',
       build: { write: false },
     });
 
-    expect(result).toBeTruthy();
+    const output = (Array.isArray(result) ? result : [result]).flatMap((build) =>
+      'output' in build ? build.output : []
+    );
+    const chunks = output.filter((item) => item.type === 'chunk');
+    const facades = chunks.flatMap((chunk) => (chunk.facadeModuleId ? [chunk.facadeModuleId] : []));
+
+    for (const variant of variants) {
+      const expected = `skin.tsx?skin=${variant.skin}&style=${variant.style}&target=${variant.framework}`;
+
+      expect(
+        facades.some((id) => id.endsWith(expected)),
+        expected
+      ).toBe(true);
+    }
+
+    expect(output.some((item) => item.type === 'asset' && item.fileName.endsWith('.js.map'))).toBe(true);
   }, 30_000);
 
   it('does not configure Shadcn output while serving', async () => {
@@ -162,3 +217,7 @@ describe('Skins Vite workflow', () => {
     expect(server.config.plugins.some((plugin) => plugin.name === 'vjsc:shadcn')).toBe(false);
   }, 30_000);
 });
+
+function skinUrl(variant: (typeof variants)[number]): string {
+  return `/../vjsc/skins/${variant.skin}/skin.tsx?style=${variant.style}&target=${variant.framework}&skin=${variant.skin}`;
+}
