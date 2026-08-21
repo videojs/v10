@@ -7,7 +7,6 @@ import { build } from 'tsdown';
 import { describe, expect, it } from 'vitest';
 
 import { schemaPlugin } from '../../../rolldown';
-import { schemaPlugin as schemaTsdownPlugin } from '../../../tsdown';
 
 describe('schemaPlugin', () => {
   it('creates a schema entry directly from inline bundler configuration', async () => {
@@ -48,7 +47,7 @@ describe('schemaPlugin', () => {
       join(sourceDir, 'play-button-component.d.ts'),
       `declare const manifest: { name: 'PlayButton' }; export default manifest;`
     );
-    const plugin = schemaTsdownPlugin({
+    const plugin = schemaPlugin({
       file: 'schema',
       declaration: true,
       source: '@fixture/components',

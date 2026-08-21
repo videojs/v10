@@ -15,7 +15,6 @@ export default defineConfig({
     'shadcn/index': './src/shadcn/index.ts',
     'styles/index': './src/styles/index.ts',
     'rolldown/index': './src/rolldown/index.ts',
-    'tsdown/index': './src/tsdown/index.ts',
     'vite/index': './src/vite/index.ts',
   },
   platform: 'node',
