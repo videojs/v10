@@ -1,11 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
 import {
+  getMediaEngine,
   isMediaBufferCapable,
   isMediaContentDataCapable,
   isMediaRemotePlaybackCapable,
   isMediaTextTrackCapable,
 } from '../predicate';
+
+describe('getMediaEngine', () => {
+  it('returns the exposed engine', () => {
+    const engine = {};
+
+    expect(getMediaEngine({ engine })).toBe(engine);
+  });
+
+  it('preserves an explicitly inactive engine', () => {
+    expect(getMediaEngine({ engine: null })).toBeNull();
+  });
+
+  it('returns undefined when no engine is exposed', () => {
+    expect(getMediaEngine({})).toBeUndefined();
+    expect(getMediaEngine(null)).toBeUndefined();
+  });
+});
 
 describe('isMediaContentDataCapable', () => {
   it('uses undefined as the unsupported sentinel', () => {

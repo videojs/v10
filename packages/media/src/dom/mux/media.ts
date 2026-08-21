@@ -1,6 +1,7 @@
 import { shallowEqual } from '@videojs/utils/object';
 import { HlsJsMedia, type HlsSource } from '../hls-js';
 import { createMuxDrmSystems } from './drm';
+import { MUX_MEDIA } from './predicate';
 import {
   createMuxPosterURL,
   createMuxStoryboardURL,
@@ -39,6 +40,7 @@ export const muxMediaDefaultProps: MuxMediaProps = {
  * @fires contentdatachange - Fired when the derived `contentData` changes. Read `contentData` for the new value.
  */
 export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
+  readonly [MUX_MEDIA] = true;
   #source: MuxSource | null = muxMediaDefaultProps.source;
   #contentData: MuxContentData = {};
 

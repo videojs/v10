@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DASH_MEDIA } from '../../dash/predicate';
+import { HLS_JS_MEDIA } from '../../hls-js/predicate';
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
 
@@ -36,6 +38,14 @@ class FakeDashJsEngine {
   }
   on() {}
   off() {}
+}
+
+class FakeHlsJsMedia extends FakeMedia {
+  readonly [HLS_JS_MEDIA] = true;
+}
+
+class FakeDashMedia extends FakeMedia {
+  readonly [DASH_MEDIA] = true;
 }
 
 // Initialization is deferred by a microtask so all props settle first.
@@ -90,7 +100,7 @@ describe('MuxData', () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const media = new FakeHlsJsMedia();
 
     data.setMedia(media);
     data.attach(video);
@@ -121,7 +131,7 @@ describe('MuxData', () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
     const video = document.createElement('video');
-    const media = new FakeMedia();
+    const media = new FakeDashMedia();
     media.engine = new FakeDashJsEngine();
     media.src = 'https://example.com/manifest.mpd';
 

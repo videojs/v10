@@ -16,3 +16,4 @@ export type {
 export { HlsVideoMediaElement, HlsVideoMediaMixin, hlsVideoMediaDefaultProps } from './adapter';
 export { HlsVideoMedia } from './media';
 export { HlsVideoMediaMediaTracksMixin } from './media-tracks';
+export { isHlsVideoMedia } from './predicate';

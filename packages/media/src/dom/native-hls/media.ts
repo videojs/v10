@@ -4,6 +4,7 @@ import { HTMLVideoElementHost } from '../video-host';
 import { NativeHlsMediaDrmMixin } from './drm';
 import { NativeHlsMediaErrorsMixin } from './errors';
 import { NativeHlsMediaLiveMixin } from './live';
+import { NATIVE_HLS_MEDIA } from './predicate';
 import { NativeHlsMediaStreamTypeMixin } from './stream-type';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
@@ -161,4 +162,6 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
 export class NativeHlsMedia extends NativeHlsMediaLiveMixin(
   NativeHlsMediaStreamTypeMixin(NativeHlsMediaDrmMixin(NativeHlsMediaErrorsMixin(NativeHlsMediaBase)))
-) {}
+) {
+  readonly [NATIVE_HLS_MEDIA] = true;
+}

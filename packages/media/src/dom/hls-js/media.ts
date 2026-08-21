@@ -7,6 +7,7 @@ import { type MediaResolution, type MediaStreamType, MediaStreamTypes } from '..
 import { type NativeHlsConfig, NativeHlsMedia, type NativeHlsSource } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsOnlyMedia } from './hls-js-only';
+import { HLS_JS_MEDIA } from './predicate';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
@@ -162,6 +163,7 @@ class HlsMediaEvent extends Event {}
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
  */
 export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
+  readonly [HLS_JS_MEDIA] = true;
   #delegate: HlsJsOnlyMedia | NativeHlsMedia | null = null;
   #mediaElement: HTMLVideoElement | null = null;
   #src = hlsMediaDefaultProps.src;

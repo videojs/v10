@@ -10,3 +10,4 @@ export {
   hlsAudioMediaDefaultProps,
 } from './adapter';
 export { HlsAudioMedia } from './media';
+export { isHlsAudioMedia } from './predicate';
