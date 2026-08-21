@@ -71,11 +71,15 @@ A <DocsLink slug="concepts/presets">preset</DocsLink> is a player, a skin, and a
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/mux-video.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/mux-data.js"></script>
 
-<video-player>
+<video-player content-title="Test VOD">
   <video-skin class="aspect-video">
-    <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8" playsinline crossorigin="anonymous"></mux-video>
+    <mux-video
+      src="https://stream.mux.com/EcHgOK9coz5K….m3u8"
+      poster-time="2"
+      playsinline
+      crossorigin="anonymous"
+    ></mux-video>
     <mux-data player-software-name="my-app"></mux-data>
-    <img slot="poster" src="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2" alt="" />
   </video-skin>
 </video-player>
 
@@ -133,10 +137,17 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 
 export function MyPlayer() {
   return (
-    <VideoPlayer>
-      <VideoSkin className="aspect-video" poster="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2">
-        <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} playsInline crossOrigin="anonymous" />
-        <MuxData playerSoftwareName="my-app" metadata={{ video_title: 'Test VOD', viewer_user_id: 'user-id-007' }} />
+    <VideoPlayer title="Test VOD">
+      <VideoSkin className="aspect-video">
+        <MuxVideo
+          source={{ playbackId: 'EcHgOK9coz5K…', poster: { time: 2 } }}
+          playsInline
+          crossOrigin="anonymous"
+        />
+        <MuxData
+          playerSoftwareName="my-app"
+          metadata={{ video_title: 'Test VOD', viewer_user_id: 'user-id-007' }}
+        />
       </VideoSkin>
     </VideoPlayer>
   );
@@ -149,9 +160,13 @@ The `'use client'` directive is there because the player owns browser state.
 
 </FrameworkCase>
 
+<Aside type="caution" title="Analytics changes from opt-out to opt-in">
+Mux Player monitors playback by default. Video.js sends no Mux Data beacons unless you add the `MuxData` component shown above. Keep it when you want a behaviorally equivalent migration; omit it only when you intend to stop monitoring.
+</Aside>
+
 A few things worth calling out:
 
-- **The poster is yours to build.** Mux Player derived one from the playback ID; here you point the skin at an `image.mux.com` URL, and `thumbnail-time="2"` becomes `?time=2`. <DocsLink slug="reference/mux-video">`MuxVideo`</DocsLink> derives the same URL and reports it, but the poster is a skin concern today, so nothing reads it for you.
+- **MuxVideo supplies the poster.** It builds the image URL from the playback ID, and the skin displays it automatically. The example keeps the frame from two seconds in by configuring MuxVideo. Set `poster` on the player only when you want to use your own URL.
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
 - **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>.
 - **Set the aspect ratio yourself,** in your own CSS on the skin. There's no `ratio` attribute, because sizing belongs to your layout.
@@ -181,8 +196,8 @@ The groups map to the three URLs Mux serves. `playback` modifies the video strea
 <FrameworkCase frameworks={["html"]}>
 Assign it as a property, since an object has no attribute form:
 
-```js
-document.querySelector('mux-video').source = { playbackId: 'EcHgOK9coz5K…' };
+```ts
+document.querySelector('mux-video')!.source = { playbackId: 'EcHgOK9coz5K…' };
 ```
 
 You can also skip the object entirely and set `src` to a full Mux URL. The element parses it back into a source, query parameters included, which is what you want in markup you can't run JavaScript against:
@@ -224,8 +239,8 @@ Here's where each Mux Player attribute lands:
 | `playback-token` | `source.playback.token` |
 | `thumbnail-token`, `storyboard-token` | `source.poster.token`, `source.storyboard.token` |
 | `drm-token` | `source.drm.token` |
-| `thumbnail-time` | `?time=` on the poster URL you build |
-| poster size, crop, rotation, format | query parameters on that URL |
+| `thumbnail-time` | `source.poster.time` |
+| poster size, crop, rotation, format | `source.poster.width`, `.height`, `.fitMode`, `.rotate`, `.ext` |
 
 Signed playback behaves the way it does in Mux Player: a token replaces every other parameter in its group, so caps and clipping have to be baked into the token itself.
 
@@ -247,14 +262,52 @@ Your metadata keys don't change. They're the same `snake_case` names Mux Data ha
 
 ## Titles and posters
 
-`metadata-video-title` quietly did two jobs in Mux Player. It labelled the video for analytics, and it was the title the viewer read. Those are separate now, which is worth knowing before you go looking for the one attribute that used to do both:
+Mux Player used the same title for analytics and on-screen display. Video.js separates them.
 
-- For analytics, it's `metadata.video_title` on the Mux Data component.
-- For display, it's `content-title` on the player.
+For analytics, use `metadata.video_title` on the Mux Data component.
 
-`content-title` reaches player state, so your own UI can read it. No packaged skin draws it, so setting it alone won't put a title on screen ([#1123](https://github.com/videojs/v10/issues/1123)).
+<FrameworkCase frameworks={["html"]}>
+For display, use `content-title` on the player.
+</FrameworkCase>
 
-The poster is a skin concern. Build an `image.mux.com` URL and hand it over:
+<FrameworkCase frameworks={["react"]}>
+For display, use `title` on the player.
+</FrameworkCase>
+
+The title reaches player state, but the packaged skins don't place it in their layouts. Add the <DocsLink slug="reference/title">Title</DocsLink> component to an ejected or custom layout when you want viewers to see it:
+
+<FrameworkCase frameworks={["html"]}>
+```js
+import '@videojs/html/ui/title';
+```
+
+```html
+<video-player content-title="Test VOD">
+  <video-skin>
+    <media-title></media-title>
+  </video-skin>
+</video-player>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { Title } from '@videojs/react';
+import { VideoPlayer, VideoSkin } from '@videojs/react/video';
+
+<VideoPlayer title="Test VOD">
+  <VideoSkin>
+    <Title />
+  </VideoSkin>
+</VideoPlayer>
+```
+</FrameworkCase>
+
+`MuxVideo` supplies a poster from the playback ID, and `source.poster` controls the generated image. The skin displays it automatically. Pass `poster` to the player when you want to use your own URL:
+
+<FrameworkCase frameworks={["react"]}>
+A generated poster becomes available after `MuxVideo` mounts. Pass `poster` to `VideoPlayer` when the image must appear in server-rendered HTML.
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```html
@@ -292,7 +345,7 @@ The player supplies the real poster. The slotted image supplies Mux Player's `pl
 `renderPoster` customizes the poster image, so its background can show Mux Player's `placeholder` while the real poster loads.
 </FrameworkCase>
 
-Mux serves the poster from its `thumbnail` endpoint, so every Mux Player poster attribute becomes a query parameter you append: `thumbnail-time` is `?time=`, and the size, crop, rotation, and format options work the same way. See <DocsLink slug="how-to/add-a-poster-placeholder">Add a poster placeholder</DocsLink> for more examples or the <DocsLink slug="reference/poster">Poster</DocsLink> reference for the component itself.
+Mux serves the poster from its `thumbnail` endpoint, and `source.poster` configures that URL: `thumbnail-time` is `source.poster.time`, and the size, crop, rotation, and format options are `width`, `height`, `fitMode`, `rotate`, and `ext` beside it. Video.js converts those camel-case keys to the `snake_case` query parameters Mux expects. See <DocsLink slug="how-to/add-a-poster-placeholder">Add a poster placeholder</DocsLink> for more examples or the <DocsLink slug="reference/poster">Poster</DocsLink> reference for the component itself.
 
 ## Customize your player
 
@@ -304,8 +357,9 @@ Two are packaged. The default skin is a modern, frosted look. The minimal skin i
 
 ### Level 2: restyle it
 
-Set custom properties. The common case, a brand color:
+Set custom properties on the skin. The common case is a brand color:
 
+<FrameworkCase frameworks={["html"]}>
 ```css
 /* Mux Player */
 mux-player {
@@ -317,8 +371,25 @@ video-skin {
   --media-accent-color: rebeccapurple;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Give the skin a class you own:
+
+```tsx
+<VideoSkin className="my-player-skin">...</VideoSkin>
+```
+
+```css
+.my-player-skin {
+  --media-accent-color: rebeccapurple;
+}
+```
+</FrameworkCase>
 
 `--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose. `--media-border-radius` rounds the player, and `--media-scale-unit` scales the whole control bar at once. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has the full list.
+
+The skins use a different visual design, so you may not need to replace Mux Player's `primaryColor` and `secondaryColor` directly. Start with `--media-accent-color`. Restyle individual surfaces, or eject the skin, only when you need a closer palette match.
 
 ### Level 3: eject
 
@@ -448,7 +519,7 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 ```
 </FrameworkCase>
 
-You get `streamType`, `targetLiveWindow`, and `liveEdgeStart` in state, plus a live button that jumps to the live edge. See <DocsLink slug="reference/feature-live">the live feature</DocsLink>.
+You get `targetLiveWindow` and `liveEdgeStart` in player state, plus a live button that jumps to the live edge. The live preset doesn't include `streamType` state and doesn't force a source to be live. The Mux media detects the manifest: `targetLiveWindow` is `NaN` for an on-demand or unknown source, `0` for standard live, and `Infinity` for DVR. See <DocsLink slug="reference/feature-live">the live feature</DocsLink>.
 
 The live composition is narrower than the video one on purpose: it leaves out quality, audio-track, and playback-rate state, none of which apply cleanly to a stream with no fixed duration. So a live skin's settings menu holds captions and nothing else. If you need one of the others on a live player, build your own player from a feature list rather than taking the preset's.
 
@@ -499,7 +570,7 @@ Two gaps to plan around. The player exposes `chaptersCues` as a read-only array,
 
 ## Signed playback and DRM
 
-**Signed playback works today.** Each token is a parameter in its own group, and Video.js checks each one's audience before building a URL, so a token in the wrong slot produces no URL rather than a request Mux would reject:
+**Signed playback works today.** Follow Mux's [secure video playback guide](https://www.mux.com/docs/guides/secure-video-playback) to create a signing key and generate these tokens on your server. Each token is a parameter in its own group, and Video.js checks each one's audience before building a URL, so a token in the wrong slot produces no URL rather than a request Mux would reject:
 
 ```js
 {
@@ -509,6 +580,8 @@ Two gaps to plan around. The player exposes `chaptersCues` as a read-only array,
   storyboard: { token: '…' }, // audience: s
 }
 ```
+
+Signed playback needs its own poster token even when MuxVideo would otherwise derive the poster from the playback ID. Put Mux's thumbnail token at `source.poster.token`. If it is missing or has the wrong audience, MuxVideo cannot build a poster URL.
 
 Neither player refreshes tokens. Mux Player at least notices an expired one and shows a friendly message; Video.js doesn't surface that yet ([#1432](https://github.com/videojs/v10/issues/1432)).
 
@@ -531,20 +604,42 @@ The SPF flavor doesn't license DRM ([#1776](https://github.com/videojs/v10/issue
 <FrameworkCase frameworks={["html"]}>
 | Mux Player | Video.js v10 |
 |---|---|
-| `media.nativeEl` | `.target` on the element |
-| the hls.js instance | `.host.engine` on the hls.js-backed flavor |
+| `media.nativeEl` | the `<mux-video>` element itself for standard media properties and methods |
+| the hls.js instance | `.engine` on the `<mux-video>` element |
 | `prefer-playback` | `source.preferPlayback`, or pick <DocsLink slug="reference/native-hls-video">native HLS</DocsLink> outright |
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 | Mux Player | Video.js v10 |
 |---|---|
-| `media.nativeEl` | a `ref` on the media component, then `.target` |
-| the hls.js instance | `.host.engine` through that same `ref`, on the hls.js-backed flavor |
+| `media.nativeEl` | `ref.current` from a `ref` on the media component |
+| the hls.js instance | the media object's `.engine`, reached through <DocsLink slug="reference/use-media">`useMedia`</DocsLink>, on the hls.js-backed flavor |
 | `prefer-playback` | `source.preferPlayback`, or pick <DocsLink slug="reference/native-hls-video">native HLS</DocsLink> outright |
 </FrameworkCase>
 
 `source.preferPlayback` is the closest mapping: set it to `'native'` and the Mux media hands playback to the browser's own HLS support instead of building an MSE pipeline, which is what `prefer-playback="native"` did.
+
+<Aside type="caution" title="Treat engine access as an escape hatch">
+Reading `.engine` couples your app to hls.js and the `/hls-js` flavor. Prefer Video.js state, events, and media APIs when they cover your use case. Reach into the engine only for functionality Video.js doesn't expose.
+</Aside>
+
+<FrameworkCase frameworks={["react"]}>
+The media component's React ref is the native `HTMLVideoElement`; it has no `.target` or `.host`. Use the player context for the Video.js media object:
+
+```tsx
+import { useMedia } from '@videojs/react';
+
+function EngineAccess() {
+  const media = useMedia();
+  const engine = media && 'engine' in media ? media.engine : null;
+
+  // `engine` is the active hls.js instance for the `/hls-js` flavor.
+  return null;
+}
+```
+
+Import the `/hls-js` flavor when your app depends on that engine. The default flavor deliberately doesn't promise which engine it uses.
+</FrameworkCase>
 
 Program Date Time has no convenience surface: no `getStartDate()`, no `currentPdt`. The player exposes `liveEdgeStart` and `targetLiveWindow`; for PDT itself, reach into the engine.
 
@@ -552,7 +647,7 @@ Program Date Time has no convenience surface: no `getStartDate()`, no `currentPd
 
 Ordered roughly by how many migrations they'll touch.
 
-- No skin draws `content-title`, so setting it alone won't put a title on screen ([#1123](https://github.com/videojs/v10/issues/1123)).
+- No packaged skin places the resolved title in its layout; add the <DocsLink slug="reference/title">Title</DocsLink> component to an ejected or custom skin ([#1123](https://github.com/videojs/v10/issues/1123)).
 - Playback rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — and you can't choose your own yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - Two skins, against Mux Player's five themes, and no runtime theme switch. That's a deliberate trade, fewer looks each of which you can eject, but it's a real difference if you shipped `theme="classic"`.
 - Chapters render on the time slider, but there's no active-chapter state, no `chapterchange` event, and no chapter menu ([#1873](https://github.com/videojs/v10/issues/1873)). No `addChapters()` either ([#1268](https://github.com/videojs/v10/issues/1268)).
