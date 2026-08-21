@@ -9,8 +9,6 @@ type VjscModuleId = `virtual:vjsc/${string}`;
 export interface SchemaPluginOptions extends Omit<CreateSchemaModuleOptions, 'output'> {
   /** Virtual entry consumed by the bundler. */
   readonly id?: VjscModuleId | undefined;
-  /** Final declaration asset emitted alongside the bundled schema. */
-  readonly declaration?: `${string}.d.ts` | false | undefined;
 }
 
 export interface SchemaPlugin extends Plugin {
@@ -23,6 +21,7 @@ export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   const cwd = resolve(options.cwd ?? process.cwd());
   const moduleId = options.id ?? 'virtual:vjsc/schema';
   const sourceFileName = resolve(cwd, 'vjsc.ts');
+  const declarationFileName = resolve(cwd, 'vjsc.d.ts');
 
   const loadSchema = () =>
     createSchemaModule({
@@ -36,35 +35,31 @@ export function schemaPlugin(options: SchemaPluginOptions): SchemaPlugin {
   const plugin: Plugin = {
     name: 'vjsc:schema',
     resolveId: {
-      filter: { id: exactId(moduleId) },
+      filter: { id: exactIds(moduleId, declarationFileName) },
       handler(id) {
-        return id === moduleId ? sourceFileName : null;
+        if (id === moduleId) return sourceFileName;
+        return id === declarationFileName ? declarationFileName : null;
       },
     },
     load: {
-      filter: { id: exactId(sourceFileName) },
+      // Supply the declaration before a host DTS plugin tries to infer it from the virtual source.
+      order: 'pre',
+      filter: { id: exactIds(sourceFileName, declarationFileName) },
       handler(id) {
-        if (id !== sourceFileName) return null;
+        if (id !== sourceFileName && id !== declarationFileName) return null;
         const generated = loadSchema();
         for (const file of generated.watchFiles) this.addWatchFile(file);
-        return { code: generated.code, moduleType: 'ts' };
+        return {
+          code: id === sourceFileName ? generated.code : createGeneratedModuleDeclaration(generated, sourceFileName),
+          moduleType: 'ts',
+        };
       },
-    },
-    generateBundle() {
-      if (!options.declaration) return;
-      const generated = loadSchema();
-      for (const file of generated.watchFiles) this.addWatchFile(file);
-      this.emitFile({
-        type: 'asset',
-        fileName: options.declaration,
-        source: createGeneratedModuleDeclaration(generated, sourceFileName),
-      });
     },
   };
 
   return Object.assign(plugin, { moduleId });
 }
 
-function exactId(id: string): RegExp {
-  return new RegExp(`^${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+function exactIds(...ids: readonly string[]): RegExp {
+  return new RegExp(`^(?:${ids.map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})$`);
 }

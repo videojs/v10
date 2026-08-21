@@ -20,12 +20,11 @@ const createConfig = (mode: PackageBuildMode): UserConfig => {
     cwd: import.meta.dirname,
     source: '@videojs/core/vjsc',
     include: ['./src/core/ui/*/*-component.ts'],
-    declaration: mode === 'dev' ? 'vjsc.d.ts' : false,
   });
 
   return {
     ...packageBuildConfig(mode, 'neutral'),
-    dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json', entry: ['src/**/*.ts'] } : false,
+    dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json', entry: ['src/**/*.ts', 'vjsc.ts'] } : false,
     deps: { neverBundle: ['vjsc/components'] },
     plugins: [schema],
     entry: {
