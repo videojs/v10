@@ -67,6 +67,7 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/add-a-poster-placeholder' },
+      { slug: 'how-to/add-a-background-video' },
       { slug: 'how-to/build-your-own-component' },
       { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
       {
@@ -134,9 +135,11 @@ export const sidebar: Sidebar = [
           { slug: 'reference/cloudflare-video' },
           { slug: 'reference/dash-video' },
           { slug: 'reference/hls-audio' },
+          { slug: 'reference/hls-background-video' },
           { slug: 'reference/hls-video' },
           { slug: 'reference/hlsjs-video' },
           { slug: 'reference/mux-audio' },
+          { slug: 'reference/mux-background-video' },
           { slug: 'reference/mux-video' },
           { slug: 'reference/native-hls-video' },
           { slug: 'reference/shaka-video' },

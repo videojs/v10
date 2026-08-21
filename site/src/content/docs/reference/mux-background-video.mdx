@@ -1,0 +1,55 @@
+---
+title: MuxBackgroundVideo
+frameworkTitle:
+  html: mux-background-video
+description: Mux-specific name for the HLS background video component
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+MuxBackgroundVideo is the Mux-specific name for <DocsLink slug="reference/hls-background-video">HlsBackgroundVideo</DocsLink>. The two names use the same implementation and API.
+
+Use this name when your source is a Mux HLS URL and the Mux identity makes the composition easier to read. See <DocsLink slug="how-to/add-a-background-video">Add a background video</DocsLink> to compare the background-video options.
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { MuxBackgroundVideo } from '@videojs/react/media/mux-background-video';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import '@videojs/html/media/mux-background-video';
+```
+</FrameworkCase>
+
+## Load a Mux source
+
+Pass a complete Mux HLS URL through `src`. This component does not take a playback ID or structured `source` object. Use Mux delivery query parameters to limit which renditions Mux includes in the manifest:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxBackgroundVideo
+  src="https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p"
+  crossOrigin="anonymous"
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<mux-background-video
+  src="https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p"
+  crossorigin
+></mux-background-video>
+```
+</FrameworkCase>
+
+MuxBackgroundVideo does not create a poster or preview thumbnails, and it does not send analytics data. Keep the poster in your page and add analytics separately when you need them.
+
+## API
+
+The source, error, fixed playback behavior, and CSS custom properties are identical to <DocsLink slug="reference/hls-background-video">HlsBackgroundVideo</DocsLink>.
