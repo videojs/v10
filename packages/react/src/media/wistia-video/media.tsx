@@ -4,6 +4,8 @@ import type { WistiaMediaProps, WistiaSource } from '@videojs/media/dom/wistia';
 import {
   normalizeWistiaPlayer,
   parseWistiaMediaId,
+  parseWistiaStartTime,
+  WISTIA_PLAYER_TAG,
   wistiaControlProps,
   wistiaPlayerDefaultOptions,
   wistiaPlayerStyle,
@@ -11,7 +13,7 @@ import {
 import type { WistiaPlayerElement, WistiaPlayerProps } from '@wistia/wistia-player-react';
 import { WistiaPlayer } from '@wistia/wistia-player-react';
 import type { ForwardRefExoticComponent, RefAttributes, RefCallback } from 'react';
-import { forwardRef, useCallback } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 import { useMediaAttach } from '../../player/context';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 
@@ -60,8 +62,19 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
 
   const attachRef = useCallback<RefCallback<WistiaPlayerElement>>(
     (element) => {
-      if (element) normalizeWistiaPlayer(element as never);
-      setMedia?.(element as never);
+      if (!element) {
+        setMedia?.(null);
+        return;
+      }
+      // Wistia's wrapper defines its element from an effect, so the node this ref is handed may not have
+      // been upgraded yet — a bare `HTMLElement` with none of the player's members on it. Handing that to
+      // the store would have it decide, once and for good, that the media cannot seek, buffer or report a
+      // source. Waiting costs a tick and is the only moment there is anything to normalize.
+      void customElements.whenDefined(WISTIA_PLAYER_TAG).then(() => {
+        if (!element.isConnected) return;
+        normalizeWistiaPlayer(element);
+        setMedia?.(element as never);
+      });
     },
     [setMedia]
   );
@@ -70,8 +83,14 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
   // A Wistia URL is accepted where a media id is expected, the way every other media here accepts a `src`.
   const { mediaId, ...options } = source ?? {};
   const resolved = mediaId ?? (src ? parseWistiaMediaId(src) : null);
+  // A `wtime` in the URL is the one thing the id does not carry over, and it is a start position rather
+  // than a live playhead, so it is read once from the source this component opened with.
+  const [startTime] = useState(() => (src ? parseWistiaStartTime(src) : null));
   // An empty `preload` is what a bare `preload` attribute means; Wistia accepts only the three words.
   const resolvedPreload = preload || 'metadata';
+  // The muted state the player *starts* in. Sent on every render it would fight the viewer: unmuting through
+  // the skin drives the element, and the next parent render would put the mute straight back.
+  const [initialMuted] = useState(() => defaultMuted ?? muted);
 
   return (
     <WistiaPlayer
@@ -80,8 +99,8 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
       {...wistiaPlayerDefaultOptions}
       {...(autoplay !== undefined && { autoplay })}
       {...(loop !== undefined && { endVideoBehavior: loop ? 'loop' : 'default' })}
-      // The state the player starts in; `muted` after that is the viewer's, driven through the element.
-      {...((defaultMuted ?? muted) !== undefined && { muted: defaultMuted ?? muted })}
+      {...(initialMuted !== undefined && { muted: initialMuted })}
+      {...(startTime !== null && { currentTime: startTime })}
       {...(poster !== undefined && { poster })}
       {...(preload !== undefined && { preload: resolvedPreload })}
       {...wistiaControlProps(controls)}

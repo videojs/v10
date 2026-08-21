@@ -13,6 +13,10 @@ vi.mock('@wistia/wistia-player-react', () => ({
   },
 }));
 
+// The component waits for the element to be defined before normalizing it and handing it to the store,
+// since Wistia's wrapper defines it from an effect.
+customElements.define('wistia-player', class extends HTMLElement {});
+
 const SRC = 'https://wesleyluyten.wistia.com/medias/oifkgmxnkb';
 
 describe('WistiaVideo', () => {
@@ -83,6 +87,30 @@ describe('WistiaVideo', () => {
     render(<WistiaVideo src={SRC} defaultMuted />);
 
     expect(lastProps.current.muted).toBe(true);
+  });
+
+  it('does not put a mute back after the viewer cleared it', () => {
+    const { rerender } = render(<WistiaVideo src={SRC} defaultMuted />);
+    expect(lastProps.current.muted).toBe(true);
+
+    // Unmuting drives the element, not this prop. Re-sending it on a later render — for any reason, from
+    // anywhere up the tree — would re-mute the player under the viewer.
+    rerender(<WistiaVideo src={SRC} defaultMuted className="changed" />);
+
+    expect(lastProps.current.muted).toBe(true);
+    expect(lastProps.current.className).toBe('changed');
+  });
+
+  it('deep-links a wtime start time the way the element does', () => {
+    render(<WistiaVideo src={`${SRC}?wtime=30`} />);
+
+    expect(lastProps.current.currentTime).toBe(30);
+  });
+
+  it('leaves currentTime alone for a source with no start time', () => {
+    render(<WistiaVideo src={SRC} />);
+
+    expect(lastProps.current).not.toHaveProperty('currentTime');
   });
 
   it('resolves an empty preload, which Wistia does not accept', () => {

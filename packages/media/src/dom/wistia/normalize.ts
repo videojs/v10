@@ -4,22 +4,28 @@ import { createTimeRange } from '../utils';
 import { parseWistiaMediaId, parseWistiaStartTime, type WistiaSource } from './source';
 
 /**
- * The parts of Wistia's `<wistia-player>` this module reads and writes.
+ * The members of Wistia's `<wistia-player>` that {@link normalizeWistiaPlayer} reads.
  *
- * Structural rather than the package's own type, so `@videojs/media` carries the contract without carrying
- * a dependency on the player only its platform packages embed.
+ * Described structurally rather than imported, so `@videojs/media` carries the contract without carrying a
+ * dependency on the player only its platform packages embed. It is the argument type of the normalizer for
+ * that reason: the platforms pass Wistia's own class, so a member it renames or drops fails to compile
+ * there instead of quietly disabling a store feature at runtime.
  */
-export interface WistiaPlayerLike extends HTMLElement {
+export interface WistiaPlayerMembers {
   mediaId: string;
+  readyState: number;
   duration: number;
-  name: string | undefined;
   state: 'beforeplay' | 'ended' | 'paused' | 'playing' | undefined;
+  name: string | undefined;
   muted: boolean;
   endVideoBehavior: string;
   playBarControl: boolean;
   inFullscreen: boolean;
   cancelFullscreen(): Promise<void>;
-  // Everything else Wistia defines, and everything this module adds.
+}
+
+/** A player as this module works on it: Wistia's members, plus everything it defines onto them. */
+export interface WistiaPlayerLike extends HTMLElement, WistiaPlayerMembers {
   [key: string]: any;
 }
 
@@ -73,9 +79,11 @@ export const WISTIA_EVENT_ALIASES: Readonly<Record<string, readonly string[]>> =
  *
  * Idempotent: normalizing an element twice is a no-op.
  */
-export function normalizeWistiaPlayer<T extends WistiaPlayerLike>(player: T): T {
-  if (normalized.has(player)) return player;
-  normalized.add(player);
+export function normalizeWistiaPlayer<T extends HTMLElement & WistiaPlayerMembers>(player: T): T {
+  // Strict on the way in, loose inside: the members installed below do not exist on the argument yet.
+  const target = player as unknown as WistiaPlayerLike;
+  if (normalized.has(target)) return player;
+  normalized.add(target);
 
   // Wistia reports no `seeking` property, only events, and it does not reliably follow a `seeking` with a
   // `seeked`. Tracking one without the other wedges the flag on: the store stops syncing the playhead while
@@ -83,37 +91,37 @@ export function normalizeWistiaPlayer<T extends WistiaPlayerLike>(player: T): T 
   // report after a seek therefore closes it — and says so, because the store waits on `seeked` to settle a
   // seek of its own and to re-read the flag.
   const endSeek = () => {
-    const state = stateOf(player);
+    const state = stateOf(target);
     if (!state.seeking) return;
     state.seeking = false;
-    player.dispatchEvent(new Event('seeked'));
+    target.dispatchEvent(new Event('seeked'));
   };
 
-  player.addEventListener('seeking', () => {
-    stateOf(player).seeking = true;
+  target.addEventListener('seeking', () => {
+    stateOf(target).seeking = true;
   });
-  player.addEventListener('seeked', () => {
+  target.addEventListener('seeked', () => {
     // A real one leaves nothing for the fallback below to announce.
-    stateOf(player).seeking = false;
+    stateOf(target).seeking = false;
   });
-  for (const type of ['second-change', 'time-update']) player.addEventListener(type, endSeek);
+  for (const type of ['second-change', 'time-update']) target.addEventListener(type, endSeek);
 
   for (const [from, to] of Object.entries(WISTIA_EVENT_ALIASES)) {
-    player.addEventListener(from, () => {
+    target.addEventListener(from, () => {
       for (const type of to) {
         // A media element announces metadata once per resource, where more than one Wistia event can be the
         // moment it arrives. The first to say so wins until the source changes.
         if (type === 'loadedmetadata') {
-          const state = stateOf(player);
+          const state = stateOf(target);
           if (state.announcedMetadata) continue;
           state.announcedMetadata = true;
         }
-        player.dispatchEvent(new Event(type));
+        target.dispatchEvent(new Event(type));
       }
     });
   }
 
-  Object.defineProperties(player, WISTIA_MEDIA_DESCRIPTORS);
+  Object.defineProperties(target, WISTIA_MEDIA_DESCRIPTORS);
   return player;
 }
 
