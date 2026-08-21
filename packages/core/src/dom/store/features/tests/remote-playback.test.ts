@@ -19,7 +19,7 @@ function createRemote(overrides: Partial<RemotePlaybackLike> = {}) {
 interface RemotePlaybackLike {
   state: string;
   watchAvailability: (callback: (available: boolean) => void) => Promise<number>;
-  cancelWatchAvailability?: (id?: number) => Promise<void>;
+  cancelWatchAvailability?: (id?: number) => Promise<void> | void;
 }
 
 function attach(media: Media) {
@@ -61,5 +61,15 @@ describe('remotePlaybackFeature', () => {
     (remote as { cancelWatchAvailability?: unknown }).cancelWatchAvailability = undefined;
 
     expect(() => controller.abort()).not.toThrow();
+  });
+
+  it('does not throw when cancelWatchAvailability returns void', () => {
+    const remote = createRemote({ cancelWatchAvailability: vi.fn(() => undefined) });
+    const media = { remote } as unknown as Media;
+
+    const { controller } = attach(media);
+
+    expect(() => controller.abort()).not.toThrow();
+    expect(remote.cancelWatchAvailability).toHaveBeenCalledOnce();
   });
 });
