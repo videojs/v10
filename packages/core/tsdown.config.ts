@@ -18,18 +18,19 @@ const localeEntries = Object.fromEntries([
 const createConfig = (mode: PackageBuildMode): UserConfig => {
   const schema = schemaPlugin({
     cwd: import.meta.dirname,
+    entry: 'vjsc',
+    declaration: mode === 'dev',
     source: '@videojs/core/vjsc',
     include: ['./src/core/ui/*/*-component.ts'],
   });
 
   return {
     ...packageBuildConfig(mode, 'neutral'),
-    dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json', entry: ['src/**/*.ts', 'vjsc.ts'] } : false,
+    dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json', entry: ['src/**/*.ts'] } : false,
     deps: { neverBundle: ['vjsc/components'] },
     plugins: [schema],
     entry: {
       index: './src/core/index.ts',
-      vjsc: schema.moduleId,
       i18n: './src/core/i18n/index.ts',
       ...localeEntries,
       dom: './src/dom/index.ts',

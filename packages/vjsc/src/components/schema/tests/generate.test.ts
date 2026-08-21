@@ -60,11 +60,11 @@ describe('createSchemaModule', () => {
 
     expect(module.code).toContain("import PlayButtonDef from './play-button/play-button-component';");
     expect(module.code).toContain("import SliderDef from './slider/slider-component';");
-    expect(module.code).toContain('export const PlayButton = createComponent(PlayButtonDef);');
-    expect(module.code).toContain('export const Slider = createComponent(SliderDef);');
+    expect(module.code).toContain("export const PlayButton: CreateComponentResult<(typeof DEFINITIONS)['PlayButton']>");
+    expect(module.code).toContain("export const Slider: CreateComponentResult<(typeof DEFINITIONS)['Slider']>");
     expect(module.code).toContain('PlayButton: PlayButtonDef,');
     expect(module.code).toContain('Slider: SliderDef,');
-    expect(module.code).toContain("export default defineSchema('@fixture/components', DEFINITIONS);");
+    expect(module.code).toContain('defineSchema("@fixture/components", DEFINITIONS)');
   });
 
   it('excludes matching component sources', () => {
@@ -112,7 +112,7 @@ describe('createSchemaModule', () => {
       output,
     });
 
-    expect(result.code).toContain("export const PauseIcon = createComponent({ name: 'PauseIcon' });");
-    expect(result.code).toContain("export const PlayIcon = createComponent({ name: 'PlayIcon' });");
+    expect(result.code).toContain('createComponent(DEFINITIONS.PauseIcon)');
+    expect(result.code).toContain('createComponent(DEFINITIONS.PlayIcon)');
   });
 });

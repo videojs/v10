@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import { join } from 'node:path';
 
 import { rolldown } from 'rolldown';
 import { build } from 'tsdown';
@@ -20,15 +20,16 @@ describe('schemaPlugin', () => {
     );
     const plugin = schemaPlugin({
       cwd: root,
+      entry: 'schema',
       source: '@fixture/components',
       include: ['./*/*-component.ts'],
     });
 
-    const bundle = await rolldown({ input: plugin.moduleId, plugins: [plugin] });
+    const bundle = await rolldown({ input: {}, plugins: [plugin] });
     const output = await bundle.generate({ format: 'es' });
 
     expect(output.output[0]?.code).toContain('PlayButton');
-    expect(plugin.moduleId).toBe('virtual:vjsc/schema');
+    expect(output.output[0]?.fileName).toBe('schema.js');
   });
 
   it('provides its companion declaration to the host build', async () => {
@@ -40,35 +41,25 @@ describe('schemaPlugin', () => {
       `const defineComponent: any = (value: any) => value; export default defineComponent({ name: 'PlayButton' });`
     );
     writeFileSync(
-      join(root, 'tsconfig.json'),
-      JSON.stringify({ compilerOptions: { module: 'esnext', moduleResolution: 'bundler', target: 'es2022' } })
+      join(sourceDir, 'play-button-component.d.ts'),
+      `declare const manifest: { name: 'PlayButton' }; export default manifest;`
     );
-    const vjscPackage = join(root, 'node_modules/vjsc');
-    mkdirSync(vjscPackage, { recursive: true });
-    writeFileSync(
-      join(vjscPackage, 'package.json'),
-      JSON.stringify({ name: 'vjsc', exports: { './components': './components.d.ts' } })
-    );
-    writeFileSync(
-      join(vjscPackage, 'components.d.ts'),
-      `export declare function createComponent<T>(definition: T): T;
-       export declare function defineSchema<S, D>(source: S, definitions: D): { source: S; definitions: D };`
-    );
-
     const plugin = schemaPlugin({
       cwd: root,
+      entry: 'schema',
+      declaration: true,
       source: '@fixture/components',
       include: ['./*/*-component.ts'],
     });
     const results = await build({
       cwd: root,
-      entry: { schema: plugin.moduleId },
+      entry: { fixture: join(sourceDir, 'play-button-component.ts') },
       format: 'es',
       platform: 'neutral',
       dts: {
         tsgo: true,
-        tsconfig: 'tsconfig.json',
-        entry: [relative(process.cwd(), join(root, 'vjsc.ts'))],
+        tsconfig: join(process.cwd(), 'tsconfig.json'),
+        entry: ['does-not-match.ts'],
       },
       deps: { neverBundle: ['vjsc/components'] },
       plugins: [plugin],
