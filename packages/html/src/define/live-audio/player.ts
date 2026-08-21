@@ -1,6 +1,6 @@
 import { liveAudioFeatures } from '@videojs/core/dom';
-import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
+import { ContainerElement } from '../../ui/container/container-element';
 import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
@@ -14,7 +14,7 @@ export class LiveAudioPlayerElement extends ProviderMixin(MediaElement) {
 
 // Provider must be defined before consumer for context handshake during upgrade.
 safeDefine(LiveAudioPlayerElement);
-safeDefine(MediaContainerElement);
+safeDefine(ContainerElement);
 
 declare global {
   interface HTMLElementTagNameMap {

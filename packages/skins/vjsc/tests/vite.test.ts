@@ -8,6 +8,7 @@ const configFile = resolve(packageDir, 'vite.config.ts');
 const reactTarget = '?style=css&target=react&skin=default-video';
 const defaultSkinUrl = `/../vjsc/skins/default-video/skin.tsx${reactTarget}`;
 const htmlSkinUrl = '/../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=html&skin=minimal-video';
+const htmlContainerUrl = '/../vjsc/components/layout/container.tsx?style=tailwind&target=html&skin=minimal-video';
 const playButtonUrl = `/../vjsc/components/buttons/play-button.tsx${reactTarget}`;
 const buttonStyles = resolve(packageDir, 'vjsc/styles/components/button.styles.ts');
 const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
@@ -67,11 +68,13 @@ describe('Skins Vite workflow', () => {
 
     const reactSkin = await server.transformRequest(defaultSkinUrl);
     const htmlSkin = await server.transformRequest(htmlSkinUrl);
+    const htmlContainer = await server.transformRequest(htmlContainerUrl);
 
     expect(reactSkin?.code).toContain('$RefreshReg$');
     expect(reactSkin?.code).toContain('DefaultVideoSkin');
     expect(htmlSkin?.code).toContain('MinimalVideoSkin');
     expect(htmlSkin?.code).toContain('media-skin-video-minimal');
+    expect(htmlContainer?.code).toContain('/src/define/ui/container.ts');
     expect(htmlSkin?.code).not.toContain('@videojs/core/vjsc');
     const resolved = await server.pluginContainer.resolveId(defaultSkinUrl);
     expect(resolved?.id).toContain('/vjsc/skins/default-video/skin.tsx');

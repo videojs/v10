@@ -81,16 +81,18 @@ import '@videojs/html/video/player';
 </video-player>
 ```
 
-If you need a custom feature set, a custom tag name, or want to combine provider+container into a single element, use `createPlayer()` to get `ProviderMixin` and compose your own class:
+If you need a custom feature set or tag name, use `createPlayer()` to get `ProviderMixin` and define your own state boundary. Extend `ContainerElement` separately when you need custom container behavior:
 
 ```ts title="my-player.ts"
-import { ContainerMixin, createPlayer, MediaElement } from '@videojs/html';
+import { ContainerElement, createPlayer, MediaElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 class MyPlayer extends ProviderMixin(MediaElement) {}
+class MyContainer extends ContainerElement {}
 customElements.define('my-player', MyPlayer);
+customElements.define('my-container', MyContainer);
 ```
 
 <DocsLinkCard slug="reference/html-create-player">`createPlayer` reference</DocsLinkCard>
