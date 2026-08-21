@@ -30,6 +30,7 @@ import {
   TIKTOK_VIDEO_SRC,
   TWITCH_VIDEO_SRC,
   VIMEO_VIDEO_SRC,
+  WISTIA_VIDEO_SRC,
   withMuxMaxResolution,
   YOUTUBE_VIDEO_SRC,
 } from '@app/shared/sources';
@@ -161,6 +162,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
     case 'cloudflare-video':
     case 'tiktok-video':
     case 'twitch-video':
+    case 'wistia-video':
       if (live) {
         if (skin === 'minimal') await import('@videojs/html/cdn/live-video-minimal');
         else await import('@videojs/html/cdn/live-video');
@@ -254,6 +256,9 @@ async function loadCdnMedia(preset: Preset) {
     case 'twitch-video':
       await import('@videojs/html/cdn/media/twitch-video');
       break;
+    case 'wistia-video':
+      await import('@videojs/html/cdn/media/wistia-video');
+      break;
   }
 }
 
@@ -293,6 +298,7 @@ const EMBED_SOURCES: Partial<Record<Preset, string>> = {
   'spotify-audio': SPOTIFY_AUDIO_SRC,
   'tiktok-video': TIKTOK_VIDEO_SRC,
   'twitch-video': TWITCH_VIDEO_SRC,
+  'wistia-video': WISTIA_VIDEO_SRC,
 };
 
 function isBackgroundPreset(preset: Preset): boolean {
@@ -335,6 +341,7 @@ function getMediaTag(preset: Preset): string {
     'spotify-audio': 'spotify-audio',
     'tiktok-video': 'tiktok-video',
     'twitch-video': 'twitch-video',
+    'wistia-video': 'wistia-video',
     audio: 'audio',
     'background-video': 'background-video',
     'hls-background-video': 'hls-background-video',

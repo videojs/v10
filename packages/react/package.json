@@ -151,7 +151,9 @@
     "@videojs/media": "workspace:*",
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*"
+    "@videojs/utils": "workspace:*",
+    "@wistia/wistia-player": "^0.7.12",
+    "@wistia/wistia-player-react": "^0.7.12"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
