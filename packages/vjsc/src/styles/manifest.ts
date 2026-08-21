@@ -7,6 +7,7 @@ import ts from 'typescript';
 
 import { readAccessPath } from '../ts/utils/jsx';
 import { parseSourceFile } from '../ts/utils/source-file';
+import { toArray } from '../utils/array';
 import { splitClassNames } from './class-names';
 import { getStyleDefinition, type StyleDefinition, type StyleValue, validateStyleDefinition } from './define';
 import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';
@@ -253,7 +254,7 @@ function styleBindings(sourceFile: ts.SourceFile, manifest: StyleManifest): Read
 }
 
 function splitUtilityGroups(value: StyleValue): string[] {
-  const values = typeof value === 'string' ? [value] : value;
+  const values = toArray(value);
 
   return values.map((part) => part.trim().replace(/\s+/g, ' ')).filter(Boolean);
 }

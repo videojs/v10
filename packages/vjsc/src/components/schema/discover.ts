@@ -1,9 +1,10 @@
 import { globSync, readFileSync } from 'node:fs';
-import { basename, extname, isAbsolute, resolve } from 'node:path';
 
 import ts from 'typescript';
 import { propertyNameText } from '../../ts/utils/declarations';
 import { parseSourceFile } from '../../ts/utils/source-file';
+import { toArray } from '../../utils/array';
+import { absolutePath, fileStem } from '../../utils/path';
 import type { ComponentDefinition, ComponentRecord } from '../definition';
 
 export interface ComponentFileSet {
@@ -85,7 +86,11 @@ function parseComponentManifest(fileName: string): Pick<ManifestSchemaComponent,
 
   const definition = parseComponentDefinition(call, fileName);
   if (!definition.name) throw new Error(`defineComponent() in ${fileName} is missing a literal \`name:\` field`);
-  return { name: definition.name, definition };
+
+  return {
+    name: definition.name,
+    definition,
+  };
 }
 
 function findDefaultExportCall(sourceFile: ts.SourceFile): ts.CallExpression | undefined {
@@ -122,6 +127,7 @@ function parseComponentDefinition(
   for (const property of argument.properties) {
     if (!ts.isPropertyAssignment(property)) continue;
     const name = staticPropertyName(property.name);
+
     if (name === 'name' || name === 'root') {
       if (!ts.isStringLiteral(property.initializer)) {
         throw new Error(`defineComponent() in ${fileName} requires a literal \`${name}:\` field`);
@@ -130,6 +136,7 @@ function parseComponentDefinition(
       continue;
     }
     if (name !== 'parts') continue;
+
     if (!ts.isObjectLiteralExpression(property.initializer)) {
       throw new Error(`defineComponent() in ${fileName} requires an object literal \`parts:\` field`);
     }
@@ -151,16 +158,4 @@ function staticPropertyName(name: ts.PropertyName): string {
   const value = propertyNameText(name);
   if (value === undefined) throw new Error('Component definition property names must be static.');
   return value;
-}
-
-function absolutePath(cwd: string, path: string): string {
-  return isAbsolute(path) ? path : resolve(cwd, path);
-}
-
-function fileStem(path: string): string {
-  return basename(path, extname(path));
-}
-
-function toArray(value: string | readonly string[]): readonly string[] {
-  return typeof value === 'string' ? [value] : value;
 }

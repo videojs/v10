@@ -4,6 +4,7 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 import type { Plugin } from 'rolldown';
 
 import { type ComponentMeta, extractComponentMeta } from '../components/meta';
+import { toArray } from '../utils/array';
 import { moduleFilename, moduleId, normalizeModuleId, normalizeResolvedId } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
 import { analyzeImports } from './analyze';
@@ -110,8 +111,8 @@ function discoverFiles(
   include: string | readonly string[],
   exclude?: string | readonly string[]
 ): string[] {
-  const patterns = typeof include === 'string' ? [include] : include;
-  const excluded = typeof exclude === 'string' ? [exclude] : exclude;
+  const patterns = toArray(include);
+  const excluded = exclude ? toArray(exclude) : undefined;
   return [
     ...new Set(
       patterns.flatMap((pattern) =>

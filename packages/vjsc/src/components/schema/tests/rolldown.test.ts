@@ -13,7 +13,9 @@ describe('schemaPlugin', () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-schema-plugin-'));
     const sourceDir = join(root, 'play-button');
     const source = join(sourceDir, 'play-button-component.ts');
+    const existing = join(root, 'existing.ts');
     mkdirSync(sourceDir);
+    writeFileSync(existing, 'export const existing = true;');
     writeFileSync(
       source,
       `const defineComponent: any = (value: any) => value; export default defineComponent({ name: 'PlayButton' });`
@@ -24,11 +26,13 @@ describe('schemaPlugin', () => {
       include: ['./*/*-component.ts'],
     });
 
-    const bundle = await rolldown({ cwd: root, input: {}, plugins: [plugin] });
+    const bundle = await rolldown({ cwd: root, input: { existing }, plugins: [plugin] });
     const output = await bundle.generate({ format: 'es' });
+    const chunks = output.output.filter((item) => item.type === 'chunk');
+    const schema = chunks.find((chunk) => chunk.fileName === 'schema.js');
 
-    expect(output.output[0]?.code).toContain('PlayButton');
-    expect(output.output[0]?.fileName).toBe('schema.js');
+    expect(chunks.map((chunk) => chunk.fileName).sort()).toEqual(['existing.js', 'schema.js']);
+    expect(schema?.code).toContain('PlayButton');
   });
 
   it('provides its companion declaration to the host build', async () => {

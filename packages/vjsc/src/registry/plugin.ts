@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { isAbsolute, relative, resolve } from 'node:path';
+import { isAbsolute, relative } from 'node:path';
 import ts from 'typescript';
 import type { ComponentDefinition, ComponentRecord } from '../components/definition';
 import { Fragment } from '../components/jsx-runtime';
@@ -24,7 +24,7 @@ import {
   readJsxAttributeValue,
 } from '../ts/utils/jsx';
 import { collectReferencedIdentifiers } from '../ts/utils/references';
-import { toPosixPath } from '../utils/path';
+import { absolutePath, toPosixPath } from '../utils/path';
 import {
   type ComponentRegistry,
   isHost,
@@ -149,7 +149,7 @@ export function plugin(registry: ComponentRegistry): CompilerPlugin {
     setup(context) {
       const { configDir, filename, target } = context;
       for (const file of registry.watchFiles ?? []) {
-        context.addWatchFile(isAbsolute(file) ? file : resolve(configDir, file));
+        context.addWatchFile(absolutePath(configDir, file));
       }
       const moduleId = registryModuleId(filename, configDir);
 

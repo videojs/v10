@@ -1,11 +1,12 @@
 import { globSync, readFileSync } from 'node:fs';
-import { isAbsolute, relative, resolve } from 'node:path';
+import { relative, resolve } from 'node:path';
 
 import ts from 'typescript';
 
 import type { CompilerPlugin } from '../ts/types';
 import { parseSourceFile } from '../ts/utils/source-file';
-import { toPosixPath } from '../utils/path';
+import { toArray } from '../utils/array';
+import { absolutePath, toPosixPath } from '../utils/path';
 
 export interface ComponentMeta {
   readonly name: string;
@@ -24,15 +25,13 @@ export function discoverComponents<Item extends ComponentMeta = ComponentMeta>(
   options: DiscoverComponentsOptions
 ): readonly (Item & { readonly source: string })[] {
   const rootDir = resolve(options.rootDir);
-  const patterns = typeof options.include === 'string' ? [options.include] : options.include;
-  const exclude = typeof options.exclude === 'string' ? [options.exclude] : options.exclude;
+  const patterns = toArray(options.include);
+  const exclude = options.exclude ? toArray(options.exclude) : undefined;
   const exportName = options.exportName ?? 'meta';
   const sourceFiles = [
     ...new Set(
       patterns.flatMap((pattern) =>
-        globSync(pattern, { cwd: rootDir, ...(exclude ? { exclude } : {}) }).map((path) =>
-          isAbsolute(path) ? path : resolve(rootDir, path)
-        )
+        globSync(pattern, { cwd: rootDir, ...(exclude ? { exclude } : {}) }).map((path) => absolutePath(rootDir, path))
       )
     ),
   ].sort();

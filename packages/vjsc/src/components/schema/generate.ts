@@ -1,7 +1,7 @@
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname } from 'node:path';
 
-import { toPosixPath } from '../../ts/utils/path';
 import { relativeModuleSpecifier } from '../../ts/utils/source-module';
+import { absolutePath, toPosixPath } from '../../utils/path';
 import { type ComponentSchema, defineSchema } from '../definition';
 import { type ComponentSource, discoverSchema, type ManifestSchemaComponent, type SchemaComponent } from './discover';
 
@@ -16,17 +16,20 @@ export interface CreateSchemaModuleOptions {
   readonly exclude?: string | readonly string[] | undefined;
   readonly output: string;
 }
+
 export interface SchemaModule {
   readonly code: string;
-  readonly watchFiles: readonly string[];
   readonly schema: ComponentSchema;
+  readonly watchFiles: readonly string[];
 }
 
 /** Produce a component schema module without writing it to disk. */
 export function createSchemaModule(options: CreateSchemaModuleOptions): SchemaModule {
   const { cwd = process.cwd(), exclude, include, output, source } = options;
-  const outputAbsolute = isAbsolute(output) ? output : resolve(cwd, output);
+
+  const outputAbsolute = absolutePath(cwd, output);
   const discovered = discoverSchema({ cwd, include, ...(exclude ? { exclude } : {}) });
+
   const entries = [...discovered.components].sort((a, b) => a.name.localeCompare(b.name));
 
   if (entries.length === 0) {
