@@ -1,9 +1,24 @@
 import { act, cleanup, render } from '@testing-library/react';
+import { StatusAnnouncerCore } from '@videojs/core';
 import type { UnknownStore } from '@videojs/store';
-import type { ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { StatusAnnouncer } from '../status-announcer';
+
+class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  override componentDidCatch(_error: Error, _info: ErrorInfo) {}
+
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 afterEach(cleanup);
 
@@ -61,6 +76,49 @@ describe('StatusAnnouncer', () => {
     await act(async () => {});
 
     expect(getByRole('status').textContent).toBe('Custom playing');
+  });
+
+  it('does not publish props from an abandoned render to the retained core', () => {
+    const labels: string[] = [];
+    const originalSetProps = StatusAnnouncerCore.prototype.setProps;
+    const setProps = vi.spyOn(StatusAnnouncerCore.prototype, 'setProps').mockImplementation(function (
+      this: StatusAnnouncerCore,
+      props
+    ) {
+      if (typeof props.labels?.playing === 'string') labels.push(props.labels.playing);
+      originalSetProps.call(this, props);
+    });
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const value = createPlayerContextValue(createTestStore().store);
+
+    function Thrower({ abandon }: { abandon: boolean }) {
+      if (abandon) throw new Error('abandon render');
+      return null;
+    }
+
+    const { rerender } = render(
+      <PlayerContextProvider value={value}>
+        <Boundary>
+          <StatusAnnouncer labels={{ playing: 'Committed' }} />
+          <Thrower abandon={false} />
+        </Boundary>
+      </PlayerContextProvider>
+    );
+
+    expect(labels).toContain('Committed');
+
+    rerender(
+      <PlayerContextProvider value={value}>
+        <Boundary>
+          <StatusAnnouncer labels={{ playing: 'Abandoned' }} />
+          <Thrower abandon />
+        </Boundary>
+      </PlayerContextProvider>
+    );
+
+    expect(labels).not.toContain('Abandoned');
+    setProps.mockRestore();
+    consoleError.mockRestore();
   });
 
   it('uses the next store snapshot as baseline when the store changes', async () => {

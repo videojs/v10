@@ -11,8 +11,8 @@ import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useOptionalContainer, useOptionalPlayer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
-import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
@@ -47,18 +47,16 @@ export function MenuRoot({
   const isSubmenu = parentMenu !== null;
   const { side, align, closeOnEscape, closeOnOutsideClick } = coreProps;
 
-  const [core] = useState(() => new MenuCore(coreProps));
-
   const isControlled = controlledOpen !== undefined;
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const resolvedOpen = controlledOpen ?? uncontrolledOpen;
 
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
-  const closeOnEscapeRef = useLatestRef(closeOnEscape);
-  const closeOnOutsideClickRef = useLatestRef(closeOnOutsideClick);
-  const popupGroupRef = useLatestRef(popupGroup);
-  const isSubmenuRef = useLatestRef(isSubmenu);
+  const onOpenChangeRef = useCommittedRef(onOpenChangeProp);
+  const onOpenChangeCompleteRef = useCommittedRef(onOpenChangeCompleteProp);
+  const closeOnEscapeRef = useCommittedRef(closeOnEscape);
+  const closeOnOutsideClickRef = useCommittedRef(closeOnOutsideClick);
+  const popupGroupRef = useCommittedRef(popupGroup);
+  const isSubmenuRef = useCommittedRef(isSubmenu);
 
   const [menu] = useState(() => {
     const instance = createMenu({
@@ -104,11 +102,12 @@ export function MenuRoot({
     return controlsState?.requestControlsLock();
   }, [controlsState?.requestControlsLock, input.active, isSubmenu]);
 
-  const preferredState = useMemo(() => {
-    core.setProps({ side, align, closeOnEscape, closeOnOutsideClick });
+  const projection = useMemo(() => {
+    const core = new MenuCore({ side, align, closeOnEscape, closeOnOutsideClick });
     core.setInput({ ...input, isSubmenu });
-    return core.getState();
-  }, [core, input, side, align, closeOnEscape, closeOnOutsideClick, isSubmenu]);
+    return { core, state: core.getState() };
+  }, [input, side, align, closeOnEscape, closeOnOutsideClick, isSubmenu]);
+  const { core, state: preferredState } = projection;
   const { state, preferredSide, setPositionedSide } = usePositionedState(preferredState);
 
   const contextValue = useMemo(

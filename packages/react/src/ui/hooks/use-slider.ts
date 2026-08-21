@@ -12,9 +12,9 @@ import { useSnapshot } from '@videojs/store/react';
 import { applyStyles } from '@videojs/utils/dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useOptionalPlayer } from '../../player/context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
 import { useForceRender } from '../../utils/use-force-render';
-import { useLatestRef } from '../../utils/use-latest-ref';
 
 export interface UseSliderOptions<State extends SliderState = SliderState>
   extends Pick<
@@ -58,7 +58,7 @@ export interface UseSliderReturnValue<State extends SliderState = SliderState> {
 export function useSlider<State extends SliderState = SliderState>(
   options: UseSliderOptions<State>
 ): UseSliderReturnValue<State> {
-  const optionsRef = useLatestRef(options);
+  const optionsRef = useCommittedRef(options);
   const controls = useOptionalPlayer(selectControls);
   const requestControlsLock = controls?.requestControlsLock;
   const releaseControlsLockRef = useRef<(() => void) | null>(null);
@@ -126,6 +126,7 @@ export function useSlider<State extends SliderState = SliderState>(
   // Adjust CSS var percents for edge thumb alignment using live DOM measurements.
   const cssVars = options.getCSSVars(slider.adjustForAlignment(state));
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the retained callback reads commit-published options without changing identity
   const syncStyles = useCallback(
     (element = rootElementRef.current) => {
       if (!element) return;

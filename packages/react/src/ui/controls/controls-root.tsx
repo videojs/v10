@@ -1,11 +1,12 @@
 import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectControls } from '@videojs/core/dom';
+import { selectControls } from '@videojs/core/dom';
 import type { ForwardedRef, ReactNode } from 'react';
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 import { ControlsContextProvider } from './context';
 
 export interface ControlsRootProps extends UIComponentProps<'div', ControlsCore.State> {
@@ -20,14 +21,13 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
   const { render, className, style, children, ...elementProps } = componentProps;
 
   const controls = usePlayer(selectControls);
-
-  const [core] = useState(() => new ControlsCore());
+  useLogMissingFeature(!controls, 'Controls.Root', 'controls');
 
   if (!controls) {
-    if (__DEV__) logMissingFeature('Controls.Root', 'controls');
     return null;
   }
 
+  const core = new ControlsCore();
   core.setMedia(controls);
   const state = core.getState();
 

@@ -282,6 +282,67 @@ describe('createThumbnail', () => {
       handle.destroy();
     });
 
+    it('retargets image listeners and resize observation when element identities change', () => {
+      let img = document.createElement('img');
+      let container = createMockContainer();
+      const firstImg = img;
+      const firstContainer = container;
+      Object.defineProperty(firstImg, 'complete', { value: false, configurable: true });
+      const onStateChange = vi.fn();
+      const handle = createThumbnail(
+        createOptions({
+          getContainer: () => container,
+          getImg: () => img,
+          onStateChange,
+        })
+      );
+
+      handle.updateSrc('sprite.jpg');
+      handle.connect();
+
+      expect(ResizeObserverStub.instances).toHaveLength(1);
+      expect(ResizeObserverStub.instances[0]!.observe).toHaveBeenCalledWith(firstContainer);
+
+      img = document.createElement('img');
+      container = createMockContainer();
+      const secondImg = img;
+      const secondContainer = container;
+      Object.defineProperty(secondImg, 'complete', { value: false, configurable: true });
+      handle.updateSrc('sprite.jpg');
+      handle.connect();
+
+      expect(ResizeObserverStub.instances[0]!.disconnect).toHaveBeenCalledOnce();
+      expect(ResizeObserverStub.instances).toHaveLength(2);
+      expect(ResizeObserverStub.instances[1]!.observe).toHaveBeenCalledWith(secondContainer);
+
+      onStateChange.mockClear();
+      firstImg.dispatchEvent(new Event('error'));
+      expect(onStateChange).not.toHaveBeenCalled();
+      expect(handle.error).toBe(false);
+
+      secondImg.dispatchEvent(new Event('error'));
+      expect(onStateChange).toHaveBeenCalledOnce();
+      expect(handle.error).toBe(true);
+
+      handle.destroy();
+    });
+
+    it('does not notify again when an already-settled image remains connected', () => {
+      const img = createMockImg();
+      Object.defineProperty(img, 'complete', { value: true, configurable: true });
+      const onStateChange = vi.fn();
+      const handle = createThumbnail(createOptions({ getImg: () => img, onStateChange }));
+
+      handle.updateSrc('sprite.jpg');
+      handle.connect();
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      handle.connect();
+      expect(onStateChange).toHaveBeenCalledOnce();
+
+      handle.destroy();
+    });
+
     it('detects already-loaded img on connect', () => {
       const img = createMockImg();
       // Mark the img as already complete (cached image).

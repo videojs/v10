@@ -1,16 +1,16 @@
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
-import { logMissingFeature } from '@videojs/core/dom';
 import { isText, translateText } from '@videojs/core/i18n';
 import type { Selector } from '@videojs/store';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
-import { forwardRef, useLayoutEffect, useState } from 'react';
+import { forwardRef, useLayoutEffect } from 'react';
 
 import { useTranslator } from '../i18n/context';
 import { usePlayer } from '../player/context';
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
 import { useButton } from './hooks/use-button';
+import { useLogMissingFeature } from './hooks/use-log-missing-feature';
 import { useHotkeyShortcut } from './hotkey/use-hotkey-shortcut';
 import { useOptionalMenuTriggerChildContext } from './menu/context';
 import { useOptionalTooltipContext } from './tooltip/context';
@@ -83,12 +83,11 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     const shortcut = useHotkeyShortcut(hotkeyAction, hotkeyValue?.(coreProps));
     const translator = useTranslator();
 
-    const [core] = useState(() => new CoreClass());
-
     if (corePropKeys.has('menuTrigger') && isUndefined(coreProps.menuTrigger)) {
       coreProps.menuTrigger = menuTriggerChild;
     }
 
+    const core = new CoreClass();
     core.setProps(coreProps);
 
     const { getButtonProps, buttonRef } = useButton({
@@ -121,8 +120,9 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       return () => setTooltipContent(undefined);
     }, [setTooltipContent, tooltipText, shortcut.shortcut]);
 
+    useLogMissingFeature(!feature, displayName, selector.displayName ?? displayName);
+
     if (!feature || !state) {
-      if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
       return null;
     }
 

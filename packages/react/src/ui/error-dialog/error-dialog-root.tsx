@@ -5,8 +5,9 @@ import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
-import { useLatestRef } from '../../utils/use-latest-ref';
+import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { useSafeId } from '../../utils/use-safe-id';
 import { AlertDialogContextProvider } from '../alert-dialog/context';
 import { ErrorDialogContextProvider } from './context';
@@ -16,13 +17,15 @@ export interface ErrorDialogRootProps {
 }
 
 export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
-  const [core] = useState(() => new ErrorDialogCore());
   const errorState = usePlayer(selectError);
-  const lastError = useRef(errorState?.error ?? null);
+  const lastErrorRef = useRef(errorState?.error ?? null);
+  const lastError = errorState?.error ?? lastErrorRef.current;
 
-  if (errorState?.error) lastError.current = errorState.error;
+  useIsomorphicLayoutEffect(() => {
+    if (errorState?.error) lastErrorRef.current = errorState.error;
+  }, [errorState?.error]);
 
-  const errorStateRef = useLatestRef(errorState);
+  const errorStateRef = useCommittedRef(errorState);
 
   const [dialog] = useState(() =>
     createAlertDialog({
@@ -38,9 +41,6 @@ export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   const titleId = useSafeId('error-dialog-title');
   const descriptionId = useSafeId('error-dialog-desc');
 
-  core.setTitleId(titleId);
-  core.setDescriptionId(descriptionId);
-
   useEffect(() => {
     const hasError = Boolean(errorState?.error);
     const { active: isOpen } = dialog.input.current;
@@ -55,13 +55,16 @@ export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   useDestroy(dialog);
 
   const input = useSnapshot(dialog.input);
+  const core = new ErrorDialogCore();
   core.setInput(input);
+  core.setTitleId(titleId);
+  core.setDescriptionId(descriptionId);
   const state = core.getState();
 
   if (!errorState) return null;
 
   return (
-    <ErrorDialogContextProvider value={{ lastError: lastError.current }}>
+    <ErrorDialogContextProvider value={{ lastError }}>
       <AlertDialogContextProvider value={{ core, dialog, state, stateAttrMap: AlertDialogDataAttrs }}>
         {children}
       </AlertDialogContextProvider>

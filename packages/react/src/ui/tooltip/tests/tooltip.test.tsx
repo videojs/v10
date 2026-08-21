@@ -3,7 +3,8 @@ import { popup } from '@videojs/skins/default/tailwind/video.tailwind';
 import { useLayoutEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Tooltip, useOptionalTooltipContext } from '..';
+import { Tooltip, useOptionalTooltipContext, useTooltipContext } from '..';
+import { useTooltipGroup } from '../group-context';
 
 function makeDOMRect(x: number, y: number, width: number, height: number): DOMRect {
   return new DOMRect(x, y, width, height);
@@ -25,7 +26,63 @@ function TooltipContent({ label, shortcut }: { label?: string; shortcut?: string
   return null;
 }
 
+function LayoutTooltipOpen({ open }: { open: boolean }) {
+  const { tooltip } = useTooltipContext();
+
+  useLayoutEffect(() => {
+    if (open) tooltip.open();
+  }, [open, tooltip]);
+
+  return null;
+}
+
+function LayoutGroupDelay({ commit, observed }: { commit: string; observed: number[] }) {
+  const group = useTooltipGroup();
+
+  useLayoutEffect(() => {
+    if (commit && group) observed.push(group.delay);
+  }, [commit, group, observed]);
+
+  return null;
+}
+
 describe('Tooltip', () => {
+  it('publishes updated callbacks before descendant layout effects invoke the public context API', () => {
+    const firstOnOpenChange = vi.fn();
+    const secondOnOpenChange = vi.fn();
+    const { rerender } = render(
+      <Tooltip.Root onOpenChange={firstOnOpenChange}>
+        <LayoutTooltipOpen open={false} />
+      </Tooltip.Root>
+    );
+
+    rerender(
+      <Tooltip.Root onOpenChange={secondOnOpenChange}>
+        <LayoutTooltipOpen open />
+      </Tooltip.Root>
+    );
+
+    expect(firstOnOpenChange).not.toHaveBeenCalled();
+    expect(secondOnOpenChange).toHaveBeenCalledWith(true, expect.anything());
+  });
+
+  it('publishes provider props before descendant layout effects', () => {
+    const observed: number[] = [];
+    const { rerender } = render(
+      <Tooltip.Provider delay={100}>
+        <LayoutGroupDelay commit="first" observed={observed} />
+      </Tooltip.Provider>
+    );
+
+    rerender(
+      <Tooltip.Provider delay={200}>
+        <LayoutGroupDelay commit="second" observed={observed} />
+      </Tooltip.Provider>
+    );
+
+    expect(observed).toEqual([100, 200]);
+  });
+
   it('exposes the positioned side on every part', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.dataset.testid === 'trigger') return makeDOMRect(100, 10, 40, 20);

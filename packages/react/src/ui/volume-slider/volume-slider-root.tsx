@@ -7,7 +7,7 @@ import { forwardRef, useCallback, useRef, useState } from 'react';
 import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
-import { useLatestRef } from '../../utils/use-latest-ref';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { renderElement } from '../../utils/use-render';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from '../slider/context';
@@ -55,8 +55,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     core.setFormatLocale(locale);
 
     // Keep refs to the latest dynamic values for stable closures.
-    const volumeRef = useLatestRef(volume);
-    const disabledRef = useLatestRef(isDisabled);
+    const volumeRef = useCommittedRef(volume);
+    const disabledRef = useCommittedRef(isDisabled);
 
     const getPercent = () => (volumeRef.current?.volume ?? 0) * 100;
     const getStepPercent = () => core.getStepPercent();

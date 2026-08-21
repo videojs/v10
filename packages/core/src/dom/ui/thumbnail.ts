@@ -22,61 +22,71 @@ export interface ThumbnailApi {
 export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   const { getContainer, getImg, onStateChange } = options;
   const core = new ThumbnailCore();
-  const abort = new AbortController();
-  const signal = abort.signal;
 
   let loading = false;
   let error = false;
   let naturalWidth = 0;
   let naturalHeight = 0;
   let lastSrc = '';
-  let imgBound = false;
+  let connectedSrc = '';
+  let boundImg: HTMLImageElement | null = null;
+  let observedContainer: HTMLElement | null = null;
+  let imgNeedsReconcile = false;
+  let stopListeningImg: (() => void) | null = null;
   let stopObservingResize: (() => void) | null = null;
 
   // --- img event listeners ---
 
-  function onImgLoad() {
-    const img = getImg();
+  function onImgLoad(event: Event) {
+    const img = boundImg;
 
-    if (img) {
-      naturalWidth = img.naturalWidth;
-      naturalHeight = img.naturalHeight;
-    }
+    if (!img || event.currentTarget !== img) return;
+
+    naturalWidth = img.naturalWidth;
+    naturalHeight = img.naturalHeight;
 
     loading = false;
     error = false;
     onStateChange();
   }
 
-  function onImgError() {
+  function onImgError(event: Event) {
+    if (event.currentTarget !== boundImg) return;
+
     loading = false;
     error = true;
     onStateChange();
   }
 
   function bindImg(img: HTMLImageElement): void {
-    listen(img, 'load', onImgLoad, { signal });
-    listen(img, 'error', onImgError, { signal });
+    const stopLoad = listen(img, 'load', onImgLoad);
+    const stopError = listen(img, 'error', onImgError);
+    stopListeningImg = () => {
+      stopLoad();
+      stopError();
+    };
   }
 
   // --- Lazy binding ---
 
   function ensureBindings(): void {
-    if (!imgBound) {
-      const img = getImg();
+    const img = getImg();
 
-      if (img) {
-        bindImg(img);
-        imgBound = true;
-      }
+    if (img !== boundImg) {
+      stopListeningImg?.();
+      stopListeningImg = null;
+      boundImg = img;
+      imgNeedsReconcile = true;
+      if (img) bindImg(img);
     }
 
-    if (!stopObservingResize) {
-      const container = getContainer();
+    const container = getContainer();
 
-      if (container) {
-        stopObservingResize = observeResize(container, onStateChange);
-      }
+    if (container !== observedContainer) {
+      stopObservingResize?.();
+      stopObservingResize = null;
+      observedContainer = container;
+      if (container) stopObservingResize = observeResize(container, onStateChange);
     }
   }
 
@@ -107,29 +117,57 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   function connect(): void {
     ensureBindings();
 
+    const shouldReconcileImg = imgNeedsReconcile || connectedSrc !== lastSrc;
+    imgNeedsReconcile = false;
+    connectedSrc = lastSrc;
+
+    if (!shouldReconcileImg) return;
+
     // Handle the case where the img already loaded or errored before listeners
     // were bound (e.g., cached image in React where mount happens before useEffect).
-    const img = getImg();
+    const img = boundImg;
 
-    if (img?.complete && lastSrc) {
+    if (img && lastSrc) {
+      const previousLoading = loading;
+      const previousError = error;
+      const previousNaturalWidth = naturalWidth;
+      const previousNaturalHeight = naturalHeight;
+
       if (img.naturalWidth > 0) {
         naturalWidth = img.naturalWidth;
         naturalHeight = img.naturalHeight;
         loading = false;
         error = false;
-      } else {
+      } else if (img.complete) {
+        naturalWidth = 0;
+        naturalHeight = 0;
         loading = false;
         error = true;
+      } else {
+        naturalWidth = 0;
+        naturalHeight = 0;
+        loading = true;
+        error = false;
       }
 
-      onStateChange();
+      if (
+        loading !== previousLoading ||
+        error !== previousError ||
+        naturalWidth !== previousNaturalWidth ||
+        naturalHeight !== previousNaturalHeight
+      ) {
+        onStateChange();
+      }
     }
   }
 
   function destroy(): void {
-    abort.abort();
+    stopListeningImg?.();
+    stopListeningImg = null;
+    boundImg = null;
     stopObservingResize?.();
     stopObservingResize = null;
+    observedContainer = null;
   }
 
   return {

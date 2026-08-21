@@ -1,13 +1,14 @@
 import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
-import { logMissingFeature, selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
+import { selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
-import { forwardRef, type ReactNode, useLayoutEffect, useState } from 'react';
+import { forwardRef, type ReactNode, useLayoutEffect } from 'react';
 
 import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useButton } from '../hooks/use-button';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 import { useOptionalTooltipContext } from '../tooltip/context';
 
 const DISPLAY_NAME = 'LiveButton';
@@ -54,8 +55,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     const tooltipCtx = useOptionalTooltipContext();
     const translator = useTranslator();
-    const [core] = useState(() => new LiveButtonCore());
-    core.setProps({ label, disabled });
+    const core = new LiveButtonCore({ label, disabled });
 
     const { getButtonProps, buttonRef } = useButton({
       displayName: DISPLAY_NAME,
@@ -75,8 +75,9 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
       return () => tooltipCtx.setContent(undefined);
     }, [tooltipCtx, labelText]);
 
+    useLogMissingFeature(!media, DISPLAY_NAME, selectLive.displayName ?? 'live');
+
     if (!media || !state) {
-      if (__DEV__) logMissingFeature(DISPLAY_NAME, selectLive.displayName ?? 'live');
       return null;
     }
 

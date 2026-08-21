@@ -1,5 +1,5 @@
 import { TimeCore, TimeDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectTime } from '@videojs/core/dom';
+import { selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { durationSuffixText, elapsedSuffixText, remainingSuffixText } from '@videojs/core/i18n/text/time';
 import { isInteractiveActivation } from '@videojs/utils/dom';
@@ -11,6 +11,7 @@ import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 
 export interface ValueProps extends Omit<UIComponentProps<'time', TimeCore.State>, 'children'>, TimeCore.Props {}
 
@@ -34,8 +35,6 @@ export const Value = forwardRef(function Value(
   const translator = useTranslator();
   const locale = useLocale();
 
-  const [core] = useState(() => new TimeCore());
-
   const defaultType = type ?? TimeCore.defaultProps.type;
   const [activeType, setActiveType] = useState(defaultType);
   // biome-ignore lint/correctness/useExhaustiveDependencies: We want to listen for changes to defaultType and toggle (so we revert to default), this just means one less useEffect.
@@ -43,15 +42,16 @@ export const Value = forwardRef(function Value(
     setActiveType(defaultType);
   }, [defaultType, toggle]);
 
-  core.setProps({
+  const core = new TimeCore({
     type: activeType,
     negativeSign,
     label,
     toggle,
   });
 
+  useLogMissingFeature(!time, 'Time.Value', 'time');
+
   if (!time) {
-    if (__DEV__) logMissingFeature('Time.Value', 'time');
     return null;
   }
 

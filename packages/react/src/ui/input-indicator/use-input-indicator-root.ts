@@ -3,6 +3,7 @@ import type { State as StoreState } from '@videojs/store';
 import { useState, useSyncExternalStore } from 'react';
 
 import { useDestroy } from '../../utils/use-destroy';
+import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { useIndicatorVisibility } from './use-indicator-visibility';
 import { useInputActionSubscription } from './use-input-action-subscription';
 import { type RenderedIndicatorOptions, useRenderedIndicatorState } from './use-rendered-indicator-state';
@@ -22,7 +23,7 @@ export function useInputIndicatorRoot<IndicatorState extends IndicatorLifecycleS
 ) {
   const [core] = useState(createCore);
   useDestroy(core);
-  core.setProps(props);
+  useIsomorphicLayoutEffect(() => core.setProps(props), [core, props]);
   const showIndicator = useIndicatorVisibility(() => core.close());
 
   useInputActionSubscription((event, snapshot) => {

@@ -2,7 +2,7 @@ import { createHotkey } from '@videojs/core/dom';
 import { useEffect } from 'react';
 
 import { useContainer } from '../../player/context';
-import { useLatestRef } from '../../utils/use-latest-ref';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 
 export interface UseHotkeyOptions {
   keys: string;
@@ -15,8 +15,9 @@ export interface UseHotkeyOptions {
 export function useHotkey(options: UseHotkeyOptions): void {
   const { keys, target = 'player', repeatable = true, disabled = false } = options;
   const container = useContainer();
-  const onActivateRef = useLatestRef(options.onActivate);
+  const onActivateRef = useCommittedRef(options.onActivate);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the retained listener reads the commit-published callback without rebinding
   useEffect(() => {
     if (!container || !keys || disabled) return;
 

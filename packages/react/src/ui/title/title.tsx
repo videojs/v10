@@ -1,13 +1,16 @@
 'use client';
 
 import { TitleCore, TitleDataAttrs } from '@videojs/core';
-import { logMissingFeature, selectMetadata } from '@videojs/core/dom';
+import { selectMetadata } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
+
+const titleCore = new TitleCore();
 
 export interface TitleProps extends Omit<UIComponentProps<'span', TitleCore.State>, 'children'> {}
 
@@ -34,14 +37,13 @@ export const Title = forwardRef(function Title(
 
   const metadata = usePlayer(selectMetadata);
 
-  const [core] = useState(() => new TitleCore());
+  useLogMissingFeature(!metadata, 'Title', 'metadata');
 
   if (!metadata) {
-    if (__DEV__) logMissingFeature('Title', 'metadata');
     return null;
   }
 
-  const state = core.getState(metadata);
+  const state = titleCore.getState(metadata);
 
   if (state.hidden) return null;
 

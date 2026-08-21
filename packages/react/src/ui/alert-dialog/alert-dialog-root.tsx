@@ -4,8 +4,8 @@ import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useLayoutEffect, useRef, useState } from 'react';
 
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
-import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { AlertDialogContextProvider } from './context';
 
@@ -24,13 +24,11 @@ export function AlertDialogRoot({
   onOpenChangeComplete: onOpenChangeCompleteProp,
   children,
 }: AlertDialogRootProps): ReactNode {
-  const [core] = useState(() => new AlertDialogCore());
-
   const isControlled = controlledOpen !== undefined;
   const initialOpenRef = useRef(!isControlled && defaultOpen);
 
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
+  const onOpenChangeRef = useCommittedRef(onOpenChangeProp);
+  const onOpenChangeCompleteRef = useCommittedRef(onOpenChangeCompleteProp);
 
   const [dialog] = useState(() => {
     const instance = createAlertDialog({
@@ -48,9 +46,6 @@ export function AlertDialogRoot({
 
   const titleId = useSafeId('alert-dialog-title');
   const descriptionId = useSafeId('alert-dialog-desc');
-
-  core.setTitleId(titleId);
-  core.setDescriptionId(descriptionId);
 
   // Commit the initial uncontrolled default or the current controlled value.
   // Keeping this out of the initializer prevents server/abandoned renders from
@@ -76,7 +71,10 @@ export function AlertDialogRoot({
   useDestroy(dialog);
 
   const input = useSnapshot(dialog.input);
+  const core = new AlertDialogCore();
   core.setInput(input);
+  core.setTitleId(titleId);
+  core.setDescriptionId(descriptionId);
   const state = core.getState();
 
   return (

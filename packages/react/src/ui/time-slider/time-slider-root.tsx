@@ -7,7 +7,7 @@ import { forwardRef, useEffect, useState } from 'react';
 import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
-import { useLatestRef } from '../../utils/use-latest-ref';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { renderElement } from '../../utils/use-render';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from '../slider/context';
@@ -58,11 +58,12 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     core.setFormatLocale(locale);
 
     // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
-    const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);
-    const playbackRef = useLatestRef(playback);
+    const mediaRef = useCommittedRef(time && buffer ? { ...time, ...buffer } : null);
+    const playbackRef = useCommittedRef(playback);
 
     // Resume playback if the slider unmounts mid-drag — createSlider's destroy()
     // does not fire onDragEnd, so without this the player would stay paused.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: cleanup reads commit-published playback without reinstalling the effect
     useEffect(() => {
       return () => core.endDrag(playbackRef.current);
     }, [core]);

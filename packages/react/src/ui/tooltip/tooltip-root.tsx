@@ -11,8 +11,8 @@ import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useOptionalContainer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
-import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
@@ -45,24 +45,22 @@ export function TooltipRoot({
   const container = useOptionalContainer();
   const popupGroup = useOptionalPopupGroup();
   const controls = useOptionalControlsContext();
-  const [core] = useState(() => new TooltipCore(coreProps));
-  core.setProps(coreProps);
 
   const isControlled = !isUndefined(controlledOpen);
   const initialOpenRef = useRef(!isControlled && defaultOpen);
 
   const groupFromContext = useTooltipGroup();
 
-  // Keep refs that always point to the latest values so the
-  // createTooltip closure never reads stale props.
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
-  const delayRef = useLatestRef(delay);
-  const closeDelayRef = useLatestRef(closeDelay);
-  const disableHoverablePopupRef = useLatestRef(disableHoverablePopup);
-  const disabledRef = useLatestRef(disabled);
-  const groupRef = useLatestRef(groupFromContext);
-  const popupGroupRef = useLatestRef(popupGroup);
+  // Publish committed values before layout work so the retained tooltip never
+  // reads abandoned or stale props.
+  const onOpenChangeRef = useCommittedRef(onOpenChangeProp);
+  const onOpenChangeCompleteRef = useCommittedRef(onOpenChangeCompleteProp);
+  const delayRef = useCommittedRef(delay);
+  const closeDelayRef = useCommittedRef(closeDelay);
+  const disableHoverablePopupRef = useCommittedRef(disableHoverablePopup);
+  const disabledRef = useCommittedRef(disabled);
+  const groupRef = useCommittedRef(groupFromContext);
+  const popupGroupRef = useCommittedRef(popupGroup);
 
   const [tooltip] = useState(() => {
     const instance = createTooltip({
@@ -118,6 +116,7 @@ export function TooltipRoot({
   useDestroy(tooltip);
 
   const input = useSnapshot(tooltip.input);
+  const core = new TooltipCore(coreProps);
   core.setInput(input);
   const { state, preferredSide, setPositionedSide } = usePositionedState(core.getState());
 

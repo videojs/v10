@@ -14,7 +14,10 @@ import { forwardRef, useMemo, useRef, useState } from 'react';
 import { useOptionalPlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
+import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { renderElement } from '../../utils/use-render';
+
+const thumbnailCore = new ThumbnailCore();
 
 export interface ThumbnailProps extends UIComponentProps<'div', ThumbnailCore.State>, ThumbnailCore.Props {
   /** Pre-parsed thumbnail images — bypasses the automatic `<track>` detection. */
@@ -55,9 +58,9 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
     ...elementProps
   } = componentProps;
 
-  const [core] = useState(() => new ThumbnailCore());
   const divRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const committedSrcRef = useRef('');
   const textTrack = useOptionalPlayer(selectTextTrack);
 
   // Force re-render when the handle's state changes (img load/error, resize).
@@ -71,7 +74,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
     })
   );
 
-  useDestroy(handle, () => handle.connect());
+  useDestroy(handle);
 
   // Resolve thumbnails: external prop takes priority over auto <track> path.
   const thumbnails = useMemo(() => {
@@ -81,14 +84,25 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
       : [];
   }, [externalThumbnails, textTrack]);
 
-  const thumbnail = useMemo(() => core.findActiveThumbnail(thumbnails, time), [core, thumbnails, time]);
+  const thumbnail = useMemo(() => thumbnailCore.findActiveThumbnail(thumbnails, time), [thumbnails, time]);
 
   const resolvedCrossOrigin = resolveCrossOrigin(crossOrigin, externalThumbnails, textTrack?.thumbnailTrackCrossOrigin);
+  const src = thumbnail?.url;
+  const srcPendingCommit = (src ?? '') !== committedSrcRef.current;
 
-  // Track src changes via the handle.
-  handle.updateSrc(thumbnail?.url);
+  useIsomorphicLayoutEffect(() => {
+    handle.updateSrc(src);
+    committedSrcRef.current = src ?? '';
+    handle.connect();
+  });
 
-  const state = core.getState(handle.loading, handle.error, thumbnail);
+  // Project a requested source immediately, while the retained handle publishes
+  // its listener/observer bindings only if this render commits.
+  const state = thumbnailCore.getState(
+    srcPendingCommit ? Boolean(src) : handle.loading,
+    srcPendingCommit ? false : handle.error,
+    thumbnail
+  );
 
   // Compute styles declaratively from resize result.
   let containerStyle: CSSProperties = { overflow: 'hidden' };
@@ -96,7 +110,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
 
   if (thumbnail && handle.naturalWidth && handle.naturalHeight) {
     const constraints = handle.readConstraints();
-    const result = core.resize(thumbnail, handle.naturalWidth, handle.naturalHeight, constraints);
+    const result = thumbnailCore.resize(thumbnail, handle.naturalWidth, handle.naturalHeight, constraints);
 
     if (result) {
       containerStyle = {
@@ -122,7 +136,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
       stateAttrMap: ThumbnailDataAttrs,
       ref: [forwardedRef, divRef],
       props: [
-        core.getAttrs(state),
+        thumbnailCore.getAttrs(state),
         { style: containerStyle },
         elementProps,
         {
@@ -132,7 +146,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
               alt=""
               aria-hidden="true"
               decoding="async"
-              src={thumbnail?.url}
+              src={src}
               crossOrigin={resolvedCrossOrigin}
               loading={loading}
               style={imgStyle}

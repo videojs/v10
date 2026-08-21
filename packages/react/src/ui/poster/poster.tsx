@@ -1,11 +1,13 @@
 import { PosterCore, PosterDataAttrs, type PosterImageLoadState } from '@videojs/core';
-import { logMissingFeature, selectMetadata, selectPlayback } from '@videojs/core/dom';
+import { selectMetadata, selectPlayback } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
+import { useIsomorphicLayoutEffect } from '../../utils/use-isomorphic-layout-effect';
 import { renderElement } from '../../utils/use-render';
+import { useLogMissingFeature } from '../hooks/use-log-missing-feature';
 
 export interface PosterProps extends UIComponentProps<'img', PosterCore.State> {}
 
@@ -50,7 +52,7 @@ export const Poster = forwardRef(function Poster(
   const playback = usePlayer(selectPlayback);
   const metadata = usePlayer(selectMetadata);
 
-  const [core] = useState(() => new PosterCore());
+  const core = new PosterCore();
 
   // The metadata feature is optional: without it nothing resolves a URL, and
   // this stays a visibility wrapper around whatever `src` was passed.
@@ -81,8 +83,15 @@ export const Poster = forwardRef(function Poster(
   // second A is a new request. `srcSet` is part of the identity because `src`
   // stays empty when it is the only source.
   const matchesRequest = request.src === src && request.srcSet === authoredSrcSet;
-  if (!matchesRequest) setRequest({ src, srcSet: authoredSrcSet, state: initialLoadState });
   const loadState = matchesRequest ? request.state : initialLoadState;
+
+  useIsomorphicLayoutEffect(() => {
+    setRequest((current) =>
+      current.src === src && current.srcSet === authoredSrcSet
+        ? current
+        : { src, srcSet: authoredSrcSet, state: initialLoadState }
+    );
+  }, [src, authoredSrcSet, initialLoadState]);
 
   if (playback) core.setImageLoadState(loadState);
 
@@ -120,8 +129,9 @@ export const Poster = forwardRef(function Poster(
     [src, authoredSrcSet]
   );
 
+  useLogMissingFeature(!playback, 'Poster', 'playback');
+
   if (!playback || !state) {
-    if (__DEV__) logMissingFeature('Poster', 'playback');
     return null;
   }
 

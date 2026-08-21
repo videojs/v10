@@ -11,8 +11,8 @@ import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useOptionalContainer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
+import { useCommittedRef } from '../../utils/use-committed-ref';
 import { useDestroy } from '../../utils/use-destroy';
-import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
@@ -43,22 +43,20 @@ export function PopoverRoot({
   const container = useOptionalContainer();
   const popupGroup = useOptionalPopupGroup();
   const controls = useOptionalControlsContext();
-  const [core] = useState(() => new PopoverCore(coreProps));
-  core.setProps(coreProps);
 
   const isControlled = !isUndefined(controlledOpen);
   const initialOpenRef = useRef(!isControlled && defaultOpen);
 
-  // Keep refs that always point to the latest values so the
-  // createPopover closure never reads stale props.
-  const onOpenChangeRef = useLatestRef(onOpenChangeProp);
-  const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
-  const closeOnEscapeRef = useLatestRef(coreProps.closeOnEscape);
-  const closeOnOutsideClickRef = useLatestRef(coreProps.closeOnOutsideClick);
-  const openOnHoverRef = useLatestRef(openOnHover);
-  const delayRef = useLatestRef(delay);
-  const closeDelayRef = useLatestRef(closeDelay);
-  const popupGroupRef = useLatestRef(popupGroup);
+  // Publish committed values before layout work so the retained popover never
+  // reads abandoned or stale props.
+  const onOpenChangeRef = useCommittedRef(onOpenChangeProp);
+  const onOpenChangeCompleteRef = useCommittedRef(onOpenChangeCompleteProp);
+  const closeOnEscapeRef = useCommittedRef(coreProps.closeOnEscape);
+  const closeOnOutsideClickRef = useCommittedRef(coreProps.closeOnOutsideClick);
+  const openOnHoverRef = useCommittedRef(openOnHover);
+  const delayRef = useCommittedRef(delay);
+  const closeDelayRef = useCommittedRef(closeDelay);
+  const popupGroupRef = useCommittedRef(popupGroup);
 
   const [popover] = useState(() => {
     const instance = createPopover({
@@ -112,6 +110,7 @@ export function PopoverRoot({
   useDestroy(popover);
 
   const input = useSnapshot(popover.input);
+  const core = new PopoverCore(coreProps);
   core.setInput(input);
   const { state, preferredSide, setPositionedSide } = usePositionedState(core.getState());
 
