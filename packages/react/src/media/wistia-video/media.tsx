@@ -1,27 +1,21 @@
 'use client';
 
-import type { WistiaMediaProps, WistiaSource } from '@videojs/media/dom/wistia';
+import type { WistiaMediaProps, WistiaPlayer, WistiaSource } from '@videojs/media/dom/wistia';
+// Importing this entry is what registers `<wistia-player>`: it is where `@wistia/wistia-player` is imported,
+// so the tag this renders cannot outrun the definition that makes it a player.
 import {
   normalizeWistiaPlayer,
   parseWistiaMediaId,
   parseWistiaStartTime,
   WISTIA_PLAYER_TAG,
-  wistiaControlProps,
-  wistiaPlayerDefaultOptions,
+  wistiaAttributes,
+  wistiaMediaOptions,
   wistiaPlayerStyle,
 } from '@videojs/media/dom/wistia';
-// Keep this above `@wistia/wistia-player`: the package reads browser globals while it evaluates, and this
-// is what a server runtime lends it. See `server-shim.ts`.
-import { restoreWistiaGlobals } from '@videojs/media/dom/wistia/server-shim';
-import { kebabCase } from '@videojs/utils/string';
-import '@wistia/wistia-player';
-import type { WistiaPlayer } from '@wistia/wistia-player';
 import type { ForwardRefExoticComponent, HTMLAttributes, RefAttributes, RefCallback } from 'react';
 import { createElement, forwardRef, useCallback, useState } from 'react';
 import { useMediaAttach } from '../../player/context';
 import { useComposedRefs } from '../../utils/use-composed-refs';
-
-restoreWistiaGlobals();
 
 export interface WistiaVideoProps extends Partial<Omit<WistiaMediaProps, 'source'>>, HTMLAttributes<WistiaPlayer> {
   /** Wistia's own options, `mediaId` among them: everything the player understands that a media does not. */
@@ -30,7 +24,7 @@ export interface WistiaVideoProps extends Partial<Omit<WistiaMediaProps, 'source
 
 /**
  * Wistia is the one media here that ships a web component of its own, so this renders that component rather
- * than a player of its own making. Importing `@wistia/wistia-player` is what registers it — statically, so
+ * than a player of its own making. `@videojs/media/dom/wistia` is what registers it — statically, so
  * the element React hands this component's ref is already upgraded and already a Wistia player. Wistia's own
  * React wrapper defines it from an effect instead, which is a tick too late: the store reads a media once,
  * as it attaches, and a bare `HTMLElement` is a media that cannot seek, buffer, or name a source.
@@ -88,8 +82,6 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
   // A `wtime` in the URL is the one thing the id does not carry over, and it is a start position rather
   // than a live playhead, so it is read once from the source this component opened with.
   const [startTime] = useState(() => (src ? parseWistiaStartTime(src) : null));
-  // An empty `preload` is what a bare `preload` attribute means; Wistia accepts only the three words.
-  const resolvedPreload = preload === undefined ? undefined : preload || 'metadata';
   // The muted state the player *starts* in. Sent on every render it would fight the viewer: unmuting through
   // the skin drives the element, and the next parent render would put the mute straight back.
   const [initialMuted] = useState(() => defaultMuted ?? muted);
@@ -104,14 +96,9 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
     key: resolved,
     ...wistiaAttributes({
       mediaId: resolved ?? '',
-      ...wistiaPlayerDefaultOptions,
-      autoplay,
-      ...(loop !== undefined && { endVideoBehavior: loop ? 'loop' : 'default' }),
+      ...wistiaMediaOptions({ autoplay, controls, loop, poster, preload }),
       muted: initialMuted,
       currentTime: startTime,
-      poster,
-      preload: resolvedPreload,
-      ...wistiaControlProps(controls),
       // Wistia's own options last, so a source reaches anything the props above do not name.
       ...options,
     }),
@@ -121,32 +108,6 @@ export const WistiaVideo: ForwardRefExoticComponent<WistiaVideoProps & RefAttrib
     children,
   });
 });
-
-/**
- * Wistia's options, written the way its element observes them: kebab-cased, and every value a string.
- *
- * Attributes rather than properties, because they are what `<wistia-player>` watches and what it can read
- * before anything has had a chance to run — a player configures itself as it connects, so an option applied
- * from an effect afterwards is an option applied too late. React would otherwise decide between the two
- * itself, by asking whether the camel-cased name is a property of the element, and answer an option Wistia
- * keeps off the prototype with a lowercased attribute name the element is not watching.
- *
- * Booleans are spelled out for the same reason React cannot be left to it: `false` would have React drop the
- * attribute, and a dropped attribute is Wistia's default rather than the `false` that was asked for — which
- * is the difference between a chromeless player and one wearing two sets of controls. Anything that is not a
- * string, number, or boolean has no attribute spelling at all and is left out; `playerColorGradient` is the
- * one documented option that falls in that gap, and Wistia's own React wrapper drops it too.
- */
-function wistiaAttributes(options: Record<string, unknown>): Record<string, string> {
-  const attributes: Record<string, string> = {};
-
-  for (const [key, value] of Object.entries(options)) {
-    if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') continue;
-    attributes[kebabCase(key)] = String(value);
-  }
-
-  return attributes;
-}
 
 export namespace WistiaVideo {
   export type Props = WistiaVideoProps;

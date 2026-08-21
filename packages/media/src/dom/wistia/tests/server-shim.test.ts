@@ -22,7 +22,7 @@ describe('restoreWistiaGlobals', () => {
     expect(SHIMMED.filter((name) => name in globalThis)).toEqual([]);
   });
 
-  it('leaves a global it did not install alone, however many importers call it', () => {
+  it('leaves a global it did not install alone, however often it is called', () => {
     (globalThis as Record<string, unknown>).window = globalThis;
 
     try {

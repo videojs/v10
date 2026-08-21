@@ -1,6 +1,6 @@
 import { VideoCSSVars } from '../custom-media-element';
 
-/** Tag name Wistia's package registers its player element under. */
+/** The tag Wistia's package registers its player element under. */
 export const WISTIA_PLAYER_TAG = 'wistia-player';
 
 /**

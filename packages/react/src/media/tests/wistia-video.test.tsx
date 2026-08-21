@@ -2,11 +2,16 @@ import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { WistiaVideo } from '../wistia-video';
 
-// The real package is the player: importing it reaches for Wistia's CDN and runs an embed. Stubbed down to
-// an element that registers under the same tag, which is all this component asks of it — it renders
+// The real package is the player: connecting one reaches for Wistia's CDN and runs an embed. Stubbed down
+// to an element that registers under the same tag, which is all this component asks of it — it renders
 // `<wistia-player>` and writes attributes, and none of that needs a player behind it.
+//
+// `@videojs/media` is what depends on the package; this one names it only so this line can resolve, which
+// is why it is a devDependency here and nothing imports it outside these tests.
 vi.mock('@wistia/wistia-player', () => {
-  class WistiaPlayer extends HTMLElement {}
+  class WistiaPlayer extends HTMLElement {
+    static observedAttributes: string[] = [];
+  }
   customElements.define('wistia-player', WistiaPlayer);
   return { WistiaPlayer };
 });

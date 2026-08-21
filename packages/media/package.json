@@ -18,7 +18,9 @@
     "dist"
   ],
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/*/dom/wistia/*.js"
+  ],
   "main": "dist/default/index.js",
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
@@ -65,6 +67,7 @@
   "dependencies": {
     "@videojs/utils": "workspace:*",
     "@vimeo/player": "^2.30.3",
+    "@wistia/wistia-player": "^0.7.12",
     "dashjs": "^5.2.0",
     "hls.js": "^1.6.7",
     "mux-embed": "^5.17.10",
