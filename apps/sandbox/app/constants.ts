@@ -23,12 +23,14 @@ export const PRESETS = [
   'spotify-audio',
   'tiktok-video',
   'twitch-video',
+  'gif-video',
 ] as const;
 
 /**
  * Presets that hand playback to a third-party embed. They render one fixed
  * source rather than the source picker's list, and have no Tailwind skin
- * variant, so the navbar disables both controls for them.
+ * variant, so the navbar disables both controls for them. `gif-video` is not
+ * an embed but shares both constraints: it plays one fixed GIF source.
  */
 export const EMBED_PRESETS = [
   'vimeo-video',
@@ -37,4 +39,5 @@ export const EMBED_PRESETS = [
   'spotify-audio',
   'tiktok-video',
   'twitch-video',
+  'gif-video',
 ] as const;

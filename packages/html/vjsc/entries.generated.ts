@@ -143,6 +143,14 @@ export const Gesture = {
   },
 } as const;
 
+export const GifVideo = {
+  tagName: 'gif-video',
+  import: {
+    from: '@videojs/html/media/gif-video',
+    sideEffect: true,
+  },
+} as const;
+
 export const HlsAudio = {
   tagName: 'hls-audio',
   import: {
@@ -666,6 +674,7 @@ export const entries = {
   ErrorDialog,
   FullscreenButton,
   Gesture,
+  GifVideo,
   HlsAudio,
   HlsBackgroundVideo,
   HlsJsVideo,

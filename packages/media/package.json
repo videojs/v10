@@ -56,6 +56,7 @@
     "@videojs/utils": "workspace:*",
     "@vimeo/player": "^2.30.3",
     "dashjs": "^5.2.0",
+    "gifuct-js": "^2.1.2",
     "hls.js": "^1.6.7",
     "mux-embed": "^5.17.10",
     "shaka-player": "^5.2.4"

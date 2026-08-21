@@ -385,6 +385,10 @@ export function withMuxMaxResolution(url: string, maxResolution: string): string
 
 export const VIMEO_VIDEO_SRC = 'https://vimeo.com/76979871';
 
+// Served with permissive CORS headers, which GifMedia needs because it fetches
+// the file to decode frames rather than rendering it through an `<img>`.
+export const GIF_VIDEO_SRC = 'https://image.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA/animated.gif';
+
 export const YOUTUBE_VIDEO_SRC = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
 
 export const CLOUDFLARE_VIDEO_SRC = 'https://watch.videodelivery.net/bfbd585059e33391d67b0f1d15fe6ea4';
