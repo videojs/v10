@@ -1,6 +1,7 @@
 import type coreSchema from '@videojs/core/vjsc';
 import { type ComponentTarget, defineComponentTarget, type TemplateTargetDefinition } from 'vjsc/target';
 import { Host, jsx } from 'vjsc/target/jsx-runtime';
+import { reactComponentTransform } from './react-transform';
 
 type CoreSchema = typeof coreSchema;
 
@@ -99,6 +100,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
         VjscNode: { from: 'react', name: 'ReactNode' },
         VjscElement: { from: 'react', name: 'ReactElement' },
       },
+      transforms: [reactComponentTransform],
       jsx: { importSource: 'react', attributes: 'react' },
     };
   }

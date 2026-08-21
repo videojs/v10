@@ -29,10 +29,21 @@ describe('Skins Shadcn registry', () => {
     const minimalVideo = assetJson<BuiltItem>(assets, 'minimal-video.json');
     const container = assetJson<BuiltItem>(assets, 'container.json');
     const poster = assetJson<BuiltItem>(assets, 'poster.json');
+    const videoSettingsMenu = assetJson<BuiltItem>(assets, 'video-settings-menu.json');
+    const volumePopover = assetJson<BuiltItem>(assets, 'volume-popover.json');
     const styles = assetJson<BuiltItem>(assets, 'styles.json');
     const utils = assetJson<BuiltItem>(assets, 'utils.json');
     const playSource = playButton.files.find((file) => file.target?.endsWith('/play-button.tsx'))?.content;
     const posterSource = poster.files.find((file) => file.target?.endsWith('/poster.tsx'))?.content;
+    const qualityMenuSource = videoSettingsMenu.files.find((file) =>
+      file.target?.endsWith('/quality-menu.tsx')
+    )?.content;
+    const videoSettingsMenuSource = videoSettingsMenu.files.find((file) =>
+      file.target?.endsWith('/video-settings-menu.tsx')
+    )?.content;
+    const volumePopoverSource = volumePopover.files.find((file) =>
+      file.target?.endsWith('/volume-popover.tsx')
+    )?.content;
 
     expect(registry.items).toHaveLength(52);
     expect(registry.items.map((item: { name: string }) => item.name)).toEqual(
@@ -63,6 +74,13 @@ describe('Skins Shadcn registry', () => {
     expect(container.registryDependencies).toEqual(['@videojs/styles', '@videojs/utils']);
     expect(posterSource).toContain('<PosterPrimitive render={children}');
     expect(posterSource).not.toContain('@videojs/core/vjsc');
+    expect(qualityMenuSource).toContain('useQualityOptions');
+    expect(qualityMenuSource).toContain(`quality?.selectedLabel`);
+    expect(qualityMenuSource).toContain('available &&');
+    expect(videoSettingsMenuSource).toContain('const hasSettings =');
+    expect(videoSettingsMenuSource).toContain('hasSettings &&');
+    expect(volumePopoverSource).toContain('usePlayer');
+    expect(volumePopoverSource).toContain(`volumeAvailability === 'available' ?`);
     expect(styles.files.map((file) => file.target)).toEqual([
       'components/videojs/styles/base.css',
       'components/videojs/styles/captions.css',

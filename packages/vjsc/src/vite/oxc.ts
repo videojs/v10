@@ -26,11 +26,6 @@ type RolldownTransformHandler = (
 export type VitePlugin = Plugin & { readonly enforce?: 'pre' | 'post' | undefined };
 export type ViteOxcPlugin = VitePlugin & { readonly enforce: 'pre' };
 
-/** Adapt every plugin produced by a factory to Vite's Oxc transform contract. */
-export function withOxc<Args extends unknown[]>(createPlugin: (...args: Args) => Plugin) {
-  return (...args: Args): ViteOxcPlugin => viteOxcPlugin(createPlugin(...args));
-}
-
 /** Adapt a transform that consumes Rolldown's AST metadata to Vite's transform contract. */
 export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
   const transform = plugin.transform;

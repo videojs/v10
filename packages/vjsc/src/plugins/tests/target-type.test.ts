@@ -3,13 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
-import {
-  componentSourcePlugin,
-  componentTargetPlugin,
-  readComponentSource,
-  targetImportCleanupPlugin,
-  targetTypePlugin,
-} from '..';
+import { readComponentSource } from '../component-meta';
+import { componentSourcePlugin } from '../component-source';
+import { componentTargetPlugin } from '../component-target';
+import { targetImportCleanupPlugin } from '../target-import-cleanup';
+import { targetTypePlugin } from '../target-type';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const schema = defineSchema('@fixture/components', {

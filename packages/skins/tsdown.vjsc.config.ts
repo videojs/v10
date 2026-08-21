@@ -1,27 +1,11 @@
 import { basename, resolve } from 'node:path';
 
 import { defineConfig } from 'tsdown';
-import {
-  componentMetaPlugin,
-  componentModulesPlugin,
-  componentSourcePlugin,
-  componentTargetPlugin,
-  primitiveTargetPlugin,
-  reactTargetPropsPlugin,
-  shadcnPlugin,
-  stylePlugin,
-  targetImportCleanupPlugin,
-  targetJsxPlugin,
-  targetTypePlugin,
-  templateTargetPlugin,
-} from 'vjsc/plugins';
+import { shadcnPlugin, vjscPlugin } from 'vjsc/plugins';
 import type { ShadcnItem } from 'vjsc/shadcn';
 
+import { configureSkinModule } from './vjsc/config';
 import { type SkinModuleMeta, skinStyles } from './vjsc/meta';
-import { resolveStyleOptions } from './vjsc/style';
-import { resolveComponentTargets } from './vjsc/target';
-import { createReactBehaviorPlugins } from './vjsc/target/react-behavior';
-import { isSkinModule } from './vjsc/transform';
 
 const packageDir = import.meta.dirname;
 const vjscDir = resolve(packageDir, 'vjsc');
@@ -57,34 +41,7 @@ export default defineConfig({
     onlyBundle: false,
   },
   plugins: [
-    componentModulesPlugin({
-      ignore: ({ parameters }) => !isSkinModule(parameters),
-    }),
-    componentMetaPlugin(),
-    targetJsxPlugin({
-      targets: ({ parameters }) => resolveComponentTargets(parameters),
-    }),
-    stylePlugin(({ parameters }) => resolveStyleOptions(parameters)),
-    ...createReactBehaviorPlugins(),
-    targetTypePlugin({
-      targets: ({ parameters }) => resolveComponentTargets(parameters),
-    }),
-    primitiveTargetPlugin({
-      targets: ({ parameters }) => resolveComponentTargets(parameters),
-    }),
-    componentTargetPlugin({
-      targets: ({ parameters }) => resolveComponentTargets(parameters),
-    }),
-    reactTargetPropsPlugin({
-      targets: ({ parameters }) => resolveComponentTargets(parameters),
-    }),
-    templateTargetPlugin({
-      targets: ({ parameters }) => resolveComponentTargets(parameters),
-    }),
-    targetImportCleanupPlugin({
-      targets: ({ parameters }) => resolveComponentTargets(parameters),
-    }),
-    componentSourcePlugin(),
+    vjscPlugin({ configure: configureSkinModule }),
     shadcnPlugin<SkinModuleMeta>({
       root: vjscDir,
       include: ['./components/**/*.{ts,tsx}', './skins/*/skin.{ts,tsx}', './utils.ts'],

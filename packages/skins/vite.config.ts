@@ -3,24 +3,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { iconElementPlugin } from '@videojs/icons/rolldown';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
-import {
-  componentMetaPlugin,
-  componentModulesPlugin,
-  componentTargetPlugin,
-  htmlRuntimePlugin,
-  primitiveTargetPlugin,
-  reactTargetPropsPlugin,
-  stylePlugin,
-  targetImportCleanupPlugin,
-  targetJsxPlugin,
-  targetTypePlugin,
-  templateTargetPlugin,
-  viteOxcPlugin,
-} from 'vjsc/vite';
-import { resolveStyleOptions } from './vjsc/style';
-import { resolveComponentTargets } from './vjsc/target';
-import { createReactBehaviorPlugins } from './vjsc/target/react-behavior';
-import { isSkinModule } from './vjsc/transform';
+import { vjscPlugin } from 'vjsc/vite';
+import { configureSkinModule } from './vjsc/config';
 
 const packageDir = import.meta.dirname;
 const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
@@ -37,34 +21,7 @@ function createPreviewConfig() {
     },
     plugins: [
       iconElementPlugin(),
-      htmlRuntimePlugin(),
-      componentModulesPlugin({
-        ignore: ({ parameters }) => !isSkinModule(parameters),
-      }),
-      componentMetaPlugin(),
-      targetJsxPlugin({
-        targets: ({ parameters }) => resolveComponentTargets(parameters),
-      }),
-      stylePlugin(({ parameters }) => resolveStyleOptions(parameters)),
-      ...createReactBehaviorPlugins().map(viteOxcPlugin),
-      targetTypePlugin({
-        targets: ({ parameters }) => resolveComponentTargets(parameters),
-      }),
-      primitiveTargetPlugin({
-        targets: ({ parameters }) => resolveComponentTargets(parameters),
-      }),
-      componentTargetPlugin({
-        targets: ({ parameters }) => resolveComponentTargets(parameters),
-      }),
-      reactTargetPropsPlugin({
-        targets: ({ parameters }) => resolveComponentTargets(parameters),
-      }),
-      templateTargetPlugin({
-        targets: ({ parameters }) => resolveComponentTargets(parameters),
-      }),
-      targetImportCleanupPlugin({
-        targets: ({ parameters }) => resolveComponentTargets(parameters),
-      }),
+      vjscPlugin({ configure: configureSkinModule }),
       tailwindcss(),
       react({ jsxImportSource: 'react' }),
     ],

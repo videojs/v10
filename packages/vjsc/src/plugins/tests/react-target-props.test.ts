@@ -3,7 +3,9 @@ import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vitest';
 
 import type { ComponentTarget } from '../../target/definition';
-import { componentSourcePlugin, reactTargetPropsPlugin, readComponentSource } from '..';
+import { readComponentSource } from '../component-meta';
+import { componentSourcePlugin } from '../component-source';
+import { reactTargetPropsPlugin } from '../react-target-props';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 const reactTarget = {
@@ -12,6 +14,7 @@ const reactTarget = {
   components: {},
   primitives: {},
   types: {},
+  transforms: [],
   jsx: { importSource: 'react', attributes: 'react' },
 } satisfies ComponentTarget;
 

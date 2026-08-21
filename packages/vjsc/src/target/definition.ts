@@ -1,3 +1,5 @@
+import type { Program } from '@oxc-project/types';
+import type { RolldownMagicString } from 'rolldown';
 import type {
   ComponentDefinition,
   ComponentRecord,
@@ -232,12 +234,25 @@ export interface ComponentTargetTypes {
   readonly [sourceType: string]: TargetImport | undefined;
 }
 
+export interface ComponentTargetTransformContext {
+  readonly code: string;
+  readonly id: string;
+  readonly ast: Program;
+  readonly magicString: RolldownMagicString;
+}
+
+export interface ComponentTargetTransform {
+  readonly name: string;
+  transform(context: ComponentTargetTransformContext): boolean;
+}
+
 export interface ComponentTargetDefinition<Schema extends ComponentSchema> {
   readonly source: Schema['source'];
   readonly resolve: ComponentTargetResolver<Schema>;
   readonly components?: ComponentTargetRules<NoInfer<Schema['definitions']>> | undefined;
   readonly primitives?: ComponentTargetPrimitives | undefined;
   readonly types?: ComponentTargetTypes | undefined;
+  readonly transforms?: readonly ComponentTargetTransform[] | undefined;
   readonly jsx: ComponentTargetJsx;
 }
 
@@ -247,6 +262,7 @@ export interface ComponentTarget<Schema extends ComponentSchema = ComponentSchem
   readonly components: ComponentTargetRules<Schema['definitions']>;
   readonly primitives: ComponentTargetPrimitives;
   readonly types: ComponentTargetTypes;
+  readonly transforms: readonly ComponentTargetTransform[];
   readonly jsx: ComponentTargetJsx;
 }
 
@@ -286,6 +302,7 @@ export function defineComponentTarget<const Schema extends ComponentSchema>(): (
       components: definition.components ?? {},
       primitives: definition.primitives ?? {},
       types: definition.types ?? {},
+      transforms: definition.transforms ?? [],
       jsx: definition.jsx,
     };
   };

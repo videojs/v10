@@ -7,7 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { compileStyles } from '../../styles/compile';
 import { loadDesignSystem } from '../../styles/design-system';
 import type { StyleManifest, StyleManifestRule } from '../../styles/manifest';
-import { componentSourcePlugin, readComponentSource, type StylePluginConfig, stylePlugin } from '..';
+import { readComponentSource } from '../component-meta';
+import { componentSourcePlugin } from '../component-source';
+import { type StylePluginConfig, stylePlugin } from '../style';
 
 const filename = resolve(import.meta.dirname, 'component.tsx');
 const modulePath = resolve(import.meta.dirname, 'fixtures/button.styles.ts');

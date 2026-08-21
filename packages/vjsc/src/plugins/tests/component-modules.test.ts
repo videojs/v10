@@ -7,7 +7,7 @@ import { rolldown } from 'rolldown';
 import { describe, expect, it } from 'vitest';
 
 import { moduleFilename } from '../../utils/module-id';
-import { componentModulesPlugin } from '..';
+import { componentModulesPlugin } from '../component-modules';
 
 describe('componentModulesPlugin', () => {
   it('propagates the full transform query through relative source dependencies', async () => {

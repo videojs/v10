@@ -1,7 +1,8 @@
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
 import { describe, expect, it } from 'vitest';
 
-import { componentMetaPlugin, componentSourcePlugin, readComponentMeta, readComponentSource } from '..';
+import { componentMetaPlugin, readComponentMeta, readComponentSource } from '../component-meta';
+import { componentSourcePlugin } from '../component-source';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 

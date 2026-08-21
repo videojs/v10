@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
 import { jsx } from '../../target/jsx-runtime';
-import { type ComponentTargetSelection, componentSourcePlugin, componentTargetPlugin, readComponentSource } from '..';
+import { readComponentSource } from '../component-meta';
+import { componentSourcePlugin } from '../component-source';
+import { type ComponentTargetSelection, componentTargetPlugin } from '../component-target';
 
 const MODULE_ID = '\0fixture.tsx?target=react';
 

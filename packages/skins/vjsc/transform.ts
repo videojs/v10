@@ -6,10 +6,6 @@ export interface SkinConfig {
   readonly style: 'tailwind' | 'vanilla';
 }
 
-export function isSkinModule(parameters: URLSearchParams): boolean {
-  return validateSkinConfig(parameters) !== null;
-}
-
 export function validateSkinConfig(parameters: URLSearchParams): SkinConfig | null {
   const target = parameters.get('target');
   const skin = parameters.get('skin');

@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ComponentMeta } from '../../components';
 import type { ShadcnItem, ShadcnPluginOptions } from '../../shadcn';
-import { componentMetaPlugin, componentModulesPlugin, componentSourcePlugin, shadcnPlugin } from '..';
+import { shadcnPlugin, vjscPlugin } from '..';
 
 interface FixtureMeta extends ComponentMeta {
   readonly type: 'block' | 'component';
@@ -192,11 +192,9 @@ async function build(
   input: string | readonly string[] = []
 ): Promise<RolldownOutput> {
   const options = baseOptions(overrides);
-  const transform = [
-    componentModulesPlugin({ ignore: ({ parameters }) => !parameters.has('framework') }),
-    componentMetaPlugin(),
-    componentSourcePlugin(),
-  ];
+  const transform = vjscPlugin({
+    configure: ({ parameters }) => (parameters.has('framework') ? { targets: [] } : null),
+  });
   const output = shadcnPlugin({ root, ...options });
   const plugins = order.flatMap((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin));
   const bundle = await rolldown({
