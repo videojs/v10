@@ -18,3 +18,18 @@ export interface SkinMeta extends ComponentMeta {
 }
 
 export type SkinModuleMeta = SkinComponentMeta | SkinMeta;
+
+export const skinStyles = {
+  'default-video': {
+    scope: 'media-skin-video',
+    theme: 'default',
+    variant: 'default',
+  },
+  'minimal-video': {
+    scope: 'media-skin-video-minimal',
+    theme: 'minimal',
+    variant: 'minimal',
+  },
+} as const satisfies Record<string, SkinMeta['style']>;
+
+export type SkinName = keyof typeof skinStyles;

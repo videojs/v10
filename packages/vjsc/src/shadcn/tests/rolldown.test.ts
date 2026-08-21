@@ -7,8 +7,8 @@ import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vitest';
 
 import { type ComponentMeta, componentMetaPlugin } from '../../components';
+import { jsx } from '../../index';
 import { shadcnPlugin, vjscPlugin } from '../../rolldown';
-import { jsx } from '../../ts/types';
 import type { ShadcnItem, ShadcnPluginOptions } from '../index';
 
 interface FixtureMeta extends ComponentMeta {
@@ -196,7 +196,7 @@ async function build(
   const transform = vjscPlugin({
     include: /\.[cm]?[jt]sx?(?:\?|$)/,
     ignore: ({ parameters }) => !parameters.has('framework'),
-    transform: { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] },
+    plugins: [componentMetaPlugin(), jsx({ importSource: 'react' })],
   });
   const output = shadcnPlugin({ root, ...options });
   const plugins = order.map((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin));

@@ -4,8 +4,8 @@ import { defineConfig } from 'tsdown';
 import { shadcnPlugin, vjscPlugin } from 'vjsc/rolldown';
 import type { ShadcnItem } from 'vjsc/shadcn';
 
-import type { SkinModuleMeta } from './vjsc/meta';
-import { createSkinTransformer } from './vjsc/transform';
+import { type SkinModuleMeta, skinStyles } from './vjsc/meta';
+import { createSkinPlugins, isSkinModule } from './vjsc/transform';
 
 const packageDir = import.meta.dirname;
 const vjscDir = resolve(packageDir, 'vjsc');
@@ -45,8 +45,8 @@ export default defineConfig({
     vjscPlugin({
       cwd: packageDir,
       include: sourceFilter,
-      transform: createSkinTransformer(),
-      ignore: ({ parameters }) => !parameters.has('framework'),
+      plugins: createSkinPlugins(),
+      ignore: ({ parameters }) => !isSkinModule(parameters),
     }),
     shadcnPlugin<SkinModuleMeta>({
       root: vjscDir,
@@ -60,17 +60,16 @@ export default defineConfig({
         style: 'tailwind',
       },
       publish: {
-        modules: (module, modules) => {
+        modules: (module) => {
           if (module.filename === registryUtils) return [{}];
 
-          const skins = modules.flatMap(({ meta }) => (meta?.type === 'skin' ? [meta] : []));
-
-          const selected =
-            module.meta?.type === 'skin' ? skins.filter((skin) => skin.name === module.meta?.name) : skins;
+          const skins = Object.keys(skinStyles);
+          const ownedSkin = skins.find((name) => module.filename.includes(`/skins/${name}/skin.`));
+          const selected = ownedSkin ? [ownedSkin] : skins;
 
           return selected.map((skin) => ({
             framework: 'react',
-            skin: skin.name,
+            skin,
             style: 'tailwind',
           }));
         },

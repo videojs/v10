@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { transformPlugin } from '../../plugins';
 import { transform } from '../../transform';
-import { jsx } from '../../types';
 import { dropUnusedLocals } from '../drop-unused-locals';
 
 const wrap = async (source: string): Promise<string> =>
-  (await transform(source, { config: { target: jsx({ transforms: [dropUnusedLocals()] }) } })).code;
+  (await transform(source, { plugins: [transformPlugin('fixture', dropUnusedLocals())] })).code;
 
 describe('dropUnusedLocals', () => {
   it('drops an unused className array local', async () => {

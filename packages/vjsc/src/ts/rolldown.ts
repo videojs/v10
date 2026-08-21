@@ -5,12 +5,12 @@ import { resolve } from 'node:path';
 import type { GeneralHookFilter, HookFilter, Plugin, RolldownLog } from 'rolldown';
 import { isVjscModule, moduleFilename, moduleId, type ParsedModuleId, parseModuleId } from '../utils/module-id';
 import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from './html-runtime';
-import { CompilerError, transform } from './transform';
-import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from './types';
+import { type Compiler, CompilerError, createCompiler } from './transform';
+import type { CompilerDiagnostic, CompilerPlugin, CompilerSourceMap } from './types';
 
 interface TransformPluginOptions {
-  /** Select a VJSC transform for each module, or return null to retain its editable source unchanged. */
-  readonly transform?: CompilerConfig | VjscTransformer | undefined;
+  /** Compiler plugins applied in declared order to every owned module. */
+  readonly plugins?: readonly CompilerPlugin[] | undefined;
   /** Directory used to resolve relative transform configuration. */
   readonly cwd?: string | undefined;
   /** Ignore a query-bearing module. Queried modules are ignored by default. */
@@ -22,15 +22,6 @@ interface VjscModuleContext {
   readonly filename: string;
   readonly parameters: URLSearchParams;
 }
-
-export interface VjscTransformContext {
-  readonly code: string;
-  readonly id: string;
-  readonly filename: string;
-  readonly parameters: URLSearchParams;
-}
-
-export type VjscTransformer = (context: VjscTransformContext) => CompilerConfig | null | Promise<CompilerConfig | null>;
 
 interface TransformPluginFilter {
   readonly hook?: HookFilter | undefined;
@@ -62,6 +53,7 @@ export function vjscPlugin(options: VjscPluginOptions = {}): Plugin {
 
 function createVjscPlugin(options: TransformPluginOptions = {}, filter: TransformPluginFilter = {}): Plugin {
   let cwd = options.cwd ? resolve(options.cwd) : undefined;
+  let compiler: Promise<Compiler> | undefined;
   const cssById = new Map<string, string>();
   const cssIdsByOwner = new Map<string, Set<string>>();
 
@@ -119,25 +111,20 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
       async handler(code, id) {
         if (filter.test && !filter.test(id)) return null;
 
-        const transformed = parseModuleId(id);
-        if (transformed.parameters.size > 0 && (options.ignore?.({ id, ...transformed }) ?? true)) {
+        const parsed = parseModuleId(id);
+        if (parsed.parameters.size > 0 && (options.ignore?.({ id, ...parsed }) ?? true)) {
           return null;
         }
-        const selected = options.transform ?? {};
-        const configured =
-          typeof selected === 'function'
-            ? await selected({ code, id, filename: transformed.filename, parameters: transformed.parameters })
-            : selected;
 
-        if (!configured) return { meta: { vjsc: { source: code } } };
-
-        let result: Awaited<ReturnType<typeof transform>>;
+        let result: Awaited<ReturnType<Compiler['transform']>>;
 
         try {
-          result = await transform(code, {
-            filename: moduleFilename(id),
-            config: configured,
-            configDir: cwd ?? resolve(process.cwd()),
+          compiler ??= createCompiler({
+            cwd: cwd ?? resolve(process.cwd()),
+            ...(options.plugins ? { plugins: options.plugins } : {}),
+          });
+          result = await (await compiler).transform(code, {
+            id,
             outputFile: moduleFilename(id),
           });
         } catch (error) {
@@ -178,7 +165,7 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
         return {
           code: output,
           map: offsetSourceMap(result.map, imports.length),
-          meta: { vjsc: { source: output } },
+          meta: { vjsc: { ...result.meta, source: output } },
         };
       },
     },
@@ -195,6 +182,13 @@ export function readVjscSource(meta: unknown): string | undefined {
   const source = Reflect.get(vjsc, 'source');
 
   return typeof source === 'string' ? source : undefined;
+}
+
+/** Read compiler metadata retained with editable VJSC output. */
+export function readVjscMeta(meta: unknown): Readonly<Record<string, unknown>> | undefined {
+  if (!meta || typeof meta !== 'object') return undefined;
+  const vjsc = Reflect.get(meta, 'vjsc');
+  return vjsc && typeof vjsc === 'object' ? (vjsc as Readonly<Record<string, unknown>>) : undefined;
 }
 
 function parseTransformedId(id: string, ignore: TransformPluginOptions['ignore']): ParsedModuleId | null {

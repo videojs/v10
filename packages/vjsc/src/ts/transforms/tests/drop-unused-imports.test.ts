@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { transformPlugin } from '../../plugins';
 import { transform } from '../../transform';
-import { jsx } from '../../types';
 import { dropUnusedImports } from '../drop-unused-imports';
 
 const wrap = async (source: string): Promise<string> =>
-  (await transform(source, { config: { target: jsx({ transforms: [dropUnusedImports()] }) } })).code;
+  (await transform(source, { plugins: [transformPlugin('fixture', dropUnusedImports())] })).code;
 
 describe('dropUnusedImports', () => {
   it('preserves module evaluation when all value bindings become unused', async () => {

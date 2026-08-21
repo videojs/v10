@@ -2,7 +2,6 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 import { transform } from '../../ts/transform';
-import { jsx } from '../../ts/types';
 import type { StyleManifest, StyleManifestRule } from '../manifest';
 import { plugin } from '../plugin';
 
@@ -53,8 +52,8 @@ describe('plugin static references', () => {
       transform(
         `import styles from './fixture.styles'; const button = styles.button; export const Example = () => <div className={button} />;`,
         {
-          filename,
-          config: { target: jsx(), plugins: [plugin({ manifest, mode: 'css' })] },
+          id: filename,
+          plugins: [plugin({ manifest, mode: 'css' })],
         }
       )
     ).rejects.toThrow('must use static className references');
@@ -65,8 +64,8 @@ describe('plugin static references', () => {
       transform(
         `import styles from './fixture.styles'; export const Example = ({ enabled }) => <div className={enabled && styles.button} />;`,
         {
-          filename,
-          config: { target: jsx(), plugins: [plugin({ manifest, mode: 'css' })] },
+          id: filename,
+          plugins: [plugin({ manifest, mode: 'css' })],
         }
       )
     ).rejects.toThrow('must use static className references');
@@ -76,8 +75,8 @@ describe('plugin static references', () => {
     const result = await transform(
       `import styles from './fixture.styles'; const value = { styles: true }; export const Example = () => <div className={styles.button}>{value.styles}</div>;`,
       {
-        filename,
-        config: { target: jsx(), plugins: [plugin({ manifest, mode: 'css' })] },
+        id: filename,
+        plugins: [plugin({ manifest, mode: 'css' })],
       }
     );
 
@@ -88,11 +87,8 @@ describe('plugin static references', () => {
 
 function compileWithStyle(mode: 'tailwind' | 'css') {
   return transform(source, {
-    filename,
-    config: {
-      target: jsx(),
-      plugins: [plugin({ manifest, mode })],
-    },
+    id: filename,
+    plugins: [plugin({ manifest, mode })],
   });
 }
 

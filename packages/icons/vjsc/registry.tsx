@@ -15,6 +15,7 @@ export function createReactRegistry(schema: ComponentSchema, options: IconRegist
 
   return defineRegistry({
     schema,
+    output: 'jsx',
     entries: Object.fromEntries(
       Object.keys(schema.definitions).map((component) => [
         component,
@@ -42,6 +43,7 @@ export function createHtmlRegistry(schema: ComponentSchema, options: IconRegistr
 
   return defineRegistry({
     schema,
+    output: 'html',
     entries: Object.fromEntries(
       Object.keys(schema.definitions).map((component) => [
         component,

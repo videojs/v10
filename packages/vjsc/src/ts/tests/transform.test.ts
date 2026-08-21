@@ -1,14 +1,14 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { html, jsx, rewrite, transform } from '../../index';
+import { html, jsx, rewrite, transform, transformPlugin } from '../../index';
 import { addProp, byTag, childAsProp, replace } from '../jsx';
 
 const compact = (value: string): string => value.replace(/\s+/g, '');
 
 describe('transform', () => {
-  it('declares the downstream JSX runtime selected by the target', async () => {
+  it('declares the downstream JSX runtime selected by the compiler plugin', async () => {
     const result = await transform('export const View = <div />;', {
-      config: { target: jsx({ importSource: 'react' }) },
+      plugins: [jsx({ importSource: 'react' })],
     });
 
     expect(result.code).toMatch(/^\/\*\* @jsxImportSource react \*\//);
@@ -17,7 +17,7 @@ describe('transform', () => {
 
   it('declares the internal JSX runtime for HTML projections', async () => {
     const result = await transform('export const View = <div />;', {
-      config: { target: html() },
+      plugins: [html()],
     });
 
     expect(result.code).toMatch(/^\/\*\* @jsxImportSource vjsc\/html-runtime \*\//);
@@ -25,14 +25,12 @@ describe('transform', () => {
 
   it('adds a props binding to a parameterless function', async () => {
     const result = await transform(`export function Button(){ return <Root/>; }`, {
-      config: {
-        plugins: [
-          rewrite((code) => [
-            code.function('Button').addProps([{ name: 'props', spread: true }]),
-            code.jsx.element('Root').spreadProps('props'),
-          ]),
-        ],
-      },
+      plugins: [
+        rewrite((code) => [
+          code.function('Button').addProps([{ name: 'props', spread: true }]),
+          code.jsx.element('Root').spreadProps('props'),
+        ]),
+      ],
     });
 
     expect(compact(result.code)).toContain(compact('function Button({ ...props })'));
@@ -41,25 +39,23 @@ describe('transform', () => {
 
   it('replaces a function props binding with a typed target shape', async () => {
     const result = await transform(`export function Skin(){ return <Root/>; }`, {
-      config: {
-        plugins: [
-          rewrite((code) => {
-            const ContainerProps = code.import('@fixture/react', 'ContainerProps', { type: true });
-            return [
-              code
-                .function('Skin')
-                .setProps(
-                  [
-                    { name: 'disabled', initializer: code.value.boolean(false) },
-                    'children',
-                    { name: 'props', spread: true },
-                  ],
-                  { type: ContainerProps, initializer: code.value.object() }
-                ),
-            ];
-          }),
-        ],
-      },
+      plugins: [
+        rewrite((code) => {
+          const ContainerProps = code.import('@fixture/react', 'ContainerProps', { type: true });
+          return [
+            code
+              .function('Skin')
+              .setProps(
+                [
+                  { name: 'disabled', initializer: code.value.boolean(false) },
+                  'children',
+                  { name: 'props', spread: true },
+                ],
+                { type: ContainerProps, initializer: code.value.object() }
+              ),
+          ];
+        }),
+      ],
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -73,21 +69,19 @@ describe('transform', () => {
     const result = await transform(
       `import { Submenu } from './submenu'; export interface MenuProps {} export const Menu = Submenu;`,
       {
-        filename: '/project/src/menu.tsx',
+        id: '/project/src/menu.tsx',
         outputFile: '/project/dist/menu.tsx',
-        configDir: '/project/config',
-        config: {
-          plugins: [
-            rewrite((code) => {
-              const SubmenuProps = code.import('./submenu', 'SubmenuProps', {
-                type: true,
-                relativeTo: 'module',
-              });
+        cwd: '/project/config',
+        plugins: [
+          rewrite((code) => {
+            const SubmenuProps = code.import('./submenu', 'SubmenuProps', {
+              type: true,
+              relativeTo: 'module',
+            });
 
-              return [code.interface('MenuProps').extends(SubmenuProps)];
-            }),
-          ],
-        },
+            return [code.interface('MenuProps').extends(SubmenuProps)];
+          }),
+        ],
       }
     );
 
@@ -97,9 +91,7 @@ describe('transform', () => {
 
   it('replaces a function parameter type without changing its binding', async () => {
     const result = await transform(`export function Button(props: SourceProps = {}) { return <Root {...props}/>; }`, {
-      config: {
-        plugins: [rewrite((code) => [code.function('Button').setParameterType(code.type.named('ButtonProps'))])],
-      },
+      plugins: [rewrite((code) => [code.function('Button').setParameterType(code.type.named('ButtonProps'))])],
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -121,50 +113,48 @@ export function Template({ children, className }: TemplateProps) {
 `;
 
     const result = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => {
-            const cn = code.import('@fixture/style', 'cn');
-            const BaseTemplateProps = code.import('@fixture/react', 'BaseTemplateProps', { type: true });
-            const Button = code.import('@fixture/renderers', 'Button');
-            const RangeTrack = code.import('@fixture/renderers', 'RangeTrack');
-            const isString = code.import('@fixture/predicate', 'isString');
-            const ReactNode = code.import('react', 'ReactNode', { type: true });
+      plugins: [
+        rewrite((code) => {
+          const cn = code.import('@fixture/style', 'cn');
+          const BaseTemplateProps = code.import('@fixture/react', 'BaseTemplateProps', { type: true });
+          const Button = code.import('@fixture/renderers', 'Button');
+          const RangeTrack = code.import('@fixture/renderers', 'RangeTrack');
+          const isString = code.import('@fixture/predicate', 'isString');
+          const ReactNode = code.import('react', 'ReactNode', { type: true });
 
-            return [
-              code.imports({ '@fixture/core': '@fixture/react' }),
-              code.jsx.element('Hint.Trigger').childToProp('render'),
-              code.jsx.element('Toolbar.Root').addProp('data-toolbar', ''),
-              code.jsx.element('Frame').spreadProps('rest'),
-              code.jsx.element('Backdrop').replace(() =>
-                code.jsx.if(
-                  'backdrop',
-                  code.jsx.create('Backdrop', {
-                    src: code.value.when('backdrop', isString),
-                  })
-                )
-              ),
-              code.jsx.element('Action').addProp('render', code.jsx.create(Button)),
-              code.jsx.element(/^Range\.(Track)$/).replace(RangeTrack),
-              code.jsx
-                .props('className')
-                .where(code.value.isArray())
-                .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
-              code.interface('TemplateProps').extends(BaseTemplateProps),
-              code.interface('TemplateProps').replaceExtends('BaseTemplateProps', 'Template.RootProps'),
-              code
-                .interface(/Props$/)
-                .property('children')
-                .setType(() => code.type.union(code.type.named(ReactNode), code.type.undefined())),
-              code
-                .interface('TemplateProps')
-                .property('metadata')
-                .setType(() => code.type.unknown()),
-              code.function('Template').addProps(['backdrop', { name: 'rest', spread: true }]),
-            ];
-          }),
-        ],
-      },
+          return [
+            code.imports({ '@fixture/core': '@fixture/react' }),
+            code.jsx.element('Hint.Trigger').childToProp('render'),
+            code.jsx.element('Toolbar.Root').addProp('data-toolbar', ''),
+            code.jsx.element('Frame').spreadProps('rest'),
+            code.jsx.element('Backdrop').replace(() =>
+              code.jsx.if(
+                'backdrop',
+                code.jsx.create('Backdrop', {
+                  src: code.value.when('backdrop', isString),
+                })
+              )
+            ),
+            code.jsx.element('Action').addProp('render', code.jsx.create(Button)),
+            code.jsx.element(/^Range\.(Track)$/).replace(RangeTrack),
+            code.jsx
+              .props('className')
+              .where(code.value.isArray())
+              .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
+            code.interface('TemplateProps').extends(BaseTemplateProps),
+            code.interface('TemplateProps').replaceExtends('BaseTemplateProps', 'Template.RootProps'),
+            code
+              .interface(/Props$/)
+              .property('children')
+              .setType(() => code.type.union(code.type.named(ReactNode), code.type.undefined())),
+            code
+              .interface('TemplateProps')
+              .property('metadata')
+              .setType(() => code.type.unknown()),
+            code.function('Template').addProps(['backdrop', { name: 'rest', spread: true }]),
+          ];
+        }),
+      ],
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -192,29 +182,29 @@ export function Template({ children, className }: TemplateProps) {
   it('keeps legacy and rewrite JSX node edits aligned', async () => {
     const source = `export function Template(){ return <Old><Action><Child/></Action></Old>; }`;
     const legacy = await transform(source, {
-      config: {
-        target: jsx({
-          transforms: [
-            childAsProp({ match: byTag('Action'), prop: 'render' }),
-            addProp({ match: byTag('Old'), prop: 'count', value: ts.factory.createNumericLiteral(1) }),
-            replace({ match: byTag('Old'), with: { source: '@fixture/react', name: 'Panel' } }),
-          ],
-        }),
-      },
+      plugins: [
+        transformPlugin('fixture:child', childAsProp({ match: byTag('Action'), prop: 'render' })),
+        transformPlugin(
+          'fixture:prop',
+          addProp({ match: byTag('Old'), prop: 'count', value: ts.factory.createNumericLiteral(1) })
+        ),
+        transformPlugin(
+          'fixture:replace',
+          replace({ match: byTag('Old'), with: { source: '@fixture/react', name: 'Panel' } })
+        ),
+      ],
     });
     const rewritten = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => {
-            const Panel = code.import('@fixture/react', 'Panel');
-            return [
-              code.jsx.element('Action').childToProp('render'),
-              code.jsx.element('Old').addProp('count', code.value.number(1)),
-              code.jsx.element('Old').replace(Panel),
-            ];
-          }),
-        ],
-      },
+      plugins: [
+        rewrite((code) => {
+          const Panel = code.import('@fixture/react', 'Panel');
+          return [
+            code.jsx.element('Action').childToProp('render'),
+            code.jsx.element('Old').addProp('count', code.value.number(1)),
+            code.jsx.element('Old').replace(Panel),
+          ];
+        }),
+      ],
     });
 
     expect(compact(rewritten.code)).toBe(compact(legacy.code));
@@ -224,15 +214,13 @@ export function Template({ children, className }: TemplateProps) {
     const source = `export function Template(){ return <Action/>; }`;
 
     const result = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => {
-            const Button = code.import('@fixture/renderers', 'Button', { default: true });
+      plugins: [
+        rewrite((code) => {
+          const Button = code.import('@fixture/renderers', 'Button', { default: true });
 
-            return [code.jsx.element('Action').addProp('render', code.jsx.create(Button))];
-          }),
-        ],
-      },
+          return [code.jsx.element('Action').addProp('render', code.jsx.create(Button))];
+        }),
+      ],
     });
 
     expect(result.code).toContain('import Button from "@fixture/renderers"');
@@ -245,15 +233,13 @@ export function Template({ children, className }: TemplateProps) {
 }`;
 
     const result = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => [
-            code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
-            code.jsx.element('Popover.Trigger').unwrap(),
-            code.jsx.props('className').rename('class'),
-          ]),
-        ],
-      },
+      plugins: [
+        rewrite((code) => [
+          code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
+          code.jsx.element('Popover.Trigger').unwrap(),
+          code.jsx.props('className').rename('class'),
+        ]),
+      ],
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -268,9 +254,7 @@ export function Template({ children, className }: TemplateProps) {
     const source = `export function Target() { return <Group><Item /></Group>; }
 export function Other() { return <Group><Item /></Group>; }`;
     const result = await transform(source, {
-      config: {
-        plugins: [rewrite((code) => [code.function('Target').jsx.element('Group').unwrap()])],
-      },
+      plugins: [rewrite((code) => [code.function('Target').jsx.element('Group').unwrap()])],
     });
 
     expect(compact(result.code)).toContain(compact('function Target() { return <><Item /></>; }'));
@@ -280,16 +264,14 @@ export function Other() { return <Group><Item /></Group>; }`;
   it('scopes JSX prop edits to matching element tags', async () => {
     const source = `export function Template(){ return <Panel className="component"><div className="native" /></Panel>; }`;
     const result = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => [
-            code.jsx
-              .props('className')
-              .on(/^[a-z]/)
-              .rename('class'),
-          ]),
-        ],
-      },
+      plugins: [
+        rewrite((code) => [
+          code.jsx
+            .props('className')
+            .on(/^[a-z]/)
+            .rename('class'),
+        ]),
+      ],
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -301,32 +283,30 @@ export function Other() { return <Group><Item /></Group>; }`;
     const source = `export function Target(){ return <Root><Primitive className="base"><Slot /></Primitive></Root>; }
 export function Other(){ return <Root><Primitive className="base"><Slot /></Primitive></Root>; }`;
     const result = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => {
-            const target = code.function('Target');
-            return [
-              target.jsx.element('Root').addProp('className', () => 'target'),
-              target.jsx.element('Slot').remove(),
-              target.jsx.element('Primitive').spreadProps('props', { position: 'start' }),
-              target.jsx
-                .props('className')
-                .on('Primitive')
-                .replace(({ value }) =>
-                  code.value.arrow(
-                    ['state'],
-                    code.value.conditional(
-                      code.value.equal(code.value.typeOf('className'), code.value.string('function')),
-                      code.value.call('className', ['state']),
-                      value
-                    )
+      plugins: [
+        rewrite((code) => {
+          const target = code.function('Target');
+          return [
+            target.jsx.element('Root').addProp('className', () => 'target'),
+            target.jsx.element('Slot').remove(),
+            target.jsx.element('Primitive').spreadProps('props', { position: 'start' }),
+            target.jsx
+              .props('className')
+              .on('Primitive')
+              .replace(({ value }) =>
+                code.value.arrow(
+                  ['state'],
+                  code.value.conditional(
+                    code.value.equal(code.value.typeOf('className'), code.value.string('function')),
+                    code.value.call('className', ['state']),
+                    value
                   )
-                ),
-              target.jsx.element('Primitive').selfClosing(),
-            ];
-          }),
-        ],
-      },
+                )
+              ),
+            target.jsx.element('Primitive').selfClosing(),
+          ];
+        }),
+      ],
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -342,32 +322,30 @@ export function Other(){ return <Root><Primitive className="base"><Slot /></Prim
     const source = `declare const Placeholder: unknown;
 export function Target(){ return <Root />; }`;
     const result = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => {
-            const BaseProps = code.import('@fixture/react', 'BaseProps', { type: true });
-            return [
-              code.variable('Placeholder').remove(),
-              code.function('Target').insertBefore(() =>
-                code.statement.interface({
-                  name: 'RenderedProps',
-                  export: true,
-                  extends: [code.type.named('Omit', [code.type.named(BaseProps), code.type.literal('hidden')])],
-                  properties: [
-                    { name: 'disabled', optional: true, type: code.type.boolean() },
-                    { name: 'value', optional: true, type: code.type.string() },
-                    {
-                      name: 'render',
-                      optional: true,
-                      type: code.type.indexed(code.type.named(BaseProps), code.type.literal('render')),
-                    },
-                  ],
-                })
-              ),
-            ];
-          }),
-        ],
-      },
+      plugins: [
+        rewrite((code) => {
+          const BaseProps = code.import('@fixture/react', 'BaseProps', { type: true });
+          return [
+            code.variable('Placeholder').remove(),
+            code.function('Target').insertBefore(() =>
+              code.statement.interface({
+                name: 'RenderedProps',
+                export: true,
+                extends: [code.type.named('Omit', [code.type.named(BaseProps), code.type.literal('hidden')])],
+                properties: [
+                  { name: 'disabled', optional: true, type: code.type.boolean() },
+                  { name: 'value', optional: true, type: code.type.string() },
+                  {
+                    name: 'render',
+                    optional: true,
+                    type: code.type.indexed(code.type.named(BaseProps), code.type.literal('render')),
+                  },
+                ],
+              })
+            ),
+          ];
+        }),
+      ],
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -384,16 +362,14 @@ export function Target(){ return <Root />; }`;
   it('adds missing properties to an existing interface', async () => {
     const source = `export interface Props { current?: string }`;
     const result = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => [
-            code.interface('Props').addProperties([
-              { name: 'current', optional: true, type: code.type.string() },
-              { name: 'className', optional: true, type: code.type.string() },
-            ]),
+      plugins: [
+        rewrite((code) => [
+          code.interface('Props').addProperties([
+            { name: 'current', optional: true, type: code.type.string() },
+            { name: 'className', optional: true, type: code.type.string() },
           ]),
-        ],
-      },
+        ]),
+      ],
     });
 
     expect(result.diagnostics).toEqual([]);
@@ -407,9 +383,7 @@ export function Target(){ return <Root />; }`;
 
     await expect(
       transform(source, {
-        config: {
-          plugins: [rewrite((code) => [code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' })])],
-        },
+        plugins: [rewrite((code) => [code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' })])],
       })
     ).rejects.toThrow('expected exactly one direct child');
   });
@@ -423,33 +397,31 @@ export function Template({ backdrop }) {
 `;
 
     const result = await transform(source, {
-      config: {
-        plugins: [
-          rewrite((code) => {
-            const useBackdrop = code.import('@fixture/react', 'useBackdrop');
+      plugins: [
+        rewrite((code) => {
+          const useBackdrop = code.import('@fixture/react', 'useBackdrop');
 
-            return [
-              code.module.prepend(
-                code.statement.const('TOP_ACTIONS', code.value.array([code.value.string('togglePaused')]), {
-                  asConst: true,
-                  export: true,
-                })
+          return [
+            code.module.prepend(
+              code.statement.const('TOP_ACTIONS', code.value.array([code.value.string('togglePaused')]), {
+                asConst: true,
+                export: true,
+              })
+            ),
+            code
+              .function('Template')
+              .prepend(() =>
+                code.statement.const(
+                  'backdropState',
+                  code.value.call(useBackdrop, [code.value.property('backdrop', 'state')])
+                )
               ),
-              code
-                .function('Template')
-                .prepend(() =>
-                  code.statement.const(
-                    'backdropState',
-                    code.value.call(useBackdrop, [code.value.property('backdrop', 'state')])
-                  )
-                ),
-              code
-                .function('Template')
-                .beforeReturn(code.statement.const('ready', code.value.call('Boolean', ['backdropState']))),
-            ];
-          }),
-        ],
-      },
+            code
+              .function('Template')
+              .beforeReturn(code.statement.const('ready', code.value.call('Boolean', ['backdropState']))),
+          ];
+        }),
+      ],
     });
 
     const compactCode = compact(result.code);

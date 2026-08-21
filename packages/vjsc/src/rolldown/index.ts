@@ -5,7 +5,5 @@ export { type ShadcnPluginOptions, shadcnPlugin } from '../shadcn/rolldown';
 export {
   type FilterPattern,
   type VjscPluginOptions,
-  type VjscTransformContext,
-  type VjscTransformer,
   vjscPlugin,
 } from '../ts/rolldown';

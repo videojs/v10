@@ -101,6 +101,7 @@ export default function createRegistry(schema: CoreSchema): ComponentRegistry {
   return defineRegistry({
     schema,
     entries,
+    output: 'jsx',
     props: {
       transform: transformReactProp,
     },

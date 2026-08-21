@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { transform } from '../../index';
-import { anyTag, byTag, childAsProp, hasChild, jsx, replace } from '../jsx';
+import { importsPlugin, transform, transformPlugin } from '../../index';
+import { anyTag, byTag, childAsProp, hasChild, replace } from '../jsx';
 import type { ImportRule } from '../transforms';
 
 /**
@@ -45,21 +45,23 @@ export function Example() {
 
   beforeAll(async () => {
     const result = await transform(source, {
-      config: {
-        target: jsx({
-          imports,
-          transforms: [
-            replace({
-              match: byTag('Gamma.Root', {
-                when: hasChild(byTag('Gamma.Trigger', { when: hasChild(byTag('Beta')) })),
-              }),
-              with: { source: './replacement', name: 'Replacement' },
-              mapChildren: () => [],
+      plugins: [
+        importsPlugin(imports),
+        transformPlugin(
+          'fixture:replace',
+          replace({
+            match: byTag('Gamma.Root', {
+              when: hasChild(byTag('Gamma.Trigger', { when: hasChild(byTag('Beta')) })),
             }),
-            childAsProp({ match: anyTag(['Alpha.Trigger', 'Gamma.Trigger']), prop: 'render' }),
-          ],
-        }),
-      },
+            with: { source: './replacement', name: 'Replacement' },
+            mapChildren: () => [],
+          })
+        ),
+        transformPlugin(
+          'fixture:children',
+          childAsProp({ match: anyTag(['Alpha.Trigger', 'Gamma.Trigger']), prop: 'render' })
+        ),
+      ],
     });
     code = result.code;
   });

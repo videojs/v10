@@ -7,6 +7,7 @@ import type {
   InferProps,
 } from '../components/definition';
 import type { Fragment, GroupProps, SlotProps, TemplateProps, TextProps } from '../components/jsx-runtime';
+import type { ImportRule } from '../ts/transforms/imports';
 import { createRegistryElement, REGISTRY_ENTRY } from './element';
 
 export { isRegistryElement } from './element';
@@ -255,11 +256,19 @@ export interface ComponentRegistry {
   readonly types?: RegistryTypeResolver | undefined;
   /** Source inputs used to construct this in-memory registry. */
   readonly watchFiles?: readonly string[] | undefined;
+  /** JSX projection behavior owned by this framework registry. */
+  readonly output?: 'jsx' | 'html' | undefined;
+  /** Import rewrites applied to entries materialized by this registry. */
+  readonly imports?: Readonly<Record<string, ImportRule>> | undefined;
 }
 
 export interface RegistryDefinition<Definitions extends ComponentRecord = ComponentRecord> extends RegistryOptions {
   readonly schema: ComponentSchema<Definitions>;
   readonly entries: RegistryEntries<NoInfer<Definitions>>;
+  /** JSX projection behavior owned by this framework registry. */
+  readonly output?: 'jsx' | 'html' | undefined;
+  /** Import rewrites applied to entries materialized by this registry. */
+  readonly imports?: Readonly<Record<string, ImportRule>> | undefined;
 }
 
 type RegistryEntryTree<Definition extends ComponentDefinition<object, ComponentRecord | undefined>> = [
@@ -288,6 +297,8 @@ export function defineRegistry<const Definitions extends ComponentRecord>(
     ...(definition.props ? { props: definition.props } : {}),
     primitives: definition.primitives ?? {},
     ...(definition.types ? { types: definition.types } : {}),
+    ...(definition.output ? { output: definition.output } : {}),
+    ...(definition.imports ? { imports: definition.imports } : {}),
   };
 }
 
@@ -301,6 +312,9 @@ export function extendRegistry<const Definitions extends ComponentRecord>(
   extension: ComponentRegistry | RegistryDefinition<Definitions>
 ): ComponentRegistry {
   const next = 'bindings' in extension ? extension : defineRegistry(extension);
+  if (registry.output && next.output && registry.output !== next.output) {
+    throw new Error(`Cannot extend a ${registry.output} component registry with a ${next.output} registry.`);
+  }
 
   return {
     bindings: [...registry.bindings, ...next.bindings],
@@ -310,6 +324,8 @@ export function extendRegistry<const Definitions extends ComponentRecord>(
     ...(registry.watchFiles?.length || next.watchFiles?.length
       ? { watchFiles: [...new Set([...(registry.watchFiles ?? []), ...(next.watchFiles ?? [])])] }
       : {}),
+    ...((next.output ?? registry.output) ? { output: next.output ?? registry.output } : {}),
+    ...(registry.imports || next.imports ? { imports: { ...registry.imports, ...next.imports } } : {}),
   };
 }
 

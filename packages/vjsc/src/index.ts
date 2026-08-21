@@ -30,6 +30,8 @@ export {
   withDiagnosticSource,
 } from './ts/diagnostics';
 export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './ts/jsx/editor';
+export { html, type JsxPluginOptions, jsx } from './ts/jsx/plugin';
+export { importsPlugin, transformPlugin } from './ts/plugins';
 export {
   type ConstStatementOptions,
   type FunctionPropSpec,
@@ -69,24 +71,33 @@ export {
   type ValueReference,
   type VariableSelection,
 } from './ts/rewrite';
-export { CompilerError, type TransformOptions, type TransformResult, transform } from './ts/transform';
-export type { ImportRule } from './ts/transforms';
 export {
-  type CompilerAsset,
-  type CompilerConfig,
-  type CompilerContext,
-  type CompilerDiagnostic,
-  type CompilerPipelineStep,
-  type CompilerPlugin,
-  type CompilerPluginEnforce,
-  type CompilerSourceMap,
-  type CompilerTarget,
-  type CompilerTargetOptions,
-  type CompilerTransform,
-  type HtmlTarget,
-  html,
-  type JsxTarget,
-  type JsxTargetOptions,
-  jsx,
+  type Compiler,
+  CompilerError,
+  type CompilerTransformOptions,
+  createCompiler,
+  type TransformOptions,
+  type TransformResult,
+  transform,
+} from './ts/transform';
+export type { ImportRule } from './ts/transforms';
+export type {
+  CompilerAsset,
+  CompilerDiagnostic,
+  CompilerModule,
+  CompilerOptions,
+  CompilerPlugin,
+  CompilerSetupContext,
+  CompilerSourceMap,
+  CompilerTransform,
+  CompilerTransformContext,
 } from './ts/types';
 export type { InterfaceDeclarationOptions, InterfacePropertySpec } from './ts/utils/declarations';
+export {
+  moduleFilename,
+  moduleId,
+  normalizeModuleId,
+  normalizeResolvedId,
+  type ParsedModuleId,
+  parseModuleId,
+} from './utils/module-id';

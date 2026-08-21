@@ -1,22 +1,28 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { type CompilerPlugin, type CompilerTransform, transform } from '../../index';
+import {
+  type CompilerPlugin,
+  type CompilerTransform,
+  createCompiler,
+  importsPlugin,
+  transform,
+  transformPlugin,
+} from '../../index';
 import {
   accessPath,
   addProp,
   anyTag,
   byTag,
-  type CompilerTargetOptions,
   childAsProp,
   hasChild,
   type JsxElementLike,
-  jsx,
   jsxExpression,
   replace,
   replaceJsxChild,
   wrap,
 } from '../jsx';
 import { parse } from '../parse';
+import { transformImports } from '../transforms';
 
 /**
  * The TS printer emits `<A />` (space before slash) — collapse all whitespace
@@ -24,8 +30,20 @@ import { parse } from '../parse';
  */
 const collapse = (s: string): string => s.replace(/\s+/g, '');
 
-const compileJsx = (source: string, options: CompilerTargetOptions = {}) =>
-  transform(source, { config: { target: jsx(options) } });
+interface CompileOptions {
+  imports?: Record<string, import('../transforms').ImportRule> | undefined;
+  transforms?: readonly CompilerTransform[] | undefined;
+}
+
+const compileJsx = (source: string, options: CompileOptions = {}) =>
+  transform(source, {
+    plugins: [
+      ...(options.imports ? [importsPlugin(options.imports)] : []),
+      ...(options.transforms ?? []).map((compilerTransform, index) =>
+        transformPlugin(`fixture:${index}`, compilerTransform)
+      ),
+    ],
+  });
 
 describe('parse', () => {
   it('produces a TSX SourceFile with parent pointers set', () => {
@@ -62,9 +80,9 @@ describe('transform pipeline phases', () => {
   it('maps transformed output back to the authored source', async () => {
     const source = `import { Widget } from 'old';\nexport const view = <Widget/>;\n`;
     const result = await transform(source, {
-      filename: '/src/input.tsx',
+      id: '/src/input.tsx',
       outputFile: '/dist/input.tsx',
-      config: { target: jsx({ imports: { old: 'new' } }) },
+      plugins: [importsPlugin({ old: 'new' })],
     });
 
     expect(result.code).toContain('from "new"');
@@ -76,37 +94,61 @@ describe('transform pipeline phases', () => {
     });
   });
 
-  it('runs pre, import, normal, target, and post phases in order', async () => {
+  it('initializes once and runs async transforms in declared order with the current AST', async () => {
     const applied: string[] = [];
-    const observe =
-      (name: string): CompilerTransform =>
-      () =>
-      (sourceFile) => {
-        const importSource = sourceFile.statements.find(ts.isImportDeclaration)?.moduleSpecifier;
-        applied.push(`${name}:${importSource && ts.isStringLiteral(importSource) ? importSource.text : 'missing'}`);
-        return sourceFile;
-      };
-    const plugin = (name: string, enforce?: 'pre' | 'post'): CompilerPlugin => ({
+    const plugin = (name: string, replacement?: string): CompilerPlugin => ({
       name,
-      ...(enforce ? { enforce } : {}),
-      setup() {
-        return { transform: observe(name) };
+      async setup() {
+        applied.push(`setup:${name}`);
+      },
+      async transform(module, context) {
+        const importSource = module.sourceFile.statements.find(ts.isImportDeclaration)?.moduleSpecifier;
+        applied.push(`${name}:${importSource && ts.isStringLiteral(importSource) ? importSource.text : 'missing'}`);
+        if (!replacement) return null;
+        return context.apply(module.sourceFile, transformImports({ rules: { old: replacement } }));
       },
     });
 
-    await transform(`import { Widget } from 'old';\nexport const view = <Widget/>;`, {
-      config: {
-        plugins: [plugin('normal'), plugin('post', 'post'), plugin('pre', 'pre')],
-        target: jsx({ imports: { old: 'new' }, transforms: [observe('target')] }),
-      },
+    const compiler = await createCompiler({ plugins: [plugin('first', 'new'), plugin('skip'), plugin('last')] });
+    await compiler.transform(`import { Widget } from 'old';\nexport const view = <Widget/>;`);
+    await compiler.transform(`import { Widget } from 'old';\nexport const other = <Widget/>;`);
+
+    expect(applied).toEqual([
+      'setup:first',
+      'setup:skip',
+      'setup:last',
+      'first:old',
+      'skip:new',
+      'last:new',
+      'first:old',
+      'skip:new',
+      'last:new',
+    ]);
+  });
+
+  it('retains setup watch files for every transformed module', async () => {
+    const compiler = await createCompiler({
+      plugins: [
+        {
+          name: 'fixture',
+          setup(context) {
+            context.addWatchFile('/project/compiler.config.ts');
+          },
+        },
+      ],
     });
 
-    expect(applied).toEqual(['pre:old', 'normal:new', 'target:new', 'post:new']);
+    await expect(compiler.transform('export const first = 1;')).resolves.toMatchObject({
+      watchFiles: ['/project/compiler.config.ts'],
+    });
+    await expect(compiler.transform('export const second = 2;')).resolves.toMatchObject({
+      watchFiles: ['/project/compiler.config.ts'],
+    });
   });
 });
 
 describe('transform (transformImports — bare-string rule)', () => {
-  it('removes imports explicitly replaced by the target runtime', async () => {
+  it('removes imports explicitly replaced by import configuration', async () => {
     const source = `import { Glyph } from '@fixture/icons/components';\nconst value = 1;`;
     const { code } = await compileJsx(source, {
       imports: { '@fixture/icons/components': false },
@@ -153,7 +195,7 @@ describe('transform (transformImports — function rule)', () => {
     expect(code).toContain(`import { NewName as OldName } from "dst"`);
   });
 
-  it('removes identifiers explicitly replaced by the target runtime', async () => {
+  it('removes identifiers explicitly replaced by import configuration', async () => {
     const source = `import { Keep, Remove } from 'src';\nconst _ = Keep;`;
     const { code } = await compileJsx(source, {
       imports: { src: (name) => (name === 'Remove' ? false : { source: 'dst', name }) },

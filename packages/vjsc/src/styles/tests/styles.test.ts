@@ -2,7 +2,6 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 import { transform } from '../../ts/transform';
-import { jsx } from '../../ts/types';
 import { getStyleDefinition } from '../define';
 import { collectReferencedStyleRules, loadStyleManifest, styles, stylesPlugin } from '../index';
 
@@ -49,8 +48,8 @@ describe('stylesPlugin', () => {
     const result = await transform(
       `import styles from './button.styles'; export const Button = () => <button className={styles.root} />;`,
       {
-        filename: componentFile,
-        config: { target: jsx(), plugins: [stylesPlugin({ mode: 'tailwind', variant: 'compact' })] },
+        id: componentFile,
+        plugins: [stylesPlugin({ mode: 'tailwind', variant: 'compact' })],
       }
     );
 
@@ -60,8 +59,8 @@ describe('stylesPlugin', () => {
 
   it('discovers style imports and projects the configured Tailwind variant', async () => {
     const result = await transform(component, {
-      filename: componentFile,
-      config: { target: jsx(), plugins: [stylesPlugin({ mode: 'tailwind', variant: 'compact' })] },
+      id: componentFile,
+      plugins: [stylesPlugin({ mode: 'tailwind', variant: 'compact' })],
     });
 
     expect(result.code).toContain('className={cn("grid border-0", "p-1", \'hook\')}');
@@ -75,25 +74,22 @@ describe('stylesPlugin', () => {
   it('rejects an unknown configured variant', async () => {
     await expect(
       transform(component, {
-        filename: componentFile,
-        config: { target: jsx(), plugins: [stylesPlugin({ mode: 'tailwind', variant: 'unknown' })] },
+        id: componentFile,
+        plugins: [stylesPlugin({ mode: 'tailwind', variant: 'unknown' })],
       })
     ).rejects.toThrow('does not define the `unknown` variant');
   });
 
   it('projects semantic classes and emits file- and layer-configured CSS', async () => {
     const result = await transform(component, {
-      filename: componentFile,
-      config: {
-        target: jsx(),
-        plugins: [
-          stylesPlugin({
-            mode: 'css',
-            variant: 'compact',
-            stylesheet: { input: tailwindInput, scope: '.fixture-skin' },
-          }),
-        ],
-      },
+      id: componentFile,
+      plugins: [
+        stylesPlugin({
+          mode: 'css',
+          variant: 'compact',
+          stylesheet: { input: tailwindInput, scope: '.fixture-skin' },
+        }),
+      ],
     });
 
     expect(result.code).toContain('className="fixture-button hook"');

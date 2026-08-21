@@ -4,8 +4,8 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { defineComponent, defineSchema } from '../../components/definition';
 import { transform } from '../../ts/transform';
-import { html, jsx as target } from '../../ts/types';
 import {
+  type ComponentRegistry,
   defineElement,
   defineRegistry,
   extendRegistry,
@@ -14,7 +14,11 @@ import {
   type RegistryEntryReference,
   type RegistryPropTransformContext,
 } from '..';
-import { plugin } from '../plugin';
+import { plugin as registryCompilerPlugin } from '../plugin';
+
+function compileRegistry(registry: ComponentRegistry, options: Pick<ComponentRegistry, 'imports' | 'output'> = {}) {
+  return registryCompilerPlugin({ ...registry, ...options });
+}
 
 const components = defineSchema('@fixture/components', {
   PlayButton: defineComponent({ name: 'PlayButton' }),
@@ -51,6 +55,38 @@ function fixtureEntry(component: string, part?: string): RegistryEntryReference 
 }
 
 describe('plugin', () => {
+  it('selects one registry from module-aware resolvers', async () => {
+    const registry = defineRegistry({ schema: components, entries: fixtureEntries() });
+    const result = await transform(`import { PlayButton } from '@fixture/components'; <PlayButton />;`, {
+      id: '/project/view.tsx?framework=react',
+      plugins: [
+        registryCompilerPlugin({
+          registries: [
+            ({ id }) => (id.includes('framework=html') ? { ...registry, output: 'html' } : null),
+            ({ id }) => (id.includes('framework=react') ? registry : null),
+          ],
+        }),
+      ],
+    });
+
+    expect(result.code).toContain('from "@fixture/react"');
+  });
+
+  it('skips modules with no matching registry and rejects ambiguous matches', async () => {
+    const source = `export const value = <div />;`;
+    const registry = defineRegistry({ schema: components, entries: fixtureEntries() });
+    const skipped = await transform(source, {
+      plugins: [registryCompilerPlugin({ registries: [() => null] })],
+    });
+
+    expect(skipped.code).toBe(source);
+    await expect(
+      transform(source, {
+        plugins: [registryCompilerPlugin({ registries: [registry, registry] })],
+      })
+    ).rejects.toThrow('More than one component registry matched');
+  });
+
   it('rewrites canonical components imported through a namespace', async () => {
     const entries = fixtureEntries();
     const registry = defineRegistry({ schema: components, entries });
@@ -60,7 +96,7 @@ describe('plugin', () => {
 
         export const view = <$.PlayButton />;
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('import { PlayButton as PlayButtonPrimitive } from "@fixture/react";');
@@ -85,7 +121,7 @@ describe('plugin', () => {
 
         export const view = <><$.PlayButton /><Overlay /></>;
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('<PlayButtonPrimitive />');
@@ -94,14 +130,10 @@ describe('plugin', () => {
     expect(result.code).not.toContain('@fixture/skin-components');
   });
 
-  it('applies target import rules to registry bindings', async () => {
+  it('applies registry import rules to registry bindings', async () => {
     const registry = defineRegistry({ schema: components, entries: fixtureEntries() });
-    const compilerTarget = target({ imports: { '@fixture/react': '@fixture/preact' } });
     const result = await transform(`import { PlayButton } from '@fixture/components'; <PlayButton />;`, {
-      config: {
-        target: compilerTarget,
-        plugins: [plugin(registry)],
-      },
+      plugins: [compileRegistry(registry, { imports: { '@fixture/react': '@fixture/preact' } })],
     });
 
     expect(result.code).toContain('import { PlayButton } from "@fixture/preact";');
@@ -134,7 +166,7 @@ describe('plugin', () => {
           );
         }
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('import { cn, resolveClassName } from "@fixture/style";');
@@ -142,7 +174,7 @@ describe('plugin', () => {
     expect(result.code).toContain("className={cn('layout', className)}");
   });
 
-  it('remaps class utility imports through the compiler target', async () => {
+  it('remaps class utility imports through the component registry', async () => {
     const registry = defineRegistry({
       schema: components,
       entries: fixtureEntries(),
@@ -153,10 +185,7 @@ describe('plugin', () => {
     const result = await transform(
       `import { PlayButton } from '@fixture/components'; <PlayButton className={['button']} />;`,
       {
-        config: {
-          target: target({ imports: { '@fixture/style': '@/utils' } }),
-          plugins: [plugin(registry)],
-        },
+        plugins: [compileRegistry(registry, { imports: { '@fixture/style': '@/utils' } })],
       }
     );
 
@@ -175,7 +204,7 @@ describe('plugin', () => {
       },
     });
     const result = await transform(`import { PlayButton } from '@fixture/components'; <PlayButton priority={1} />;`, {
-      config: { target: target(), plugins: [plugin(registry)] },
+      plugins: [compileRegistry(registry)],
     });
 
     expect(result.code).toContain('<PlayButton priority={2}/>');
@@ -198,10 +227,7 @@ describe('plugin', () => {
         const button = <PlayButton className={['button']} />;
       `,
       {
-        config: {
-          target: target({ imports: { '@fixture/style': '@/utils' } }),
-          plugins: [plugin(registry)],
-        },
+        plugins: [compileRegistry(registry, { imports: { '@fixture/style': '@/utils' } })],
       }
     );
 
@@ -226,7 +252,7 @@ describe('plugin', () => {
           return <$.PlayButton {...props} />;
         }
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain("import type { PlayButtonProps } from '@fixture/core';");
@@ -256,7 +282,7 @@ describe('plugin', () => {
           return <$.PlayButton className={className} {...props} />;
         }
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('import { PlayButton as PlayButtonPrimitive } from "@fixture/react";');
@@ -287,7 +313,7 @@ describe('plugin', () => {
           return <Group className={className} {...props} />;
         }
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('import { type ComponentProps } from "react";');
@@ -315,7 +341,7 @@ describe('plugin', () => {
           return <$.PlayButton render={children} {...props} />;
         }
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain(
@@ -335,7 +361,7 @@ describe('plugin', () => {
         export interface PlayTooltipProps extends Omit<PropsOf<typeof ButtonTooltip>, 'children'> {}
         export const buttonTooltip = ButtonTooltip;
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain("import { ButtonTooltip, type ButtonTooltipProps } from './button-tooltip';");
@@ -351,7 +377,7 @@ describe('plugin', () => {
 
         export const view = <$.Tooltip.Root render={<$.PlayButton />} />;
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('<TooltipPrimitive.Root render={<PlayButtonPrimitive />}/>');
@@ -366,7 +392,6 @@ describe('plugin', () => {
         PlayButton: { tagName: 'media-play-button' },
       },
     });
-    const compilerTarget = html();
     const result = await transform(
       `
         import { type PlayButtonProps, PlayButton } from '@fixture/components';
@@ -375,10 +400,7 @@ describe('plugin', () => {
         export const view = <PlayButton className="button" />;
       `,
       {
-        config: {
-          target: compilerTarget,
-          plugins: [plugin(registry)],
-        },
+        plugins: [compileRegistry(registry, { output: 'html' })],
       }
     );
 
@@ -391,7 +413,7 @@ describe('plugin', () => {
 
     await expect(
       transform(`import * as $ from '@fixture/components'; <$.Missing />;`, {
-        config: { target: target(), plugins: [plugin(registry)] },
+        plugins: [compileRegistry(registry)],
       })
     ).rejects.toThrow('Unknown canonical component <Missing>');
   });
@@ -427,7 +449,7 @@ describe('plugin', () => {
           );
         }
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('import { PlayButton, Tooltip as TooltipAlias } from "@fixture/react";');
@@ -450,7 +472,7 @@ describe('plugin', () => {
       },
     });
     const result = await transform(`import { PlayButton } from '@fixture/components'; <PlayButton>Play</PlayButton>;`, {
-      config: { target: target(), plugins: [plugin(registry)] },
+      plugins: [compileRegistry(registry)],
     });
 
     expect(result.code).toContain('import { PlayButton } from "@fixture/react";');
@@ -489,9 +511,9 @@ describe('plugin', () => {
       );
     `;
     const options = {
-      filename: '/project/src/view.tsx',
-      configDir: '/project',
-      config: { target: target(), plugins: [plugin(registry)] },
+      id: '/project/src/view.tsx',
+      cwd: '/project',
+      plugins: [compileRegistry(registry)],
     } as const;
     const first = await transform(source, options);
     const second = await transform(source, options);
@@ -521,9 +543,9 @@ describe('plugin', () => {
     const source = `import { PlayButton } from '@fixture/components'; <PlayButton />;`;
     const compile = (filename: string) =>
       transform(source, {
-        filename,
-        configDir: '/project',
-        config: { target: target(), plugins: [plugin(registry)] },
+        id: filename,
+        cwd: '/project',
+        plugins: [compileRegistry(registry)],
       });
     const first = await compile('/project/src/first.tsx');
     const second = await compile('/project/src/second.tsx');
@@ -579,7 +601,7 @@ describe('plugin', () => {
           </Tooltip.Root>
         );
       `,
-      { config: { target: html(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry, { output: 'html' })] }
     );
     const triggerId = result.code.match(/<media-play-button[^>]*id="([^"]+)"/)?.[1];
 
@@ -616,7 +638,7 @@ describe('plugin', () => {
           <Tooltip.Popup>Content</Tooltip.Popup>
         </Tooltip.Root>;
       `,
-      { config: { target: html(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry, { output: 'html' })] }
     );
 
     expect(result.code).toContain('<button>Open</button>');
@@ -637,7 +659,7 @@ describe('plugin', () => {
     });
     const compile = (children: string) =>
       transform(`import { Wrapper } from '@fixture/wrappers'; <Wrapper>${children}</Wrapper>;`, {
-        config: { target: html(), plugins: [plugin(registry)] },
+        plugins: [compileRegistry(registry, { output: 'html' })],
       });
 
     await expect(compile('')).rejects.toThrow('exactly one concrete child host, received 0');
@@ -664,7 +686,7 @@ describe('plugin', () => {
           return <Wrapper>{children}</Wrapper>;
         }
       `,
-      { config: { target: html(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry, { output: 'html' })] }
     );
 
     expect(result.code).toContain('import { Host as HtmlHost } from "vjsc/html-runtime/jsx-runtime";');
@@ -710,7 +732,7 @@ describe('plugin', () => {
 
         export const detachedPopup = <Tooltip.Popup>Detached</Tooltip.Popup>;
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('import "@fixture/html/play-button";');
@@ -737,7 +759,7 @@ describe('plugin', () => {
     });
     const result = await transform(
       `import { PlayButton } from '@fixture/components'; <PlayButton className="button" />;`,
-      { config: { target: html(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry, { output: 'html' })] }
     );
 
     expect(result.code).toContain('import "@fixture/html/icon";');
@@ -781,13 +803,13 @@ describe('plugin', () => {
           </Tooltip.Root>
         );
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code.match(/<media-tooltip/g)).toHaveLength(2);
   });
 
-  it('lowers compiler primitives through framework targets', async () => {
+  it('lowers compiler primitives through framework registry outputs', async () => {
     const Div = defineElement('div');
     const Span = defineElement('span');
     const slot: RegistryEntry<{ children?: unknown }> = {
@@ -817,7 +839,7 @@ describe('plugin', () => {
         export const element: VjscElement = <Group />;
         export const empty = <Group><Slot name="poster" /></Group>;
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('<div>');
@@ -881,7 +903,7 @@ describe('plugin', () => {
           </List>
         );
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('renderItem={(props, item) => (<Row {...props}>');
@@ -927,7 +949,7 @@ describe('plugin', () => {
           </List>
         );
       `,
-      { config: { target: target(), plugins: [plugin(registry)] } }
+      { plugins: [compileRegistry(registry)] }
     );
 
     expect(result.code).toContain('renderItem={props => (<Item disabled {...props}/>)}');

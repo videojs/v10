@@ -7,10 +7,10 @@ import { build as viteBuild } from 'vite';
 import { describe, expect, it } from 'vitest';
 
 import { componentMetaPlugin } from '../../components';
+import { jsx, parseModuleId } from '../../index';
 import { vjscPlugin } from '../../rolldown';
 import { vjscPlugin as viteVjscPlugin } from '../../vite';
 import { readVjscSource } from '../rolldown';
-import { jsx } from '../types';
 
 describe('vjscPlugin', () => {
   it('uses native host filters for included and excluded modules', async () => {
@@ -28,17 +28,15 @@ describe('vjscPlugin', () => {
         vjscPlugin({
           include: '**/*.tsx',
           exclude: '**/*.test.tsx',
-          transform: {
-            plugins: [
-              {
-                name: 'record-transform',
-                setup(context) {
-                  transformed.push(context.filename);
-                  return {};
-                },
+          plugins: [
+            {
+              name: 'record-transform',
+              transform(module) {
+                transformed.push(module.id);
+                return null;
               },
-            ],
-          },
+            },
+          ],
         }),
       ],
     });
@@ -67,8 +65,7 @@ describe('vjscPlugin', () => {
       plugins: [
         vjscPlugin({
           ignore: ({ parameters }) => !parameters.has('framework'),
-          transform: ({ parameters }) =>
-            parameters.get('framework') === 'react' ? { target: jsx({ importSource: 'react' }) } : null,
+          plugins: [jsx({ importSource: 'react' })],
         }),
         {
           name: 'record-projected-modules',
@@ -107,10 +104,15 @@ describe('vjscPlugin', () => {
       plugins: [
         vjscPlugin({
           ignore: ({ parameters }) => !parameters.has('skin'),
-          transform: ({ parameters }) => {
-            transformed.push(parameters.toString());
-            return {};
-          },
+          plugins: [
+            {
+              name: 'record-parameters',
+              transform(module) {
+                transformed.push(parseModuleId(module.id).parameters.toString());
+                return null;
+              },
+            },
+          ],
         }),
       ],
     });
@@ -129,7 +131,7 @@ describe('vjscPlugin', () => {
     const output = (await viteBuild({
       configFile: false,
       logLevel: 'silent',
-      plugins: [viteVjscPlugin({ transform: { target: jsx({ importSource: 'react' }) } })],
+      plugins: [viteVjscPlugin({ plugins: [jsx({ importSource: 'react' })] })],
       build: {
         write: false,
         rolldownOptions: { input: app, output: { format: 'es' } },
@@ -152,18 +154,18 @@ describe('vjscPlugin', () => {
       input: entry,
       plugins: [
         vjscPlugin({
-          transform: {
-            plugins: [
-              {
-                name: 'host-cwd',
-                setup(context) {
-                  configDir = context.configDir;
-                  context.addWatchFile('compiler.config.ts');
-                  return {};
-                },
+          plugins: [
+            {
+              name: 'host-cwd',
+              setup(context) {
+                configDir = context.cwd;
               },
-            ],
-          },
+              transform(_module, context) {
+                context.addWatchFile('compiler.config.ts');
+                return null;
+              },
+            },
+          ],
         }),
       ],
     });
@@ -200,10 +202,7 @@ describe('vjscPlugin', () => {
       plugins: [
         {
           ignore: ({ parameters }) => !parameters.has('framework'),
-          transform: ({ parameters }) =>
-            parameters.get('framework') === 'react'
-              ? { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] }
-              : null,
+          plugins: [componentMetaPlugin(), jsx({ importSource: 'react' })],
         },
         capture.plugin,
       ],

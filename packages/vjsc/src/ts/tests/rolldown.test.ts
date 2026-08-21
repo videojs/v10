@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { importsPlugin } from '../../index';
 import { vjscPlugin } from '../../rolldown';
 import type { CompilerPlugin, CompilerSourceMap } from '../types';
-import { jsx } from '../types';
 
 type TestPlugin = {
   resolveId(id: string): Promise<string | null>;
@@ -10,7 +10,7 @@ type TestPlugin = {
     this: { addWatchFile(id: string): void; error(error: unknown): never; warn(warning: unknown): void },
     code: string,
     id: string
-  ): Promise<{ code: string; map: CompilerSourceMap } | null>;
+  ): Promise<{ code: string; map: CompilerSourceMap; meta?: unknown } | null>;
 };
 
 const createPlugin = (...args: Parameters<typeof vjscPlugin>): TestPlugin => {
@@ -32,19 +32,33 @@ const createContext = () => ({
 
 const createCssPlugin = (source: string): CompilerPlugin => ({
   name: 'fixture',
-  setup(context) {
-    return {
-      transform: () => (sourceFile) => sourceFile,
-      finish() {
-        context.addAsset({ type: 'css', fileName: 'skin.css', source });
-      },
-    };
+  transform(_module, context) {
+    context.addAsset({ type: 'css', fileName: 'skin.css', source });
+    return null;
   },
 });
 
 describe('vjscPlugin', () => {
+  it('keeps editable source authoritative over compiler metadata', async () => {
+    const plugin = createPlugin({
+      plugins: [
+        {
+          name: 'fixture',
+          transform(_module, context) {
+            context.meta.source = 'not editable source';
+            return null;
+          },
+        },
+      ],
+    });
+    const source = 'export const value = <main/>;';
+    const result = await plugin.transform.call(createContext(), source, '/workspace/source.tsx');
+
+    expect(result?.meta).toEqual({ vjsc: { source } });
+  });
+
   it('imports emitted CSS assets as virtual modules', async () => {
-    const plugin = createPlugin({ transform: { plugins: [createCssPlugin('.foo{display:flex;}')] } });
+    const plugin = createPlugin({ plugins: [createCssPlugin('.foo{display:flex;}')] });
 
     const result = await plugin.transform.call(
       createContext(),
@@ -67,20 +81,15 @@ describe('vjscPlugin', () => {
   it('changes the virtual CSS identity when emitted content changes', async () => {
     let css = '.foo{color:red;}';
     const plugin = createPlugin({
-      transform: {
-        plugins: [
-          {
-            name: 'fixture-css',
-            setup(context) {
-              return {
-                finish() {
-                  context.addAsset({ type: 'css', fileName: 'skin.css', source: css });
-                },
-              };
-            },
+      plugins: [
+        {
+          name: 'fixture-css',
+          transform(_module, context) {
+            context.addAsset({ type: 'css', fileName: 'skin.css', source: css });
+            return null;
           },
-        ],
-      },
+        },
+      ],
     });
     const id = '/workspace/skin.tsx';
     const source = `function App(){ return <Foo/>; }`;
@@ -99,20 +108,15 @@ describe('vjscPlugin', () => {
   it('shares identical emitted assets between transformed modules', async () => {
     let css = '.foo{color:red;}';
     const plugin = createPlugin({
-      transform: {
-        plugins: [
-          {
-            name: 'fixture-css',
-            setup(context) {
-              return {
-                finish() {
-                  context.addAsset({ type: 'css', fileName: 'shared.css', source: css });
-                },
-              };
-            },
+      plugins: [
+        {
+          name: 'fixture-css',
+          transform(_module, context) {
+            context.addAsset({ type: 'css', fileName: 'shared.css', source: css });
+            return null;
           },
-        ],
-      },
+        },
+      ],
     });
     const first = await plugin.transform.call(createContext(), 'export const first = <Foo/>;', '/workspace/first.tsx');
     const second = await plugin.transform.call(
@@ -132,17 +136,15 @@ describe('vjscPlugin', () => {
   it('forwards compiler warnings to the host', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({
-      transform: {
-        plugins: [
-          {
-            name: 'fixture',
-            setup(context) {
-              context.report({ level: 'warning', code: 'fixture-warning', message: 'Check this', plugin: 'fixture' });
-              return { transform: () => (sourceFile) => sourceFile };
-            },
+      plugins: [
+        {
+          name: 'fixture',
+          transform(_module, context) {
+            context.report({ level: 'warning', code: 'fixture-warning', message: 'Check this', plugin: 'fixture' });
+            return null;
           },
-        ],
-      },
+        },
+      ],
     });
 
     await plugin.transform.call(
@@ -157,25 +159,23 @@ describe('vjscPlugin', () => {
   it('forwards located compiler warnings to the host', async () => {
     const warn = vi.fn();
     const plugin = createPlugin({
-      transform: {
-        plugins: [
-          {
-            name: 'fixture',
-            setup(context) {
-              context.report({
-                level: 'warning',
-                code: 'fixture-warning',
-                message: 'Check this location',
-                file: context.filename,
-                line: 1,
-                column: 24,
-                plugin: 'fixture',
-              });
-              return { transform: () => (sourceFile) => sourceFile };
-            },
+      plugins: [
+        {
+          name: 'fixture',
+          transform(module, context) {
+            context.report({
+              level: 'warning',
+              code: 'fixture-warning',
+              message: 'Check this location',
+              file: module.id,
+              line: 1,
+              column: 24,
+              plugin: 'fixture',
+            });
+            return null;
           },
-        ],
-      },
+        },
+      ],
     });
 
     await plugin.transform.call(
@@ -195,22 +195,20 @@ describe('vjscPlugin', () => {
   it('fails the host transform for compiler errors', async () => {
     const context = createContext();
     const plugin = createPlugin({
-      transform: {
-        plugins: [
-          {
-            name: 'fixture',
-            setup(compilerContext) {
-              compilerContext.report({
-                level: 'error',
-                code: 'fixture-error',
-                message: 'Cannot compile this source',
-                plugin: 'fixture',
-              });
-              return { transform: () => (sourceFile) => sourceFile };
-            },
+      plugins: [
+        {
+          name: 'fixture',
+          transform(_module, compilerContext) {
+            compilerContext.report({
+              level: 'error',
+              code: 'fixture-error',
+              message: 'Cannot compile this source',
+              plugin: 'fixture',
+            });
+            return null;
           },
-        ],
-      },
+        },
+      ],
     });
 
     await expect(
@@ -221,7 +219,7 @@ describe('vjscPlugin', () => {
 
   it('forwards syntax errors to the host with their source location', async () => {
     const context = createContext();
-    const plugin = createPlugin({ transform: {} });
+    const plugin = createPlugin();
 
     await expect(
       plugin.transform.call(context, `export function App( { return <Foo/> }`, '/workspace/broken.tsx')
@@ -234,9 +232,7 @@ describe('vjscPlugin', () => {
   it('rebases relative import targets from the transformed module', async () => {
     const plugin = createPlugin({
       cwd: '/workspace',
-      transform: {
-        target: jsx({ imports: { '@fixture/widgets': './shared/widgets' } }),
-      },
+      plugins: [importsPlugin({ '@fixture/widgets': './shared/widgets' })],
     });
 
     const result = await plugin.transform.call(

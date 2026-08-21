@@ -1,29 +1,33 @@
 import ts from 'typescript';
+import { moduleFilename } from '../utils/module-id';
 import { fatalDiagnosticFromError, withDiagnosticSource } from './diagnostics';
 import { parse } from './parse';
 import { identitySourceMap, printSourceFile } from './source-map';
 import { dropUnusedImports } from './transforms/drop-unused-imports';
 import { dropUnusedLocals } from './transforms/drop-unused-locals';
-import { transformImports } from './transforms/imports';
-import {
-  type CompilerAsset,
-  type CompilerConfig,
-  type CompilerContext,
-  type CompilerDiagnostic,
-  type CompilerPipelineStep,
-  type CompilerPlugin,
-  type CompilerSourceMap,
-  type CompilerTarget,
-  type CompilerTransform,
-  jsx,
+import type {
+  CompilerAsset,
+  CompilerDiagnostic,
+  CompilerModule,
+  CompilerOptions,
+  CompilerPlugin,
+  CompilerSetupContext,
+  CompilerSourceMap,
+  CompilerTransform,
+  CompilerTransformContext,
 } from './types';
 
-export interface TransformOptions {
-  filename?: string | undefined;
-  config?: CompilerConfig | undefined;
-  /** Directory relative paths in `imports` rules resolve against. */
-  configDir?: string | undefined;
-  /** Output file path (used to project relative-path import targets). */
+export interface TransformOptions extends CompilerOptions {
+  /** Full source module ID. Defaults to `input.tsx`. */
+  id?: string | undefined;
+  /** Output file path used to project relative-path import targets. */
+  outputFile?: string | undefined;
+}
+
+export interface CompilerTransformOptions {
+  /** Full source module ID. Defaults to `input.tsx`. */
+  id?: string | undefined;
+  /** Output file path used to project relative-path import targets. */
   outputFile?: string | undefined;
 }
 
@@ -33,6 +37,11 @@ export interface TransformResult {
   assets: readonly CompilerAsset[];
   watchFiles: readonly string[];
   diagnostics: readonly CompilerDiagnostic[];
+  meta: Readonly<Record<string, unknown>>;
+}
+
+export interface Compiler {
+  transform(source: string, options?: CompilerTransformOptions): Promise<TransformResult>;
 }
 
 export class CompilerError extends Error {
@@ -45,37 +54,80 @@ export class CompilerError extends Error {
   }
 }
 
-interface PipelineTransform {
-  plugin: string;
-  transform: CompilerTransform;
+/** Create a compiler whose plugins are initialized once and reused across modules. */
+export async function createCompiler(options: CompilerOptions = {}): Promise<Compiler> {
+  const cwd = options.cwd ?? process.cwd();
+  const plugins = [...(options.plugins ?? [])];
+  const setupWatchFiles = new Set<string>();
+  const setupContext: CompilerSetupContext = {
+    cwd,
+    addWatchFile(fileName) {
+      setupWatchFiles.add(fileName);
+    },
+  };
+
+  for (const plugin of plugins) {
+    try {
+      await plugin.setup?.(setupContext);
+    } catch (error) {
+      throw compilerErrorFromPlugin(error, plugin.name, 'input.tsx', '');
+    }
+  }
+
+  return {
+    transform(source, transformOptions = {}) {
+      return transformModule(source, transformOptions, plugins, cwd, setupWatchFiles);
+    },
+  };
 }
 
-interface PipelineFinisher {
-  plugin: string;
-  finish: () => void | Promise<void>;
-}
-
-/**
- * Compile a constrained-JSX source module to a target-flavored TSX module.
- *
- * 1. Parse the source into a TSX SourceFile.
- * 2. Apply pre transforms, configured import rewrites, and normal transforms.
- * 3. Apply target transforms, then post transforms and safe cleanup.
- * 4. Print transformed source with mappings back to the authored module.
- */
+/** Compile one module with a one-use compiler instance. */
 export async function transform(source: string, options: TransformOptions = {}): Promise<TransformResult> {
-  const filename = options.filename ?? 'input.tsx';
-  const config = options.config ?? {};
-  const target = config.target ?? jsx();
-  const assets: CompilerAsset[] = [];
-  const watchFiles = new Set<string>();
-  const diagnostics: CompilerDiagnostic[] = [];
-  const context: CompilerContext = {
-    filename,
-    sourceText: source,
-    configDir: options.configDir ?? process.cwd(),
-    target,
+  const compiler = await createCompiler({
+    ...(options.cwd ? { cwd: options.cwd } : {}),
+    ...(options.plugins ? { plugins: options.plugins } : {}),
+  });
+  return compiler.transform(source, {
+    ...(options.id ? { id: options.id } : {}),
     ...(options.outputFile ? { outputFile: options.outputFile } : {}),
+  });
+}
+
+async function transformModule(
+  source: string,
+  options: CompilerTransformOptions,
+  plugins: readonly CompilerPlugin[],
+  cwd: string,
+  setupWatchFiles: ReadonlySet<string>
+): Promise<TransformResult> {
+  const id = options.id ?? 'input.tsx';
+  const filename = moduleFilename(id);
+  const assets: CompilerAsset[] = [];
+  const watchFiles = new Set(setupWatchFiles);
+  const diagnostics: CompilerDiagnostic[] = [];
+  const meta: Record<string, unknown> = {};
+  const preambles: string[] = [];
+  const transformations: ts.TransformationResult<ts.SourceFile>[] = [];
+  const { ast, diagnostics: parseDiagnostics } = parse(source, { filename });
+  if (parseDiagnostics.length > 0) throw new CompilerError(parseDiagnostics);
+
+  let sourceFile = ast;
+  let transformed = false;
+  let currentPlugin = '';
+  const context: CompilerTransformContext = {
+    cwd,
+    ...(options.outputFile ? { outputFile: options.outputFile } : {}),
+    meta,
+    apply(input, compilerTransform) {
+      const result = ts.transform(input, [
+        attributedTransform({ plugin: currentPlugin, transform: compilerTransform }, filename, source),
+      ]);
+      transformations.push(result);
+      return result.transformed[0]!;
+    },
+    prepend(code) {
+      preambles.push(code);
+    },
     addAsset(asset) {
       assets.push(asset);
     },
@@ -83,120 +135,83 @@ export async function transform(source: string, options: TransformOptions = {}):
       watchFiles.add(fileName);
     },
     report(diagnostic) {
-      diagnostics.push(withDiagnosticSource(diagnostic, source, filename));
+      diagnostics.push(
+        withDiagnosticSource(
+          { ...diagnostic, plugin: diagnostic.plugin ?? (currentPlugin || undefined) },
+          source,
+          filename
+        )
+      );
     },
   };
 
-  const { ast, diagnostics: parseDiagnostics } = parse(source, { filename });
-  if (parseDiagnostics.length > 0) throw new CompilerError(parseDiagnostics);
-
-  const preTransforms: PipelineTransform[] = [];
-  const normalTransforms: PipelineTransform[] = [];
-  const postTransforms: PipelineTransform[] = [];
-  const finishers: PipelineFinisher[] = [];
-  let importTransform: PipelineTransform | undefined;
-
-  if (target.imports) {
-    importTransform = {
-      plugin: 'vjsc:imports',
-      transform: transformImports({
-        rules: target.imports,
-        configDir: context.configDir,
-        outputFile: options.outputFile,
-      }),
-    };
-  }
-
-  for (const plugin of orderPlugins(config.plugins ?? [])) {
-    const step = await setupPipelineStep(
-      plugin.name,
-      () => plugin.setup?.(pluginContext(context, plugin.name)),
-      filename,
-      source
-    );
-    if (step?.transform) {
-      const entry = { plugin: plugin.name, transform: step.transform };
-      if (plugin.enforce === 'pre') preTransforms.push(entry);
-      else if (plugin.enforce === 'post') postTransforms.push(entry);
-      else normalTransforms.push(entry);
+  try {
+    for (const plugin of plugins) {
+      if (!plugin.transform) continue;
+      currentPlugin = plugin.name;
+      const module: CompilerModule = { code: source, id, sourceFile };
+      let next: ts.SourceFile | null;
+      try {
+        next = await plugin.transform(module, context);
+      } catch (error) {
+        throw compilerErrorFromPlugin(error, plugin.name, filename, source);
+      }
+      if (!next) continue;
+      sourceFile = next;
+      transformed = true;
     }
-    if (step?.finish) finishers.push({ plugin: plugin.name, finish: step.finish });
-  }
 
-  const targetTransforms = (target.transforms ?? []).map((transform) => ({
-    plugin: 'vjsc:target',
-    transform,
-  }));
-  const transformers: PipelineTransform[] = [
-    ...preTransforms,
-    ...(importTransform ? [importTransform] : []),
-    ...normalTransforms,
-    ...targetTransforms,
-    ...postTransforms,
-  ];
+    if (transformed) {
+      currentPlugin = 'vjsc:cleanup';
+      sourceFile = context.apply(sourceFile, dropUnusedLocals());
+      sourceFile = context.apply(sourceFile, dropUnusedImports());
+    }
 
-  // Final passes: prune locals the rewrites left behind, then prune imports.
-  // Order matters — dropping a local may make the imports it referenced
-  // unused. Always run when any transformer ran.
-  if (transformers.length > 0) {
-    transformers.push({ plugin: 'vjsc:cleanup', transform: dropUnusedLocals() });
-    transformers.push({ plugin: 'vjsc:cleanup', transform: dropUnusedImports() });
-  }
-
-  if (transformers.length === 0) {
-    await runFinishers(finishers, filename, source);
-    return withJsxImportSource(
-      {
-        code: source,
-        map: identitySourceMap(source, filename, options.outputFile),
+    if (!transformed) {
+      const prefix = sourcePrefix(preambles);
+      return {
+        code: `${prefix}${source}`,
+        map: offsetSourceMap(identitySourceMap(source, filename, options.outputFile), lineCount(prefix)),
         assets,
         watchFiles: [...watchFiles],
         diagnostics,
-      },
-      target
-    );
-  }
+        meta,
+      };
+    }
 
-  let result: ts.TransformationResult<ts.SourceFile> | undefined;
-  try {
-    result = ts.transform(
-      ast,
-      transformers.map((entry) => attributedTransform(entry, filename, source))
-    );
-    const transformed = result.transformed[0]!;
-    const printed = printSourceFile(transformed, source, options.outputFile ?? filename);
-
-    await runFinishers(finishers, filename, source);
-
-    return withJsxImportSource(
-      { code: printed.code, map: printed.map, assets, watchFiles: [...watchFiles], diagnostics },
-      target
-    );
+    const printed = printSourceFile(sourceFile, source, options.outputFile ?? filename);
+    const prefix = sourcePrefix(preambles);
+    return {
+      code: `${prefix}${printed.code}`,
+      map: offsetSourceMap(printed.map, lineCount(prefix)),
+      assets,
+      watchFiles: [...watchFiles],
+      diagnostics,
+      meta,
+    };
   } catch (error) {
     if (error instanceof CompilerError) throw error;
     throw new CompilerError([fatalDiagnosticFromError(error, { filename, sourceText: source })], { cause: error });
   } finally {
-    result?.dispose();
+    for (const result of transformations.reverse()) result.dispose();
   }
 }
 
-function withJsxImportSource(result: TransformResult, target: CompilerTarget): TransformResult {
-  const importSource = target.name === 'html' ? 'vjsc/html-runtime' : target.importSource;
-  if (!importSource) return result;
-  return {
-    ...result,
-    code: `/** @jsxImportSource ${importSource} */\n${result.code}`,
-    map: { ...result.map, mappings: `;${result.map.mappings}` },
-  };
+function sourcePrefix(preambles: readonly string[]): string {
+  return preambles.length === 0 ? '' : `${preambles.join('\n')}\n`;
 }
 
-function pluginContext(context: CompilerContext, plugin: string): CompilerContext {
-  return {
-    ...context,
-    report(diagnostic) {
-      context.report({ ...diagnostic, plugin: diagnostic.plugin ?? plugin });
-    },
-  };
+function lineCount(value: string): number {
+  return value.match(/\n/g)?.length ?? 0;
+}
+
+function offsetSourceMap(map: CompilerSourceMap, lines: number): CompilerSourceMap {
+  return lines === 0 ? map : { ...map, mappings: `${';'.repeat(lines)}${map.mappings}` };
+}
+
+interface PipelineTransform {
+  plugin: string;
+  transform: CompilerTransform;
 }
 
 function attributedTransform(entry: PipelineTransform, filename: string, source: string): CompilerTransform {
@@ -218,16 +233,6 @@ function attributedTransform(entry: PipelineTransform, filename: string, source:
   };
 }
 
-async function runFinishers(finishers: readonly PipelineFinisher[], filename: string, source: string): Promise<void> {
-  for (const entry of finishers) {
-    try {
-      await entry.finish();
-    } catch (error) {
-      throw compilerErrorFromPlugin(error, entry.plugin, filename, source);
-    }
-  }
-}
-
 function compilerErrorFromPlugin(error: unknown, plugin: string, filename: string, source: string): CompilerError {
   if (error instanceof CompilerError) {
     if (error.diagnostics.every((diagnostic) => diagnostic.plugin)) return error;
@@ -240,26 +245,4 @@ function compilerErrorFromPlugin(error: unknown, plugin: string, filename: strin
   return new CompilerError([fatalDiagnosticFromError(error, { filename, sourceText: source, plugin })], {
     cause: error,
   });
-}
-
-function orderPlugins(plugins: readonly CompilerPlugin[]): CompilerPlugin[] {
-  const pre = plugins.filter((plugin) => plugin.enforce === 'pre');
-  const normal = plugins.filter((plugin) => plugin.enforce === undefined);
-  const post = plugins.filter((plugin) => plugin.enforce === 'post');
-  return [...pre, ...normal, ...post];
-}
-
-async function setupPipelineStep(
-  plugin: string,
-  setup: () => CompilerPipelineStep | Promise<CompilerPipelineStep | undefined> | undefined,
-  filename: string,
-  source: string
-): Promise<CompilerPipelineStep | undefined> {
-  try {
-    return await setup();
-  } catch (error) {
-    throw new CompilerError([fatalDiagnosticFromError(error, { filename, sourceText: source, plugin })], {
-      cause: error,
-    });
-  }
 }

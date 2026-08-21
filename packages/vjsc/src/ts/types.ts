@@ -1,5 +1,4 @@
 import type ts from 'typescript';
-import type { ImportRule } from './transforms/imports';
 
 export type CompilerTransform = ts.TransformerFactory<ts.SourceFile>;
 
@@ -7,7 +6,6 @@ export interface CompilerAsset {
   type: 'css';
   fileName: string;
   source: string;
-  sourceFile?: string | undefined;
 }
 
 export interface CompilerDiagnostic {
@@ -33,82 +31,49 @@ export interface CompilerSourceMap {
   mappings: string;
 }
 
-export interface CompilerContext {
-  filename: string;
-  sourceText: string;
-  configDir: string;
-  target: CompilerTarget;
-  outputFile?: string | undefined;
+/** A source module at its current point in the compiler pipeline. */
+export interface CompilerModule {
+  /** Authored source passed to the compiler. */
+  readonly code: string;
+  /** Full module ID, including any transform-selection query. */
+  readonly id: string;
+  /** Current AST after every preceding compiler plugin. */
+  readonly sourceFile: ts.SourceFile;
+}
+
+export interface CompilerSetupContext {
+  /** Directory used to resolve compiler configuration. */
+  readonly cwd: string;
+  /** Register a configuration input that should invalidate host watch builds. */
+  addWatchFile(fileName: string): void;
+}
+
+export interface CompilerTransformContext extends CompilerSetupContext {
+  readonly outputFile?: string | undefined;
+  /** Metadata retained with the transformed module by host adapters. */
+  readonly meta: Record<string, unknown>;
+  /** Apply a synchronous TypeScript transformer while retaining compiler lifecycle ownership. */
+  apply(sourceFile: ts.SourceFile, transform: CompilerTransform): ts.SourceFile;
+  /** Prepend generated source without forcing the authored module through the TypeScript printer. */
+  prepend(code: string): void;
   addAsset(asset: CompilerAsset): void;
   addWatchFile(fileName: string): void;
   report(diagnostic: CompilerDiagnostic): void;
 }
 
-export interface CompilerPipelineStep {
-  transform?: CompilerTransform | undefined;
-  finish?: (() => void | Promise<void>) | undefined;
-}
-
-export type CompilerPluginEnforce = 'pre' | 'post';
-
 export interface CompilerPlugin {
-  name: string;
-  /**
-   * `pre` runs before configured import rewrites. Normal plugins run after
-   * import rewrites and before target transforms. `post` runs after target
-   * transforms and before compiler cleanup.
-   */
-  enforce?: CompilerPluginEnforce | undefined;
-  setup?(context: CompilerContext): CompilerPipelineStep | Promise<CompilerPipelineStep>;
+  readonly name: string;
+  /** Initialize this plugin once for a compiler instance. */
+  setup?(context: CompilerSetupContext): void | Promise<void>;
+  /** Transform one module, or return null to leave it unchanged. */
+  transform?(
+    module: CompilerModule,
+    context: CompilerTransformContext
+  ): ts.SourceFile | null | Promise<ts.SourceFile | null>;
 }
 
-/** Source transformations shared by JSX and HTML targets. */
-export interface CompilerTargetOptions {
-  /** Per-source-module rewrite rules. */
-  imports?: Record<string, ImportRule> | undefined;
-  /** Transforms applied in order after `transformImports`. */
-  transforms?: readonly CompilerTransform[] | undefined;
-}
-
-export interface JsxTargetOptions extends CompilerTargetOptions {
-  /** JSX runtime used by the tool that lowers a JSX projection. */
-  importSource?: string | undefined;
-}
-
-export interface JsxTarget {
-  name: 'jsx';
-  importSource?: string | undefined;
-  imports?: Record<string, ImportRule> | undefined;
-  transforms?: readonly CompilerTransform[] | undefined;
-}
-
-export interface HtmlTarget {
-  name: 'html';
-  imports?: Record<string, ImportRule> | undefined;
-  transforms?: readonly CompilerTransform[] | undefined;
-}
-
-export type CompilerTarget = JsxTarget | HtmlTarget;
-
-export interface CompilerConfig {
-  plugins?: readonly CompilerPlugin[] | undefined;
-  target?: CompilerTarget | undefined;
-}
-
-export function jsx(options: JsxTargetOptions = {}): JsxTarget {
-  return {
-    name: 'jsx',
-    ...(options.importSource ? { importSource: options.importSource } : {}),
-    ...(options.imports ? { imports: options.imports } : {}),
-    ...(options.transforms ? { transforms: options.transforms } : {}),
-  };
-}
-
-/** Transform VJSC JSX into the static HTML runtime representation. */
-export function html(options: CompilerTargetOptions = {}): HtmlTarget {
-  return {
-    name: 'html',
-    ...(options.imports ? { imports: options.imports } : {}),
-    ...(options.transforms ? { transforms: options.transforms } : {}),
-  };
+export interface CompilerOptions {
+  /** Directory used to resolve compiler configuration. */
+  readonly cwd?: string | undefined;
+  readonly plugins?: readonly CompilerPlugin[] | undefined;
 }

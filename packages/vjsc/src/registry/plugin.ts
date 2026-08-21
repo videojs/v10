@@ -5,7 +5,7 @@ import type { ComponentDefinition, ComponentRecord } from '../components/definit
 import { Fragment } from '../components/jsx-runtime';
 import { DiagnosticError, diagnosticLocationFromNode } from '../ts/diagnostics';
 import { HTML_RUNTIME_IMPORT } from '../ts/html-runtime';
-import type { CompilerPlugin, CompilerTarget } from '../ts/types';
+import type { CompilerModule, CompilerPlugin } from '../ts/types';
 import { collectTopLevelBindingNames } from '../ts/utils/bindings';
 import {
   createIndexedAccessType,
@@ -24,6 +24,7 @@ import {
   readJsxAttributeValue,
 } from '../ts/utils/jsx';
 import { collectReferencedIdentifiers } from '../ts/utils/references';
+import { moduleFilename } from '../utils/module-id';
 import { absolutePath, toPosixPath } from '../utils/path';
 import {
   type ComponentRegistry,
@@ -104,7 +105,7 @@ interface TransformState {
   readonly modules: ModuleImports;
   readonly scopes: WeakMap<ts.Node, RegistryScope>;
   readonly sourceFile: ts.SourceFile;
-  readonly target?: CompilerTarget | undefined;
+  readonly output: 'jsx' | 'html';
   readonly usedNames: Set<string>;
   nextSyntheticScope: number;
   projection?: FunctionProjection | undefined;
@@ -141,21 +142,40 @@ interface TemplateScope {
   readonly parameters: Readonly<Record<string, SourceExpression>>;
 }
 
-/** Lower canonical component JSX through a framework-owned component registry. */
-export function plugin(registry: ComponentRegistry): CompilerPlugin {
+export type ComponentRegistryResolver = (
+  module: CompilerModule
+) => ComponentRegistry | null | Promise<ComponentRegistry | null>;
+
+export interface ComponentRegistryPluginOptions {
+  readonly registries: readonly (ComponentRegistry | ComponentRegistryResolver)[];
+}
+
+/** Lower component JSX through the one framework registry selected for each module. */
+export function plugin(options: ComponentRegistry | ComponentRegistryPluginOptions): CompilerPlugin {
+  const registries = 'registries' in options ? options.registries : [options];
+
   return {
     name: 'vjsc:components',
-    enforce: 'post',
-    setup(context) {
-      const { configDir, filename, target } = context;
-      for (const file of registry.watchFiles ?? []) {
-        context.addWatchFile(absolutePath(configDir, file));
+    async transform(module, compilerContext) {
+      const matches = [] as ComponentRegistry[];
+      for (const candidate of registries) {
+        const registry = typeof candidate === 'function' ? await candidate(module) : candidate;
+        if (registry) matches.push(registry);
       }
-      const moduleId = registryModuleId(filename, configDir);
+      if (matches.length === 0) return null;
+      if (matches.length > 1) throw new Error(`More than one component registry matched \`${module.id}\`.`);
 
-      return {
-        transform: (context) => (sourceFile) => transformComponents(sourceFile, registry, target, moduleId, context),
-      };
+      const registry = matches[0]!;
+
+      for (const file of registry.watchFiles ?? []) {
+        compilerContext.addWatchFile(absolutePath(compilerContext.cwd, file));
+      }
+
+      const id = registryModuleId(moduleFilename(module.id), compilerContext.cwd);
+      return compilerContext.apply(
+        module.sourceFile,
+        (context) => (sourceFile) => transformComponents(sourceFile, registry, id, context)
+      );
     },
   };
 }
@@ -163,7 +183,6 @@ export function plugin(registry: ComponentRegistry): CompilerPlugin {
 function transformComponents(
   sourceFile: ts.SourceFile,
   registry: ComponentRegistry,
-  target: CompilerTarget | undefined,
   moduleId: string,
   context: ts.TransformationContext
 ): ts.SourceFile {
@@ -183,7 +202,7 @@ function transformComponents(
     modules: collectModuleImports(sourceFile),
     scopes: new WeakMap(),
     sourceFile,
-    target,
+    output: registry.output ?? 'jsx',
     usedNames: collectTopLevelBindingNames(sourceFile),
     nextSyntheticScope: 0,
     visitor(node) {
@@ -1025,7 +1044,7 @@ function registryScope(node: ts.Node, state: TransformState): RegistryScope {
 
   const original = ts.getOriginalNode(node);
   const position = original.pos >= 0 ? original.pos.toString(36) : `s${(state.nextSyntheticScope++).toString(36)}`;
-  const prefix = state.target?.name === 'html' ? `${state.moduleId}-${position}` : `vjs-${state.moduleId}-${position}`;
+  const prefix = state.output === 'html' ? `${state.moduleId}-${position}` : `vjs-${state.moduleId}-${position}`;
   const ids = new Map<string, string>();
   const scope: RegistryScope = {
     prefix,
@@ -1042,7 +1061,7 @@ function registryScope(node: ts.Node, state: TransformState): RegistryScope {
       const existingId = ids.get(name);
       if (existingId) return existingId;
 
-      const id = state.target?.name === 'html' ? `__vjsc-id-${prefix}-${name}` : `${prefix}-${name}`;
+      const id = state.output === 'html' ? `__vjsc-id-${prefix}-${name}` : `${prefix}-${name}`;
       ids.set(name, id);
       return id;
     },
@@ -1053,7 +1072,7 @@ function registryScope(node: ts.Node, state: TransformState): RegistryScope {
 }
 
 function wrapHtmlScope(output: ts.Node, scope: ComponentScope, state: TransformState): ts.Node {
-  if (state.target?.name !== 'html' || !scope.boundary || !scope.registry.hasIds()) return output;
+  if (state.output !== 'html' || !scope.boundary || !scope.registry.hasIds()) return output;
 
   const local = requestNamedImport(HTML_RUNTIME_IMPORT, 'Scope', 'HtmlScope', false, state);
   const tag = state.factory.createIdentifier(local);
@@ -1263,7 +1282,7 @@ function forwardTransparentHost(
   const entryPath = entry ? jsxTagPath(registryElementTag(entry, preferredLocal, state)) : undefined;
   const result = forwardAttributes(children, forwarded, entryPath, state.factory);
 
-  if (result.hosts === 0 && !entryPath && state.target?.name === 'html') {
+  if (result.hosts === 0 && !entryPath && state.output === 'html') {
     const dynamic = forwardDynamicHtmlHost(result.children, forwarded, state);
     if (dynamic) return dynamic;
   }
@@ -1670,7 +1689,7 @@ function resolveNamedImport(
   name: string,
   state: TransformState
 ): { source: string; name: string } | undefined {
-  const rule = state.target?.imports?.[source];
+  const rule = state.registry.imports?.[source];
 
   if (rule === undefined) return { source, name };
   if (rule === false) return undefined;
@@ -1681,7 +1700,7 @@ function resolveNamedImport(
 }
 
 function addSideEffectImport(source: string, state: TransformState): void {
-  const rule = state.target?.imports?.[source];
+  const rule = state.registry.imports?.[source];
 
   if (rule === false) return;
 
@@ -1775,7 +1794,7 @@ function isEntryReference(entry: RegistryEntry<any>): entry is RegistryEntryRefe
 }
 
 function outputAttributeName(name: string, state: TransformState): string {
-  return state.target?.name === 'html' && name === 'className' ? 'class' : name;
+  return state.output === 'html' && name === 'className' ? 'class' : name;
 }
 
 function isModuleEntry(

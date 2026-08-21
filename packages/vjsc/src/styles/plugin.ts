@@ -3,7 +3,8 @@ import { resolve } from 'node:path';
 
 import ts from 'typescript';
 
-import type { CompilerContext, CompilerPipelineStep, CompilerPlugin } from '../ts/types';
+import type { CompilerModule, CompilerPlugin } from '../ts/types';
+import { moduleFilename } from '../utils/module-id';
 
 import { compileStyles } from './compile';
 import { type DesignSystem, loadDesignSystem } from './design-system';
@@ -44,43 +45,41 @@ export function plugin(options: StylePluginOptions): CompilerPlugin {
 
   return {
     name: 'vjsc:styles',
-    enforce: 'pre',
-    async setup(context) {
-      const manifest = options.manifest ?? (await loadImportedManifest(context, manifests));
+    async transform(module, context) {
+      const manifest = options.manifest ?? (await loadImportedManifest(module, manifests));
 
-      if (!manifest || manifest.rules.length === 0) return {};
+      if (!manifest || manifest.rules.length === 0) return null;
 
       for (const file of manifest.watchFiles) context.addWatchFile(file);
 
-      const step: CompilerPipelineStep = {
-        transform: createStyleTransform({
+      const sourceFile = context.apply(
+        module.sourceFile,
+        createStyleTransform({
           manifest,
           mode: options.mode,
           ...(options.variant ? { variant: options.variant } : {}),
-        }),
-      };
+        })
+      );
 
       if (options.mode === 'css' && options.stylesheet) {
         const stylesheet = options.stylesheet;
-        const input = resolve(context.configDir, stylesheet.input);
+        const input = resolve(context.cwd, stylesheet.input);
 
         context.addWatchFile(input);
 
-        step.finish = async () => {
-          const assets = await compileStyles({
-            design: await cachedDesignSystem(designs, input),
-            manifest,
-            ...(stylesheet.scope ? { scope: stylesheet.scope } : {}),
-            ...(options.variant ? { variant: options.variant } : {}),
-          });
+        const assets = await compileStyles({
+          design: await cachedDesignSystem(designs, input),
+          manifest,
+          ...(stylesheet.scope ? { scope: stylesheet.scope } : {}),
+          ...(options.variant ? { variant: options.variant } : {}),
+        });
 
-          for (const [fileName, source] of assets) {
-            context.addAsset({ type: 'css', fileName, source });
-          }
-        };
+        for (const [fileName, source] of assets) {
+          context.addAsset({ type: 'css', fileName, source });
+        }
       }
 
-      return step;
+      return sourceFile;
     },
   };
 }
@@ -107,12 +106,11 @@ async function cachedDesignSystem(
 }
 
 async function loadImportedManifest(
-  context: CompilerContext,
+  module: CompilerModule,
   cache: Map<string, CachedManifest>
 ): Promise<StyleManifest | undefined> {
-  const files = isStyleModulePath(context.filename)
-    ? [context.filename]
-    : await importedStyleFiles(context.filename, context.sourceText);
+  const filename = moduleFilename(module.id);
+  const files = isStyleModulePath(filename) ? [filename] : await importedStyleFiles(filename, module.code);
 
   if (files.length === 0) return undefined;
 

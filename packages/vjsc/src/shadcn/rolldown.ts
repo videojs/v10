@@ -3,8 +3,8 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 
 import type { OutputBundle, Plugin, PluginContext } from 'rolldown';
 
-import { type ComponentMeta, extractComponentMeta } from '../components/meta';
-import { readVjscSource } from '../ts/rolldown';
+import type { ComponentMeta } from '../components/meta';
+import { readVjscMeta, readVjscSource } from '../ts/rolldown';
 import { toArray } from '../utils/array';
 import { moduleFilename, moduleId, normalizeResolvedId } from '../utils/module-id';
 import { isInsideRoot } from '../utils/path';
@@ -40,7 +40,6 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
           id: filename,
           filename,
           transform: {},
-          meta: maybeExtractComponentMeta(readFileSync(filename, 'utf8'), filename) as Item | undefined,
         })
       );
 
@@ -62,6 +61,7 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
         const info = this.getModuleInfo(module.id);
         const source = readVjscSource(info?.meta);
         if (source === undefined) this.error(`Shadcn source has no editable VJSC output: \`${module.id}\`.`);
+        const meta = readVjscMeta(info?.meta)?.component as Item | undefined;
         const imports: SourceImport[] = [];
         for (const reference of analyzeImports(source, module.filename)) {
           const resolved = await this.resolve(reference.specifier, module.id);
@@ -83,7 +83,7 @@ export function shadcnPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
           }
           imports.push({ ...reference, ...(resolvedId ? { resolvedId } : {}) });
         }
-        modules.push({ ...module, source, imports });
+        modules.push({ ...module, ...(meta ? { meta } : {}), source, imports });
       }
       graph = { root, modules: new Map(modules.map((module) => [module.id, module])) };
     },
@@ -154,15 +154,6 @@ function discoverStyleFiles(input: string): string[] {
   };
   visit(input);
   return [...files].sort();
-}
-
-function maybeExtractComponentMeta(source: string, filename: string): ComponentMeta | undefined {
-  try {
-    return extractComponentMeta(source, filename);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('must export a static')) return undefined;
-    throw error;
-  }
 }
 
 function resolveModulePath(path: string): string {

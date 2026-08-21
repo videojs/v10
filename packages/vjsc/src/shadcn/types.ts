@@ -48,11 +48,14 @@ export interface ShadcnPluginOptions<Item extends ComponentMeta = ComponentMeta>
   readonly include: string | readonly string[];
   readonly exclude?: string | readonly string[] | undefined;
   readonly publish: {
-    /** Select each VJSC transformation of a discovered module that should be available for publication. */
+    /**
+     * Select the query projections loaded for each discovered file. Component metadata is captured later from
+     * transformed host modules and is therefore not available in this inventory hook.
+     */
     readonly modules?:
       | ((
-          module: ShadcnModule<Item>,
-          modules: readonly ShadcnModule<Item>[]
+          module: Omit<ShadcnModule<Item>, 'meta'>,
+          modules: readonly Omit<ShadcnModule<Item>, 'meta'>[]
         ) => readonly Readonly<Record<string, string>>[])
       | undefined;
     /** Describe the published registry items after every requested transformation is complete. */

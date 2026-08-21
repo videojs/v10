@@ -1,7 +1,6 @@
 import { isObject } from '@videojs/utils/predicate';
 import ts from 'typescript';
 import type { JsxElementLike } from '../jsx';
-import type { CompilerPlugin, CompilerTransform } from '../types';
 import { isJsxElementLike, readJsxAttributeExpression } from '../utils/jsx';
 
 export function readJsxElement(value: unknown, context: unknown): JsxElementLike | undefined {
@@ -74,10 +73,6 @@ export function readFunctionDeclaration(value: unknown, context: unknown): ts.Fu
   }
 
   return undefined;
-}
-
-export function isCompilerPlugin(value: CompilerTransform | CompilerPlugin): value is CompilerPlugin {
-  return isObject(value) && 'name' in value && typeof value.name === 'string';
 }
 
 export function isNode(value: unknown): value is ts.Node {

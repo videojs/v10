@@ -56,6 +56,7 @@ export {
   wrap,
 } from './jsx';
 export { type ParseOptions, type ParseResult, parse } from './parse';
+export { importsPlugin, transformPlugin } from './plugins';
 export {
   type AddImportContext,
   type AddImportRef,

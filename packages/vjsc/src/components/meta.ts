@@ -1,71 +1,24 @@
-import { globSync, readFileSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
-
 import ts from 'typescript';
 
 import type { CompilerPlugin } from '../ts/types';
-import { parseSourceFile } from '../ts/utils/source-file';
-import { toArray } from '../utils/array';
-import { absolutePath, toPosixPath } from '../utils/path';
 
 export interface ComponentMeta {
   readonly name: string;
   readonly [key: string]: unknown;
 }
 
-export interface DiscoverComponentsOptions {
-  readonly rootDir: string;
-  readonly include: string | readonly string[];
-  readonly exclude?: string | readonly string[] | undefined;
-  readonly exportName?: string | undefined;
-}
-
-/** Discover self-describing components without evaluating their source. */
-export function discoverComponents<Item extends ComponentMeta = ComponentMeta>(
-  options: DiscoverComponentsOptions
-): readonly (Item & { readonly source: string })[] {
-  const rootDir = resolve(options.rootDir);
-  const patterns = toArray(options.include);
-  const exclude = options.exclude ? toArray(options.exclude) : undefined;
-  const exportName = options.exportName ?? 'meta';
-  const sourceFiles = [
-    ...new Set(
-      patterns.flatMap((pattern) =>
-        globSync(pattern, { cwd: rootDir, ...(exclude ? { exclude } : {}) }).map((path) => absolutePath(rootDir, path))
-      )
-    ),
-  ].sort();
-
-  const items = sourceFiles.flatMap((fileName) => {
-    const meta = findComponentMeta(readFileSync(fileName, 'utf8'), fileName, exportName) as Item | undefined;
-    if (!meta) return [];
-    if ('source' in meta) throw new Error(`Component metadata in ${fileName} must not declare \`source\`.`);
-    const path = toPosixPath(relative(rootDir, fileName));
-    return [{ ...meta, source: `./${path}` }];
-  });
-  const names = new Set<string>();
-
-  for (const item of items) {
-    if (names.has(item.name)) throw new Error(`Component \`${item.name}\` is declared more than once.`);
-    names.add(item.name);
-  }
-
-  return items.sort((left, right) => left.name.localeCompare(right.name));
-}
-
-/** Remove compile-time metadata from transformed components. */
+/** Capture compile-time component metadata and remove its export from transformed source. */
 export function componentMetaPlugin(exportName = 'meta'): CompilerPlugin {
   return {
     name: 'vjsc:component-meta',
-    enforce: 'pre',
-    setup() {
-      return {
-        transform: (context) => (sourceFile) =>
-          context.factory.updateSourceFile(
-            sourceFile,
-            sourceFile.statements.flatMap((statement) => removeExportedMeta(context.factory, statement, exportName))
-          ),
-      };
+    transform(module, context) {
+      const meta = readComponentMeta(module.sourceFile, exportName);
+      if (!meta) return null;
+      context.meta.component = meta;
+      return ts.factory.updateSourceFile(
+        module.sourceFile,
+        module.sourceFile.statements.flatMap((statement) => removeExportedMeta(ts.factory, statement, exportName))
+      );
     },
   };
 }
@@ -89,24 +42,19 @@ function removeExportedMeta(
   ];
 }
 
-export function extractComponentMeta(source: string, fileName: string, exportName = 'meta'): ComponentMeta {
-  const meta = findComponentMeta(source, fileName, exportName);
-  if (meta) return meta;
-  throw new Error(`Component source ${fileName} must export a static \`${exportName}\` object.`);
-}
-
-function findComponentMeta(source: string, fileName: string, exportName: string): ComponentMeta | undefined {
-  const sourceFile = parseSourceFile(source, fileName);
-
+/** Read static component metadata from an already parsed source module. */
+function readComponentMeta(sourceFile: ts.SourceFile, exportName = 'meta'): ComponentMeta | undefined {
   for (const statement of sourceFile.statements) {
     if (!isExportedMetaStatement(statement, exportName)) continue;
     const declaration = statement.declarationList.declarations.find(
       (declaration) => ts.isIdentifier(declaration.name) && declaration.name.text === exportName
     );
     if (!declaration?.initializer) break;
-    const value = staticValue(declaration.initializer, fileName);
+    const value = staticValue(declaration.initializer, sourceFile.fileName);
     if (!isRecord(value) || typeof value.name !== 'string' || value.name.length === 0) {
-      throw new Error(`Component metadata \`${exportName}\` in ${fileName} must contain a non-empty literal \`name\`.`);
+      throw new Error(
+        `Component metadata \`${exportName}\` in ${sourceFile.fileName} must contain a non-empty literal \`name\`.`
+      );
     }
     return value as ComponentMeta;
   }

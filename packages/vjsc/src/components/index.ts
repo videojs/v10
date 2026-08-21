@@ -29,7 +29,4 @@ export {
 export {
   type ComponentMeta,
   componentMetaPlugin,
-  type DiscoverComponentsOptions,
-  discoverComponents,
-  extractComponentMeta,
 } from './meta';

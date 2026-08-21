@@ -4,7 +4,7 @@ import { iconElementPlugin } from '@videojs/icons/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { vjscPlugin } from 'vjsc/vite';
-import { createSkinTransformer } from './vjsc/transform';
+import { createSkinPlugins, isSkinModule } from './vjsc/transform';
 
 const packageDir = import.meta.dirname;
 const vjscDir = normalizePath(resolve(packageDir, 'vjsc'));
@@ -16,8 +16,6 @@ const vjscInclude = new RegExp(`^${escapeRegExp(vjscDir)}/.*\\.tsx(?:\\?.*)?$`);
 export default defineConfig(createPreviewConfig());
 
 function createPreviewConfig() {
-  const transform = createSkinTransformer();
-
   return {
     root: resolve(packageDir, 'dev'),
     define: {
@@ -28,8 +26,8 @@ function createPreviewConfig() {
       vjscPlugin({
         cwd: packageDir,
         include: vjscInclude,
-        ignore: ({ parameters }) => !parameters.has('framework'),
-        transform,
+        ignore: ({ parameters }) => !isSkinModule(parameters),
+        plugins: createSkinPlugins(),
       }),
       tailwindcss(),
       react({ jsxImportSource: 'react' }),

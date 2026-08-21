@@ -4,7 +4,7 @@ import { tagName, unwrap as unwrapJsxElement } from '../jsx';
 import { moveJsxChildToProp, replaceJsxElementTag, setJsxAttribute } from '../jsx/edits';
 import { addNamedImport } from '../transforms/add-import';
 import { type ImportRewriteOptions, type ImportRule, transformImports } from '../transforms/imports';
-import type { CompilerContext, CompilerPipelineStep, CompilerPlugin, CompilerTransform } from '../types';
+import type { CompilerPlugin, CompilerTransform, CompilerTransformContext } from '../types';
 import {
   createIndexedAccessType,
   createInterfaceDeclaration,
@@ -24,7 +24,6 @@ import { insertStatementsAfterImports } from '../utils/source-file';
 import type { ImportOptions, ImportReference } from './import-reference';
 import { createImportReference, isImportReference, type MutableImportReference } from './import-reference';
 import {
-  isCompilerPlugin,
   isNode,
   readFunctionDeclaration,
   readInterface,
@@ -286,7 +285,7 @@ export interface TransformHelpers {
   variable(name: string | RegExp): VariableSelection;
 }
 
-export type TransformStep = CompilerTransform | CompilerPlugin | null | undefined | false;
+export type TransformStep = CompilerTransform | null | undefined | false;
 export type RewriteCallback = (helpers: TransformHelpers) => readonly TransformStep[];
 
 export interface JsxElementContext {
@@ -367,39 +366,18 @@ export interface FunctionPropsOptions {
 export function rewrite(callback: RewriteCallback): CompilerPlugin {
   return {
     name: 'vjsc:rewrite',
-    async setup(context) {
+    transform(module, context) {
       const refs: MutableImportReference[] = [];
       const helpers = createTransformHelpers(refs, context);
-      const steps = callback(helpers).filter(Boolean) as Array<CompilerTransform | CompilerPlugin>;
-      const transforms: CompilerTransform[] = [];
-      const finishers: Array<() => void | Promise<void>> = [];
-
-      for (const step of steps) {
-        if (isCompilerPlugin(step)) {
-          const nested = await step.setup?.(context);
-          if (nested?.transform) transforms.push(nested.transform);
-          if (nested?.finish) finishers.push(nested.finish);
-          continue;
-        }
-        transforms.push(step);
-      }
+      const transforms = callback(helpers).filter(Boolean) as CompilerTransform[];
 
       transforms.push(materializeImportRefs(refs, context));
-
-      const pipeline: CompilerPipelineStep = {
-        transform: pipeTransforms(transforms),
-      };
-      if (finishers.length > 0) {
-        pipeline.finish = async () => {
-          for (const finish of finishers) await finish();
-        };
-      }
-      return pipeline;
+      return context.apply(module.sourceFile, pipeTransforms(transforms));
     },
   };
 }
 
-function createTransformHelpers(refs: MutableImportReference[], context: CompilerContext): TransformHelpers {
+function createTransformHelpers(refs: MutableImportReference[], context: CompilerTransformContext): TransformHelpers {
   const ref: RefHelpers = {
     import(source, name, options = {}) {
       const next = createImportReference(source, name, options);
@@ -853,13 +831,13 @@ function createCreateHelpers(): CreateHelpers {
   };
 }
 
-function createEditHelpers(context: CompilerContext): EditHelpers {
+function createEditHelpers(context: CompilerTransformContext): EditHelpers {
   return {
     import: {
       rewrite(rules) {
         const options: ImportRewriteOptions = {
           rules,
-          configDir: context.configDir,
+          configDir: context.cwd,
           ...(context.outputFile ? { outputFile: context.outputFile } : {}),
         };
         return transformImports(options);
@@ -1108,7 +1086,10 @@ function editFunctionDeclaration(options: FunctionDeclarationEditOptions): Compi
   };
 }
 
-function materializeImportRefs(refs: readonly MutableImportReference[], context: CompilerContext): CompilerTransform {
+function materializeImportRefs(
+  refs: readonly MutableImportReference[],
+  context: CompilerTransformContext
+): CompilerTransform {
   return (transformContext) => {
     const factory = transformContext.factory;
     return (sourceFile) => {
@@ -1119,7 +1100,7 @@ function materializeImportRefs(refs: readonly MutableImportReference[], context:
           result,
           { source: ref.source, name: ref.name, default: ref.default, type: ref.type },
           factory,
-          ref.relativeTo === 'module' ? {} : context
+          ref.relativeTo === 'module' ? {} : { configDir: context.cwd, outputFile: context.outputFile }
         );
       }
       return result;

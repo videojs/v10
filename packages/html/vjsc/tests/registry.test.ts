@@ -17,12 +17,9 @@ const registry = createRegistry(schema.schema as Parameters<typeof createRegistr
 
 function compile(source: string, filename = '/project/src/view.tsx') {
   return transform(source, {
-    filename,
-    configDir: '/project',
-    config: {
-      target: html(),
-      plugins: [registryPlugin(registry)],
-    },
+    id: filename,
+    cwd: '/project',
+    plugins: [registryPlugin(registry), html()],
   });
 }
 

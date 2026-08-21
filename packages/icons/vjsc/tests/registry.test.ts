@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { html, jsx, transform } from 'vjsc';
+import { html, transform } from 'vjsc';
 import { defineComponent, defineSchema } from 'vjsc/components';
 import { registryPlugin } from 'vjsc/registry';
 import { createHtmlRegistry, createReactRegistry } from '../registry';
@@ -17,10 +17,7 @@ const source = `
 describe('icon registries', () => {
   it('maps canonical icons to the selected React family', async () => {
     const result = await transform(source, {
-      config: {
-        target: jsx(),
-        plugins: [registryPlugin(createReactRegistry(schema, { family: 'minimal' }))],
-      },
+      plugins: [registryPlugin(createReactRegistry(schema, { family: 'minimal' }))],
     });
 
     expect(result.code).toContain('import { PlayIcon } from "@videojs/react/icons/minimal";');
@@ -29,10 +26,7 @@ describe('icon registries', () => {
 
   it('maps canonical icons to the lazy HTML icon element', async () => {
     const result = await transform(source, {
-      config: {
-        target: html(),
-        plugins: [registryPlugin(createHtmlRegistry(schema, { family: 'minimal' }))],
-      },
+      plugins: [registryPlugin(createHtmlRegistry(schema, { family: 'minimal' })), html()],
     });
 
     expect(result.code).toContain('import "@videojs/html/icons/element/minimal";');

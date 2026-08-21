@@ -85,6 +85,7 @@ describe('defineRegistry', () => {
       props: { transform: baseTransform },
       primitives: { Group },
       types: () => ({ from: '@fixture/react', name: 'BaseNode' }),
+      imports: { base: '@fixture/base', shared: '@fixture/base-shared' },
     });
     const registry = extendRegistry(base, {
       schema: skinComponents,
@@ -94,6 +95,7 @@ describe('defineRegistry', () => {
       props: { transform: extensionTransform },
       primitives: { Text },
       types: () => ({ from: '@fixture/react', name: 'ExtensionNode' }),
+      imports: { extension: '@fixture/extension', shared: '@fixture/extension-shared' },
     });
 
     expect(registry.props?.transform).toBe(extensionTransform);
@@ -102,6 +104,20 @@ describe('defineRegistry', () => {
       from: '@fixture/react',
       name: 'ExtensionNode',
     });
+    expect(registry.imports).toEqual({
+      base: '@fixture/base',
+      extension: '@fixture/extension',
+      shared: '@fixture/extension-shared',
+    });
+  });
+
+  it('rejects incompatible framework outputs', () => {
+    const base = { ...defineRegistry({ schema, entries: fixtureEntries() }), output: 'jsx' as const };
+    const extension = { ...defineRegistry({ schema, entries: fixtureEntries() }), output: 'html' as const };
+
+    expect(() => extendRegistry(base, extension)).toThrow(
+      'Cannot extend a jsx component registry with a html registry'
+    );
   });
 });
 

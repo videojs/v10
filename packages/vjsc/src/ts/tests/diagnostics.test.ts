@@ -1,6 +1,6 @@
 import type ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { CompilerError, transform } from '../../index';
+import { CompilerError, transform, transformPlugin } from '../../index';
 import {
   DiagnosticError,
   diagnosticLocationFromNode,
@@ -8,7 +8,6 @@ import {
   formatCompilerDiagnosticJsonLine,
   formatDiagnosticSummaryJsonLine,
 } from '../diagnostics';
-import { jsx } from '../jsx';
 
 describe('formatCompilerDiagnostic', () => {
   it('renders a diagnostic code frame', () => {
@@ -89,7 +88,7 @@ describe('CompilerError diagnostics', () => {
   it('rejects syntax-invalid TSX before transforms run', async () => {
     try {
       await transform(`export function App( { return <Foo/> }`, {
-        filename: '/workspace/broken.tsx',
+        id: '/workspace/broken.tsx',
       });
       throw new Error('Expected transform to fail');
     } catch (error) {
@@ -106,62 +105,50 @@ describe('CompilerError diagnostics', () => {
 
   it('attributes reported and thrown failures to their plugin', async () => {
     const reported = await transform(`export const value = 1;`, {
-      filename: '/workspace/input.tsx',
-      config: {
-        plugins: [
-          {
-            name: 'fixture-report',
-            setup(context) {
-              context.report({ level: 'warning', code: 'fixture-warning', message: 'Check this' });
-              return {};
-            },
+      id: '/workspace/input.tsx',
+      plugins: [
+        {
+          name: 'fixture-report',
+          transform(_module, context) {
+            context.report({ level: 'warning', code: 'fixture-warning', message: 'Check this' });
+            return null;
           },
-        ],
-      },
+        },
+      ],
     });
     expect(reported.diagnostics[0]?.plugin).toBe('fixture-report');
 
     const failingPlugin = {
       name: 'fixture-transform',
-      setup() {
-        return {
-          transform: () => () => {
-            throw new Error('Transform failed');
-          },
-        };
+      transform() {
+        throw new Error('Transform failed');
       },
     };
     await expect(
       transform(`export const value = 1;`, {
-        filename: '/workspace/input.tsx',
-        config: { plugins: [failingPlugin] },
+        id: '/workspace/input.tsx',
+        plugins: [failingPlugin],
       })
     ).rejects.toMatchObject({
       diagnostics: [expect.objectContaining({ message: 'Transform failed', plugin: 'fixture-transform' })],
     });
   });
 
-  it('attributes finish failures even when the plugin has no transform', async () => {
+  it('attributes async transform failures even when no AST was produced', async () => {
     await expect(
       transform(`export const value = 1;`, {
-        filename: '/workspace/input.tsx',
-        config: {
-          plugins: [
-            {
-              name: 'fixture-finish',
-              setup() {
-                return {
-                  finish() {
-                    throw new Error('Finish failed');
-                  },
-                };
-              },
+        id: '/workspace/input.tsx',
+        plugins: [
+          {
+            name: 'fixture-async',
+            async transform() {
+              throw new Error('Async transform failed');
             },
-          ],
-        },
+          },
+        ],
       })
     ).rejects.toMatchObject({
-      diagnostics: [expect.objectContaining({ message: 'Finish failed', plugin: 'fixture-finish' })],
+      diagnostics: [expect.objectContaining({ message: 'Async transform failed', plugin: 'fixture-async' })],
     });
   });
 
@@ -175,8 +162,8 @@ describe('CompilerError diagnostics', () => {
 
     try {
       await transform(`export function App(){ return <Foo/>; }`, {
-        filename: '/workspace/skin.tsx',
-        config: { target: jsx({ transforms: [failingTransform()] }) },
+        id: '/workspace/skin.tsx',
+        plugins: [transformPlugin('fixture-transform', failingTransform())],
       });
       throw new Error('Expected transform to fail');
     } catch (error) {
