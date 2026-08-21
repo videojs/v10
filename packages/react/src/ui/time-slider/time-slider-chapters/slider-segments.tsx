@@ -10,7 +10,7 @@ import { Fragment, forwardRef, useMemo, useState } from 'react';
 
 import type { HTMLProps, UIComponentProps } from '../../../utils/types';
 import { renderElement } from '../../../utils/use-render';
-import { useSliderContext, useSliderPointerValue } from '../../slider/context';
+import { useSliderContext, useSliderMotion } from '../../slider/context';
 
 type SegmentProps = Omit<HTMLProps<HTMLElement>, 'ref'>;
 
@@ -26,7 +26,7 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
   function SliderSegments(componentProps, ref) {
     const { ranges, min, max, renderSegment, render, className, style, ...elementProps } = componentProps;
     const slider = useSliderContext();
-    const pointerValue = useSliderPointerValue();
+    const { pointerValue } = useSliderMotion();
     const [core] = useState(() => new SliderSegmentsCore());
     const geometry = useMemo(
       () => core.getGeometry({ ranges, min, max, orientation: slider.state.orientation }),

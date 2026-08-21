@@ -67,6 +67,9 @@ The base Slider provides a generic range input. It manages value, pointer tracki
 
 The slider supports vertical orientation via the `orientation` prop (defaults to `"horizontal"`).
 
+<FrameworkCase frameworks={["react"]}>
+  Slider `render`, `className`, and `style` callbacks receive semantic state such as `value`, `fillPercent`, and interaction flags. They do not receive the high-frequency `pointerPercent` field. Custom preview content that must follow pointer movement can opt in with <DocsLink slug="reference/use-slider-motion">`useSliderMotion`</DocsLink>.
+</FrameworkCase>
 
 ## Styling
 

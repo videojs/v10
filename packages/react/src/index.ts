@@ -114,7 +114,14 @@ export { Gesture, type GestureProps, MediaGesture, type MediaGestureProps } from
 export { type UseDoubleTapGestureOptions, useDoubleTapGesture } from './ui/gesture/use-doubletap-gesture';
 export { type UseTapGestureOptions, useTapGesture } from './ui/gesture/use-tap-gesture';
 export { useButton } from './ui/hooks/use-button';
-export { useSlider } from './ui/hooks/use-slider';
+export {
+  type SliderInteractionState,
+  type SliderMotionState,
+  type SliderRenderState,
+  type UseSliderOptions,
+  type UseSliderReturnValue,
+  useSlider,
+} from './ui/hooks/use-slider';
 export { Hotkey, type HotkeyProps, MediaHotkey, type MediaHotkeyProps } from './ui/hotkey/hotkey';
 export { type UseHotkeyOptions, useHotkey } from './ui/hotkey/use-hotkey';
 export { useHotkeyShortcut } from './ui/hotkey/use-hotkey-shortcut';
@@ -155,6 +162,7 @@ export { SeekIndicator } from './ui/seek-indicator';
 export type { SeekIndicatorRootProps } from './ui/seek-indicator/seek-indicator-root';
 export type { SeekIndicatorValueProps } from './ui/seek-indicator/seek-indicator-value';
 export { Slider } from './ui/slider';
+export { type SliderMotionValue, useSliderMotion } from './ui/slider/context';
 export type { SliderBufferProps } from './ui/slider/slider-buffer';
 export type { SliderFillProps } from './ui/slider/slider-fill';
 export type { SliderRootProps } from './ui/slider/slider-root';

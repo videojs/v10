@@ -1,19 +1,24 @@
-import type { SliderInput, SliderState, StateAttrMap } from '@videojs/core';
+import type { StateAttrMap } from '@videojs/core';
 import type { SliderThumbProps } from '@videojs/core/dom';
 import type { State } from '@videojs/store';
 import type { ProviderProps, RefCallback } from 'react';
-import { createContext, useContext, useSyncExternalStore } from 'react';
+import { createContext, useCallback, useContext, useSyncExternalStore } from 'react';
+import type { SliderMotionState, SliderRenderState } from '../hooks/use-slider';
+
+/** Live slider motion exposed to components that explicitly subscribe with `useSliderMotion`. */
+export interface SliderMotionValue extends SliderMotionState {
+  /** Pointer position converted from percent into the slider's value domain. */
+  pointerValue: number;
+}
 
 export interface SliderContextValue {
-  state: SliderState;
-  /** Pointer position converted to the value domain (not 0–100 percent). */
-  pointerValue: number;
-  input?: State<SliderInput> | undefined;
-  getPointerValue?: ((percent: number) => number) | undefined;
+  state: SliderRenderState;
+  motion: State<SliderMotionState>;
+  getPointerValue: (percent: number) => number;
   thumbRef: RefCallback<HTMLElement>;
   thumbProps: SliderThumbProps;
-  stateAttrMap: StateAttrMap<SliderState>;
-  getAttrs: (state: SliderState) => object;
+  stateAttrMap: StateAttrMap<SliderRenderState>;
+  getAttrs: (state: SliderRenderState, pointer: Pick<SliderMotionValue, 'pointerPercent' | 'pointerValue'>) => object;
   formatValue?: ((value: number, type: 'current' | 'pointer') => string) | undefined;
 }
 
@@ -31,12 +36,24 @@ export function useSliderContext(): SliderContextValue {
   return ctx;
 }
 
-export function useSliderPointerValue(enabled = true): number {
+/**
+ * Subscribe to high-frequency pointer and drag positions for a slider part.
+ *
+ * Ordinary slider render callbacks receive semantic state only. Use this hook
+ * inside a `Slider.Root` when custom preview content must follow pointer motion.
+ */
+export function useSliderMotion(): SliderMotionValue {
   const context = useSliderContext();
-  const percent = useSyncExternalStore(
-    (onChange) => context.input?.subscribe(onChange) ?? (() => {}),
-    () => (enabled ? (context.input?.current.pointerPercent ?? null) : null),
-    () => (enabled ? (context.input?.current.pointerPercent ?? null) : null)
+  const subscribe = useCallback((onChange: () => void) => context.motion.subscribe(onChange), [context.motion]);
+  const motion = useSyncExternalStore(
+    subscribe,
+    () => context.motion.current,
+    () => context.motion.current
   );
-  return percent === null ? context.pointerValue : (context.getPointerValue?.(percent) ?? context.pointerValue);
+
+  return {
+    pointerPercent: motion.pointerPercent,
+    dragPercent: motion.dragPercent,
+    pointerValue: context.getPointerValue(motion.pointerPercent),
+  };
 }

@@ -1,0 +1,33 @@
+---
+title: useSliderMotion
+description: Subscribe a React slider part to live pointer and drag positions
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useSliderMotion } from '@videojs/react';
+```
+
+## Usage
+
+Call `useSliderMotion` inside a `Slider.Root`, `TimeSlider.Root`, or `VolumeSlider.Root` when custom content must follow pointer motion. The hook returns `pointerPercent`, `dragPercent`, and `pointerValue`, which is converted into the root slider's value domain.
+
+```tsx
+function PointerReadout() {
+  const { pointerValue } = useSliderMotion();
+  return <output>{Math.round(pointerValue)}</output>;
+}
+
+<Slider.Root>
+  <Slider.Preview>
+    <PointerReadout />
+  </Slider.Preview>
+</Slider.Root>;
+```
+
+Slider `render`, `className`, and `style` callbacks receive semantic render state and do not subscribe to pointer motion. Keep ordinary parts on that channel, and use `useSliderMotion` only for previews or other content that must update on every pointer move.
+
+<UtilReference util="useSliderMotion" />

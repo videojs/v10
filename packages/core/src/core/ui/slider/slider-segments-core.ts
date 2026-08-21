@@ -85,7 +85,11 @@ export class SliderSegmentsCore {
     });
   }
 
-  getState(segment: SliderSegmentGeometry, slider: SliderState, pointerValue: number): SliderSegmentState {
+  getState<Slider extends Pick<SliderState, 'value' | 'pointing' | 'dragging' | 'interactive'>>(
+    segment: SliderSegmentGeometry,
+    slider: Slider,
+    pointerValue: number
+  ): SliderSegmentState {
     const { last, ...geometry } = segment;
     const contains = (value: number): boolean =>
       value >= segment.start && (value < segment.end || (last && value === segment.end));

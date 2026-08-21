@@ -1,6 +1,6 @@
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderBuffer } from '../slider-buffer';
@@ -10,7 +10,24 @@ import { SliderThumb } from '../slider-thumb';
 import { SliderTrack } from '../slider-track';
 import { SliderValue } from '../slider-value';
 
-const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
+const resizeObservers: { callback: ResizeObserverCallback }[] = [];
+
+beforeAll(() => {
+  globalThis.ResizeObserver = class ResizeObserver {
+    readonly callback: ResizeObserverCallback;
+
+    constructor(callback: ResizeObserverCallback) {
+      this.callback = callback;
+      resizeObservers.push(this);
+    }
+
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof globalThis.ResizeObserver;
+});
+
+const { mockSliderApi, mockSliderInput, sliderInputListeners, sliderOptionsRef } = vi.hoisted(() => {
   const sliderOptionsRef: {
     current:
       | {
@@ -19,8 +36,18 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
         }
       | undefined;
   } = { current: undefined };
+  const sliderInputListeners = new Set<() => void>();
+  const mockSliderInput = {
+    pointerPercent: 0,
+    dragPercent: 0,
+    dragging: false,
+    pointing: false,
+    focused: false,
+  };
 
   return {
+    mockSliderInput,
+    sliderInputListeners,
     sliderOptionsRef,
     mockSliderApi: (options?: {
       getElement?: () => HTMLElement;
@@ -33,14 +60,11 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
 
       return {
         input: {
-          current: {
-            pointerPercent: 0,
-            dragPercent: 0,
-            dragging: false,
-            pointing: false,
-            focused: false,
-          },
-          subscribe: vi.fn(() => vi.fn()),
+          current: mockSliderInput,
+          subscribe: vi.fn((callback: () => void) => {
+            sliderInputListeners.add(callback);
+            return () => sliderInputListeners.delete(callback);
+          }),
         },
         rootProps: {
           onPointerDown: vi.fn(),
@@ -86,7 +110,18 @@ vi.mock('@videojs/store/react', () => ({
   ),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  resizeObservers.length = 0;
+  sliderInputListeners.clear();
+  Object.assign(mockSliderInput, {
+    pointerPercent: 0,
+    dragPercent: 0,
+    dragging: false,
+    pointing: false,
+    focused: false,
+  });
+});
 
 describe('SliderRoot', () => {
   it('renders a div element', () => {
@@ -124,6 +159,42 @@ describe('SliderRoot', () => {
 
     expect(el.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
+  });
+
+  it('exposes semantic render state without pointer motion', () => {
+    const renderState = vi.fn();
+    render(
+      <SliderRoot
+        value={50}
+        className={(state) => {
+          expectTypeOf(state).toEqualTypeOf<SliderRoot.State>();
+          // @ts-expect-error Pointer motion requires useSliderMotion().
+          state.pointerPercent;
+          renderState(state);
+          return undefined;
+        }}
+      />
+    );
+
+    expect(renderState).toHaveBeenCalledWith(expect.objectContaining({ value: 50, fillPercent: 50, dragging: false }));
+    expect(renderState.mock.calls[0]?.[0]).not.toHaveProperty('pointerPercent');
+    expect(renderState.mock.calls[0]?.[0]).not.toHaveProperty('dragPercent');
+  });
+
+  it('imperatively binds pointer motion without rewriting React-owned fill', () => {
+    const { container } = render(<SliderRoot value={50} />);
+    const root = container.firstElementChild as HTMLElement;
+
+    expect(root.style.getPropertyValue('--media-slider-fill')).toBe('50.000%');
+    expect(root.style.getPropertyValue('--media-slider-pointer')).toBe('0.000%');
+
+    act(() => {
+      mockSliderInput.pointerPercent = 75;
+      for (const listener of sliderInputListeners) listener();
+    });
+
+    expect(root.style.getPropertyValue('--media-slider-pointer')).toBe('75.000%');
+    expect(root.style.getPropertyValue('--media-slider-fill')).toBe('50.000%');
   });
 
   it('holds a controls visibility lock for the duration of a drag', () => {
@@ -304,7 +375,7 @@ describe('thumbAlignment', () => {
   });
 
   it('adjusts CSS vars for edge alignment', () => {
-    const { container, rerender } = render(
+    const { container } = render(
       <SliderRoot value={0} thumbAlignment="edge">
         <SliderThumb />
       </SliderRoot>
@@ -317,19 +388,17 @@ describe('thumbAlignment', () => {
     Object.defineProperty(root, 'offsetWidth', { value: 200, configurable: true });
     Object.defineProperty(thumb, 'offsetWidth', { value: 20, configurable: true });
 
-    // Re-render so the root reads the now-available element measurements.
-    rerender(
-      <SliderRoot value={0} thumbAlignment="edge">
-        <SliderThumb />
-      </SliderRoot>
-    );
+    act(() => {
+      const observer = resizeObservers.at(-1)!;
+      observer.callback([], observer as unknown as ResizeObserver);
+    });
 
     // thumbHalf = (20/200 * 100) / 2 = 5%.  Adjusted 0% → 5%.
     expect(root.style.getPropertyValue('--media-slider-fill')).toBe('5.000%');
   });
 
   it('adjusts CSS vars at max value for edge alignment', () => {
-    const { container, rerender } = render(
+    const { container } = render(
       <SliderRoot value={100} thumbAlignment="edge">
         <SliderThumb />
       </SliderRoot>
@@ -341,14 +410,62 @@ describe('thumbAlignment', () => {
     Object.defineProperty(root, 'offsetWidth', { value: 200, configurable: true });
     Object.defineProperty(thumb, 'offsetWidth', { value: 20, configurable: true });
 
-    rerender(
-      <SliderRoot value={100} thumbAlignment="edge">
-        <SliderThumb />
-      </SliderRoot>
-    );
+    act(() => {
+      const observer = resizeObservers.at(-1)!;
+      observer.callback([], observer as unknown as ResizeObserver);
+    });
 
     // thumbHalf = 5%.  Adjusted 100% → 95%.
     expect(root.style.getPropertyValue('--media-slider-fill')).toBe('95.000%');
+  });
+
+  it('updates edge alignment when the root or thumb resizes', () => {
+    const { container } = render(
+      <SliderRoot value={0} thumbAlignment="edge">
+        <SliderThumb />
+      </SliderRoot>
+    );
+    const root = container.firstElementChild as HTMLElement;
+    const thumb = root.querySelector('[role="slider"]') as HTMLElement;
+
+    Object.defineProperty(root, 'offsetWidth', { value: 200, configurable: true });
+    Object.defineProperty(thumb, 'offsetWidth', { value: 20, configurable: true });
+
+    act(() => {
+      const observer = resizeObservers.at(-1)!;
+      observer.callback([], observer as unknown as ResizeObserver);
+    });
+    expect(root.style.getPropertyValue('--media-slider-fill')).toBe('5.000%');
+
+    Object.defineProperty(root, 'offsetWidth', { value: 100, configurable: true });
+    act(() => {
+      const observer = resizeObservers.at(-1)!;
+      observer.callback([], observer as unknown as ResizeObserver);
+    });
+    expect(root.style.getPropertyValue('--media-slider-fill')).toBe('10.000%');
+  });
+
+  it('updates pointer alignment when alignment props change', () => {
+    const { container, rerender } = render(
+      <SliderRoot value={0} thumbAlignment="center">
+        <SliderThumb />
+      </SliderRoot>
+    );
+    const root = container.firstElementChild as HTMLElement;
+    const thumb = root.querySelector('[role="slider"]') as HTMLElement;
+
+    Object.defineProperty(root, 'offsetWidth', { value: 200, configurable: true });
+    Object.defineProperty(thumb, 'offsetWidth', { value: 20, configurable: true });
+    expect(resizeObservers).toHaveLength(0);
+    expect(root.style.getPropertyValue('--media-slider-pointer')).toBe('0.000%');
+
+    rerender(
+      <SliderRoot value={0} thumbAlignment="edge">
+        <SliderThumb />
+      </SliderRoot>
+    );
+    expect(resizeObservers).toHaveLength(1);
+    expect(root.style.getPropertyValue('--media-slider-pointer')).toBe('5.000%');
   });
 });
 

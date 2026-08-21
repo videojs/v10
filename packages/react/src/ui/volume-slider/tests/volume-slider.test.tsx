@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderFill } from '../../slider/slider-fill';
@@ -11,7 +11,7 @@ import { VolumeSliderRoot } from '../volume-slider-root';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
-const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
+const { mockSliderApi, mockSliderInput, mockVolumeState, mutableVolume } = vi.hoisted(() => {
   const volumeState = {
     volume: 0.8,
     muted: false,
@@ -19,17 +19,19 @@ const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
     setVolume: vi.fn(),
     toggleMuted: vi.fn(),
   };
+  const mockSliderInput = {
+    pointerPercent: 0,
+    dragPercent: 0,
+    dragging: false,
+    pointing: false,
+    focused: false,
+  };
 
   return {
+    mockSliderInput,
     mockSliderApi: () => ({
       input: {
-        current: {
-          pointerPercent: 0,
-          dragPercent: 0,
-          dragging: false,
-          pointing: false,
-          focused: false,
-        },
+        current: mockSliderInput,
         subscribe: vi.fn(() => vi.fn()),
       },
       rootProps: {
@@ -89,6 +91,13 @@ afterEach(() => {
   mutableVolume.current = mockVolumeState;
   mockVolumeState.setVolume.mockClear();
   mockVolumeState.toggleMuted.mockClear();
+  Object.assign(mockSliderInput, {
+    pointerPercent: 0,
+    dragPercent: 0,
+    dragging: false,
+    pointing: false,
+    focused: false,
+  });
 });
 
 // --- Tests ---
@@ -166,6 +175,32 @@ describe('VolumeSliderRoot', () => {
     expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
   });
+
+  it('keeps React render value aligned with media volume while dragging', () => {
+    mockSliderInput.dragging = true;
+    mockSliderInput.dragPercent = 20;
+    const renderState = vi.fn();
+    const { Wrapper } = createPlayerWrapper();
+    render(
+      <Wrapper>
+        <VolumeSliderRoot
+          className={(state) => {
+            expectTypeOf(state.volume).toBeNumber();
+            expectTypeOf(state.value).toBeNumber();
+            // @ts-expect-error Pointer motion requires useSliderMotion().
+            state.pointerPercent;
+            renderState(state);
+            return undefined;
+          }}
+        />
+      </Wrapper>
+    );
+
+    expect(renderState).toHaveBeenCalledWith(
+      expect.objectContaining({ volume: 0.8, value: 80, fillPercent: 80, dragging: true })
+    );
+    expect(renderState.mock.calls[0]?.[0]).not.toHaveProperty('pointerPercent');
+  });
 });
 
 describe('VolumeSlider compound', () => {
@@ -221,6 +256,55 @@ describe('VolumeSlider compound', () => {
 });
 
 describe('VolumeSliderRoot wheel handling', () => {
+  it('keeps one effective wheel listener across renders and removes it on unmount', () => {
+    const activeListeners = new Set<EventListenerOrEventListenerObject>();
+    const originalAdd = HTMLDivElement.prototype.addEventListener;
+    const originalRemove = HTMLDivElement.prototype.removeEventListener;
+
+    HTMLDivElement.prototype.addEventListener = function (
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | AddEventListenerOptions
+    ) {
+      if (type === 'wheel' && typeof options === 'object' && options.passive === false) {
+        activeListeners.add(listener);
+      }
+      return originalAdd.call(this, type, listener, options);
+    };
+    HTMLDivElement.prototype.removeEventListener = function (
+      type: string,
+      listener: EventListenerOrEventListenerObject,
+      options?: boolean | EventListenerOptions
+    ) {
+      if (type === 'wheel') activeListeners.delete(listener);
+      return originalRemove.call(this, type, listener, options);
+    };
+
+    try {
+      const { Wrapper } = createPlayerWrapper();
+      const view = render(
+        <Wrapper>
+          <VolumeSliderRoot label="First" />
+        </Wrapper>
+      );
+
+      expect(activeListeners).toHaveLength(1);
+
+      view.rerender(
+        <Wrapper>
+          <VolumeSliderRoot label="Second" />
+        </Wrapper>
+      );
+      expect(activeListeners).toHaveLength(1);
+
+      view.unmount();
+      expect(activeListeners).toHaveLength(0);
+    } finally {
+      HTMLDivElement.prototype.addEventListener = originalAdd;
+      HTMLDivElement.prototype.removeEventListener = originalRemove;
+    }
+  });
+
   it('attaches a non-passive wheel listener on the root element', () => {
     // Capture the raw options before jsdom normalizes them.
     const capturedOptions: AddEventListenerOptions[] = [];

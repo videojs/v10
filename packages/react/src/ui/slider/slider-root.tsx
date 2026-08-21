@@ -2,14 +2,16 @@ import { SliderCore, SliderDataAttrs } from '@videojs/core';
 import { getSliderCSSVars } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import type { ForwardedRef } from 'react';
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useSlider } from '../hooks/use-slider';
+import { type SliderRenderState, useSlider } from '../hooks/use-slider';
 import { SliderProvider } from './context';
 
-export interface SliderRootProps extends UIComponentProps<'div', SliderCore.State>, SliderCore.Props {
+export interface SliderRootProps
+  extends UIComponentProps<'div', SliderRenderState<SliderCore.State>>,
+    SliderCore.Props {
   onValueChange?: ((value: number) => void) | undefined;
   onValueCommit?: ((value: number) => void) | undefined;
   onDragStart?: (() => void) | undefined;
@@ -40,13 +42,12 @@ export const SliderRoot = forwardRef(function SliderRoot(
     ...elementProps
   } = componentProps;
 
-  const [core] = useState(() => new SliderCore());
   const translator = useTranslator();
-  core.setProps({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
+  const core = new SliderCore({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
 
   const {
     state,
-    input,
+    motion,
     cssVars,
     rootRef,
     thumbRef: sliderThumbRef,
@@ -55,7 +56,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
     thumbProps,
   } = useSlider({
     computeState: (input) => {
-      core.setInput(input);
+      core.setInput({ ...SliderCore.defaultInput, ...input });
       return core.getSliderState(value);
     },
     getPercent: () => core.percentFromValue(value),
@@ -63,6 +64,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
     getLargeStepPercent: () => core.getLargeStepPercent(),
     orientation,
     disabled,
+    thumbAlignment,
     adjustPercent: (rawPercent, thumbSize, trackSize) =>
       core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
     getCSSVars: getSliderCSSVars,
@@ -76,14 +78,17 @@ export const SliderRoot = forwardRef(function SliderRoot(
     <SliderProvider
       value={{
         state,
-        pointerValue: core.valueFromPercent(state.pointerPercent),
-        input,
+        motion,
         getPointerValue: (percent) => core.valueFromPercent(percent),
         thumbRef: sliderThumbRef,
         thumbProps,
         stateAttrMap: SliderDataAttrs,
-        getAttrs: (sliderState) => {
-          const attrs = core.getAttrs(sliderState);
+        getAttrs: (sliderState, sliderMotion) => {
+          const attrs = core.getAttrs({
+            ...sliderState,
+            pointerPercent: sliderMotion.pointerPercent,
+            value: sliderState.dragging ? sliderMotion.pointerValue : sliderState.value,
+          });
           return { ...attrs, 'aria-label': translateText(attrs['aria-label'], translator) };
         },
         formatValue: undefined,
@@ -105,5 +110,5 @@ export const SliderRoot = forwardRef(function SliderRoot(
 
 export namespace SliderRoot {
   export type Props = SliderRootProps;
-  export type State = SliderCore.State;
+  export type State = SliderRenderState<SliderCore.State>;
 }

@@ -6,7 +6,7 @@ import { forwardRef, useMemo, useState } from 'react';
 import { usePlayer } from '../../../player/context';
 import type { UIComponentProps } from '../../../utils/types';
 import { renderElement } from '../../../utils/use-render';
-import { useSliderContext, useSliderPointerValue } from '../../slider/context';
+import { useSliderContext, useSliderMotion } from '../../slider/context';
 
 export interface TimeSliderChapterTitleState {
   /** Chapter at the current interaction value. */
@@ -22,7 +22,7 @@ export const TimeSliderChapterTitle = forwardRef<HTMLSpanElement, TimeSliderChap
   function TimeSliderChapterTitle(componentProps, ref) {
     const { render, className, style, ...elementProps } = componentProps;
     const slider = useSliderContext();
-    const pointerValue = useSliderPointerValue();
+    const { pointerValue } = useSliderMotion();
     const textTrack = usePlayer(selectTextTrack);
     const time = usePlayer(selectTime);
     const [core] = useState(() => new TimeSliderChaptersCore());

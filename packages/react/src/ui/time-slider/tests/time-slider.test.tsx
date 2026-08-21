@@ -2,7 +2,7 @@ import { cleanup, render } from '@testing-library/react';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { HTMLAttributes } from 'react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
@@ -191,6 +191,30 @@ describe('TimeSliderRoot', () => {
     expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-buffer')).toBeTruthy();
+  });
+
+  it('exposes semantic time state without pointer motion', () => {
+    const renderState = vi.fn();
+    const { Wrapper } = createPlayerWrapper();
+    render(
+      <Wrapper>
+        <TimeSliderRoot
+          className={(state) => {
+            expectTypeOf(state.currentTime).toBeNumber();
+            expectTypeOf(state.bufferPercent).toBeNumber();
+            // @ts-expect-error Pointer motion requires useSliderMotion().
+            state.pointerPercent;
+            renderState(state);
+            return undefined;
+          }}
+        />
+      </Wrapper>
+    );
+
+    expect(renderState).toHaveBeenCalledWith(
+      expect.objectContaining({ currentTime: 30, bufferPercent: 50, dragging: false })
+    );
+    expect(renderState.mock.calls[0]?.[0]).not.toHaveProperty('pointerPercent');
   });
 });
 
