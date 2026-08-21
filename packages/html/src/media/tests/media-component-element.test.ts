@@ -17,11 +17,11 @@ class FakeComponent implements MediaComponent {
 class TestMediaProvider extends MediaElement {
   readonly #provider = new ContextProvider(this, {
     context: mediaContext,
-    initialValue: { media: null, setMedia: () => {} },
+    initialValue: { media: null, registerMedia: () => () => {} },
   });
 
   setMedia(media: Media | null) {
-    this.#provider.setValue({ media, setMedia: () => {} });
+    this.#provider.setValue({ media, registerMedia: () => () => {} });
   }
 }
 

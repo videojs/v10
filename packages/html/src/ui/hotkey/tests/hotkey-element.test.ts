@@ -50,7 +50,7 @@ describe('AriaKeyShortcutsController', () => {
       context: containerContext,
       initialValue: {
         container: this,
-        setContainer: () => {},
+        registerContainer: () => () => {},
       },
     });
   }

@@ -22,7 +22,7 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: videoFeatures });
 
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
-    // @ts-expect-error ContainerMixin is imported from the package root, not created per player.
+    // @ts-expect-error ContainerMixin is no longer part of the HTML API.
     result.ContainerMixin;
   });
 

@@ -31,7 +31,7 @@ export const MEDIA_CONTEXT_KEY = Symbol.for('@videojs/media');
 
 export interface MediaContextValue {
   media: Media | null;
-  setMedia: (media: Media | null) => void;
+  registerMedia: (media: Media) => () => void;
 }
 
 export type MediaContext = Context<typeof MEDIA_CONTEXT_KEY, MediaContextValue>;
@@ -46,7 +46,7 @@ export const CONTAINER_CONTEXT_KEY = Symbol.for('@videojs/container');
 
 export interface ContainerContextValue {
   container: MediaContainer | null;
-  setContainer: (container: MediaContainer | null) => void;
+  registerContainer: (container: MediaContainer) => () => void;
 }
 
 export type ContainerContext = Context<typeof CONTAINER_CONTEXT_KEY, ContainerContextValue>;

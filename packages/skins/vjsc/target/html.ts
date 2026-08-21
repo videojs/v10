@@ -225,7 +225,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
 function htmlElementTarget(name: string, element: ComponentTargetHelpers<CoreSchema>['element']) {
   const publicName = publicNames[name] ?? kebabCase(name === 'MediaContainer' ? 'container' : name);
   const moduleName = groupedModules[name] ?? publicName;
-  const source = name === 'MediaContainer' ? `@videojs/html/media/${moduleName}` : `@videojs/html/ui/${moduleName}`;
+  const source = `@videojs/html/ui/${moduleName}`;
 
   return element(`media-${publicName}`, { import: { from: source, sideEffect: true } });
 }

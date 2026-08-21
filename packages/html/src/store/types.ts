@@ -16,13 +16,3 @@ export type PlayerProvider<Store extends PlayerStore> = MediaElement &
   };
 
 export interface PlayerProviderConstructor<Store extends PlayerStore> extends Constructor<PlayerProvider<Store>> {}
-
-// ----------------------------------------
-// PlayerConsumer
-// ----------------------------------------
-
-export interface PlayerConsumer<Store extends PlayerStore> extends MediaElement {
-  readonly store: Store | null;
-}
-
-export interface PlayerConsumerConstructor<Store extends PlayerStore> extends Constructor<PlayerConsumer<Store>> {}

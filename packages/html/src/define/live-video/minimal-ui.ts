@@ -3,11 +3,11 @@
 // this entry when building an ejected (light DOM) player layout for live
 // HLS / DASH streams.
 import { AirPlayButtonElement } from '@/ui/airplay-button/airplay-button-element';
-import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
 import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
 import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
+import { ContainerElement } from '../../ui/container/container-element';
 import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-button-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
@@ -35,7 +35,7 @@ import { LiveVideoPlayerElement } from './player';
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(LiveVideoPlayerElement);
-safeDefine(MediaContainerElement);
+safeDefine(ContainerElement);
 
 // Compound groups.
 defineControls();

@@ -54,7 +54,7 @@ class TestStatusAnnouncerPlayerElement extends MediaElement {
 
   override connectedCallback(): void {
     this.#provider.setValue(this.#store);
-    this.#containerProvider.setValue({ container: this, setContainer: vi.fn() });
+    this.#containerProvider.setValue({ container: this, registerContainer: () => vi.fn() });
     super.connectedCallback();
   }
 }
