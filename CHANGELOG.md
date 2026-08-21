@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.31] - 2026-08-21
+
+### 🚀 Features
+- *(packages)* Add live presets to installation and skin tools ([#1919](https://github.com/videojs/v10/pull/1919)) by [@decepulis](https://github.com/decepulis)
+- *(packages)* Add right-to-left player support ([#2281](https://github.com/videojs/v10/pull/2281)) by [@sampotts](https://github.com/sampotts)
+
+### 📚 Documentation
+- *(site)* Reconcile metadata docs with the rest of the merged stack ([#2294](https://github.com/videojs/v10/pull/2294)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add changelog prose for 10.0.0-beta.30 ([#2296](https://github.com/videojs/v10/pull/2296)) by [@github-actions[bot]](https://github.com/github-actions[bot])
+- *(site)* Document the embed providers and Shaka, and generate engine options ([#2293](https://github.com/videojs/v10/pull/2293)) by [@decepulis](https://github.com/decepulis)
+
 ## [@videojs/core@10.0.0-beta.30] - 2026-08-20
 
 ### 🚀 Features
@@ -1727,6 +1738,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.31]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.30...@videojs/core@10.0.0-beta.31
 [@videojs/core@10.0.0-beta.30]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.29...@videojs/core@10.0.0-beta.30
 [@videojs/core@10.0.0-beta.29]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.28...@videojs/core@10.0.0-beta.29
 [@videojs/core@10.0.0-beta.28]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.27...@videojs/core@10.0.0-beta.28
