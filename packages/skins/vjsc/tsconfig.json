@@ -11,5 +11,5 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "../tsdown.vjsc.config.ts"]
+  "include": ["**/*.ts", "**/*.tsx", "../tsdown.shadcn.config.ts"]
 }

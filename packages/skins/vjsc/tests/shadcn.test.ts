@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { ShadcnRegistry } from 'vjsc/shadcn';
 
 const packageDir = resolve(import.meta.dirname, '../..');
-const configFile = resolve(packageDir, 'tsdown.vjsc.config.ts');
+const configFile = resolve(packageDir, 'tsdown.shadcn.config.ts');
 
 describe('Skins Shadcn registry', () => {
   it('emits editable React and Tailwind JSON without a synthetic runtime chunk', async () => {

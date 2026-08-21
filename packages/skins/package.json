@@ -26,7 +26,8 @@
     }
   },
   "scripts": {
-    "build": "tsdown && tsdown --config tsdown.vjsc.config.ts --config-loader unrun",
+    "build": "tsdown",
+    "build:shadcn": "tsdown --config tsdown.shadcn.config.ts --config-loader unrun",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "vite --host",
     "test": "pnpm run test:types && vitest run",
