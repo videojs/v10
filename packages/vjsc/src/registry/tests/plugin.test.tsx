@@ -56,20 +56,38 @@ function fixtureEntry(component: string, part?: string): RegistryEntryReference 
 
 describe('plugin', () => {
   it('selects one registry from module-aware resolvers', async () => {
-    const registry = defineRegistry({ schema: components, entries: fixtureEntries() });
+    const registry = defineRegistry({
+      schema: components,
+      entries: fixtureEntries(),
+      output: { mode: 'jsx', importSource: 'react' },
+    });
     const result = await transform(`import { PlayButton } from '@fixture/components'; <PlayButton />;`, {
       id: '/project/view.tsx?framework=react',
       plugins: [
         registryCompilerPlugin({
           registries: [
-            ({ id }) => (id.includes('framework=html') ? { ...registry, output: 'html' } : null),
+            ({ id }) => (id.includes('framework=html') ? { ...registry, output: { mode: 'html' } } : null),
             ({ id }) => (id.includes('framework=react') ? registry : null),
           ],
         }),
       ],
     });
 
+    expect(result.code).toMatch(/^\/\*\* @jsxImportSource react \*\//);
     expect(result.code).toContain('from "@fixture/react"');
+  });
+
+  it('does not declare a JSX runtime for modules without JSX', async () => {
+    const registry = defineRegistry({
+      schema: components,
+      entries: fixtureEntries(),
+      output: { mode: 'jsx', importSource: 'react' },
+    });
+    const result = await transform(`export const value = 1;`, {
+      plugins: [registryCompilerPlugin(registry)],
+    });
+
+    expect(result.code).not.toContain('@jsxImportSource');
   });
 
   it('skips modules with no matching registry and rejects ambiguous matches', async () => {
@@ -400,7 +418,7 @@ describe('plugin', () => {
         export const view = <PlayButton className="button" />;
       `,
       {
-        plugins: [compileRegistry(registry, { output: 'html' })],
+        plugins: [compileRegistry(registry, { output: { mode: 'html' } })],
       }
     );
 
@@ -601,7 +619,7 @@ describe('plugin', () => {
           </Tooltip.Root>
         );
       `,
-      { plugins: [compileRegistry(registry, { output: 'html' })] }
+      { plugins: [compileRegistry(registry, { output: { mode: 'html' } })] }
     );
     const triggerId = result.code.match(/<media-play-button[^>]*id="([^"]+)"/)?.[1];
 
@@ -638,7 +656,7 @@ describe('plugin', () => {
           <Tooltip.Popup>Content</Tooltip.Popup>
         </Tooltip.Root>;
       `,
-      { plugins: [compileRegistry(registry, { output: 'html' })] }
+      { plugins: [compileRegistry(registry, { output: { mode: 'html' } })] }
     );
 
     expect(result.code).toContain('<button>Open</button>');
@@ -659,7 +677,7 @@ describe('plugin', () => {
     });
     const compile = (children: string) =>
       transform(`import { Wrapper } from '@fixture/wrappers'; <Wrapper>${children}</Wrapper>;`, {
-        plugins: [compileRegistry(registry, { output: 'html' })],
+        plugins: [compileRegistry(registry, { output: { mode: 'html' } })],
       });
 
     await expect(compile('')).rejects.toThrow('exactly one concrete child host, received 0');
@@ -686,7 +704,7 @@ describe('plugin', () => {
           return <Wrapper>{children}</Wrapper>;
         }
       `,
-      { plugins: [compileRegistry(registry, { output: 'html' })] }
+      { plugins: [compileRegistry(registry, { output: { mode: 'html' } })] }
     );
 
     expect(result.code).toContain('import { Host as HtmlHost } from "vjsc/html-runtime/jsx-runtime";');
@@ -759,7 +777,7 @@ describe('plugin', () => {
     });
     const result = await transform(
       `import { PlayButton } from '@fixture/components'; <PlayButton className="button" />;`,
-      { plugins: [compileRegistry(registry, { output: 'html' })] }
+      { plugins: [compileRegistry(registry, { output: { mode: 'html' } })] }
     );
 
     expect(result.code).toContain('import "@fixture/html/icon";');

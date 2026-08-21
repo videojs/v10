@@ -6,8 +6,7 @@ import { type RolldownOutput, rolldown } from 'rolldown';
 import { registryItemSchema, registrySchema } from 'shadcn/schema';
 import { describe, expect, it } from 'vitest';
 
-import { type ComponentMeta, componentMetaPlugin } from '../../components';
-import { jsx } from '../../index';
+import type { ComponentMeta } from '../../components';
 import { shadcnPlugin, vjscPlugin } from '../../rolldown';
 import type { ShadcnItem, ShadcnPluginOptions } from '../index';
 
@@ -196,7 +195,6 @@ async function build(
   const transform = vjscPlugin({
     include: /\.[cm]?[jt]sx?(?:\?|$)/,
     ignore: ({ parameters }) => !parameters.has('framework'),
-    plugins: [componentMetaPlugin(), jsx({ importSource: 'react' })],
   });
   const output = shadcnPlugin({ root, ...options });
   const plugins = order.map((plugin) => (plugin === 'vjsc' ? transform : plugin === 'shadcn' ? output : plugin));
@@ -258,7 +256,7 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
 }
 
 function meta(name: string, type: FixtureMeta['type'] = 'component'): string {
-  return `export const meta = { name: '${name}', type: '${type}', title: '${name}', description: '${name}.' } as const;`;
+  return `/** @jsxImportSource react */\nexport const meta = { name: '${name}', type: '${type}', title: '${name}', description: '${name}.' } as const;`;
 }
 
 function setup(files: Readonly<Record<string, string>>): string {

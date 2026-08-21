@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
-import { createSchemaModule, html, transform } from 'vjsc';
+import { createSchemaModule, transform } from 'vjsc';
 import { registryPlugin } from 'vjsc/registry';
 import createRegistry from '../registry';
 
@@ -19,7 +19,7 @@ function compile(source: string, filename = '/project/src/view.tsx') {
   return transform(source, {
     id: filename,
     cwd: '/project',
-    plugins: [registryPlugin(registry), html()],
+    plugins: [registryPlugin(registry)],
   });
 }
 
@@ -37,6 +37,7 @@ describe('registry', () => {
     `);
     const contentId = result.code.match(/<media-menu[^>]*id="([^"]+)"/)?.[1];
 
+    expect(result.code).toMatch(/^\/\*\* @jsxImportSource vjsc\/html-runtime \*\//);
     expect(contentId).toBeDefined();
     expect(result.code).toContain(`<button commandfor="${contentId}">Settings</button>`);
     expect(result.code).toContain(`<media-menu id="${contentId}" side="top">Content</media-menu>`);

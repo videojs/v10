@@ -30,7 +30,6 @@ export {
 } from './edits';
 export { hasChild } from './matchers/has-child';
 export { anyTag, byTag, type JsxElementLike, type Matcher, tagName } from './matchers/tag';
-export { html, type JsxPluginOptions, jsx } from './plugin';
 export { type AddPropImportRef, type AddPropOptions, addProp } from './transforms/add-prop';
 export { type ChildAsPropOptions, childAsProp } from './transforms/child-as-prop';
 export {

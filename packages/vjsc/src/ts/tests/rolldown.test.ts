@@ -39,6 +39,25 @@ const createCssPlugin = (source: string): CompilerPlugin => ({
 });
 
 describe('vjscPlugin', () => {
+  it('captures component metadata and watches projected source by default', async () => {
+    const context = createContext();
+    const plugin = createPlugin({ ignore: () => false });
+    const result = await plugin.transform.call(
+      context,
+      `export const meta = { name: 'play' };\nexport const Play = () => <button/>;`,
+      '/workspace/play.tsx?framework=react'
+    );
+
+    expect(result?.code).not.toContain('const meta');
+    expect(result?.meta).toEqual({
+      vjsc: {
+        component: { name: 'play' },
+        source: expect.not.stringContaining('const meta'),
+      },
+    });
+    expect(context.addWatchFile).toHaveBeenCalledWith('/workspace/play.tsx');
+  });
+
   it('keeps editable source authoritative over compiler metadata', async () => {
     const plugin = createPlugin({
       plugins: [

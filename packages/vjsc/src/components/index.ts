@@ -26,7 +26,4 @@ export {
   type VjscElement,
   type VjscNode,
 } from './jsx-runtime';
-export {
-  type ComponentMeta,
-  componentMetaPlugin,
-} from './meta';
+export type { ComponentMeta } from './meta';

@@ -6,8 +6,7 @@ import { type Plugin, type RolldownOutput, rolldown } from 'rolldown';
 import { build as viteBuild } from 'vite';
 import { describe, expect, it } from 'vitest';
 
-import { componentMetaPlugin } from '../../components';
-import { jsx, parseModuleId } from '../../index';
+import { parseModuleId } from '../../index';
 import { vjscPlugin } from '../../rolldown';
 import { vjscPlugin as viteVjscPlugin } from '../../vite';
 import { readVjscSource } from '../rolldown';
@@ -53,9 +52,9 @@ describe('vjscPlugin', () => {
     const label = join(root, 'label.ts');
     writeFileSync(
       entry,
-      `import { Child } from './child'; import { label } from './label'; export const Entry = () => <Child>{label}</Child>;`
+      `/** @jsxImportSource react */\nimport { Child } from './child'; import { label } from './label'; export const Entry = () => <Child>{label}</Child>;`
     );
-    writeFileSync(child, `export const Child = () => <span/>;`);
+    writeFileSync(child, `/** @jsxImportSource react */\nexport const Child = () => <span/>;`);
     writeFileSync(label, `export const label = 'projected';`);
     const transformed: string[] = [];
 
@@ -65,7 +64,6 @@ describe('vjscPlugin', () => {
       plugins: [
         vjscPlugin({
           ignore: ({ parameters }) => !parameters.has('framework'),
-          plugins: [jsx({ importSource: 'react' })],
         }),
         {
           name: 'record-projected-modules',
@@ -131,7 +129,7 @@ describe('vjscPlugin', () => {
     const output = (await viteBuild({
       configFile: false,
       logLevel: 'silent',
-      plugins: [viteVjscPlugin({ plugins: [jsx({ importSource: 'react' })] })],
+      plugins: [viteVjscPlugin()],
       build: {
         write: false,
         rolldownOptions: { input: app, output: { format: 'es' } },
@@ -187,12 +185,12 @@ describe('vjscPlugin', () => {
     writeFileSync(app, `export const app = 'unrelated';`);
     writeFileSync(
       entry,
-      `import { Child } from './child';\nimport type { Label } from './model';\nexport const meta = { name: 'entry' };\nexport interface EntryProps { label: Label; }\nexport function Entry(props: EntryProps) { return <Child label={props.label}/>; }`
+      `/** @jsxImportSource react */\nimport { Child } from './child';\nimport type { Label } from './model';\nexport const meta = { name: 'entry' };\nexport interface EntryProps { label: Label; }\nexport function Entry(props: EntryProps) { return <Child label={props.label}/>; }`
     );
     writeFileSync(model, `export type Label = string;`);
     writeFileSync(
       child,
-      `export const meta = { name: 'child' };\nexport interface ChildProps { label: string; }\nexport function Child(props: ChildProps) { return <span>{props.label}</span>; }`
+      `/** @jsxImportSource react */\nexport const meta = { name: 'child' };\nexport interface ChildProps { label: string; }\nexport function Child(props: ChildProps) { return <span>{props.label}</span>; }`
     );
     const projection = '?framework=react&skin=default-video&style=tailwind';
     const capture = createSourceCapture(`${entry}${projection}`, projection);
@@ -202,7 +200,6 @@ describe('vjscPlugin', () => {
       plugins: [
         {
           ignore: ({ parameters }) => !parameters.has('framework'),
-          plugins: [componentMetaPlugin(), jsx({ importSource: 'react' })],
         },
         capture.plugin,
       ],

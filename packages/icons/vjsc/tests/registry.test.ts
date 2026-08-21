@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { html, transform } from 'vjsc';
+import { transform } from 'vjsc';
 import { defineComponent, defineSchema } from 'vjsc/components';
 import { registryPlugin } from 'vjsc/registry';
 import { createHtmlRegistry, createReactRegistry } from '../registry';
@@ -20,15 +20,17 @@ describe('icon registries', () => {
       plugins: [registryPlugin(createReactRegistry(schema, { family: 'minimal' }))],
     });
 
+    expect(result.code).toMatch(/^\/\*\* @jsxImportSource react \*\//);
     expect(result.code).toContain('import { PlayIcon } from "@videojs/react/icons/minimal";');
     expect(result.code).toContain('<PlayIcon className="icon"/>');
   });
 
   it('maps canonical icons to the lazy HTML icon element', async () => {
     const result = await transform(source, {
-      plugins: [registryPlugin(createHtmlRegistry(schema, { family: 'minimal' })), html()],
+      plugins: [registryPlugin(createHtmlRegistry(schema, { family: 'minimal' }))],
     });
 
+    expect(result.code).toMatch(/^\/\*\* @jsxImportSource vjsc\/html-runtime \*\//);
     expect(result.code).toContain('import "@videojs/html/icons/element/minimal";');
     expect(result.code).toContain('<media-icon class="icon" family="minimal" name="play"/>');
   });

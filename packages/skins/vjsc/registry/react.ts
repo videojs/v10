@@ -39,7 +39,7 @@ interface ReactImports {
 }
 
 /** React-only behavior that cannot be expressed by the framework-neutral component registry. */
-export function componentTransforms(): CompilerPlugin {
+export function createReactTransformPlugin(): CompilerPlugin {
   const references = resolveReactImports();
 
   return rewrite((code) => {

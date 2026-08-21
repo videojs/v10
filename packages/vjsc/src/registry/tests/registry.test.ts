@@ -112,8 +112,8 @@ describe('defineRegistry', () => {
   });
 
   it('rejects incompatible framework outputs', () => {
-    const base = { ...defineRegistry({ schema, entries: fixtureEntries() }), output: 'jsx' as const };
-    const extension = { ...defineRegistry({ schema, entries: fixtureEntries() }), output: 'html' as const };
+    const base = defineRegistry({ schema, entries: fixtureEntries(), output: { mode: 'jsx' } });
+    const extension = defineRegistry({ schema, entries: fixtureEntries(), output: { mode: 'html' } });
 
     expect(() => extendRegistry(base, extension)).toThrow(
       'Cannot extend a jsx component registry with a html registry'

@@ -170,14 +170,31 @@ export function plugin(options: ComponentRegistry | ComponentRegistryPluginOptio
       for (const file of registry.watchFiles ?? []) {
         compilerContext.addWatchFile(absolutePath(compilerContext.cwd, file));
       }
-
       const id = registryModuleId(moduleFilename(module.id), compilerContext.cwd);
-      return compilerContext.apply(
+      const sourceFile = compilerContext.apply(
         module.sourceFile,
         (context) => (sourceFile) => transformComponents(sourceFile, registry, id, context)
       );
+      if (registry.output?.importSource && containsJsx(sourceFile)) {
+        compilerContext.prepend(`/** @jsxImportSource ${registry.output.importSource} */`);
+      }
+      return sourceFile;
     },
   };
+}
+
+function containsJsx(sourceFile: ts.SourceFile): boolean {
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (found) return;
+    if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
+      found = true;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  return found;
 }
 
 function transformComponents(
@@ -202,7 +219,7 @@ function transformComponents(
     modules: collectModuleImports(sourceFile),
     scopes: new WeakMap(),
     sourceFile,
-    output: registry.output ?? 'jsx',
+    output: registry.output?.mode ?? 'jsx',
     usedNames: collectTopLevelBindingNames(sourceFile),
     nextSyntheticScope: 0,
     visitor(node) {

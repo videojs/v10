@@ -30,7 +30,6 @@ export {
   withDiagnosticSource,
 } from './ts/diagnostics';
 export { createJsxEditor, type ExtractedJsxChild, type JsxElementEdit } from './ts/jsx/editor';
-export { html, type JsxPluginOptions, jsx } from './ts/jsx/plugin';
 export { importsPlugin, transformPlugin } from './ts/plugins';
 export {
   type ConstStatementOptions,

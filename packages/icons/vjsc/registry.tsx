@@ -15,7 +15,7 @@ export function createReactRegistry(schema: ComponentSchema, options: IconRegist
 
   return defineRegistry({
     schema,
-    output: 'jsx',
+    output: { mode: 'jsx', importSource: 'react' },
     entries: Object.fromEntries(
       Object.keys(schema.definitions).map((component) => [
         component,
@@ -43,7 +43,7 @@ export function createHtmlRegistry(schema: ComponentSchema, options: IconRegistr
 
   return defineRegistry({
     schema,
-    output: 'html',
+    output: { mode: 'html', importSource: 'vjsc/html-runtime' },
     entries: Object.fromEntries(
       Object.keys(schema.definitions).map((component) => [
         component,

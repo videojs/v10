@@ -249,6 +249,13 @@ export interface ComponentRegistryBinding {
   readonly entries: Readonly<Record<string, unknown>>;
 }
 
+export interface RegistryOutput {
+  /** Framework projection semantics used while lowering canonical components. */
+  readonly mode: 'jsx' | 'html';
+  /** JSX runtime retained with editable output for the downstream host compiler. */
+  readonly importSource?: string | undefined;
+}
+
 export interface ComponentRegistry {
   readonly bindings: readonly ComponentRegistryBinding[];
   readonly props?: RegistryOptions['props'];
@@ -256,8 +263,8 @@ export interface ComponentRegistry {
   readonly types?: RegistryTypeResolver | undefined;
   /** Source inputs used to construct this in-memory registry. */
   readonly watchFiles?: readonly string[] | undefined;
-  /** JSX projection behavior owned by this framework registry. */
-  readonly output?: 'jsx' | 'html' | undefined;
+  /** Projection and JSX runtime behavior owned by this framework registry. */
+  readonly output?: RegistryOutput | undefined;
   /** Import rewrites applied to entries materialized by this registry. */
   readonly imports?: Readonly<Record<string, ImportRule>> | undefined;
 }
@@ -265,8 +272,8 @@ export interface ComponentRegistry {
 export interface RegistryDefinition<Definitions extends ComponentRecord = ComponentRecord> extends RegistryOptions {
   readonly schema: ComponentSchema<Definitions>;
   readonly entries: RegistryEntries<NoInfer<Definitions>>;
-  /** JSX projection behavior owned by this framework registry. */
-  readonly output?: 'jsx' | 'html' | undefined;
+  /** Projection and JSX runtime behavior owned by this framework registry. */
+  readonly output?: RegistryOutput | undefined;
   /** Import rewrites applied to entries materialized by this registry. */
   readonly imports?: Readonly<Record<string, ImportRule>> | undefined;
 }
@@ -312,8 +319,12 @@ export function extendRegistry<const Definitions extends ComponentRecord>(
   extension: ComponentRegistry | RegistryDefinition<Definitions>
 ): ComponentRegistry {
   const next = 'bindings' in extension ? extension : defineRegistry(extension);
-  if (registry.output && next.output && registry.output !== next.output) {
-    throw new Error(`Cannot extend a ${registry.output} component registry with a ${next.output} registry.`);
+  if (
+    registry.output &&
+    next.output &&
+    (registry.output.mode !== next.output.mode || registry.output.importSource !== next.output.importSource)
+  ) {
+    throw new Error(`Cannot extend a ${registry.output.mode} component registry with a ${next.output.mode} registry.`);
   }
 
   return {

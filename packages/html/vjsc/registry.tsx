@@ -186,7 +186,7 @@ export default function createRegistry(schema: CoreSchema): ComponentRegistry {
   return defineRegistry({
     schema,
     entries,
-    output: 'html',
+    output: { mode: 'html', importSource: 'vjsc/html-runtime' },
     primitives: {
       Group: Div,
       Slot,

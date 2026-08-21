@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { GeneralHookFilter, HookFilter, Plugin, RolldownLog } from 'rolldown';
+import { componentMetaPlugin } from '../components/meta';
 import { isVjscModule, moduleFilename, moduleId, type ParsedModuleId, parseModuleId } from '../utils/module-id';
 import { HTML_RUNTIME, HTML_RUNTIME_ID, HTML_RUNTIME_IMPORT } from './html-runtime';
 import { type Compiler, CompilerError, createCompiler } from './transform';
@@ -115,13 +116,14 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
         if (parsed.parameters.size > 0 && (options.ignore?.({ id, ...parsed }) ?? true)) {
           return null;
         }
+        if (parsed.parameters.size > 0) this.addWatchFile(parsed.filename);
 
         let result: Awaited<ReturnType<Compiler['transform']>>;
 
         try {
           compiler ??= createCompiler({
             cwd: cwd ?? resolve(process.cwd()),
-            ...(options.plugins ? { plugins: options.plugins } : {}),
+            plugins: [componentMetaPlugin(), ...(options.plugins ?? [])],
           });
           result = await (await compiler).transform(code, {
             id,
