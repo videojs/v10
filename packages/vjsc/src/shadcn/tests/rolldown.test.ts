@@ -195,7 +195,7 @@ async function build(
   const options = baseOptions(overrides);
   const transform = vjscPlugin({
     include: /\.[cm]?[jt]sx?(?:\?|$)/,
-    isVjscModule: ({ parameters }) => parameters.has('framework'),
+    ignore: ({ parameters }) => !parameters.has('framework'),
     transform: { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] },
   });
   const output = shadcnPlugin({ root, ...options });

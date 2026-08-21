@@ -45,8 +45,8 @@ export default defineConfig({
     vjscPlugin({
       cwd: packageDir,
       include: sourceFilter,
-      isVjscModule: ({ parameters }) => parameters.has('framework'),
       transform: createSkinTransformer(),
+      ignore: ({ parameters }) => !parameters.has('framework'),
     }),
     shadcnPlugin<SkinModuleMeta>({
       root: vjscDir,

@@ -28,7 +28,7 @@ function createPreviewConfig() {
       vjscPlugin({
         cwd: packageDir,
         include: vjscInclude,
-        isVjscModule: ({ parameters }) => parameters.has('framework'),
+        ignore: ({ parameters }) => !parameters.has('framework'),
         transform,
       }),
       tailwindcss(),

@@ -13,11 +13,11 @@ interface TransformPluginOptions {
   readonly transform?: CompilerConfig | VjscTransformer | undefined;
   /** Directory used to resolve relative transform configuration. */
   readonly cwd?: string | undefined;
-  /** Select query-bearing modules whose parameters propagate through relative imports. */
-  readonly isVjscModule?: ((context: VjscModuleContext) => boolean) | undefined;
+  /** Ignore a query-bearing module. Queried modules are ignored by default. */
+  readonly ignore?: ((context: VjscModuleContext) => boolean) | undefined;
 }
 
-export interface VjscModuleContext {
+interface VjscModuleContext {
   readonly id: string;
   readonly filename: string;
   readonly parameters: URLSearchParams;
@@ -79,8 +79,8 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
         }
         if (cssById.has(id)) return `\0${id}`;
 
-        const transformed = parseTransformedId(id, options.isVjscModule);
-        const inherited = importer ? parseTransformedId(importer, options.isVjscModule) : null;
+        const transformed = parseTransformedId(id, options.ignore);
+        const inherited = importer ? parseTransformedId(importer, options.ignore) : null;
         if (!transformed && (!inherited || !id.startsWith('.'))) return null;
 
         const resolved = await this.resolve(
@@ -102,7 +102,7 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
     async load(id) {
       if (id === HTML_RUNTIME_ID) return { code: HTML_RUNTIME, moduleType: 'js' };
 
-      const transformed = parseTransformedId(id, options.isVjscModule);
+      const transformed = parseTransformedId(id, options.ignore);
       if (transformed) {
         this.addWatchFile(transformed.filename);
         return { code: await readFile(transformed.filename, 'utf8'), moduleType: 'tsx' };
@@ -120,7 +120,7 @@ function createVjscPlugin(options: TransformPluginOptions = {}, filter: Transfor
         if (filter.test && !filter.test(id)) return null;
 
         const transformed = parseModuleId(id);
-        if (transformed.parameters.size > 0 && options.isVjscModule?.({ id, ...transformed }) !== true) {
+        if (transformed.parameters.size > 0 && (options.ignore?.({ id, ...transformed }) ?? true)) {
           return null;
         }
         const selected = options.transform ?? {};
@@ -197,14 +197,9 @@ export function readVjscSource(meta: unknown): string | undefined {
   return typeof source === 'string' ? source : undefined;
 }
 
-function parseTransformedId(
-  id: string,
-  matchesVjscModule: TransformPluginOptions['isVjscModule']
-): ParsedModuleId | null {
+function parseTransformedId(id: string, ignore: TransformPluginOptions['ignore']): ParsedModuleId | null {
   const parsed = parseModuleId(id);
-  return parsed.parameters.size > 0 && isVjscModule(id) && matchesVjscModule?.({ id, ...parsed }) === true
-    ? parsed
-    : null;
+  return parsed.parameters.size > 0 && isVjscModule(id) && !(ignore?.({ id, ...parsed }) ?? true) ? parsed : null;
 }
 
 function cssVirtualId(fileName: string, source: string): string {

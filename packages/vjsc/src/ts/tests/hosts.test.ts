@@ -66,7 +66,7 @@ describe('vjscPlugin', () => {
       external: /^react\//,
       plugins: [
         vjscPlugin({
-          isVjscModule: ({ parameters }) => parameters.has('framework'),
+          ignore: ({ parameters }) => !parameters.has('framework'),
           transform: ({ parameters }) =>
             parameters.get('framework') === 'react' ? { target: jsx({ importSource: 'react' }) } : null,
         }),
@@ -106,7 +106,7 @@ describe('vjscPlugin', () => {
       input: `${entry}?skin=minimal`,
       plugins: [
         vjscPlugin({
-          isVjscModule: ({ parameters }) => parameters.has('skin'),
+          ignore: ({ parameters }) => !parameters.has('skin'),
           transform: ({ parameters }) => {
             transformed.push(parameters.toString());
             return {};
@@ -199,7 +199,7 @@ describe('vjscPlugin', () => {
       app,
       plugins: [
         {
-          isVjscModule: ({ parameters }) => parameters.has('framework'),
+          ignore: ({ parameters }) => !parameters.has('framework'),
           transform: ({ parameters }) =>
             parameters.get('framework') === 'react'
               ? { target: jsx({ importSource: 'react' }), plugins: [componentMetaPlugin()] }
