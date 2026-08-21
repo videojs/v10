@@ -109,6 +109,26 @@ describe('Skins Vite workflow', () => {
     await vi.waitFor(() => expect(targetedPlayButton.lastInvalidationTimestamp).toBeGreaterThan(sourceInvalidation));
   }, 30_000);
 
+  it('serves optimized icon families with the authored element runtime', async () => {
+    server = await createServer({
+      configFile,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    const resolved = await server.pluginContainer.resolveId('@videojs/icons/element/minimal');
+    if (!resolved) throw new Error('Expected the source icon plugin to resolve the minimal family.');
+
+    const loaded = await server.pluginContainer.load(resolved.id);
+    const source = typeof loaded === 'string' ? loaded : loaded?.code;
+    const runtime = await server.pluginContainer.resolveId('virtual:videojs/icons/element-runtime');
+
+    expect(source).toContain('aria-hidden');
+    expect(source).toContain('virtual:videojs/icons/element-runtime');
+    expect(runtime?.id).toBe(resolve(packageDir, '../icons/src/element.ts'));
+  }, 30_000);
+
   it('builds the same VJSC configuration for production', async () => {
     const result = await build({
       configFile,

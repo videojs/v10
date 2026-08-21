@@ -29,8 +29,14 @@ export function createHtmlIconTarget(options: IconTargetOptions = {}): Component
       jsx: {
         importSource: 'vjsc/html-runtime',
         attributes: 'html',
-        host: { from: 'vjsc/html-runtime/jsx-runtime', name: 'Host' },
-        scope: { from: 'vjsc/html-runtime/jsx-runtime', name: 'Scope' },
+        host: {
+          from: 'vjsc/html-runtime/jsx-runtime',
+          name: 'Host',
+        },
+        scope: {
+          from: 'vjsc/html-runtime/jsx-runtime',
+          name: 'Scope',
+        },
       },
     };
   });
@@ -48,6 +54,9 @@ export function createReactIconTarget(options: IconTargetOptions = {}): Componen
         name: component,
         props: { from: source, name: 'IconProps' },
       }),
-    jsx: { importSource: 'react', attributes: 'react' },
+    jsx: {
+      importSource: 'react',
+      attributes: 'react',
+    },
   }));
 }

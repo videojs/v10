@@ -1,6 +1,6 @@
 # @videojs/icons
 
-SVG icon library for Video.js. Ships optimized icons as **React components** and **HTML strings**, organized into icon sets.
+SVG icon library for Video.js. Ships optimized icons for React, HTML strings, static rendering, and the `<media-icon>` custom element, organized into icon sets.
 
 ## Icon Sets
 
@@ -102,10 +102,10 @@ Icons are designed on an **18×18 grid**. Rendering at `18px` (or exact multiple
 
 The build automatically:
 
-- Removes hardcoded `fill`, `stroke`, `clip-rule`, and `fill-rule` attributes.
-- Adds `fill="currentColor"` for dynamic styling.
+- Optimizes each source SVG once and normalizes black fills and strokes to `currentColor`.
+- Adds `aria-hidden="true"` because accessible names belong on the surrounding control.
 - Preserves the `viewBox` attribute.
-- Generates `.js`, `.d.ts`, and `.tsx` files for each icon.
+- Generates executable `.js` modules and matching `.d.ts` declarations.
 
 ## Adding an Icon Set
 

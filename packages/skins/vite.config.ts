@@ -1,9 +1,9 @@
 import { resolve } from 'node:path';
 import tailwindcss from '@tailwindcss/vite';
-import { iconElementPlugin } from '@videojs/icons/rolldown';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath } from 'vite';
 import { vjscPlugin } from 'vjsc/vite';
+import { iconElementSourcePlugin } from '../icons/vjsc/vite';
 import { configureSkinModule } from './vjsc/config';
 
 const packageDir = import.meta.dirname;
@@ -21,7 +21,7 @@ function createPreviewConfig() {
       __DEV__: 'true',
     },
     plugins: [
-      iconElementPlugin(),
+      iconElementSourcePlugin(),
       vjscPlugin({
         configure: configureSkinModule,
       }),

@@ -4,8 +4,9 @@
     "outDir": "./dist",
     "rootDir": ".",
     "declaration": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node"],
     "jsx": "react-jsx"
   },
-  "include": ["rolldown", "vite", "vjsc"]
+  "include": ["scripts/internal/svg.ts", "src/element.ts", "vjsc"]
 }
