@@ -83,13 +83,13 @@ customElements.define('my-container', MyContainer);
 
 ## What it does
 
-### Layout & fullscreen
+### Layout and fullscreen
 
-The container is the visual box around your media and controls. Sizing, aspect ratio, and visual boundaries all go here — on `Container`, not `Player`.
+The container is the visual box around your media and controls. Put sizing, aspect ratio, positioning, and visual boundaries here — on `Container`, not `Player`. Place overlays inside it, use it as their positioning context, and measure it when your app needs the rendered player size.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Container style={{ width: 640, aspectRatio: '16/9' }}>
+<Container style={{ position: 'relative', width: 640, aspectRatio: '16/9' }}>
   <video src="video.mp4" />
   <Controls.Root>
     {/* ... */}
@@ -98,8 +98,17 @@ The container is the visual box around your media and controls. Sizing, aspect r
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
+```css
+.player-surface {
+  position: relative;
+  display: block;
+  width: 640px;
+  aspect-ratio: 16 / 9;
+}
+```
+
 ```html
-<media-container style="width: 640px; aspect-ratio: 16/9;">
+<media-container class="player-surface">
   <video src="video.mp4"></video>
   <media-controls>...</media-controls>
 </media-container>
@@ -107,6 +116,13 @@ The container is the visual box around your media and controls. Sizing, aspect r
 </FrameworkCase>
 
 When the user goes fullscreen, the **container** goes fullscreen — not the video element. This keeps controls and other UI visible on top of the video, since they're children of the container.
+
+<FrameworkCase frameworks={["html"]}>
+Custom video elements such as `<mux-video>` and `<hlsjs-video>` are also boxless: their inner `<video>` fills the parent. Size and measure the container, not the custom media host. Native `<video>` and `<audio>` elements still render their own boxes.
+</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+React media components such as `MuxVideo` render a native media element, so the media itself has a box. The container remains the shared layout and fullscreen target for the media and its overlays.
+</FrameworkCase>
 
 ### Media attachment
 
@@ -128,6 +144,10 @@ The container is where user intent enters the player. It listens for physical in
 ## Relationship to skins
 
 A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI controls. When you use a packaged skin, the container is built in — you don't need to add one yourself.
+
+Style the skin for the player's outer size and aspect ratio. The packaged skin CSS makes its container fill that space and supplies the positioning rules for media, controls, posters, and overlays. React loads those rules from the skin CSS import; importing an HTML skin registers the styles with the skin element.
+
+Headless player and media imports do not include skin layout. Render `Container` or `<media-container>` yourself and supply its display, size, and positioning styles.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
