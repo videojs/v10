@@ -1170,12 +1170,12 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
 
 // ============================================================================
 // Codec-family policy — preferCodecFamilies (initial-pick scope) +
-// stickToSelectedCodecs (sticky scope)
+// stickToSelectedCodecs (sticky constraint)
 //
 // SPF implements no `SourceBuffer.changeType()`, so a mid-stream pick outside
 // the initially-selected codec families would append undecodable data into a
-// buffer created under the initial family's mimetype. The sticky scope keeps
-// re-picks within the selected families; the preference scope narrows which
+// buffer created under the initial family's mimetype. The sticky constraint
+// prunes such picks in the pre-pass; the preference scope narrows which
 // family the *initial* pick lands in on mixed-codec sources (the Apple bipbop
 // advanced example muxes HEVC + AVC renditions of the same content).
 // ============================================================================
@@ -1264,7 +1264,7 @@ describe('preferCodecFamilies (codec-family scope)', () => {
   });
 });
 
-describe('stickToSelectedCodecs (codec-family sticky scope)', () => {
+describe('stickToSelectedCodecs (codec-family sticky constraint)', () => {
   it('keeps re-picks within the selected codec family (upgrades stay in-family)', async () => {
     // preferredCodecs: [] isolates the sticky scope from the preference.
     const state = makeState({
@@ -1292,8 +1292,9 @@ describe('stickToSelectedCodecs (codec-family sticky scope)', () => {
 
     state.userVideoTrackSelection.set({ id: 'hvc-4k' });
     await flush();
-    // The sticky scope runs ahead of the user filter: the HEVC pick is gone
-    // from the narrowed set, so the filter falls through and the pick stands.
+    // The constraint prunes the HEVC pick in the pre-pass, so the user filter
+    // never sees it and falls through. (A soft rule couldn't guarantee this:
+    // the filter's single-match early-bail would win.)
     expect(state.selectedVideoTrackId.get()).toBe('avc-high');
 
     state.userVideoTrackSelection.set({ id: 'avc-low' });
@@ -1356,8 +1357,52 @@ describe('stickToSelectedCodecs (codec-family sticky scope)', () => {
     state.userAudioTrackSelection.set({ language: 'es' });
     await flush();
     // Spanish exists only as E-AC-3; honoring it would cross codec families,
-    // so the sticky scope narrows it away and the pick stands.
+    // so the constraint prunes it and the pick stands.
     expect(state.selectedAudioTrackId.get()).toBe('audio-aac-en');
+    reactor.destroy();
+  });
+
+  it('reports and clears when the selected family vanishes, re-picking on recovery', async () => {
+    // AVC only on cdn-a, HEVC only on cdn-b: the shape where failover can
+    // remove a whole codec family from the playable set. This is the
+    // observable difference constraint placement buys over the old soft rule,
+    // which would have silently cross-picked HEVC into an AVC buffer.
+    const cdnFamilyTrack = (id: string, host: string, bandwidth: number, codecs: string[]) => ({
+      ...createVideoTrack(id, bandwidth),
+      url: `https://${host}/${id}.m3u8`,
+      codecs,
+    });
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(
+        createPresentation([
+          cdnFamilyTrack('avc-low', 'cdn-a.example.com', 1_000_000, ['avc1.640020']),
+          cdnFamilyTrack('avc-high', 'cdn-a.example.com', 3_000_000, ['avc1.640028']),
+          cdnFamilyTrack('hvc-low', 'cdn-b.example.com', 900_000, ['hvc1.2.4.L123.B0']),
+          cdnFamilyTrack('hvc-high', 'cdn-b.example.com', 3_200_000, ['hvc1.2.4.L150.B0']),
+        ])
+      ),
+      bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(4_000_000)),
+      selectedVideoTrackId: signal<string | undefined>(undefined),
+      userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+      failedCdns: signal<string[] | undefined>(undefined),
+      errors: signal<SvtaError[] | undefined>(undefined),
+    };
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('avc-high');
+
+    // The only CDN carrying the selected family enters cooldown: the failover
+    // constraint leaves HEVC, this constraint removes it — an explicable
+    // reported stop instead of an opaque decode error at append.
+    state.failedCdns.set(['https://cdn-a.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+
+    // Cooldown ends: the family is playable again and selection recovers.
+    state.failedCdns.set(undefined);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('avc-high');
     reactor.destroy();
   });
 });

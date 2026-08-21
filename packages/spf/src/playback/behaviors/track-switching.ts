@@ -6,34 +6,32 @@
  *
  * Selection runs in two stages. First a **hard-constraints pre-pass**
  * (`applyConstraints`) prunes the unplayable from the candidate set — the
- * failed-CDN constraint (`excludeFailedCdns`, failover cooldown) and the
- * capability constraint (`excludeUnplayableTracks`, codec support). Then a small
+ * failed-CDN constraint (`excludeFailedCdns`, failover cooldown), the
+ * capability constraint (`excludeUnplayableTracks`, codec support), and the
+ * codec-family sticky constraint (`stickToSelectedCodecs`, no
+ * `SourceBuffer.changeType()` — see its note). Then a small
  * ordered chain of rules (`applyRules`) picks among the survivors. Each constraint/rule reads the signals it needs at apply
  * time, so the effect subscribes to exactly what was consulted. The chain runs
  * most authoritative first:
  *
- *   1. **codec-family sticky** — a soft filter on the current selection
- *      (`stickToSelectedCodecs`): narrow to the tracks sharing the selected
- *      track's codec families. Physics ahead of preference — SPF implements no
- *      `SourceBuffer.changeType()`, so a cross-family re-pick would append
- *      undecodable data; that's why it outranks even user intent.
- *   2. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
+ *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
  *      partial-track match; an empty match falls through to the full set.
- *   3. **codec-family preference** — a soft filter on `preferredCodecs`
+ *   2. **codec-family preference** — a soft filter on `preferredCodecs`
  *      (`preferCodecFamilies`, default AVC/AAC): on a mixed-codec source,
- *      narrow which family the *initial* pick — the one the sticky rule then
- *      holds — lands in. Behind user intent so an explicit initial pick may
- *      land anywhere; inert once sticky narrows to a non-preferred family.
- *   4. **active CDN** — a soft filter on `cdnPriority` (`preferActiveCdn`):
+ *      narrow which family the *initial* pick — the one the sticky constraint
+ *      then holds — lands in. Behind user intent so an explicit initial pick
+ *      may land anywhere; inert once the constraint narrows to a
+ *      non-preferred family.
+ *   3. **active CDN** — a soft filter on `cdnPriority` (`preferActiveCdn`):
  *      narrow to the highest-priority CDN that still has tracks; an empty match
  *      falls through. Shared by video and audio, so every type stays on one CDN
  *      (`deriveCdnPriority` owns the list). No-op for non-redundant sources.
- *   5. **player resolution** — a soft filter on `playerResolution`
+ *   4. **player resolution** — a soft filter on `playerResolution`
  *      (`playerResolutionCap`, video only): narrow to the smallest rendition
  *      tier covering the player element, plus everything below it. No-op
  *      without a measurement. Ahead of the ranker but behind the CDN scope, so
  *      the cap chooses *within* a host rather than between hosts.
- *   6. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
+ *   5. **ranking** — the terminal sort: `rankByBandwidth`, shared by video and
  *      audio. Fitting tracks (within the throughput threshold) first, highest
  *      bitrate first; over-throughput tracks after, least-over first. Hysteresis
  *      via boosting the current track's sort weight by `upgradeMargin`.
@@ -51,9 +49,10 @@
  * (default: the head, `applyRules(...)[0]`). Each variant supplies its
  * **constraints + rule chain (+ optional resolveSelection)** via config;
  * `setupTrackSwitching` owns only the lifecycle and runs what it's given. Video
- * and audio run constraints `[excludeFailedCdns, excludeUnplayableTracks]` then
- * rules `[stickToSelectedCodecs, filterByUserSelection, preferCodecFamilies,
- * preferActiveCdn, rankByBandwidth]` and take the head; video inserts
+ * and audio run constraints `[excludeFailedCdns, excludeUnplayableTracks,
+ * stickToSelectedCodecs]` then rules `[filterByUserSelection,
+ * preferCodecFamilies, preferActiveCdn, rankByBandwidth]` and take the head;
+ * video inserts
  * `playerResolutionCap` after the active-CDN scope, and `switchVideoTrack` also
  * accepts ABR tuning config, `switchAudioTrack` takes none.
  * `switchTextTrack` differs — selection is *optional* (captions are
@@ -533,33 +532,45 @@ function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(
 }
 
 /**
- * Codec-family sticky scope — a soft filter, shared by video and audio, and
- * the reason the re-evaluating variants can run ABR over a mixed-codec source
- * at all: SPF implements no `SourceBuffer.changeType()`, so once segments of
- * the selected track's codec families are what a buffer was created for, a
- * re-pick outside them would append undecodable data. Narrows the candidates
- * to the tracks whose codec-family set *equals* the selected track's
- * (set-equality so a muxed `hvc1,mp4a` rendition can't pass as a match for
- * `avc1,mp4a` on its audio half).
- *
- * Sits at the head of the chain — ahead of even user intent, the one rule
- * that does, because this is physics rather than preference: a cross-family
- * user selection mid-stream falls through unhonored instead of killing
- * playback. Before any selection exists (the initial pick) it passes
- * everything through, which is what leaves the initial family choice to the
- * rules behind it (user intent, then `preferCodecFamilies`).
+ * Codec-family sticky constraint — a *hard* filter for the constraints
+ * pre-pass, shared by video and audio, and the reason the re-evaluating
+ * variants can run ABR over a mixed-codec source at all: SPF implements no
+ * `SourceBuffer.changeType()`, so once segments of the selected track's codec
+ * families are what a buffer was created for, a pick outside them could
+ * never play — constraint semantics ("can't play here"), not preference.
+ * Removes the candidates whose codec-family set doesn't *equal* the selected
+ * track's (set-equality so a muxed `hvc1,mp4a` rendition can't pass as a
+ * match for `avc1,mp4a` on its audio half). Purely relational: the lock *is*
+ * the current selection's families, no state of its own. Pruned pre-pass, a
+ * cross-family user selection mid-stream never reaches the user filter,
+ * which falls through unhonored instead of killing playback. Before any
+ * selection exists (the initial pick) it removes nothing, which is what
+ * leaves the initial family choice to the rule chain (user intent, then
+ * `preferCodecFamilies`).
  *
  * The selected track's families come from the *presentation's* track list,
- * not the constraint-pruned candidates: a CDN entering cooldown may prune the
+ * not the already-pruned candidates: a CDN entering cooldown may prune the
  * current track itself while same-family renditions survive on another host,
- * and the lock must carry over to them. Fall-through cases: no selection yet,
- * a selection the presentation no longer carries, or a selected track without
- * codecs (then no candidate's compatibility is decidable — same inertness as
- * `preferCodecFamilies` on a codec-less ladder). When the selected family has
- * genuinely vanished from the candidates, soft-filter fall-through applies
- * and the pick crosses families — the pipeline breaks at append exactly as it
- * would have without this rule, no worse (a changeType-shaped problem this
- * scope can't solve).
+ * and the lock must carry over to them. Removes nothing when: no selection
+ * yet, a selection the presentation no longer carries, or a selected track
+ * without codecs (then no candidate's compatibility is decidable — same
+ * inertness as `preferCodecFamilies` on a codec-less ladder).
+ *
+ * When the selected family genuinely vanishes from the playable set, the
+ * pre-pass empties: the behavior reports the type's no-supported-track code
+ * and clears the selection — an explicable stop instead of a cross-family
+ * append surfacing as an opaque decode error. Clearing also releases the
+ * lock (it keys on the live selection), so a following pick may land in the
+ * surviving family on freshly-created buffer actors; whether the append
+ * layer survives that rebuild is the changeType gap, out of this
+ * constraint's hands. If `changeType` support ever lands, this constraint is
+ * what relaxes.
+ *
+ * Reading the selection here — a slot the picking effect itself writes, from
+ * inside the candidate-set computed — is safe only because the effect
+ * scheduler revalidates an effect's sources after each run; see
+ * `core/signals/effect.ts` (`revalidateSources`) for the lost-wakeup this
+ * once caused and the regression test that pins it.
  *
  * Composed only into the re-evaluating `switch*` variants: the pinned
  * `selectVideoTrack` (background compositions) evaluates once and never
@@ -855,15 +866,8 @@ export const switchVideoTrack = defineBehavior({
         selectionKey: 'selectedVideoTrackId',
         userSelectionKey: 'userVideoTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'video') as readonly VideoTrackCandidate[],
-        constraints: [excludeFailedCdns, excludeUnplayableTracks],
-        rules: [
-          stickToSelectedCodecs,
-          filterByUserSelection,
-          preferCodecFamilies,
-          preferActiveCdn,
-          playerResolutionCap,
-          rankByBandwidth,
-        ],
+        constraints: [excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs],
+        rules: [filterByUserSelection, preferCodecFamilies, preferActiveCdn, playerResolutionCap, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_VIDEO_TRACK,
       },
     }),
@@ -914,8 +918,8 @@ export const switchAudioTrack = defineBehavior({
         selectionKey: 'selectedAudioTrackId',
         userSelectionKey: 'userAudioTrackSelection',
         getTracks: (presentation) => getTracksByType(presentation, 'audio') as readonly AudioTrackCandidate[],
-        constraints: [excludeFailedCdns, excludeUnplayableTracks],
-        rules: [stickToSelectedCodecs, filterByUserSelection, preferCodecFamilies, preferActiveCdn, rankByBandwidth],
+        constraints: [excludeFailedCdns, excludeUnplayableTracks, stickToSelectedCodecs],
+        rules: [filterByUserSelection, preferCodecFamilies, preferActiveCdn, rankByBandwidth],
         noSupportedTrackCode: SVTA_NO_SUPPORTED_AUDIO_TRACK,
       },
     }),
