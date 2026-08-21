@@ -2,7 +2,7 @@
   "name": "vjsc",
   "version": "0.0.0",
   "type": "module",
-  "description": "Private VJSC source transforms and bundler plugins",
+  "description": "Video.js Compiler",
   "license": "Apache-2.0",
   "private": true,
   "repository": {
