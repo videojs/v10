@@ -22,7 +22,7 @@ import { cn } from '@videojs/utils/style';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 
-// Register the player, container, and all UI custom elements.
+// Register the container and all UI custom elements.
 import './ui';
 
 const SEEK_TIME = 10;

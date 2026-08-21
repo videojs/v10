@@ -1,4 +1,4 @@
-// Registers the live audio player, container, and all audio UI custom
+// Registers the container and all live audio UI custom
 // elements without creating a skin element. Use this entry when building an
 // ejected (light DOM) player layout for live HLS / DASH streams.
 
@@ -16,11 +16,8 @@ import { safeDefine } from '../safe-define';
 import { defineErrorDialog, defineTime, defineTimeSlider, defineTooltip, defineVolumeSlider } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
-import { LiveAudioPlayerElement } from './player';
-
 // ── Registration (providers / parents first) ────────────────────────────
 
-safeDefine(LiveAudioPlayerElement);
 safeDefine(ContainerElement);
 safeDefine(I18nProviderElement);
 
