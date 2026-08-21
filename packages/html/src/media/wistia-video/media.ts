@@ -35,7 +35,8 @@ class NormalizedWistiaPlayer extends WistiaPlayer {
 
   constructor() {
     super();
-    normalizeWistiaPlayer(this as never);
+    // No cast: this is where Wistia's real class is held to the contract the normalizer describes.
+    normalizeWistiaPlayer(this);
   }
 
   protected override connectedCallback(): void {

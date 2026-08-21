@@ -1,25 +1,40 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { isMediaBufferCapable, isMediaContentDataCapable, isMediaSeekCapable } from '../../../core/predicate';
+import {
+  isMediaBufferCapable,
+  isMediaContentDataCapable,
+  isMediaPauseCapable,
+  isMediaPlaybackRateCapable,
+  isMediaSeekCapable,
+  isMediaSourceCapable,
+  isMediaVolumeCapable,
+} from '../../../core/predicate';
 import {
   normalizeWistiaPlayer,
   parseWistiaMediaId,
   parseWistiaStartTime,
   type WistiaPlayerLike,
+  type WistiaPlayerMembers,
   wistiaControlProps,
 } from '..';
 
 const HASHED_ID = 'abcde12345';
 const MEDIA_URL = `https://videojs.wistia.com/medias/${HASHED_ID}`;
 
-/** Stands in for `<wistia-player>`: the members the normalizer reads and writes, and nothing else. */
-class StubWistiaPlayer extends HTMLElement {
+/**
+ * Stands in for `<wistia-player>`.
+ *
+ * Typed against `WistiaPlayerMembers` on purpose: the normalizer is only as honest as this stub, so the
+ * stub is held to the same contract the platform packages hold Wistia's real class to. Inventing a member
+ * the player does not have would otherwise make these tests pass over a media that cannot work.
+ */
+class StubWistiaPlayer extends HTMLElement implements WistiaPlayerMembers {
   mediaId = '';
   duration = 0;
   muted = false;
   volume = 1;
   currentTime = 0;
   playbackRate = 1;
-  state: string | undefined = 'beforeplay';
+  state: WistiaPlayerMembers['state'] = 'beforeplay';
   name: string | undefined;
   ended = false;
   buffered = { length: 0, start: () => 0, end: () => 0 };
@@ -34,6 +49,9 @@ class StubWistiaPlayer extends HTMLElement {
   playerColor = '';
 
   cancelFullscreen = vi.fn(async () => {});
+
+  play = vi.fn(async () => {});
+  pause = vi.fn(async () => {});
 }
 
 customElements.define('stub-wistia-player', StubWistiaPlayer);
@@ -320,6 +338,14 @@ describe('normalizeWistiaPlayer', () => {
 
     it('reports itself able to describe its content', () => {
       expect(isMediaContentDataCapable(createPlayer())).toBe(true);
+    });
+
+    it('reports itself able to name a source, pause, and carry a volume', () => {
+      const player = createPlayer();
+      expect(isMediaSourceCapable(player)).toBe(true);
+      expect(isMediaPauseCapable(player)).toBe(true);
+      expect(isMediaVolumeCapable(player)).toBe(true);
+      expect(isMediaPlaybackRateCapable(player)).toBe(true);
     });
   });
 

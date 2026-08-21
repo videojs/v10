@@ -1,5 +1,8 @@
 import { VideoCSSVars } from '../custom-media-element';
 
+/** Tag name Wistia's package registers its player element under. */
+export const WISTIA_PLAYER_TAG = 'wistia-player';
+
 /**
  * Wistia player options, spelled the way `<wistia-player>` spells its JavaScript properties
  * (https://docs.wistia.com/docs/player-attributes-and-properties). They are assigned to the player
