@@ -175,7 +175,7 @@ describe('createPlayer', () => {
 
   it('applies orientation lock configuration through attributes and properties', async () => {
     const { ProviderMixin } = createPlayer({ features: [features.orientationLock] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-orientation-lock-provider';
     customElements.define(tagName, ProviderElement);
 

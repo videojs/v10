@@ -76,8 +76,8 @@ describe('createPlayer', () => {
   it('exposes orientation lock configuration as a provider property', () => {
     const withOrientationLock = createPlayer({ features: [features.orientationLock] });
     const withoutOrientationLock = createPlayer({ features: [features.playback] });
-    const OrientationProvider = withOrientationLock.ProviderMixin(MediaElement);
-    const PlainProvider = withoutOrientationLock.ProviderMixin(MediaElement);
+    const OrientationProvider = withOrientationLock.ProviderMixin(UIElement);
+    const PlainProvider = withoutOrientationLock.ProviderMixin(UIElement);
     const orientationProvider = new OrientationProvider();
     const plainProvider = new PlainProvider();
 
