@@ -16,8 +16,7 @@ type DurationFormatter = { format: (duration: DurationRecord) => string };
 
 const durationFormatters = new Map<string, DurationFormatter>();
 
-// Use these widely supported formatters instead of Intl.DurationFormat so servers and browsers
-// cannot select different formatting paths and produce an SSR hydration mismatch.
+// Use one widely supported formatting path so server and browser output match during SSR hydration.
 function createDurationFormatter(
   style: NonNullable<TimeFormatOptions['style']>,
   hoursDisplay?: 'auto' | 'always',
