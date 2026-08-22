@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.31...@videojs/media@10.0.0-beta.32) (2026-08-22)
+
+
+### Miscellaneous Chores
+
+* **@videojs/media:** Synchronize videojs versions
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.32
+
 ## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/media@10.0.0-beta.30...@videojs/media@10.0.0-beta.31) (2026-08-21)
 
 

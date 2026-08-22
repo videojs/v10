@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.0.0-beta.32](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.31...@videojs/skins@10.0.0-beta.32) (2026-08-22)
+
+
+### Performance Improvements
+
+* **packages:** enable native MagicString ([#2311](https://github.com/videojs/v10/issues/2311)) ([599007f](https://github.com/videojs/v10/commit/599007f72461b51eb4a4ad28049bb7bbc3e207d7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.32
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.32
+    * @videojs/icons bumped to 10.0.0-beta.32
+
 ## [10.0.0-beta.31](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.30...@videojs/skins@10.0.0-beta.31) (2026-08-21)
 
 
