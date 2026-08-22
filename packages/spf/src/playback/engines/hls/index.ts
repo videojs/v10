@@ -1,3 +1,7 @@
+// The `source.drm`-shaped license-server contract the engine's `drm` config
+// takes — structurally identical to `@videojs/media`'s, so adapter-held
+// configs pass through without the package dependency.
+export type { DrmSystemConfig, DrmSystemsConfig } from '../../../media/drm';
 // SVTA 2070 error vocabulary — the codes reported on `state.errors` and
 // surfaced through the adapter's `error`.
 export type { SvtaError } from '../../../media/errors';
