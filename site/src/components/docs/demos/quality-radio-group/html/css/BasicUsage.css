@@ -14,6 +14,10 @@
   bottom: 10px;
 }
 
+.menu-bar:has([data-availability="unavailable"]) {
+  display: none;
+}
+
 .settings-trigger {
   padding: 6px 16px;
   color: black;
@@ -27,8 +31,6 @@
 .menu {
   --media-menu-side-offset: 8px;
   box-sizing: border-box;
-  display: grid;
-  gap: 2px;
   min-width: 180px;
   max-width: var(--media-menu-available-width, var(--media-popover-available-width, none));
   max-height: var(--media-menu-available-height, var(--media-popover-available-height, none));

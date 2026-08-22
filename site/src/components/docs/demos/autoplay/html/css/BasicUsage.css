@@ -1,0 +1,47 @@
+.video-player {
+  position: relative;
+}
+
+.video-player video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.media-play-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.media-play-button .paused {
+  display: none;
+}
+.media-play-button .playing {
+  display: none;
+}
+.media-play-button .ended {
+  display: none;
+}
+.media-play-button[data-paused]:not([data-ended]) .paused {
+  display: inline;
+}
+.media-play-button:not([data-paused]) .playing {
+  display: inline;
+}
+.media-play-button[data-ended] .ended {
+  display: inline;
+}
+.media-play-button[data-ended] .paused {
+  display: none;
+}
+.media-play-button[data-ended] .playing {
+  display: none;
+}

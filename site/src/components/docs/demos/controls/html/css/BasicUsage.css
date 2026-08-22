@@ -23,6 +23,10 @@
 }
 
 .controls-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
   pointer-events: auto;
 }
 
@@ -38,13 +42,6 @@
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 9999px;
   backdrop-filter: blur(10px);
-}
-
-.controls-group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
 }
 
 .button {

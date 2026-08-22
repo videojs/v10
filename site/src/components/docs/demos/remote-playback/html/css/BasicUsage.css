@@ -1,0 +1,59 @@
+.video-player {
+  position: relative;
+  display: block;
+}
+
+.video-player video {
+  width: 100%;
+}
+
+.media-remote-buttons {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.media-airplay-button,
+.media-cast-button {
+  padding-block: 8px;
+  padding-inline: 20px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.media-airplay-button .connected,
+.media-airplay-button .not-connected,
+.media-cast-button .connected,
+.media-cast-button .disconnected {
+  display: none;
+}
+
+/* AirPlay: swap label on connection state */
+.media-airplay-button[data-airplay-state="connected"] .connected {
+  display: inline;
+}
+.media-airplay-button:not([data-airplay-state="connected"]) .not-connected {
+  display: inline;
+}
+
+/* Cast: swap label on connection state */
+.media-cast-button[data-cast-state="connected"] .connected {
+  display: inline;
+}
+.media-cast-button:not([data-cast-state="connected"]) .disconnected {
+  display: inline;
+}
+
+/* Explicitly disabled while the route is unavailable. */
+.media-airplay-button[data-disabled],
+.media-cast-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(1);
+}

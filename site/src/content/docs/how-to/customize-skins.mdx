@@ -1,15 +1,18 @@
 ---
 title: Customize skins
-description: Learn how to customize Video.js v10 skins by copying and modifying them
+description: Restyle the pre-built Video.js skins with CSS custom properties, or eject a skin's code into your project for full control
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import StyleCase from '@/components/docs/StyleCase.astro';
 import EjectedSkin from '@/components/docs/EjectedSkin.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js v10 comes with two pre-built skins; Default and Minimal. Basic customization is possible with CSS custom properties, but if you want more control over the design and functionality of your player, you can copy the skin's code into your project and modify it as needed. We call this "ejecting" the skin, since you're taking the internal code that makes up the skin and making it your own.
+Video.js v10 comes with two pre-built skins: Default and Minimal. Restyle them with CSS custom properties, or copy a skin's code into your project and make it your own. See <DocsLink slug="concepts/skins">Skins</DocsLink> for how skins are put together.
 
-## Basic customization
+## Recommended approach
+
+Set CSS custom properties on the player to change the design without touching any skin code:
 
 | Property Name | Description | Type | Example |
 | ------------- | ----------- | ---- | ------- |
@@ -48,15 +51,17 @@ Vanilla CSS skins use `--media-scale-unit` as the base for control spacing, icon
 
 You can of course also add your own classnames to the skins themselves.
 
-## Ejecting
+## Common variations
 
-If you'd like to customize them you can fully customize them by "ejecting" the code and making it your own.
+### Eject a skin
+
+If you want more control over the design and functionality of your player than the custom properties give you, copy the skin's code into your project and modify it as needed. We call this "ejecting" the skin, since you're taking the internal code that makes up the skin and making it your own.
 
 While eventually we’ll have a CLI that will eject skins in your preferred framework and style, for now we invite you to try it out with these copy-paste-ready implementations.
 
 {/*TODO: Add StyleCase for tailwind variants once tailwind is a supported style (see #840)*/}
 
-### Default video skin
+#### Default video skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="default-video-react" />
@@ -66,7 +71,7 @@ While eventually we’ll have a CLI that will eject skins in your preferred fram
   <EjectedSkin id="default-video" />
 </FrameworkCase>
 
-### Default audio skin
+#### Default audio skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="default-audio-react" />
@@ -76,7 +81,7 @@ While eventually we’ll have a CLI that will eject skins in your preferred fram
   <EjectedSkin id="default-audio" />
 </FrameworkCase>
 
-### Minimal video skin
+#### Minimal video skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="minimal-video-react" />
@@ -86,7 +91,7 @@ While eventually we’ll have a CLI that will eject skins in your preferred fram
   <EjectedSkin id="minimal-video" />
 </FrameworkCase>
 
-### Minimal audio skin
+#### Minimal audio skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="minimal-audio-react" />
@@ -96,7 +101,7 @@ While eventually we’ll have a CLI that will eject skins in your preferred fram
   <EjectedSkin id="minimal-audio" />
 </FrameworkCase>
 
-### Default live video skin
+#### Default live video skin
 
 The live skins swap the duration and current-time displays for a Live button. They build on the live presets, so the player reports live-edge state.
 
@@ -108,7 +113,7 @@ The live skins swap the duration and current-time displays for a Live button. Th
   <EjectedSkin id="default-live-video" />
 </FrameworkCase>
 
-### Default live audio skin
+#### Default live audio skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="default-live-audio-react" />
@@ -118,7 +123,7 @@ The live skins swap the duration and current-time displays for a Live button. Th
   <EjectedSkin id="default-live-audio" />
 </FrameworkCase>
 
-### Minimal live video skin
+#### Minimal live video skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="minimal-live-video-react" />
@@ -128,7 +133,7 @@ The live skins swap the duration and current-time displays for a Live button. Th
   <EjectedSkin id="minimal-live-video" />
 </FrameworkCase>
 
-### Minimal live audio skin
+#### Minimal live audio skin
 
 <FrameworkCase frameworks={["react"]}>
   <EjectedSkin id="minimal-live-audio-react" />
@@ -137,3 +142,7 @@ The live skins swap the duration and current-time displays for a Live button. Th
 <FrameworkCase frameworks={["html"]}>
   <EjectedSkin id="minimal-live-audio" />
 </FrameworkCase>
+
+## Related guides
+
+- <DocsLink slug="how-to/build-your-own-component">Build your own UI component</DocsLink>

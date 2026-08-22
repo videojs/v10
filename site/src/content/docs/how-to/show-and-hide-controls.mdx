@@ -1,0 +1,109 @@
+---
+title: 'Automatically show and hide controls'
+description: 'Show controls while the user is active, hide them during playback, and toggle them by touch.'
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/controls/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/controls/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/controls/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/controls/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/controls/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/controls/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/controls/html/css/BasicUsage.ts?raw';
+
+Show controls while the user is active, fade them out during undisturbed playback, and bring them back on interaction.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Wrap your control UI in <DocsLink slug="reference/controls">Controls</DocsLink>. It reads controls visibility from player state, so the whole control bar shows and hides as one unit.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-controls">controls feature</DocsLink> tracks activity on the player container:
+
+- `userActive` is `true` while the user interacts — pointer movement, keyboard input, or focus — and flips to `false` after two seconds of inactivity.
+- `controlsVisible` derives from activity and playback: controls stay visible while paused or while a remote playback session is connecting or connected, regardless of idle state.
+- `toggleControls()` flips visibility, for wiring to custom triggers.
+
+On touch devices, a tap on the media toggles the controls instead of relying on pointer movement, and mid-gesture movement doesn't flicker visibility.
+
+The feature needs the player container for activity tracking; without a container it stays inactive and warns in development.
+
+## Availability and constraints
+
+- Activity tracking listens on the player container, so controls placed outside it don't keep the player "active" — put control UI inside the container.
+- Keyboard focus counts as activity: controls stay reachable for keyboard and assistive-technology users while focus is inside them.
+- Touch and mouse behave differently by design — mouse movement shows controls, touch requires a tap. Test both.
+- The idle delay is fixed at two seconds.
+
+## Common variations
+
+### Always-visible controls
+
+Skip the visibility wiring: render your controls without consuming `controlsVisible`. State still tracks activity for anything else that needs it.
+
+### Custom show/hide styling
+
+Controls hide by state, so you own the transition. Style the visible and hidden states in CSS — fade, slide, or scale — driven by the component's rendered state rather than re-implementing the idle timer.
+
+## Troubleshooting
+
+### Controls never hide
+
+The media is paused (controls intentionally stay visible), a remote playback session is active, an open menu or popover holds a controls lock, or something keeps triggering activity — for example a focused element inside the container receiving repeated events.
+
+### Controls don't come back on touch
+
+A tap on the media toggles controls. If a custom overlay covers the media and swallows pointer events, taps never reach the container; let pointer events pass through decorative overlays.
+
+### Controls flicker on Android while tapping
+
+Use the skin gestures (`tap` with the `toggleControls` action) rather than adding your own tap handlers next to the built-in behavior; competing handlers invert each other. See <DocsLink slug="how-to/add-keyboard-shortcuts-and-gestures">Add keyboard shortcuts and gestures</DocsLink>.
+
+## Related components
+
+- <DocsLink slug="reference/controls">Controls</DocsLink>
+- <DocsLink slug="reference/player-container">Player container</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-controls">Controls feature</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/add-keyboard-shortcuts-and-gestures">Add keyboard shortcuts and gestures</DocsLink>
+- <DocsLink slug="concepts/accessibility">Accessibility</DocsLink>

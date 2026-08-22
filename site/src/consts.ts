@@ -68,6 +68,7 @@ export const VJS10_DEMO_BACKGROUND_VIDEO_POSTER =
   'https://image.mux.com/601n4w1fq88NJiVpzvrQQeQfNnnjjfKMIN7dCGAEarTs/thumbnail.webp';
 export const VJS10_DEMO_POSTER = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/thumbnail.jpg`;
 export const VJS10_DEMO_STORYBOARD = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/storyboard.jpg`;
+export const VJS10_DEMO_STORYBOARD_VTT = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/storyboard.vtt`;
 
 // Standalone third-party samples for source types that aren't the shared Mux
 // asset above: Mux doesn't serve DASH, and Vimeo is a hosting service. The DASH

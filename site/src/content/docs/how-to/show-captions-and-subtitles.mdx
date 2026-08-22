@@ -1,0 +1,151 @@
+---
+title: 'Show captions and subtitles'
+description: 'Show captions and subtitles, and let users turn them on and pick a language.'
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/text-tracks/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/text-tracks/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/text-tracks/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/text-tracks/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/text-tracks/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/text-tracks/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/text-tracks/html/css/BasicUsage.ts?raw';
+
+Add captions and subtitles to media, and let users turn them on and pick a language.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Add WebVTT tracks as `<track>` children of the media element, and give users a <DocsLink slug="reference/captions-button">CaptionsButton</DocsLink> to toggle them.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-text-tracks">text track feature</DocsLink> mirrors the media element's `textTracks` into player state:
+
+- `textTrackList` holds every track with its `id`, `kind`, `label`, `language`, and `mode`.
+- `subtitlesShowing` is `true` when any caption or subtitle track is showing.
+- `toggleSubtitles(forceShow?)` shows or hides all caption and subtitle tracks.
+- `selectSubtitlesTrack(id)` shows one track and disables the rest; pass `'off'` to disable all.
+
+Tracks don't have to come from `<track>` elements: tracks that streaming media exposes (for example in-manifest HLS captions) appear in `textTrackList` the same way.
+
+The browser renders the cues. Style them with the `::cue` pseudo-element.
+
+## Availability and constraints
+
+- Captions availability is `'unavailable'` until the media has at least one caption or subtitle track; caption controls render nothing in that case.
+- Cues load asynchronously. A track appears in `textTrackList` before its cues are parsed, so cue-driven UI fills in when the track finishes loading.
+- Cross-origin track files require CORS: serve the VTT with CORS headers and set `crossOrigin` on the media element.
+- Track selection UIs identify tracks by `label` and `language`; give every track both.
+- `default` on a `<track>` makes the browser show it initially.
+
+## Common variations
+
+### Language selection menu
+
+For multiple languages, render a menu instead of a toggle.
+
+<FrameworkCase frameworks={["react"]}>
+
+`useCaptionsOptions` provides the option list (including "Off"), the selected value, and availability:
+
+```tsx
+import { Menu, useCaptionsOptions } from '@videojs/react';
+
+function CaptionsMenu() {
+  const captions = useCaptionsOptions();
+  if (captions?.state.availability !== 'available') return null;
+
+  return (
+    <Menu.Root side="top" align="end">
+      <Menu.Trigger render={<button type="button" />}>Captions</Menu.Trigger>
+      <Menu.Content>
+        <Menu.RadioGroup value={captions.value} onValueChange={captions.setValue} aria-label="Captions">
+          {captions.options.map((option) => (
+            <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+              {option.label}
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+```
+
+See the <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink> reference for the complete pattern.
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+Use <DocsLink slug="reference/captions-radio-group">`<media-captions-radio-group>`</DocsLink> inside a menu or popover for explicit track selection.
+
+</FrameworkCase>
+
+## Troubleshooting
+
+### Captions don't appear
+
+Confirm that:
+
+- The track `kind` is `captions` or `subtitles`.
+- The VTT file loads (check the network panel for the track request).
+- The track is enabled: `default` on the track element, a CaptionsButton toggle, or `toggleSubtitles(true)`.
+
+### Captions work locally but not in production
+
+The track file is served from another origin without CORS headers. Serve it with `Access-Control-Allow-Origin` and set `crossOrigin` on the media element.
+
+### The selection menu is empty
+
+The media has no caption or subtitle tracks, so captions availability is `'unavailable'`. For streaming sources, confirm the manifest actually declares text tracks.
+
+## Related components
+
+- <DocsLink slug="reference/captions-button">Captions button</DocsLink>
+- <DocsLink slug="reference/captions-radio-group">Captions radio group</DocsLink>
+- <DocsLink slug="reference/menu">Menu</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-text-tracks">Text track feature</DocsLink>
+- <DocsLink slug="reference/use-captions-options">useCaptionsOptions</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/show-timeline-thumbnail-previews">Show timeline thumbnail previews</DocsLink>
+- <DocsLink slug="concepts/media-sources">Media sources</DocsLink>
+- <DocsLink slug="concepts/accessibility">Accessibility</DocsLink>

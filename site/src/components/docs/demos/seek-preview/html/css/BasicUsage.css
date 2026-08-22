@@ -1,0 +1,65 @@
+.video-player {
+  position: relative;
+  display: block;
+}
+
+.video-player video {
+  width: 100%;
+}
+
+.media-time-slider {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  cursor: pointer;
+}
+
+.media-slider-track {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  transition: height 150ms ease;
+}
+
+.media-time-slider[data-interactive] .media-slider-track {
+  height: 6px;
+}
+
+.media-slider-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--media-slider-fill);
+  height: 100%;
+  background: white;
+  border-radius: 9999px;
+}
+
+/* Reveal the preview over the pointer while it is on the slider. */
+.media-slider-thumbnail {
+  position: absolute;
+  bottom: 100%;
+  left: var(--media-slider-pointer);
+  max-width: 160px;
+  margin-bottom: 8px;
+  pointer-events: none;
+  border-radius: 4px;
+  opacity: 0;
+  transform: translateX(-50%);
+  transition: opacity 150ms ease;
+}
+
+.media-time-slider[data-pointing] .media-slider-thumbnail {
+  opacity: 1;
+}
+
+.media-slider-thumbnail[data-hidden] {
+  display: none;
+}
