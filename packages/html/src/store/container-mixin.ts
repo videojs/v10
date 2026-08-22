@@ -1,6 +1,6 @@
 import { type AnyPlayerStore, createPopupGroup, type MediaContainer, type PlayerStore } from '@videojs/core/dom';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
-import type { MediaElementConstructor } from '@/ui/media-element';
+import type { UIElementConstructor } from '@/ui/ui-element';
 import { type ContainerContext, containerContext, type PlayerContext, playerContext } from '../player/context';
 import { popupGroupContext } from '../player/popup-group-context';
 import type { PlayerConsumer, PlayerConsumerConstructor } from './types';
@@ -10,7 +10,7 @@ export interface ContainerMixinConfig<Store extends PlayerStore> {
   containerContext: ContainerContext;
 }
 
-export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
+export type ContainerMixin<Store extends PlayerStore> = <Class extends UIElementConstructor>(
   BaseClass: Class
 ) => Class & PlayerConsumerConstructor<Store>;
 
@@ -23,7 +23,7 @@ export type ContainerMixin<Store extends PlayerStore> = <Class extends MediaElem
 export function createContainerMixin<Store extends PlayerStore>(
   config: ContainerMixinConfig<Store>
 ): ContainerMixin<Store> {
-  return <Class extends MediaElementConstructor>(BaseClass: Class) => {
+  return <Class extends UIElementConstructor>(BaseClass: Class) => {
     class PlayerContainerElement extends BaseClass implements PlayerConsumer<Store>, MediaContainer {
       #contextStore: Store | null = null;
       #setContainer: ((container: MediaContainer | null) => void) | null = null;

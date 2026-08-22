@@ -44,12 +44,12 @@ function CaptionsButton() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="captions-button.ts"
-import { createPlayer, MediaElement, selectTextTrack } from '@videojs/html';
+import { createPlayer, UIElement, selectTextTrack } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
-class CaptionsButton extends MediaElement {
+class CaptionsButton extends UIElement {
   readonly #textTracks = new PlayerController(this, context, selectTextTrack);
 }
 ```

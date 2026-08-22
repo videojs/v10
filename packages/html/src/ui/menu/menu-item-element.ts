@@ -1,10 +1,10 @@
 import { applyElementProps, completeMenuItemSelection } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import { type MenuContextValue, menuContext } from './context';
 
-export class MenuItemElement extends MediaElement {
+export class MenuItemElement extends UIElement {
   static readonly tagName = 'media-menu-item';
 
   static override properties = {

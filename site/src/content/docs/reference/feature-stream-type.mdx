@@ -38,12 +38,12 @@ function LiveIndicator() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="live-indicator.ts"
-import { createPlayer, MediaElement, selectStreamType } from '@videojs/html';
+import { createPlayer, UIElement, selectStreamType } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
-class LiveIndicator extends MediaElement {
+class LiveIndicator extends UIElement {
   readonly #stream = new PlayerController(this, context, selectStreamType);
 }
 ```

@@ -72,9 +72,9 @@ import '@videojs/html/video/player';
 For custom behavior, import the preconfigured `ContainerMixin` from the main HTML package:
 
 ```ts title="my-player.ts"
-import { ContainerMixin, MediaElement } from '@videojs/html';
+import { ContainerMixin, UIElement } from '@videojs/html';
 
-class MyContainer extends ContainerMixin(MediaElement) {}
+class MyContainer extends ContainerMixin(UIElement) {}
 customElements.define('my-container', MyContainer);
 ```
 

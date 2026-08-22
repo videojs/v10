@@ -10,7 +10,7 @@ import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { isNull } from '@videojs/utils/predicate';
 import { camelCase, kebabCase } from '@videojs/utils/string';
-import type { MediaElementConstructor } from '@/ui/media-element';
+import type { UIElementConstructor } from '@/ui/ui-element';
 import type { ContainerContext, MediaContext, PlayerContext } from '../player/context';
 import type { PlayerProviderConstructor } from './types';
 
@@ -22,7 +22,7 @@ export interface ProviderMixinConfig<Store extends PlayerStore> {
   config: PlayerFeatureConfig;
 }
 
-export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
+export type ProviderMixin<Store extends PlayerStore> = <Class extends UIElementConstructor>(
   BaseClass: Class
 ) => Class & PlayerProviderConstructor<Store>;
 
@@ -70,7 +70,7 @@ export function createProviderMixin<Store extends PlayerStore>(
 ): ProviderMixin<Store> {
   const inputs = resolveInputs(options.config);
 
-  return <Class extends MediaElementConstructor>(BaseClass: Class) => {
+  return <Class extends UIElementConstructor>(BaseClass: Class) => {
     class PlayerProviderElement extends BaseClass {
       static properties = {
         ...(BaseClass as unknown as { properties: PropertyDeclarationMap }).properties,

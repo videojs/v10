@@ -15,7 +15,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/html-create-player/html/cs
 `createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns a typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, `ProviderMixin`, and a `create` store factory. Import `ContainerMixin` separately from the main package when composing a container.
 
 ```ts title="player.ts"
-import { ContainerMixin, createPlayer, MediaElement, selectPlayback } from '@videojs/html';
+import { ContainerMixin, createPlayer, UIElement, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { ProviderMixin, PlayerController, context } = createPlayer({
@@ -23,11 +23,11 @@ const { ProviderMixin, PlayerController, context } = createPlayer({
 });
 
 // Provider element: owns the store, provides context to descendants
-class VideoPlayer extends ProviderMixin(MediaElement) {}
+class VideoPlayer extends ProviderMixin(UIElement) {}
 customElements.define('video-player', VideoPlayer);
 
 // Control element with selector
-class PlayButton extends MediaElement {
+class PlayButton extends UIElement {
   #playback = new PlayerController(this, context, selectPlayback);
 }
 ```
@@ -37,24 +37,24 @@ class PlayButton extends MediaElement {
 Use split elements (recommended for reusable skins/layouts):
 
 ```ts title="player.ts"
-import { ContainerMixin, createPlayer, MediaElement } from '@videojs/html';
+import { ContainerMixin, createPlayer, UIElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-class PlayerRoot extends ProviderMixin(MediaElement) {}
-class PlayerRegion extends ContainerMixin(MediaElement) {}
+class PlayerRoot extends ProviderMixin(UIElement) {}
+class PlayerRegion extends ContainerMixin(UIElement) {}
 ```
 
 Use a single composed element when the same element should both own the store and attach media:
 
 ```ts title="player.ts"
-import { ContainerMixin, createPlayer, MediaElement } from '@videojs/html';
+import { ContainerMixin, createPlayer, UIElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-class ComposedPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
+class ComposedPlayer extends ProviderMixin(ContainerMixin(UIElement)) {}
 ```
 
 ## Examples

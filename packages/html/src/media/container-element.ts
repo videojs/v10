@@ -6,9 +6,9 @@ import { listen } from '@videojs/utils/dom';
 import { i18nContext } from '../i18n/context';
 import { I18nController } from '../i18n/controller';
 import { ContainerMixin } from '../store/container-mixin';
-import { MediaElement } from '../ui/media-element';
+import { UIElement } from '../ui/ui-element';
 
-export class MediaContainerElement extends ContainerMixin(MediaElement) {
+export class MediaContainerElement extends ContainerMixin(UIElement) {
   static readonly tagName = 'media-container';
 
   readonly #i18n = new I18nController(this, i18nContext);

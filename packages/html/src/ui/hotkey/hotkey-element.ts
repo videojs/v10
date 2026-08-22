@@ -5,9 +5,9 @@ import { ContextConsumer } from '@videojs/element/context';
 
 import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class HotkeyElement extends MediaElement {
+export class HotkeyElement extends UIElement {
   static readonly tagName = 'media-hotkey';
 
   static override properties: PropertyDeclarationMap = {

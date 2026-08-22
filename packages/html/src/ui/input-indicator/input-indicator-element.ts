@@ -18,7 +18,7 @@ import type { State as StoreState } from '@videojs/store';
 
 import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 import type { LiveIndicator } from './live-indicator';
 
 /** Shared imperative API for status / volume / seek indicator cores. */
@@ -33,7 +33,7 @@ export interface InputIndicatorOptions {
   replayOnUpdate?: boolean | undefined;
 }
 
-export abstract class InputIndicatorElement<IndicatorState extends IndicatorLifecycleState> extends MediaElement {
+export abstract class InputIndicatorElement<IndicatorState extends IndicatorLifecycleState> extends UIElement {
   protected abstract get core(): InputIndicatorCoreApi<IndicatorState>;
   protected abstract get transition(): TransitionApi;
   protected abstract get liveIndicator(): LiveIndicator<IndicatorState>;

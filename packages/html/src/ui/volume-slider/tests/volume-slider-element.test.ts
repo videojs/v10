@@ -5,8 +5,8 @@ import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
 import { SliderThumbElement } from '../../slider/slider-thumb-element';
+import { UIElement } from '../../ui-element';
 import { VolumeSliderElement } from '../volume-slider-element';
 
 let tagCounter = 0;
@@ -37,7 +37,7 @@ function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailabil
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createVolumeStore('available');
 
   readonly #provider = new ContextProvider(this, { context: playerContext });

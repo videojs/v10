@@ -8,7 +8,7 @@ export type {
   ReactiveController,
   ReactiveControllerHost,
 } from '@videojs/element';
-// Element — reactive primitives for users extending MediaElement
+// Element — reactive primitives for users extending UIElement
 export { DestroyMixin, ReactiveElement } from '@videojs/element';
 // Media predicates
 export {
@@ -96,8 +96,6 @@ export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-contr
 export { HotkeyElement } from './ui/hotkey/hotkey-element';
 export { LiveButtonElement } from './ui/live-button/live-button-element';
 export { MediaButtonElement } from './ui/media-button-element';
-// Primitives
-export * from './ui/media-element';
 export { MediaUIElement } from './ui/media-ui-element';
 export {
   type MenuContextValue,
@@ -153,6 +151,8 @@ export { TooltipElement } from './ui/tooltip/tooltip-element';
 export { TooltipGroupElement } from './ui/tooltip/tooltip-group-element';
 export { TooltipLabelElement } from './ui/tooltip/tooltip-label-element';
 export { TooltipShortcutElement } from './ui/tooltip/tooltip-shortcut-element';
+// Primitives
+export * from './ui/ui-element';
 export { VolumeIndicatorElement } from './ui/volume-indicator/volume-indicator-element';
 export { VolumeIndicatorFillElement } from './ui/volume-indicator/volume-indicator-fill-element';
 export { VolumeIndicatorValueElement } from './ui/volume-indicator/volume-indicator-value-element';

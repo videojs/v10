@@ -12,13 +12,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { playerContext } from '../../player/context';
 import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
 import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
-import { MediaElement } from '../../ui/media-element';
 import { MenuElement } from '../../ui/menu/menu-element';
 import { MenuItemElement } from '../../ui/menu/menu-item-element';
 import { MenuRadioGroupElement } from '../../ui/menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../../ui/menu/menu-radio-item-element';
 import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-group/playback-rate-radio-group-element';
 import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
+import { UIElement } from '../../ui/ui-element';
 
 type MenuMediaState = MediaAudioTrackState & MediaPlaybackRateState & MediaQualityState & MediaTextTrackState;
 
@@ -60,7 +60,7 @@ function createMenuStore(overrides: Partial<MenuMediaState> = {}): AnyPlayerStor
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createMenuStore();
 
   readonly #provider = new ContextProvider(this, { context: playerContext });
