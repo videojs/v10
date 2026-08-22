@@ -23,6 +23,10 @@ type CdnBuildMode = 'dev' | 'prod';
 
 const packageDir = dirname(fileURLToPath(import.meta.url));
 const skinsDir = resolve(packageDir, '../skins/src');
+
+/** The light-DOM sheet every non-background skin pulls in. Kept out of the shadow sheets. */
+const globalCss = resolve(packageDir, 'src/define/global.css');
+
 const srcDir = new URL('./src', import.meta.url).pathname;
 const srcAlias = { '@': srcDir };
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
@@ -159,6 +163,43 @@ export const entries = [
   ...cdnMediaEntries,
 ];
 
+/**
+ * Flat CDN filename for a stylesheet, or null for a source file that is not published.
+ *
+ * A bundle inlines its own CSS and applies it on upgrade, so these files are not needed to run the player. They exist
+ * for the two things a running element cannot do for a page:
+ *
+ * - **Light DOM, `<link>` in `<head>`.** `global.css` and `background.css` are what the elements inject into
+ *   `document.head` themselves. Linking them instead applies the host and media box rules before the custom element
+ *   upgrades, which is what stops the pre-upgrade layout shift.
+ * - **Shadow DOM, `<link>` inside a `<template shadowrootmode>`.** `SkinElement` skips styling when a shadow root already
+ *   exists, so a declaratively rendered skin has to carry its own sheet. Nothing is exposed through `::part`, so a
+ *   document-level `<link>` cannot reach it.
+ *
+ * A tarball CDN serves paths and ignores `package.json` exports, so the filename _is_ the public URL. Shadow sheets are
+ * named after the bundle they pair with (`video.css` beside `video.js`), which is what lets a page derive one URL from
+ * the other.
+ *
+ * Everything under `src/__generated__` is an ejected-skin partial that the flattened skins already inline, so it is
+ * skipped rather than published twice.
+ */
+function cdnStylesheetName(file: string): string | null {
+  const match = /^src\/define\/(?:([\w-]+)\/)?([\w-]+)\.css$/.exec(file);
+  if (!match) return null;
+
+  const [, preset, name] = match;
+  // Light DOM: `global.css`, and `shared.css` as a base for hand-written shadow skins.
+  if (!preset) return `${name}.css`;
+
+  // The background skin is light DOM only — its shadow root holds a bare container and no styles.
+  if (preset === 'background') return name === 'skin' ? 'background.css' : null;
+
+  const suffix = name === 'skin' ? '' : name === 'minimal-skin' ? '-minimal' : null;
+  if (suffix === null) return null;
+
+  return `${preset}${suffix}.css`;
+}
+
 /** Generate empty declaration stubs for side-effect-only dev CDN entries. */
 function dtsStubsPlugin(outDir: string) {
   function generate(dir: string) {
@@ -217,6 +258,21 @@ for (const mode of cdnBuildModes) {
       cdnI18nExternalPlugin({ prod: isProd }),
       inlineCssPlugin({ skinsDir, minify: isProd }),
       inlineTemplatePlugin({ minify: isProd }),
+      // Stylesheets have no dev/prod variant, so they are emitted once. The prod pass runs after the dev pass, which
+      // is the one that cleans `outDir`.
+      ...(isProd
+        ? [
+            copyCssPlugin({
+              skinsDir,
+              outDir: cdnOutDir,
+              rename: cdnStylesheetName,
+              // Skin sheets are for a shadow root, where the light-DOM rules are dead weight. `global.css` ships on
+              // its own instead, for the `<head>`.
+              omitImport: (imported) => imported === globalCss,
+              minify: true,
+            }),
+          ]
+        : []),
       ...(!isProd ? [dtsStubsPlugin(cdnOutDir)] : []),
     ],
     inputOptions: {

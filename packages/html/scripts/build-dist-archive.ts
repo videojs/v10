@@ -13,7 +13,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, globSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -93,6 +93,15 @@ async function main() {
     process.exit(1);
   }
 
+  // Stylesheets are unreachable through the module graph — the bundles inline their CSS, and these
+  // are the separate `<link>`-able copies — so they come from a directory listing instead. They are
+  // excluded from the check above, which reads JavaScript.
+  const stylesheets = globSync('*.css', { cwd: CDN_DIR }).sort();
+
+  for (const file of stylesheets) {
+    cpSync(resolve(CDN_DIR, file), join(stageDir, file));
+  }
+
   cpSync(resolve(REPO_ROOT, 'LICENSE'), resolve(stageDir, 'LICENSE'));
   cpSync(resolve(PACKAGE_DIR, 'README.md'), resolve(stageDir, 'README.md'));
   writeFileSync(resolve(stageDir, 'VERSION'), `${pkg.version}\n`);
@@ -107,7 +116,7 @@ async function main() {
     `${archives.map((archive) => `${sha256(resolve(OUT_DIR, archive))}  ${archive}`).join('\n')}\n`
   );
 
-  log.info(`✅ ${files.length} bundles from ${roots.length} entries`);
+  log.info(`✅ ${files.length} bundles from ${roots.length} entries, ${stylesheets.length} stylesheets`);
 
   for (const archive of archives) {
     const size = (statSync(resolve(OUT_DIR, archive)).size / 1024).toFixed(0);
