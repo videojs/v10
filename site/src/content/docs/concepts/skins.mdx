@@ -115,6 +115,8 @@ There are currently two options for styling:
 - Vanilla CSS that's automatically imported. This is the default.
 - Tailwind where you [eject](../how-to/customize-skins#ejecting) the skin and use Tailwind classnames in your app.
 
+Either way the styles travel inside the skin's JavaScript and apply when the element upgrades, so there is no stylesheet to add. The CDN publishes them as files as well, which matters when you want the player's box styled before that upgrade — see <DocsLink slug="how-to/self-host-the-player">Self-host the player</DocsLink>.
+
 </FrameworkCase>
 
 ### Current limitations
