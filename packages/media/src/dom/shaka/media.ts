@@ -12,10 +12,17 @@ import shaka from 'shaka-player/dist/shaka-player.compiled-es2021';
 import type { DrmSystemsConfig } from '../../core/drm';
 import { MediaError } from '../../core/media-error';
 import { MediaTracksMixin } from '../../core/media-tracks';
-import { type MediaEngineHost, type MediaPreloadType, type MediaStreamType, MediaStreamTypes } from '../../core/types';
+import {
+  type MediaEngineHost,
+  type MediaPreloadType,
+  type MediaResolution,
+  type MediaStreamType,
+  MediaStreamTypes,
+} from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { ShakaMediaLiveMixin } from './live';
 import { ShakaMediaMediaTracksMixin } from './media-tracks';
+import { RenditionCapController } from './rendition-cap';
 import { didShimSelf } from './server-shim';
 import { ShakaMediaStreamTypeMixin } from './stream-type';
 
@@ -59,6 +66,54 @@ export interface ShakaSource {
    * is the browser's choice.
    */
   drm?: DrmSystemsConfig | undefined;
+  /**
+   * Highest resolution adaptive bitrate selection may choose on its own.
+   *
+   * A ceiling on automatic selection, not a filter on what is available:
+   * renditions above it stay in `videoRenditions` and can still be selected by
+   * hand. Matching is by pixel area, so a `'720p'` cap admits any rendition at
+   * or below 1280×720 worth of pixels. When every rendition sits above the cap,
+   * the smallest one is used.
+   *
+   * Applied live — changing it never rebuilds the playback engine.
+   */
+  maxAutoResolution?: MediaResolution | undefined;
+  /**
+   * Whether the element's rendered size caps automatic selection. Defaults to
+   * `true`.
+   *
+   * A 400px-wide player has no use for a 4K rendition, so selection is held to
+   * the smallest rendition that still covers the element, measured in device
+   * pixels — a `2` device pixel ratio asks for twice what a CSS measurement
+   * would. The cap follows the element as it resizes, and `minAutoResolution`
+   * bounds how far down it can go. Set it to `false` for a player whose layout
+   * size understates what it needs, such as one that goes fullscreen without a
+   * resize.
+   *
+   * Applied live — changing it never rebuilds the playback engine. Shaka's own
+   * `abr.restrictToElementSize` (through `source.engine.shaka`) is a different
+   * thing: Shaka's built-in size cap, which knows nothing of
+   * `minAutoResolution` and composes with this one rather than replacing it.
+   */
+  capRenditionToPlayerSize?: boolean | undefined;
+  /**
+   * Lowest resolution `capRenditionToPlayerSize` may cap down to. Defaults to
+   * `'720p'`.
+   *
+   * Not a quality floor. It bounds the size-derived cap and nothing else: when
+   * bandwidth is poor, adaptive selection still drops below it, because the cap
+   * is a ceiling and selection stays free underneath. Nor does it raise an
+   * explicit `maxAutoResolution` — asking for at most `'360p'` alongside a
+   * `'720p'` floor yields `'360p'`.
+   *
+   * The default exists because the low rungs of a ladder are there for poor
+   * network conditions, and capping a small player to them looks worse than its
+   * size suggests. Name a lower rung to weaken the floor, or `'270p'` to lift
+   * it for any real ladder.
+   *
+   * Applied live — changing it never rebuilds the playback engine.
+   */
+  minAutoResolution?: MediaResolution | undefined;
   /** Playback options, keyed by the engine that reads them. */
   engine?: ShakaEngineConfig | undefined;
 }
@@ -88,16 +143,6 @@ export const shakaMediaDefaultProps: ShakaMediaProps = {
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
-/**
- * Configuration this element applies on top of Shaka's own defaults — the
- * Shaka spelling of what the hls.js media ships (`capLevelToPlayerSize`):
- * adaptation stays within renditions no larger than the element rendering
- * them. Anything under `source.engine.shaka` overrides it.
- */
-const defaultShakaConfig: ShakaConfig = {
-  abr: { restrictToElementSize: true },
-};
-
 const ShakaMediaHost = MediaTracksMixin(HTMLVideoElementHost);
 
 class ShakaMediaBase
@@ -105,6 +150,7 @@ class ShakaMediaBase
   implements MediaEngineHost<shaka.Player, HTMLVideoElement>, Omit<ShakaMediaProps, 'streamType'>
 {
   #engine: shaka.Player | null = null;
+  #renditionCap: RenditionCapController | null = null;
   #src = shakaMediaDefaultProps.src;
   #source: ShakaSource | null = shakaMediaDefaultProps.source;
   #preload: MediaPreloadType = shakaMediaDefaultProps.preload;
@@ -134,7 +180,11 @@ class ShakaMediaBase
     }
 
     this.#engine = new shaka.Player();
-    this.#engine.configure(defaultShakaConfig);
+    // The Shaka spelling of what the hls.js media ships (`capLevelToPlayerSize`):
+    // adaptation stays within renditions no larger than the element rendering
+    // them, floored so a small player is never capped onto the ladder's lowest
+    // rungs. The source's cap options steer it live.
+    this.#renditionCap = new RenditionCapController(this.#engine);
     this.#engine.addEventListener('error', this.#onEngineError);
   }
 
@@ -155,6 +205,7 @@ class ShakaMediaBase
     const engine = this.#engine;
     if (!engine || !isNewTarget) return;
 
+    this.#renditionCap?.observe(target);
     this.#run(engine.attach(target));
     // Shaka takes its lock in call order, so this runs after the attach above
     // without waiting on it here.
@@ -165,8 +216,10 @@ class ShakaMediaBase
     const engine = this.#engine;
     const wasAttached = this.target !== null;
 
-    // The play listener belongs to the target that is leaving.
+    // The play listener belongs to the target that is leaving, as does the
+    // size-derived rendition cap.
     this.#disarmPlayIntent();
+    this.#renditionCap?.observe(null);
 
     super.detach();
 
@@ -181,6 +234,9 @@ class ShakaMediaBase
     // Anything still in flight has nothing left to report to.
     this.#engine = null;
     this.#isDestroyed = true;
+
+    this.#renditionCap?.destroy();
+    this.#renditionCap = null;
 
     if (engine) {
       engine.removeEventListener('error', this.#onEngineError);
@@ -224,10 +280,15 @@ class ShakaMediaBase
   set src(value) {
     // `src` says which source to play; every other field says how to play it,
     // so they carry over.
-    const { type, drm, engine } = this.#source ?? {};
+    const { type, drm, maxAutoResolution, capRenditionToPlayerSize, minAutoResolution, engine } = this.#source ?? {};
     const next: ShakaSource = {
       ...(type && { type }),
       ...(drm && { drm }),
+      ...(maxAutoResolution && { maxAutoResolution }),
+      // Definedness, not truthiness: `false` is the value worth naming, and the
+      // falsy one, so the neighbors' pattern would drop it.
+      ...(capRenditionToPlayerSize !== undefined && { capRenditionToPlayerSize }),
+      ...(minAutoResolution && { minAutoResolution }),
       ...(engine && { engine }),
       ...(value && { src: value }),
     };
@@ -296,12 +357,17 @@ class ShakaMediaBase
     // engine calls are guarded, so re-assigning an equivalent source — an inline
     // React prop, say — never disturbs what is already playing.
     const configChanged = !deepEqual(engineConfigKey(this.#source), engineConfigKey(source));
+    const capsChanged = !deepEqual(renditionCapKey(this.#source), renditionCapKey(source));
     const loadChanged = this.#src !== (source?.src ?? '') || this.#source?.type !== source?.type;
 
     this.#source = source;
     this.#src = source?.src ?? '';
 
     if (configChanged) this.#applyEngineConfig();
+    // The cap options are deliberately outside the engine config key, so
+    // changing one reaches the engine already running. A config change forces a
+    // re-apply either way: its reset lifted the restrictions the caps wrote.
+    if (configChanged || capsChanged) this.#applyRenditionCaps();
     if (loadChanged) this.#requestLoad();
 
     this.dispatchEvent(new Event('sourcechange'));
@@ -315,7 +381,6 @@ class ShakaMediaBase
     if (!engine) return;
 
     engine.resetConfiguration();
-    engine.configure(defaultShakaConfig);
 
     const config = withDrmConfig(this.#source?.engine?.shaka, this.#source?.drm);
     if (config) engine.configure(config);
@@ -323,6 +388,20 @@ class ShakaMediaBase
     // A wholesale re-apply raised the buffering goals a pending `'metadata'`
     // clamp held down; clamp again against the configuration now in force.
     if (this.#clampedGoals) this.#clampBuffering(engine);
+  }
+
+  /** Push the source's rendition caps down to the controller that applies them. */
+  #applyRenditionCaps() {
+    const { maxAutoResolution, capRenditionToPlayerSize, minAutoResolution, engine } = this.#source ?? {};
+
+    this.#renditionCap?.update({
+      maxAutoResolution,
+      capToPlayerSize: capRenditionToPlayerSize,
+      minAutoResolution,
+      // The computed ceilings intersect whatever `engine.shaka` restricted
+      // itself, so a stricter caller-configured ceiling stays in force.
+      baseRestrictions: engine?.shaka?.abr?.restrictions,
+    });
   }
 
   #requestLoad() {
@@ -487,6 +566,15 @@ function installPolyfills() {
  */
 function engineConfigKey(source: ShakaSource | null) {
   return { drm: source?.drm ?? null, shaka: source?.engine?.shaka ?? null };
+}
+
+/** The cap inputs on their own; they steer a running engine without a reload. */
+function renditionCapKey(source: ShakaSource | null) {
+  return {
+    maxAutoResolution: source?.maxAutoResolution ?? null,
+    capRenditionToPlayerSize: source?.capRenditionToPlayerSize ?? null,
+    minAutoResolution: source?.minAutoResolution ?? null,
+  };
 }
 
 /**

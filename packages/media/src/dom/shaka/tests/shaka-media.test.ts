@@ -136,8 +136,13 @@ async function flush() {
   for (let index = 0; index < 5; index += 1) await Promise.resolve();
 }
 
-/** What the element itself configures on a fresh or reset engine. */
-const ELEMENT_DEFAULTS = { abr: { restrictToElementSize: true } };
+/**
+ * What the element itself configures on a fresh or reset engine: the rendition
+ * cap's restrictions, all lifted — the test target has no measurable size and
+ * the sources under test name no caps.
+ */
+const DEFAULT_RESTRICTIONS = { maxPixels: Infinity, maxWidth: Infinity, maxHeight: Infinity };
+const ELEMENT_DEFAULTS = { abr: { restrictions: DEFAULT_RESTRICTIONS } };
 
 const MANIFEST = 'https://example.com/manifest.mpd';
 const OTHER_MANIFEST = 'https://example.com/other.m3u8';
@@ -374,9 +379,86 @@ describe('ShakaMedia', () => {
         servers: { [KeySystems.PLAYREADY]: 'https://example.com/playready' },
       });
     });
+
+    it('translates the rendition caps into abr restrictions', async () => {
+      const { media, engine } = setup();
+
+      media.source = { src: MANIFEST, maxAutoResolution: '720p' };
+      await flush();
+
+      expect(engine.config.abr.restrictions.maxPixels).toBe(1280 * 720);
+    });
+
+    it('applies a cap change to the engine already running', async () => {
+      const { media, engine } = setup();
+
+      media.source = { src: MANIFEST };
+      await flush();
+      engine.load.mockClear();
+      engine.resetConfiguration.mockClear();
+
+      media.source = { src: MANIFEST, maxAutoResolution: '360p' };
+      await flush();
+
+      expect(engine.load).not.toHaveBeenCalled();
+      expect(engine.resetConfiguration).not.toHaveBeenCalled();
+      expect(engine.config.abr.restrictions.maxPixels).toBe(640 * 360);
+    });
+
+    it('keeps the rendition caps in force when shaka configuration is reset', async () => {
+      const { media, engine } = setup();
+
+      media.source = { src: MANIFEST, maxAutoResolution: '720p' };
+      await flush();
+
+      media.source = {
+        src: MANIFEST,
+        maxAutoResolution: '720p',
+        engine: { shaka: { streaming: { bufferingGoal: 30 } } },
+      };
+      await flush();
+
+      expect(engine.resetConfiguration).toHaveBeenCalled();
+      expect(engine.config.abr.restrictions.maxPixels).toBe(1280 * 720);
+    });
+
+    it('keeps a stricter shaka-configured restriction in force', async () => {
+      const { media, engine } = setup();
+
+      media.source = {
+        src: MANIFEST,
+        maxAutoResolution: '2160p',
+        engine: { shaka: { abr: { restrictions: { maxPixels: 1_000 } } } },
+      };
+      await flush();
+
+      expect(engine.config.abr.restrictions.maxPixels).toBe(1_000);
+    });
   });
 
   describe('src', () => {
+    it('preserves the rendition caps across a src change', async () => {
+      const { media } = setup();
+
+      media.source = {
+        src: MANIFEST,
+        maxAutoResolution: '720p',
+        capRenditionToPlayerSize: false,
+        minAutoResolution: '360p',
+      };
+      await flush();
+
+      media.src = OTHER_MANIFEST;
+      await flush();
+
+      expect(media.source).toEqual({
+        src: OTHER_MANIFEST,
+        maxAutoResolution: '720p',
+        capRenditionToPlayerSize: false,
+        minAutoResolution: '360p',
+      });
+    });
+
     it('preserves source configuration across a src change', async () => {
       const { media, engine } = setup();
 
@@ -577,7 +659,7 @@ describe('ShakaMedia', () => {
       media.videoRenditions[1]!.selected = true;
       await flush();
 
-      expect(engine.config.abr).toEqual({ restrictToElementSize: true, enabled: false });
+      expect(engine.config.abr).toEqual({ restrictions: DEFAULT_RESTRICTIONS, enabled: false });
       expect(engine.selectVideoTrack).toHaveBeenCalledWith(engine.videoTracks[1]);
     });
 
@@ -592,7 +674,7 @@ describe('ShakaMedia', () => {
       media.videoRenditions[1]!.selected = false;
       await flush();
 
-      expect(engine.config.abr).toEqual({ restrictToElementSize: true, enabled: true });
+      expect(engine.config.abr).toEqual({ restrictions: DEFAULT_RESTRICTIONS, enabled: true });
     });
 
     it('leaves shaka configuration alone when nothing was ever pinned', async () => {
@@ -620,7 +702,7 @@ describe('ShakaMedia', () => {
       media.source = { src: MANIFEST, engine: { shaka: { streaming: { bufferingGoal: 30 } } } };
       await flush();
 
-      expect(engine.config.abr).toEqual({ restrictToElementSize: true, enabled: false });
+      expect(engine.config.abr).toEqual({ restrictions: DEFAULT_RESTRICTIONS, enabled: false });
       expect(engine.selectVideoTrack).toHaveBeenCalledWith(engine.videoTracks[1]);
     });
 
@@ -637,7 +719,7 @@ describe('ShakaMedia', () => {
       await flush();
 
       expect([...media.videoRenditions]).toEqual([]);
-      expect(engine.config.abr).toEqual({ restrictToElementSize: true, enabled: true });
+      expect(engine.config.abr).toEqual({ restrictions: DEFAULT_RESTRICTIONS, enabled: true });
     });
 
     it('stops mirroring tracks once destroyed', async () => {

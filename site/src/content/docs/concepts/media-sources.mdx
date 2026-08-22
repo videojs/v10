@@ -235,7 +235,7 @@ The cap limits automatic selection without hiding anything. Renditions above it 
 
 Renditions are matched on pixel area rather than height, which keeps unusual aspect ratios honest: an ultrawide 2560×1080 rendition carries more pixels than 16:9 1080p, so a `'1080p'` cap leaves it out. When every rendition sits above the cap, the smallest one plays.
 
-Changing the cap applies to the running engine, so playback continues uninterrupted. It needs the hls.js engine — native HLS playback ignores it, and audio-only streams have no video renditions to cap.
+Changing the cap applies to the running engine, so playback continues uninterrupted. It needs an engine with the lever — hls.js and Shaka both have one, native HLS playback ignores it — and audio-only streams have no video renditions to cap.
 
 ### Capping to the player's size
 
