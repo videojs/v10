@@ -19,6 +19,10 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
   class HlsJsMediaAirPlay extends (BaseClass as Constructor<HlsEngineHost>) {
     #sourceEl: HTMLSourceElement | null = null;
     #disconnect: AbortController | null = null;
+    /** Whether disableRemotePlayback was set explicitly through the media API. */
+    #apiDisableRemotePlayback?: boolean;
+    /** The element's own disableRemotePlayback, sampled fresh on every attach. */
+    #elementDisableRemotePlayback = false;
 
     constructor(...args: any[]) {
       super(...args);
@@ -31,16 +35,39 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       });
     }
 
+    override get disableRemotePlayback(): boolean {
+      return super.disableRemotePlayback;
+    }
+
+    override set disableRemotePlayback(value: boolean) {
+      this.#apiDisableRemotePlayback = value;
+      super.disableRemotePlayback = value;
+    }
+
+    override attach(target: HTMLVideoElement): void {
+      // Markup and React props reach the element, not the setter above, so sample
+      // it before `super.attach` lets hls.js overwrite the flag. Sampled per
+      // attach so clearing the attribute takes effect on the next one.
+      this.#elementDisableRemotePlayback = target.disableRemotePlayback ?? false;
+      super.attach(target);
+    }
+
+    /** An explicit media API call wins over whatever the element carries. */
+    get #authorDisabledRemotePlayback(): boolean {
+      return this.#apiDisableRemotePlayback ?? this.#elementDisableRemotePlayback;
+    }
+
     #init(): void {
       this.#destroy();
 
       const target = this.target;
       if (!target || !isWebKitAirPlayCapable(target)) return;
 
-      // Counter the `disableRemotePlayback = true` that other code paths may
-      // set for MSE; AirPlay requires the picker to be available on this
-      // element.
-      target.disableRemotePlayback = false;
+      // Counter the `disableRemotePlayback = true` hls.js sets for MMS; AirPlay
+      // requires the picker on this element. The author's intent wins.
+      if (!this.#authorDisabledRemotePlayback) {
+        target.disableRemotePlayback = false;
+      }
       this.#attachSource(target);
       this.#setupLoadControl(target);
     }
