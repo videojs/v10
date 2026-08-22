@@ -120,6 +120,30 @@ export function hasCodecs(track: PartiallyResolvedTrack | ResolvedTrack | undefi
 }
 
 /**
+ * The family (RFC 6381 4CC) of one codec string: `'avc1.640028'` → `'avc1'`,
+ * `'mp4a.40.2'` → `'mp4a'`, dotless strings (`'ec-3'`) pass through whole.
+ * Lowercased so families compare regardless of manifest casing.
+ *
+ * The family is what a `SourceBuffer`'s bytestream is keyed on: renditions in
+ * one family swap via a new init segment, while crossing families needs
+ * `SourceBuffer.changeType()` (which SPF doesn't implement).
+ */
+export function getCodecFamily(codec: string): string {
+  return codec.trim().split('.', 1)[0]!.toLowerCase();
+}
+
+/**
+ * The distinct codec families a track carries, or `undefined` when it carries
+ * no codecs (unknowable, per `hasCodecs` — not "none"). A demuxed rendition
+ * has one family; a muxed one (bipbop's `CODECS="hvc1…,mp4a…"`) has one per
+ * elementary stream.
+ */
+export function getCodecFamilies(track: { codecs?: string[] }): readonly string[] | undefined {
+  if (!track.codecs?.length) return undefined;
+  return [...new Set(track.codecs.map(getCodecFamily))];
+}
+
+/**
  * Set `mimeType` on every track of one `type` (immutably). Used to propagate a
  * detected container across a type's renditions: an ABR ladder is the same
  * content at different bitrates, so one rendition's container holds for all of

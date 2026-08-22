@@ -161,6 +161,14 @@ export interface HlsAudioEngineConfig extends ShareSignalsConfig<HlsAudioEngineS
    */
   canPlayTrack?: CanPlayTrack;
   /**
+   * Codec families the initial audio pick prefers on a mixed-codec source
+   * (`preferCodecFamilies` scope) — the family it lands in is then sticky for
+   * the source's lifetime (`stickToSelectedCodecs`; SPF implements no
+   * `SourceBuffer.changeType()`). Defaults to `DEFAULT_PREFERRED_CODECS`
+   * (AAC, plus video 4CCs inert here); pass `[]` to disable.
+   */
+  preferredCodecs?: string[];
+  /**
    * Conditions reported about each rendition as it resolves — the *causes* behind
    * a later verdict, and the copy a verdict reuses when they agree. Defaults to
    * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
