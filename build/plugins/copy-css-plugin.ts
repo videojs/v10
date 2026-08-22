@@ -1,5 +1,6 @@
 import { existsSync, globSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { transform } from 'lightningcss';
 import { resolveImports } from './resolve-css-imports.ts';
 import type { BuildPlugin } from './types.ts';
 
@@ -8,10 +9,30 @@ interface CopyCssPluginOptions {
   outDir: string;
   inline?: boolean;
   rebuild?: boolean;
+  /**
+   * Map a source path to an output path relative to `outDir`, or null to skip the file.
+   * Defaults to mirroring the `src` tree.
+   */
+  rename?: (file: string) => string | null;
+  /** Drop an `@import`ed file, by resolved absolute path, instead of inlining it. */
+  omitImport?: (file: string) => boolean;
+  minify?: boolean;
+}
+
+function mirrorSrcTree(file: string): string {
+  return file.replace(/^src\//, '');
 }
 
 export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
-  const { skinsDir, outDir, inline = true, rebuild = true } = options;
+  const {
+    skinsDir,
+    outDir,
+    inline = true,
+    rebuild = true,
+    rename = mirrorSrcTree,
+    omitImport,
+    minify = false,
+  } = options;
   let poll: ReturnType<typeof setInterval> | undefined;
   let state = new Map<string, string>();
 
@@ -30,9 +51,17 @@ export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
 
   function writeCss() {
     for (const file of globSync('src/**/*.css')) {
+      const target = rename(file);
+      if (target === null) continue;
+
       const content = readFileSync(file, 'utf-8');
-      const output = inline ? resolveImports(content, dirname(file), skinsDir) : content;
-      const outFile = join(outDir, file.replace(/^src\//, ''));
+      let output = inline ? resolveImports(content, dirname(file), skinsDir, omitImport) : content;
+
+      if (minify) {
+        output = transform({ filename: file, code: Buffer.from(output), minify: true }).code.toString();
+      }
+
+      const outFile = join(outDir, target);
       if (existsSync(outFile) && readFileSync(outFile, 'utf-8') === output) continue;
       mkdirSync(dirname(outFile), { recursive: true });
       writeFileSync(outFile, output);

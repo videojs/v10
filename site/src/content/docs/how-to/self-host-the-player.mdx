@@ -103,6 +103,25 @@ The file name matches your player: `video.js`, `audio.js`, `background.js`, and 
 
 Hashed chunk names change between releases, so re-copy the directory whenever you upgrade `@videojs/html`.
 
+## Stylesheets
+
+Every bundle inlines its own CSS and applies it when the custom element upgrades, so a mirrored copy renders correctly with no extra `<link>`. Alongside the bundles, `cdn/` publishes those styles as separate files for the one thing a script cannot do: style the page before that upgrade happens.
+
+`global.css` holds the light-DOM rules — `display: contents` on `<video-player>`, and the box the media and poster stretch to fill. Link it ahead of the bundle and the player reserves its space on first paint instead of on upgrade:
+
+```html
+<link rel="stylesheet" href="/videojs/global.css">
+<script type="module" src="/videojs/video.js"></script>
+```
+
+The background preset keeps its light-DOM rules in `background.css` instead.
+
+The rest — `video.css`, `audio.css`, one per skin, and the `shared.css` they build on — are shadow-DOM styles. No skin exposes a `::part`, so linking these from the document has no effect. They apply only inside a shadow root, which each skin builds and styles itself.
+
+<Aside type="note" title="Declarative shadow DOM">
+A skin skips building and styling its shadow root when one already exists, so markup that ships a `<template shadowrootmode="open">` has to carry the matching stylesheet inside that template. Today only `background-video-skin` exposes its template for server rendering; the other skins keep theirs in JavaScript, so this path needs a hand-written template.
+</Aside>
+
 ## HLS and other media types
 
 HLS and other non-default media need their own module on top of the player. Match it in your self-hosted build:
