@@ -1,7 +1,7 @@
 import type { MediaMetadataState } from '@videojs/media';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { TitleCore } from '../title-core';
+import { TitleCore } from '../core';
 
 function createMediaState(overrides: Partial<MediaMetadataState> = {}): MediaMetadataState {
   return {
