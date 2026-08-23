@@ -143,6 +143,7 @@ function deriveState(
   if (!mediaSource || !presentation || !msIsOpen) return 'preconditions-unmet';
 
   const actors = [videoBufferActor, audioBufferActor].filter((a): a is SourceBufferActor => a !== undefined);
+
   // No active buffer actors means setup hasn't completed wiring yet.
   if (actors.length === 0) return 'preconditions-unmet';
 
@@ -153,23 +154,29 @@ function deriveState(
 
   for (const actor of actors) {
     const snapshot = actor.snapshot.get();
+
     if (snapshot.value !== 'idle') return 'preconditions-unmet';
 
     const { initTrackId, segments: appended } = snapshot.context;
+
     if (!initTrackId) return 'preconditions-unmet';
 
     const track = findTrackById(presentation, initTrackId);
+
     if (!track || !isResolvedTrack(track)) return 'preconditions-unmet';
+
     // Only a complete playlist has a true last segment: firing on an ongoing
     // live window would pin a finite (live-edge) duration and end the stream,
     // only for the next reload's appends to reopen it and re-fire on a loop.
     // Independent of the currentTime slack below — this asks "is there an end at
     // all," the slack asks "has the playhead effectively reached it."
     if (!Number.isFinite(track.duration)) return 'preconditions-unmet';
+
     if (!isLastSegmentAppended(track.segments, appended)) return 'preconditions-unmet';
 
     if (track.segments.length > 0) {
       const start = track.segments[track.segments.length - 1]!.startTime;
+
       if (lastSegStart === undefined || start > lastSegStart) lastSegStart = start;
     }
   }
@@ -205,10 +212,12 @@ function endOfStreamSetup({
   const msIsOpen = signal(false);
   const cleanupMsListener = effect(() => {
     const mediaSource = context.mediaSource.get();
+
     if (!mediaSource) {
       msIsOpen.set(false);
       return;
     }
+
     msIsOpen.set(mediaSource.readyState === 'open');
     const controller = new AbortController();
     onMediaSourceReadyStateChange(mediaSource, controller.signal, (rs) => {
@@ -250,6 +259,7 @@ function endOfStreamSetup({
             // between deriveState's read and entry firing leaves a thin
             // gap. The DOM-level wait closes it.
             await waitForSourceBuffersReady(mediaSource.sourceBuffers, controller.signal);
+
             if (controller.signal.aborted) return;
 
             // MSE spec: duration cannot be less than any buffered range, and
@@ -258,6 +268,7 @@ function endOfStreamSetup({
             // final value deterministic for assets whose declared duration
             // disagrees with the buffered end (common with CMAF).
             const bufferedEnd = getMaxBufferedEnd(mediaSource.sourceBuffers);
+
             if (bufferedEnd > 0) mediaSource.duration = bufferedEnd;
 
             mediaSource.endOfStream();

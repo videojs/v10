@@ -52,6 +52,7 @@ export const Value = forwardRef(function Value(
 
   if (!time) {
     if (__DEV__) logMissingFeature('Time.Value', 'time');
+
     return null;
   }
 
@@ -87,20 +88,25 @@ export const Value = forwardRef(function Value(
       if (defaultType === 'current') {
         return value === 'remaining' ? 'current' : 'remaining';
       }
+
       return value === 'duration' ? 'remaining' : 'duration';
     });
   };
 
   const handleClick = (event: MouseEvent<HTMLTimeElement>) => {
     if (event.defaultPrevented) return;
+
     toggleType();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTimeElement>) => {
     if (event.defaultPrevented || !isInteractiveActivation(event.nativeEvent)) return;
+
     // Prevent space from scrolling page.
     event.preventDefault();
+
     if (event.repeat) return;
+
     toggleType();
   };
 

@@ -55,6 +55,7 @@ export class MenuGroupController {
 
     return () => {
       if (this.#labelId !== id) return;
+
       this.#labelId = undefined;
       this.#host.requestUpdate();
     };

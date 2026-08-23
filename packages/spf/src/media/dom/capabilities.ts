@@ -56,16 +56,21 @@ const codecSupportCache = new Map<string, boolean>();
  */
 export const canPlayTrack: CanPlayTrack = (track) => {
   if (track.mimeType && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) return false;
+
   // Encrypted renditions are unplayable *for now* — this engine has no EME /
   // license pipeline, so appending them would fail to decode with nothing to
   // explain it. Pruning them here means a partially-encrypted source still plays
   // its clear renditions, and a fully-encrypted one empties the candidate set
   // (which `track-switching` reports). Remove this when DRM support lands.
   if (getMediaPlaylistMetadata(track)?.encrypted) return false;
+
   if (!track.mimeType || !track.codecs?.length) return true;
+
   const mimeCodec = buildMimeCodec({ mimeType: track.mimeType, codecs: track.codecs });
   const cached = codecSupportCache.get(mimeCodec);
+
   if (cached !== undefined) return cached;
+
   const supported = isCodecSupported(mimeCodec);
   codecSupportCache.set(mimeCodec, supported);
   return supported;

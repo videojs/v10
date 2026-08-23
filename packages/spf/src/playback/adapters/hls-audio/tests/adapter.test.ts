@@ -226,9 +226,11 @@ describe('HlsAudioMediaElement', () => {
       const originalPlay = el.play.bind(el);
       el.play = () => {
         playCallCount++;
+
         if (playCallCount === 1) {
           return Promise.reject(new Error('no supported sources'));
         }
+
         return originalPlay();
       };
 

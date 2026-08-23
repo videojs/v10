@@ -32,6 +32,7 @@ export function setupDrm(engine: Hls): void {
       // Fatal key system failures surface as media errors; non-fatal ones
       // (e.g. output restricted → black frames) are otherwise silent.
       if (data.fatal || data.type !== Hls.ErrorTypes.KEY_SYSTEM_ERROR) return;
+
       console.warn(`[vjs-drm] ${data.details}`, data.error);
     });
   }
@@ -56,6 +57,7 @@ const requestKeySystemAccess: MediaKeyFunc = (keySystem, supportedConfigurations
 function withHardwareRobustness(configurations: MediaKeySystemConfiguration[]): MediaKeySystemConfiguration[] {
   const hardware = configurations.map((configuration): MediaKeySystemConfiguration => {
     const { videoCapabilities } = configuration;
+
     if (!videoCapabilities) return configuration;
 
     return {

@@ -25,6 +25,7 @@ export interface PartExport {
  */
 export function extractParts(filePath: string, program: ts.Program): PartExport[] {
   const sourceFile = program.getSourceFile(filePath);
+
   if (!sourceFile) return [];
 
   const parts: PartExport[] = [];
@@ -70,7 +71,9 @@ export function extractPartDescription(filePath: string, program: ts.Program, pa
   const ast = tae.parseFromProgram(filePath, program);
   const component = ast.exports.find((exp) => exp.name === partName);
   let desc = component?.documentation?.description;
+
   if (desc) desc = desc.replace(/\n*@example[\s\S]*$/, '').trim();
+
   return desc || undefined;
 }
 
@@ -84,14 +87,18 @@ export function extractPartDescription(filePath: string, program: ts.Program, pa
  */
 export function extractSubPartProps(filePath: string, program: ts.Program, localName: string): Record<string, PropDef> {
   const sourceFile = program.getSourceFile(filePath);
+
   if (!sourceFile) return {};
+
   const checker = program.getTypeChecker();
   const props: Record<string, PropDef> = {};
 
   function collectFromMembers(members: ts.NodeArray<ts.TypeElement>) {
     for (const member of members) {
       if (!ts.isPropertySignature(member) || !member.name || !ts.isIdentifier(member.name)) continue;
+
       const name = member.name.text;
+
       if (!member.type) continue;
 
       const symbol = checker.getSymbolAtLocation(member.name);
@@ -100,14 +107,17 @@ export function extractSubPartProps(filePath: string, program: ts.Program, local
           ?.getDocumentationComment(checker)
           .map((part) => part.text)
           .join('') ?? '';
+
       if (name === 'children' && !docs) continue;
 
       let typeStr = ts.isFunctionTypeNode(member.type)
         ? member.type.getText(sourceFile)
         : checker.typeToString(checker.getTypeFromTypeNode(member.type));
+
       if (member.questionToken) typeStr = typeStr.replace(/ \| undefined$/, '');
 
       const propDef: PropDef = { type: typeStr, frameworks: ['react'] };
+
       if (docs) propDef.description = docs;
 
       props[name] = propDef;
@@ -126,10 +136,12 @@ export function extractSubPartProps(filePath: string, program: ts.Program, local
             const type = checker.getTypeAtLocation(expr);
             const symbol = type.getSymbol();
             const decl = symbol?.declarations?.[0];
+
             if (!decl) continue;
 
             // Only include if declared in project sources (not node_modules).
             const declFile = decl.getSourceFile().fileName;
+
             if (declFile.includes('node_modules')) continue;
 
             if (ts.isInterfaceDeclaration(decl)) {
@@ -139,6 +151,7 @@ export function extractSubPartProps(filePath: string, program: ts.Program, local
         }
       }
     }
+
     ts.forEachChild(node, visit);
   });
 

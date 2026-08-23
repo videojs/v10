@@ -36,6 +36,7 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
 
     destroy(): void {
       if (this.#destroyed) return;
+
       this.#destroyed = true;
       this.destroyCallback();
     }
@@ -58,6 +59,7 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
 
     connectedCallback(): void {
       if (this.#destroyed) return;
+
       super.connectedCallback();
     }
 
@@ -75,6 +77,7 @@ export function DestroyMixin<Base extends new (...args: any[]) => ReactiveElemen
 
     protected performUpdate(): void {
       if (this.#destroyed) return;
+
       super.performUpdate();
     }
   }

@@ -151,6 +151,7 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
   const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer, messagePipelines } = config;
   const derivedStateSignal = computed<BufferActorsFsmState>(() => {
     if (!context.mediaSource.get()) return 'preconditions-unmet';
+
     const selection: TrackSelectionState = {
       presentation: state.presentation.get(),
       [selectedKey]: state[selectedKey].get(),

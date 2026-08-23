@@ -10,8 +10,10 @@ export function effectiveLocale<Locale extends string = string>(
   if (!isUndefined(explicitLocale) && explicitLocale.trim() !== '') {
     return explicitLocale;
   }
+
   if (!isUndefined(ambientLang) && ambientLang.trim() !== '') {
     return ambientLang;
   }
+
   return fallback;
 }

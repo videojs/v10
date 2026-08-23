@@ -102,6 +102,7 @@ class DashMediaBase
 
   set source(value: DashSource | null) {
     const source = value ?? null;
+
     // Changing anything takes a new object, so handing the same one back costs
     // nothing.
     if (source === this.#source) return;
@@ -118,6 +119,7 @@ class DashMediaBase
     this.#src = src;
 
     if (configChanged) this.#applyEngineConfig(source?.engine?.dashJs);
+
     if (srcChanged) this.#engine.attachSource(src);
 
     this.dispatchEvent(new Event('sourcechange'));
@@ -128,6 +130,7 @@ class DashMediaBase
   // a key clears it instead of leaving the previous value behind.
   #applyEngineConfig(settings?: dashjs.MediaPlayerSettingClass) {
     this.#engine.resetSettings();
+
     if (settings) this.#engine.updateSettings(settings);
   }
 }

@@ -31,9 +31,11 @@ export function MuxStoryboard({ media }: { media: MuxStoryboardMedia }) {
       let scheduled = false;
       const notify = () => {
         if (scheduled) return;
+
         scheduled = true;
         queueMicrotask(() => {
           scheduled = false;
+
           if (!cancelled) onChange();
         });
       };
@@ -54,5 +56,6 @@ export function MuxStoryboard({ media }: { media: MuxStoryboardMedia }) {
   const src = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   if (!src) return null;
+
   return <track kind="metadata" label="thumbnails" src={src} default />;
 }

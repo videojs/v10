@@ -65,6 +65,7 @@ function compileRule(rule: StyleManifestRule, design: DesignSystem, variant?: st
 
   for (const utility of utilitiesForRule(rule, variant)) {
     if (isGroupPeerMarker(utility)) continue;
+
     if (design.recognizesCandidate(utility)) candidates.push(utility);
     else unsupported.push(utility);
   }
@@ -97,6 +98,7 @@ function collectRelationships(
       }
 
       if (!isGroupMarker(utility)) continue;
+
       registerRelationshipOwner(groupOwners, utility, rule);
     }
   }

@@ -17,6 +17,7 @@ async function build(): Promise<void> {
   console.log(`Building ${families.length} icon families: ${families.map(({ name }) => name).join(', ')}`);
 
   emitElementBase(families);
+
   for (const family of families) {
     console.log(`Building ${family.name} (${family.icons.length} icons)`);
     emitVjscFamily(family);
@@ -39,8 +40,10 @@ function watchAssets(): void {
     }
 
     building = true;
+
     do {
       pending = false;
+
       try {
         await build();
         console.log('Rebuild complete.');
@@ -48,6 +51,7 @@ function watchAssets(): void {
         console.error(error);
       }
     } while (pending);
+
     building = false;
   };
 

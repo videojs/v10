@@ -36,11 +36,13 @@ export function HlsJsMediaStreamTypeMixin<Base extends Constructor<HlsEngineHost
 
     #setDetected(value: MediaStreamType): void {
       if (this.#isUserStreamType) return;
+
       this.#update(value);
     }
 
     #update(value: MediaStreamType): void {
       if (this.#streamType === value) return;
+
       this.#streamType = value;
       this.dispatchEvent(new Event('streamtypechange'));
     }

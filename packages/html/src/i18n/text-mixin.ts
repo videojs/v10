@@ -29,6 +29,7 @@ export function createTextMixin({ context }: TextMixinConfig): I18nTextMixin {
 
       protected override updated(changed: PropertyValues): void {
         super.updated(changed);
+
         if (!this.#text) {
           this.textContent = '';
           return;

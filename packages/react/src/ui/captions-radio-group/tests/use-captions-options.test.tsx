@@ -75,6 +75,7 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
   return {
     updateState(next: Record<string, unknown>) {
       store.state = next;
+
       for (const listener of listeners) listener();
     },
     Wrapper({ children }: { children: ReactNode }) {
@@ -94,6 +95,7 @@ function CaptionsAvailability(): ReactNode {
 
 function CaptionsRadioGroup(): ReactNode {
   const captions = useCaptionsOptions();
+
   if (!captions?.showMenu) return null;
 
   const { options, selectedLabel, setValue, value } = captions;

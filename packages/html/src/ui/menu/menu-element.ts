@@ -80,6 +80,7 @@ export class MenuElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.setAttribute(POPUP_HOST_ATTR, '');
@@ -97,6 +98,7 @@ export class MenuElement extends MediaElement {
             detail: { open: nextOpen, ...details },
           })
         );
+
         if (accepted) this.open = nextOpen;
       },
       closeOnEscape: () => this.closeOnEscape,
@@ -169,6 +171,7 @@ export class MenuElement extends MediaElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#menu) return;
 
     const parentCtx = this.#parentCtx.value ?? null;
@@ -206,6 +209,7 @@ export class MenuElement extends MediaElement {
 
   #syncParentRegistration(parentCtx: MenuContextValue | null): void {
     const parentMenu = parentCtx?.menu ?? null;
+
     if (parentMenu === this.#registeredParentMenu || !this.#menu) return;
 
     this.#cleanupParentRegistration?.();
@@ -247,6 +251,7 @@ export class MenuElement extends MediaElement {
     this.#cleanupSizeObserver = observeMenuSize(this, syncSize);
 
     const positionOptions = getRootPositionOptions(state.side, state.align);
+
     if (!positionOptions || !this.#currentTrigger) return;
 
     this.#position.sync({
@@ -267,7 +272,9 @@ export class MenuElement extends MediaElement {
     );
 
     this.#menu?.setTriggerElement(triggerElement ?? null);
+
     if (triggerElement) applyElementProps(triggerElement, this.#core.getTriggerAttrs(state, this.id));
+
     this.#syncTriggerState(triggerElement ?? null);
 
     this.removeAttribute(MenuDataAttrs.side);
@@ -306,9 +313,11 @@ export class MenuElement extends MediaElement {
 
     if (!parentCtx) {
       if (event.key === 'Escape') return;
+
       if (isNavigationKey) {
         event.stopPropagation();
       }
+
       return;
     }
 
@@ -336,7 +345,9 @@ export class MenuElement extends MediaElement {
     }
 
     this.#triggerState = triggerState;
+
     if (triggerState.disabled && this.open && this.#parentCtx.value) this.close('imperative-action');
+
     this.requestUpdate();
   };
 
@@ -355,11 +366,13 @@ export class MenuElement extends MediaElement {
     });
 
     const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
+
     if (hint && hint.textContent !== this.#triggerState.hint) hint.textContent = this.#triggerState.hint;
   }
 
   #clearTriggerState(): void {
     const trigger = this.#stateTrigger;
+
     if (!trigger) return;
 
     applyElementProps(trigger, {
@@ -368,7 +381,9 @@ export class MenuElement extends MediaElement {
     });
 
     const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
+
     if (hint?.textContent) hint.textContent = '';
+
     this.#stateTrigger = null;
   }
 

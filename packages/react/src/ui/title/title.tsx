@@ -38,6 +38,7 @@ export const Title = forwardRef(function Title(
 
   if (!metadata) {
     if (__DEV__) logMissingFeature('Title', 'metadata');
+
     return null;
   }
 

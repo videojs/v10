@@ -43,6 +43,7 @@ export class MenuRadioItemElement extends MediaElement {
 
     const menuCtx = this.#menuCtx.value;
     const groupCtx = this.#groupCtx.value;
+
     if (!menuCtx || !groupCtx || !this.#disconnect) return;
 
     if (!this.#registered) {
@@ -56,6 +57,7 @@ export class MenuRadioItemElement extends MediaElement {
           onClick: () => {
             const currentMenuCtx = this.#menuCtx.value;
             const currentGroupCtx = this.#groupCtx.value;
+
             if (!currentMenuCtx || !currentGroupCtx || this.disabled) return;
 
             currentGroupCtx.onValueChange(this.value);
@@ -63,6 +65,7 @@ export class MenuRadioItemElement extends MediaElement {
           },
           onPointerenter: () => {
             const currentMenuCtx = this.#menuCtx.value;
+
             if (!this.disabled) currentMenuCtx?.menu.highlight(this, { focus: false, pointer: true });
           },
         },

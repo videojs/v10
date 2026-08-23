@@ -63,6 +63,7 @@ export function createRadioOptionsHook<Props, Media, State extends RadioOptionsS
 
     if (!media) {
       if (__DEV__) logMissingFeature(name, selector.displayName ?? feature);
+
       return null;
     }
 

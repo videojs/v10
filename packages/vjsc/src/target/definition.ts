@@ -353,7 +353,9 @@ function createComponentTargetReference(path: readonly string[]): TargetElement 
   return new Proxy(reference, {
     get(target, property) {
       if (property === 'then' && path.length === 0) return undefined;
+
       const ownTarget = target as TargetElement & Readonly<Record<PropertyKey, unknown>>;
+
       if (property in ownTarget) return ownTarget[property];
 
       if (!children.has(property)) {

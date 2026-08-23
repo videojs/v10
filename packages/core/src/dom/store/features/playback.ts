@@ -15,15 +15,19 @@ export const playbackFeature = definePlayerFeature({
     },
     pause() {
       const { media } = target();
+
       if (isMediaPauseCapable(media)) media.pause();
     },
     togglePaused() {
       const media = target().media;
+
       if (!isMediaPauseCapable(media)) return false;
+
       if (media.paused) {
         media.play();
         return true;
       }
+
       media.pause();
       return false;
     },

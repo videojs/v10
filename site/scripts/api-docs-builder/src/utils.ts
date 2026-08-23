@@ -16,8 +16,11 @@ export function getJSDocNodes(node: ts.Node): readonly ts.JSDoc[] {
 
 export function getJSDocDescription(node: ts.Node): string | undefined {
   const doc = getJSDocNodes(node)[0];
+
   if (!doc?.comment) return undefined;
+
   if (typeof doc.comment === 'string') return doc.comment;
+
   return doc.comment.map((part) => ('text' in part ? part.text : '')).join('') || undefined;
 }
 
@@ -26,10 +29,12 @@ export function hasJSDocTag(node: ts.Node, tagName: string): boolean {
 
   for (const doc of jsDocNodes) {
     if (!doc.tags) continue;
+
     for (const tag of doc.tags) {
       if (tag.tagName.text === tagName) return true;
     }
   }
+
   return false;
 }
 
@@ -41,10 +46,13 @@ export function getJSDocTagValue(node: ts.Node, tagName: string): string | undef
   // is the binding one, so scan in reverse.
   for (const doc of [...jsDocNodes].reverse()) {
     if (!doc.tags) continue;
+
     for (const tag of doc.tags) {
       if (tag.tagName.text === tagName) {
         if (!tag.comment) return undefined;
+
         if (typeof tag.comment === 'string') return tag.comment.trim();
+
         return tag.comment
           .map((c: ts.JSDocComment) => ('text' in c ? c.text : ''))
           .join('')
@@ -58,9 +66,11 @@ export function getJSDocTagValue(node: ts.Node, tagName: string): string | undef
 
 export function unwrapObjectLiteral(node: ts.Expression): ts.ObjectLiteralExpression | undefined {
   if (ts.isObjectLiteralExpression(node)) return node;
+
   if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isSatisfiesExpression(node)) {
     return unwrapObjectLiteral(node.expression);
   }
+
   return undefined;
 }
 
@@ -81,9 +91,11 @@ export function partKebabFromSource(source: string, componentKebab: string): str
   const basename = source.split('/').at(-1) ?? source;
   const prefix = `./${componentKebab}-`;
   const basenamePrefix = `${componentKebab}-`;
+
   if (source.startsWith(prefix) || basename.startsWith(basenamePrefix)) {
     return basename.replace(new RegExp(`^${componentKebab}-`), '');
   }
+
   // Fallback: strip leading './' and the component prefix
   return basename.replace(/^\.\//, '').replace(new RegExp(`^${componentKebab}-`), '');
 }
@@ -97,6 +109,7 @@ export function sortProps(props: Record<string, PropDef>): Record<string, PropDe
     const bRequired = b[1].required ?? false;
 
     if (aRequired && !bRequired) return -1;
+
     if (!aRequired && bRequired) return 1;
 
     // Then alphabetical

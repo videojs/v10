@@ -17,6 +17,7 @@ function unmockedFetchFallback(url: string): Promise<Response> {
   // Non-empty body: `fetchStream` throws "Response has no body" on a null body
   // (empty Uint8Array), which would itself trip the monitor.
   if (/\.(m4s|mp4|ts|aac)(\?|$)/.test(url)) return Promise.resolve(new Response(new Uint8Array([0])));
+
   return Promise.reject(new Error(`Unmocked URL: ${url}`));
 }
 
@@ -40,7 +41,9 @@ describe('createHlsAudioEngine', () => {
     const originalConsoleError = console.error.bind(console);
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
       const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
+
       if (expectedErrorPatterns.some((p) => p.test(text))) return;
+
       originalConsoleError(...args);
     });
   });
@@ -124,6 +127,7 @@ describe('createHlsAudioEngine', () => {
     const engine = createHlsAudioEngine();
 
     const state = snapshot(engine.state) as Record<string, unknown>;
+
     // bandwidthState slot may or may not exist depending on whether any
     // composed behavior declares it; if it exists, it must not be seeded.
     if ('bandwidthState' in state) {

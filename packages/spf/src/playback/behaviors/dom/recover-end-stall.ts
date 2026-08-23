@@ -70,9 +70,11 @@ export function shouldForceEnded(
   nudgeWindow: number
 ): boolean {
   const { msEnded, durationFinite, paused, seeking, ended, currentTime, bufferedEnd } = input;
+
   if (!msEnded || !durationFinite || paused || seeking || ended || bufferedEnd === undefined) {
     return false;
   }
+
   const gap = bufferedEnd - currentTime;
   return gap >= 0 && gap < nudgeWindow;
 }
@@ -91,6 +93,7 @@ function recoverEndStallSetup({
 
   return effect(() => {
     const mediaElement = context.mediaElement.get();
+
     if (!mediaElement) return;
 
     const onWaiting = () => {
@@ -107,6 +110,7 @@ function recoverEndStallSetup({
         },
         nudgeWindow
       );
+
       // Nudge to `duration` → native `ended` (the seeking/ended guards above prevent a
       // re-fire while the nudge-seek is in flight, so no latch is needed).
       if (forceEnded) mediaElement.currentTime = mediaElement.duration;

@@ -8,19 +8,23 @@
 
 function concat(chunks: Uint8Array[]): Uint8Array {
   if (chunks.length === 1) return chunks[0]!;
+
   const total = chunks.reduce((n, c) => n + c.length, 0);
   const out = new Uint8Array(total);
   let offset = 0;
+
   for (const chunk of chunks) {
     out.set(chunk, offset);
     offset += chunk.length;
   }
+
   return out;
 }
 
 /** Re-emit the eagerly-pulled head chunks, then stream the untouched tail. */
 async function* reassemble(head: Uint8Array[], tail: AsyncIterator<Uint8Array>): AsyncIterable<Uint8Array> {
   yield* head;
+
   for (let next = await tail.next(); !next.done; next = await tail.next()) yield next.value;
 }
 
@@ -37,9 +41,12 @@ export async function peekHead(
 ): Promise<AsyncIterable<Uint8Array>> {
   const iterator = data[Symbol.asyncIterator]();
   const head: Uint8Array[] = [];
+
   for (let next = await iterator.next(); !next.done; next = await iterator.next()) {
     head.push(next.value);
+
     if (tryParse(concat(head))) break;
   }
+
   return reassemble(head, iterator);
 }

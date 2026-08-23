@@ -56,6 +56,7 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
    */
   const reconcile = async () => {
     if (settling) return;
+
     settling = true;
 
     try {
@@ -79,6 +80,7 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
           // Leave `held` alone so it keeps describing the platform. Retrying
           // the same type here would spin, so wait for the next request.
           if (desired === target) return;
+
           continue;
         }
 

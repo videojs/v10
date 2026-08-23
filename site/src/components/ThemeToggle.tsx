@@ -16,9 +16,13 @@ const themeOptions = [
 
 function initPreference(): Preference {
   if (typeof localStorage === 'undefined') return 'system';
+
   if (localStorage[THEME_KEY] === 'light') return 'light';
+
   if (localStorage[THEME_KEY] === 'dark') return 'dark';
+
   if (localStorage[THEME_KEY] === 'system') return 'system';
+
   // Shouldn't be possible after head script runs, but handle it
   localStorage[THEME_KEY] = 'system';
   return 'system';
@@ -26,13 +30,17 @@ function initPreference(): Preference {
 
 function getThemeFromPreference(preference: Preference): Theme {
   if (preference === 'light') return 'light';
+
   if (preference === 'dark') return 'dark';
+
   if (preference === 'system') {
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
+
     return 'light';
   }
+
   return 'light';
 }
 
@@ -42,7 +50,9 @@ export function ThemeToggle() {
 
   const setPreference = (newPreference: Preference) => {
     _setPreference(newPreference);
+
     if (typeof localStorage !== 'undefined') localStorage[THEME_KEY] = newPreference;
+
     setTheme(getThemeFromPreference(newPreference));
   };
 
@@ -56,6 +66,7 @@ export function ThemeToggle() {
   // Listen to media query changes when preference is 'system'
   useEffect(() => {
     if (preference !== 'system') return;
+
     if (typeof window === 'undefined' || typeof window.matchMedia === 'undefined') return;
 
     const onMediaChange = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
@@ -70,6 +81,7 @@ export function ThemeToggle() {
   // Keep document.documentElement and theme-color in sync with theme
   useEffect(() => {
     if (typeof document === 'undefined') return;
+
     if (theme === 'light') {
       document.documentElement.classList.remove('dark');
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#ebe4c1');

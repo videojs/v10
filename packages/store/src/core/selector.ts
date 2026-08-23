@@ -40,6 +40,7 @@ export function createSelector<S extends AnySlice>(slice: S): Selector<object, I
     (state: object) => {
       // WARN: Could be the source of a bug if two slices have overlapping state keys
       if (!(firstKey in state)) return undefined;
+
       return pick(state as Record<string, unknown>, keys) as InferSliceState<S>;
     },
     { displayName: slice.name }

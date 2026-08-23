@@ -48,6 +48,7 @@ export function isMultivariantPlaylist(playlist: string) {
 export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: string): string | null {
   const lines = multivariant.split(/\r?\n/);
   const start = lines.findIndex((l) => l.startsWith('#EXT-X-STREAM-INF'));
+
   if (start === -1) return null;
 
   // The URI appears on the first non-blank, non-comment line that follows.
@@ -55,6 +56,7 @@ export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: stri
     .slice(start + 1)
     .map((l) => l.trim())
     .find((l) => l && !l.startsWith('#'));
+
   if (!uri) return null;
 
   try {
@@ -87,17 +89,21 @@ export function parseStreamInfo(playlist: string): StreamInfo {
 
   for (const raw of lines) {
     const line = raw.trim();
+
     if (line.startsWith('#EXT-X-PLAYLIST-TYPE:')) {
       playlistType = line.slice('#EXT-X-PLAYLIST-TYPE:'.length).trim().toUpperCase();
     } else if (line === '#EXT-X-ENDLIST') {
       hasEndList = true;
     } else if (line.startsWith('#EXT-X-TARGETDURATION:')) {
       const value = Number(line.slice('#EXT-X-TARGETDURATION:'.length));
+
       if (Number.isFinite(value)) targetDuration = value;
     } else if (line.startsWith('#EXT-X-PART-INF')) {
       const match = /PART-TARGET\s*=\s*([0-9.]+)/i.exec(line);
+
       if (match) {
         const value = Number(match[1]);
+
         if (Number.isFinite(value)) partTarget = value;
       }
     }
@@ -117,7 +123,9 @@ export function parseStreamInfo(playlist: string): StreamInfo {
 
 async function fetchPlaylist(url: string, init: RequestInit): Promise<{ text: string; url: string }> {
   const response = await fetch(url, init);
+
   if (!response.ok) throw new Error(`Failed to fetch playlist (${response.status}): ${url}`);
+
   return { text: await response.text(), url: response.url || url };
 }
 
@@ -134,7 +142,9 @@ export async function getStreamInfoFromSrc(src: string, signal?: AbortSignal): P
   if (!isMultivariantPlaylist(text)) return parseStreamInfo(text);
 
   const mediaUrl = resolveFirstMediaPlaylistUrl(text, url);
+
   if (!mediaUrl) throw new Error('No media playlist URL found in multivariant playlist');
+
   const media = await fetchPlaylist(mediaUrl, init);
   return parseStreamInfo(media.text);
 }

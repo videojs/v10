@@ -182,12 +182,16 @@ export function createMachineActor<
 
     send(message: Message): void {
       const state = getState();
+
       if (state === 'destroyed') return;
+
       const stateDef = def.states[state as UserState];
       const handler = stateDef?.on?.[message.type as keyof typeof stateDef.on] as
         | ((msg: Message, ctx: HandlerContext<UserState, Context, RunnerFactory>) => void)
         | undefined;
+
       if (!handler) return;
+
       handler(message, {
         context: getContext(),
         getContext,
@@ -197,12 +201,15 @@ export function createMachineActor<
       } as HandlerContext<UserState, Context, RunnerFactory>);
       // Register onSettled after the handler so we read the post-transition state.
       const newState = getState();
+
       if (newState !== 'destroyed') {
         const newStateDef = def.states[newState as UserState];
+
         if (newStateDef?.onSettled && runner) {
           const targetState = newStateDef.onSettled as FullState;
           runner.whenSettled(() => {
             if (getState() !== newState) return;
+
             transition(targetState);
           });
         }
@@ -211,6 +218,7 @@ export function createMachineActor<
 
     destroy(): void {
       if (getState() === 'destroyed') return;
+
       runner?.destroy();
       transition('destroyed');
     },

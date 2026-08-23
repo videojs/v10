@@ -397,10 +397,12 @@ describe('createI18n', () => {
         if (tag === 'en') {
           return { Play: 'EnLazy' };
         }
+
         if (tag === 'fr') {
           await frBlocked;
           return { Play: 'FrLazy' };
         }
+
         return undefined;
       },
     });
@@ -489,9 +491,11 @@ describe('createI18n', () => {
         if (tag === 'de') {
           return deLoad;
         }
+
         if (tag === 'fr') {
           return { Play: 'Lecture' };
         }
+
         return undefined;
       },
     });

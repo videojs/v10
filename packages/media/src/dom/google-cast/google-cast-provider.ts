@@ -57,6 +57,7 @@ export class GoogleCastProvider {
     if (this.target && !this.target.disableRemotePlayback) {
       ensureCastFramework();
     }
+
     return this.#remotePlayback;
   }
 
@@ -156,6 +157,7 @@ export class GoogleCastProvider {
     if (subtitles.length) {
       mediaInfo.tracks = subtitles.map((el, i) => {
         const trackId = i + 1;
+
         if (!activeTrackIds.length && el.track.mode === 'showing') activeTrackIds.push(trackId);
 
         const track = new Track(trackId, TrackType.TEXT);
@@ -205,6 +207,7 @@ export class GoogleCastProvider {
 
   get paused() {
     if (!this.#remotePlayer.isMediaLoaded) return this.target?.paused ?? true;
+
     return this.#remotePlayer.isPaused || this.ended;
   }
 
@@ -232,11 +235,13 @@ export class GoogleCastProvider {
 
   get duration() {
     if (!this.#remotePlayer.isMediaLoaded) return this.target?.duration ?? NaN;
+
     return this.#remotePlayer.duration ?? NaN;
   }
 
   get currentTime() {
     if (!this.#remotePlayer.isMediaLoaded) return this.target?.currentTime ?? 0;
+
     return this.#remotePlayer.currentTime ?? 0;
   }
 
@@ -280,6 +285,7 @@ export class GoogleCastProvider {
       await this.load();
       return;
     }
+
     if (this.paused) {
       this.#remotePlayer.controller?.playOrPause();
       return new Promise<void>((resolve) => {
@@ -296,6 +302,7 @@ export class GoogleCastProvider {
 
   onCastFrameworkAvailable() {
     if (!castFramework || this.#isInit) return;
+
     this.#isInit = true;
 
     this.#applyCastOptions();
@@ -308,6 +315,7 @@ export class GoogleCastProvider {
     this.#remoteListeners = {
       [castFramework.RemotePlayerEventType.IS_CONNECTED_CHANGED]: (event?: cast.framework.RemotePlayerChangedEvent) => {
         const value = event?.value;
+
         if (value === true) {
           this.#hooks.setState?.('connected');
         } else {
@@ -326,6 +334,7 @@ export class GoogleCastProvider {
       },
       [castFramework.RemotePlayerEventType.CURRENT_TIME_CHANGED]: () => {
         if (!this.#isCasting || !this.#remotePlayer.isMediaLoaded) return;
+
         this.#notifySeeked();
         this.target?.dispatchEvent(new Event('timeupdate'));
       },
@@ -340,6 +349,7 @@ export class GoogleCastProvider {
         const state = this.#isCasting ? this.#remotePlayer.playerState : undefined;
 
         if (state !== PS.BUFFERING) this.#notifySeeked();
+
         if (state === PS.PAUSED) return;
 
         if (state === PS.IDLE) {
@@ -362,6 +372,7 @@ export class GoogleCastProvider {
 
   onCastStateChanged() {
     if (!this.#isInit) return;
+
     const CS = cast.framework.CastState;
     const state = getCastContext()!.getCastState();
 
@@ -374,7 +385,9 @@ export class GoogleCastProvider {
 
   async onSessionStateChanged() {
     if (!this.#isInit) return;
+
     const { SESSION_RESUMED } = castFramework!.SessionState;
+
     if (getCastContext()!.getSessionState() === SESSION_RESUMED) {
       if (this.#googleCast.src === currentMedia()?.media?.contentId) {
         this.#isCasting = true;
@@ -410,17 +423,21 @@ export class GoogleCastProvider {
   // cancel/retry and stop-casting flows.
   #attachRemoteListeners() {
     if (this.#listenersAttached) return;
+
     const controller = this.#remotePlayer?.controller;
+
     if (!controller) return;
 
     for (const [type, handler] of Object.entries(this.#remoteListeners)) {
       controller.addEventListener(type as cast.framework.RemotePlayerEventType, handler);
     }
+
     this.#listenersAttached = true;
   }
 
   #detachRemoteListeners() {
     if (!this.#listenersAttached) return;
+
     const controller = this.#remotePlayer?.controller;
 
     if (controller) {
@@ -428,6 +445,7 @@ export class GoogleCastProvider {
         controller.removeEventListener(type as cast.framework.RemotePlayerEventType, handler);
       }
     }
+
     this.#listenersAttached = false;
   }
 
@@ -445,10 +463,12 @@ export class GoogleCastProvider {
     }
 
     const saved = this.#remotePlayer.savedPlayerState;
+
     if (saved) {
       if (this.target) {
         this.target.currentTime = saved.currentTime;
       }
+
       if (saved.isPaused === false && this.target) {
         this.target.play();
       }
@@ -462,6 +482,7 @@ export class GoogleCastProvider {
 
   #notifySeeked() {
     if (!this.#seeking) return;
+
     this.#seeking = false;
     this.target?.dispatchEvent(new Event('seeked'));
   }
@@ -474,6 +495,7 @@ export class GoogleCastProvider {
 
   #checkPlaybackRate() {
     const rate = currentMedia()?.playbackRate ?? 1;
+
     if (rate !== this.#playbackRate) {
       this.#playbackRate = rate;
       this.target?.dispatchEvent(new Event('ratechange'));
@@ -497,6 +519,7 @@ export class GoogleCastProvider {
 
     const active = currentSession()?.getSessionObj().media[0]?.activeTrackIds ?? [];
     const next = new Set(active.filter((id) => !hidden.has(id)));
+
     if (showing) next.add(showing);
 
     if (next.size === active.length && active.every((id) => next.has(id))) return;

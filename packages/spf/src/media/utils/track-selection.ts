@@ -72,11 +72,15 @@ export function getSelectedTrack<T extends TrackType>(
 export function getResolvedSelectedTrackDuration(state: TrackSelectionState): number | undefined {
   if (state.selectedVideoTrackId) {
     const video = getSelectedTrack(state, 'video');
+
     if (video && isResolvedTrack(video)) return video.duration;
   }
+
   if (state.selectedAudioTrackId) {
     const audio = getSelectedTrack(state, 'audio');
+
     if (audio && isResolvedTrack(audio)) return audio.duration;
   }
+
   return undefined;
 }

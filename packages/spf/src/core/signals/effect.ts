@@ -11,7 +11,9 @@ function runPending() {
   for (const c of watcher.getPending()) {
     pending.add(c as Signal.Computed<void>);
   }
+
   watcher.watch(); // re-arm before running effects, in case they write signals
+
   for (const c of pending) {
     pending.delete(c);
     c.get(); // re-run the effect body
@@ -32,12 +34,14 @@ export function effect(fn: () => (() => void) | void): () => void {
   let cleanup: (() => void) | void;
   const c = new Signal.Computed(() => {
     if (typeof cleanup === 'function') cleanup();
+
     cleanup = fn();
   });
   watcher.watch(c);
   c.get(); // initial run
   return () => {
     watcher.unwatch(c);
+
     if (typeof cleanup === 'function') cleanup();
   };
 }

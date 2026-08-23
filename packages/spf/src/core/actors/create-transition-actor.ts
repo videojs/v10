@@ -62,13 +62,16 @@ export function createTransitionActor<Context extends object, Message extends { 
 
     send(message: Message): void {
       if (getState() === 'destroyed') return;
+
       const context = getContext();
       const newContext = reducer(context, message);
+
       if (newContext !== context) setContext(newContext);
     },
 
     destroy(): void {
       if (getState() === 'destroyed') return;
+
       transition('destroyed');
     },
   };

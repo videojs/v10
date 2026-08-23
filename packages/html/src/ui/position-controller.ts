@@ -26,6 +26,7 @@ export class PositionController implements ReactiveController {
   /** Discover an explicit trigger by ID or one linked via `commandfor`. */
   findTrigger(trigger?: string): HTMLElement | null {
     const root = this.#host.getRootNode() as Document | ShadowRoot;
+
     if (trigger) {
       this.#releaseImplicitBinding();
       return root.getElementById(trigger);
@@ -33,6 +34,7 @@ export class PositionController implements ReactiveController {
 
     if (this.#implicitBinding) {
       const { id, trigger: boundTrigger } = this.#implicitBinding;
+
       if (
         this.#host.id === id &&
         boundTrigger.getAttribute('commandfor') === id &&
@@ -40,6 +42,7 @@ export class PositionController implements ReactiveController {
       ) {
         return boundTrigger;
       }
+
       this.#releaseImplicitBinding();
     }
 
@@ -48,21 +51,26 @@ export class PositionController implements ReactiveController {
     }
 
     const adjacent = this.#host.previousElementSibling;
+
     if (!(adjacent instanceof HTMLElement)) {
       if (__DEV__) {
         console.warn(
           `[${this.#host.localName}] No trigger was found. Place the popup immediately after its trigger or link them explicitly.`
         );
       }
+
       return null;
     }
+
     const claimedTarget = adjacent.getAttribute('commandfor');
+
     if (claimedTarget) {
       if (__DEV__) {
         console.warn(
           `[${this.#host.localName}] The adjacent trigger already targets \`${claimedTarget}\`; link this popup explicitly.`
         );
       }
+
       return null;
     }
 
@@ -93,21 +101,26 @@ export class PositionController implements ReactiveController {
 
   #releaseImplicitBinding(): void {
     const binding = this.#implicitBinding;
+
     if (!binding) return;
 
     if (binding.trigger.getAttribute('commandfor') === binding.id) {
       binding.trigger.removeAttribute('commandfor');
     }
+
     if (this.#host.id === binding.id) {
       this.#host.removeAttribute('id');
     }
+
     this.#implicitBinding = null;
   }
 }
 
 function nextPopupId(root: Document | ShadowRoot): string {
   let id: string;
+
   do id = `vjs-popup-${++popupId}`;
   while (root.getElementById(id));
+
   return id;
 }

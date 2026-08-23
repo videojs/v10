@@ -45,6 +45,7 @@ class TestMedia extends EventTarget {
 
   constructor(renditions?: VideoRenditionLike[]) {
     super();
+
     if (renditions) this.videoRenditions = new TestRenditionList(renditions);
   }
 

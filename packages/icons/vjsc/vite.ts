@@ -7,6 +7,7 @@ import { optimizeSvg } from '../scripts/internal/svg.js';
 const elementId = '@videojs/icons/element';
 const elementRuntimeId = 'virtual:videojs/icons/element-runtime';
 const familyName = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 const iconsRoot = resolve(import.meta.dirname, '..');
 const assetsRoot = resolve(iconsRoot, 'src/assets');
 const elementSource = resolve(iconsRoot, 'src/element.ts');
@@ -18,15 +19,18 @@ export function iconElementSourcePlugin(): Plugin {
     enforce: 'pre',
     resolveId(id) {
       if (id === elementRuntimeId) return elementSource;
+
       return iconFamily(id) ? `\0${id}` : null;
     },
     load(id) {
       if (!id.startsWith(`\0${elementId}`)) return null;
 
       const family = iconFamily(id.slice(1));
+
       if (!family) return null;
 
       const directory = resolve(assetsRoot, family);
+
       if (!existsSync(directory)) throw new Error(`Unknown icon family: ${family}`);
 
       this.addWatchFile(directory);

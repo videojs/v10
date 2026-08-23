@@ -49,8 +49,11 @@ export function resolvePositioningBoundary(
   options: ResolvePositioningBoundaryOptions = {}
 ): Element | null {
   if (!boundary) return null;
+
   if (!isString(boundary)) return boundary;
+
   if (boundary === 'viewport') return null;
+
   if (boundary === 'container') return options.container ?? null;
 
   try {

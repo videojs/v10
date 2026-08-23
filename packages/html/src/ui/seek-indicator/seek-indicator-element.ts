@@ -41,6 +41,7 @@ export class SeekIndicatorElement extends InputIndicatorElement<SeekIndicatorCor
 
 function renderSeekIndicator(element: HTMLElement, state: SeekIndicatorCore.State): void {
   const value = element.querySelector('media-seek-indicator-value');
+
   if (!value) return;
 
   value.textContent = getSeekIndicatorDisplayValue(state);

@@ -43,6 +43,7 @@ export async function pollForPlaybackId(options: PollOptions): Promise<PollResul
 
   // Phase 1: Poll until asset_id is available
   let assetId: string | undefined;
+
   while (!assetId) {
     if (signal?.aborted) {
       throw new Error('Aborted');

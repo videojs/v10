@@ -29,7 +29,9 @@ describe('Tooltip', () => {
   it('exposes the positioned side on every part', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.dataset.testid === 'trigger') return makeDOMRect(100, 10, 40, 20);
+
       if (this.dataset.testid === 'popup') return makeDOMRect(0, 0, 100, 60);
+
       return makeDOMRect(0, 0, 300, 200);
     });
     vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {

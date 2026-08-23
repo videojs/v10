@@ -20,6 +20,7 @@ describe('API docs output', () => {
 
   afterEach(() => {
     if (tempPath) fs.rmSync(tempPath, { recursive: true, force: true });
+
     tempPath = undefined;
   });
 
@@ -35,7 +36,9 @@ describe('API docs output', () => {
     });
 
     expect(result.success).toBe(false);
+
     if (result.success) return;
+
     expect(result.errors).toEqual([
       {
         label: 'Invalid',
@@ -57,7 +60,9 @@ describe('API docs output', () => {
     });
 
     expect(result.success).toBe(false);
+
     if (result.success) return;
+
     expect(result.errors.map((error) => error.label)).toEqual(['Second', 'Outside']);
   });
 
@@ -71,7 +76,9 @@ describe('API docs output', () => {
     });
 
     expect(result.success).toBe(false);
+
     if (result.success) return;
+
     expect(result.errors[0]?.issues[0]?.message).toBe('Expected at least 1 generated document(s), received 0');
   });
 
@@ -89,6 +96,7 @@ describe('API docs output', () => {
       docs: [{ fileName: 'current.json', label: 'Current', data: 'value' }],
     });
     expect(validation.success).toBe(true);
+
     if (!validation.success) return;
 
     const result = writeReferenceGroup(validation.group);

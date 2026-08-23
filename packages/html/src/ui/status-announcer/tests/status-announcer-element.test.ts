@@ -32,6 +32,7 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
 
   const setState = (partial: Record<string, unknown>) => {
     state = { ...state, ...partial };
+
     for (const listener of listeners) listener();
   };
 
@@ -49,6 +50,7 @@ class TestStatusAnnouncerPlayerElement extends MediaElement {
 
   set store(store: AnyPlayerStore) {
     this.#store = store;
+
     if (this.isConnected) this.#provider.setValue(this.#store);
   }
 

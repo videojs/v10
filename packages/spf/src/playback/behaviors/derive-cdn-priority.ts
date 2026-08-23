@@ -78,8 +78,11 @@ export const deriveCdnPriority = defineBehavior({
           effects: [
             () => {
               const presentation = state.presentation.get();
+
               if (!isResolvedPresentation(presentation)) return;
+
               const next = getOrderedCdnIds(presentation, getCdnId);
+
               // Skip the write when the CDN set is unchanged — a live reload swaps
               // in a new presentation object with the same hosts, and re-setting a
               // fresh array would re-fire the scope for an identical result.

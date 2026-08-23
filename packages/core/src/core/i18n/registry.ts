@@ -27,6 +27,7 @@ type I18nRegistryHost = { [I18N_REGISTRY_KEY]?: I18nRegistry };
 function getRegistry(): I18nRegistry {
   const host = globalThis as I18nRegistryHost;
   const existing = host[I18N_REGISTRY_KEY];
+
   if (existing) {
     return existing;
   }
@@ -51,9 +52,11 @@ function stripUnicodeExtensions(tag: Locale): Locale {
   const xIdx = tag.indexOf('-x-');
   const beforePrivateUse = xIdx === -1 ? tag : tag.slice(0, xIdx);
   const uIdx = beforePrivateUse.indexOf('-u-');
+
   if (uIdx === -1) {
     return tag;
   }
+
   return tag.slice(0, uIdx) + (xIdx === -1 ? '' : tag.slice(xIdx));
 }
 
@@ -78,6 +81,7 @@ export function getCanonicalLocaleKey(locale: Locale): Locale {
  */
 export function findLocaleKeys(locale: Locale): Locale[] {
   const base = getCanonicalLocaleKey(locale);
+
   if (!base) {
     return [DEFAULT_LOCALE];
   }
@@ -91,18 +95,21 @@ export function findLocaleKeys(locale: Locale): Locale[] {
 
   const zhFallback = chineseFallback(segments);
   const zhIndex = chain.indexOf('zh');
+
   if (zhFallback && zhIndex !== -1) {
     chain.splice(zhIndex, 0, zhFallback);
   }
 
   const out: Locale[] = [];
   const seen = new Set<string>();
+
   for (const tag of chain) {
     if (!seen.has(tag)) {
       seen.add(tag);
       out.push(tag);
     }
   }
+
   if (!seen.has(DEFAULT_LOCALE)) {
     out.push(DEFAULT_LOCALE);
   }
@@ -113,13 +120,16 @@ export function findLocaleKeys(locale: Locale): Locale[] {
 function mergeI18nTranslations(chain: Locale[]): FlatTranslations {
   const { layers } = getRegistry();
   const merged: Partial<FlatTranslations> = {};
+
   for (let i = chain.length - 1; i >= 0; i--) {
     const tag = chain[i]!;
     const layer = layers.get(tag);
+
     if (layer) {
       Object.assign(merged, layer);
     }
   }
+
   return merged as FlatTranslations;
 }
 

@@ -137,6 +137,7 @@ async function attachAndLoad(media: SpotifyMedia): Promise<{
   // There is no embed to attach to without a source, so tests that don't care
   // which entity is playing get one.
   if (!media.src) media.src = TRACK_URL;
+
   const iframe = createIframe();
   media.attach(iframe);
   const controller = await waitForEngine(media);
@@ -414,6 +415,7 @@ describe('SpotifyMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete after ready', async () => {
     const media = new SpotifyMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete', 'volumechange'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -453,6 +455,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['play', 'waiting', 'playing', 'pause'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -480,6 +483,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['play', 'waiting', 'playing', 'pause'] as const) {
       media.addEventListener(type, () => events.push(type));
     }

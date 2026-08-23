@@ -10,9 +10,11 @@ function uniqueTag(base: string): string {
 
 function createElement<T extends HTMLElement>(ctor: { new (): T }): T {
   const tag = uniqueTag('test-el');
+
   if (!customElements.get(tag)) {
     customElements.define(tag, class extends (ctor as typeof HTMLElement) {} as typeof HTMLElement);
   }
+
   return document.createElement(tag) as T;
 }
 

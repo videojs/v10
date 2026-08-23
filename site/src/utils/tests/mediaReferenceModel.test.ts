@@ -85,6 +85,7 @@ describe('createMediaReferenceModel', () => {
   it('omits engine options for a media with no structured source', () => {
     const model = createMediaReferenceModel('HlsJsVideo', makeRef());
     expect(model.engines).toEqual([]);
+
     for (const platform of ['html', 'react']) {
       expect(model.platforms[platform].sections.map((section) => section.key)).not.toContain('engineOptions');
     }

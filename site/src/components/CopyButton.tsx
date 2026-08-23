@@ -17,6 +17,7 @@ export default function CopyButton({ children, copied, copyFrom, className, styl
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isCopied, setIsCopied] = useState(false);
   const isHydrated = useIsHydrated();
+
   const disabled = !isHydrated;
 
   const handleCopy = async () => {
@@ -26,9 +27,11 @@ export default function CopyButton({ children, copied, copyFrom, className, styl
       if (buttonRef.current) {
         // Find the closest container
         const container = buttonRef.current.closest(copyFrom.container);
+
         if (container) {
           // Find the target within that container
           const target = container.querySelector(copyFrom.target);
+
           if (target) {
             text = target?.textContent || '';
           } else {
@@ -42,6 +45,7 @@ export default function CopyButton({ children, copied, copyFrom, className, styl
       } else {
         console.warn('CopyButton: buttonRef is null');
       }
+
       if (text) {
         await navigator.clipboard.writeText(text.trim());
         setIsCopied(true);

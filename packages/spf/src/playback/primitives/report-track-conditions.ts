@@ -79,11 +79,14 @@ export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly
   const data = { trackType: track.type, trackId: track.id };
 
   const formatCode = UNSUPPORTED_FORMAT_CODE[track.type];
+
   if (formatCode !== undefined && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) {
     conditions.push({ code: formatCode, data: { ...data, mimeType: track.mimeType } });
   }
+
   if (getMediaPlaylistMetadata(track)?.encrypted) {
     conditions.push({ code: SVTA_UNSUPPORTED_DRM_SYSTEM, data });
   }
+
   return conditions;
 }

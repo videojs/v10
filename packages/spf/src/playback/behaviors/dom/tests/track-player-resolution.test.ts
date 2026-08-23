@@ -56,6 +56,7 @@ const CSS_PIXELS: TrackPlayerResolutionConfig = { useDevicePixelRatio: false };
 
 afterEach(() => {
   vi.unstubAllGlobals();
+
   for (const element of elements.splice(0)) element.remove();
 });
 

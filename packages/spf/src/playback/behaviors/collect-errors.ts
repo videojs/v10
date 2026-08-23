@@ -65,7 +65,9 @@ export interface ErrorEmitterState {
  */
 export function emitError(state: ErrorEmitterState, error: SvtaError): void {
   console.error('[spf] reported condition', error);
+
   if (!state.errors) return;
+
   update(state.errors, (errors) => [...(errors ?? []), error]);
 }
 
@@ -99,9 +101,11 @@ export function emitError(state: ErrorEmitterState, error: SvtaError): void {
 export function reportAbsentTrackType<T>(code: number): SelectionRule<T, ErrorEmitterState> {
   return (tracks, { state }) => {
     const reported = state.errors && peek(state.errors);
+
     if (!tracks.length && !reported?.some((error) => error.code === code)) {
       emitError(state, { code });
     }
+
     return tracks;
   };
 }

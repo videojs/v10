@@ -53,6 +53,7 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
 
   function close(element: HTMLElement | null): Promise<void> | null {
     const { active, status } = state.current;
+
     if (abort.signal.aborted || !active || status === 'ending') return null;
 
     return transition.close(element);
@@ -79,10 +80,13 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
 
   function handleKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Escape') return;
+
     if (event.defaultPrevented) return;
+
     if (!state.current.active) return;
 
     const shouldClose = options.closeOnEscape?.() ?? true;
+
     if (!shouldClose) return;
 
     options.onEscapeDismiss(event);
@@ -106,6 +110,7 @@ export function createDismissLayer(options: DismissLayerOptions): DismissLayerAp
 
   function destroy(): void {
     if (abort.signal.aborted) return;
+
     abort.abort();
   }
 

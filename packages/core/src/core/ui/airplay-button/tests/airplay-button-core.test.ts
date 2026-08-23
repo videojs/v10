@@ -8,6 +8,7 @@ import { AirPlayButtonCore } from '../airplay-button-core';
 // jsdom lacks that constructor, so stub it for every test.
 function stubWebKit(present: boolean) {
   const key = 'WebKitPlaybackTargetAvailabilityEvent';
+
   if (present) {
     (globalThis as unknown as Record<string, unknown>)[key] = class {};
   } else {

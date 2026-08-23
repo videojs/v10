@@ -12,7 +12,9 @@ export const sourceFeature = definePlayerFeature({
       signals.clear();
 
       const { media } = target();
+
       if (!isMediaSourceCapable(media)) return src;
+
       media.src = src;
       media.load();
 

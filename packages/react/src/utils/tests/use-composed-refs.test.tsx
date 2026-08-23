@@ -59,9 +59,11 @@ describe('composeRefs', () => {
     const returnedCleanup = composed('test-value') as (() => void) | void;
 
     expect(returnedCleanup).toBeTypeOf('function');
+
     if (typeof returnedCleanup === 'function') {
       returnedCleanup();
     }
+
     expect(cleanup).toHaveBeenCalled();
   });
 
@@ -75,6 +77,7 @@ describe('composeRefs', () => {
     expect(refObject.current).toBe('test-value');
 
     const returnedCleanup = composed('test-value') as (() => void) | void;
+
     if (typeof returnedCleanup === 'function') {
       returnedCleanup();
     }

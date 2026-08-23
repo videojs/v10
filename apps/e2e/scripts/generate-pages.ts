@@ -222,6 +222,7 @@ document.getElementById('root')!.innerHTML = html\`
 
 function reactVideoPage(media: string, resource: string, config: MediaTypeConfig): string {
   const reactMedia = REACT_MEDIA[media];
+
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   const isDefaultVideo = media === 'video';
@@ -256,6 +257,7 @@ createRoot(document.getElementById('root')!).render(<App />);
 
 function reactAudioPage(media: string, resource: string): string {
   const reactMedia = REACT_MEDIA[media];
+
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   const isDefaultAudio = media === 'audio';
@@ -324,6 +326,7 @@ document.getElementById('root')!.append(media);
  */
 function reactBackgroundVideoPage(media: string, resource: string): string {
   const reactMedia = REACT_MEDIA[media];
+
   if (!reactMedia) throw new Error(`No React component mapping for media type: ${media}`);
 
   return `import { ${reactMedia.component} } from '${reactMedia.importPath}';
@@ -676,7 +679,9 @@ const PAGES: PageDef[] = [
 function getImports(page: PageDef, config: MediaTypeConfig): string[] {
   if (page.category === 'cdn') {
     const cdnImports = CDN_IMPORTS[page.media];
+
     if (!cdnImports) throw new Error(`No CDN imports for media type: ${page.media}`);
+
     return cdnImports.map((i) => `import '${i}';`);
   }
 
@@ -692,6 +697,7 @@ function getImports(page: PageDef, config: MediaTypeConfig): string[] {
 
 function generatePage(page: PageDef): { ts: string; html: string; ext: string } {
   const config = MEDIA_TYPES[page.media];
+
   if (!config) throw new Error(`Unknown media type: ${page.media}`);
 
   const ext = page.framework === 'react' ? 'tsx' : 'ts';
@@ -728,10 +734,12 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
 
 function generateIndexHtml(pages: PageDef[]): string {
   const noCategory = (p: PageDef) => !p.category;
+
   const htmlVideo = pages.filter((p) => p.framework === 'html' && !MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
   const htmlAudio = pages.filter((p) => p.framework === 'html' && MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
   const reactVideo = pages.filter((p) => p.framework === 'react' && !MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
   const reactAudio = pages.filter((p) => p.framework === 'react' && MEDIA_TYPES[p.media]?.isAudio && noCategory(p));
+
   const cdn = pages.filter((p) => p.category === 'cdn');
   const ejected = pages.filter((p) => p.category?.startsWith('ejected'));
   const captions = pages.filter((p) => p.category === 'captions');

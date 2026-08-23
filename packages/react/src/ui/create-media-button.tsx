@@ -79,6 +79,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     const tooltipCtx = useOptionalTooltipContext();
     const menuTriggerChild = useOptionalMenuTriggerChildContext();
     const setTooltipContent = tooltipCtx?.setContent;
+
     const feature = usePlayer(selector);
     const shortcut = useHotkeyShortcut(hotkeyAction, hotkeyValue?.(coreProps));
     const translator = useTranslator();
@@ -107,7 +108,9 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     // Derive state and label before the hooks boundary so the
     // useLayoutEffect below (called unconditionally) can reference them.
     type State = InferComponentState<Core>;
+
     if (feature) core.setMedia(feature);
+
     const state = feature ? (core.getState() as State) : null;
     const supported = state ? (isSupported?.(state) ?? true) : false;
     const label =
@@ -117,12 +120,14 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     // Forward label to tooltip popup content when inside a Tooltip.Root.
     useLayoutEffect(() => {
       if (!setTooltipContent) return;
+
       setTooltipContent(tooltipText ? { label: tooltipText, shortcut: shortcut.shortcut } : undefined);
       return () => setTooltipContent(undefined);
     }, [setTooltipContent, tooltipText, shortcut.shortcut]);
 
     if (!feature || !state) {
       if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
+
       return null;
     }
 

@@ -130,6 +130,7 @@ class ShakaMediaBase
       if (__DEV__) {
         console.warn('[vjs-shaka] This browser lacks the APIs Shaka Player needs. Nothing will play.');
       }
+
       return;
     }
 
@@ -153,9 +154,11 @@ class ShakaMediaBase
     if (target.preload !== this.#preload) target.preload = this.#preload;
 
     const engine = this.#engine;
+
     if (!engine || !isNewTarget) return;
 
     this.#run(engine.attach(target));
+
     // Shaka takes its lock in call order, so this runs after the attach above
     // without waiting on it here.
     if (hasUnloadedSource) this.#loadSource(engine);
@@ -259,12 +262,15 @@ class ShakaMediaBase
 
   set preload(value: MediaPreloadType) {
     if (this.#preload === value) return;
+
     this.#preload = value;
 
     const { target } = this;
+
     if (target && target.preload !== value) target.preload = value;
 
     const engine = this.#engine;
+
     if (!engine) return;
 
     if (this.#isLoadDeferred && (value === 'metadata' || value === 'auto')) {
@@ -288,6 +294,7 @@ class ShakaMediaBase
 
   set source(value: ShakaSource | null) {
     const source = value ?? null;
+
     // Changing anything takes a new object, so handing the same one back costs
     // nothing.
     if (source === this.#source) return;
@@ -302,6 +309,7 @@ class ShakaMediaBase
     this.#src = source?.src ?? '';
 
     if (configChanged) this.#applyEngineConfig();
+
     if (loadChanged) this.#requestLoad();
 
     this.dispatchEvent(new Event('sourcechange'));
@@ -312,12 +320,14 @@ class ShakaMediaBase
   // a key clears it instead of leaving the previous value behind.
   #applyEngineConfig() {
     const engine = this.#engine;
+
     if (!engine) return;
 
     engine.resetConfiguration();
     engine.configure(defaultShakaConfig);
 
     const config = withDrmConfig(this.#source?.engine?.shaka, this.#source?.drm);
+
     if (config) engine.configure(config);
 
     // A wholesale re-apply raised the buffering goals a pending `'metadata'`
@@ -327,6 +337,7 @@ class ShakaMediaBase
 
   #requestLoad() {
     const engine = this.#engine;
+
     // Nothing to load into yet — `attach()` loads what is waiting.
     if (!engine || !this.target) return;
 
@@ -343,6 +354,7 @@ class ShakaMediaBase
     this.#restoreBuffering(engine);
 
     const { src } = this;
+
     if (!src) {
       this.#run(engine.unload());
       return;
@@ -357,6 +369,7 @@ class ShakaMediaBase
       // The `play` is itself the intent — no second look at the target.
       this.#armPlayIntent(() => {
         const deferredEngine = this.#engine;
+
         if (deferredEngine) this.#startLoad(deferredEngine);
       });
       return;
@@ -366,6 +379,7 @@ class ShakaMediaBase
       this.#clampBuffering(engine);
       this.#armPlayIntent(() => {
         const clampedEngine = this.#engine;
+
         if (clampedEngine) this.#restoreBuffering(clampedEngine);
       });
     }
@@ -393,7 +407,9 @@ class ShakaMediaBase
 
   #restoreBuffering(engine: shaka.Player) {
     const goals = this.#clampedGoals;
+
     if (!goals) return;
+
     this.#clampedGoals = null;
     engine.configure({ streaming: goals });
   }
@@ -402,6 +418,7 @@ class ShakaMediaBase
     this.#disarmPlayIntent();
 
     const { target } = this;
+
     if (!target) return;
 
     this.#playIntentAbort = new AbortController();
@@ -442,10 +459,12 @@ class ShakaMediaBase
     // flight land as a fresh failure against the source it just started.
     if (isObject(error)) {
       if (this.#reported.has(error)) return;
+
       this.#reported.add(error);
     }
 
     const mediaError = toMediaError(error);
+
     // An aborted load or a failure Shaka intends to retry is not worth
     // announcing.
     if (!mediaError) return;
@@ -475,6 +494,7 @@ let arePolyfillsInstalled = false;
  */
 function installPolyfills() {
   if (arePolyfillsInstalled) return;
+
   arePolyfillsInstalled = true;
 
   shaka.polyfill.installAll();
@@ -497,6 +517,7 @@ function engineConfigKey(source: ShakaSource | null) {
  */
 function withDrmConfig(config: ShakaConfig | undefined, drm: DrmSystemsConfig | undefined) {
   const systems = Object.entries(drm ?? {});
+
   if (systems.length === 0 || config?.drm?.servers) return config;
 
   const servers: Record<string, string> = {};
@@ -504,6 +525,7 @@ function withDrmConfig(config: ShakaConfig | undefined, drm: DrmSystemsConfig | 
 
   for (const [keySystem, system] of systems) {
     servers[keySystem] = system.licenseUrl;
+
     if (system.serverCertificateUrl) advanced[keySystem] = { serverCertificateUri: system.serverCertificateUrl };
   }
 

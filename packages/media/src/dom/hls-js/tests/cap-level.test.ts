@@ -45,6 +45,7 @@ function createEngine(levels: FakeLevel[], config: Record<string, unknown> = {})
     },
     on(event: string, fn: (...args: any[]) => void, ctx?: unknown) {
       if (!listeners.has(event)) listeners.set(event, new Set());
+
       listeners.get(event)!.add({ fn, ctx });
     },
     off(event: string, fn: (...args: any[]) => void) {
@@ -65,6 +66,7 @@ const controllers: Array<{ destroy(): void }> = [];
 afterEach(() => {
   // `startCapping()` opens a one-second interval; destroying clears it.
   while (controllers.length) controllers.pop()!.destroy();
+
   document.body.innerHTML = '';
   vi.restoreAllMocks();
   vi.unstubAllGlobals();

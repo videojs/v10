@@ -176,9 +176,11 @@ export class ReactiveElement extends HTMLElement {
 
     const { props, attrToProp } = resolve(this.constructor as typeof ReactiveElement);
     const propName = attrToProp.get(attr);
+
     if (!propName) return;
 
     const decl = props.get(propName);
+
     if (!decl) return;
 
     let value: unknown = newValue;
@@ -188,6 +190,7 @@ export class ReactiveElement extends HTMLElement {
     } else if (decl.type === Number) {
       value = newValue === null ? null : Number(newValue);
     }
+
     (this as Record<string, unknown>)[propName] = value;
   }
 
@@ -205,6 +208,7 @@ export class ReactiveElement extends HTMLElement {
     }
 
     if (this.isUpdatePending) return;
+
     this.#updatePromise = this.#enqueueUpdate();
   }
 
@@ -276,6 +280,7 @@ export class ReactiveElement extends HTMLElement {
       for (const [name, value] of this.#instanceProperties) {
         (this as Record<string, unknown>)[name] = value;
       }
+
       this.#instanceProperties = undefined;
     }
 
@@ -366,6 +371,7 @@ export class ReactiveElement extends HTMLElement {
  */
 function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
   const existing = cache.get(ctor);
+
   if (existing) return existing;
 
   const props = new Map<string, PropertyDeclaration>();
@@ -378,6 +384,7 @@ function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
     // Install reactive accessor on the prototype
     if (!Object.getOwnPropertyDescriptor(ctor.prototype, name)?.get) {
       let key = propertyKeys.get(name);
+
       if (!key) {
         key = Symbol(name);
         propertyKeys.set(name, key);

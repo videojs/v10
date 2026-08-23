@@ -64,6 +64,7 @@ export class StatusIndicatorCore {
       ...DEFAULT_INPUT_INDICATOR_LABELS,
       ...this.#props.labels,
     });
+
     if (!details) return false;
 
     this.state.patch({

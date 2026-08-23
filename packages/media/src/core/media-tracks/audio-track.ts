@@ -38,6 +38,7 @@ export class AudioTrack {
 
   set enabled(value: boolean) {
     if (this.#enabled === value) return;
+
     this.#enabled = value;
 
     enabledChanged(this);

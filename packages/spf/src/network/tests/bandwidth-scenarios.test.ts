@@ -404,24 +404,28 @@ describe('real-world segment patterns', () => {
     for (let i = 0; i < 3; i++) {
       state = sampleBandwidth(state, 2000, 30_000); // 3 × 30KB = 90KB < 128KB
     }
+
     history.push({ phase: 'startup', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Phase 2: Steady state (enough data for real estimate)
     for (let i = 0; i < 5; i++) {
       state = sampleBandwidth(state, 2000, 30_000); // Now > 128KB total
     }
+
     history.push({ phase: 'steady', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Phase 3: Congestion (bandwidth drops significantly)
     for (let i = 0; i < 5; i++) {
       state = sampleBandwidth(state, 2000, 10_000); // Drop to 40 Kbps
     }
+
     history.push({ phase: 'congestion', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Phase 4: Recovery (bandwidth returns)
     for (let i = 0; i < 5; i++) {
       state = sampleBandwidth(state, 2000, 30_000); // Back to normal
     }
+
     history.push({ phase: 'recovery', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Verify phase transitions

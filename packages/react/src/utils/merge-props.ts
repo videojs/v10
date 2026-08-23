@@ -29,6 +29,7 @@ function mergeEventHandlers(
   theirs: ((event: SyntheticEvent) => void) | undefined
 ): ((event: SyntheticEvent) => void) | undefined {
   if (!theirs) return ours;
+
   if (!ours) return theirs;
 
   return (event: SyntheticEvent) => {
@@ -42,6 +43,7 @@ function mergeEventHandlers(
  */
 function mergeClassNames(ours: string | undefined, theirs: string | undefined): string | undefined {
   if (theirs && ours) return `${theirs} ${ours}`;
+
   return theirs || ours;
 }
 
@@ -50,7 +52,9 @@ function mergeClassNames(ours: string | undefined, theirs: string | undefined): 
  */
 function mergeStyles(ours: CSSProperties | undefined, theirs: CSSProperties | undefined): CSSProperties | undefined {
   if (!theirs) return ours;
+
   if (!ours) return theirs;
+
   return { ...ours, ...theirs };
 }
 

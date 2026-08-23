@@ -165,6 +165,7 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
   const setState = (partial: Record<string, unknown>) => {
     act(() => {
       state = { ...state, ...partial };
+
       for (const listener of listeners) listener();
     });
   };

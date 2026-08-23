@@ -11,8 +11,10 @@ export function translateText(
   params?: TextParams
 ): string {
   if (typeof text === 'string') return text;
+
   if (typeof translatorOrParams === 'function') {
     return translatorOrParams(text, params);
   }
+
   return interpolate(resolveText(text), translatorOrParams ?? params);
 }

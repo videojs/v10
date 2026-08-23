@@ -138,7 +138,9 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
    */
   const planTasks = (message: TextTrackSegmentLoaderMessage): TextLoadTask[] => {
     const { track, range } = message;
+
     if (!range) return [];
+
     const trackId = track.id;
     // Peek (don't track) the snapshot: the loader's `send` is typically
     // invoked from inside the dispatcher's effect body, so a tracked
@@ -169,11 +171,14 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
   const makeLoadTask = (op: TextLoadTask, { getContext, setContext }: Ctx): Task<void> => {
     return new Task(async (signal) => {
       if (signal.aborted) return;
+
       const frame: TextFrame<C> = { op };
       setContext({ ...getContext(), inFlightTrackId: op.trackId, inFlightSegmentId: op.segment.id });
+
       try {
         for (const step of pipeline) {
           if (signal.aborted) return;
+
           await step(frame, signal, deps);
         }
       } catch (error) {
@@ -189,6 +194,7 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
     for (const op of tasks) {
       ctx.runner.schedule(makeLoadTask(op, ctx)).then(undefined, (e: unknown) => {
         if (e instanceof Error && e.name === 'AbortError') return;
+
         console.error('Unexpected error in text-track segment loader:', e);
         ctx.runner.abortPending();
       });
@@ -209,7 +215,9 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
         on: {
           load: (msg, ctx) => {
             const tasks = planTasks(msg);
+
             if (tasks.length === 0) return;
+
             ctx.transition('loading');
             scheduleAll(tasks, ctx);
           },

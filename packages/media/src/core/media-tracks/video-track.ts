@@ -41,6 +41,7 @@ export class VideoTrack {
 
   set selected(value: boolean) {
     if (this.#selected === value) return;
+
     this.#selected = value;
 
     if (value !== true) return;

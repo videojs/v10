@@ -72,18 +72,25 @@ export function parseTwitchVideoId(src: string) {
  */
 export function parseTwitchSource(src: string): ParsedTwitchSource | null {
   if (!src) return null;
+
   // A VOD URL also satisfies the channel pattern's host, so it is tried first.
   const videoId = MATCH_VIDEO.exec(src)?.[1];
+
   if (videoId) return { kind: 'video', id: videoId, channel: null };
+
   const channel = MATCH_CHANNEL.exec(src)?.[1];
+
   if (channel) return { kind: 'channel', id: null, channel };
+
   return null;
 }
 
 /** Build the iframe `src` URL for an initial Twitch embed from the given props. */
 export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProps> = {}) {
   const parsed = parseTwitchSource(src);
+
   if (!parsed) return '';
+
   // Neither of these travels with the rest: `parent` repeats (see below), and
   // `referrerPolicy` is an attribute of the iframe hosting the embed.
   const { parent, referrerPolicy: _referrerPolicy, ...twitch } = props.source?.engine?.twitch ?? {};
@@ -100,16 +107,20 @@ export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProp
   };
 
   const query = new URLSearchParams();
+
   for (const key in params) {
     const value = params[key];
+
     // Twitch reads every parameter by value, so an empty one says nothing and is
     // left off. The shared `serializeEmbedParams` cannot be used for this reason:
     // it writes the `1` an HTML attribute's presence means, which `time` and
     // `collection` would read as content, and `1`/`0` for booleans, which Twitch
     // spells out as the words `true` and `false`.
     if (isNil(value) || value === '') continue;
+
     query.set(key, String(value));
   }
+
   // `parent` is the one parameter that repeats — one entry per hostname the
   // embed may be framed by — so it is appended rather than set with the rest.
   for (const host of resolveParentHosts(parent)) query.append('parent', host);

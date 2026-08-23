@@ -69,17 +69,22 @@ export function parseSpotifyEntityId(src: string) {
  */
 export function parseSpotifySource(src: string): ParsedSpotifySource | null {
   if (!src) return null;
+
   const match = MATCH_URI.exec(src) ?? MATCH_SRC.exec(src);
   const type = match?.[1]?.toLowerCase() as SpotifyEntityType | undefined;
   const id = match?.[2];
+
   if (!type || !id) return null;
+
   return { type, id, startTime: parseStartTime(src) };
 }
 
 /** Build the iframe `src` URL for an initial Spotify embed from the given props. */
 export function buildSpotifyIframeSrc(src: string, props: Partial<SpotifyMediaProps> = {}) {
   const parsed = parseSpotifySource(src);
+
   if (!parsed) return '';
+
   // Neither of these is an embed parameter: `preferVideo` picks the path below,
   // and `referrerPolicy` is an attribute of the iframe hosting the embed.
   const { preferVideo, referrerPolicy: _referrerPolicy, ...spotify } = props.source?.engine?.spotify ?? {};

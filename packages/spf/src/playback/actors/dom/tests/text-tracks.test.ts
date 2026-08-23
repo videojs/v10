@@ -4,12 +4,14 @@ import { createTextTracksActor } from '../text-tracks';
 
 function makeMediaElement(trackIds: string[]): HTMLMediaElement {
   const video = document.createElement('video');
+
   for (const id of trackIds) {
     const el = document.createElement('track');
     el.id = id;
     el.kind = 'subtitles';
     video.appendChild(el);
   }
+
   return video;
 }
 
@@ -125,6 +127,7 @@ describe('TextTracksActor', () => {
   it('tracks cues and segments independently per track ID', () => {
     const video = makeMediaElement(['track-en', 'track-es']);
     const actor = createTextTracksActor(video);
+
     for (const t of Array.from(video.textTracks)) t.mode = 'hidden';
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });

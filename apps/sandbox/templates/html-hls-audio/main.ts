@@ -20,6 +20,7 @@ const loadLatest = createLatestLoader();
 
 async function render() {
   const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling));
+
   if (!tag) return;
 
   const mediaAttrs = renderMediaAttrs(state);

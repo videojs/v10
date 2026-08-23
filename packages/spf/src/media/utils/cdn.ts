@@ -51,16 +51,20 @@ export function getOrderedCdnIds(presentation: MaybeResolvedPresentation, getId:
   const selectionSets = [...(presentation.selectionSets ?? [])].sort(
     (a, b) => CDN_TYPE_PRIORITY[a.type] - CDN_TYPE_PRIORITY[b.type]
   );
+
   for (const selectionSet of selectionSets) {
     for (const switchingSet of selectionSet.switchingSets) {
       for (const track of switchingSet.tracks) {
         const id = getId(track.url);
+
         if (seen.has(id)) continue;
+
         seen.add(id);
         ids.push(id);
       }
     }
   }
+
   return ids;
 }
 

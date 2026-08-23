@@ -93,6 +93,7 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     set source(value: MuxSourceBase | null) {
       const source = value ?? null;
+
       // Changing anything takes a new object, so handing the same one back costs
       // nothing.
       if (source === this.#source) return;

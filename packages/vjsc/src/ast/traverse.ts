@@ -28,7 +28,9 @@ export function findJsxElement(root: Node, name: string): JSXElement | undefined
   walk(root, {
     enter(node) {
       if (found || node.type !== 'JSXElement') return;
+
       if (jsxNamePath(node.openingElement.name).join('.') !== name) return;
+
       found = node;
       this.skip();
     },
@@ -49,6 +51,8 @@ export function findJsxAttribute(node: JSXElement | JSXOpeningElement, name: str
 /** Read a JSX element name as its identifier path. */
 export function jsxNamePath(name: JSXElementName): string[] {
   if (name.type === 'JSXIdentifier') return [name.name];
+
   if (name.type === 'JSXNamespacedName') return [];
+
   return [...jsxNamePath(name.object), name.property.name];
 }

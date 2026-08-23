@@ -54,6 +54,7 @@ export const controlsFeature = definePlayerFeature({
       if (__DEV__ && isNull(container)) {
         console.warn('[vjs] controlsFeature requires a container element for activity tracking.');
       }
+
       return;
     }
 
@@ -78,7 +79,9 @@ export const controlsFeature = definePlayerFeature({
 
     function scheduleIdle() {
       clearIdle();
+
       if (controlsLockCount > 0) return;
+
       idleTimer = setTimeout(setInactive, IDLE_DELAY);
     }
 
@@ -86,6 +89,7 @@ export const controlsFeature = definePlayerFeature({
       if (!get().userActive) {
         set({ userActive: true, controlsVisible: true });
       }
+
       scheduleIdle();
     }
 
@@ -106,6 +110,7 @@ export const controlsFeature = definePlayerFeature({
 
       return () => {
         if (released || signal.aborted) return;
+
         released = true;
         controlsLockCount--;
 
@@ -122,6 +127,7 @@ export const controlsFeature = definePlayerFeature({
       } else {
         setActive();
       }
+
       return get().controlsVisible;
     }
 
@@ -148,6 +154,7 @@ export const controlsFeature = definePlayerFeature({
 
     function onPointerDown(event: PointerEvent) {
       pointerDownTime = Date.now();
+
       if (event.pointerType === 'touch') {
         lastTouchAt = pointerDownTime;
       }
@@ -171,6 +178,7 @@ export const controlsFeature = definePlayerFeature({
 
         // Inline touch tap-to-toggle for standalone use (no gestures).
         const isMediaOrContainer = [media, container].includes(event.target as HTMLElement);
+
         if (get().controlsVisible && isMediaOrContainer) {
           setInactive();
         } else {
@@ -196,8 +204,10 @@ export const controlsFeature = definePlayerFeature({
       // On touch, don't flip visibility mid-gesture — just keep the idle timer alive.
       if (event.pointerType === 'touch') {
         if (get().userActive) scheduleIdle();
+
         return;
       }
+
       setActive();
     }
 
@@ -212,6 +222,7 @@ export const controlsFeature = definePlayerFeature({
       () => {
         // Ignore focusin from the container's own pointerup focus grab.
         if (isRecentTouch()) return;
+
         setActive();
       },
       { signal }
@@ -224,6 +235,7 @@ export const controlsFeature = definePlayerFeature({
       () => {
         // Ignore synthetic mouseleave that Android Chrome dispatches after touchend.
         if (isRecentTouch()) return;
+
         setInactive();
       },
       { signal }
@@ -280,6 +292,7 @@ function createControlsActions(
 
     return () => {
       if (released) return;
+
       released = true;
       locks.delete(lock);
       lock.release();

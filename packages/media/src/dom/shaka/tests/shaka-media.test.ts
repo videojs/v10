@@ -9,6 +9,7 @@ vi.mock('shaka-player/dist/shaka-player.compiled-es2021', () => {
       const isPlainObject = typeof value === 'object' && value !== null && !Array.isArray(value);
       target[key] = isPlainObject ? merge({ ...target[key] }, value) : value;
     }
+
     return target;
   }
 

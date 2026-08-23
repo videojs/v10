@@ -276,6 +276,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   set source(value: HlsSource | null) {
     const source = value ?? null;
+
     // Changing anything takes a new object, so handing the same one back costs
     // nothing.
     if (source === this.#source) return;
@@ -306,6 +307,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   set preload(value) {
     this.#preload = value;
+
     if (this.#delegate) {
       this.#delegate.preload = value;
     }
@@ -326,6 +328,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     }
 
     if (this.#streamType === value) return;
+
     this.#streamType = value;
     this.dispatchEvent(new HlsMediaEvent('streamtypechange'));
   }
@@ -443,6 +446,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     };
 
     if (Object.keys(source).length > 0) media.source = source;
+
     return media;
   }
 
@@ -461,6 +465,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   async #requestLoad() {
     if (this.#loadRequested) return;
+
     await (this.#loadRequested = Promise.resolve());
     this.#loadRequested = null;
     this.load();
@@ -486,6 +491,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.#delegate = null;
     this.#prevEngineConfigKey = null;
     this.#loadRequested = null;
+
     // Delegate teardown already emits `streamtypechange` (bridged); only sync cache.
     if (!this.#isUserStreamType) this.#streamType = StreamTypes.UNKNOWN;
   }
@@ -505,6 +511,7 @@ function withDrmSystems(
   drm: DrmSystemsConfig | undefined
 ): Partial<HlsJsConfig> {
   const drmSystems = hlsJs?.drmSystems ?? drm;
+
   if (!drmSystems || Object.keys(drmSystems).length === 0) return { ...hlsJs };
 
   // hls.js declares `serverCertificateUrl` without `undefined`, which an
@@ -514,6 +521,8 @@ function withDrmSystems(
 
 function inferContentType(src: string): SourceType {
   const path = src.split(/[?#]/)[0] ?? '';
+
   if (path.endsWith('.mp4')) return ContentTypes.MP4;
+
   return ContentTypes.M3U8;
 }

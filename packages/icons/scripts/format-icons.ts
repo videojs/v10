@@ -21,14 +21,17 @@ function allShapesUseCurrentColor(node: XastElement, inheritedFill: string): boo
       return false;
     }
   }
+
   return true;
 }
 
 function hasShapeDescendant(node: XastElement): boolean {
   for (const child of node.children) {
     if (child.type !== 'element') continue;
+
     if (SHAPES.has(child.name) || hasShapeDescendant(child)) return true;
   }
+
   return false;
 }
 
@@ -36,6 +39,7 @@ function removeFillCurrentColor(node: XastElement): void {
   if (node.attributes.fill === 'currentColor') {
     delete node.attributes.fill;
   }
+
   for (const child of node.children) {
     if (child.type === 'element') removeFillCurrentColor(child);
   }
@@ -55,8 +59,11 @@ const hoistCurrentColorFill: CustomPlugin = {
     element: {
       exit(node) {
         if (node.name !== 'svg') return;
+
         if (node.attributes.fill !== 'none') return;
+
         if (!hasShapeDescendant(node)) return;
+
         if (!allShapesUseCurrentColor(node, 'none')) return;
 
         node.attributes.fill = 'currentColor';

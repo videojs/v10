@@ -23,6 +23,7 @@ export interface ApiReferenceChanges {
 
 function listJsonFiles(directory: string): string[] {
   if (!existsSync(directory)) return [];
+
   return readdirSync(directory)
     .filter((file) => file.endsWith('.json'))
     .sort();
@@ -31,9 +32,11 @@ function listJsonFiles(directory: string): string[] {
 export function classifyDirectory(beforeDirectory: string, afterDirectory: string): DirectoryChanges {
   const before = new Set(listJsonFiles(beforeDirectory));
   const after = new Set(listJsonFiles(afterDirectory));
+
   const added = [...after].filter((file) => !before.has(file));
   const removed = [...before].filter((file) => !after.has(file));
   const common = [...after].filter((file) => before.has(file));
+
   const changed: string[] = [];
   const unchanged: string[] = [];
 
@@ -71,9 +74,11 @@ function directoryDiff(beforeDirectory: string, afterDirectory: string): string 
     encoding: 'utf-8',
     maxBuffer: MAX_DIFF_BUFFER_BYTES,
   });
+
   if (result.error || (result.status !== 0 && result.status !== 1)) {
     throw new Error(result.stderr || result.error?.message || `diff exited with status ${result.status}`);
   }
+
   return result.stdout;
 }
 
@@ -115,4 +120,5 @@ export function main(artifactDirectory = process.argv[2] ?? '/tmp/api-sync'): vo
 }
 
 const isEntrypoint = process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url));
+
 if (isEntrypoint) main();

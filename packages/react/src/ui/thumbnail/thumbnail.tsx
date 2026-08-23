@@ -36,7 +36,9 @@ function resolveCrossOrigin(
   inherited: MediaTextTrackState['thumbnailTrackCrossOrigin'] | undefined
 ) {
   if (isNull(explicit)) return undefined;
+
   if (!isUndefined(explicit)) return explicit;
+
   if (external?.length) return undefined;
 
   return inherited ?? undefined;
@@ -56,8 +58,10 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
   } = componentProps;
 
   const [core] = useState(() => new ThumbnailCore());
+
   const divRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+
   const textTrack = useOptionalPlayer(selectTextTrack);
 
   // Force re-render when the handle's state changes (img load/error, resize).
@@ -76,6 +80,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
   // Resolve thumbnails: external prop takes priority over auto <track> path.
   const thumbnails = useMemo(() => {
     if (externalThumbnails && externalThumbnails.length > 0) return externalThumbnails;
+
     return textTrack && textTrack.thumbnailCues.length > 0
       ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
       : [];

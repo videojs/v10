@@ -21,6 +21,8 @@ export const PopoverContextProvider = PopoverContext.Provider;
 
 export function usePopoverContext(): PopoverContextValue {
   const ctx = useContext(PopoverContext);
+
   if (!ctx) throw new Error('Popover compound components must be used within a Popover.Root');
+
   return ctx;
 }

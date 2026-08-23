@@ -56,10 +56,12 @@ export function TooltipRoot({
   // createTooltip closure never reads stale props.
   const onOpenChangeRef = useLatestRef(onOpenChangeProp);
   const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
+
   const delayRef = useLatestRef(delay);
   const closeDelayRef = useLatestRef(closeDelay);
   const disableHoverablePopupRef = useLatestRef(disableHoverablePopup);
   const disabledRef = useLatestRef(disabled);
+
   const groupRef = useLatestRef(groupFromContext);
   const popupGroupRef = useLatestRef(popupGroup);
 
@@ -98,6 +100,7 @@ export function TooltipRoot({
     if (isUndefined(controlledOpen)) return;
 
     const { active: inputOpen } = tooltip.input.current;
+
     if (controlledOpen === inputOpen) return;
 
     if (controlledOpen) {
@@ -109,6 +112,7 @@ export function TooltipRoot({
 
   useEffect(() => {
     if (isUndefined(controls?.state.visible)) return;
+
     if (controls.state.visible) return;
 
     tooltip.close('imperative-action');

@@ -210,6 +210,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
           frameworks: ['react'],
         });
       }
+
       if (part.frameworks.includes('html')) {
         headings.push({
           depth: 3,

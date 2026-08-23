@@ -33,6 +33,7 @@ export class SliderThumbElement extends MediaElement {
     super.update(_changed);
 
     const ctx = this.#ctx.value;
+
     if (!ctx) return;
 
     // Apply keyboard and focus handlers once — they don't change per slider instance.

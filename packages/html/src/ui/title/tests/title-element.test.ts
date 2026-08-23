@@ -109,6 +109,7 @@ defineElement('test-title-player', TestPlayerProviderElement);
 
 async function setup(store?: object) {
   const provider = document.createElement('test-title-player') as TestPlayerProviderElement;
+
   if (store) provider.store = store as unknown as AnyPlayerStore;
 
   const title = createElement(TitleElement);

@@ -55,6 +55,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
 
   attach(target: Target) {
     if (!target || this.#target === target) return;
+
     this.#target = target;
 
     for (const type of this.#eventTypes) {
@@ -107,6 +108,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
       this.#eventTypes.add(type);
       this.target?.addEventListener(type, this.#forwardEvent);
     }
+
     super.addEventListener(type, listener as EventListener, options);
   }
 
@@ -132,6 +134,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
   set streamType(value) {
     if (this.streamType === value) return;
+
     this.#streamType = value;
     setMediaProp(this, 'streamType', value);
     this.dispatchEvent(new Event('streamtypechange'));

@@ -37,9 +37,13 @@ function colorizePatch(patch: string): string {
     .split('\n')
     .map((line) => {
       if (line.startsWith('---') || line.startsWith('+++')) return chalk.dim(line);
+
       if (line.startsWith('-')) return chalk.red(line);
+
       if (line.startsWith('+')) return chalk.green(line);
+
       if (line.startsWith('@@')) return chalk.cyan(line);
+
       return chalk.gray(line);
     })
     .join('\n');
@@ -103,6 +107,7 @@ export async function mirrorTemplatesToSrc(): Promise<string[]> {
       if (await fs.pathExists(targetPath)) {
         const existing = await fs.readFile(targetPath, 'utf8');
         const next = await fs.readFile(templatePath, 'utf8');
+
         if (existing === next) continue;
       }
 

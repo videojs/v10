@@ -45,8 +45,10 @@ const ManifestSchema = z.array(z.object({ id: z.string() }));
 function collectSubpaths(dir: string, prefix = ''): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     if (entry.isDirectory()) return collectSubpaths(resolve(dir, entry.name), `${prefix}${entry.name}/`);
+
     // Skip dev bundles (`.dev.js`), sourcemaps, and type stubs.
     if (!entry.name.endsWith('.js') || entry.name.endsWith('.dev.js')) return [];
+
     return [`${prefix}${entry.name.replace(/\.js$/, '')}`];
   });
 }

@@ -69,6 +69,7 @@ async function loadRuntime(): Promise<HtmlRuntime> {
         name: 'test-runtime',
         resolveId(id) {
           if (id === 'runtime') return id;
+
           return id === 'vjsc/target' ? resolve(import.meta.dirname, '../../target/index.ts') : null;
         },
         load(id) {
@@ -79,6 +80,7 @@ async function loadRuntime(): Promise<HtmlRuntime> {
   });
   const { output } = await build.generate({ format: 'esm' });
   const chunk = output.find((item) => item.type === 'chunk');
+
   if (!chunk) throw new Error('Expected the HTML runtime bundle to contain a chunk.');
 
   const url = `data:text/javascript;base64,${Buffer.from(chunk.code).toString('base64')}`;

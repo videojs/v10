@@ -60,9 +60,12 @@ function wrapCdnPlayerI18n(playerTag: string, inner: string): string {
 
 async function waitForMediaMetadata(timeoutMs = 15_000): Promise<void> {
   const deadline = performance.now() + timeoutMs;
+
   while (performance.now() < deadline) {
     const video = document.querySelector('video');
+
     if (video && video.readyState >= HTMLMediaElement.HAVE_METADATA) return;
+
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   }
 }
@@ -72,18 +75,22 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
   await waitForMediaMetadata(timeoutMs);
 
   const deadline = performance.now() + timeoutMs;
+
   while (performance.now() < deadline) {
     const provider = document.querySelector('media-i18n') as LitElementLike | null;
     provider?.requestUpdate?.();
+
     if (provider?.updateComplete) await provider.updateComplete;
 
     for (const button of document.querySelectorAll('media-play-button')) {
       const el = button as LitElementLike;
       el.requestUpdate?.();
+
       if (el.updateComplete) await el.updateComplete;
     }
 
     const playLabel = document.querySelector('media-play-button')?.getAttribute('aria-label');
+
     if (playLabel === expected) return playLabel;
 
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
@@ -94,22 +101,27 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
 
 async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<void> {
   await ensureCdnSandboxLocale(tag);
+
   if (seq !== localeApplySeq) return;
 
   const provider = document.querySelector('media-i18n') as LitElementLike | null;
+
   if (!provider?.requestUpdate) return;
 
   provider.requestUpdate();
   await provider.updateComplete;
+
   if (seq !== localeApplySeq) return;
 
   // An embed plays in a cross-origin frame with no <video> of its own, so the
   // metadata gate the label check waits on never opens.
   if (!import.meta.env.DEV || tag === 'en' || isEmbedPreset(preset)) return;
+
   if (!document.querySelector('media-play-button')) return;
 
   const expected = getI18nTranslations(tag)['buttons.play'];
   const playLabel = await waitForCdnPlayLabel(expected);
+
   if (seq !== localeApplySeq) return;
 
   if (playLabel !== expected) {
@@ -122,7 +134,9 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
 async function applyLocale(next: SandboxLocaleTag): Promise<void> {
   const seq = ++localeApplySeq;
   await ensureCdnSandboxLocale(next);
+
   if (seq !== localeApplySeq) return;
+
   locale = next;
   syncDocumentLocale(locale);
   await syncCdnI18nProvider(locale, seq);
@@ -154,6 +168,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
         if (skin === 'minimal') await import('@videojs/html/cdn/video-minimal');
         else await import('@videojs/html/cdn/video');
       }
+
       break;
     case 'audio':
     case 'mux-audio':
@@ -162,6 +177,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
     case 'spotify-audio':
       if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
       else await import('@videojs/html/cdn/audio');
+
       break;
     case 'background-video':
     case 'hls-background-video':
@@ -285,14 +301,19 @@ function isBackgroundPreset(preset: Preset): boolean {
 
 function getPlayerTag(preset: Preset, live: boolean): string {
   if (isBackgroundPreset(preset)) return 'background-video-player';
+
   if (isAudioPreset(preset)) return live ? 'live-audio-player' : 'audio-player';
+
   return live ? 'live-video-player' : 'video-player';
 }
 
 function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
   if (isBackgroundPreset(preset)) return 'background-video-skin';
+
   if (isAudioPreset(preset)) return CSS_SKIN_TAGS[skin].audio;
+
   if (live) return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
+
   return CSS_SKIN_TAGS[skin].video;
 }
 
@@ -495,6 +516,7 @@ onPreloadChange((preload) => {
 
 onLocaleChange((next) => {
   const provider = document.querySelector('media-i18n');
+
   if (provider) {
     void applyLocale(next);
     return;
@@ -503,7 +525,9 @@ onLocaleChange((next) => {
   const seq = ++localeApplySeq;
   void (async () => {
     await ensureCdnSandboxLocale(next);
+
     if (seq !== localeApplySeq) return;
+
     locale = next;
     syncDocumentLocale(locale);
     await render();

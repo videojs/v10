@@ -20,6 +20,7 @@ import { createMuxQuery, MUX_VIDEO_DOMAIN, type MuxJWT, type MuxSourceBase } fro
  */
 export function createMuxDrmSystems(source?: MuxSourceBase | null): DrmSystemsConfig | undefined {
   if (!source?.playbackId) return undefined;
+
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, drm } = source;
   const { token } = drm ?? {};
 

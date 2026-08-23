@@ -57,6 +57,7 @@ export function resolveIndexRedirect(
     if (!isValidFramework(params.framework)) {
       throw new Error(`Invalid framework param: ${params.framework}`);
     }
+
     selectedFramework = params.framework;
     reason = 'Using validated params.framework';
   } else {
@@ -136,6 +137,7 @@ export function resolveFrameworkChange(
 
   const guide = findGuideBySlug(currentSlug, sidebar);
   const validFrameworks = guide ? getValidFrameworksForGuide(guide, sidebar) : [];
+
   if (guide && validFrameworks.includes(selectedFramework)) {
     // Current slug is visible in the new framework
     selectedSlug = currentSlug;
@@ -198,6 +200,7 @@ export function resolveDocsLinkUrl(input: DocsLinkInput, sidebar: Sidebar = defa
   const { targetSlug, contextFramework } = input;
 
   const guide = findGuideBySlug(targetSlug, sidebar);
+
   if (!guide) {
     throw new Error(`No guide found with slug "${targetSlug}"`);
   }
@@ -213,6 +216,7 @@ export function resolveDocsLinkUrl(input: DocsLinkInput, sidebar: Sidebar = defa
 
   // Priority 1: Try current framework
   const validFrameworks = getValidFrameworksForGuide(guide, sidebar);
+
   if (validFrameworks.includes(contextFramework)) {
     selectedFramework = contextFramework;
     priorityLevel = 1;

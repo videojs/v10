@@ -48,6 +48,7 @@ export function createContainerMixin<Store extends PlayerStore>(
           context: config.containerContext,
           callback: (value) => {
             this.#setContainer = value?.setContainer ?? null;
+
             if (this.isConnected) this.#setContainer?.(this);
           },
           subscribe: true,

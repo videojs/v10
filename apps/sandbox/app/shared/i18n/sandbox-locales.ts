@@ -37,6 +37,7 @@ export async function ensureSandboxLocale(tag: SandboxLocaleTag): Promise<void> 
     if (activeLocale !== tag) {
       await prefetchBrowserSandboxLocale(tag);
     }
+
     activeLocale = tag;
     return;
   }
@@ -46,6 +47,7 @@ export async function ensureSandboxLocale(tag: SandboxLocaleTag): Promise<void> 
   }
 
   const translations = all[tag as keyof typeof all];
+
   if (!translations) {
     throw new Error(`Unknown sandbox locale: ${tag}`);
   }

@@ -351,7 +351,9 @@ describe('createPlayer', () => {
 
       function Consumer({ fail = false }: { fail?: boolean }) {
         store = usePlayer();
+
         if (fail) throw new Error('abandon render');
+
         return null;
       }
 

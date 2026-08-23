@@ -98,6 +98,7 @@ vi.mock('@videojs/store/react', () => ({
   useSnapshot: vi.fn((state: { current: unknown }) => state.current),
   useStore: vi.fn((_store: unknown, selector?: (state: object) => unknown) => {
     if (!selector) return _store;
+
     try {
       const result = selector({
         time: mockTimeState,
@@ -105,10 +106,12 @@ vi.mock('@videojs/store/react', () => ({
         playback: mockPlaybackState,
         textTrack: mockTextTrackState,
       });
+
       if (result !== undefined) return result;
     } catch {
       // fall through
     }
+
     try {
       return selector({ ...mockTimeState, ...mockBufferState, ...mockPlaybackState, ...mockTextTrackState });
     } catch {

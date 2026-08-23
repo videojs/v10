@@ -38,6 +38,7 @@ export class MediaContainerElement extends ContainerMixin(MediaElement) {
 
   #applyLabel(): void {
     const current = this.getAttribute('aria-label');
+
     if (current && current !== this.#label) return;
 
     if (this.hasAttribute('aria-labelledby')) {
@@ -45,6 +46,7 @@ export class MediaContainerElement extends ContainerMixin(MediaElement) {
         this.removeAttribute('aria-label');
         this.#label = null;
       }
+
       return;
     }
 

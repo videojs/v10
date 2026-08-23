@@ -11,6 +11,7 @@ type DefinableElement = CustomElementConstructor & { tagName: string };
  */
 export function safeDefine(element: DefinableElement, tagName: string = element.tagName): void {
   const registry = globalThis.customElements;
+
   if (!registry || registry.get(tagName)) return;
 
   registry.define(tagName, element);

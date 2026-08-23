@@ -27,7 +27,9 @@ export const CAPTIONS_OFF_VALUE = 'off';
 
 function formatTrackLabel(track: MediaTextTrack): Text | string {
   if (track.label) return track.label;
+
   if (track.language) return track.language;
+
   return track.kind === 'captions' ? captionsText : subtitlesText;
 }
 
@@ -69,6 +71,7 @@ export class CaptionsRadioGroupCore {
 
   getLabel(state: CaptionsRadioGroupState): Text | string {
     const label = resolveLabel(this.#props.label, state);
+
     if (label) return label;
 
     return captionsText;
@@ -123,6 +126,7 @@ export class CaptionsRadioGroupCore {
     if (this.#props.disabled) return;
 
     const captionTracks = getCaptionTracks(media.textTrackList);
+
     if (!captionTracks.length) return;
 
     if (value === CAPTIONS_OFF_VALUE) {

@@ -60,6 +60,7 @@ export function AlertDialogRoot({
     if (controlledOpen === undefined) return;
 
     const { active: inputOpen } = dialog.input.current;
+
     if (controlledOpen === inputOpen) return;
 
     if (controlledOpen) {

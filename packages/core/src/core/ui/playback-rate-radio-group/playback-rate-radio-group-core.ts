@@ -59,7 +59,9 @@ export class PlaybackRateRadioGroupCore {
 
   getLabel(state: PlaybackRateRadioGroupState): Text | string {
     const custom = resolveLabel(this.#props.label, state);
+
     if (custom !== undefined) return custom;
+
     return playbackRateText;
   }
 
@@ -113,6 +115,7 @@ export class PlaybackRateRadioGroupCore {
 
   select(media: MediaPlaybackRateState, rate: number): void {
     if (this.#props.disabled) return;
+
     if (!media.playbackRates.includes(rate)) return;
 
     media.setPlaybackRate(rate);
@@ -120,6 +123,7 @@ export class PlaybackRateRadioGroupCore {
 
   selectValue(media: MediaPlaybackRateState, value: string): void {
     const rate = media.playbackRates.find((candidate) => this.getRateValue(candidate) === value);
+
     if (isUndefined(rate)) return;
 
     this.select(media, rate);

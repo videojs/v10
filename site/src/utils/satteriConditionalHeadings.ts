@@ -53,8 +53,11 @@ export function satteriConditionalHeadings(): MdastPluginInput {
 
     const publish = (ctx: MdastVisitorContext) => {
       if (published) return;
+
       const frontmatter = getAstroFrontmatter(ctx);
+
       if (!frontmatter) return;
+
       frontmatter.conditionalHeadings = headings;
       published = true;
     };
@@ -73,7 +76,9 @@ export function satteriConditionalHeadings(): MdastPluginInput {
         };
 
         const { frameworks, styles } = resolveCaseContext(node, ctx);
+
         if (frameworks) heading.frameworks = frameworks;
+
         if (styles) heading.styles = styles;
 
         headings.push(heading);
@@ -112,15 +117,18 @@ function resolveCaseContext(
   let styles: string[] | null = null;
 
   let current = ctx.parent(node);
+
   while (current) {
     if (current.type === 'mdxJsxFlowElement') {
       const el = current as MdxJsxFlowElement;
+
       if (!frameworks && el.name === 'FrameworkCase') {
         frameworks = extractArrayAttr(el, 'frameworks');
       } else if (!styles && el.name === 'StyleCase') {
         styles = extractArrayAttr(el, 'styles');
       }
     }
+
     current = ctx.parent(current);
   }
 
@@ -135,8 +143,11 @@ function getStringAttr(node: MdxJsxFlowElement, name: string): string | null {
 /** Parse a JSX expression attribute like `frameworks={["react", "html"]}`. */
 function extractArrayAttr(node: MdxJsxFlowElement, name: string): string[] | null {
   const attr = node.attributes?.find((a) => a.type === 'mdxJsxAttribute' && a.name === name);
+
   if (!attr?.value || typeof attr.value === 'string') return null;
+
   if (attr.value.type !== 'mdxJsxAttributeValueExpression') return null;
+
   try {
     return JSON.parse(attr.value.value.trim());
   } catch (e) {
@@ -155,9 +166,13 @@ function readRefJson(dir: string, key: string): unknown {
 
 function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const componentName = getStringAttr(node, 'component');
+
   if (!componentName) return;
+
   const json = readRefJson(COMPONENT_REF_DIR, resolveReferenceSlug(componentName));
+
   if (!json) return;
+
   const partOrder = extractArrayAttr(node, 'partOrder');
   const model = createComponentReferenceModel(
     componentName,
@@ -169,28 +184,40 @@ function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: Con
 
 function injectFeatureReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const featureName = getStringAttr(node, 'feature');
+
   if (!featureName) return;
+
   const json = readRefJson(FEATURE_REF_DIR, featureName);
+
   if (!json) return;
+
   const model = createFeatureReferenceModel(featureName, json);
   headings.push(...buildFeatureReferenceTocHeadings(model));
 }
 
 function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const utilName = getStringAttr(node, 'util');
+
   if (!utilName) return;
+
   const slug = getStringAttr(node, 'slug');
   const json = readRefJson(UTIL_REF_DIR, slug ?? kebabCase(utilName));
+
   if (!json) return;
+
   const model = createUtilReferenceModel(utilName, json as Parameters<typeof createUtilReferenceModel>[1]);
   headings.push(...buildUtilReferenceTocHeadings(model));
 }
 
 function injectMediaReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const mediaName = getStringAttr(node, 'media');
+
   if (!mediaName) return;
+
   const json = readRefJson(MEDIA_REF_DIR, resolveReferenceSlug(mediaName));
+
   if (!json) return;
+
   const model = createMediaReferenceModel(mediaName, json);
   headings.push(...buildMediaReferenceTocHeadings(model));
 }

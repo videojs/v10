@@ -94,6 +94,7 @@ export class TimeCore {
   #getSeconds(): number {
     const media = this.#media!;
     const { type } = this.#props;
+
     switch (type) {
       case 'current':
         return media.currentTime;
@@ -140,7 +141,9 @@ export class TimeCore {
 
   getLabel(state: TimeState, type = this.#props.type): Text | string {
     const custom = resolveLabel(this.#props.label, state);
+
     if (custom !== undefined) return custom;
+
     if (!this.#props.toggle) {
       return DEFAULT_LABELS[this.#props.type];
     }
@@ -152,6 +155,7 @@ export class TimeCore {
 
   getLabelParams(state: TimeState): { duration: string } | undefined {
     const custom = resolveLabel(this.#props.label, state);
+
     if (custom !== undefined || !this.#props.toggle) return undefined;
 
     const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };

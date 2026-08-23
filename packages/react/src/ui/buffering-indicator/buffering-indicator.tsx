@@ -52,6 +52,7 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
 
   if (!playback) {
     if (__DEV__) logMissingFeature('BufferingIndicator', 'playback');
+
     return null;
   }
 

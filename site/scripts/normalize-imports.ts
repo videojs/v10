@@ -42,6 +42,7 @@ export function normalizeImports(source: string): string {
     }
 
     const namedBindings = importClause.namedBindings;
+
     if (importClause.name || (namedBindings && !ts.isNamedImports(namedBindings))) {
       rawImports.push(getImportStatementText(source, statement));
       continue;

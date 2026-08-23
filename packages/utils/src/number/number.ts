@@ -12,7 +12,9 @@ export function clamp(value: number, min: number, max: number): number {
  */
 export function toPercent(value: number, min: number, max: number): number {
   const range = max - min;
+
   if (!Number.isFinite(range) || range <= 0) return 0;
+
   return clamp(((value - min) / range) * 100, 0, 100);
 }
 

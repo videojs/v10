@@ -129,9 +129,11 @@ export interface MuxSourceBase {
  */
 export function createMuxQuery(params: Record<string, unknown> = {}): string {
   const { token, ...rest } = params;
+
   if (token) return `?${new URLSearchParams({ token: String(token) })}`;
 
   const search = new URLSearchParams();
+
   for (const [key, value] of Object.entries(rest)) {
     if (!isNil(value)) search.set(snakeCase(key), String(value));
   }
@@ -143,6 +145,7 @@ export function createMuxQuery(params: Record<string, unknown> = {}): string {
 /** Build the Mux HLS stream URL for a source. */
 export function createMuxVideoURL(source?: MuxSourceBase | null): string | undefined {
   if (!source?.playbackId) return undefined;
+
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, playback } = source;
 
   if (__DEV__ && playback?.minResolution && playback?.maxResolution) {
@@ -165,6 +168,7 @@ export function parseMuxVideoURL(src: string): MuxSourceBase | undefined {
   if (!src) return undefined;
 
   let url: URL;
+
   try {
     url = new URL(src);
   } catch {
@@ -173,15 +177,19 @@ export function parseMuxVideoURL(src: string): MuxSourceBase | undefined {
 
   const [, domain] = url.hostname.match(/^stream\.(.+)$/) ?? [];
   const [, playbackId] = url.pathname.match(/^\/([^/]+)\.m3u8$/) ?? [];
+
   if (!domain || !playbackId) return undefined;
 
   const source: MuxSourceBase = { playbackId };
+
   if (domain !== MUX_VIDEO_DOMAIN) source.customDomain = domain;
 
   const playback: MuxPlaybackParams = {};
+
   for (const [key, value] of url.searchParams) {
     playback[camelCase(key)] = key === 'token' ? value : parseMuxParamValue(value);
   }
+
   if (Object.keys(playback).length > 0) source.playback = playback;
 
   return source;
@@ -194,8 +202,11 @@ export function parseMuxVideoURL(src: string): MuxSourceBase | undefined {
  */
 function parseMuxParamValue(value: string): string | number | boolean {
   if (value === 'true') return true;
+
   if (value === 'false') return false;
+
   if (value !== '' && String(Number(value)) === value) return Number(value);
+
   return value;
 }
 
@@ -222,11 +233,13 @@ export interface MuxContentData extends MediaContentData {
  */
 export function createMuxPosterURL(source?: MuxSourceBase | null): string | undefined {
   if (!source?.playbackId) return undefined;
+
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, poster, playback } = source;
   const { ext = 'webp', token, ...query } = poster ?? {};
 
   // Image tokens must carry the image (`t`) audience.
   if (token && parseJwt<MuxJWT>(token)?.aud !== 't') return undefined;
+
   // Signed playback requires a matching image token; an unsigned URL would be rejected.
   if (!token && playback?.token) return undefined;
 
@@ -241,11 +254,13 @@ export function createMuxPosterURL(source?: MuxSourceBase | null): string | unde
  */
 export function createMuxStoryboardURL(source?: MuxSourceBase | null): string | undefined {
   if (!source?.playbackId) return undefined;
+
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, storyboard, playback } = source;
   const { token, ...query } = storyboard ?? {};
 
   // Storyboard tokens must carry the storyboard (`s`) audience.
   if (token && parseJwt<MuxJWT>(token)?.aud !== 's') return undefined;
+
   // Signed playback requires a matching storyboard token; an unsigned URL would be rejected.
   if (!token && playback?.token) return undefined;
 

@@ -73,6 +73,7 @@ function trackPlayerResolutionSetup({
     // stand while the new one's first observation is in flight.
     let current: PlayerResolution | undefined;
     state.playerResolution.set(current);
+
     if (!capRenditionToPlayerSize || !mediaElement) return;
 
     // Compared rather than written straight through, since the slot holds an
@@ -81,6 +82,7 @@ function trackPlayerResolutionSetup({
     // Same reason `watchScreenResolution` compares its readings.
     const write = (size: ElementSize & { scale?: number }) => {
       const next = scaleResolution(size, size.scale);
+
       if (shallowEqual(current, next)) return;
 
       current = next;

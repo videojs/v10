@@ -16,6 +16,7 @@ export function useRenderedIndicatorState<State extends IndicatorLifecycleState>
   const currentStateRef = useRef(currentState);
   const snapshotRef = useRef(currentState);
   const [transition] = useState(() => createTransition());
+
   useDestroy(transition);
   currentStateRef.current = currentState;
 
@@ -30,19 +31,23 @@ export function useRenderedIndicatorState<State extends IndicatorLifecycleState>
   useLayoutEffect(() => {
     if (open) {
       const nextState = currentStateRef.current;
+
       if (nextState.generation !== generation) return;
 
       snapshotRef.current = nextState;
       const transitionState = transition.state.current;
+
       if (!transitionState.active || options.replayOnUpdate !== false) {
         void transition.open(elementRef.current);
       } else if (transitionState.status === 'ending') {
         transition.cancel();
       }
+
       return;
     }
 
     const { active, status } = transition.state.current;
+
     if (active && status !== 'ending') {
       void transition.close(elementRef.current);
     }

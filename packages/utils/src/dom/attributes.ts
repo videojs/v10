@@ -28,9 +28,11 @@ export function restoreAttributes(element: Element, snapshot: AttributeSnapshot)
  */
 export function namedNodeMapToObject(namedNodeMap: NamedNodeMap) {
   const obj: Record<string, string> = {};
+
   for (const attr of namedNodeMap) {
     obj[attr.name] = attr.value;
   }
+
   return obj;
 }
 
@@ -39,10 +41,13 @@ export function namedNodeMapToObject(namedNodeMap: NamedNodeMap) {
  */
 export function serializeAttributes(attrs: Record<string, string>) {
   let html = '';
+
   for (const key in attrs) {
     const value = attrs[key]!;
+
     if (value === '') html += ` ${key}`;
     else html += ` ${key}="${escapeHtml(value)}"`;
   }
+
   return html;
 }

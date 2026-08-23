@@ -27,6 +27,7 @@ vi.mock('@/types/docs', async () => {
     // Mock isValidFramework to check against mock frameworks
     isValidFramework: (value: string | undefined | null): value is MockFramework => {
       if (!value) return false;
+
       return value === 'html' || value === 'react';
     },
   };

@@ -35,6 +35,7 @@ function ensureAlias(relativePath, target) {
     } catch {
       // Replace a dangling generated link below.
     }
+
     unlinkSync(path);
   } else if (state) {
     console.warn(`warning: refusing to replace non-generated ${relativePath}`);
@@ -42,6 +43,7 @@ function ensureAlias(relativePath, target) {
   }
 
   mkdirSync(dirname(path), { recursive: true });
+
   try {
     symlinkSync(target, path, 'junction');
   } catch {

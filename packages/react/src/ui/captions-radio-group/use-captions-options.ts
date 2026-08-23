@@ -37,6 +37,7 @@ export function useCaptionsOptions(props?: CaptionsOptionsProps): CaptionsOption
   'use no memo';
 
   const result = useCaptionsRadioOptions(props);
+
   if (!result) return null;
 
   return { ...result, showMenu: result.state.options.length > 2 };

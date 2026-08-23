@@ -30,9 +30,11 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
       if (source === CDN_I18N_REGISTRY) {
         return { id: CDN_I18N_REGISTRY, external: true };
       }
+
       if (source === '@videojs/core/i18n' && importer && !isCdnI18nEntry(importer)) {
         return { id: CDN_I18N_REGISTRY, external: true };
       }
+
       return null;
     },
 
@@ -44,6 +46,7 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
       const depth = chunk.fileName.split('/').length - 1;
       const target = depth === 0 ? `./${file}` : `${'../'.repeat(depth)}${file}`;
       const magicString = meta?.magicString;
+
       if (!magicString) {
         throw new Error('cdn-i18n-external requires experimental.nativeMagicString: true.');
       }

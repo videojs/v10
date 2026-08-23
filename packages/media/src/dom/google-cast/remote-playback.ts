@@ -80,7 +80,9 @@ export class RemotePlayback extends EventTarget {
 
   #setState(next: RemotePlaybackState) {
     if (this.#state === next) return;
+
     this.#state = next;
+
     if (next === 'connecting') this.dispatchEvent(new Event('connecting'));
     else if (next === 'connected') this.dispatchEvent(new Event('connect'));
     else this.dispatchEvent(new Event('disconnect'));
@@ -88,7 +90,9 @@ export class RemotePlayback extends EventTarget {
 
   #setAvailable(available: boolean) {
     if (this.#available === available) return;
+
     this.#available = available;
+
     for (const callback of this.#callbacks.values()) callback(available);
   }
 }

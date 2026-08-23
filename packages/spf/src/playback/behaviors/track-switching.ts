@@ -391,7 +391,9 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
   { state, config }: SelectionRuleDeps<UserSelectionStateMap<S, U, T>, AnySlotMap, UserSelectionConfig<S, U, T>>
 ): readonly T[] {
   const key = config.userSelectionKey;
+
   if (!key) return tracks;
+
   const filter = state[key]?.get();
   return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
 }
@@ -431,6 +433,7 @@ function playerResolutionCap<S extends SelectionKey, T extends SwitchableTrack>(
   { state }: SelectionRuleDeps<PlayerResolutionCapStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
 ): readonly T[] {
   const playerResolution = state.playerResolution?.get();
+
   if (!playerResolution) return tracks;
 
   // A player larger than every rendition has no covering tier, so the cap is
@@ -457,7 +460,9 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
   { state, config }: SelectionRuleDeps<CdnConstraintStateMap<S>, AnySlotMap, CdnRuleConfig<S, T>>
 ): readonly T[] {
   const failed = state.failedCdns?.get();
+
   if (!failed?.length) return tracks;
+
   const getCdnId = config.getCdnId ?? defaultGetCdnId;
   const failedSet = new Set(failed);
   return tracks.filter((track) => !failedSet.has(getCdnId(track.url)));
@@ -489,12 +494,17 @@ function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(
   { state, config }: SelectionRuleDeps<CdnScopeStateMap<S>, AnySlotMap, CdnRuleConfig<S, T>>
 ): readonly T[] {
   const cdnPriority = state.cdnPriority?.get();
+
   if (!cdnPriority?.length) return tracks;
+
   const getCdnId = config.getCdnId ?? defaultGetCdnId;
+
   for (const cdn of cdnPriority) {
     const tracksUsingCdn = tracks.filter((track) => getCdnId(track.url) === cdn);
+
     if (tracksUsingCdn.length) return tracksUsingCdn;
   }
+
   return tracks;
 }
 
@@ -526,11 +536,13 @@ function rankByBandwidth<S extends SelectionKey, T extends SwitchableTrack>(
   const upgradeMargin = config.quality?.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
   const initialBandwidth = config.initialBandwidth ?? DEFAULT_INITIAL_BANDWIDTH;
   const bandwidthConfig: BandwidthConfig = { ...DEFAULT_BANDWIDTH_CONFIG, ...config.bandwidth };
+
   if (!state.bandwidthState) {
     console.debug(
       '[track-switching] rankByBandwidth: no bandwidthState signal in composition; ranking on initialBandwidth'
     );
   }
+
   const threshold = getBandwidthEstimate(state.bandwidthState?.get(), initialBandwidth, bandwidthConfig) * safetyMargin;
   const currentId = state[config.selectionKey].get();
   const bitrate = (track: T) => track.bandwidth ?? 0;
@@ -599,14 +611,18 @@ function pickResolvedTextTrack<T extends TextTrackCandidate>(
   { state, config }: SelectionRuleDeps<TextSelectionStateMap, AnySlotMap, TextTerminalConfig>
 ): string | undefined {
   const intent = state.userTextTrackSelection?.get();
+
   if (intent === 'off') return undefined;
+
   if (intent) {
     // The stored intent is a `Partial<TextTrack>`; cast to the candidate's own
     // partial shape so the generic `matchesPartialTrack` accepts it (every field
     // it carries — language, forced — exists on the candidate too).
     const matched = candidates.filter((track) => matchesPartialTrack(track, intent as Partial<T>));
+
     if (matched.length) return matched[0]!.id;
   }
+
   return pickTextTrackFromTracks(candidates, config);
 }
 
@@ -649,7 +665,9 @@ export function setupTrackSwitching<
   const candidateSet = computed<readonly T[]>(
     () => {
       const presentation = state.presentation.get();
+
       if (!isResolvedPresentation(presentation)) return [];
+
       return applyConstraints(config.constraints ?? [], getTracks(presentation), deps);
     },
     { equals: sameCandidateSet }
@@ -686,6 +704,7 @@ export function setupTrackSwitching<
             if (!tracks.length) {
               const presentation = peek(state.presentation);
               const hasTracksOfType = isResolvedPresentation(presentation) && getTracks(presentation).length > 0;
+
               if (hasTracksOfType) {
                 // Reported generically: *why* the set emptied is the constraints'
                 // business, not this behavior's, so no constraint's state is read
@@ -698,8 +717,10 @@ export function setupTrackSwitching<
                 if (noSupportedTrackCode !== undefined) {
                   emitError(state, { code: noSupportedTrackCode, data: { selectionKey } });
                 }
+
                 state[selectionKey].set(undefined);
               }
+
               return;
             }
 
@@ -722,6 +743,7 @@ export function setupTrackSwitching<
               console.error('[track-switching] applyRules returned no candidates');
               return;
             }
+
             // Map survivors to the final id. Defaults to the chain head; a
             // variant with optional selection (text) may resolve to `undefined`,
             // which clears the slot (e.g. explicit off, opt-in decline).

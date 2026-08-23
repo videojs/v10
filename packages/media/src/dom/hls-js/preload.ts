@@ -56,6 +56,7 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
       this.#preloadAbort?.abort();
 
       const target = this.target as HTMLVideoElement | null;
+
       if (!target) return;
 
       // Sync stored preload to the native element (may have been set before attach)
@@ -64,6 +65,7 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
       }
 
       const { engine } = this;
+
       if (!engine) return;
 
       this.#defaultMaxBufferLength ??= engine.config.maxBufferLength;
@@ -84,6 +86,7 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
        */
       const load = (length?: number, size?: number) => {
         const { engine } = this;
+
         if (!engine) return;
 
         engine.config.maxBufferLength = length ?? defaultLength;

@@ -21,6 +21,7 @@ export function parseMediaFragment(
   if (!hash) return { url };
 
   const eqIndex = hash.indexOf('=');
+
   if (eqIndex === -1) return { url };
 
   const keys = hash.slice(0, eqIndex);
@@ -30,9 +31,11 @@ export function parseMediaFragment(
     .map(Number);
 
   const data: Record<string, number> = {};
+
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
     const value = values[i];
+
     if (key && isNumber(value) && !Number.isNaN(value)) {
       data[key] = value;
     }
@@ -41,7 +44,9 @@ export function parseMediaFragment(
   const result: { url: string; width?: number; height?: number; coords?: ThumbnailCoords } = { url };
 
   if (isNumber(data.w)) result.width = data.w;
+
   if (isNumber(data.h)) result.height = data.h;
+
   if (isNumber(data.x) && isNumber(data.y)) result.coords = { x: data.x, y: data.y };
 
   return result;
@@ -60,7 +65,9 @@ export function mapCuesToThumbnails(cues: MediaTextCue[], baseURL?: string): Thu
     const image: ThumbnailImage = { url: fragment.url, startTime: cue.startTime, endTime: cue.endTime };
 
     if (fragment.width) image.width = fragment.width;
+
     if (fragment.height) image.height = fragment.height;
+
     if (fragment.coords) image.coords = fragment.coords;
 
     images.push(image);

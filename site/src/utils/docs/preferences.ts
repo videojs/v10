@@ -41,7 +41,9 @@ export function getFrameworkPreferenceClient(): SupportedFramework | null {
   const cookies = document.cookie.split(';').reduce(
     (acc, cookie) => {
       const [key, value] = cookie.trim().split('=');
+
       if (key) acc[key] = value;
+
       return acc;
     },
     {} as Record<string, string>
@@ -53,6 +55,7 @@ export function getFrameworkPreferenceClient(): SupportedFramework | null {
 
 export function setFrameworkPreferenceClient(framework: SupportedFramework): void {
   if (typeof document === 'undefined') return;
+
   if (!isValidFramework(framework)) throw new Error(`Invalid framework: ${framework}`);
 
   document.cookie = `${FRAMEWORK_COOKIE}=${framework}; ${COOKIE_OPTIONS}`;
@@ -70,6 +73,7 @@ export function getStylePreferenceClient<F extends SupportedFramework>(framework
   if (style && isValidStyleForFramework(framework, style)) {
     return style as SupportedStyle<F>;
   }
+
   return null;
 }
 
@@ -78,6 +82,7 @@ export function getStylePreferenceClient<F extends SupportedFramework>(framework
  */
 export function setStylePreferenceClient<F extends SupportedFramework>(framework: F, style: SupportedStyle<F>): void {
   if (typeof localStorage === 'undefined') return;
+
   if (!isValidStyleForFramework(framework, style)) {
     throw new Error(`Invalid style "${style}" for framework "${framework}"`);
   }
@@ -91,5 +96,6 @@ export function setStylePreferenceClient<F extends SupportedFramework>(framework
  */
 export function updateStyleAttribute(style: AnySupportedStyle): void {
   if (typeof document === 'undefined') return;
+
   document.documentElement.dataset.style = style;
 }

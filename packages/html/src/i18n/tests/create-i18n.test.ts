@@ -184,7 +184,9 @@ describe('createI18n (HTML)', () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loader: async (tag) => {
         if (tag === 'x-test-lazy-de') return { 'buttons.play': 'BuiltinDe' };
+
         if (tag === 'x-test-lazy-fr') return { 'buttons.play': 'BuiltinFr' };
+
         return undefined;
       },
     });
@@ -233,7 +235,9 @@ describe('createI18n (HTML)', () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loader: async (tag) => {
         if (tag === 'en') return { 'buttons.play': 'BuiltinEn' };
+
         if (tag === 'de') return { 'buttons.play': 'BuiltinDe' };
+
         return undefined;
       },
     });

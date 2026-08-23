@@ -50,7 +50,9 @@ function setup(locale: string, text?: string) {
 
   i18n.setAttribute('lang', locale);
   player.setStore(createLiveStore());
+
   if (text) button.textContent = text;
+
   player.append(button);
   i18n.append(player);
   document.body.append(i18n);

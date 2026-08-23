@@ -352,7 +352,9 @@ describe('store', () => {
         derived: {
           doubled: ({ get }) => {
             const { value } = get();
+
             if (value < 0) throw new Error('invalid value');
+
             return value * 2;
           },
         },
@@ -400,7 +402,9 @@ describe('store', () => {
         derived: {
           doubled: ({ get }) => {
             const { value } = get();
+
             if (value < 0) throw invalidValueError;
+
             return value * 2;
           },
         },

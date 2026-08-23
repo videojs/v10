@@ -66,7 +66,9 @@ describe('textTrackFeature', () => {
      */
     function crossOriginFor(crossOrigin: string | undefined, kind: TextTrackKind = 'metadata') {
       const video = createVideo();
+
       if (crossOrigin !== undefined) video.setAttribute('crossorigin', crossOrigin);
+
       mockTextTracks(video, [createMockTrack(kind, 'disabled', { label: 'thumbnails' })]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);

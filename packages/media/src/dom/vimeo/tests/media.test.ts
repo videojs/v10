@@ -39,25 +39,31 @@ vi.mock('@vimeo/player', () => {
       // the document URL). Mirror it so tests can't pass on an embed the real
       // player would have thrown on.
       const src = (target as Element | null)?.getAttribute?.('src') ?? '';
+
       if (!/^https?:\/\/((player|www)\.)?vimeo\.com\//.test(src)) {
         throw new Error('The player element passed isn’t a Vimeo embed.');
       }
+
       this.target = target;
       MockPlayer.instances.push(this);
     }
 
     on(event: string, handler: (data: unknown) => void): void {
       let set = this.handlers.get(event);
+
       if (!set) {
         set = new Set();
         this.handlers.set(event, set);
       }
+
       set.add(handler);
     }
 
     off(event: string, handler?: (data: unknown) => void): void {
       const set = this.handlers.get(event);
+
       if (!set) return;
+
       if (handler) set.delete(handler);
       else set.clear();
     }
@@ -89,6 +95,7 @@ async function flushDeferredEmbed(): Promise<void> {
 
 async function waitForVimeoLoaded(media: VimeoMedia): Promise<void> {
   if (media.readyState >= 1 && Number.isFinite(media.duration)) return;
+
   await new Promise<void>((resolve) => {
     media.addEventListener('loadcomplete', () => resolve(), { once: true });
   });
@@ -98,6 +105,7 @@ async function attachAndLoad(media: VimeoMedia): Promise<{ iframe: HTMLIFrameEle
   // There is no embed to attach to without a source, so tests that don't care
   // which video is playing get one.
   if (!media.src) media.src = '76979871';
+
   const iframe = createIframe();
   media.attach(iframe);
   const player = media.engine as unknown as MockPlayerLike;
@@ -344,6 +352,7 @@ describe('VimeoMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete after loaded', async () => {
     const media = new VimeoMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete', 'durationchange'] as const) {
       media.addEventListener(type, () => events.push(type));
     }

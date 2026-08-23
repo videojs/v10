@@ -58,6 +58,7 @@ export class ErrorDialogElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#dialog = createAlertDialog({
@@ -86,6 +87,7 @@ export class ErrorDialogElement extends MediaElement {
 
   protected override willUpdate(_changed: PropertyValues): void {
     super.willUpdate(_changed);
+
     if (!this.#dialog) return;
 
     const errorState = this.#errorState.value;
@@ -113,6 +115,7 @@ export class ErrorDialogElement extends MediaElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#dialog) return;
 
     const input = this.#dialog.input.current;
@@ -132,21 +135,26 @@ export class ErrorDialogElement extends MediaElement {
   #syncDialogCopy(error: ErrorLike | null): void {
     const t = this.#i18n.value;
     const title = this.querySelector<HTMLElement>('media-alert-dialog-title');
+
     if (title && !this.#hasAuthoredCopy(title)) {
       title.textContent = translateText(getErrorDialogTitleText(), t);
     }
 
     const desc = this.querySelector<HTMLElement>('media-alert-dialog-description');
+
     if (desc && !this.#hasAuthoredCopy(desc)) {
       const description = error ? resolveErrorDialogDescription(error) : null;
+
       if (description) {
         this.#lastDescription = description;
       }
+
       const copy = description ?? this.#lastDescription;
       desc.textContent = copy ? translateText(copy, t) : translateText(getErrorDialogUnexpectedText(), t);
     }
 
     const close = this.querySelector<HTMLElement>('media-alert-dialog-close');
+
     if (close && !this.#hasAuthoredCopy(close)) {
       close.textContent = translateText(getErrorDialogDismissText(), t);
     }
@@ -155,10 +163,12 @@ export class ErrorDialogElement extends MediaElement {
   #hasAuthoredCopy(el: HTMLElement): boolean {
     if (!this.#seenCopyParts.has(el)) {
       this.#seenCopyParts.add(el);
+
       if (hasAuthoredContent(el)) {
         this.#authoredCopyParts.add(el);
       }
     }
+
     return this.#authoredCopyParts.has(el);
   }
 }

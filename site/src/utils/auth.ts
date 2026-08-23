@@ -94,6 +94,7 @@ export function getJWKS() {
   if (!_jwks) {
     _jwks = createRemoteJWKSet(new URL(`${OAUTH_URL}/oauth2/jwks`));
   }
+
   return _jwks;
 }
 
@@ -106,6 +107,7 @@ export function getJWKS() {
  */
 export async function unseal<T>(cookieValue: string): Promise<T> {
   if (!SESSION_COOKIE_PASSWORD) throw new Error('SESSION_COOKIE_PASSWORD required');
+
   return unsealData<T>(cookieValue, {
     password: SESSION_COOKIE_PASSWORD,
   });
@@ -116,6 +118,7 @@ export async function unseal<T>(cookieValue: string): Promise<T> {
  */
 export async function seal<T>(data: T): Promise<string> {
   if (!SESSION_COOKIE_PASSWORD) throw new Error('SESSION_COOKIE_PASSWORD required');
+
   return sealData(data, {
     password: SESSION_COOKIE_PASSWORD,
     ttl: INACTIVITY_EXPIRY,

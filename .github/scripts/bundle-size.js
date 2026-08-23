@@ -127,25 +127,34 @@ const PRESET_EXPORTS = {
  */
 function buildPresetEntry(pkgShortName, config, distDir) {
   const table = PRESET_EXPORTS[pkgShortName];
+
   if (!table) return null;
 
   const lines = [];
 
   function addExport(key) {
     const entry = table[key];
+
     // Key not in lookup → not applicable for this package type (e.g., HTML
     // has no media/features entries). Skip without aborting.
     if (!entry) return true;
+
     const fullPath = resolve(distDir, entry.path);
+
     if (!existsSync(fullPath)) return false;
+
     lines.push(`export { ${entry.name} } from './${entry.path}';`);
     return true;
   }
 
   if (!addExport(`${config.preset}/${config.skin}`)) return null;
+
   if (!addExport(`${config.preset}/player`)) return null;
+
   if (!addExport(`${config.preset}/media`)) return null;
+
   if (!addExport(`${config.preset}/features`)) return null;
+
   if (config.hls && !addExport('hlsjs-video')) return null;
 
   return lines.length > 0 ? lines.join('\n') : null;
@@ -188,11 +197,14 @@ function staticOutputs(metafile, entryPoint) {
 
   for (const path of queue) {
     if (outputs.has(path)) continue;
+
     outputs.add(path);
 
     const output = metafile.outputs[path];
+
     for (const link of output.imports ?? []) {
       if (link.kind === 'dynamic-import') continue;
+
       if (metafile.outputs[link.path]) queue.push(link.path);
     }
   }
@@ -240,6 +252,7 @@ async function measure(entryPoint, external = []) {
   for (const [path] of Object.entries(result.metafile.outputs)) {
     const bytes = sizeByPath.get(outputPath(path)) ?? 0;
     totalSize += bytes;
+
     if (staticPaths.has(path)) size += bytes;
   }
 
@@ -285,6 +298,7 @@ async function measureVirtual(code, resolveDir, external = []) {
   for (const [path] of Object.entries(result.metafile.outputs)) {
     const bytes = sizeByPath.get(outputPath(path)) ?? 0;
     totalSize += bytes;
+
     if (staticPaths.has(path)) size += bytes;
   }
 
@@ -302,9 +316,11 @@ async function measureVirtual(code, resolveDir, external = []) {
  */
 function resolveDefault(exportValue) {
   if (typeof exportValue === 'string') return exportValue;
+
   if (typeof exportValue === 'object' && exportValue !== null) {
     return exportValue.default ?? null;
   }
+
   return null;
 }
 
@@ -317,6 +333,7 @@ function resolveDefault(exportValue) {
  */
 function categorize(name) {
   const match = name.match(/^@videojs\/([^/]+)(\/.*)?$/);
+
   if (!match) return undefined;
 
   const pkg = match[1];
@@ -332,13 +349,18 @@ function categorize(name) {
   if (subpath === '' || /^\/(video|audio|background)$/.test(subpath)) {
     return '_skip';
   }
+
   if (subpath.startsWith('/media/')) return 'media';
+
   if (subpath.startsWith('/ui/')) {
     // Skip compound component parts — only show main entries
     const uiName = subpath.slice('/ui/'.length);
+
     if (UI_PARTS.has(uiName)) return '_skip';
+
     return 'ui';
   }
+
   if (subpath.startsWith('/feature/')) return 'feature';
 
   // Match skin entries but exclude internal utilities like skin-mixin
@@ -359,12 +381,14 @@ function categorize(name) {
  */
 function resolveWildcard(pkgDir, exportKey, exportValue) {
   const defaultPath = resolveDefault(exportValue);
+
   if (!defaultPath) return [];
 
   const isCSS = exportKey.endsWith('.css');
   const fullPattern = resolve(pkgDir, defaultPath);
 
   const starIdx = fullPattern.indexOf('*');
+
   if (starIdx === -1) return [];
 
   // Find the directory that contains the wildcard
@@ -382,10 +406,12 @@ function resolveWildcard(pkgDir, exportKey, exportValue) {
   return readdirSync(scanDir, { withFileTypes: true })
     .filter((d) => {
       if (!d.name.startsWith(prefix)) return false;
+
       return isDirectoryPattern ? d.isDirectory() : d.isFile();
     })
     .filter((d) => {
       if (isDirectoryPattern) return true;
+
       // For file patterns, the filename must end with the suffix
       return d.name.endsWith(suffix);
     })
@@ -398,7 +424,9 @@ function resolveWildcard(pkgDir, exportKey, exportValue) {
     })
     .filter(({ fullPath }) => {
       if (!existsSync(fullPath)) return false;
+
       if (fullPath.includes('.test.')) return false;
+
       return readFileSync(fullPath, 'utf8').trim().length > 0;
     })
     .sort((a, b) => a.stem.localeCompare(b.stem))
@@ -417,9 +445,11 @@ function discoverPackages() {
     if (SKIP_PACKAGES.has(dirName)) continue;
 
     const pkgJsonPath = join(PACKAGES_DIR, dirName, 'package.json');
+
     if (!existsSync(pkgJsonPath)) continue;
 
     const pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'));
+
     if (!pkgJson.exports) continue;
 
     const pkgName = pkgJson.name;
@@ -440,16 +470,19 @@ function discoverPackages() {
             isCSS: r.isCSS,
           });
         }
+
         continue;
       }
 
       const defaultPath = resolveDefault(value);
+
       if (!defaultPath) continue;
 
       // Skip types-only exports (no runtime code)
       if (defaultPath.endsWith('.d.ts')) continue;
 
       const absolutePath = resolve(pkgDir, defaultPath);
+
       if (!existsSync(absolutePath)) continue;
 
       // Skip empty files (types-only exports with no runtime code)
@@ -470,15 +503,23 @@ function discoverPackages() {
     // discovered from exports (e.g., React tree-shakes UI from root).
     if (rootPath && CATEGORIZED_PACKAGES.has(dirName)) {
       const uiDir = join(dirname(rootPath), 'ui');
+
       if (existsSync(uiDir)) {
         const existing = new Set(subpaths.map((s) => s.name));
+
         for (const d of readdirSync(uiDir, { withFileTypes: true })) {
           if (!d.isDirectory()) continue;
+
           if (UI_PARTS.has(d.name)) continue;
+
           const indexPath = join(uiDir, d.name, 'index.js');
+
           if (!existsSync(indexPath)) continue;
+
           const name = `${pkgName}/ui/${d.name}`;
+
           if (existing.has(name)) continue;
+
           subpaths.push({ name, path: indexPath, isCSS: false });
         }
       }
@@ -514,6 +555,7 @@ async function main() {
 
     if (isRootCSS) {
       const cat = categorize(pkg.name);
+
       if (cat === '_skip') continue;
 
       results.push({
@@ -541,6 +583,7 @@ async function main() {
 
     for (const sub of pkg.subpaths) {
       const cat = categorize(sub.name);
+
       if (cat === '_skip') continue;
 
       if (sub.isCSS) {
@@ -567,11 +610,13 @@ async function main() {
 
     // Measure preset virtual bundles for categorized packages.
     const pkgShortName = pkg.name.replace('@videojs/', '');
+
     if (CATEGORIZED_PACKAGES.has(pkgShortName)) {
       const distDir = dirname(pkg.rootPath);
 
       for (const config of PRESET_CONFIGS) {
         const code = buildPresetEntry(pkgShortName, config, distDir);
+
         if (!code) continue;
 
         const measurement = await measureVirtual(code, distDir, pkg.external);

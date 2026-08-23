@@ -50,6 +50,7 @@ export function useTranslator(): Translator {
   if (!ctx) {
     return fallback;
   }
+
   return ctx.translator;
 }
 

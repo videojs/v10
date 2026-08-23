@@ -4,8 +4,11 @@ import { unwrapObjectLiteral } from './utils.js';
 
 function extractSatisfiesExpression(node: ts.Expression): ts.TypeNode | undefined {
   if (ts.isSatisfiesExpression(node)) return node.type;
+
   if (ts.isParenthesizedExpression(node)) return extractSatisfiesExpression(node.expression);
+
   if (ts.isAsExpression(node)) return extractSatisfiesExpression(node.expression);
+
   return undefined;
 }
 
@@ -28,6 +31,7 @@ function inferStateTypes(satisfiesType: ts.TypeNode, program: ts.Program): Map<s
 
     // Expand union types to avoid showing alias names (e.g., VolumeLevel → 'off' | 'low')
     let typeStr: string;
+
     if (propType.isUnion()) {
       typeStr = propType.types.map((t) => checker.typeToString(t)).join(' | ');
     } else {
@@ -35,6 +39,7 @@ function inferStateTypes(satisfiesType: ts.TypeNode, program: ts.Program): Map<s
     }
 
     if (typeStr === 'boolean' || typeStr === 'false | true') continue;
+
     result.set(prop.name, typeStr.replace(/"/g, "'"));
   }
 
@@ -60,6 +65,7 @@ export function extractDataAttrs(
   componentName: string
 ): DataAttrsExtraction | null {
   const sourceFile = program.getSourceFile(filePath);
+
   if (!sourceFile) {
     return null;
   }
@@ -78,6 +84,7 @@ export function extractDataAttrs(
         }
 
         const objLiteral = unwrapObjectLiteral(decl.initializer);
+
         if (!objLiteral) continue;
 
         // Infer types from satisfies StateAttrMap<State>
@@ -136,10 +143,12 @@ export function parseJsDoc(
   sourceFile: ts.SourceFile
 ): { description: string; type?: string } {
   const raw = getJsDocComment(node, sourceFile);
+
   if (!raw) return { description: '' };
 
   // Extract @type {value} tag
   const typeMatch = raw.match(/@type\s*\{([^}]+)\}/);
+
   if (!typeMatch) return { description: raw };
 
   const type = typeMatch[1]!.trim();
@@ -162,6 +171,7 @@ export function getJsDocComment(node: ts.PropertyAssignment, sourceFile: ts.Sour
 
   // Get the last comment (closest to the property)
   const lastRange = ranges[ranges.length - 1];
+
   if (!lastRange) return '';
 
   const commentText = fullText.substring(lastRange.pos, lastRange.end);

@@ -33,6 +33,7 @@ describe('preferences utilities', () => {
           if (name === FRAMEWORK_COOKIE) {
             return { value: firstFramework };
           }
+
           return null;
         }),
       } as unknown as AstroCookies;
@@ -49,6 +50,7 @@ describe('preferences utilities', () => {
           if (name === FRAMEWORK_COOKIE) {
             return { value: 'invalid-framework' };
           }
+
           return null;
         }),
       } as unknown as AstroCookies;
@@ -66,6 +68,7 @@ describe('preferences utilities', () => {
             if (name === FRAMEWORK_COOKIE) {
               return { value: framework };
             }
+
             return null;
           }),
         } as unknown as AstroCookies;

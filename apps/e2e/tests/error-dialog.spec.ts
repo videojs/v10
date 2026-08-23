@@ -8,6 +8,7 @@ test.describe('Error Dialog', () => {
   async function triggerError(page: Page) {
     await page.evaluate(() => {
       const video = document.querySelector('video') as HTMLVideoElement;
+
       if (!video) return;
 
       Object.defineProperty(video, 'error', {

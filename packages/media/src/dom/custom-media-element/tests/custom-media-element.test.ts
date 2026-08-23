@@ -433,6 +433,7 @@ describe('CustomMediaElement', () => {
       for (const attr of booleanAttrs) {
         el.setAttribute(attr, '');
       }
+
       for (const [attr, value] of Object.entries(valueAttrs)) {
         el.setAttribute(attr, value);
       }
@@ -440,6 +441,7 @@ describe('CustomMediaElement', () => {
       for (const attr of booleanAttrs) {
         expect(target.hasAttribute(attr), `expected ${attr} to be present on target`).toBe(true);
       }
+
       for (const [attr, value] of Object.entries(valueAttrs)) {
         expect(target.getAttribute(attr), `expected ${attr}="${value}" on target`).toBe(value);
       }

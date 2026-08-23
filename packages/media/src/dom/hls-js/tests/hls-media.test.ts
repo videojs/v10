@@ -492,6 +492,7 @@ describe('HlsJsMedia', () => {
       // Let any queued load settle, then tear the engines down, so no manifest
       // request outlives the test that started it.
       await Promise.resolve();
+
       while (built.length) built.pop()!.destroy();
     });
 

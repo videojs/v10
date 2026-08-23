@@ -19,7 +19,9 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
       filter: { id: SCRIPT_ID, code: 'className' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
+
         if (!targets.some((target) => target.jsx.attributes === 'react')) return null;
+
         if (!transform.ast || !transform.magicString) return null;
 
         const bindings = importBindings(transform.ast);
@@ -65,6 +67,7 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
         });
 
         if (!changed) return null;
+
         imports.commit();
         return { code: transform.magicString };
       },
@@ -77,6 +80,7 @@ function importBindings(ast: Program): ReadonlyMap<string, ImportBinding> {
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type') continue;
+
     collectImportBindings(statement, bindings);
   }
 
@@ -86,6 +90,7 @@ function importBindings(ast: Program): ReadonlyMap<string, ImportBinding> {
 function collectImportBindings(declaration: ImportDeclaration, bindings: Map<string, ImportBinding>): void {
   for (const specifier of declaration.specifiers) {
     if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
+
     const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
     bindings.set(specifier.local.name, { imported, source: declaration.source.value });
   }
@@ -99,6 +104,8 @@ function acceptsClassNameCallback(name: JSXElementName, bindings: ReadonlyMap<st
 
 function jsxNameRoot(name: JSXElementName): string | undefined {
   if (name.type === 'JSXIdentifier') return name.name;
+
   if (name.type === 'JSXNamespacedName') return undefined;
+
   return jsxNameRoot(name.object);
 }

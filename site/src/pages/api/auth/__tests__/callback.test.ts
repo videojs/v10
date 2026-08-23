@@ -45,7 +45,9 @@ const mockOAuthResponse = {
 
 function createMockContext(params: { code?: string; state?: string; storedState?: string }): APIContext {
   const url = new URL('https://example.com/api/auth/callback');
+
   if (params.code) url.searchParams.set('code', params.code);
+
   if (params.state) url.searchParams.set('state', params.state);
 
   return {
@@ -55,6 +57,7 @@ function createMockContext(params: { code?: string; state?: string; storedState?
         if (name === 'state' && params.storedState) {
           return { value: params.storedState };
         }
+
         return undefined;
       }),
       set: vi.fn(),

@@ -36,9 +36,11 @@ export class SkinElement extends ReactiveElement {
       }
 
       const sheets: ShadowStyle[] = [sharedSheet];
+
       if (ctor.styles) {
         sheets.push(ctor.styles);
       }
+
       applyShadowStyles(this.shadowRoot!, sheets);
     }
   }

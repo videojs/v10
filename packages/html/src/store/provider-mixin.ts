@@ -86,6 +86,7 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #setMedia = (media: Media | null): void => {
         if (this.#media === media) return;
+
         this.#media = media;
         this.#mediaProvider.setValue({ media, setMedia: this.#setMedia });
         this.#tryAttach();
@@ -93,6 +94,7 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #setContainer = (container: MediaContainer | null): void => {
         if (this.#container === container) return;
+
         this.#container = container;
         this.#containerProvider.setValue({
           container,
@@ -159,12 +161,14 @@ export function createProviderMixin<Store extends PlayerStore>(
         // write to the store. Store-side writers do not reflect back here.
         for (const { property, entry } of inputs) {
           if (!changed.has(property)) continue;
+
           setPlayerConfigValue(this.store, entry, (this as unknown as Record<string, unknown>)[property]);
         }
       }
 
       #tryAttach(): void {
         const store = this.#store;
+
         if (!store) return;
 
         if (!this.#media) {
@@ -193,16 +197,19 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #syncInitialConfig(): void {
         const store = this.store;
+
         if (this.#configuredStore === store) return;
 
         for (const { property, entry } of inputs) {
           setPlayerConfigValue(store, entry, (this as unknown as Record<string, unknown>)[property]);
         }
+
         this.#configuredStore = store;
       }
 
       #queueFallbackDiscovery(): void {
         if (this.#media || this.#fallbackQueued) return;
+
         this.#fallbackQueued = true;
 
         queueMicrotask(() => {
@@ -212,6 +219,7 @@ export function createProviderMixin<Store extends PlayerStore>(
           if (this.#media) return;
 
           const media = this.querySelector<HTMLMediaElement>('video, audio');
+
           if (media) {
             this.#setMedia(media);
           }

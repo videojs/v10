@@ -61,6 +61,7 @@ export function update<T>(signal: Signal<T>, updater: (current: T) => T): void;
 export function update<T extends object>(signal: Signal<T>, updater: Partial<T>): void;
 export function update<T>(signal: Signal<T>, updater: ((current: T) => T) | object): void {
   const current = untrack(() => signal.get());
+
   if (typeof updater === 'function') {
     signal.set((updater as (current: T) => T)(current));
   } else {
@@ -99,8 +100,10 @@ export function snapshot<M extends Record<string, ReadonlySignal<unknown>>>(
   map: M
 ): { [K in keyof M]: M[K] extends { get(): infer V } ? V : never } {
   const out = {} as { [K in keyof M]: M[K] extends { get(): infer V } ? V : never };
+
   for (const key in map) {
     out[key] = map[key]!.get() as never;
   }
+
   return out;
 }

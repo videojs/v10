@@ -13,6 +13,8 @@ export function StatusIndicatorProvider({ value, children }: ProviderProps<Statu
 
 export function useStatusIndicatorContext(): StatusIndicatorContextValue {
   const ctx = useContext(StatusIndicatorContext);
+
   if (!ctx) throw new Error('StatusIndicator child compounds must be used within a StatusIndicator.Root');
+
   return ctx;
 }

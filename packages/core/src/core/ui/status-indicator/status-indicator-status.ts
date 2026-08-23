@@ -40,6 +40,7 @@ export function deriveStatus(
       return deriveVolumeStatus(event, snapshot, labels);
     case 'toggleSubtitles': {
       if (snapshot.subtitlesAvailable === false) return null;
+
       const showing = snapshot.subtitlesShowing !== undefined ? !snapshot.subtitlesShowing : true;
       return {
         status: showing ? 'captions-on' : 'captions-off',

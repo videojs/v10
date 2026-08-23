@@ -43,6 +43,7 @@ vi.mock('../../../../media/dom/text/resolve-vtt-segment', () => ({
     if (url.includes('fail')) {
       return Promise.reject(new Error('Failed to load'));
     }
+
     return Promise.resolve([new VTTCue(0, 5, `Subtitle from ${url}`)]);
   }),
   destroyVttResolver: vi.fn(),

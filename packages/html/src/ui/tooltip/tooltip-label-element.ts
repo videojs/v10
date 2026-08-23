@@ -25,6 +25,7 @@ export class TooltipLabelElement extends MediaElement {
 
   setSyncedText(text: string): void {
     if (this.#hasAuthoredContent) return;
+
     this.textContent = text;
   }
 }

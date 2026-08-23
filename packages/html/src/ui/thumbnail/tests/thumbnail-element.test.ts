@@ -37,6 +37,7 @@ class TestPlayerProviderElement extends MediaElement {
 if (!customElements.get(ThumbnailElement.tagName)) {
   customElements.define(ThumbnailElement.tagName, ThumbnailElement);
 }
+
 if (!customElements.get('test-thumbnail-player')) {
   customElements.define('test-thumbnail-player', TestPlayerProviderElement);
 }

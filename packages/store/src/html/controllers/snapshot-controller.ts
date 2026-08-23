@@ -83,6 +83,7 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
 
     this.#unsubscribe = this.#state.subscribe(() => {
       const next = selector(this.#state.current);
+
       if (!shallowEqual(this.#cached, next)) {
         this.#cached = next;
         this.#host.requestUpdate();

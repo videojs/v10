@@ -63,6 +63,7 @@ export function throttle<Args extends unknown[]>(
     } else {
       // Trailing-only (original behavior).
       if (timerId !== null) return;
+
       timerId = setTimeout(() => {
         timerId = null;
         fn(...latestArgs);
@@ -75,6 +76,7 @@ export function throttle<Args extends unknown[]>(
       clearTimeout(timerId);
       timerId = null;
     }
+
     hasPending = false;
   };
 

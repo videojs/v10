@@ -53,6 +53,7 @@ export function createLatestLoader() {
 
   return async <Result>(load: () => Promise<Result>): Promise<Result | undefined> => {
     const version = ++loadVersion;
+
     try {
       const result = await load();
       return version === loadVersion ? result : undefined;

@@ -25,6 +25,7 @@ export type Context = import('./context').Context;
       { specifier: './lazy', kind: 'dynamic', quote: '`' },
       { specifier: './context', kind: 'type', quote: "'" },
     ]);
+
     for (const reference of references) {
       expect(source.slice(reference.start + 1, reference.end - 1)).toBe(reference.specifier);
     }

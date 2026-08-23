@@ -97,14 +97,17 @@ function makeSourceBuffer(
 
   const clipRanges = (start: number, end: number) => {
     const next: Array<[number, number]> = [];
+
     for (const [s, e] of ranges) {
       if (e <= start || s >= end) {
         next.push([s, e]);
       } else {
         if (s < start) next.push([s, start]);
+
         if (e > end) next.push([end, e]);
       }
     }
+
     ranges = next;
   };
 
@@ -121,7 +124,9 @@ function makeSourceBuffer(
     updating: false,
     appendBuffer: vi.fn(() => {
       const range = appendRanges[appendIndex++];
+
       if (range) ranges.push(range);
+
       setTimeout(() => {
         for (const listener of listeners.updateend ?? []) {
           listener(new Event('updateend'));
@@ -930,7 +935,9 @@ describe('loadSegments byte-range segment fetching', () => {
     const rangeHeaders: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const range = (input as Request).headers?.get('Range');
+
       if (range) rangeHeaders.push(range);
+
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
@@ -985,7 +992,9 @@ describe('loadSegments byte-range segment fetching', () => {
     const rangeHeaders: string[] = [];
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const range = (input as Request).headers?.get('Range');
+
       if (range) rangeHeaders.push(range);
+
       return Promise.resolve(new Response(new ArrayBuffer(100)));
     });
 
@@ -1041,6 +1050,7 @@ describe('loadSegments bandwidth tracking', () => {
       const body = new ReadableStream<Uint8Array>({
         start(controller) {
           for (const chunk of chunks) controller.enqueue(chunk);
+
           controller.close();
         },
       });
@@ -1172,6 +1182,7 @@ describe('loadSegments bandwidth tracking', () => {
 
     // Each response body yields [1,2,3,4,5,6,7,8] — both init and segment appends should match
     const calls = (sourceBuffer.appendBuffer as ReturnType<typeof vi.fn>).mock.calls;
+
     for (const [data] of calls) {
       expect(Array.from(new Uint8Array(data as ArrayBuffer))).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     }

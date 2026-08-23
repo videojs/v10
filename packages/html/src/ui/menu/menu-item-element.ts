@@ -39,6 +39,7 @@ export class MenuItemElement extends MediaElement {
     super.update(_changed);
 
     const ctx = this.#ctx.value;
+
     if (!ctx || !this.#disconnect) return;
 
     if (this.#registeredMenu !== ctx.menu) {
@@ -51,26 +52,33 @@ export class MenuItemElement extends MediaElement {
         {
           onClick: (event: MouseEvent) => {
             const currentCtx = this.#ctx.value;
+
             if (!currentCtx || this.#isDisabled()) return;
 
             const target = this.commandfor;
+
             if (target) {
               this.#openSubmenu(target);
             } else {
               const select = new CustomEvent('select', { bubbles: true, cancelable: true });
+
               if (!this.dispatchEvent(select)) {
                 event.preventDefault();
                 return;
               }
+
               completeMenuItemSelection(currentCtx.menu);
             }
+
             event.preventDefault();
           },
           onKeyDown: (event: KeyboardEvent) => {
             const currentCtx = this.#ctx.value;
+
             if (!currentCtx || this.#isDisabled() || event.key !== 'ArrowRight') return;
 
             const target = this.commandfor;
+
             if (!target) return;
 
             this.#openSubmenu(target);
@@ -78,6 +86,7 @@ export class MenuItemElement extends MediaElement {
           },
           onPointerenter: () => {
             const currentCtx = this.#ctx.value;
+
             if (!this.#isDisabled()) currentCtx?.menu.highlight(this, { focus: false, pointer: true });
           },
         },

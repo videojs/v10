@@ -60,6 +60,7 @@ export const orientationLockFeature = definePlayerFeature({
       const next = isFullscreen(container, media) ? get().orientationLockType : null;
 
       if (next === synced) return;
+
       synced = next;
 
       if (isNull(next)) {
@@ -76,6 +77,7 @@ export const orientationLockFeature = definePlayerFeature({
 
     // iOS Safari presentation mode change (covers fullscreen)
     const video = media as WebKitVideoElement;
+
     if ('webkitPresentationMode' in video) {
       listen(media, 'webkitpresentationmodechanged', sync, { signal });
     }

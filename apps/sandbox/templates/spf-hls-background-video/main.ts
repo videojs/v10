@@ -26,6 +26,7 @@ const video = document.getElementById('bg-video') as HTMLVideoElement;
 const sourceSelect = document.getElementById('source-select') as HTMLSelectElement;
 const renditionButtons = document.getElementById('rendition-buttons') as HTMLDivElement;
 const loadBtn = document.getElementById('load-btn') as HTMLButtonElement;
+
 const diagLoad = document.getElementById('diag-load') as HTMLSpanElement;
 const diagRendition = document.getElementById('diag-rendition') as HTMLSpanElement;
 const diagContext = document.getElementById('diag-context') as HTMLSpanElement;
@@ -45,7 +46,9 @@ for (const id of HLS_SOURCE_IDS) {
   const option = document.createElement('option');
   option.value = id;
   option.textContent = SOURCES[id].label;
+
   if (id === DEFAULT_ID) option.selected = true;
+
   sourceSelect.appendChild(option);
 }
 
@@ -120,6 +123,7 @@ loadBtn.addEventListener('click', () => {
 // ── Diagnostic strip + rendition picker ──────────────────────────────────────
 function formatBandwidth(bps: number): string {
   if (bps >= 1_000_000) return `${(bps / 1_000_000).toFixed(1)} Mbps`;
+
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
@@ -133,6 +137,7 @@ function attachDiagnostic(): () => void {
 
     const tracks = videoTracksOf(state.presentation);
     const selected = tracks.find((t) => t.id === state.selectedVideoTrackId);
+
     if (selected) {
       const { w, h } = trackDimensions(selected);
       const res = w && h ? `${w}x${h} ` : '';
@@ -158,10 +163,13 @@ function renditionSignature(tracks: VideoTrack[], selectedId: string | undefined
 
 function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefined): void {
   const signature = renditionSignature(tracks, selectedId);
+
   if (signature === lastRenditionSignature) return;
+
   lastRenditionSignature = signature;
 
   renditionButtons.innerHTML = '';
+
   if (tracks.length === 0) return;
 
   // Sort by area desc so the list reads top-down high-to-low.
@@ -170,7 +178,9 @@ function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefine
     const db = trackDimensions(b);
     const areaA = da.w * da.h;
     const areaB = db.w * db.h;
+
     if (areaB !== areaA) return areaB - areaA;
+
     return b.bandwidth - a.bandwidth;
   });
 
@@ -182,7 +192,9 @@ function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefine
     const dims = w && h ? ` · ${w}x${h}` : '';
     row.textContent = `${tier} - ${formatBandwidth(track.bandwidth)}${dims}`;
     row.title = stableTrackId(track);
+
     if (track.id === selectedId) row.classList.add('selected');
+
     renditionButtons.appendChild(row);
   }
 }

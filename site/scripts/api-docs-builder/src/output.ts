@@ -81,9 +81,11 @@ export function validateReferenceGroup<T>(group: ReferenceGroup<T>): ReferenceGr
       });
       continue;
     }
+
     seenFileNames.add(doc.fileName);
 
     const validated = group.schema.safeParse(doc.data);
+
     if (!validated.success) {
       errors.push({ label: doc.label, issues: validated.error.issues });
       continue;
@@ -133,6 +135,7 @@ export function writeReferenceGroup(group: ValidatedReferenceGroup): { written: 
 
     for (const fileName of fs.readdirSync(group.outputPath)) {
       if (!fileName.endsWith('.json') || expectedFiles.has(fileName)) continue;
+
       fs.unlinkSync(path.join(group.outputPath, fileName));
       removed.push(fileName);
     }

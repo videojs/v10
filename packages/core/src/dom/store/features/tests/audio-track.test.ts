@@ -26,6 +26,7 @@ class TestMedia extends EventTarget {
 
   constructor(tracks?: AudioTrackLike[]) {
     super();
+
     if (tracks) this.audioTracks = new TestAudioTrackList(tracks);
   }
 

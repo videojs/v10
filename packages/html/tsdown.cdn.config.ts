@@ -166,6 +166,7 @@ for (const mode of buildModes) {
       ...baseConfig.inputOptions,
       onwarn(warning, defaultHandler) {
         if (warning.code === 'COMMONJS_VARIABLE_IN_ESM') return;
+
         defaultHandler(warning);
       },
       ...(!isProd && {

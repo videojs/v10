@@ -90,6 +90,7 @@ test.describe('Visual — HTML Portrait Layout', () => {
     await page.waitForFunction(() => customElements.get('video-skin'));
     await page.evaluate(() => {
       const root = document.getElementById('root');
+
       if (!root) return;
 
       root.innerHTML = `
@@ -127,6 +128,7 @@ test.describe('Visual — HTML Portrait Layout', () => {
       };
 
       if (!thumbnail) return;
+
       thumbnail.thumbnails = [{ url, startTime: 0, width: 270, height: 480 }];
     }, src);
 

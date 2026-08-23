@@ -51,16 +51,20 @@ function trackCurrentTimeSetup({
 
   return effect(() => {
     const mediaElement = context.mediaElement.get();
+
     if (!mediaElement) {
       state.currentTime.set(defaultCurrentTime);
       return;
     }
 
     const sync = () => state.currentTime.set(mediaElement.currentTime);
+
     sync();
+
     const removeEmptied = listen(mediaElement, 'emptied', sync);
     const removeTimeupdate = listen(mediaElement, 'timeupdate', sync);
     const removeSeeking = listen(mediaElement, 'seeking', sync);
+
     return () => {
       removeEmptied();
       removeTimeupdate();

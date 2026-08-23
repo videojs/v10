@@ -10,12 +10,14 @@ function createResolveVttSegment(): ReturnType<typeof vi.fn<ResolveVttSegment>> 
     if (url.includes('fail')) {
       return Promise.reject(new Error('Network error'));
     }
+
     return Promise.resolve([new VTTCue(0, 5, `Cue from ${url}`)]);
   });
 }
 
 function makeMediaElement(trackIds: string[]): HTMLMediaElement {
   const video = document.createElement('video');
+
   for (const id of trackIds) {
     const el = document.createElement('track');
     el.id = id;
@@ -23,6 +25,7 @@ function makeMediaElement(trackIds: string[]): HTMLMediaElement {
     video.appendChild(el);
     el.track.mode = 'hidden';
   }
+
   return video;
 }
 

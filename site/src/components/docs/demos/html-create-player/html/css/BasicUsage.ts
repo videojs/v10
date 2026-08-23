@@ -32,7 +32,9 @@ class PlayToggle extends MediaElement {
     const buttonProps = createButton({
       onActivate: () => {
         const state = this.#player.value;
+
         if (!state) return;
+
         state.paused ? state.play() : state.pause();
       },
       isDisabled: () => !this.#player.value,
@@ -50,7 +52,9 @@ class PlayToggle extends MediaElement {
   protected override update(changed: Map<string, unknown>): void {
     super.update(changed);
     const state = this.#player.value;
+
     if (!state) return;
+
     applyStateDataAttrs(this, state, { paused: 'data-paused', ended: 'data-ended' });
   }
 }

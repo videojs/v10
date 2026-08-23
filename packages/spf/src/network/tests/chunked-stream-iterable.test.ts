@@ -24,9 +24,11 @@ function bytes(size: number, fill = 1): Uint8Array {
 
 async function collect(iterable: AsyncIterable<Uint8Array>): Promise<Uint8Array[]> {
   const result: Uint8Array[] = [];
+
   for await (const chunk of iterable) {
     result.push(chunk);
   }
+
   return result;
 }
 

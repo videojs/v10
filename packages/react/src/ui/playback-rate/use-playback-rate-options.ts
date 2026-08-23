@@ -41,6 +41,7 @@ const usePlaybackRateRadioOptions = createRadioOptionsHook({
 export function usePlaybackRateOptions(props?: PlaybackRateOptionsProps): PlaybackRateOptionsResult | null {
   const result = usePlaybackRateRadioOptions(props);
   const setRate = useCallback((rate: number) => result?.setValue(String(rate)), [result?.setValue]);
+
   if (!result) return null;
 
   return {

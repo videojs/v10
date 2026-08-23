@@ -56,6 +56,7 @@ describe('MediaContainerElement', () => {
     if (!customElements.get(MediaI18nProviderElement.tagName)) {
       customElements.define(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
     }
+
     registerI18n('x-container', { container: { label: 'Translated media player' } });
     const provider = document.createElement(MediaI18nProviderElement.tagName) as MediaI18nProviderElement;
     const container = createElement(MediaContainerElement);

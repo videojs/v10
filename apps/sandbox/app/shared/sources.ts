@@ -424,6 +424,7 @@ function imageQuery(id: SourceId, kind: 'poster' | 'storyboard', params?: string
   const query = new URLSearchParams(params);
 
   const token = SOURCES[id].source?.[kind]?.token;
+
   if (token) query.set('token', token);
 
   const search = query.toString();
@@ -432,6 +433,7 @@ function imageQuery(id: SourceId, kind: 'poster' | 'storyboard', params?: string
 
 export function getPosterSrc(source: SourceId): string | undefined {
   const { poster } = SOURCES[source];
+
   if (poster) return poster;
 
   const id = getMuxAssetId(source);
@@ -450,6 +452,7 @@ export function getPlaceholderSrc(source: SourceId): string | undefined {
 export function getStoryboardSrc(source: SourceId): string | undefined {
   // Storyboards aren't generated for live streams, so skip the request entirely.
   if (isLiveSource(source)) return undefined;
+
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/storyboard.vtt${imageQuery(source, 'storyboard')}` : undefined;
 }

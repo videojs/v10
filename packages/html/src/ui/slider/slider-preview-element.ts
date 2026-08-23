@@ -47,6 +47,7 @@ export class SliderPreviewElement extends MediaElement {
     super.update(_changed);
 
     const ctx = this.#ctx.value;
+
     if (ctx) applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
 
     this.#applyPosition();

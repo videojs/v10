@@ -319,6 +319,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('logs the explanation once, with the conditions attached', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       try {
         const media = new TestMedia();
         media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } }]);
@@ -344,6 +345,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('explains a source with no video renditions too, not only a substituted code', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       try {
         const media = new TestMedia();
         // The shape that used to reach a developer as a bare 2011: a verdict with

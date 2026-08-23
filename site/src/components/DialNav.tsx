@@ -21,7 +21,9 @@ export default function DialNav({ left, right }: DialNavProps) {
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>, link: Link) {
     e.preventDefault();
     const resolvedHref = e.currentTarget.href;
+
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
     setActiveAngle(link.angle);
     setActiveHref(link.href);
     timeoutRef.current = setTimeout(() => {

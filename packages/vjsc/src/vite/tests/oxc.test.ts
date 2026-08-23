@@ -70,6 +70,7 @@ function metadataProbe(record: (hasMetadata: boolean) => void): Plugin {
       if (id === ENTRY_ID) {
         record('ast' in (options ?? {}) || 'magicString' in (options ?? {}));
       }
+
       return null;
     },
   };

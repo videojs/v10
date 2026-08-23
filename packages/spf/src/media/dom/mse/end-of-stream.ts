@@ -41,7 +41,10 @@ export function isLastSegmentAppended(
   appendedSegments: readonly AppendedSegment[] | undefined
 ): boolean {
   if (expectedSegments.length === 0) return true;
+
   const lastSeg = expectedSegments[expectedSegments.length - 1];
+
   if (!lastSeg) return false;
+
   return appendedSegments?.some((s) => s.id === lastSeg.id && !s.partial) ?? false;
 }

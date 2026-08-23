@@ -103,6 +103,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
     this.#source = Object.keys(next).length > 0 ? next : null;
     this.#src = src;
+
     if (this.target) this.target.src = src;
   }
 
@@ -124,6 +125,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
   set source(value: NativeHlsSource | null) {
     const source = value ?? null;
+
     // Changing anything takes a new object, so handing the same one back costs
     // nothing.
     if (source === this.#source) return;
@@ -148,6 +150,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
   set preload(value: PreloadType) {
     this.#preload = value;
+
     if (this.target) this.target.preload = value;
   }
 
@@ -155,6 +158,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
     super.attach(target);
 
     if (this.preload !== target.preload) target.preload = this.preload;
+
     if (this.src) target.src = this.src;
   }
 }

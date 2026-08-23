@@ -20,6 +20,7 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
   const raw = readFileSync(absolute, 'utf8');
   const reference = `@reference "${normalizePath(absolute)}";`;
   const design = await __unstable__loadDesignSystem(raw, { base });
+
   const candidateCache = new Map<string, boolean>();
   const watchFiles = new Set([absolute]);
 
@@ -37,7 +38,9 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
     watchFiles,
     recognizesCandidate(candidate: string): boolean {
       const cached = candidateCache.get(candidate);
+
       if (cached !== undefined) return cached;
+
       const css = design.candidatesToCss([candidate])[0];
       const recognized = typeof css === 'string' && css.trim().length > 0;
       candidateCache.set(candidate, recognized);

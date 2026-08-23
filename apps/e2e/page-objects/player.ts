@@ -190,6 +190,7 @@ export class PlayerPage {
       await this.page.evaluate((selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         if (actual) actual.muted = true;
       }, SELECTORS.media);
     }
@@ -260,6 +261,7 @@ export class PlayerPage {
     );
 
     const box = await this.timeSlider.boundingBox();
+
     if (!box) throw new Error('Time slider not visible');
 
     const x = box.x + box.width * (percent / 100);
@@ -273,6 +275,7 @@ export class PlayerPage {
   /** Hover over the time slider at a percentage position. */
   async hoverTimeSlider(percent: number): Promise<void> {
     const box = await this.timeSlider.boundingBox();
+
     if (!box) throw new Error('Time slider not visible');
 
     const x = box.x + box.width * (percent / 100);
@@ -308,6 +311,7 @@ export class PlayerPage {
   /** Signal pointer activity to show controls and reset the idle timer. */
   async showControls(): Promise<void> {
     await this.playerRoot.dispatchEvent('pointermove', { pointerType: 'mouse' });
+
     if ((await this.videoPlayer.count()) > 0) {
       await expect(this.controls).toHaveAttribute(DATA_ATTRS.visible, '');
     }

@@ -118,6 +118,7 @@ function setup({
   const options = createElement(QualityRadioGroupElement);
 
   if (locale) i18n.setAttribute('lang', locale);
+
   provider.setStore(store);
 
   if (template) {

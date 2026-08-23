@@ -26,6 +26,7 @@ export default function RendererSelect() {
       // No valid detection — ensure current renderer is valid for use case
       const current = renderer.get();
       const validRenderers = getInstallationPreset($useCase).renderers;
+
       if (!validRenderers.includes(current)) {
         renderer.set(validRenderers[0]!);
       }

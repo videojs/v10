@@ -49,11 +49,13 @@ function resolveSourceModule(importer: string, specifier: string): string | unde
 
   for (const extension of sourceExtensions) {
     const filename = `${candidate}${extension}`;
+
     if (existsSync(filename)) return filename;
   }
 
   for (const extension of sourceExtensions) {
     const filename = resolve(candidate, `index${extension}`);
+
     if (existsSync(filename)) return filename;
   }
 

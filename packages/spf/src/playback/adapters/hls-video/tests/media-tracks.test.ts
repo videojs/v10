@@ -67,6 +67,7 @@ const flush = () =>
     const sig = signal(0);
     const stop = effect(() => {
       if (sig.get() === 0) return; // skip the synchronous initial run
+
       stop();
       resolve();
     });

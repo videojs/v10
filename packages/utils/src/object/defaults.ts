@@ -24,6 +24,7 @@ export function defaults<T extends object>(object: PartialWithUndefined<T>, defa
 
   for (const key of Object.keys(defaultValues) as (keyof T)[]) {
     const value = object[key];
+
     if (!isUndefined(value)) {
       result[key] = value as T[keyof T];
     }

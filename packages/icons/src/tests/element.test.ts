@@ -45,11 +45,13 @@ describe('MediaIconElement', () => {
 
     const first = createIcon();
     const second = createIcon();
+
     for (const icon of [first, second]) {
       icon.setAttribute('family', family);
       icon.setAttribute('name', 'play');
       document.body.append(icon);
     }
+
     MediaIconElement.registerLoader(family, load);
 
     await vi.waitFor(() => {

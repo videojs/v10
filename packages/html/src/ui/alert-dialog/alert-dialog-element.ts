@@ -40,6 +40,7 @@ export class AlertDialogElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#dialog = createAlertDialog({
@@ -72,6 +73,7 @@ export class AlertDialogElement extends MediaElement {
     // Sync controlled open state.
     if (this.#dialog && changed.has('open')) {
       const { active: inputOpen } = this.#dialog.input.current;
+
       if (this.open !== inputOpen) {
         if (this.open) {
           this.#dialog.open();
@@ -84,6 +86,7 @@ export class AlertDialogElement extends MediaElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#dialog) return;
 
     const input = this.#dialog.input.current;

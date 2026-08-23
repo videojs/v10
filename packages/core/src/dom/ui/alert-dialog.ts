@@ -53,6 +53,7 @@ export function createAlertDialog(options: AlertDialogOptions): AlertDialogApi {
     previousFocus = document.activeElement as HTMLElement | null;
 
     const opening = layer.open();
+
     if (!opening) return;
 
     onOpenChange(true);
@@ -60,17 +61,20 @@ export function createAlertDialog(options: AlertDialogOptions): AlertDialogApi {
     // Defer focus to allow the element to render/mount.
     requestAnimationFrame(() => {
       if (layer.signal.aborted || !state.current.active) return;
+
       element?.focus();
     });
 
     opening.then(() => {
       if (layer.signal.aborted || !state.current.active) return;
+
       options.onOpenChangeComplete?.(true);
     });
   }
 
   function applyClose(): void {
     const closing = layer.close(element);
+
     if (!closing) return;
 
     onOpenChange(false);

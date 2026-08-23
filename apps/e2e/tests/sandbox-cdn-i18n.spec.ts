@@ -11,7 +11,9 @@ async function expectLTRControlOrder(scope: Page | Frame): Promise<void> {
     const control = scope.locator(selector).first();
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
+
     if (!box) throw new Error(`Control has no bounding box: ${selector}`);
+
     return box.x;
   };
   const [play, mute, settings, fullscreen] = await Promise.all([
@@ -38,6 +40,7 @@ async function getPreviewFrame(page: Page, path: string): Promise<Frame> {
     .toContain(path);
 
   const frame = page.frames().find((frame) => frame.url().includes(path));
+
   if (!frame) throw new Error(`Preview frame not found: ${path}`);
 
   return frame;

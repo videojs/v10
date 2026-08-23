@@ -43,10 +43,12 @@ function getRenditionSize(rendition: MediaVideoRendition): number | undefined {
     // 4:3 and portrait renditions use their actual vertical-ish size. For wider-than-16:9
     // cinematic encodes, snap to a known 16:9 class only when the width maps cleanly.
     if (width > height && width * 9 > height * 16) return getWidescreenSize(width) ?? height;
+
     return Math.min(width, height);
   }
 
   if (height) return height;
+
   if (width) return getWidescreenSize(width) ?? width;
 
   return undefined;
@@ -59,8 +61,11 @@ function hasSameSize(rendition: MediaVideoRendition, renditions: readonly MediaV
 
 function formatRenditionLabel(rendition: MediaVideoRendition): Text | string {
   const size = getRenditionSize(rendition);
+
   if (size) return `${size}p`;
+
   if (rendition.bitrate) return formatBitrate(rendition.bitrate);
+
   return qualityText;
 }
 
@@ -69,6 +74,7 @@ function formatRenditionBadge(
   renditions: readonly MediaVideoRendition[] = []
 ): string | undefined {
   if (!getRenditionSize(rendition) || !rendition.bitrate || !hasSameSize(rendition, renditions)) return undefined;
+
   return formatBitrate(rendition.bitrate);
 }
 
@@ -76,8 +82,11 @@ function formatRenditionTier(rendition: MediaVideoRendition): string | undefined
   const size = getRenditionSize(rendition);
 
   if (!size) return undefined;
+
   if (size >= 4320) return '8K';
+
   if (size >= 2160) return '4K';
+
   if (size >= 1080) return 'HD';
 
   return undefined;
@@ -128,6 +137,7 @@ export class QualityRadioGroupCore {
 
   getLabel(state: QualityRadioGroupState): Text | string {
     const label = resolveLabel(this.#props.label, state);
+
     if (label) return label;
 
     return qualityText;
@@ -228,6 +238,7 @@ export class QualityRadioGroupCore {
     const hasValue = media.videoRenditionList.some(
       (rendition, index) => this.getRenditionValue(rendition, index) === value
     );
+
     if (!hasValue) return;
 
     media.selectVideoRendition(value);

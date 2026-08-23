@@ -32,6 +32,7 @@ type ValidationResult = { valid: true } | { valid: false; reason: string };
 
 export function validateInstallationOptions(opts: InstallationOptions): ValidationResult {
   const preset = getInstallationPreset(opts.useCase);
+
   if (!preset.renderers.includes(opts.renderer)) {
     return {
       valid: false,
@@ -157,7 +158,9 @@ function getProviderTag(useCase: UseCase): string {
 
 function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   const prefix = getInstallationPreset(useCase).tagPrefix;
+
   if (useCase === 'background-video') return `${prefix}-skin`;
+
   return getSkinFile(skin) === 'minimal-skin' ? `${prefix}-minimal-skin` : `${prefix}-skin`;
 }
 
@@ -216,12 +219,15 @@ function generateHTMLJSImports(useCase: UseCase, skin: Skin, renderer: Renderer)
 import '@videojs/html/background/skin';
 import '@videojs/html/background/video';${mediaImport}`;
   }
+
   const group = getInstallationPreset(useCase).group;
   const mediaSubpath = getMediaSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
+
   if (skin === 'none') {
     return `import '@videojs/html/${group}/player';${mediaImport}`;
   }
+
   return `import '@videojs/html/${group}/player';
 import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}`;
 }
@@ -303,6 +309,7 @@ export function generateReactCreateCode(
   } else {
     skinComponent = getSkinComponent(useCase, skin);
     skinCssImport = `@videojs/react/${group}/${getSkinFile(skin)}.css`;
+
     if (isPresetRenderer(renderer)) {
       presetImport = `import { ${playerComponent}, ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
     } else {

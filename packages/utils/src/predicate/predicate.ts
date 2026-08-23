@@ -48,6 +48,7 @@ export function hasMethods<K extends string>(
   methods: readonly K[]
 ): value is Record<K, (...args: any[]) => any> {
   if (!isObject(value)) return false;
+
   return methods.every((method) => isFunction((value as Record<string, unknown>)[method]));
 }
 
@@ -56,6 +57,7 @@ export function hasMethods<K extends string>(
  */
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (!isObject(value)) return false;
+
   const proto = Object.getPrototypeOf(value);
   return proto === null || proto === Object.prototype;
 }

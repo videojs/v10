@@ -9,8 +9,10 @@ function getPageEntries(): Record<string, string> {
 
   // Hand-written pages in src/ (ejected, captions, etc.)
   const srcDir = resolve(__dirname, 'src');
+
   for (const entry of readdirSync(srcDir)) {
     const file = resolve(srcDir, entry);
+
     if (entry.endsWith('.html') && entry !== 'index.html' && statSync(file).isFile()) {
       entries[entry.replace('.html', '')] = file;
     }
@@ -18,9 +20,11 @@ function getPageEntries(): Record<string, string> {
 
   // Generated pages in src/pages/
   const pagesDir = resolve(__dirname, 'src/pages');
+
   if (existsSync(pagesDir)) {
     for (const entry of readdirSync(pagesDir)) {
       const file = resolve(pagesDir, entry);
+
       if (entry.endsWith('.html') && statSync(file).isFile()) {
         entries[`pages/${entry.replace('.html', '')}`] = file;
       }

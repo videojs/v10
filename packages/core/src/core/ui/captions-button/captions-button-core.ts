@@ -57,6 +57,7 @@ export class CaptionsButtonCore {
 
   getLabel(state: CaptionsButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
+
     if (label) return label;
 
     return state.subtitlesShowing ? disableText : enableText;
@@ -93,8 +94,11 @@ export class CaptionsButtonCore {
 
   toggle(media: MediaTextTrackState): void {
     this.setMedia(media);
+
     if (this.getState().disabled) return;
+
     if (this.#props.menuTrigger && getCaptionTrackCount(media) > 1) return;
+
     media.toggleSubtitles();
   }
 }

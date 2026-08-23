@@ -61,7 +61,9 @@ const render = {
     config: { defaultText?: string };
   }) {
     const el = context.renderElement.get();
+
     if (!el) return;
+
     el.textContent = String(state.count.get() ?? config.defaultText ?? 'N/A');
   },
 };
@@ -71,6 +73,7 @@ const persist = {
   contextKeys: [],
   setup({ state, config }: { state: StateSignals<{ count?: number }>; config: { saveEvery?: number } }) {
     const c = state.count.get();
+
     if (c && c > 0 && c % (config.saveEvery ?? 5) === 0) {
       // save logic
     }

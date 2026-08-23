@@ -20,6 +20,7 @@ async function resolveActiveMenuPanel(page: Page, player: PlayerPage): Promise<P
     .toBe('auto');
 
   const handle = await player.activeMenuPanel.elementHandle();
+
   if (!handle) throw new Error('Menu panel is not attached');
 
   return handle as PanelHandle;
@@ -42,6 +43,7 @@ async function getStableBox(panel: PanelHandle): Promise<{ x: number; y: number;
     .toBe(true);
 
   const box = await panel.boundingBox();
+
   if (!box) throw new Error('Menu panel is not visible');
 
   return box;

@@ -78,6 +78,7 @@ function calculatePresentationDurationSetup({
 }): () => void {
   return effect(() => {
     const presentation = state.presentation.get();
+
     if (!presentation || presentation.duration !== undefined) return;
 
     // presentation drives the effect; selection-only changes can't yield a
@@ -90,6 +91,7 @@ function calculatePresentationDurationSetup({
       selectedAudioTrackId: state.selectedAudioTrackId?.get(),
     }));
     const duration = config.resolveDuration(resolverInput);
+
     if (duration === undefined || Number.isNaN(duration) || duration <= 0) return;
 
     // Patch-object form requires `T extends object`; `state.presentation`'s

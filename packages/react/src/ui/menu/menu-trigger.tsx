@@ -40,8 +40,11 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   // Register with the parent menu's item list when acting as a submenu trigger.
   useEffect(() => {
     if (!isSubMenuTrigger || !parentMenuApi) return;
+
     const element = elementRef.current;
+
     if (!element) return;
+
     menu.setTriggerElement(element);
     const unregister = parentMenuApi.registerItem(element);
     return () => {
@@ -57,7 +60,9 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   const handleSubMenuClick = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
       onClick?.(event);
+
       if (event.defaultPrevented) return;
+
       openSubMenu();
     },
     [onClick, openSubMenu]
@@ -66,7 +71,9 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   const handleSubMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       const defaultPreventedByUser = callKeyDownHandler(onKeyDown, event);
+
       if (disabled || defaultPreventedByUser) return;
+
       if (event.key === 'ArrowRight') {
         event.preventDefault();
         openSubMenu();
@@ -77,7 +84,9 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
+
     if (!element || disabled || !parentMenuApi) return;
+
     parentMenuApi.highlight(element, { focus: false, pointer: true });
   }, [disabled, parentMenuApi]);
 
@@ -95,6 +104,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
       if (disabled || defaultPreventedByUser) {
         if (disabled && isMenuNavigationKey(event)) event.preventDefault();
+
         return;
       }
 

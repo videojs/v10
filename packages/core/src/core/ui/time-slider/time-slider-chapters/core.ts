@@ -10,11 +10,13 @@ let cueKey = 0;
 
 function getCueKey(cue: MediaTextCue): string {
   let key = cueKeys.get(cue);
+
   if (!key) {
     const id = (cue as MediaTextCue & { id?: unknown }).id;
     key = `cue-${typeof id === 'string' && id ? `${id}-` : ''}${cueKey++}`;
     cueKeys.set(cue, key);
   }
+
   return key;
 }
 
@@ -38,6 +40,7 @@ export function normalizeChapterCues(
   for (const { cue, key } of sorted) {
     const start = Math.max(min, cue.startTime);
     const cueEnd = Math.min(max, cue.endTime);
+
     if (cueEnd <= start) continue;
 
     if (start > end) {
@@ -45,6 +48,7 @@ export function normalizeChapterCues(
     }
 
     const segmentStart = Math.max(start, end);
+
     if (cueEnd <= segmentStart) continue;
 
     chapters.push({ key, start: segmentStart, end: cueEnd, cue });
@@ -53,7 +57,9 @@ export function normalizeChapterCues(
   }
 
   if (chapters.length === 0) return [{ key: 'gap-start-end', start: min, end: max, cue: null }];
+
   if (end < max) chapters.push({ key: `gap-${previousKey}-end`, start: end, end: max, cue: null });
+
   return chapters;
 }
 

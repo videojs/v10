@@ -76,6 +76,7 @@ const REACT_SUBSECTIONS = Object.freeze([
 function createSections(definitions, source, ref) {
   return definitions.flatMap((definition) => {
     if (definition.isEmpty(source, ref)) return [];
+
     return [
       {
         key: definition.key,
@@ -144,7 +145,9 @@ export function buildMediaReferenceTocHeadings(model) {
 
   for (const framework of ['html', 'react']) {
     const platform = model.platforms[framework];
+
     if (!platform) continue;
+
     for (const section of platform.sections) {
       headings.push({
         depth: section.depth,

@@ -70,6 +70,7 @@ export const pipFeature = definePlayerFeature({
 
     // iOS Safari presentation mode change (covers PiP)
     const video = media as WebKitVideoElement;
+
     if ('webkitPresentationMode' in video) {
       listen(media, 'webkitpresentationmodechanged', sync, { signal });
     }

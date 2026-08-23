@@ -12,6 +12,7 @@ export function getIconSets(): string[] {
   if (!existsSync(ASSETS_DIR)) {
     throw new Error(`Assets directory not found: ${ASSETS_DIR}`);
   }
+
   return readdirSync(ASSETS_DIR, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'index')
     .map((entry) => entry.name)

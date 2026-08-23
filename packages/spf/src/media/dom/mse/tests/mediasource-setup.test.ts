@@ -148,6 +148,7 @@ describe('attachMediaSourceAsSourceElement', () => {
     vi.stubGlobal('ManagedMediaSource', FakeManagedMediaSource);
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake-mms');
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
     try {
       const mediaSource = new FakeManagedMediaSource() as unknown as MediaSource;
       const mediaElement = document.createElement('video');

@@ -201,6 +201,7 @@ function scheduleReset(
     queueMicrotask(() => resetIfOwnedAndNotClosed(mediaSource, mediaElement, url));
     return;
   }
+
   resetIfOwnedAndNotClosed(mediaSource, mediaElement, url);
 }
 
@@ -314,6 +315,7 @@ export function onMediaSourceReadyStateChange(
  */
 export function waitForMediaSourceOpen(mediaSource: MediaSource, signal: AbortSignal): Promise<void> {
   if (signal.aborted) return Promise.resolve();
+
   if (mediaSource.readyState !== 'closed') return Promise.resolve();
 
   return new Promise<void>((resolve) => {

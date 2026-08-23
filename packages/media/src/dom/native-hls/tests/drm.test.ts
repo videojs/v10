@@ -17,7 +17,9 @@ function skdInitData(contentId: string): ArrayBuffer {
   const uri = `skd://${contentId}`;
   const bytes = new Uint8Array(uri.length * 2);
   const view = new DataView(bytes.buffer);
+
   for (let i = 0; i < uri.length; i++) view.setUint16(i * 2, uri.charCodeAt(i), true);
+
   return bytes.buffer;
 }
 
@@ -58,6 +60,7 @@ function stubKeySystem(): KeySystemStubs {
     keyStatuses: new Map<string, MediaKeyStatus>(),
     addEventListener(type: string, listener: EventListener, options?: AddEventListenerOptions) {
       if (!listeners.has(type)) listeners.set(type, new Set());
+
       listeners.get(type)!.add(listener);
       options?.signal?.addEventListener('abort', () => listeners.get(type)!.delete(listener));
     },
@@ -95,6 +98,7 @@ function stubWebKitKeySystem() {
     close: vi.fn(),
     addEventListener(type: string, listener: EventListener, options?: AddEventListenerOptions) {
       if (!listeners.has(type)) listeners.set(type, new Set());
+
       listeners.get(type)!.add(listener);
       options?.signal?.addEventListener('abort', () => listeners.get(type)!.delete(listener));
     },

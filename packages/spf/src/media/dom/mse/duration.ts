@@ -41,9 +41,13 @@ export function getBufferedEnd(
   return (
     ([...buffers].reduce((endMatch: number | undefined, buffer) => {
       const { buffered } = buffer;
+
       if (!buffered.length) return endMatch;
+
       const end = buffered.end(buffered.length - 1);
+
       if (!endMatch) return end;
+
       return isEndMatch(end, endMatch) ? end : endMatch;
     }, undefined) as number) ?? 0
   );
@@ -118,6 +122,7 @@ export function waitForSourceBuffersReady(buffers: SourceBufferIterable, signal:
   if (signal.aborted) return Promise.resolve();
 
   const updating: SourceBuffer[] = [];
+
   for (const buf of buffers) {
     if (buf.updating) updating.push(buf);
   }
@@ -128,6 +133,7 @@ export function waitForSourceBuffersReady(buffers: SourceBufferIterable, signal:
     let remaining = updating.length;
     const onUpdateEnd = () => {
       remaining--;
+
       if (remaining === 0) resolve();
     };
 

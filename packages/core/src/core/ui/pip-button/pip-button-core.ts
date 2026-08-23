@@ -50,6 +50,7 @@ export class PiPButtonCore {
 
   getLabel(state: PiPButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
+
     if (label) return label;
 
     return state.pip ? exitText : enterText;
@@ -84,7 +85,9 @@ export class PiPButtonCore {
 
   async toggle(media: MediaPictureInPictureState): Promise<void> {
     this.setMedia(media);
+
     if (this.getState().disabled) return;
+
     return media.pip ? media.exitPictureInPicture() : media.requestPictureInPicture();
   }
 }

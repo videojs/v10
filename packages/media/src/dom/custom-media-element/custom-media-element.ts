@@ -145,6 +145,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     static #define(ctor: typeof CustomMedia) {
       if (isDefined) return;
+
       isDefined = true;
 
       const properties = ctor.properties as Record<string, { type: any; attribute?: string; empty?: unknown }>;
@@ -152,6 +153,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
+
           // Defer to the explicit `ctor.properties` loop when its attribute
           // mapping diverges from `kebabCase(prop)`. Covers multi-word camelCase
           // props (`playsInline` → `'playsinline'`) and explicit overrides
@@ -159,9 +161,11 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
           // `properties` (like `loop`, `preload`) keep their legacy proto-walk
           // path so the mediaHost still receives the setter call.
           const propConfig = properties[prop];
+
           if (propConfig && (propConfig.attribute ?? prop.toLowerCase()) !== kebabCase(prop)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
+
           if (!descriptor) continue;
 
           const config: PropertyDescriptor = {
@@ -180,6 +184,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
             if (descriptor.set) {
               const attr = kebabCase(prop);
+
               if (ctor.observedAttributes.includes(attr)) {
                 mediaHostAttrToProp.set(attr, prop);
 
@@ -240,7 +245,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         const pickedAttrs = pick(namedNodeMapToObject(this.attributes), allowedKeys);
         // Embed templates (iframe) need host-bound attrs (e.g. `src`) to build the initial URL.
         const attrs: Record<string, string> = syncTargetAttributes ? omit(pickedAttrs, disallowedKeys) : pickedAttrs;
+
         if (tag && !attrs.part) attrs.part = tag;
+
         this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
       }
 
@@ -258,8 +265,11 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     #attachToTarget(): void {
       const target = this.target;
+
       if (target === this.#mediaHost.target) return;
+
       if (this.#mediaHost.target) this.#mediaHost.detach();
+
       this.#mediaHost.attach(target);
     }
 
@@ -278,6 +288,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     connectedCallback() {
       if (tag !== 'iframe') return;
+
       // Add data attribute for styling and avoiding cross-origin issues. e.g. backdrop-filter
       if (!this.hasAttribute('data-cross-origin-frame')) {
         this.setAttribute('data-cross-origin-frame', '');
@@ -286,6 +297,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     disconnectedCallback() {
       if (this.hasAttribute('keep-alive')) return;
+
       // Defer so a synchronous reparent (remove + insert) doesn't tear down
       // the host and its registered components.
       queueMicrotask(() => {
@@ -299,6 +311,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       options?: boolean | AddEventListenerOptions
     ) {
       super.addEventListener(type, listener as EventListener, options);
+
       if (!this.#bridgedEventTypes.has(type)) {
         this.#bridgedEventTypes.add(type);
         this.#mediaHost.addEventListener(type, this.#bridgeEvent);
@@ -321,6 +334,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     attributeChangedCallback(attrName: string, oldValue: string | null, newValue: string | null): void {
       const prop = mediaHostAttrToProp.get(attrName);
+
       if (prop) {
         if (oldValue !== newValue) {
           const valueType = typeof this.#mediaHost[prop];
@@ -333,6 +347,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
                 ? Number(newValue)
                 : (newValue ?? emptyValue);
         }
+
         return;
       }
 
@@ -374,11 +389,13 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
       for (const el of mediaChildren) {
         let clone = this.#childMap.get(el);
+
         if (!clone) {
           clone = el.cloneNode() as HTMLTrackElement | HTMLSourceElement;
           this.#childMap.set(el, clone);
           this.#childObserver?.observe(el, { attributes: true });
         }
+
         this.target?.append(clone);
         this.#enableDefaultTrack(clone as HTMLTrackElement);
       }
@@ -389,6 +406,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         if (mutation.type === 'attributes') {
           const { target, attributeName } = mutation;
           const clone = this.#childMap.get(target as HTMLTrackElement | HTMLSourceElement);
+
           if (clone && attributeName) {
             clone.setAttribute(
               attributeName,

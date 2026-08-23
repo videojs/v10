@@ -69,6 +69,7 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
     if (element.webkitKeys) return;
 
     const MediaKeysConstructor = (globalThis as { WebKitMediaKeys?: WebKitMediaKeysConstructor }).WebKitMediaKeys;
+
     if (!MediaKeysConstructor || !supportsWebKitFairPlay(media)) {
       throw createDrmError(NativeHlsDrmMessages.UNSUPPORTED_KEY_SYSTEM, NativeHlsDrmErrors.UNSUPPORTED_KEY_SYSTEM);
     }
@@ -83,10 +84,13 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
   async function onMessage(session: WebKitMediaKeySession, event: WebKitKeyMessageEvent): Promise<void> {
     try {
       const ckc = await requestLicenseKey(context, event.message);
+
       if (signal.aborted) return;
+
       session.update(ckc);
     } catch (cause) {
       if (signal.aborted) return;
+
       reportError(
         toDrmError(cause, NativeHlsDrmMessages.UPDATE_LICENSE_FAILED, NativeHlsDrmErrors.UPDATE_LICENSE_FAILED)
       );
@@ -103,12 +107,14 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
     async request(event: MediaEncryptedEvent): Promise<void> {
       if (!event.initData) {
         if (__DEV__) console.warn('[vjs-drm] Ignoring a `webkitneedkey` event carrying no initialization data.');
+
         return;
       }
 
       setupKeys();
 
       const appCertificate = await (certificate ??= requestAppCertificate(context));
+
       if (signal.aborted) return;
 
       // Unlike EME, the certificate is packed into the session's data rather
@@ -141,6 +147,7 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
           session.close();
         } catch {}
       }
+
       sessions.clear();
       certificate = null;
 
@@ -201,8 +208,10 @@ function getContentId(initData: ArrayBuffer): string {
 function toUtf16LE(value: string): Uint8Array<ArrayBuffer> {
   const bytes = new Uint8Array(value.length * 2);
   const view = new DataView(bytes.buffer);
+
   for (let i = 0; i < value.length; i++) {
     view.setUint16(i * 2, value.charCodeAt(i), true);
   }
+
   return bytes;
 }

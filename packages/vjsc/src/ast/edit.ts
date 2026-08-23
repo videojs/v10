@@ -8,5 +8,6 @@ export function prependBlockBody(
   source: string
 ): void {
   if (!source) return;
+
   magicString.appendLeft(body.start + 1, `\n${source}\n`);
 }

@@ -37,9 +37,12 @@ class ContentDataMedia extends EventTarget {
 
   #setKey(key: 'title' | 'poster', value: MediaContentValue): void {
     if (!this.contentData || Object.is(this.contentData[key], value)) return;
+
     const contentData = { ...this.contentData };
+
     if (value === undefined) delete contentData[key];
     else contentData[key] = value;
+
     this.contentData = contentData;
     this.dispatchEvent(new Event('contentdatachange'));
   }

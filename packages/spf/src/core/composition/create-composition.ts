@@ -341,19 +341,24 @@ export function createComposition<const Behaviors extends readonly AnyBehavior[]
     context,
     async destroy() {
       const results: (void | Promise<void>)[] = [];
+
       for (const cleanup of cleanups) {
         if (cleanup == null) continue;
+
         if (typeof cleanup === 'function') {
           results.push(cleanup());
         } else if ('destroy' in cleanup) {
           results.push(cleanup.destroy());
         }
       }
+
       await Promise.all(results);
+
       // Reset every signal to undefined as a final cleanup, matching the
       // prior post-destroy `owners.set({})` semantics. A later stage will
       // move per-signal cleanup into the behaviors that own the writes.
       for (const sig of Object.values(state) as Signal<unknown>[]) sig.set(undefined);
+
       for (const sig of Object.values(context) as Signal<unknown>[]) sig.set(undefined);
     },
   };

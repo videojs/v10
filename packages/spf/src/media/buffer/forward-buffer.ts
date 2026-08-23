@@ -20,14 +20,17 @@ export interface TimeRange {
 export function mergeTimeRanges(ranges: readonly TimeRange[], epsilon = SEGMENT_TIME_EPSILON): TimeRange[] {
   const sorted = ranges.filter((r) => r.end > r.start).sort((a, b) => a.start - b.start);
   const merged: TimeRange[] = [];
+
   for (const r of sorted) {
     const last = merged[merged.length - 1];
+
     if (last && r.start <= last.end + epsilon) {
       last.end = Math.max(last.end, r.end);
     } else {
       merged.push({ start: r.start, end: r.end });
     }
   }
+
   return merged;
 }
 
@@ -141,6 +144,7 @@ export function segmentStartForTime(
   segments: readonly Pick<Segment, 'startTime' | 'duration'>[] | undefined
 ): number | undefined {
   if (currentTime == null) return undefined;
+
   return segments?.find(
     ({ startTime, duration }, i, all) =>
       currentTime >= startTime && (currentTime < startTime + duration || i === all.length - 1)

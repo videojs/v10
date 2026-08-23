@@ -21,6 +21,7 @@ export class VideoRendition {
 
   set selected(value: boolean) {
     if (this.#selected === value) return;
+
     this.#selected = value;
 
     selectedChanged(this);
@@ -32,6 +33,7 @@ export class VideoRendition {
 
   set active(value: boolean) {
     if (this.#active === value) return;
+
     this.#active = value;
 
     activeChanged(this);

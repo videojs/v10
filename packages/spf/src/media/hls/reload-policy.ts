@@ -79,6 +79,7 @@ export function resolveLiveLatency(
   trackId: string | undefined
 ): number {
   if (!isResolvedPresentation(presentation) || !trackId) return 0;
+
   const track = findTrackById(presentation, trackId);
   return track && isResolvedTrack(track) ? liveLatencyFor(track) : 0;
 }

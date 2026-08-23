@@ -82,7 +82,9 @@ describe('fetchResolvableStream', () => {
 
   async function collect(gen: AsyncGenerator<Uint8Array>): Promise<Uint8Array[]> {
     const result: Uint8Array[] = [];
+
     for await (const chunk of gen) result.push(chunk);
+
     return result;
   }
 

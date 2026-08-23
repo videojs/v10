@@ -78,6 +78,7 @@ function awaitDefined(read: () => number | undefined): Promise<number> {
     let stop: (() => void) | undefined;
     stop = effect(() => {
       const value = read();
+
       if (value !== undefined) {
         stop?.();
         resolve(value);
@@ -105,12 +106,18 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
    */
   const readInitTrackInfo: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
+
     if (op.type !== 'append-init' || !frame.data) return;
+
     const slot = containerSlot(deps);
+
     if (peek(slot)?.[trackType]?.timescale !== undefined) return; // already have it (any rung of this type)
+
     frame.data = await peekHead(frame.data, (bytes) => {
       const track = findMediaTrack(bytes, handlerType);
+
       if (track === undefined) return false;
+
       writeContainer(slot, trackType, { trackId: track.trackId, timescale: track.timescale });
       return true;
     });
@@ -126,16 +133,24 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
    */
   const readSegmentOrigin: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
+
     if (op.type !== 'append-segment' || !frame.data) return;
+
     const slot = containerSlot(deps);
     const container = peek(slot)?.[trackType];
+
     if (container?.baseMediaDecodeTime !== undefined) return; // established
+
     const { trackId } = container ?? {};
+
     if (trackId === undefined) return; // init didn't identify a media track — nothing to match
+
     const segmentStartTime = op.meta.startTime;
     frame.data = await peekHead(frame.data, (bytes) => {
       const baseMediaDecodeTime = readBaseMediaDecodeTime(bytes, trackId);
+
       if (baseMediaDecodeTime === undefined) return false;
+
       writeContainer(slot, trackType, { baseMediaDecodeTime, segmentStartTime });
       return true;
     });
@@ -154,6 +169,7 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
    */
   const stampStartMediaTime: LoadStep = async (frame, signal, deps) => {
     if (frame.op.type !== 'append-segment') return;
+
     const state = relocationState(deps);
     // Liveness guard: if THIS type's own origin wasn't discovered — `readSegmentOrigin`
     // ran earlier in this pipeline and found no `tfdt` (mock / TS / containerless) — the
@@ -161,18 +177,24 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
     // discoverable type awaits the derived origin (which for shared-`min` legitimately
     // blocks on the other selected type — the barrier).
     const own = peek(state.mediaContainerData)?.[trackType];
+
     if (own?.timescale === undefined || own.baseMediaDecodeTime === undefined || own.segmentStartTime === undefined) {
       return;
     }
+
     const startMediaTime = await awaitDefined(() => {
       const containerData = state.mediaContainerData.get();
+
       if (!containerData) return undefined;
+
       return derive(containerData, {
         selectedVideoTrackId: state.selectedVideoTrackId?.get(),
         selectedAudioTrackId: state.selectedAudioTrackId?.get(),
       })[trackType];
     });
+
     if (signal.aborted || startMediaTime === 0) return;
+
     frame.meta = { ...(frame.meta ?? frame.op.meta), timestampOffset: -startMediaTime };
   };
 
@@ -204,7 +226,9 @@ const resolveWithMetadataStep = async <C extends Cue>(
     textStepWiring<C>(deps).resolveSegment(frame.op.segment.url),
     resolveVttSegmentMetadata(frame.op.segment.url),
   ]);
+
   if (signal.aborted) return;
+
   frame.cues = cues;
   frame.metadata = metadata;
 };
@@ -225,15 +249,20 @@ const relocateCuesStep = async <C extends Cue>(
   deps: TextStepDeps
 ): Promise<void> => {
   if (!frame.cues?.length) return;
+
   const state = deps.state as unknown as StateSignals<RelocationSlots>;
   const startMediaTime = await awaitDefined(() => {
     const presentation = state.presentation.get();
+
     if (!presentation) return undefined;
+
     const primaryId = state.selectedVideoTrackId.get() ?? state.selectedAudioTrackId.get();
+
     if (primaryId !== undefined) {
       // A/V selected: use its origin once stamped (undefined until then → keep waiting).
       return findTrackById(presentation, primaryId)?.startMediaTime;
     }
+
     // No A/V selected. Distinguish "not selected YET" from "text-only source". If the
     // presentation has A/V tracks, one WILL be selected and stamped — wait for it, or the
     // cues get shifted by the full `mapCorrection` (e.g. +10s on Apple X-TIMESTAMP-MAP
@@ -243,10 +272,13 @@ const relocateCuesStep = async <C extends Cue>(
       getTracksByType(presentation, 'video').length > 0 || getTracksByType(presentation, 'audio').length > 0;
     return hasAv ? undefined : 0;
   });
+
   if (signal.aborted) return;
+
   const { timestampMap } = (frame.metadata as TextSegmentMetadata | undefined) ?? {};
   const mapCorrection = timestampMap ? timestampMap.mpegts / 90000 - timestampMap.local : 0;
   const delta = mapCorrection - startMediaTime;
+
   if (delta !== 0) {
     for (const cue of frame.cues) {
       cue.startTime += delta;

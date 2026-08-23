@@ -50,6 +50,7 @@ function QualityRadioGroup({
   formatRendition?: ((rendition: MediaVideoRendition) => string) | undefined;
 }): ReactNode {
   const quality = useQualityOptions(formatRendition ? { formatRendition } : undefined);
+
   if (!quality) return null;
 
   const { options, selectedLabel, setValue, value } = quality;

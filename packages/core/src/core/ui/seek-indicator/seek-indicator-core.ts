@@ -92,6 +92,7 @@ export class SeekIndicatorCore {
 
   #getEffectiveSeekValue(event: InputActionEvent, snapshot: MediaSnapshot, rapidRepeat: boolean): number {
     if (event.action !== 'seekStep' || event.value === undefined) return 0;
+
     if (!rapidRepeat || this.#originTime === null) return event.value;
 
     const originTime = this.#originTime;

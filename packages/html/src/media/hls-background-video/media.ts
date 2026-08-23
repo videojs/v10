@@ -87,6 +87,7 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
     // what sets the property — along with the rest of the fixed behavior — so
     // nothing here needs to repeat it.
     const video = this.video;
+
     if (video) this.#media.attach(video);
 
     // Re-fired rather than bridged on demand the way `CustomMediaElement` does
@@ -102,7 +103,9 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback?.();
+
     if (this.hasAttribute('keep-alive')) return;
+
     // Deferred so a synchronous reparent (remove then insert) doesn't tear down
     // the engine, matching `CustomMediaElement`.
     queueMicrotask(() => {

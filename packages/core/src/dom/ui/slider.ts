@@ -242,6 +242,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     onPointerLeave() {
       if (!isNull(capturedPointerId)) return;
+
       input.patch({ pointing: false });
     },
 
@@ -255,6 +256,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     onKeyDown(event) {
       if (options.isDisabled()) {
         if (event.key !== 'Tab') event.preventDefault();
+
         return;
       }
 
@@ -319,6 +321,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     const rootEl = options.getElement();
     const thumbEl = options.getThumbElement?.();
+
     if (!thumbEl) return state;
 
     const isHorizontal = state.orientation === 'horizontal';
@@ -350,6 +353,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     adjustForAlignment,
     destroy() {
       if (abort.signal.aborted) return;
+
       abort.abort();
       stopObservingResize?.();
       releaseCapture();

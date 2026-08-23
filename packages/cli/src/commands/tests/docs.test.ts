@@ -90,7 +90,9 @@ beforeEach(() => {
 
   (readBundledDoc as Mock).mockImplementation((_fw: string, slug: string) => {
     if (slug === 'how-to/installation') return INSTALLATION_DOC;
+
     if (slug === 'concepts/skins') return REGULAR_DOC;
+
     return null;
   });
   (readLlmsTxt as Mock).mockReturnValue(LLMS_TXT);

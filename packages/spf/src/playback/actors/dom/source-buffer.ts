@@ -64,9 +64,11 @@ export type SourceBufferActor = MessageActor<SourceBufferActorState, SourceBuffe
 
 function snapshotBuffered(buffered: TimeRanges): BufferedRange[] {
   const ranges: BufferedRange[] = [];
+
   for (let i = 0; i < buffered.length; i++) {
     ranges.push({ start: buffered.start(i), end: buffered.end(i) });
   }
+
   return ranges;
 }
 
@@ -90,7 +92,9 @@ function appendInitTask(
 ): Task<SourceBufferActorContext> {
   return new Task(async (taskSignal) => {
     const ctx = getContext();
+
     if (taskSignal.aborted) return ctx;
+
     await appendSegment(sourceBuffer, message.data);
     // No abort check here: the physical SourceBuffer has been modified, so
     // the model must be updated to match regardless of signal state.
@@ -104,6 +108,7 @@ function appendSegmentTask(
 ): Task<SourceBufferActorContext> {
   return new Task(async (taskSignal) => {
     const ctx = getContext();
+
     if (taskSignal.aborted) return ctx;
 
     const { meta } = message;
@@ -148,6 +153,7 @@ function appendSegmentTask(
     if (meta.timestampOffset != null && sourceBuffer.timestampOffset !== meta.timestampOffset) {
       sourceBuffer.timestampOffset = meta.timestampOffset;
     }
+
     await appendSegment(sourceBuffer, message.data, taskSignal);
     // No abort check here: the physical SourceBuffer has been modified, so
     // the model must be updated to match regardless of signal state.
@@ -174,7 +180,9 @@ function removeTask(
 ): Task<SourceBufferActorContext> {
   return new Task(async (taskSignal) => {
     const ctx = getContext();
+
     if (taskSignal.aborted) return ctx;
+
     await flushBuffer(sourceBuffer, message.start, message.end);
     // No abort check here: the physical SourceBuffer has been modified, so
     // the model must be updated to match regardless of signal state.
@@ -249,6 +257,7 @@ export function createSourceBufferActor(
           remove: onMessage,
           batch: (msg, { transition, setContext, getContext, runner }) => {
             const { messages } = msg;
+
             if (messages.length === 0) return;
 
             transition('updating');

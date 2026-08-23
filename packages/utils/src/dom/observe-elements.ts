@@ -69,6 +69,7 @@ function toElementSize(entry: ResizeObserverEntry): ElementSize {
 export function observeElementSize(element: Element, onResize: (size: ElementSize) => void): () => void {
   return observeResize(element, (entries) => {
     const entry = entries[entries.length - 1];
+
     if (entry) onResize(toElementSize(entry));
   });
 }

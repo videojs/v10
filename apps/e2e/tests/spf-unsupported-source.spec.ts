@@ -145,6 +145,7 @@ test.describe('SPF unsupported-source errors', () => {
 
     await page.evaluate((url) => {
       const media = document.querySelector('hls-video') as (HTMLElement & { src?: string }) | null;
+
       if (media) media.src = url;
     }, FMP4_URL);
 

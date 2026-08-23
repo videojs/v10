@@ -31,6 +31,7 @@ export class ControlsElement extends MediaElement {
     super.update(_changed);
 
     const media = this.#mediaState.value;
+
     if (!media) return;
 
     this.#core.setMedia(media);
@@ -54,6 +55,7 @@ export class ControlsElement extends MediaElement {
   #closeOwnedOverlays(): void {
     for (const element of this.querySelectorAll(POPUP_HOST_SELECTOR)) {
       const host = element as Element & { close?: unknown };
+
       if (!isFunction(host.close)) continue;
 
       host.close('imperative-action');

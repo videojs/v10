@@ -34,7 +34,9 @@ export function createMediaAttachMixin(context: MediaContext): MediaAttachMixin 
             this,
             (value, unsubscribe) => {
               if (unsubscribe) this.#unsubscribe = unsubscribe;
+
               this.#setMedia = value?.setMedia ?? null;
+
               if (this.isConnected) {
                 this.#setMedia?.(this.getMediaTarget());
               }

@@ -79,6 +79,7 @@ export class ThumbnailElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#api = createThumbnail({
@@ -167,7 +168,9 @@ export class ThumbnailElement extends MediaElement {
    */
   #resolveCrossOrigin(textTrack: MediaTextTrackState | undefined): string | undefined {
     if (isNull(this.crossOrigin)) return undefined;
+
     if (!isUndefined(this.crossOrigin)) return this.crossOrigin;
+
     if (this.#externalThumbnails) return undefined;
 
     return textTrack?.thumbnailTrackCrossOrigin ?? undefined;

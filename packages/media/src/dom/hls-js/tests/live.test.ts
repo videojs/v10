@@ -11,6 +11,7 @@ function createEngine(userConfig: Record<string, unknown> = {}): Hls {
     userConfig: { ...userConfig },
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
+
       listeners.get(event)!.add(fn);
     },
     off(event: string, fn: (...args: any[]) => void) {

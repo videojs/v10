@@ -17,9 +17,11 @@ import { createHlsVideoEngine, getMediaPlaylistMetadata } from '@videojs/spf/hls
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
+
 const logsDiv = document.getElementById('logs') as HTMLDivElement;
 const liveStatusDiv = document.getElementById('live-status') as HTMLDivElement;
 const stateDiv = document.getElementById('state') as HTMLDivElement;
+
 const renditionButtonsDiv = document.getElementById('rendition-buttons') as HTMLDivElement;
 const audioTrackButtonsDiv = document.getElementById('audio-track-buttons') as HTMLDivElement;
 const textTrackButtonsDiv = document.getElementById('text-track-buttons') as HTMLDivElement;
@@ -27,14 +29,17 @@ const resolutionListDiv = document.getElementById('resolution-list') as HTMLDivE
 const nowPlayingQualityDiv = document.getElementById('now-playing-quality') as HTMLDivElement;
 const throughputDiv = document.getElementById('throughput-display') as HTMLDivElement;
 const playerSizeDiv = document.getElementById('player-size-display') as HTMLDivElement;
+
 const srcPreset = document.getElementById('src-preset') as HTMLSelectElement;
 const srcInput = document.getElementById('src-input') as HTMLInputElement;
 const setSrcBtn = document.getElementById('set-src') as HTMLButtonElement;
+
 const avcOnlyToggle = document.getElementById('avc-only-toggle') as HTMLInputElement;
 const mutedToggle = document.getElementById('muted-toggle') as HTMLInputElement;
 const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLInputElement;
 const loopToggle = document.getElementById('loop-toggle') as HTMLInputElement;
 const preloadSelect = document.getElementById('preload-select') as HTMLSelectElement;
+
 const shareLink = document.getElementById('share-link') as HTMLAnchorElement;
 
 // ── Query params ──────────────────────────────────────────────────────────────
@@ -69,7 +74,9 @@ const PRESETS: Preset[] = [
   ...SOURCE_IDS.filter((id) => SOURCES[id].type === 'hls' && SOURCES[id].url).map((id) => {
     const source = SOURCES[id];
     const preset: Preset = { label: source.label, url: source.url ?? '' };
+
     if (source.subType === 'ts') preset.unsupported = 'TS — unsupported';
+
     return preset;
   }),
   ...HARNESS_PRESETS,
@@ -82,6 +89,7 @@ const avcOnly = (track: { codecs?: string[] }) =>
   !track.codecs?.some((codec) => codec.startsWith('hvc1') || codec.startsWith('hev1'));
 
 const params = new URLSearchParams(window.location.search);
+
 const INITIAL_SRC = params.get('src') ?? DEFAULT_STREAM;
 const INITIAL_MUTED = params.get('muted') === 'true';
 const INITIAL_AUTOPLAY = params.get('autoplay') === 'true';
@@ -121,6 +129,7 @@ function log(msg: string, type: 'info' | 'success' | 'error' | 'warning' = 'info
 
 function formatBandwidth(bps: number): string {
   if (bps >= 1_000_000) return `${(bps / 1_000_000).toFixed(1)} Mbps`;
+
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
@@ -148,9 +157,12 @@ function getTextTracks(presentation: HlsVideoEngineState['presentation']) {
 // signal directly. `showId === undefined` disables all (Off).
 function setNativeTextMode(showId: string | undefined) {
   const tt = video.textTracks;
+
   for (let i = 0; i < tt.length; i++) {
     const track = tt[i];
+
     if (!track || (track.kind !== 'subtitles' && track.kind !== 'captions')) continue;
+
     track.mode = track.id === showId ? 'showing' : 'disabled';
   }
 }
@@ -159,12 +171,19 @@ function setNativeTextMode(showId: string | undefined) {
 function updateShareUrl() {
   const p = new URLSearchParams();
   const src = srcInput.value.trim();
+
   if (src && src !== DEFAULT_STREAM) p.set('src', src);
+
   if (mutedToggle.checked) p.set('muted', 'true');
+
   if (autoplayToggle.checked) p.set('autoplay', 'true');
+
   if (loopToggle.checked) p.set('loop', 'true');
+
   if (preloadSelect.value !== 'none') p.set('preload', preloadSelect.value);
+
   if (avcOnlyToggle.checked) p.set('avcOnly', 'true');
+
   const url = `${window.location.origin}${window.location.pathname}${p.size > 0 ? `?${p}` : ''}`;
   shareLink.href = url;
   shareLink.textContent = url;
@@ -172,9 +191,11 @@ function updateShareUrl() {
 
 function updateNowPlayingQuality() {
   if (!engine) return;
+
   const segments = engine.context.videoBufferActor.get()?.snapshot.get().context.segments ?? [];
   const t = video.currentTime;
   const current = segments.find((s) => t >= s.startTime && t < s.startTime + s.duration);
+
   if (current?.trackBandwidth) {
     nowPlayingQualityDiv.textContent = `▶ Now playing: ${formatBandwidth(current.trackBandwidth)}`;
     nowPlayingQualityDiv.className = 'has-quality';
@@ -190,11 +211,14 @@ function updateNowPlayingQuality() {
 // video frame's corner to move it.
 function updatePlayerSizeDisplay() {
   if (!engine) return;
+
   const playerResolution = engine.state.playerResolution.get();
+
   if (!playerResolution) {
     playerSizeDiv.textContent = '📐 Player size: not measured (cap inert)';
     return;
   }
+
   const { width, height } = playerResolution;
   const area = width * height;
   const covering = getVideoTracks(engine.state.presentation.get())
@@ -217,24 +241,30 @@ function updatePlayerSizeDisplay() {
 // zero-factor correction scales them back to the true estimate.
 function correctedEstimate(estimate: number, totalWeight: number, halfLife: number): number {
   if (totalWeight === 0) return 0;
+
   const alpha = Math.exp(Math.log(0.5) / halfLife);
   return estimate / (1 - alpha ** totalWeight);
 }
 
 function updateThroughputDisplay() {
   if (!engine) return;
+
   const bs = engine.state.bandwidthState.get();
+
   if (!bs || bs.bytesSampled === 0) {
     throughputDiv.textContent = '📶 Throughput: no samples yet';
     throughputDiv.className = '';
     return;
   }
+
   const minBytes = 128_000;
+
   if (bs.bytesSampled < minBytes) {
     throughputDiv.textContent = `📶 Warming up: ${(bs.bytesSampled / 1000).toFixed(0)} KB sampled`;
     throughputDiv.className = 'warming';
     return;
   }
+
   const fast = correctedEstimate(bs.fastEstimate, bs.fastTotalWeight, 2);
   const slow = correctedEstimate(bs.slowEstimate, bs.slowTotalWeight, 5);
   const est = Math.min(fast, slow);
@@ -251,6 +281,7 @@ let videoTrackSetKey = '';
 
 function renderRenditionPicker() {
   if (!engine || !signals) return;
+
   const presentation = engine.state.presentation.get();
   const selectedVideoTrackId = engine.state.selectedVideoTrackId.get();
   const userFilter = engine.state.userVideoTrackSelection.get();
@@ -268,10 +299,12 @@ function renderRenditionPicker() {
   // button per identity so the UI matches what selection actually guarantees.
   const groups = getVideoSelectionGroups(tracks);
   const setKey = groups.map((group) => group.key).join('|');
+
   if (setKey !== videoTrackSetKey) {
     videoTrackSetKey = setKey;
     buildVideoTrackButtons(groups);
   }
+
   updateVideoTrackSelection(tracks, selectedVideoTrackId, userFilter);
 }
 
@@ -295,24 +328,31 @@ function videoSelectionKey(track: ReturnType<typeof getVideoTracks>[number]): st
 /** Collapse video tracks to one entry per selection identity (bitrate + resolution). */
 function getVideoSelectionGroups(tracks: ReturnType<typeof getVideoTracks>): VideoSelectionGroup[] {
   const groups = new Map<string, VideoSelectionGroup>();
+
   for (const track of tracks) {
     const key = videoSelectionKey(track);
     let group = groups.get(key);
+
     if (!group) {
       const width = 'width' in track ? track.width : undefined;
       const height = 'height' in track ? track.height : undefined;
       const res = width && height ? `${width}×${height} @ ` : '';
       const fps = 'frameRate' in track && track.frameRate ? ` · ${formatFrameRate(track.frameRate)}` : '';
       const filter: VideoSelectionGroup['filter'] = { bandwidth: track.bandwidth };
+
       if (width) filter.width = width;
+
       if (height) filter.height = height;
+
       group = { key, label: `${res}${formatBandwidth(track.bandwidth)}${fps}`, filter, members: [] };
       groups.set(key, group);
     }
+
     // Member ids (one per CDN for redundant streams) are surfaced in the
     // tooltip so the collapsed renditions are still inspectable.
     group.members.push(track.id);
   }
+
   return [...groups.values()];
 }
 
@@ -352,12 +392,14 @@ function updateVideoTrackSelection(
   const isManual = userFilter !== undefined;
 
   const statusRow = document.getElementById('video-status-row');
+
   if (statusRow) {
     statusRow.innerHTML = '';
     const modeLabel = document.createElement('span');
     modeLabel.className = isManual ? 'mode-manual' : 'mode-abr';
     modeLabel.textContent = isManual ? `🔒 Manual: ${JSON.stringify(userFilter)}` : '⟳ ABR';
     statusRow.appendChild(modeLabel);
+
     if (isManual) {
       const enableBtn = document.createElement('button');
       enableBtn.type = 'button';
@@ -375,6 +417,7 @@ function updateVideoTrackSelection(
   // highlight that group's button.
   const selectedTrack = tracks.find((track) => track.id === selectedVideoTrackId);
   const selectedKey = selectedTrack ? videoSelectionKey(selectedTrack) : undefined;
+
   for (const btn of renditionButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
     const isSelected = btn.dataset.selectionKey === selectedKey;
     btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
@@ -391,6 +434,7 @@ let audioTrackSetKey = '';
 
 function renderAudioTrackPicker() {
   if (!engine || !signals) return;
+
   const presentation = engine.state.presentation.get();
   const selectedAudioTrackId = engine.state.selectedAudioTrackId.get();
   const userFilter = engine.state.userAudioTrackSelection.get();
@@ -409,10 +453,12 @@ function renderAudioTrackPicker() {
   // selection actually guarantees.
   const groups = getAudioSelectionGroups(tracks);
   const setKey = groups.map((group) => group.key).join('|');
+
   if (setKey !== audioTrackSetKey) {
     audioTrackSetKey = setKey;
     buildAudioTrackButtons(groups);
   }
+
   updateAudioTrackSelection(tracks, selectedAudioTrackId, userFilter);
 }
 
@@ -430,21 +476,25 @@ interface AudioSelectionGroup {
 /** Collapse audio tracks to one entry per selection identity (language, else id). */
 function getAudioSelectionGroups(tracks: ReturnType<typeof getAudioTracks>): AudioSelectionGroup[] {
   const groups = new Map<string, AudioSelectionGroup>();
+
   for (const track of tracks) {
     const language = track.language || undefined;
     const key = language ?? track.id;
     let group = groups.get(key);
+
     if (!group) {
       const name = 'name' in track && track.name ? track.name : track.id;
       group = { key, byLanguage: !!language, language, label: `${language ?? '—'} · ${name}`, members: [] };
       groups.set(key, group);
     }
+
     // Member labels (bitrate, else groupId tier) are surfaced in the tooltip so
     // the collapsed renditions are still inspectable.
     const groupId = 'groupId' in track ? track.groupId : undefined;
     const tier = track.bandwidth ? formatBandwidth(track.bandwidth) : groupId;
     group.members.push(tier ?? track.id);
   }
+
   return [...groups.values()];
 }
 
@@ -487,12 +537,14 @@ function updateAudioTrackSelection(
   const isPinned = userFilter !== undefined;
 
   const statusRow = document.getElementById('audio-status-row');
+
   if (statusRow) {
     statusRow.innerHTML = '';
     const modeLabel = document.createElement('span');
     modeLabel.className = isPinned ? 'mode-pinned' : 'mode-default';
     modeLabel.textContent = isPinned ? `🔒 Pinned: ${JSON.stringify(userFilter)}` : '🌐 Default pick';
     statusRow.appendChild(modeLabel);
+
     if (isPinned) {
       const clearBtn = document.createElement('button');
       clearBtn.type = 'button';
@@ -510,6 +562,7 @@ function updateAudioTrackSelection(
   // highlight that group's button.
   const selectedTrack = tracks.find((track) => track.id === selectedAudioTrackId);
   const selectedKey = selectedTrack ? selectedTrack.language || selectedTrack.id : undefined;
+
   for (const btn of audioTrackButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
     const isSelected = btn.dataset.selectionKey === selectedKey;
     btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
@@ -529,6 +582,7 @@ function updateAudioTrackSelection(
 // escape hatch. Highlighting reads the resolved selectedTextTrackId + intent.
 function renderTextTrackPicker() {
   if (!engine || !signals) return;
+
   const presentation = engine.state.presentation.get();
   const selectedTextTrackId = engine.state.selectedTextTrackId.get();
   const intent = engine.state.userTextTrackSelection.get();
@@ -557,6 +611,7 @@ function renderTextTrackPicker() {
       ? `🔒 Pinned: ${JSON.stringify(intent)}`
       : '🌐 Auto (default policy)';
   statusRow.appendChild(modeLabel);
+
   if (intent !== undefined) {
     const resetBtn = document.createElement('button');
     resetBtn.type = 'button';
@@ -568,6 +623,7 @@ function renderTextTrackPicker() {
     });
     statusRow.appendChild(resetBtn);
   }
+
   textTrackButtonsDiv.appendChild(statusRow);
 
   // Off button — explicit 'off' intent; highlighted whenever nothing resolves.
@@ -584,10 +640,13 @@ function renderTextTrackPicker() {
 
   // One button per selection identity (language, else id).
   const seen = new Set<string>();
+
   for (const track of tracks) {
     const language = track.language || undefined;
     const key = language ?? track.id;
+
     if (seen.has(key)) continue;
+
     seen.add(key);
 
     const label = 'label' in track && track.label ? track.label : track.id;
@@ -608,6 +667,7 @@ function renderTextTrackPicker() {
 
 function renderResolutionStatus() {
   if (!engine) return;
+
   const presentation = engine.state.presentation.get();
   const tracks = getVideoTracks(presentation);
 
@@ -617,6 +677,7 @@ function renderResolutionStatus() {
   }
 
   resolutionListDiv.innerHTML = '';
+
   for (const track of tracks) {
     const isResolved = 'segments' in track;
     const item = document.createElement('div');
@@ -633,15 +694,20 @@ function renderResolutionStatus() {
 /** The selected timeline-bearing track (video ?? audio) from the live state. */
 function selectedTimelineTrack() {
   if (!signals) return undefined;
+
   const state = snapshot(signals.state);
   const trackId = state.selectedVideoTrackId ?? state.selectedAudioTrackId;
+
   if (!state.presentation?.selectionSets || !trackId) return undefined;
+
   for (const selectionSet of state.presentation.selectionSets) {
     for (const switchingSet of selectionSet.switchingSets) {
       const track = switchingSet.tracks.find((t) => t.id === trackId);
+
       if (track) return track;
     }
   }
+
   return undefined;
 }
 
@@ -655,7 +721,9 @@ function liveHoldBack(): number {
 /** The live-edge seek target: seekable end − HOLD-BACK, clamped into the window. */
 function liveEdgeTarget(): number | undefined {
   const { seekable } = video;
+
   if (!seekable.length) return undefined;
+
   const end = seekable.end(seekable.length - 1);
   return Math.max(seekable.start(0), end - liveHoldBack());
 }
@@ -668,6 +736,7 @@ function liveEdgeTarget(): number | undefined {
  */
 function updateLiveStatus() {
   const streamType = signals ? snapshot(signals.state).presentation?.streamType : undefined;
+
   if (streamType !== 'live') {
     liveStatusDiv.className = '';
     liveStatusDiv.textContent = streamType === 'on-demand' ? 'stream: on-demand' : '';
@@ -695,6 +764,7 @@ function inspectState() {
     stateDiv.innerHTML = '<h2>State Inspector</h2><div class="error">Engine not initialized</div>';
     return;
   }
+
   const state = snapshot(engine.state);
   const ctx = snapshot(engine.context);
 
@@ -771,6 +841,7 @@ let cleanupEffects: () => void = () => {};
 
 function startEngine(src: string) {
   cleanupEffects();
+
   if (engine) engine.destroy();
 
   engine = createHlsVideoEngine({
@@ -815,10 +886,12 @@ function startEngine(src: string) {
       log(`Video track selected ${mode}: ${state.selectedVideoTrackId}`);
       prev.selectedVideoTrackId = state.selectedVideoTrackId;
     }
+
     if (state.selectedAudioTrackId && state.selectedAudioTrackId !== prev.selectedAudioTrackId) {
       log(`Audio track selected: ${state.selectedAudioTrackId}`);
       prev.selectedAudioTrackId = state.selectedAudioTrackId;
     }
+
     if (state.selectedTextTrackId && state.selectedTextTrackId !== prev.selectedTextTrackId) {
       log(`Text track selected: ${state.selectedTextTrackId}`, 'success');
       prev.selectedTextTrackId = state.selectedTextTrackId;
@@ -846,6 +919,7 @@ function startEngine(src: string) {
       log(`MediaSource created: ${ctx.mediaSource.readyState}`, 'success');
       prevContext.hasMediaSource = true;
     }
+
     if (ctx.videoBuffer && !prevContext.hasVideoBuffer) {
       log('Video SourceBuffer created', 'success');
       prevContext.hasVideoBuffer = true;
@@ -861,14 +935,19 @@ function startEngine(src: string) {
 
       ctx.videoBuffer.addEventListener('updateend', () => {
         const buf = engine.context.videoBuffer.get();
+
         if (!buf) return;
+
         const ranges: string[] = [];
+
         for (let i = 0; i < buf.buffered.length; i++) {
           ranges.push(`[${buf.buffered.start(i).toFixed(2)}, ${buf.buffered.end(i).toFixed(2)}]`);
         }
+
         log(`📹 Video buffered: ${ranges.join(' ') || '(empty)'}`, 'info');
       });
     }
+
     if (ctx.audioBuffer && !prevContext.hasAudioBuffer) {
       log('Audio SourceBuffer created', 'success');
       prevContext.hasAudioBuffer = true;
@@ -884,11 +963,15 @@ function startEngine(src: string) {
 
       ctx.audioBuffer.addEventListener('updateend', () => {
         const buf = engine.context.audioBuffer.get();
+
         if (!buf) return;
+
         const ranges: string[] = [];
+
         for (let i = 0; i < buf.buffered.length; i++) {
           ranges.push(`[${buf.buffered.start(i).toFixed(2)}, ${buf.buffered.end(i).toFixed(2)}]`);
         }
+
         log(`🔊 Audio buffered: ${ranges.join(' ') || '(empty)'}`, 'info');
       });
     }
@@ -946,13 +1029,17 @@ document.getElementById('pause')!.addEventListener('click', () => {
 });
 document.getElementById('seek-to-edge')!.addEventListener('click', () => {
   const target = liveEdgeTarget();
+
   if (target === undefined) return log('Seek to live edge: no seekable window', 'warning');
+
   video.currentTime = target;
   log(`Seek to live edge: ${target.toFixed(2)}s`, 'success');
 });
 document.getElementById('seek-behind-window')!.addEventListener('click', () => {
   const { seekable } = video;
+
   if (!seekable.length) return log('Seek out of window: no seekable window', 'warning');
+
   // 30s behind the window start. The browser clamps the seek to `seekable`, so
   // while playing this exercises the window-exit rescue as the window slides
   // past — watch the playhead snap back to the edge on the next reload.
@@ -967,7 +1054,9 @@ document.getElementById('clearLogs')!.addEventListener('click', () => {
 
 setSrcBtn.addEventListener('click', () => {
   const url = srcInput.value.trim();
+
   if (!url) return;
+
   log(`Setting src: ${url}`, 'info');
   srcPreset.value = PRESETS.some((preset) => preset.url === url) ? url : '';
   startEngine(url);
@@ -978,9 +1067,13 @@ srcInput.addEventListener('input', updateShareUrl);
 
 srcPreset.addEventListener('change', () => {
   const preset = PRESETS.find((p) => p.url === srcPreset.value);
+
   if (!preset) return;
+
   srcInput.value = preset.url;
+
   if (preset.avcOnly) avcOnlyToggle.checked = true;
+
   log(`Preset: ${preset.label}${preset.avcOnly ? ' (AVC-only enabled)' : ''}`, 'info');
   startEngine(preset.url);
   updateShareUrl();

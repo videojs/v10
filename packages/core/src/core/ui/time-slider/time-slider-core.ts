@@ -45,6 +45,7 @@ export class TimeSliderCore extends SliderCore {
 
   constructor(props?: TimeSliderProps) {
     super();
+
     if (props) this.setProps(props);
   }
 
@@ -104,9 +105,11 @@ export class TimeSliderCore extends SliderCore {
 
   getValueTextParams(state: TimeSliderState): { current: string; duration: string } | { current: string } {
     const current = this.#formatTimeAsPhrase(this.#announceValue(state));
+
     if (!Number.isFinite(state.duration)) {
       return { current };
     }
+
     return {
       current,
       duration: this.#formatTimeAsPhrase(state.duration),
@@ -119,6 +122,7 @@ export class TimeSliderCore extends SliderCore {
    */
   startDrag(playback: MediaPlaybackState | null | undefined): void {
     this.#wasPlayingBeforeDrag = false;
+
     if (this.#props.pauseOnDrag && playback && !playback.paused) {
       this.#wasPlayingBeforeDrag = true;
       playback.pause();
@@ -136,6 +140,7 @@ export class TimeSliderCore extends SliderCore {
         // Resume play() can reject (autoplay policy, etc.) — surface via existing error feature.
       });
     }
+
     this.#wasPlayingBeforeDrag = false;
   }
 

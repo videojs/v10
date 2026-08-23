@@ -35,6 +35,7 @@ function getSubtitlesTracks(media: MediaTextTrackCapability): IdentifiedTrack[] 
 function showOnly(tracks: IdentifiedTrack[], active: TextTrackLike | null): void {
   for (const { track } of tracks) {
     const mode = track === active ? 'showing' : 'disabled';
+
     if (track.mode !== mode) track.mode = mode;
   }
 }
@@ -46,6 +47,7 @@ function showOnly(tracks: IdentifiedTrack[], active: TextTrackLike | null): void
  */
 function toCorsMode(value: string | null | undefined): MediaTextTrackState['thumbnailTrackCrossOrigin'] {
   if (isNil(value)) return null;
+
   return value.toLowerCase() === 'use-credentials' ? 'use-credentials' : 'anonymous';
 }
 
@@ -58,9 +60,11 @@ function findLocaleTrack(tracks: IdentifiedTrack[], locale: string): IdentifiedT
 
   for (const key of keys) {
     const exact = tracks.find(({ track }) => getCanonicalLocaleKey(track.language) === key);
+
     if (exact) return exact;
 
     const regional = tracks.find(({ track }) => getCanonicalLocaleKey(track.language).startsWith(`${key}-`));
+
     if (regional) return regional;
   }
 
@@ -83,9 +87,11 @@ export const textTrackFeature = definePlayerFeature({
       subtitlesShowing: false,
       toggleSubtitles(forceShow?: boolean) {
         const { media } = target();
+
         if (!isMediaTextTrackCapable(media)) return false;
 
         const subtitlesTracks = getSubtitlesTracks(media);
+
         if (!subtitlesTracks.length) return false;
 
         const showing = subtitlesTracks.find(({ track }) => track.mode === 'showing');
@@ -112,19 +118,24 @@ export const textTrackFeature = definePlayerFeature({
       },
       selectSubtitlesTrack(value: string) {
         const { media } = target();
+
         if (!isMediaTextTrackCapable(media)) return;
 
         const subtitlesTracks = getSubtitlesTracks(media);
+
         if (!subtitlesTracks.length) return;
 
         if (value === 'off') {
           const showing = subtitlesTracks.find(({ track }) => track.mode === 'showing');
+
           if (showing) lastShownId = showing.id;
+
           showOnly(subtitlesTracks, null);
           return;
         }
 
         const active = subtitlesTracks.find(({ id }) => id === value);
+
         if (!active) return;
 
         lastShownId = active.id;
@@ -151,7 +162,9 @@ export const textTrackFeature = definePlayerFeature({
 
       for (let i = 0; i < media.textTracks.length; i++) {
         const track = media.textTracks[i]!;
+
         if (!chaptersTrack && track.kind === 'chapters') chaptersTrack = track;
+
         if (!thumbnailTrack && track.kind === 'metadata' && track.label === 'thumbnails') thumbnailTrack = track;
 
         textTrackList.push({
@@ -178,6 +191,7 @@ export const textTrackFeature = definePlayerFeature({
 
       let thumbnailTrackSrc: string | null = null;
       let thumbnailTrackCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'] = null;
+
       if (thumbnailTrack) {
         const el = findTrackElement(media, thumbnailTrack);
         thumbnailTrackSrc = el?.src ?? null;
@@ -211,11 +225,13 @@ export const textTrackFeature = definePlayerFeature({
     sync();
 
     const textTracks = media.textTracks;
+
     if (textTracks instanceof EventTarget) {
       listen(textTracks, 'addtrack', sync, { signal });
       listen(textTracks, 'removetrack', sync, { signal });
       listen(textTracks, 'change', sync, { signal });
     }
+
     listen(media, 'loadstart', sync, { signal });
 
     signal.addEventListener('abort', () => trackCleanup?.abort(), { once: true });

@@ -81,7 +81,9 @@ export const Poster = forwardRef(function Poster(
   // second A is a new request. `srcSet` is part of the identity because `src`
   // stays empty when it is the only source.
   const matchesRequest = request.src === src && request.srcSet === authoredSrcSet;
+
   if (!matchesRequest) setRequest({ src, srcSet: authoredSrcSet, state: initialLoadState });
+
   const loadState = matchesRequest ? request.state : initialLoadState;
 
   if (playback) core.setImageLoadState(loadState);
@@ -101,6 +103,7 @@ export const Poster = forwardRef(function Poster(
   // biome-ignore lint/correctness/useExhaustiveDependencies: reads the first source only, at mount
   useEffect(() => {
     const img = imgRef.current;
+
     if (!img) return;
 
     if (img.naturalWidth > 0) setRequest({ src, srcSet: authoredSrcSet, state: 'loaded' });
@@ -122,6 +125,7 @@ export const Poster = forwardRef(function Poster(
 
   if (!playback || !state) {
     if (__DEV__) logMissingFeature('Poster', 'playback');
+
     return null;
   }
 

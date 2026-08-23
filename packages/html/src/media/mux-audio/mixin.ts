@@ -39,6 +39,7 @@ export function MuxAudioMixin<Class extends AnyConstructor<HTMLElement>>(BaseCla
     // Mirrors the host `src` to the `src` attribute so it matches the active playback URL.
     #reflectSrc() {
       const src = this.host.src;
+
       if (src) {
         if (this.getAttribute('src') !== src) this.setAttribute('src', src);
       } else if (this.hasAttribute('src')) {

@@ -12,6 +12,7 @@ export const playbackRateFeature = definePlayerFeature({
     playbackRate: 1,
     setPlaybackRate(rate: number) {
       const { media } = target();
+
       if (isMediaPlaybackRateCapable(media)) media.playbackRate = rate;
     },
   }),

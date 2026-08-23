@@ -131,7 +131,9 @@ export const resolveCuesStep = async <C extends Cue>(
   deps: TextStepDeps
 ): Promise<void> => {
   const cues = await textStepWiring<C>(deps).resolveSegment(frame.op.segment.url);
+
   if (signal.aborted) return;
+
   frame.cues = cues;
 };
 

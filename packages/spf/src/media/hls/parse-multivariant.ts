@@ -88,6 +88,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
 
     // #EXT-X-MEDIA:TYPE=AUDIO/SUBTITLES
     const mediaAttrs = matchTag(trimmed, 'EXT-X-MEDIA');
+
     if (mediaAttrs) {
       const type = mediaAttrs.get('TYPE');
       const groupId = mediaAttrs.get('GROUP-ID');
@@ -111,6 +112,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
 
       if (type === 'SUBTITLES' && groupId && name) {
         const uri = mediaAttrs.get('URI');
+
         // URI is required for subtitle tracks
         if (uri) {
           subtitleRenditions.push({
@@ -124,11 +126,13 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
           });
         }
       }
+
       continue;
     }
 
     // #EXT-X-STREAM-INF:BANDWIDTH=...
     const streamInfAttrs = matchTag(trimmed, 'EXT-X-STREAM-INF');
+
     if (streamInfAttrs) {
       pendingStreamInfo = {
         bandwidth: streamInfAttrs.getInt('BANDWIDTH', 0)!,
@@ -188,18 +192,22 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
   // live at *distinct* per-CDN URIs, so they stay separate — only the same-URI
   // cross-product merges.)
   const videoTracksByUrl = new Map<string, PartiallyResolvedVideoTrack>();
+
   for (const stream of videoStreams) {
     const existing = videoTracksByUrl.get(stream.uri);
+
     if (existing) {
       if (stream.audioGroupId && !existing.audioGroupIds?.includes(stream.audioGroupId)) {
         existing.audioGroupIds = [...(existing.audioGroupIds ?? []), stream.audioGroupId];
       }
+
       // BANDWIDTH is video + audio combined; the duplicates differ only in the
       // paired audio. Keep the lowest as the closest proxy to video-only, which
       // is what ABR should rank on.
       if (stream.bandwidth < existing.bandwidth) {
         existing.bandwidth = stream.bandwidth;
       }
+
       continue;
     }
 
@@ -218,9 +226,11 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     if (stream.resolution?.width !== undefined) {
       track.width = stream.resolution.width;
     }
+
     if (stream.resolution?.height !== undefined) {
       track.height = stream.resolution.height;
     }
+
     if (codecs?.video) {
       // When the STREAM-INF lists an audio codec but declares no AUDIO group,
       // the audio is muxed into this rendition's segments — keep both codecs so
@@ -230,15 +240,18 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
       // codec belongs here.
       track.codecs = codecs.audio && !stream.audioGroupId ? [codecs.video, codecs.audio] : [codecs.video];
     }
+
     if (stream.frameRate) {
       track.frameRate = stream.frameRate;
     }
+
     if (stream.audioGroupId) {
       track.audioGroupIds = [stream.audioGroupId];
     }
 
     videoTracksByUrl.set(stream.uri, track);
   }
+
   const videoTracks: PartiallyResolvedVideoTrack[] = [...videoTracksByUrl.values()];
 
   // Build PartiallyResolvedAudioTracks from audio-only streams
@@ -265,9 +278,11 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
   // Extract audio codecs from referencing streams
   const audioRenditionTracks: PartiallyResolvedAudioTrack[] = audioRenditions.flatMap((rendition) => {
     let audioCodecs: string[] | undefined;
+
     for (const stream of streams) {
       if (stream.audioGroupId === rendition.groupId && stream.codecs) {
         const codecs = parseCodecs(stream.codecs);
+
         if (codecs.audio) {
           audioCodecs = [codecs.audio];
           break;
@@ -282,12 +297,18 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     // stream the URL and bandwidth.
     if (!rendition.uri) {
       const carrier = audioOnlyTracks.find((track) => track.groupId === rendition.groupId);
+
       if (carrier) {
         carrier.name = rendition.name;
+
         if (rendition.language) carrier.language = rendition.language;
+
         if (rendition.channels) carrier.channels = rendition.channels;
+
         if (rendition.default) carrier.default = rendition.default;
+
         if (rendition.autoselect) carrier.autoselect = rendition.autoselect;
+
         return [];
       }
     }
@@ -309,12 +330,15 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     if (rendition.language) {
       track.language = rendition.language;
     }
+
     if (audioCodecs) {
       track.codecs = audioCodecs;
     }
+
     if (rendition.default) {
       track.default = rendition.default;
     }
+
     if (rendition.autoselect) {
       track.autoselect = rendition.autoselect;
     }
@@ -342,13 +366,16 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     if (rendition.language) {
       track.language = rendition.language;
     }
+
     // Match hls.js/http-streaming: only set default=true when BOTH DEFAULT=YES AND AUTOSELECT=YES
     if (rendition.default && rendition.autoselect) {
       track.default = true;
     }
+
     if (rendition.autoselect) {
       track.autoselect = rendition.autoselect;
     }
+
     if (rendition.forced) {
       track.forced = rendition.forced;
     }

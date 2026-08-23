@@ -79,6 +79,7 @@ export default function MuxUploaderPanel() {
    */
   const handleLogin = useCallback(async () => {
     const result = await actions.auth.initiateLogin();
+
     if (result.error) {
       setError(result.error.message);
       setState('polling_error');
@@ -124,9 +125,11 @@ export default function MuxUploaderPanel() {
       uploadId,
       getUploadStatus: async (id) => {
         const response = await actions.mux.getUploadStatus({ uploadId: id });
+
         if (response.error) {
           return { error: { message: response.error.message } };
         }
+
         return {
           data: {
             status: response.data.status as 'waiting' | 'asset_created' | 'errored' | 'cancelled' | 'timed_out',
@@ -136,9 +139,11 @@ export default function MuxUploaderPanel() {
       },
       getAssetStatus: async (assetId) => {
         const response = await actions.mux.getAssetStatus({ assetId });
+
         if (response.error) {
           return { error: { message: response.error.message } };
         }
+
         return {
           data: {
             status: response.data.status as 'preparing' | 'ready' | 'errored',

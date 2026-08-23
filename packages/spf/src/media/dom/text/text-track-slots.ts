@@ -29,7 +29,9 @@ export function addSubtitlesTracksToMedia(
     el.kind = modelTrack.kind;
     el.label = modelTrack.label;
     el.toggleAttribute('data-src-track', true);
+
     if (modelTrack.language) el.srclang = modelTrack.language;
+
     // Deliberately NOT propagating `modelTrack.default` to the `default`
     // attribute: that makes the browser auto-activate the slot on insertion,
     // which fires a `change` that `syncTextTracks` records as user intent —
@@ -49,12 +51,15 @@ export function addSubtitlesTracksToMedia(
  */
 export function getShowingSubtitlesTrackFromMedia(mediaElement: HTMLMediaElement): globalThis.TextTrack | undefined {
   const elements = mediaElement.querySelectorAll<HTMLTrackElement>(SPF_TRACK_SELECTOR);
+
   for (const el of elements) {
     const track = el.track;
+
     if (track.mode === 'showing' && isCaptionOrSubtitleTrack(track)) {
       return track;
     }
   }
+
   return undefined;
 }
 
@@ -65,6 +70,7 @@ export function getShowingSubtitlesTrackFromMedia(mediaElement: HTMLMediaElement
  */
 export function removeAllSubtitlesTracksFromMedia(mediaElement: HTMLMediaElement): void {
   const elements = mediaElement.querySelectorAll<HTMLTrackElement>(SPF_TRACK_SELECTOR);
+
   for (const el of elements) {
     el.remove();
   }
@@ -79,7 +85,9 @@ export function removeAllSubtitlesTracksFromMedia(mediaElement: HTMLMediaElement
 export function syncTextTrackModes(textTracks: TextTrackList, selectedId: string | undefined): void {
   for (let i = 0; i < textTracks.length; i++) {
     const track = textTracks[i]!;
+
     if (!isCaptionOrSubtitleTrack(track)) continue;
+
     track.mode = track.id === selectedId ? 'showing' : 'disabled';
   }
 }

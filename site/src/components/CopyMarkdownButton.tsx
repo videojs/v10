@@ -46,6 +46,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
               if (!response.ok) {
                 throw new Error(`Failed to fetch markdown: ${response.status} ${response.statusText}`);
               }
+
               return response.text();
             })
             .then((text) => new Blob([text], { type: 'text/plain' }));

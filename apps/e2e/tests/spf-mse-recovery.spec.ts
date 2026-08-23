@@ -49,6 +49,7 @@ function readAttachShape(): AttachShape {
 /** The blob URL of the current MSE attachment, wherever it rides. */
 function mseAttachmentOf(shape: AttachShape): string {
   if (shape.srcAttr.startsWith('blob:')) return shape.srcAttr;
+
   return shape.sources.find((s) => s.type === 'video/mp4' && s.src.startsWith('blob:'))?.src ?? '';
 }
 
@@ -95,11 +96,13 @@ test.describe('SPF MediaSource attach + recovery', () => {
       const mseSource = Array.from(video.querySelectorAll('source')).find(
         (s) => s.type === 'video/mp4' && s.src.startsWith('blob:')
       );
+
       if (mseSource) {
         mseSource.remove();
       } else {
         video.removeAttribute('src');
       }
+
       video.load();
     });
 

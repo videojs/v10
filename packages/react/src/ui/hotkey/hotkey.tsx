@@ -16,6 +16,7 @@ export function Hotkey({ keys, action, value, disabled, target }: HotkeyProps): 
     if (!container || !keys || !action || disabled) return;
 
     const resolver = resolveHotkeyAction(action);
+
     if (!resolver) return;
 
     return createHotkey(container, {

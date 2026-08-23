@@ -38,6 +38,7 @@ export abstract class ContextPartElement<State extends object> extends MediaElem
 
   #applyState(): void {
     const ctx = this.consumer.value;
+
     if (ctx) applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
   }
 }

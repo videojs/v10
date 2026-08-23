@@ -15,6 +15,7 @@ type MediaHost = HTMLMediaElementHost<HTMLMediaTargetLike, any>;
 /** Resolve the media host from a context media value (a media custom element or the host itself). */
 function resolveMediaHost(media: Media | null): MediaHost | null {
   if (media instanceof HTMLMediaElementHost) return media;
+
   const host = (media as { host?: unknown } | null)?.host;
   return host instanceof HTMLMediaElementHost ? host : null;
 }

@@ -13,6 +13,7 @@ const loadLatest = createLatestLoader();
 
 async function render() {
   const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling));
+
   if (!tag) return;
 
   document.getElementById('root')!.innerHTML = html`

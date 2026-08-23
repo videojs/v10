@@ -6,6 +6,7 @@ export function getPrivate(instance: object) {
 
 export function setPrivate(instance: object, props: Record<string, any>) {
   let saved = privateProps.get(instance);
+
   if (!saved) privateProps.set(instance, (saved = {}));
 
   return Object.assign(saved, props);

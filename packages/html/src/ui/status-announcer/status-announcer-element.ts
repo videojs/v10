@@ -33,6 +33,7 @@ export class StatusAnnouncerElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.setAttribute('role', 'status');
@@ -82,6 +83,7 @@ export class StatusAnnouncerElement extends MediaElement {
   #reconnect(store: StatusAnnouncerStore | undefined = this.#player.value): void {
     this.#storeUnsubscribe?.();
     this.#storeUnsubscribe = null;
+
     if (!store) {
       this.#core.resetSnapshot();
       return;

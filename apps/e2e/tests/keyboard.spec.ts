@@ -32,6 +32,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
 
     test.beforeEach(async ({ page }) => {
       if (!isAudio) await mockPresentation(page);
+
       player = new PlayerPage(page);
       await page.goto(entry.path);
       await player.waitForMediaReady();
@@ -54,9 +55,11 @@ for (const entry of PAGES as readonly PageEntry[]) {
       await before.focus();
 
       await expectTabFocus(page, player.playerRoot);
+
       if (!isAudio && browserName === 'firefox') {
         await expectTabFocus(page, page.locator('video').first());
       }
+
       await expectTabFocus(page, player.playButton);
 
       if (isAudio) {
@@ -78,6 +81,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
         await expectTabFocus(page, player.volumeSliderThumb);
       } else {
         await expectTabFocus(page, player.settingsButton);
+
         for (const control of [player.castButton, player.airPlayButton, player.pipButton, player.fullscreenButton]) {
           if (await control.isVisible()) await expectTabFocus(page, control);
         }
@@ -85,7 +89,9 @@ for (const entry of PAGES as readonly PageEntry[]) {
 
       await page.keyboard.press('Tab');
       await expect(after).toBeFocused();
+
       if (isAudio) await expect(player.volumeSlider).toBeHidden();
+
       await page.keyboard.press('Shift+Tab');
       await expect(isAudio ? player.muteButton : player.fullscreenButton).toBeFocused();
     });
@@ -187,6 +193,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
       test('operates captions with Enter and Space when a track is available', async ({ page }) => {
         await page.evaluate(() => {
           const video = document.querySelector('video');
+
           if (!video) return;
 
           const track = document.createElement('track');

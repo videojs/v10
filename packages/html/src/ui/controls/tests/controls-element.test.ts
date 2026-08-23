@@ -14,6 +14,7 @@ import { ControlsElement } from '../controls-element';
 
 function ensureCustomElementDefined(Constructor: CustomElementConstructor & { readonly tagName: string }): void {
   const { tagName } = Constructor;
+
   if (!customElements.get(tagName)) {
     customElements.define(tagName, Constructor);
   }

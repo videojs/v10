@@ -22,8 +22,11 @@ export function moduleFilename(id: string): string {
 /** Build a stable host module ID from a filename and query parameters. */
 export function moduleId(filename: string, parameters?: URLSearchParams | Readonly<Record<string, string>>): string {
   if (!parameters) return filename;
+
   const entries = parameters instanceof URLSearchParams ? [...parameters.entries()] : Object.entries(parameters);
+
   if (entries.length === 0) return filename;
+
   const query = new URLSearchParams(entries.sort(([left], [right]) => left.localeCompare(right)));
   return `${filename}?${query}`;
 }

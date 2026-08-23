@@ -58,9 +58,11 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     transition: options.transition,
     onOpenChange(open: boolean, details: PopoverChangeDetails) {
       const reason = REASON_MAP[details.reason];
+
       if (!reason) return;
 
       const group = options.group?.();
+
       if (open) group?.notifyOpen();
       else group?.notifyClose();
 
@@ -72,7 +74,9 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     openOnHover: () => true,
     delay: () => {
       const group = options.group?.();
+
       if (group?.shouldSkipDelay()) return 0;
+
       return options.delay?.() ?? group?.delay ?? 600;
     },
     closeDelay: () => {
@@ -100,6 +104,7 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
 
   function syncPopupGroup(): void {
     const next = options.popupGroup?.();
+
     if (next === popupGroup) return;
 
     unsubscribe?.();
@@ -112,6 +117,7 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
   function setTriggerElement(el: HTMLElement | null): void {
     popover.setTriggerElement(el);
     syncPopupGroup();
+
     if (isTriggerPopupOpen()) popover.close('imperative-action');
   }
 
@@ -126,19 +132,27 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     },
     onPointerEnter(event) {
       syncPopupGroup();
+
       if (options.disabled?.()) return;
+
       if (isTriggerPopupOpen()) return;
+
       if (event.pointerType === 'touch') return;
+
       baseTriggerProps.onPointerEnter(event);
     },
     onFocusIn(event) {
       syncPopupGroup();
+
       if (options.disabled?.()) return;
+
       if (isTriggerPopupOpen()) return;
+
       if (isPointerDown) {
         isPointerDown = false;
         return;
       }
+
       baseTriggerProps.onFocusIn(event);
     },
   };
@@ -148,6 +162,7 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     ...popover.popupProps,
     onPointerEnter(event) {
       if (options.disableHoverablePopup?.()) return;
+
       popover.popupProps.onPointerEnter(event);
     },
   };
@@ -162,6 +177,7 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     setTriggerElement,
     open: () => {
       syncPopupGroup();
+
       if (!isTriggerPopupOpen()) popover.open('hover');
     },
     close: (reason: TooltipOpenChangeReason = 'hover') => popover.close(reason),

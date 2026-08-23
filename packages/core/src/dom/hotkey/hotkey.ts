@@ -95,8 +95,11 @@ export function matchesHotkeyEvent(binding: ParsedHotkeyBinding, event: Keyboard
 
   // Exact modifier matching — all four must agree.
   if (shiftKey !== binding.modifiers.has('shift')) return false;
+
   if (event.ctrlKey !== binding.modifiers.has('ctrl')) return false;
+
   if (altKey !== binding.modifiers.has('alt')) return false;
+
   if (event.metaKey !== binding.modifiers.has('meta')) return false;
 
   return true;
@@ -114,10 +117,12 @@ export function findHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator | 
 /** Look up or create the hotkey coordinator for a target element. */
 export function getHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator {
   let coordinator = coordinators.get(target);
+
   if (!coordinator) {
     coordinator = new HotkeyCoordinator(target);
     coordinators.set(target, coordinator);
   }
+
   return coordinator;
 }
 

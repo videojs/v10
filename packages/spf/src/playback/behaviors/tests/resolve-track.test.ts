@@ -85,6 +85,7 @@ http://example.com/segment2.m4s
     const resolvedTrack = findTrackById(resolvedPres, 'track-1');
 
     expect(isResolvedTrack(resolvedTrack!)).toBe(true);
+
     if (isResolvedTrack(resolvedTrack!)) {
       expect(resolvedTrack.segments).toBeDefined();
       expect(resolvedTrack.segments.length).toBeGreaterThan(0);
@@ -222,6 +223,7 @@ http://example.com/segment1.m4s
     const resolvedTrack = findTrackById(resolvedPres, 'audio-1');
 
     expect(isResolvedTrack(resolvedTrack!)).toBe(true);
+
     if (isResolvedTrack(resolvedTrack!)) {
       expect(resolvedTrack.segments).toBeDefined();
       expect(resolvedTrack.segments.length).toBeGreaterThan(0);
@@ -291,6 +293,7 @@ http://example.com/subtitle1.webvtt
     const resolvedTrack = findTrackById(resolvedPres, 'text-1');
 
     expect(isResolvedTrack(resolvedTrack!)).toBe(true);
+
     if (isResolvedTrack(resolvedTrack!)) {
       expect(resolvedTrack.type).toBe('text');
     }
@@ -341,7 +344,9 @@ ${segUrl}
 
     vi.spyOn(globalThis, 'fetch').mockImplementation((requestOrUrl: RequestInfo | URL) => {
       const url = requestOrUrl instanceof Request ? requestOrUrl.url : String(requestOrUrl);
+
       if (url.includes('track-a')) return Promise.resolve(new Response(makePlaylist('http://example.com/a-seg1.m4s')));
+
       return Promise.resolve(new Response(makePlaylist('http://example.com/b-seg1.m4s')));
     });
 
@@ -763,9 +768,11 @@ function findTrackById(
   for (const selectionSet of presentation.selectionSets ?? []) {
     for (const switchingSet of selectionSet.switchingSets) {
       const track = switchingSet.tracks.find((t) => t.id === trackId);
+
       if (track) return track;
     }
   }
+
   return undefined;
 }
 

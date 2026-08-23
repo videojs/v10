@@ -34,11 +34,13 @@ for (const { name, path, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry
     test('all controls are present with correct attributes', async () => {
       await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.volumeLevel);
       await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.availability);
+
       // PiP is unsupported on WebKit and the button receives the `hidden` attribute.
       // Only assert `data-availability` when the pip button is visible.
       if (await player.pipButton.isVisible()) {
         await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
       }
+
       await expect(player.settingsButton).toBeAttached();
       await expect(player.duration).not.toHaveText('');
       await player.showControls();
@@ -149,6 +151,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect(player.volumeSlider).toBeVisible();
 
       const box = await player.volumeSlider.boundingBox();
+
       if (!box) throw new Error('Volume slider not visible');
 
       await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.75);
@@ -173,6 +176,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await player.showControls();
 
       const box = await player.timeSlider.boundingBox();
+
       if (!box) throw new Error('Time slider not visible');
 
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -193,6 +197,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await player.showControls();
 
       const box = await player.timeSlider.boundingBox();
+
       if (!box) throw new Error('Time slider not visible');
 
       const x = box.x + box.width / 2;
@@ -215,7 +220,9 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       const playerBox = await player.playerRoot.boundingBox();
       const triggerBox = await player.settingsButton.boundingBox();
       const tooltipBox = await player.settingsTooltip.boundingBox();
+
       if (!playerBox || !triggerBox || !tooltipBox) throw new Error('Settings tooltip not visible');
+
       expect(tooltipBox.x).toBeGreaterThanOrEqual(playerBox.x);
       expect(tooltipBox.y).toBeGreaterThanOrEqual(playerBox.y);
       expect(tooltipBox.x + tooltipBox.width).toBeLessThanOrEqual(playerBox.x + playerBox.width);
@@ -239,6 +246,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await page.evaluate((selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         if (!actual) return;
 
         Object.defineProperties(actual, {
@@ -253,6 +261,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await page.evaluate((selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         if (!actual) return;
 
         Object.defineProperty(actual, 'readyState', {
@@ -276,6 +285,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await page.evaluate((selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         if (!actual) return;
 
         Object.defineProperties(actual, {

@@ -55,6 +55,7 @@ export class VolumeSliderElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
@@ -64,6 +65,7 @@ export class VolumeSliderElement extends MediaElement {
       const volume = this.#volumeState.value;
       return this.disabled || !volume || volume.volumeAvailability !== 'available';
     };
+
     const getPercent = () => (this.#volumeState.value?.volume ?? 0) * 100;
     const getStepPercent = () => this.#core.getStepPercent();
     const setVolume = (percent: number) => this.#setVolume(percent);
@@ -133,9 +135,11 @@ export class VolumeSliderElement extends MediaElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#slider) return;
 
     const media = this.#volumeState.value;
+
     if (!media) return;
 
     this.#core.setInput(this.#slider.input.current);

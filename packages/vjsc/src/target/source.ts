@@ -47,19 +47,25 @@ function createSourcePropsFromAttributes<Props extends object>(
   return new Proxy(Object.create(null) as SourceProps<Props>, {
     get(_target, property) {
       if (property === SOURCE_PROPS) return token;
+
       if (property === 'has') return (name: string) => findAttribute(attributes, name) !== undefined;
+
       if (property === 'get') return (name: string) => createSourceProp(source, attributes, name, children);
+
       if (property === 'omit') {
         return (...names: string[]) =>
           createSourcePropsFromAttributes<Props>(source, attributes, children, new Set([...omitted, ...names]));
       }
+
       if (property === 'merge') {
         return (other: SourceProps<object>) => {
           const otherSource = (other as SourceProps<object> & { readonly [SOURCE_PROPS]?: SourcePropsToken })[
             SOURCE_PROPS
           ];
+
           if (!otherSource || otherSource.source.code !== token.source.code)
             throw new Error('vjsc/target: source props can only merge within one module.');
+
           return createSourcePropsFromAttributes<Props & object>(
             token.source,
             [...attributes, ...otherSource.attributes],
@@ -68,8 +74,11 @@ function createSourcePropsFromAttributes<Props extends object>(
           );
         };
       }
+
       if (property === 'children') return children;
+
       if (typeof property === 'string') return createSourceProp(source, attributes, property, children);
+
       return undefined;
     },
     ownKeys() {

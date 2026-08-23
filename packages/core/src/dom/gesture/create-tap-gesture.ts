@@ -6,6 +6,7 @@ const recognizers = new WeakMap<HTMLElement, TapRecognizer>();
 
 function getRecognizer(target: HTMLElement): TapRecognizer {
   let recognizer = recognizers.get(target);
+
   if (recognizer) return recognizer;
 
   recognizer = new TapRecognizer();

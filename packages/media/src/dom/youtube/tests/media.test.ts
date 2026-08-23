@@ -59,10 +59,12 @@ class MockPlayer {
 
   addEventListener(type: string, listener: (event: StateChangeEvent) => void): void {
     let set = this.listeners.get(type);
+
     if (!set) {
       set = new Set();
       this.listeners.set(type, set);
     }
+
     set.add(listener);
   }
 
@@ -118,6 +120,7 @@ async function attachAndLoad(media: YouTubeMedia): Promise<{ iframe: HTMLIFrameE
   // There is no embed to attach to without a source, so tests that don't care
   // which video is playing get one.
   if (!media.src) media.src = 'aqz-KE-bpKQ';
+
   const iframe = createIframe();
   media.attach(iframe);
   const player = await waitForEngine(media);
@@ -434,6 +437,7 @@ describe('YouTubeMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete after ready', async () => {
     const media = new YouTubeMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete', 'durationchange'] as const) {
       media.addEventListener(type, () => events.push(type));
     }

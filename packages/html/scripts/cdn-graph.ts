@@ -54,9 +54,11 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
 
   while (queue.length > 0) {
     const file = queue.pop() as string;
+
     if (seen.has(file)) continue;
 
     const path = resolve(dir, file);
+
     if (!existsSync(path)) {
       throw new Error(`Expected bundle is missing from the build: ${file}`);
     }
@@ -65,6 +67,7 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
 
     for (const specifier of collectSpecifiers(readFileSync(path, 'utf8'))) {
       if (!specifier.startsWith('.')) continue;
+
       queue.push(relative(dir, resolve(dirname(path), specifier)));
     }
   }
@@ -95,6 +98,7 @@ export function findUnresolvableSpecifiers(dir: string, files: Iterable<string>)
       }
 
       const target = resolve(dirname(path), specifier);
+
       if (!existsSync(target)) {
         problems.push(`${file}: "${specifier}" resolves outside the build (${relative(dir, target)})`);
       }

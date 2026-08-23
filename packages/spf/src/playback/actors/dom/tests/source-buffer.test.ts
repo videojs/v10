@@ -21,14 +21,17 @@ function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuf
 
   const clipRanges = (start: number, end: number) => {
     const next: Array<[number, number]> = [];
+
     for (const [s, e] of ranges) {
       if (e <= start || s >= end) {
         next.push([s, e]);
       } else {
         if (s < start) next.push([s, start]);
+
         if (e > end) next.push([end, e]);
       }
     }
+
     ranges = next;
   };
 
@@ -45,7 +48,9 @@ function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuf
     updating: false,
     appendBuffer: vi.fn(() => {
       const range = appendRanges[appendIndex++];
+
       if (range) ranges.push(range);
+
       setTimeout(() => {
         for (const listener of listeners.updateend ?? []) {
           listener(new Event('updateend'));
@@ -211,6 +216,7 @@ describe('createSourceBufferActor', () => {
         firstCall = false;
         actor.send({ type: 'cancel' });
       }
+
       return origImpl?.(data);
     });
 

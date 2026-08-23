@@ -35,6 +35,7 @@ export class LiveIndicator<State extends object> {
 
     for (const key in this.#dataAttrs) {
       const name = this.#dataAttrs[key];
+
       if (name) this.#host.removeAttribute(name);
     }
   }

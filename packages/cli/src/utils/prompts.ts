@@ -28,7 +28,9 @@ export async function promptFramework(): Promise<Framework> {
       { value: 'react' as const, label: 'React' },
     ],
   });
+
   if (p.isCancel(value)) process.exit(0);
+
   p.note(`💡 Tip: run \`npx @videojs/cli config set framework ${value}\` to save this preference`);
   return value;
 }
@@ -48,6 +50,7 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
   if (useCase === 'background-video') {
     return [{ value: 'video', label: 'Default' }];
   }
+
   const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
   return [
     { value: isAudio ? 'audio' : 'video', label: 'Default' },
@@ -66,9 +69,11 @@ function installMethodOptions(
     { value: 'yarn', label: 'yarn' },
     { value: 'bun', label: 'bun' },
   ];
+
   if (framework === 'html' && supportsCdnInstall(renderer)) {
     options.unshift({ value: 'cdn', label: 'CDN' });
   }
+
   return options;
 }
 
@@ -89,10 +94,12 @@ export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
     none: 'none',
   };
   const result = map[skinFlag];
+
   if (!result) {
     console.error(`Invalid skin: "${skinFlag}". Must be "default", "minimal", or "none".`);
     process.exit(1);
   }
+
   return result;
 }
 
@@ -107,7 +114,9 @@ export async function promptInstallOptions(
         message: 'Preset',
         options: PRESET_OPTIONS,
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value;
     })());
 
@@ -121,7 +130,9 @@ export async function promptInstallOptions(
         message: 'Skin',
         options: skinOptionsForUseCase(useCase),
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value;
     })());
 
@@ -132,7 +143,9 @@ export async function promptInstallOptions(
         message: 'Source URL (leave blank for demo)',
         defaultValue: '',
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value ?? '';
     })());
 
@@ -154,7 +167,9 @@ export async function promptInstallOptions(
         options,
         initialValue: detected?.renderer,
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value as Renderer;
     })());
 
@@ -165,7 +180,9 @@ export async function promptInstallOptions(
         message: 'Install method',
         options: installMethodOptions(framework, media),
       });
+
       if (p.isCancel(value)) process.exit(0);
+
       return value;
     })());
 

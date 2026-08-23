@@ -26,6 +26,7 @@ async function render() {
 
   const live = isLiveSource(state.source);
   const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling, { live }));
+
   if (!tag) return;
 
   const storyboard = getStoryboardSrc(state.source);

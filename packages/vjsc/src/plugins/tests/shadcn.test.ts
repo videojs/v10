@@ -38,8 +38,10 @@ describe('shadcnPlugin', () => {
     const manifest = assetJson(output, 'registry.json');
     const rootItem = assetJson(output, 'root.json');
     registrySchema.parse(manifest);
+
     for (const outputItem of output.output) {
       if (outputItem.type !== 'asset' || outputItem.fileName === 'registry.json') continue;
+
       registryItemSchema.parse(JSON.parse(String(outputItem.source)));
     }
 
@@ -224,6 +226,7 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
       items: (modules) =>
         modules.flatMap<ShadcnItem<FixtureMeta>>((module) => {
           const { filename, meta: itemMeta, transform } = module;
+
           if (basename(filename) === 'utils.ts') {
             return [
               {
@@ -236,7 +239,9 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
               },
             ];
           }
+
           if (!itemMeta) return [];
+
           const skin = transform.skin;
           const name = skin && skin !== 'default' ? `${itemMeta.name}-${skin}` : itemMeta.name;
           return [
@@ -261,16 +266,20 @@ function meta(name: string, type: FixtureMeta['type'] = 'component'): string {
 
 function setup(files: Readonly<Record<string, string>>): string {
   const root = mkdtempSync(join(tmpdir(), 'vjsc-shadcn-'));
+
   for (const [filename, source] of Object.entries(files)) {
     const path = join(root, filename);
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, source);
   }
+
   return root;
 }
 
 function assetJson(output: RolldownOutput, filename: string): any {
   const asset = output.output.find((item) => item.type === 'asset' && item.fileName === filename);
+
   if (asset?.type !== 'asset') throw new Error(`Missing asset: ${filename}`);
+
   return JSON.parse(String(asset.source));
 }

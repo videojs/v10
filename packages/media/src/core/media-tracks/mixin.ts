@@ -124,21 +124,25 @@ function hasOwn(value: object, key: PropertyKey) {
 
 function initVideoRenditions(media: HTMLMediaElement) {
   let renditions = getPrivate(media).videoRenditions as VideoRenditionList | undefined;
+
   if (!renditions) {
     renditions = new VideoRenditionList();
     getPrivate(renditions).media = new WeakRef(media);
     getPrivate(media).videoRenditions = renditions;
   }
+
   return renditions;
 }
 
 function initAudioRenditions(media: HTMLMediaElement) {
   let renditions = getPrivate(media).audioRenditions as AudioRenditionList | undefined;
+
   if (!renditions) {
     renditions = new AudioRenditionList();
     getPrivate(renditions).media = new WeakRef(media);
     getPrivate(media).audioRenditions = renditions;
   }
+
   return renditions;
 }
 
@@ -146,6 +150,7 @@ function getBaseMediaTracksFn(MediaElementClass: any, type: string): (() => any)
   if (MediaElementClass?.prototype) {
     return Object.getOwnPropertyDescriptor(MediaElementClass.prototype, `${type}Tracks`)?.get;
   }
+
   return undefined;
 }
 
@@ -160,6 +165,7 @@ function isNativeTrackList(
 
 function getVideoTracks(media: any) {
   let tracks = getPrivate(media).videoTracks as VideoTrackList | undefined;
+
   if (!tracks) {
     tracks = new VideoTrackList();
     getPrivate(media).videoTracks = tracks;
@@ -180,6 +186,7 @@ function getVideoTracks(media: any) {
 
       const onAddTrack = (event: TrackEvent) => {
         if ([...currentTracks].some((track) => track instanceof VideoTrack)) return;
+
         addVideoTrack(media, event.track as VideoTrack);
       };
 
@@ -190,6 +197,7 @@ function getVideoTracks(media: any) {
       // Adding a custom track replaces any mirrored native tracks.
       const onCustomAddTrack = (event: Event) => {
         if (!((event as TrackEvent).track instanceof VideoTrack)) return;
+
         for (const nativeTrack of nativeTracks) {
           removeVideoTrack(nativeTrack as VideoTrack);
         }
@@ -197,6 +205,7 @@ function getVideoTracks(media: any) {
 
       const controller = new AbortController();
       const { signal } = controller;
+
       getPrivate(media).videoTracksCleanup = controller;
 
       nativeTracks.addEventListener('change', onChange, { signal });
@@ -205,11 +214,13 @@ function getVideoTracks(media: any) {
       currentTracks.addEventListener('addtrack', onCustomAddTrack, { signal });
     }
   }
+
   return tracks;
 }
 
 function getAudioTracks(media: any) {
   let tracks = getPrivate(media).audioTracks as AudioTrackList | undefined;
+
   if (!tracks) {
     tracks = new AudioTrackList();
     getPrivate(media).audioTracks = tracks;
@@ -230,6 +241,7 @@ function getAudioTracks(media: any) {
 
       const onAddTrack = (event: TrackEvent) => {
         if ([...currentTracks].some((track) => track instanceof AudioTrack)) return;
+
         addAudioTrack(media, event.track as AudioTrack);
       };
 
@@ -240,6 +252,7 @@ function getAudioTracks(media: any) {
       // Adding a custom track replaces any mirrored native tracks.
       const onCustomAddTrack = (event: Event) => {
         if (!((event as TrackEvent).track instanceof AudioTrack)) return;
+
         for (const nativeTrack of nativeTracks) {
           removeAudioTrack(nativeTrack as AudioTrack);
         }
@@ -247,6 +260,7 @@ function getAudioTracks(media: any) {
 
       const controller = new AbortController();
       const { signal } = controller;
+
       getPrivate(media).audioTracksCleanup = controller;
 
       nativeTracks.addEventListener('change', onChange, { signal });
@@ -255,5 +269,6 @@ function getAudioTracks(media: any) {
       currentTracks.addEventListener('addtrack', onCustomAddTrack, { signal });
     }
   }
+
   return tracks;
 }

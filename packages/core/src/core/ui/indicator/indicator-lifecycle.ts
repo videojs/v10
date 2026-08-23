@@ -33,6 +33,7 @@ export class IndicatorCloseController {
 
   clear(): void {
     if (this.#timer === null) return;
+
     clearTimeout(this.#timer);
     this.#timer = null;
   }

@@ -14,6 +14,7 @@ const coreLocalesDir = resolve(coreRoot, 'src/core/i18n/locales');
 const htmlLocalesDir = resolve(coreRoot, '../html/src/i18n/locales');
 const reactLocalesDir = resolve(coreRoot, '../react/src/i18n/locales');
 const textDir = resolve(coreRoot, 'src/core/i18n/text');
+
 const generatedFiles = new Set<string>();
 
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)] as const;
@@ -119,6 +120,7 @@ async function validateLocaleCompleteness(): Promise<void> {
     const { default: locale } = await import(pathToFileURL(resolve(coreLocalesDir, `${tag}.ts`)).href);
     const localeKeys = new Set(flattenEntries(locale ?? {}).map(([key]) => key));
     const missing = [...englishKeys].filter((key) => !localeKeys.has(key));
+
     if (missing.length) errors.push(`${tag}: ${missing.join(', ')}`);
   }
 
@@ -132,6 +134,7 @@ function generateTextModules(): void {
   mkdirSync(textDir, { recursive: true });
 
   const namespaces = new Map<string, [string, string][]>();
+
   for (const [key, text] of flattenEntries(en)) {
     const namespace = key.slice(0, key.indexOf('.'));
     const entries = namespaces.get(namespace) ?? [];
@@ -186,14 +189,17 @@ function syncPlatformLocaleDir(dir: string): void {
     if (!file.endsWith('.ts') || expected.has(file)) {
       continue;
     }
+
     unlinkSync(resolve(dir, file));
   }
 
   const expectedDirs = new Set([...PLATFORM_LOCALE_TAGS, 'all']);
+
   for (const file of readdirSync(dir, { withFileTypes: true })) {
     if (!file.isDirectory() || expectedDirs.has(file.name)) {
       continue;
     }
+
     rmSync(resolve(dir, file.name), { recursive: true, force: true });
   }
 }

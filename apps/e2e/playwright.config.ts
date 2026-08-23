@@ -34,13 +34,16 @@ const selectedProjects = args.flatMap((arg, index) => {
   if (arg === '--project' || arg === '-p') {
     return args[index + 1] ? [args[index + 1]] : [];
   }
+
   return arg.startsWith('--project=') ? [arg.slice('--project='.length)] : [];
 });
+
 const testFilters = args.filter((arg, index) => !arg.startsWith('-') && !VALUE_OPTIONS.has(args[index - 1] ?? ''));
 const selectedViteProject = selectedProjects.some((name) => name.startsWith('vite-'));
 const selectedSandboxProject = selectedProjects.some((name) => name.startsWith('sandbox-'));
 const selectedSandboxSpec = testFilters.some((arg) => SANDBOX_SPEC.test(arg));
 const unfilteredRun = selectedProjects.length === 0 && testFilters.length === 0;
+
 const shouldStartViteServer =
   selectedViteProject ||
   unfilteredRun ||

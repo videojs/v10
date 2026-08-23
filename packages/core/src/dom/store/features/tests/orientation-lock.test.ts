@@ -55,6 +55,7 @@ function createOrientationStore() {
 describe('orientationLockFeature', () => {
   afterEach(() => {
     for (const store of stores.splice(0)) store.destroy();
+
     setFullscreenElement(null);
     vi.unstubAllGlobals();
   });

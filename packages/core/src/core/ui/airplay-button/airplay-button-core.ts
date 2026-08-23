@@ -54,10 +54,13 @@ export class AirPlayButtonCore {
 
   getLabel(state: AirPlayButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
+
     if (label) return label;
 
     if (state.state === 'connected') return stopText;
+
     if (state.state === 'connecting') return connectingText;
+
     return startText;
   }
 
@@ -94,6 +97,7 @@ export class AirPlayButtonCore {
 
   async toggle(media: MediaRemotePlaybackState): Promise<void> {
     this.setMedia(media);
+
     if (this.getState().disabled) return;
 
     try {

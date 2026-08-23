@@ -133,7 +133,9 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
   const candidateSet = computed(
     () => {
       const presentation = state.presentation.get();
+
       if (!isResolvedPresentation(presentation)) return [];
+
       return applyConstraints(constraints, getTracksByType(presentation, trackType), deps);
     },
     { equals: sameCandidateSet }
@@ -169,8 +171,10 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
             // first-track code path of its own.
             const survivors = applyRules(rules, peek(candidateSet), deps);
             const id = survivors[0]?.id;
+
             if (id) state[selectedKey].set(id);
           }
+
           return () => state[selectedKey].set(undefined);
         },
         effects: [
@@ -191,13 +195,16 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
           () => {
             // Untracked: writing the slot below must not re-enter this reaction.
             const selectedId = peek(state[selectedKey]);
+
             if (!selectedId) return;
+
             if (candidateSet.get().some((track) => track.id === selectedId)) return;
 
             // Only a pick the source actually offers is this behavior's to drop. An
             // id absent from the manifest was never selectable, and external writes
             // are left alone — see this module's header.
             const presentation = peek(state.presentation);
+
             if (
               isResolvedPresentation(presentation) &&
               getTracksByType(presentation, trackType).some((track) => track.id === selectedId)
@@ -297,6 +304,7 @@ type ScreenResolutionRuleState = {
  */
 export const screenResolutionCap: SelectTrackRule<unknown> = (tracks, { state }) => {
   const screenResolution = (state as ScreenResolutionRuleState | undefined)?.screenResolution?.get();
+
   if (!screenResolution) return [];
 
   return tracksUnderPixelArea(tracks, screenResolution.width * screenResolution.height);

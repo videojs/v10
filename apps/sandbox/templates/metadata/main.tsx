@@ -32,9 +32,12 @@ function MetadataVideo({ mediaTitle }: { mediaTitle: string | null | undefined }
 
   useLayoutEffect(() => {
     if (!media.current || Object.is(media.current.contentData.title, mediaTitle)) return;
+
     const contentData = { ...media.current.contentData };
+
     if (mediaTitle === undefined) delete contentData.title;
     else contentData.title = mediaTitle;
+
     media.current.contentData = contentData;
     media.current.dispatchEvent(new Event('contentdatachange'));
   }, [mediaTitle]);

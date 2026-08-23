@@ -93,16 +93,20 @@ export function parseYouTubeVideoId(src: string) {
  */
 export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   if (!src) return null;
+
   if (/^[\w-]{11}$/.test(src)) {
     return { id: src, kind: 'video', listId: null, startTime: null, noCookie: false };
   }
+
   const noCookie = src.includes('-nocookie');
   const videoMatch = VIDEO_MATCH_SRC.exec(src);
   const listMatch = PLAYLIST_MATCH_SRC.exec(src);
   // Playlist embed URLs use the `videoseries` placeholder in the video id slot.
   const videoId = videoMatch?.[1] ?? null;
   const id = videoId === 'videoseries' ? null : videoId;
+
   if (!id && !listMatch) return null;
+
   return {
     id,
     kind: id ? 'video' : 'playlist',
@@ -115,7 +119,9 @@ export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
 /** Build the iframe `src` URL for an initial YouTube embed from the given props. */
 export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaProps> = {}) {
   const parsed = parseYouTubeSource(src);
+
   if (!parsed) return '';
+
   const embedBase = parsed.noCookie ? EMBED_BASE_NOCOOKIE : EMBED_BASE;
   const params: Record<string, unknown> = {
     // Hide YouTube chrome by default; pass nothing only when controls is explicitly true.
@@ -133,9 +139,11 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
     // YouTube-specific knobs (`cc_load_policy`, `hl`, `color`, …) flow through here.
     ...(props.source?.engine?.youtube ?? undefined),
   };
+
   if (parsed.kind === 'playlist' && parsed.listId) {
     return `${embedBase}?${serializeEmbedParams({ listType: 'playlist', list: parsed.listId, ...params })}`;
   }
+
   return `${embedBase}/${parsed.id}?${serializeEmbedParams(params)}`;
 }
 
@@ -145,24 +153,32 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
  */
 function parseStartTime(url: string): number | null {
   const tValue = /[?&]t=([\dhms]+)/i.exec(url)?.[1]?.toLowerCase();
+
   if (!tValue) return null;
+
   let totalSeconds = 0;
   let hasValue = false;
   const hours = /(\d+)h/.exec(tValue)?.[1];
+
   if (hours) {
     totalSeconds += Number.parseInt(hours, 10) * 3600;
     hasValue = true;
   }
+
   const minutes = /(\d+)m/.exec(tValue)?.[1];
+
   if (minutes) {
     totalSeconds += Number.parseInt(minutes, 10) * 60;
     hasValue = true;
   }
+
   const seconds = /(\d+)s?$/.exec(tValue)?.[1];
+
   if (seconds) {
     totalSeconds += Number.parseInt(seconds, 10);
     hasValue = true;
   }
+
   return hasValue ? totalSeconds : null;
 }
 

@@ -11,7 +11,9 @@ function createMatches(handlers: Partial<Record<GestureType, (() => void) | null
   return {
     resolve(type) {
       const handler = handlers[type];
+
       if (!handler) return [];
+
       return [{ type, recognizer: NOOP_RECOGNIZER, onActivate: handler }];
     },
   };

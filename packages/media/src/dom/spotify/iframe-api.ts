@@ -62,6 +62,7 @@ let apiPromise: Promise<SpotifyIframeApi> | null = null;
 export function loadSpotifyIframeApi(): Promise<SpotifyIframeApi> {
   const globals = globalThis as SpotifyApiGlobals;
   const existing = globals.SpotifyIframeApi;
+
   if (existing) return Promise.resolve(existing);
 
   apiPromise ??= new Promise<SpotifyIframeApi>((resolve, reject) => {

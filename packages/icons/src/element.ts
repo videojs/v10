@@ -14,6 +14,7 @@ export class MediaIconElement extends HTMLElement {
     for (const [name, svg] of Object.entries(icons)) familyIcons.set(name, svg);
 
     MediaIconElement.#families.set(family, familyIcons);
+
     for (const icon of MediaIconElement.#instances) {
       if (icon.#family === family) icon.#render();
     }
@@ -21,6 +22,7 @@ export class MediaIconElement extends HTMLElement {
 
   static registerLoader(family: string, load: IconLoader): void {
     MediaIconElement.#loaders.set(family, load);
+
     for (const icon of MediaIconElement.#instances) {
       if (icon.#family === family) icon.#render();
     }
@@ -30,9 +32,11 @@ export class MediaIconElement extends HTMLElement {
     if (MediaIconElement.#families.has(family)) return Promise.resolve();
 
     const pending = MediaIconElement.#loading.get(family);
+
     if (pending) return pending;
 
     const loader = MediaIconElement.#loaders.get(family);
+
     if (!loader) return Promise.resolve();
 
     const loading = Promise.resolve()
@@ -75,10 +79,12 @@ export class MediaIconElement extends HTMLElement {
 
     if (svg !== undefined) {
       if (this.innerHTML !== svg) this.innerHTML = svg;
+
       return;
     }
 
     this.replaceChildren();
+
     if (familyIcons || !name || !MediaIconElement.#loaders.has(family)) return;
 
     void MediaIconElement.load(family).then(

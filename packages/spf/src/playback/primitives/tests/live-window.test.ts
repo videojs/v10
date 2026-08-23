@@ -53,6 +53,7 @@ function audioTrack(start: number): AudioTrack {
 
 function presentation(opts: { video?: VideoTrack; audio?: AudioTrack }): Presentation {
   const selectionSets: SelectionSet[] = [];
+
   if (opts.video) {
     const set: VideoSelectionSet = {
       id: 'v-set',
@@ -61,6 +62,7 @@ function presentation(opts: { video?: VideoTrack; audio?: AudioTrack }): Present
     };
     selectionSets.push(set);
   }
+
   if (opts.audio) {
     const set: AudioSelectionSet = {
       id: 'a-set',
@@ -69,6 +71,7 @@ function presentation(opts: { video?: VideoTrack; audio?: AudioTrack }): Present
     };
     selectionSets.push(set);
   }
+
   return { id: 'pres-1', url: 'https://example.com/master.m3u8', startTime: 0, selectionSets };
 }
 

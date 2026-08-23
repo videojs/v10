@@ -84,6 +84,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     if (this.hotkeyAction && !this.#hotkeyRegistry) {
@@ -124,7 +125,9 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   /** Resolved label for tooltips and other display surfaces. */
   getResolvedLabel(): string | undefined {
     const media = this.mediaState.value;
+
     if (!media) return undefined;
+
     this.core.setMedia(media);
     const state = this.core.getState() as InferComponentState<Core>;
     return translateText(this.core.getLabel(state), this.#i18n.value, getLabelParams(this.core, state));
@@ -147,9 +150,11 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     this.core.setMedia(media);
     const state = this.core.getState() as InferComponentState<Core>;
     const attrs = (this.core.getAttrs?.(state) ?? {}) as Record<string, unknown>;
+
     if (isText(attrs['aria-label'])) {
       attrs['aria-label'] = translateText(attrs['aria-label'], this.#i18n.value, getLabelParams(this.core, state));
     }
+
     applyElementProps(this, {
       ...attrs,
       'aria-keyshortcuts': this.#hotkeyRegistry?.aria,

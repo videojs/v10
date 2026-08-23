@@ -37,6 +37,7 @@ export function createSchemaModule(options: CreateSchemaModuleOptions): SchemaMo
   }
 
   const duplicate = entries.find((entry, index) => entry.name === entries[index - 1]?.name);
+
   if (duplicate) throw new Error(`Duplicate component name: ${duplicate.name}`);
 
   const code = `${[

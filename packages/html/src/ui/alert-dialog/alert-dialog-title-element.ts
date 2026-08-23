@@ -13,6 +13,7 @@ export class AlertDialogTitleElement extends ContextPartElement<AlertDialogState
   protected override update(changed: PropertyValues): void {
     super.update(changed);
     const titleId = this.consumer.value?.state.titleId;
+
     if (titleId) this.id = titleId;
   }
 }

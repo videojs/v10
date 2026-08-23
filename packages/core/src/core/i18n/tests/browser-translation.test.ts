@@ -128,12 +128,15 @@ describe('getBrowserTranslations', () => {
     installMockTranslator({
       translate: (text) => {
         translatedInputs.push(text);
+
         if (text === 'Seek backward {0} seconds') {
           return 'Mencari mundur {0} detik';
         }
+
         if (text === 'Seek forward {0} seconds') {
           return 'Mencari maju {0} detik';
         }
+
         return text;
       },
     });

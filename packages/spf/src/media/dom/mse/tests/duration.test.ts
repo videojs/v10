@@ -17,14 +17,17 @@ function makeUpdatingSourceBuffer() {
     addEventListener: (_event: string, handler: () => void, options?: { once?: boolean; signal?: AbortSignal }) => {
       const wrapped = () => {
         if (options?.signal?.aborted) return;
+
         handler();
       };
       updateEndListeners.push(wrapped);
+
       if (options?.signal) {
         options.signal.addEventListener(
           'abort',
           () => {
             const idx = updateEndListeners.indexOf(wrapped);
+
             if (idx >= 0) updateEndListeners.splice(idx, 1);
           },
           { once: true }
@@ -36,6 +39,7 @@ function makeUpdatingSourceBuffer() {
 
   const finishUpdating = () => {
     (buffer as unknown as { updating: boolean }).updating = false;
+
     for (const h of updateEndListeners.slice()) h();
   };
 

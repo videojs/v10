@@ -15,6 +15,7 @@ const htmlPackageDir = normalizePath(dirname(createRequire(__filename).resolve('
 const htmlCdnDir = `${htmlPackageDir}/cdn`;
 const htmlCdnI18nRegistry = `${htmlCdnDir}/i18n.dev.js`;
 const htmlCdnSourceI18n = `${htmlPackageDir}/src/cdn/i18n.ts`;
+
 const cdnSandboxMainSrc = resolve(__dirname, 'src/cdn/main.ts');
 const cdnSandboxMainTemplate = resolve(__dirname, 'templates/cdn/main.ts');
 
@@ -37,6 +38,7 @@ function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
 
   const isRelativeI18nChunk =
     source === './i18n.dev.js' || source === '../i18n.dev.js' || source.endsWith('/i18n.dev.js');
+
   if (isRelativeI18nChunk && isHtmlCdnChunk(importer)) {
     return true;
   }
@@ -72,8 +74,10 @@ function cdnSandboxI18nPlugin(): Plugin {
         }
 
         const cdnEntryMatch = source.match(/^@videojs\/html\/cdn\/(.+)$/);
+
         if (cdnEntryMatch && cdnEntryMatch[1] !== 'i18n') {
           const devEntry = resolveHtmlCdnDevEntry(cdnEntryMatch[1]);
+
           if (devEntry) return devEntry;
         }
 
@@ -180,6 +184,7 @@ export default defineConfig({
       },
       onwarn(warning, defaultHandler) {
         if (warning.code === 'COMMONJS_VARIABLE_IN_ESM') return;
+
         defaultHandler(warning);
       },
     },

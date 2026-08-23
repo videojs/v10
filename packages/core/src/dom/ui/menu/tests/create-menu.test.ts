@@ -45,6 +45,7 @@ describe('createMenu', () => {
 
   afterEach(() => {
     for (const item of items) cleanupElement(item);
+
     items = [];
   });
 

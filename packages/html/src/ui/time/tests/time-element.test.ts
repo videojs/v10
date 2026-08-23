@@ -90,7 +90,9 @@ async function setup(props: Partial<TimeElement> = {}, locale?: string, state?: 
   const time = createElement(TimeElement);
 
   if (state) provider.store = createTimeStore(state);
+
   Object.assign(time, props);
+
   if (locale) {
     const i18n = new MediaI18nProviderElement();
     i18n.setAttribute('lang', locale);
@@ -99,6 +101,7 @@ async function setup(props: Partial<TimeElement> = {}, locale?: string, state?: 
   } else {
     document.body.append(provider);
   }
+
   provider.append(time);
   await time.updateComplete;
   await waitForAssertion(() => expect(time.textContent).toBeTruthy());

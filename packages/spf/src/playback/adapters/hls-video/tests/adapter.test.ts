@@ -260,9 +260,11 @@ describe('HlsVideoMediaElement', () => {
       const originalPlay = el.play.bind(el);
       el.play = () => {
         playCallCount++;
+
         if (playCallCount === 1) {
           return Promise.reject(new Error('no supported sources'));
         }
+
         return originalPlay();
       };
 
@@ -505,7 +507,9 @@ describe('HlsVideoMediaElement', () => {
       // The window slides (reload): derived value follows with no event needed.
       const slid = liveVideoPresentation();
       const track = slid.selectionSets[0]!.switchingSets[0]!.tracks[0] as { segments: { startTime: number }[] };
+
       for (const segment of track.segments) segment.startTime += 10;
+
       media.engine.state.presentation.set(slid);
       expect(media.liveEdgeStart).toBe(114);
       media.destroy();

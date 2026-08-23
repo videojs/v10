@@ -87,6 +87,7 @@ function deriveState(
   mediaElement: HTMLMediaElement | undefined
 ): SyncTextTracksFsmState {
   if (!mediaElement || !presentation) return 'preconditions-unmet';
+
   return getTracksByType(presentation, 'text').length > 0 ? 'sync-active' : 'preconditions-unmet';
 }
 
@@ -101,6 +102,7 @@ function deriveTextTrackIntent(
   modelTextTracks: readonly (PartiallyResolvedTextTrack | TextTrack)[]
 ): Partial<TextTrack> | 'off' {
   if (!showingId) return 'off';
+
   const language = modelTextTracks.find((track) => track.id === showingId)?.language;
   return language ? { language } : { id: showingId };
 }
@@ -178,14 +180,17 @@ function syncTextTracksSetup({
               syncTextTrackModes(mediaElement.textTracks, state.selectedTextTrackId.get());
               return;
             }
+
             const showingTrack = getShowingSubtitlesTrackFromMedia(mediaElement);
             // `showingTrack.id` matches the SPF id we set when the slot was
             // allocated. Empty-string ids fall through to `undefined`.
             const showingId = showingTrack?.id || undefined;
+
             // Echo guard: selectedTextTrackId is the id we last drove into the
             // DOM (mirror / resolver correction). A change still showing it is our
             // own echo — ignore it rather than write spurious intent.
             if (showingId === state.selectedTextTrackId.get()) return;
+
             // Genuine user action → write intent (resolved into selectedTextTrackId
             // by switchTextTrack), not the resolved id.
             state.userTextTrackSelection.set(deriveTextTrackIntent(showingId, modelTextTracks));

@@ -24,6 +24,7 @@ export class BackgroundVideoHost extends EventTarget {
 
   attach(target: HTMLVideoElement): void {
     if (!target || this.#target === target) return;
+
     this.#target = target;
   }
 

@@ -40,6 +40,7 @@ export function HlsJsMediaErrorsMixin<Base extends Constructor<HlsEngineHost>>(B
       this.#disconnect = new AbortController();
 
       const { engine, target } = this;
+
       if (!engine || !target) return;
 
       const onError = (_event: string, data: ErrorData) => {

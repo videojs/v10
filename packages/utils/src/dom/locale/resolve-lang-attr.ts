@@ -8,5 +8,6 @@ export function resolveLangAttr<Locale extends string = string>(raw: string | un
   if (isUndefined(raw) || raw.trim() === '') {
     return undefined;
   }
+
   return raw.trim() as Locale;
 }

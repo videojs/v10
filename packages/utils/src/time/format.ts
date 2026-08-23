@@ -53,6 +53,7 @@ function createDurationFormatter(
 
 function localeCacheKey(locale?: string | string[]): string {
   if (locale === undefined) return '';
+
   return Array.isArray(locale) ? locale.join(':') : locale;
 }
 
@@ -63,10 +64,12 @@ function getDurationFormatter(
 ): DurationFormatter {
   const key = `${localeCacheKey(locale)}:${style}:${hoursDisplay ?? ''}`;
   let formatter = durationFormatters.get(key);
+
   if (!formatter) {
     formatter = createDurationFormatter(style, hoursDisplay, locale);
     durationFormatters.set(key, formatter);
   }
+
   return formatter;
 }
 
@@ -141,8 +144,11 @@ export function secondsToIsoDuration(seconds: number): string {
   const s = Math.floor(positiveSeconds % 60);
 
   let duration = 'PT';
+
   if (h > 0) duration += `${h}H`;
+
   if (m > 0) duration += `${m}M`;
+
   if (s > 0 || duration === 'PT') duration += `${s}S`;
 
   return duration;
@@ -160,6 +166,7 @@ export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions)
   }
 
   const { locale = DEFAULT_LOCALE, style = 'long', formatRemaining } = options ?? {};
+
   const negative = seconds < 0;
   const positiveSeconds = Math.abs(seconds);
   const totalSeconds = Math.floor(positiveSeconds);
@@ -168,15 +175,20 @@ export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions)
   const secondsPart = totalSeconds % 60;
 
   const record: DurationRecord = {};
+
   if (hours > 0) record.hours = hours;
+
   if (minutes > 0) record.minutes = minutes;
+
   if (secondsPart > 0 || (hours === 0 && minutes === 0)) record.seconds = secondsPart;
 
   const body = getDurationFormatter(locale, style).format(record);
 
   if (negative) {
     if (formatRemaining) return formatRemaining(body);
+
     if (isDefaultLocale(locale)) return `${body} remaining`;
+
     return body;
   }
 

@@ -48,6 +48,7 @@ export function componentSchemaPlugin(config: ComponentSchemaPluginOptions): Plu
     },
     resolveId(id) {
       if (id === moduleId) return output;
+
       return id === declarationOutput ? declarationOutput : null;
     },
     load: {

@@ -35,8 +35,11 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
       preload,
       locale,
     });
+
     if (accentColor) params.set('accent', accentColor);
+
     if (bustCache) params.set('_', String(Date.now()));
+
     return `${base}?${params}`;
   };
 
@@ -51,6 +54,7 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
   // biome-ignore lint/correctness/useExhaustiveDependencies: keep iframe `src` locale in sync; other toggles use postMessage.
   useEffect(() => {
     if (previousLocaleRef.current === locale) return;
+
     previousLocaleRef.current = locale;
     setIframeUrl(buildUrl(pagePath, reloadOnLocale));
   }, [locale, pagePath, reloadOnLocale]);

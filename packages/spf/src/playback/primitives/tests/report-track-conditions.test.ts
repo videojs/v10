@@ -94,6 +94,7 @@ describe('reportUnsupportedTrackConditions', () => {
     ];
 
     expect(conditions).not.toHaveLength(0);
+
     for (const condition of conditions) expect(condition.message).toBeUndefined();
   });
 });

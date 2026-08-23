@@ -34,6 +34,7 @@ export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHo
       super(...args);
 
       const { engine } = this;
+
       if (!engine) return;
 
       engine.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, this.#onStreamInitialized);
@@ -62,6 +63,7 @@ export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHo
     // is rebuilt rather than added to.
     #onStreamInitialized = (event: dashjs.StreamInitializedEvent) => {
       const { engine } = this;
+
       if (!engine || event.error) return;
 
       this.#reset();
@@ -93,11 +95,13 @@ export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHo
 
     #onQualityChangeRendered = (event: dashjs.QualityChangeRenderedEvent) => {
       if (event.mediaType !== 'video') return;
+
       this.#setActiveRendition(event.newRepresentation?.id);
     };
 
     #switchRendition = () => {
       const { engine } = this;
+
       if (!engine) return;
 
       // Multiple renditions can be selected, but dash.js plays exactly one
@@ -154,6 +158,7 @@ export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHo
     // switch bitrates manually on purpose are left as configured.
     #restoreBitrateSwitching() {
       if (!this.#isBitrateSwitchingOff) return;
+
       this.#isBitrateSwitchingOff = false;
       this.engine?.updateSettings(autoSwitchBitrate(true));
     }
@@ -183,6 +188,8 @@ function autoSwitchBitrate(video: boolean): dashjs.MediaPlayerSettingClass {
  */
 function toBitrate(representation: dashjs.Representation): number | undefined {
   const { bandwidth, bitrateInKbit } = representation;
+
   if (bandwidth) return bandwidth;
+
   return bitrateInKbit ? bitrateInKbit * 1000 : undefined;
 }

@@ -7,6 +7,7 @@ export function useAttachMedia<T extends HTMLMediaElement>(media: MediaEngineHos
     (element: T | null) => {
       if (element) media.attach?.(element);
       else media.detach?.();
+
       return () => media.detach?.();
     },
     [media]

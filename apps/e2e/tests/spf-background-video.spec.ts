@@ -203,6 +203,7 @@ test.describe('SPF background video', () => {
 
     await page.evaluate((url) => {
       const media = document.querySelector('hls-background-video') as (HTMLElement & { src?: string }) | null;
+
       if (media) media.src = url;
     }, MEDIA.hlsFmp4.url);
 

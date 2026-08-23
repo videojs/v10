@@ -9,6 +9,7 @@ export function getElementChildren(parent: Element, predicate: ElementPredicate)
 
   for (let index = 0; index < parent.children.length; index++) {
     const child = parent.children.item(index);
+
     if (child && predicate(child, index)) children.push(child);
   }
 
@@ -21,6 +22,7 @@ export function findElementChild(parent: Element, predicate: ElementPredicate): 
 export function findElementChild(parent: Element, predicate: ElementPredicate): Element | null {
   for (let index = 0; index < parent.children.length; index++) {
     const child = parent.children.item(index);
+
     if (child && predicate(child, index)) return child;
   }
 

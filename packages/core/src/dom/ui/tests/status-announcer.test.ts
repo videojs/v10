@@ -65,6 +65,7 @@ function createStore(initialState: Record<string, unknown>) {
 
   const setState = (partial: Record<string, unknown>) => {
     state = { ...state, ...partial };
+
     for (const listener of listeners) listener();
   };
 

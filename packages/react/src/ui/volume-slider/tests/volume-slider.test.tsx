@@ -71,10 +71,12 @@ vi.mock('@videojs/store/react', () => ({
 
     // Return the mutable volume state directly for volume selectors.
     const vol = mutableVolume.current;
+
     if (!vol) return undefined;
 
     try {
       const result = selector(vol);
+
       if (result !== undefined) return result;
     } catch {
       // fall through
@@ -234,6 +236,7 @@ describe('VolumeSliderRoot wheel handling', () => {
       if (type === 'wheel' && typeof options === 'object') {
         capturedOptions.push({ ...options });
       }
+
       return origAdd.call(this, type, listener, options as AddEventListenerOptions);
     });
     HTMLDivElement.prototype.addEventListener = addSpy as typeof origAdd;

@@ -12,6 +12,7 @@ export function targetTransformPlugin(options: ComponentTargetPluginOptions): Pl
       filter: { id: SCRIPT_ID },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
+
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
 
         const transforms = new Set(targets.flatMap((target) => target.transforms));

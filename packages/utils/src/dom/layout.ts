@@ -32,6 +32,7 @@ export function getElementSize(
   let height = box === 'layout' ? element.offsetHeight || rect.height : rect.height;
 
   if (overflow === 'width' || overflow === 'both') width = Math.max(width, element.scrollWidth);
+
   if (overflow === 'height' || overflow === 'both') height = Math.max(height, element.scrollHeight);
 
   return { width, height };

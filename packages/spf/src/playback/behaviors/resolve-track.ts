@@ -148,9 +148,11 @@ function setupTrackResolution<K extends SelectedTrackKey>({
             // behavior's own reload cycles) don't re-fire the effect.
             const presentation = peek(state.presentation);
             const trackId = state[selectedKey].get();
+
             if (!presentation || !trackId) return;
 
             const track = findTrackToResolve(presentation, trackId);
+
             // Skip a complete or missing track; a resolved-but-incomplete (live)
             // window still reloads — its window may have slid past the playhead.
             if (!track || (isResolvedTrack(track) && Number.isFinite(track.duration))) return;
@@ -168,6 +170,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                 async (signal) => {
                   const snapshot = peek(state.presentation);
                   const current = snapshot ? findTrackToResolve(snapshot, trackId) : undefined;
+
                   if (!current) throw new Error('resolve-track: selected track not found');
 
                   // `fetchResolvableText` is the behavior's failover-decorated
@@ -212,7 +215,9 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // that way, or move the read into the updater.
                   const live = peek(state.presentation);
                   const previous = live ? findTrackToResolve(live, trackId) : undefined;
+
                   if (!previous) throw new Error('resolve-track: selected track not found');
+
                   const mediaTrack = parseMediaPlaylist(text, previous);
 
                   // Report what the parse revealed about this rendition, before
@@ -234,6 +239,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // against is the live one.
                   update(state.presentation, (current) => {
                     if (!isResolvedPresentation(current)) return current;
+
                     const patched = updateTrackInPresentation(current, mediaTrack);
                     // Container is uniform within a type (an ABR ladder shares
                     // its container), so a detected non-fMP4 rendition (TS,

@@ -5,6 +5,7 @@ import { isWebKitAirPlayCapable, supportsWebKitAirPlay } from '../webkit';
 // jsdom lacks WebKit's AirPlay APIs, so stub the global support flag per test.
 function stubWebKit(present: boolean) {
   const key = 'WebKitPlaybackTargetAvailabilityEvent';
+
   if (present) {
     (globalThis as unknown as Record<string, unknown>)[key] = class {};
   } else {

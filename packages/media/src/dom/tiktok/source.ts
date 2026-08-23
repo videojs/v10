@@ -71,9 +71,11 @@ export function parseTikTokVideoId(src: string) {
  */
 export function parseTikTokSource(src: string): ParsedTikTokSource | null {
   if (!src) return null;
+
   // A bare numeric id is how the embed URL itself names a video, so it is taken
   // as one.
   if (MATCH_ID.test(src)) return { id: src };
+
   const id = MATCH_SRC.exec(src)?.[1];
   return id ? { id } : null;
 }
@@ -93,7 +95,9 @@ export function shouldBootstrapTikTokEmbed(props: Partial<TikTokMediaProps> = {}
 /** Build the iframe `src` URL for a TikTok embed from the given props. */
 export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProps> = {}) {
   const parsed = parseTikTokSource(src);
+
   if (!parsed) return '';
+
   // `referrerPolicy` is an attribute of the iframe hosting the embed rather than
   // something the player reads, so it never reaches the URL.
   const { referrerPolicy: _referrerPolicy, ...tiktok } = props.source?.engine?.tiktok ?? {};

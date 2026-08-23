@@ -11,6 +11,8 @@ export const ErrorDialogContextProvider = ErrorDialogContext.Provider;
 
 export function useErrorDialogContext(): ErrorDialogContextValue {
   const ctx = useContext(ErrorDialogContext);
+
   if (!ctx) throw new Error('ErrorDialog compound components must be used within an ErrorDialog.Root');
+
   return ctx;
 }

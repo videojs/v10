@@ -68,6 +68,7 @@ try {
   // Format sizes
   const formatSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
+
     return `${(bytes / 1024).toFixed(2)} KB`;
   };
 

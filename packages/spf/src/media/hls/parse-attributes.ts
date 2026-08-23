@@ -11,6 +11,7 @@ export function parseAttributeList(line: string): Map<string, string> {
   for (const match of line.matchAll(regex)) {
     const key = match[1];
     const value = match[2] ?? match[3] ?? '';
+
     if (key) {
       attributes.set(key, value);
     }
@@ -24,6 +25,7 @@ export function parseAttributeList(line: string): Map<string, string> {
  */
 export function parseResolution(value: string): { width: number; height: number } | null {
   const match = /^(\d+)x(\d+)$/.exec(value);
+
   if (!match) return null;
 
   const width = Number.parseInt(match[1]!, 10);
@@ -37,15 +39,18 @@ export function parseResolution(value: string): { width: number; height: number 
  */
 export function parseFrameRate(value: string): FrameRate | undefined {
   const fps = Number.parseFloat(value);
+
   if (Number.isNaN(fps) || fps <= 0) return undefined;
 
   // Common frame rates with tolerance for floating point precision
   if (Math.abs(fps - 23.976) < 0.01) {
     return { frameRateNumerator: 24000, frameRateDenominator: 1001 };
   }
+
   if (Math.abs(fps - 29.97) < 0.01) {
     return { frameRateNumerator: 30000, frameRateDenominator: 1001 };
   }
+
   if (Math.abs(fps - 59.94) < 0.01) {
     return { frameRateNumerator: 60000, frameRateDenominator: 1001 };
   }
@@ -76,6 +81,7 @@ export function parseCodecs(codecs: string): { video?: string; audio?: string } 
 
   for (const codec of parts) {
     const lower = codec.toLowerCase();
+
     if (codec.startsWith('avc1.') || codec.startsWith('hvc1.') || codec.startsWith('hev1.')) {
       result.video = codec;
     } else if (AUDIO_CODEC_PREFIXES.some((prefix) => lower.startsWith(prefix))) {
@@ -102,14 +108,18 @@ export function parseExtInfDuration(value: string): number {
  */
 export function parseByteRange(value: string, previousEnd?: number): { start: number; end: number } | null {
   const match = /^(\d+)(?:@(\d+))?$/.exec(value);
+
   if (!match) return null;
 
   const length = Number.parseInt(match[1]!, 10);
+
   if (Number.isNaN(length)) return null;
 
   let start: number;
+
   if (match[2] !== undefined) {
     start = Number.parseInt(match[2], 10);
+
     if (Number.isNaN(start)) return null;
   } else if (previousEnd !== undefined) {
     start = previousEnd;
@@ -145,14 +155,18 @@ export function createAttributeList(line: string): AttributeList {
 
     getInt(key: string, defaultValue?: number): number | undefined {
       const value = map.get(key);
+
       if (value === undefined) return defaultValue;
+
       const parsed = Number.parseInt(value, 10);
       return Number.isNaN(parsed) ? defaultValue : parsed;
     },
 
     getFloat(key: string, defaultValue?: number): number | undefined {
       const value = map.get(key);
+
       if (value === undefined) return defaultValue;
+
       const parsed = Number.parseFloat(value);
       return Number.isNaN(parsed) ? defaultValue : parsed;
     },
@@ -163,13 +177,17 @@ export function createAttributeList(line: string): AttributeList {
 
     getResolution(key: string): { width: number; height: number } | undefined {
       const value = map.get(key);
+
       if (!value) return undefined;
+
       return parseResolution(value) ?? undefined;
     },
 
     getFrameRate(key: string): FrameRate | undefined {
       const value = map.get(key);
+
       if (!value) return undefined;
+
       return parseFrameRate(value);
     },
   };
@@ -181,6 +199,8 @@ export function createAttributeList(line: string): AttributeList {
  */
 export function matchTag(line: string, tag: string): AttributeList | null {
   const prefix = `#${tag}:`;
+
   if (!line.startsWith(prefix)) return null;
+
   return createAttributeList(line.slice(prefix.length));
 }

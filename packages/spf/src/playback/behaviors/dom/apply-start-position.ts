@@ -74,7 +74,9 @@ function deriveState(
   startPosition: number | undefined
 ): StartPositionFsmState {
   if (!mediaElement || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
+
   if (isUndefined(startPosition)) return 'preconditions-unmet';
+
   return 'position-pending';
 }
 
@@ -122,6 +124,7 @@ function applyStartPositionSetup({
             apply();
             return;
           }
+
           return listen(mediaElement, 'loadedmetadata', apply, { once: true });
         },
       },

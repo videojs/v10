@@ -58,6 +58,7 @@ export function styles<const Rules extends StyleTree>(definition: StyleDefinitio
 
 export function getStyleDefinition(value: unknown): StyleDefinition | undefined {
   if (!value || typeof value !== 'object') return undefined;
+
   return (value as Partial<DefinedStyles<StyleTree>>)[styleDefinition];
 }
 

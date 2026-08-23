@@ -118,6 +118,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     const parentAddLocaleRoot = useContext(LocaleRootContext);
 
     const rootProps = getProviderRootProps(props, parent, parentAddLocaleRoot);
+
     if (!rootProps) return props.children;
 
     return <I18nProviderRoot {...rootProps} />;

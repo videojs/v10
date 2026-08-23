@@ -25,6 +25,7 @@ export const SliderPreview = forwardRef(function SliderPreview(
 
   useEffect(() => {
     const el = measureRef.current;
+
     if (!el) return;
 
     return observeResize(el, ([entry]) => {

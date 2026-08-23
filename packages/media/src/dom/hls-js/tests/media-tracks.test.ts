@@ -23,6 +23,7 @@ function createEngine(): Hls {
     nextLevel: -1,
     on(event: string, fn: (...args: any[]) => void) {
       if (!listeners.has(event)) listeners.set(event, new Set());
+
       listeners.get(event)!.add(fn);
     },
     once(event: string, fn: (...args: any[]) => void) {
@@ -30,7 +31,9 @@ function createEngine(): Hls {
         listeners.get(event)?.delete(wrapped);
         fn(...args);
       };
+
       if (!listeners.has(event)) listeners.set(event, new Set());
+
       listeners.get(event)!.add(wrapped);
     },
     off(event: string, fn: (...args: any[]) => void) {

@@ -61,6 +61,7 @@ export class TimeSliderElement extends MediaElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
@@ -73,13 +74,16 @@ export class TimeSliderElement extends MediaElement {
       isDisabled: () => this.disabled || !this.#timeState.value,
       getPercent: () => {
         const media = this.#timeState.value;
+
         if (!media) return 0;
+
         return this.#core.percentFromValue(media.currentTime);
       },
       getStepPercent: () => this.#core.getStepPercent(),
       getLargeStepPercent: () => this.#core.getLargeStepPercent(),
       onValueCommit: (percent) => {
         const media = this.#timeState.value;
+
         if (media) media.seek(this.#core.rawValueFromPercent(percent));
       },
       changeThrottle: this.changeThrottle,
@@ -150,10 +154,12 @@ export class TimeSliderElement extends MediaElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#slider) return;
 
     const time = this.#timeState.value;
     const buffer = this.#bufferState.value;
+
     if (!time) return;
 
     this.#core.setInput(this.#slider.input.current);

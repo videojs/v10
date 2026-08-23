@@ -64,19 +64,25 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
 
     #detect(target: HTMLMediaElement | null = this.target as HTMLVideoElement | null): MediaStreamType {
       if (!target) return MediaStreamTypes.UNKNOWN;
+
       const { duration } = target;
+
       if (duration === Infinity) return MediaStreamTypes.LIVE;
+
       if (Number.isFinite(duration) && duration > 0) return MediaStreamTypes.ON_DEMAND;
+
       return MediaStreamTypes.UNKNOWN;
     }
 
     #setDetected(value: MediaStreamType): void {
       if (this.#isUserStreamType) return;
+
       this.#update(value);
     }
 
     #update(value: MediaStreamType): void {
       if (this.#streamType === value) return;
+
       this.#streamType = value;
       this.dispatchEvent(new Event('streamtypechange'));
     }

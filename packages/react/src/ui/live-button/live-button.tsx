@@ -66,17 +66,20 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
     });
 
     if (media) core.setMedia(media);
+
     const state = media ? core.getState() : null;
     const labelText = state ? translateText(core.getLabel(state), translator) : undefined;
 
     useLayoutEffect(() => {
       if (!tooltipCtx) return;
+
       tooltipCtx.setContent(labelText ? { label: labelText } : undefined);
       return () => tooltipCtx.setContent(undefined);
     }, [tooltipCtx, labelText]);
 
     if (!media || !state) {
       if (__DEV__) logMissingFeature(DISPLAY_NAME, selectLive.displayName ?? 'live');
+
       return null;
     }
 

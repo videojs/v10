@@ -27,6 +27,7 @@ export default function SkinPicker() {
   // Auto-switch skin when use case changes and current skin is invalid
   useEffect(() => {
     const validValues = options.map((o) => o.value);
+
     if (!validValues.includes(skin.get())) {
       skin.set(options[0].value);
     }

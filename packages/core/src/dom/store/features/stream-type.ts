@@ -33,8 +33,11 @@ export const streamTypeFeature = definePlayerFeature({
 
     const detect = (): MediaStreamType => {
       const { duration } = media;
+
       if (duration === Number.POSITIVE_INFINITY) return MediaStreamTypes.LIVE;
+
       if (Number.isFinite(duration) && duration > 0) return MediaStreamTypes.ON_DEMAND;
+
       return MediaStreamTypes.UNKNOWN;
     };
 
@@ -45,6 +48,7 @@ export const streamTypeFeature = definePlayerFeature({
     listen(media, 'durationchange', sync, { signal });
     listen(media, 'loadedmetadata', sync, { signal });
     listen(media, 'emptied', sync, { signal });
+
     // `progress` widens the seekable window for DVR streams — treat it as a
     // hint that the duration may now be usable.
     if (isMediaBufferCapable(media)) {

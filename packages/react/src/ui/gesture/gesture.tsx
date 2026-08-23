@@ -16,6 +16,7 @@ export function Gesture({ type, action, value, pointer, region, disabled }: Gest
     if (!container || !type || !action || disabled) return;
 
     const resolver = resolveGestureAction(action);
+
     if (!resolver) return;
 
     const onActivate = (event: PointerEvent) => {

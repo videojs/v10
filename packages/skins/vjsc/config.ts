@@ -11,6 +11,7 @@ export interface SkinConfig {
 
 export function configureSkinModule({ parameters }: VjscModule): VjscModuleConfig | null {
   const config = validateSkinConfig(parameters);
+
   if (!config) return null;
 
   return {

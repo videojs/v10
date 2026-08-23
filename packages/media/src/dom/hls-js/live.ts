@@ -27,6 +27,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       });
       engine?.on(Hls.Events.LEVEL_LOADED, (_event: string, data: LevelLoadedData) => {
         this.#derive(data.details);
+
         // For `preload="none"`/`"metadata"` the manifest only loads after the
         // first play, so retry the seek once `liveEdgeStart` becomes finite.
         if (this.#seekToLivePending) this.#trySeekToLive();
@@ -40,10 +41,15 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     // Derived from seekable + offset at read time. No cached state, no event.
     get liveEdgeStart() {
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
+
       const { target } = this;
+
       if (!target) return Number.NaN;
+
       const { seekable } = target;
+
       if (!seekable.length) return Number.NaN;
+
       return seekable.end(seekable.length - 1) - this.#liveEdgeStartOffset;
     }
 
@@ -66,6 +72,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       if (streamType === MediaStreamTypes.LIVE) {
         // Update hls.js config for live/ll-live
         const hls = this.engine;
+
         if (!hls) return;
 
         if (lowLatency) {
@@ -82,6 +89,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
 
     #setTargetLiveWindow(value: number) {
       if (Object.is(this.#targetLiveWindow, value)) return;
+
       this.#targetLiveWindow = value;
       this.dispatchEvent(new Event('targetlivewindowchange'));
     }
@@ -95,6 +103,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       this.#disarmSeekToLive();
 
       const target = this.target as HTMLVideoElement | null;
+
       if (!target || target.autoplay) return;
 
       this.#seekToLiveAbort = new AbortController();
@@ -116,13 +125,17 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
 
     #trySeekToLive() {
       const target = this.target as HTMLVideoElement | null;
+
       if (!target) return;
+
       const { liveEdgeStart } = this;
+
       if (!Number.isFinite(liveEdgeStart)) return;
 
       if (target.currentTime < liveEdgeStart) {
         target.currentTime = liveEdgeStart;
       }
+
       this.#seekToLivePending = false;
     }
   }
@@ -139,6 +152,7 @@ const getStreamInfoFromHlsjsLevelDetails = (levelDetails: LevelLoadedData['detai
   const targetLiveWindow = toTargetLiveWindowFromPlaylistType(playlistType);
   const lowLatency = !!levelDetails.partList?.length;
   let liveEdgeStartOffset: number | undefined;
+
   if (streamType === MediaStreamTypes.LIVE) {
     // Prefer manifest-declared HOLD-BACK / PART-HOLD-BACK when present;
     // otherwise fall back to the per-spec multiples of the target durations.
@@ -162,6 +176,8 @@ const toStreamTypeFromPlaylistType = (playlistType: HlsPlaylistTypes) => {
 
 const toTargetLiveWindowFromPlaylistType = (playlistType: HlsPlaylistTypes) => {
   if (playlistType === 'EVENT') return Number.POSITIVE_INFINITY;
+
   if (playlistType === 'VOD') return Number.NaN;
+
   return 0;
 };

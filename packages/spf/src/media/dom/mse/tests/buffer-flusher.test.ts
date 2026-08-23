@@ -53,6 +53,7 @@ describe('flushBuffer', () => {
       addEventListener: vi.fn((type: string, listener: EventListener) => {
         listeners[type] ??= [];
         listeners[type].push(listener);
+
         if (type === 'updateend' && sourceBuffer.updating) {
           updateEndCallback = () => listener(new Event('updateend'));
         }
@@ -69,6 +70,7 @@ describe('flushBuffer', () => {
 
     // Simulate the previous operation finishing
     (sourceBuffer as any).updating = false;
+
     if (updateEndCallback) updateEndCallback();
 
     await flushPromise;

@@ -39,6 +39,7 @@ export function extractCore(filePath: string, program: ts.Program, componentName
 
   // Extract state
   let state: ExtractedProp[] = [];
+
   if (stateExport?.type instanceof tae.ObjectNode) {
     const formatted = formatProperties(stateExport.type.properties, ast.exports);
     state = Object.entries(formatted).map(([name, def]) => ({
@@ -69,6 +70,7 @@ export function extractDefaultProps(
   componentName: string
 ): Record<string, string> {
   const sourceFile = program.getSourceFile(filePath);
+
   if (!sourceFile) return {};
 
   const defaultProps: Record<string, string> = {};
@@ -92,6 +94,7 @@ export function extractDefaultProps(
               if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
                 const propName = prop.name.text;
                 const propValue = getPropertyValue(prop.initializer, sourceFile);
+
                 if (propValue !== undefined) {
                   defaultProps[propName] = propValue;
                 }

@@ -31,7 +31,9 @@ function createEmptySrcIframe(): HTMLIFrameElement {
 
 function frameOf(iframe: HTMLIFrameElement): Window {
   const frame = iframe.contentWindow;
+
   if (!frame) throw new Error('iframe has no window');
+
   return frame;
 }
 
@@ -62,9 +64,11 @@ async function attachAndLoad(
   // There is no embed to attach to without a source, so tests that don't care
   // which video is playing get one.
   if (!media.src) media.src = VIDEO_ID;
+
   // Opt out of the bootstrap unless a test asks for it: it posts commands of its own and swallows what the embed
   // reports, which is the subject of `TikTokMedia bootstrap` rather than of the protocol these tests check.
   if (media.preload === tiktokMediaDefaultProps.preload) media.preload = 'none';
+
   const iframe = createIframe();
   media.attach(iframe);
   const commands = watchCommands(iframe);
@@ -337,6 +341,7 @@ describe('TikTokMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete once the embed is ready', async () => {
     const media = new TikTokMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -387,6 +392,7 @@ describe('TikTokMedia', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['timeupdate', 'durationchange', 'seeking', 'seeked'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -646,6 +652,7 @@ describe('TikTokMedia', () => {
     iframe.setAttribute('src', buildTikTokIframeSrc(VIDEO_ID, tiktokMediaDefaultProps));
     media.attach(iframe);
     const events: string[] = [];
+
     for (const type of ['emptied', 'loadstart'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -903,6 +910,7 @@ describe('TikTokMedia bootstrap', () => {
   /** Attach with the bootstrap left on, the way every preload but `none` arrives. */
   async function attachBootstrapped(media: TikTokMedia) {
     if (!media.src) media.src = VIDEO_ID;
+
     const iframe = createIframe();
     media.attach(iframe);
     const commands = watchCommands(iframe);
@@ -924,6 +932,7 @@ describe('TikTokMedia bootstrap', () => {
     const media = new TikTokMedia();
     const { iframe } = await attachBootstrapped(media);
     const events: string[] = [];
+
     for (const type of ['play', 'playing', 'pause', 'waiting', 'timeupdate', 'ended'] as const) {
       media.addEventListener(type, () => events.push(type));
     }

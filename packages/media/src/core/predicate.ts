@@ -26,18 +26,21 @@ export function hasMetadata(media: MediaSourceCapability): boolean {
 
 export function isMediaPauseCapable(value: unknown): value is MediaPauseCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.paused) && !isUndefined(media.ended) && isFunction(media.pause);
 }
 
 export function isMediaSeekCapable(value: unknown): value is MediaSeekCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.currentTime) && !isUndefined(media.duration) && !isUndefined(media.seeking);
 }
 
 export function isMediaSourceCapable(value: unknown): value is MediaSourceCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return (
     !isUndefined(media.src) &&
@@ -49,6 +52,7 @@ export function isMediaSourceCapable(value: unknown): value is MediaSourceCapabi
 
 export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.volume) && !isUndefined(media.muted);
 }
@@ -60,12 +64,14 @@ export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapabi
  */
 export function isMediaMutedCapable(value: unknown): value is Pick<MediaVolumeCapability, 'muted'> {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.muted);
 }
 
 export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlaybackRateCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.playbackRate);
 }
@@ -77,12 +83,14 @@ export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlayba
  */
 export function isMediaPictureInPictureCapable(value: unknown): value is MediaPictureInPictureCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return isFunction(media.requestPictureInPicture);
 }
 
 export function isMediaBufferCapable(value: unknown): value is MediaBufferCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return (
     !isUndefined(media.buffered) &&
@@ -94,53 +102,62 @@ export function isMediaBufferCapable(value: unknown): value is MediaBufferCapabi
 
 export function isMediaErrorCapable(value: unknown): value is MediaErrorCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.error);
 }
 
 export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrackCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.textTracks) && media.textTracks !== EMPTY_TEXT_TRACKS;
 }
 
 export function isMediaVideoRenditionCapable(value: unknown): value is MediaVideoRenditionCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.videoRenditions);
 }
 
 export function isMediaAudioTrackCapable(value: unknown): value is MediaAudioTrackCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.audioTracks);
 }
 
 export function isMediaVideoDimensionsCapable(value: unknown): value is MediaVideoDimensionsCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.videoWidth) && !isUndefined(media.videoHeight);
 }
 
 export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return isObject(media.remote) && media.remote !== EMPTY_REMOTE;
 }
 
 export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTypeCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.streamType);
 }
 
 export function isMediaContentDataCapable(value: unknown): value is MediaContentDataCapability {
   if (!isObject(value)) return false;
+
   return !isUndefined((value as Record<string, unknown>).contentData);
 }
 
 export function isMediaLiveCapable(value: unknown): value is MediaLiveCapability {
   if (!isObject(value)) return false;
+
   const media = value as Record<string, unknown>;
   return !isUndefined(media.liveEdgeStart) && !isUndefined(media.targetLiveWindow);
 }

@@ -26,6 +26,7 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
      */
     setError(error: MediaError): void {
       if (error.fatal) this.#error = error;
+
       this.dispatchEvent(new ErrorEvent('error', { error, message: error.message }));
     }
 
@@ -62,6 +63,7 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
           event.stopImmediatePropagation();
 
           const native = target.error;
+
           if (!native) return;
 
           const code = native.code;

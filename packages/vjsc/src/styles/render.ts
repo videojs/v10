@@ -65,6 +65,7 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
               const relationship = relationshipScope(rule, relationshipOwners);
 
               if (relationship) return relationship;
+
               if (!scope) return;
 
               const selectors = includeScopeRootSelectors(rule.value.selectors, scopeRootClasses);
@@ -185,6 +186,7 @@ function analyzeCompiledFile(css: string, file: StyleOutputFile): AnalyzedFile {
           const className = semanticRootClass(rule, semanticClassNames);
 
           if (!className) continue;
+
           if (semanticRules.has(className)) throw new Error(`Tailwind emitted '.${className}' more than once.`);
 
           semanticRules.set(className, cloneCssAst(rule));

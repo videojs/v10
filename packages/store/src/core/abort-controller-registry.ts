@@ -18,6 +18,7 @@ export class AbortControllerRegistry {
     for (const controller of this.#keys.values()) {
       controller.abort();
     }
+
     this.#keys.clear();
   }
 

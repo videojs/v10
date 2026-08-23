@@ -244,7 +244,9 @@ describe('Task', () => {
       // Cycle 1 → 1, cycle 2 → throws, cycle 3 → 3.
       const run = async () => {
         n += 1;
+
         if (n === 2) throw new Error('boom');
+
         return n;
       };
       const c1 = new Task<number>(run, { id: 'x' });
@@ -718,7 +720,9 @@ describe('RecurringRunner', () => {
     let n = 0;
     const task = new Task<number>(async () => {
       n += 1;
+
       if (n === 1) throw new Error('boom');
+
       return n;
     });
     // A reschedule that would otherwise keep going — but a run error ends it.

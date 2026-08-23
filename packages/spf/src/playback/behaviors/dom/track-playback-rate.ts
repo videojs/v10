@@ -43,13 +43,16 @@ function trackPlaybackRateSetup({
 
   return effect(() => {
     const mediaElement = context.mediaElement.get();
+
     if (!mediaElement) {
       state.playbackRate.set(defaultPlaybackRate);
       return;
     }
 
     const sync = () => state.playbackRate.set(mediaElement.playbackRate);
+
     sync();
+
     return listen(mediaElement, 'ratechange', sync);
   });
 }

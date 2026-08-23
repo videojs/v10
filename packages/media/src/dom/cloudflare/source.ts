@@ -71,15 +71,20 @@ export function parseCloudflareVideoId(src: string) {
  */
 export function parseCloudflareSource(src: string): ParsedCloudflareSource | null {
   if (!src) return null;
+
   const id = MATCH_SRC.exec(src)?.[1] ?? (MATCH_VIDEO_ID.test(src) || MATCH_SIGNED_TOKEN.test(src) ? src : null);
+
   if (!id) return null;
+
   return { id, signed: MATCH_SIGNED_TOKEN.test(id), origin: MATCH_CUSTOMER_ORIGIN.exec(src)?.[1] ?? null };
 }
 
 /** Build the iframe `src` URL for an initial Cloudflare Stream embed from the given props. */
 export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareMediaProps> = {}) {
   const parsed = parseCloudflareSource(src);
+
   if (!parsed) return '';
+
   // `referrerPolicy` is an attribute of the iframe hosting the embed rather than
   // something the player reads, so it never reaches the URL.
   const { referrerPolicy: _referrerPolicy, ...cloudflare } = props.source?.engine?.cloudflare ?? {};

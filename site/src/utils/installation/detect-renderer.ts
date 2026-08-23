@@ -100,15 +100,19 @@ function parseUrl(input: string): URL | null {
 function getExtension(pathname: string): string {
   const clean = pathname.split('?')[0]!.split('#')[0]!;
   const dot = clean.lastIndexOf('.');
+
   if (dot === -1) return '';
+
   return clean.slice(dot).toLowerCase();
 }
 
 export function detectRenderer(url: string, useCase: UseCase): DetectionResult | null {
   const trimmed = url.trim();
+
   if (!trimmed) return null;
 
   const parsed = parseUrl(trimmed);
+
   if (!parsed) return null;
 
   // Check domain rules first. When a host matches but its renderer isn't valid
@@ -125,21 +129,25 @@ export function detectRenderer(url: string, useCase: UseCase): DetectionResult |
 
   if (ext === '.m3u8') {
     if (!isRendererValidForUseCase('hls', useCase)) return null;
+
     return { renderer: 'hls', label: 'HLS' };
   }
 
   if (ext === '.mpd') {
     if (!isRendererValidForUseCase('dash', useCase)) return null;
+
     return { renderer: 'dash', label: 'DASH' };
   }
 
   if (VIDEO_EXTENSIONS.has(ext)) {
     if (!isRendererValidForUseCase('html5-video', useCase)) return null;
+
     return { renderer: 'html5-video', label: 'HTML5 Video' };
   }
 
   if (AUDIO_EXTENSIONS.has(ext)) {
     if (!isRendererValidForUseCase('html5-audio', useCase)) return null;
+
     return { renderer: 'html5-audio', label: 'HTML5 Audio' };
   }
 

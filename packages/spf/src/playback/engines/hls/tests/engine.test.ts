@@ -17,6 +17,7 @@ function unmockedFetchFallback(url: string): Promise<Response> {
   // Non-empty body: `fetchStream` throws "Response has no body" on a null body
   // (empty Uint8Array), which would itself trip the monitor.
   if (/\.(m4s|mp4|ts|aac)(\?|$)/.test(url)) return Promise.resolve(new Response(new Uint8Array([0])));
+
   return Promise.reject(new Error(`Unmocked URL: ${url}`));
 }
 
@@ -41,7 +42,9 @@ describe('createHlsVideoEngine', () => {
     const originalConsoleError = console.error.bind(console);
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
       const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
+
       if (expectedErrorPatterns.some((p) => p.test(text))) return;
+
       originalConsoleError(...args);
     });
   });
@@ -434,7 +437,9 @@ describe('createHlsVideoEngine', () => {
     // cdn-a is down (media-playlist fetch rejects); cdn-b serves a valid playlist.
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
+
       if (url.includes('cdn-a')) throw new TypeError('cdn-a unreachable');
+
       return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
     }) as typeof fetch;
 
@@ -486,7 +491,9 @@ describe('createHlsVideoEngine', () => {
 
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
+
       if (url.includes('cdn=a')) throw new TypeError('cdn-a unreachable');
+
       return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
     }) as typeof fetch;
 
@@ -752,6 +759,7 @@ http://example.com/audio-seg1.m4s
 http://example.com/video-a.m3u8`)
         );
       }
+
       if (url.includes('video-a.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -763,6 +771,7 @@ http://example.com/video-a-seg1.m4s
 #EXT-X-ENDLIST`)
         );
       }
+
       if (url.includes('audio-a.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -774,6 +783,7 @@ http://example.com/audio-a-seg1.m4s
 #EXT-X-ENDLIST`)
         );
       }
+
       if (url.includes('playlist-b.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -783,6 +793,7 @@ http://example.com/audio-a-seg1.m4s
 http://example.com/video-b.m3u8`)
         );
       }
+
       if (url.includes('video-b.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -794,6 +805,7 @@ http://example.com/video-b-seg1.m4s
 #EXT-X-ENDLIST`)
         );
       }
+
       if (url.includes('audio-b.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U

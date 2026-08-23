@@ -51,6 +51,7 @@ export class SeekButtonCore {
 
   getLabel(state: SeekButtonState): Text | string {
     const custom = resolveLabel(this.#props.label, state);
+
     if (custom !== undefined) return custom;
 
     return state.direction === 'backward' ? backwardText : forwardText;
@@ -58,6 +59,7 @@ export class SeekButtonCore {
 
   getLabelParams(state: SeekButtonState): { seconds: number } | undefined {
     if (resolveLabel(this.#props.label, state) !== undefined) return undefined;
+
     return { seconds: Math.abs(this.#props.seconds) };
   }
 
@@ -84,6 +86,7 @@ export class SeekButtonCore {
 
   async seek(media: MediaTimeState): Promise<void> {
     if (this.#props.disabled) return;
+
     await media.seek(media.currentTime + this.#props.seconds);
   }
 }

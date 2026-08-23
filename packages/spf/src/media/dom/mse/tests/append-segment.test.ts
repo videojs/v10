@@ -57,6 +57,7 @@ describe('appendSegment', () => {
       appendBuffer: vi.fn(() => {
         setTimeout(() => {
           updating = false;
+
           for (const l of listeners.updateend ?? []) l(new Event('updateend'));
         }, 0);
       }),
@@ -72,6 +73,7 @@ describe('appendSegment', () => {
     // Simulate an external updateend that clears updating
     setTimeout(() => {
       updating = false;
+
       for (const l of listeners.updateend ?? []) l(new Event('updateend'));
     }, 10);
 

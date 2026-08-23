@@ -53,6 +53,7 @@ export function TabsRoot({ children, maxWidth = true, className, id: propId, var
     // but it actually delays this effect until later,
     // giving tab and tabpanel elements time to mount.
     if (!isHydrated) return;
+
     const id = propId || Date.now().toString();
     const tabs = ref.current?.querySelectorAll('[role="tab"]') || [];
     const panels = ref.current?.querySelectorAll('[role="tabpanel"]') || [];
@@ -161,12 +162,16 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
       case 'ArrowLeft':
         // Move to previous tab, wrap to last if at start
         targetIndex = currentIndex - 1;
+
         if (targetIndex < 0) targetIndex = allTabs.length - 1;
+
         break;
       case 'ArrowRight':
         // Move to next tab, wrap to first if at end
         targetIndex = currentIndex + 1;
+
         if (targetIndex >= allTabs.length) targetIndex = 0;
+
         break;
       case 'Home':
         // Jump to first tab
@@ -211,9 +216,11 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         }
       });
     });
+
     if (ref.current) {
       observer.observe(ref.current, { attributes: true });
     }
+
     return () => {
       observer.disconnect();
     };

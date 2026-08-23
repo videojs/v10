@@ -62,29 +62,36 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLi
 
   get isFullscreen(): boolean {
     const el = this.target as HTMLVideoElement | null;
+
     if (!el) return false;
+
     if (this.webkitPresentationMode === 'fullscreen') return true;
+
     const doc = globalThis.document as WebKitDocument;
     return doc?.fullscreenElement === el || doc?.webkitFullscreenElement === el;
   }
 
   async requestPictureInPicture() {
     if (!this.target) return Promise.reject();
+
     return this.target.requestPictureInPicture();
   }
 
   async exitPictureInPicture() {
     if (!this.target) return Promise.reject();
+
     return globalThis.document?.exitPictureInPicture();
   }
 
   requestFullscreen() {
     if (!this.target) return Promise.reject();
+
     return this.target.requestFullscreen();
   }
 
   exitFullscreen() {
     if (!this.target) return Promise.reject();
+
     return globalThis.document?.exitFullscreen();
   }
 }

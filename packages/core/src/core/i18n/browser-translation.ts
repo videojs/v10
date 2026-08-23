@@ -61,9 +61,11 @@ function restoreNamedPlaceholders(translated: string, slots: readonly string[]):
 
 async function translateProtectingPlaceholders(translator: BrowserTranslatorInstance, value: string): Promise<string> {
   const { masked, slots } = maskNamedPlaceholders(value);
+
   if (slots.length === 0) {
     return translator.translate(value);
   }
+
   const translated = await translator.translate(masked);
   return restoreNamedPlaceholders(translated, slots);
 }
@@ -72,6 +74,7 @@ const cache = new Map<string, Partial<FlatTranslations>>();
 
 function getBrowserTranslator(): BrowserTranslatorConstructor | undefined {
   if (!('Translator' in globalThis)) return undefined;
+
   return (globalThis as typeof globalThis & { Translator: BrowserTranslatorConstructor }).Translator;
 }
 
@@ -80,6 +83,7 @@ export function resolveBrowserTranslationTarget(locale: string): string | undefi
   for (const tag of findLocaleKeys(locale)) {
     if (!isDefaultLocale(tag)) return tag;
   }
+
   return undefined;
 }
 
@@ -90,7 +94,9 @@ export function shouldAttemptBrowserTranslation(
   translations?: Partial<FlatTranslations>
 ): boolean {
   const target = resolveBrowserTranslationTarget(locale);
+
   if (!target) return false;
+
   if (loadedLazyTags.some((tag) => !isDefaultLocale(tag))) {
     return translations !== undefined && hasMissingEnglishTranslations(translations);
   }
@@ -112,12 +118,15 @@ export async function getBrowserTranslations(
   options?: GetBrowserTranslationsOptions
 ): Promise<Partial<FlatTranslations>> {
   const target = resolveBrowserTranslationTarget(locale);
+
   if (!target) return {};
 
   const cached = cache.get(target);
+
   if (cached) return cached;
 
   const Translator = getBrowserTranslator();
+
   if (!Translator) return {};
 
   const downloadIfNeeded = options?.downloadIfNeeded ?? false;
@@ -126,13 +135,16 @@ export async function getBrowserTranslations(
     sourceLanguage: DEFAULT_LOCALE,
     targetLanguage: target,
   });
+
   if (availability === 'unavailable') return {};
+
   if (!downloadIfNeeded && availability !== 'available') return {};
 
   const needsDownload = downloadIfNeeded && (availability === 'downloadable' || availability === 'downloading');
   let downloadStarted = false;
   const notifyDownloadStart = (): void => {
     if (!needsDownload || downloadStarted) return;
+
     downloadStarted = true;
     options?.onModelDownload?.start?.(target);
   };
@@ -160,7 +172,9 @@ export async function getBrowserTranslations(
   const entries = await Promise.all(
     keys.map(async (key) => {
       const value = english[key];
+
       if (!value) return [key, ''] as const;
+
       const translated = await translateProtectingPlaceholders(translator, value);
       return [key, translated] as const;
     })

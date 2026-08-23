@@ -117,6 +117,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
       const media = this.target as HTMLVideoElement | null;
       const drmSystems = this.#drmSystems();
       const config = drmSystems[KeySystems.FAIRPLAY];
+
       if (!media) return;
 
       if (!config?.licenseUrl) {
@@ -141,6 +142,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
         // What raised this has since been torn down, so it is about a source
         // that is no longer playing.
         if (active.disconnect.signal.aborted) return;
+
         this.setError(
           cause instanceof MediaError
             ? cause
@@ -177,19 +179,23 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
 
     #reset(): Promise<void> {
       const active = this.#active;
+
       this.#active = null;
 
       active?.disconnect.abort();
+
       return active?.keySystem.close() ?? Promise.resolve();
     }
 
     async #fallBackToWebKit(media: HTMLVideoElement): Promise<void> {
       if (this.#useWebKit) return;
+
       this.#useWebKit = true;
 
       // EME has to release the element's media keys before the legacy API can
       // claim them, so the switch waits for teardown to finish.
       await this.#reset();
+
       if (!this.#disconnect || this.#disconnect.signal.aborted) return;
 
       // WebKit does not re-issue the key request the EME session failed on, so

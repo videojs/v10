@@ -52,6 +52,7 @@ function createMockContext(sessionCookie?: string): APIContext {
         if (name === 'session' && sessionCookie) {
           return { value: sessionCookie };
         }
+
         return undefined;
       }),
       set: vi.fn(),

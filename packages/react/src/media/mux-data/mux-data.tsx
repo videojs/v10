@@ -42,6 +42,7 @@ export function MuxData(props: MuxDataProps): ReactNode {
   // instead: passing the prop wins even when its value is `undefined`, and only
   // omitting it falls back to the default SDK.
   const sdk = 'MuxDataSdk' in props ? MuxDataSdk : muxDataDefaultProps.MuxDataSdk;
+
   if (component.MuxDataSdk !== sdk) component.MuxDataSdk = sdk;
 
   useSyncProps(component, rest, muxDataDefaultProps);

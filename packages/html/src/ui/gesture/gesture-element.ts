@@ -58,9 +58,11 @@ export class GestureElement extends MediaElement {
   #register(): void {
     const store = this.#player.value;
     const container = this.#container.value?.container;
+
     if (!this.type || !this.action || !store || !container) return;
 
     const resolver = resolveGestureAction(this.action);
+
     if (!resolver) return;
 
     const { value } = this;

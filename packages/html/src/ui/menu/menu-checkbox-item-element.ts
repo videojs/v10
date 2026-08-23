@@ -41,6 +41,7 @@ export class MenuCheckboxItemElement extends MediaElement {
     super.update(_changed);
 
     const ctx = this.#ctx.value;
+
     if (!ctx || !this.#disconnect) return;
 
     if (!this.#registered) {
@@ -53,6 +54,7 @@ export class MenuCheckboxItemElement extends MediaElement {
         {
           onClick: () => {
             const currentCtx = this.#ctx.value;
+
             if (!currentCtx || this.disabled) return;
 
             this.checked = !this.checked;
@@ -60,6 +62,7 @@ export class MenuCheckboxItemElement extends MediaElement {
           },
           onPointerenter: () => {
             const currentCtx = this.#ctx.value;
+
             if (!this.disabled) currentCtx?.menu.highlight(this, { focus: false, pointer: true });
           },
         },

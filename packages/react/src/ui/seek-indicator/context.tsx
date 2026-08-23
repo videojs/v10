@@ -13,6 +13,8 @@ export function SeekIndicatorProvider({ value, children }: ProviderProps<SeekInd
 
 export function useSeekIndicatorContext(): SeekIndicatorContextValue {
   const ctx = useContext(SeekIndicatorContext);
+
   if (!ctx) throw new Error('SeekIndicator child compounds must be used within a SeekIndicator.Root');
+
   return ctx;
 }

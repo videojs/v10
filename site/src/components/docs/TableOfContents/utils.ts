@@ -22,11 +22,13 @@ export function calculateRailGeometry(headingCount: number, availableHeight: num
   }
 
   const desiredHeight = headingCount * stripeHeight + (headingCount - 1) * gap;
+
   if (desiredHeight <= availableHeight) {
     return { stripeHeight, gap };
   }
 
   const compressedGap = (availableHeight - headingCount * stripeHeight) / (headingCount - 1);
+
   if (compressedGap >= 0) {
     return { stripeHeight, gap: compressedGap };
   }
@@ -53,8 +55,10 @@ export function getScrollParent(element: HTMLElement): HTMLElement {
         return current;
       }
     }
+
     current = current.parentElement;
   }
+
   return document.body;
 }
 
@@ -101,6 +105,7 @@ export function filterHeadingsForToc(headings: MarkdownHeading[]): MarkdownHeadi
  */
 export function navigateToHeading(slug: string): void {
   const element = document.getElementById(slug);
+
   if (element) {
     element.scrollIntoView({ behavior: 'smooth' });
     window.history.pushState({}, '', `#${slug}`);
@@ -120,9 +125,11 @@ export function useAutoScroll({ activeId, containerRef }: UseAutoScrollOptions) 
     if (!activeId || !containerRef.current) return;
 
     const activeLink = containerRef.current.querySelector<HTMLAnchorElement>(`a[href="#${activeId}"]`);
+
     if (!activeLink) return;
 
     const scrollParent = getScrollParent(containerRef.current);
+
     if (!scrollParent) return;
 
     if (isElementOffscreen(activeLink, scrollParent)) {
@@ -146,23 +153,30 @@ export function useActiveHeading(headings: MarkdownHeading[]): string {
       // let's get the value of that, here
       let scrollOffset = 125; // idk, a sensible default
       const idElement = document.querySelector('main [id]');
+
       if (idElement) {
         const computedStyle = getComputedStyle(idElement);
         const scrollMarginTop = computedStyle.scrollMarginTop;
+
         if (scrollMarginTop) {
           const parsed = Number.parseFloat(scrollMarginTop);
+
           if (!Number.isNaN(parsed)) scrollOffset = parsed;
         }
       }
+
       scrollOffset = scrollOffset + 1;
       const scrollPosition = window.scrollY + scrollOffset;
 
       // Find the last heading that's above the scroll position
       let currentActiveId = '';
+
       for (const heading of headings) {
         const element = document.getElementById(heading.slug);
+
         if (element) {
           const elementTop = element.offsetTop;
+
           if (elementTop <= scrollPosition) {
             currentActiveId = heading.slug;
           } else {

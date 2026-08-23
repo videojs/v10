@@ -11,6 +11,7 @@ export function createBrowserSandboxPrefetch(register: RegisterI18n) {
 
   return async function prefetchBrowserSandboxLocale(tag: SandboxBrowserLocaleTag): Promise<void> {
     const pending = inflight.get(tag);
+
     if (pending) return pending;
 
     const task = (async () => {
@@ -26,6 +27,7 @@ export function createBrowserSandboxPrefetch(register: RegisterI18n) {
           },
         },
       });
+
       if (Object.keys(browser).length) register(tag, browser);
     })().finally(() => {
       inflight.delete(tag);

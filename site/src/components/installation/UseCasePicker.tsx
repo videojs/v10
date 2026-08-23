@@ -6,7 +6,9 @@ import { getInstallationPreset, USE_CASES, type UseCase } from '@/utils/installa
 
 function getPresetIcon(useCase: UseCase) {
   if (useCase === 'background-video') return <Image size={32} />;
+
   if (getInstallationPreset(useCase).live) return <RadioTower size={32} />;
+
   return <Globe size={32} />;
 }
 

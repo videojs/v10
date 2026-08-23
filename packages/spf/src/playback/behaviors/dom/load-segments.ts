@@ -174,7 +174,9 @@ function setupSegmentLoading<
   // `Object.is` equality on this computed dedups within-segment ticks.
   const segmentBoundarySignal = computed(() => {
     const track = selectedTrack.get();
+
     if (!track) return undefined;
+
     return segmentStartForTime(state.currentTime.get() ?? 0, track.segments);
   });
 
@@ -182,9 +184,13 @@ function setupSegmentLoading<
     // Policy-off wins even over preconditions: a loader arriving while
     // suspended must not dispatch.
     if (state.loadingSuspended?.get()) return 'dormant';
+
     if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
+
     if (state.loadActivated.get() || state.preload.get() === 'auto') return 'full-range';
+
     if (state.preload.get() === 'none') return 'dormant';
+
     return 'metadata-only';
   });
 

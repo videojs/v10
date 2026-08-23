@@ -52,10 +52,13 @@ export class CastButtonCore {
 
   getLabel(state: CastButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
+
     if (label) return label;
 
     if (state.connection === 'connected') return stopText;
+
     if (state.connection === 'connecting') return connectingText;
+
     return startText;
   }
 
@@ -89,7 +92,9 @@ export class CastButtonCore {
 
   async toggle(media: MediaRemotePlaybackState): Promise<void> {
     this.setMedia(media);
+
     if (this.getState().disabled) return;
+
     return media.toggleRemotePlayback();
   }
 }

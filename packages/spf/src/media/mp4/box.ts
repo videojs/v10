@@ -39,18 +39,22 @@ export function readFourCC(view: DataView, offset: number): string {
 /** Iterate the boxes directly contained in `[start, end)`. */
 export function* iterateBoxes(view: DataView, start = 0, end = view.byteLength): Generator<Box> {
   let offset = start;
+
   while (offset + 8 <= end) {
     let size = view.getUint32(offset);
     const type = readFourCC(view, offset + 4);
     let dataStart = offset + 8;
+
     if (size === 1) {
       size = Number(view.getBigUint64(offset + 8));
       dataStart = offset + 16;
     } else if (size === 0) {
       size = end - offset;
     }
+
     // A size smaller than its own header is malformed — stop rather than loop.
     if (size < dataStart - offset) return;
+
     yield { type, start: offset, dataStart, end: offset + size };
     offset += size;
   }
@@ -70,12 +74,17 @@ export function* iterateBoxesOfType(view: DataView, type: string, start = 0, end
  */
 export function findBox(view: DataView, path: readonly string[], start = 0, end = view.byteLength): Box | undefined {
   const [head, ...rest] = path;
+
   for (const box of iterateBoxes(view, start, end)) {
     if (box.type !== head) continue;
+
     if (rest.length === 0) return box;
+
     const found = findBox(view, rest, box.dataStart, box.end);
+
     if (found) return found;
   }
+
   return undefined;
 }
 

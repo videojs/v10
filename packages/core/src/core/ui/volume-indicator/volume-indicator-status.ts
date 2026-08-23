@@ -24,6 +24,7 @@ export function isVolumeIndicatorAction(action: string | null | undefined): acti
 
 export function getVolumeLevel(volume: number): IndicatorVolumeLevel {
   if (volume <= 0) return 'off';
+
   return volume <= 0.5 ? 'low' : 'high';
 }
 

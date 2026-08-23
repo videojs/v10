@@ -183,10 +183,12 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
         this.#reportedCode = null;
         return;
       }
+
       // Keyed on the code, not the object: a later append re-runs this effect
       // with an equal-but-new array, and re-firing `'error'` for a condition
       // already surfaced would look like a second failure.
       if (this.#reportedCode === reported.code) return;
+
       this.#reportedCode = reported.code;
 
       // Logged for every fatal condition, not just the substituted ones: a source
@@ -264,6 +266,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
 
     async play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
+
       if (!mediaElement) {
         return Promise.reject(new Error('HlsBackgroundVideoMediaElement: no media element attached'));
       }
@@ -284,6 +287,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
             mediaElement.addEventListener('loadstart', listener, { once: true });
           });
         }
+
         throw err;
       }
     }
@@ -306,6 +310,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
 
     #cancelPendingPlay(): void {
       if (!this.#loadstartListener) return;
+
       const mediaElement = this.#signals.context.mediaElement.get();
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;

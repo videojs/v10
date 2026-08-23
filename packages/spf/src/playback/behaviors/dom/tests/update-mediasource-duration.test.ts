@@ -51,6 +51,7 @@ function makeUpdatingSourceBuffer() {
 
   const finishUpdating = () => {
     (buffer as unknown as { updating: boolean }).updating = false;
+
     for (const h of updateEndListeners) h();
   };
 

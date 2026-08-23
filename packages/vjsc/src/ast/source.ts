@@ -27,24 +27,31 @@ export function renderSourceRange(source: SourceText, start: number, end: number
     if (edit.start < cursor || edit.end > end) {
       throw new Error('vjsc: source edits must be non-overlapping and contained by the rendered range.');
     }
+
     value += source.code.slice(cursor, edit.start) + edit.content;
     cursor = edit.end;
   }
+
   value += source.code.slice(cursor, end);
 
   return {
     value,
     position(original) {
       if (original < start || original > end) return undefined;
+
       let position = original - start;
+
       for (const edit of edits) {
         if (edit.end <= original) {
           position += edit.content.length - (edit.end - edit.start);
           continue;
         }
+
         if (edit.start < original) return undefined;
+
         break;
       }
+
       return position;
     },
   };

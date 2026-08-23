@@ -17,6 +17,7 @@ export class AudioRendition {
 
   set selected(value: boolean) {
     if (this.#selected === value) return;
+
     this.#selected = value;
 
     selectedChanged(this);

@@ -1369,6 +1369,7 @@ describe('Preset pipeline (end-to-end)', () => {
       const featureSlugs = featureResults.map((r) => r.slug);
 
       const videoPreset = findPreset('video')!.reference;
+
       for (const feature of videoPreset.features) {
         expect(featureSlugs).toContain(feature.name);
       }

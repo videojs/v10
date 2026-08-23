@@ -54,7 +54,9 @@ function createBindingPath(code: string): TargetBinding {
   return new Proxy(expression as TargetBinding, {
     get(target, property) {
       if (property === TARGET_EXPRESSION) return target[TARGET_EXPRESSION];
+
       if (typeof property === 'string') return createBindingPath(`${code}.${property}`);
+
       return (target as TargetBinding & Readonly<Record<PropertyKey, unknown>>)[property];
     },
     ownKeys() {
@@ -78,8 +80,10 @@ function readExpression(expression: TargetExpression): TargetExpressionNode {
 
 function readBinding(binding: TargetBinding): string {
   const expression = readExpression(binding);
+
   if (expression.kind !== 'reference' || expression.code.includes('.')) {
     throw new Error('vjsc/target: generated function parameters must be direct bindings.');
   }
+
   return expression.code;
 }

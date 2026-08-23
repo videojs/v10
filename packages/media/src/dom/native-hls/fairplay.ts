@@ -91,6 +91,7 @@ export function createDrmError(message: string, context: NativeHlsDrmErrorContex
  */
 export function toDrmError(cause: unknown, message: string, context: NativeHlsDrmErrorContext): MediaError {
   if (cause instanceof MediaError) return cause;
+
   const error = createDrmError(message, context);
   error.data = cause;
   return error;
@@ -103,6 +104,7 @@ export function toDrmError(cause: unknown, message: string, context: NativeHlsDr
  */
 export async function requestAppCertificate({ config, signal }: FairPlayContext): Promise<ArrayBuffer | null> {
   const { serverCertificateUrl } = config;
+
   if (!serverCertificateUrl) return null;
 
   const response = await fetch(serverCertificateUrl, { signal }).catch((cause) => {

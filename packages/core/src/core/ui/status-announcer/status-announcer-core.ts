@@ -85,6 +85,7 @@ export class StatusAnnouncerCore {
     alreadyHandled: boolean
   ): boolean {
     const label = deriveVolumeAnnouncement(previous, snapshot, labels);
+
     if (label === null || alreadyHandled || !this.#shouldAnnounce()) return false;
 
     this.#schedule(label);
@@ -117,6 +118,7 @@ export class StatusAnnouncerCore {
     this.#seekTargetTime = null;
 
     if (targetTime === undefined || targetTime === null || Object.is(targetTime, startTime)) return false;
+
     if (alreadyHandled || !this.#shouldAnnounce()) return false;
 
     this.#schedule(labels.seekedTo(targetTime));
@@ -127,7 +129,9 @@ export class StatusAnnouncerCore {
     this.#clearTimer();
     this.#timer = setTimeout(() => {
       this.#timer = null;
+
       if (!this.#shouldAnnounce()) return;
+
       this.#announce(label);
     }, ANNOUNCEMENT_DEBOUNCE);
   }
@@ -138,6 +142,7 @@ export class StatusAnnouncerCore {
 
   #clearTimer(): void {
     if (this.#timer === null) return;
+
     clearTimeout(this.#timer);
     this.#timer = null;
   }

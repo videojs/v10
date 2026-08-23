@@ -97,11 +97,13 @@ function deriveState(
   mediaSourceClosed: boolean
 ): MediaSourceFsmState {
   if (!mediaElement || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
+
   // The current attachment was torn down (typically a UA-fired
   // `sourceclose`). The fact stands until the `'preconditions-unmet'`
   // effects consume it (see below); the reset then re-derives into a fresh
   // attach for the same source.
   if (mediaSourceClosed) return 'preconditions-unmet';
+
   return 'mediasource-attached';
 }
 
@@ -214,7 +216,9 @@ function setupMediaSourceSetup({
 
           const publishWhenOpen = async () => {
             await waitForMediaSourceOpen(mediaSource, controller.signal);
+
             if (controller.signal.aborted) return;
+
             // `waitForMediaSourceOpen` resolves on any readyState transition
             // out of `'closed'`; if we landed in `'ended'` / `'closed'`
             // instead of `'open'`, the attach window is gone and we leave
@@ -233,6 +237,7 @@ function setupMediaSourceSetup({
               );
               return;
             }
+
             context.mediaSource.set(mediaSource);
           };
 

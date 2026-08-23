@@ -308,8 +308,11 @@ describe('resolveOffsets', () => {
           fontSize: target === document.documentElement ? '16px' : '14px',
           getPropertyValue(name: string) {
             if (name === PopoverCSSVars.sideOffset) return '0.5rem';
+
             if (name === PopoverCSSVars.alignOffset) return '1em';
+
             if (name === PopoverCSSVars.boundaryOffset) return '2px';
+
             return '';
           },
         }) as CSSStyleDeclaration

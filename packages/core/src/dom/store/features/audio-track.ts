@@ -23,10 +23,12 @@ export const audioTrackFeature = definePlayerFeature({
     audioTrackList: [],
     selectAudioTrack(value: string) {
       const { media } = target();
+
       if (!isMediaAudioTrackCapable(media)) return;
 
       const tracks = [...media.audioTracks];
       const track = tracks.find((candidate, index) => getTrackValue(candidate, index) === value);
+
       if (!track) return;
 
       for (const candidate of tracks) {

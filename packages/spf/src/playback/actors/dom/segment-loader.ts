@@ -141,6 +141,7 @@ function makeLoadTask(op: LoadTask, { getContext, setContext, pipelines, deps }:
 
       for (const step of pipelines[op.type]) {
         if (taskSignal.aborted) return;
+
         await step(frame, taskSignal, deps);
       }
     } finally {
@@ -257,6 +258,7 @@ export function createSegmentLoaderActor(
     const actorCtx = peek(sourceBufferActor.snapshot).context;
     const bufferedSegments = getBufferedSegments(track.segments);
     const currentTime = range?.start ?? 0;
+
     const tasks: LoadTask[] = [];
 
     // Cross-rendition switch check (mid-stream language change). Fires when
@@ -287,6 +289,7 @@ export function createSegmentLoaderActor(
     // re-plans new-track segments inside them.
     const removes: Array<{ start: number; end: number }> = [];
     const staleRanges: Array<{ start: number; end: number }> = [];
+
     if (range) {
       if (isCrossRenditionSwitch) {
         // Mark current-segment-start onward as stale. Falls back to the
@@ -296,18 +299,24 @@ export function createSegmentLoaderActor(
           (s) => s.startTime <= currentTime && s.startTime + s.duration > currentTime
         );
         const staleStart = currentSeg?.startTime ?? actorCtx.segments.find((s) => s.startTime > currentTime)?.startTime;
+
         if (staleStart !== undefined) {
           staleRanges.push({ start: staleStart, end: Infinity });
         }
       }
+
       const forwardFlushStart = calculateForwardFlushPoint(bufferedSegments, currentTime, forwardBufferConfig);
+
       if (forwardFlushStart < Infinity) {
         removes.push({ start: forwardFlushStart, end: Infinity });
       }
+
       const backFlushEnd = calculateBackBufferFlushPoint(bufferedSegments, currentTime, backBufferConfig);
+
       if (backFlushEnd > 0) {
         removes.push({ start: 0, end: backFlushEnd });
       }
+
       for (const r of removes) tasks.push({ type: 'remove', start: r.start, end: r.end });
     }
 
@@ -355,12 +364,16 @@ export function createSegmentLoaderActor(
         const existing = actorCtx.segments.find(
           (s) => !overlapsStale(s) && Math.abs(s.startTime - seg.startTime) < SEGMENT_TIME_EPSILON
         );
+
         // Partial segments are still streaming — treat as not buffered so they
         // are always re-planned (avoids relying on incomplete data).
         if (existing?.partial) return true;
+
         if (!existing?.trackBandwidth || !track.bandwidth) return true;
+
         return track.bandwidth > existing.trackBandwidth;
       });
+
       for (const segment of segmentsToLoad) {
         tasks.push({
           type: 'append-segment',
@@ -384,6 +397,7 @@ export function createSegmentLoaderActor(
     tasks.forEach((op) => {
       runner.schedule(makeLoadTask(op, { getContext, setContext, pipelines, deps })).then(undefined, (e: unknown) => {
         if (e instanceof Error && e.name === 'AbortError') return;
+
         // On unexpected fetch/append errors, abort remaining tasks so a failed
         // init doesn't cause segment fetches to proceed with no init segment.
         console.error('Unexpected error in segment loader:', e);
@@ -401,7 +415,9 @@ export function createSegmentLoaderActor(
         on: {
           load: (msg, ctx) => {
             const allTasks = planTasks(msg);
+
             if (allTasks.length === 0) return;
+
             ctx.transition('loading');
             scheduleAll(allTasks, ctx);
           },
@@ -458,9 +474,11 @@ export function createSegmentLoaderActor(
                 context.inFlightSegment !== null ||
                 (context.inFlightInitTrackId !== null &&
                   allTasks.some((t) => t.type === 'append-init' && t.meta.trackId !== context.inFlightInitTrackId));
+
               if (cancelSourceBuffer) {
                 sourceBufferActor.send({ type: 'cancel' });
               }
+
               scheduleAll(allTasks, ctx);
             }
           },

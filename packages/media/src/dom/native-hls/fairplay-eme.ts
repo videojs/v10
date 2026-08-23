@@ -52,6 +52,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
 
   async function createKeys(): Promise<MediaKeys> {
     let access: MediaKeySystemAccess;
+
     try {
       access = await navigator.requestMediaKeySystemAccess(KeySystems.FAIRPLAY, [FAIRPLAY_CONFIGURATION]);
     } catch (cause) {
@@ -65,6 +66,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
     // only a configuration choice — a rejected one is a real failure.
     if (appCertificate) {
       const accepted = await mediaKeys.setServerCertificate(appCertificate).catch(() => false);
+
       if (!accepted) {
         throw createDrmError(
           NativeHlsDrmMessages.SERVER_CERTIFICATE_FAILED,
@@ -86,6 +88,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
   async function onMessage(session: MediaKeySession, event: MediaKeyMessageEvent): Promise<void> {
     try {
       const ckc = await requestLicenseKey(context, event.message);
+
       if (signal.aborted) return;
 
       await session.update(ckc).catch((cause) => {
@@ -93,6 +96,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
       });
     } catch (cause) {
       if (signal.aborted) return;
+
       // Both steps raise errors that describe themselves; this only covers what
       // neither anticipated.
       reportError(toDrmError(cause, NativeHlsDrmMessages.CDM_ERROR, NativeHlsDrmErrors.CDM_ERROR));
@@ -144,15 +148,18 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
         if (__DEV__) {
           console.warn(`[vjs-drm] Ignoring unexpected initialization data type "${event.initDataType}".`);
         }
+
         return;
       }
 
       if (!event.initData) {
         if (__DEV__) console.warn('[vjs-drm] Ignoring an `encrypted` event carrying no initialization data.');
+
         return;
       }
 
       const mediaKeys = await (keys ??= createKeys());
+
       if (signal.aborted) return;
 
       await createSession(mediaKeys, event.initDataType, event.initData);
@@ -171,6 +178,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
       // Only release keys still ours: a source that replaced this one may
       // already have set its own while these sessions were closing.
       const mediaKeys = await pending?.catch(() => null);
+
       if (mediaKeys && media.mediaKeys === mediaKeys) {
         await media.setMediaKeys(null).catch(() => {});
       }

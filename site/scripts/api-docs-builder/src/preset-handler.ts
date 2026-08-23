@@ -56,6 +56,7 @@ export interface PresetResult {
 function distToSrc(distPath: string): string {
   // Real packages: dist/(dev|default)/foo/bar.js → src/foo/bar.ts
   const distMatch = distPath.match(/^\.\/dist\/(?:dev|default)\/(.+?)(?:\.d\.ts|\.js)$/);
+
   if (distMatch) return `./src/${distMatch[1]}.ts`;
 
   // Already a source path (test fixtures)
@@ -68,12 +69,14 @@ function distToSrc(distPath: string): string {
  */
 function resolveExportPath(exportValue: unknown): string | undefined {
   if (typeof exportValue === 'string') return exportValue;
+
   if (typeof exportValue === 'object' && exportValue !== null) {
     const obj = exportValue as Record<string, unknown>;
     // Prefer types (points to source in some configs), fall back to default
     const raw = (obj.types ?? obj.default) as string | undefined;
     return raw;
   }
+
   return undefined;
 }
 
@@ -83,6 +86,7 @@ function resolveExportPath(exportValue: unknown): string | undefined {
  */
 function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPath: string; scanDir: string }> {
   const pkgJsonPath = path.join(packageDir, 'package.json');
+
   if (!fs.existsSync(pkgJsonPath)) return new Map();
 
   const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
@@ -93,16 +97,19 @@ function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPat
   for (const key of Object.keys(exports)) {
     // Match ./name (not ./, not ./name/*, not ./name/*.css)
     const match = key.match(/^\.\/([a-z][a-z0-9-]*)$/);
+
     if (!match) continue;
 
     const name = match[1]!;
 
     // Must have a corresponding wildcard export
     const wildcardKey = `./${name}/*`;
+
     if (!(wildcardKey in exports)) continue;
 
     const barrelRaw = resolveExportPath(exports[key]);
     const wildcardRaw = resolveExportPath(exports[wildcardKey]);
+
     if (!barrelRaw || !wildcardRaw) continue;
 
     const barrelSrc = distToSrc(barrelRaw);
@@ -138,8 +145,11 @@ function discoverPresets(monorepoRoot: string): PresetInfo[] {
     const info: PresetInfo = { name };
     const html = htmlPresets.get(name);
     const react = reactPresets.get(name);
+
     if (html) info.html = html;
+
     if (react) info.react = react;
+
     return info;
   });
 }
@@ -185,13 +195,16 @@ function extractClassesWithTagName(filePath: string): ClassWithTagName[] {
     if (ts.isExportDeclaration(node) && !node.exportClause && node.moduleSpecifier) {
       const specifier = (node.moduleSpecifier as ts.StringLiteral).text;
       const resolved = resolveModulePath(path.dirname(filePath), specifier);
+
       if (resolved) {
         results.push(...extractClassesWithTagName(resolved));
       }
+
       return;
     }
 
     if (!ts.isClassDeclaration(node) || !node.name) return;
+
     if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
 
     for (const member of node.members) {
@@ -218,13 +231,17 @@ function extractClassesWithTagName(filePath: string): ClassWithTagName[] {
 function resolveModulePath(dir: string, specifier: string): string | undefined {
   for (const ext of ['.ts', '.tsx']) {
     const candidate = path.join(dir, `${specifier}${ext}`);
+
     if (fs.existsSync(candidate)) return candidate;
   }
+
   // Try index file in directory
   for (const ext of ['.ts', '.tsx']) {
     const candidate = path.join(dir, specifier, `index${ext}`);
+
     if (fs.existsSync(candidate)) return candidate;
   }
+
   return undefined;
 }
 
@@ -245,6 +262,7 @@ function extractValueExports(filePath: string): string[] {
     ) {
       names.push(node.name.text);
     }
+
     if (ts.isVariableStatement(node) && node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
       for (const decl of node.declarationList.declarations) {
         if (ts.isIdentifier(decl.name)) {
@@ -252,6 +270,7 @@ function extractValueExports(filePath: string): string[] {
         }
       }
     }
+
     if (
       ts.isClassDeclaration(node) &&
       node.name &&
@@ -284,6 +303,7 @@ function parseBarrelExportNames(filePath: string): string[] {
     if (node.exportClause && ts.isNamedExports(node.exportClause)) {
       for (const element of node.exportClause.elements) {
         if (element.isTypeOnly) continue;
+
         names.push(element.name.text);
       }
     }
@@ -302,12 +322,17 @@ function findFeatureBundleExport(filePath: string): string | undefined {
  */
 function findReactMediaElement(filePath: string): string | undefined {
   const names = parseBarrelExportNames(filePath);
+
   for (const name of names) {
     if (isFeatureBundle(name)) continue;
+
     if (isReactSkin(name)) continue;
+
     if (/Tailwind$/.test(name)) continue;
+
     return name;
   }
+
   return undefined;
 }
 
@@ -323,7 +348,9 @@ const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
 
 function featureDocsSlug(featureName: string): string {
   const override = FEATURE_SLUG_OVERRIDES[featureName];
+
   if (override) return `reference/feature-${override}`;
+
   const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
   return `reference/feature-${kebab}`;
 }
@@ -340,6 +367,7 @@ function resolveFeatureRef(name: string, monorepoRoot: string): PresetFeatureRef
 
 function parseFeatureBundles(presetsFilePath: string): Map<string, string[]> {
   const map = new Map<string, string[]>();
+
   if (!fs.existsSync(presetsFilePath)) return map;
 
   const content = fs.readFileSync(presetsFilePath, 'utf-8');
@@ -347,21 +375,26 @@ function parseFeatureBundles(presetsFilePath: string): Map<string, string[]> {
 
   ts.forEachChild(sourceFile, (node) => {
     if (!ts.isVariableStatement(node)) return;
+
     if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
 
     for (const decl of node.declarationList.declarations) {
       if (!ts.isIdentifier(decl.name)) continue;
+
       const name = decl.name.text;
+
       if (!name.endsWith('Features')) continue;
 
       if (decl.initializer && ts.isArrayLiteralExpression(decl.initializer)) {
         const features: string[] = [];
+
         for (const element of decl.initializer.elements) {
           if (ts.isIdentifier(element)) {
             const featureName = element.text.replace(/Feature$/, '');
             features.push(featureName);
           }
         }
+
         map.set(name, features);
       }
     }
@@ -379,6 +412,7 @@ function extractFileDescription(filePath: string): string | undefined {
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
 
   const firstStatement = sourceFile.statements[0];
+
   if (!firstStatement) return undefined;
 
   return getJSDocDescription(firstStatement);
@@ -429,9 +463,12 @@ function scanReactDirectory(scanDir: string, barrelPath: string, presetName: str
 
     for (const name of exports) {
       if (isFeatureBundle(name)) continue;
+
       if (isReactSkin(name)) {
         const skin: PresetSkinDef = { name };
+
         if (cssImport) skin.cssImport = cssImport;
+
         skins.push(skin);
       }
     }
@@ -480,6 +517,7 @@ function buildPresetReference(
   };
 
   if (htmlResult.mediaElement) ref.html.mediaElement = htmlResult.mediaElement;
+
   if (description) ref.description = description;
 
   return { name: preset.name, reference: ref };
@@ -492,11 +530,14 @@ export function generatePresetReferences(monorepoRoot: string): PresetResult[] {
   const featureBundleMap = parseFeatureBundles(presetsFilePath);
 
   const presets = discoverPresets(monorepoRoot);
+
   if (presets.length === 0) return [];
 
   const results: PresetResult[] = [];
+
   for (const preset of presets) {
     const result = buildPresetReference(preset, featureBundleMap, monorepoRoot);
+
     if (result) results.push(result);
   }
 

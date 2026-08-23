@@ -89,7 +89,9 @@ export async function collectReferencedStyleRules(
   for (const file of files.filter((entry) => /\.(?:[cm]?ts|tsx)$/.test(entry))) {
     const sourceText = await readFile(file, 'utf8');
     const parsed = parseSync(file, sourceText);
+
     if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
+
     const bindings = styleBindings(parsed.program, file, manifest);
 
     if (bindings.size === 0) continue;
@@ -109,11 +111,14 @@ export async function collectReferencedStyleRules(
         walk(node.value.expression, {
           enter(expression) {
             if (expression.type !== 'MemberExpression') return;
+
             const path = readAccessPath(expression);
             const [root, ...tokenPath] = path ?? [];
             const modulePath = root ? bindings.get(root) : undefined;
             const rule = modulePath ? ruleForToken(manifest, modulePath, tokenPath) : undefined;
+
             if (!rule) return;
+
             referenced.add(rule.className);
             this.skip();
           },
@@ -216,9 +221,13 @@ function styleBindings(ast: Program, filename: string, manifest: StyleManifest):
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
+
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
+
     if (defaults.length !== 1 || statement.specifiers.length !== 1) continue;
+
     const modulePath = resolveManifestStyleModule(filename, statement.source.value, manifest);
+
     if (modulePath) bindings.set(defaults[0]!.local.name, modulePath);
   }
 
@@ -227,13 +236,19 @@ function styleBindings(ast: Program, filename: string, manifest: StyleManifest):
 
 function readAccessPath(expression: Expression): string[] | undefined {
   if (expression.type === 'Identifier') return [expression.name];
+
   if (expression.type !== 'MemberExpression') return undefined;
+
   const object = readAccessPath(expression.object);
+
   if (!object) return undefined;
+
   if (!expression.computed) return [...object, expression.property.name];
+
   if (expression.property.type === 'Literal' && typeof expression.property.value === 'string') {
     return [...object, expression.property.value];
   }
+
   return undefined;
 }
 

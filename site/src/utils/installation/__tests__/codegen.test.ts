@@ -39,6 +39,7 @@ describe('validateInstallationOptions', () => {
   it('rejects React + CDN', () => {
     const result = validateInstallationOptions({ ...baseReact, installMethod: 'cdn' });
     expect(result.valid).toBe(false);
+
     if (!result.valid) {
       expect(result.reason).toContain('CDN');
     }
@@ -167,6 +168,7 @@ describe('generateHTMLUsageCode', () => {
       { renderer: 'tiktok', tag: 'tiktok-video', urlPart: 'tiktok.com' },
       { renderer: 'twitch', tag: 'twitch-video', urlPart: 'twitch.tv' },
     ] as const;
+
     for (const { renderer, tag, urlPart } of cases) {
       const result = generateHTMLUsageCode({ ...baseHTML, renderer });
       expect(result.html).toContain(`<${tag} src=`);
@@ -333,6 +335,7 @@ describe('generateReactCreateCode', () => {
       { renderer: 'tiktok', component: 'TikTokVideo', subpath: 'tiktok-video' },
       { renderer: 'twitch', component: 'TwitchVideo', subpath: 'twitch-video' },
     ] as const;
+
     for (const { renderer, component, subpath } of cases) {
       const code = generateReactCreateCode({ ...baseReact, renderer })['MyPlayer.tsx'];
       expect(code).toContain(`import { ${component} } from '@videojs/react/media/${subpath}'`);

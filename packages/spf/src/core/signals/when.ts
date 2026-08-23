@@ -13,12 +13,14 @@ import { effect } from './effect';
  */
 export function when(condition: () => boolean, options: { signal?: AbortSignal } = {}): Promise<void> {
   const { signal } = options;
+
   if (signal?.aborted) return Promise.reject(signal.reason);
 
   return new Promise<void>((resolve, reject) => {
     let settled = false;
     const settle = (complete: () => void) => {
       if (settled) return;
+
       settled = true;
       complete();
       // Deferred: on the effect's synchronous initial run `stop` isn't

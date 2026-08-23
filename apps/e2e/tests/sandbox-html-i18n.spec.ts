@@ -18,7 +18,9 @@ async function expectLTRControlOrder(scope: Page | Frame): Promise<void> {
     const control = scope.locator(selector).first();
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
+
     if (!box) throw new Error(`Control has no bounding box: ${selector}`);
+
     return box.x;
   };
   const [play, mute, settings, fullscreen] = await Promise.all([
@@ -37,6 +39,7 @@ async function expectLTRThumbnailCrop(page: Page): Promise<void> {
   const slider = page.locator('[role="slider"]:visible').first();
   await expect(slider).toBeVisible();
   const box = await slider.boundingBox();
+
   if (!box) throw new Error('Time slider is not visible');
 
   await page.mouse.move(box.x + box.width * 0.75, box.y + box.height / 2);
@@ -47,6 +50,7 @@ async function expectLTRThumbnailCrop(page: Page): Promise<void> {
 
   const crop = await thumbnail.evaluate((element) => {
     const image = element.shadowRoot?.querySelector('img') ?? element.querySelector('img');
+
     if (!image) return;
 
     const hostBox = element.getBoundingClientRect();
@@ -54,6 +58,7 @@ async function expectLTRThumbnailCrop(page: Page): Promise<void> {
     const transform = new DOMMatrix(getComputedStyle(image).transform);
     return { actual: imageBox.left, expected: hostBox.left + transform.m41 };
   });
+
   if (!crop) throw new Error('Thumbnail image is not rendered');
 
   expect(crop.actual).toBeCloseTo(crop.expected, 0);
@@ -73,6 +78,7 @@ async function getControlOrder(page: Page): Promise<string[]> {
   const visible = await Promise.all(
     (await controls.all()).map(async (control, index) => {
       if (!(await control.isVisible())) return;
+
       const box = await control.boundingBox();
       return box ? { index, x: box.x } : undefined;
     })
@@ -96,6 +102,7 @@ async function getPreviewFrame(page: Page, path: string): Promise<Frame> {
     .toContain(path);
 
   const frame = page.frames().find((frame) => frame.url().includes(path));
+
   if (!frame) throw new Error(`Preview frame not found: ${path}`);
 
   return frame;
@@ -215,6 +222,7 @@ test.describe('Sandbox RTL playback control order', () => {
       if ('width' in controlCase) {
         await page.setViewportSize({ width: controlCase.width, height: 720 });
       }
+
       const query = `styling=${controlCase.styling}&skin=${controlCase.skin}&source=${controlCase.source}&autoplay=0&muted=0&loop=0&preload=metadata`;
 
       await page.goto(`${SANDBOX_BASE}/${controlCase.path}/?locale=en&${query}`, {

@@ -10,6 +10,7 @@ export function addInputEntries(
   const ids = Object.values(entries);
 
   if (typeof input === 'string') return [input, ...ids];
+
   if (Array.isArray(input)) return [...new Set([...input, ...ids])];
 
   for (const name of Object.keys(entries)) {

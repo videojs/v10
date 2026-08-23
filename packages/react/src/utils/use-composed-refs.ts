@@ -41,6 +41,7 @@ export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): 
       return () => {
         for (let i = 0; i < cleanups.length; i++) {
           const cleanup = cleanups[i];
+
           if (isFunction(cleanup)) {
             cleanup();
           } else {

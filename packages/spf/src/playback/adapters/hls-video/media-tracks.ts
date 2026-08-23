@@ -81,6 +81,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
         const renditions = renditionsSignal.get();
         this.#renditions = renditions;
         this.#removeVideoTracks();
+
         if (!renditions.length) return;
 
         // "video track" here is the Media UI Extensions concept, which maps onto
@@ -97,6 +98,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
         videoTrack.selected = true;
 
         const resolved = untrack(() => findVideoTrackById(state.presentation.get(), state.selectedVideoTrackId.get()));
+
         for (const rendition of renditions) {
           const domRendition = videoTrack.addRendition(
             '',
@@ -113,6 +115,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
 
       const reflectSelectedVideo = () => {
         const resolved = findVideoTrackById(state.presentation.get(), state.selectedVideoTrackId.get());
+
         for (const rendition of this.videoRenditions) {
           rendition.active = isSameVideoTrack(toVideoKey(rendition), resolved);
         }
@@ -124,9 +127,11 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
         const tracks = audioTracksSignal.get();
         this.#audioTracks = tracks;
         this.#removeAudioTracks();
+
         if (!tracks.length) return;
 
         const resolved = untrack(() => findAudioTrackById(state.presentation.get(), state.selectedAudioTrackId.get()));
+
         for (const track of tracks) {
           const domTrack = this.addAudioTrack(track.default ? 'main' : 'alternative', track.name, track.language ?? '');
           domTrack.id = track.id;
@@ -136,6 +141,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
 
       const reflectSelectedAudio = () => {
         const resolved = findAudioTrackById(state.presentation.get(), state.selectedAudioTrackId.get());
+
         for (const track of this.audioTracks) {
           track.enabled = isSameAudioTrack(toAudioKey(track), resolved);
         }
@@ -167,6 +173,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
 
     destroy(): void {
       if (this.#destroyed) return;
+
       this.#destroyed = true;
       this.#abort.abort();
       this.#removeVideoTracks();
@@ -194,12 +201,14 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
       // enabled track over the one that is already playing.
       const enabled = [...this.audioTracks].filter((track) => track.enabled);
       const target = enabled.find((track) => track !== current) ?? enabled[0];
+
       if (!target) return;
 
       // Disable the rest so future change events resolve unambiguously.
       for (const track of enabled) {
         if (track !== target) track.enabled = false;
       }
+
       // Skip the write when the enabled track is already the resolved one
       // that's this projection's own reflection (or a no-op re-affirm), not a user switch.
       if (target === current) return;

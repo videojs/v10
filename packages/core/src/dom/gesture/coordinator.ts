@@ -41,6 +41,7 @@ export class GestureCoordinator {
    */
   claimsTap(event: PointerEvent, action: string): boolean {
     if (isInteractiveTarget(event)) return false;
+
     return this.#bindings.some(
       (b) => b.type === 'tap' && b.action === action && (!b.pointer || b.pointer === event.pointerType)
     );
@@ -60,6 +61,7 @@ export class GestureCoordinator {
             pointer: binding.pointer,
             event,
           };
+
           for (const cb of this.#subscribers) {
             try {
               cb(activateEvent);
@@ -68,6 +70,7 @@ export class GestureCoordinator {
             }
           }
         }
+
         binding.onActivate(event);
       },
     };
@@ -79,9 +82,11 @@ export class GestureCoordinator {
     let removed = false;
     return () => {
       if (removed) return;
+
       removed = true;
 
       const idx = this.#bindings.indexOf(wrapped);
+
       if (idx !== -1) this.#bindings.splice(idx, 1);
 
       this.#maybeDisconnect();
@@ -92,6 +97,7 @@ export class GestureCoordinator {
 
   #connect(): void {
     if (this.#disconnect) return;
+
     this.#disconnect = new AbortController();
     const { signal } = this.#disconnect;
 
@@ -102,6 +108,7 @@ export class GestureCoordinator {
       'pointerdown',
       (event) => {
         if (event.button !== 0) return;
+
         pointerDownTime = Date.now();
       },
       { signal }
@@ -112,7 +119,9 @@ export class GestureCoordinator {
       'pointerup',
       (event) => {
         if (event.button !== 0) return;
+
         if (Date.now() - pointerDownTime > TAP_THRESHOLD) return;
+
         if (isInteractiveTarget(event)) return;
 
         const pointerType = event.pointerType;
@@ -154,10 +163,12 @@ export function findGestureCoordinator(target: HTMLElement): GestureCoordinator 
 
 export function getGestureCoordinator(target: HTMLElement): GestureCoordinator {
   let coordinator = coordinators.get(target);
+
   if (!coordinator) {
     coordinator = new GestureCoordinator(target);
     coordinators.set(target, coordinator);
   }
+
   return coordinator;
 }
 
@@ -178,7 +189,9 @@ function matchBindings(
 
   for (const binding of bindings) {
     if (binding.disabled) continue;
+
     if (binding.type !== type) continue;
+
     if (binding.pointer && binding.pointer !== pointerType) continue;
 
     if (binding.region) {
@@ -195,11 +208,16 @@ function matchBindings(
 
 function getActiveRegions(bindings: GestureBinding[], type: GestureType, pointerType: string): Set<GestureRegion> {
   const regions = new Set<GestureRegion>();
+
   for (const binding of bindings) {
     if (binding.disabled) continue;
+
     if (binding.type !== type) continue;
+
     if (binding.pointer && binding.pointer !== pointerType) continue;
+
     if (binding.region) regions.add(binding.region);
   }
+
   return regions;
 }

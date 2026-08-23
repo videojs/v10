@@ -41,6 +41,7 @@ describe('parseHotkeyPattern', () => {
     const result = parseHotkeyPattern('0-9');
 
     expect(result).toHaveLength(10);
+
     for (let i = 0; i < 10; i++) {
       expect(result[i]!.key).toBe(String(i));
       expect(result[i]!.modifiers.size).toBe(0);

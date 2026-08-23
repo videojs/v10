@@ -12,6 +12,7 @@ export function useLocaleRootNotifications(resolvedLocale: Locale, onActiveLocal
     childLocaleRootCountRef.current += 1;
     return () => {
       childLocaleRootCountRef.current = Math.max(0, childLocaleRootCountRef.current - 1);
+
       if (childLocaleRootCountRef.current === 0) {
         invalidateLocaleRoots();
       }
@@ -24,6 +25,7 @@ export function useLocaleRootNotifications(resolvedLocale: Locale, onActiveLocal
   useEffect(() => {
     const id = setTimeout(() => {
       if (childLocaleRootCountRef.current > 0) return;
+
       onActiveLocaleChangeRef.current?.(resolvedLocale);
     }, 0);
     return () => clearTimeout(id);

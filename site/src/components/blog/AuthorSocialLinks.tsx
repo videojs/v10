@@ -57,6 +57,7 @@ export function AuthorSocialLinks({ socialLinks, className }: AuthorSocialLinksP
       <ul className={className}>
         {links.map(([platform, url]) => {
           const config = SOCIAL_CONFIGS[platform];
+
           if (!config) return <Fragment key={platform} />;
 
           const Icon = config.icon;

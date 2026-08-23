@@ -56,8 +56,11 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
           S extends { thumbAlignment?: string; orientation?: string; fillPercent: number; pointerPercent: number },
         >(state: S): S {
           if (!options?.adjustPercent || state.thumbAlignment !== 'edge') return state;
+
           const thumbEl = options.getThumbElement?.();
+
           if (!thumbEl) return state;
+
           const rootEl = options.getElement!();
           const isHorizontal = state.orientation === 'horizontal';
           const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;

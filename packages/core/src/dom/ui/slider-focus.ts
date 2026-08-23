@@ -5,5 +5,6 @@ export function isSliderFocused(root: Document | Element = document): boolean {
   const active = getDeepActiveElement(doc);
 
   if (active?.getAttribute('role') !== 'slider') return false;
+
   return isDocument(root) || containsComposed(root, active);
 }

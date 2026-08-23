@@ -20,6 +20,7 @@ export interface IconFamily {
 export function loadIconFamilies(): IconFamily[] {
   return getIconSets().map((family) => {
     const files = getSvgFiles(family);
+
     if (files.length === 0) throw new Error(`Icon family \`${family}\` does not contain any SVG assets.`);
 
     return {

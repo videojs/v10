@@ -10,6 +10,7 @@ describe('prependBlockBody', () => {
     const ast = parseSync('fixture.ts', code).program;
     const body = collectFunctionDeclarations(ast)[0]?.body;
     const magicString = new RolldownMagicString(code);
+
     if (!body) throw new Error('Expected fixture function body.');
 
     prependBlockBody(magicString, body, 'const value = true;');

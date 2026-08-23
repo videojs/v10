@@ -39,6 +39,7 @@ function readPreload(): PreloadValue {
 
 function readResolution(name: string): MediaResolution | undefined {
   const value = params.get(name);
+
   if (!value || !RESOLUTION_PATTERN.test(value) || Number.parseInt(value, 10) <= 0) return undefined;
 
   return value as MediaResolution;
@@ -47,6 +48,7 @@ function readResolution(name: string): MediaResolution | undefined {
 /** Absent unless named, so the source default is what runs otherwise. */
 function readOptionalBoolean(name: string): boolean | undefined {
   const value = params.get(name);
+
   if (value === null) return undefined;
 
   return value !== '0' && value !== 'false';
@@ -64,6 +66,7 @@ let currentMuted = readBoolean('muted');
 let currentLoop = readBoolean('loop');
 let currentPreload = readPreload();
 let currentLocale = readLocale();
+
 const initialMaxAutoResolution = readResolution('maxAutoResolution');
 const initialMinAutoResolution = readResolution('minAutoResolution');
 const initialCapRenditionToPlayerSize = readOptionalBoolean('capRenditionToPlayerSize');

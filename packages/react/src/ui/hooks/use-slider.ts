@@ -59,6 +59,7 @@ export function useSlider<State extends SliderState = SliderState>(
   options: UseSliderOptions<State>
 ): UseSliderReturnValue<State> {
   const optionsRef = useLatestRef(options);
+
   const controls = useOptionalPlayer(selectControls);
   const requestControlsLock = controls?.requestControlsLock;
   const releaseControlsLockRef = useRef<(() => void) | null>(null);
@@ -129,6 +130,7 @@ export function useSlider<State extends SliderState = SliderState>(
   const syncStyles = useCallback(
     (element = rootElementRef.current) => {
       if (!element) return;
+
       const next = optionsRef.current.computeState(slider.input.current);
       applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
     },

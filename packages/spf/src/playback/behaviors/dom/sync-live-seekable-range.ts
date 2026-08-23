@@ -57,6 +57,7 @@ function syncLiveSeekableRangeSetup({
   return effect(() => {
     const mediaSource = context.mediaSource.get();
     const liveWindow = liveWindowFromState(state);
+
     if (!mediaSource || !liveWindow) return;
 
     // Re-declared as the window slides so seekable tracks the live window

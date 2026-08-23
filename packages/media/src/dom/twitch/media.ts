@@ -94,7 +94,9 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   /** Bind the iframe hosting the embed. The embed follows once a URL resolves; `load()` retries if none does yet. */
   attach(target: HTMLIFrameElement | null): void {
     if (!target || this.#target === target) return;
+
     if (this.#target) this.detach();
+
     this.#target = target;
     this.#beginLoad();
     this.#createPlayer();
@@ -102,6 +104,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
 
   detach(): void {
     if (!this.#target) return;
+
     this.#attachId++;
     // The `message` listener is on the host window, which outlives the iframe; dropping it silences the embed.
     this.#messages?.abort();
@@ -147,34 +150,42 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     if (!this.#messages || !this.#playerReady) {
       // Commands are dropped before `ready`; replay the load then. A cleared src replays too, settling the barrier.
       this.#pendingLoad = !!this.#target;
+
       // A target attached before it had anything to embed: this load is what finally builds it.
       if (this.#target && !this.#messages) {
         // `attach()`'s barrier was settled when there was nothing to embed, so this load needs one of its own.
         const load = this.#beginLoad();
         // The embed URL is built once, so wait a microtask for whatever order the framework sets src and props in.
         await Promise.resolve();
+
         // A later load took over while waiting; building the embed is its job now.
         if (load !== this.#loadComplete) return;
+
         // The embed is built from the current source, so `ready` has nothing to replay.
         this.#pendingLoad = false;
         this.#createPlayer();
       }
+
       return;
     }
+
     const load = this.#beginLoad();
     // Reset before bailing on an empty src: nothing to load, but the old video's reported state still has to go.
     this.#resetState();
     // `emptied` announces that reset before the empty-src bail: a cleared source is the one case where the embed
     // reports nothing further, stranding listeners on the last video's duration and buffer.
     this.dispatchEvent(new Event('emptied'));
+
     if (!this.#src) {
       // Stop the embed too: left running it keeps playing and writes the cleared state straight back.
       load.resolve();
       this.#sendCommand(COMMAND_PAUSE);
       return;
     }
+
     this.dispatchEvent(new Event('loadstart'));
     const parsed = parseTwitchSource(this.#src);
+
     if (!parsed) {
       this.#error = new MediaError(`Unrecognized Twitch source: ${this.#src}`, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
       this.dispatchEvent(new Event('error'));
@@ -182,6 +193,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
       load.resolve();
       return;
     }
+
     this.#kind = parsed.kind;
     const nextEmbedSrc = buildTwitchIframeSrc(this.#src, this.#snapshotProps());
 
@@ -189,8 +201,10 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     // embed URL, so a changed parameter or an unbuilt URL we cannot compare has to rebuild the iframe.
     if (isContentOnlyChange(this.#embedSrc, nextEmbedSrc)) {
       this.#embedSrc = nextEmbedSrc;
+
       if (parsed.kind === 'video') this.#sendCommand(COMMAND_SET_VIDEO, `v${parsed.id}`);
       else this.#sendCommand(COMMAND_SET_CHANNEL, parsed.channel);
+
       return;
     }
 
@@ -198,6 +212,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     // A rebuilt embed posts `ready` again, which is what completes this load.
     this.#playerReady = false;
     this.#rebuilding = true;
+
     if (this.#target) this.#target.src = nextEmbedSrc;
   }
 
@@ -211,6 +226,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   get paused() {
     // Until the embed describes itself, our own play()/pause() calls are the only answer there is.
     if (!this.#playback) return this.#paused;
+
     // Buffering is playing that is waiting; every other state the embed reports is paused.
     return this.#playback !== PLAYBACK_PLAYING && this.#playback !== PLAYBACK_BUFFERING;
   }
@@ -218,6 +234,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   get ended() {
     // A live channel never ends; a stream going away is re-dispatched as `offline` under its own name.
     if (this.#kind === 'channel') return false;
+
     return this.#playback === PLAYBACK_ENDED;
   }
 
@@ -227,8 +244,10 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
 
   async play() {
     await this.#loadComplete;
+
     // The embed still holds the paused video, so playing it would resume a source that was cleared.
     if (!this.#src) return;
+
     this.#paused = false;
     this.#sendCommand(COMMAND_PLAY);
   }
@@ -243,6 +262,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   }
   set currentTime(value) {
     if (this.#currentTime === value) return;
+
     this.#currentTime = value;
     this.#afterLoad(() => this.#sendCommand(COMMAND_SEEK, value));
   }
@@ -256,6 +276,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   }
   set volume(value) {
     if (this.#volume === value) return;
+
     this.#volume = value;
     // Nothing else announces this: the embed's echo of the level it was told to take reads as unchanged.
     this.dispatchEvent(new Event('volumechange'));
@@ -268,6 +289,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   }
   set muted(value) {
     if (this.#muted === value) return;
+
     this.#muted = value;
     // Announced here for the same reason the level is: the embed's echo of a commanded mute is not a change.
     this.dispatchEvent(new Event('volumechange'));
@@ -339,6 +361,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   }
   set source(value: TwitchSource | null) {
     const source = value ?? null;
+
     // Changing anything takes a new object, so handing the same one back is a no-op.
     if (source === this.#source) return;
 
@@ -387,37 +410,46 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   async requestFullscreen() {
     // Without an element to request it on nothing entered fullscreen, so the flag must not claim otherwise.
     if (!this.#target?.requestFullscreen) return;
+
     await this.#target.requestFullscreen();
     this.#isFullscreen = true;
   }
 
   async exitFullscreen() {
     const doc = globalThis.document;
+
     if (doc?.fullscreenElement && doc.fullscreenElement === this.#target) await doc.exitFullscreen();
+
     this.#isFullscreen = false;
   }
 
   // Build the embed and listen to it once a source resolves; an unresolvable target settles its load and retries later.
   #createPlayer(): boolean {
     const target = this.#target;
+
     if (!target || this.#messages) return false;
 
     // The `src` property resolves an empty attribute to the document URL; only the attribute can spot a placeholder.
     const existingSrc = target.getAttribute('src');
+
     if (!existingSrc) {
       const initialSrc = buildTwitchIframeSrc(this.#src, this.#snapshotProps());
+
       // No embed means no `ready` is coming to settle this load.
       if (!initialSrc) {
         this.#loadComplete.resolve();
         return false;
       }
+
       target.src = initialSrc;
     } else {
       // Twitch refuses to play in a page its `parent` never named, which is what server rendering leaves behind.
       // Nothing else about a URL we did not build is ours to second-guess.
       const withParent = withPageParent(existingSrc);
+
       if (withParent !== existingSrc) target.src = withParent;
     }
+
     this.#kind = parseTwitchSource(this.#src)?.kind ?? null;
     // Remembered even when the iframe brought its own URL: a later source change compares against it to swap in place.
     this.#embedSrc = target.getAttribute('src') ?? '';
@@ -442,6 +474,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     this.#loadComplete.then(
       () => {
         if (!this.#messages) return;
+
         fn();
       },
       () => {}
@@ -450,7 +483,9 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
 
   #sendCommand(command: number, params?: unknown) {
     const embedWindow = this.#target?.contentWindow;
+
     if (!embedWindow) return;
+
     const message: TwitchCommandMessage = { namespace: PLAYER_PROXY_NAMESPACE, eventName: command, params };
     embedWindow.postMessage(message, TWITCH_PLAYER_ORIGIN);
   }
@@ -486,20 +521,27 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
 
   async #onMessage(event: MessageEvent, attachId: number) {
     if (this.#isStale(attachId)) return;
+
     const embedWindow = this.#target?.contentWindow;
+
     // Any frame on the page can post here, so only the embed we bound is allowed to drive state.
     if (!embedWindow || event.source !== embedWindow) return;
+
     const { data } = event;
+
     if (!isTwitchMessage(data)) return;
 
     if (data.namespace === EMBED_NAMESPACE) {
       // The lifecycle event lands before the snapshot explaining it, so wait for the snapshot before acting.
       await new Promise((resolve) => setTimeout(resolve, STATE_SETTLE_MS));
+
       // The wait outlives a detach, and the embed it belonged to may be gone.
       if (this.#isStale(attachId)) return;
+
       this.#onEmbedEvent(data.eventName);
       return;
     }
+
     if (data.eventName === 'UPDATE_STATE') this.#onUpdateState(data.params ?? {});
   }
 
@@ -512,12 +554,14 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
       case 'ready': {
         this.#playerReady = true;
         this.#rebuilding = false;
+
         if (this.#pendingLoad) {
           // The embed was built from a stale src; skip its metadata and reload.
           this.#pendingLoad = false;
           void this.load();
           return;
         }
+
         this.#onLoaded();
         return;
       }
@@ -531,6 +575,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
           this.#seeking = false;
           this.dispatchEvent(new Event('seeked'));
         }
+
         this.#readyState = READY_STATE_HAVE_FUTURE_DATA;
         this.dispatchEvent(new Event('playing'));
         return;
@@ -538,11 +583,13 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
       case 'ended': {
         // Dispatched for a live channel too, as a native element does; only the `ended` *state* refuses to latch.
         this.dispatchEvent(new Event('ended'));
+
         // No loop parameter and no repeat command, so a repeat is a seek to zero followed by a play.
         if (this.#loop) {
           this.currentTime = 0;
           void this.play();
         }
+
         return;
       }
       default: {
@@ -557,6 +604,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     // An iframe keeps its window across a `src` change, so the outgoing document still describes the old content;
     // the rebuilt embed's `ready` completes this load instead.
     if (this.#rebuilding) return;
+
     // With no source loaded a snapshot would write the cleared video's time and duration straight back.
     if (!this.#src) return;
 
@@ -567,6 +615,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     if (state.playback && state.playback !== this.#playback) {
       // No lifecycle event says the embed ran dry, so entering the buffering state is the whole of `waiting`.
       if (state.playback === PLAYBACK_BUFFERING) this.dispatchEvent(new Event('waiting'));
+
       this.#playback = state.playback;
     }
 
@@ -584,33 +633,42 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     // Only a level or mute differing from what is reported is a change; the rest is an echo the setter announced.
     const volumeChanged = isNumber(state.volume) && state.volume !== this.#volume;
     const mutedChanged = !isUndefined(state.muted) && state.muted !== this.#muted;
+
     if (volumeChanged || mutedChanged) {
       if (isNumber(state.volume)) this.#volume = state.volume;
+
       if (!isUndefined(state.muted)) this.#muted = state.muted;
+
       this.dispatchEvent(new Event('volumechange'));
     }
 
     const bufferSize = state.stats?.videoStats?.bufferSize;
+
     if (isNumber(bufferSize) && bufferSize !== this.#progress) {
       this.#progress = bufferSize;
+
       // Buffer ahead of a playing head is as far as the embed lets us see; it never says the whole thing arrived.
       if (this.#readyState >= READY_STATE_HAVE_FUTURE_DATA && bufferSize > 0) {
         this.#readyState = READY_STATE_HAVE_ENOUGH_DATA;
       }
+
       this.dispatchEvent(new Event('progress'));
     }
   }
 
   #onLoaded() {
     if (this.#loaded) return;
+
     this.#loaded = true;
     this.#readyState = READY_STATE_HAVE_METADATA;
     this.dispatchEvent(new Event('loadedmetadata'));
+
     if (this.#kind === 'channel') {
       // Live has no end to seek to, so report it as a live `HTMLMediaElement` does rather than await a duration.
       this.#duration = Number.POSITIVE_INFINITY;
       this.dispatchEvent(new Event('durationchange'));
     }
+
     this.dispatchEvent(new Event('loadcomplete'));
     this.#loadComplete.resolve();
   }
@@ -627,22 +685,29 @@ function isContentOnlyChange(current: string, next: string): boolean {
 // Name the page in `parent` when the URL does not: the embed refuses to play in a page its ancestors list omits.
 function withPageParent(embedSrc: string): string {
   const hostname = globalThis.location?.hostname;
+
   if (!hostname) return embedSrc;
+
   let url: URL;
+
   try {
     url = new URL(embedSrc);
   } catch {
     return embedSrc;
   }
+
   // Only the embed reads `parent`; an iframe pointed anywhere else is not ours.
   if (url.origin !== TWITCH_PLAYER_ORIGIN) return embedSrc;
+
   if (url.searchParams.getAll('parent').includes(hostname)) return embedSrc;
+
   url.searchParams.append('parent', hostname);
   return url.toString();
 }
 
 function withoutContent(embedSrc: string): string | null {
   if (!embedSrc) return null;
+
   try {
     const url = new URL(embedSrc);
     url.searchParams.delete('video');

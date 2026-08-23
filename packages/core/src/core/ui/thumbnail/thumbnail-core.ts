@@ -85,6 +85,7 @@ export class ThumbnailCore {
 
     // Scale down if exceeding max constraints.
     if (Number.isFinite(maxRatio) && maxRatio < 1) return maxRatio;
+
     // Scale up if below min constraints.
     if (Number.isFinite(minRatio) && minRatio > 1) return minRatio;
 

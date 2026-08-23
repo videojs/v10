@@ -4,6 +4,7 @@ let queued = false;
 
 const flush = (): void => {
   queued = false;
+
   for (const cb of subscribers) {
     cb();
   }

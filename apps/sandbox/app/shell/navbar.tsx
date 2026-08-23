@@ -73,19 +73,24 @@ function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | un
   // video-only, so an absent video type is fatal here too.
   if (preset === 'hls-background-video' || preset === 'mux-background-video') {
     if (source.drm) return 'expects protected error';
+
     if (source.subType && source.subType !== 'mp4') return 'expects unsupported-format error';
+
     return undefined;
   }
 
   if (preset !== 'hls-video' && preset !== 'hls-audio') return undefined;
+
   const audioOnlyPreset = preset === 'hls-audio';
 
   if (source.drm) {
     return audioOnlyPreset ? 'plays — Mux leaves audio clear' : 'expects protected error';
   }
+
   if (source.subType && source.subType !== 'mp4') {
     return audioOnlyPreset ? 'expects no playback' : 'expects unsupported-format error';
   }
+
   return undefined;
 }
 
@@ -207,10 +212,13 @@ export function Navbar({
               // The empty-src entry carries no media, so it's offered wherever
               // the preset can render one rather than being filtered by format.
               if (sources[id].type === 'none') return true;
+
               // Any HLS source, including formats the SPF engine can't play — reaching
               // those failures on purpose is how the error paths get smoke-tested.
               if (isSpfHls || isSpfBackgroundVideo) return sources[id].type === 'hls';
+
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
+
               return true;
             })
             .map((id) => {

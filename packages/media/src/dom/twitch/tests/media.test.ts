@@ -88,6 +88,7 @@ async function attachAndLoad(media: TwitchMedia): Promise<{ iframe: HTMLIFrameEl
   // There is no embed to attach to without a source, so tests that don't care
   // which video is playing get one.
   if (!media.src) media.src = VOD_SRC;
+
   const iframe = createIframe();
   media.attach(iframe);
   postEmbedEvent(iframe, 'ready');
@@ -337,6 +338,7 @@ describe('TwitchMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete after ready', async () => {
     const media = new TwitchMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -469,6 +471,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['durationchange', 'timeupdate', 'volumechange', 'progress'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -540,6 +543,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['seeking', 'seeked', 'playing'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -560,6 +564,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['play', 'pause', 'offline'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -862,9 +867,11 @@ describe('TwitchMedia source', () => {
     await flushDeferredEmbed();
 
     const events: string[] = [];
+
     for (const type of ['durationchange', 'timeupdate', 'progress', 'playing'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
+
     // A paused embed keeps describing the video it still holds.
     postPlayerState(iframe, { duration: 120, currentTime: 5, stats: { videoStats: { bufferSize: 10 } } });
     postEmbedEvent(iframe, 'playing');

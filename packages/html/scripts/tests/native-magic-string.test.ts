@@ -94,7 +94,9 @@ async function build(source: string, plugin: Plugin): Promise<{ chunk: OutputChu
   );
 
   if (!chunk) throw new Error('Expected fixture build to emit a chunk.');
+
   if (!map) throw new Error('Expected fixture build to emit a source map.');
+
   return { chunk, map: JSON.parse(String(map.source)) as SourceMapOutput };
 }
 

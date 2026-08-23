@@ -18,7 +18,9 @@ describe('walkAncestors', () => {
     expect(
       walkAncestors(inner, (node) => {
         if (node === middle) return 'middle';
+
         if (node === outer) return 'outer';
+
         return undefined;
       })
     ).toBe('middle');

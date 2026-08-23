@@ -29,6 +29,7 @@ export type ViteOxcPlugin = VitePlugin & { readonly enforce: 'pre' };
 /** Adapt a transform that consumes Rolldown's AST metadata to Vite's transform contract. */
 export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
   const transform = plugin.transform;
+
   if (!transform) return { ...plugin, enforce: 'pre' };
 
   const handler = (typeof transform === 'function' ? transform : transform.handler) as RolldownTransformHandler;
@@ -79,15 +80,22 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
 
 function scriptModuleType(filename: string): ModuleType {
   if (/\.tsx$/.test(filename)) return 'tsx';
+
   if (/\.jsx$/.test(filename)) return 'jsx';
+
   if (/\.(?:ts|mts|cts)$/.test(filename)) return 'ts';
+
   return 'js';
 }
 
 function parserLanguage(moduleType: ModuleType, filename: string): 'js' | 'jsx' | 'ts' | 'tsx' | 'dts' {
   if (/\.d\.(?:ts|mts|cts)$/.test(filename)) return 'dts';
+
   if (moduleType === 'jsx') return 'jsx';
+
   if (moduleType === 'ts') return 'ts';
+
   if (moduleType === 'tsx') return 'tsx';
+
   return scriptModuleType(filename) as 'js' | 'jsx' | 'ts' | 'tsx';
 }

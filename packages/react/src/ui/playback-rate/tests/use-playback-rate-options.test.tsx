@@ -37,6 +37,7 @@ function renderPlaybackRateOptions({
 
 function PlaybackRateRadioGroup({ formatRate }: { formatRate?: ((rate: number) => string) | undefined }): ReactNode {
   const state = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
+
   if (!state) return null;
 
   const { options, selectedLabel, setValue, value } = state;
@@ -57,6 +58,7 @@ function PlaybackRateRadioGroup({ formatRate }: { formatRate?: ((rate: number) =
 
 function PlaybackRateTrigger({ formatRate }: { formatRate?: ((rate: number) => string) | undefined }): ReactNode {
   const state = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
+
   if (!state) return null;
 
   return (

@@ -46,8 +46,11 @@ export function createMockVideo(overrides: MockVideoOverrides = {}): HTMLVideoEl
   }
 
   if (overrides.currentTime !== undefined) video.currentTime = overrides.currentTime;
+
   if (overrides.volume !== undefined) video.volume = overrides.volume;
+
   if (overrides.muted !== undefined) video.muted = overrides.muted;
+
   if (overrides.src !== undefined) video.src = overrides.src;
 
   return video;
@@ -63,16 +66,20 @@ export function createTimeRanges(ranges: Array<[number, number]>): TimeRanges {
     length: ranges.length,
     start(index: number): number {
       const range = ranges[index];
+
       if (index < 0 || index >= ranges.length || !range) {
         throw new DOMException('Index out of range', 'IndexSizeError');
       }
+
       return range[0];
     },
     end(index: number): number {
       const range = ranges[index];
+
       if (index < 0 || index >= ranges.length || !range) {
         throw new DOMException('Index out of range', 'IndexSizeError');
       }
+
       return range[1];
     },
   };

@@ -39,6 +39,7 @@ export class TooltipGroupCore {
 
   shouldSkipDelay(): boolean {
     if (this.#isOpen) return true;
+
     return Date.now() - this.#lastCloseTime < this.#props.timeout;
   }
 

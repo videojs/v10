@@ -75,6 +75,7 @@ export function findVideoTrackById(
   id: string | undefined
 ): VideoTrack | undefined {
   if (!presentation || !id) return undefined;
+
   const track = findTrackById(presentation, id);
   return track?.type === 'video' ? (track as VideoTrack) : undefined;
 }
@@ -85,6 +86,7 @@ export function findAudioTrackById(
   id: string | undefined
 ): AudioTrack | undefined {
   if (!presentation || !id) return undefined;
+
   const track = findTrackById(presentation, id);
   return track?.type === 'audio' ? (track as AudioTrack) : undefined;
 }
@@ -97,6 +99,7 @@ function sameKey<K extends object>(a: K, b: K): boolean {
   for (const attr in a) {
     if (a[attr] !== b[attr]) return false;
   }
+
   return true;
 }
 
@@ -113,9 +116,12 @@ function dedupe<T, K extends object>({
 }): T[] {
   const seen: K[] = [];
   const kept: T[] = [];
+
   for (const track of tracks) {
     const key = keyFn(track);
+
     if (!key || seen.some((other) => sameKey(other, key))) continue;
+
     seen.push(key);
     kept.push(track);
   }

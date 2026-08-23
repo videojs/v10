@@ -42,6 +42,7 @@ export class MenuRadioGroupElement extends RadioGroupElement {
     if (this.hasAttribute('aria-labelledby')) return;
 
     const current = this.getAttribute('aria-label');
+
     if (current !== null && current !== this.#ariaLabel) return;
 
     this.#ariaLabel = label;

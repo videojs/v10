@@ -40,7 +40,9 @@ function main() {
 
   if (problems.length > 0) {
     log.error(`${problems.length} specifier(s) break self-hosting:`);
+
     for (const problem of problems) console.error(`  ${problem}`);
+
     process.exit(1);
   }
 

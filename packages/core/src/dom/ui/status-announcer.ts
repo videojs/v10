@@ -24,6 +24,7 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
 
       pending = false;
       target = store.target;
+
       if (target) core.processSnapshot(getMediaSnapshot(store));
     });
   };
@@ -37,6 +38,7 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
     }
 
     if (!nextTarget || pending) return;
+
     core.processSnapshot(getMediaSnapshot(store));
   });
 

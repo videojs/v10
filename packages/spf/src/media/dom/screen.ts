@@ -60,6 +60,7 @@ export function getScreenResolution(
   { useDevicePixelRatio }: ScreenResolutionOptions = { useDevicePixelRatio: true }
 ): ScreenResolution | undefined {
   const screen = globalThis.screen;
+
   if (!screen) return undefined;
 
   // A missing or nonsense ratio falls back to 1 (see `getDevicePixelRatio`): a
@@ -127,6 +128,7 @@ export function watchScreenResolution(
 
   const check = () => {
     const next = getScreenResolution(options);
+
     if (shallowEqual(current, next)) return;
 
     current = next;
@@ -154,9 +156,11 @@ export function watchScreenResolution(
   const orientation = screen?.orientation;
 
   if (globalThis.window) listen(globalThis.window, 'resize', check, { signal });
+
   // NOTE: Chromium browsers support screen change event.
   // See: https://developer.mozilla.org/en-US/docs/Web/API/Screen/change_event
   if (isEventTarget(screen)) listen(screen, 'change', check, { signal });
+
   if (orientation) listen(orientation, 'change', check, { signal });
 
   return () => disconnect.abort();

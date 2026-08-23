@@ -74,6 +74,7 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
 
   get value(): Result | undefined {
     const store = this.#consumer.value;
+
     if (!store) return undefined;
 
     // Without selector: return store directly
@@ -89,6 +90,7 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
 
   hostConnected(): void {
     const store = this.#consumer.value;
+
     if (store) this.#connect(store);
   }
 

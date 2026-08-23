@@ -5,10 +5,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'vite.config.ts');
+
 const reactTarget = '?style=css&target=react&skin=default-video';
 const defaultSkinUrl = `/../vjsc/skins/default-video/skin.tsx${reactTarget}`;
 const htmlSkinUrl = '/../vjsc/skins/minimal-video/skin.tsx?style=tailwind&target=html&skin=minimal-video';
 const playButtonUrl = `/../vjsc/components/buttons/play-button.tsx${reactTarget}`;
+
 const buttonStyles = resolve(packageDir, 'vjsc/styles/components/button.styles.ts');
 const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
 const vjscPlayButton = resolve(packageDir, 'vjsc/components/buttons/play-button.tsx');
@@ -82,6 +84,7 @@ describe('Skins Vite workflow', () => {
     const targetedPlayButton = targetedPlayButtonId && server.moduleGraph.getModuleById(targetedPlayButtonId.id);
     expect(targetedPlayButton).toBeDefined();
     expect(targetedPlayButton?.transformResult).not.toBeNull();
+
     if (!skinModule || !targetedPlayButton) throw new Error('Expected targeted VJSC modules.');
 
     const styleInvalidation = {
@@ -118,6 +121,7 @@ describe('Skins Vite workflow', () => {
     });
 
     const resolved = await server.pluginContainer.resolveId('@videojs/icons/element/minimal');
+
     if (!resolved) throw new Error('Expected the source icon plugin to resolve the minimal family.');
 
     const loaded = await server.pluginContainer.load(resolved.id);

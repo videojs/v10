@@ -76,6 +76,7 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
       filter: { id: SCRIPT_ID, code: '.styles' },
       async handler(_code, id, transform) {
         const options = typeof config === 'function' ? await config({ id, ...parseModuleId(id) }) : config;
+
         if (!options || !transform.ast || !transform.magicString) {
           replaceVirtualCss(cssById, cssByOwner, id, []);
           return null;
@@ -83,19 +84,23 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
 
         const filename = moduleFilename(id);
         const files = importedStyleFiles(filename, transform.ast);
+
         if (files.length === 0) {
           replaceVirtualCss(cssById, cssByOwner, id, []);
           return null;
         }
 
         const manifest = options.manifest ?? (await cachedManifest(manifests, files));
+
         if (manifest.rules.length === 0) {
           replaceVirtualCss(cssById, cssByOwner, id, []);
           return null;
         }
+
         for (const file of manifest.watchFiles) this.addWatchFile(file);
 
         const changed = transformStyles(filename, transform.ast, transform.magicString, manifest, options);
+
         if (!changed) {
           replaceVirtualCss(cssById, cssByOwner, id, []);
           return null;
@@ -111,7 +116,9 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
             ...(options.variant ? { variant: options.variant } : {}),
           });
           cachedDesign.versions = await fileVersions(cachedDesign.design.watchFiles);
+
           for (const file of cachedDesign.design.watchFiles) this.addWatchFile(file);
+
           const imports: string[] = [];
           const modules: Array<readonly [string, string]> = [];
 
@@ -146,11 +153,13 @@ function replaceVirtualCss(
 
     const module = cssById.get(id);
     module?.owners.delete(owner);
+
     if (module?.owners.size === 0) cssById.delete(id);
   }
 
   for (const [id, source] of modules) {
     const module = cssById.get(id);
+
     if (module) {
       module.owners.add(owner);
     } else {
@@ -170,6 +179,7 @@ function transformStyles(
   options: StylePluginOptions
 ): boolean {
   const bindings = styleBindings(filename, ast, manifest);
+
   if (bindings.size === 0) return false;
 
   const edits: SourceEdit[] = [];
@@ -195,6 +205,7 @@ function transformStyles(
           const [root, ...tokenPath] = path ?? [];
           const binding = root ? bindings.get(root) : undefined;
           const rule = binding ? ruleForToken(manifest, binding.modulePath, tokenPath) : undefined;
+
           if (!rule) return;
 
           edits.push({
@@ -212,6 +223,7 @@ function transformStyles(
   assertNoUntransformedReferences(ast, bindings, transformedRanges);
 
   for (const edit of edits) magicString.overwrite(edit.start, edit.end, edit.content);
+
   for (const binding of new Set(bindings.values())) {
     magicString.remove(binding.declaration.start, binding.declaration.end);
   }
@@ -224,10 +236,13 @@ function styleBindings(filename: string, ast: Program, manifest: StyleManifest):
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
+
     const modulePath = resolveManifestStyleModule(filename, statement.source.value, manifest);
+
     if (!modulePath) continue;
 
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
+
     if (defaults.length !== 1 || statement.specifiers.length !== 1) {
       throw new Error(`Style import \`${statement.source.value}\` must use a default import.`);
     }
@@ -243,11 +258,15 @@ function importedStyleFiles(filename: string, ast: Program): string[] {
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration') continue;
+
     const specifier = statement.source.value;
+
     if (!specifier.startsWith('.') || !isStyleModulePath(specifier)) continue;
 
     const file = resolveStyleModuleFile(filename, specifier);
+
     if (!file) throw new Error(`Cannot resolve style module \`${specifier}\` imported by \`${filename}\`.`);
+
     files.push(file);
   }
 
@@ -256,12 +275,15 @@ function importedStyleFiles(filename: string, ast: Program): string[] {
 
 function readAccessPath(expression: Expression): string[] | undefined {
   if (expression.type === 'Identifier') return [expression.name];
+
   if (expression.type !== 'MemberExpression') return undefined;
 
   const object = readAccessPath(expression.object);
+
   if (!object) return undefined;
 
   if (!expression.computed) return [...object, expression.property.name];
+
   if (expression.property.type === 'Literal' && typeof expression.property.value === 'string') {
     return [...object, expression.property.value];
   }
@@ -279,6 +301,7 @@ function renderStyleRule(rule: StyleManifestRule, options: StylePluginOptions, l
   const values = groups.filter(Boolean);
 
   if (listItem) return values.length > 0 ? values.map((value) => JSON.stringify(value)).join(', ') : '""';
+
   return JSON.stringify(values.join(' '));
 }
 
@@ -299,9 +322,11 @@ function assertNoUntransformedReferences(
   walk(ast, {
     enter(node) {
       if (node.type !== 'Identifier' || !bindings.has(node.name)) return;
+
       const binding = bindings.get(node.name)!;
       const inImport = node.start >= binding.declaration.start && node.end <= binding.declaration.end;
       const inTransform = transformed.some(([start, end]) => node.start >= start && node.end <= end);
+
       if (!inImport && !inTransform) {
         const positions = unresolved.get(node.name) ?? [];
         positions.push(node.start);
@@ -322,6 +347,7 @@ function assertNoUntransformedReferences(
 async function cachedManifest(cache: Map<string, CachedManifest>, files: readonly string[]): Promise<StyleManifest> {
   const key = [...files].sort().join('\0');
   const cached = cache.get(key);
+
   if (cached && (await versionsMatch(cached.versions))) return cached.manifest;
 
   const manifest = await loadStyleManifest(files);
@@ -338,6 +364,7 @@ async function versionsMatch(versions: ReadonlyMap<string, number>): Promise<boo
     for (const [file, mtimeMs] of versions) {
       if ((await stat(file)).mtimeMs !== mtimeMs) return false;
     }
+
     return true;
   } catch {
     return false;
@@ -349,6 +376,7 @@ async function cachedDesignSystem(
   input: string
 ): Promise<CachedDesignSystem> {
   const cached = await cache.get(input);
+
   if (cached && (await versionsMatch(cached.versions))) return cached;
 
   const loading = loadDesignSystem(input).then(async (design) => ({

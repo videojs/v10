@@ -22,6 +22,7 @@ export interface WritableState<T> extends State<T> {
 let isFlushScheduled = false;
 function scheduleFlush(): void {
   if (isFlushScheduled) return;
+
   isFlushScheduled = true;
   queueMicrotask(flush);
 }
@@ -30,7 +31,9 @@ const pendingContainers = new Set<StateContainer<any>>();
 
 export function flush(): void {
   isFlushScheduled = false;
+
   for (const container of pendingContainers) container.flush();
+
   pendingContainers.clear();
 }
 
@@ -82,6 +85,7 @@ class StateContainer<T> implements WritableState<T> {
 
   subscribe(callback: StateChange, options?: SubscribeOptions): () => void {
     const signal = options?.signal;
+
     if (signal?.aborted) return noop;
 
     this.#listeners.add(callback);
@@ -101,7 +105,9 @@ class StateContainer<T> implements WritableState<T> {
 
   flush(): void {
     if (!this.#pending) return;
+
     this.#pending = false;
+
     for (const fn of this.#listeners) fn();
   }
 
