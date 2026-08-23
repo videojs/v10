@@ -25,11 +25,18 @@ export class PositionController implements ReactiveController {
 
   /** Discover an explicit trigger by ID or one linked via `commandfor`. */
   findTrigger(trigger?: string): HTMLElement | null {
-    const root = this.#host.getRootNode() as Document | ShadowRoot;
+    const root = this.#host.getRootNode();
+
+    if (root.nodeType !== Node.DOCUMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
+      this.#releaseImplicitBinding();
+      return null;
+    }
+
+    const scopedRoot = root as Document | DocumentFragment;
 
     if (trigger) {
       this.#releaseImplicitBinding();
-      return root.getElementById(trigger);
+      return scopedRoot.getElementById(trigger);
     }
 
     if (this.#implicitBinding) {
@@ -47,7 +54,7 @@ export class PositionController implements ReactiveController {
     }
 
     if (this.#host.id) {
-      return root.querySelector<HTMLElement>(`[commandfor="${this.#host.id}"]`);
+      return scopedRoot.querySelector<HTMLElement>(`[commandfor="${this.#host.id}"]`);
     }
 
     const adjacent = this.#host.previousElementSibling;
@@ -74,7 +81,7 @@ export class PositionController implements ReactiveController {
       return null;
     }
 
-    const id = nextPopupId(root);
+    const id = nextPopupId(scopedRoot);
 
     this.#host.id = id;
     adjacent.setAttribute('commandfor', id);
@@ -116,7 +123,7 @@ export class PositionController implements ReactiveController {
   }
 }
 
-function nextPopupId(root: Document | ShadowRoot): string {
+function nextPopupId(root: Document | DocumentFragment): string {
   let id: string;
 
   do id = `vjs-popup-${++popupId}`;
