@@ -383,8 +383,39 @@ describe('createI18n', () => {
     });
   });
 
+  it('keeps regional registry overrides above lazy parent packs and refreshes them after mount', async () => {
+    registerI18n('de-DE', { Play: 'CustomPlay' });
+    const { I18nProvider, useTranslator } = createI18n({
+      loader: async (tag) => (tag === 'de' ? { Play: 'BuiltinPlay', Pause: 'BuiltinPause' } : undefined),
+    });
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return (
+        <span>
+          {t('Play')}:{t('Pause')}
+        </span>
+      );
+    }
+
+    render(
+      <I18nProvider locale="de-DE">
+        <Probe />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('CustomPlay:BuiltinPause')).not.toBeNull();
+    });
+
+    registerI18n('de-DE', { Pause: 'CustomPause' });
+
+    await waitFor(() => {
+      expect(screen.queryByText('CustomPlay:CustomPause')).not.toBeNull();
+    });
+  });
+
   it('drops lazy builtin overlay from the prior locale while the next locale is loading', async () => {
-    registerI18n('en', { Play: 'EnReg' });
     registerI18n('fr', { Play: 'FrReg' });
 
     let unblockFr!: () => void;
@@ -434,7 +465,7 @@ describe('createI18n', () => {
     unblockFr();
 
     await waitFor(() => {
-      expect(screen.queryByText('FrLazy')).not.toBeNull();
+      expect(screen.queryByText('FrReg')).not.toBeNull();
     });
   });
 
