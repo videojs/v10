@@ -84,6 +84,26 @@ describe('Skins Vite workflow', () => {
     expect(htmlContainer?.code).toContain('/src/define/ui/container.ts');
   }, 30_000);
 
+  it('reports VJSC style diagnostics through the Vite logger', async () => {
+    const logger = createLogger('warn');
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    const warnOnce = vi.spyOn(logger, 'warnOnce').mockImplementation(() => {});
+    server = await createServer({
+      configFile,
+      customLogger: logger,
+      logLevel: 'warn',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    await server.transformRequest(reactPosterUrl);
+    const warnings = [...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n');
+
+    expect(warnings).toContain('[VJSC_STYLE_COMPLEX_SELECTOR]');
+    expect(warnings).toContain('Reason:');
+    expect(warnings).toContain('Recommendation:');
+  }, 30_000);
+
   it('passes trigger props to the concrete React render element', async () => {
     const logger = createLogger('silent');
     const warn = vi.spyOn(logger, 'warn');

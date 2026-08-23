@@ -2,6 +2,7 @@ import { createVjscPluginPipeline, type VjscPluginOptions } from '../plugins/vjs
 import { type ViteOxcPlugin, viteOxcPlugin } from './oxc';
 
 export type { VjscModule, VjscModuleConfig, VjscPluginOptions } from '../plugins/vjsc';
+export type { ComplexSelectorDiagnosticLevel, VjscDiagnosticsOptions } from '../styles/diagnostics';
 
 /** Create the Vite-adapted VJSC compiler pipeline. */
 export function vjscPlugin(options: VjscPluginOptions): ViteOxcPlugin[] {

@@ -152,14 +152,69 @@ describe('stylePlugin', () => {
     expect(await resolvePluginId(styles, firstId!)).toBeNull();
     expect(await resolvePluginId(styles, secondId!)).toBe(`\0${secondId}`);
   });
+
+  it('warns once when authored and compiled checks find the same complex selector', async () => {
+    const complexManifest = createManifest([rule(['root'], 'media-root', ['[&_img]:block', '[&_video]:block'])]);
+    const styles = stylePlugin({
+      manifest: complexManifest,
+      mode: 'css',
+      stylesheet: { input: designPath },
+    });
+    const { warnings } = await transform(
+      `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`,
+      undefined,
+      styles
+    );
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('[VJSC_STYLE_COMPLEX_SELECTOR]');
+    expect(warnings[0]).toContain('`[&_img]:block`, `[&_video]:block`');
+    expect(warnings[0]).toContain('Reason:');
+    expect(warnings[0]).toContain('Recommendation:');
+  });
+
+  it('promotes or silences complex-selector warnings', async () => {
+    const complexManifest = createManifest([rule(['root'], 'media-root', ['[&_img]:block'])]);
+    const input = `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`;
+
+    await expect(
+      transform(
+        input,
+        undefined,
+        stylePlugin({ manifest: complexManifest, mode: 'tailwind' }, { complexSelectors: 'error' })
+      )
+    ).rejects.toThrow('[VJSC_STYLE_COMPLEX_SELECTOR]');
+
+    const { warnings } = await transform(
+      input,
+      undefined,
+      stylePlugin({ manifest: complexManifest, mode: 'tailwind' }, { complexSelectors: 'off' })
+    );
+
+    expect(warnings).toEqual([]);
+  });
+
+  it('keeps isolation errors active when complex-selector warnings are off', async () => {
+    const peerManifest = createManifest([rule(['root'], 'media-root', ['peer/dialog'])]);
+    const input = `import styles from './fixtures/button.styles'; export const root = <div className={styles.root} />;`;
+
+    await expect(
+      transform(
+        input,
+        undefined,
+        stylePlugin({ manifest: peerManifest, mode: 'tailwind' }, { complexSelectors: 'off' })
+      )
+    ).rejects.toThrow('[VJSC_STYLE_PEER_RELATIONSHIP]');
+  });
 });
 
 async function transform(
   source: string,
   config: StylePluginConfig = { manifest, mode: 'tailwind' },
   styles: Plugin = stylePlugin(config)
-): Promise<{ readonly source: string }> {
+): Promise<{ readonly source: string; readonly warnings: readonly string[] }> {
   let meta: unknown;
+  const warnings: string[] = [];
   const inspect: Plugin = {
     name: 'fixture:inspect',
     buildEnd() {
@@ -172,6 +227,9 @@ async function transform(
     external: /^virtual:vjsc\/css\//,
     transform: { jsx: 'preserve' },
     plugins: [fixturePlugin(source), styles, componentSourcePlugin(), inspect],
+    onLog(level, log) {
+      if (level === 'warn') warnings.push(log.message);
+    },
   });
 
   await bundle.generate({ format: 'es' });
@@ -179,7 +237,7 @@ async function transform(
   const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
 
-  return { source: output };
+  return { source: output, warnings };
 }
 
 function virtualCssIds(source: string): string[] {
@@ -233,5 +291,13 @@ function rule(tokenPath: readonly string[], className: string, utilities: readon
     utilities,
     variantGroups: {},
     variants: {},
+  };
+}
+
+function createManifest(items: readonly StyleManifestRule[]): StyleManifest {
+  return {
+    modules: new Map([[modulePath, new Map(items.map((item) => [item.tokenPath.join('.'), item]))]]),
+    rules: items,
+    watchFiles: [],
   };
 }

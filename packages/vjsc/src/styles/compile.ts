@@ -61,8 +61,14 @@ function compileRule(rule: StyleManifestRule, design: DesignSystem, variants: re
   for (const utility of utilitiesForRule(rule, variants)) {
     if (isGroupMarker(utility)) continue;
 
-    if (design.recognizesCandidate(utility)) candidates.push(utility);
-    else unsupported.push(utility);
+    const css = design.candidateCss(utility);
+
+    if (!css) {
+      unsupported.push(utility);
+      continue;
+    }
+
+    candidates.push(utility);
   }
 
   if (unsupported.length > 0) {

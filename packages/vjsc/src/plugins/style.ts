@@ -11,6 +11,13 @@ import { insertModuleImports } from '../ast/imports';
 import { compileStyles } from '../styles/compile';
 import { type DesignSystem, loadDesignSystem } from '../styles/design-system';
 import {
+  diagnoseCompiledStyles,
+  diagnoseStyleManifest,
+  formatStyleDiagnostic,
+  type StyleDiagnostic,
+  type VjscDiagnosticsOptions,
+} from '../styles/diagnostics';
+import {
   loadStyleManifest,
   ruleForToken,
   type StyleManifest,
@@ -51,11 +58,12 @@ interface VirtualCssModule {
   readonly owners: Set<string>;
 }
 
-export function stylePlugin(config: StylePluginConfig): Plugin {
+export function stylePlugin(config: StylePluginConfig, diagnostics: VjscDiagnosticsOptions = {}): Plugin {
   const designs = new Map<string, Promise<CachedDesignSystem>>();
   const manifests = new Map<string, CachedManifest>();
   const cssById = new Map<string, VirtualCssModule>();
   const cssByOwner = new Map<string, ReadonlySet<string>>();
+  const reportedWarnings = new Set<string>();
   let cwd = process.cwd();
 
   return {
@@ -63,6 +71,9 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
     options(options) {
       cwd = resolve(options.cwd ?? process.cwd());
       return null;
+    },
+    buildStart() {
+      reportedWarnings.clear();
     },
     resolveId(id) {
       return cssById.has(id) ? `\0${id}` : null;
@@ -99,9 +110,17 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
 
         for (const file of manifest.watchFiles) this.addWatchFile(file);
 
+        const styleDiagnostics = [...diagnoseStyleManifest(manifest, options.variants)];
+        const report = () => {
+          for (const diagnostic of mergeStyleDiagnostics(styleDiagnostics)) {
+            reportStyleDiagnostic(diagnostic, diagnostics, reportedWarnings, (message) => this.warn(message));
+          }
+        };
+
         const referencedRules = transformStyles(filename, transform.ast, transform.magicString, manifest, options);
 
         if (referencedRules.size === 0) {
+          report();
           replaceVirtualCss(cssById, cssByOwner, id, []);
           return null;
         }
@@ -110,6 +129,10 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
           const input = resolve(cwd, options.stylesheet.input);
           const base = options.stylesheet.base ? resolve(cwd, options.stylesheet.base) : undefined;
           const cachedDesign = await cachedDesignSystem(designs, input);
+          styleDiagnostics.push(
+            ...diagnoseCompiledStyles(manifest, cachedDesign.design, referencedRules, options.variants)
+          );
+          report();
           const assets = await compileStyles({
             design: cachedDesign.design,
             manifest,
@@ -144,6 +167,7 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
           replaceVirtualCss(cssById, cssByOwner, id, modules);
           insertModuleImports(transform.ast, transform.magicString, imports);
         } else {
+          report();
           replaceVirtualCss(cssById, cssByOwner, id, []);
         }
 
@@ -151,6 +175,42 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
       },
     },
   };
+}
+
+function mergeStyleDiagnostics(diagnostics: readonly StyleDiagnostic[]): readonly StyleDiagnostic[] {
+  const merged = new Map<string, StyleDiagnostic>();
+
+  for (const diagnostic of diagnostics) {
+    const key = `${diagnostic.code}:${diagnostic.rule.modulePath}:${diagnostic.rule.tokenPath.join('.')}`;
+    const previous = merged.get(key);
+    if (!previous) {
+      merged.set(key, diagnostic);
+      continue;
+    }
+
+    merged.set(key, {
+      ...previous,
+      utilities: [...new Set([...previous.utilities, ...diagnostic.utilities])],
+    });
+  }
+
+  return [...merged.values()];
+}
+
+function reportStyleDiagnostic(
+  diagnostic: StyleDiagnostic,
+  options: VjscDiagnosticsOptions,
+  reportedWarnings: Set<string>,
+  warn: (message: string) => void
+): void {
+  const message = formatStyleDiagnostic(diagnostic);
+  const level = options.complexSelectors ?? 'warn';
+
+  if (diagnostic.kind === 'error' || level === 'error') throw new Error(message);
+  if (level === 'off' || reportedWarnings.has(message)) return;
+
+  reportedWarnings.add(message);
+  warn(message);
 }
 
 function replaceVirtualCss(
