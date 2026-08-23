@@ -1,10 +1,12 @@
-import { render } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { ControlsBackdrop } from '../controls-backdrop';
 import { ControlsRoot } from '../controls-root';
+
+afterEach(cleanup);
 
 describe('ControlsBackdrop', () => {
   it('is presentational and receives controls state attributes', () => {
@@ -40,5 +42,20 @@ describe('ControlsBackdrop', () => {
     );
 
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('allows the default aria-hidden value to be overridden', () => {
+    const { Wrapper } = createPlayerWrapper({
+      controlsVisible: true,
+      userActive: true,
+    });
+    const { getByTestId } = render(
+      <ControlsRoot>
+        <ControlsBackdrop aria-hidden={false} data-testid="backdrop" />
+      </ControlsRoot>,
+      { wrapper: Wrapper }
+    );
+
+    expect(getByTestId('backdrop').getAttribute('aria-hidden')).toBe('false');
   });
 });

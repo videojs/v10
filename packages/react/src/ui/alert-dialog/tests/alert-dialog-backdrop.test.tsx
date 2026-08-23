@@ -42,6 +42,17 @@ describe('AlertDialogBackdrop', () => {
     expect(backdrop.hasAttribute('data-open')).toBe(true);
   });
 
+  it('allows the default aria-hidden value to be overridden', () => {
+    const { getByTestId } = render(
+      <AlertDialogRoot open>
+        <AlertDialogBackdrop aria-hidden={false} data-testid="backdrop" />
+        <AlertDialogPopup>content</AlertDialogPopup>
+      </AlertDialogRoot>
+    );
+
+    expect(getByTestId('backdrop').getAttribute('aria-hidden')).toBe('false');
+  });
+
   it('stays rendered with ending state while the dialog closes', () => {
     const { getByTestId, rerender } = render(
       <AlertDialogRoot open>
