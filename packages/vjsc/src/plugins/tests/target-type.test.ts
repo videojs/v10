@@ -23,7 +23,7 @@ const target = defineComponentTarget<typeof schema>()(({ element, imported }) =>
       props: { from: '@fixture/react', name: component, path: ['Props'] },
     }),
   primitives: {
-    Group: element('div', {
+    Box: element('div', {
       props: { from: 'react', name: 'ComponentProps', intrinsic: 'div' },
     }),
   },
@@ -39,7 +39,7 @@ describe('targetTypePlugin', () => {
     const source = await transform(`
       'use client';
       import * as $ from '@fixture/components';
-      import { Group, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
+      import { Box, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
       import { Local } from './local';
       import { setup } from './setup';
       import type { BuildOnly } from './build-only';
@@ -60,7 +60,7 @@ describe('targetTypePlugin', () => {
       }
 
       export function Panel({ className, ...props }: Props = {}) {
-        return <Group className={className} {...props} />;
+        return <Box className={className} {...props} />;
       }
     `);
 

@@ -11,6 +11,8 @@ const htmlContainerUrl = '/../vjsc/components/layout/container.tsx?style=tailwin
 const playButtonUrl = `/../vjsc/components/buttons/play-button.tsx${reactTarget}`;
 const settingsMenuUrl = `/../vjsc/components/menus/settings-menu.tsx${reactTarget}`;
 const volumePopoverUrl = `/../vjsc/components/controls/volume-popover.tsx${reactTarget}`;
+const htmlPosterUrl = '/../vjsc/components/layout/poster.tsx?style=tailwind&target=html&skin=default-video';
+const reactPosterUrl = '/../vjsc/components/layout/poster.tsx?style=tailwind&target=react&skin=default-video';
 const buttonStyles = resolve(packageDir, 'vjsc/styles/components/button.styles.ts');
 const designStyles = resolve(packageDir, 'vjsc/styles/base.css');
 const skinConfig = resolve(packageDir, 'vjsc/config.ts');
@@ -64,8 +66,13 @@ describe('Skins Vite workflow', () => {
 
       if (variant.framework === 'react') expect(result?.code, url).toContain('$RefreshReg$');
 
-      if (variant.style === 'css') expect(result?.code, url).toContain('virtual:vjsc/css');
-      else expect(result?.code, url).not.toContain('virtual:vjsc/css');
+      if (variant.style === 'css') {
+        const code = result?.code ?? '';
+
+        expect(code, url).toContain('virtual:vjsc/css');
+        expect(code, url).toContain('/base.css');
+        expect(code.indexOf('/base.css'), url).toBeLessThan(code.indexOf('/controls.css'));
+      } else expect(result?.code, url).not.toContain('virtual:vjsc/css');
     }
 
     const htmlContainer = await server.transformRequest(htmlContainerUrl);
@@ -92,6 +99,21 @@ describe('Skins Vite workflow', () => {
     expect(settingsMenu?.code).toContain('Tooltip.Trigger, { render: /* @__PURE__ */ _jsxDEV(Menu.Trigger');
     expect(volumePopover?.code).toContain('Popover.Trigger, { render: /* @__PURE__ */ _jsxDEV(MuteButton');
     expect([...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n')).not.toContain('emitFile() is not supported');
+  }, 30_000);
+
+  it('includes Shadow DOM utilities only for HTML targets', async () => {
+    server = await createServer({
+      configFile,
+      logLevel: 'silent',
+      optimizeDeps: { include: [], noDiscovery: true },
+      server: { middlewareMode: true },
+    });
+
+    const html = await server.transformRequest(htmlPosterUrl);
+    const react = await server.transformRequest(reactPosterUrl);
+
+    expect(html?.code).toContain('[&_::slotted(img)]:absolute');
+    expect(react?.code).not.toContain('::slotted');
   }, 30_000);
 
   it('invalidates transformed owners for component, style, and design changes', async () => {
@@ -174,11 +196,14 @@ describe('Skins Vite workflow', () => {
 
     const loaded = await server.pluginContainer.load(resolved.id);
     const source = typeof loaded === 'string' ? loaded : loaded?.code;
-    const runtime = await server.pluginContainer.resolveId('virtual:videojs/icons/element-runtime');
+    const runtime = resolve(packageDir, '../icons/src/element.ts');
+    const transformed = await server.transformRequest(resolved.id);
 
     expect(source).toContain('aria-hidden');
-    expect(source).toContain('virtual:videojs/icons/element-runtime');
-    expect(runtime?.id).toBe(resolve(packageDir, '../icons/src/element.ts'));
+    expect(source).toContain(runtime);
+    expect(transformed?.code).toContain('/@fs/');
+    expect(transformed?.code).toContain('MediaIconElement');
+    expect(await server.pluginContainer.resolveId(runtime, resolved.id)).toMatchObject({ id: runtime });
   }, 30_000);
 
   it('builds the same VJSC configuration for production', async () => {

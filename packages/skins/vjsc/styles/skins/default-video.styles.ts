@@ -28,12 +28,13 @@ export default styles({
       root: {
         className: 'media-controls-root',
         utilities: [
-          'peer/controls group/controls contents text-white',
+          'peer/controls group/controls contents p-1 text-white',
           '[--media-popover-side-offset:--spacing(3)]',
           '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
           '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
           '@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10',
-          '@lg/media-root:flex @lg/media-root:items-center @lg/media-root:rounded-media-control',
+          '@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control',
+          'text-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
           ...defaultSurfaceAtLarge,
           '@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3',
           '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
@@ -46,7 +47,7 @@ export default styles({
       primary: {
         className: 'media-controls-primary',
         utilities: [
-          'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center rounded-media-control',
+          'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control',
           ...defaultSurface,
           'p-1',
           '@lg/media-root:contents',
@@ -60,7 +61,7 @@ export default styles({
       secondary: {
         className: 'media-controls-secondary',
         utilities: [
-          'absolute top-2 right-2 z-10 flex origin-top items-center rounded-media-control',
+          'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control',
           ...defaultSurface,
           'p-1',
           '@lg/media-root:contents',
@@ -73,13 +74,15 @@ export default styles({
       },
     },
     buttons: {
-      className: 'media-button-group',
-      utilities: 'flex items-center gap-px',
+      captions: {
+        className: 'media-default-captions-button',
+        utilities: '@max-lg/media-root:hidden',
+      },
     },
     timeline: {
       className: 'media-time-controls',
       utilities: [
-        '@container/media-time flex flex-1 items-center gap-2.5 px-3',
+        '@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3',
         '@max-[16rem]/media-time:[&>*:last-child]:hidden',
       ],
     },
@@ -92,7 +95,7 @@ export default styles({
         className: 'media-time-remaining',
         utilities: [
           'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
-          'focus-visible:outline-current focus-visible:outline-offset-2',
+          'focus-visible:outline-white focus-visible:outline-offset-2',
         ],
       },
     },

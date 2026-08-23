@@ -1,4 +1,4 @@
-import { type Props, Group as StatusIndicatorGroup } from 'vjsc/components';
+import { type Props, Box as StatusIndicatorBox } from 'vjsc/components';
 
 import styles from '../../styles/components/status-indicator-overlay.styles';
 import { SeekIndicator } from './seek-indicator';
@@ -10,12 +10,12 @@ export function VideoStatusIndicators({ className, ...props }: Props = {}) {
   return (
     <>
       <StatusAnnouncer />
-      <StatusIndicatorGroup className={[styles.root, className]} {...props}>
+      <StatusIndicatorBox className={[styles.root, className]} {...props}>
         <VolumeIndicator />
         <StatusIndicator />
         <SeekIndicator />
         <PlaybackStatusIndicator />
-      </StatusIndicatorGroup>
+      </StatusIndicatorBox>
     </>
   );
 }

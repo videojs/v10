@@ -36,7 +36,7 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
       <BufferingIndicator />
       <ErrorDialog />
 
-      <$.Controls.Root className={styles.controls.root}>
+      <$.Controls.Root className={styles.controls.root} data-controls="">
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.controls.start}>
             <PlayButton />

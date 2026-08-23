@@ -72,6 +72,10 @@ export const tokens = {
     kind: 'internal',
     description: 'Theme control scale multiplier.',
   },
+  '--media-scrollbar-thumb-color': {
+    kind: 'internal',
+    description: 'Theme scrollbar thumb color.',
+  },
   '--media-spacing': {
     kind: 'internal',
     description: 'Scoped Tailwind spacing unit scaled for fullscreen UI.',
@@ -88,6 +92,14 @@ export const tokens = {
     kind: 'runtime',
     description: 'Measured menu height during submenu transitions.',
   },
+  '--media-menu-parent-translate': {
+    kind: 'internal',
+    description: 'Direction-aware offset used while a settings menu shows a submenu.',
+  },
+  '--media-menu-transition-duration': {
+    kind: 'internal',
+    description: 'Duration shared by settings menu panel and size transitions.',
+  },
   '--media-menu-item-highlight-anchor': {
     kind: 'internal',
     description: 'Anchor name used by the menu highlight.',
@@ -96,6 +108,22 @@ export const tokens = {
     kind: 'runtime',
     description: 'Measured menu width during submenu transitions.',
   },
+  '--media-nested-submenu-translate': {
+    kind: 'internal',
+    description: 'Direction-aware offset for a submenu nested inside a menu panel.',
+  },
+  '--media-preview-end-inset': {
+    kind: 'internal',
+    description: 'Slider preview correction when the slider is narrower than its container.',
+  },
+  '--media-preview-left': {
+    kind: 'internal',
+    description: 'Clamped horizontal position for slider preview content.',
+  },
+  '--media-submenu-translate': {
+    kind: 'internal',
+    description: 'Direction-aware entry offset for nested menu panels.',
+  },
   '--media-popover-available-height': {
     kind: 'runtime',
     description: 'Available floating-ui height.',
@@ -103,6 +131,18 @@ export const tokens = {
   '--media-popover-available-width': {
     kind: 'runtime',
     description: 'Available floating-ui width.',
+  },
+  '--media-popup-translate-distance': {
+    kind: 'internal',
+    description: 'Distance a popup travels while entering or leaving.',
+  },
+  '--media-popup-translate-x': {
+    kind: 'internal',
+    description: 'Resolved horizontal popup transition offset.',
+  },
+  '--media-popup-translate-y': {
+    kind: 'internal',
+    description: 'Resolved vertical popup transition offset.',
   },
   '--media-poster-placeholder': {
     kind: 'runtime',
@@ -123,6 +163,10 @@ export const tokens = {
   '--media-slider-fill': {
     kind: 'runtime',
     description: 'Slider fill percentage.',
+  },
+  '--media-slider-height': {
+    kind: 'internal',
+    description: 'Responsive hit-area height for horizontal sliders.',
   },
   '--media-slider-pointer': {
     kind: 'runtime',

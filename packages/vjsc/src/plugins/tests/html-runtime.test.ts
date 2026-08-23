@@ -37,6 +37,13 @@ describe('htmlRuntimePlugin', () => {
     expect(String(output)).toBe('<button class="button active" id="trigger"></button>');
   });
 
+  it('flattens class arrays after HTML attribute normalization', async () => {
+    const runtime = await loadRuntime();
+    const output = runtime.jsx('media-icon', { class: ['icon', ['active', false, undefined]] });
+
+    expect(String(output)).toBe('<media-icon class="icon active"></media-icon>');
+  });
+
   it('escapes attribute and child text with the shared HTML contract', async () => {
     const runtime = await loadRuntime();
     const value = `&<>"'\``;

@@ -5,6 +5,7 @@
   --text-media: calc(var(--media-spacing) * 3.25);
   --spacing-media-icon: var(--media-icon-size, calc(var(--media-spacing) * 4.5));
   --spacing-media-icon-lg: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 1.5);
+  --spacing-media-icon-xl: calc(var(--media-icon-size, calc(var(--media-spacing) * 4.5)) * 2);
   --radius-media-control: var(--media-control-radius);
   --radius-media-surface: var(--media-surface-radius);
 }
@@ -23,7 +24,13 @@
   transition-duration: 100ms, 100ms, 100ms, 100ms, 250ms, 250ms;
   transition-property: opacity, filter, transform, scale, width, height;
 
+  &[data-starting-style],
+  &[data-ending-style] {
+    transition-duration: 100ms;
+    transition-property: opacity, filter, transform, scale;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    transition-duration: 0ms, 0ms, 0ms, 0ms, 250ms, 250ms;
+    transition-duration: 0ms;
   }
 }

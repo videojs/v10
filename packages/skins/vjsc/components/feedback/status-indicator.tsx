@@ -10,7 +10,7 @@ import {
   PipExitIcon,
   PlayIcon,
 } from '@videojs/icons/vjsc';
-import type { Props } from 'vjsc/components';
+import { Box, type Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import styles from '../../styles/components/status-indicator.styles';
@@ -22,13 +22,15 @@ const PLAYBACK_STATUS_ACTIONS = ['togglePaused'] as const;
 export function StatusIndicator({ className, ...props }: Props<Omit<CoreProps, 'actions'>> = {}) {
   return (
     <$.StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={[styles.root, className]} {...props}>
-      <CaptionsOnIcon className={[styles.icon, styles.icons.captionsOn]} />
-      <CaptionsOffIcon className={[styles.icon, styles.icons.captionsOff]} />
-      <FullscreenEnterIcon className={[styles.icon, styles.icons.fullscreenEnter]} />
-      <FullscreenExitIcon className={[styles.icon, styles.icons.fullscreenExit]} />
-      <PipEnterIcon className={[styles.icon, styles.icons.pipEnter]} />
-      <PipExitIcon className={[styles.icon, styles.icons.pipExit]} />
-      <$.StatusIndicator.Value className={styles.value} />
+      <Box className={styles.content}>
+        <CaptionsOnIcon className={[styles.icon, styles.icons.captionsOn]} />
+        <CaptionsOffIcon className={[styles.icon, styles.icons.captionsOff]} />
+        <FullscreenEnterIcon className={[styles.icon, styles.icons.fullscreenEnter]} />
+        <FullscreenExitIcon className={[styles.icon, styles.icons.fullscreenExit]} />
+        <PipEnterIcon className={[styles.icon, styles.icons.pipEnter]} />
+        <PipExitIcon className={[styles.icon, styles.icons.pipExit]} />
+        <$.StatusIndicator.Value className={styles.value} />
+      </Box>
     </$.StatusIndicator.Root>
   );
 }

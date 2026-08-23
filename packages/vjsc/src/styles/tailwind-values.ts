@@ -271,19 +271,19 @@ function resolveTailwindTokens(
 /** Recombine the rules Tailwind splits by utility so related setters and consumers can be inlined together. */
 function mergeConditionalRules(rules: readonly Rule[]): Rule[] {
   const output: Rule[] = [];
-  const conditionals = new Map<string, Extract<Rule, { type: 'media' | 'container' | 'supports' }>>();
 
   for (const source of rules) {
     const rule = cloneCssAst(source);
     const key = conditionalRuleKey(rule);
-    const previous = key ? conditionals.get(key) : undefined;
+    const previous = output.at(-1);
+    const previousKey = previous ? conditionalRuleKey(previous) : undefined;
 
     if (previous && isMergeableConditionalRule(rule)) {
-      previous.value.rules = mergeDeclarationRules([...previous.value.rules, ...rule.value.rules]);
-      continue;
+      if (key === previousKey && isMergeableConditionalRule(previous)) {
+        previous.value.rules = mergeDeclarationRules([...previous.value.rules, ...rule.value.rules]);
+        continue;
+      }
     }
-
-    if (key && isMergeableConditionalRule(rule)) conditionals.set(key, rule);
 
     if (hasNestedCssRules(rule)) rule.value.rules = mergeDeclarationRules(rule.value.rules);
 

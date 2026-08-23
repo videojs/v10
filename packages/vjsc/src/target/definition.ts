@@ -9,7 +9,7 @@ import type {
   EmptyProps,
   InferProps,
 } from '../components/definition';
-import type { GroupProps, SlotProps, TemplatePartProps, TemplateProps, TextProps } from '../components/jsx-runtime';
+import type { BoxProps, SlotProps, TemplatePartProps, TemplateProps, TextProps } from '../components/jsx-runtime';
 import { createTargetCode } from './expression';
 
 export const TARGET_ELEMENT = Symbol.for('vjsc/target-element');
@@ -181,7 +181,7 @@ export interface TemplateTargetDefinition {
 export type TemplateTargetRule = PrimitiveTargetRule<Omit<TemplateProps, 'name'>> | TemplateTargetDefinition;
 
 export interface ComponentTargetPrimitives {
-  readonly Group?: PrimitiveTargetRule<GroupProps> | undefined;
+  readonly Box?: PrimitiveTargetRule<BoxProps> | undefined;
   readonly Slot?: PrimitiveTargetRule<SlotProps> | undefined;
   readonly Text?: PrimitiveTargetRule<TextProps> | undefined;
   readonly Template?: Readonly<Record<string, TemplateTargetRule>> | undefined;

@@ -8,7 +8,7 @@ export default styles({
       className: 'media-buffering-indicator',
       utilities: [
         'peer/buffering pointer-events-none absolute inset-0 z-10 hidden place-content-center text-white',
-        'not-data-visible:[--media-spinner-animation:none] data-visible:grid',
+        'not-data-visible:[--media-spinner-animation:none] data-visible:grid motion-reduce:[--media-spinner-animation:none]',
       ],
     },
     spinner: {

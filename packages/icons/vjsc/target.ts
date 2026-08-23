@@ -6,6 +6,11 @@ export interface IconTargetOptions {
   readonly family?: string | undefined;
 }
 
+const htmlIconNames: Readonly<Record<string, string>> = {
+  AirPlayEnterIcon: 'airplay-enter',
+  AirPlayExitIcon: 'airplay-exit',
+};
+
 export function createHtmlIconTarget(options: IconTargetOptions = {}): ComponentTarget<ComponentSchema> {
   const family = options.family ?? 'default';
   const source = family === 'default' ? '@videojs/html/icons/element' : `@videojs/html/icons/element/${family}`;
@@ -21,10 +26,12 @@ export function createHtmlIconTarget(options: IconTargetOptions = {}): Component
           jsx(Icon, {
             ...props,
             ...(family === 'default' ? {} : { family }),
-            name: component
-              .replace(/Icon$/, '')
-              .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-              .toLowerCase(),
+            name:
+              htmlIconNames[component] ??
+              component
+                .replace(/Icon$/, '')
+                .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+                .toLowerCase(),
           }),
       jsx: {
         importSource: 'vjsc/html-runtime',

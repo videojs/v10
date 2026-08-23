@@ -1,6 +1,9 @@
 @layer videojs.components {
   @scope (.media-skin) {
     video::-webkit-media-text-track-container {
+      z-index: 1;
+      font-family: inherit;
+      scale: 0.98;
       translate: 0 calc(var(--media-spacing) * -2);
       transition: translate var(--media-controls-transition-duration) ease-out 25ms;
     }

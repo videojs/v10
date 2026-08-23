@@ -36,13 +36,11 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
       <BufferingIndicator />
       <ErrorDialog />
 
-      <$.Controls.Root className={styles.controls.root}>
+      <$.Controls.Root className={styles.controls.root} data-controls="">
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.controls.primary}>
-            <$.Controls.Group className={styles.buttons}>
-              <PlayButton />
-              <VolumePopover />
-            </$.Controls.Group>
+            <PlayButton />
+            <VolumePopover />
 
             <$.Controls.Group className={styles.timeline}>
               <$.Time.Value className={styles.time.current} type="current" />
@@ -50,19 +48,15 @@ export function DefaultVideoSkin({ children, className, poster, ...props }: Defa
               <$.Time.Value className={styles.time.remaining} type="remaining" toggle />
             </$.Controls.Group>
 
-            <$.Controls.Group className={styles.buttons}>
-              <CaptionsButton />
-              <VideoSettingsMenu />
-            </$.Controls.Group>
+            <CaptionsButton className={styles.buttons.captions} />
+            <VideoSettingsMenu />
           </$.Controls.Group>
 
           <$.Controls.Group className={styles.controls.secondary}>
-            <$.Controls.Group className={styles.buttons}>
-              <CastButton />
-              <AirPlayButton />
-              <PiPButton />
-              <FullscreenButton />
-            </$.Controls.Group>
+            <CastButton />
+            <AirPlayButton />
+            <PiPButton />
+            <FullscreenButton />
           </$.Controls.Group>
         </$.Tooltip.Provider>
       </$.Controls.Root>

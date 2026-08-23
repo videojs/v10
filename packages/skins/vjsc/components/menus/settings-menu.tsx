@@ -24,7 +24,12 @@ export function SettingsMenu({ children, className, ...props }: PropsWithChildre
           <Text token={settingsText.key}>{settingsText.text}</Text>
         </$.Tooltip.Popup>
       </$.Tooltip.Root>
-      <$.Menu.Popup className={[popupStyles.surface, popupStyles.popover, styles.root, className]}>
+      <$.Menu.Popup
+        side="top"
+        align="center"
+        {...props}
+        className={[popupStyles.surface, popupStyles.popover, styles.root, className]}
+      >
         <$.Menu.Content className={styles.content}>{children}</$.Menu.Content>
       </$.Menu.Popup>
     </$.Menu.Root>

@@ -10,41 +10,52 @@ export default styles({
       className: 'media-error-dialog',
       utilities: [
         'peer/error z-20 flex flex-col gap-3 outline-none',
-        'not-data-open:hidden transition-[opacity,scale,transform] delay-100 ease-out motion-reduce:delay-0 motion-reduce:duration-50',
-        'data-starting-style:scale-50 data-starting-style:opacity-0',
-        'data-ending-style:scale-50 data-ending-style:opacity-0 data-ending-style:delay-0',
+        'not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:delay-0 motion-reduce:duration-50',
+        'data-starting-style:scale-95 data-starting-style:opacity-0',
+        'data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0',
         'motion-reduce:delay-0',
       ],
       variants: {
         default: [
           ...defaultSurface,
           'absolute top-1/2 left-1/2 w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] p-3 text-white',
+          'text-shadow-[0_1px_0_rgb(0_0_0/0.25)]',
           'duration-350',
         ],
         minimal: [
-          'absolute inset-0 h-full w-full items-center justify-center p-4 text-white',
+          'absolute top-1/2 left-1/2 w-full max-w-64 -translate-x-1/2 -translate-y-1/2 p-4 text-white',
+          'text-shadow-[0_1px_0_rgb(0_0_0/0.5)]',
           'duration-150',
-          'pointer-events-none [&>*]:pointer-events-auto',
         ],
+      },
+    },
+    content: {
+      className: 'media-error-dialog-content',
+      utilities: 'flex flex-col gap-2',
+      variants: {
+        default: 'px-2 pt-2 pb-1.5',
+        minimal: 'py-1.5',
       },
     },
     title: {
       className: 'media-error-dialog-title',
-      utilities: 'font-semibold leading-tight',
-      variants: {
-        default: 'px-2 pt-2 text-media',
-        minimal: 'w-full max-w-64 pt-1.5 text-[--spacing(3.75)]',
-      },
+      utilities: 'my-[0.83em] text-[calc(var(--media-spacing)*3.75)] font-semibold leading-tight',
     },
     description: {
       className: 'media-error-dialog-description',
-      utilities: 'pb-1.5 opacity-70 wrap-anywhere',
-      variants: { default: 'px-2', minimal: 'w-full max-w-64' },
+      utilities: 'my-[1em] opacity-70 wrap-anywhere',
+    },
+    actions: {
+      className: 'media-error-dialog-actions',
+      utilities: 'flex gap-2 [&>*]:flex-1',
     },
     close: {
       className: 'media-error-dialog-close',
-      utilities: 'h-9 w-full bg-media-accent px-4 font-medium text-media-accent-text',
-      variants: { default: '', minimal: 'max-w-64' },
+      utilities: 'w-full bg-media-accent! px-4 py-2 font-medium text-media-accent-text!',
+      variants: {
+        default: 'h-9',
+        minimal: 'h-9.5',
+      },
     },
   },
 });

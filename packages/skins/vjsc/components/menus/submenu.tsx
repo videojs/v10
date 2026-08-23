@@ -29,7 +29,7 @@ export function Submenu({
           <MenuChevron />
         </Text>
       </$.Menu.Trigger>
-      <$.Menu.Content className={[styles.submenu, className]}>
+      <$.Menu.Content {...props} className={[styles.submenu, className]}>
         <$.Menu.Item className={[styles.item, styles.back]}>
           <MenuChevron flipped />
           {label}

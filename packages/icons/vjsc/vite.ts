@@ -6,9 +6,7 @@ import type { Plugin } from 'vite';
 import { optimizeSvg } from '../scripts/internal/svg.ts';
 
 const elementId = '@videojs/icons/element';
-const elementRuntimeId = 'virtual:videojs/icons/element-runtime';
 const familyName = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
 const iconsRoot = resolve(import.meta.dirname, '..');
 const assetsRoot = resolve(iconsRoot, 'src/assets');
 const elementSource = resolve(iconsRoot, 'src/element.ts');
@@ -18,9 +16,10 @@ export function iconElementSourcePlugin(): Plugin {
   return {
     name: 'videojs:icons:element-source',
     enforce: 'pre',
+    configureServer(server) {
+      server.watcher.add(assetsRoot);
+    },
     resolveId(id) {
-      if (id === elementRuntimeId) return elementSource;
-
       return iconFamily(id) ? `\0${id}` : null;
     },
     load(id) {
@@ -31,8 +30,6 @@ export function iconElementSourcePlugin(): Plugin {
 
       const directory = resolve(assetsRoot, family);
       if (!existsSync(directory)) throw new Error(`Unknown icon family: ${family}`);
-
-      this.addWatchFile(directory);
 
       const files = readdirSync(directory)
         .filter((file) => file.endsWith('.svg'))
@@ -48,7 +45,7 @@ export function iconElementSourcePlugin(): Plugin {
         })
       );
 
-      return iconFamilyModule(family, icons);
+      return iconFamilyModule(family, icons, elementSource);
     },
   };
 }
@@ -59,9 +56,9 @@ function iconFamily(id: string): string | null {
   return familyName.test(family) ? family : null;
 }
 
-function iconFamilyModule(family: string, icons: Readonly<Record<string, string>>): string {
+function iconFamilyModule(family: string, icons: Readonly<Record<string, string>>, runtime: string): string {
   return [
-    `import { MediaIconElement } from ${JSON.stringify(elementRuntimeId)};`,
+    `import { MediaIconElement } from ${JSON.stringify(runtime)};`,
     `const icons = ${JSON.stringify(icons)};`,
     ``,
     `if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {`,

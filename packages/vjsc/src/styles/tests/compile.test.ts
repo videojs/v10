@@ -74,6 +74,22 @@ describe('compileStyles', () => {
     expect(styles.get('buttons.css')).not.toContain('peer\\/control');
   });
 
+  it('keeps responsive overrides after each semantic rule base', async () => {
+    const primary = rule('primary', 'media-controls-primary', ['flex', '@lg/media-root:contents']);
+    const root = rule('root', 'media-controls-root', ['contents', '@lg/media-root:flex']);
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      manifest: manifest([primary, root]),
+      scope: '.media-skin-video',
+    });
+
+    const css = styles.get('buttons.css') ?? '';
+    const rootBase = css.indexOf('.media-controls-root {\n      display: contents;');
+    const rootResponsive = css.indexOf('.media-controls-root {\n        display: flex;');
+
+    expect(rootBase).toBeGreaterThanOrEqual(0);
+    expect(rootResponsive).toBeGreaterThan(rootBase);
+  });
   it('combines selected variants in order across rules', async () => {
     const button = rule('root', 'media-button', ['grid', 'p-3'], {
       compact: ['p-1'],

@@ -129,6 +129,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
 }) => {
   const Button = element('button');
   const Div = element('div');
+  const Img = element('img');
   const Slot = element('slot');
   const Span = element('span');
   const Sup = element('sup');
@@ -187,6 +188,14 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         parts.Trigger.children,
         <target.Popover.Popup {...props.merge(parts.Popup.props)}>{parts.Popup.children}</target.Popover.Popup>,
       ],
+      Poster: ({ props }) =>
+        jsx(target.Poster, {
+          ...props,
+          children: jsx(Slot, {
+            name: 'poster',
+            children: jsx(Img, { alt: '', decoding: 'async' }),
+          }),
+        }),
       Slider: {
         Thumbnail: {
           Root: Div,
@@ -204,7 +213,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
       },
     },
     primitives: {
-      Group: Div,
+      Box: Div,
       Slot,
       Text: ({ props, children }) =>
         props.has('token') ? <I18nText {...props}>{children}</I18nText> : <Span {...props}>{children}</Span>,

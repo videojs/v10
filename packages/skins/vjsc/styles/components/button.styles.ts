@@ -3,10 +3,13 @@ import { styles } from 'vjsc/styles';
 const buttonStyles = [
   'grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit',
   'cursor-pointer outline-2 outline-transparent -outline-offset-2',
-  'transition-[background-color,color,outline-offset,scale] duration-150 ease-out motion-reduce:duration-50',
-  'hover:bg-media-control-hover hover:text-media-accent-text focus-visible:bg-media-control-hover focus-visible:text-media-accent-text aria-expanded:bg-media-control-hover aria-expanded:text-media-accent-text',
-  'focus-visible:outline-current focus-visible:outline-offset-2',
-  'not-aria-disabled:active:scale-90',
+  'will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out',
+  'not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text',
+  'not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text',
+  'not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text',
+  'focus-visible:outline-white focus-visible:outline-offset-2',
+  'not-aria-disabled:active:scale-[0.97]',
+  'motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto',
   'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
 ];
 
@@ -17,7 +20,14 @@ export default styles({
     root: {
       className: 'media-button',
       utilities: buttonStyles,
-      variants: { default: 'size-9', minimal: 'size-9.5' },
+      variants: {
+        default: 'size-9',
+        minimal: [
+          'size-9.5',
+          'supports-[corner-shape:squircle]:rounded-[--spacing(4)]',
+          'supports-[corner-shape:squircle]:[corner-shape:squircle]',
+        ],
+      },
     },
     icon: {
       className: 'media-button-icon',
