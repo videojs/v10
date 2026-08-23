@@ -154,32 +154,34 @@ function CaptionsTrigger(): ReactNode {
           </CaptionsButton>
         }
       />
-      <Menu.Content className="media-popover media-menu media-menu--captions">
-        <Menu.RadioGroup
-          className="media-menu__group"
-          value={captions.value}
-          onValueChange={captions.setValue}
-          aria-label={t(captionsText)}
-        >
-          {captions.options.map((option) => (
-            <Menu.RadioItem
-              key={option.value}
-              className="media-menu__item"
-              value={option.value}
-              disabled={option.disabled}
-            >
-              <bdi dir="auto">{option.label}</bdi>
-              <Menu.ItemIndicator
-                checked={option.value === captions.value}
-                forceMount
-                className="media-menu__indicator"
+      <Menu.Popup className="media-popover media-menu media-menu--captions">
+        <Menu.Content className="media-menu__content">
+          <Menu.RadioGroup
+            className="media-menu__group"
+            value={captions.value}
+            onValueChange={captions.setValue}
+            aria-label={t(captionsText)}
+          >
+            {captions.options.map((option) => (
+              <Menu.RadioItem
+                key={option.value}
+                className="media-menu__item"
+                value={option.value}
+                disabled={option.disabled}
               >
-                <CheckIcon className="media-icon" />
-              </Menu.ItemIndicator>
-            </Menu.RadioItem>
-          ))}
-        </Menu.RadioGroup>
-      </Menu.Content>
+                <bdi dir="auto">{option.label}</bdi>
+                <Menu.ItemIndicator
+                  checked={option.value === captions.value}
+                  forceMount
+                  className="media-menu__indicator"
+                >
+                  <CheckIcon className="media-icon" />
+                </Menu.ItemIndicator>
+              </Menu.RadioItem>
+            ))}
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

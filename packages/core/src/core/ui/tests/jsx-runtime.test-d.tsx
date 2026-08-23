@@ -75,8 +75,10 @@ describe('constrained JSX', () => {
 
     void (
       <Menu.Root>
-        <Menu.SubmenuTrigger>Quality</Menu.SubmenuTrigger>
-        <Menu.Content />
+        <Menu.Trigger>Settings</Menu.Trigger>
+        <Menu.Popup>
+          <Menu.Content />
+        </Menu.Popup>
       </Menu.Root>
     );
 

@@ -291,9 +291,11 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
 
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
-              <Menu.Content className={cn(popup.popover, menu.root)}>
-                <PlaybackRateRadioGroup />
-              </Menu.Content>
+              <Menu.Popup className={cn(popup.popover, menu.root)}>
+                <Menu.Content className={menu.content}>
+                  <PlaybackRateRadioGroup />
+                </Menu.Content>
+              </Menu.Popup>
             </Menu.Root>
           </div>
         </Tooltip.Provider>

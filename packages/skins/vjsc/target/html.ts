@@ -1,12 +1,11 @@
 import type coreSchema from '@videojs/core/vjsc';
-
 import {
   type ComponentTarget,
   type ComponentTargetHelpers,
   defineComponentTarget,
   type TemplateTargetDefinition,
-} from '../../../vjsc/src/target/index.ts';
-import { Host, jsx } from '../../../vjsc/src/target/jsx-runtime.ts';
+} from 'vjsc/target';
+import { Host, jsx } from 'vjsc/target/jsx-runtime';
 
 type CoreSchema = typeof coreSchema;
 
@@ -25,8 +24,8 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
   Menu: {
     Root: 'Menu',
     Trigger: 'MenuItem',
-    SubmenuTrigger: 'MenuItem',
-    Content: 'Menu',
+    Popup: 'Menu',
+    Content: 'MenuContent',
     Group: 'MenuGroup',
     GroupLabel: 'MenuGroupLabel',
     Item: 'MenuItem',
@@ -103,6 +102,7 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
 
 const groupedModules: Readonly<Record<string, string>> = {
   MenuCheckboxItem: 'menu',
+  MenuContent: 'menu',
   MenuGroup: 'menu',
   MenuGroupLabel: 'menu',
   MenuItem: 'menu',
@@ -153,18 +153,31 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
       ErrorDialog: {
         Root: ({ children }) => children,
       },
-      Menu: {
-        Trigger: ({ props, children, id }) => jsx(Button, { commandfor: id('content'), ...props, children }),
-        SubmenuTrigger: ({ props, children, id }) =>
+      Menu: ({ props, parts, id }) => {
+        const popup = parts.Popup?.one();
+        const trigger = parts.Trigger.one();
+        const controlledId = id(popup ? 'popup' : 'content');
+
+        if (popup) {
+          return [
+            jsx(Button, { commandfor: controlledId, ...trigger.props, children: trigger.children }),
+            jsx(target.Menu.Popup, {
+              id: controlledId,
+              ...props.merge(popup.props),
+              children: popup.children,
+            }),
+          ];
+        }
+
+        const content = parts.Content.one();
+        return [
           jsx(target.Menu.Item, {
-            commandfor: id('content'),
-            'data-has-submenu': '',
-            ...props,
-            children,
+            commandfor: controlledId,
+            ...trigger.props,
+            children: trigger.children,
           }),
-        Content: ({ props, children, id }) => jsx(target.Menu.Content, { id: id('content'), ...props, children }),
-        Group: ({ children }) => children,
-        Separator: Div,
+          jsx(target.Menu.Content, { id: controlledId, ...content.props, children: content.children }),
+        ];
       },
       Popover: ({ props, parts }) => [
         parts.Trigger.children,
@@ -225,7 +238,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
 function htmlElementTarget(name: string, element: ComponentTargetHelpers<CoreSchema>['element']) {
   const publicName = publicNames[name] ?? kebabCase(name === 'MediaContainer' ? 'container' : name);
   const moduleName = groupedModules[name] ?? publicName;
-  const source = `@videojs/html/ui/${moduleName}`;
+  const source = name === 'MediaContainer' ? `@videojs/html/media/${moduleName}` : `@videojs/html/ui/${moduleName}`;
 
   return element(`media-${publicName}`, { import: { from: source, sideEffect: true } });
 }

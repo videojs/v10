@@ -10,19 +10,21 @@ function SpeedMenu(): ReactNode {
       <Menu.Trigger className="settings-trigger" render={<button type="button" />}>
         Speed
       </Menu.Trigger>
-      <Menu.Content className="menu">
-        <PlaybackRateRadioGroup
-          className="menu-group"
-          renderItem={(props, item) => (
-            <Menu.RadioItem {...props} className="menu-item">
-              {item.label}
-              <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
-                ✓
-              </Menu.ItemIndicator>
-            </Menu.RadioItem>
-          )}
-        />
-      </Menu.Content>
+      <Menu.Popup className="menu">
+        <Menu.Content>
+          <PlaybackRateRadioGroup
+            className="menu-group"
+            renderItem={(props, item) => (
+              <Menu.RadioItem {...props} className="menu-item">
+                {item.label}
+                <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
+                  ✓
+                </Menu.ItemIndicator>
+              </Menu.RadioItem>
+            )}
+          />
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

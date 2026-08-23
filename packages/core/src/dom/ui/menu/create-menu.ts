@@ -85,8 +85,11 @@ export interface MenuApi {
   readonly triggerElement: HTMLElement | null;
   /** The currently registered content element, if any. */
   readonly contentElement: HTMLElement | null;
+  /** The root popup element that owns popover behavior, if any. */
+  readonly popupElement: HTMLElement | null;
   setTriggerElement: (element: HTMLElement | null) => void;
   setContentElement: (element: HTMLElement | null) => void;
+  setPopupElement: (element: HTMLElement | null) => void;
   /** Register a navigable item. Returns a cleanup function. */
   registerItem: (element: HTMLElement) => () => void;
   /** Register a directly nested menu so it can be reset when this menu closes. */
@@ -115,6 +118,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   let highlightedItem: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
   let contentElement: HTMLElement | null = null;
+  let popupElement: HTMLElement | null = null;
   const submenus = new Set<MenuApi>();
 
   let typeaheadBuffer = '';
@@ -395,6 +399,10 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function setContentElement(element: HTMLElement | null): void {
     contentElement = element;
+  }
+
+  function setPopupElement(element: HTMLElement | null): void {
+    popupElement = element;
     popover.setPopupElement(element);
   }
 
@@ -466,8 +474,12 @@ export function createMenu(options: MenuOptions): MenuApi {
     get contentElement(): HTMLElement | null {
       return contentElement;
     },
+    get popupElement(): HTMLElement | null {
+      return popupElement;
+    },
     setTriggerElement,
     setContentElement,
+    setPopupElement,
     registerItem,
     registerSubmenu,
     highlight,

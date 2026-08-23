@@ -32,7 +32,9 @@ function renderCaptionsTrigger({
   render(
     <Menu.Root>
       <Menu.Trigger render={<CaptionsButton data-testid="trigger" />} />
-      <Menu.Content>Captions</Menu.Content>
+      <Menu.Popup>
+        <Menu.Content>Captions</Menu.Content>
+      </Menu.Popup>
     </Menu.Root>,
     { wrapper: Wrapper }
   );

@@ -9,6 +9,7 @@ import { ControlsElement } from '../../ui/controls/controls-element';
 import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
 import { MenuCheckboxItemElement } from '../../ui/menu/menu-checkbox-item-element';
+import { MenuContentElement } from '../../ui/menu/menu-content-element';
 import { MenuElement } from '../../ui/menu/menu-element';
 import { MenuGroupElement } from '../../ui/menu/menu-group-element';
 import { MenuGroupLabelElement } from '../../ui/menu/menu-group-label-element';
@@ -49,6 +50,7 @@ import { safeDefine } from '../safe-define';
 export function defineMenu(): void {
   // Root first — part elements consume its context.
   safeDefine(MenuElement);
+  safeDefine(MenuContentElement);
   safeDefine(MenuItemElement);
   safeDefine(MenuGroupLabelElement);
   safeDefine(MenuSeparatorElement);

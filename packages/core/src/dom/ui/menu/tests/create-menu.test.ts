@@ -293,6 +293,7 @@ describe('createMenu', () => {
 
       menu.setTriggerElement(trigger);
       menu.setContentElement(content);
+      menu.setPopupElement(content);
       menu.open();
       onOpenChange.mockClear();
 
@@ -308,6 +309,7 @@ describe('createMenu', () => {
 
       content.append(child);
       menu.setContentElement(content);
+      menu.setPopupElement(content);
       menu.open();
       onOpenChange.mockClear();
 
@@ -323,6 +325,7 @@ describe('createMenu', () => {
 
       menu.setTriggerElement(trigger);
       menu.setContentElement(content);
+      menu.setPopupElement(content);
       menu.open();
       onOpenChange.mockClear();
 
@@ -433,6 +436,7 @@ describe('createMenu', () => {
 
       menu.setTriggerElement(trigger);
       menu.setContentElement(content);
+      menu.setPopupElement(content);
       menu.open();
       menu.contentProps.onFocusOut(makeFocusEvent(outside));
 

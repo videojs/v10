@@ -1,5 +1,5 @@
-import type { MenuCore, MenuState, StateAttrMap } from '@videojs/core';
-import type { MediaContainer, MenuApi, PositioningBoundary } from '@videojs/core/dom';
+import type { MenuCore, MenuState } from '@videojs/core';
+import type { MediaContainer, MenuApi, MenuPopupApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
 export interface MenuContextValue {
@@ -9,7 +9,6 @@ export interface MenuContextValue {
   state: MenuState;
   preferredSide: MenuState['side'];
   setPositionedSide: (side: MenuState['side']) => void;
-  stateAttrMap: StateAttrMap<MenuState>;
   contentId: string;
   anchorName: string;
   boundary: PositioningBoundary;
@@ -29,6 +28,21 @@ export function useMenuContext(): MenuContextValue {
 
 export function useOptionalMenuContext(): MenuContextValue | null {
   return useContext(MenuContext);
+}
+
+export interface MenuPopupContextValue {
+  popup: MenuPopupApi;
+  element: HTMLElement | null;
+}
+
+const MenuPopupContext = createContext<MenuPopupContextValue | null>(null);
+
+export const MenuPopupContextProvider = MenuPopupContext.Provider;
+
+export function useMenuPopupContext(): MenuPopupContextValue {
+  const ctx = useContext(MenuPopupContext);
+  if (!ctx) throw new Error('Menu.Content must be used within a Menu.Popup');
+  return ctx;
 }
 
 // ---------------------------------------------------------------------------

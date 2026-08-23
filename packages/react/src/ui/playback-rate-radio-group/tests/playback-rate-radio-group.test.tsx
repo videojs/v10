@@ -29,9 +29,11 @@ function renderPlaybackRateRadioGroup({
   const { Wrapper } = createPlayerWrapper({ playbackRates, playbackRate, setPlaybackRate });
   const content = (
     <Menu.Root defaultOpen>
-      <Menu.Content>
-        {group ?? <PlaybackRateRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
-      </Menu.Content>
+      <Menu.Popup>
+        <Menu.Content>
+          {group ?? <PlaybackRateRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 

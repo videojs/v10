@@ -164,8 +164,8 @@ function SettingsMenu(): ReactNode {
           <Tooltip.Label>{t(settingsText)}</Tooltip.Label>
         </Tooltip.Popup>
       </Tooltip.Root>
-      <Menu.Content className="media-popover media-menu media-menu--settings">
-        <div className="media-menu__group">
+      <Menu.Popup className="media-popover media-menu media-menu--settings">
+        <Menu.Content className="media-menu__content">
           {hasQuality ? (
             <Menu.Root>
               <Menu.Trigger
@@ -325,8 +325,8 @@ function SettingsMenu(): ReactNode {
               </Menu.Content>
             </Menu.Root>
           ) : null}
-        </div>
-      </Menu.Content>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

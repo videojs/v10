@@ -15,7 +15,7 @@
     <div class="menu-bar">
       <button type="button" commandfor="settings-menu" class="settings-trigger">Settings</button>
       <media-menu id="settings-menu" side="top" align="end" class="menu">
-        <div class="menu-panel">
+        <media-menu-content class="menu-content">
           <media-menu-item commandfor="quality-menu" class="menu-item">
             <span>Quality</span>
             <span class="menu-value">
@@ -45,9 +45,8 @@
             </span>
           </media-menu-item>
           <media-menu-item class="menu-item">Copy link</media-menu-item>
-        </div>
-
-        <media-menu id="quality-menu" class="menu-panel">
+        </media-menu-content>
+        <media-menu-content id="quality-menu" class="menu-panel">
           <media-menu-item class="menu-back">
             <span aria-hidden="true">‹</span>
             Quality
@@ -64,9 +63,8 @@
               </media-menu-radio-item>
             </template>
           </media-quality-radio-group>
-        </media-menu>
-
-        <media-menu id="audio-menu" class="menu-panel">
+        </media-menu-content>
+        <media-menu-content id="audio-menu" class="menu-panel">
           <media-menu-item class="menu-back">
             <span aria-hidden="true">‹</span>
             Audio
@@ -79,9 +77,8 @@
               </media-menu-radio-item>
             </template>
           </media-audio-track-radio-group>
-        </media-menu>
-
-        <media-menu id="speed-menu" class="menu-panel">
+        </media-menu-content>
+        <media-menu-content id="speed-menu" class="menu-panel">
           <media-menu-item class="menu-back">
             <span aria-hidden="true">‹</span>
             Speed
@@ -94,9 +91,8 @@
               </media-menu-radio-item>
             </template>
           </media-playback-rate-radio-group>
-        </media-menu>
-
-        <media-menu id="captions-menu" class="menu-panel">
+        </media-menu-content>
+        <media-menu-content id="captions-menu" class="menu-panel">
           <media-menu-item class="menu-back">
             <span aria-hidden="true">‹</span>
             Captions
@@ -109,7 +105,7 @@
               </media-menu-radio-item>
             </template>
           </media-captions-radio-group>
-        </media-menu>
+        </media-menu-content>
       </media-menu>
     </div>
   </media-container>

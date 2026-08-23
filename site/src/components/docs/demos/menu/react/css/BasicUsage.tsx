@@ -30,8 +30,8 @@ function SettingsMenu(): ReactNode {
       <Menu.Trigger className="settings-trigger" aria-label="Settings" render={<button type="button" />}>
         Settings
       </Menu.Trigger>
-      <Menu.Content className="menu">
-        <div className="menu-panel">
+      <Menu.Popup className="menu">
+        <Menu.Content className="menu-content">
           {hasQuality ? (
             <Menu.Root>
               <Menu.Trigger
@@ -227,8 +227,8 @@ function SettingsMenu(): ReactNode {
           <Menu.Item className="menu-item" onSelect={() => navigator.clipboard?.writeText(window.location.href)}>
             Copy link
           </Menu.Item>
-        </div>
-      </Menu.Content>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

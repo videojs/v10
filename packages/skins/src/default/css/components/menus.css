@@ -50,6 +50,7 @@
     box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.075);
   }
 
+  .media-menu__content,
   .media-menu__group {
     anchor-scope: --menu-item-highlight-anchor;
     display: flex;
@@ -212,25 +213,27 @@
       width var(--popup-transition-timing-function) var(--menu-transition-duration),
       height var(--popup-transition-timing-function) var(--menu-transition-duration);
 
-    & > :not([data-submenu]) {
+    & > .media-menu__content {
+      --submenu-parent-translate: -100%;
+
       translate: 0 0;
       transition:
         translate var(--menu-transition-duration) ease-out,
         filter var(--menu-transition-duration) ease-out;
+
+      &:dir(rtl) {
+        --submenu-parent-translate: 100%;
+      }
     }
 
-    &[data-submenu-expanded="true"] > :not([data-submenu]) {
+    & > .media-menu__content[data-submenu-expanded="true"] {
       filter: blur(8px);
-      translate: -100% 0;
+      translate: var(--submenu-parent-translate) 0;
     }
 
-    &:dir(rtl)[data-submenu-expanded="true"] > :not([data-submenu]) {
-      translate: 100% 0;
-    }
-
-    /* WebKit can restart the covered-content transition while the
+    /* WebKit can restart the parent-page transition while the
        anchor-positioned highlight remains active. */
-    &[data-submenu-expanded] > :not([data-submenu])::before {
+    & > .media-menu__content[data-submenu-expanded]::before {
       display: none;
     }
 

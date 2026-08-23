@@ -43,9 +43,11 @@ function renderCaptionsRadioGroup({
   });
   const content = (
     <Menu.Root defaultOpen>
-      <Menu.Content>
-        {group ?? <CaptionsRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
-      </Menu.Content>
+      <Menu.Popup>
+        <Menu.Content>
+          {group ?? <CaptionsRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 

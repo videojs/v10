@@ -1,11 +1,7 @@
 import type coreSchema from '@videojs/core/vjsc';
+import { type ComponentTarget, defineComponentTarget, type TemplateTargetDefinition } from 'vjsc/target';
+import { Host, jsx } from 'vjsc/target/jsx-runtime';
 
-import {
-  type ComponentTarget,
-  defineComponentTarget,
-  type TemplateTargetDefinition,
-} from '../../../vjsc/src/target/index.ts';
-import { Host, jsx } from '../../../vjsc/src/target/jsx-runtime.ts';
 import { reactComponentTransform } from './react-transform';
 
 type CoreSchema = typeof coreSchema;
@@ -41,7 +37,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
   return {
     source: '@videojs/core/vjsc',
     resolve: ({ component, part }) => {
-      const path = part ? (part === 'SubmenuTrigger' ? 'Trigger' : part).split('.') : [];
+      const path = part ? part.split('.') : [];
       const propsPath = path.length === 0 ? ['Props'] : [...path.slice(0, -1), `${path.at(-1)}Props`];
 
       return imported({

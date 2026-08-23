@@ -41,9 +41,11 @@ function renderCaptionsMenu({
   });
   const content = (
     <Menu.Root defaultOpen align="center">
-      <Menu.Content data-testid="content">
-        <CaptionsRadioGroup />
-      </Menu.Content>
+      <Menu.Popup data-testid="popup">
+        <Menu.Content data-testid="content">
+          <CaptionsRadioGroup />
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 
@@ -127,7 +129,7 @@ describe('useCaptionsOptions', () => {
   it('center aligns the popup by default', () => {
     renderCaptionsMenu();
 
-    expect(screen.getByTestId('content').getAttribute('data-align')).toBe('center');
+    expect(screen.getByTestId('popup').getAttribute('data-align')).toBe('center');
   });
 
   it('selects a captions track', () => {

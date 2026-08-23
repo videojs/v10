@@ -227,8 +227,8 @@ function SettingsMenu(): ReactNode {
           <Tooltip.Label>{t(settingsText)}</Tooltip.Label>
         </Tooltip.Popup>
       </Tooltip.Root>
-      <Menu.Content className={menu.settings}>
-        <div className={menu.group}>
+      <Menu.Popup className={menu.settings}>
+        <Menu.Content className={menu.settingsContent}>
           {hasQuality ? (
             <Menu.Root>
               <Menu.Trigger
@@ -388,8 +388,8 @@ function SettingsMenu(): ReactNode {
               </Menu.Content>
             </Menu.Root>
           ) : null}
-        </div>
-      </Menu.Content>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

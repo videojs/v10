@@ -33,9 +33,11 @@ function renderQualityOptions({
   const { Wrapper } = createPlayerWrapper({ videoRenditionList, activeVideoRendition, selectVideoRendition });
   const content = (
     <Menu.Root defaultOpen align="center">
-      <Menu.Content data-testid="content">
-        <QualityRadioGroup formatRendition={formatRendition} />
-      </Menu.Content>
+      <Menu.Popup>
+        <Menu.Content data-testid="content">
+          <QualityRadioGroup formatRendition={formatRendition} />
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 

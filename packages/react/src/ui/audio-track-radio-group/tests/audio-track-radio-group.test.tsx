@@ -33,9 +33,11 @@ function renderAudioTrackRadioGroup({
   const { Wrapper } = createPlayerWrapper({ audioTrackList, selectAudioTrack });
   const content = (
     <Menu.Root defaultOpen>
-      <Menu.Content>
-        {group ?? <AudioTrackRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
-      </Menu.Content>
+      <Menu.Popup>
+        <Menu.Content>
+          {group ?? <AudioTrackRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 

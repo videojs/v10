@@ -157,28 +157,19 @@ describe('MenuCore', () => {
   });
 
   describe('getContentAttrs', () => {
-    it('returns menu ARIA attrs with popover for root menu', () => {
+    it('returns menu ARIA attrs', () => {
       const core = new MenuCore();
-
-      core.setInput(createInput());
-      const state = core.getState();
-      const attrs = core.getContentAttrs(state);
-
-      expect(attrs.role).toBe('menu');
-      expect(attrs.tabIndex).toBe(-1);
-      expect(attrs.popover).toBe('manual');
-    });
-
-    it('omits popover attr for submenus', () => {
-      const core = new MenuCore();
-
-      core.setInput(createInput({ isSubmenu: true }));
-      const state = core.getState();
-      const attrs = core.getContentAttrs(state);
+      const attrs = core.getContentAttrs();
 
       expect(attrs.role).toBe('menu');
       expect(attrs.tabIndex).toBe(-1);
       expect('popover' in attrs).toBe(false);
+    });
+  });
+
+  describe('getPopupAttrs', () => {
+    it('returns the manual popover mode', () => {
+      expect(new MenuCore().getPopupAttrs()).toEqual({ popover: 'manual' });
     });
   });
 

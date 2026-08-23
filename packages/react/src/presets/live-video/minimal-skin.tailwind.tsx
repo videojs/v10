@@ -199,23 +199,25 @@ function CaptionsTrigger(): ReactNode {
           </CaptionsButton>
         }
       />
-      <Menu.Content className={cn(popup.popover, menu.root)}>
-        <Menu.RadioGroup
-          className={menu.group}
-          value={captions.value}
-          onValueChange={captions.setValue}
-          aria-label={t(captionsText)}
-        >
-          {captions.options.map((option) => (
-            <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
-              <bdi dir="auto">{option.label}</bdi>
-              <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
-                <CheckIcon className={cn(icon, menu.icon)} />
-              </Menu.ItemIndicator>
-            </Menu.RadioItem>
-          ))}
-        </Menu.RadioGroup>
-      </Menu.Content>
+      <Menu.Popup className={cn(popup.popover, menu.root)}>
+        <Menu.Content className={menu.content}>
+          <Menu.RadioGroup
+            className={menu.group}
+            value={captions.value}
+            onValueChange={captions.setValue}
+            aria-label={t(captionsText)}
+          >
+            {captions.options.map((option) => (
+              <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
+                <bdi dir="auto">{option.label}</bdi>
+                <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
+                  <CheckIcon className={cn(icon, menu.icon)} />
+                </Menu.ItemIndicator>
+              </Menu.RadioItem>
+            ))}
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

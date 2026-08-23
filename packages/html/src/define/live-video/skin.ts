@@ -78,16 +78,18 @@ function getTemplateHTML() {
                 ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
               </media-captions-button>
               <media-menu id="captions-menu" side="top" align="center" class="media-surface media-popover media-menu media-menu--captions">
-                <media-captions-radio-group class="media-menu__group">
-                  <template>
-                    <media-menu-radio-item class="media-menu__item">
-                      <bdi data-part="label" dir="auto"></bdi>
-                      <media-menu-item-indicator force-mount class="media-menu__indicator">
-                        ${renderIcon('check', { class: 'media-icon' })}
-                      </media-menu-item-indicator>
-                    </media-menu-radio-item>
-                  </template>
-                </media-captions-radio-group>
+                <media-menu-content class="media-menu__content">
+                  <media-captions-radio-group class="media-menu__group">
+                    <template>
+                      <media-menu-radio-item class="media-menu__item">
+                        <bdi data-part="label" dir="auto"></bdi>
+                        <media-menu-item-indicator force-mount class="media-menu__indicator">
+                          ${renderIcon('check', { class: 'media-icon' })}
+                        </media-menu-item-indicator>
+                      </media-menu-radio-item>
+                    </template>
+                  </media-captions-radio-group>
+                </media-menu-content>
               </media-menu>
               <media-tooltip id="captions-tooltip" side="top" class="media-surface media-tooltip">
                 <media-tooltip-label></media-tooltip-label>

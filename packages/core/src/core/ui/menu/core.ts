@@ -104,14 +104,15 @@ export class MenuCore {
     };
   }
 
-  getContentAttrs(state: MenuState) {
+  getContentAttrs() {
     return {
       role: 'menu' as const,
       tabIndex: -1,
-      // Root menus use the Popover API for dismiss and focus handling.
-      // Submenus render inline inside their parent menu — no popover.
-      ...(!state.isSubmenu && { popover: 'manual' as const }),
     };
+  }
+
+  getPopupAttrs() {
+    return { popover: 'manual' as const };
   }
 }
 

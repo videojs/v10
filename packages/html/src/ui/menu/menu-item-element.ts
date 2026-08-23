@@ -14,7 +14,7 @@ export class MenuItemElement extends UIElement {
   } satisfies PropertyDeclarationMap<'disabled' | 'commandfor'>;
 
   disabled = false;
-  /** ID of a nested `<media-menu>` to open when this item is activated. */
+  /** ID of a nested `<media-menu-content>` page to open when activated. */
   commandfor: string | undefined = undefined;
   readonly #ctx = new ContextConsumer(this, { context: menuContext, subscribe: true });
 

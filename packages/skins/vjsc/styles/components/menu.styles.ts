@@ -21,8 +21,15 @@ export default styles({
         'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         'transition-settings-menu',
-        '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
-        '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur-sm',
+      ],
+    },
+    content: {
+      className: 'media-menu-content',
+      utilities: [
+        group,
+        'absolute inset-x-0 top-0 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
+        'transition-[translate,filter] duration-250 ease-out',
+        'data-[submenu-expanded=true]:-translate-x-full data-[submenu-expanded=true]:blur-sm',
       ],
     },
     group: {

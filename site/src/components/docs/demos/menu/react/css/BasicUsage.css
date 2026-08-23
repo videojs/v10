@@ -71,6 +71,7 @@
   transition-property: width, height, opacity, filter;
 }
 
+.menu-content,
 .menu-panel {
   position: absolute;
   inset: 0;
@@ -86,13 +87,13 @@
   transition-property: translate, filter;
 }
 
-.menu[data-submenu-expanded="true"] > :not([data-submenu]) {
+.menu-content[data-submenu-expanded="true"] {
   filter: blur(8px);
   translate: -100% 0;
   animation: media-menu-content-exit var(--menu-transition-duration) ease-in-out both;
 }
 
-.menu[data-submenu-expanded="false"] > :not([data-submenu]) {
+.menu-content[data-submenu-expanded="false"] {
   animation: media-menu-content-enter var(--menu-transition-duration) ease-in-out both;
 }
 

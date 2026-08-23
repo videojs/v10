@@ -1,4 +1,4 @@
-import { MenuCore, MenuDataAttrs } from '@videojs/core';
+import { MenuCore } from '@videojs/core';
 import {
   createMenu,
   createTransition,
@@ -123,7 +123,6 @@ export function MenuRoot({
       state,
       preferredSide,
       setPositionedSide,
-      stateAttrMap: MenuDataAttrs,
       contentId,
       anchorName,
       boundary,

@@ -66,6 +66,8 @@ const menuHostShell = cn(
 export const menu = {
   /** Standalone menu popover host (audio playback rate, sandbox demos). */
   root: cn(menuHostShell, 'overflow-auto!'),
+  /** Root menu page. */
+  content: group,
   /** Settings menu host with nested submenu navigation. */
   settings: cn(
     menuHostShell,
@@ -75,15 +77,18 @@ export const menu = {
     'data-starting-style:[--popup-transition:var(--popup-base-transition)]',
     'data-ending-style:[--popup-transition:var(--popup-base-transition)]',
     'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
-    '[&>:not([data-submenu])]:translate-none [&>:not([data-submenu])]:transition-[translate,filter]',
-    '[&>:not([data-submenu])]:duration-(--menu-transition-duration) [&>:not([data-submenu])]:ease-out',
-    '[--submenu-parent-translate:-100%] [&:dir(rtl)]:[--submenu-parent-translate:100%]',
-    '[&[data-submenu-expanded=true]>:not([data-submenu])]:[translate:var(--submenu-parent-translate)_0]',
-    '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur',
-    // Avoid restarting the covered-content transition in WebKit while the
-    // anchor-positioned highlight is active.
-    '[&[data-submenu-expanded]>:not([data-submenu])]:before:hidden',
     'overflow-hidden!'
+  ),
+  /** Root settings page that exits when a submenu page opens. */
+  settingsContent: cn(
+    group,
+    'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-out',
+    '[--submenu-parent-translate:-100%] [&:dir(rtl)]:[--submenu-parent-translate:100%]',
+    'data-[submenu-expanded=true]:[translate:var(--submenu-parent-translate)_0]',
+    'data-[submenu-expanded=true]:blur',
+    // Avoid restarting the parent-page transition in WebKit while the
+    // anchor-positioned highlight is active.
+    'data-[submenu-expanded]:before:hidden'
   ),
   group,
   item: cn(

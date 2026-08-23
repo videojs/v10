@@ -213,9 +213,11 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
           <div className="media-button-group">
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
-              <Menu.Content className="media-surface media-popover media-menu media-menu--playback-rate">
-                <PlaybackRateRadioGroup />
-              </Menu.Content>
+              <Menu.Popup className="media-surface media-popover media-menu media-menu--playback-rate">
+                <Menu.Content className="media-menu__content">
+                  <PlaybackRateRadioGroup />
+                </Menu.Content>
+              </Menu.Popup>
             </Menu.Root>
 
             <VolumePopover />

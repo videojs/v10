@@ -25,9 +25,11 @@ function renderAudioTrackOptions({
 
   render(
     <Menu.Root defaultOpen align="center">
-      <Menu.Content data-testid="content">
-        <AudioTrackRadioGroup formatTrack={formatTrack} />
-      </Menu.Content>
+      <Menu.Popup>
+        <Menu.Content data-testid="content">
+          <AudioTrackRadioGroup formatTrack={formatTrack} />
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>,
     { wrapper: Wrapper }
   );
