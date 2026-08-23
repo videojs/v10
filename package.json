@@ -60,6 +60,7 @@
     "lightningcss": "^1.32.0",
     "lint-staged": "^16.2.3",
     "magic-string": "^1.2.2",
+    "oxc-parser": "0.146.0",
     "pkg-pr-new": "^0.0.88",
     "prettier": "^3.8.1",
     "prettier-plugin-astro": "^0.14.1",

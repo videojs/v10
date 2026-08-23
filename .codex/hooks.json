@@ -1,26 +1,14 @@
 {
-  "enabledMcpjsonServers": ["astro-docs"],
-  "enableAllProjectMcpServers": true,
+  "description": "Enforce readable source spacing after agent edits.",
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "apply_patch",
         "hooks": [
           {
             "type": "command",
             "command": "node \"$(git rev-parse --show-toplevel)/.agents/hooks/enforce-source-spacing.mjs\"",
             "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "npx -y gh-setup-hooks",
-            "timeout": 120
           }
         ]
       }

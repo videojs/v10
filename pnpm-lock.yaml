@@ -47,6 +47,9 @@ importers:
       magic-string:
         specifier: ^1.2.2
         version: 1.2.2
+      oxc-parser:
+        specifier: 0.146.0
+        version: 0.146.0
       pkg-pr-new:
         specifier: ^0.0.88
         version: 0.0.88
