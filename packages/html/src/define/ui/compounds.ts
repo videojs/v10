@@ -1,6 +1,7 @@
 import { AlertDialogBackdropElement } from '../../ui/alert-dialog/alert-dialog-backdrop-element';
 import { AlertDialogCloseElement } from '../../ui/alert-dialog/alert-dialog-close-element';
 import { AlertDialogDescriptionElement } from '../../ui/alert-dialog/alert-dialog-description-element';
+import { AlertDialogElement } from '../../ui/alert-dialog/alert-dialog-element';
 import { AlertDialogPopupElement } from '../../ui/alert-dialog/alert-dialog-popup-element';
 import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-title-element';
 import { ControlsBackdropElement } from '../../ui/controls/controls-backdrop-element';
@@ -64,14 +65,24 @@ export function defineControls(): void {
   safeDefine(ControlsGroupElement);
 }
 
-export function defineErrorDialog(): void {
-  // Parent first — child elements consume its context.
-  safeDefine(ErrorDialogElement);
+function defineAlertDialogParts(): void {
   safeDefine(AlertDialogBackdropElement);
   safeDefine(AlertDialogPopupElement);
   safeDefine(AlertDialogCloseElement);
   safeDefine(AlertDialogDescriptionElement);
   safeDefine(AlertDialogTitleElement);
+}
+
+export function defineAlertDialog(): void {
+  // Parent first — child elements consume its context.
+  safeDefine(AlertDialogElement);
+  defineAlertDialogParts();
+}
+
+export function defineErrorDialog(): void {
+  // Parent first — child elements consume its context.
+  safeDefine(ErrorDialogElement);
+  defineAlertDialogParts();
 }
 
 export function defineInputIndicators(): void {
