@@ -28,7 +28,7 @@ export default styles({
       root: {
         className: 'media-controls-root',
         utilities: [
-          'peer/controls group/controls contents p-1 text-white',
+          'group/controls contents p-1 text-white',
           '[--media-popover-side-offset:--spacing(3)]',
           '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
           '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
@@ -41,7 +41,16 @@ export default styles({
           '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
           '@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm',
           'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
-          'peer-data-open/error:hidden!',
+        ],
+      },
+      backdrop: {
+        className: 'media-controls-backdrop',
+        utilities: [
+          'pointer-events-none absolute inset-0 rounded-[inherit] opacity-0',
+          '@lg/media-root:inset-auto @lg/media-root:bottom-[-0.5rem] @lg/media-root:left-1/2 @lg/media-root:h-[100cqh] @lg/media-root:w-[100cqw] @lg/media-root:-translate-x-1/2',
+          '@2xl/media-root:bottom-[-0.75rem]',
+          'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
+          'transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100',
         ],
       },
       primary: {

@@ -15,11 +15,13 @@ type CoreSchema = typeof coreSchema;
 const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   Controls: {
     Root: 'Controls',
+    Backdrop: 'ControlsBackdrop',
     Group: 'ControlsGroup',
   },
   ErrorDialog: {
     Root: 'ErrorDialog',
-    Popup: 'ErrorDialog',
+    Backdrop: 'AlertDialogBackdrop',
+    Popup: 'AlertDialogPopup',
     Title: 'AlertDialogTitle',
     Description: 'AlertDialogDescription',
     Close: 'AlertDialogClose',
@@ -154,9 +156,6 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
       return name ? htmlElementTarget(name, element) : undefined;
     },
     components: {
-      ErrorDialog: {
-        Root: ({ children }) => children,
-      },
       Menu: ({ props, parts, id }) => {
         const popup = parts.Popup?.one();
         const trigger = parts.Trigger.one();

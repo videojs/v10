@@ -8,7 +8,7 @@ import styles from '../../styles/components/buffering.styles';
 
 export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <$.BufferingIndicator className={[styles.root, className]} {...props}>
+    <$.BufferingIndicator className={[styles.root, className]} data-buffering-indicator="" {...props}>
       <SpinnerIcon className={styles.spinner} />
     </$.BufferingIndicator>
   );

@@ -11,7 +11,6 @@ import { insertModuleImports } from '../ast/imports';
 import { compileStyles } from '../styles/compile';
 import { type DesignSystem, loadDesignSystem } from '../styles/design-system';
 import {
-  isGroupPeerMarker,
   loadStyleManifest,
   ruleForToken,
   type StyleManifest,
@@ -306,12 +305,7 @@ function readAccessPath(expression: Expression): string[] | undefined {
 }
 
 function renderStyleRule(rule: StyleManifestRule, options: StylePluginOptions, listItem: boolean): string {
-  const groups =
-    options.mode === 'css'
-      ? isGroupPeerMarker(rule.className)
-        ? []
-        : [rule.className]
-      : utilityGroupsForRule(rule, options.variants);
+  const groups = options.mode === 'css' ? [rule.className] : utilityGroupsForRule(rule, options.variants);
   const values = groups.filter(Boolean);
 
   if (listItem) return values.length > 0 ? values.map((value) => JSON.stringify(value)).join(', ') : '""';

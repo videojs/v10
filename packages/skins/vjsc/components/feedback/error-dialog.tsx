@@ -8,7 +8,8 @@ import styles from '../../styles/components/error-dialog.styles';
 export function ErrorDialog({ className, ...props }: Props = {}) {
   return (
     <$.ErrorDialog.Root>
-      <$.ErrorDialog.Popup className={[styles.root, className]} {...props}>
+      <$.ErrorDialog.Backdrop className={styles.backdrop} />
+      <$.ErrorDialog.Popup className={[styles.popup, className]} {...props}>
         <Box className={styles.content}>
           <$.ErrorDialog.Title className={styles.title} />
           <$.ErrorDialog.Description className={styles.description} />

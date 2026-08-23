@@ -60,20 +60,6 @@ describe('compileStyles', () => {
     expect(styles.get('buttons.css')).not.toContain('calc(2px * -1)');
   });
 
-  it('rewrites named peer variants to their semantic owner', async () => {
-    const peer = rule('control', 'media-control', ['peer/control']);
-    const overlay = rule('overlay', 'media-overlay', ['opacity-0', 'peer-data-visible/control:opacity-100']);
-
-    const styles = await compileStyles({
-      design: await loadDesignSystem(designPath),
-      manifest: manifest([peer, overlay]),
-      scope: '.media-skin-video',
-    });
-
-    expect(styles.get('buttons.css')).toContain('.media-overlay:is(:where(.media-control)[data-visible] ~ *)');
-    expect(styles.get('buttons.css')).not.toContain('peer\\/control');
-  });
-
   it('keeps responsive overrides after each semantic rule base', async () => {
     const primary = rule('primary', 'media-controls-primary', ['flex', '@lg/media-root:contents']);
     const root = rule('root', 'media-controls-root', ['contents', '@lg/media-root:flex']);

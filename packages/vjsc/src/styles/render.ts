@@ -147,7 +147,7 @@ interface AnalyzedFile {
 }
 
 function renderFile(analyzed: AnalyzedFile, file: StyleOutputFile): string {
-  const relationshipOwners = new Map([...file.groupOwners, ...file.peerOwners]);
+  const relationshipOwners = file.groupOwners;
   const rules = [...file.rules]
     .sort((a, b) => a.className.localeCompare(b.className))
     .map((rule) => {

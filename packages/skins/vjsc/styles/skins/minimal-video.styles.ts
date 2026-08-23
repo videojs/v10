@@ -8,7 +8,7 @@ export default styles({
       root: {
         className: 'media-controls-root',
         utilities: [
-          'peer/controls group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white',
+          'group/controls absolute inset-x-1 bottom-1 z-20 flex flex-wrap items-center gap-x-2 rounded-xl bg-transparent text-white',
           'text-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
           '[@media(prefers-reduced-transparency:reduce)]:bg-black contrast-more:bg-black forced-colors:bg-[Canvas]',
           '[--media-popover-side-offset:--spacing(5)] [--media-tooltip-side-offset:var(--media-popover-side-offset)]',
@@ -20,7 +20,15 @@ export default styles({
           'motion-safe:not-data-visible:translate-y-full pointer-fine:motion-safe:not-data-visible:blur-sm',
           '@2xl/media-root:inset-x-2 @2xl/media-root:bottom-2 @2xl/media-root:flex-nowrap',
           '@2xl/media-root:[--media-popover-side-offset:--spacing(3)]',
-          'peer-data-open/error:hidden!',
+        ],
+      },
+      backdrop: {
+        className: 'media-controls-backdrop',
+        utilities: [
+          'pointer-events-none absolute bottom-[-0.25rem] left-1/2 h-[100cqh] w-[100cqw] -translate-x-1/2 rounded-[inherit] opacity-0',
+          '@2xl/media-root:bottom-[-0.5rem]',
+          'bg-linear-to-t from-black/70 via-black/50 via-[length:calc(var(--media-spacing)*30)] to-transparent',
+          'transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100',
         ],
       },
       start: {

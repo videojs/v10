@@ -1,12 +1,5 @@
 import type { DesignSystem } from './design-system';
-import {
-  isGroupMarker,
-  isGroupPeerMarker,
-  isPeerMarker,
-  type StyleManifest,
-  type StyleManifestRule,
-  utilitiesForRule,
-} from './manifest';
+import { isGroupMarker, type StyleManifest, type StyleManifestRule, utilitiesForRule } from './manifest';
 import type { StyleOutputFile, StyleOutputRule } from './output';
 import { renderStylesheets } from './render';
 
@@ -23,7 +16,7 @@ export interface CompileStylesOptions {
 /** Compile semantic rules and group the resulting CSS by each definition's explicit output file. */
 export async function compileStyles(options: CompileStylesOptions): Promise<Map<string, string>> {
   const variants = options.variants ?? [];
-  const relationships = collectRelationships(options.manifest.rules, variants);
+  const groupOwners = collectGroupOwners(options.manifest.rules, variants);
 
   const byFile = new Map<string, StyleOutputFile & { rules: StyleOutputRule[] }>();
 
@@ -44,8 +37,7 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
       name: rule.file,
       layer: rule.layer,
       rules: [compiled],
-      groupOwners: relationships.groupOwners,
-      peerOwners: relationships.peerOwners,
+      groupOwners,
     });
   }
 
@@ -67,7 +59,7 @@ function compileRule(rule: StyleManifestRule, design: DesignSystem, variants: re
   const unsupported: string[] = [];
 
   for (const utility of utilitiesForRule(rule, variants)) {
-    if (isGroupPeerMarker(utility)) continue;
+    if (isGroupMarker(utility)) continue;
 
     if (design.recognizesCandidate(utility)) candidates.push(utility);
     else unsupported.push(utility);
@@ -83,30 +75,21 @@ function compileRule(rule: StyleManifestRule, design: DesignSystem, variants: re
   return { className: rule.className, candidates, scopeRoot: rule.scopeRoot };
 }
 
-function collectRelationships(
+function collectGroupOwners(
   rules: readonly StyleManifestRule[],
   variants: readonly string[]
-): {
-  groupOwners: ReadonlyMap<string, string>;
-  peerOwners: ReadonlyMap<string, string>;
-} {
+): ReadonlyMap<string, string> {
   const groupOwners = new Map<string, string>();
-  const peerOwners = new Map<string, string>();
 
   for (const rule of rules) {
     for (const utility of utilitiesForRule(rule, variants)) {
-      if (isPeerMarker(utility)) {
-        registerRelationshipOwner(peerOwners, utility, rule);
-        continue;
-      }
-
       if (!isGroupMarker(utility)) continue;
 
       registerRelationshipOwner(groupOwners, utility, rule);
     }
   }
 
-  return { groupOwners, peerOwners };
+  return groupOwners;
 }
 
 function registerRelationshipOwner(owners: Map<string, string>, utility: string, rule: StyleManifestRule): void {

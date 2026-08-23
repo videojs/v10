@@ -6,11 +6,24 @@ export default styles({
   file: 'dialog.css',
   layer: 'videojs.components',
   rules: {
-    root: {
-      className: 'media-error-dialog',
+    backdrop: {
+      className: 'media-error-dialog-backdrop',
       utilities: [
-        'peer/error z-20 flex flex-col gap-3 outline-none',
-        'not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:delay-0 motion-reduce:duration-50',
+        'absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150',
+        'not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50',
+        'data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0',
+        'motion-reduce:delay-0',
+      ],
+      variants: {
+        default: 'duration-350',
+        minimal: 'backdrop-saturate-120 duration-150',
+      },
+    },
+    popup: {
+      className: 'media-error-dialog-popup',
+      utilities: [
+        'absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none',
+        'not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50',
         'data-starting-style:scale-95 data-starting-style:opacity-0',
         'data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0',
         'motion-reduce:delay-0',
@@ -18,15 +31,10 @@ export default styles({
       variants: {
         default: [
           ...defaultSurface,
-          'absolute top-1/2 left-1/2 w-[calc(100%-1.5rem)] max-w-72 -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] p-3 text-white',
-          'text-shadow-[0_1px_0_rgb(0_0_0/0.25)]',
-          'duration-350',
+          'w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white',
+          'text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350',
         ],
-        minimal: [
-          'absolute top-1/2 left-1/2 w-full max-w-64 -translate-x-1/2 -translate-y-1/2 p-4 text-white',
-          'text-shadow-[0_1px_0_rgb(0_0_0/0.5)]',
-          'duration-150',
-        ],
+        minimal: ['w-full max-w-64 p-4 text-white', 'text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150'],
       },
     },
     content: {

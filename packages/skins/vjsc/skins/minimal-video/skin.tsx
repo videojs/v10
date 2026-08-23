@@ -12,7 +12,6 @@ import { BufferingIndicator } from '../../components/feedback/buffering-indicato
 import { ErrorDialog } from '../../components/feedback/error-dialog';
 import { VideoStatusIndicators } from '../../components/feedback/video-status-indicators';
 import { Container } from '../../components/layout/container';
-import { Overlay } from '../../components/layout/overlay';
 import { Poster } from '../../components/layout/poster';
 import { VideoSettingsMenu } from '../../components/menus/video-settings-menu';
 import { TimeSlider } from '../../components/sliders/time-slider';
@@ -37,6 +36,7 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
       <ErrorDialog />
 
       <$.Controls.Root className={styles.controls.root} data-controls="">
+        <$.Controls.Backdrop className={styles.controls.backdrop} />
         <$.Tooltip.Provider>
           <$.Controls.Group className={styles.controls.start}>
             <PlayButton />
@@ -65,7 +65,6 @@ export function MinimalVideoSkin({ children, className, poster, ...props }: Mini
         </$.Tooltip.Provider>
       </$.Controls.Root>
 
-      <Overlay />
       <VideoHotkeys />
       <VideoGestures />
       <VideoStatusIndicators />

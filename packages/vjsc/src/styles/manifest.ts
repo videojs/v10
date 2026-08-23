@@ -119,16 +119,8 @@ export async function collectReferencedStyleRules(
   return referenced;
 }
 
-export function isGroupPeerMarker(value: string): boolean {
-  return isGroupMarker(value) || isPeerMarker(value);
-}
-
 export function isGroupMarker(value: string): boolean {
   return value === 'group' || value.startsWith('group/');
-}
-
-export function isPeerMarker(value: string): boolean {
-  return value === 'peer' || value.startsWith('peer/');
 }
 
 function createStyleManifest(

@@ -43,7 +43,7 @@ describe('Skins Shadcn registry', () => {
       file.target?.endsWith('/volume-popover.tsx')
     )?.content;
 
-    expect(registry.items).toHaveLength(52);
+    expect(registry.items).toHaveLength(50);
     expect(registry.items.map((item: { name: string }) => item.name)).toEqual(
       expect.arrayContaining(['button-tooltip', 'minimal-video', 'play-button', 'play-button-minimal'])
     );
@@ -63,7 +63,7 @@ describe('Skins Shadcn registry', () => {
     expect(playSource).toContain('size-9');
     expect(minimalPlayButton.files[0]?.content).toContain('size-9.5');
     expect(defaultVideo.registryDependencies).toEqual(
-      expect.arrayContaining(['@videojs/container', '@videojs/overlay', '@videojs/play-button', '@videojs/poster'])
+      expect.arrayContaining(['@videojs/container', '@videojs/play-button', '@videojs/poster'])
     );
     expect(defaultVideo.registryDependencies).not.toContain('@videojs/seek-button');
     expect(minimalVideo.registryDependencies).toContain('@videojs/play-button-minimal');
