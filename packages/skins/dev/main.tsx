@@ -119,14 +119,10 @@ if (source === 'legacy') {
 
 async function renderLegacy(framework: 'react' | 'html', skin: 'default-video' | 'minimal-video') {
   if (framework === 'react') {
-    const [{ VideoPlayer }, { Video }] = await Promise.all([
-      import('../../react/dist/dev/presets/video/player.js'),
-      import('../../react/dist/dev/media/video.js'),
-      skin === 'default-video' ? import('../src/default/css/video.css') : import('../src/minimal/css/video.css'),
-    ]);
+    await (skin === 'default-video' ? import('../src/default/css/video.css') : import('../src/minimal/css/video.css'));
 
     if (skin === 'default-video') {
-      const { VideoSkin } = await import('../../react/dist/dev/presets/video/skin.js');
+      const { VideoSkin } = await import('../../react/src/presets/video/skin');
 
       renderReact(
         <VideoPlayer poster={media.poster}>
@@ -138,7 +134,7 @@ async function renderLegacy(framework: 'react' | 'html', skin: 'default-video' |
         </VideoPlayer>
       );
     } else {
-      const { MinimalVideoSkin } = await import('../../react/dist/dev/presets/video/minimal-skin.js');
+      const { MinimalVideoSkin } = await import('../../react/src/presets/video/minimal-skin');
 
       renderReact(
         <VideoPlayer poster={media.poster}>
@@ -154,11 +150,11 @@ async function renderLegacy(framework: 'react' | 'html', skin: 'default-video' |
     return;
   }
 
-  await import('../../html/dist/dev/define/video/player.js');
+  await import('../../html/src/define/video/player');
   const tag = skin === 'default-video' ? 'video-skin' : 'video-minimal-skin';
 
-  if (skin === 'default-video') await import('../../html/dist/dev/define/video/skin.js');
-  else await import('../../html/dist/dev/define/video/minimal-skin.js');
+  if (skin === 'default-video') await import('../../html/src/define/video/skin');
+  else await import('../../html/src/define/video/minimal-skin');
 
   root.innerHTML = `<video-player poster="${media.poster}"><${tag} class="preview-player"><video src="${media.src}" playsinline crossorigin="anonymous"><track kind="subtitles" label="English" src="${media.captions}" srclang="en"></video></${tag}></video-player>`;
 }

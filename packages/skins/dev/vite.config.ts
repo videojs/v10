@@ -29,6 +29,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: [
+      { find: /^@\//, replacement: `${reactSourceDir}/` },
       { find: /^@videojs\/react(?=\/|$)/, replacement: reactSourceDir },
       { find: /^@videojs\/html\/icons\/element(?=\/|$)/, replacement: htmlIconElementDir },
       { find: /^@videojs\/html(?=\/|$)/, replacement: htmlDefineDir },
