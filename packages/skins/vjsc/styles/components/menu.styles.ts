@@ -29,7 +29,7 @@ export default styles({
     root: {
       className: 'media-settings',
       utilities: [
-        'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden! border-0',
+        'm-0 min-w-48 max-w-(--media-popover-available-width) overflow-hidden! border-0 p-1',
         'max-h-[min(var(--media-popover-available-height,14rem),14rem)] overscroll-none',
         'h-(--media-menu-height) w-(--media-menu-width)',
         '[--media-menu-transition-duration:250ms] motion-reduce:[--media-menu-transition-duration:0ms]',
@@ -43,10 +43,12 @@ export default styles({
     content: {
       className: 'media-menu-content',
       utilities: [
-        group,
-        'absolute inset-x-0 top-0 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
-        'transition-[translate,filter] duration-250 ease-out',
-        'data-[child-open]:-translate-x-full data-[child-open]:blur-sm',
+        ...group,
+        'absolute inset-x-1 top-1 max-h-[inherit] overflow-auto overscroll-none outline-none',
+        '[--media-menu-parent-translate:-100%] [&:dir(rtl)]:[--media-menu-parent-translate:100%]',
+        'transition-[translate,filter] duration-(--media-menu-transition-duration) ease-out',
+        'data-[child-open]:[translate:var(--media-menu-parent-translate)_0]',
+        'data-[child-open]:blur-sm data-[child-open]:before:hidden',
       ],
     },
     group: {
@@ -100,6 +102,7 @@ export default styles({
     separator: {
       className: 'media-separator',
       utilities: [
+        'block',
         '[@media(prefers-reduced-transparency:reduce)]:border-white/25 contrast-more:border-white/25',
         'forced-colors:border-[CanvasText]',
       ],

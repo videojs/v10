@@ -108,10 +108,6 @@ export const tokens = {
     kind: 'runtime',
     description: 'Measured menu width during submenu transitions.',
   },
-  '--media-nested-submenu-translate': {
-    kind: 'internal',
-    description: 'Direction-aware offset for a submenu nested inside a menu panel.',
-  },
   '--media-preview-end-inset': {
     kind: 'internal',
     description: 'Slider preview correction when the slider is narrower than its container.',

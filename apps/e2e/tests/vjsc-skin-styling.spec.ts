@@ -1036,11 +1036,13 @@ async function reducedMotionContract(root: Locator, menu: Locator, tooltipDurati
 async function rtlMenuContract(root: Locator, submenu: Locator) {
   const popup = await popupContract(root, submenu);
   const direction = await submenu.evaluate((element) => {
-    const menu = element.closest<HTMLElement>('[role="menu"]') ?? element;
-    const style = getComputedStyle(menu);
+    const style = getComputedStyle(element);
+    const parentContent = [...(element.parentElement?.children ?? [])].find(
+      (child) => child.getAttribute('role') === 'menu' && !child.hasAttribute('data-submenu')
+    );
     return {
       direction: style.direction,
-      parentTranslate: Number.parseFloat(style.getPropertyValue('--media-menu-parent-translate')),
+      parentTranslate: parentContent ? Number.parseFloat(getComputedStyle(parentContent).translate) : Number.NaN,
       submenuTranslate: Number.parseFloat(style.getPropertyValue('--media-submenu-translate')),
     };
   });
@@ -1106,7 +1108,11 @@ async function openSettingsMenu(page: Page): Promise<Locator> {
   await expect(trigger).toBeVisible();
   await trigger.click();
 
-  const menu = page.locator('.media-menu--settings:visible, .media-settings:visible, [role="menu"]:visible').first();
+  const menu = page
+    .locator(
+      '.media-menu--settings:visible, .media-settings:visible, [popover]:has(> [role="menu"]):visible, media-menu:has(> media-menu-content):visible, [role="menu"]:visible'
+    )
+    .first();
   await expect(menu).toBeVisible();
   await expect(menu).not.toHaveAttribute('data-starting-style', '');
   await page.waitForTimeout(300);
@@ -1122,7 +1128,7 @@ async function openSettingsSubmenu(page: Page, name: string): Promise<Locator> {
   const submenu = root.locator('[data-submenu]:visible').first();
   await expect(submenu).toBeVisible();
   await expect(submenu).not.toHaveAttribute('data-starting-style', '');
-  await expect(root).toHaveAttribute('data-submenu-expanded', 'true');
+  await expect(await rootMenuContent(root)).toHaveAttribute('data-submenu-expanded', 'true');
   await page.waitForTimeout(300);
   return submenu;
 }
@@ -1135,7 +1141,7 @@ async function settingsSubmenuMotionContract(page: Page, name: string) {
 
   const submenu = root.locator('[data-submenu]:visible').first();
   await expect(submenu).toBeVisible();
-  await expect(root).toHaveAttribute('data-submenu-expanded', 'true');
+  await expect(await rootMenuContent(root)).toHaveAttribute('data-submenu-expanded', 'true');
 
   const motion = await root.evaluate((element) => {
     const transitionDuration = (target: Element) =>
@@ -1171,6 +1177,13 @@ async function settingsSubmenuMotionContract(page: Page, name: string) {
   await expect(submenu).toBeHidden();
 
   return { ...motion, submenuPersistsDuringClose };
+}
+
+async function rootMenuContent(root: Locator): Promise<Locator> {
+  const content = root
+    .locator(':scope > [role="menu"]:not([data-submenu]), :scope > media-menu-content:not([data-submenu])')
+    .first();
+  return (await content.count()) > 0 ? content : root;
 }
 
 async function openVolumePopover(page: Page): Promise<Locator> {

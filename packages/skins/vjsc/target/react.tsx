@@ -51,13 +51,6 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       });
     },
     components: {
-      Menu: {
-        Content: ({ props, children }) =>
-          jsx(target.Menu.Content, {
-            ...props.omit('side', 'align', 'open', 'defaultOpen', 'closeOnEscape', 'closeOnOutsideClick'),
-            children,
-          }),
-      },
       Popover: {
         Trigger: ({ props, children }) => <target.Popover.Trigger render={children} {...props} />,
       },
