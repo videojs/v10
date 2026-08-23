@@ -89,7 +89,7 @@ jobs:
         with:
           # The dispatch job relays the release with github.token, so the
           # workflow_dispatch actor is the Actions bot.
-          allow-bots: 'github-actions[bot]'
+          allow-bot-users: 'github-actions[bot]'
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           model: gpt-5.6-terra
           effort: high
