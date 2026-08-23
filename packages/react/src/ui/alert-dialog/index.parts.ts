@@ -1,3 +1,7 @@
+export {
+  AlertDialogBackdrop as Backdrop,
+  type AlertDialogBackdropProps as BackdropProps,
+} from './alert-dialog-backdrop';
 export { AlertDialogClose as Close, type AlertDialogCloseProps as CloseProps } from './alert-dialog-close';
 export {
   AlertDialogDescription as Description,

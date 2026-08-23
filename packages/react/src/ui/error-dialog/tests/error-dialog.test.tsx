@@ -33,6 +33,7 @@ describe('ErrorDialog', () => {
       <Wrapper>
         <I18nProvider locale="es">
           <ErrorDialog.Root>
+            <ErrorDialog.Backdrop data-testid="backdrop" />
             <ErrorDialog.Popup>
               <ErrorDialog.Title data-testid="title" />
               <ErrorDialog.Description data-testid="description" />
@@ -43,6 +44,7 @@ describe('ErrorDialog', () => {
       </Wrapper>
     );
 
+    expect(screen.getByTestId('backdrop').getAttribute('aria-hidden')).toBe('true');
     expect(screen.getByTestId('title').textContent).toBe('Algo salió mal.');
     expect(screen.getByTestId('description').textContent).toBe('Error de red.');
     expect(screen.getByTestId('close').textContent).toBe('Aceptar');

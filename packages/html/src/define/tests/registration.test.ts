@@ -143,6 +143,33 @@ describe('composite define registration', () => {
     });
   });
 
+  describe('ui/alert-dialog', () => {
+    it('registers media-alert-dialog before sub-elements', async () => {
+      const before = spy.mock.calls.length;
+      await import('../ui/alert-dialog');
+      const batch = batchSince(before);
+
+      expect(batch[0]).toBe('media-alert-dialog');
+      expect(batch).toContain('media-alert-dialog-backdrop');
+      expect(batch).toContain('media-alert-dialog-popup');
+      expect(batch).toContain('media-alert-dialog-close');
+      expect(batch).toContain('media-alert-dialog-description');
+      expect(batch).toContain('media-alert-dialog-title');
+    });
+  });
+
+  describe('ui/error-dialog', () => {
+    it('registers media-error-dialog and reuses alert-dialog parts', async () => {
+      const before = spy.mock.calls.length;
+      await import('../ui/error-dialog');
+      const batch = batchSince(before);
+
+      expect(batch).toContain('media-error-dialog');
+      expect(batch).not.toContain('media-alert-dialog-backdrop');
+      expect(batch).not.toContain('media-alert-dialog-popup');
+    });
+  });
+
   describe('ui/controls', () => {
     it('registers media-controls before sub-elements', async () => {
       const before = spy.mock.calls.length;
@@ -151,6 +178,7 @@ describe('composite define registration', () => {
       const batch = batchSince(before);
 
       expect(batch[0]).toBe('media-controls');
+      expect(batch).toContain('media-controls-backdrop');
       expect(batch).toContain('media-controls-group');
     });
   });
@@ -196,7 +224,16 @@ describe('composite define registration', () => {
         'media-time-separator',
         // Controls
         'media-controls',
+        'media-controls-backdrop',
         'media-controls-group',
+        // Dialogs
+        'media-alert-dialog',
+        'media-alert-dialog-backdrop',
+        'media-alert-dialog-popup',
+        'media-alert-dialog-close',
+        'media-alert-dialog-description',
+        'media-alert-dialog-title',
+        'media-error-dialog',
       ];
 
       for (const tagName of expected) {

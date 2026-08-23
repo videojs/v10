@@ -10,6 +10,7 @@ import { MenuElement } from '../../menu/menu-element';
 import { PopoverElement } from '../../popover/popover-element';
 import { TooltipElement } from '../../tooltip/tooltip-element';
 import { UIElement } from '../../ui-element';
+import { ControlsBackdropElement } from '../controls-backdrop-element';
 import { ControlsElement } from '../controls-element';
 
 function ensureCustomElementDefined(Constructor: CustomElementConstructor & { readonly tagName: string }): void {
@@ -181,5 +182,28 @@ describe('ControlsElement', () => {
     await controls.updateComplete;
 
     expect(() => provider.setVisible(false)).not.toThrow();
+  });
+});
+
+describe('ControlsBackdropElement', () => {
+  it('has the correct tag name', () => {
+    expect(ControlsBackdropElement.tagName).toBe('media-controls-backdrop');
+  });
+
+  it('is presentational and receives controls state attributes', async () => {
+    const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
+    const controls = createDefinedElement(ControlsElement);
+    const backdrop = createDefinedElement(ControlsBackdropElement);
+    controls.append(backdrop);
+
+    document.body.append(provider);
+    provider.append(controls);
+    await controls.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(backdrop.getAttribute('aria-hidden')).toBe('true');
+      expect(backdrop.hasAttribute('data-visible')).toBe(true);
+      expect(backdrop.hasAttribute('data-user-active')).toBe(true);
+    });
   });
 });

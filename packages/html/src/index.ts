@@ -72,9 +72,11 @@ export * from './store/media-attach-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
 export { AirPlayButtonElement } from './ui/airplay-button/airplay-button-element';
+export { AlertDialogBackdropElement } from './ui/alert-dialog/alert-dialog-backdrop-element';
 export { AlertDialogCloseElement } from './ui/alert-dialog/alert-dialog-close-element';
 export { AlertDialogDescriptionElement } from './ui/alert-dialog/alert-dialog-description-element';
 export { AlertDialogElement } from './ui/alert-dialog/alert-dialog-element';
+export { AlertDialogPopupElement } from './ui/alert-dialog/alert-dialog-popup-element';
 export { AlertDialogTitleElement } from './ui/alert-dialog/alert-dialog-title-element';
 export { type AlertDialogContextValue, alertDialogContext } from './ui/alert-dialog/context';
 // UI Components
@@ -85,6 +87,7 @@ export { CaptionsRadioGroupElement } from './ui/captions-radio-group/captions-ra
 export { CastButtonElement } from './ui/cast-button/cast-button-element';
 export { ContainerElement } from './ui/container/container-element';
 export { ContextPartElement, type PartContextValue } from './ui/context-part-element';
+export { ControlsBackdropElement } from './ui/controls/controls-backdrop-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { ErrorDialogElement } from './ui/error-dialog/error-dialog-element';

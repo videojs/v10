@@ -7,6 +7,7 @@ export default defineComponent({
   root: 'Root',
   parts: {
     Root: defineComponent(),
+    Backdrop: defineComponent(),
     Group: defineComponent(),
   },
   dataAttrs: ControlsDataAttrs,
