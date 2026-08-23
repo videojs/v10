@@ -210,6 +210,7 @@ describe('createMenu', () => {
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
       expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
       expect(focus).toHaveBeenCalledOnce();
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
 
       vi.useRealTimers();
     });
@@ -234,6 +235,7 @@ describe('createMenu', () => {
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
       expect(a.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
       expect(focus).toHaveBeenCalledOnce();
+      expect(focus).toHaveBeenCalledWith({ preventScroll: true });
 
       vi.useRealTimers();
     });
