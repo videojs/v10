@@ -34,9 +34,8 @@
   },
   "scripts": {
     "build": "vp pack",
-    "build:shadcn": "vp -C shadcn pack",
     "build:watch": "vp pack --filter skins --watch ./src --no-clean",
-    "dev": "vp dev --host",
+    "dev": "vp -C dev dev --host",
     "test": "pnpm run test:types && vp test run",
     "test:types": "tsgo --project ./vjsc/tsconfig.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"

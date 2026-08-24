@@ -47,6 +47,17 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
 });
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: 'pnpm run generate:locales && pnpm run generate:i18n-types && vp pack',
+        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        // The CDN task consumes Core, but its generated output is not an input
+        // to Core's locale generators or package build.
+        input: [{ auto: true }, { pattern: '!packages/html/cdn/**', base: 'workspace' }],
+      },
+    },
+  },
   define: {
     __DEV__: 'true',
   },

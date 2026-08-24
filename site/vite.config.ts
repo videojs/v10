@@ -31,8 +31,9 @@ const config: ViteUserConfig = {
         input: [
           { auto: true },
           // The API extractor has no sandbox inputs, but its workspace scan can
-          // observe files that the sandbox build creates in parallel.
+          // observe generated files that other builds create in parallel.
           { pattern: '!apps/sandbox/**', base: 'workspace' },
+          { pattern: '!packages/cli/docs/**', base: 'workspace' },
         ],
         output: [
           'src/content/generated-component-reference/**',
