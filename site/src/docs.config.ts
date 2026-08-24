@@ -113,6 +113,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/captions-radio-group' },
           { slug: 'reference/cast-button' },
           { slug: 'reference/controls' },
+          { slug: 'reference/dialog' },
           { slug: 'reference/error-dialog' },
           { slug: 'reference/fullscreen-button' },
           { slug: 'reference/google-cast' },

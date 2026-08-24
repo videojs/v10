@@ -6,6 +6,7 @@ description: A modal alert dialog for urgent messages that require acknowledgeme
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -47,7 +48,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/Basi
 
 ## Behavior
 
-Use an alert dialog for an urgent message that interrupts the user and requires acknowledgement. Your application controls when it opens and supplies its content. The component does not create a trigger or manage application flows such as opening a player from a thumbnail.
+Use an alert dialog for an urgent message that interrupts the user and requires acknowledgement. Your application controls when it opens and supplies its content. For general modal content, including a player opened from a thumbnail, use <DocsLink slug="reference/dialog">`Dialog`</DocsLink> instead.
 
 <FrameworkCase frameworks={["react"]}>
 Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncontrolled state. `Root` provides state without rendering an element, while `Popup` renders only while the dialog is open.
@@ -95,9 +96,7 @@ React renders standard DOM elements. Add a `className` to the popup and use it a
 
 ## Accessibility
 
-The dialog uses `role="alertdialog"` and `aria-modal="true"`. The title and description receive generated IDs that are connected with `aria-labelledby` and `aria-describedby`. Pressing <kbd>Escape</kbd> closes the dialog.
-
-The current component does not trap focus. If your interface requires strict modal behavior, prevent interaction with content outside the dialog while it is open. In HTML, make the dialog focusable with `tabindex="-1"` so it can receive initial focus.
+The dialog uses `role="alertdialog"` and `aria-modal="true"`. The title and description receive generated IDs that are connected with `aria-labelledby` and `aria-describedby`. Focus moves into the dialog when it opens, stays within it while open, and returns to the previously focused element when it closes. Content outside the dialog is inert while it is open. Pressing <kbd>Escape</kbd> closes the dialog.
 
 ## Examples
 
