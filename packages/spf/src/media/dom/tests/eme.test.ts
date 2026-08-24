@@ -8,6 +8,7 @@ import {
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
   requestKeySystemAccess,
+  resolveDrmUrl,
   shapeLicenseRequest,
   toCencInitData,
 } from '../eme';
@@ -228,6 +229,58 @@ describe('keySystemCandidates', () => {
 
   it('ignores keys with unrecognized or absent KEYFORMAT', () => {
     expect(keySystemCandidates([{ method: 'AES-128', uri: 'k.bin' }], drm)).toEqual([]);
+  });
+
+  it('resolves a function-valued license server', () => {
+    expect(
+      keySystemCandidates([WIDEVINE_KEY], {
+        'com.widevine.alpha': { licenseUrl: () => 'https://license.example.com/widevine' },
+      })
+    ).toEqual(['com.widevine.alpha']);
+  });
+
+  it('omits a declared system whose license server resolves to nothing', () => {
+    // The per-source "not licensable" signal: the entry names the system, but
+    // the current source has no credentials for it, so it prunes exactly as an
+    // unnamed system does.
+    expect(
+      keySystemCandidates([WIDEVINE_KEY, FAIRPLAY_KEY], {
+        'com.widevine.alpha': { licenseUrl: undefined },
+        'com.apple.fps': { licenseUrl: () => undefined },
+      })
+    ).toEqual([]);
+  });
+
+  it('treats a throwing resolver as no configured license server', () => {
+    expect(
+      keySystemCandidates([WIDEVINE_KEY], {
+        'com.widevine.alpha': {
+          licenseUrl: () => {
+            throw new Error('no token yet');
+          },
+        },
+      })
+    ).toEqual([]);
+  });
+});
+
+describe('resolveDrmUrl', () => {
+  it('passes a plain value through, including undefined', () => {
+    expect(resolveDrmUrl('https://license.example.com/widevine')).toBe('https://license.example.com/widevine');
+    expect(resolveDrmUrl(undefined)).toBeUndefined();
+  });
+
+  it('calls a resolver and returns what it yields', () => {
+    expect(resolveDrmUrl(() => 'https://license.example.com/fairplay')).toBe('https://license.example.com/fairplay');
+    expect(resolveDrmUrl(() => undefined)).toBeUndefined();
+  });
+
+  it('answers undefined when the resolver throws', () => {
+    expect(
+      resolveDrmUrl(() => {
+        throw new Error('no token yet');
+      })
+    ).toBeUndefined();
   });
 });
 
