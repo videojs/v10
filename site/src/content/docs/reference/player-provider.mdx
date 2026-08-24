@@ -81,16 +81,18 @@ import '@videojs/html/video/player';
 </video-player>
 ```
 
-If you need a custom feature set, a custom tag name, or want to combine provider+container into a single element, use `createPlayer()` to get `ProviderMixin` and compose your own class:
+If you need a custom feature set or tag name, use `createPlayer()` to get `ProviderMixin` and define your own state boundary. Extend `ContainerElement` separately when you need custom container behavior:
 
 ```ts title="my-player.ts"
-import { ContainerMixin, createPlayer, MediaElement } from '@videojs/html';
+import { ContainerElement, createPlayer, UIElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-class MyPlayer extends ProviderMixin(MediaElement) {}
+class MyPlayer extends ProviderMixin(UIElement) {}
+class MyContainer extends ContainerElement {}
 customElements.define('my-player', MyPlayer);
+customElements.define('my-container', MyContainer);
 ```
 
 <DocsLinkCard slug="reference/html-create-player">`createPlayer` reference</DocsLinkCard>
@@ -125,10 +127,12 @@ Everything that needs player state goes inside `Player`: skins, containers, UI c
 ## No visual presence
 
 <FrameworkCase frameworks={["react"]}>
-`Player` renders no visible element of its own — it's purely a state wrapper. Sizing, borders, and background go on the <DocsLink slug="reference/player-container">`Container`</DocsLink>, not `Player`.
+`Player` renders no DOM element of its own — it's purely a state wrapper. Put sizing, positioning, borders, backgrounds, and DOM measurements on the <DocsLink slug="reference/player-container">`Container`</DocsLink>, not `Player`.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-The `<video-player>` element uses `display: contents`, meaning it has no visual box of its own. Sizing, borders, and background go on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink>, not the provider.
+Packaged skins make `<video-player>` boxless with `display: contents`. Width, height, positioning, transforms, and `getBoundingClientRect()` do not describe a visible player box there. Put layout and measurements on the <DocsLink slug="reference/player-container">`<media-container>`</DocsLink> instead.
+
+If you omit `<video-skin>` and import only the player and media elements, those skin styles are not loaded. The provider still owns state, not layout, so add and style a `<media-container>` instead of relying on the provider's default display.
 </FrameworkCase>
 
 ## Accessing state
@@ -157,7 +161,7 @@ Use `PlayerController` to subscribe to store state from any custom element insid
 ```ts title="play-pause-button.ts"
 import { selectPlayback } from '@videojs/html';
 
-class PlayPauseButton extends MediaElement {
+class PlayPauseButton extends UIElement {
   #playback = new PlayerController(this, context, selectPlayback);
 
   connectedCallback() {

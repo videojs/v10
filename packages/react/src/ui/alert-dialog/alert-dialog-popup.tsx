@@ -8,6 +8,7 @@ import { useAlertDialogContext } from './context';
 
 export interface AlertDialogPopupProps extends UIComponentProps<'div', AlertDialogCore.State> {}
 
+/** Renders the modal alert dialog while it is open. */
 export const AlertDialogPopup = forwardRef<HTMLDivElement, AlertDialogPopupProps>(function AlertDialogPopup(
   { render, className, style, ...elementProps },
   forwardedRef

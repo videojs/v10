@@ -1,3 +1,5 @@
+import htmlPackage from '../../packages/html/package.json' with { type: 'json' };
+
 // Always https://videojs.org. Unlike Astro.site, which varies per deploy
 // (e.g. deploy preview URLs), this is stable for canonical URLs and other
 // references that must always point to production.
@@ -15,6 +17,8 @@ export const MUX_SUPPORT_URL = 'https://www.mux.com/sales-contact?form=sales&utm
 export const THEME_KEY = 'vjs-site-theme';
 export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
 export const BLOG_PAGE_SIZE = 10;
+export const VJS10_VERSION = htmlPackage.version;
+export const VJS10_HTML_CDN_BASE = `https://cdn.jsdelivr.net/npm/@videojs/html@${VJS10_VERSION}/cdn`;
 
 export function isPrereleaseSite(siteUrl: URL | undefined): boolean {
   return siteUrl?.origin === PRERELEASE_URL.origin;
@@ -60,6 +64,8 @@ export const VJS10_DEMO_LIVE: StreamingVideoSource = {
 
 export const VJS10_DEMO_BACKGROUND_VIDEO_MP4 =
   'https://stream.mux.com/601n4w1fq88NJiVpzvrQQeQfNnnjjfKMIN7dCGAEarTs/highest.mp4';
+export const VJS10_DEMO_BACKGROUND_VIDEO_POSTER =
+  'https://image.mux.com/601n4w1fq88NJiVpzvrQQeQfNnnjjfKMIN7dCGAEarTs/thumbnail.webp';
 export const VJS10_DEMO_POSTER = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/thumbnail.jpg`;
 export const VJS10_DEMO_STORYBOARD = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/storyboard.jpg`;
 

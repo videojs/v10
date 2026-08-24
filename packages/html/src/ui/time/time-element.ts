@@ -10,9 +10,9 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class TimeElement extends MediaElement {
+export class TimeElement extends UIElement {
   static readonly tagName = 'media-time';
 
   static override properties = {

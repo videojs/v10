@@ -4,7 +4,7 @@ import type { PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 /** What an element composes: whatever fills a slot, or the element's own children. */
 function composedChildren(element: Element): Element[] {
@@ -69,7 +69,7 @@ type ImageLoadState = 'pending' | 'loaded' | 'error';
  * `<media-poster><img alt=""></media-poster>`. Inside a skin, an
  * `<img slot="poster">` of yours replaces the one the skin carries.
  */
-export class PosterElement extends MediaElement {
+export class PosterElement extends UIElement {
   static readonly tagName = 'media-poster';
 
   readonly #core = new PosterCore();

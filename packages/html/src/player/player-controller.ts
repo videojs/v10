@@ -17,7 +17,7 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
  * @example
  * ```ts
  * // Store access (no subscription)
- * class Controls extends MediaElement {
+ * class Controls extends UIElement {
  *   #player = new PlayerController(this, playerContext);
  *
  *   handleClick() {
@@ -26,7 +26,7 @@ export type PlayerControllerHost = ReactiveControllerHost & HTMLElement;
  * }
  *
  * // Selector-based subscription
- * class PlayButton extends MediaElement {
+ * class PlayButton extends UIElement {
  *   #playback = new PlayerController(this, playerContext, selectPlayback);
  * }
  * ```

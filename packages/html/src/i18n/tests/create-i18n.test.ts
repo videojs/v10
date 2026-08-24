@@ -382,6 +382,40 @@ describe('createI18n (HTML)', () => {
     });
   });
 
+  it('keeps regional registry overrides above lazy parent packs and refreshes them after mount', async () => {
+    registerI18n('de-DE', { 'buttons.play': 'CustomPlay' });
+    const { ProviderMixin, TextMixin } = createI18n({
+      loader: async (tag) =>
+        tag === 'de' ? { 'buttons.play': 'BuiltinPlay', 'buttons.pause': 'BuiltinPause' } : undefined,
+    });
+    class RegionalProvider extends ProviderMixin(ReactiveElement) {}
+    class RegionalText extends TextMixin(ReactiveElement) {}
+    customElements.define('i18n-regional-provider', RegionalProvider);
+    customElements.define('i18n-regional-text', RegionalText);
+
+    const provider = new RegionalProvider();
+    provider.lang = 'de-DE';
+    const play = new RegionalText();
+    play.setAttribute('token', 'buttons.play');
+    play.textContent = 'Play';
+    const pause = new RegionalText();
+    pause.setAttribute('token', 'buttons.pause');
+    pause.textContent = 'Pause';
+    provider.append(play, pause);
+    document.body.appendChild(provider);
+
+    await vi.waitFor(() => {
+      expect(play.textContent).toBe('CustomPlay');
+      expect(pause.textContent).toBe('BuiltinPause');
+    });
+
+    registerI18n('de-DE', { 'buttons.pause': 'CustomPause' });
+
+    await vi.waitFor(() => {
+      expect(pause.textContent).toBe('CustomPause');
+    });
+  });
+
   it('keeps media-text fallback English without a provider when the registry changes', async () => {
     const text = new MediaTextElement();
     text.textContent = 'Play';

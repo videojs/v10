@@ -3,8 +3,8 @@
 // ejected (light DOM) player layout for live HLS / DASH streams.
 
 import { I18nProviderElement } from '../../i18n/provider-element';
-import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
+import { ContainerElement } from '../../ui/container/container-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
@@ -21,7 +21,7 @@ import { LiveAudioPlayerElement } from './player';
 // ── Registration (providers / parents first) ────────────────────────────
 
 safeDefine(LiveAudioPlayerElement);
-safeDefine(MediaContainerElement);
+safeDefine(ContainerElement);
 safeDefine(I18nProviderElement);
 
 // Compound groups.

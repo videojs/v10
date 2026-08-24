@@ -6,9 +6,9 @@ import { ContextConsumer } from '@videojs/element/context';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { containerContext, playerContext } from '../../player/context';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class StatusAnnouncerElement extends MediaElement {
+export class StatusAnnouncerElement extends UIElement {
   static readonly tagName = 'media-status-announcer';
 
   static override properties = {

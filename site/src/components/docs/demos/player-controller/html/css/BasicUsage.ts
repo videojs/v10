@@ -2,24 +2,24 @@ import {
   applyElementProps,
   createButton,
   createPlayer,
-  MediaElement,
   PlayerController,
   selectPlayback,
   selectTime,
   selectVolume,
+  UIElement,
 } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
-import '@videojs/html/media/container';
+import '@videojs/html/ui/container';
 
 const { ProviderMixin, context } = createPlayer({
   features: videoFeatures,
 });
 
-class DemoPlayer extends ProviderMixin(MediaElement) {
+class DemoPlayer extends ProviderMixin(UIElement) {
   static readonly tagName = 'demo-ctrl-player';
 }
 
-class PlayerActions extends MediaElement {
+class PlayerActions extends UIElement {
   static readonly tagName = 'demo-ctrl-actions';
 
   readonly #player = new PlayerController(this, context);
@@ -52,7 +52,7 @@ class PlayerActions extends MediaElement {
   }
 }
 
-class PlayerState extends MediaElement {
+class PlayerState extends UIElement {
   static readonly tagName = 'demo-ctrl-state';
 
   readonly #playback = new PlayerController(this, context, selectPlayback);

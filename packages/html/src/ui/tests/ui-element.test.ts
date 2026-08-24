@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 let tagCounter = 0;
 
@@ -18,10 +18,10 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('MediaElement', () => {
+describe('UIElement', () => {
   it('extends DestroyMixin(ReactiveElement)', () => {
-    const el = createElement(MediaElement);
-    expect(el).toBeInstanceOf(MediaElement);
+    const el = createElement(UIElement);
+    expect(el).toBeInstanceOf(UIElement);
     expect(el.destroyed).toBe(false);
   });
 });

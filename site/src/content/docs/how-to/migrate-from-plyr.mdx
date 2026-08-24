@@ -60,7 +60,7 @@ The closest Video.js skin to the Plyr skin is the Minimal skin, so we'll use tha
 The easiest path is the CDN:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video-minimal.js"></script>
 
 <video-player>
   <video-minimal-skin>
@@ -112,8 +112,8 @@ interface AppVideoPlayerProps {
 
 export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
   return (
-    <VideoPlayer>
-      <MinimalVideoSkin poster={`${origin}/poster.jpg`}>
+    <VideoPlayer poster={`${origin}/poster.jpg`}>
+      <MinimalVideoSkin className="app-video-player">
         <Video src={`${origin}/video.mp4`} playsInline>
           <track kind="captions" label="English" src={`${origin}/captions/en.vtt`} srclang="en" default />
           <track kind="metadata" label="thumbnails" src={`${origin}/storyboard.vtt`} default />
@@ -127,7 +127,7 @@ export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
 ### Notes
 
 - `@videojs/react/video` is a <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together. `VideoPlayer` is the piece that owns the state, built from the standard set of <DocsLink slug="concepts/features">features</DocsLink> for video.
-- The poster is a prop on the skin rather than a `poster` attribute on the media, which gives the skin control over how it appears. That's much like Plyr's `data-poster`.
+- The poster URL is metadata on `VideoPlayer`. The skin reads that metadata and controls how the poster appears. To replace the rendered image, pass `renderPoster` to the skin.
 - This example assumes all your files for a given asset live in the same path, using consistent filenames. This will almost certainly need adjusting for your implementation.
 - If `origin` points somewhere other than your page's origin, add `crossOrigin="anonymous"` to `<Video>` and serve those files with CORS headers. A cross-origin thumbnail track only loads when the media element is CORS-enabled. See <DocsLink slug="reference/thumbnail">Thumbnail</DocsLink>.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
@@ -147,7 +147,7 @@ If you're using HLS or DASH to stream your media, you're in luck; we have prebui
 Replace `<video>` with `<hls-video>`. If you're using the CDN, add an additional script:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/hls-video.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/hls-video.js"></script>
 ```
 
 Or add an additional import:
@@ -179,7 +179,7 @@ Very similar to HLS in that we have a drop-in component.
 Replace `<video>` with `<dash-video>`. If you're using the CDN, add an additional script:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/dash-video.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/media/dash-video.js"></script>
 ```
 
 Or add an additional import:
@@ -284,7 +284,7 @@ For CDN users:
 
 ```html
 <script type="module">
-  import { registerI18n } from 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn/i18n.js';
+  import { registerI18n } from '{{VJS10_HTML_CDN_BASE}}/i18n.js';
 
   registerI18n('en', {
     buttons: {
@@ -297,7 +297,7 @@ For CDN users:
   });
 </script>
 
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video-minimal.js"></script>
 
 <video-player>
   <video-minimal-skin>
@@ -358,7 +358,7 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 | `controls` | The <DocsLink slug="concepts/skins">skins</DocsLink> include all the common controls, laid out in a familiar way that users would expect. If you want to customize the skin beyond basic colors, you can [eject the skin](#ejecting) and change layout, styles, or icons. |
 | `settings` | Included automatically in the skins when quality, speed, audio tracks, or captions are available. |
 | `autoplay`, `muted`, `loop`, `playsinline`, `preload` | These are attributes on your media (e.g. `<video>`) component. |
-| `poster` / `data-poster` | The skin owns the poster, as shown in [Basic migration](#basic-migration) above. |
+| `poster` / `data-poster` | In HTML, slot an image into the skin. In React, set `poster` on `VideoPlayer`. See [Basic migration](#basic-migration). |
 | `ratio` | Set `aspect-ratio` in CSS on the skin component. |
 | `hideControls` | Preset skins auto-hide controls based on activity. The delay is currently not configurable. |
 | `clickToPlay` | Preset video skins include click and tap gestures. [Eject the skin](#ejecting) to remove or change them. |
@@ -374,6 +374,20 @@ Here's a matrix for configuration options in Plyr and how each maps to Video.js 
 | `storage` | Unsupported at this time. |
 | `i18n` | The most common languages are available by default but you can also provide custom translations, if required. See [Internationalization](#internationalization) above for more info. |
 | `ads` | Unsupported at this time. |
+
+## Customize the controls
+
+Plyr's `controls` option chooses which controls appear. Video.js skins come with their own control set and layout. Keep the skin when that UI fits your player. To remove, reorder, or restyle its controls, [eject the skin](#ejecting) and edit the copied implementation. Adding a child to a skin does not place it inside the control bar.
+
+If your app already has a custom control bar, build it from individual <DocsLink slug="concepts/ui-components">UI components</DocsLink>. Video.js handles the media action, accessible name, and state. You add the visible contents, layout, and CSS.
+
+<FrameworkCase frameworks={["html"]}>
+Individual HTML buttons include no text, icon, or finished styling. Add your own content, or import `@videojs/html/icons/element` and place a `<media-icon>` inside the button. Attach click handlers directly to controls you add, and keep playback event handlers on the `<video>` or `<audio>`. To change or listen to a button inside a ready-made skin, eject the skin first.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+Individual React buttons do not include visible content. Use their `render` props to add an icon or text and style the element you return. Eject a ready-made skin when you need to change its control set or layout.
+</FrameworkCase>
 
 ## Dynamic sources
 
@@ -397,12 +411,27 @@ Use the media element for standard playback operations:
 For custom UI, read and write through the Video.js player store.
 
 <FrameworkCase frameworks={["react"]}>
-Import the preset's <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook and call it directly or with a selector:
+Import the preset's <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook and call it from a descendant of `VideoPlayer`. The component that creates `VideoPlayer` cannot also consume its context, so put store access in a child component:
 
 ```tsx
-import { usePlayer } from '@videojs/react/video';
+import '@videojs/react/video/minimal-skin.css';
+import { MinimalVideoSkin, usePlayer, Video, VideoPlayer } from '@videojs/react/video';
 
-const currentTime = usePlayer((state) => state.currentTime);
+function CurrentTime() {
+  const currentTime = usePlayer((state) => state.currentTime);
+  return <output>{Math.round(currentTime)} seconds</output>;
+}
+
+export function AppVideoPlayer() {
+  return (
+    <VideoPlayer>
+      <MinimalVideoSkin>
+        <Video src="/video.mp4" playsInline />
+        <CurrentTime />
+      </MinimalVideoSkin>
+    </VideoPlayer>
+  );
+}
 ```
 </FrameworkCase>
 
@@ -427,12 +456,25 @@ Video.js v10 skins offer similar color customization via CSS custom properties. 
 .plyr {
   --plyr-color-main: rebeccapurple;
 }
+```
 
-/* Video.js */
+<FrameworkCase frameworks={["html"]}>
+```css
+/* Video.js HTML */
 video-player {
   --media-accent-color: rebeccapurple;
 }
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```css
+/* Video.js React: the className from the basic example */
+.app-video-player {
+  --media-accent-color: rebeccapurple;
+}
+```
+</FrameworkCase>
 
 `--media-accent-color` reaches the sliders, active buttons, and accent surfaces, so it's the closest match for Plyr's `--plyr-color-main`. Video.js picks a readable text color to sit on top of it; set `--media-accent-text-color` to choose that yourself. `--media-border-radius` and `--media-scale-unit` cover rounding and control sizing. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> for the full list.
 

@@ -2,7 +2,7 @@
 title: Container
 frameworkTitle:
   html: media-container
-description: The player's interaction surface — handles layout, fullscreen, media attachment, and user activity detection.
+description: The player's visual and interaction surface for layout, fullscreen, focus, and user activity.
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
@@ -55,10 +55,11 @@ const { Player } = createPlayer({ features: videoFeatures });
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-For most users, importing from `@videojs/html/video/player` registers both `<video-player>` and `<media-container>` with the standard video features:
+Register the standard player and skin entry points for a complete video player. The skin supplies `<media-container>` and the UI elements it uses:
 
 ```ts
 import '@videojs/html/video/player';
+import '@videojs/html/video/skin';
 ```
 
 ```html
@@ -69,27 +70,27 @@ import '@videojs/html/video/player';
 </video-player>
 ```
 
-For custom behavior, import the preconfigured `ContainerMixin` from the main HTML package:
+For custom behavior, extend the same `ContainerElement` used by the built-in player:
 
 ```ts title="my-player.ts"
-import { ContainerMixin, MediaElement } from '@videojs/html';
+import { ContainerElement } from '@videojs/html';
 
-class MyContainer extends ContainerMixin(MediaElement) {}
+class MyContainer extends ContainerElement {}
 customElements.define('my-container', MyContainer);
 ```
 
-<DocsLinkCard slug="reference/container-mixin">ContainerMixin reference</DocsLinkCard>
+Import `@videojs/html/ui/container` when you only need to register the standard `<media-container>` element.
 </FrameworkCase>
 
 ## What it does
 
-### Layout & fullscreen
+### Layout and fullscreen
 
-The container is the visual box around your media and controls. Sizing, aspect ratio, and visual boundaries all go here — on `Container`, not `Player`.
+The container is the visual box around your media and controls. Put sizing, aspect ratio, positioning, and visual boundaries here — on `Container`, not `Player`. Place overlays inside it, use it as their positioning context, and measure it when your app needs the rendered player size.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Container style={{ width: 640, aspectRatio: '16/9' }}>
+<Container style={{ position: 'relative', width: 640, aspectRatio: '16/9' }}>
   <video src="video.mp4" />
   <Controls.Root>
     {/* ... */}
@@ -98,8 +99,17 @@ The container is the visual box around your media and controls. Sizing, aspect r
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
+```css
+.player-surface {
+  position: relative;
+  display: block;
+  width: 640px;
+  aspect-ratio: 16 / 9;
+}
+```
+
 ```html
-<media-container style="width: 640px; aspect-ratio: 16/9;">
+<media-container class="player-surface">
   <video src="video.mp4"></video>
   <media-controls>...</media-controls>
 </media-container>
@@ -108,13 +118,20 @@ The container is the visual box around your media and controls. Sizing, aspect r
 
 When the user goes fullscreen, the **container** goes fullscreen — not the video element. This keeps controls and other UI visible on top of the video, since they're children of the container.
 
+<FrameworkCase frameworks={["html"]}>
+Custom video elements such as `<mux-video>` and `<hlsjs-video>` do not create their own layout boxes: their inner `<video>` fills the parent. Size and measure `<media-container>`, not `<mux-video>` or `<hlsjs-video>`. Native `<video>` and `<audio>` elements still render their own boxes.
+</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+React media components such as `MuxVideo` render a native media element, so the media itself has a box. The container remains the shared layout and fullscreen target for the media and its overlays.
+</FrameworkCase>
+
 ### Media attachment
 
 <FrameworkCase frameworks={["react"]}>
 Media discovery is handled by `Player`, not `Container`. When a media component like `<Video>` registers itself via context, `Player` wires it to the store and all of the player's features.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-Media discovery is handled by the provider, not the container. Custom media elements like `<hlsjs-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are picked up automatically via a `querySelector` fallback. No `slot="media"` attribute is needed.
+Media discovery is handled by the player provider, not the container. Custom media elements like `<hlsjs-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are tracked automatically, including when they are added, removed, or replaced after connection. No `slot="media"` attribute is needed.
 </FrameworkCase>
 
 ### Interaction surface
@@ -130,17 +147,21 @@ The container is where user intent enters the player. It listens for physical in
 A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI controls. When you use a packaged skin, the container is built in — you don't need to add one yourself.
 
 <FrameworkCase frameworks={["react"]}>
+Style `VideoSkin` for the player's outer size and aspect ratio. Its `skin.css` import makes the built-in container fill that space and positions the media, controls, poster, and overlays.
+
+If you omit `VideoSkin` to build custom UI, render `Container` yourself and supply its size and positioning styles:
+
 ```tsx
 {/* Packaged skin — container is inside VideoSkin */}
 <Player>
-  <VideoSkin>
+  <VideoSkin style={{ width: '100%', aspectRatio: '16/9' }}>
     <Video src="video.mp4" />
   </VideoSkin>
 </Player>
 
 {/* Custom UI — you use Container directly */}
 <Player>
-  <Container>
+  <Container style={{ position: 'relative', width: '100%', aspectRatio: '16/9' }}>
     <video src="video.mp4" />
     <PlayButton />
   </Container>
@@ -148,21 +169,34 @@ A <DocsLink slug="concepts/skins">skin</DocsLink> is a container plus UI control
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
+Style `<video-skin>` for the player's outer size and aspect ratio. Importing the skin registers the styles that make the built-in container fill that space and position the media, controls, poster, and overlays.
+
+If you omit `<video-skin>` to build custom UI, render `<media-container>` yourself and supply its display, size, and positioning styles:
+
 ```html
 <!-- Packaged skin — container is inside video-skin -->
 <video-player>
-  <video-skin>
+  <video-skin class="player-surface">
     <video src="video.mp4"></video>
   </video-skin>
 </video-player>
 
 <!-- Custom UI — you use media-container directly -->
 <video-player>
-  <media-container>
+  <media-container class="player-surface">
     <video src="video.mp4"></video>
     <media-play-button></media-play-button>
   </media-container>
 </video-player>
+```
+
+```css
+.player-surface {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
 ```
 </FrameworkCase>
 

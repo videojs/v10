@@ -161,6 +161,10 @@ export default defineConfig({
     include: ['react', 'react-dom'],
     exclude: ['@videojs/core', '@videojs/html', '@videojs/react', '@videojs/spf', '@videojs/store', '@videojs/utils'],
   },
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
   build: {
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,

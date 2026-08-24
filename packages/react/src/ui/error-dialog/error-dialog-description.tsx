@@ -10,6 +10,7 @@ import { useErrorDialogContext } from './context';
 
 export interface ErrorDialogDescriptionProps extends UIComponentProps<'p', AlertDialogCore.State> {}
 
+/** Renders the localized playback error message, or authored children when provided. */
 export const ErrorDialogDescription = forwardRef<HTMLParagraphElement, ErrorDialogDescriptionProps>(
   function ErrorDialogDescription({ render, className, style, children, ...elementProps }, forwardedRef) {
     const t = useTranslator();

@@ -169,8 +169,8 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
         }
         const registryLayer = getI18nTranslations(locale);
         const translations: FlatTranslations = {
-          ...registryLayer,
           ...this.#lazyLayer,
+          ...registryLayer,
         };
         const translator = createTranslator(translations, locale);
         this.#i18nValue = { translator, locale };

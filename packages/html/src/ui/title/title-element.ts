@@ -4,7 +4,7 @@ import type { PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
 /**
  * Displays the resolved content title.
@@ -12,7 +12,7 @@ import { MediaElement } from '../media-element';
  * The element owns its text content. Set the title through the player's
  * `content-title` attribute rather than by writing children.
  */
-export class TitleElement extends MediaElement {
+export class TitleElement extends UIElement {
   static readonly tagName = 'media-title';
 
   readonly #core = new TitleCore();
