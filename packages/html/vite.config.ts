@@ -148,9 +148,9 @@ const cdnMediaEntries = readdirSync(mediaDirPath, { withFileTypes: true })
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
-const cdnLocaleEntries = globSync('src/cdn/locales/*.ts', { cwd: packageDir }).map((file) => ({
-  src: file,
-  name: `locales/${basename(file, '.ts')}`,
+const cdnLocaleEntries = localeTags.map((tag) => ({
+  src: `src/cdn/locales/${tag}.ts`,
+  name: `locales/${tag}`,
 }));
 
 /**
@@ -248,17 +248,18 @@ export default defineConfig({
       build: {
         command: 'vp pack --filter package',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        // CDN locale sources are generated and consumed only by build:cdn.
-        // Config discovery sees their directory for the CDN Pack entries, but
-        // they must not invalidate the independent npm package build.
-        input: [...cachedTaskInputs, '!src/cdn/locales', '!src/cdn/locales/**'],
+        // CDN sources are consumed only by build:cdn. Pack config discovery
+        // observes their parent directory even when filtering to `package`, so
+        // keep the independent npm package build free of that generated tree.
+        input: [...cachedTaskInputs, '!src/cdn/', '!src/cdn/**'],
       },
       'build:cdn': {
         command: 'node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn',
         dependsOn: ['build'],
         // Both related Pack configs share this output directory, so Pack may
         // inspect files emitted by the other config. They remain outputs only.
-        input: [...cachedTaskInputs, '!cdn', '!cdn/**'],
+        input: [...cachedTaskInputs, '!src/cdn/locales/', '!src/cdn/locales/**', '!cdn/', '!cdn/**'],
+        output: ['src/cdn/locales/**', 'cdn/**'],
       },
     },
   },
