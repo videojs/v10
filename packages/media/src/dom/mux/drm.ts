@@ -11,8 +11,8 @@ import { createMuxQuery, MUX_VIDEO_DOMAIN, type MuxJWT, type MuxSourceBase } fro
  * Returns `undefined` when no license token is present, or when the token is not scoped to DRM — an unsigned license
  * request is always rejected, so there is nothing useful to configure.
  *
- * Separate from `./source` because it is the one part of the Mux source an engine that licenses differently — or, like
- * SPF today, doesn't license at all — has nothing to do with.
+ * Separate from `./source` because it is the one part of the Mux source an engine that licenses differently has
+ * nothing to do with.
  *
  * @internal
  */
