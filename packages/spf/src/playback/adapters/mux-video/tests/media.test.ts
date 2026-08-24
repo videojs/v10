@@ -6,7 +6,41 @@
  */
 import { describe, expect, it, vi } from 'vite-plus/test';
 
+import { resolveDrmUrl } from '../../../../media/drm';
+import { createHlsVideoEngine } from '../../../engines/hls/engine';
 import { MuxVideoMedia } from '../media';
+
+// Real engine, spied construction — the DRM config a Media hands over is not
+// readable back off a `Composition`, and these assertions are about what it
+// passes rather than what the engine then does with it.
+vi.mock('../../../engines/hls/engine', async () => {
+  const actual = await vi.importActual<typeof import('../../../engines/hls/engine')>('../../../engines/hls/engine');
+  return { ...actual, createHlsVideoEngine: vi.fn(actual.createHlsVideoEngine) };
+});
+
+// Header `{"alg":"HS256"}`, body sets `aud`, empty signature — unpadded
+// base64url, so it survives a query string untouched.
+function fakeJwt(payload: Record<string, unknown>): string {
+  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
+}
+
+/**
+ * Resolve one key system's license server off the `drm` config the most recently
+ * constructed Media handed the engine — which is what the engine itself would do
+ * when the CDM asks.
+ */
+function licenseUrl(keySystem: string): string | undefined {
+  const calls = vi.mocked(createHlsVideoEngine).mock.calls;
+  const drm = calls[calls.length - 1]![0]!.drm!;
+  return resolveDrmUrl(drm[keySystem]?.licenseUrl);
+}
+
+function serverCertificateUrl(keySystem: string): string | undefined {
+  const calls = vi.mocked(createHlsVideoEngine).mock.calls;
+  const drm = calls[calls.length - 1]![0]!.drm!;
+  return resolveDrmUrl(drm[keySystem]?.serverCertificateUrl);
+}
 
 describe('MuxVideoMedia', () => {
   it('defaults source to null', () => {
@@ -222,5 +256,60 @@ describe('MuxVideoMedia', () => {
     // import path, since this one Media is reached through three packages.
     expect(MuxVideoMedia.alternativeMediaSuggestion).toContain('hls-js');
     expect(MuxVideoMedia.alternativeMediaSuggestion).not.toContain('@videojs/');
+  });
+});
+
+describe('MuxVideoMedia DRM', () => {
+  const token = fakeJwt({ aud: 'd' });
+
+  it('derives Mux license servers from a drm token', () => {
+    const media = new MuxVideoMedia();
+    media.source = { playbackId: 'abc123', drm: { token } };
+
+    expect(licenseUrl('com.widevine.alpha')).toBe(`https://license.mux.com/license/widevine/abc123?token=${token}`);
+    expect(serverCertificateUrl('com.apple.fps')).toBe(
+      `https://license.mux.com/appcert/fairplay/abc123?token=${token}`
+    );
+  });
+
+  it('resolves no license server for a source carrying no DRM', () => {
+    const media = new MuxVideoMedia();
+    media.source = { playbackId: 'abc123' };
+
+    // What makes an encrypted rendition prune rather than negotiate: every key
+    // system is named, none resolves.
+    expect(licenseUrl('com.widevine.alpha')).toBeUndefined();
+    expect(licenseUrl('com.apple.fps')).toBeUndefined();
+    expect(licenseUrl('com.microsoft.playready')).toBeUndefined();
+  });
+
+  it('prefers a license server the source names outright over the derived one', () => {
+    const media = new MuxVideoMedia();
+    media.source = {
+      playbackId: 'abc123',
+      drm: { token, 'com.widevine.alpha': { licenseUrl: 'https://license.example.com/widevine' } },
+    };
+
+    expect(licenseUrl('com.widevine.alpha')).toBe('https://license.example.com/widevine');
+    // Systems it doesn't name still come from the token.
+    expect(licenseUrl('com.microsoft.playready')).toBe(
+      `https://license.mux.com/license/playready/abc123?token=${token}`
+    );
+  });
+
+  it('follows the source without rebuilding the engine', () => {
+    const media = new MuxVideoMedia();
+    const before = vi.mocked(createHlsVideoEngine).mock.calls.length;
+
+    media.source = { playbackId: 'abc123', drm: { token } };
+    expect(licenseUrl('com.widevine.alpha')).toBe(`https://license.mux.com/license/widevine/abc123?token=${token}`);
+
+    media.source = { playbackId: 'def456', drm: { token } };
+    expect(licenseUrl('com.widevine.alpha')).toBe(`https://license.mux.com/license/widevine/def456?token=${token}`);
+
+    media.source = null;
+    expect(licenseUrl('com.widevine.alpha')).toBeUndefined();
+
+    expect(vi.mocked(createHlsVideoEngine).mock.calls.length).toBe(before);
   });
 });

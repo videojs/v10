@@ -1,4 +1,5 @@
 import {
+  createMuxDrmSystems,
   createMuxPosterURL,
   createMuxStoryboardURL,
   createMuxVideoURL,
@@ -8,6 +9,10 @@ import {
 } from '@videojs/media/dom/mux/source';
 import { shallowEqual } from '@videojs/utils/object';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
+import type { DrmSystemsConfig } from '../../../media/drm';
+
+/** Key-system ids Mux's license-server derivation is keyed by. */
+type MuxKeySystem = keyof NonNullable<ReturnType<typeof createMuxDrmSystems>>;
 
 export interface MuxMediaProps {
   src: string;
@@ -41,8 +46,8 @@ export interface MuxMediaAPI extends MuxMediaProps {
 export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class MuxMediaImpl extends BaseClass {
     /**
-     * Named on the error copy when this engine can't play a source: the hls.js-backed Mux Media plays the MPEG-TS and
-     * DRM-protected sources that SPF does not, and it backs both `<mux-video>` and `<mux-audio>`.
+     * Named on the error copy when this engine can't play a source: the hls.js-backed Mux Media plays the MPEG-TS
+     * sources that SPF does not, and it backs both `<mux-video>` and `<mux-audio>`.
      *
      * Names the flavor rather than an import path, because one Media is reached through three of them —
      * `@videojs/html`, `@videojs/react`, and this package — and each has a different counterpart. The flavor suffix is
@@ -54,6 +59,32 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
 
     #source: MuxSourceBase | null = muxMediaDefaultProps.source;
     #contentData: MuxContentData = {};
+    /** Memoized license servers, and the source they were derived from. */
+    #drmSystems: ReturnType<typeof createMuxDrmSystems>;
+    #drmSystemsSource: MuxSourceBase | null = muxMediaDefaultProps.source;
+
+    constructor(...args: any[]) {
+      const [options] = args;
+      // License servers are per-source, so the engine is handed one resolver per
+      // key system instead of URLs it would have to be rebuilt to change. Mux
+      // serves all three from a playback ID, so naming them costs nothing when a
+      // source licenses none of them — each resolver answers `undefined` and its
+      // renditions prune exactly as an unconfigured system's do.
+      //
+      // Built before `super()`, which is why they close over `this` rather than
+      // reading it: nothing resolves a URL during engine construction, since the
+      // first read is a capability probe and no presentation is set yet.
+      const drm: DrmSystemsConfig = {
+        'com.apple.fps': {
+          licenseUrl: () => this.#drmSystem('com.apple.fps')?.licenseUrl,
+          serverCertificateUrl: () => this.#drmSystem('com.apple.fps')?.serverCertificateUrl,
+        },
+        'com.widevine.alpha': { licenseUrl: () => this.#drmSystem('com.widevine.alpha')?.licenseUrl },
+        'com.microsoft.playready': { licenseUrl: () => this.#drmSystem('com.microsoft.playready')?.licenseUrl },
+      };
+
+      super({ ...options, config: { ...options?.config, drm } });
+    }
 
     /**
      * Media source URL. Setting a Mux stream URL (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the
@@ -113,6 +144,22 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
      */
     get contentData(): MuxContentData {
       return this.#contentData;
+    }
+
+    /**
+     * One key system's license server for the current source: Mux's, derived
+     * from a `drm.token`, under anything `source.drm` names outright.
+     *
+     * Memoized on source identity because this runs inside rendition pruning,
+     * which asks per track on every selection pass.
+     */
+    #drmSystem(keySystem: MuxKeySystem) {
+      if (this.#drmSystemsSource !== this.#source) {
+        const { token: _token, ...named } = this.#source?.drm ?? {};
+        this.#drmSystems = { ...createMuxDrmSystems(this.#source), ...named };
+        this.#drmSystemsSource = this.#source;
+      }
+      return this.#drmSystems?.[keySystem];
     }
 
     /** Rebuild the derived bag, reporting whether anything about it changed. */
