@@ -51,7 +51,7 @@ function sha256(path: string): string {
 
 async function main() {
   if (!existsSync(CDN_DIR)) {
-    log.error(`CDN build not found at ${CDN_DIR}. Run \`pnpm -F @videojs/html build:cdn\` first.`);
+    log.error(`CDN build not found at ${CDN_DIR}. Run \`pnpm build:cdn\` from the workspace root first.`);
     process.exit(1);
   }
 

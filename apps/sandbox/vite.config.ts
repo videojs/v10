@@ -145,6 +145,18 @@ function serveAppShell(): Plugin {
 }
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: 'tsx scripts/setup.ts && vp build',
+        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }, '@videojs/html#build:cdn'],
+        // The app-shell plugin creates this file for the build and removes it
+        // afterwards. It is a temporary path, not a cache input or output.
+        input: [{ auto: true }, '!src/index.html'],
+        output: [{ auto: true }, '!src/index.html'],
+      },
+    },
+  },
   root: 'src',
   appType: 'mpa',
   plugins: [sandboxTemplateSyncPlugin(), cdnSandboxI18nPlugin(), tailwindcss(), react(), serveAppShell()],

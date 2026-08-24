@@ -49,6 +49,7 @@ packages/core/src/core/ui/schema.generated.ts
 packages/html/vjsc/entries.generated.ts
 packages/icons/vjsc/schema.generated.ts
 packages/react/vjsc/entries.generated.ts
+packages/skins/vjsc/registry/
 packages/html/src/__generated__/skins/
 packages/react/src/__generated__/skins/
 

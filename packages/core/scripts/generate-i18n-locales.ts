@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readdirSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -16,6 +16,7 @@ const htmlLocalesDir = resolve(coreRoot, '../html/src/i18n/locales');
 const reactLocalesDir = resolve(coreRoot, '../react/src/i18n/locales');
 const textDir = resolve(coreRoot, 'src/core/i18n/text');
 const generatedFiles = new Set<string>();
+const changedFiles = new Set<string>();
 
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)] as const;
 const PLATFORM_LOCALE_TAGS = ['en', ...localeTags] as const;
@@ -38,9 +39,9 @@ function generateLoadLocaleTs(): string {
     .map((tag) => `  ${propertyKey(tag.trim().replaceAll('_', '-').toLowerCase())}: () => import('./locales/${tag}'),`)
     .join('\n');
 
-  return `${GENERATED_HEADER}import { flattenTranslations } from './utils';
+  return `${GENERATED_HEADER}import type { FlatTranslations, Translations } from './params';
 import { findLocaleKeys, getCanonicalLocaleKey, hasRegisteredLocale } from './registry';
-import type { FlatTranslations, Translations } from './params';
+import { flattenTranslations } from './utils';
 
 const loaders = {
 ${entries}
@@ -129,7 +130,6 @@ async function validateLocaleCompleteness(): Promise<void> {
 }
 
 function generateTextModules(): void {
-  rmSync(textDir, { recursive: true, force: true });
   mkdirSync(textDir, { recursive: true });
 
   const namespaces = new Map<string, [string, string][]>();
@@ -142,6 +142,11 @@ function generateTextModules(): void {
 
   for (const [namespace, entries] of namespaces) {
     writeGenerated(resolve(textDir, `${namespace}.ts`), generateTextModule(entries));
+  }
+
+  for (const file of readdirSync(textDir)) {
+    const path = resolve(textDir, file);
+    if (file.endsWith('.ts') && !generatedFiles.has(path)) unlinkSync(path);
   }
 }
 
@@ -164,7 +169,11 @@ for (const [tag, translations] of Object.entries(all)) {
 }
 
 function writeGenerated(path: string, content: string): void {
-  writeFileSync(path, content.endsWith('\n') ? content : `${content}\n`);
+  const next = content.endsWith('\n') ? content : `${content}\n`;
+  if (!existsSync(path) || readFileSync(path, 'utf8') !== next) {
+    writeFileSync(path, next);
+    changedFiles.add(path);
+  }
   generatedFiles.add(path);
 }
 
@@ -205,9 +214,11 @@ writeGenerated(resolve(coreRoot, 'src/core/i18n/load-locale.ts'), generateLoadLo
 generateTextModules();
 syncPlatformLocaleDir(htmlLocalesDir);
 syncPlatformLocaleDir(reactLocalesDir);
-execFileSync('pnpm', ['exec', 'vp', 'check', '--fix', ...generatedFiles], {
-  cwd: repoRoot,
-  stdio: 'inherit',
-});
+if (changedFiles.size > 0) {
+  execFileSync('pnpm', ['exec', 'vp', 'check', '--fix', ...changedFiles], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
+}
 
 console.log('[generate-i18n-locales] Updated locale packs, text descriptors, and platform re-exports');

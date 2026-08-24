@@ -29,7 +29,7 @@ Built-in locales live in `locales/`. The locale build generates lazy loaders, CD
 5. Run `pnpm -F @videojs/core test src/core/i18n` and add coverage for locale aliases or loader
    behavior when needed.
 
-6. Run `pnpm -F @videojs/html build:cdn` to verify the generated CDN locale chunk.
+6. Run `pnpm build:cdn` from the workspace root to verify the generated CDN locale chunk.
 
 Do not copy Video.js v8 locale JSON blindly. V10 uses semantic keys and different ARIA-label
 semantics.

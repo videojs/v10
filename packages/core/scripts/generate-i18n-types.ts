@@ -1,4 +1,4 @@
-import { writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,5 +31,6 @@ ${params}
 `;
 }
 
-writeFileSync(output, generate());
+const generated = generate();
+if (!existsSync(output) || readFileSync(output, 'utf8') !== generated) writeFileSync(output, generated);
 console.log('[generate-i18n-types] Updated generated translation types');

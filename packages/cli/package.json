@@ -19,7 +19,6 @@
   },
   "scripts": {
     "copy-docs": "node --import tsx ../../site/scripts/copy-package-docs.ts cli",
-    "build": "pnpm run copy-docs && vp pack",
     "dev": "vp pack --watch",
     "test": "vp test run",
     "clean": "rimraf dist docs"

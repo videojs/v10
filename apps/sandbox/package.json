@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "tsx scripts/setup.ts && vp dev --host",
-    "build": "tsx scripts/setup.ts && vp build",
     "preview": "vp preview",
     "reset": "tsx scripts/reset.ts",
     "sync": "tsx scripts/sync.ts"

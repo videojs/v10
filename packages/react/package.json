@@ -139,7 +139,6 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vp pack",
     "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm build:watch",
     "test": "vp test run",

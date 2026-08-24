@@ -21,6 +21,8 @@ import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 type CdnBuildMode = 'dev' | 'prod';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
+const srcDir = new URL('./src', import.meta.url).pathname;
+const srcAlias = { '@': srcDir };
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
 const defineEntries = Object.fromEntries(
@@ -79,9 +81,7 @@ const createPackagePackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   deps: {
     alwaysBundle: [/^@videojs\/icons/, /^@videojs\/skins/],
   },
-  alias: {
-    '@': new URL('./src', import.meta.url).pathname,
-  },
+  alias: srcAlias,
   plugins: [
     copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
     inlineCssPlugin({ skinsDir, minify: !isDevBuildMode(mode) }),
@@ -214,9 +214,7 @@ for (const mode of cdnBuildModes) {
       ],
     },
     outDir: cdnOutDir,
-    alias: {
-      '@': new URL('./src', import.meta.url).pathname,
-    },
+    alias: srcAlias,
     define: {
       __DEV__: isProd ? 'false' : 'true',
     },
@@ -242,6 +240,21 @@ for (const mode of cdnBuildModes) {
 }
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: 'vp pack --filter package',
+        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+      },
+      'build:cdn': {
+        command: 'node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn',
+        dependsOn: ['build'],
+        // Both related Pack configs share this output directory, so Pack may
+        // inspect files emitted by the other config. They remain outputs only.
+        input: [{ auto: true }, '!cdn/**'],
+      },
+    },
+  },
   define: {
     __DEV__: 'true',
   },

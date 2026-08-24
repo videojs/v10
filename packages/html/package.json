@@ -176,8 +176,6 @@
     "access": "public"
   },
   "scripts": {
-    "build": "vp pack --filter package",
-    "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn",
     "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts",
     "build:archive": "node --import tsx ./scripts/build-dist-archive.ts",
     "build:watch": "vp pack --filter package --watch ./src --no-clean",

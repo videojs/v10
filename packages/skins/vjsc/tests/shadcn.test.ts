@@ -2,7 +2,7 @@ import { build } from 'vite-plus/pack';
 import { describe, expect, it } from 'vite-plus/test';
 import type { ShadcnRegistry } from 'vjsc/shadcn';
 
-import { shadcnPackConfig } from '../../vite.config';
+import { shadcnPackConfig } from '../../shadcn/vite.config';
 
 describe('Skins Shadcn registry', () => {
   it('emits editable React and Tailwind JSON without a synthetic runtime chunk', async () => {
