@@ -116,7 +116,7 @@ Media components are the components that actually display your media. They're es
 Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (background video).
 
 <FrameworkCase frameworks={["html"]}>
-Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`, while custom media elements like `<hlsjs-video>` register themselves.
+Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`. Custom media elements like `<hlsjs-video>` register themselves after you import their registration entry point.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -150,37 +150,13 @@ The default presets are `@videojs/react/video` and `@videojs/react/audio`, cover
 The default presets are `@videojs/html/video` and `@videojs/html/audio`, covering the baseline set of controls you'd expect from the HTML `<video>` and `<audio>` tags. 
 </FrameworkCase>
 
-Beyond the defaults, presets target more specific use cases. For example, `/background` includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power it:
+Beyond the defaults, presets target more specific use cases. The `/background` preset combines a media element with autoplay, mute, and loop built in, a skin with no controls, and only the features needed to power it.
 
 <FrameworkCase frameworks={["react"]}>
-```tsx
-import { BackgroundVideo, BackgroundVideoPlayer, BackgroundVideoSkin } from '@videojs/react/background';
-
-function Hero() {
-  return (
-    <BackgroundVideoPlayer>
-      <BackgroundVideoSkin>
-        <BackgroundVideo src="hero.mp4" />
-      </BackgroundVideoSkin>
-    </BackgroundVideoPlayer>
-  );
-}
-```
+You can use it from `@videojs/react/background`.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-```html
-<script type="module">
-  import '@videojs/html/background/player';
-  import '@videojs/html/background/video';
-  import '@videojs/html/background/skin';
-</script>
-
-<background-video-player>
-  <background-video-skin>
-    <background-video src="hero.mp4"></background-video>
-  </background-video-skin>
-</background-video-player>
-```
+You can use it from the `@videojs/html/background/*` registration entry points.
 </FrameworkCase>
 
 <DocsLinkCard slug="concepts/presets">Learn more about presets</DocsLinkCard>

@@ -48,7 +48,7 @@ If for some reason you need a bit more control, you can use the `src` param with
 />
 ```
 
-MuxVideo fires a `sourcechange` event when the source actually changes. Setting the same values again, like a fresh object on a React re-render, doesn't fire it.
+MuxVideo ignores the same source object when it is assigned again. A new object fires `sourcechange` even when its values are equal, although an equivalent playback source does not reload.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -70,7 +70,7 @@ video.source = {
 };
 ```
 
-MuxVideo fires a `sourcechange` event when the source actually changes. Setting the same values again doesn't fire it.
+MuxVideo ignores the same source object when it is assigned again. A new object fires `sourcechange` even when its values are equal, although an equivalent playback source does not reload.
 </FrameworkCase>
 
 ## Posters and storyboards
@@ -167,24 +167,41 @@ MuxVideo plays Mux streams. It doesn't monitor them or cast them — <DocsLink s
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
+import { createPlayer } from '@videojs/react';
 import { GoogleCast } from '@videojs/react/media/google-cast';
 import { MuxData } from '@videojs/react/media/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
+import { videoFeatures } from '@videojs/react/video';
 
-<MuxVideo source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }} playsInline />
-<MuxData playerSoftwareName="mux-video" />
-<GoogleCast />
+const { Player } = createPlayer({ features: videoFeatures });
+
+export function MuxPlayer() {
+  return (
+    <Player>
+      <MuxVideo source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM' }} playsInline />
+      <MuxData playerSoftwareName="mux-video" />
+      <GoogleCast />
+    </Player>
+  );
+}
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<mux-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" playsinline></mux-video>
-<mux-data player-software-name="mux-video"></mux-data>
-<google-cast></google-cast>
-```
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/media/mux-video';
+  import '@videojs/html/media/mux-data';
+  import '@videojs/html/media/google-cast';
+</script>
 
-Register the elements by importing `@videojs/html/media/mux-data` and `@videojs/html/media/google-cast`.
+<video-player>
+  <mux-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" playsinline></mux-video>
+  <mux-data player-software-name="mux-video"></mux-data>
+  <google-cast></google-cast>
+</video-player>
+```
 </FrameworkCase>
 
 <DocsLinkCard slug="concepts/mux-data" description="Metadata, options, and configuration">Mux Data</DocsLinkCard>

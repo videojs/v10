@@ -25,13 +25,29 @@ import withPartsHtmlTs from "@/components/docs/demos/volume-slider/html/css/With
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  <VolumeSlider.Root />
+  <VolumeSlider.Root>
+    <VolumeSlider.Track>
+      <VolumeSlider.Fill />
+    </VolumeSlider.Track>
+    <VolumeSlider.Thumb />
+    <VolumeSlider.Preview>
+      <VolumeSlider.Value type="pointer" />
+    </VolumeSlider.Preview>
+  </VolumeSlider.Root>
   ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   ```html
-  <media-volume-slider></media-volume-slider>
+  <media-volume-slider>
+    <media-slider-track>
+      <media-slider-fill></media-slider-fill>
+    </media-slider-track>
+    <media-slider-thumb></media-slider-thumb>
+    <media-slider-preview>
+      <media-slider-value type="pointer"></media-slider-value>
+    </media-slider-preview>
+  </media-volume-slider>
   ```
 </FrameworkCase>
 

@@ -148,17 +148,21 @@ All keys are optional. Missing keys follow the <DocsLink slug="concepts/i18n">lo
 Load the player and a locale chunk. CDN locale modules call <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> on import:
 
 ```html
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
-<script type="module" src="{{VJS10_HTML_CDN_BASE}}/locales/es.js"></script>
-
+<!doctype html>
 <html lang="es">
-  <media-i18n>
-    <video-player>
-      <video-skin>
-        <video src="..." playsinline></video>
-      </video-skin>
-    </video-player>
-  </media-i18n>
+  <head>
+    <script type="module" src="{{VJS10_HTML_CDN_BASE}}/locales/es.js"></script>
+    <script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
+  </head>
+  <body>
+    <media-i18n>
+      <video-player>
+        <video-skin>
+          <video src="..." playsinline></video>
+        </video-skin>
+      </video-player>
+    </media-i18n>
+  </body>
 </html>
 ```
 
@@ -179,7 +183,7 @@ registerI18n('es', {
 });
 ```
 
-Load your module after the player script and before playback starts.
+Load your locale module before the player module so its strings are registered before the player upgrades.
 
 </FrameworkCase>
 

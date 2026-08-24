@@ -25,15 +25,19 @@ Video.js 10 builds directly on the web platform: custom elements, CSS custom pro
 
 ### Progressive enhancement
 
-When we use a platform feature that hasn't landed in all supported browsers yet, we provide a fallback. The player works either way; the experience may differ slightly in older browsers. For example, tooltips and popovers use CSS anchor positioning where available and fall back to absolute positioning where it isn't.
+When we use a platform feature that hasn't landed in all supported browsers yet, we provide a fallback. The player works either way; the experience may differ slightly in older browsers. For example, tooltips and popovers use CSS anchor positioning where available and fall back to JavaScript-computed positioning where it isn't.
 
 ## Rendering contexts
 
-### WebViews and PWAs
+### WebViews
 
-A [WebView](https://developer.mozilla.org/en-US/docs/Glossary/WebView) is a browser engine embedded inside a native app. WebViews on iOS (WKWebView) and Android (Android WebView) behave differently from the full browser; autoplay policies, fullscreen APIs, and hardware acceleration can vary. Progressive Web Apps (PWAs) installed via "Add to Homescreen" can exhibit similar quirks, since they also run in a limited browser context rather than a full browser tab.
+A [WebView](https://developer.mozilla.org/en-US/docs/Glossary/WebView) is a browser engine embedded inside a native app. WebViews on iOS (WKWebView) and Android (Android WebView) can behave differently from the full browser; autoplay policies, fullscreen APIs, and hardware acceleration can vary.
 
-Video.js 10 beta targets only standard browser environments. If you embed a player inside a native app or PWA, test thoroughly for your specific platform and runtime.
+Video.js 10 beta targets standard browser environments. If you embed a player inside a native app, test it on each platform and WebView version you support.
+
+### Progressive Web Apps
+
+Installed Progressive Web Apps (PWAs) use the browser engine, but their standalone display mode and platform policies can affect fullscreen, media sessions, and other browser integration. Test playback both in a browser tab and in the installed app.
 
 ### Smart TVs and set-top boxes
 

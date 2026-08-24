@@ -10,17 +10,17 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 
 <FrameworkCase frameworks={["react"]}>
-The `Container` is the player's physical surface. It defines the visual boundary, attaches the media element, and detects user interaction like activity and (eventually) gestures and keyboard input. It lives inside a <DocsLink slug="reference/player-provider">`Player`</DocsLink>.
+The `Container` is the player's physical surface. It defines the visual boundary, registers the fullscreen and activity target, and gives gesture and hotkey components a shared interaction surface. It lives inside a <DocsLink slug="reference/player-provider">`Player`</DocsLink>.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-The `<media-container>` is the player's physical surface. It defines the visual boundary, attaches the media element, and detects user interaction like activity and (eventually) gestures and keyboard input. It lives inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
+The `<media-container>` is the player's physical surface. It defines the visual boundary, registers the fullscreen and activity target, and gives gesture and hotkey elements a shared interaction surface. It lives inside a <DocsLink slug="reference/player-provider">`<video-player>`</DocsLink>.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Player>
   <Container> {/* [!code focus] */}
-    <video src="video.mp4" />
+    <Video src="video.mp4" />
     <Controls.Root>
       {/* ... */}
     </Controls.Root>
@@ -46,7 +46,7 @@ Import `Container` from the main React package. It connects to whichever `Player
 
 ```tsx
 import { Container, createPlayer } from '@videojs/react';
-import { videoFeatures } from '@videojs/react/video';
+import { Video, videoFeatures } from '@videojs/react/video';
 
 const { Player } = createPlayer({ features: videoFeatures });
 ```
@@ -55,11 +55,10 @@ const { Player } = createPlayer({ features: videoFeatures });
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Register the standard player and skin entry points for a complete video player. The skin supplies `<media-container>` and the UI elements it uses:
+Import the standard player entry point. It registers both `<video-player>` and `<media-container>`:
 
 ```ts
 import '@videojs/html/video/player';
-import '@videojs/html/video/skin';
 ```
 
 ```html
@@ -91,7 +90,7 @@ The container is the visual box around your media and controls. Put sizing, aspe
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <Container style={{ position: 'relative', width: 640, aspectRatio: '16/9' }}>
-  <video src="video.mp4" />
+  <Video src="video.mp4" />
   <Controls.Root>
     {/* ... */}
   </Controls.Root>
@@ -165,7 +164,7 @@ If you omit `<video-skin>` to build custom UI, render and style `<media-containe
 ```tsx
 <Player>
   <Container>
-    <video src="video.mp4" />
+    <Video src="video.mp4" />
     <Controls.Root>          {/* fullscreen, activity detection, gestures */}
       {/* ... */}
     </Controls.Root>

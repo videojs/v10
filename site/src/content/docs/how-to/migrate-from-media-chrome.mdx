@@ -316,12 +316,6 @@ Chapters themselves do work. Add a default `<track kind="chapters">` and the pac
 
 Packaged skins don't expose an autohide switch. Eject the closest skin and remove its hidden-control styles. That's safer than overriding internal selectors in a skin you don't own.
 
-To change the *delay* rather than disable it, note that the idle timer is a constant inside `controlsFeature`. Fork that feature, swap it into a custom feature list, and pass that list to `createPlayer`:
-
-```ts
-const features = videoFeatures.map((f) => (f.name === 'controls' ? myControlsFeature : f));
-```
-
 ### Breakpoints
 
 The skin root is an inline-size container named `media-root`, so write responsive styles with container queries instead of `breakpoints` attributes. This is exactly how the built-in skins adapt:

@@ -24,15 +24,19 @@ Pass `selectBuffer` to <DocsLink slug="reference/player-controller">`PlayerContr
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-```tsx title="BufferBar.tsx"
+```tsx title="BufferedRanges.tsx"
 import { selectBuffer, usePlayer } from '@videojs/react';
 
-function BufferBar() {
+function BufferedRanges() {
   const buffer = usePlayer(selectBuffer);
   if (!buffer) return null;
 
   return (
-    <div style={{ width: `${buffer.percentBuffered * 100}%` }} />
+    <ul>
+      {buffer.buffered.map(([start, end]) => (
+        <li key={`${start}-${end}`}>{start.toFixed(1)}–{end.toFixed(1)} seconds</li>
+      ))}
+    </ul>
   );
 }
 ```

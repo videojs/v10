@@ -17,7 +17,7 @@ If your component needs to react to player state or call a player action, wait u
   import { onMount } from 'svelte';
 
   let player: VideoPlayerElement;
-  let paused = $state(true);
+  let paused = true;
 
   onMount(() => {
     const sync = () => (paused = player.store.paused);

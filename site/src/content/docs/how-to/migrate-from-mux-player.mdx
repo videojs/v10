@@ -68,7 +68,7 @@ Here's a typical Mux Player embed. A playback ID, a title and viewer ID for anal
 ></mux-player>
 ```
 
-A <DocsLink slug="concepts/presets">preset</DocsLink> is a player, a skin, and a media element that already fit together. Everything else is its own import. From the CDN, that's one script for the video preset, one for the Mux media, and one for analytics:
+From the CDN, load the video <DocsLink slug="concepts/presets">preset</DocsLink>, the Mux media, and analytics:
 
 ```html
 <script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
@@ -128,7 +128,7 @@ export function MyPlayer() {
 npm install @videojs/react
 ```
 
-One new idea here. Instead of one component that does everything, you pick a <DocsLink slug="concepts/presets">preset</DocsLink> that matches what you're building. A preset is a player, a skin, and a media element that already fit together. `@videojs/react/video` is the general-purpose one, and it's what you want unless you're doing something unusual.
+Start with the general-purpose `@videojs/react/video` <DocsLink slug="concepts/presets">preset</DocsLink>, then add the Mux media and analytics components:
 
 ```tsx
 'use client';
@@ -567,6 +567,7 @@ import '@videojs/html/media/mux-video';
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
+import '@videojs/react/live-video/skin.css';
 import { LiveVideoPlayer, LiveVideoSkin } from '@videojs/react/live-video';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 
@@ -580,7 +581,7 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 
 You get `targetLiveWindow` and `liveEdgeStart` in player state, plus a live button that jumps to the live edge. The live preset doesn't include `streamType` state and doesn't force a source to be live. The Mux media detects the manifest: `targetLiveWindow` is `NaN` for an on-demand or unknown source, `0` for a sliding live window, and `Infinity` for a live event with playback history. See <DocsLink slug="reference/feature-live">the live feature</DocsLink>.
 
-The live composition is narrower than the video one on purpose: it leaves out quality, audio-track, and playback-rate state, none of which apply cleanly to a stream with no fixed duration. So a live skin's settings menu holds captions and nothing else. If you need one of the others on a live player, build your own player from a feature list rather than taking the preset's.
+The live composition is narrower than the video one on purpose: it leaves out quality, audio-track, and playback-rate state. A live skin's settings menu therefore holds captions and nothing else. If you need one of the omitted features on a live player, build your own player from a feature list rather than taking the preset's.
 
 <FrameworkCase frameworks={["html"]}>
 Use <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> to build a player element from that list.
@@ -618,7 +619,7 @@ Do not rebuild this behavior from `duration` or set `currentTime` to `Infinity`.
 
 #### An on-demand video shows live controls
 
-Video.js does not replace the preset after reading the HLS playlist. Render the video preset for on-demand content and the live preset for live content. If the same part of your app handles both, use `streamType` to choose the preset or controls.
+Video.js does not replace the preset after reading the HLS playlist. Render the video preset for on-demand content and the live preset for live content. If the same part of your app handles both, choose the preset from application or content metadata before rendering. If only the manifest can tell you, use a custom player with the stream type feature and choose the controls from that state.
 
 #### `selectStreamType` returns `undefined`
 

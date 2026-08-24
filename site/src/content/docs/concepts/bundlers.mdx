@@ -13,9 +13,11 @@ If an older bundler reports that one of these paths is missing or not exported, 
 
 ## Vite compatibility
 
-Vite 3.2.8 can load Video.js JavaScript, but it cannot load the exported `@videojs/html/video/skin.css` file. Vite 5.4.19 can load both.
+Use a current Vite release. Testing confirmed that Vite 5.4.19 can load Video.js JavaScript and CSS package exports. Vite 3.2.8 can load the JavaScript, but it cannot load an exported stylesheet such as `@videojs/html/video/skin.css`.
 
-## Publish a wrapper library
+Packaged HTML skins import their own styles, so an HTML application using `@videojs/html/video/skin` doesn't need to import `skin.css` separately. The CSS limitation matters only when your application imports that stylesheet directly.
+
+## Externalize Video.js in a wrapper library
 
 You can skip this section when building an application.
 
