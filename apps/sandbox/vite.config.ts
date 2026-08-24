@@ -99,6 +99,10 @@ function getSandboxEntries(): Record<string, string> {
   const srcDir = resolve(__dirname, 'src');
   const entries: Record<string, string> = {};
 
+  // `src` is generated and gitignored. Vite+ loads every workspace config
+  // before it can schedule the setup command that creates this directory.
+  if (!existsSync(srcDir)) return entries;
+
   for (const entry of readdirSync(srcDir)) {
     const dir = resolve(srcDir, entry);
     const indexHtml = resolve(dir, 'index.html');
