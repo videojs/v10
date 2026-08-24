@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
-import { componentSchemaPlugin } from 'vjsc/plugins';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { cachedTaskInputs } from '../../build/run.ts';
+// Vite+ loads configs before it can build workspace dependencies.
+import { componentSchemaPlugin } from '../vjsc/src/plugins/index.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
 import en from './src/core/i18n/locales/en.ts';
 
