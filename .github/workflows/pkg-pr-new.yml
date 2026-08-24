@@ -84,6 +84,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-preview-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-preview-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build packages
         run: pnpm build:packages

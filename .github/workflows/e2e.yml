@@ -49,6 +49,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ matrix.browser }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-e2e-${{ matrix.browser }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build packages
         run: pnpm build:packages

@@ -38,6 +38,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-website-test-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-website-test-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Run website tests
         run: pnpm exec vp run --filter="site^..." build && pnpm exec vp run site#test
@@ -76,6 +77,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-website-astro-check-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-website-astro-check-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build packages
         run: pnpm build:packages

@@ -64,6 +64,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-release-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-release-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Clean
         if: ${{ steps.release.outputs.releases_created == 'true' }}

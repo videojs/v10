@@ -34,6 +34,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-bundle-size-pr-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-bundle-size-pr-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build packages
         run: pnpm build:packages
@@ -96,6 +97,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-bundle-size-base-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-bundle-size-base-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build and measure base
         run: |

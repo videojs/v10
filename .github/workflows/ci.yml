@@ -83,6 +83,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-typecheck-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-ci-typecheck-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build packages for type resolution
         run: pnpm build:packages
@@ -141,6 +142,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-${{ matrix.package }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-${{ matrix.package }}-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build package dependencies
         if: matrix.package != '@videojs/cli'
@@ -193,6 +195,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-spf-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-ci-test-spf-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Test SPF
         run: pnpm exec vp run --filter="@videojs/spf..." build && pnpm exec vp run @videojs/spf#test
@@ -255,6 +258,7 @@ jobs:
           key: vite-task-${{ runner.os }}-${{ runner.arch }}-ci-build-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             vite-task-${{ runner.os }}-${{ runner.arch }}-ci-build-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Build
         run: pnpm build:packages
