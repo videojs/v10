@@ -258,7 +258,7 @@ export default defineConfig({
         dependsOn: ['build'],
         // Both related Pack configs share this output directory, so Pack may
         // inspect files emitted by the other config. They remain outputs only.
-        input: [...cachedTaskInputs, '!cdn/**'],
+        input: [...cachedTaskInputs, '!cdn', '!cdn/**'],
       },
     },
   },
