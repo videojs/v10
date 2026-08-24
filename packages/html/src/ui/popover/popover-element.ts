@@ -18,6 +18,7 @@ import { containerContext } from '../../player/context';
 import { popupGroupContext } from '../../player/popup-group-context';
 import { PositionController } from '../position-controller';
 import { UIElement } from '../ui-element';
+
 export class PopoverElement extends UIElement {
   static readonly tagName = 'media-popover';
 
@@ -122,6 +123,10 @@ export class PopoverElement extends UIElement {
 
   close(reason: PopoverOpenChangeReason = 'imperative-action'): void {
     this.#popover?.close(reason);
+  }
+
+  protected get triggerElement(): HTMLElement | null {
+    return this.#currentTrigger;
   }
 
   protected override willUpdate(changed: PropertyValues): void {

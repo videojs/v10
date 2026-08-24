@@ -122,7 +122,9 @@ describe('Skins Vite workflow', () => {
     const volumePopover = await server.transformRequest(volumePopoverUrl);
 
     expect(settingsMenu?.code).toContain('Tooltip.Trigger, { render: /* @__PURE__ */ _jsxDEV(Menu.Trigger');
-    expect(volumePopover?.code).toContain('Popover.Trigger, { render: /* @__PURE__ */ _jsxDEV(MuteButton');
+    expect(volumePopover?.code).toContain(
+      'VolumePopoverPrimitive.Trigger, { render: /* @__PURE__ */ _jsxDEV(MuteButton'
+    );
     expect([...warn.mock.calls, ...warnOnce.mock.calls].flat().join('\n')).not.toContain('emitFile() is not supported');
   }, 30_000);
 

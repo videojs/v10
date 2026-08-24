@@ -181,6 +181,7 @@ export { VolumeIndicator } from './ui/volume-indicator';
 export type { VolumeIndicatorFillProps } from './ui/volume-indicator/volume-indicator-fill';
 export type { VolumeIndicatorRootProps } from './ui/volume-indicator/volume-indicator-root';
 export type { VolumeIndicatorValueProps } from './ui/volume-indicator/volume-indicator-value';
+export { VolumePopover } from './ui/volume-popover';
 export { VolumeSlider } from './ui/volume-slider';
 // Utilities
 export { mergeProps } from './utils/merge-props';

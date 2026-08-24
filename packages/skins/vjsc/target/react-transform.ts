@@ -19,7 +19,7 @@ const optionMenus = [
   { component: 'CaptionsMenu', binding: 'captions', hook: 'useCaptionsOptions' },
 ] as const;
 
-/** Add React player bindings and availability gates to skin controls and menus. */
+/** Add React player bindings and availability gates to skin menus. */
 export const reactComponentTransform: ComponentTargetTransform = {
   name: 'videojs:react-components',
   transform(context) {
@@ -49,36 +49,10 @@ function transformReactComponent(
   name: string,
   body: BlockBody
 ): boolean {
-  if (name === 'VolumePopover') return transformVolumePopover(context, imports, body);
-
   const menu = optionMenus.find((candidate) => candidate.component === name);
   if (menu) return transformOptionMenu(context, imports, body, menu);
 
   return name === 'VideoSettingsMenu' ? transformVideoSettingsMenu(context, imports, body) : false;
-}
-
-/**
- * Replace an unavailable volume popover with its mute-button fallback.
- *
- * ```diff
- * - <$.Popover.Root>...</$.Popover.Root>
- * + volumeAvailability === 'available' ? <$.Popover.Root>...</$.Popover.Root> : <MuteButton />
- * ```
- */
-function transformVolumePopover(
-  context: ComponentTargetTransformContext,
-  imports: ModuleImports,
-  body: BlockBody
-): true {
-  const usePlayer = imports.reference({ from: '@videojs/react', name: 'usePlayer' });
-
-  prependBlockBody(
-    context.magicString,
-    body,
-    `const volumeAvailability = ${usePlayer}(state => state.volumeAvailability);`
-  );
-  wrapElement(context, body, '$.Popover.Root', `volumeAvailability === 'available'`, '<MuteButton />');
-  return true;
 }
 
 /**

@@ -135,6 +135,7 @@ export const sidebar: Sidebar = [
           { slug: 'reference/time-slider' },
           { slug: 'reference/title' },
           { slug: 'reference/tooltip' },
+          { slug: 'reference/volume-popover' },
           { slug: 'reference/volume-slider' },
         ],
       },

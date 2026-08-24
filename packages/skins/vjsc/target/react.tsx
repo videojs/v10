@@ -54,6 +54,9 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       Popover: {
         Trigger: ({ props, children }) => <target.Popover.Trigger render={children} {...props} />,
       },
+      VolumePopover: {
+        Trigger: ({ props, children }) => <target.VolumePopover.Trigger render={children} {...props} />,
+      },
       Poster: ({ props, children }) => <target.Poster render={children} {...props} />,
       Slider: {
         Thumbnail: {

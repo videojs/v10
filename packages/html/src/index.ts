@@ -158,4 +158,5 @@ export * from './ui/ui-element';
 export { VolumeIndicatorElement } from './ui/volume-indicator/volume-indicator-element';
 export { VolumeIndicatorFillElement } from './ui/volume-indicator/volume-indicator-fill-element';
 export { VolumeIndicatorValueElement } from './ui/volume-indicator/volume-indicator-value-element';
+export { VolumePopoverElement } from './ui/volume-popover/volume-popover-element';
 export { VolumeSliderElement } from './ui/volume-slider/volume-slider-element';

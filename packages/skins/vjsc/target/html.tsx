@@ -95,6 +95,11 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
     Fill: 'VolumeIndicatorFill',
     Value: 'VolumeIndicatorValue',
   },
+  VolumePopover: {
+    Root: 'VolumePopover',
+    Trigger: 'VolumePopover',
+    Popup: 'VolumePopover',
+  },
   VolumeSlider: {
     Root: 'VolumeSlider',
     Track: 'SliderTrack',
@@ -186,6 +191,12 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
       Popover: ({ props, parts }) => [
         parts.Trigger.children,
         <target.Popover.Popup {...props.merge(parts.Popup.props)}>{parts.Popup.children}</target.Popover.Popup>,
+      ],
+      VolumePopover: ({ props, parts }) => [
+        parts.Trigger.children,
+        <target.VolumePopover.Popup {...props.merge(parts.Popup.props)}>
+          {parts.Popup.children}
+        </target.VolumePopover.Popup>,
       ],
       Poster: ({ props }) => (
         <target.Poster {...props}>

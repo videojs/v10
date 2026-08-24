@@ -9,7 +9,6 @@ export default styles({
       utilities: [
         'rounded-media-control px-0 py-3',
         'data-[side=right]:rounded-none data-[side=right]:bg-transparent data-[side=right]:p-0 data-[side=right]:shadow-none data-[side=right]:ring-0 data-[side=right]:backdrop-filter-none data-[side=right]:after:hidden',
-        'has-[media-volume-slider[data-hidden]]:hidden',
       ],
     },
   },

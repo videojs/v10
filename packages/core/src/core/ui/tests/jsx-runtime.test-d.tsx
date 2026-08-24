@@ -12,6 +12,7 @@ import {
   Time,
   TimeSlider,
   Tooltip,
+  VolumePopover,
   VolumeSlider,
 } from '@videojs/core/vjsc';
 import { describe, it } from 'vite-plus/test';
@@ -71,6 +72,17 @@ describe('constrained JSX', () => {
           </VolumeSlider.Root>
         </Popover.Popup>
       </Popover.Root>
+    );
+
+    void (
+      <VolumePopover.Root openOnHover>
+        <VolumePopover.Trigger>
+          <MuteButton />
+        </VolumePopover.Trigger>
+        <VolumePopover.Popup>
+          <VolumeSlider.Root orientation="vertical" />
+        </VolumePopover.Popup>
+      </VolumePopover.Root>
     );
 
     void (

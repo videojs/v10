@@ -77,8 +77,9 @@ describe('Skins Shadcn registry', () => {
     expect(qualityMenuSource).toContain('available &&');
     expect(videoSettingsMenuSource).toContain('const hasSettings =');
     expect(videoSettingsMenuSource).toContain('hasSettings &&');
-    expect(volumePopoverSource).toContain('usePlayer');
-    expect(volumePopoverSource).toContain(`volumeAvailability === 'available' ?`);
+    expect(volumePopoverSource).toContain('VolumePopoverPrimitive.Root');
+    expect(volumePopoverSource).toContain('VolumePopoverPrimitive.Trigger');
+    expect(volumePopoverSource).not.toContain('usePlayer');
     expect(styles.files.map((file) => file.target)).toEqual([
       'components/videojs/styles/base.css',
       'components/videojs/styles/captions.css',
