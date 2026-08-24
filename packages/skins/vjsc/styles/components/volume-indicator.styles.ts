@@ -53,9 +53,9 @@ export default styles({
         minimal: [
           'grid w-[min(80%,14rem)] grid-cols-[auto_minmax(0,1fr)_auto] [transform:translateX(0)]',
           'before:col-start-2 before:row-start-1 before:h-0.75 before:w-full before:rounded-[9999px]',
-          'before:bg-current/20 before:shadow-[0_1px_0_rgb(255_255_255/0.15)] before:content-[""]',
+          'before:bg-current/20 before:shadow-[0_1px_0_rgb(255_255_255/0.15)]',
           'after:col-start-2 after:row-start-1 after:h-0.75 after:w-[var(--media-volume-fill,0%)] after:justify-self-start',
-          'after:rounded-[9999px] after:bg-media-accent after:content-[""]',
+          'after:rounded-[9999px] after:bg-media-accent',
           'after:transition-[width] after:duration-200 after:ease-linear',
           '[@media(prefers-reduced-transparency:reduce)]:rounded-[--spacing(2)]',
           '[@media(prefers-reduced-transparency:reduce)]:bg-black',
