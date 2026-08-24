@@ -136,7 +136,7 @@ describe('AlertDialogElement', () => {
     expect(el.open).toBe(true);
   });
 
-  it('closes on button click within the dialog', async () => {
+  it('does not close on an arbitrary button click within the dialog', async () => {
     const el = createElement(AlertDialogElement);
     el.open = true;
 
@@ -149,7 +149,7 @@ describe('AlertDialogElement', () => {
 
     button.click();
 
-    expect(el.open).toBe(false);
+    expect(el.open).toBe(true);
   });
 
   it('does not close on non-button element click', async () => {

@@ -1,20 +1,19 @@
 import type { AlertDialogCore, StateAttrMap } from '@videojs/core';
 import type { AlertDialogApi } from '@videojs/core/dom';
-import { createContext, useContext } from 'react';
+import type { Provider } from 'react';
 
-export interface AlertDialogContextValue {
+import { DialogContextProvider, type DialogContextValue, useDialogContextFor } from '../dialog/context';
+
+export interface AlertDialogContextValue
+  extends Omit<DialogContextValue, 'core' | 'dialog' | 'state' | 'stateAttrMap'> {
   core: AlertDialogCore;
   dialog: AlertDialogApi;
   state: AlertDialogCore.State;
   stateAttrMap: StateAttrMap<AlertDialogCore.State>;
 }
 
-const AlertDialogContext = createContext<AlertDialogContextValue | null>(null);
-
-export const AlertDialogContextProvider = AlertDialogContext.Provider;
+export const AlertDialogContextProvider = DialogContextProvider as Provider<AlertDialogContextValue | null>;
 
 export function useAlertDialogContext(): AlertDialogContextValue {
-  const ctx = useContext(AlertDialogContext);
-  if (!ctx) throw new Error('AlertDialog compound components must be used within an AlertDialog.Root');
-  return ctx;
+  return useDialogContextFor('AlertDialog') as AlertDialogContextValue;
 }

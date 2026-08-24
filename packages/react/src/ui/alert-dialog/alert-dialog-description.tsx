@@ -1,20 +1,2 @@
-import type { AlertDialogCore } from '@videojs/core';
-
-import type { UIComponentProps } from '../../utils/types';
-import { createContextPart } from '../create-context-part';
-import { useAlertDialogContext } from './context';
-
-export interface AlertDialogDescriptionProps extends UIComponentProps<'p', AlertDialogCore.State> {}
-
-/** Renders the description announced with the alert dialog. */
-export const AlertDialogDescription = createContextPart<AlertDialogDescriptionProps, AlertDialogCore.State>({
-  displayName: 'AlertDialogDescription',
-  tag: 'p',
-  useContext: useAlertDialogContext,
-  getProps: (state) => ({ id: state.descriptionId }),
-});
-
-export namespace AlertDialogDescription {
-  export type Props = AlertDialogDescriptionProps;
-  export type State = AlertDialogCore.State;
-}
+export type { DialogDescriptionProps as AlertDialogDescriptionProps } from '../dialog/dialog-description';
+export { DialogDescription as AlertDialogDescription } from '../dialog/dialog-description';

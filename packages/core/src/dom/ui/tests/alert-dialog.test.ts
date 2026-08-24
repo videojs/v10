@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type AlertDialogOptions, createAlertDialog } from '../alert-dialog';
 import { createTransition } from '../transition';
 
+const dialogs = new Set<ReturnType<typeof createAlertDialog>>();
+
 function createTestAlertDialog(overrides?: Partial<AlertDialogOptions>) {
   const onOpenChange = vi.fn();
   const transition = createTransition();
@@ -11,10 +13,13 @@ function createTestAlertDialog(overrides?: Partial<AlertDialogOptions>) {
     onOpenChange,
     ...overrides,
   });
+  dialogs.add(alertDialog);
   return { alertDialog, onOpenChange, transition };
 }
 
 afterEach(() => {
+  for (const dialog of dialogs) dialog.destroy();
+  dialogs.clear();
   document.body.innerHTML = '';
 });
 
@@ -232,8 +237,8 @@ describe('createAlertDialog', () => {
     });
   });
 
-  describe('button click dismiss', () => {
-    it('closes when a button inside the element is clicked', () => {
+  describe('button clicks', () => {
+    it('does not close when an arbitrary button inside the element is clicked', () => {
       const { alertDialog, onOpenChange } = createTestAlertDialog();
       const el = document.createElement('div');
       const button = document.createElement('button');
@@ -246,7 +251,7 @@ describe('createAlertDialog', () => {
 
       button.click();
 
-      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(onOpenChange).not.toHaveBeenCalled();
     });
 
     it('does not close on non-button element click', () => {

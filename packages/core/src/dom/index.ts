@@ -14,6 +14,7 @@ export * from './store/selectors';
 export * from './ui/alert-dialog';
 export * from './ui/button';
 export * from './ui/container-attrs';
+export * from './ui/dialog';
 export * from './ui/dismiss-layer';
 export * from './ui/event';
 export * from './ui/input-action';

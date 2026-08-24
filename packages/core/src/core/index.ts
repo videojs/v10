@@ -14,6 +14,8 @@ export * from './ui/cast-button/cast-button-core';
 export * from './ui/cast-button/cast-button-data-attrs';
 export * from './ui/controls/controls-core';
 export * from './ui/controls/controls-data-attrs';
+export * from './ui/dialog/dialog-core';
+export * from './ui/dialog/dialog-data-attrs';
 export * from './ui/error-dialog/error-dialog-core';
 export * from './ui/error-dialog/error-dialog-data-attrs';
 export * from './ui/error-dialog/error-dialog-i18n';

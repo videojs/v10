@@ -1,11 +1,11 @@
 import type { StateAttrMap } from '../types';
-import type { ErrorDialogState } from './error-dialog-core';
+import type { DialogState } from './dialog-core';
 
-export const ErrorDialogDataAttrs = {
-  /** Present when the error dialog is open. */
+export const DialogDataAttrs = {
+  /** Present when the dialog is open. */
   open: 'data-open',
   /** Present during the open transition. */
   transitionStarting: 'data-starting-style',
   /** Present during the close transition. */
   transitionEnding: 'data-ending-style',
-} as const satisfies StateAttrMap<ErrorDialogState>;
+} as const satisfies StateAttrMap<DialogState>;

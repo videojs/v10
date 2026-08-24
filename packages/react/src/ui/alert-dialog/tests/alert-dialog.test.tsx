@@ -44,9 +44,7 @@ describe('AlertDialogRoot', () => {
 
 describe('AlertDialogPopup', () => {
   it('throws when used outside Root', () => {
-    expect(() => render(<AlertDialogPopup />)).toThrow(
-      'AlertDialog compound components must be used within an AlertDialog.Root'
-    );
+    expect(() => render(<AlertDialogPopup />)).toThrow('Dialog compound components must be used within a Dialog.Root');
   });
 
   it('renders with alertdialog role and aria-modal', () => {
