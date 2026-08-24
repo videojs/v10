@@ -1,6 +1,6 @@
 ---
 name: create-rolldown-plugin
-description: Create Video.js Rolldown plugins. Use for transforms, graphs, watching, and output.
+description: Create Rolldown plugins. Use for hooks.
 ---
 
 # Rolldown plugin implementation
