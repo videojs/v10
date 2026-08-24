@@ -7,6 +7,8 @@
  * can be shared here.
  */
 
+import { type PlayerTarget, videoFeatures } from '@videojs/core/dom';
+import { combine, createStore } from '@videojs/store';
 import type { ReactNode } from 'react';
 import type { Mock } from 'vitest';
 import { vi } from 'vitest';
@@ -19,6 +21,18 @@ interface MockStore {
   attach: Mock<() => Mock>;
   subscribe: Mock<() => Mock>;
   destroy: Mock;
+}
+
+const videoStore = createStore<PlayerTarget>()(combine(...videoFeatures));
+
+/**
+ * Create a complete plain-object snapshot for a built-in video player.
+ *
+ * Spreading the canonical store snapshot is intentional: component tests use
+ * the selector fallback for unmarked objects while keeping every feature key.
+ */
+export function createVideoPlayerState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return { ...videoStore.state, ...overrides };
 }
 
 /**

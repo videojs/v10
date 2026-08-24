@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { AnyPlayerFeature } from '../../player';
+import { playbackRateFeature } from '../../store/features/playback-rate';
+import { timeFeature } from '../../store/features/time';
+import { volumeFeature } from '../../store/features/volume';
+import { createTestPlayerStore } from '../../tests/test-helpers';
 import type { GestureActionContext } from '../actions';
 import { resolveGestureAction } from '../actions';
 
@@ -72,13 +77,15 @@ describe('direct store actions', () => {
 describe('seekStep', () => {
   it('seeks by value offset', () => {
     const seek = vi.fn();
-    resolveGestureAction('seekStep')!(ctx({ currentTime: 10, duration: 60, seeking: false, seek }, 5));
+    resolveGestureAction('seekStep')!(ctx({ currentTime: 10, duration: 60, seeking: false, seek }, 5, timeFeature));
     expect(seek).toHaveBeenCalledWith(15);
   });
 
   it('does nothing without value', () => {
     const seek = vi.fn();
-    resolveGestureAction('seekStep')!(ctx({ currentTime: 10, duration: 60, seeking: false, seek }));
+    resolveGestureAction('seekStep')!(
+      ctx({ currentTime: 10, duration: 60, seeking: false, seek }, undefined, timeFeature)
+    );
     expect(seek).not.toHaveBeenCalled();
   });
 });
@@ -87,7 +94,11 @@ describe('volumeStep', () => {
   it('adjusts volume by value offset', () => {
     const setVolume = vi.fn();
     resolveGestureAction('volumeStep')!(
-      ctx({ volume: 0.5, muted: false, volumeAvailability: 'available', setVolume, toggleMuted: vi.fn() }, 0.1)
+      ctx(
+        { volume: 0.5, muted: false, volumeAvailability: 'available', setVolume, toggleMuted: vi.fn() },
+        0.1,
+        volumeFeature
+      )
     );
     expect(setVolume).toHaveBeenCalledWith(0.6);
   });
@@ -96,13 +107,17 @@ describe('volumeStep', () => {
 describe('speedUp', () => {
   it('cycles to next playback rate', () => {
     const setPlaybackRate = vi.fn();
-    resolveGestureAction('speedUp')!(ctx({ playbackRates: [0.5, 1, 1.5, 2], playbackRate: 1, setPlaybackRate }));
+    resolveGestureAction('speedUp')!(
+      ctx({ playbackRates: [0.5, 1, 1.5, 2], playbackRate: 1, setPlaybackRate }, undefined, playbackRateFeature)
+    );
     expect(setPlaybackRate).toHaveBeenCalledWith(1.5);
   });
 
   it('wraps to first rate at end', () => {
     const setPlaybackRate = vi.fn();
-    resolveGestureAction('speedUp')!(ctx({ playbackRates: [0.5, 1, 2], playbackRate: 2, setPlaybackRate }));
+    resolveGestureAction('speedUp')!(
+      ctx({ playbackRates: [0.5, 1, 2], playbackRate: 2, setPlaybackRate }, undefined, playbackRateFeature)
+    );
     expect(setPlaybackRate).toHaveBeenCalledWith(0.5);
   });
 });
@@ -110,13 +125,17 @@ describe('speedUp', () => {
 describe('speedDown', () => {
   it('cycles to previous playback rate', () => {
     const setPlaybackRate = vi.fn();
-    resolveGestureAction('speedDown')!(ctx({ playbackRates: [0.5, 1, 1.5, 2], playbackRate: 1.5, setPlaybackRate }));
+    resolveGestureAction('speedDown')!(
+      ctx({ playbackRates: [0.5, 1, 1.5, 2], playbackRate: 1.5, setPlaybackRate }, undefined, playbackRateFeature)
+    );
     expect(setPlaybackRate).toHaveBeenCalledWith(1);
   });
 
   it('wraps to last rate at beginning', () => {
     const setPlaybackRate = vi.fn();
-    resolveGestureAction('speedDown')!(ctx({ playbackRates: [0.5, 1, 2], playbackRate: 0.5, setPlaybackRate }));
+    resolveGestureAction('speedDown')!(
+      ctx({ playbackRates: [0.5, 1, 2], playbackRate: 0.5, setPlaybackRate }, undefined, playbackRateFeature)
+    );
     expect(setPlaybackRate).toHaveBeenCalledWith(2);
   });
 });
@@ -125,9 +144,11 @@ describe('speedDown', () => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function ctx(stateProps: Record<string, unknown>, value?: number): GestureActionContext {
+function ctx(stateProps: Record<string, unknown>, value?: number, feature?: AnyPlayerFeature): GestureActionContext {
   return {
-    store: { state: stateProps } as unknown as GestureActionContext['store'],
+    store: (feature
+      ? createTestPlayerStore([feature], stateProps)
+      : { state: stateProps }) as GestureActionContext['store'],
     value,
     event: new Event('pointerup') as PointerEvent,
   };

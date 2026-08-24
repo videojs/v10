@@ -1,10 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { AnyPlayerFeature } from '../../player';
+import { fullscreenFeature } from '../../store/features/fullscreen';
+import { playbackFeature } from '../../store/features/playback';
+import { playbackRateFeature } from '../../store/features/playback-rate';
+import { timeFeature } from '../../store/features/time';
+import { volumeFeature } from '../../store/features/volume';
+import { createTestPlayerStore } from '../../tests/test-helpers';
 import type { HotkeyActionContext } from '../actions';
 import { isHotkeyToggleAction, resolveHotkeyAction } from '../actions';
 
-function mockStore(state: Record<string, unknown>) {
-  return { state } as HotkeyActionContext['store'];
+function mockStore(feature: AnyPlayerFeature, state: Record<string, unknown>) {
+  return createTestPlayerStore([feature], state) as HotkeyActionContext['store'];
 }
 
 describe('resolveHotkeyAction', () => {
@@ -50,7 +57,14 @@ describe('isHotkeyToggleAction', () => {
 describe('togglePaused', () => {
   it('calls play() when paused', () => {
     const play = vi.fn();
-    const store = mockStore({ paused: true, ended: false, started: false, waiting: false, play, pause: vi.fn() });
+    const store = mockStore(playbackFeature, {
+      paused: true,
+      ended: false,
+      started: false,
+      waiting: false,
+      play,
+      pause: vi.fn(),
+    });
 
     resolveHotkeyAction('togglePaused')!({ store, key: '' });
 
@@ -59,7 +73,14 @@ describe('togglePaused', () => {
 
   it('calls pause() when playing', () => {
     const pause = vi.fn();
-    const store = mockStore({ paused: false, ended: false, started: true, waiting: false, play: vi.fn(), pause });
+    const store = mockStore(playbackFeature, {
+      paused: false,
+      ended: false,
+      started: true,
+      waiting: false,
+      play: vi.fn(),
+      pause,
+    });
 
     resolveHotkeyAction('togglePaused')!({ store, key: '' });
 
@@ -70,7 +91,7 @@ describe('togglePaused', () => {
 describe('toggleMuted', () => {
   it('calls toggleMuted()', () => {
     const toggleMuted = vi.fn();
-    const store = mockStore({
+    const store = mockStore(volumeFeature, {
       volume: 1,
       muted: false,
       volumeAvailability: 'available',
@@ -87,7 +108,7 @@ describe('toggleMuted', () => {
 describe('toggleFullscreen', () => {
   it('calls requestFullscreen() when not fullscreen', () => {
     const requestFullscreen = vi.fn();
-    const store = mockStore({
+    const store = mockStore(fullscreenFeature, {
       fullscreen: false,
       fullscreenAvailability: 'available',
       requestFullscreen,
@@ -101,7 +122,7 @@ describe('toggleFullscreen', () => {
 
   it('calls exitFullscreen() when fullscreen', () => {
     const exitFullscreen = vi.fn();
-    const store = mockStore({
+    const store = mockStore(fullscreenFeature, {
       fullscreen: true,
       fullscreenAvailability: 'available',
       requestFullscreen: vi.fn(),
@@ -117,7 +138,7 @@ describe('toggleFullscreen', () => {
 describe('seekStep', () => {
   it('seeks forward by value', () => {
     const seek = vi.fn();
-    const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
+    const store = mockStore(timeFeature, { currentTime: 10, duration: 100, seeking: false, seek });
 
     resolveHotkeyAction('seekStep')!({ store, value: 5, key: '' });
 
@@ -126,7 +147,7 @@ describe('seekStep', () => {
 
   it('seeks backward by negative value', () => {
     const seek = vi.fn();
-    const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
+    const store = mockStore(timeFeature, { currentTime: 10, duration: 100, seeking: false, seek });
 
     resolveHotkeyAction('seekStep')!({ store, value: -5, key: '' });
 
@@ -135,7 +156,7 @@ describe('seekStep', () => {
 
   it('no-ops without value', () => {
     const seek = vi.fn();
-    const store = mockStore({ currentTime: 10, duration: 100, seeking: false, seek });
+    const store = mockStore(timeFeature, { currentTime: 10, duration: 100, seeking: false, seek });
 
     resolveHotkeyAction('seekStep')!({ store, key: '' });
 
@@ -146,7 +167,7 @@ describe('seekStep', () => {
 describe('volumeStep', () => {
   it('increases volume by value', () => {
     const setVolume = vi.fn();
-    const store = mockStore({
+    const store = mockStore(volumeFeature, {
       volume: 0.5,
       muted: false,
       volumeAvailability: 'available',
@@ -161,7 +182,7 @@ describe('volumeStep', () => {
 
   it('decreases volume by negative value', () => {
     const setVolume = vi.fn();
-    const store = mockStore({
+    const store = mockStore(volumeFeature, {
       volume: 0.5,
       muted: false,
       volumeAvailability: 'available',
@@ -178,7 +199,7 @@ describe('volumeStep', () => {
 describe('speedUp', () => {
   it('steps to next rate', () => {
     const setPlaybackRate = vi.fn();
-    const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 1, setPlaybackRate });
+    const store = mockStore(playbackRateFeature, { playbackRates: [1, 1.5, 2], playbackRate: 1, setPlaybackRate });
 
     resolveHotkeyAction('speedUp')!({ store, key: '' });
 
@@ -187,7 +208,7 @@ describe('speedUp', () => {
 
   it('wraps to first rate at end', () => {
     const setPlaybackRate = vi.fn();
-    const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 2, setPlaybackRate });
+    const store = mockStore(playbackRateFeature, { playbackRates: [1, 1.5, 2], playbackRate: 2, setPlaybackRate });
 
     resolveHotkeyAction('speedUp')!({ store, key: '' });
 
@@ -198,7 +219,11 @@ describe('speedUp', () => {
 describe('speedDown', () => {
   it('steps to previous rate', () => {
     const setPlaybackRate = vi.fn();
-    const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 1.5, setPlaybackRate });
+    const store = mockStore(playbackRateFeature, {
+      playbackRates: [1, 1.5, 2],
+      playbackRate: 1.5,
+      setPlaybackRate,
+    });
 
     resolveHotkeyAction('speedDown')!({ store, key: '' });
 
@@ -207,7 +232,7 @@ describe('speedDown', () => {
 
   it('wraps to last rate at beginning', () => {
     const setPlaybackRate = vi.fn();
-    const store = mockStore({ playbackRates: [1, 1.5, 2], playbackRate: 1, setPlaybackRate });
+    const store = mockStore(playbackRateFeature, { playbackRates: [1, 1.5, 2], playbackRate: 1, setPlaybackRate });
 
     resolveHotkeyAction('speedDown')!({ store, key: '' });
 
@@ -218,7 +243,7 @@ describe('speedDown', () => {
 describe('seekToPercent', () => {
   it('seeks to explicit value percentage', () => {
     const seek = vi.fn();
-    const store = mockStore({ currentTime: 0, duration: 200, seeking: false, seek });
+    const store = mockStore(timeFeature, { currentTime: 0, duration: 200, seeking: false, seek });
 
     resolveHotkeyAction('seekToPercent')!({ store, value: 50, key: '' });
 
@@ -227,7 +252,7 @@ describe('seekToPercent', () => {
 
   it('derives percentage from digit key', () => {
     const seek = vi.fn();
-    const store = mockStore({ currentTime: 0, duration: 200, seeking: false, seek });
+    const store = mockStore(timeFeature, { currentTime: 0, duration: 200, seeking: false, seek });
 
     resolveHotkeyAction('seekToPercent')!({ store, key: '3' });
 
@@ -236,7 +261,7 @@ describe('seekToPercent', () => {
 
   it('no-ops for non-digit key without value', () => {
     const seek = vi.fn();
-    const store = mockStore({ currentTime: 0, duration: 200, seeking: false, seek });
+    const store = mockStore(timeFeature, { currentTime: 0, duration: 200, seeking: false, seek });
 
     resolveHotkeyAction('seekToPercent')!({ store, key: 'k' });
 
@@ -245,7 +270,7 @@ describe('seekToPercent', () => {
 
   it('no-ops when duration is 0', () => {
     const seek = vi.fn();
-    const store = mockStore({ currentTime: 0, duration: 0, seeking: false, seek });
+    const store = mockStore(timeFeature, { currentTime: 0, duration: 0, seeking: false, seek });
 
     resolveHotkeyAction('seekToPercent')!({ store, value: 50, key: '' });
 

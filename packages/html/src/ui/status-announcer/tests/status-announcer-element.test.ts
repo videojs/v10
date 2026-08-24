@@ -1,7 +1,10 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { playbackFeature, timeFeature, volumeFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaPlaybackState, MediaTimeState, MediaVolumeState } from '@videojs/media';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { containerContext, playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MediaElement } from '../../media-element';
 import { StatusAnnouncerElement } from '../status-announcer-element';
 
@@ -13,35 +16,18 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
   if (!customElements.get(tagName)) customElements.define(tagName, Base);
 }
 
-function createTestStore(initialState: Record<string, unknown> = {}) {
-  let state = initialState;
-  const target = {};
-  const listeners = new Set<() => void>();
-  const store = {
-    get state() {
-      return state;
-    },
-    get target() {
-      return target;
-    },
-    subscribe(callback: () => void) {
-      listeners.add(callback);
-      return () => listeners.delete(callback);
-    },
-  } as unknown as AnyPlayerStore;
+type TestStatusState = MediaPlaybackState & MediaTimeState & MediaVolumeState;
 
-  const setState = (partial: Record<string, unknown>) => {
-    state = { ...state, ...partial };
-    for (const listener of listeners) listener();
-  };
+function createTestStore(initialState: Partial<TestStatusState> = {}) {
+  const store = createTestPlayerStore([playbackFeature, timeFeature, volumeFeature], initialState);
 
-  return { store, setState };
+  return { store, setState: store.setState };
 }
 
 class TestStatusAnnouncerPlayerElement extends MediaElement {
   readonly #provider = new ContextProvider(this, { context: playerContext });
   readonly #containerProvider = new ContextProvider(this, { context: containerContext });
-  #store = createTestStore().store;
+  #store: AnyPlayerStore = createTestStore().store;
 
   get store(): AnyPlayerStore {
     return this.#store;
@@ -141,7 +127,7 @@ describe('StatusAnnouncerElement', () => {
     {
       name: 'completed seeks',
       initialState: { currentTime: 10, duration: 120, seeking: false },
-      update: async (setState: (partial: Record<string, unknown>) => void) => {
+      update: async (setState: (partial: Partial<TestStatusState>) => void) => {
         setState({ currentTime: 45, seeking: true });
         await Promise.resolve();
         setState({ seeking: false });
@@ -150,7 +136,7 @@ describe('StatusAnnouncerElement', () => {
     {
       name: 'volume changes',
       initialState: { volume: 0.5, muted: false },
-      update: async (setState: (partial: Record<string, unknown>) => void) => {
+      update: async (setState: (partial: Partial<TestStatusState>) => void) => {
         setState({ volume: 0.75 });
       },
     },

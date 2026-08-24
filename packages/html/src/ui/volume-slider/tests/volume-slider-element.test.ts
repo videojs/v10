@@ -1,10 +1,11 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { volumeFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaVolumeState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MediaElement } from '../../media-element';
 import { SliderThumbElement } from '../../slider/slider-thumb-element';
 import { VolumeSliderElement } from '../volume-slider-element';
@@ -22,19 +23,14 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
 }
 
 function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailability']): AnyPlayerStore {
-  return createStore<unknown>()<MediaVolumeState>({
-    name: 'volume',
-    state: () => ({
-      volume: 1,
-      muted: false,
-      volumeAvailability,
-      // Mute has an availability of its own, and this slider reads the level's;
-      // these tests vary that one and leave the mute available throughout.
-      mutedAvailability: 'available',
-      setVolume: vi.fn(),
-      toggleMuted: vi.fn(),
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([volumeFeature], {
+    volumeAvailability,
+    // Mute has an availability of its own, and this slider reads the level's;
+    // these tests vary that one and leave the mute available throughout.
+    mutedAvailability: 'available',
+    setVolume: vi.fn(),
+    toggleMuted: vi.fn(),
+  });
 }
 
 class TestPlayerProviderElement extends MediaElement {

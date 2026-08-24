@@ -1,4 +1,5 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { audioTrackFeature, playbackRateFeature, qualityFeature, textTrackFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type {
   MediaAudioTrackState,
@@ -6,10 +7,10 @@ import type {
   MediaQualityState,
   MediaTextTrackState,
 } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { playerContext } from '../../player/context';
+import { createTestPlayerStore } from '../../testing/create-test-player-store';
 import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
 import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
 import { MediaElement } from '../../ui/media-element';
@@ -27,37 +28,30 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 }
 
 function createMenuStore(overrides: Partial<MenuMediaState> = {}): AnyPlayerStore {
-  return createStore<unknown>()<MenuMediaState>({
-    name: 'videoMenuComposition',
-    state: () => ({
-      audioTrackList: [
-        { id: '0', kind: 'main', label: 'English', language: 'en', enabled: false },
-        { id: '1', kind: 'alternative', label: 'Spanish', language: 'es', enabled: true },
-      ],
-      selectAudioTrack: vi.fn(),
-      playbackRates: [0.5, 1, 1.5, 2],
-      playbackRate: 1.5,
-      setPlaybackRate: vi.fn(),
-      videoRenditionList: [
-        { id: '0', height: 1080, selected: false },
-        { id: '1', height: 720, selected: true },
-      ],
-      activeVideoRendition: null,
-      selectVideoRendition: vi.fn(),
-      chaptersCues: [],
-      thumbnailCues: [],
-      thumbnailTrackSrc: null,
-      thumbnailTrackCrossOrigin: null,
-      textTrackList: [
-        { kind: 'captions', label: 'English', language: 'en', mode: 'showing' },
-        { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
-      ],
-      subtitlesShowing: true,
-      toggleSubtitles: vi.fn(),
-      selectSubtitlesTrack: vi.fn(),
-      ...overrides,
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([audioTrackFeature, playbackRateFeature, qualityFeature, textTrackFeature], {
+    audioTrackList: [
+      { id: '0', kind: 'main', label: 'English', language: 'en', enabled: false },
+      { id: '1', kind: 'alternative', label: 'Spanish', language: 'es', enabled: true },
+    ],
+    selectAudioTrack: vi.fn(),
+    playbackRates: [0.5, 1, 1.5, 2],
+    playbackRate: 1.5,
+    setPlaybackRate: vi.fn(),
+    videoRenditionList: [
+      { id: '0', height: 1080, selected: false },
+      { id: '1', height: 720, selected: true },
+    ],
+    activeVideoRendition: null,
+    selectVideoRendition: vi.fn(),
+    textTrackList: [
+      { kind: 'captions', label: 'English', language: 'en', mode: 'showing' },
+      { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+    ],
+    subtitlesShowing: true,
+    toggleSubtitles: vi.fn(),
+    selectSubtitlesTrack: vi.fn(),
+    ...overrides,
+  });
 }
 
 class TestPlayerProviderElement extends MediaElement {

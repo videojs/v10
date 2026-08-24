@@ -1,9 +1,10 @@
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { controlsFeature } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
-import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { playerContext } from '../../../player/context';
+import { createTestPlayerStore } from '../../../testing/create-test-player-store';
 import { MediaElement } from '../../media-element';
 import { SliderBufferElement } from '../slider-buffer-element';
 import { SliderElement } from '../slider-element';
@@ -26,15 +27,7 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
 }
 
 function createControlsStore(requestControlsLock: MediaControlsState['requestControlsLock']): AnyPlayerStore {
-  return createStore<unknown>()<MediaControlsState>({
-    name: 'controls',
-    state: () => ({
-      userActive: true,
-      controlsVisible: true,
-      requestControlsLock,
-      toggleControls: () => true,
-    }),
-  }) as unknown as AnyPlayerStore;
+  return createTestPlayerStore([controlsFeature], { requestControlsLock });
 }
 
 class TestPlayerProviderElement extends MediaElement {

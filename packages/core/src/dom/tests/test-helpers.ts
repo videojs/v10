@@ -1,5 +1,42 @@
+import type { StateContext } from '@videojs/store';
+import { combine, createStore } from '@videojs/store';
 import type { SliderState } from '../../core/ui/slider/slider-core';
 import type { TimeSliderState } from '../../core/ui/time-slider/time-slider-core';
+import type { AnyPlayerFeature, AnyPlayerStore, PlayerTarget } from '../player';
+
+// ---------------------------------------------------------------------------
+// Mock Player State
+// ---------------------------------------------------------------------------
+
+const SET_TEST_STATE = Symbol('setTestPlayerState');
+
+interface TestStateAction {
+  [SET_TEST_STATE](partial: Record<string, unknown>): void;
+}
+
+export type TestPlayerStore = AnyPlayerStore & {
+  setState(partial: Record<string, unknown>): void;
+};
+
+/** Creates a marked player store from real features with test-only state overrides. */
+export function createTestPlayerStore(
+  features: readonly AnyPlayerFeature[],
+  initialState: Record<string, unknown> = {}
+): TestPlayerStore {
+  const testStateFeature = {
+    name: 'testState',
+    state: ({ set }: StateContext<PlayerTarget>): TestStateAction => ({
+      [SET_TEST_STATE]: (partial) => set(partial),
+    }),
+  };
+  const store = createStore<PlayerTarget>()(combine(...features, testStateFeature)) as AnyPlayerStore & TestStateAction;
+
+  store[SET_TEST_STATE](initialState);
+
+  return Object.assign(store, {
+    setState: (partial: Record<string, unknown>) => store[SET_TEST_STATE](partial),
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Mock Video
