@@ -152,12 +152,21 @@ function serveAppShell(): Plugin {
 export default defineConfig({
   run: {
     tasks: {
+      setup: {
+        command: 'tsx scripts/setup.ts',
+        dependsOn: ['@videojs/core#build'],
+        // Setup deterministically mirrors tracked templates into the gitignored
+        // scratch tree. Keep that generated tree out of its own fingerprint.
+        input: ['scripts/setup.ts', 'scripts/shared.ts', 'scripts/generate-cdn-locale-loaders.ts', 'templates/**'],
+        output: ['src/**', 'app/shared/i18n/cdn-locale-loaders.generated.ts'],
+      },
       build: {
-        command: 'tsx scripts/setup.ts && vp build',
-        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }, '@videojs/html#build:cdn'],
+        command: 'vp build',
+        dependsOn: ['setup', { task: 'build', from: ['dependencies', 'devDependencies'] }, '@videojs/html#build:cdn'],
         // The app-shell plugin creates this file for the build and removes it
-        // afterwards. It is a temporary path, not a cache input or output.
-        input: [...cachedTaskInputs, '!src/index.html'],
+        // afterwards. Workspace dependencies are fingerprinted through the task
+        // graph, not their mutable package-local node_modules links.
+        input: [...cachedTaskInputs, '!src/index.html', '!node_modules/@videojs', '!node_modules/@videojs/**'],
         output: [{ auto: true }, '!src/index.html'],
       },
     },

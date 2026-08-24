@@ -40,6 +40,7 @@ const config: ViteUserConfig = {
           { pattern: 'tsconfig.base.json', base: 'workspace' },
           { pattern: 'packages/{core,html,media,react,spf,utils}/package.json', base: 'workspace' },
           { pattern: 'packages/{core,html,media,react,spf,utils}/src/**', base: 'workspace' },
+          { pattern: '!packages/**/*.tsbuildinfo', base: 'workspace' },
           { pattern: '!packages/html/src/cdn/locales', base: 'workspace' },
           { pattern: '!packages/html/src/cdn/locales/**', base: 'workspace' },
         ],
@@ -81,6 +82,8 @@ const config: ViteUserConfig = {
           'SESSION_COOKIE_PASSWORD',
           'SENTRY_AUTH_TOKEN',
         ],
+        // Shell nesting changes between invocations but cannot affect Astro's output.
+        untrackedEnv: ['SHLVL'],
       },
       dev: {
         command: 'NETLIFY_DEV=1 astro dev',
