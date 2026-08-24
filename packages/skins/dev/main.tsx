@@ -43,7 +43,7 @@ const [framework, skin, styleMode] = key.split('/') as [
 ];
 const loaded = source === 'vjsc' ? await modules[key]() : null;
 
-if (source === 'vjsc' && styleMode === 'tailwind') await import('../vjsc/styles/tailwind.design.css');
+if (source === 'vjsc' && styleMode === 'tailwind') await import('../vjsc/styles/tailwind.compiler.css');
 
 function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ className?: string }>> }) {
   return (

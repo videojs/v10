@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/popup.styles';
+import styles from '../../styles/components/volume-popover.styles';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
 
@@ -22,7 +22,7 @@ export function VolumePopover({
       <$.Popover.Trigger>
         <MuteButton />
       </$.Popover.Trigger>
-      <$.Popover.Popup className={[styles.surface, styles.volume, className]}>
+      <$.Popover.Popup className={[styles.popup, className]}>
         <VolumeSlider orientation={orientation} />
       </$.Popover.Popup>
     </$.Popover.Root>

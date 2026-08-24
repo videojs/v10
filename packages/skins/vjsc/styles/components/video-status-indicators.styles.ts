@@ -1,11 +1,11 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'indicator.css',
+  file: 'indicators.css',
   layer: 'videojs.components',
   rules: {
     root: {
-      className: 'media-status-indicator-overlay',
+      className: 'media-video-status-indicators',
       utilities: ['pointer-events-none absolute inset-0 grid grid-cols-3 items-center justify-items-center text-white'],
     },
   },

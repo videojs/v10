@@ -4,15 +4,15 @@ import { CaptionsOffIcon, CaptionsOnIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/button.styles';
+import styles from '../../styles/components/captions-button.styles';
 import { ButtonTooltip } from './button-tooltip';
 
 export function CaptionsButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
     <ButtonTooltip side="top">
-      <$.CaptionsButton className={[styles.root, styles.captions, className]} {...props}>
-        <CaptionsOffIcon className={[styles.icon, styles.icons.captionsOff]} />
-        <CaptionsOnIcon className={[styles.icon, styles.icons.captionsOn]} />
+      <$.CaptionsButton className={[styles.root, className]} {...props}>
+        <CaptionsOffIcon className={styles.offIcon} />
+        <CaptionsOnIcon className={styles.onIcon} />
       </$.CaptionsButton>
     </ButtonTooltip>
   );

@@ -4,15 +4,15 @@ import { AirPlayEnterIcon, AirPlayExitIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/button.styles';
+import styles from '../../styles/components/airplay-button.styles';
 import { ButtonTooltip } from './button-tooltip';
 
 export function AirPlayButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
     <ButtonTooltip side="top">
-      <$.AirPlayButton className={[styles.root, styles.airplay, className]} {...props}>
-        <AirPlayEnterIcon className={[styles.icon, styles.icons.airplayEnter]} />
-        <AirPlayExitIcon className={[styles.icon, styles.icons.airplayExit]} />
+      <$.AirPlayButton className={[styles.root, className]} {...props}>
+        <AirPlayEnterIcon className={styles.enterIcon} />
+        <AirPlayExitIcon className={styles.exitIcon} />
       </$.AirPlayButton>
     </ButtonTooltip>
   );

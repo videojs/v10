@@ -13,6 +13,7 @@ import {
 import { Box, type Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
+import playbackStyles from '../../styles/components/playback-status-indicator.styles';
 import styles from '../../styles/components/status-indicator.styles';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
@@ -23,12 +24,12 @@ export function StatusIndicator({ className, ...props }: Props<Omit<CoreProps, '
   return (
     <$.StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={[styles.root, className]} {...props}>
       <Box className={styles.content}>
-        <CaptionsOnIcon className={[styles.icon, styles.icons.captionsOn]} />
-        <CaptionsOffIcon className={[styles.icon, styles.icons.captionsOff]} />
-        <FullscreenEnterIcon className={[styles.icon, styles.icons.fullscreenEnter]} />
-        <FullscreenExitIcon className={[styles.icon, styles.icons.fullscreenExit]} />
-        <PipEnterIcon className={[styles.icon, styles.icons.pipEnter]} />
-        <PipExitIcon className={[styles.icon, styles.icons.pipExit]} />
+        <CaptionsOnIcon className={styles.captionsOnIcon} />
+        <CaptionsOffIcon className={styles.captionsOffIcon} />
+        <FullscreenEnterIcon className={styles.fullscreenEnterIcon} />
+        <FullscreenExitIcon className={styles.fullscreenExitIcon} />
+        <PipEnterIcon className={styles.pipEnterIcon} />
+        <PipExitIcon className={styles.pipExitIcon} />
         <$.StatusIndicator.Value className={styles.value} />
       </Box>
     </$.StatusIndicator.Root>
@@ -37,9 +38,9 @@ export function StatusIndicator({ className, ...props }: Props<Omit<CoreProps, '
 
 export function PlaybackStatusIndicator({ className, ...props }: Props<Omit<CoreProps, 'actions'>> = {}) {
   return (
-    <$.StatusIndicator.Root actions={PLAYBACK_STATUS_ACTIONS} className={[styles.playback.root, className]} {...props}>
-      <PlayIcon className={[styles.playback.icon, styles.playback.play]} />
-      <PauseIcon className={[styles.playback.icon, styles.playback.pause]} />
+    <$.StatusIndicator.Root actions={PLAYBACK_STATUS_ACTIONS} className={[playbackStyles.root, className]} {...props}>
+      <PlayIcon className={playbackStyles.playIcon} />
+      <PauseIcon className={playbackStyles.pauseIcon} />
     </$.StatusIndicator.Root>
   );
 }

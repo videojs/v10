@@ -4,8 +4,8 @@ import { SpinnerIcon } from '@videojs/icons/vjsc';
 import { Box, type Props, Template } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import popupStyles from '../../styles/components/popup.styles';
-import styles from '../../styles/components/slider.styles';
+import thumbnailStyles from '../../styles/components/thumbnail.styles';
+import styles from '../../styles/components/time-slider.styles';
 
 export function TimeSlider({ className, ...props }: Props<CoreProps> = {}) {
   return (
@@ -18,13 +18,13 @@ export function TimeSlider({ className, ...props }: Props<CoreProps> = {}) {
           </$.TimeSlider.Track>
         </Template>
       </$.TimeSlider.Chapters>
-      <$.TimeSlider.Thumb className={[styles.thumb, styles.interactiveThumb]} />
+      <$.TimeSlider.Thumb className={styles.thumb} />
       <$.TimeSlider.Preview className={styles.preview} overflow="visible">
-        <$.Slider.Thumbnail.Root className={[popupStyles.surface, styles.thumbnail]}>
-          <$.Slider.Thumbnail.Image className={styles.image} />
-          <SpinnerIcon className={styles.spinner} />
+        <$.Slider.Thumbnail.Root className={thumbnailStyles.root}>
+          <$.Slider.Thumbnail.Image className={thumbnailStyles.image} />
+          <SpinnerIcon className={thumbnailStyles.spinnerIcon} />
         </$.Slider.Thumbnail.Root>
-        <Box className={styles.previewValue}>
+        <Box className={styles.previewContent}>
           <$.TimeSlider.ChapterTitle className={styles.chapterTitle} />
           <$.TimeSlider.Value className={styles.value} type="pointer" />
         </Box>

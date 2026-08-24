@@ -22,19 +22,3 @@
     transparent
   );
 }
-
-@utility transition-settings-menu {
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
-  transition-duration: 100ms, 100ms, 100ms, 100ms, 250ms, 250ms;
-  transition-property: opacity, filter, transform, scale, width, height;
-
-  &[data-starting-style],
-  &[data-ending-style] {
-    transition-duration: 100ms;
-    transition-property: opacity, filter, transform, scale;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    transition-duration: 0ms;
-  }
-}

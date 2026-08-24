@@ -12,27 +12,27 @@ import styles from './controls.styles';
 
 export function MinimalVideoControls() {
   return (
-    <$.Controls.Root className={styles.controls.root} data-controls="">
-      <$.Controls.Backdrop className={styles.controls.backdrop} />
+    <$.Controls.Root className={styles.root} data-controls="">
+      <$.Controls.Backdrop className={styles.backdrop} />
       <$.Tooltip.Provider>
-        <$.Controls.Group className={styles.controls.start}>
+        <$.Controls.Group className={styles.start}>
           <PlayButton />
           <VolumePopover side="right" orientation="horizontal" />
         </$.Controls.Group>
 
         <$.Controls.Group className={styles.timeSliderGroup}>
-          <$.Time.Group className={styles.time.group}>
-            <$.Time.Value className={styles.time.current} type="current" toggle />
-            <$.Time.Separator className={styles.time.separator} />
-            <$.Time.Value className={styles.time.duration} type="duration" />
+          <$.Time.Group className={styles.timeGroup}>
+            <$.Time.Value className={styles.currentTime} type="current" toggle />
+            <$.Time.Separator className={styles.timeSeparator} />
+            <$.Time.Value className={styles.durationTime} type="duration" />
           </$.Time.Group>
           <TimeSlider />
         </$.Controls.Group>
 
-        <$.Controls.Group className={styles.controls.end}>
+        <$.Controls.Group className={styles.end}>
           <CaptionsButton />
           <VideoSettingsMenu />
-          <$.Controls.Group className={styles.controls.remote}>
+          <$.Controls.Group className={styles.remote}>
             <CastButton />
             <AirPlayButton />
             <PiPButton />

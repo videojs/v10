@@ -1,7 +1,7 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'indicator.css',
+  file: 'indicators.css',
   layer: 'videojs.components',
   rules: {
     root: {

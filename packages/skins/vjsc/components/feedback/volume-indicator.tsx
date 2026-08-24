@@ -10,9 +10,9 @@ export function VolumeIndicator({ className, ...props }: Props<CoreProps> = {}) 
   return (
     <$.VolumeIndicator.Root className={[styles.root, className]} {...props}>
       <$.VolumeIndicator.Fill className={styles.fill}>
-        <VolumeHighIcon className={[styles.icon, styles.icons.high]} />
-        <VolumeLowIcon className={[styles.icon, styles.icons.low]} />
-        <VolumeOffIcon className={[styles.icon, styles.icons.off]} />
+        <VolumeHighIcon className={styles.highIcon} />
+        <VolumeLowIcon className={styles.lowIcon} />
+        <VolumeOffIcon className={styles.offIcon} />
         <$.VolumeIndicator.Value className={styles.value} />
       </$.VolumeIndicator.Fill>
     </$.VolumeIndicator.Root>

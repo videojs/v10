@@ -2,8 +2,15 @@ import { styles } from 'vjsc/styles';
 
 import { defaultSurface } from '../surface';
 
+const icon = ['hidden shrink-0'] as const;
+
+const iconVariants = {
+  default: ['mix-blend-difference'],
+  minimal: ['drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]'],
+} as const;
+
 export default styles({
-  file: 'indicator.css',
+  file: 'indicators.css',
   layer: 'videojs.components',
   rules: {
     root: {
@@ -50,76 +57,40 @@ export default styles({
         ],
       },
     },
-    icon: {
-      className: 'media-status-indicator-icon',
-      utilities: 'hidden shrink-0',
-      variants: {
-        default: 'mix-blend-difference',
-        minimal: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
-      },
+    captionsOnIcon: {
+      className: 'media-status-captions-on-icon',
+      utilities: [...icon, 'group-data-[status=captions-on]/input-status:block'],
+      variants: iconVariants,
+    },
+    captionsOffIcon: {
+      className: 'media-status-captions-off-icon',
+      utilities: [...icon, 'group-data-[status=captions-off]/input-status:block'],
+      variants: iconVariants,
+    },
+    fullscreenEnterIcon: {
+      className: 'media-status-fullscreen-enter-icon',
+      utilities: [...icon, 'group-data-[status=fullscreen]/input-status:block'],
+      variants: iconVariants,
+    },
+    fullscreenExitIcon: {
+      className: 'media-status-fullscreen-exit-icon',
+      utilities: [...icon, 'group-data-[status=exit-fullscreen]/input-status:block'],
+      variants: iconVariants,
+    },
+    pipEnterIcon: {
+      className: 'media-status-pip-enter-icon',
+      utilities: [...icon, 'group-data-[status=pip]/input-status:block'],
+      variants: iconVariants,
+    },
+    pipExitIcon: {
+      className: 'media-status-pip-exit-icon',
+      utilities: [...icon, 'group-data-[status=exit-pip]/input-status:block'],
+      variants: iconVariants,
     },
     value: {
       className: 'media-status-indicator-value',
       utilities: 'ml-auto',
       variants: { default: 'mix-blend-difference', minimal: '' },
-    },
-    icons: {
-      captionsOn: {
-        className: 'media-status-captions-on-icon',
-        utilities: 'group-data-[status=captions-on]/input-status:block',
-      },
-      captionsOff: {
-        className: 'media-status-captions-off-icon',
-        utilities: 'group-data-[status=captions-off]/input-status:block',
-      },
-      fullscreenEnter: {
-        className: 'media-status-fullscreen-enter-icon',
-        utilities: 'group-data-[status=fullscreen]/input-status:block',
-      },
-      fullscreenExit: {
-        className: 'media-status-fullscreen-exit-icon',
-        utilities: 'group-data-[status=exit-fullscreen]/input-status:block',
-      },
-      pipEnter: {
-        className: 'media-status-pip-enter-icon',
-        utilities: 'group-data-[status=pip]/input-status:block',
-      },
-      pipExit: {
-        className: 'media-status-pip-exit-icon',
-        utilities: 'group-data-[status=exit-pip]/input-status:block',
-      },
-    },
-    playback: {
-      root: {
-        className: 'media-playback-status-indicator',
-        utilities: [
-          'group/playback-status col-start-2 row-start-1 grid place-content-center p-4 text-center',
-          'transition-[opacity,scale] duration-200 ease-out motion-reduce:transition-opacity motion-reduce:duration-50',
-          'data-starting-style:scale-85 data-starting-style:opacity-0',
-          'data-ending-style:scale-85 data-ending-style:opacity-0 data-ending-style:duration-100 data-ending-style:ease-in',
-          'motion-reduce:data-starting-style:scale-100 motion-reduce:data-ending-style:scale-100',
-        ],
-        variants: { default: 'rounded-[9999px] bg-black/35 backdrop-blur-sm', minimal: '' },
-      },
-      icon: {
-        className: 'media-playback-status-icon',
-        utilities: [
-          'col-start-1 row-start-1 scale-0 opacity-0',
-          'transition-[opacity,scale] duration-150 ease-out',
-          'motion-reduce:scale-100 motion-reduce:transition-opacity motion-reduce:duration-50',
-        ],
-        variants: { default: 'size-media-icon-lg', minimal: 'size-media-icon-xl' },
-      },
-      play: {
-        className: 'media-status-play-icon',
-        utilities:
-          'group-data-[status=play]/playback-status:scale-100 group-data-[status=play]/playback-status:opacity-100 group-data-[status=play]/playback-status:translate-x-px',
-      },
-      pause: {
-        className: 'media-status-pause-icon',
-        utilities:
-          'group-data-[status=pause]/playback-status:scale-100 group-data-[status=pause]/playback-status:opacity-100',
-      },
     },
   },
 });

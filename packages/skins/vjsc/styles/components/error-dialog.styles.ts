@@ -1,5 +1,6 @@
 import { styles } from 'vjsc/styles';
 
+import { button } from '../button';
 import { defaultSurface } from '../surface';
 
 export default styles({
@@ -59,7 +60,7 @@ export default styles({
     },
     close: {
       className: 'media-error-dialog-close',
-      utilities: 'w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!',
+      utilities: [...button, 'w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!'],
       variants: {
         default: 'h-9',
         minimal: 'h-9.5',

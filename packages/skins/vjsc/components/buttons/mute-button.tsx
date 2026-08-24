@@ -4,14 +4,14 @@ import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/vjs
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/button.styles';
+import styles from '../../styles/components/mute-button.styles';
 
 export function MuteButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <$.MuteButton className={[styles.root, styles.mute, className]} {...props}>
-      <VolumeOffIcon className={[styles.icon, styles.icons.volumeOff]} />
-      <VolumeLowIcon className={[styles.icon, styles.icons.volumeLow]} />
-      <VolumeHighIcon className={[styles.icon, styles.icons.volumeHigh]} />
+    <$.MuteButton className={[styles.root, className]} {...props}>
+      <VolumeOffIcon className={styles.offIcon} />
+      <VolumeLowIcon className={styles.lowIcon} />
+      <VolumeHighIcon className={styles.highIcon} />
     </$.MuteButton>
   );
 }

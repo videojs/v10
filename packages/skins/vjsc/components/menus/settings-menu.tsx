@@ -4,27 +4,26 @@ import * as $ from '@videojs/core/vjsc';
 import { GearIcon } from '@videojs/icons/vjsc';
 import { type PropsWithChildren, Text } from 'vjsc/components';
 
-import buttonStyles from '../../styles/components/button.styles';
 import styles from '../../styles/components/menu.styles';
-import popupStyles from '../../styles/components/popup.styles';
+import tooltipStyles from '../../styles/components/tooltip.styles';
 
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
     <$.Menu.Root side="top" align="center" {...props}>
       <$.Tooltip.Root side="top">
         <$.Tooltip.Trigger>
-          <$.Menu.Trigger className={[buttonStyles.root, styles.trigger]}>
-            <GearIcon className={[buttonStyles.icon, styles.triggerIcon]} />
-            <Text className={styles.srOnly} token={settingsText.key}>
+          <$.Menu.Trigger className={styles.settingsTrigger}>
+            <GearIcon className={styles.settingsIcon} />
+            <Text className={styles.triggerLabel} token={settingsText.key}>
               {settingsText.text}
             </Text>
           </$.Menu.Trigger>
         </$.Tooltip.Trigger>
-        <$.Tooltip.Popup className={[popupStyles.surface, popupStyles.tooltip]}>
+        <$.Tooltip.Popup className={tooltipStyles.popup}>
           <Text token={settingsText.key}>{settingsText.text}</Text>
         </$.Tooltip.Popup>
       </$.Tooltip.Root>
-      <$.Menu.Popup className={[popupStyles.surface, popupStyles.popover, styles.root, className]}>
+      <$.Menu.Popup className={[styles.popup, className]}>
         <$.Menu.Content className={styles.content}>{children}</$.Menu.Content>
       </$.Menu.Popup>
     </$.Menu.Root>

@@ -15,7 +15,7 @@ export interface QualityMenuProps extends Omit<
 export function QualityMenu(props: QualityMenuProps = {}) {
   return (
     <Submenu
-      icon={<SwitchesIcon className={styles.icon} />}
+      icon={<SwitchesIcon className={styles.triggerItemIcon} />}
       label={<Text token={qualityText.key}>{qualityText.text}</Text>}
       selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
       {...props}

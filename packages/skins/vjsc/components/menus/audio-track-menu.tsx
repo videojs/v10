@@ -15,7 +15,7 @@ export interface AudioTrackMenuProps extends Omit<
 export function AudioTrackMenu(props: AudioTrackMenuProps = {}) {
   return (
     <Submenu
-      icon={<SpeechIcon className={styles.icon} />}
+      icon={<SpeechIcon className={styles.triggerItemIcon} />}
       label={<Text token={audioText.key}>{audioText.text}</Text>}
       selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
       {...props}

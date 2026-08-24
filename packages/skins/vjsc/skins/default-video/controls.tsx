@@ -12,24 +12,24 @@ import styles from './controls.styles';
 
 export function DefaultVideoControls() {
   return (
-    <$.Controls.Root className={styles.controls.root} data-controls="">
-      <$.Controls.Backdrop className={styles.controls.backdrop} />
+    <$.Controls.Root className={styles.root} data-controls="">
+      <$.Controls.Backdrop className={styles.backdrop} />
       <$.Tooltip.Provider>
-        <$.Controls.Group className={styles.controls.primary}>
+        <$.Controls.Group className={styles.primary}>
           <PlayButton />
           <VolumePopover />
 
           <$.Controls.Group className={styles.timeSliderGroup}>
-            <$.Time.Value className={styles.time.current} type="current" />
+            <$.Time.Value className={styles.currentTime} type="current" />
             <TimeSlider />
-            <$.Time.Value className={styles.time.remaining} type="remaining" toggle />
+            <$.Time.Value className={styles.remainingTime} type="remaining" toggle />
           </$.Controls.Group>
 
-          <CaptionsButton className={styles.buttons.captions} />
+          <CaptionsButton className={styles.captionsButton} />
           <VideoSettingsMenu />
         </$.Controls.Group>
 
-        <$.Controls.Group className={styles.controls.secondary}>
+        <$.Controls.Group className={styles.secondary}>
           <CastButton />
           <AirPlayButton />
           <PiPButton />

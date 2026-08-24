@@ -3,7 +3,7 @@ import { styles } from 'vjsc/styles';
 import { defaultSurface } from '../surface';
 
 export default styles({
-  file: 'indicator.css',
+  file: 'indicators.css',
   layer: 'videojs.components',
   rules: {
     root: {
@@ -64,31 +64,33 @@ export default styles({
         ],
       },
     },
-    icon: {
-      className: 'media-volume-indicator-icon',
-      utilities: 'hidden shrink-0',
-      variants: {
-        default: 'mix-blend-difference',
-        minimal: 'col-start-1 row-start-1 drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
-      },
-    },
     value: {
       className: 'media-volume-indicator-value',
       utilities: [],
       variants: { default: 'ml-auto mix-blend-difference', minimal: 'col-start-3 row-start-1' },
     },
-    icons: {
-      high: {
-        className: 'media-volume-high-indicator-icon',
-        utilities: 'group-data-[level=high]/volume-status:block',
+    highIcon: {
+      className: 'media-volume-high-indicator-icon',
+      utilities: 'hidden shrink-0 group-data-[level=high]/volume-status:block',
+      variants: {
+        default: 'mix-blend-difference',
+        minimal: 'col-start-1 row-start-1 drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
       },
-      low: {
-        className: 'media-volume-low-indicator-icon',
-        utilities: 'group-data-[level=low]/volume-status:block',
+    },
+    lowIcon: {
+      className: 'media-volume-low-indicator-icon',
+      utilities: 'hidden shrink-0 group-data-[level=low]/volume-status:block',
+      variants: {
+        default: 'mix-blend-difference',
+        minimal: 'col-start-1 row-start-1 drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
       },
-      off: {
-        className: 'media-volume-off-indicator-icon',
-        utilities: 'group-data-[level=off]/volume-status:block',
+    },
+    offIcon: {
+      className: 'media-volume-off-indicator-icon',
+      utilities: 'hidden shrink-0 group-data-[level=off]/volume-status:block',
+      variants: {
+        default: 'mix-blend-difference',
+        minimal: 'col-start-1 row-start-1 drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
       },
     },
   },

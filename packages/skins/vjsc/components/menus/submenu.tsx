@@ -21,7 +21,7 @@ export function Submenu({
 >) {
   return (
     <$.Menu.Root {...props}>
-      <$.Menu.Trigger className={[styles.item, styles.option]}>
+      <$.Menu.Trigger className={styles.triggerItem}>
         {icon}
         {label}
         <Text className={styles.hint}>
@@ -29,8 +29,8 @@ export function Submenu({
           <MenuChevron />
         </Text>
       </$.Menu.Trigger>
-      <$.Menu.Content {...props} className={[styles.submenu, className]}>
-        <$.Menu.Item className={[styles.item, styles.back]}>
+      <$.Menu.Content {...props} className={[styles.content, className]}>
+        <$.Menu.Item className={styles.backItem}>
           <MenuChevron flipped />
           {label}
         </$.Menu.Item>

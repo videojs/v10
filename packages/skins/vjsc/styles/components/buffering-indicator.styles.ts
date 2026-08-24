@@ -1,7 +1,7 @@
 import { styles } from 'vjsc/styles';
 
 export default styles({
-  file: 'indicator.css',
+  file: 'indicators.css',
   layer: 'videojs.components',
   rules: {
     root: {
@@ -12,7 +12,7 @@ export default styles({
         'not-data-visible:[--media-spinner-animation:none] data-visible:grid motion-reduce:[--media-spinner-animation:none]',
       ],
     },
-    spinner: {
+    spinnerIcon: {
       className: 'media-buffering-spinner-icon',
       utilities: 'relative z-30 size-media-icon',
       variants: {

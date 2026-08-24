@@ -7,10 +7,10 @@ import styles from '../../styles/components/menu.styles';
 
 export function RadioItem({ children, className, ...props }: PropsWithChildren<MenuItemProps>) {
   return (
-    <$.Menu.RadioItem className={[styles.item, styles.option, className]} {...props}>
+    <$.Menu.RadioItem className={[styles.radioItem, className]} {...props}>
       {children}
-      <$.Menu.ItemIndicator forceMount className={styles.indicator}>
-        <CheckIcon className={styles.icon} />
+      <$.Menu.ItemIndicator forceMount className={styles.itemIndicator}>
+        <CheckIcon className={styles.radioItemIcon} />
       </$.Menu.ItemIndicator>
     </$.Menu.RadioItem>
   );

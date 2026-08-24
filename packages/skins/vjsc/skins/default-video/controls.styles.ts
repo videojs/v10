@@ -24,87 +24,81 @@ export default styles({
   file: 'controls.css',
   layer: 'videojs.components',
   rules: {
-    controls: {
-      root: {
-        className: 'media-controls-root',
-        utilities: [
-          'group/controls contents p-1 text-white',
-          '[--media-popover-side-offset:--spacing(3)]',
-          '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
-          '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
-          '@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10',
-          '@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control',
-          'text-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
-          ...defaultSurfaceAtLarge,
-          '@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3',
-          '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
-          '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
-          '@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm',
-          'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
-        ],
-      },
-      backdrop: {
-        className: 'media-controls-backdrop',
-        utilities: [
-          'pointer-events-none absolute inset-0 rounded-[inherit] opacity-0',
-          '@lg/media-root:inset-auto @lg/media-root:bottom-[-0.5rem] @lg/media-root:left-1/2 @lg/media-root:h-[100cqh] @lg/media-root:w-[100cqw] @lg/media-root:-translate-x-1/2',
-          '@2xl/media-root:bottom-[-0.75rem]',
-          'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
-          'transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100',
-        ],
-      },
-      primary: {
-        className: 'media-controls-primary',
-        utilities: [
-          'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control',
-          ...defaultSurface,
-          'p-1',
-          '@lg/media-root:contents',
-          '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
-          '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
-          '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
-          '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1',
-          'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
-        ],
-      },
-      secondary: {
-        className: 'media-controls-secondary',
-        utilities: [
-          'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control',
-          ...defaultSurface,
-          'p-1',
-          '@lg/media-root:contents',
-          '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
-          '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
-          '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
-          '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1',
-          'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
-        ],
-      },
+    root: {
+      className: 'media-controls-root',
+      utilities: [
+        'group/controls contents p-1 text-white',
+        '[--media-popover-side-offset:--spacing(3)]',
+        '[--media-tooltip-side-offset:var(--media-popover-side-offset)]',
+        '[--media-popover-boundary-offset:0.75rem] [--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
+        '@lg/media-root:absolute @lg/media-root:inset-x-2 @lg/media-root:bottom-2 @lg/media-root:z-10',
+        '@lg/media-root:flex @lg/media-root:items-center @lg/media-root:gap-px @lg/media-root:rounded-media-control',
+        'text-shadow-[0_1px_0_rgb(0_0_0/0.15)]',
+        ...defaultSurfaceAtLarge,
+        '@2xl/media-root:inset-x-3 @2xl/media-root:bottom-3',
+        '@lg/media-root:not-data-visible:pointer-events-none @lg/media-root:not-data-visible:opacity-0',
+        '@lg/media-root:motion-safe:not-data-visible:scale-95 @lg/media-root:motion-safe:not-data-visible:translate-y-1',
+        '@lg/media-root:pointer-fine:motion-safe:not-data-visible:blur-sm',
+        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
+      ],
     },
-    buttons: {
-      captions: {
-        className: 'media-default-captions-button',
-        utilities: '@max-lg/media-root:hidden',
-      },
+    backdrop: {
+      className: 'media-controls-backdrop',
+      utilities: [
+        'pointer-events-none absolute inset-0 rounded-[inherit] opacity-0',
+        '@lg/media-root:inset-auto @lg/media-root:bottom-[-0.5rem] @lg/media-root:left-1/2 @lg/media-root:h-[100cqh] @lg/media-root:w-[100cqw] @lg/media-root:-translate-x-1/2',
+        '@2xl/media-root:bottom-[-0.75rem]',
+        'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
+        'transition-opacity duration-(--media-controls-transition-duration) ease-out data-visible:opacity-100',
+      ],
+    },
+    primary: {
+      className: 'media-controls-primary',
+      utilities: [
+        'absolute inset-x-2 bottom-2 z-10 flex origin-bottom items-center gap-px rounded-media-control',
+        ...defaultSurface,
+        'p-1',
+        '@lg/media-root:contents',
+        '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
+        '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
+        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
+        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:translate-y-1',
+        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
+      ],
+    },
+    secondary: {
+      className: 'media-controls-secondary',
+      utilities: [
+        'absolute top-2 right-2 z-10 flex origin-top items-center gap-px rounded-media-control',
+        ...defaultSurface,
+        'p-1',
+        '@lg/media-root:contents',
+        '@max-lg/media-root:group-[:not([data-visible])]/controls:pointer-events-none',
+        '@max-lg/media-root:group-[:not([data-visible])]/controls:opacity-0',
+        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:scale-95',
+        '@max-lg/media-root:motion-safe:group-[:not([data-visible])]/controls:-translate-y-1',
+        'transition-[filter,opacity,scale,translate] duration-(--media-controls-transition-duration) ease-out',
+      ],
+    },
+    captionsButton: {
+      className: 'media-default-captions-button',
+      utilities: '@max-lg/media-root:hidden',
     },
     timeSliderGroup: {
-      className: 'media-time-controls',
+      className: 'media-time-slider-group',
       utilities: ['@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3'],
     },
-    time: {
-      current: {
-        className: 'media-time-current',
-        utilities: 'tabular-nums',
-      },
-      remaining: {
-        className: 'media-time-remaining',
-        utilities: [
-          'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
-          '@max-[16rem]/media-time:hidden',
-          'focus-visible:outline-white focus-visible:outline-offset-2',
-        ],
-      },
+    currentTime: {
+      className: 'media-time-current',
+      utilities: 'tabular-nums',
+    },
+    remainingTime: {
+      className: 'media-time-remaining',
+      utilities: [
+        'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
+        '@max-[16rem]/media-time:hidden',
+        'focus-visible:outline-white focus-visible:outline-offset-2',
+      ],
     },
   },
 });

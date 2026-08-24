@@ -15,7 +15,7 @@ export interface PlaybackRateMenuProps extends Omit<
 export function PlaybackRateMenu(props: PlaybackRateMenuProps = {}) {
   return (
     <Submenu
-      icon={<SpeedIcon className={styles.icon} />}
+      icon={<SpeedIcon className={styles.triggerItemIcon} />}
       label={<Text token={speedText.key}>{speedText.text}</Text>}
       selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
       {...props}

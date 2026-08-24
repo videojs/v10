@@ -4,15 +4,15 @@ import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/icons/vjsc';
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/button.styles';
+import styles from '../../styles/components/fullscreen-button.styles';
 import { ButtonTooltip } from './button-tooltip';
 
 export function FullscreenButton({ className, ...props }: Props<CoreProps> = {}) {
   return (
     <ButtonTooltip side="top">
-      <$.FullscreenButton className={[styles.root, styles.fullscreen, className]} {...props}>
-        <FullscreenEnterIcon className={[styles.icon, styles.icons.fullscreenEnter]} />
-        <FullscreenExitIcon className={[styles.icon, styles.icons.fullscreenExit]} />
+      <$.FullscreenButton className={[styles.root, className]} {...props}>
+        <FullscreenEnterIcon className={styles.enterIcon} />
+        <FullscreenExitIcon className={styles.exitIcon} />
       </$.FullscreenButton>
     </ButtonTooltip>
   );

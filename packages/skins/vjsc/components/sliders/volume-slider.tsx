@@ -3,7 +3,7 @@ import * as $ from '@videojs/core/vjsc';
 import type { Props } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/slider.styles';
+import styles from '../../styles/components/volume-slider.styles';
 
 export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
   return (
@@ -11,7 +11,7 @@ export function VolumeSlider({ className, ...props }: Props<CoreProps> = {}) {
       <$.VolumeSlider.Track className={styles.track}>
         <$.VolumeSlider.Fill className={styles.fill} />
       </$.VolumeSlider.Track>
-      <$.VolumeSlider.Thumb className={[styles.thumb, styles.persistentThumb]} />
+      <$.VolumeSlider.Thumb className={styles.thumb} />
     </$.VolumeSlider.Root>
   );
 }

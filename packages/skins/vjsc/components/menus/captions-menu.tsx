@@ -15,7 +15,7 @@ export interface CaptionsMenuProps extends Omit<
 export function CaptionsMenu(props: CaptionsMenuProps = {}) {
   return (
     <Submenu
-      icon={<CaptionsOffIcon className={styles.icon} />}
+      icon={<CaptionsOffIcon className={styles.triggerItemIcon} />}
       label={<Text token={captionsText.key}>{captionsText.text}</Text>}
       selectedLabel={<Text className={styles.hintLabel} data-part="hint" />}
       {...props}
