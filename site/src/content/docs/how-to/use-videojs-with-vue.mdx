@@ -55,21 +55,20 @@ If your Vue component needs to react to player state or call a player action, wa
 ```vue
 <script setup lang="ts">
 import type { VideoPlayerElement } from '@videojs/html/video/player';
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 const player = ref<VideoPlayerElement | null>(null);
 const paused = ref(true);
 let unsubscribe = () => {};
 
-onMounted(async () => {
-  await customElements.whenDefined('video-player');
+onMounted(() => {
   const store = player.value!.store;
   const sync = () => (paused.value = store.paused);
   sync();
   unsubscribe = store.subscribe(sync);
 });
 
-onBeforeUnmount(() => unsubscribe());
+onUnmounted(() => unsubscribe());
 </script>
 
 <template>
@@ -78,7 +77,22 @@ onBeforeUnmount(() => unsubscribe());
 </template>
 ```
 
-Use the store for player state and actions. You can still listen for native media events on the `<video>`, `<audio>`, or media custom element when you need the event itself.
+Use the store for player state and actions. Unsubscribe in `onUnmounted`.
+
+When you need the native event itself, attach a listener to the `<video>`, `<audio>`, or media custom element:
+
+```vue
+<script setup lang="ts">
+function handleLoadedMetadata(event: Event) {
+  const media = event.currentTarget as HTMLVideoElement;
+  console.log(`Duration: ${media.duration} seconds`);
+}
+</script>
+
+<template>
+  <video @loadedmetadata="handleLoadedMetadata"><!-- sources and tracks --></video>
+</template>
+```
 
 ## Style Vue components
 
