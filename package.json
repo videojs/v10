@@ -26,6 +26,7 @@
     "dev:prepare": "vp run -w prepare:dev",
     "dev:packages": "vp run --fail-if-no-match --filter='./packages/*' --filter='!@videojs/cli' build && VP_PACK_WATCH=true vp run --fail-if-no-match --filter='./packages/*' --parallel --ignore-depends-on --no-cache dev",
     "dev:sandbox": "vp run @videojs/sandbox#dev",
+    "dev:sandbox:https": "vp run @videojs/sandbox#dev:https",
     "lint": "vp check --no-lint && vp lint --quiet",
     "lint:anti-slop": "vp lint",
     "lint:fix": "vp check --fix",
