@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
 import {
   attachMediaKeys,
+  type DrmSystemsConfig,
   fetchLicense,
   fetchServerCertificate,
   requestKeySystemAccess,
@@ -141,10 +142,14 @@ function makeContext(initial: MediaKeysContext = {}) {
   };
 }
 
-function setupSetupMediaKeys(initialState: MediaKeysState = {}, initialContext: MediaKeysContext = {}) {
+function setupSetupMediaKeys(
+  initialState: MediaKeysState = {},
+  initialContext: MediaKeysContext = {},
+  drm: DrmSystemsConfig = DRM_CONFIG
+) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const reactor = setupMediaKeys.setup({ state, context, config: { drm: DRM_CONFIG } });
+  const reactor = setupMediaKeys.setup({ state, context, config: { drm } });
   return { state, context, reactor };
 }
 
@@ -342,6 +347,80 @@ describe('setupMediaKeys', () => {
     expect(fetchLicense).toHaveBeenCalledWith(DRM_CONFIG['com.widevine.alpha'].licenseUrl, message, expect.anything(), {
       'Content-Type': 'application/octet-stream',
     });
+
+    reactor.destroy();
+  });
+
+  it('resolves a function-valued license server when the exchange runs', async () => {
+    const eme = makeFakeEme();
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
+    // The Mux flavor's shape: the Media holds the source, so the URL is not
+    // known when the engine is constructed.
+    const licenseUrl = vi.fn(() => 'https://license.example.com/minted');
+    const { reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY]) },
+      { mediaElement: document.createElement('video') },
+      { 'com.widevine.alpha': { licenseUrl } }
+    );
+
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    const message = new Uint8Array([1, 2, 3]).buffer;
+    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message }));
+
+    await vi.waitFor(() =>
+      expect(fetchLicense).toHaveBeenCalledWith(
+        'https://license.example.com/minted',
+        message,
+        expect.anything(),
+        expect.anything()
+      )
+    );
+
+    reactor.destroy();
+  });
+
+  it('resolves a function-valued server certificate', async () => {
+    const eme = makeFakeEme('com.apple.fps');
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    const { context, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([FAIRPLAY_KEY]) },
+      { mediaElement: document.createElement('video') },
+      {
+        'com.apple.fps': {
+          licenseUrl: () => 'https://license.example.com/fairplay',
+          serverCertificateUrl: () => 'https://license.example.com/minted-appcert',
+        },
+      }
+    );
+
+    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
+    expect(fetchServerCertificate).toHaveBeenCalledWith(
+      'https://license.example.com/minted-appcert',
+      expect.anything()
+    );
+
+    reactor.destroy();
+  });
+
+  it('skips the certificate phase when its resolver yields nothing', async () => {
+    const eme = makeFakeEme('com.apple.fps');
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    const { context, reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([FAIRPLAY_KEY]) },
+      { mediaElement: document.createElement('video') },
+      {
+        'com.apple.fps': {
+          licenseUrl: () => 'https://license.example.com/fairplay',
+          serverCertificateUrl: () => undefined,
+        },
+      }
+    );
+
+    // Same as naming no certificate URL at all: attachment proceeds rather than
+    // parking the source.
+    await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
+    expect(fetchServerCertificate).not.toHaveBeenCalled();
 
     reactor.destroy();
   });
