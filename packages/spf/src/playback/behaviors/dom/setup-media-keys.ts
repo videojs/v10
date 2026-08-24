@@ -58,6 +58,7 @@ import {
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
   requestKeySystemAccess,
+  resolveDrmUrl,
   shapeLicenseRequest,
   toCencInitData,
 } from '../../../media/dom/eme';
@@ -157,14 +158,18 @@ function setupMediaKeysSetup({
             }
 
             const { keySystem } = result;
-            const { licenseUrl, serverCertificateUrl } = config.drm[keySystem]!;
+            // Resolved once per negotiation. `keySystemCandidates` only offers a
+            // system whose license server resolves, so this is a string.
+            const entry = config.drm[keySystem]!;
+            const licenseUrl = resolveDrmUrl(entry.licenseUrl)!;
+            const serverCertificateUrl = resolveDrmUrl(entry.serverCertificateUrl);
             const mediaKeys = await result.access.createMediaKeys();
             if (controller.signal.aborted) return;
 
             // FairPlay can't generate a license request without the server
             // (application) certificate, so its failure parks the source like
             // an unusable key system rather than proceeding to certain
-            // failure. Skipped entirely when the config names no URL.
+            // failure. Skipped entirely when no certificate URL resolves.
             if (serverCertificateUrl !== undefined) {
               try {
                 const certificate = await fetchServerCertificate(serverCertificateUrl, controller.signal);

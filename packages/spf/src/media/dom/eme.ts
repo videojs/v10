@@ -11,10 +11,12 @@ import { buildMimeCodec } from './mse/mediasource-setup';
 export {
   type DrmSystemConfig,
   type DrmSystemsConfig,
+  type DrmUrl,
   declaredDrmKeys,
   declaredEncryptionScheme,
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
+  resolveDrmUrl,
   toCencInitData,
 } from '../drm';
 

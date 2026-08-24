@@ -13,23 +13,56 @@ import {
 } from './types';
 
 /**
- * Where one key system's licenses come from. Structurally mirrors
- * `@videojs/media`'s `DrmSystemConfig`, so a `source.drm` entry passes through
- * adapters unchanged; defined locally so driving an engine directly costs no
- * `@videojs/media`.
+ * A configured DRM URL: the value itself, or a resolver asked for it.
+ *
+ * A resolver exists because license servers are per-source while engine config
+ * is per-engine. A Media holding a structured source names the key systems it
+ * could ever license once, and resolves each URL from whatever source is
+ * current — no engine rebuild when the source changes.
+ *
+ * `undefined`, returned or given outright, means this key system has no license
+ * server for the current source. Its renditions then prune exactly as an
+ * unnamed system's do, so "named but unlicensable" and "not named" agree.
+ *
+ * Synchronous by necessity: {@link keySystemCandidates} runs inside rendition
+ * pruning, which is a synchronous selection constraint. Resolvers are called
+ * during pruning as well as at license time, so keep them cheap and free of
+ * side effects.
+ */
+export type DrmUrl = string | undefined | (() => string | undefined);
+
+/**
+ * Where one key system's licenses come from. Accepts `@videojs/media`'s
+ * `DrmSystemConfig` — a `source.drm` entry passes through adapters unchanged —
+ * and additionally takes a resolver per URL. Defined locally so driving an
+ * engine directly costs no `@videojs/media`.
  */
 export interface DrmSystemConfig {
   /** License server the CDM's license request is POSTed to. */
-  licenseUrl: string;
+  licenseUrl: DrmUrl;
   /**
    * URL of the DRM server (application) certificate. FairPlay needs one unless
    * its CDM is pre-provisioned; Widevine and PlayReady ignore it.
    */
-  serverCertificateUrl?: string | undefined;
+  serverCertificateUrl?: DrmUrl;
 }
 
 /** License servers keyed by EME key-system id — the shape of `source.drm`. */
 export type DrmSystemsConfig = Partial<Record<string, DrmSystemConfig>>;
+
+/**
+ * Resolve a {@link DrmUrl}. A resolver that throws answers `undefined`: this is
+ * called from a selection constraint, where an exception would fail the whole
+ * pruning pass, and a system whose URL can't be produced is unusable anyway.
+ */
+export function resolveDrmUrl(url: DrmUrl): string | undefined {
+  if (typeof url !== 'function') return url;
+  try {
+    return url();
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * EME key-system id per HLS `KEYFORMAT` identity. Widevine declares itself by
@@ -123,13 +156,19 @@ export function toCencInitData(keySystem: string, bytes: Uint8Array<ArrayBuffer>
 
 /**
  * The key systems worth asking the CDM for: declared by the presentation's
- * keys *and* holding a configured license server, in {@link KEY_SYSTEM_PREFERENCE}
+ * keys *and* resolving to a license server, in {@link KEY_SYSTEM_PREFERENCE}
  * order. Keys without a recognized DRM `KEYFORMAT` (e.g. `identity` AES-128)
  * contribute nothing.
+ *
+ * A resolved license server rather than a named entry is what counts, so a
+ * config naming every system it could ever license still refuses the sources it
+ * holds no credentials for.
  */
 export function keySystemCandidates(keys: readonly MediaPlaylistKey[], drm: DrmSystemsConfig): string[] {
   const declared = new Set(
     keys.map((key) => (key.keyFormat === undefined ? undefined : KEY_SYSTEM_BY_KEY_FORMAT[key.keyFormat]))
   );
-  return KEY_SYSTEM_PREFERENCE.filter((keySystem) => declared.has(keySystem) && drm[keySystem] !== undefined);
+  return KEY_SYSTEM_PREFERENCE.filter(
+    (keySystem) => declared.has(keySystem) && resolveDrmUrl(drm[keySystem]?.licenseUrl) !== undefined
+  );
 }
