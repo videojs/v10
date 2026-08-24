@@ -3,6 +3,15 @@ import { defineConfig } from 'vite-plus';
 import { neutralLibraryConfig } from '../../build/pack.ts';
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: 'vp pack',
+        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+      },
+    },
+  },
   test: {
     projects: [
       {

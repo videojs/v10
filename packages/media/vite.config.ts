@@ -36,6 +36,15 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
 });
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: 'vp pack',
+        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+      },
+    },
+  },
   define: {
     __DEV__: 'true',
     __PLAYER_VERSION__: JSON.stringify('10.0.0-beta.25'),

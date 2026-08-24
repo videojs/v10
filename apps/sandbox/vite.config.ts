@@ -152,7 +152,7 @@ export default defineConfig({
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }, '@videojs/html#build:cdn'],
         // The app-shell plugin creates this file for the build and removes it
         // afterwards. It is a temporary path, not a cache input or output.
-        input: [{ auto: true }, '!src/index.html'],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo', '!src/index.html'],
         output: [{ auto: true }, '!src/index.html'],
       },
     },

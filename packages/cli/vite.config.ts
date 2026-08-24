@@ -24,6 +24,7 @@ export default defineConfig({
       build: {
         command: 'pnpm run copy-docs && vp pack',
         dependsOn: ['site#build'],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
       },
     },
   },

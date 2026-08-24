@@ -24,6 +24,15 @@ const pack: PackUserConfig = {
 };
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: 'vp pack && node scripts/check-exports.mjs',
+        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+      },
+    },
+  },
   test: {
     include: ['src/**/*.test.{ts,tsx}'],
   },

@@ -65,12 +65,11 @@
     }
   },
   "scripts": {
-    "build": "node --import tsx scripts/build-icons.ts",
-    "build:watch": "pnpm run build -- --watch",
+    "build:watch": "node --import tsx scripts/build-icons.ts --watch",
     "dev": "pnpm run build:watch",
     "clean": "rimraf dist",
     "format": "node --import tsx scripts/format-icons.ts",
-    "test": "pnpm run test:types && pnpm run build && vp test run",
+    "test": "pnpm run test:types && node --import tsx scripts/build-icons.ts && vp test run",
     "test:types": "tsgo --project tsconfig.test.json"
   },
   "dependencies": {

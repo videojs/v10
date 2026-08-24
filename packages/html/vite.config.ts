@@ -245,13 +245,14 @@ export default defineConfig({
       build: {
         command: 'vp pack --filter package',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
       },
       'build:cdn': {
         command: 'node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn',
         dependsOn: ['build'],
         // Both related Pack configs share this output directory, so Pack may
         // inspect files emitted by the other config. They remain outputs only.
-        input: [{ auto: true }, '!cdn/**'],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo', '!cdn/**'],
       },
     },
   },

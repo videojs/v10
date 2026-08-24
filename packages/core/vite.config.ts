@@ -54,7 +54,15 @@ export default defineConfig({
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
         // The CDN task consumes Core, but its generated output is not an input
         // to Core's locale generators or package build.
-        input: [{ auto: true }, { pattern: '!packages/html/cdn/**', base: 'workspace' }],
+        input: [
+          { auto: true },
+          '!*.tsbuildinfo',
+          '!**/*.tsbuildinfo',
+          { pattern: '!packages/cli/docs', base: 'workspace' },
+          { pattern: '!packages/cli/docs/**', base: 'workspace' },
+          { pattern: '!packages/html/cdn', base: 'workspace' },
+          { pattern: '!packages/html/cdn/**', base: 'workspace' },
+        ],
       },
     },
   },

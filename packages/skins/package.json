@@ -33,7 +33,6 @@
     }
   },
   "scripts": {
-    "build": "vp pack",
     "build:watch": "vp pack --filter skins --watch ./src --no-clean",
     "dev": "vp -C dev dev --host",
     "test": "pnpm run test:types && vp test run",

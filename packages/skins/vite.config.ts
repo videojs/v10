@@ -26,9 +26,15 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
 export default defineConfig({
   run: {
     tasks: {
+      build: {
+        command: 'vp pack',
+        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+      },
       'build:shadcn': {
         command: 'vp -C shadcn pack',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
       },
     },
   },

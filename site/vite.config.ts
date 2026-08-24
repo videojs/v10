@@ -30,9 +30,12 @@ const config: ViteUserConfig = {
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
         input: [
           { auto: true },
+          '!*.tsbuildinfo',
+          '!**/*.tsbuildinfo',
           // The API extractor has no sandbox inputs, but its workspace scan can
           // observe generated files that other builds create in parallel.
           { pattern: '!apps/sandbox/**', base: 'workspace' },
+          { pattern: '!packages/cli/docs', base: 'workspace' },
           { pattern: '!packages/cli/docs/**', base: 'workspace' },
         ],
         output: [
@@ -58,8 +61,9 @@ const config: ViteUserConfig = {
         dependsOn: ['api-docs:generate', 'ejected-skins', 'cdn-manifest'],
         // Astro regenerates and consumes collection schemas during one build.
         // They are tool-managed state rather than stable inputs or outputs.
-        input: [{ auto: true }, '!.astro/**', '!.netlify/**'],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo', '!.astro/**', '!.netlify/**'],
         output: [{ auto: true }, '!.astro/**', '!.netlify/**'],
+        untrackedEnv: ['SHLVL'],
         env: [
           'OAUTH_CLIENT_ID',
           'OAUTH_CLIENT_SECRET',

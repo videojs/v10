@@ -21,6 +21,15 @@ const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
 });
 
 export default defineConfig({
+  run: {
+    tasks: {
+      build: {
+        command: 'vp pack',
+        dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+      },
+    },
+  },
   test: {
     coverage: {
       provider: 'v8',
