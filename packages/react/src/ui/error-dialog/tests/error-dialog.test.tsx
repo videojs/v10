@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
+import { Dialog } from '../../dialog';
 import { ErrorDialog } from '..';
 
 afterEach(() => {
@@ -33,11 +34,11 @@ describe('ErrorDialog', () => {
       <Wrapper>
         <I18nProvider locale="es">
           <ErrorDialog.Root>
-            <ErrorDialog.Popup>
+            <Dialog.Popup>
               <ErrorDialog.Title data-testid="title" />
               <ErrorDialog.Description data-testid="description" />
               <ErrorDialog.Close data-testid="close" />
-            </ErrorDialog.Popup>
+            </Dialog.Popup>
           </ErrorDialog.Root>
         </I18nProvider>
       </Wrapper>

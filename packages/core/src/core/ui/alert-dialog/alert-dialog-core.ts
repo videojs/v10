@@ -9,11 +9,6 @@ export class AlertDialogCore extends DialogCore {
   constructor() {
     super('alertdialog');
   }
-
-  /** @deprecated Use `getPopupAttrs`. */
-  getAttrs(state: AlertDialogState) {
-    return this.getPopupAttrs(state);
-  }
 }
 
 export namespace AlertDialogCore {

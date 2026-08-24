@@ -102,7 +102,7 @@ describe('AlertDialogCore', () => {
     it('returns alertdialog role and aria-modal', () => {
       const core = new AlertDialogCore();
       core.setInput(OPEN);
-      const attrs = core.getAttrs(core.getState());
+      const attrs = core.getPopupAttrs(core.getState());
 
       expect(attrs.role).toBe('alertdialog');
       expect(attrs['aria-modal']).toBe('true');
@@ -113,7 +113,7 @@ describe('AlertDialogCore', () => {
       core.setInput(OPEN);
       core.setTitleId('title-1');
       core.setDescriptionId('desc-1');
-      const attrs = core.getAttrs(core.getState());
+      const attrs = core.getPopupAttrs(core.getState());
 
       expect(attrs['aria-labelledby']).toBe('title-1');
       expect(attrs['aria-describedby']).toBe('desc-1');
@@ -122,7 +122,7 @@ describe('AlertDialogCore', () => {
     it('omits aria-labelledby and aria-describedby when no ids set', () => {
       const core = new AlertDialogCore();
       core.setInput(OPEN);
-      const attrs = core.getAttrs(core.getState());
+      const attrs = core.getPopupAttrs(core.getState());
 
       expect(attrs['aria-labelledby']).toBeUndefined();
       expect(attrs['aria-describedby']).toBeUndefined();

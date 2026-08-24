@@ -1,8 +1,8 @@
-import { AlertDialogCloseElement } from '../../ui/alert-dialog/alert-dialog-close-element';
-import { AlertDialogDescriptionElement } from '../../ui/alert-dialog/alert-dialog-description-element';
-import { AlertDialogTitleElement } from '../../ui/alert-dialog/alert-dialog-title-element';
 import { ControlsElement } from '../../ui/controls/controls-element';
 import { ControlsGroupElement } from '../../ui/controls/controls-group-element';
+import { DialogCloseElement } from '../../ui/dialog/dialog-close-element';
+import { DialogDescriptionElement } from '../../ui/dialog/dialog-description-element';
+import { DialogTitleElement } from '../../ui/dialog/dialog-title-element';
 import { ErrorDialogElement } from '../../ui/error-dialog/error-dialog-element';
 import { MenuCheckboxItemElement } from '../../ui/menu/menu-checkbox-item-element';
 import { MenuElement } from '../../ui/menu/menu-element';
@@ -63,9 +63,9 @@ export function defineControls(): void {
 export function defineErrorDialog(): void {
   // Parent first — child elements consume its context.
   safeDefine(ErrorDialogElement);
-  safeDefine(AlertDialogCloseElement);
-  safeDefine(AlertDialogDescriptionElement);
-  safeDefine(AlertDialogTitleElement);
+  safeDefine(DialogCloseElement);
+  safeDefine(DialogDescriptionElement);
+  safeDefine(DialogTitleElement);
 }
 
 export function defineInputIndicators(): void {

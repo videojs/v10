@@ -32,6 +32,7 @@ import { CaptionsButton } from '@/ui/captions-button';
 import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
+import { Dialog } from '@/ui/dialog';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
@@ -183,7 +184,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
       />
 
       <ErrorDialog.Root>
-        <ErrorDialog.Popup className="media-error">
+        <Dialog.Popup className="media-error">
           <div className="media-error__dialog media-surface">
             <div className="media-error__content">
               <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
@@ -193,7 +194,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
               <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
             </div>
           </div>
-        </ErrorDialog.Popup>
+        </Dialog.Popup>
       </ErrorDialog.Root>
 
       <Controls.Root className="media-surface media-controls media-controls--root">

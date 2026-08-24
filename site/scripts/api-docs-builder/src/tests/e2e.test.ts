@@ -19,6 +19,8 @@
  *   toggle-button/  — Single-part component. Exercises: props, state, data-attrs,
  *                     CSS vars, defaultProps, HTML element, type abbreviation,
  *                     @ignore skipping, ref auto-skip, function-typed props.
+ *   notice/         — Root-only compound component. Exercises: preserving React
+ *                     Root APIs when all other parts come from another component.
  *   gauge/          — Multi-part component. Exercises: primary part detection via
  *                     Core instantiation, sub-parts with/without HTML elements,
  *                     React-only parts (no platforms.html), sub-part data-attr
@@ -215,6 +217,24 @@ describe('Component pipeline (end-to-end)', () => {
       // ── Platforms ──
       // HTML element exists → platforms.html with tagName
       expect(ref.platforms.html).toEqual({ tagName: 'media-toggle-button' });
+    });
+  });
+
+  describe('Notice (root-only compound)', () => {
+    it('keeps its only exported part instead of falling back to a flat reference', () => {
+      const ref = findComponent('Notice')!.reference;
+
+      expect(ref.platforms).toEqual({});
+      expect(Object.keys(ref.parts!)).toEqual(['root']);
+      expect(ref.parts!.root).toMatchObject({
+        name: 'Root',
+        platforms: {
+          html: { tagName: 'media-notice' },
+          react: {},
+        },
+      });
+      expect(ref.parts!.root!.props.open).toMatchObject({ type: 'boolean' });
+      expect(ref.parts!.root!.state.open).toMatchObject({ type: 'boolean' });
     });
   });
 
@@ -498,7 +518,9 @@ describe('Component pipeline (end-to-end)', () => {
   describe('Cross-cutting conventions', () => {
     it('all components are discovered from core/ui directories', () => {
       const names = results.map((r) => r.name).sort();
-      expect(names).toEqual(expect.arrayContaining(['Gauge', 'PiPButton', 'Slider', 'ToggleButton', 'VolumeSlider']));
+      expect(names).toEqual(
+        expect.arrayContaining(['Gauge', 'Notice', 'PiPButton', 'Slider', 'ToggleButton', 'VolumeSlider'])
+      );
     });
 
     it('kebab name matches directory name', () => {

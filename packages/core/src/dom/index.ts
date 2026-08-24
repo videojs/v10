@@ -11,7 +11,6 @@ export * from './hotkey/hotkey-events';
 export * from './player';
 export * from './store/features';
 export * from './store/selectors';
-export * from './ui/alert-dialog';
 export * from './ui/button';
 export * from './ui/container-attrs';
 export * from './ui/dialog';

@@ -79,7 +79,7 @@ export {
 } from './player/create-player';
 // UI
 export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
-export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
+export { AlertDialog } from './ui/alert-dialog';
 export {
   type AudioTrackOption,
   type AudioTrackOptionsProps,

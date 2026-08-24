@@ -1,5 +1,8 @@
 import { flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DialogCloseElement } from '../../dialog/dialog-close-element';
+import { DialogDescriptionElement } from '../../dialog/dialog-description-element';
+import { DialogTitleElement } from '../../dialog/dialog-title-element';
 import { AlertDialogElement } from '../alert-dialog-element';
 
 let tagCounter = 0;
@@ -12,6 +15,10 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   const tag = uniqueTag('test-el');
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
+}
+
+function ensureDefined(tagName: string, Base: CustomElementConstructor): void {
+  if (!customElements.get(tagName)) customElements.define(tagName, Base);
 }
 
 afterEach(() => {
@@ -74,6 +81,30 @@ describe('AlertDialogElement', () => {
 
     expect(el.getAttribute('role')).toBe('alertdialog');
     expect(el.getAttribute('aria-modal')).toBe('true');
+  });
+
+  it('uses generic dialog parts for its accessible name, description, and close action', async () => {
+    ensureDefined(DialogTitleElement.tagName, DialogTitleElement);
+    ensureDefined(DialogDescriptionElement.tagName, DialogDescriptionElement);
+    ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
+
+    const el = createElement(AlertDialogElement);
+    const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
+    const description = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
+    const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
+    el.append(title, description, close);
+    el.open = true;
+
+    document.body.append(el);
+    await el.updateComplete;
+    await title.updateComplete;
+    await description.updateComplete;
+
+    expect(el.getAttribute('aria-labelledby')).toBe(title.id);
+    expect(el.getAttribute('aria-describedby')).toBe(description.id);
+
+    close.click();
+    expect(el.open).toBe(false);
   });
 
   it('dispatches open-change event on close', async () => {

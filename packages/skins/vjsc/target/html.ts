@@ -17,9 +17,9 @@ const componentParts: Readonly<Record<string, Readonly<Record<string, string>>>>
   ErrorDialog: {
     Root: 'ErrorDialog',
     Popup: 'ErrorDialog',
-    Title: 'AlertDialogTitle',
-    Description: 'AlertDialogDescription',
-    Close: 'AlertDialogClose',
+    Title: 'DialogTitle',
+    Description: 'DialogDescription',
+    Close: 'DialogClose',
   },
   Menu: {
     Root: 'Menu',

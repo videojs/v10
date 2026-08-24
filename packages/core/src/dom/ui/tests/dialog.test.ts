@@ -24,6 +24,12 @@ afterEach(() => {
 });
 
 describe('createDialog', () => {
+  it('starts closed', () => {
+    const { dialog } = createTestDialog();
+
+    expect(dialog.input.current).toEqual({ active: false, status: 'idle' });
+  });
+
   it('opens from its trigger', () => {
     const { dialog, onOpenChange } = createTestDialog();
 
@@ -101,32 +107,26 @@ describe('createDialog', () => {
     expect(trigger.hasAttribute('inert')).toBe(false);
   });
 
-  it('only closes the topmost dialog on Escape', async () => {
-    const first = createTestDialog();
-    const second = createTestDialog();
-    const firstPopup = document.createElement('div');
-    const secondPopup = document.createElement('div');
-    document.body.append(firstPopup, secondPopup);
-    first.dialog.setPopupElement(firstPopup);
-    second.dialog.setPopupElement(secondPopup);
-    first.dialog.open();
-    second.dialog.open();
-
-    expect(firstPopup.hasAttribute('inert')).toBe(true);
-    expect(secondPopup.hasAttribute('inert')).toBe(false);
-
+  it('closes on Escape', () => {
+    const { dialog, onOpenChange } = createTestDialog();
+    dialog.open();
+    onOpenChange.mockClear();
     flush();
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-
-    expect(first.dialog.input.current.active).toBe(true);
-    expect(second.dialog.input.current.status).toBe('ending');
-
-    await vi.waitFor(() => expect(second.dialog.input.current.active).toBe(false));
-    expect(firstPopup.hasAttribute('inert')).toBe(false);
-    expect(secondPopup.hasAttribute('inert')).toBe(true);
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    expect(first.dialog.input.current.status).toBe('ending');
+
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('does not close on Escape when disabled', () => {
+    const { dialog, onOpenChange } = createTestDialog({ closeOnEscape: () => false });
+    dialog.open();
+    onOpenChange.mockClear();
+    flush();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 
   it('does not close when an arbitrary button inside the dialog is clicked', () => {
@@ -143,5 +143,33 @@ describe('createDialog', () => {
 
     expect(onOpenChange).not.toHaveBeenCalled();
     expect(dialog.input.current.active).toBe(true);
+  });
+
+  it('restores pre-existing inert state after closing', async () => {
+    const background = document.createElement('div');
+    background.setAttribute('inert', '');
+    const popup = document.createElement('div');
+    document.body.append(background, popup);
+
+    const { dialog } = createTestDialog();
+    dialog.setPopupElement(popup);
+    dialog.open();
+    dialog.close();
+
+    await vi.waitFor(() => expect(dialog.input.current.active).toBe(false));
+    expect(background.hasAttribute('inert')).toBe(true);
+  });
+
+  it('restores background interaction when destroyed', () => {
+    const background = document.createElement('button');
+    const popup = document.createElement('div');
+    document.body.append(background, popup);
+
+    const { dialog } = createTestDialog();
+    dialog.setPopupElement(popup);
+    dialog.open();
+    dialog.destroy();
+
+    expect(background.hasAttribute('inert')).toBe(false);
   });
 });

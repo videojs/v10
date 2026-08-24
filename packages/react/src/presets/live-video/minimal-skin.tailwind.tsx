@@ -52,6 +52,7 @@ import { CaptionsButton } from '@/ui/captions-button';
 import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
+import { Dialog } from '@/ui/dialog';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
@@ -220,7 +221,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
       />
 
       <ErrorDialog.Root>
-        <ErrorDialog.Popup className={error.root}>
+        <Dialog.Popup className={error.root}>
           <div className={error.dialog}>
             <div className={error.content}>
               <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
@@ -230,7 +231,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
               <ErrorDialog.Close className={cn(button.base, button.primary)}></ErrorDialog.Close>
             </div>
           </div>
-        </ErrorDialog.Popup>
+        </Dialog.Popup>
       </ErrorDialog.Root>
 
       <Controls.Root

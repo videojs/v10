@@ -13,7 +13,7 @@ export interface ErrorDialogRootProps {
   children?: ReactNode;
 }
 
-/** Opens from player error state and provides it to the shared alert dialog parts. */
+/** Opens from player error state and provides it to the shared dialog parts. */
 export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   const errorState = usePlayer(selectError);
   const lastError = useRef(errorState?.error ?? null);

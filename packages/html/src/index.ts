@@ -72,11 +72,7 @@ export * from './store/media-attach-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
 export { AirPlayButtonElement } from './ui/airplay-button/airplay-button-element';
-export { AlertDialogCloseElement } from './ui/alert-dialog/alert-dialog-close-element';
-export { AlertDialogDescriptionElement } from './ui/alert-dialog/alert-dialog-description-element';
 export { AlertDialogElement } from './ui/alert-dialog/alert-dialog-element';
-export { AlertDialogTitleElement } from './ui/alert-dialog/alert-dialog-title-element';
-export { type AlertDialogContextValue, alertDialogContext } from './ui/alert-dialog/context';
 // UI Components
 export { AudioTrackRadioGroupElement } from './ui/audio-track-radio-group/audio-track-radio-group-element';
 export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-indicator-element';

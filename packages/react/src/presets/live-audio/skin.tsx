@@ -6,6 +6,7 @@ import { PauseIcon, PlayIcon, RestartIcon, SpinnerIcon, VolumeHighIcon, VolumeLo
 import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
+import { Dialog } from '@/ui/dialog';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
@@ -81,7 +82,7 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
       {children}
 
       <ErrorDialog.Root>
-        <ErrorDialog.Popup className="media-error">
+        <Dialog.Popup className="media-error">
           <div className="media-error__dialog">
             <div className="media-error__content">
               <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
@@ -91,7 +92,7 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
               <ErrorDialog.Close className="media-button media-button--subtle"></ErrorDialog.Close>
             </div>
           </div>
-        </ErrorDialog.Popup>
+        </Dialog.Popup>
       </ErrorDialog.Root>
 
       <div className="media-surface media-controls">

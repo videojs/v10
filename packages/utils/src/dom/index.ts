@@ -17,7 +17,7 @@ export {
 export { getDevicePixelRatio, watchDevicePixelRatio } from './device-pixel-ratio';
 export { isRTL } from './direction';
 export { type OnEventOptions, onEvent, resolveEventTarget } from './event';
-export { getDeepActiveElement } from './focus';
+export { getDeepActiveElement, getTabbableElements } from './focus';
 export { idleCallback } from './idle-callback';
 export {
   EDITABLE_SELECTOR,

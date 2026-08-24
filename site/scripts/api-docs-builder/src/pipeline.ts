@@ -558,7 +558,7 @@ export function buildComponentReference(
 ): ComponentReference | null {
   if (source.partsIndexPath) {
     const parts = discoverParts(source, program, monorepoRoot);
-    if (parts.length > 1) {
+    if (parts.length > 0) {
       return buildMultiPartReference(source, program, parts);
     }
   }

@@ -27,11 +27,11 @@ import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/Basi
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <AlertDialog.Root>
-  <AlertDialog.Popup>
-    <AlertDialog.Title />
-    <AlertDialog.Description />
-    <AlertDialog.Close />
-  </AlertDialog.Popup>
+  <Dialog.Popup>
+    <Dialog.Title />
+    <Dialog.Description />
+    <Dialog.Close />
+  </Dialog.Popup>
 </AlertDialog.Root>
 ```
 </FrameworkCase>
@@ -39,16 +39,16 @@ import basicUsageHtmlTs from "@/components/docs/demos/alert-dialog/html/css/Basi
 <FrameworkCase frameworks={["html"]}>
 ```html
 <media-alert-dialog>
-  <media-alert-dialog-title></media-alert-dialog-title>
-  <media-alert-dialog-description></media-alert-dialog-description>
-  <media-alert-dialog-close></media-alert-dialog-close>
+  <media-dialog-title></media-dialog-title>
+  <media-dialog-description></media-dialog-description>
+  <media-dialog-close></media-dialog-close>
 </media-alert-dialog>
 ```
 </FrameworkCase>
 
 ## Behavior
 
-Use an alert dialog for an urgent message that interrupts the user and requires acknowledgement. Your application controls when it opens and supplies its content. For general modal content, including a player opened from a thumbnail, use <DocsLink slug="reference/dialog">`Dialog`</DocsLink> instead.
+Use an alert dialog for an urgent message that interrupts the user and requires acknowledgement. Your application controls when it opens and supplies its content. `AlertDialog.Root` adds alert semantics and composes with the popup, title, description, and close parts from <DocsLink slug="reference/dialog">`Dialog`</DocsLink>. For general modal content, including a player opened from a thumbnail, use `Dialog.Root` instead.
 
 <FrameworkCase frameworks={["react"]}>
 Use `open` with `onOpenChange` for controlled state, or `defaultOpen` for uncontrolled state. `Root` provides state without rendering an element, while `Popup` renders only while the dialog is open.

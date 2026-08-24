@@ -1,31 +1,9 @@
 import type { State } from '@videojs/store';
-import { containsComposed, getDeepActiveElement, listen } from '@videojs/utils/dom';
+import { containsComposed, getDeepActiveElement, getTabbableElements, listen } from '@videojs/utils/dom';
 
 import type { DialogInput } from '../../core/ui/dialog/dialog-core';
 import { createDismissLayer } from './dismiss-layer';
 import type { TransitionApi } from './transition';
-
-const TABBABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  'audio[controls]',
-  'video[controls]',
-  'iframe',
-  '[contenteditable]:not([contenteditable="false"])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
-
-interface ActiveDialog {
-  token: symbol;
-  isolate: () => void;
-  restore: () => void;
-}
-
-const activeDialogs: ActiveDialog[] = [];
-const inertElements = new WeakMap<HTMLElement, { count: number; wasInert: boolean }>();
 
 export interface DialogOptions {
   /** Transition API for animated open/close. */
@@ -55,8 +33,6 @@ export interface DialogApi {
   setTriggerElement(el: HTMLElement | null): void;
   /** Register the popup for focus management and transitions. */
   setPopupElement(el: HTMLElement | null): void;
-  /** @deprecated Use `setPopupElement`. */
-  setElement(el: HTMLElement | null): void;
   /** Tear down all listeners and subscriptions. */
   destroy(): void;
 }
@@ -70,16 +46,11 @@ export function createDialog(options: DialogOptions): DialogApi {
   let triggerElement: HTMLElement | null = null;
   let previousFocus: HTMLElement | null = null;
   let focusFrame = 0;
-  const isolatedElements = new Set<HTMLElement>();
-  const stackEntry: ActiveDialog = {
-    token: Symbol('dialog'),
-    isolate: isolateBackground,
-    restore: restoreBackground,
-  };
+  const isolatedElements = new Map<HTMLElement, boolean>();
 
   const layer = createDismissLayer({
     transition: options.transition,
-    closeOnEscape: () => isTopDialog(stackEntry) && (options.closeOnEscape?.() ?? true),
+    closeOnEscape: options.closeOnEscape,
     onEscapeDismiss(event) {
       event.preventDefault();
       event.stopPropagation();
@@ -99,7 +70,7 @@ export function createDialog(options: DialogOptions): DialogApi {
     const opening = layer.open(() => popupElement);
     if (!opening) return;
 
-    pushDialog(stackEntry);
+    isolateBackground();
     options.onOpenChange(true);
     scheduleInitialFocus();
 
@@ -120,7 +91,7 @@ export function createDialog(options: DialogOptions): DialogApi {
     closing.then(() => {
       if (layer.signal.aborted || state.current.active) return;
 
-      popDialog(stackEntry);
+      restoreBackground();
       const restoreTarget = triggerElement?.isConnected ? triggerElement : previousFocus;
       if (restoreTarget?.isConnected) restoreTarget.focus();
       previousFocus = null;
@@ -142,7 +113,7 @@ export function createDialog(options: DialogOptions): DialogApi {
   }
 
   function handleDocumentKeydown(event: KeyboardEvent): void {
-    if (event.key !== 'Tab' || !state.current.active || !isTopDialog(stackEntry) || !popupElement) return;
+    if (event.key !== 'Tab' || !state.current.active || !popupElement) return;
 
     const tabbable = getTabbableElements(popupElement);
     if (tabbable.length === 0) {
@@ -165,7 +136,7 @@ export function createDialog(options: DialogOptions): DialogApi {
   }
 
   function handleDocumentFocusin(event: FocusEvent): void {
-    if (!state.current.active || !isTopDialog(stackEntry) || !popupElement) return;
+    if (!state.current.active || !popupElement) return;
     if (event.target instanceof Element && containsComposed(popupElement, event.target)) return;
 
     const target = getTabbableElements(popupElement)[0] ?? popupElement;
@@ -179,7 +150,7 @@ export function createDialog(options: DialogOptions): DialogApi {
   function setPopupElement(el: HTMLElement | null): void {
     if (popupElement !== el) restoreBackground();
     popupElement = el;
-    if (el && state.current.active && isTopDialog(stackEntry)) isolateBackground();
+    if (el && state.current.active) isolateBackground();
     const active = getDeepActiveElement();
     if (el && state.current.active && (!active || !containsComposed(el, active))) {
       scheduleInitialFocus();
@@ -189,7 +160,7 @@ export function createDialog(options: DialogOptions): DialogApi {
   layer.signal.addEventListener('abort', () => {
     cancelAnimationFrame(focusFrame);
     focusFrame = 0;
-    popDialog(stackEntry);
+    restoreBackground();
     popupElement = null;
     triggerElement = null;
     previousFocus = null;
@@ -206,7 +177,6 @@ export function createDialog(options: DialogOptions): DialogApi {
     close: applyClose,
     setTriggerElement,
     setPopupElement,
-    setElement: setPopupElement,
     destroy: layer.destroy,
   };
 
@@ -218,7 +188,7 @@ export function createDialog(options: DialogOptions): DialogApi {
       const parent = current.parentElement;
       if (parent) {
         for (const sibling of parent.children) {
-          if (sibling !== current && sibling instanceof HTMLElement) acquireInert(sibling);
+          if (sibling !== current && sibling instanceof HTMLElement) makeInert(sibling);
         }
         current = parent;
         continue;
@@ -228,70 +198,21 @@ export function createDialog(options: DialogOptions): DialogApi {
       if (!(root instanceof ShadowRoot)) break;
 
       for (const sibling of root.children) {
-        if (sibling !== current && sibling instanceof HTMLElement) acquireInert(sibling);
+        if (sibling !== current && sibling instanceof HTMLElement) makeInert(sibling);
       }
       current = root.host;
     }
   }
 
-  function acquireInert(element: HTMLElement): void {
-    isolatedElements.add(element);
-
-    const entry = inertElements.get(element);
-    if (entry) {
-      entry.count++;
-      return;
-    }
-
-    inertElements.set(element, { count: 1, wasInert: element.hasAttribute('inert') });
+  function makeInert(element: HTMLElement): void {
+    isolatedElements.set(element, element.hasAttribute('inert'));
     element.setAttribute('inert', '');
   }
 
   function restoreBackground(): void {
-    for (const element of isolatedElements) {
-      const entry = inertElements.get(element);
-      if (!entry) continue;
-
-      entry.count--;
-      if (entry.count > 0) continue;
-
-      inertElements.delete(element);
-      if (!entry.wasInert) element.removeAttribute('inert');
+    for (const [element, wasInert] of isolatedElements) {
+      if (!wasInert) element.removeAttribute('inert');
     }
     isolatedElements.clear();
   }
-}
-
-function pushDialog(dialog: ActiveDialog): void {
-  const index = activeDialogs.indexOf(dialog);
-  if (index >= 0) activeDialogs.splice(index, 1);
-
-  activeDialogs.at(-1)?.restore();
-  dialog.restore();
-  activeDialogs.push(dialog);
-  dialog.isolate();
-}
-
-function popDialog(dialog: ActiveDialog): void {
-  const index = activeDialogs.indexOf(dialog);
-  if (index < 0) return;
-
-  const wasTop = index === activeDialogs.length - 1;
-  dialog.restore();
-  activeDialogs.splice(index, 1);
-  if (wasTop) activeDialogs.at(-1)?.isolate();
-}
-
-function isTopDialog(dialog: ActiveDialog): boolean {
-  return activeDialogs.at(-1) === dialog;
-}
-
-function getTabbableElements(root: HTMLElement): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR)).filter(isTabbable);
-}
-
-function isTabbable(element: HTMLElement): boolean {
-  if (element.tabIndex < 0 || element.hidden) return false;
-  if (element.closest('[inert],[hidden],[aria-hidden="true"]')) return false;
-  return true;
 }

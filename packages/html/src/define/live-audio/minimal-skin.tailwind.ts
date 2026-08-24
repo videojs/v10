@@ -30,11 +30,11 @@ function getTemplateHTML() {
       <media-error-dialog class="${error.root}">
         <div class="${error.dialog}">
           <div class="${error.content}">
-            <media-alert-dialog-title class="${error.title}"></media-alert-dialog-title>
-            <media-alert-dialog-description class="${error.description}"></media-alert-dialog-description>
+            <media-dialog-title class="${error.title}"></media-dialog-title>
+            <media-dialog-description class="${error.description}"></media-dialog-description>
           </div>
           <div class="${error.actions}">
-            <media-alert-dialog-close class="${cn(button.base, button.subtle)}"></media-alert-dialog-close>
+            <media-dialog-close class="${cn(button.base, button.subtle)}"></media-dialog-close>
           </div>
         </div>
       </media-error-dialog>
