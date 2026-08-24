@@ -12,6 +12,7 @@ import LegacyBanner from '@/components/LegacyBanner.astro';
 import Posthog from '@/components/Posthog.astro';
 import PrereleaseBanner from '@/components/PrereleaseBanner.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
+import { FEED_CHANNELS } from '@/utils/feeds/feedChannels';
 
 interface Props {
   title: string | string[];
@@ -62,12 +63,24 @@ const fullTitle =
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <link
-      rel="alternate"
-      type="application/rss+xml"
-      title={SITE_TITLE}
-      href={new URL("rss.xml", Astro.site)}
-    />
+    {
+      FEED_CHANNELS.map((feed) => (
+        <>
+          <link
+            rel="alternate"
+            type="application/rss+xml"
+            title={feed.title}
+            href={feed.rssMetadata(Astro.site!).feedUrl.href}
+          />
+          <link
+            rel="alternate"
+            type="application/feed+json"
+            title={feed.title}
+            href={feed.jsonMetadata(Astro.site!).feedUrl.href}
+          />
+        </>
+      ))
+    }
     <meta name="generator" content={Astro.generator} />
     <meta name="algolia-site-verification" content="9CE2D1D6448256D3" />
     {

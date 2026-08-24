@@ -1,0 +1,20 @@
+---
+/**
+ * Feed stand-in for the site's `CodeFrame`, which the `satteriCodeFrame` MDAST
+ * plugin wraps around every standalone code block. The real frame is a set of
+ * React islands (tabs, copy button) that a feed reader strips along with the
+ * code inside it, so feeds swap in this static frame instead.
+ */
+interface Props {
+  title?: string;
+  lang?: string;
+}
+
+const { title, lang } = Astro.props;
+const label = title || lang;
+---
+
+<figure>
+  {label && <figcaption>{label}</figcaption>}
+  <slot />
+</figure>

@@ -1,21 +1,23 @@
-import { getCollection } from 'astro:content';
 import rss from '@astrojs/rss';
-import { SITE_DESCRIPTION, SITE_TITLE } from '@/consts';
+import { BLOG_FEED } from '@/utils/feeds/feedChannels';
+import { buildBlogFeedItems } from '@/utils/feeds/feedItems';
+import { buildChannelCustomData, RSS_NAMESPACES, toRssItems } from '@/utils/feeds/rssFeed';
 
 // TODO cache idk this can be static
 export async function GET(context) {
-  const posts = (await getCollection('blog'))
-    .filter((post) => !post.data.devOnly || import.meta.env.DEV)
-    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+  const site = new URL(context.site);
+  const items = await buildBlogFeedItems(site, { includeDevOnly: import.meta.env.DEV });
 
   return rss({
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
+    title: BLOG_FEED.title,
+    description: BLOG_FEED.description,
     site: context.site,
     trailingSlash: false,
-    items: posts.map((post) => ({
-      ...post.data,
-      link: `/blog/${post.id}`,
-    })),
+    xmlns: RSS_NAMESPACES,
+    customData: buildChannelCustomData({
+      ...BLOG_FEED.rssMetadata(site),
+      lastBuildDate: items[0]?.datePublished,
+    }),
+    items: toRssItems(items),
   });
 }
