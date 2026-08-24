@@ -3,6 +3,7 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 import { playwright } from 'vite-plus/test/browser-playwright';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+import { cachedTaskInputs } from '../../build/run.ts';
 
 const createPackConfig = (mode: PackageBuildMode): PackUserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
@@ -26,7 +27,7 @@ export default defineConfig({
       build: {
         command: 'vp pack',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+        input: cachedTaskInputs,
       },
     },
   },

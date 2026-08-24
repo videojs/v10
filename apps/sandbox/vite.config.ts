@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath, type Plugin } from 'vite-plus';
 
+import { cachedTaskInputs } from '../../build/run.ts';
 import { mirrorTemplatesToSrc } from './scripts/shared';
 
 // Locate @videojs/html through Node resolution rather than a workspace-relative
@@ -152,7 +153,7 @@ export default defineConfig({
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }, '@videojs/html#build:cdn'],
         // The app-shell plugin creates this file for the build and removes it
         // afterwards. It is a temporary path, not a cache input or output.
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo', '!src/index.html'],
+        input: [...cachedTaskInputs, '!src/index.html'],
         output: [{ auto: true }, '!src/index.html'],
       },
     },

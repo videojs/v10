@@ -1,12 +1,14 @@
 import { defineConfig } from 'vite-plus';
 
+import { cachedTaskInputs } from '../../build/run.ts';
+
 export default defineConfig({
   run: {
     tasks: {
       build: {
         command: 'node --import tsx scripts/build-icons.ts',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo', '!dist', '!dist/**'],
+        input: [...cachedTaskInputs, '!dist', '!dist/**'],
       },
     },
   },

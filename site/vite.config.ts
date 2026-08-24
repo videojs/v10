@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
 import type { ViteUserConfig } from 'vite-plus';
 
+import { cachedTaskInputs } from '../build/run.ts';
 import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 
 // Typed as Vite+'s `ViteUserConfig` (Vite's config augmented with `test`) and
@@ -51,21 +52,24 @@ const config: ViteUserConfig = {
       'ejected-skins': {
         command: 'tsx scripts/build-ejected-skins.ts',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
+        input: cachedTaskInputs,
         output: ['src/content/ejected-skins.json'],
       },
       'cdn-manifest': {
         command: 'tsx scripts/build-cdn-manifest.ts',
         dependsOn: [{ task: 'build:cdn', from: ['dependencies', 'devDependencies'] }],
+        input: cachedTaskInputs,
         output: ['src/content/cdn-media.json'],
       },
       build: {
-        command: 'astro build',
+        // Astro observes pnpm's selector-specific lifecycle metadata even though
+        // it does not affect the output, so normalize it for cross-task cache reuse.
+        command: "npm_lifecycle_event=vite-plus npm_lifecycle_script='astro build' astro build",
         dependsOn: ['api-docs:generate', 'ejected-skins', 'cdn-manifest'],
         // Astro regenerates and consumes collection schemas during one build.
         // They are tool-managed state rather than stable inputs or outputs.
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo', '!.astro/**', '!.netlify/**'],
+        input: [...cachedTaskInputs, '!.astro/**', '!.netlify/**'],
         output: [{ auto: true }, '!.astro/**', '!.netlify/**'],
-        untrackedEnv: ['SHLVL'],
         env: [
           'OAUTH_CLIENT_ID',
           'OAUTH_CLIENT_SECRET',

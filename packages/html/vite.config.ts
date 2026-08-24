@@ -16,17 +16,19 @@ import { cdnI18nExternalPlugin } from '../../build/plugins/cdn-i18n-external-plu
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
+import { cachedTaskInputs } from '../../build/run.ts';
 import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
 type CdnBuildMode = 'dev' | 'prod';
 
-const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
+const packageDir = dirname(fileURLToPath(import.meta.url));
+const skinsDir = resolve(packageDir, '../skins/src');
 const srcDir = new URL('./src', import.meta.url).pathname;
 const srcAlias = { '@': srcDir };
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
 const defineEntries = Object.fromEntries(
-  globSync('src/define/**/*.ts')
+  globSync('src/define/**/*.ts', { cwd: packageDir })
     .filter((file) => !file.includes('.test.'))
     .map((file) => {
       const key = file.replace('src/', '').replace('.ts', '');
@@ -35,14 +37,14 @@ const defineEntries = Object.fromEntries(
 );
 
 const presetEntries = Object.fromEntries(
-  globSync('src/presets/*.ts').map((file) => {
+  globSync('src/presets/*.ts', { cwd: packageDir }).map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
     return [key, file];
   })
 );
 
 const iconEntries = Object.fromEntries(
-  globSync('src/icons/**/index.ts').map((file) => {
+  globSync('src/icons/**/index.ts', { cwd: packageDir }).map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
     return [key, file];
   })
@@ -114,6 +116,7 @@ const cdnPresets = [
   'background',
 ];
 const mediaDir = 'src/define/media';
+const mediaDirPath = resolve(packageDir, mediaDir);
 
 /**
  * Media entries, one bundle per module under `src/define/media` — or per flavor,
@@ -130,10 +133,10 @@ const mediaDir = 'src/define/media';
  * where two flavors of one element can end up in a single realm — see the
  * tag-collision note in `define/media/mux-video/spf`.
  */
-const cdnMediaEntries = readdirSync(mediaDir, { withFileTypes: true })
+const cdnMediaEntries = readdirSync(mediaDirPath, { withFileTypes: true })
   .flatMap((entry) => {
     if (entry.isDirectory()) {
-      return globSync(`${mediaDir}/${entry.name}/*.ts`).map((src) => {
+      return globSync(`${mediaDir}/${entry.name}/*.ts`, { cwd: packageDir }).map((src) => {
         const flavor = basename(src, '.ts');
         return { src, name: flavor === 'index' ? `media/${entry.name}` : `media/${entry.name}/${flavor}` };
       });
@@ -145,7 +148,7 @@ const cdnMediaEntries = readdirSync(mediaDir, { withFileTypes: true })
   })
   .sort((a, b) => a.name.localeCompare(b.name));
 
-const cdnLocaleEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
+const cdnLocaleEntries = globSync('src/cdn/locales/*.ts', { cwd: packageDir }).map((file) => ({
   src: file,
   name: `locales/${basename(file, '.ts')}`,
 }));
@@ -245,14 +248,14 @@ export default defineConfig({
       build: {
         command: 'vp pack --filter package',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+        input: cachedTaskInputs,
       },
       'build:cdn': {
         command: 'node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn',
         dependsOn: ['build'],
         // Both related Pack configs share this output directory, so Pack may
         // inspect files emitted by the other config. They remain outputs only.
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo', '!cdn/**'],
+        input: [...cachedTaskInputs, '!cdn/**'],
       },
     },
   },

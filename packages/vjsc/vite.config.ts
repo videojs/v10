@@ -2,6 +2,7 @@ import { defineConfig } from 'vite-plus';
 import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { neutralLibraryConfig } from '../../build/pack.ts';
+import { cachedTaskInputs } from '../../build/run.ts';
 
 const pack: PackUserConfig = {
   ...neutralLibraryConfig,
@@ -29,7 +30,7 @@ export default defineConfig({
       build: {
         command: 'vp pack && node scripts/check-exports.mjs',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+        input: cachedTaskInputs,
       },
     },
   },

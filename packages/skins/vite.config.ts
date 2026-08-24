@@ -6,11 +6,12 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
+import { cachedTaskInputs } from '../../build/run.ts';
 
 const packageDir = import.meta.dirname;
-const skinsDir = resolve('src');
+const skinsDir = resolve(packageDir, 'src');
 const entries = Object.fromEntries(
-  globSync('src/**/*.tailwind.ts').map((file) => {
+  globSync('src/**/*.tailwind.ts', { cwd: packageDir }).map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
     return [key, file];
   })
@@ -29,12 +30,14 @@ export default defineConfig({
       build: {
         command: 'vp pack',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+        input: cachedTaskInputs,
       },
       'build:shadcn': {
         command: 'vp -C shadcn pack',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+        // The registry plugin compares files in its output directory before
+        // rewriting them; those reads must not turn outputs into inputs.
+        input: [...cachedTaskInputs, '!dist/registry', '!dist/registry/**'],
       },
     },
   },

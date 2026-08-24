@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite-plus';
 
 import { baseConfig } from '../../build/pack.ts';
+import { cachedTaskInputs } from '../../build/run.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
@@ -24,7 +25,7 @@ export default defineConfig({
       build: {
         command: 'node --import tsx ../../site/scripts/copy-package-docs.ts cli && vp pack',
         dependsOn: ['site#build'],
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+        input: cachedTaskInputs,
       },
     },
   },

@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite-plus';
 
 import { neutralLibraryConfig } from '../../build/pack.ts';
+import { cachedTaskInputs } from '../../build/run.ts';
 
 export default defineConfig({
   run: {
@@ -8,7 +9,7 @@ export default defineConfig({
       build: {
         command: 'vp pack',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
+        input: cachedTaskInputs,
       },
     },
   },

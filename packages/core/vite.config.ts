@@ -3,6 +3,7 @@ import type { UserConfig as PackUserConfig } from 'vite-plus/pack';
 import { componentSchemaPlugin } from 'vjsc/plugins';
 
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/pack.ts';
+import { cachedTaskInputs } from '../../build/run.ts';
 import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
 import en from './src/core/i18n/locales/en.ts';
 
@@ -56,9 +57,7 @@ export default defineConfig({
         // The CDN task consumes Core, but its generated output is not an input
         // to Core's locale generators or package build.
         input: [
-          { auto: true },
-          '!*.tsbuildinfo',
-          '!**/*.tsbuildinfo',
+          ...cachedTaskInputs,
           { pattern: '!packages/cli/docs', base: 'workspace' },
           { pattern: '!packages/cli/docs/**', base: 'workspace' },
           { pattern: '!packages/html/cdn', base: 'workspace' },
