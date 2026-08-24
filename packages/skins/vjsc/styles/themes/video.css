@@ -19,13 +19,13 @@
 
 @layer videojs.theme.preferences {
   @media (pointer: fine) {
-    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):not([data-controls-visible]) {
       --media-controls-transition-duration: 300ms;
     }
   }
 
   @media (pointer: coarse) {
-    :is(.media-theme-default, .media-theme-minimal):has([data-controls]:not([data-visible])) {
+    :is(.media-theme-default, .media-theme-minimal):not([data-controls-visible]) {
       --media-controls-transition-duration: 150ms;
     }
   }

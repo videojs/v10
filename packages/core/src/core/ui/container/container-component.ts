@@ -1,3 +1,5 @@
 import { defineComponent } from 'vjsc/components';
 
-export default defineComponent({ name: 'Container' });
+import { ContainerDataAttrs } from './data';
+
+export default defineComponent({ name: 'Container', dataAttrs: ContainerDataAttrs });

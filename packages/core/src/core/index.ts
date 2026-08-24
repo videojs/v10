@@ -12,6 +12,8 @@ export * from './ui/captions-radio-group/core';
 export * from './ui/captions-radio-group/data';
 export * from './ui/cast-button/core';
 export * from './ui/cast-button/data';
+export * from './ui/container/core';
+export * from './ui/container/data';
 export * from './ui/controls/core';
 export * from './ui/controls/data';
 export * from './ui/error-dialog/core';

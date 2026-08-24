@@ -270,6 +270,22 @@ describe('Container', () => {
     expect(container.querySelector('span')).toBeTruthy();
   });
 
+  it.each([
+    { controlsVisible: true, expected: '' },
+    { controlsVisible: false, expected: null },
+  ])('reflects controls visibility on the container', ({ controlsVisible, expected }) => {
+    const store = createMockStore({ controlsVisible, userActive: true });
+    const value = createContextValue({ store: store as any });
+
+    const { container } = render(
+      <PlayerContextProvider value={value}>
+        <Container />
+      </PlayerContextProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('data-controls-visible')).toBe(expected);
+  });
+
   it('provides a default accessible name', () => {
     const value = createContextValue();
 

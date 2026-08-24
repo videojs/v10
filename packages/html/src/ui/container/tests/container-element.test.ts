@@ -1,7 +1,13 @@
+import type { AnyPlayerStore } from '@videojs/core/dom';
 import { registerI18n } from '@videojs/core/i18n';
+import { ContextProvider } from '@videojs/element/context';
+import type { MediaControlsState } from '@videojs/media';
+import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n/provider-element';
+import { playerContext } from '../../../player/context';
+import { UIElement } from '../../ui-element';
 import { ContainerElement } from '../container-element';
 
 let tagCounter = 0;
@@ -11,6 +17,40 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
 
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
+}
+
+function createControlsStore(): AnyPlayerStore {
+  return createStore<unknown>()<MediaControlsState>({
+    name: 'controls',
+    state: ({ get, set }) => ({
+      userActive: true,
+      controlsVisible: true,
+      requestControlsLock: () => () => {},
+      toggleControls() {
+        const visible = !(get().controlsVisible as boolean);
+        set({ userActive: visible, controlsVisible: visible });
+        return visible;
+      },
+    }),
+  }) as unknown as AnyPlayerStore;
+}
+
+class TestPlayerProviderElement extends UIElement {
+  readonly store = createControlsStore();
+  readonly #provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#provider.setValue(this.store);
+  }
+
+  setControlsVisible(visible: boolean): void {
+    const state = this.store.state as MediaControlsState;
+    if (state.controlsVisible === visible) return;
+
+    state.toggleControls();
+    flush();
+  }
 }
 
 afterEach(() => {
@@ -26,6 +66,19 @@ describe('ContainerElement', () => {
     expect(container.getAttribute('tabindex')).toBe('0');
     expect(container.getAttribute('role')).toBe('group');
     expect(container.getAttribute('aria-label')).toBe('Media player');
+  });
+
+  it('reflects controls visibility on the container', async () => {
+    const provider = createElement(TestPlayerProviderElement);
+    const container = createElement(ContainerElement);
+    provider.append(container);
+    document.body.append(provider);
+
+    await vi.waitFor(() => expect(container.getAttribute('data-controls-visible')).toBe(''));
+
+    provider.setControlsVisible(false);
+
+    await vi.waitFor(() => expect(container.hasAttribute('data-controls-visible')).toBe(false));
   });
 
   it('preserves explicit role and aria-label', () => {

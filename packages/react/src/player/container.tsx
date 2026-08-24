@@ -1,8 +1,11 @@
+import { ContainerCore, ContainerDataAttrs } from '@videojs/core';
 import {
   createPopupGroup,
   DEFAULT_CONTAINER_ROLE,
   DEFAULT_CONTAINER_TAB_INDEX,
   focusContainer,
+  getStateDataAttrs,
+  selectControls,
 } from '@videojs/core/dom';
 import { labelText } from '@videojs/core/i18n/text/container';
 import { getTextDirection } from '@videojs/utils/i18n';
@@ -19,7 +22,7 @@ import {
 
 import { I18nContext, useTranslator } from '../i18n/context';
 import { useComposedRefs } from '../utils/use-composed-refs';
-import { useContainerAttach } from './context';
+import { useContainerAttach, usePlayer } from './context';
 import { PopupGroupProvider } from './popup-group-context';
 
 export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
@@ -42,6 +45,8 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   const setContainer = useContainerAttach();
   const translator = useTranslator();
   const i18n = useContext(I18nContext);
+  const controls = usePlayer(selectControls);
+  const [core] = useState(() => new ContainerCore());
 
   const [popupGroup] = useState(() => createPopupGroup());
 
@@ -71,6 +76,10 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
     dir: dirProp ?? (lang ? getTextDirection(lang) : undefined),
   };
 
+  if (controls) core.setMedia(controls);
+
+  const stateAttrs = controls ? getStateDataAttrs(core.getState(), ContainerDataAttrs) : undefined;
+
   return (
     <div
       ref={composedRef}
@@ -79,6 +88,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
       {...accessibleNameProps}
       {...localeProps}
       {...props}
+      {...stateAttrs}
       onPointerUp={handlePointerUp}
     >
       <PopupGroupProvider value={popupGroup}>{children}</PopupGroupProvider>

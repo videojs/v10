@@ -21,11 +21,20 @@
     }
 
     img,
-    video,
     svg,
     media-icon {
       display: block;
       max-width: 100%;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      border-radius: inherit;
+      object-fit: var(--media-object-fit, contain);
+      object-position: var(--media-object-position, center);
     }
 
     media-icon > svg {

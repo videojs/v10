@@ -1,4 +1,12 @@
-import { applyContainerAttrs, createPopupGroup, focusContainer, type MediaContainer } from '@videojs/core/dom';
+import { ContainerCore, ContainerDataAttrs } from '@videojs/core';
+import {
+  applyContainerAttrs,
+  applyStateDataAttrs,
+  createPopupGroup,
+  focusContainer,
+  type MediaContainer,
+  selectControls,
+} from '@videojs/core/dom';
 import { labelText } from '@videojs/core/i18n/text/container';
 import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
@@ -6,7 +14,8 @@ import { listen } from '@videojs/utils/dom';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
-import { type ContainerContextValue, containerContext } from '../../player/context';
+import { type ContainerContextValue, containerContext, playerContext } from '../../player/context';
+import { PlayerController } from '../../player/player-controller';
 import { popupGroupContext } from '../../player/popup-group-context';
 import { UIElement } from '../ui-element';
 
@@ -22,6 +31,8 @@ export class ContainerElement extends UIElement implements MediaContainer {
   #disconnect: AbortController | null = null;
   #label: string | null = null;
 
+  readonly #core = new ContainerCore();
+  readonly #controls = new PlayerController(this, playerContext, selectControls);
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #popupGroup = createPopupGroup();
   readonly #popupGroupProvider = new ContextProvider(this, {
@@ -56,6 +67,14 @@ export class ContainerElement extends UIElement implements MediaContainer {
   protected override update(changed: PropertyValues): void {
     super.update(changed);
     this.#applyLabel();
+
+    const controls = this.#controls.value;
+    if (controls) {
+      this.#core.setMedia(controls);
+      applyStateDataAttrs(this, this.#core.getState(), ContainerDataAttrs);
+    } else {
+      this.removeAttribute(ContainerDataAttrs.controlsVisible);
+    }
   }
 
   #register(value: ContainerContextValue | undefined): void {

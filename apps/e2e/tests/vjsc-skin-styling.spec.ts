@@ -9,6 +9,7 @@ const CASES = [
 const WIDTHS = [320, 800] as const;
 const BUFFERING_INDICATOR_SELECTOR =
   '.media-buffering-indicator, media-buffering-indicator, [class~="peer/buffering"], [class~="hidden"][class~="place-content-center"]';
+const CONTROLS_SELECTOR = '.media-controls--root, media-controls, .media-controls';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -501,6 +502,9 @@ async function openVariant(
   const root = page.getByRole('group', { name: 'Media player' });
 
   await expect(root).toBeVisible();
+
+  if (source === 'vjsc') await expect(root).toHaveAttribute('data-controls-visible', '');
+
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
   const poster = root.locator('img[data-loaded], media-poster[data-loaded]').first();
 
@@ -672,18 +676,17 @@ async function seekDragContract(page: Page) {
 }
 
 async function hideControls(root: Locator) {
-  const controls = root
-    .locator('[data-controls], .media-controls--root, .media-controls-root, media-controls, .media-controls')
-    .first();
+  const controls = root.locator(CONTROLS_SELECTOR).first();
 
   await expect(controls).toHaveAttribute('data-visible', '');
   await controls.evaluate((element) => {
     element.removeAttribute('data-visible');
     element.querySelector(':scope > [aria-hidden="true"]')?.removeAttribute('data-visible');
+    element.closest('[role="group"]')?.removeAttribute('data-controls-visible');
   });
   await root.page().waitForTimeout(650);
 
-  return root.evaluate((element) => {
+  return root.evaluate((element, controlsSelector) => {
     const inspect = (target: Element | null) => {
       if (!(target instanceof HTMLElement)) return null;
 
@@ -699,9 +702,7 @@ async function hideControls(root: Locator) {
       };
     };
 
-    const controls = element.querySelector<HTMLElement>(
-      '[data-controls], .media-controls--root, .media-controls-root, media-controls, .media-controls'
-    );
+    const controls = element.querySelector<HTMLElement>(controlsSelector);
     const overlay = inspect(
       element.querySelector('.media-overlay, .media-controls-backdrop') ??
         controls?.querySelector(':scope > [aria-hidden="true"]') ??
@@ -721,7 +722,7 @@ async function hideControls(root: Locator) {
           }
         : null,
     };
-  });
+  }, CONTROLS_SELECTOR);
 }
 
 async function showBuffering(root: Locator) {
@@ -831,9 +832,7 @@ async function enterFullscreen(page: Page, root: Locator) {
 }
 
 async function preferenceSurfaceContract(root: Locator, menu: Locator) {
-  const controls = root
-    .locator('[data-controls], .media-controls--root, .media-controls-root, media-controls, .media-controls')
-    .first();
+  const controls = root.locator(CONTROLS_SELECTOR).first();
 
   const inspect = (target: Locator) =>
     target.evaluate((element) => {
@@ -1127,14 +1126,14 @@ async function errorDialogContract(root: Locator, dialog: Locator) {
 }
 
 async function reducedMotionContract(root: Locator, menu: Locator, tooltipDuration: string) {
-  const rootDurations = await root.evaluate((element) => {
-    const controls = element.querySelector<HTMLElement>('[data-controls]');
+  const rootDurations = await root.evaluate((element, controlsSelector) => {
+    const controls = element.querySelector<HTMLElement>(controlsSelector);
 
     return {
       container: getComputedStyle(element).transitionDuration,
       controls: controls ? getComputedStyle(controls).transitionDuration : null,
     };
-  });
+  }, CONTROLS_SELECTOR);
   const menuDuration = await menu.evaluate((element) => getComputedStyle(element).transitionDuration);
 
   return { ...rootDurations, menu: menuDuration, tooltip: tooltipDuration };
@@ -1159,7 +1158,7 @@ async function rtlMenuContract(root: Locator, submenu: Locator) {
 }
 
 async function layoutContract(root: Locator) {
-  return root.evaluate((element) => {
+  return root.evaluate((element, controlsSelector) => {
     const rootRect = element.getBoundingClientRect();
     const round = (value: number) => Math.round(value * 10) / 10;
     const inspect = (
@@ -1200,7 +1199,7 @@ async function layoutContract(root: Locator) {
     return {
       root: inspect(':scope'),
       poster: inspect('img[data-loaded], media-poster[data-loaded]', { includeRadius: false }),
-      controls: inspect('.media-controls--root, .media-controls-root, .media-controls', { includeGap: false }),
+      controls: inspect(controlsSelector, { includeGap: false }),
       primary: inspect('.media-controls--primary, .media-controls-primary', { includeGap: false }),
       secondary: inspect('.media-controls--secondary, .media-controls-secondary', { includeGap: false }),
       timeline: inspect('.media-time-controls, .media-time-slider-group', {
@@ -1216,7 +1215,7 @@ async function layoutContract(root: Locator) {
       pictureInPicture: inspect('.media-button--pip, .media-pip-button'),
       fullscreen: inspect('.media-button--fullscreen, .media-fullscreen-button'),
     };
-  });
+  }, CONTROLS_SELECTOR);
 }
 
 async function openSettingsMenu(page: Page): Promise<Locator> {

@@ -13,7 +13,7 @@ import styles from './controls.styles';
 
 export function MinimalVideoControls() {
   return (
-    <$.Controls.Root className={styles.root} data-controls="">
+    <$.Controls.Root className={['media-controls', styles.root]}>
       <$.Controls.Backdrop className={styles.backdrop} />
       <$.Tooltip.Provider>
         <$.Controls.Group className={styles.start}>
