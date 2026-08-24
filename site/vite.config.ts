@@ -29,14 +29,16 @@ const config: ViteUserConfig = {
         command: 'tsx scripts/api-docs-builder/src/index.ts',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
         input: [
-          { auto: true },
-          '!*.tsbuildinfo',
-          '!**/*.tsbuildinfo',
-          // The API extractor has no sandbox inputs, but its workspace scan can
-          // observe generated files that other builds create in parallel.
-          { pattern: '!apps/sandbox/**', base: 'workspace' },
-          { pattern: '!packages/cli/docs', base: 'workspace' },
-          { pattern: '!packages/cli/docs/**', base: 'workspace' },
+          // Keep the extractor's workspace-wide TypeScript inputs explicit.
+          // Automatic tracking also observes unrelated generated directories
+          // while Vite/Astro load this config, causing false cache misses.
+          'scripts/api-docs-builder/**',
+          'src/utils/api-reference-overrides.ts',
+          { pattern: 'package.json', base: 'workspace' },
+          { pattern: 'pnpm-lock.yaml', base: 'workspace' },
+          { pattern: 'tsconfig.base.json', base: 'workspace' },
+          { pattern: 'packages/{core,html,media,react,spf,utils}/package.json', base: 'workspace' },
+          { pattern: 'packages/{core,html,media,react,spf,utils}/src/**', base: 'workspace' },
         ],
         output: [
           'src/content/generated-component-reference/**',

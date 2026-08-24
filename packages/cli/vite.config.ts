@@ -22,7 +22,7 @@ export default defineConfig({
   run: {
     tasks: {
       build: {
-        command: 'pnpm run copy-docs && vp pack',
+        command: 'node --import tsx ../../site/scripts/copy-package-docs.ts cli && vp pack',
         dependsOn: ['site#build'],
         input: [{ auto: true }, '!*.tsbuildinfo', '!**/*.tsbuildinfo'],
       },

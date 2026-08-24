@@ -50,7 +50,8 @@ export default defineConfig({
   run: {
     tasks: {
       build: {
-        command: 'pnpm run generate:locales && pnpm run generate:i18n-types && vp pack',
+        command:
+          'node --import tsx ./scripts/generate-i18n-locales.ts && node --import tsx ./scripts/generate-i18n-types.ts && vp pack',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
         // The CDN task consumes Core, but its generated output is not an input
         // to Core's locale generators or package build.
