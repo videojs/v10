@@ -363,15 +363,21 @@ export const HLS_SOURCE_IDS = SOURCE_IDS.filter(
  */
 export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && id !== 'hls-drm-unlicensed');
 /**
- * The SPF engine has no EME, so it can license neither DRM asset. It still gets the unlicensed one: refusing a
- * protected source visibly is the behavior worth reaching here, unlike the licensable assets that would only fail
- * obscurely. Signed playback is not DRM and stays — SPF plays it once the token authorizes the URL.
+ * The SPF Mux presets read `source.drm`, so they license both protected assets: `mux-drm` from the token its license
+ * servers derive from, `hls-drm` from the servers it names outright. The unlicensed asset stays alongside them, as the
+ * one DRM source here that carries no credentials — refusing a protected source visibly is a behavior worth reaching.
+ * Signed playback is not DRM and stays either way; SPF plays it once the token authorizes the URL.
  */
-export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter(
-  (id) => SOURCES[id].type !== 'dash' && (!isDrmSource(id) || id === 'hls-drm-unlicensed')
+export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
+/**
+ * The plain HLS presets are the same engine reached through `<hls-video>`, which
+ * takes a `src` string and nothing else. That drops what only a playback ID
+ * reaches, and both licensable DRM assets with it — there is nowhere to name a
+ * license server — leaving the unlicensed one to be refused.
+ */
+export const SPF_HLS_SOURCE_IDS = SOURCE_IDS.filter(
+  (id) => SOURCES[id].type !== 'dash' && !isMuxSource(id) && (!isDrmSource(id) || id === 'hls-drm-unlicensed')
 );
-/** The plain HLS presets are the same engine without the Mux source, so they drop what only a playback ID reaches. */
-export const SPF_HLS_SOURCE_IDS = MUX_SPF_SOURCE_IDS.filter((id) => !isMuxSource(id));
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 /**
  * Shaka plays DASH and HLS from one element, so it is the only preset offered both. The DRM assets are left out until

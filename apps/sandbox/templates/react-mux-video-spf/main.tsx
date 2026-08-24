@@ -19,8 +19,9 @@ import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // The SPF-backed counterpart to `react-mux-video`. See that page's HTML sibling
-// for what differs: SPF appends fMP4/CMAF only, so MPEG-TS and DRM playback IDs
-// are expected to surface the unsupported-source error rather than play.
+// for what differs: SPF appends fMP4/CMAF only, so an MPEG-TS playback ID is
+// expected to surface the unsupported-source error rather than play. DRM plays
+// here, licensed from `source.drm`, apart from the unlicensed asset.
 //
 // Mux Data and Cast both work here, as on the hls.js-backed page — Mux Data
 // monitors this flavor from the media element alone, since its engine
@@ -44,7 +45,7 @@ function App() {
   const Player = live ? LiveVideoPlayer : VideoPlayer;
 
   // A source carrying signed tokens has no room in a plain `src`. A `drm.token`
-  // is accepted but inert on this flavor.
+  // licenses the protected assets: the Media derives Mux's license servers from it.
   const { source: muxSource, url } = SOURCES[source];
 
   return (
