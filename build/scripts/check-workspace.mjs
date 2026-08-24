@@ -488,6 +488,7 @@ const SKILL_ACTIONS = new Set([
   'build',
   'change',
   'commit',
+  'configure',
   'create',
   'design',
   'document',

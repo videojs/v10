@@ -1,6 +1,6 @@
 ---
 name: configure-vite-plus
-description: Configure Vite+. Use for build, task, cache, migration, or CI.
+description: Configure Vite+. Use for tasks, cache, migration, or CI.
 ---
 
 # Configure Vite+ workflows
