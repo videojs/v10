@@ -10,10 +10,12 @@ import { createHtmlSandbox, html } from '@app/shared/html/sandbox';
 // `html-mux-video`. Same element behavior — derived poster, storyboard track,
 // `poster-time` — over the SPF engine.
 //
-// What differs is what it can play. SPF appends fMP4/CMAF only, so an MPEG-TS or
-// DRM-protected playback ID is expected to surface the unsupported-source error,
-// with console copy pointing at the hls.js-backed import. Those sources are left
-// in the picker deliberately: failing well is part of what this page demos.
+// What differs is what it can play. SPF appends fMP4/CMAF only, so an MPEG-TS
+// playback ID is expected to surface the unsupported-source error, with console
+// copy pointing at the hls.js-backed import. Those sources are left in the
+// picker deliberately: failing well is part of what this page demos. DRM does
+// play here — `source.drm` licenses it — except for the deliberately unlicensed
+// asset, which is in the picker to be refused.
 //
 // Mux Data and Cast both work here, as on the hls.js-backed page. Cast is
 // engine-agnostic — it hands the URL to the receiver. Mux Data monitors this
@@ -32,9 +34,8 @@ createHtmlSandbox({
     <google-cast></google-cast>
   `,
   // A source carrying signed tokens has no room in the `src` attribute, so it is
-  // assigned as an object instead. `source.drm` is accepted but inert here: SPF
-  // prunes encrypted renditions and reports unsupported DRM rather than fetching a
-  // license.
+  // assigned as an object instead. A `drm.token` on the source is what licenses the
+  // protected assets: the Adapter derives Mux's license servers from it.
   attach: ({ source }) => {
     if (source) document.querySelector('mux-video')!.source = source;
   },
