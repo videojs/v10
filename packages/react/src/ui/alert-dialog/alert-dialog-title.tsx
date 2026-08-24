@@ -6,6 +6,7 @@ import { useAlertDialogContext } from './context';
 
 export interface AlertDialogTitleProps extends UIComponentProps<'h2', AlertDialogCore.State> {}
 
+/** Renders the heading that labels the alert dialog. */
 export const AlertDialogTitle = createContextPart<AlertDialogTitleProps, AlertDialogCore.State>({
   displayName: 'AlertDialogTitle',
   tag: 'h2',

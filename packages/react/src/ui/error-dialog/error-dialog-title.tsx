@@ -9,6 +9,7 @@ import { useAlertDialogContext } from '../alert-dialog/context';
 
 export interface ErrorDialogTitleProps extends UIComponentProps<'h2', AlertDialogCore.State> {}
 
+/** Renders the localized error dialog heading, or authored children when provided. */
 export const ErrorDialogTitle = forwardRef<HTMLHeadingElement, ErrorDialogTitleProps>(function ErrorDialogTitle(
   { render, className, style, children, ...elementProps },
   forwardedRef

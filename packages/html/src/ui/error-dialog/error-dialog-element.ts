@@ -1,7 +1,7 @@
 import {
-  AlertDialogDataAttrs,
   type AlertDialogInput,
   ErrorDialogCore,
+  ErrorDialogDataAttrs,
   getErrorDialogDismissText,
   getErrorDialogTitleText,
   getErrorDialogUnexpectedText,
@@ -120,11 +120,11 @@ export class ErrorDialogElement extends UIElement {
     const state = this.#core.getState();
 
     applyElementProps(this, this.#core.getAttrs(state));
-    applyStateDataAttrs(this, state, AlertDialogDataAttrs);
+    applyStateDataAttrs(this, state, ErrorDialogDataAttrs);
 
     this.#provider.setValue({
       state,
-      stateAttrMap: AlertDialogDataAttrs,
+      stateAttrMap: ErrorDialogDataAttrs,
       close: () => this.#dialog?.close(),
     });
   }

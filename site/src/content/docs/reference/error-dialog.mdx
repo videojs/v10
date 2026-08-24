@@ -1,0 +1,118 @@
+---
+title: ErrorDialog
+frameworkTitle:
+  html: media-error-dialog
+description: An alert dialog that presents and dismisses playback errors
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/error-dialog/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/error-dialog/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/error-dialog/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/error-dialog/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/error-dialog/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/error-dialog/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/error-dialog/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<ErrorDialog.Root>
+  <ErrorDialog.Popup>
+    <ErrorDialog.Title />
+    <ErrorDialog.Description />
+    <ErrorDialog.Close />
+  </ErrorDialog.Popup>
+</ErrorDialog.Root>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<media-error-dialog>
+  <media-alert-dialog-title></media-alert-dialog-title>
+  <media-alert-dialog-description></media-alert-dialog-description>
+  <media-alert-dialog-close></media-alert-dialog-close>
+</media-error-dialog>
+```
+</FrameworkCase>
+
+## Behavior
+
+`ErrorDialog` is a specialized alert dialog driven by the player's <DocsLink slug="reference/feature-error">error feature</DocsLink>. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
+
+The title, description, and close label use localized default text. Provide children to any of those parts to replace its default content. Known media error codes use the matching translated message, while custom error messages are shown as written.
+
+The included player skins already render an error dialog. Compose this component directly when building a custom skin.
+
+## Styling
+
+Use `data-open`, `data-starting-style`, and `data-ending-style` to style visibility and transitions.
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-error-dialog:not([data-open]) {
+  display: none;
+}
+
+media-error-dialog[data-starting-style],
+media-error-dialog[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders the popup as a standard DOM element. Add a `className` and use it as the selector:
+
+```css
+.error-dialog[data-starting-style],
+.error-dialog[data-ending-style] {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+## Accessibility
+
+The popup uses `role="alertdialog"` and `aria-modal="true"`. Its title and description are connected with `aria-labelledby` and `aria-describedby`. Pressing <kbd>Escape</kbd> or activating the close part dismisses the error.
+
+## Examples
+
+The example replaces the video source with invalid local data so the media element reports an error without making a failing network request.
+
+### Basic usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="ErrorDialog" />
