@@ -44,7 +44,7 @@ export default styles({
         utilities: 'flex items-center gap-px',
       },
     },
-    timeline: {
+    timeSliderGroup: {
       className: 'media-time-controls',
       utilities: [
         '@container/media-time-controls -order-1 flex flex-none basis-full flex-row-reverse items-center gap-3 px-1.5',

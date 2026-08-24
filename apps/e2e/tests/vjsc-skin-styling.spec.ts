@@ -644,16 +644,12 @@ async function hideControls(root: Locator) {
 }
 
 async function showBuffering(root: Locator) {
-  const indicator = root
-    .locator('[data-buffering-indicator], .media-buffering-indicator, [class~="peer/buffering"]')
-    .first();
+  const indicator = root.locator('.media-buffering-indicator, [class~="peer/buffering"]').first();
   await indicator.evaluate((element) => element.setAttribute('data-visible', ''));
   await root.page().waitForTimeout(500);
 
   return root.evaluate((element) => {
-    const indicator = element.querySelector<HTMLElement>(
-      '[data-buffering-indicator], .media-buffering-indicator, [class~="peer/buffering"]'
-    );
+    const indicator = element.querySelector<HTMLElement>('.media-buffering-indicator, [class~="peer/buffering"]');
     const overlay = element.querySelector<HTMLElement>(
       '.media-overlay, [class~="peer-data-visible/buffering:bg-black/35"]'
     );

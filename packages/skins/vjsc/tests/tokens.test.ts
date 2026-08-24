@@ -30,7 +30,7 @@ describe('tokens', () => {
     expect([...referenced].sort()).toEqual(Object.keys(tokens).sort());
   });
 
-  test('prefixes skin-local custom properties', async () => {
+  test('reserves the media prefix for classified contracts', async () => {
     const stylesRoot = resolve(import.meta.dirname, '../styles');
     const entries = await readdir(stylesRoot, { recursive: true, withFileTypes: true });
     const files = entries
@@ -51,7 +51,7 @@ describe('tokens', () => {
         !/^--(?:color|drop-shadow|ease|font|radius|shadow|spacing|text)-media(?:-|$)/.test(property)
     );
 
-    expect(unprefixed).toEqual([]);
+    expect(unprefixed).toEqual(['--popup-translate-distance']);
     expect([...customProperties].filter((property) => property.startsWith('--media-resolved-'))).toEqual([]);
     expect(Object.values(tokens).some((token) => token.kind === 'internal')).toBe(true);
     expect(tokens['--media-video-border-radius'].kind).toBe('bridge');

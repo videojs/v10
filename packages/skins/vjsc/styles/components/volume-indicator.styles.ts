@@ -1,6 +1,6 @@
 import { styles } from 'vjsc/styles';
 
-import { defaultSurface } from './popup.styles';
+import { defaultSurface } from '../surface';
 
 export default styles({
   file: 'indicator.css',
@@ -48,7 +48,6 @@ export default styles({
           'flex w-full bg-left bg-no-repeat',
           '[background-image:linear-gradient(currentColor,currentColor)]',
           '[background-size:var(--media-volume-fill,0%)_100%] transition-[background-size] duration-200 ease-linear',
-          '[&>*]:mix-blend-difference',
         ],
         minimal: [
           'grid w-[min(80%,14rem)] grid-cols-[auto_minmax(0,1fr)_auto] [transform:translateX(0)]',
@@ -68,12 +67,15 @@ export default styles({
     icon: {
       className: 'media-volume-indicator-icon',
       utilities: 'hidden shrink-0',
-      variants: { default: '', minimal: 'col-start-1 row-start-1 drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]' },
+      variants: {
+        default: 'mix-blend-difference',
+        minimal: 'col-start-1 row-start-1 drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
+      },
     },
     value: {
       className: 'media-volume-indicator-value',
       utilities: [],
-      variants: { default: 'ml-auto', minimal: 'col-start-3 row-start-1' },
+      variants: { default: 'ml-auto mix-blend-difference', minimal: 'col-start-3 row-start-1' },
     },
     icons: {
       high: {

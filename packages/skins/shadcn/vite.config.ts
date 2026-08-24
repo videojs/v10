@@ -44,7 +44,7 @@ export const shadcnPackConfig: PackUserConfig = {
     vjscPlugin({ configure: configureSkinModule }),
     shadcnPlugin<SkinModuleMeta>({
       root: vjscDir,
-      include: ['./components/**/*.{ts,tsx}', './skins/*/skin.{ts,tsx}', './utils.ts'],
+      include: ['./components/**/*.{ts,tsx}', './skins/**/*.{ts,tsx}', './styles/**/*.ts', './utils.ts'],
       name: 'videojs',
       homepage: 'https://videojs.org',
       namespace: '@videojs',

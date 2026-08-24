@@ -8,7 +8,7 @@ import styles from '../../styles/components/buffering.styles';
 
 export function BufferingIndicator({ className, ...props }: Props<CoreProps> = {}) {
   return (
-    <$.BufferingIndicator className={[styles.root, className]} data-buffering-indicator="" {...props}>
+    <$.BufferingIndicator className={['media-buffering-indicator', styles.root, className]} {...props}>
       <SpinnerIcon className={styles.spinner} />
     </$.BufferingIndicator>
   );

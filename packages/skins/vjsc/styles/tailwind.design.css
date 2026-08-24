@@ -5,7 +5,8 @@
 @import "./tailwind.shared.css";
 
 @source "../**/*.tsx";
-@source "./**/*.styles.ts";
+@source "../**/*.styles.ts";
+@source "./surface.ts";
 
 @theme inline {
   --spacing: var(--media-spacing);

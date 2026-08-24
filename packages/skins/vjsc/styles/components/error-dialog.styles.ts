@@ -1,6 +1,6 @@
 import { styles } from 'vjsc/styles';
 
-import { defaultSurface } from './popup.styles';
+import { defaultSurface } from '../surface';
 
 export default styles({
   file: 'dialog.css',
@@ -47,7 +47,7 @@ export default styles({
     },
     title: {
       className: 'media-error-dialog-title',
-      utilities: 'my-[0.83em] text-[calc(var(--media-spacing)*3.75)] font-semibold leading-tight',
+      utilities: 'my-[0.83em] text-media-lg font-semibold leading-tight',
     },
     description: {
       className: 'media-error-dialog-description',
@@ -55,11 +55,11 @@ export default styles({
     },
     actions: {
       className: 'media-error-dialog-actions',
-      utilities: 'flex gap-2 [&>*]:flex-1',
+      utilities: 'flex gap-2',
     },
     close: {
       className: 'media-error-dialog-close',
-      utilities: 'w-full bg-media-accent! px-4 py-2 font-medium text-media-accent-text!',
+      utilities: 'w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!',
       variants: {
         default: 'h-9',
         minimal: 'h-9.5',

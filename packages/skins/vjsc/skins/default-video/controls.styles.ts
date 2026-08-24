@@ -1,6 +1,6 @@
 import { styles } from 'vjsc/styles';
 
-import { defaultSurface } from '../components/popup.styles';
+import { defaultSurface } from '../../styles/surface';
 
 const defaultSurfaceAtLarge = [
   '@lg/media-root:text-white @lg/media-root:backdrop-blur-lg @lg/media-root:backdrop-saturate-150',
@@ -88,12 +88,9 @@ export default styles({
         utilities: '@max-lg/media-root:hidden',
       },
     },
-    timeline: {
+    timeSliderGroup: {
       className: 'media-time-controls',
-      utilities: [
-        '@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3',
-        '@max-[16rem]/media-time:[&>*:last-child]:hidden',
-      ],
+      utilities: ['@container/media-time flex flex-1 items-center gap-2.5 px-2 @lg/media-root:px-3'],
     },
     time: {
       current: {
@@ -104,6 +101,7 @@ export default styles({
         className: 'media-time-remaining',
         utilities: [
           'cursor-pointer tabular-nums rounded-sm outline-2 -outline-offset-2 outline-transparent',
+          '@max-[16rem]/media-time:hidden',
           'focus-visible:outline-white focus-visible:outline-offset-2',
         ],
       },

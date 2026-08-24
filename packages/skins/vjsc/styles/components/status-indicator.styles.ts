@@ -1,6 +1,6 @@
 import { styles } from 'vjsc/styles';
 
-import { defaultSurface } from './popup.styles';
+import { defaultSurface } from '../surface';
 
 export default styles({
   file: 'indicator.css',
@@ -42,7 +42,7 @@ export default styles({
       className: 'media-status-indicator-content',
       utilities: 'flex items-center justify-between gap-2 px-2.5 py-1',
       variants: {
-        default: 'w-full [&>*]:mix-blend-difference',
+        default: 'w-full',
         minimal: [
           '[@media(prefers-reduced-transparency:reduce)]:rounded-[--spacing(2)]',
           '[@media(prefers-reduced-transparency:reduce)]:bg-black',
@@ -53,11 +53,15 @@ export default styles({
     icon: {
       className: 'media-status-indicator-icon',
       utilities: 'hidden shrink-0',
-      variants: { default: '', minimal: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]' },
+      variants: {
+        default: 'mix-blend-difference',
+        minimal: 'drop-shadow-[0_1px_0_rgb(0_0_0/0.2)]',
+      },
     },
     value: {
       className: 'media-status-indicator-value',
       utilities: 'ml-auto',
+      variants: { default: 'mix-blend-difference', minimal: '' },
     },
     icons: {
       captionsOn: {

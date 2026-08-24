@@ -1,7 +1,7 @@
 import type { TimeSliderProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { SpinnerIcon } from '@videojs/icons/vjsc';
-import { Box as PreviewValue, type Props, Template } from 'vjsc/components';
+import { Box, type Props, Template } from 'vjsc/components';
 
 import type { SkinComponentMeta } from '../../meta';
 import popupStyles from '../../styles/components/popup.styles';
@@ -24,10 +24,10 @@ export function TimeSlider({ className, ...props }: Props<CoreProps> = {}) {
           <$.Slider.Thumbnail.Image className={styles.image} />
           <SpinnerIcon className={styles.spinner} />
         </$.Slider.Thumbnail.Root>
-        <PreviewValue className={styles.previewValue}>
+        <Box className={styles.previewValue}>
           <$.TimeSlider.ChapterTitle className={styles.chapterTitle} />
           <$.TimeSlider.Value className={styles.value} type="pointer" />
-        </PreviewValue>
+        </Box>
       </$.TimeSlider.Preview>
     </$.TimeSlider.Root>
   );

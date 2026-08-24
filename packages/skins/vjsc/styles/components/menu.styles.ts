@@ -121,11 +121,11 @@ export default styles({
     },
     tier: {
       className: 'media-tier',
-      utilities: 'ps-0.5 pt-px text-[0.7em] font-semibold leading-none text-current/70',
+      utilities: 'ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70',
     },
     badge: {
       className: 'media-badge',
-      utilities: 'rounded-media-control bg-media-control-hover px-1.5 text-[0.7em] font-semibold',
+      utilities: 'rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold',
     },
     indicator: {
       className: 'media-indicator',

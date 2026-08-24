@@ -6,7 +6,7 @@ export interface SkinToken {
   description: string;
 }
 
-/** Stable classification for every `--media-*` custom property used by a Skin. */
+/** Classification for every `--media-*` custom property used by a Skin. */
 export const tokens = {
   '--media-accent-color': {
     kind: 'public',
@@ -127,18 +127,6 @@ export const tokens = {
   '--media-popover-available-width': {
     kind: 'runtime',
     description: 'Available floating-ui width.',
-  },
-  '--media-popup-translate-distance': {
-    kind: 'internal',
-    description: 'Distance a popup travels while entering or leaving.',
-  },
-  '--media-popup-translate-x': {
-    kind: 'internal',
-    description: 'Resolved horizontal popup transition offset.',
-  },
-  '--media-popup-translate-y': {
-    kind: 'internal',
-    description: 'Resolved vertical popup transition offset.',
   },
   '--media-poster-placeholder': {
     kind: 'runtime',
