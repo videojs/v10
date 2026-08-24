@@ -146,8 +146,12 @@ jobs:
         if: matrix.package != '@videojs/cli'
         run: pnpm exec vp run --filter="${{ matrix.package }}..." build
 
-      # CLI tests resolve a committed CDN-manifest fixture and are deliberately
-      # independent of the site's production build graph.
+      # CLI tests resolve a committed CDN-manifest fixture, so they do not need
+      # the Site build. Anti-slop predicates do require Utils declarations.
+      - name: Build CLI test dependencies
+        if: matrix.package == '@videojs/cli'
+        run: pnpm exec vp run @videojs/utils#build
+
       - name: Test package
         run: pnpm --filter "${{ matrix.package }}" test
 
