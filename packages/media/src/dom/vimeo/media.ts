@@ -8,6 +8,7 @@ import { MediaError } from '../../core/media-error';
 import type { ErrorLike, MediaContentData, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 import { createTimeRange, serializeEmbedParams } from '../utils';
+import { VIMEO_MEDIA } from './predicate';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
@@ -73,6 +74,7 @@ const VimeoMediaBase = MediaPlayedRangesMixin(EventTarget);
  * @fires contentdatachange - Fired when the embed reports a title and when that title is cleared. Read `contentData` for the new value.
  */
 export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
+  readonly [VIMEO_MEDIA] = true;
   #target: HTMLIFrameElement | null = null;
   #player: VimeoPlayer | null = null;
   // Barrier for the load in progress; its identity also tells a late response whether it still owns the load.

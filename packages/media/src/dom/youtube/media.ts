@@ -22,12 +22,14 @@ import {
   type YouTubePlayerApi,
   youtubeErrorCodeToMediaErrorCode,
 } from './iframe-api';
+import { YOUTUBE_MEDIA } from './predicate';
 import { youtubeMediaDefaultProps } from './props';
 import { buildYouTubeIframeSrc, parseYouTubeSource, type YouTubeSource } from './source';
 
 const YouTubeMediaBase = MediaPlayedRangesMixin(EventTarget);
 
 export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
+  readonly [YOUTUBE_MEDIA] = true;
   #target: HTMLIFrameElement | null = null;
   #player: YouTubePlayerApi | null = null;
   // The iframe API rejects `cueVideoById`/`loadVideoById` before `onReady`.

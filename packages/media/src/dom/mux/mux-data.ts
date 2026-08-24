@@ -37,9 +37,9 @@ const MUX_VIDEO_DOMAIN = 'mux.com';
  *
  * `engine` is deliberately untyped. Every engine-backed media host exposes one,
  * but they are unrelated types (an hls.js instance, a dash.js player, an SPF
- * composition), and which of them Mux Data can hook is decided by
- * {@link toMuxDataEngineOptions}, not by this contract. Media with no JS engine
- * simply omit it.
+ * composition), and the symbol-backed Media guards in
+ * {@link toMuxDataEngineOptions} decide which of them Mux Data can hook. Media
+ * with no JS engine simply omit it.
  */
 export interface MuxDataMedia extends EventTarget {
   readonly engine?: unknown;
@@ -225,7 +225,7 @@ export class MuxData implements MuxDataProps {
       debug,
       ...(beaconCollectionDomain ? { beaconCollectionDomain } : {}),
       ...(disableCookies ? { disableCookies } : {}),
-      ...toMuxDataEngineOptions(media.engine),
+      ...toMuxDataEngineOptions(media),
       data: {
         ...(env_key ? { env_key } : {}),
         ...(player_software_name ? { player_software_name } : {}),

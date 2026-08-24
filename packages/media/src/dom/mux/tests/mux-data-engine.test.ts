@@ -1,6 +1,8 @@
 import * as dashjs from 'dashjs';
 import Hls from 'hls.js';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { DASH_MEDIA } from '../../dash/predicate';
+import { HLS_JS_MEDIA } from '../../hls-js/predicate';
 import { toMuxDataEngineOptions } from '../mux-data-engine';
 
 /** Shaped like an hls.js instance, class statics included. */
@@ -25,6 +27,16 @@ class FakeDashJsEngine {
   off() {}
 }
 
+class FakeHlsJsMedia {
+  readonly [HLS_JS_MEDIA] = true;
+  engine: unknown = new FakeHlsJsEngine();
+}
+
+class FakeDashMedia {
+  readonly [DASH_MEDIA] = true;
+  engine: unknown = new FakeDashJsEngine();
+}
+
 let warn: MockInstance<typeof console.warn>;
 
 beforeEach(() => {
@@ -37,23 +49,23 @@ afterEach(() => {
 
 describe('toMuxDataEngineOptions', () => {
   it('wires an hls.js engine and its class into the hls.js integration', () => {
-    const engine = new FakeHlsJsEngine();
+    const media = new FakeHlsJsMedia();
 
-    expect(toMuxDataEngineOptions(engine)).toEqual({ hlsjs: engine, Hls: FakeHlsJsEngine });
+    expect(toMuxDataEngineOptions(media)).toEqual({ hlsjs: media.engine, Hls: FakeHlsJsEngine });
   });
 
   it('wires a dash.js player into the dash.js integration', () => {
-    const engine = new FakeDashJsEngine();
+    const media = new FakeDashMedia();
 
-    expect(toMuxDataEngineOptions(engine)).toEqual({ dashjs: engine });
+    expect(toMuxDataEngineOptions(media)).toEqual({ dashjs: media.engine });
   });
 
-  it('wires a pre-v5 dash.js player into the dash.js integration', () => {
-    // v5 replaced `getBitrateInfoListFor` with `getRepresentationsByType`, and
-    // `mux-embed` reads whichever the player has.
-    const engine = { on() {}, off() {}, getCurrentTrackFor() {}, getBitrateInfoListFor() {} };
+  it('does not infer a Media type from its engine shape', () => {
+    const hlsjs = new FakeHlsJsEngine();
+    const dashEngine = new FakeDashJsEngine();
 
-    expect(toMuxDataEngineOptions(engine)).toEqual({ dashjs: engine });
+    expect(toMuxDataEngineOptions({ engine: hlsjs })).toEqual({});
+    expect(toMuxDataEngineOptions({ engine: dashEngine })).toEqual({});
   });
 
   it('sends no engine options for media with no engine', () => {
@@ -65,39 +77,44 @@ describe('toMuxDataEngineOptions', () => {
     // An SPF playback engine: a composition, not a handle `mux-embed` can hook.
     const engine = { state: {}, context: {}, destroy: () => Promise.resolve() };
 
-    expect(toMuxDataEngineOptions(engine)).toEqual({});
+    expect(toMuxDataEngineOptions({ engine })).toEqual({});
   });
 
   it('skips the hls.js integration when the engine class publishes no events', () => {
     // `mux-embed` needs the class to hook hls.js events, and reaches for
     // `window.Hls` when it isn't given one — better to monitor the element alone
     // than to let it pick up an unrelated global.
-    const engine = { levels: [], on() {}, off() {} };
+    const media = new FakeHlsJsMedia();
+    media.engine = { levels: [], on() {}, off() {} } as FakeHlsJsEngine;
 
-    expect(toMuxDataEngineOptions(engine)).toEqual({});
+    expect(toMuxDataEngineOptions(media)).toEqual({});
   });
 
-  // The engines are matched by shape, so the real instances are what keeps the
-  // match honest as hls.js and dash.js evolve.
+  // Real instances keep the values handed to mux-embed honest as its engine
+  // integrations and their upstream libraries evolve.
   it('recognizes a real hls.js instance', () => {
+    const media = new FakeHlsJsMedia();
     const engine = new Hls();
+    media.engine = engine;
 
-    expect(toMuxDataEngineOptions(engine)).toEqual({ hlsjs: engine, Hls });
+    expect(toMuxDataEngineOptions(media)).toEqual({ hlsjs: engine, Hls });
 
     engine.destroy();
   });
 
   it('recognizes a real dash.js player', () => {
     const engine = dashjs.MediaPlayer().create();
+    const media = new FakeDashMedia();
+    media.engine = engine;
 
-    expect(toMuxDataEngineOptions(engine)).toEqual({ dashjs: engine });
+    expect(toMuxDataEngineOptions(media)).toEqual({ dashjs: engine });
   });
 
   it('warns once per unrecognized engine in development', () => {
     const engine = { destroy: () => {} };
 
-    toMuxDataEngineOptions(engine);
-    toMuxDataEngineOptions(engine);
+    toMuxDataEngineOptions({ engine });
+    toMuxDataEngineOptions({ engine });
 
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('could not hook this playback engine'), engine);

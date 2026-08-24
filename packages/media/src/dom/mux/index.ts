@@ -2,6 +2,7 @@ export type { DrmSystemConfig, DrmSystemsConfig, KeySystem } from '../../core/dr
 export { KeySystems } from '../../core/drm';
 export * from './media';
 export { MuxData, type MuxDataProps, muxDataDefaultProps } from './mux-data';
+export { isMuxMedia } from './predicate';
 // The engine-neutral source layer, re-exported so this stays the one import for
 // the hls.js-backed Media. Its own entry point, `@videojs/media/dom/mux/source`,
 // is what a Media on another engine imports — reaching it through here would

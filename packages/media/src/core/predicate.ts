@@ -24,6 +24,19 @@ export function hasMetadata(media: MediaSourceCapability): boolean {
   return media.readyState >= 1;
 }
 
+/**
+ * Get the playback engine exposed by a Media.
+ *
+ * Returns `undefined` when the value exposes no engine property. An explicit
+ * `null` is preserved because it means the Media supports an engine but none is
+ * currently active.
+ *
+ * @param media - Media value whose engine should be read.
+ */
+export function getMediaEngine(media: unknown): unknown {
+  return isObject(media) && 'engine' in media ? media.engine : undefined;
+}
+
 export function isMediaPauseCapable(value: unknown): value is MediaPauseCapability {
   if (!isObject(value)) return false;
   const media = value as Record<string, unknown>;
