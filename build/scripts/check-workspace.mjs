@@ -15,6 +15,7 @@
  * 8. i18n locales — tag lists match locale files and generated stubs
  * 9. Agent context — portable skill metadata, compatibility imports, and budgets
  * 10. Internal records — organized design docs, frontmatter, and lifecycle status
+ * 11. mise tool pins — optional mise.toml agrees with the canonical version pins
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -825,6 +826,60 @@ function checkInternalRecords() {
   return { ok: warnings.length === 0, warnings };
 }
 
+// ── Check 11: mise tool pins ────────────────────────────────────────────────
+
+/** Returns the body of a top-level TOML table, or null when it is absent. */
+function tomlTable(text, name) {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((line) => line.trim() === `[${name}]`);
+  if (start === -1) return null;
+
+  const body = lines.slice(start + 1);
+  const end = body.findIndex((line) => /^\s*\[/.test(line));
+  return (end === -1 ? body : body.slice(0, end)).join('\n');
+}
+
+/**
+ * `mise.toml` is optional contributor convenience, so this check is a no-op
+ * without it. When present, its pnpm pin must match `packageManager` — mise
+ * users would otherwise silently run a different pnpm than CI. Node stays out
+ * of `[tools]` on purpose: mise reads `.nvmrc`/`.node-version`, keeping one
+ * Node pin shared with nvm, Volta, and `actions/setup-node`.
+ */
+function checkMiseToolPins() {
+  const warnings = [];
+  const misePath = join(ROOT, 'mise.toml');
+  if (!existsSync(misePath)) return { ok: true, warnings };
+
+  const miseText = readText(misePath);
+  const tools = tomlTable(miseText, 'tools');
+  const settings = tomlTable(miseText, 'settings');
+
+  const expected = readJson(join(ROOT, 'package.json')).packageManager?.match(/^pnpm@(.+)$/)?.[1];
+  const pinned = tools?.match(/^\s*pnpm\s*=\s*["']([^"']+)["']/m)?.[1];
+
+  if (!expected) {
+    warnings.push('package.json: "packageManager" must pin a pnpm version');
+  } else if (pinned !== expected) {
+    warnings.push(
+      `mise.toml: [tools] pnpm should be "${expected}" to match packageManager (got: ${pinned ?? 'missing'})`
+    );
+  }
+
+  if (tools && /^\s*node\s*=/m.test(tools)) {
+    warnings.push(
+      'mise.toml: drop the [tools] node pin — .nvmrc/.node-version is the single Node pin shared with nvm, Volta, and CI'
+    );
+  }
+
+  // Without the opt-in, mise ignores the Node version files and pins no Node.
+  if (!/idiomatic_version_file_enable_tools\s*=\s*\[[^\]]*["']node["']/.test(settings ?? '')) {
+    warnings.push('mise.toml: [settings] idiomatic_version_file_enable_tools must include "node" so .nvmrc is honored');
+  }
+
+  return { ok: warnings.length === 0, warnings };
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 const checks = [
@@ -838,6 +893,7 @@ const checks = [
   { name: 'i18n locales', fn: checkI18nLocales },
   { name: 'Agent context', fn: checkAgentContext },
   { name: 'Internal records', fn: checkInternalRecords },
+  { name: 'mise tool pins', fn: checkMiseToolPins },
 ];
 
 let failed = 0;

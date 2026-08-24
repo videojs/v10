@@ -164,6 +164,10 @@ bun.lockb
 # -------------------------
 .playwright-mcp/
 
+# Personal mise overrides (mise.toml itself is checked in)
+mise.local.toml
+mise.*.local.toml
+
 # -------------------------
 # AI Agent Config (Generated)
 # -------------------------
