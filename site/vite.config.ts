@@ -40,6 +40,8 @@ const config: ViteUserConfig = {
           { pattern: 'tsconfig.base.json', base: 'workspace' },
           { pattern: 'packages/{core,html,media,react,spf,utils}/package.json', base: 'workspace' },
           { pattern: 'packages/{core,html,media,react,spf,utils}/src/**', base: 'workspace' },
+          { pattern: '!packages/html/src/cdn/locales', base: 'workspace' },
+          { pattern: '!packages/html/src/cdn/locales/**', base: 'workspace' },
         ],
         output: [
           'src/content/generated-component-reference/**',

@@ -248,7 +248,10 @@ export default defineConfig({
       build: {
         command: 'vp pack --filter package',
         dependsOn: [{ task: 'build', from: ['dependencies', 'devDependencies'] }],
-        input: cachedTaskInputs,
+        // CDN locale sources are generated and consumed only by build:cdn.
+        // Config discovery sees their directory for the CDN Pack entries, but
+        // they must not invalidate the independent npm package build.
+        input: [...cachedTaskInputs, '!src/cdn/locales', '!src/cdn/locales/**'],
       },
       'build:cdn': {
         command: 'node --import tsx ./scripts/build-cdn-locales.ts && vp pack --filter cdn',
