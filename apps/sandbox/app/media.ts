@@ -63,15 +63,17 @@ const SPF_MEDIA_SOURCE_IDS = SPF_HLS_SOURCE_IDS.filter(
 );
 
 /**
- * The plain HLS media are the SPF engine: no TS transmux pipeline and no EME, so it refuses MPEG-TS on format and
- * encrypted renditions on protection. Derived from the pair rather than stored on the source, since every source here
- * plays fine under some other media.
+ * The plain HLS media are the SPF engine reached through `<hls-video>`: no TS transmux pipeline, and no way to name a
+ * license server, so it refuses MPEG-TS on format and encrypted renditions on protection. (The Mux SPF media do license
+ * `source.drm`, and are not labelled here.) Derived from the pair rather than stored on the source, since every source
+ * here plays fine under some other media.
  *
  * The video and audio-only variants answer differently, and a note promising the wrong outcome is worse than none — a
  * reviewer would file the difference as a bug:
  *
  * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only engine resolves only the audio
- *   rendition, so it never fetches an encrypted playlist and plays the source instead of refusing it.
+ *   rendition, so it never fetches an encrypted playlist and plays the source instead of refusing it. Only the
+ *   unlicensed asset reaches these media; the licensable two are Mux-media only.
  * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the source carries an audio rendition of its
  *   own or muxes audio into its video renditions — an absent type reports nothing and stalls silently rather than
  *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean nothing plays, so the note stops at
