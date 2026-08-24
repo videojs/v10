@@ -1,11 +1,11 @@
 ---
-title: Browser and tooling compatibility
-description: Supported browsers, TypeScript, module resolution, bundlers, and rendering contexts for Video.js 10
+title: Browser support
+description: Browsers and rendering environments supported by Video.js 10
 ---
 
 import Aside from '@/components/Aside.astro';
 
-Video.js 10 targets modern browsers and build tools. This page describes the supported baseline and the integration boundaries to consider when adopting it.
+Video.js 10 targets modern browsers. This page describes the supported browser baseline and other rendering environments.
 
 ## Browser baseline
 
@@ -27,35 +27,6 @@ Video.js 10 builds directly on the web platform: custom elements, CSS custom pro
 
 When we use a platform feature that hasn't landed in all supported browsers yet, we provide a fallback. The player works either way; the experience may differ slightly in older browsers. For example, tooltips and popovers use CSS anchor positioning where available and fall back to absolute positioning where it isn't.
 
-## TypeScript and build tools
-
-If your project uses TypeScript, use **TypeScript 5.0 or newer**. Older versions cannot read the syntax in Video.js type files. The `skipLibCheck` option does not help because TypeScript must still read those files before it can skip checking them.
-
-Each Video.js package lists the import paths it supports in the `exports` field of its `package.json`, such as `@videojs/html/video/player` and `@videojs/react/live-video`. Most web applications should use this TypeScript configuration so TypeScript follows the same package rules as the application's build tool:
-
-```json title="tsconfig.json"
-{
-  "compilerOptions": {
-    "module": "ESNext",
-    "moduleResolution": "bundler"
-  }
-}
-```
-
-If Node.js runs files emitted directly by TypeScript, use `node16` for both `module` and `moduleResolution`, or use `nodenext` for both. Do not use the older `node` setting, now called `node10`. It does not understand the package rules Video.js uses and can report valid imports or types as missing.
-
-### If changing this setting reveals other errors
-
-The older `node` setting allowed applications to import almost any file inside a dependency. Modern settings allow only the import paths that dependency publishes. Changing the setting can therefore reveal an existing import into another package's private files.
-
-If the error names a package outside `@videojs/*`, it is a separate problem in that application or dependency. Update the dependency or use one of its supported import paths. A TypeScript `paths` override can be a temporary bridge when no supported replacement exists. Do not switch back to the older resolver because that also breaks Video.js type resolution.
-
-## Bundler compatibility
-
-Before the browser runs your application, a bundler such as Vite combines its imports into files the browser can load. The bundler must understand the supported import paths listed by each Video.js package.
-
-Vite 3.2.8 can load Video.js JavaScript, but it cannot load the exported `@videojs/html/video/skin.css` file. Vite 5.4.19 can load both. Upgrade Vite instead of adding aliases that bypass the package's supported import paths.
-
 ## Rendering contexts
 
 ### WebViews and PWAs
@@ -71,25 +42,3 @@ TV platforms run embedded browsers with limited standards support. Video.js 10's
 ### Server-side rendering
 
 Video.js components render valid markup on the server. Interactivity — state management, media playback, and event handling — requires the browser and kicks in after hydration.
-
-## Advanced: publish a wrapper library
-
-You can skip this section when building an application.
-
-If you publish a library that expects its users to install Video.js separately, leave Video.js out of your library's bundle. Rollup calls this marking a dependency as **external**. Its array form matches only the exact package name, so `external: ['@videojs/html']` misses imports such as `@videojs/html/video/player`.
-
-Match the package name and everything below it instead:
-
-```js title="rollup.config.js"
-const videojsPeers = ['@videojs/html'];
-
-export default {
-  external(id) {
-    return videojsPeers.some(
-      (packageName) => id === packageName || id.startsWith(`${packageName}/`)
-    );
-  }
-};
-```
-
-Add every `@videojs/*` package your library imports directly to `videojsPeers` and list it in `peerDependencies`.

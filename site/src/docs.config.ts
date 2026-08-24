@@ -41,6 +41,8 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
       { href: '/changelog', sidebarLabel: 'Changelog' },
       { slug: 'concepts/browser-support' },
+      { slug: 'concepts/typescript' },
+      { slug: 'concepts/bundlers' },
     ],
   },
   {
