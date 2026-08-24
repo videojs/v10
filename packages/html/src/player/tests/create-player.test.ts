@@ -7,10 +7,12 @@ import {
   videoFeatures,
 } from '@videojs/core/dom';
 import { ContextConsumer } from '@videojs/element/context';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ContainerMixin } from '../../index';
-import { MediaElement } from '../../ui/media-element';
+import { BackgroundVideo } from '../../media/background-video';
+import { MediaAttachMixin } from '../../store/media-attach-mixin';
+import { ContainerElement } from '../../ui/container/container-element';
+import { UIElement } from '../../ui/ui-element';
 import { createPlayer } from '../create-player';
 import { popupGroupContext } from '../popup-group-context';
 
@@ -48,15 +50,13 @@ describe('createPlayer', () => {
 
   it('ProviderMixin produces a valid custom element class', () => {
     const { ProviderMixin } = createPlayer({ features: videoFeatures });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
 
     expect(typeof ProviderElement).toBe('function');
     expect(ProviderElement.prototype).toBeDefined();
   });
 
-  it('ContainerMixin produces a valid custom element class', () => {
-    const ContainerElement = ContainerMixin(MediaElement);
-
+  it('exports a valid ContainerElement class', () => {
     expect(typeof ContainerElement).toBe('function');
     expect(ContainerElement.prototype).toBeDefined();
   });
@@ -64,7 +64,7 @@ describe('createPlayer', () => {
   it('scopes popup coordination to container descendants', async () => {
     const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
-    class PopupGroupProbe extends MediaElement {
+    class PopupGroupProbe extends UIElement {
       popupGroup: PopupGroup | undefined;
 
       constructor() {
@@ -78,8 +78,8 @@ describe('createPlayer', () => {
       }
     }
 
-    const providerTag = defineTestElement(ProviderMixin(MediaElement));
-    const containerTag = defineTestElement(ContainerMixin(MediaElement));
+    const providerTag = defineTestElement(ProviderMixin(UIElement));
+    const containerTag = defineTestElement(ContainerElement);
     const probeTag = defineTestElement(PopupGroupProbe);
     const provider = document.createElement(providerTag);
     const container = document.createElement(containerTag);
@@ -91,14 +91,106 @@ describe('createPlayer', () => {
     document.body.append(provider);
 
     await Promise.all([
-      (provider as MediaElement).updateComplete,
-      (container as MediaElement).updateComplete,
+      (provider as UIElement).updateComplete,
+      (container as UIElement).updateComplete,
       outsideProbe.updateComplete,
       insideProbe.updateComplete,
     ]);
 
     expect(outsideProbe.popupGroup).toBeUndefined();
     expect(insideProbe.popupGroup).toBeDefined();
+  });
+
+  it('keeps container registration identity-safe', async () => {
+    const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
+    const PlayerElement = ProviderMixin(UIElement);
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+    const first = document.createElement(defineTestElement(class extends ContainerElement {}));
+    const second = document.createElement(defineTestElement(class extends ContainerElement {}));
+    const video = document.createElement('video');
+
+    first.append(video);
+    player.append(first, second);
+    document.body.append(player);
+
+    await vi.waitFor(() => expect(player.store.target?.container).toBe(second));
+
+    second.remove();
+    await vi.waitFor(() => expect(player.store.target?.container).toBe(first));
+
+    first.remove();
+    await vi.waitFor(() => expect(player.store.target?.container).toBeNull());
+  });
+
+  it('upgrades parser-created containers under a connected player', async () => {
+    const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
+    const PlayerElement = ProviderMixin(UIElement);
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+    const containerTag = `test-late-container-${tagCounter++}`;
+
+    player.innerHTML = `<${containerTag}><video></video></${containerTag}>`;
+    document.body.append(player);
+
+    expect(() => customElements.define(containerTag, class extends ContainerElement {})).not.toThrow();
+    await vi.waitFor(() => expect(player.store.target?.container).toBeInstanceOf(ContainerElement));
+  });
+
+  it('keeps custom media registration identity-safe', async () => {
+    const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
+    const PlayerElement = ProviderMixin(UIElement);
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+    const mediaTag = defineTestElement(MediaAttachMixin(HTMLElement));
+    const first = document.createElement(mediaTag);
+    const second = document.createElement(mediaTag);
+
+    player.append(first, second);
+    document.body.append(player);
+
+    await vi.waitFor(() => expect(player.store.target?.media).toBe(second));
+
+    first.remove();
+    expect(player.store.target?.media).toBe(second);
+
+    second.remove();
+    await vi.waitFor(() => expect(player.store.target).toBeNull());
+  });
+
+  it('tracks native media added, removed, and replaced after connection', async () => {
+    const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
+    const PlayerElement = ProviderMixin(UIElement);
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+    const first = document.createElement('video');
+    const second = document.createElement('audio');
+
+    document.body.append(player);
+    expect(player.store.target).toBeNull();
+
+    player.append(first);
+    await vi.waitFor(() => expect(player.store.target?.media).toBe(first));
+
+    first.replaceWith(second);
+    await vi.waitFor(() => expect(player.store.target?.media).toBe(second));
+
+    second.remove();
+    await vi.waitFor(() => expect(player.store.target).toBeNull());
+  });
+
+  it('does not retain disconnected context media as a native fallback', async () => {
+    const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
+    const PlayerElement = ProviderMixin(UIElement);
+    const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
+    const background = document.createElement(defineTestElement(BackgroundVideo));
+    const video = document.createElement('video');
+    video.slot = 'media';
+
+    background.append(video);
+    player.append(background);
+    document.body.append(player);
+
+    await vi.waitFor(() => expect(player.store.target?.media).toBe(video));
+
+    background.remove();
+    expect(player.store.target).toBeNull();
   });
 
   it('creates audio player with expected exports', () => {
@@ -123,7 +215,7 @@ describe('createPlayer', () => {
 
   it('maps selected feature inputs to reactive properties and attributes', async () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-metadata-provider';
     customElements.define(tagName, ProviderElement);
 
@@ -155,7 +247,7 @@ describe('createPlayer', () => {
 
   it('leaves the element its own `title`, which means the tooltip', async () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-title-provider';
     customElements.define(tagName, ProviderElement);
 
@@ -175,7 +267,7 @@ describe('createPlayer', () => {
 
   it('applies orientation lock configuration through attributes and properties', async () => {
     const { ProviderMixin } = createPlayer({ features: [features.orientationLock] });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-orientation-lock-provider';
     customElements.define(tagName, ProviderElement);
 
@@ -200,7 +292,7 @@ describe('createPlayer', () => {
 
   it('leaves config attributes inert when their feature is absent', () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
-    const ProviderElement = ProviderMixin(MediaElement);
+    const ProviderElement = ProviderMixin(UIElement);
 
     expect(ProviderElement.observedAttributes).not.toContain('content-title');
     expect(ProviderElement.prototype).not.toHaveProperty('contentTitle');

@@ -233,6 +233,18 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   canPlayTrack?: CanPlayTrack;
   /**
+   * Codec families (RFC 6381 4CCs, e.g. `'avc1'` / `'hvc1'` / `'mp4a'`) the
+   * initial video/audio picks prefer on a mixed-codec source, read by the
+   * `preferCodecFamilies` selection scope. SPF implements no
+   * `SourceBuffer.changeType()`, so the initial pick's codec family is sticky
+   * for the source's lifetime (`stickToSelectedCodecs`); this decides which
+   * family that is. Soft — a source with no preferred-family rendition is
+   * unaffected. Defaults to `DEFAULT_PREFERRED_CODECS` (AVC + AAC, the
+   * broadest-decode pair); pass `[]` to disable and let ABR pick the initial
+   * family (it then still can't leave it mid-stream).
+   */
+  preferredCodecs?: string[];
+  /**
    * Conditions reported about each rendition as it resolves — the *causes* behind
    * a later verdict, and the copy a verdict reuses when they agree. Defaults to
    * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers

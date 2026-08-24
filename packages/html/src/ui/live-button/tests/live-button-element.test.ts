@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { LiveButtonElement } from '../live-button-element';
 
 function defineElement(tagName: string, Base: CustomElementConstructor): void {
@@ -31,7 +31,7 @@ function createLiveStore(): AnyPlayerStore {
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   readonly #provider = new ContextProvider(this, { context: playerContext });
 
   setStore(store: AnyPlayerStore): void {

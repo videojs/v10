@@ -25,7 +25,12 @@ describe('componentSchemaPlugin', () => {
       include: ['./*/*-component.ts'],
     });
 
-    const bundle = await rolldown({ cwd: root, input: { existing }, plugins: [plugin] });
+    const bundle = await rolldown({
+      cwd: root,
+      input: { existing },
+      experimental: { nativeMagicString: true },
+      plugins: [plugin],
+    });
     const output = await bundle.generate({ format: 'es' });
     const chunks = output.output.filter((item) => item.type === 'chunk');
     const schema = chunks.find((chunk) => chunk.fileName === 'component-schema.js');

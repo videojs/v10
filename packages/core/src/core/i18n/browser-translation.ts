@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE } from '@videojs/utils/i18n';
+import { DEFAULT_LOCALE, isDefaultLocale } from '@videojs/utils/i18n';
 import en from './locales/en';
 import type { FlatTranslations, Locale } from './params';
 import { findLocaleKeys, hasRegisteredLocale } from './registry';
@@ -70,19 +70,15 @@ async function translateProtectingPlaceholders(translator: BrowserTranslatorInst
 
 const cache = new Map<string, Partial<FlatTranslations>>();
 
-function isEnglishLocaleTag(tag: string): boolean {
-  return tag === DEFAULT_LOCALE || tag.startsWith(`${DEFAULT_LOCALE}-`);
-}
-
 function getBrowserTranslator(): BrowserTranslatorConstructor | undefined {
   if (!('Translator' in globalThis)) return undefined;
   return (globalThis as typeof globalThis & { Translator: BrowserTranslatorConstructor }).Translator;
 }
 
-/** First non-English tag in the lookup chain used as the browser translation target. */
+/** First non-default tag in the lookup chain used as the browser translation target. */
 export function resolveBrowserTranslationTarget(locale: string): string | undefined {
   for (const tag of findLocaleKeys(locale)) {
-    if (!isEnglishLocaleTag(tag)) return tag;
+    if (!isDefaultLocale(tag)) return tag;
   }
   return undefined;
 }
@@ -95,11 +91,11 @@ export function shouldAttemptBrowserTranslation(
 ): boolean {
   const target = resolveBrowserTranslationTarget(locale);
   if (!target) return false;
-  if (loadedLazyTags.some((tag) => !isEnglishLocaleTag(tag))) {
+  if (loadedLazyTags.some((tag) => !isDefaultLocale(tag))) {
     return translations !== undefined && hasMissingEnglishTranslations(translations);
   }
 
-  return !findLocaleKeys(locale).some((tag) => !isEnglishLocaleTag(tag) && hasRegisteredLocale(tag));
+  return !findLocaleKeys(locale).some((tag) => !isDefaultLocale(tag) && hasRegisteredLocale(tag));
 }
 
 function hasMissingEnglishTranslations(translations: Partial<FlatTranslations>): boolean {

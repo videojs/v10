@@ -29,6 +29,7 @@ describe('reactTargetPropsPlugin', () => {
     };
     const bundle = await rolldown({
       input: 'fixture',
+      experimental: { nativeMagicString: true },
       external: (id) => !id.startsWith('.') && !id.startsWith('\0'),
       transform: { jsx: 'preserve' },
       plugins: [

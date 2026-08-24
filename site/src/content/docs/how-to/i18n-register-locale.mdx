@@ -148,8 +148,8 @@ All keys are optional. Missing keys follow the <DocsLink slug="concepts/i18n">lo
 Load the player and a locale chunk. CDN locale modules call <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> on import:
 
 ```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/locales/es.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/video.js"></script>
+<script type="module" src="{{VJS10_HTML_CDN_BASE}}/locales/es.js"></script>
 
 <html lang="es">
   <media-i18n>
@@ -169,7 +169,7 @@ CDN locale files import `registerI18n` from the shared `cdn/i18n.js` bundle so e
 ## Custom CDN locale
 
 ```js title="my-locale.js"
-import { registerI18n } from 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn/i18n.js';
+import { registerI18n } from '{{VJS10_HTML_CDN_BASE}}/i18n.js';
 
 registerI18n('es', {
   buttons: {

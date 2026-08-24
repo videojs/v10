@@ -65,8 +65,17 @@ export const sidebar: Sidebar = [
     llmsDescription:
       'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
     contents: [
+      {
+        sidebarLabel: 'Integrate with a framework',
+        defaultOpen: false,
+        contents: [
+          { slug: 'how-to/use-videojs-with-vue', sidebarLabel: 'Vue and Nuxt', frameworks: ['html'] },
+          { slug: 'how-to/use-videojs-with-svelte', sidebarLabel: 'Svelte and SvelteKit', frameworks: ['html'] },
+        ],
+      },
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/add-a-poster-placeholder' },
+      { slug: 'how-to/add-a-background-video' },
       { slug: 'how-to/build-your-own-component' },
       { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
       {
@@ -97,12 +106,14 @@ export const sidebar: Sidebar = [
           { slug: 'reference/i18n-provider', frameworks: ['react'] },
           // sorted alphabetically
           { slug: 'reference/airplay-button' },
+          { slug: 'reference/alert-dialog' },
           { slug: 'reference/audio-track-radio-group' },
           { slug: 'reference/buffering-indicator' },
           { slug: 'reference/captions-button' },
           { slug: 'reference/captions-radio-group' },
           { slug: 'reference/cast-button' },
           { slug: 'reference/controls' },
+          { slug: 'reference/error-dialog' },
           { slug: 'reference/fullscreen-button' },
           { slug: 'reference/google-cast' },
           { slug: 'reference/menu' },
@@ -134,9 +145,11 @@ export const sidebar: Sidebar = [
           { slug: 'reference/cloudflare-video' },
           { slug: 'reference/dash-video' },
           { slug: 'reference/hls-audio' },
+          { slug: 'reference/hls-background-video' },
           { slug: 'reference/hls-video' },
           { slug: 'reference/hlsjs-video' },
           { slug: 'reference/mux-audio' },
+          { slug: 'reference/mux-background-video' },
           { slug: 'reference/mux-video' },
           { slug: 'reference/native-hls-video' },
           { slug: 'reference/shaka-video' },
@@ -210,7 +223,6 @@ export const sidebar: Sidebar = [
           { slug: 'reference/use-quality-options', frameworks: ['react'] },
           { slug: 'reference/use-selector', frameworks: ['react'] },
           { slug: 'reference/use-snapshot', frameworks: ['react'] },
-          { slug: 'reference/container-mixin', frameworks: ['html'] },
           { slug: 'reference/media-attach-mixin', frameworks: ['html'] },
           { slug: 'reference/player-context', frameworks: ['html'] },
           { slug: 'reference/provider-mixin', frameworks: ['html'] },

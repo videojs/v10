@@ -77,7 +77,7 @@
     "@tailwindcss/node": "4.2.1",
     "@videojs/utils": "workspace:*",
     "lightningcss": "^1.32.0",
-    "magic-string": "^0.30.21",
+    "magic-string": "^1.2.2",
     "oxc-parser": "0.146.0",
     "oxc-walker": "^1.1.1",
     "rolldown": "~1.2.5",

@@ -1,19 +1,39 @@
-/**
- * Minimal rolldown plugin interface covering only the hooks used by our build
- * plugins. The full `Plugin` type lives in `rolldown` which is a transitive
- * dependency (via tsdown) and not directly resolvable from the repo root.
- */
+export interface BuildMagicString {
+  overwrite(start: number, end: number, content: string): unknown;
+  toString(): string;
+}
+
+interface BuildTransformMeta {
+  readonly magicString?: BuildMagicString | undefined;
+}
+
+interface BuildRenderChunkMeta {
+  readonly magicString?: BuildMagicString | undefined;
+}
+
+interface BuildCodeResult {
+  code: string | BuildMagicString;
+  map?: object | undefined;
+}
+
+/** Minimal Rolldown plugin interface covering the hooks used by root build plugins. */
 export interface BuildPlugin {
   name: string;
-  transform?: (this: void, code: string, id: string) => { code: string; map?: object } | null;
+  transform?: (this: void, code: string, id: string, meta?: BuildTransformMeta) => BuildCodeResult | null;
   resolveId?: (
     this: void,
     source: string,
     importer: string | undefined
-  ) => { id: string; moduleSideEffects: boolean } | null;
+  ) => { id: string; external?: boolean; moduleSideEffects?: boolean } | null;
   load?: (this: void, id: string) => { code: string; moduleSideEffects: boolean } | null;
   buildStart?: (this: { addWatchFile: (file: string) => void }) => void;
-  renderChunk?: (this: void, code: string, chunk: { fileName: string }) => { code: string; map: object } | null;
+  renderChunk?: (
+    this: void,
+    code: string,
+    chunk: { fileName: string },
+    outputOptions?: unknown,
+    meta?: BuildRenderChunkMeta
+  ) => BuildCodeResult | null;
   writeBundle?: (this: void) => void;
   closeWatcher?: (this: void) => void;
 }

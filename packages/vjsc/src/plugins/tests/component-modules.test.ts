@@ -38,6 +38,7 @@ describe('componentModulesPlugin', () => {
     };
     const bundle = await rolldown({
       input: `${entry}?style=tailwind&target=react`,
+      experimental: { nativeMagicString: true },
       transform: { jsx: 'preserve' },
       plugins: [componentModulesPlugin(), capture],
     });

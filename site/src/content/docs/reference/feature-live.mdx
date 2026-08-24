@@ -42,12 +42,12 @@ function LiveEdgeIndicator() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="live-edge-button.ts"
-import { createPlayer, MediaElement, selectLive } from '@videojs/html';
+import { createPlayer, UIElement, selectLive } from '@videojs/html';
 import { liveVideoFeatures } from '@videojs/html/live-video';
 
 const { PlayerController, context } = createPlayer({ features: liveVideoFeatures });
 
-class LiveEdgeButton extends MediaElement {
+class LiveEdgeButton extends UIElement {
   readonly #live = new PlayerController(this, context, selectLive);
 }
 ```

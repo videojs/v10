@@ -14,38 +14,28 @@ The store is created when the element is constructed. On `connectedCallback`, th
 
 {/* TODO: link context keys to concept page once written (https://github.com/videojs/v10/issues/1033) */}
 - **`playerContext`** — the store, consumed by <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> and other controllers
-- **`mediaContext`** — a setter callback for media elements to register themselves
-- **`containerContext`** — a setter callback for container elements to register themselves
+- **`mediaContext`** — a registration callback for media elements that returns a release function
+- **`containerContext`** — a registration callback for container elements that returns a release function
 
-When a media element and a container both register, the provider calls `store.attach({ media, container })`. If no media element registers via context within a [microtask](https://developer.mozilla.org/en-US/docs/Web/API/HTML_DOM_API/Microtask_guide), the provider falls back to `querySelector('video, audio')` to support plain `<video>` and `<audio>` elements.
+When a media element and a container both register, the provider calls `store.attach({ media, container })`. Each release function removes only the element that registered it, so disconnecting an older element cannot clear a newer registration. The provider also watches for plain `<video>` and `<audio>` elements as they are added, removed, or replaced.
 
 {/* TODO: link destroyCallback to lifecycle reference once written (https://github.com/videojs/v10/issues/1034) */}
 On `disconnectedCallback`, the mixin detaches the current media target but keeps the store alive. An element moved in the DOM reconnects without losing state. The store is destroyed in `destroyCallback`.
 
 ### When to split provider and container
 
-Use `ProviderMixin` separate from <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink> when the store owner is a different element from the container:
+Use `ProviderMixin` with the independently extensible <DocsLink slug="reference/player-container">`ContainerElement`</DocsLink> when the store owner is a different element from the container:
 
 ```ts
-import { ContainerMixin, createPlayer } from '@videojs/html';
+import { ContainerElement, createPlayer, UIElement } from '@videojs/html';
 
 const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 // Layout shell owns the store
-class AppShell extends ProviderMixin(MediaElement) {}
+class AppShell extends ProviderMixin(UIElement) {}
 
 // Content region is the fullscreen target and container reference
-class VideoRegion extends ContainerMixin(MediaElement) {}
-```
-
-When a single element handles both responsibilities, compose the mixins directly:
-
-```ts
-import { ContainerMixin, createPlayer } from '@videojs/html';
-
-const { ProviderMixin } = createPlayer({ features: videoFeatures });
-
-class VideoPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
+class VideoRegion extends ContainerElement {}
 ```
 
 <UtilReference util="ProviderMixin" />

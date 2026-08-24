@@ -1,3 +1,4 @@
+import { VJS10_HTML_CDN_BASE } from '@/consts';
 import {
   getInstallationPreset,
   getMediaSubpath,
@@ -6,8 +7,6 @@ import {
   type Skin,
   type UseCase,
 } from '@/utils/installation/types';
-
-const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
 
 // Every installation preset ships default, minimal, and skinless CDN bundles.
 // The skinless bundle is named for the element it defines (e.g. `video-player`).
@@ -45,14 +44,14 @@ export function generateCdnCode(
   const name = getCdnFileName(useCase, skin);
   const mediaSubpath = getMediaSubpath(renderer);
 
-  const scriptLines = [`<script type="module" src="${CDN_BASE}/${name}.js"></script>`];
+  const scriptLines = [`<script type="module" src="${VJS10_HTML_CDN_BASE}/${name}.js"></script>`];
 
   // Emit a media script only when that media ships a CDN build, per the
   // manifest. A media renderer whose subpath isn't in the manifest gets just the
   // preset script; if it gains a CDN build later, the manifest carries it and
   // this starts emitting automatically — no code change needed.
   if (mediaSubpath !== null && cdnMediaSubpaths.includes(mediaSubpath)) {
-    scriptLines.push(`<script type="module" src="${CDN_BASE}/media/${mediaSubpath}.js"></script>`);
+    scriptLines.push(`<script type="module" src="${VJS10_HTML_CDN_BASE}/media/${mediaSubpath}.js"></script>`);
   }
 
   return scriptLines.join('\n');

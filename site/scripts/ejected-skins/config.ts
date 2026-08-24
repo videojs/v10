@@ -1,3 +1,5 @@
+import { VJS10_HTML_CDN_BASE } from '../../src/consts';
+
 export type MediaType = 'video' | 'audio';
 export type SkinVariant = 'default' | 'minimal';
 export type SkinStyle = 'css' | 'tailwind';
@@ -28,7 +30,7 @@ export interface ReactSkinDef extends SkinMetadata {
 
 export type SkinDef = HtmlSkinDef | ReactSkinDef;
 
-export const HTML_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
+export const HTML_CDN_BASE = VJS10_HTML_CDN_BASE;
 export const DEMO_VIDEO_SRC = 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4';
 export const DEMO_POSTER_SRC = 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp';
 export const DEMO_LIVE_SRC = 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8';

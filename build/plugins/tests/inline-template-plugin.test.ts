@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import MagicString from 'magic-string';
 import { inlineTemplatePlugin } from '../inline-template-plugin.ts';
 
 // Helper: run the plugin's transform on a code string.
 function transform(code: string): string {
   const plugin = inlineTemplatePlugin({ minify: true });
-  const result = plugin.transform?.(code, 'test.ts');
-  return result?.code ?? code;
+  const result = plugin.transform?.(code, 'test.ts', { magicString: new MagicString(code) });
+  return result?.code.toString() ?? code;
 }
 
 // Helper: extract the minified template body (between the backticks).

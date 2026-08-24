@@ -8,8 +8,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
 import { PlayButtonElement } from '../../play-button/play-button-element';
+import { UIElement } from '../../ui-element';
 import { TooltipElement } from '../tooltip-element';
 import { TooltipLabelElement } from '../tooltip-label-element';
 import { TooltipShortcutElement } from '../tooltip-shortcut-element';
@@ -62,7 +62,7 @@ class TestTriggerElement extends HTMLElement {
   }
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   static readonly tagName = 'test-tooltip-player';
 
   store = createPlaybackStore();

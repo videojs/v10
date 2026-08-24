@@ -9,6 +9,7 @@ Read this reference only when a plugin needs Vite lifecycle, environments, dev b
 - Build and `build.rolldownOptions`: <https://vite.dev/config/build-options>
 - Production customization: <https://vite.dev/guide/build.html>
 - Worker plugin lifecycle: <https://vite.dev/config/worker-options.html>
+- Rolldown native MagicString: <https://rolldown.rs/in-depth/native-magic-string>
 
 Recheck installed types alongside the documentation after Vite or Rolldown upgrades. Environment APIs and compatibility details continue to evolve.
 
@@ -31,6 +32,8 @@ Use Vite's extended interface for:
 - HMR behavior.
 
 A build-only Rolldown plugin under `build.rolldownOptions.plugins` behaves like a Vite plugin with build-only, post-tier activation. Put it there when it should not participate in dev. Put it in top-level `plugins` when it must also transform served modules or needs Vite fields.
+
+Enable `build.rolldownOptions.experimental.nativeMagicString: true` for repository-owned Vite builds and `build.sourcemap: true` when final map files are required. In the pinned Vite 8.2.x host, transform hook options expose Vite fields but do not forward Rolldown's `ast` or `magicString`, whether a plugin is top-level or under `build.rolldownOptions.plugins`. The option still enables native MagicString in production output hooks such as `renderChunk`; it does not replace `packages/vjsc/src/vite/oxc.ts` for VJSC transforms in serve or build.
 
 ## Ordering and lifecycle
 

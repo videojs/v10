@@ -1115,7 +1115,9 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
 
   it('passes everything through when no canPlayTrack probe is wired', async () => {
     const state = makeState();
-    const reactor = switchVideoTrack.setup({ state });
+    // preferredCodecs: [] keeps the codec-family preference (its own describe)
+    // out of this test's lens on the constraint.
+    const reactor = switchVideoTrack.setup({ state, config: { preferredCodecs: [] } });
     await flush();
     // No probe → HEVC survives; same-bitrate tie keeps manifest order, so the
     // first 1080p (HEVC) wins.
@@ -1148,8 +1150,9 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
   it('clears a prior pick when a later relabel prunes every rendition to empty', async () => {
     const state = makeState();
     // Accepts fMP4; rejects the non-fMP4 container MIME resolve-track relabels to.
+    // preferredCodecs: [] keeps the codec-family preference out of the picture.
     const canPlayTrack = (track: { mimeType?: string }) => track.mimeType !== 'video/mp2t';
-    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack } });
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack, preferredCodecs: [] } });
     await flush();
     // Pick made while the tracks are still labeled video/mp4.
     expect(state.selectedVideoTrackId.get()).toBe('1080p-hevc');
@@ -1161,6 +1164,242 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
     await flush();
     expect(state.selectedVideoTrackId.get()).toBeUndefined();
 
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// Codec-family policy — preferCodecFamilies (initial-pick scope) +
+// stickToSelectedCodecs (sticky constraint)
+//
+// SPF implements no `SourceBuffer.changeType()`, so a mid-stream pick outside
+// the initially-selected codec families would append undecodable data into a
+// buffer created under the initial family's mimetype. The sticky constraint
+// prunes such picks in the pre-pass; the preference scope narrows which
+// family the *initial* pick lands in on mixed-codec sources (the Apple bipbop
+// advanced example muxes HEVC + AVC renditions of the same content).
+// ============================================================================
+
+const codecFamilyTrack = (id: string, bandwidth: number, codecs: string[]): PartiallyResolvedVideoTrack => ({
+  ...createVideoTrack(id, bandwidth),
+  codecs,
+});
+
+// Mixed-codec ladder (bipbop shape). At most bandwidths the best-fitting rung
+// is HEVC, so a pick that lands on AVC is the preference's doing, not ABR's.
+const mixedFamilyLadder = () => [
+  codecFamilyTrack('avc-low', 1_000_000, ['avc1.640020']),
+  codecFamilyTrack('avc-high', 3_000_000, ['avc1.640028']),
+  codecFamilyTrack('hvc-low', 900_000, ['hvc1.2.4.L123.B0']),
+  codecFamilyTrack('hvc-high', 3_200_000, ['hvc1.2.4.L150.B0']),
+  codecFamilyTrack('hvc-4k', 8_000_000, ['hvc1.2.4.L153.B0']),
+];
+
+describe('preferCodecFamilies (codec-family scope)', () => {
+  it('narrows the initial pick to the default AVC/AAC families on a mixed-codec ladder', async () => {
+    const state = makeState({
+      presentation: createPresentation(mixedFamilyLadder()),
+      bandwidthState: createBandwidthState(4_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    // The best fitting rung overall is hvc-high (3.2M under the 3.4M
+    // threshold); the default preference narrows to AVC first, so the best
+    // fitting AVC rung wins.
+    expect(state.selectedVideoTrackId.get()).toBe('avc-high');
+    reactor.destroy();
+  });
+
+  it('disables the preference for preferredCodecs: []', async () => {
+    const state = makeState({
+      presentation: createPresentation(mixedFamilyLadder()),
+      bandwidthState: createBandwidthState(4_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { preferredCodecs: [] } });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('hvc-high');
+    reactor.destroy();
+  });
+
+  it('honors a configured non-default family', async () => {
+    const state = makeState({
+      presentation: createPresentation(mixedFamilyLadder()),
+      bandwidthState: createBandwidthState(4_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { preferredCodecs: ['hvc1'] } });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('hvc-high');
+    reactor.destroy();
+  });
+
+  it('falls through on a ladder with no preferred-family rendition', async () => {
+    const state = makeState({
+      presentation: createPresentation([
+        codecFamilyTrack('hvc-low', 900_000, ['hvc1.2.4.L123.B0']),
+        codecFamilyTrack('hvc-high', 3_200_000, ['hvc1.2.4.L150.B0']),
+      ]),
+      bandwidthState: createBandwidthState(4_000_000),
+    });
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    // Nothing matches AVC/AAC → the soft filter is skipped, not applied to
+    // empty — an HEVC-only source plays exactly as before.
+    expect(state.selectedVideoTrackId.get()).toBe('hvc-high');
+    reactor.destroy();
+  });
+
+  it('narrows the audio initial pick to AAC over a higher-bitrate E-AC-3', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([
+        makeAudioTrack('audio-ec3', { codecs: ['ec-3'], bandwidth: 640_000 }),
+        makeAudioTrack('audio-aac', { codecs: ['mp4a.40.2'], bandwidth: 128_000 }),
+      ]),
+    });
+    const reactor = switchAudioTrack.setup({ state });
+    await flush();
+    // Without the preference the ranker takes E-AC-3 (highest fitting bitrate,
+    // listed first); mp4a is in the default preferred families, ec-3 is not.
+    expect(state.selectedAudioTrackId.get()).toBe('audio-aac');
+    reactor.destroy();
+  });
+});
+
+describe('stickToSelectedCodecs (codec-family sticky constraint)', () => {
+  it('keeps re-picks within the selected codec family (upgrades stay in-family)', async () => {
+    // preferredCodecs: [] isolates the sticky scope from the preference.
+    const state = makeState({
+      presentation: createPresentation(mixedFamilyLadder()),
+      bandwidthState: createBandwidthState(12_000_000),
+      selectedVideoTrackId: 'avc-low',
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { preferredCodecs: [] } });
+    await flush();
+    // Everything fits at 12M and the best rung overall is hvc-4k, but the
+    // pick sticks to the AVC family — upgrading within it.
+    expect(state.selectedVideoTrackId.get()).toBe('avc-high');
+    reactor.destroy();
+  });
+
+  it('ignores a cross-family user selection mid-stream, honors an in-family one', async () => {
+    const state = makeState({
+      presentation: createPresentation(mixedFamilyLadder()),
+      bandwidthState: createBandwidthState(12_000_000),
+      selectedVideoTrackId: 'avc-high',
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { preferredCodecs: [] } });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('avc-high');
+
+    state.userVideoTrackSelection.set({ id: 'hvc-4k' });
+    await flush();
+    // The constraint prunes the HEVC pick in the pre-pass, so the user filter
+    // never sees it and falls through.
+    expect(state.selectedVideoTrackId.get()).toBe('avc-high');
+
+    state.userVideoTrackSelection.set({ id: 'avc-low' });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('avc-low');
+    reactor.destroy();
+  });
+
+  it("locks to the family the user's initial pick landed in", async () => {
+    const state = makeState({
+      presentation: createPresentation(mixedFamilyLadder()),
+      bandwidthState: createBandwidthState(12_000_000),
+      userVideoTrackSelection: { id: 'hvc-4k' },
+    });
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    // No selection yet → the sticky scope passes through, and the user's
+    // explicit pick may land in any family (the default preference sits
+    // behind the user filter).
+    expect(state.selectedVideoTrackId.get()).toBe('hvc-4k');
+
+    state.userVideoTrackSelection.set(undefined);
+    await flush();
+    // Intent withdrawn: re-picks stay in the HEVC family the initial pick
+    // landed in (the AVC-preferring default falls through inside it).
+    expect(state.selectedVideoTrackId.get()).toBe('hvc-4k');
+    reactor.destroy();
+  });
+
+  it('matches the full codec-family set — a shared audio codec is not enough', async () => {
+    const muxed = [
+      codecFamilyTrack('muxed-avc', 1_000_000, ['avc1.640020', 'mp4a.40.2']),
+      codecFamilyTrack('muxed-hvc', 3_000_000, ['hvc1.2.4.L150.B0', 'mp4a.40.2']),
+    ];
+    const state = makeState({
+      presentation: createPresentation(muxed),
+      bandwidthState: createBandwidthState(12_000_000),
+      selectedVideoTrackId: 'muxed-avc',
+    });
+    const reactor = switchVideoTrack.setup({ state, config: { preferredCodecs: [] } });
+    await flush();
+    // {hvc1, mp4a} shares mp4a with {avc1, mp4a} but isn't the same family
+    // set; the buffer's mimetype still can't take it.
+    expect(state.selectedVideoTrackId.get()).toBe('muxed-avc');
+    reactor.destroy();
+  });
+
+  it('keeps an audio pick in-family when the requested language only exists in another family', async () => {
+    const state = makeAudioState({
+      presentation: createAudioPresentation([
+        makeAudioTrack('audio-aac-en', { language: 'en' }),
+        makeAudioTrack('audio-ec3-es', { language: 'es', codecs: ['ec-3'], bandwidth: 640_000 }),
+      ]),
+      selectedAudioTrackId: 'audio-aac-en',
+    });
+    const reactor = switchAudioTrack.setup({ state });
+    await flush();
+    expect(state.selectedAudioTrackId.get()).toBe('audio-aac-en');
+
+    state.userAudioTrackSelection.set({ language: 'es' });
+    await flush();
+    // Spanish exists only as E-AC-3; honoring it would cross codec families,
+    // so the constraint prunes it and the pick stands.
+    expect(state.selectedAudioTrackId.get()).toBe('audio-aac-en');
+    reactor.destroy();
+  });
+
+  it('reports and clears when the selected family vanishes, re-picking on recovery', async () => {
+    // AVC only on cdn-a, HEVC only on cdn-b: the shape where failover can
+    // remove a whole codec family from the playable set.
+    const cdnFamilyTrack = (id: string, host: string, bandwidth: number, codecs: string[]) => ({
+      ...createVideoTrack(id, bandwidth),
+      url: `https://${host}/${id}.m3u8`,
+      codecs,
+    });
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(
+        createPresentation([
+          cdnFamilyTrack('avc-low', 'cdn-a.example.com', 1_000_000, ['avc1.640020']),
+          cdnFamilyTrack('avc-high', 'cdn-a.example.com', 3_000_000, ['avc1.640028']),
+          cdnFamilyTrack('hvc-low', 'cdn-b.example.com', 900_000, ['hvc1.2.4.L123.B0']),
+          cdnFamilyTrack('hvc-high', 'cdn-b.example.com', 3_200_000, ['hvc1.2.4.L150.B0']),
+        ])
+      ),
+      bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(4_000_000)),
+      selectedVideoTrackId: signal<string | undefined>(undefined),
+      userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+      failedCdns: signal<string[] | undefined>(undefined),
+      errors: signal<SvtaError[] | undefined>(undefined),
+    };
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('avc-high');
+
+    // The only CDN carrying the selected family enters cooldown: the failover
+    // constraint leaves HEVC, this constraint removes it — an explicable
+    // reported stop instead of an opaque decode error at append.
+    state.failedCdns.set(['https://cdn-a.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_NO_SUPPORTED_VIDEO_TRACK]);
+
+    // Cooldown ends: the family is playable again and selection recovers.
+    state.failedCdns.set(undefined);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('avc-high');
     reactor.destroy();
   });
 });

@@ -3,6 +3,7 @@ import { basename, resolve } from 'node:path';
 import { defineConfig } from 'tsdown';
 import { shadcnPlugin, vjscPlugin } from 'vjsc/plugins';
 import type { ShadcnItem } from 'vjsc/shadcn';
+import { baseConfig } from '../../build/tsdown';
 
 import { configureSkinModule } from './vjsc/config';
 import { type SkinModuleMeta, skinStyles } from './vjsc/meta';
@@ -19,7 +20,7 @@ const paths = {
 } as const;
 
 export default defineConfig({
-  report: process.env.CI === 'true',
+  ...baseConfig,
   name: 'skins-shadcn-registry',
   cwd: packageDir,
   entry: {

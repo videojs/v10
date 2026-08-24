@@ -4,9 +4,9 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { MediaElement } from '../media-element';
+import { UIElement } from '../ui-element';
 
-export class BufferingIndicatorElement extends MediaElement {
+export class BufferingIndicatorElement extends UIElement {
   static readonly tagName = 'media-buffering-indicator';
 
   static override properties = {

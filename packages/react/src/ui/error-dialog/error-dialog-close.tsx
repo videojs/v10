@@ -9,6 +9,7 @@ import { useAlertDialogContext } from '../alert-dialog/context';
 
 export interface ErrorDialogCloseProps extends UIComponentProps<'button', AlertDialogCore.State> {}
 
+/** Renders a localized button that closes the dialog and dismisses the player error. */
 export const ErrorDialogClose = forwardRef<HTMLButtonElement, ErrorDialogCloseProps>(function ErrorDialogClose(
   { render, className, style, disabled, children, ...elementProps },
   forwardedRef

@@ -1,4 +1,4 @@
-import { AlertDialogDataAttrs, ErrorDialogCore } from '@videojs/core';
+import { ErrorDialogCore, ErrorDialogDataAttrs } from '@videojs/core';
 import { createAlertDialog, createTransition, selectError } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
@@ -15,6 +15,7 @@ export interface ErrorDialogRootProps {
   children?: ReactNode;
 }
 
+/** Opens from player error state and provides error dialog state to the compound parts. */
 export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   const [core] = useState(() => new ErrorDialogCore());
   const errorState = usePlayer(selectError);
@@ -62,7 +63,7 @@ export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
 
   return (
     <ErrorDialogContextProvider value={{ lastError: lastError.current }}>
-      <AlertDialogContextProvider value={{ core, dialog, state, stateAttrMap: AlertDialogDataAttrs }}>
+      <AlertDialogContextProvider value={{ core, dialog, state, stateAttrMap: ErrorDialogDataAttrs }}>
         {children}
       </AlertDialogContextProvider>
     </ErrorDialogContextProvider>
