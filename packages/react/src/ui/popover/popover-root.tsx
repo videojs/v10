@@ -45,6 +45,7 @@ export function PopoverRoot({
   const popupGroup = useOptionalPopupGroup();
   const controls = useOptionalControlsContext();
   const [core] = useState(() => new PopoverCore(coreProps));
+
   core.setProps(coreProps);
 
   const isControlled = !isUndefined(controlledOpen);
@@ -116,6 +117,7 @@ export function PopoverRoot({
   useDestroy(popover);
 
   const input = useSnapshot(popover.input);
+
   core.setInput(input);
   const { state, preferredSide, setPositionedSide } = usePositionedState(core.getState());
 

@@ -7,6 +7,7 @@ export default async (request: Request) => {
   if (url.pathname.startsWith('/ph/')) return;
 
   const redirectUrl = new URL(url.pathname.replace(/\/$/, ''), url.origin);
+
   redirectUrl.search = url.search;
   redirectUrl.hash = url.hash;
 

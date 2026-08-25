@@ -25,6 +25,7 @@ export const streamTypeFeature = definePlayerFeature({
 
     if (isMediaStreamTypeCapable(media)) {
       const sync = () => set({ streamType: media.streamType });
+
       sync();
       listen(media, 'streamtypechange', sync, { signal });
       return;

@@ -21,6 +21,7 @@ export class AudioTrack {
 
   addRendition(src: string, codec?: string, bitrate?: number) {
     const rendition = new AudioRendition();
+
     rendition.src = src;
     rendition.codec = codec;
     rendition.bitrate = bitrate;

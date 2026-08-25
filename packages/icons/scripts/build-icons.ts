@@ -17,6 +17,7 @@ async function build(): Promise<void> {
   if ((!isWatch || hasBuilt) && existsSync(DIST_DIR)) rmSync(DIST_DIR, { recursive: true, force: true });
 
   const families = loadIconFamilies();
+
   console.log(`Building ${families.length} icon families: ${families.map(({ name }) => name).join(', ')}`);
 
   emitElementBase(families);

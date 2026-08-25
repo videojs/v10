@@ -139,6 +139,7 @@ describe('BufferingIndicatorCore', () => {
   describe('custom delay', () => {
     it('respects a custom delay value', () => {
       const core = new BufferingIndicatorCore();
+
       core.setProps({ delay: 1000 });
 
       core.update(createMediaState({ waiting: true, paused: false }));
@@ -151,6 +152,7 @@ describe('BufferingIndicatorCore', () => {
 
     it('respects delay: 0 for immediate visibility', () => {
       const core = new BufferingIndicatorCore();
+
       core.setProps({ delay: 0 });
 
       core.update(createMediaState({ waiting: true, paused: false }));
@@ -226,6 +228,7 @@ describe('BufferingIndicatorCore', () => {
       const callback = vi.fn();
 
       const unsubscribe = core.state.subscribe(callback);
+
       unsubscribe();
 
       core.update(createMediaState({ waiting: true, paused: false }));

@@ -95,6 +95,7 @@ let requestId = 0;
 
 export function setPlaybackRate(rate: number) {
   const media = currentMedia();
+
   return currentSession()!.sendMessage(MEDIA_NAMESPACE, {
     type: 'SET_PLAYBACK_RATE',
     playbackRate: rate,
@@ -128,6 +129,7 @@ function getFormat(segment: string | undefined) {
 
   const regex = /\.([a-zA-Z0-9]+)(?:\?.*)?$/;
   const match = segment.match(regex);
+
   return match ? match[1] : null;
 }
 
@@ -152,6 +154,7 @@ function parsePlaylistUrls(playlistContent: string) {
 
 function parseSegment(playlistContent: string) {
   const lines = playlistContent.split('\n');
+
   return lines.find((line) => !line.trim().startsWith('#') && line.trim() !== '');
 }
 
@@ -169,6 +172,7 @@ export async function isHls(url: string) {
     if (!contentType) return false;
 
     const normalizedContentType = contentType.toLowerCase().split(';')[0]!.trim();
+
     return HLS_RESPONSE_HEADERS.some((header) => normalizedContentType === header.toLowerCase());
   } catch (err) {
     console.error('Error while trying to get the Content-Type of the manifest', err);
@@ -185,11 +189,13 @@ export async function getPlaylistSegmentFormat(url: string) {
 
     if (playlists.length > 0) {
       const chosenPlaylistUrl = new URL(playlists[0]!, url).toString();
+
       availableChunksContent = await (await fetch(chosenPlaylistUrl)).text();
     }
 
     const segment = parseSegment(availableChunksContent);
     const format = getFormat(segment);
+
     return format;
   } catch (err) {
     console.error('Error while trying to parse the manifest playlist', err);

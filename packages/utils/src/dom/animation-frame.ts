@@ -9,5 +9,6 @@
  */
 export function animationFrame(callback: FrameRequestCallback): () => void {
   const id = requestAnimationFrame(callback);
+
   return () => cancelAnimationFrame(id);
 }

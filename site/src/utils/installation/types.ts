@@ -122,5 +122,6 @@ export function getMediaSubpath(renderer: Renderer): string | null {
     tiktok: 'tiktok-video',
     twitch: 'twitch-video',
   };
+
   return map[renderer] ?? null;
 }

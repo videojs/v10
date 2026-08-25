@@ -8,6 +8,7 @@ class VimeoCustomMediaElement extends CustomMediaElement('iframe', VimeoMedia) {
   static override getTemplateHTML = (attrs: Record<string, string>): string => {
     const initialSrc = buildVimeoIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
     const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
+
     return /*html*/ `
       <style>
         :host {

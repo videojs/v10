@@ -20,6 +20,7 @@ describe('uniqBy', () => {
 
   it('returns empty array for empty input', () => {
     const result = uniqBy([], (item) => item);
+
     expect(result).toEqual([]);
   });
 

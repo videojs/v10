@@ -50,6 +50,7 @@ export class PosterCore {
   /** Derive the presentation state to paint. */
   getState(): PosterState {
     const media = this.#media!;
+
     return {
       visible: !media.started,
       src: media.poster,

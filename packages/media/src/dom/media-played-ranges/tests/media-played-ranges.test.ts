@@ -38,6 +38,7 @@ class FakeMedia extends MediaPlayedRangesMixin(EventTarget) {
 describe('MediaPlayedRangesMixin', () => {
   it('starts with a single empty range', () => {
     const media = new FakeMedia();
+
     expect(media.played.length).toBe(1);
     expect(media.played.start(0)).toBe(0);
     expect(media.played.end(0)).toBe(0);
@@ -45,11 +46,13 @@ describe('MediaPlayedRangesMixin', () => {
 
   it('tracks a contiguous play segment', () => {
     const media = new FakeMedia();
+
     media.simulatePlay(0);
     media.tick(5);
     media.simulatePause(5);
 
     const played = media.played;
+
     expect(played.length).toBe(1);
     expect(played.start(0)).toBe(0);
     expect(played.end(0)).toBe(5);
@@ -57,18 +60,21 @@ describe('MediaPlayedRangesMixin', () => {
 
   it('merges adjacent ranges within the epsilon tolerance', () => {
     const media = new FakeMedia();
+
     media.simulatePlay(0);
     media.simulatePause(5);
     media.simulatePlay(5.2);
     media.simulatePause(8);
 
     const played = media.played;
+
     expect(played.length).toBe(1);
     expect(played.end(0)).toBe(8);
   });
 
   it('keeps non-adjacent ranges separate', () => {
     const media = new FakeMedia();
+
     media.simulatePlay(0);
     media.simulatePause(2);
     media.seek(20);
@@ -76,6 +82,7 @@ describe('MediaPlayedRangesMixin', () => {
     media.simulatePause(25);
 
     const played = media.played;
+
     expect(played.length).toBe(2);
     expect(played.start(0)).toBe(0);
     expect(played.end(0)).toBe(2);
@@ -85,6 +92,7 @@ describe('MediaPlayedRangesMixin', () => {
 
   it('commits a range on ended', () => {
     const media = new FakeMedia();
+
     media.simulatePlay(0);
     media.tick(10);
     media.end(10);
@@ -93,6 +101,7 @@ describe('MediaPlayedRangesMixin', () => {
 
   it('stops tracking after destroy', () => {
     const media = new FakeMedia();
+
     media.destroy();
     media.simulatePlay(0);
     media.tick(5);

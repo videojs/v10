@@ -114,6 +114,7 @@ export function validateReferenceGroup<T>(group: ReferenceGroup<T>): ReferenceGr
  */
 export function writeReferenceGroup(group: ValidatedReferenceGroup): { written: number; removed: string[] } {
   const parentPath = path.dirname(group.outputPath);
+
   fs.mkdirSync(parentPath, { recursive: true });
 
   // Stage every serialized file before touching the current output.

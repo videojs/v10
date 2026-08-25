@@ -24,5 +24,6 @@ export interface TextSegmentMetadata {
  */
 export async function resolveVttSegmentMetadata(url: string): Promise<TextSegmentMetadata> {
   const text = await fetch(url).then((response) => response.text());
+
   return { timestampMap: parseVttTimestampMap(text) };
 }

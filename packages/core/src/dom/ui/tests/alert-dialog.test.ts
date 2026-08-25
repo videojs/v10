@@ -12,6 +12,7 @@ function createTestAlertDialog(overrides?: Partial<AlertDialogOptions>) {
     onOpenChange,
     ...overrides,
   });
+
   return { alertDialog, onOpenChange, transition };
 }
 
@@ -22,6 +23,7 @@ afterEach(() => {
 describe('createAlertDialog', () => {
   it('starts closed', () => {
     const { alertDialog } = createTestAlertDialog();
+
     expect(alertDialog.input.current).toEqual({ active: false, status: 'idle' });
   });
 
@@ -115,6 +117,7 @@ describe('createAlertDialog', () => {
     it('focuses the element on open', async () => {
       const { alertDialog } = createTestAlertDialog();
       const el = document.createElement('div');
+
       el.tabIndex = -1;
       document.body.appendChild(el);
       alertDialog.setElement(el);
@@ -127,12 +130,14 @@ describe('createAlertDialog', () => {
 
     it('saves focus on open and restores after close animation', async () => {
       const focusTarget = document.createElement('button');
+
       document.body.appendChild(focusTarget);
       focusTarget.focus();
       expect(document.activeElement).toBe(focusTarget);
 
       const { alertDialog } = createTestAlertDialog();
       const el = document.createElement('div');
+
       el.tabIndex = -1;
       document.body.appendChild(el);
       alertDialog.setElement(el);
@@ -206,6 +211,7 @@ describe('createAlertDialog', () => {
       flush();
 
       const parentSpy = vi.fn();
+
       window.addEventListener('keydown', parentSpy);
 
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -238,6 +244,7 @@ describe('createAlertDialog', () => {
       const { alertDialog, onOpenChange } = createTestAlertDialog();
       const el = document.createElement('div');
       const button = document.createElement('button');
+
       el.appendChild(button);
       document.body.appendChild(el);
       alertDialog.setElement(el);
@@ -254,6 +261,7 @@ describe('createAlertDialog', () => {
       const { alertDialog, onOpenChange } = createTestAlertDialog();
       const el = document.createElement('div');
       const span = document.createElement('span');
+
       el.appendChild(span);
       document.body.appendChild(el);
       alertDialog.setElement(el);
@@ -270,6 +278,7 @@ describe('createAlertDialog', () => {
       const { alertDialog, onOpenChange } = createTestAlertDialog();
       const el = document.createElement('div');
       const button = document.createElement('button');
+
       el.appendChild(button);
       document.body.appendChild(el);
       alertDialog.setElement(el);
@@ -324,6 +333,7 @@ describe('createAlertDialog', () => {
       const { alertDialog, onOpenChange } = createTestAlertDialog();
       const el = document.createElement('div');
       const button = document.createElement('button');
+
       el.appendChild(button);
       document.body.appendChild(el);
       alertDialog.setElement(el);

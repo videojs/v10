@@ -40,6 +40,7 @@ export function renderTargetOutput(output: TargetOutput, context: TargetRenderCo
 
   if (Array.isArray(output)) {
     const children = output.map((item) => renderTargetOutput(item, context)).join('');
+
     return children ? `<>${children}</>` : '';
   }
 
@@ -256,10 +257,12 @@ function renderWithProps(
     if (!host) throw new Error('vjsc/target: dynamic host children require a target JSX host runtime.');
 
     const name = context.imports.reference(host);
+
     return `<${name}${attributes.length ? ` ${attributes.join(' ')}` : ''}>${children.value}</${name}>`;
   }
 
   const insertion = children.rootOpeningEnd - (children.value[children.rootOpeningEnd - 2] === '/' ? 2 : 1);
+
   return `${children.value.slice(0, insertion)}${attributes.length ? ` ${attributes.join(' ')}` : ''}${children.value.slice(insertion)}`;
 }
 

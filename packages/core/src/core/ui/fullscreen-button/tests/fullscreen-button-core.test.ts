@@ -41,6 +41,7 @@ describe('FullscreenButtonCore', () => {
     it('projects fullscreen and availability', () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({ fullscreen: true });
+
       core.setMedia(media);
       const state = core.getState();
 
@@ -52,6 +53,7 @@ describe('FullscreenButtonCore', () => {
 
     it('marks disabled and hidden when unsupported', () => {
       const core = new FullscreenButtonCore();
+
       core.setMedia(createMediaState({ fullscreenAvailability: 'unsupported' }));
       const state = core.getState();
 
@@ -62,6 +64,7 @@ describe('FullscreenButtonCore', () => {
 
     it('marks disabled and hidden when unavailable', () => {
       const core = new FullscreenButtonCore();
+
       core.setMedia(createMediaState({ fullscreenAvailability: 'unavailable' }));
       const state = core.getState();
 
@@ -72,6 +75,7 @@ describe('FullscreenButtonCore', () => {
 
     it('marks disabled when the disabled prop is set', () => {
       const core = new FullscreenButtonCore({ disabled: true });
+
       core.setMedia(createMediaState({ fullscreenAvailability: 'available' }));
       const state = core.getState();
 
@@ -83,6 +87,7 @@ describe('FullscreenButtonCore', () => {
   describe('getLabel', () => {
     it('returns Enter fullscreen when not fullscreen', () => {
       const core = new FullscreenButtonCore();
+
       expect(core.getLabel(createState({ fullscreen: false }))).toMatchObject({
         key: 'fullscreen.enter',
         text: 'Enter fullscreen',
@@ -91,6 +96,7 @@ describe('FullscreenButtonCore', () => {
 
     it('returns Exit fullscreen when fullscreen', () => {
       const core = new FullscreenButtonCore();
+
       expect(core.getLabel(createState({ fullscreen: true }))).toMatchObject({
         key: 'fullscreen.exit',
         text: 'Exit fullscreen',
@@ -99,6 +105,7 @@ describe('FullscreenButtonCore', () => {
 
     it('returns custom string label', () => {
       const core = new FullscreenButtonCore({ label: 'Full screen' });
+
       expect(core.getLabel(createState())).toBe('Full screen');
     });
 
@@ -106,6 +113,7 @@ describe('FullscreenButtonCore', () => {
       const core = new FullscreenButtonCore({
         label: (state) => (state.fullscreen ? 'Minimize' : 'Maximize'),
       });
+
       expect(core.getLabel(createState({ fullscreen: true }))).toBe('Minimize');
     });
   });
@@ -114,18 +122,21 @@ describe('FullscreenButtonCore', () => {
     it('returns aria-label', () => {
       const core = new FullscreenButtonCore();
       const attrs = core.getAttrs(createState());
+
       expect(attrs['aria-label']).toMatchObject({ key: 'fullscreen.enter', text: 'Enter fullscreen' });
     });
 
     it('sets aria-disabled when state.disabled is true', () => {
       const core = new FullscreenButtonCore();
       const attrs = core.getAttrs(createState({ disabled: true }));
+
       expect(attrs['aria-disabled']).toBe('true');
     });
 
     it('sets the hidden attribute when state.hidden is true', () => {
       const core = new FullscreenButtonCore();
       const attrs = core.getAttrs(createState({ hidden: true }));
+
       expect(attrs.hidden).toBe('');
     });
   });
@@ -134,6 +145,7 @@ describe('FullscreenButtonCore', () => {
     it('calls requestFullscreen when not fullscreen', async () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({ fullscreen: false });
+
       await core.toggle(media);
       expect(media.requestFullscreen).toHaveBeenCalled();
     });
@@ -141,6 +153,7 @@ describe('FullscreenButtonCore', () => {
     it('calls exitFullscreen when fullscreen', async () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({ fullscreen: true });
+
       await core.toggle(media);
       expect(media.exitFullscreen).toHaveBeenCalled();
     });
@@ -148,6 +161,7 @@ describe('FullscreenButtonCore', () => {
     it('does nothing when the disabled prop is set', async () => {
       const core = new FullscreenButtonCore({ disabled: true });
       const media = createMediaState();
+
       await core.toggle(media);
       expect(media.requestFullscreen).not.toHaveBeenCalled();
     });
@@ -155,6 +169,7 @@ describe('FullscreenButtonCore', () => {
     it('does nothing when unsupported', async () => {
       const core = new FullscreenButtonCore();
       const media = createMediaState({ fullscreenAvailability: 'unsupported' });
+
       await core.toggle(media);
       expect(media.requestFullscreen).not.toHaveBeenCalled();
     });
@@ -166,6 +181,7 @@ describe('FullscreenButtonCore', () => {
           throw new Error('permission denied');
         }),
       });
+
       await expect(core.toggle(media)).rejects.toThrow('permission denied');
     });
   });

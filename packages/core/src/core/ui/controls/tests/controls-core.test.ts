@@ -60,10 +60,12 @@ describe('ControlsCore', () => {
 
     it('returns only primitive values', () => {
       const core = new ControlsCore();
+
       core.setMedia(createControlsState());
       const state = core.getState();
 
       const functionKeys = Object.entries(state).filter(([, value]) => typeof value === 'function');
+
       expect(functionKeys).toHaveLength(0);
     });
   });

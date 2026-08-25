@@ -16,6 +16,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       super(...args);
 
       const { engine } = this;
+
       engine?.on(Hls.Events.MANIFEST_LOADING, () => {
         this.#reset();
         this.#armSeekToLive();

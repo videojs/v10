@@ -126,17 +126,20 @@ export function resolveCSSLength(el: Element, value: string): number {
 
   if (!Number.isNaN(parsed) && trimmed.endsWith('rem')) {
     const rootFontSize = root ? Number.parseFloat(getComputedStyle(root).fontSize) || 16 : 16;
+
     return parsed * rootFontSize;
   }
 
   if (!Number.isNaN(parsed) && trimmed.endsWith('em')) {
     const fontSize = el instanceof HTMLElement ? Number.parseFloat(getComputedStyle(el).fontSize) || 16 : 16;
+
     return parsed * fontSize;
   }
 
   if (!doc) return Number.isNaN(parsed) ? 0 : parsed;
 
   const measurementEl = doc.createElement('div');
+
   measurementEl.style.position = 'absolute';
   measurementEl.style.visibility = 'hidden';
   measurementEl.style.pointerEvents = 'none';
@@ -150,6 +153,7 @@ export function resolveCSSLength(el: Element, value: string): number {
   measurementEl.style.inset = '0';
 
   const computed = getComputedStyle(el);
+
   measurementEl.style.fontSize = computed.fontSize;
 
   for (let i = 0; i < computed.length; i++) {
@@ -172,6 +176,7 @@ export function resolveCSSLength(el: Element, value: string): number {
   }
 
   const pixels = measurementEl.getBoundingClientRect().width;
+
   measurementEl.remove();
 
   if (Number.isFinite(pixels)) return pixels;

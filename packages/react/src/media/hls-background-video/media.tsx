@@ -61,6 +61,7 @@ export const HlsBackgroundVideo = forwardRef<HTMLVideoElement, HlsBackgroundVide
   // `addEventListener`, a testing-library assertion — sees the same failure.
   useEffect(() => {
     const forward = () => videoRef.current?.dispatchEvent(new Event('error'));
+
     media.addEventListener('error', forward);
     return () => media.removeEventListener('error', forward);
   }, [media]);

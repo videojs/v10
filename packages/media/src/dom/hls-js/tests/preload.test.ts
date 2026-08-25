@@ -6,6 +6,7 @@ import { HlsJsMediaPreloadMixin } from '../preload';
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
+
   return {
     config: {
       maxBufferLength: 30,
@@ -47,6 +48,7 @@ const PreloadHost = HlsJsMediaPreloadMixin(FakeHost);
 describe('HlsJsMediaPreloadMixin', () => {
   it('defaults preload to metadata', () => {
     const host = new PreloadHost(null);
+
     expect(host.preload).toBe('metadata');
   });
 
@@ -68,6 +70,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     expect(host.target).toBeNull();
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -81,6 +84,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'auto';
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -95,6 +99,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'none';
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -108,6 +113,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'metadata';
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -125,6 +131,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'metadata';
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -145,6 +152,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'none';
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -164,6 +172,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'metadata';
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MANIFEST_LOADING);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
@@ -179,6 +188,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'metadata';
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
     (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
@@ -194,6 +204,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     const host = new PreloadHost(engine);
 
     const video = document.createElement('video');
+
     host.attach(video);
 
     host.preload = 'auto';
@@ -208,6 +219,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'metadata';
 
     const video = document.createElement('video');
+
     host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 

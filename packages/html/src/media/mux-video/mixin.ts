@@ -38,6 +38,7 @@ export function MuxVideoMixin<Class extends AnyConstructor<HTMLElement>>(BaseCla
     // would also coerce a removed attribute to `0`, which is a valid poster time.
     static get observedAttributes(): string[] {
       const inherited = (BaseClass as unknown as { observedAttributes?: string[] }).observedAttributes ?? [];
+
       return [...inherited, 'poster-time'];
     }
 
@@ -70,6 +71,7 @@ export function MuxVideoMixin<Class extends AnyConstructor<HTMLElement>>(BaseCla
     #posterTimeAttr() {
       const attr = this.getAttribute('poster-time');
       const parsed = attr ? Number(attr) : Number.NaN;
+
       return Number.isNaN(parsed) ? undefined : parsed;
     }
 

@@ -38,6 +38,7 @@ export const Value = forwardRef(function Value(
 
   const defaultType = type ?? TimeCore.defaultProps.type;
   const [activeType, setActiveType] = useState(defaultType);
+
   // We want to listen for changes to defaultType and toggle (so we revert to default), this just means one less useEffect.
   // oxlint-disable-next-line react/exhaustive-deps
   useEffect(() => {

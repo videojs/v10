@@ -45,6 +45,7 @@ export function extractParts(filePath: string, program: ts.Program): PartExport[
           if (element.isTypeOnly) continue;
 
           const localName = element.propertyName?.text ?? element.name.text;
+
           parts.push({
             name: element.name.text,
             localName,

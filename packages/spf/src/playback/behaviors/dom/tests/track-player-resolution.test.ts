@@ -18,6 +18,7 @@ const elements: HTMLElement[] = [];
  */
 function makeVideo(width: number, height: number): HTMLVideoElement {
   const element = document.createElement('video');
+
   element.style.display = 'block';
   element.style.width = `${width}px`;
   element.style.height = `${height}px`;
@@ -45,6 +46,7 @@ function setupTrackPlayerResolution(
   const state = makeState();
   const context = makeContext(initialContext);
   const cleanup = trackPlayerResolution.setup({ state, context, config });
+
   return { state, context, cleanup };
 }
 
@@ -141,6 +143,7 @@ describe('trackPlayerResolution', () => {
 
   it('leaves the reading unset for an unrendered element so the cap stays inert', async () => {
     const mediaElement = makeVideo(320, 180);
+
     mediaElement.style.display = 'none';
 
     const { state, cleanup } = setupTrackPlayerResolution({ mediaElement }, CSS_PIXELS);

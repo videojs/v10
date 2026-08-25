@@ -47,6 +47,7 @@ describe.skipIf(!SMOKE)('multi-CDN failover (live smoke)', () => {
   it('fails over to the backup CDN when the primary is unreachable, then recovers', async () => {
     realFetch = globalThis.fetch;
     let blockPrimary = true;
+
     globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
 
@@ -56,6 +57,7 @@ describe.skipIf(!SMOKE)('multi-CDN failover (live smoke)', () => {
     }) as typeof fetch;
 
     const engine = createHlsVideoEngine({ failover: { cooldownMs: 4000 } });
+
     engine.state.presentation.set({ url: REDUNDANT_URL } as MaybeResolvedPresentation);
 
     // The primary is picked first, its media-playlist fetch fails, the trip
@@ -66,6 +68,7 @@ describe.skipIf(!SMOKE)('multi-CDN failover (live smoke)', () => {
         expect(engine.state.cdnPriority.get()?.length).toBe(2);
         expect(engine.state.failedCdns.get()?.some((cdn) => cdn.includes(PRIMARY))).toBe(true);
         const track = selectedVideoTrack(engine.state.presentation.get(), engine.state.selectedVideoTrackId.get());
+
         expect(track).toBeDefined();
         expect(hostOf(track!.url)).toContain(BACKUP);
         expect(isResolvedTrack(track!)).toBe(true);
@@ -81,6 +84,7 @@ describe.skipIf(!SMOKE)('multi-CDN failover (live smoke)', () => {
       () => {
         expect(engine.state.failedCdns.get()?.some((cdn) => cdn.includes(PRIMARY))).toBe(false);
         const track = selectedVideoTrack(engine.state.presentation.get(), engine.state.selectedVideoTrackId.get());
+
         expect(track).toBeDefined();
         expect(hostOf(track!.url)).toContain(PRIMARY);
         expect(isResolvedTrack(track!)).toBe(true);

@@ -9,7 +9,6 @@ import { defineMdastPlugin } from 'satteri';
 
 // Astro evaluates this module while Vite+ is still loading the task graph, so
 // the built workspace package is not available yet.
-import { isString } from '../../../packages/utils/src/predicate/index.ts';
 import { resolveReferenceSlug } from './api-reference-overrides';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
 import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
@@ -142,6 +141,7 @@ function resolveCaseContext(
 
 function getStringAttr(node: MdxJsxFlowElement, name: string): string | null {
   const attr = node.attributes?.find((a) => a.type === 'mdxJsxAttribute' && a.name === name);
+
   return attr && typeof attr.value === 'string' ? attr.value : null;
 }
 
@@ -184,6 +184,7 @@ function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: Con
     json as Parameters<typeof createComponentReferenceModel>[1],
     partOrder ?? undefined
   );
+
   headings.push(...buildComponentReferenceTocHeadings(model));
 }
 
@@ -197,6 +198,7 @@ function injectFeatureReferenceHeadings(node: MdxJsxFlowElement, headings: Condi
   if (!json) return;
 
   const model = createFeatureReferenceModel(featureName, json);
+
   headings.push(...buildFeatureReferenceTocHeadings(model));
 }
 
@@ -211,6 +213,7 @@ function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: Conditio
   if (!json) return;
 
   const model = createUtilReferenceModel(utilName, json as Parameters<typeof createUtilReferenceModel>[1]);
+
   headings.push(...buildUtilReferenceTocHeadings(model));
 }
 
@@ -224,5 +227,6 @@ function injectMediaReferenceHeadings(node: MdxJsxFlowElement, headings: Conditi
   if (!json) return;
 
   const model = createMediaReferenceModel(mediaName, json);
+
   headings.push(...buildMediaReferenceTocHeadings(model));
 }

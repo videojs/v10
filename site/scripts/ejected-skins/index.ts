@@ -46,6 +46,7 @@ export async function buildEjectedSkin(skin: SkinDef): Promise<EjectedSkinEntry>
     entry.html = await processHtmlSkin(skin);
   } else {
     const { tsx, jsx } = await processReactSkin(skin);
+
     entry.tsx = tsx;
     entry.jsx = jsx;
   }

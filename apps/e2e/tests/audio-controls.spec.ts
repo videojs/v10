@@ -52,6 +52,7 @@ for (const { name, path, skipBrowsers } of AUDIO_PAGES as readonly PageEntry[]) 
             return page.evaluate((selector) => {
               const el = document.querySelector(selector);
               const media = (el?.querySelector?.('video') as HTMLMediaElement) ?? (el as HTMLMediaElement);
+
               return media?.currentTime ?? 0;
             }, SELECTORS.media);
           },

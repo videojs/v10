@@ -41,6 +41,7 @@ describe('PiPButtonCore', () => {
     it('projects pip and availability', () => {
       const core = new PiPButtonCore();
       const media = createMediaState({ pip: true });
+
       core.setMedia(media);
       const state = core.getState();
 
@@ -52,6 +53,7 @@ describe('PiPButtonCore', () => {
 
     it('marks disabled and hidden when unsupported', () => {
       const core = new PiPButtonCore();
+
       core.setMedia(createMediaState({ pipAvailability: 'unsupported' }));
       const state = core.getState();
 
@@ -62,6 +64,7 @@ describe('PiPButtonCore', () => {
 
     it('marks disabled and hidden when unavailable', () => {
       const core = new PiPButtonCore();
+
       core.setMedia(createMediaState({ pipAvailability: 'unavailable' }));
       const state = core.getState();
 
@@ -72,6 +75,7 @@ describe('PiPButtonCore', () => {
 
     it('marks disabled when the disabled prop is set', () => {
       const core = new PiPButtonCore({ disabled: true });
+
       core.setMedia(createMediaState({ pipAvailability: 'available' }));
       const state = core.getState();
 
@@ -83,6 +87,7 @@ describe('PiPButtonCore', () => {
   describe('getLabel', () => {
     it('returns Enter picture-in-picture when not in PiP', () => {
       const core = new PiPButtonCore();
+
       expect(core.getLabel(createState({ pip: false }))).toMatchObject({
         key: 'pip.enter',
         text: 'Enter picture-in-picture',
@@ -91,6 +96,7 @@ describe('PiPButtonCore', () => {
 
     it('returns Exit picture-in-picture when in PiP', () => {
       const core = new PiPButtonCore();
+
       expect(core.getLabel(createState({ pip: true }))).toMatchObject({
         key: 'pip.exit',
         text: 'Exit picture-in-picture',
@@ -99,6 +105,7 @@ describe('PiPButtonCore', () => {
 
     it('returns custom string label', () => {
       const core = new PiPButtonCore({ label: 'Picture-in-picture' });
+
       expect(core.getLabel(createState())).toBe('Picture-in-picture');
     });
 
@@ -106,6 +113,7 @@ describe('PiPButtonCore', () => {
       const core = new PiPButtonCore({
         label: (state) => (state.pip ? 'Leave mini player' : 'Mini player'),
       });
+
       expect(core.getLabel(createState({ pip: true }))).toBe('Leave mini player');
     });
   });
@@ -114,18 +122,21 @@ describe('PiPButtonCore', () => {
     it('returns aria-label', () => {
       const core = new PiPButtonCore();
       const attrs = core.getAttrs(createState());
+
       expect(attrs['aria-label']).toMatchObject({ key: 'pip.enter', text: 'Enter picture-in-picture' });
     });
 
     it('sets aria-disabled when state.disabled is true', () => {
       const core = new PiPButtonCore();
       const attrs = core.getAttrs(createState({ disabled: true }));
+
       expect(attrs['aria-disabled']).toBe('true');
     });
 
     it('sets the hidden attribute when state.hidden is true', () => {
       const core = new PiPButtonCore();
       const attrs = core.getAttrs(createState({ hidden: true }));
+
       expect(attrs.hidden).toBe('');
     });
   });
@@ -134,6 +145,7 @@ describe('PiPButtonCore', () => {
     it('calls requestPictureInPicture when not in PiP', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({ pip: false });
+
       await core.toggle(media);
       expect(media.requestPictureInPicture).toHaveBeenCalled();
     });
@@ -141,6 +153,7 @@ describe('PiPButtonCore', () => {
     it('calls exitPictureInPicture when in PiP', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({ pip: true });
+
       await core.toggle(media);
       expect(media.exitPictureInPicture).toHaveBeenCalled();
     });
@@ -148,6 +161,7 @@ describe('PiPButtonCore', () => {
     it('does nothing when the disabled prop is set', async () => {
       const core = new PiPButtonCore({ disabled: true });
       const media = createMediaState();
+
       await core.toggle(media);
       expect(media.requestPictureInPicture).not.toHaveBeenCalled();
     });
@@ -155,6 +169,7 @@ describe('PiPButtonCore', () => {
     it('does nothing when unsupported', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({ pipAvailability: 'unsupported' });
+
       await core.toggle(media);
       expect(media.requestPictureInPicture).not.toHaveBeenCalled();
     });
@@ -166,6 +181,7 @@ describe('PiPButtonCore', () => {
           throw new Error('permission denied');
         }),
       });
+
       await expect(core.toggle(media)).rejects.toThrow('permission denied');
     });
   });

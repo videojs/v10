@@ -157,6 +157,7 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
       presentation: state.presentation.get(),
       [selectedKey]: state[selectedKey].get(),
     };
+
     return hasCodecs(getSelectedTrack(selection, type)) ? 'buffer-ready' : 'preconditions-unmet';
   });
 
@@ -269,6 +270,7 @@ export const setupVideoBufferActors = defineBehavior({
     // Engine `config` layers over the per-type defaults; `failoverFetch` reads
     // its `selectedKey` + `getCdnId` from the merged result.
     const typeConfig = { ...VIDEO_TYPE_CONFIG, ...config };
+
     return setupBufferActors({
       state,
       context,
@@ -317,6 +319,7 @@ export const setupAudioBufferActors = defineBehavior({
   }) => {
     // Key order mirrors setupVideoBufferActors.
     const typeConfig = { ...AUDIO_TYPE_CONFIG, ...config };
+
     return setupBufferActors({
       state,
       context,

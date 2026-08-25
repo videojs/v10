@@ -14,6 +14,7 @@ function uniqueTag(base: string): string {
 
 function createElement<T extends HTMLElement>(ctor: abstract new () => T): T {
   const tag = uniqueTag('test-destroy');
+
   customElements.define(tag, class extends (ctor as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as T;
 }
@@ -30,11 +31,13 @@ afterEach(() => {
 describe('DestroyMixin', () => {
   it('destroyed is false by default', () => {
     const el = createElement(DestroyableElement);
+
     expect(el.destroyed).toBe(false);
   });
 
   it('destroy() sets destroyed to true', () => {
     const el = createElement(DestroyableElement);
+
     el.destroy();
     expect(el.destroyed).toBe(true);
   });
@@ -50,6 +53,7 @@ describe('DestroyMixin', () => {
     }
 
     const el = createElement(TestElement);
+
     el.destroy();
     el.destroy();
 
@@ -67,6 +71,7 @@ describe('DestroyMixin', () => {
     }
 
     const el = createElement(TestElement);
+
     el.destroy();
 
     expect(destroyCallback).toHaveBeenCalledOnce();
@@ -129,6 +134,7 @@ describe('DestroyMixin deferred destruction', () => {
 
   it('keep-alive attribute prevents deferred destruction', () => {
     const el = createElement(DestroyableElement);
+
     el.setAttribute('keep-alive', '');
 
     document.body.appendChild(el);
@@ -140,6 +146,7 @@ describe('DestroyMixin deferred destruction', () => {
 
   it('manual destroy() works even with keep-alive', () => {
     const el = createElement(DestroyableElement);
+
     el.setAttribute('keep-alive', '');
 
     document.body.appendChild(el);
@@ -177,6 +184,7 @@ describe('DestroyMixin controller lifecycle', () => {
     const controller: ReactiveController = { hostDestroyed };
 
     const el = createElement(DestroyableElement);
+
     el.addController(controller);
     el.destroy();
 
@@ -195,6 +203,7 @@ describe('DestroyMixin controller lifecycle', () => {
     // Re-insert — should not re-initialize.
     const hostConnected = vi.fn();
     const controller: ReactiveController = { hostConnected };
+
     el.addController(controller);
 
     document.body.appendChild(el);
@@ -213,6 +222,7 @@ describe('DestroyMixin controller lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 

@@ -10,6 +10,7 @@ const SETTLE_MS = 1000;
 // jsdom/Chromium lack WebKit's AirPlay APIs; stub the global support flag that
 // `isWebKitAirPlayCapable` probes for. See `utils/dom/tests/webkit.test.ts`.
 const AIRPLAY_KEY = 'WebKitPlaybackTargetAvailabilityEvent';
+
 function stubWebKit(present: boolean): void {
   if (present) {
     (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY] = class {};
@@ -28,6 +29,7 @@ interface WebKitVideoLike extends HTMLVideoElement {
  */
 function makeWebKitVideo(opts: { wireless?: boolean; disableRemotePlayback?: boolean } = {}): WebKitVideoLike {
   const video = document.createElement('video') as WebKitVideoLike;
+
   video.webkitCurrentPlaybackTargetIsWireless = opts.wireless ?? false;
   video.disableRemotePlayback = opts.disableRemotePlayback ?? false;
   return video;
@@ -77,6 +79,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await flush();
@@ -97,6 +100,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     await flush();
 
@@ -108,6 +112,7 @@ describe('setupAirPlay', () => {
     await flush();
 
     const source = fallbackSourceOf(video);
+
     expect(source).not.toBeNull();
     expect(source?.src).toBe('https://example.com/a.m3u8');
 
@@ -121,6 +126,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await vi.advanceTimersByTimeAsync(0);
@@ -152,6 +158,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await flush();
@@ -180,6 +187,7 @@ describe('setupAirPlay', () => {
 
     // Author didn't opt out.
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     await flush();
 
@@ -204,6 +212,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await flush();
@@ -231,6 +240,7 @@ describe('setupAirPlay', () => {
     // Author's explicit opt-out, expressed through the adapter signal (not the
     // DOM property). The `<video>` starts with the flag MMS would leave set.
     const video = makeWebKitVideo({ disableRemotePlayback: true });
+
     state.disableRemotePlayback.set(true);
     context.mediaElement.set(video);
     await flush();
@@ -252,6 +262,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await flush();
@@ -277,6 +288,7 @@ describe('setupAirPlay', () => {
 
     // Author opted out at attach → nothing is set up.
     const video = makeWebKitVideo({ disableRemotePlayback: true });
+
     state.disableRemotePlayback.set(true);
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
@@ -298,6 +310,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: false });
+
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
     // Sync at attach: not wireless → session not active.
@@ -326,9 +339,11 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
     Object.defineProperty(video, 'paused', { value: false, configurable: true });
     const play = vi.fn(() => Promise.resolve());
+
     video.play = play;
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
@@ -375,6 +390,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
     Object.defineProperty(video, 'paused', { value: false, configurable: true });
     context.mediaElement.set(video);
@@ -412,9 +428,11 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
     Object.defineProperty(video, 'paused', { value: false, configurable: true });
     const play = vi.fn(() => Promise.resolve());
+
     video.play = play;
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
@@ -443,9 +461,11 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
     Object.defineProperty(video, 'paused', { value: false, configurable: true });
     const play = vi.fn(() => Promise.resolve());
+
     video.play = play;
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
@@ -475,9 +495,11 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
     Object.defineProperty(video, 'paused', { value: true, configurable: true });
     const play = vi.fn(() => Promise.resolve());
+
     video.play = play;
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
@@ -501,6 +523,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
@@ -524,6 +547,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
     expect(state.loadingSuspended.get()).toBe(true);
@@ -553,6 +577,7 @@ describe('setupAirPlay', () => {
     // stuck `'connected'` must not pin `loadingSuspended` past the wireless
     // flag's falling edge, which would strand setupMediaSource's rebuild.
     const video = makeWebKitVideo({ wireless: true });
+
     Object.defineProperty(video, 'remote', { value: { state: 'connected' }, configurable: true });
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
@@ -571,6 +596,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     context.mediaElement.set(video);
     await flush();
 
@@ -585,6 +611,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: true });
+
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await flush();
@@ -612,6 +639,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await flush();
@@ -633,6 +661,7 @@ describe('setupAirPlay', () => {
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo();
+
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await flush();

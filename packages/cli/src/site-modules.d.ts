@@ -115,5 +115,6 @@ declare module '@/utils/installation/renderer-options' {
 
 declare module '@/content/cdn-media.json' {
   const entries: Array<{ id: string }>;
+
   export default entries;
 }

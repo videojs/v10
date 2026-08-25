@@ -52,6 +52,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const isDisabled = Boolean(disabled) || isUnavailable;
 
     const [core] = useState(() => new VolumeSliderCore());
+
     core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
     core.setFormatLocale(locale);
 
@@ -128,6 +129,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           stateAttrMap: VolumeSliderDataAttrs,
           getAttrs: (sliderState) => {
             const attrs = core.getAttrs(sliderState as VolumeSliderCore.State);
+
             return {
               ...attrs,
               'aria-label': translateText(attrs['aria-label'], translator),

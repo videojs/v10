@@ -98,6 +98,7 @@ export class LiveButtonElement extends UIElement {
     if (!media) return undefined;
 
     const state = this.core.getState();
+
     return translateText(this.core.getLabel(state), this.#i18n.value);
   }
 
@@ -120,6 +121,7 @@ export class LiveButtonElement extends UIElement {
     this.core.setMedia(media);
     const state = this.core.getState();
     const attrs = this.core.getAttrs(state);
+
     applyElementProps(this, {
       ...attrs,
       'aria-label': translateText(attrs['aria-label'], this.#i18n.value),

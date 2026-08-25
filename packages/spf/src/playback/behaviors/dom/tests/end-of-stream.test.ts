@@ -45,6 +45,7 @@ function setupEndOfStream(initialState: EndOfStreamState, initialContext: EndOfS
   // BehaviorCleanup (void | () => void | { destroy }) — the real return is
   // a () => void; cast for callable ergonomics in tests.
   const cleanup = endOfStream.setup({ state, context, config: {} }) as () => void;
+
   return { state, context, cleanup };
 }
 
@@ -68,6 +69,7 @@ function makeMediaSource(
     removeEventListener: { value: target.removeEventListener.bind(target) },
     dispatchEvent: { value: target.dispatchEvent.bind(target) },
   }) as MediaSource;
+
   ms.endOfStream = vi.fn();
   return ms;
 }
@@ -79,6 +81,7 @@ function transitionMediaSource(mediaSource: MediaSource, readyState: MediaSource
 
 function makeSourceBuffer(): SourceBuffer {
   const listeners: Record<string, EventListener[]> = {};
+
   return {
     buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
     updating: false,

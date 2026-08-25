@@ -38,6 +38,7 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
   const playback = usePlayer(selectPlayback);
 
   const [core] = useState(() => new BufferingIndicatorCore());
+
   useDestroy(core);
   core.setProps({ delay });
 

@@ -7,5 +7,6 @@ const MUX_PLAYBACK_ID = /^https:\/\/stream\.[^/]+\/([\w-]+?)(?:\.m3u8|\/[\w-]+\.
 export function getMuxAssetId(source: SourceId): string | undefined {
   // A structured source names the playback ID outright; a plain URL hides it.
   const { source: muxSource, url } = SOURCES[source];
+
   return muxSource?.playbackId ?? url?.match(MUX_PLAYBACK_ID)?.[1];
 }

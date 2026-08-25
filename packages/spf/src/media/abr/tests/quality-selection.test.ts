@@ -66,10 +66,12 @@ describe('selectQuality', () => {
       // To select 1080p (4 Mbps), need 4M / 0.85 ≈ 4.7 Mbps
       // With 4.6 Mbps, should select 720p (15% safety margin)
       const selected1 = selectQuality(tracks, { bandwidth: 4_600_000 });
+
       expect(selected1?.id).toBe('720p');
 
       // With 4.8 Mbps, should select 1080p
       const selected2 = selectQuality(tracks, { bandwidth: 4_800_000 });
+
       expect(selected2?.id).toBe('1080p');
     });
 
@@ -78,6 +80,7 @@ describe('selectQuality', () => {
 
       // Exactly 2M / 0.85 ≈ 2.35 Mbps required for 720p
       const selected = selectQuality(tracks, { bandwidth: 2_350_000 });
+
       expect(selected?.id).toBe('720p');
     });
 
@@ -91,6 +94,7 @@ describe('selectQuality', () => {
 
       // With 0.9 margin, need 4M / 0.9 ≈ 4.4 Mbps
       const selected = selectQuality(tracks, { bandwidth: 4_500_000, ...config });
+
       expect(selected?.id).toBe('1080p');
     });
   });
@@ -98,6 +102,7 @@ describe('selectQuality', () => {
   describe('edge cases', () => {
     it('should return undefined for empty track list', () => {
       const selected = selectQuality([], { bandwidth: 5_000_000 });
+
       expect(selected).toBeUndefined();
     });
 
@@ -106,6 +111,7 @@ describe('selectQuality', () => {
 
       // Should select the only available track
       const selected = selectQuality(tracks, { bandwidth: 1_000_000 });
+
       expect(selected?.id).toBe('720p');
     });
 
@@ -117,6 +123,7 @@ describe('selectQuality', () => {
 
       // Should prefer higher resolution at same bandwidth
       const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
+
       expect(selected?.id).toBe('720p-high');
     });
 
@@ -125,6 +132,7 @@ describe('selectQuality', () => {
 
       // Should select lowest quality
       const selected = selectQuality(tracks, { bandwidth: 0 });
+
       expect(selected?.id).toBe('360p');
     });
 
@@ -153,6 +161,7 @@ describe('selectQuality', () => {
 
       // Should handle missing width/height gracefully
       const selected = selectQuality(tracks, { bandwidth: 1_500_000 });
+
       expect(selected).toBeDefined();
     });
   });
@@ -168,6 +177,7 @@ describe('selectQuality', () => {
 
       // With 2.5 Mbps, should still select 720p despite unsorted list
       const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
+
       expect(selected?.id).toBe('720p');
     });
 
@@ -180,6 +190,7 @@ describe('selectQuality', () => {
       ];
 
       const selected = selectQuality(tracks, { bandwidth: 1_500_000 });
+
       expect(selected?.id).toBe('480p');
     });
   });
@@ -196,18 +207,21 @@ describe('selectQuality', () => {
     it('should handle startup with low initial estimate', () => {
       // Startup: conservative 1 Mbps estimate
       const selected = selectQuality(abrLadder, { bandwidth: 1_000_000 });
+
       expect(selected?.id).toBe('360p'); // Stay conservative
     });
 
     it('should handle steady state with good bandwidth', () => {
       // Good Wi-Fi: 5 Mbps
       const selected = selectQuality(abrLadder, { bandwidth: 5_000_000 });
+
       expect(selected?.id).toBe('720p'); // Upgrade threshold keeps it from 1080p
     });
 
     it('should handle bandwidth drop gracefully', () => {
       // Bandwidth drops to 1.5 Mbps
       const selected = selectQuality(abrLadder, { bandwidth: 1_500_000 });
+
       expect(selected?.id).toBe('480p');
     });
 
@@ -236,6 +250,7 @@ describe('selectQuality', () => {
       ];
 
       const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
+
       expect(selected?.id).toBe('1080p-low');
     });
 
@@ -246,6 +261,7 @@ describe('selectQuality', () => {
       ];
 
       const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
+
       expect(selected?.id).toBe('tall'); // More total pixels
     });
   });
@@ -258,10 +274,12 @@ describe('selectQuality', () => {
 
       // At 4.5 Mbps: below safety threshold for 1080p, select 720p
       const selected1 = selectQuality(tracks, { bandwidth: 4_500_000 });
+
       expect(selected1?.id).toBe('720p');
 
       // At 4.8 Mbps: above safety threshold for 1080p, select 1080p
       const selected2 = selectQuality(tracks, { bandwidth: 4_800_000 });
+
       expect(selected2?.id).toBe('1080p');
     });
 
@@ -274,6 +292,7 @@ describe('selectQuality', () => {
 
       // With 2.4 Mbps: can fit 720p (needs 2M/0.85 = 2.35M)
       const selected = selectQuality(tracks, { bandwidth: 2_400_000 });
+
       expect(selected?.id).toBe('720p');
     });
   });

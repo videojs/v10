@@ -65,6 +65,7 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
               const name = staticName(template, code);
               const owned = binding.targets.flatMap((target) => {
                 const rule = target.primitives.Template?.[name];
+
                 return rule ? [{ target, rule }] : [];
               });
 
@@ -91,6 +92,7 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
 
               if (isHostOutput(output)) {
                 const attributes = renderTargetAttributes(output, { target: owner.target, imports });
+
                 assertAvailableHostAttributes(node.openingElement, attributes, code);
 
                 if (attributes.length > 0) {
@@ -229,6 +231,7 @@ function isTemplate(node: JSXElement, local: string): boolean {
 
 function isTemplatePart(node: JSXElement, local: string): boolean {
   const name = node.openingElement.name;
+
   return (
     name.type === 'JSXMemberExpression' &&
     name.object.type === 'JSXIdentifier' &&

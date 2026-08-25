@@ -299,6 +299,7 @@ export function buildSignalMap<S extends object>(
 ): { [K in keyof S]-?: Signal<S[K]> } {
   const init = initial as Record<PropertyKey, unknown>;
   const uniqueKeys = new Set(keys);
+
   return Object.fromEntries([...uniqueKeys].map((key) => [key, signal(init[key])])) as {
     [K in keyof S]-?: Signal<S[K]>;
   };

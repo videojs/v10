@@ -105,6 +105,7 @@ function deriveTextTrackIntent(
   if (!showingId) return 'off';
 
   const language = modelTextTracks.find((track) => track.id === showingId)?.language;
+
   return language ? { language } : { id: showingId };
 }
 
@@ -220,6 +221,7 @@ function syncTextTracksSetup({
         // round-trips, so we peek mediaElement here.
         effects: () => {
           const mediaElement = peek(context.mediaElement)!;
+
           syncTextTrackModes(mediaElement.textTracks, state.selectedTextTrackId.get());
         },
       },

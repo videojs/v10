@@ -96,6 +96,7 @@ export class MenuItemElement extends UIElement {
     }
 
     const hasSubmenu = Boolean(this.commandfor);
+
     applyElementProps(this, {
       role: 'menuitem',
       'aria-disabled': this.#isDisabled() ? 'true' : undefined,
@@ -112,6 +113,7 @@ export class MenuItemElement extends UIElement {
     const submenu = root.querySelector<HTMLElement>(`#${CSS.escape(id)}`) as HTMLElement & {
       openMenu?: (reason?: 'click') => void;
     };
+
     submenu?.openMenu?.('click');
   }
 

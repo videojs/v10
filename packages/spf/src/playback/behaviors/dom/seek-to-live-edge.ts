@@ -182,6 +182,7 @@ function seekToLiveEdgeSetup({
               mediaElement.currentTime = liveEdgeStart;
             }
           };
+
           reposition();
           // `play` (not `playing`): a slid-past playhead is at an unseekable
           // position where `playing` would stall and never fire; `play` fires on

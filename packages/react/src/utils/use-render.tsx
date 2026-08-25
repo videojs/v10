@@ -39,6 +39,7 @@ function getElementRef(element: ReactElement): Ref<unknown> | undefined {
   // React 19+ uses element.props.ref, older versions use element.ref
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const elementAny = element as any;
+
   return elementAny.ref ?? elementAny.props?.ref;
 }
 
@@ -98,6 +99,7 @@ export function renderElement<
   if (isFunction(render)) {
     // Render function: call with props and state
     const mergedRef = composeRefs(ref, mergedProps.ref);
+
     return render({ ...mergedProps, ref: mergedRef } as HTMLProps, state);
   }
 
@@ -107,6 +109,7 @@ export function renderElement<
     const mergedRef = composeRefs(ref, mergedProps.ref, elementRef);
 
     const elementProps = mergeProps(mergedProps, render.props as Record<string, unknown>);
+
     elementProps.ref = mergedRef;
 
     return cloneElement(render, elementProps);
@@ -114,6 +117,7 @@ export function renderElement<
 
   // Default tag
   const mergedRef = composeRefs(ref, mergedProps.ref);
+
   mergedProps.ref = mergedRef;
 
   return createElement(element, mergedProps);

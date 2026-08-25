@@ -160,5 +160,6 @@ export function insertModuleImports(
 
   const insertion = ast.body[0]?.start ?? ast.hashbang?.end ?? 0;
   const prefix = ast.body.length === 0 && ast.hashbang ? '\n' : '';
+
   magicString.appendLeft(insertion, `${prefix}${statements.join('\n')}\n`);
 }

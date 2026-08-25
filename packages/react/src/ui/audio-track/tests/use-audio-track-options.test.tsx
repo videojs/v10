@@ -71,6 +71,7 @@ describe('useAudioTrackOptions', () => {
 
   it('sets the selected audio track', () => {
     const selectAudioTrack = vi.fn();
+
     renderAudioTrackOptions({ selectAudioTrack });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Spanish' }));

@@ -52,6 +52,7 @@ describe('TimeSliderCore', () => {
   describe('getState', () => {
     it('uses currentTime as value when not dragging', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
       const state = core.getState();
@@ -64,6 +65,7 @@ describe('TimeSliderCore', () => {
 
     it('fill stays at currentTime during drag, pointerPercent tracks drag', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput({ dragging: true, dragPercent: 50, pointerPercent: 50 }));
       core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
       const state = core.getState();
@@ -77,6 +79,7 @@ describe('TimeSliderCore', () => {
 
     it('computes buffer percent from buffered ranges', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ duration: 200, buffered: [[0, 100]] }));
       const state = core.getState();
@@ -86,6 +89,7 @@ describe('TimeSliderCore', () => {
 
     it('uses end of the furthest buffered range', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(
         createMediaState({
@@ -103,6 +107,7 @@ describe('TimeSliderCore', () => {
 
     it('returns 0 buffer percent when no buffered ranges', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ duration: 200, buffered: [] }));
       const state = core.getState();
@@ -112,6 +117,7 @@ describe('TimeSliderCore', () => {
 
     it('returns 0 buffer percent when duration is 0', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ duration: 0, buffered: [] }));
       const state = core.getState();
@@ -121,6 +127,7 @@ describe('TimeSliderCore', () => {
 
     it('passes through seeking state', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ seeking: true }));
       const state = core.getState();
@@ -130,17 +137,20 @@ describe('TimeSliderCore', () => {
 
     it('sets min to 0 and max to duration', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ duration: 600 }));
       const state = core.getState();
 
       const attrs = core.getAttrs(state);
+
       expect(attrs['aria-valuemin']).toBe(0);
       expect(attrs['aria-valuemax']).toBe(600);
     });
 
     it('handles zero duration', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ currentTime: 0, duration: 0 }));
       const state = core.getState();
@@ -153,6 +163,7 @@ describe('TimeSliderCore', () => {
   describe('getAttrs', () => {
     it('returns aria-label and aria-valuetext', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
       const state = core.getState();
@@ -169,6 +180,7 @@ describe('TimeSliderCore', () => {
 
     it('uses custom label', () => {
       const core = new TimeSliderCore({ label: 'Scrub' });
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ currentTime: 0, duration: 300 }));
       const state = core.getState();
@@ -179,6 +191,7 @@ describe('TimeSliderCore', () => {
 
     it('shows both times when duration is 0', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput());
       core.setMedia(createMediaState({ currentTime: 0, duration: 0 }));
       const state = core.getState();
@@ -193,6 +206,7 @@ describe('TimeSliderCore', () => {
 
     it('announces drag position in valuetext during drag', () => {
       const core = new TimeSliderCore();
+
       core.setInput(createInput({ dragging: true, dragPercent: 50, pointerPercent: 50 }));
       core.setMedia(createMediaState({ currentTime: 0, duration: 300 }));
       const state = core.getState();
@@ -208,6 +222,7 @@ describe('TimeSliderCore', () => {
 
     it('formats value text params with the active locale', () => {
       const core = new TimeSliderCore();
+
       core.setFormatLocale('fr');
       core.setInput(createInput());
       core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
@@ -223,6 +238,7 @@ describe('TimeSliderCore', () => {
   describe('setProps', () => {
     it('updates label', () => {
       const core = new TimeSliderCore();
+
       core.setProps({ label: 'Progress' });
 
       core.setInput(createInput());
@@ -244,6 +260,7 @@ describe('TimeSliderCore', () => {
       expect(state.disabled).toBe(true);
 
       const attrs = core.getAttrs(state);
+
       expect(attrs['aria-disabled']).toBe('true');
       expect(attrs.tabIndex).toBe(-1);
     });

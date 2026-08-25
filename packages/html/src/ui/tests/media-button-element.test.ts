@@ -18,6 +18,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -37,6 +38,7 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 function createPlaybackStore(): AnyPlayerStore {
   const store = createStore<PlayerTarget>()(playbackFeature) as unknown as AnyPlayerStore;
   const video = document.createElement('video');
+
   Object.defineProperty(video, 'paused', { value: true, configurable: true });
   Object.defineProperty(video, 'ended', { value: false, configurable: true });
   Object.defineProperty(video, 'readyState', {
@@ -124,6 +126,7 @@ describe('MediaButtonElement', () => {
 
     const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
     const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
 

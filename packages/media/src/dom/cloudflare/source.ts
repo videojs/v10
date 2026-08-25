@@ -116,6 +116,7 @@ export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareM
   // `/<id>`; rebuilding onto the shared host would drop the very origin a signed
   // or access-controlled video is authorized for.
   const base = parsed.origin ? `${parsed.origin}/${parsed.id}/iframe` : `${EMBED_BASE}/${parsed.id}`;
+
   return `${base}?${serializeEmbedParams(params)}`;
 }
 

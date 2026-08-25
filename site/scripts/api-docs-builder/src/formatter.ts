@@ -253,9 +253,11 @@ export function formatType(type: tae.AnyType, removeUndefined: boolean): string 
       .map((s) => {
         const params = s.parameters.map((p) => `${p.name}: ${formatType(p.type, false)}`).join(', ');
         const returnType = formatType(s.returnValueType, false);
+
         return `(${params}) => ${returnType}`;
       })
       .join(' | ');
+
     return `(${functionSignature})`;
   }
 
@@ -326,6 +328,7 @@ function createNameWithTypeArguments(typeName: tae.TypeName): string {
  */
 function orderMembers(members: readonly tae.AnyType[]): readonly tae.AnyType[] {
   let ordered = pushToEnd(members, 'any');
+
   ordered = pushToEnd(ordered, 'null');
   ordered = pushToEnd(ordered, 'undefined');
   return ordered;
@@ -338,6 +341,7 @@ function pushToEnd(members: readonly tae.AnyType[], name: string): readonly tae.
 
   if (index !== -1) {
     const member = members[index];
+
     return [...members.slice(0, index), ...members.slice(index + 1), member!];
   }
 

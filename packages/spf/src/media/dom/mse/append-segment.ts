@@ -68,6 +68,7 @@ async function appendChunk(sourceBuffer: SourceBuffer, data: ArrayBuffer | Uint8
         sourceBuffer.removeEventListener('updateend', onUpdateEnd);
         resolve();
       };
+
       sourceBuffer.addEventListener('updateend', onUpdateEnd);
     });
   }

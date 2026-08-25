@@ -32,6 +32,7 @@ if (modified.length > 0 || added.length > 0) {
 
 for (const change of modified) {
   const label = filePath(change);
+
   console.log(chalk.yellow(`  ~ ${label}`));
   printDiff(srcPath(change), templatesPath(change), label);
 }

@@ -152,17 +152,20 @@ export class SliderCore {
   valueFromPercent(percent: number): number {
     const { min, max, step } = this.#props;
     const raw = min + (percent / 100) * (max - min);
+
     return roundToStep(clamp(raw, min, max), step, min);
   }
 
   /** Convert percent to a clamped value without applying step rounding. */
   rawValueFromPercent(percent: number): number {
     const { min, max } = this.#props;
+
     return clamp(min + (percent / 100) * (max - min), min, max);
   }
 
   percentFromValue(value: number): number {
     const { min, max } = this.#props;
+
     return toPercent(value, min, max);
   }
 
@@ -170,6 +173,7 @@ export class SliderCore {
   getStepPercent(): number {
     const { step, min, max } = this.#props;
     const range = max - min;
+
     return range > 0 ? (step / range) * 100 : 0;
   }
 
@@ -177,6 +181,7 @@ export class SliderCore {
   getLargeStepPercent(): number {
     const { largeStep, min, max } = this.#props;
     const range = max - min;
+
     return range > 0 ? (largeStep / range) * 100 : 0;
   }
 
@@ -188,6 +193,7 @@ export class SliderCore {
     const thumbHalf = ((thumbSize / trackSize) * 100) / 2;
     const minPercent = thumbHalf;
     const maxPercent = 100 - thumbHalf;
+
     return minPercent + (rawPercent / 100) * (maxPercent - minPercent);
   }
 }

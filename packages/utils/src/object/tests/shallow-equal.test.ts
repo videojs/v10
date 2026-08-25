@@ -20,6 +20,7 @@ describe('shallowEqual', () => {
 
   it('returns true for same reference', () => {
     const obj = { a: 1 };
+
     expect(shallowEqual(obj, obj)).toBe(true);
   });
 
@@ -50,6 +51,7 @@ describe('shallowEqual', () => {
 
   it('returns true for nested objects with same reference', () => {
     const nested = { b: 1 };
+
     expect(shallowEqual({ a: nested }, { a: nested })).toBe(true);
   });
 

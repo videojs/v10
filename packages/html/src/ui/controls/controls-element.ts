@@ -45,6 +45,7 @@ export class ControlsElement extends UIElement {
     });
 
     const wasVisible = this.#visible;
+
     this.#visible = state.visible;
 
     if (wasVisible && !state.visible) {

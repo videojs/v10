@@ -64,6 +64,7 @@ function getStatementName(statement: ts.Statement): string | null {
 
   if (ts.isVariableStatement(statement)) {
     const decl = statement.declarationList.declarations[0];
+
     return decl && ts.isIdentifier(decl.name) ? decl.name.text : null;
   }
 
@@ -215,6 +216,7 @@ function inlineModuleExport(
   }
 
   const aliasKeyword = isTypeOnly ? 'type' : 'const';
+
   return `${exportText}\n\n${aliasKeyword} ${localName} = ${importName};`;
 }
 
@@ -246,6 +248,7 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
 
     const targetPath = resolveRelativeModulePath(sourcePath, specifier);
     const targetSource = rewriteSource(readFileSync(targetPath, 'utf-8'));
+
     validatePackageImports(targetSource, toRepoPath(targetPath));
     const transformedTargetSource = inlineRelativeImports(targetSource, targetPath, rewriteSource);
     const transformedTargetFile = createSourceFile(targetPath, transformedTargetSource);
@@ -305,6 +308,7 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
   if (declarationsToInline.length > 0) {
     const insertPos = findLastImportEnd(transformedSource);
     const block = `\n${declarationsToInline.join('\n\n')}\n`;
+
     transformedSource = `${transformedSource.slice(0, insertPos)}${block}${transformedSource.slice(insertPos)}`;
   }
 
@@ -336,6 +340,7 @@ function collectRelativeImportSpecifiers(source: string): string[] {
 export function resolveCss(cssPath: string): string {
   const abs = resolve(ROOT, cssPath);
   const raw = readFileSync(abs, 'utf-8');
+
   return resolveImports(raw, dirname(abs), SKINS_SRC);
 }
 
@@ -355,6 +360,7 @@ function serializeValue(value: unknown, indent = 0): string {
     const pad = '  '.repeat(indent + 1);
     const closePad = '  '.repeat(indent);
     const parts = entries.map(([k, v]) => `${pad}${k}: ${serializeValue(v, indent + 1)}`);
+
     return `{\n${parts.join(',\n')},\n${closePad}}`;
   }
 
@@ -370,6 +376,7 @@ function tsxToJsx(source: string): string {
       jsx: ts.JsxEmit.Preserve,
     },
   });
+
   return result.outputText;
 }
 
@@ -565,6 +572,7 @@ function rewritePathAliases(source: string): string {
   const importLine = `import { ${allNames.join(', ')} } from '@videojs/react';\n`;
 
   const lastImportIndex = findLastImportEnd(source);
+
   source = `${source.slice(0, lastImportIndex)}${importLine}${source.slice(lastImportIndex)}`;
 
   return source;
@@ -587,6 +595,7 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+
     source = source.replace(/import\s+\{[^}]+\}\s+from\s+['"]@videojs\/core\/dom['"];?\n?/g, '');
     source = source.replace(
       /import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/react['"]/,
@@ -755,6 +764,7 @@ export function resolvePropsInterface(source: string): string {
         .map((s: string) => s.trim())
         .filter(Boolean);
       const filtered = nameList.filter((n: string) => !n.includes('PropsWithChildren'));
+
       return `import { ${filtered.join(', ')} } from 'react'`;
     });
   }
@@ -779,6 +789,7 @@ const SECTION_HEADERS: Partial<Record<SectionKey, string>> = {
 
 function hasExportModifier(statement: ts.Statement): boolean {
   const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
+
   return modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) ?? false;
 }
 
@@ -837,6 +848,7 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
     const name = getStatementName(statement);
     const exported = hasExportModifier(statement);
     const section = name ? classifyDeclaration(name, exported) : 'top';
+
     sections[section].push(statement.getText(sourceFile));
   }
 
@@ -906,6 +918,7 @@ function flattenErrorClasses(source: string): string {
     const replacement = isStringLiteral
       ? `className=${value.replace(/'/g, '"')}` // 'foo' → className="foo"
       : `className={${value}}`;
+
     source = source.replace(new RegExp(`className=\\{classNames\\?\\.${key}\\}`, 'g'), replacement);
   }
 
@@ -985,6 +998,7 @@ function flattenSkinIntoPlayer(
 
   // 2. Rename SkinProps → PlayerProps, replace `children` with `src`
   const posterProp = isVideo ? '\n  poster?: string | undefined;' : '';
+
   source = source.replace(/export interface \w+SkinProps/, `export interface ${playerName}Props`);
   source = source.replace(/(\s*)children\?: ReactNode;/, `$1src: string;${posterProp}`);
 
@@ -1009,6 +1023,7 @@ function flattenSkinIntoPlayer(
           .map((line) => (line.trim() === '' ? '' : `  ${line}`))
           .join('\n');
         const playerProps = isVideo ? ' poster={poster}' : '';
+
         newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player${playerProps}>\n${reindented}\n    </Player>\n  )${newBody.slice(parenEnd + 1)}`;
       }
 
@@ -1047,6 +1062,7 @@ export async function processReactSkin(
 ): Promise<{ tsx: Record<string, string>; jsx: Record<string, string> }> {
   const absPath = resolve(ROOT, skin.source);
   let source = readFileSync(absPath, 'utf-8');
+
   source = rewriteReactIconImports(source);
   validatePackageImports(source, skin.source);
   const postImport: string[] = [];
@@ -1065,12 +1081,14 @@ export async function processReactSkin(
 
   // 5. Inline private package imports (core/dom → react, predicates, isRenderProp)
   const privates = inlinePrivatePackages(source);
+
   source = privates.source;
 
   // 6. Insert collected non-import code after the final import statement
   if (postImport.length > 0) {
     const insertPos = findLastImportEnd(source);
     const block = `\n${postImport.join('\n\n')}\n`;
+
     source = `${source.slice(0, insertPos)}${block}${source.slice(insertPos)}`;
   }
 

@@ -156,6 +156,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
       if (this.#target && !this.#messages) {
         // `attach()`'s barrier was settled when there was nothing to embed, so this load needs one of its own.
         const load = this.#beginLoad();
+
         // The embed URL is built once, so wait a microtask for whatever order the framework sets src and props in.
         await Promise.resolve();
 
@@ -171,6 +172,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     }
 
     const load = this.#beginLoad();
+
     // Reset before bailing on an empty src: nothing to load, but the old video's reported state still has to go.
     this.#resetState();
     // `emptied` announces that reset before the empty-src bail: a cleared source is the one case where the embed
@@ -456,6 +458,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     this.#embedSrc = target.getAttribute('src') ?? '';
 
     const attachId = this.#attachId;
+
     this.#messages = new AbortController();
     globalThis.addEventListener('message', (event) => void this.#onMessage(event, attachId), {
       signal: this.#messages.signal,
@@ -488,6 +491,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     if (!embedWindow) return;
 
     const message: TwitchCommandMessage = { namespace: PLAYER_PROXY_NAMESPACE, eventName: command, params };
+
     embedWindow.postMessage(message, TWITCH_PLAYER_ORIGIN);
   }
 
@@ -680,6 +684,7 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
 function isContentOnlyChange(current: string, next: string): boolean {
   const currentBase = withoutContent(current);
   const nextBase = withoutContent(next);
+
   return currentBase !== null && currentBase === nextBase;
 }
 
@@ -711,6 +716,7 @@ function withoutContent(embedSrc: string): string | null {
 
   try {
     const url = new URL(embedSrc);
+
     url.searchParams.delete('video');
     url.searchParams.delete('channel');
     return url.toString();

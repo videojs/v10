@@ -5,11 +5,13 @@ import { serializeTimeRanges } from '../time-ranges';
 describe('serializeTimeRanges', () => {
   it('returns empty array for empty TimeRanges', () => {
     const ranges = createTimeRanges([]);
+
     expect(serializeTimeRanges(ranges)).toEqual([]);
   });
 
   it('serializes single range', () => {
     const ranges = createTimeRanges([[0, 10]]);
+
     expect(serializeTimeRanges(ranges)).toEqual([[0, 10]]);
   });
 
@@ -19,6 +21,7 @@ describe('serializeTimeRanges', () => {
       [10, 20],
       [30, 45],
     ]);
+
     expect(serializeTimeRanges(ranges)).toEqual([
       [0, 5],
       [10, 20],

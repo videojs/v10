@@ -45,6 +45,7 @@ export const remotePlaybackFeature = definePlayerFeature({
 
       const syncAvailability = (event: Event) => {
         const { availability } = event as WebkitAvailabilityEvent;
+
         set({ remotePlaybackAvailability: availability === 'available' ? 'available' : 'unavailable' });
       };
 

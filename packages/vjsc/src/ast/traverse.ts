@@ -42,6 +42,7 @@ export function findJsxElement(root: Node, name: string): JSXElement | undefined
 /** Find a named JSX attribute on an element or opening element. */
 export function findJsxAttribute(node: JSXElement | JSXOpeningElement, name: string): JSXAttribute | undefined {
   const opening = node.type === 'JSXElement' ? node.openingElement : node;
+
   return opening.attributes.find(
     (attribute): attribute is JSXAttribute =>
       attribute.type === 'JSXAttribute' && attribute.name.type === 'JSXIdentifier' && attribute.name.name === name

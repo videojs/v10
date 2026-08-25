@@ -96,6 +96,7 @@ export class StatusAnnouncerElement extends UIElement {
     if (this.#liveText?.isConnected) return this.#liveText;
 
     const existing = this.querySelector<HTMLElement>('[data-status-announcer-content]');
+
     this.#liveText = existing ?? document.createElement('span');
     this.#liveText.setAttribute('data-status-announcer-content', '');
 

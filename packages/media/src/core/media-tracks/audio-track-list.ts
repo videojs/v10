@@ -14,6 +14,7 @@ export function addAudioTrack(media: HTMLMediaElement, track: AudioTrack) {
   }
 
   const trackSet = getPrivate(trackList).trackSet as Set<AudioTrack>;
+
   trackSet.add(track);
 
   const index = trackSet.size - 1;

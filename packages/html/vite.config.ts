@@ -32,6 +32,7 @@ const defineEntries = Object.fromEntries(
     .filter((file) => !file.includes('.test.'))
     .map((file) => {
       const key = file.replace('src/', '').replace('.ts', '');
+
       return [key, file];
     })
 );
@@ -39,6 +40,7 @@ const defineEntries = Object.fromEntries(
 const presetEntries = Object.fromEntries(
   globSync('src/presets/*.ts', { cwd: packageDir }).map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
+
     return [key, file];
   })
 );
@@ -46,6 +48,7 @@ const presetEntries = Object.fromEntries(
 const iconEntries = Object.fromEntries(
   globSync('src/icons/**/index.ts', { cwd: packageDir }).map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
+
     return [key, file];
   })
 );
@@ -138,6 +141,7 @@ const cdnMediaEntries = readdirSync(mediaDirPath, { withFileTypes: true })
     if (entry.isDirectory()) {
       return globSync(`${mediaDir}/${entry.name}/*.ts`, { cwd: packageDir }).map((src) => {
         const flavor = basename(src, '.ts');
+
         return { src, name: flavor === 'index' ? `media/${entry.name}` : `media/${entry.name}/${flavor}` };
       });
     }

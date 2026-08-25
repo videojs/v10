@@ -24,6 +24,7 @@ export function satteriReadingTime(): MdastPluginInput {
       if (!frontmatter) return;
 
       const readingTime = getReadingTime(text);
+
       frontmatter.minutesRead = readingTime.text;
       frontmatter.readingTimeMinutes = readingTime.minutes;
     };

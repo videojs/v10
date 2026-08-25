@@ -49,6 +49,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
     menu.setTriggerElement(element);
     const unregister = parentMenuApi.registerItem(element);
+
     return () => {
       unregister();
       menu.setTriggerElement(null);

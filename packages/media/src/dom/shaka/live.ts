@@ -105,6 +105,7 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
       // call that its shape is not covered by semver — so the same spec
       // default is derived from the presentation's max segment duration.
       const { maxSegmentDuration } = engine.getStats();
+
       this.#liveEdgeStartOffset =
         Number.isFinite(maxSegmentDuration) && maxSegmentDuration > 0 ? maxSegmentDuration * 3 : undefined;
 

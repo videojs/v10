@@ -83,6 +83,7 @@ export class PopoverCore {
 
   getState(): PopoverState {
     const input = this.#input!;
+
     return {
       open: input.active,
       status: input.status,

@@ -123,6 +123,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   set src(value) {
     const { engine } = this.#source ?? {};
     const next: YouTubeSource = { ...(engine && { engine }), ...(value && { src: value }) };
+
     // The `source` setter is the one path for storing, loading, and announcing a source.
     this.source = Object.keys(next).length > 0 ? next : null;
   }
@@ -146,6 +147,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       if (this.#target && !this.#player && !this.#creatingPlayer) {
         // `attach()` settled its barrier when there was nothing to embed, so `play()` needs a new one.
         const load = this.#beginLoad();
+
         // Wait a microtask so the one-shot embed URL sees every prop a framework set alongside `src`.
         await Promise.resolve();
 
@@ -159,6 +161,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     }
 
     const load = this.#beginLoad();
+
     // Reset and announce before the empty-src bail: a cleared source reports nothing further, so
     // anything listening would keep the last video's duration and buffer forever.
     this.#resetState();
@@ -450,6 +453,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
         },
       },
     });
+
     this.#player = player;
     this.#creatingPlayer = false;
     this.#bindPlayerEvents(player, attachId);
@@ -543,6 +547,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       youtubeErrorCodeToMediaErrorCode[code] ?? MediaError.MEDIA_ERR_CUSTOM,
       true
     );
+
     error.data = { youtubeErrorCode: code };
     this.#error = error;
     this.dispatchEvent(new Event('error'));
@@ -678,12 +683,14 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
 
     this.#teardownTextTracks();
     const host = doc.createElement('video');
+
     this.#textTracksHost = host;
     this.#textTracksDisconnect = new AbortController();
     host.textTracks?.addEventListener?.(
       'change',
       () => {
         const showing = Array.from(host.textTracks).find((t) => t.mode === 'showing');
+
         tryCall(() => player.setOption('captions', 'track', showing ? { languageCode: showing.language } : {}));
       },
       { signal: this.#textTracksDisconnect.signal }

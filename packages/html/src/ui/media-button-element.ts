@@ -130,6 +130,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 
     this.core.setMedia(media);
     const state = this.core.getState() as InferComponentState<Core>;
+
     return translateText(this.core.getLabel(state), this.#i18n.value, getLabelParams(this.core, state));
   }
 

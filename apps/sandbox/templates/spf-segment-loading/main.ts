@@ -76,6 +76,7 @@ const INITIAL_PRELOAD = (params.get('preload') as 'auto' | 'metadata' | 'none') 
 for (const preset of PRESETS) {
   const label = preset.unsupported ? `${preset.label} (${preset.unsupported})` : preset.label;
   const option = new Option(label, preset.url);
+
   option.disabled = !!preset.unsupported;
   srcPreset.add(option);
 }
@@ -92,8 +93,10 @@ updateShareUrl();
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function log(msg: string, type: 'info' | 'success' | 'error' | 'warning' = 'info') {
   const timestamp = new Date().toLocaleTimeString();
+
   console.log(`[${timestamp}] ${msg}`);
   const div = document.createElement('div');
+
   div.className = type;
   div.textContent = `[${timestamp}] ${msg}`;
   logsDiv.appendChild(div);
@@ -108,6 +111,7 @@ function formatBandwidth(bps: number): string {
 
 function formatFrameRate(frameRate: { frameRateNumerator: number; frameRateDenominator?: number }): string {
   const fps = frameRate.frameRateNumerator / (frameRate.frameRateDenominator ?? 1);
+
   // Trim to two decimals then drop trailing zeros so 30 shows as "30" and 29.97 stays "29.97".
   return `${Number.parseFloat(fps.toFixed(2))} fps`;
 }
@@ -156,6 +160,7 @@ function updateShareUrl() {
   if (preloadSelect.value !== 'none') p.set('preload', preloadSelect.value);
 
   const url = `${window.location.origin}${window.location.pathname}${p.size > 0 ? `?${p}` : ''}`;
+
   shareLink.href = url;
   shareLink.textContent = url;
 }
@@ -196,6 +201,7 @@ function updatePlayerSizeDisplay() {
     .map((track) => {
       const trackWidth = 'width' in track ? (track.width ?? 0) : 0;
       const trackHeight = 'height' in track ? (track.height ?? 0) : 0;
+
       return {
         label: trackWidth && trackHeight ? `${trackWidth}×${trackHeight}` : 'unsized',
         area: trackWidth * trackHeight,
@@ -204,6 +210,7 @@ function updatePlayerSizeDisplay() {
     .filter((tier) => tier.area >= area)
     .sort((a, b) => a.area - b.area);
   const cap = covering[0]?.label ?? 'none — player exceeds every rendition';
+
   playerSizeDiv.textContent = `📐 Player: ${width}×${height} device px  ·  cap: ${cap}`;
 }
 
@@ -214,6 +221,7 @@ function correctedEstimate(estimate: number, totalWeight: number, halfLife: numb
   if (totalWeight === 0) return 0;
 
   const alpha = Math.exp(Math.log(0.5) / halfLife);
+
   return estimate / (1 - alpha ** totalWeight);
 }
 
@@ -239,6 +247,7 @@ function updateThroughputDisplay() {
   const fast = correctedEstimate(bs.fastEstimate, bs.fastTotalWeight, 2);
   const slow = correctedEstimate(bs.slowEstimate, bs.slowTotalWeight, 5);
   const est = Math.min(fast, slow);
+
   throughputDiv.textContent = `📶 Est: ${formatBandwidth(est)}  (fast: ${formatBandwidth(fast)}, slow: ${formatBandwidth(slow)})`;
   throughputDiv.className = 'has-data';
 }
@@ -293,6 +302,7 @@ interface VideoSelectionGroup {
 function videoSelectionKey(track: ReturnType<typeof getVideoTracks>[number]): string {
   const width = 'width' in track ? track.width : undefined;
   const height = 'height' in track ? track.height : undefined;
+
   return `${track.bandwidth}|${width ?? ''}×${height ?? ''}`;
 }
 
@@ -332,12 +342,14 @@ function buildVideoTrackButtons(groups: VideoSelectionGroup[]) {
   renditionButtonsDiv.innerHTML = '';
 
   const statusRow = document.createElement('div');
+
   statusRow.id = 'video-status-row';
   statusRow.className = 'abr-status';
   renditionButtonsDiv.appendChild(statusRow);
 
   for (const group of groups) {
     const btn = document.createElement('button');
+
     btn.type = 'button';
     btn.dataset.selectionKey = group.key;
     // Base label minus the selection badge; the badge is toggled in place.
@@ -367,12 +379,14 @@ function updateVideoTrackSelection(
   if (statusRow) {
     statusRow.innerHTML = '';
     const modeLabel = document.createElement('span');
+
     modeLabel.className = isManual ? 'mode-manual' : 'mode-abr';
     modeLabel.textContent = isManual ? `🔒 Manual: ${JSON.stringify(userFilter)}` : '⟳ ABR';
     statusRow.appendChild(modeLabel);
 
     if (isManual) {
       const enableBtn = document.createElement('button');
+
       enableBtn.type = 'button';
       enableBtn.className = 'enable-abr-btn';
       enableBtn.textContent = 'Enable ABR';
@@ -391,8 +405,10 @@ function updateVideoTrackSelection(
 
   for (const btn of renditionButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
     const isSelected = btn.dataset.selectionKey === selectedKey;
+
     btn.className = `rendition-btn${isSelected ? (isManual ? ' selected-manual' : ' selected-abr') : ''}`;
     const badge = isSelected ? (isManual ? ' 🔒' : ' ⟳') : '';
+
     btn.textContent = `${btn.dataset.label ?? ''}${badge}`;
   }
 }
@@ -455,6 +471,7 @@ function getAudioSelectionGroups(tracks: ReturnType<typeof getAudioTracks>): Aud
 
     if (!group) {
       const name = 'name' in track && track.name ? track.name : track.id;
+
       group = { key, byLanguage: !!language, language, label: `${language ?? '—'} · ${name}`, members: [] };
       groups.set(key, group);
     }
@@ -463,6 +480,7 @@ function getAudioSelectionGroups(tracks: ReturnType<typeof getAudioTracks>): Aud
     // the collapsed renditions are still inspectable.
     const groupId = 'groupId' in track ? track.groupId : undefined;
     const tier = track.bandwidth ? formatBandwidth(track.bandwidth) : groupId;
+
     group.members.push(tier ?? track.id);
   }
 
@@ -474,12 +492,14 @@ function buildAudioTrackButtons(groups: AudioSelectionGroup[]) {
   audioTrackButtonsDiv.innerHTML = '';
 
   const statusRow = document.createElement('div');
+
   statusRow.id = 'audio-status-row';
   statusRow.className = 'audio-status';
   audioTrackButtonsDiv.appendChild(statusRow);
 
   for (const group of groups) {
     const btn = document.createElement('button');
+
     btn.type = 'button';
     btn.dataset.selectionKey = group.key;
     // Base label minus the selection badge; the badge is toggled in place.
@@ -489,6 +509,7 @@ function buildAudioTrackButtons(groups: AudioSelectionGroup[]) {
       : `id: ${group.key}`;
     btn.addEventListener('click', () => {
       const filter = group.byLanguage ? { language: group.language } : { id: group.key };
+
       log(
         `Audio track filter: ${JSON.stringify(filter)} — mid-stream flush will fire if language differs from buffered`,
         'warning'
@@ -512,12 +533,14 @@ function updateAudioTrackSelection(
   if (statusRow) {
     statusRow.innerHTML = '';
     const modeLabel = document.createElement('span');
+
     modeLabel.className = isPinned ? 'mode-pinned' : 'mode-default';
     modeLabel.textContent = isPinned ? `🔒 Pinned: ${JSON.stringify(userFilter)}` : '🌐 Default pick';
     statusRow.appendChild(modeLabel);
 
     if (isPinned) {
       const clearBtn = document.createElement('button');
+
       clearBtn.type = 'button';
       clearBtn.className = 'clear-filter-btn';
       clearBtn.textContent = 'Clear filter';
@@ -536,8 +559,10 @@ function updateAudioTrackSelection(
 
   for (const btn of audioTrackButtonsDiv.querySelectorAll<HTMLButtonElement>('button[data-selection-key]')) {
     const isSelected = btn.dataset.selectionKey === selectedKey;
+
     btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
     const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
+
     btn.textContent = `${btn.dataset.label ?? ''}${badge}`;
   }
 }
@@ -573,8 +598,10 @@ function renderTextTrackPicker() {
 
   // Status row: current intent (auto / pinned / off) + reset.
   const statusRow = document.createElement('div');
+
   statusRow.className = 'audio-status';
   const modeLabel = document.createElement('span');
+
   modeLabel.className = isPinned || isOff ? 'mode-pinned' : 'mode-default';
   modeLabel.textContent = isOff
     ? '🔇 Off (user)'
@@ -585,6 +612,7 @@ function renderTextTrackPicker() {
 
   if (intent !== undefined) {
     const resetBtn = document.createElement('button');
+
     resetBtn.type = 'button';
     resetBtn.className = 'clear-filter-btn';
     resetBtn.textContent = 'Reset to auto';
@@ -599,8 +627,10 @@ function renderTextTrackPicker() {
 
   // Off button — explicit 'off' intent; highlighted whenever nothing resolves.
   const offBtn = document.createElement('button');
+
   offBtn.type = 'button';
   const offSelected = !selectedTextTrackId;
+
   offBtn.className = `audio-track-btn${offSelected ? (isOff ? ' selected-pinned' : ' selected-default') : ''}`;
   offBtn.textContent = `Off${offSelected ? (isOff ? ' 🔇' : ' 🌐') : ''}`;
   offBtn.addEventListener('click', () => {
@@ -623,9 +653,11 @@ function renderTextTrackPicker() {
     const label = 'label' in track && track.label ? track.label : track.id;
     const isSelected = key === selectedKey;
     const btn = document.createElement('button');
+
     btn.type = 'button';
     btn.className = `audio-track-btn${isSelected ? (isPinned ? ' selected-pinned' : ' selected-default') : ''}`;
     const badge = isSelected ? (isPinned ? ' 🔒' : ' 🌐') : '';
+
     btn.textContent = `${language ?? '—'} · ${label}${badge}`;
     btn.title = `kind: ${track.kind}${track.forced ? ' · forced' : ''} · id: ${track.id}`;
     btn.addEventListener('click', () => {
@@ -652,8 +684,10 @@ function renderResolutionStatus() {
   for (const track of tracks) {
     const isResolved = 'segments' in track;
     const item = document.createElement('div');
+
     item.className = `resolution-item ${isResolved ? 'resolved' : 'unresolved'}`;
     const res = 'width' in track && track.width && track.height ? `${track.width}×${track.height} ` : '';
+
     item.textContent = `${isResolved ? '✓' : '○'} ${res}${formatBandwidth(track.bandwidth)}`;
     item.title = track.id;
     resolutionListDiv.appendChild(item);
@@ -686,6 +720,7 @@ function selectedTimelineTrack() {
 function liveHoldBack(): number {
   const track = selectedTimelineTrack();
   const targetDuration = track ? getMediaPlaylistMetadata(track)?.targetDuration : undefined;
+
   return (targetDuration || 6) * 3;
 }
 
@@ -696,6 +731,7 @@ function liveEdgeTarget(): number | undefined {
   if (!seekable.length) return undefined;
 
   const end = seekable.end(seekable.length - 1);
+
   return Math.max(seekable.start(0), end - liveHoldBack());
 }
 
@@ -851,6 +887,7 @@ function startEngine(src: string) {
 
     if (state.selectedVideoTrackId && state.selectedVideoTrackId !== prev.selectedVideoTrackId) {
       const mode = state.userVideoTrackSelection ? '(manual)' : '(ABR)';
+
       log(`Video track selected ${mode}: ${state.selectedVideoTrackId}`);
       prev.selectedVideoTrackId = state.selectedVideoTrackId;
     }
@@ -893,6 +930,7 @@ function startEngine(src: string) {
       prevContext.hasVideoBuffer = true;
 
       const origRemove = ctx.videoBuffer.remove.bind(ctx.videoBuffer);
+
       ctx.videoBuffer.remove = (start: number, end: number) => {
         log(
           `📹 Video SourceBuffer.remove(${start.toFixed(2)}s → ${end === Infinity ? '∞' : end.toFixed(2)}s)`,
@@ -921,6 +959,7 @@ function startEngine(src: string) {
       prevContext.hasAudioBuffer = true;
 
       const origRemove = ctx.audioBuffer.remove.bind(ctx.audioBuffer);
+
       ctx.audioBuffer.remove = (start: number, end: number) => {
         log(
           `🔊 Audio SourceBuffer.remove(${start.toFixed(2)}s → ${end === Infinity ? '∞' : end.toFixed(2)}s)`,
@@ -1012,6 +1051,7 @@ document.getElementById('seek-behind-window')!.addEventListener('click', () => {
   // while playing this exercises the window-exit rescue as the window slides
   // past — watch the playhead snap back to the edge on the next reload.
   const target = Math.max(0, seekable.start(0) - 30);
+
   video.currentTime = target;
   log(`Seek out of window: requested ${target.toFixed(2)}s (browser may clamp to seekable)`, 'warning');
 });
@@ -1064,6 +1104,7 @@ loopToggle.addEventListener('change', () => {
 
 preloadSelect.addEventListener('change', () => {
   const value = preloadSelect.value as 'auto' | 'metadata' | 'none';
+
   signals.state.preload.set(value);
   log(`Preload: ${value}`);
   updateShareUrl();

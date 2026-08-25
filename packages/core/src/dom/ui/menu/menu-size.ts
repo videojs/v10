@@ -77,6 +77,7 @@ function getAvailableWidth(content: HTMLElement): number | null {
   return (
     walkAncestors(content, (element) => {
       const width = readCSSLength(element, MenuCSSVars.availableWidth);
+
       return width !== null && width > 0 ? width : undefined;
     }) ?? null
   );
@@ -84,6 +85,7 @@ function getAvailableWidth(content: HTMLElement): number | null {
 
 function constrainWidth(content: HTMLElement, width: number): number {
   const availableWidth = getAvailableWidth(content);
+
   return availableWidth === null ? width : Math.min(width, Math.max(0, availableWidth));
 }
 
@@ -110,6 +112,7 @@ function getConstrainedElementSize(content: HTMLElement, element: HTMLElement): 
 function getCurrentSize(content: HTMLElement): MenuSize {
   const path = followElementPath(content, (current) => {
     const activeSubmenu = getActiveSubmenu(current);
+
     return activeSubmenu?.hasAttribute('data-ending-style') ? null : activeSubmenu;
   });
   const current = path[path.length - 1]!;
@@ -149,6 +152,7 @@ export function syncMenuSize(content: HTMLElement | null): void {
   for (const child of rootChildren) setCovered(child, covered);
 
   const size = getCurrentSize(content);
+
   content.style.setProperty(MenuCSSVars.width, `${Math.ceil(size.width)}px`);
   content.style.setProperty(MenuCSSVars.height, `${Math.ceil(size.height)}px`);
 }
@@ -160,6 +164,7 @@ export function syncMenuSizeChain(content: HTMLElement | null): void {
   while (current) {
     syncMenuSize(current);
     const parent = current.parentElement;
+
     current = parent?.getAttribute('role') === 'menu' ? parent : null;
   }
 }

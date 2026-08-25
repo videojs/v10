@@ -25,6 +25,7 @@ function ensureDummyVideo(): HTMLVideoElement {
 export function resolveVttSegment(url: string): Promise<VTTCue[]> {
   const video = ensureDummyVideo();
   const track = document.createElement('track');
+
   track.kind = 'subtitles';
 
   return new Promise((resolve, reject) => {

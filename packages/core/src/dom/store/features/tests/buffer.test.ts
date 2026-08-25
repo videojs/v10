@@ -14,6 +14,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(bufferFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.buffered).toEqual([[0, 60]]);
@@ -30,6 +31,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(bufferFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.buffered).toEqual([
@@ -45,6 +47,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(bufferFeature);
+
       store.attach({ media: video, container: null });
 
       // Update the mock video's buffered range
@@ -66,6 +69,7 @@ describe('bufferFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(bufferFeature);
+
       store.attach({ media: video, container: null });
 
       // Update the mock video to have no buffered content

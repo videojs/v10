@@ -49,6 +49,7 @@ describe('idleCallback', () => {
     const callback = vi.fn();
 
     const cancel = idleCallback(callback);
+
     cancel();
 
     await vi.runAllTimersAsync();
@@ -60,6 +61,7 @@ describe('idleCallback', () => {
     const callback = vi.fn();
 
     const cancel = idleCallback(callback);
+
     cancel();
     cancel();
     cancel();

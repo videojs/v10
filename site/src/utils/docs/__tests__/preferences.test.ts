@@ -114,6 +114,7 @@ describe('preferences utilities', () => {
 
     it('should return null when document is undefined (SSR)', () => {
       const originalDocument = globalThis.document;
+
       // @ts-expect-error Testing SSR scenario
       globalThis.document = undefined;
 
@@ -127,6 +128,7 @@ describe('preferences utilities', () => {
     it('should set framework cookie', () => {
       // Mock document.cookie
       const cookies: string[] = [];
+
       Object.defineProperty(document, 'cookie', {
         get: () => cookies.join('; '),
         set: (value: string) => {
@@ -155,6 +157,7 @@ describe('preferences utilities', () => {
       for (const framework of SUPPORTED_FRAMEWORKS) {
         // Mock document.cookie
         const cookies: string[] = [];
+
         Object.defineProperty(document, 'cookie', {
           get: () => cookies.join('; '),
           set: (value: string) => {
@@ -171,6 +174,7 @@ describe('preferences utilities', () => {
 
     it('should do nothing when document is undefined (SSR)', () => {
       const originalDocument = globalThis.document;
+
       // @ts-expect-error Testing SSR scenario
       globalThis.document = undefined;
 
@@ -185,6 +189,7 @@ describe('preferences utilities', () => {
   describe('setStylePreferenceClient', () => {
     it('should set style in localStorage', () => {
       const mockStorage: Record<string, string> = {};
+
       Object.defineProperty(globalThis, 'localStorage', {
         value: {
           getItem: (key: string) => mockStorage[key] ?? null,
@@ -198,11 +203,13 @@ describe('preferences utilities', () => {
       setStylePreferenceClient(firstFramework, 'css');
 
       const expectedKey = STYLE_STORAGE_KEY_PREFIX + firstFramework;
+
       expect(mockStorage[expectedKey]).toBe('css');
     });
 
     it('should throw error for invalid style', () => {
       const mockStorage: Record<string, string> = {};
+
       Object.defineProperty(globalThis, 'localStorage', {
         value: {
           getItem: (key: string) => mockStorage[key] ?? null,

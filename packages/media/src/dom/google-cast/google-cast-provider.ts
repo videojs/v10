@@ -88,6 +88,7 @@ export class GoogleCastProvider {
 
   hasDevicesAvailable() {
     const state = getCastContext()?.getCastState();
+
     return !!state && state !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
   }
 
@@ -103,6 +104,7 @@ export class GoogleCastProvider {
     }
 
     const willDisconnect = this.#isCasting;
+
     this.#isCasting = true;
 
     this.#applyCastOptions();
@@ -145,6 +147,7 @@ export class GoogleCastProvider {
     }
 
     const mediaInfo = new chrome.cast.media.MediaInfo(this.#googleCast.src, this.#googleCast.contentType ?? '');
+
     mediaInfo.customData = this.#googleCast.customData ?? null;
 
     const { target } = this;
@@ -162,6 +165,7 @@ export class GoogleCastProvider {
         if (!activeTrackIds.length && el.track.mode === 'showing') activeTrackIds.push(trackId);
 
         const track = new Track(trackId, TrackType.TEXT);
+
         track.trackContentId = el.src;
         track.trackContentType = 'text/vtt';
         track.subtype = el.kind === 'captions' ? TextTrackType.CAPTIONS : TextTrackType.SUBTITLES;
@@ -195,6 +199,7 @@ export class GoogleCastProvider {
     }
 
     const request = new chrome.cast.media.LoadRequest(mediaInfo);
+
     // Use `super.currentTime` to read the local element's time even though our
     // own `currentTime` getter is overridden to return the remote player's.
     request.currentTime = this.target?.currentTime ?? 0;
@@ -355,6 +360,7 @@ export class GoogleCastProvider {
 
         if (state === PS.IDLE) {
           const finished = currentMedia()?.idleReason === chrome.cast.media.IdleReason.FINISHED;
+
           this.target?.dispatchEvent(new Event(finished ? 'ended' : 'emptied'));
           return;
         }
@@ -416,6 +422,7 @@ export class GoogleCastProvider {
 
   #applyCastOptions() {
     const { receiver } = this.#googleCast;
+
     setCastOptions(receiver ? { receiverApplicationId: receiver } : {});
   }
 
@@ -512,6 +519,7 @@ export class GoogleCastProvider {
       .filter(({ type }) => type === chrome.cast.media.TrackType.TEXT)
       .flatMap(({ language, name, trackId }) => {
         const local = localSubs.find((l) => l.language === language && l.label === name);
+
         return local?.mode ? [{ mode: local.mode, trackId }] : [];
       });
 

@@ -64,6 +64,7 @@ function highlight(code: string, lang: BundledLanguage, highlighter: Highlighter
     preClassName: preProps.class as string | undefined,
     codeClassName: codeProps.class as string | undefined,
   };
+
   highlightCache.set(cacheKey, result);
   return result;
 }

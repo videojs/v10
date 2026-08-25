@@ -10,6 +10,7 @@ vi.mock('dashjs', () => {
   function merge(target: Record<string, any>, source: Record<string, any>) {
     for (const [key, value] of Object.entries(source)) {
       const isPlainObject = typeof value === 'object' && value !== null && !Array.isArray(value);
+
       target[key] = isPlainObject ? merge({ ...target[key] }, value) : value;
     }
 
@@ -36,6 +37,7 @@ vi.mock('dashjs', () => {
       destroy: vi.fn(),
       on: vi.fn((type: string, listener: (event: any) => void) => {
         const typeListeners = listeners.get(type) ?? new Set();
+
         typeListeners.add(listener);
         listeners.set(type, typeListeners);
       }),
@@ -55,6 +57,7 @@ vi.mock('dashjs', () => {
   }
 
   const MediaPlayer = Object.assign(() => ({ create }), { events });
+
   return { MediaPlayer, default: { MediaPlayer } };
 });
 
@@ -89,9 +92,11 @@ type MockRepresentation = {
 
 function setup() {
   const video = document.createElement('video');
+
   document.body.appendChild(video);
 
   const media = new DashMedia();
+
   media.attach(video);
 
   return { media, video, engine: media.engine as unknown as MockEngine };
@@ -124,6 +129,7 @@ describe('DashMedia', () => {
       const { media, video } = setup();
 
       const playHandler = vi.fn();
+
       media.addEventListener('play', playHandler);
 
       video.dispatchEvent(new Event('play'));
@@ -138,6 +144,7 @@ describe('DashMedia', () => {
 
     it('detaches the dash view from the target on destroy', () => {
       const { media, engine } = setup();
+
       engine.attachView.mockClear();
 
       media.destroy();
@@ -158,6 +165,7 @@ describe('DashMedia', () => {
     it('derives src and attaches the manifest', () => {
       const { media, engine } = setup();
       const sourcechange = vi.fn();
+
       media.addEventListener('sourcechange', sourcechange);
 
       media.source = { src: MANIFEST };
@@ -170,9 +178,11 @@ describe('DashMedia', () => {
     it('leaves the engine alone for a structurally equal source', () => {
       const { media, engine } = setup();
       const source: DashSource = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
+
       media.source = source;
 
       const sourcechange = vi.fn();
+
       media.addEventListener('sourcechange', sourcechange);
       engine.attachSource.mockClear();
       engine.updateSettings.mockClear();
@@ -191,6 +201,7 @@ describe('DashMedia', () => {
 
     it('does not re-attach the manifest when only dash.js settings change', () => {
       const { media, engine } = setup();
+
       media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.attachSource.mockClear();
 
@@ -202,6 +213,7 @@ describe('DashMedia', () => {
 
     it('resets settings instead of merging when a dash.js setting is dropped', () => {
       const { media, engine } = setup();
+
       media.source = {
         src: MANIFEST,
         engine: { dashJs: { streaming: { abandonLoadTimeout: 1000, cacheInitSegments: true } } },
@@ -220,6 +232,7 @@ describe('DashMedia', () => {
 
     it('resets settings when dash.js settings are removed entirely', () => {
       const { media, engine } = setup();
+
       media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
@@ -232,6 +245,7 @@ describe('DashMedia', () => {
 
     it('clears src when set to null', () => {
       const { media, engine } = setup();
+
       media.source = { src: MANIFEST };
       engine.attachSource.mockClear();
 
@@ -246,6 +260,7 @@ describe('DashMedia', () => {
   describe('src', () => {
     it('preserves source dash.js settings across a src change', () => {
       const { media, engine } = setup();
+
       media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
@@ -265,6 +280,7 @@ describe('DashMedia', () => {
     it('fires sourcechange through the source setter', () => {
       const { media, engine } = setup();
       const sourcechange = vi.fn(() => media.source?.src);
+
       media.addEventListener('sourcechange', sourcechange);
 
       media.src = MANIFEST;
@@ -284,6 +300,7 @@ describe('DashMedia', () => {
   describe('videoRenditions', () => {
     it('mirrors the video representations of the initialized stream', () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
 
       initStream(engine, REPRESENTATIONS);
@@ -301,6 +318,7 @@ describe('DashMedia', () => {
 
     it('rebuilds the list for every stream it is told about', () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       initStream(engine, REPRESENTATIONS);
 
@@ -312,6 +330,7 @@ describe('DashMedia', () => {
 
     it('ignores a stream that failed to initialize', () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
 
       engine.representations = REPRESENTATIONS;
@@ -322,6 +341,7 @@ describe('DashMedia', () => {
 
     it('pins the selected representation and turns dash.js bitrate switching off', async () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       initStream(engine, REPRESENTATIONS);
       engine.updateSettings.mockClear();
@@ -335,6 +355,7 @@ describe('DashMedia', () => {
 
     it('hands switching back to dash.js when the selection is cleared', async () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       initStream(engine, REPRESENTATIONS);
 
@@ -350,6 +371,7 @@ describe('DashMedia', () => {
 
     it('leaves dash.js settings alone when nothing was ever pinned', async () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       initStream(engine, REPRESENTATIONS);
       engine.updateSettings.mockClear();
@@ -363,6 +385,7 @@ describe('DashMedia', () => {
 
     it('re-pins the selected representation when dash.js settings are re-applied', async () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       initStream(engine, REPRESENTATIONS);
 
@@ -381,6 +404,7 @@ describe('DashMedia', () => {
     it('leaves the pinned representation alone when an equivalent source is re-assigned', async () => {
       const { media, engine } = setup();
       const source: DashSource = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
+
       media.source = source;
       initStream(engine, REPRESENTATIONS);
 
@@ -400,6 +424,7 @@ describe('DashMedia', () => {
 
     it('drops renditions and restores switching when the source changes', async () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       initStream(engine, REPRESENTATIONS);
 
@@ -415,6 +440,7 @@ describe('DashMedia', () => {
 
     it('marks the representation dash.js renders active', () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       engine.currentRepresentation = REPRESENTATIONS[0]!;
       initStream(engine, REPRESENTATIONS);
@@ -428,6 +454,7 @@ describe('DashMedia', () => {
 
     it('ignores rendered switches for other media types', () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       engine.currentRepresentation = REPRESENTATIONS[0]!;
       initStream(engine, REPRESENTATIONS);
@@ -439,6 +466,7 @@ describe('DashMedia', () => {
 
     it('stops mirroring representations once destroyed', () => {
       const { media, engine } = setup();
+
       media.src = MANIFEST;
       initStream(engine, REPRESENTATIONS);
 

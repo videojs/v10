@@ -8,6 +8,7 @@ const OPEN: PopoverInput = { active: true, status: 'idle' };
 describe('PopoverCore', () => {
   it('uses default props', () => {
     const core = new PopoverCore();
+
     core.setInput(CLOSED);
     const state = core.getState();
 
@@ -21,15 +22,18 @@ describe('PopoverCore', () => {
 
     core.setInput(CLOSED);
     const closed = core.getState();
+
     expect(closed.open).toBe(false);
 
     core.setInput(OPEN);
     const open = core.getState();
+
     expect(open.open).toBe(true);
   });
 
   it('applies custom props', () => {
     const core = new PopoverCore({ side: 'bottom', align: 'start' });
+
     core.setInput(OPEN);
     const state = core.getState();
 
@@ -53,6 +57,7 @@ describe('PopoverCore', () => {
   describe('getTriggerAttrs', () => {
     it('returns aria-expanded false when closed', () => {
       const core = new PopoverCore();
+
       core.setInput(CLOSED);
       const state = core.getState();
       const attrs = core.getTriggerAttrs(state);
@@ -63,6 +68,7 @@ describe('PopoverCore', () => {
 
     it('returns aria-expanded true when open', () => {
       const core = new PopoverCore();
+
       core.setInput(OPEN);
       const state = core.getState();
       const attrs = core.getTriggerAttrs(state);
@@ -72,6 +78,7 @@ describe('PopoverCore', () => {
 
     it('returns aria-expanded false when closing', () => {
       const core = new PopoverCore();
+
       core.setInput({ active: true, status: 'ending' });
       const state = core.getState();
       const attrs = core.getTriggerAttrs(state);
@@ -82,6 +89,7 @@ describe('PopoverCore', () => {
 
     it('includes aria-controls when popupId is provided', () => {
       const core = new PopoverCore();
+
       core.setInput(OPEN);
       const state = core.getState();
       const attrs = core.getTriggerAttrs(state, 'popup-123');
@@ -91,6 +99,7 @@ describe('PopoverCore', () => {
 
     it('returns undefined aria-controls when popupId is not provided', () => {
       const core = new PopoverCore();
+
       core.setInput(OPEN);
       const state = core.getState();
       const attrs = core.getTriggerAttrs(state);
@@ -102,6 +111,7 @@ describe('PopoverCore', () => {
   describe('getPopupAttrs', () => {
     it('returns popover manual attribute', () => {
       const core = new PopoverCore();
+
       core.setInput(OPEN);
       const state = core.getState();
       const attrs = core.getPopupAttrs(state);
@@ -111,6 +121,7 @@ describe('PopoverCore', () => {
 
     it('returns dialog role', () => {
       const core = new PopoverCore();
+
       core.setInput(OPEN);
       const state = core.getState();
       const attrs = core.getPopupAttrs(state);
@@ -120,6 +131,7 @@ describe('PopoverCore', () => {
 
     it('sets aria-modal when modal is true', () => {
       const core = new PopoverCore({ modal: true });
+
       core.setInput(OPEN);
       const state = core.getState();
       const attrs = core.getPopupAttrs(state);
@@ -129,6 +141,7 @@ describe('PopoverCore', () => {
 
     it('omits aria-modal when not modal', () => {
       const core = new PopoverCore();
+
       core.setInput(OPEN);
       const state = core.getState();
       const attrs = core.getPopupAttrs(state);
@@ -138,6 +151,7 @@ describe('PopoverCore', () => {
 
     it('omits aria-modal when modal is trap-focus', () => {
       const core = new PopoverCore({ modal: 'trap-focus' });
+
       core.setInput(OPEN);
       const state = core.getState();
       const attrs = core.getPopupAttrs(state);
@@ -149,6 +163,7 @@ describe('PopoverCore', () => {
   describe('transition flags', () => {
     it('sets transitionStarting when status is starting', () => {
       const core = new PopoverCore();
+
       core.setInput({ active: true, status: 'starting' });
       const state = core.getState();
 
@@ -158,6 +173,7 @@ describe('PopoverCore', () => {
 
     it('sets transitionEnding when status is ending', () => {
       const core = new PopoverCore();
+
       core.setInput({ active: true, status: 'ending' });
       const state = core.getState();
 
@@ -167,6 +183,7 @@ describe('PopoverCore', () => {
 
     it('both false when status is idle', () => {
       const core = new PopoverCore();
+
       core.setInput(OPEN);
       const state = core.getState();
 

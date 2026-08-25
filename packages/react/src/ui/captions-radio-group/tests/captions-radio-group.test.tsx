@@ -57,6 +57,7 @@ function renderCaptionsRadioGroup({
 describe('CaptionsRadioGroup', () => {
   it('renders generated radio item props and item state', () => {
     const states: CaptionsRadioGroupItemState[] = [];
+
     renderCaptionsRadioGroup({
       group: (
         <CaptionsRadioGroup
@@ -79,6 +80,7 @@ describe('CaptionsRadioGroup', () => {
 
   it('selects a captions track', () => {
     const selectSubtitlesTrack = vi.fn();
+
     renderCaptionsRadioGroup({ selectSubtitlesTrack });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'English' }));
@@ -88,6 +90,7 @@ describe('CaptionsRadioGroup', () => {
 
   it('exposes group state through attributes and callbacks', () => {
     const ref = createRef<HTMLDivElement>();
+
     renderCaptionsRadioGroup({
       group: (
         <CaptionsRadioGroup
@@ -100,6 +103,7 @@ describe('CaptionsRadioGroup', () => {
     });
 
     const group = screen.getByTestId('group');
+
     expect(ref.current).toBe(group);
     expect(group.classList.contains('captions-available')).toBe(true);
     expect(group.getAttribute('aria-label')).toBe('Captions');
@@ -111,6 +115,7 @@ describe('CaptionsRadioGroup', () => {
     renderCaptionsRadioGroup({ textTrackList: [], subtitlesShowing: false });
 
     const group = document.querySelector<HTMLElement>('[role="group"]');
+
     expect(group).toBeTruthy();
     expect(group?.hidden).toBe(true);
     expect(group?.getAttribute('aria-disabled')).toBe('true');
@@ -134,6 +139,7 @@ describe('CaptionsRadioGroup', () => {
     });
 
     const group = screen.getByRole('group', { name: 'Captions' });
+
     expect(group.tagName).toBe('SECTION');
     expect(group.getAttribute('data-value')).toBe('1');
     expect(screen.getByRole('menuitemradio', { name: 'Spanish' }).querySelector('[aria-hidden="true"]')).toBeTruthy();

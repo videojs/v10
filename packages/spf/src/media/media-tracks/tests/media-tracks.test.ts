@@ -78,6 +78,7 @@ describe('dedupedVideoTracks', () => {
         video({ id: 'b', width: 1920, height: 1080, bandwidth: 3_000_000 }),
       ])
     );
+
     expect(renditions).toHaveLength(2);
   });
 
@@ -93,6 +94,7 @@ describe('dedupedAudioTracks', () => {
     const tracks = dedupedAudioTracks(
       presentationWith([], [audio({ id: 'a-en', language: 'en', name: 'English', default: true })])
     );
+
     expect(tracks.map((t) => t.id)).toEqual(['a-en']);
     expect(tracks[0]).toMatchObject({ language: 'en', name: 'English', default: true });
   });
@@ -108,6 +110,7 @@ describe('dedupedAudioTracks', () => {
         ]
       )
     );
+
     expect(tracks.map((t) => t.id)).toEqual(['en-cdn-a', 'es-cdn-a']);
   });
 
@@ -121,6 +124,7 @@ describe('dedupedAudioTracks', () => {
         ]
       )
     );
+
     expect(tracks.map((t) => t.id)).toEqual(['en', 'en-commentary']);
   });
 
@@ -135,6 +139,7 @@ describe('toUserVideoTrackSelection', () => {
     const [rendition] = dedupedVideoTracks(
       presentationWith([video({ id: 'v1', width: 1280, height: 720, bandwidth: 3_000_000 })])
     );
+
     expect(toUserVideoTrackSelection(rendition!)).toEqual({ width: 1280, height: 720, bandwidth: 3_000_000 });
   });
 
@@ -153,6 +158,7 @@ describe('toUserVideoTrackSelection', () => {
 describe('toUserAudioTrackSelection', () => {
   it('emits the language + name match criteria', () => {
     const [track] = dedupedAudioTracks(presentationWith([], [audio({ id: 'a-es', language: 'es', name: 'Spanish' })]));
+
     expect(toUserAudioTrackSelection(track!)).toEqual({ language: 'es', name: 'Spanish' });
   });
 
@@ -209,11 +215,13 @@ describe('isSameVideoTrack', () => {
   it('matches by width + height + bandwidth regardless of id/url', () => {
     const a = { width: 1280, height: 720, bandwidth: 3_000_000 };
     const b = video({ id: 'other-cdn', width: 1280, height: 720, bandwidth: 3_000_000 }) as VideoTrack;
+
     expect(isSameVideoTrack(a, b)).toBe(true);
   });
 
   it('does not match a different quality, and is false when the track is undefined', () => {
     const a = { width: 1280, height: 720, bandwidth: 3_000_000 };
+
     expect(isSameVideoTrack(a, video({ width: 1920, height: 1080, bandwidth: 5_000_000 }) as VideoTrack)).toBe(false);
     expect(isSameVideoTrack(a, undefined)).toBe(false);
   });

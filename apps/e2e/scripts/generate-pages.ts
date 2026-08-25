@@ -724,6 +724,7 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
     ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource, config);
   } else {
     const imports = getImports(page, config);
+
     ts = config.isAudio ? htmlAudioPage(config, page.resource, imports) : htmlVideoPage(config, page.resource, imports);
   }
 
@@ -808,6 +809,7 @@ for (const page of PAGES) {
 
 // Generate index.html in src/ (not pages/)
 const srcDir = resolve(OUT_DIR, '..');
+
 writeFileSync(resolve(srcDir, 'index.html'), generateIndexHtml(PAGES));
 
 console.log(`[generate-pages] Generated ${count} pages + index.html`);

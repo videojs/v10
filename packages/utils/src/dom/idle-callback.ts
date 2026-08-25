@@ -12,6 +12,7 @@ import { supportsIdleCallback } from './supports';
 export function idleCallback(callback: IdleRequestCallback, options?: IdleRequestOptions): () => void {
   if (supportsIdleCallback()) {
     const id = requestIdleCallback(callback, options);
+
     return () => cancelIdleCallback(id);
   }
 

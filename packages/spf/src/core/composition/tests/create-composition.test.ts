@@ -157,6 +157,7 @@ describe('createComposition', () => {
       const composition = createComposition([asyncCleanupBehavior]);
 
       const destroyPromise = composition.destroy();
+
       expect(cleanupCompleted).toBe(false);
 
       await destroyPromise;
@@ -321,6 +322,7 @@ describe('defineBehavior', () => {
       contextKeys: ['b'],
       setup: setup as (deps: { state: StateSignals<{ a?: number }>; context: ContextSignals<{ b?: string }> }) => void,
     });
+
     expect(behavior.stateKeys).toEqual(['a']);
     expect(behavior.contextKeys).toEqual(['b']);
     expect(behavior.setup).toBe(setup);
@@ -375,6 +377,7 @@ describe('defineBehavior', () => {
 describe('buildSignalMap', () => {
   it('creates one signal per key', () => {
     const map = buildSignalMap<{ a?: number; b?: string }>(['a', 'b'], {});
+
     expect(typeof map.a.get).toBe('function');
     expect(typeof map.b.get).toBe('function');
     expect(map.a.get()).toBeUndefined();
@@ -386,23 +389,27 @@ describe('buildSignalMap', () => {
       count: 42,
       label: 'hello',
     });
+
     expect(map.count.get()).toBe(42);
     expect(map.label.get()).toBe('hello');
   });
 
   it('leaves unseeded keys as undefined', () => {
     const map = buildSignalMap<{ a?: number; b?: string }>(['a', 'b'], { a: 1 });
+
     expect(map.a.get()).toBe(1);
     expect(map.b.get()).toBeUndefined();
   });
 
   it('deduplicates duplicate keys (one signal per unique key)', () => {
     const map = buildSignalMap<{ a?: number; b?: string }>(['a', 'b', 'a', 'b', 'a'], {});
+
     expect(Object.keys(map)).toEqual(['a', 'b']);
   });
 
   it('returns reactive signals — set/get works', () => {
     const map = buildSignalMap<{ count?: number }>(['count'], { count: 0 });
+
     expect(map.count.get()).toBe(0);
     map.count.set(7);
     expect(map.count.get()).toBe(7);
@@ -412,11 +419,13 @@ describe('buildSignalMap', () => {
     // empty interface intentional
     // oxlint-disable-next-line typescript/no-empty-object-type
     const map = buildSignalMap<{}>([], {});
+
     expect(Object.keys(map)).toEqual([]);
   });
 
   it('accepts any Iterable<PropertyKey> — Set, generator, etc.', () => {
     const fromSet = buildSignalMap<{ a?: number; b?: string }>(new Set(['a', 'b']), {});
+
     expect(Object.keys(fromSet).sort()).toEqual(['a', 'b']);
 
     function* keys(): Generator<PropertyKey> {
@@ -424,11 +433,13 @@ describe('buildSignalMap', () => {
       yield 'b';
     }
     const fromGen = buildSignalMap<{ a?: number; b?: string }>(keys(), {});
+
     expect(Object.keys(fromGen).sort()).toEqual(['a', 'b']);
   });
 
   it('preserves first-occurrence order across duplicate keys', () => {
     const map = buildSignalMap<{ a?: number; b?: string; c?: boolean }>(['c', 'a', 'b', 'a', 'c'], {});
+
     // Set keeps insertion order; first occurrence of each key wins.
     expect(Object.keys(map)).toEqual(['c', 'a', 'b']);
   });

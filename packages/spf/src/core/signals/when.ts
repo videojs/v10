@@ -32,6 +32,7 @@ export function when(condition: () => boolean, options: { signal?: AbortSignal }
       });
     };
     const onAbort = () => settle(() => reject(signal?.reason));
+
     signal?.addEventListener('abort', onAbort, { once: true });
     const stop = effect(() => {
       if (!settled && condition()) settle(resolve);

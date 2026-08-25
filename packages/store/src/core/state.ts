@@ -20,6 +20,7 @@ export interface WritableState<T> extends State<T> {
 }
 
 let isFlushScheduled = false;
+
 function scheduleFlush(): void {
   if (isFlushScheduled) return;
 
@@ -95,6 +96,7 @@ class StateContainer<T> implements WritableState<T> {
     }
 
     const onAbort = () => this.#listeners.delete(callback);
+
     signal.addEventListener('abort', onAbort, { once: true });
 
     return () => {

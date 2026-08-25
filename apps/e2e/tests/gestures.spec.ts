@@ -40,6 +40,7 @@ test.describe('Mouse Gestures', () => {
 
     // Click the center of the player (not a button) — should toggle play
     const { x, y } = await getCenter(player);
+
     await page.mouse.click(x, y);
     await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
 
@@ -91,6 +92,7 @@ test.describe('React Mouse Gestures', () => {
     await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
 
     const { x, y } = await getCenter(player);
+
     await page.mouse.click(x, y);
     await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
   });
@@ -136,6 +138,7 @@ test.describe('Touch Gestures', () => {
   test('tap container toggles controls visibility', async ({ page }) => {
     // Tap the center of the player container with touch
     const { x, y } = await getCenter(player);
+
     await page.touchscreen.tap(x, y);
     await page.waitForTimeout(300);
 

@@ -17,5 +17,6 @@ import translations from '@videojs/core/i18n/locales/${tag}';
 
 registerI18n('${tag}', translations);
 `;
+
   writeFileSync(resolve(outDir, `${tag}.ts`), body);
 }

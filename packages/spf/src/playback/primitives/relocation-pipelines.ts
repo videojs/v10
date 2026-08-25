@@ -76,6 +76,7 @@ function writeContainer(slot: ContainerSlot, trackType: string, patch: Partial<M
 function awaitDefined(read: () => number | undefined): Promise<number> {
   return new Promise((resolve) => {
     let stop: (() => void) | undefined;
+
     stop = effect(() => {
       const value = read();
 
@@ -146,6 +147,7 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
     if (trackId === undefined) return; // init didn't identify a media track — nothing to match
 
     const segmentStartTime = op.meta.startTime;
+
     frame.data = await peekHead(frame.data, (bytes) => {
       const baseMediaDecodeTime = readBaseMediaDecodeTime(bytes, trackId);
 
@@ -270,6 +272,7 @@ const relocateCuesStep = async <C extends Cue>(
     // text-only source (no A/V origin ever coming) legitimately relocates by offset 0.
     const hasAv =
       getTracksByType(presentation, 'video').length > 0 || getTracksByType(presentation, 'audio').length > 0;
+
     return hasAv ? undefined : 0;
   });
 

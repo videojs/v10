@@ -27,6 +27,7 @@ describe('useIndicatorVisibility', () => {
 
 function VisibilityProbe({ close, id }: { close: () => void; id: string }) {
   const show = useIndicatorVisibility(close);
+
   return (
     <button data-testid={id} onClick={show} type="button">
       {id}

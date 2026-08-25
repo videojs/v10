@@ -105,6 +105,7 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       super(...args);
 
       const { config } = args?.[0] ?? {};
+
       this.#config = config;
       this.#engine = this.#createEngine();
 
@@ -114,6 +115,7 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       // this needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
         const errors = this.#signals.state.errors.get();
+
         this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
     }
@@ -268,6 +270,7 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
               this.#loadstartListener = null;
               mediaElement.play().then(resolve, reject);
             };
+
             this.#loadstartListener = listener;
             mediaElement.addEventListener('loadstart', listener, { once: true });
           });
@@ -299,6 +302,7 @@ export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       if (!this.#loadstartListener) return;
 
       const mediaElement = this.#signals.context.mediaElement.get();
+
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;
     }

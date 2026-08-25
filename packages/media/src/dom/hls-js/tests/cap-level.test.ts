@@ -101,6 +101,7 @@ function setup({
   const engine = createEngine(levels, config);
   const Controller = createCapLevelController(policy);
   const controller = new Controller(engine) as InstanceType<typeof Controller> & { destroy(): void };
+
   controllers.push(controller);
 
   // hls.js starts its capping loop from here when the manifest signals video.
@@ -108,6 +109,7 @@ function setup({
 
   if (playerSize) {
     const video = document.createElement('video');
+
     // jsdom reports an empty bounding rect, and hls.js falls back to the
     // element's width/height attributes when it does.
     video.width = playerSize.width;
@@ -317,6 +319,7 @@ describe('createCapLevelController', () => {
 
     // hls.js drops the two lowest renditions; 720p is now index 0.
     const trimmed = LADDER.slice(2);
+
     (engine as any).levels = trimmed;
     emit(engine, Hls.Events.LEVELS_UPDATED, { levels: trimmed });
 
@@ -388,6 +391,7 @@ describe('createCapLevelController', () => {
     expect(engine.autoLevelCapping).toBe(4);
 
     const video = document.createElement('video');
+
     video.width = 1920;
     video.height = 1080;
     document.body.appendChild(video);
@@ -429,6 +433,7 @@ describe('createCapLevelController', () => {
       const { engine } = setup({ maxAutoResolution: '720p', ...noSizeCapping });
 
       const trimmed = LADDER.slice(2);
+
       (engine as any).levels = trimmed;
       emit(engine, Hls.Events.LEVELS_UPDATED, { levels: trimmed });
 
@@ -455,6 +460,7 @@ describe('createCapLevelController', () => {
 
     const Controller = createCapLevelController(policy, CustomController);
     const controller = new Controller(engine) as InstanceType<typeof Controller> & { destroy(): void };
+
     controllers.push(controller);
 
     expect(controller.getMaxLevel(4)).toBe(2);
@@ -634,6 +640,7 @@ describe('createCapLevelController', () => {
     const engine = createEngine([]);
     const Controller = createCapLevelController(policy);
     const controller = new Controller(engine) as InstanceType<typeof Controller> & { destroy(): void };
+
     controllers.push(controller);
 
     // No video codec in the manifest, so hls.js defers capping indefinitely.

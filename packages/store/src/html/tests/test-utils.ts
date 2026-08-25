@@ -76,6 +76,7 @@ export function createCoreTestStore(): { store: TestStore; target: MockMedia } {
   const store = createCoreStore<MockMedia>()(audioSlice, { onError: noop });
 
   const target = new MockMedia();
+
   store.attach(target);
 
   return { store, target };

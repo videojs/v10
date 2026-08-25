@@ -45,6 +45,7 @@ export function iconElementSourcePlugin(): Plugin {
       const icons = Object.fromEntries(
         files.map((file) => {
           const path = resolve(directory, file);
+
           this.addWatchFile(path);
           return [basename(file, '.svg'), optimizeSvg(readFileSync(path, 'utf8'))];
         })
@@ -57,6 +58,7 @@ export function iconElementSourcePlugin(): Plugin {
 
 function iconFamily(id: string): string | null {
   const family = id === elementId ? 'default' : id.startsWith(`${elementId}/`) ? id.slice(elementId.length + 1) : '';
+
   return familyName.test(family) ? family : null;
 }
 

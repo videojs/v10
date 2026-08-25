@@ -56,6 +56,7 @@ export function MediaTracksMixin<Base extends AnyConstructor<any>>(MediaElementC
   if (!hasOwn(prototype, 'addVideoTrack')) {
     prototype.addVideoTrack = function (this: HTMLMediaElement, kind: string, label = '', language = '') {
       const track = new VideoTrack();
+
       track.kind = kind;
       track.label = label;
       track.language = language;
@@ -71,6 +72,7 @@ export function MediaTracksMixin<Base extends AnyConstructor<any>>(MediaElementC
   if (!hasOwn(prototype, 'addAudioTrack')) {
     prototype.addAudioTrack = function (this: HTMLMediaElement, kind: string, label = '', language = '') {
       const track = new AudioTrack();
+
       track.kind = kind;
       track.label = label;
       track.language = language;
@@ -88,8 +90,10 @@ export function MediaTracksMixin<Base extends AnyConstructor<any>>(MediaElementC
   // re-mirrors against the new target.
   if (!hasOwn(prototype, 'detach')) {
     const baseDetach = prototype.detach as ((this: object) => void) | undefined;
+
     prototype.detach = function (this: object) {
       const priv = getPrivate(this);
+
       (priv.videoTracksCleanup as AbortController | undefined)?.abort();
       (priv.audioTracksCleanup as AbortController | undefined)?.abort();
       delete priv.videoTracks;

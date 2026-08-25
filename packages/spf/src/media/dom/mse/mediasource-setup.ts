@@ -113,6 +113,7 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
   }
 
   const url = URL.createObjectURL(mediaSource);
+
   mediaElement.src = url;
 
   const detach = ({ deferReset }: DetachOptions = {}): void => {
@@ -151,6 +152,7 @@ export function attachMediaSourceAsSourceElement(
 
   const url = URL.createObjectURL(mediaSource);
   const sourceEl = document.createElement('source');
+
   sourceEl.type = 'video/mp4';
   sourceEl.src = url;
 
@@ -242,6 +244,7 @@ export function createSourceBuffer(mediaSource: MediaSource, mimeCodec: string):
  */
 export function buildMimeCodec(track: { mimeType: string; codecs?: string[] }): string {
   const codecString = track.codecs?.join(',') ?? '';
+
   return `${track.mimeType}; codecs="${codecString}"`;
 }
 
@@ -289,6 +292,7 @@ export function onMediaSourceReadyStateChange(
 ): void {
   const update = () => onChange(mediaSource.readyState);
   const options = { signal: abortSignal };
+
   mediaSource.addEventListener('sourceopen', update, options);
   mediaSource.addEventListener('sourceended', update, options);
   mediaSource.addEventListener('sourceclose', update, options);
@@ -321,6 +325,7 @@ export function waitForMediaSourceOpen(mediaSource: MediaSource, signal: AbortSi
   return new Promise<void>((resolve) => {
     const done = () => resolve();
     const options = { once: true, signal };
+
     mediaSource.addEventListener('sourceopen', done, options);
     mediaSource.addEventListener('sourceended', done, options);
     mediaSource.addEventListener('sourceclose', done, options);

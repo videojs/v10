@@ -139,6 +139,7 @@ export class SliderElement extends UIElement {
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: (() => {
         const attrs = this.#core.getAttrs(state);
+
         return { ...attrs, 'aria-label': translateText(attrs['aria-label'], this.#i18n.value) };
       })(),
       thumbProps: this.#slider.thumbProps,

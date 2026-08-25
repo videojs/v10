@@ -41,6 +41,7 @@ export function intersectDOMRects(firstRect: DOMRect, secondRect: DOMRect): DOMR
 
 export function getPositioningBoundaryRect(boundaryElement?: Element | null): DOMRect {
   const viewportRect = document.documentElement.getBoundingClientRect();
+
   return boundaryElement ? intersectDOMRects(viewportRect, boundaryElement.getBoundingClientRect()) : viewportRect;
 }
 

@@ -73,6 +73,7 @@ export const metadataFeature = definePlayerFeature({
         [MEDIA_TITLE]: media.contentData?.title,
         [MEDIA_POSTER]: media.contentData?.poster,
       });
+
     sync();
     listen(media, 'contentdatachange', sync, { signal });
   },

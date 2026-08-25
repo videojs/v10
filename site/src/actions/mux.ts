@@ -46,6 +46,7 @@ export const mux = {
     handler: async () => {
       try {
         const muxClient = getHealthMuxClient();
+
         await muxClient.video.assets.list({ limit: 0 });
         return { ok: true };
       } catch (error) {

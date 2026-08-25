@@ -61,6 +61,7 @@ export function ThemeToggle() {
   // Initialize preference and theme on mount
   useEffect(() => {
     const initialPreference = initPreference();
+
     _setPreference(initialPreference);
     setTheme(getThemeFromPreference(initialPreference));
   }, []);
@@ -73,6 +74,7 @@ export function ThemeToggle() {
 
     const onMediaChange = (e: MediaQueryListEvent) => setTheme(e.matches ? 'dark' : 'light');
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
     mediaQuery.addEventListener('change', onMediaChange);
 
     return () => {

@@ -209,6 +209,7 @@ function setupSegmentLoading<
         // intentionally not followed.
         entry: () => {
           const track = selectedTrack.get()!;
+
           context[loaderKey].get()!.send({ type: 'load', track });
         },
       },
@@ -218,8 +219,10 @@ function setupSegmentLoading<
         // boundary-dedup signal already handles re-firing policy.
         effects: () => {
           const track = selectedTrack.get()!;
+
           segmentBoundarySignal.get();
           const currentTime = peek(state.currentTime) ?? 0;
+
           peek(context[loaderKey])!.send({
             type: 'load',
             track,

@@ -72,6 +72,7 @@ export function liveWindowFromState(state: LiveWindowState): LiveWindow | null {
   if (video && audio) {
     const start = Math.max(video.start, audio.start);
     const end = Math.min(video.end, audio.end);
+
     // A degenerate intersection (disjoint windows — one playlist stalled a full
     // window behind the other) means there is no position both types can serve:
     // no live edge, rather than an invented one.
@@ -120,5 +121,6 @@ export function getLiveEdge({
   if (!window) return null;
 
   const latency = config?.resolveLiveLatency?.(state.presentation.get(), liveTrackId(state)) ?? 0;
+
   return { ...window, liveEdgeStart: Math.max(window.start, window.end - latency) };
 }

@@ -24,6 +24,7 @@ async function buildComponent(icon: IconDefinition): Promise<string> {
 
   if (result.errors.length > 0 || !result.code) {
     const errors = result.errors.map((error) => error.codeframe ?? error.message).join('\n');
+
     throw new Error(`Could not transpile ${componentName}:\n${errors}`);
   }
 

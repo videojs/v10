@@ -83,6 +83,7 @@ export class ContainerElement extends UIElement implements MediaContainer {
     }
 
     const label = this.#i18n.value(labelText);
+
     this.setAttribute('aria-label', label);
     this.#label = label;
   }

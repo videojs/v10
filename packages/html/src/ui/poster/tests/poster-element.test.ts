@@ -52,10 +52,12 @@ async function mount(options: { authorMarkup?: string } = {}): Promise<Harness> 
   ensureDefined(PosterElement);
 
   const provider = document.createElement(TestProviderElement.tagName) as TestProviderElement;
+
   document.body.appendChild(provider);
 
   const skin = provider.attachShadow({ mode: 'open' });
   const tag = PosterElement.tagName;
+
   skin.innerHTML = `<${tag}><slot name="poster"><img alt="" decoding="async"></slot></${tag}>`;
   const poster = skin.querySelector(tag) as PosterElement;
 
@@ -72,6 +74,7 @@ async function mount(options: { authorMarkup?: string } = {}): Promise<Harness> 
   }
 
   const video = document.createElement('video');
+
   provider.store.attach({ media: video, container: null });
 
   await poster.updateComplete;
@@ -124,10 +127,12 @@ describe('PosterElement', () => {
     ensureDefined(PosterElement);
 
     const provider = document.createElement(TestProviderElement.tagName) as TestProviderElement;
+
     provider.innerHTML = `<${PosterElement.tagName}></${PosterElement.tagName}>`;
     document.body.appendChild(provider);
 
     const poster = provider.querySelector(PosterElement.tagName) as PosterElement;
+
     provider.store.attach({ media: document.createElement('video'), container: null });
     setUserPoster(provider.store, 'poster.jpg');
     await poster.updateComplete;
@@ -138,6 +143,7 @@ describe('PosterElement', () => {
 
     // No slot is involved here, so nothing announces the image arriving.
     const image = document.createElement('img');
+
     image.alt = '';
     poster.appendChild(image);
 
@@ -279,10 +285,13 @@ describe('PosterElement', () => {
     const { poster, host, settle } = await mount();
 
     const picture = document.createElement('picture');
+
     picture.setAttribute('slot', 'poster');
     const source = document.createElement('source');
+
     source.setAttribute('srcset', 'author.webp');
     const img = document.createElement('img');
+
     // Decoded before we started listening, so no `load` is coming.
     Object.defineProperty(img, 'naturalWidth', { value: 1280 });
     picture.append(source, img);
@@ -298,6 +307,7 @@ describe('PosterElement', () => {
 
     // A cached failure: complete, nothing decoded, and `error` already spent.
     const failed = document.createElement('img');
+
     failed.setAttribute('slot', 'poster');
     failed.setAttribute('src', 'missing.jpg');
     Object.defineProperty(failed, 'complete', { value: true });
@@ -368,9 +378,11 @@ describe('PosterElement', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const provider = document.createElement(TestProviderElement.tagName) as TestProviderElement;
+
     document.body.appendChild(provider);
 
     const poster = document.createElement(PosterElement.tagName) as PosterElement;
+
     provider.appendChild(poster);
     provider.store.attach({ media: document.createElement('video'), container: null });
     await poster.updateComplete;

@@ -5,6 +5,7 @@ import { setupDrm } from '../drm';
 
 function createEngine(userConfig: Record<string, any> = {}): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
+
   return {
     config: {
       emeEnabled: false,
@@ -28,6 +29,7 @@ function createEngine(userConfig: Record<string, any> = {}): Hls {
 
 function stubKeySystemAccess() {
   const requestMediaKeySystemAccess = vi.fn(async () => ({}) as MediaKeySystemAccess);
+
   Object.defineProperty(navigator, 'requestMediaKeySystemAccess', {
     value: requestMediaKeySystemAccess,
     configurable: true,
@@ -74,9 +76,11 @@ describe('setupDrm', () => {
     it('prefers hardware robustness for Widevine while keeping a fallback', async () => {
       const requestMediaKeySystemAccess = stubKeySystemAccess();
       const engine = createEngine({ emeEnabled: true });
+
       setupDrm(engine);
 
       const configurations = [{ videoCapabilities: videoCapabilities() }];
+
       await engine.config.requestMediaKeySystemAccessFunc!('com.widevine.alpha' as any, configurations as any);
 
       const [keySystem, requested] = requestMediaKeySystemAccess.mock.calls[0] as unknown as [
@@ -95,9 +99,11 @@ describe('setupDrm', () => {
     it('passes configurations through unchanged for other key systems', async () => {
       const requestMediaKeySystemAccess = stubKeySystemAccess();
       const engine = createEngine({ emeEnabled: true });
+
       setupDrm(engine);
 
       const configurations = [{ videoCapabilities: videoCapabilities() }];
+
       await engine.config.requestMediaKeySystemAccessFunc!('com.apple.fps' as any, configurations as any);
 
       expect(requestMediaKeySystemAccess).toHaveBeenCalledWith('com.apple.fps', configurations);
@@ -105,9 +111,11 @@ describe('setupDrm', () => {
 
     it('propagates a denied request', async () => {
       const requestMediaKeySystemAccess = stubKeySystemAccess();
+
       requestMediaKeySystemAccess.mockRejectedValueOnce(new Error('unsupported'));
 
       const engine = createEngine({ emeEnabled: true });
+
       setupDrm(engine);
 
       await expect(engine.config.requestMediaKeySystemAccessFunc!('com.widevine.alpha' as any, [])).rejects.toThrow(

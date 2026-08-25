@@ -8,6 +8,7 @@ class SpotifyCustomMediaElement extends CustomMediaElement('iframe', SpotifyMedi
   static override getTemplateHTML = (attrs: Record<string, string>): string => {
     const initialSrc = buildSpotifyIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
     const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
+
     return /*html*/ `
       <style>
         :host {

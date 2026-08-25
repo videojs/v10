@@ -98,6 +98,7 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
   constructor(runFn: (signal: AbortSignal) => Promise<TValue>, config?: TaskConfig) {
     this.#runFn = runFn;
     const rawId = config?.id;
+
     this.id = typeof rawId === 'function' ? rawId() : (rawId ?? generateId());
     this.#externalSignal = config?.signal;
     this.#signal = config?.signal
@@ -139,6 +140,7 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
 
     try {
       const result = await this.#runFn(this.#signal);
+
       this.#value = result; // value before status — ordering guarantee
       this.#status = 'done';
       return result;
@@ -165,6 +167,7 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
    */
   clone(): Task<TValue, TError> {
     const cloned = new Task<TValue, TError>(this.#runFn, { id: this.id, signal: this.#externalSignal });
+
     cloned.#previous = this.#value ?? this.#previous;
     return cloned;
   }
@@ -201,6 +204,7 @@ export class ConcurrentRunner {
     }
 
     const promise = task.run();
+
     // Suppress unhandled rejection for callers that ignore the return value.
     promise.catch(() => {});
     // Cleanup: update pending and resolve settled regardless of outcome.
@@ -212,6 +216,7 @@ export class ConcurrentRunner {
         this.#resolveSettled = null;
       }
     };
+
     promise.then(cleanup, cleanup);
 
     this.#pending.set(task.id, { task: task as TaskLike<unknown, unknown>, promise: promise as Promise<unknown> });
@@ -228,6 +233,7 @@ export class ConcurrentRunner {
     if (this.#pending.size === 0) return;
 
     const captured = this.#settled;
+
     captured.then(
       () => {
         if (this.#settled !== captured) return;
@@ -284,6 +290,7 @@ export class SerialRunner {
     if (this.#destroyed) return Promise.resolve() as Promise<TValue>;
 
     const t = task as TaskLike<unknown, unknown>;
+
     this.#pending.add(t);
 
     const result = this.#chain
@@ -326,6 +333,7 @@ export class SerialRunner {
     if (this.#pending.size === 0 && this.#current === null) return;
 
     const currentChain = this.#chain;
+
     currentChain.then(
       () => {
         if (this.#chain !== currentChain) return;

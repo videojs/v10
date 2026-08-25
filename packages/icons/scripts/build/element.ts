@@ -31,6 +31,7 @@ export function emitElementBase(families: readonly IconFamily[]): void {
 
   if (result.errors.length > 0 || !result.code) {
     const errors = result.errors.map((error) => error.codeframe ?? error.message).join('\n');
+
     throw new Error(`Could not transpile MediaIconElement:\n${errors}`);
   }
 

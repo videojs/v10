@@ -20,6 +20,7 @@ function makeDeps() {
   const context: ContextSignals<Context> = {
     element: signal<{ id: string } | undefined>(undefined),
   };
+
   return { state, context };
 }
 
@@ -72,6 +73,7 @@ describe('makeShareSignals', () => {
   it('does not require an onSignalsReady callback', () => {
     const shareSignals = makeShareSignals<State, Context>();
     const { state, context } = makeDeps();
+
     expect(() => {
       shareSignals.setup({ state, context, config: {} });
     }).not.toThrow();
@@ -79,6 +81,7 @@ describe('makeShareSignals', () => {
 
   it('declares no stateKeys or contextKeys (passthrough behavior)', () => {
     const shareSignals = makeShareSignals<State, Context>();
+
     expect(shareSignals.stateKeys).toEqual([]);
     expect(shareSignals.contextKeys).toEqual([]);
   });

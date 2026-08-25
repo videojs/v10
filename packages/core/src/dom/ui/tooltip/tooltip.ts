@@ -68,6 +68,7 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
       else group?.notifyClose();
 
       const tooltipDetails: TooltipChangeDetails = details.event ? { reason, event: details.event } : { reason };
+
       options.onOpenChange(open, tooltipDetails);
     },
     closeOnEscape: () => true,
@@ -82,6 +83,7 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     },
     closeDelay: () => {
       const group = options.group?.();
+
       return options.closeDelay?.() ?? group?.closeDelay ?? 0;
     },
   };

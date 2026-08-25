@@ -15,6 +15,7 @@ describe('componentModulesPlugin', () => {
     const entry = join(root, 'entry.tsx');
     const child = join(root, 'child.tsx');
     const model = join(root, 'model.ts');
+
     writeFileSync(
       entry,
       `import { Child } from './child'; import type { Label } from './model'; export const Entry = ({ label }: { label: Label }) => <Child>{label}</Child>;`

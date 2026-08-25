@@ -32,12 +32,14 @@ describe('webkit', () => {
     it('returns true when supported and the media exposes the AirPlay flag', () => {
       stubWebKit(true);
       const media = { webkitCurrentPlaybackTargetIsWireless: false } as unknown as EventTarget;
+
       expect(isWebKitAirPlayCapable(media)).toBe(true);
     });
 
     it('returns false when WebKit is unsupported', () => {
       stubWebKit(false);
       const media = { webkitCurrentPlaybackTargetIsWireless: false } as unknown as EventTarget;
+
       expect(isWebKitAirPlayCapable(media)).toBe(false);
     });
 

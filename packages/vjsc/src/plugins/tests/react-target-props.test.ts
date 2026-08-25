@@ -49,6 +49,7 @@ describe('reactTargetPropsPlugin', () => {
     await bundle.generate({ format: 'es' });
 
     const source = readComponentSource(meta);
+
     expect(source).toContain(`import { cn, resolveClassName } from "@videojs/utils/style";`);
     expect(source).toContain(`className={state => cn('poster', resolveClassName(className, state))}`);
     expect(source).toContain(`className={cn('container', className)}`);

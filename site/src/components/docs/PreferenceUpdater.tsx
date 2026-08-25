@@ -22,6 +22,7 @@ export function PreferenceUpdater({ currentFramework }: PreferenceUpdaterProps) 
     // Read style from localStorage (StyleInit guarantees a valid value exists)
     // Fallback to default if React hydrates before StyleInit completes
     const style = getStylePreferenceClient(currentFramework) ?? getDefaultStyle(currentFramework);
+
     styleStore.set(style);
   }, [currentFramework]);
 

@@ -9,6 +9,7 @@ describe('usePositionedState', () => {
     const { result, rerender } = renderHook(
       ({ open }: { open: boolean }) => {
         const positioned = usePositionedState<{ open: boolean; side: 'top' | 'bottom' }>({ open, side: 'top' });
+
         sides.push(positioned.state.side);
         return positioned;
       },

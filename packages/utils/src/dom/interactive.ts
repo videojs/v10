@@ -32,6 +32,7 @@ export function isEditableElement(el: Element): boolean {
 /** Whether the keyboard event target is an editable element (input, textarea, etc). */
 export function isEditableTarget(event: KeyboardEvent): boolean {
   const target = resolveEventTarget(event);
+
   return target instanceof Element && isEditableElement(target);
 }
 
@@ -58,5 +59,6 @@ export function isInteractiveActivation(event: KeyboardEvent): boolean {
   if (!ACTIVATION_KEYS.has(event.key)) return false;
 
   const target = resolveEventTarget(event);
+
   return target instanceof Element && target.matches(ACTIVATABLE_SELECTOR);
 }

@@ -23,6 +23,7 @@ export function extractDateFromFilename(id: string): Date {
   }
 
   const [, year, month, day] = match;
+
   return new Date(`${year}-${month}-${day}`);
 }
 

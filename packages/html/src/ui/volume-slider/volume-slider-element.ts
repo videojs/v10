@@ -63,6 +63,7 @@ export class VolumeSliderElement extends UIElement {
 
     const isDisabled = () => {
       const volume = this.#volumeState.value;
+
       return this.disabled || !volume || volume.volumeAvailability !== 'available';
     };
 
@@ -176,6 +177,7 @@ export class VolumeSliderElement extends UIElement {
 
   #setVolume(percent: number): void {
     const media = this.#volumeState.value;
+
     media?.setVolume(this.#core.valueFromPercent(percent) / 100);
   }
 }

@@ -33,6 +33,7 @@ describe('StoreAccessor', () => {
       const onAvailable = vi.fn();
 
       const accessor = new StoreAccessor(host, store, onAvailable);
+
       accessor.hostConnected();
 
       expect(onAvailable).toHaveBeenCalledWith(store);

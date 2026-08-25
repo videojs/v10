@@ -122,6 +122,7 @@ export function createEndpointCoordinator(options: EndpointCoordinatorOptions): 
 
         // Wait for auth to complete
         const uploadUrl = await waitForAuthAndRetry();
+
         return uploadUrl;
       }
 

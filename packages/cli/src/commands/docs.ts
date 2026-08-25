@@ -60,6 +60,7 @@ function mapPresetToUseCase(preset: string): UseCase {
 
   if (!result) {
     const valid = USE_CASES.map((useCase) => `"${getInstallationPreset(useCase).flag}"`).join(', ');
+
     console.error(`Invalid preset: "${preset}". Valid options: ${valid}`);
     process.exit(1);
   }
@@ -213,6 +214,7 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
 
     const generated = formatInstallationCode(opts);
     const output = stripOmitMarkers(replaceMarker(markdown, 'installation', generated));
+
     printVersionHeader();
     console.log(output);
     return;

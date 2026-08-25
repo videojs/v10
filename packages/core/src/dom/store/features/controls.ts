@@ -10,6 +10,7 @@ import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../pre
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
 const TOUCH_SETTLE_DELAY = 500;
+
 type RequestControlsLock = MediaControlsState['requestControlsLock'];
 type ToggleControls = MediaControlsState['toggleControls'];
 
@@ -33,6 +34,7 @@ export const controlsFeature = definePlayerFeature({
     const fallbackToggleControls = () => {
       // Fallback before attach — no idle timer, just flip state.
       const next = !get().userActive;
+
       set({ userActive: next, controlsVisible: next });
       return next as boolean;
     };
@@ -133,6 +135,7 @@ export const controlsFeature = definePlayerFeature({
     }
 
     const actions = controlsActionsByRequest.get(get().requestControlsLock)!;
+
     actions.setDelegates(requestControlsLock, toggleControls);
 
     // Touch tap-to-toggle.
@@ -193,6 +196,7 @@ export const controlsFeature = definePlayerFeature({
     // Recompute visibility when playback state changes.
     const onPlaybackChange = () => {
       const { userActive } = get();
+
       set({ controlsVisible: computeVisible(userActive) });
 
       // When playback starts, schedule idle if user is active.
@@ -251,6 +255,7 @@ export const controlsFeature = definePlayerFeature({
     if (isMediaRemotePlaybackCapable(media)) {
       const onCastChange = () => {
         const { userActive } = get();
+
         set({ controlsVisible: computeVisible(userActive) });
       };
 

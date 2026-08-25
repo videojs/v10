@@ -20,6 +20,7 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
 
   function isCdnI18nEntry(importer: string): boolean {
     const normalized = importer.replaceAll('\\', '/');
+
     return normalized.includes('/cdn/i18n.ts') || normalized.endsWith('/cdn/i18n.js');
   }
 

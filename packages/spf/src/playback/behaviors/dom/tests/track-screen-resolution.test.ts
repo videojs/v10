@@ -16,6 +16,7 @@ afterEach(() => {
 /** A mutable screen, so a test can move it the way the environment would. */
 function stubScreen(width: number, height: number, ratio = 1) {
   const screen = Object.assign(new EventTarget(), { width, height, orientation: new EventTarget() });
+
   vi.stubGlobal('screen', screen);
   vi.stubGlobal('devicePixelRatio', ratio);
   return screen;
@@ -26,6 +27,7 @@ function setupTrackScreenResolution(config?: TrackScreenResolutionConfig) {
     screenResolution: signal<ScreenResolution | undefined>(undefined),
   };
   const cleanup = trackScreenResolution.setup({ state, context: {}, config });
+
   return { state, cleanup };
 }
 

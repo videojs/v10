@@ -201,6 +201,7 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
                 type.toLowerCase() === showingTrack.kind)
             );
           });
+
           // After the subtitleTrack is set here, hls.js will load the playlist and CUES_PARSED events will be fired below.
           engine.subtitleTrack = idx;
         }
@@ -232,6 +233,7 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
 
     #clearTracks(): void {
       const trackEls = this.target?.querySelectorAll?.(`track[${HLS_TRACK_ATTR}]`) ?? [];
+
       trackEls.forEach((trackEl) => trackEl.remove());
     }
   }
@@ -248,6 +250,7 @@ function addTextTrack(
   defaultTrack?: boolean
 ): TextTrack {
   const trackEl = document.createElement('track');
+
   trackEl.kind = kind;
   trackEl.label = label;
 

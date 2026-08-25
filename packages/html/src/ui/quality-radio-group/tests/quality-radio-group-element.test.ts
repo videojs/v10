@@ -22,6 +22,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -123,6 +124,7 @@ function setup({
 
   if (template) {
     const templateElement = document.createElement('template');
+
     templateElement.innerHTML = template;
     options.append(templateElement);
   }
@@ -140,6 +142,7 @@ async function waitForMenu(menu: MenuElement, options?: QualityRadioGroupElement
   await options?.updateComplete;
 
   const group = menu.querySelector<QualityRadioGroupElement>(QualityRadioGroupElement.tagName);
+
   await group?.updateComplete;
 
   const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
@@ -207,6 +210,7 @@ describe('QualityRadioGroupElement', () => {
 
     await waitForAssertion(() => {
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
       expect(items[0]?.textContent).toBe('Automatique');
     });
   });

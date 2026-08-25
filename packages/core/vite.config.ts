@@ -120,6 +120,7 @@ function componentSchemaPlugin(config: ComponentSchemaPluginOptions) {
     name: 'vjsc:deferred-component-schema',
     async options(options) {
       const module = await import('vjsc/plugins');
+
       plugin = module.componentSchemaPlugin(config);
       return plugin.options.call(this, options);
     },

@@ -108,6 +108,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
      */
     #drmSystems(): DrmSystemsConfig {
       const { drm, engine } = this.source ?? {};
+
       return engine?.nativeHls?.drmSystems ?? drm ?? {};
     }
 

@@ -23,6 +23,7 @@ export function loadScript(src: string): Promise<void> {
 
   promise = new Promise<void>((resolve, reject) => {
     const script = document.createElement('script');
+
     script.src = src;
     script.onload = () => resolve();
     script.onerror = () => {

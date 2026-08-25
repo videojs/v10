@@ -67,6 +67,7 @@ export interface MediaTrackInfo {
 export function readFirstMediaTimescale(initSegment: ArrayBuffer | Uint8Array): number | undefined {
   const view = toDataView(initSegment);
   const mdhd = findBox(view, ['moov', 'trak', 'mdia', 'mdhd']);
+
   return mdhd ? readMdhdTimescale(view, mdhd) : undefined;
 }
 
@@ -78,6 +79,7 @@ export function readFirstMediaTimescale(initSegment: ArrayBuffer | Uint8Array): 
 export function readFirstBaseMediaDecodeTime(mediaSegment: ArrayBuffer | Uint8Array): number | undefined {
   const view = toDataView(mediaSegment);
   const tfdt = findBox(view, ['moof', 'traf', 'tfdt']);
+
   return tfdt ? readTfdtBaseMediaDecodeTime(view, tfdt) : undefined;
 }
 
@@ -108,6 +110,7 @@ export function findMediaTrack(
     // tkhd FullBox: version(1)+flags(3), creation/modification dates (v0: 4+4, v1:
     // 8+8), then track_id.
     const trackId = view.getUint32(tkhd.dataStart + 4 + (readFullBoxVersion(view, tkhd.dataStart) === 1 ? 16 : 8));
+
     return { trackId, timescale: readMdhdTimescale(view, mdhd) };
   }
 
@@ -129,6 +132,7 @@ export function readBaseMediaDecodeTime(mediaSegment: ArrayBuffer | Uint8Array, 
     if (readTrafTrackId(view, traf) !== trackId) continue;
 
     const tfdt = findBox(view, ['tfdt'], traf.dataStart, traf.end);
+
     return tfdt ? readTfdtBaseMediaDecodeTime(view, tfdt) : undefined;
   }
 
@@ -145,6 +149,7 @@ function readMdhdTimescale(view: DataView, mdhd: Box): number {
 /** `tfdt.baseMediaDecodeTime`: FullBox, then the value — v0: (4), v1: (8). */
 function readTfdtBaseMediaDecodeTime(view: DataView, tfdt: Box): number {
   const at = tfdt.dataStart + 4;
+
   return readFullBoxVersion(view, tfdt.dataStart) === 1 ? Number(view.getBigUint64(at)) : view.getUint32(at);
 }
 
@@ -153,11 +158,13 @@ function readTfdtBaseMediaDecodeTime(view: DataView, tfdt: Box): number {
 /** `hdlr.handler_type` for a `trak`: FullBox version(1)+flags(3) + pre_defined(4) + handler_type(4). */
 function readTrakHandler(view: DataView, trak: Box): string | undefined {
   const hdlr = findBox(view, ['mdia', 'hdlr'], trak.dataStart, trak.end);
+
   return hdlr ? readFourCC(view, hdlr.dataStart + 8) : undefined;
 }
 
 /** `tfhd.track_id` for a `traf`: FullBox version(1)+flags(3) + track_id(4). */
 function readTrafTrackId(view: DataView, traf: Box): number | undefined {
   const tfhd = findBox(view, ['tfhd'], traf.dataStart, traf.end);
+
   return tfhd ? view.getUint32(tfhd.dataStart + 4) : undefined;
 }

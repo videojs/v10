@@ -77,6 +77,7 @@ async function main() {
 
   for (const file of files) {
     const target = join(stageDir, file);
+
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, readFileSync(resolve(CDN_DIR, file), 'utf8').replace(SOURCE_MAPPING_URL, '\n'));
   }
@@ -101,6 +102,7 @@ async function main() {
   run('tar', ['--create', '--gzip', '--file', `${name}.tar.gz`, name], OUT_DIR);
 
   const archives = [`${name}.zip`, `${name}.tar.gz`];
+
   writeFileSync(
     resolve(OUT_DIR, 'SHA256SUMS'),
     `${archives.map((archive) => `${sha256(resolve(OUT_DIR, archive))}  ${archive}`).join('\n')}\n`
@@ -110,6 +112,7 @@ async function main() {
 
   for (const archive of archives) {
     const size = (statSync(resolve(OUT_DIR, archive)).size / 1024).toFixed(0);
+
     log.info(`   archive/${archive} (${size} KB)`);
   }
 }

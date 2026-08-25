@@ -146,6 +146,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
     source: '@videojs/core/vjsc',
     resolve: ({ component, part }) => {
       const name = part ? componentParts[component]?.[part] : component === 'Container' ? 'MediaContainer' : component;
+
       return name ? htmlElementTarget(name, element) : undefined;
     },
     components: {
@@ -179,6 +180,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
       },
       Tooltip: ({ props, parts, id }) => {
         const trigger = id('trigger');
+
         return [
           jsx(Host, { id: trigger, children: parts.Trigger.children }),
           jsx(target.Tooltip.Popup, {

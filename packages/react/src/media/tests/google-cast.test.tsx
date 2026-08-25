@@ -10,6 +10,7 @@ import { GoogleCast } from '../google-cast';
 
 function setup(media: Media | null = new HlsJsMedia()) {
   const { value, Wrapper } = createPlayerWrapper();
+
   value.media = media;
   return { media, Wrapper };
 }
@@ -31,6 +32,7 @@ describe('GoogleCast', () => {
     });
 
     const component = getMediaComponents(media as HlsJsMedia).get(GoogleCastComponent)!;
+
     expect(component.receiver).toBe('APP_ID');
     expect(component.contentType).toBe('application/x-mpegURL');
     expect(component.streamType).toBe('live');
@@ -40,6 +42,7 @@ describe('GoogleCast', () => {
     const { media, Wrapper } = setup();
 
     const { rerender } = render(<GoogleCast receiver="APP_ID" />, { wrapper: Wrapper });
+
     rerender(<GoogleCast />);
 
     expect(getMediaComponents(media as HlsJsMedia).get(GoogleCastComponent)!.receiver).toBeUndefined();
@@ -49,6 +52,7 @@ describe('GoogleCast', () => {
     const { media, Wrapper } = setup();
 
     const { unmount } = render(<GoogleCast />, { wrapper: Wrapper });
+
     unmount();
 
     expect(getMediaComponents(media as HlsJsMedia).get(GoogleCastComponent)).toBeUndefined();

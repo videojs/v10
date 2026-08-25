@@ -24,6 +24,7 @@ export function createPublicPromise<T>(): PublicPromise<T> {
     resolve = res;
     reject = rej;
   }) as PublicPromise<T>;
+
   promise.resolve = resolve;
   promise.reject = reject;
   return promise;

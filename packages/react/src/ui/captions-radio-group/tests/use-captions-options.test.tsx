@@ -86,6 +86,7 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
 
 function CaptionsAvailability(): ReactNode {
   const captions = useCaptionsOptions();
+
   return (
     <div data-testid="availability">
       {captions ? `${captions.state.availability}:${captions.hidden ? 'hidden' : 'visible'}` : 'missing'}
@@ -132,6 +133,7 @@ describe('useCaptionsOptions', () => {
 
   it('selects a captions track', () => {
     const selectSubtitlesTrack = vi.fn();
+
     renderCaptionsMenu({ selectSubtitlesTrack });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'English' }));
@@ -157,6 +159,7 @@ describe('useCaptionsOptions', () => {
 
   it('turns captions off', () => {
     const selectSubtitlesTrack = vi.fn();
+
     renderCaptionsMenu({ selectSubtitlesTrack });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Off' }));

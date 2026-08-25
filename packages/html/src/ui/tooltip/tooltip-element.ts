@@ -175,6 +175,7 @@ export class TooltipElement extends UIElement {
     if (!this.#tooltip) return;
 
     const triggerEl = this.#position.findTrigger(this.trigger);
+
     this.#syncTrigger(triggerEl);
 
     if (this.#currentTrigger && isLabelTrigger(this.#currentTrigger)) {
@@ -183,6 +184,7 @@ export class TooltipElement extends UIElement {
 
     // Derive state from core + input.
     const input = this.#tooltip.input.current;
+
     this.#core.setInput(input);
     const state = this.#core.getState();
 

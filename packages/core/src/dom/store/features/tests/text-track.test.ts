@@ -48,6 +48,7 @@ describe('textTrackFeature', () => {
     it('has empty initial state', () => {
       const video = createVideo();
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.chaptersCues).toEqual([]);
@@ -73,6 +74,7 @@ describe('textTrackFeature', () => {
       mockTextTracks(video, [createMockTrack(kind, 'disabled', { label: 'thumbnails' })]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       return store.state.thumbnailTrackCrossOrigin;
@@ -104,9 +106,11 @@ describe('textTrackFeature', () => {
   describe('attach', () => {
     it('detects chapters track via addTextTrack', () => {
       const video = createVideo();
+
       video.addTextTrack('chapters', 'Chapters', 'en');
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       // Track detected, but no cues in jsdom
@@ -115,9 +119,11 @@ describe('textTrackFeature', () => {
 
     it('detects thumbnail track by kind and label', () => {
       const video = createVideo();
+
       video.addTextTrack('metadata', 'thumbnails', 'en');
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       // Track detected, but no cues or <track> element for src
@@ -127,9 +133,11 @@ describe('textTrackFeature', () => {
 
     it('ignores metadata tracks without thumbnails label', () => {
       const video = createVideo();
+
       video.addTextTrack('metadata', 'ad-cues', 'en');
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.thumbnailCues).toEqual([]);
@@ -138,12 +146,14 @@ describe('textTrackFeature', () => {
 
     it('prefers first matching track when multiple exist', () => {
       const video = createVideo();
+
       video.addTextTrack('chapters', 'Ch1', 'en');
       video.addTextTrack('chapters', 'Ch2', 'fr');
       video.addTextTrack('metadata', 'thumbnails', 'en');
       video.addTextTrack('metadata', 'thumbnails', 'fr');
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       // Should not error with multiple matching tracks
@@ -155,6 +165,7 @@ describe('textTrackFeature', () => {
       const video = createVideo();
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       // Add a track programmatically (won't trigger textTracks event in jsdom)
@@ -171,6 +182,7 @@ describe('textTrackFeature', () => {
     it('resolves thumbnailTrackSrc from track element', () => {
       const video = createVideo();
       const trackEl = document.createElement('track');
+
       trackEl.kind = 'metadata';
       trackEl.label = 'thumbnails';
       trackEl.src = 'https://cdn.example.com/thumbnails.vtt';
@@ -180,6 +192,7 @@ describe('textTrackFeature', () => {
       // In jsdom, appending <track> to <video> adds to textTracks.
       // The track.track property links the element to its TextTrack.
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       // findTrackElement maps TextTrack → <track> element → src
@@ -194,9 +207,11 @@ describe('textTrackFeature', () => {
 
     it('sets subtitlesShowing when a subtitles track is showing', () => {
       const video = createVideo();
+
       mockTextTracks(video, [createMockTrack('subtitles', 'showing')]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.subtitlesShowing).toBe(true);
@@ -215,9 +230,11 @@ describe('textTrackFeature', () => {
         language: 'en',
       });
       const metadataTrack = createMockTrack('metadata', 'showing', { id: 'metadata-thumbnails' });
+
       mockTextTracks(video, [subtitlesTrack, captionsTrack, metadataTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.textTrackList).toEqual([
@@ -231,18 +248,22 @@ describe('textTrackFeature', () => {
       const video = createVideo();
       const subtitlesTrack = createMockTrack('subtitles');
       const captionsTrack = createMockTrack('captions');
+
       mockTextTracks(video, [subtitlesTrack, captionsTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       const enabled = store.state.toggleSubtitles();
+
       expect(enabled).toBe(true);
       // Captions sort before subtitles, matching the captions menu order.
       expect(captionsTrack.mode).toBe('showing');
       expect(subtitlesTrack.mode).toBe('disabled');
 
       const disabled = store.state.toggleSubtitles(false);
+
       expect(disabled).toBe(false);
       expect(subtitlesTrack.mode).toBe('disabled');
       expect(captionsTrack.mode).toBe('disabled');
@@ -256,9 +277,11 @@ describe('textTrackFeature', () => {
         id: 'subtitles-fr-ca',
         language: 'fr-CA',
       });
+
       mockTextTracks(video, [frenchTrack, canadianTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.toggleSubtitles()).toBe(true);
@@ -276,9 +299,11 @@ describe('textTrackFeature', () => {
         language: 'fr-CA',
       });
       const frenchTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-fr', language: 'fr' });
+
       mockTextTracks(video, [canadianTrack, frenchTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.toggleSubtitles()).toBe(true);
@@ -293,9 +318,11 @@ describe('textTrackFeature', () => {
       const video = createVideo();
       const spanishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-es', language: 'es' });
       const englishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-en', language: 'en' });
+
       mockTextTracks(video, [spanishTrack, englishTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.toggleSubtitles()).toBe(true);
@@ -309,9 +336,11 @@ describe('textTrackFeature', () => {
       const video = createVideo();
       const englishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-en', language: 'en' });
       const germanTrack = createMockTrack('subtitles', 'showing', { id: 'subtitles-de', language: 'de' });
+
       mockTextTracks(video, [englishTrack, germanTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.toggleSubtitles()).toBe(false);
@@ -327,9 +356,11 @@ describe('textTrackFeature', () => {
       const video = createVideo();
       const englishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-en', language: 'en' });
       const germanTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-de', language: 'de' });
+
       mockTextTracks(video, [englishTrack, germanTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       store.state.selectSubtitlesTrack('subtitles-de');
@@ -344,9 +375,11 @@ describe('textTrackFeature', () => {
       const video = createVideo();
       const englishTrack = createMockTrack('subtitles', 'showing', { id: 'subtitles-en', language: 'en' });
       const germanTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-de', language: 'de' });
+
       mockTextTracks(video, [englishTrack, germanTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.toggleSubtitles(true)).toBe(true);
@@ -357,15 +390,18 @@ describe('textTrackFeature', () => {
     it('toggleSubtitles() falls back to the first track when the remembered track is gone', () => {
       const video = createVideo();
       const germanTrack = createMockTrack('subtitles', 'showing', { id: 'subtitles-de', language: 'de' });
+
       mockTextTracks(video, [germanTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       store.state.toggleSubtitles(false);
 
       const frenchTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-fr', language: 'fr' });
       const spanishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-es', language: 'es' });
+
       mockTextTracks(video, [frenchTrack, spanishTrack]);
 
       expect(store.state.toggleSubtitles()).toBe(true);
@@ -376,9 +412,11 @@ describe('textTrackFeature', () => {
     it('toggleSubtitles() returns false when no subtitle tracks exist', () => {
       const video = createVideo();
       const metadataTrack = createMockTrack('metadata', 'showing');
+
       mockTextTracks(video, [metadataTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.toggleSubtitles()).toBe(false);
@@ -388,9 +426,11 @@ describe('textTrackFeature', () => {
       const video = createVideo();
       const englishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-en', label: 'English' });
       const spanishTrack = createMockTrack('subtitles', 'disabled', { id: 'subtitles-es', label: 'Spanish' });
+
       mockTextTracks(video, [englishTrack, spanishTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       store.state.selectSubtitlesTrack('subtitles-es');
@@ -403,9 +443,11 @@ describe('textTrackFeature', () => {
       const video = createVideo();
       const englishTrack = createMockTrack('subtitles', 'showing');
       const spanishTrack = createMockTrack('subtitles', 'disabled');
+
       mockTextTracks(video, [englishTrack, spanishTrack]);
 
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       store.state.selectSubtitlesTrack('off');
@@ -417,6 +459,7 @@ describe('textTrackFeature', () => {
     it('stops updating after destroy', () => {
       const video = createVideo();
       const store = createStore<PlayerTarget>()(textTrackFeature);
+
       store.attach({ media: video, container: null });
 
       store.destroy();

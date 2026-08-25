@@ -29,8 +29,10 @@ describe('subscribeToStatusAnnouncer', () => {
   it('resets the snapshot baseline when the target changes', async () => {
     const core = new StatusAnnouncerCore();
     const { attach, setState, store } = createStore({ paused: true });
+
     attach({});
     const unsubscribe = subscribeToStatusAnnouncer(store, core);
+
     await Promise.resolve();
 
     setState({ paused: false });

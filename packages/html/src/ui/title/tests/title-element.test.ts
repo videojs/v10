@@ -16,6 +16,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -163,6 +164,7 @@ describe('TitleElement', () => {
   it('ignores controls and playback state', async () => {
     const store: TitleStore = createTitleStore();
     const media = new FakeMedia();
+
     store.attach({ media: media as unknown as PlayerTarget['media'], container: null });
 
     const { title } = await setup(store);

@@ -17,6 +17,7 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
     target = store.target;
     pending = true;
     const current = ++revision;
+
     core.resetSnapshot();
 
     queueMicrotask(() => {

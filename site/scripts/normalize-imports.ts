@@ -74,8 +74,10 @@ export function normalizeImports(source: string): string {
     ...[...namedImports.entries()].map(([specifier, names]) => {
       const specifiers = [...names.entries()].map(([name, { isType, alias }]) => {
         const prefix = isType ? 'type ' : '';
+
         return alias ? `${prefix}${name} as ${alias}` : `${prefix}${name}`;
       });
+
       return `import { ${specifiers.join(', ')} } from '${specifier}';`;
     }),
   ];

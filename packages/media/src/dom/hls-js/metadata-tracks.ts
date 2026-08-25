@@ -46,6 +46,7 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
         // Only reset the track if it was loaded before and had no cues.
         if (src && trackEl.readyState === TRACK_LOADED && !track.cues?.length) {
           const clonedTrackEl = trackEl.cloneNode() as HTMLTrackElement;
+
           target.replaceChild(clonedTrackEl, trackEl);
         }
 

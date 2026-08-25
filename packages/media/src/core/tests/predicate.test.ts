@@ -27,6 +27,7 @@ describe('isMediaBufferCapable', () => {
 
   it('accepts defined non-stub time ranges', () => {
     const range = { length: 1, start: () => 0, end: () => 10 };
+
     expect(isMediaBufferCapable({ buffered: range, seekable: range })).toBe(true);
   });
 });

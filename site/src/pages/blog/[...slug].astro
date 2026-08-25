@@ -11,6 +11,7 @@ import { createBlogPostingSchema } from '@/utils/jsonLd/schemas';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
+
   return posts
     .filter((post) => !post.data.devOnly || import.meta.env.DEV)
     .map((post) => ({

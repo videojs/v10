@@ -37,6 +37,7 @@ describe('CaptionsButtonCore', () => {
         subtitlesShowing: true,
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
       });
+
       core.setMedia(media);
       const state = core.getState();
 
@@ -45,6 +46,7 @@ describe('CaptionsButtonCore', () => {
 
     it('returns available when subtitles exist', () => {
       const core = new CaptionsButtonCore();
+
       core.setMedia(
         createMediaState({
           textTrackList: [
@@ -62,6 +64,7 @@ describe('CaptionsButtonCore', () => {
 
     it('marks disabled and hidden when no caption tracks are present', () => {
       const core = new CaptionsButtonCore();
+
       core.setMedia(
         createMediaState({
           textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }],
@@ -76,6 +79,7 @@ describe('CaptionsButtonCore', () => {
 
     it('marks disabled when the disabled prop is set', () => {
       const core = new CaptionsButtonCore({ disabled: true });
+
       core.setMedia(
         createMediaState({
           textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
@@ -91,6 +95,7 @@ describe('CaptionsButtonCore', () => {
   describe('getLabel', () => {
     it('returns Enable captions when captions are disabled', () => {
       const core = new CaptionsButtonCore();
+
       expect(core.getLabel(createState({ subtitlesShowing: false }))).toMatchObject({
         key: 'captions.enable',
         text: 'Enable captions',
@@ -99,6 +104,7 @@ describe('CaptionsButtonCore', () => {
 
     it('returns Disable captions when captions are enabled', () => {
       const core = new CaptionsButtonCore();
+
       expect(core.getLabel(createState({ subtitlesShowing: true }))).toMatchObject({
         key: 'captions.disable',
         text: 'Disable captions',
@@ -107,6 +113,7 @@ describe('CaptionsButtonCore', () => {
 
     it('returns custom string label', () => {
       const core = new CaptionsButtonCore({ label: 'Captions' });
+
       expect(core.getLabel(createState())).toBe('Captions');
     });
 
@@ -114,6 +121,7 @@ describe('CaptionsButtonCore', () => {
       const core = new CaptionsButtonCore({
         label: (state) => (state.subtitlesShowing ? 'Hide subtitles' : 'Show subtitles'),
       });
+
       expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('Hide subtitles');
     });
   });
@@ -122,18 +130,21 @@ describe('CaptionsButtonCore', () => {
     it('returns aria-label', () => {
       const core = new CaptionsButtonCore();
       const attrs = core.getAttrs(createState({ subtitlesShowing: false }));
+
       expect(attrs['aria-label']).toMatchObject({ key: 'captions.enable', text: 'Enable captions' });
     });
 
     it('sets aria-disabled when state.disabled is true', () => {
       const core = new CaptionsButtonCore();
       const attrs = core.getAttrs(createState({ disabled: true }));
+
       expect(attrs['aria-disabled']).toBe('true');
     });
 
     it('sets the hidden attribute when state.hidden is true', () => {
       const core = new CaptionsButtonCore();
       const attrs = core.getAttrs(createState({ hidden: true }));
+
       expect(attrs.hidden).toBe('');
     });
   });
@@ -144,6 +155,7 @@ describe('CaptionsButtonCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
+
       core.toggle(media);
       expect(media.toggleSubtitles).toHaveBeenCalled();
     });
@@ -151,6 +163,7 @@ describe('CaptionsButtonCore', () => {
     it('does nothing when no caption tracks are present', () => {
       const core = new CaptionsButtonCore();
       const media = createMediaState();
+
       core.toggle(media);
       expect(media.toggleSubtitles).not.toHaveBeenCalled();
     });
@@ -163,6 +176,7 @@ describe('CaptionsButtonCore', () => {
           { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
         ],
       });
+
       core.toggle(media);
       expect(media.toggleSubtitles).not.toHaveBeenCalled();
     });
@@ -172,6 +186,7 @@ describe('CaptionsButtonCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
+
       core.toggle(media);
       expect(media.toggleSubtitles).not.toHaveBeenCalled();
     });
@@ -181,6 +196,7 @@ describe('CaptionsButtonCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
       });
+
       core.toggle(media);
       expect(media.toggleSubtitles).toHaveBeenCalled();
     });

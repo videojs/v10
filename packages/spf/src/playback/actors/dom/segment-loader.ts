@@ -222,6 +222,7 @@ export function createSegmentLoaderActor(
     // to the text-track loader in `b3f44efe`.
     const appended = peek(sourceBufferActor.snapshot).context.segments.filter((s) => !s.partial);
     const merged = mergeTimeRanges(appended.map((s) => ({ start: s.startTime, end: s.startTime + s.duration })));
+
     return allSegments.filter((s) => isTimeRangeCovered(s.startTime, s.startTime + s.duration, merged));
   };
 
@@ -329,6 +330,7 @@ export function createSegmentLoaderActor(
     // playback.
     const overlapsStale = (seg: { startTime: number; duration: number }): boolean => {
       const segEnd = seg.startTime + seg.duration;
+
       return (
         removes.some((r) => seg.startTime < r.end && segEnd > r.start) ||
         staleRanges.some((r) => seg.startTime < r.end && segEnd > r.start)

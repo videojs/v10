@@ -47,6 +47,7 @@ function readPackageManifest(packageDir: string): PackageManifest {
   }
 
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8')) as PackageManifest;
+
   packageManifestCache.set(packageDir, manifest);
   return manifest;
 }
@@ -122,6 +123,7 @@ export function validatePackageImports(source: string, sourcePath: string): void
       resolvePackageExportFile(specifier);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+
       throw new Error(`Invalid package import "${specifier}" in "${sourcePath}": ${message}`);
     }
   }

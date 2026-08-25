@@ -14,6 +14,7 @@ describe('syncMenuSize', () => {
   it('measures ordinary root children by default', () => {
     const content = document.createElement('div');
     const root = document.createElement('div');
+
     content.append(root);
     setSize(root, 180, 120);
 
@@ -30,6 +31,7 @@ describe('syncMenuSize', () => {
     const content = document.createElement('div');
     const root = document.createElement('div');
     const submenu = document.createElement('div');
+
     submenu.setAttribute('data-submenu', '');
     content.append(root, submenu);
     setSize(root, 180, 120);
@@ -50,6 +52,7 @@ describe('syncMenuSize', () => {
     const submenu = document.createElement('div');
     const first = document.createElement('div');
     const second = document.createElement('div');
+
     submenu.setAttribute('data-submenu', '');
     submenu.style.paddingLeft = '4px';
     submenu.style.paddingTop = '4px';
@@ -82,6 +85,7 @@ describe('syncMenuSize', () => {
     const root = document.createElement('div');
     const decorative = document.createElement('div');
     const submenu = document.createElement('div');
+
     decorative.setAttribute('aria-hidden', 'true');
     decorative.setAttribute('inert', '');
     submenu.setAttribute('data-submenu', '');
@@ -104,6 +108,7 @@ describe('syncMenuSize', () => {
     const content = document.createElement('div');
     const root = document.createElement('div');
     const submenu = document.createElement('div');
+
     submenu.setAttribute('data-submenu', '');
     submenu.setAttribute('data-ending-style', '');
     content.append(root, submenu);
@@ -123,6 +128,7 @@ describe('syncMenuSize', () => {
     const content = document.createElement('div');
     const root = document.createElement('div');
     const submenu = document.createElement('div');
+
     submenu.setAttribute('data-submenu', '');
     content.style.setProperty('--media-menu-available-width', '200px');
     content.append(root, submenu);
@@ -137,6 +143,7 @@ describe('syncMenuSize', () => {
   it('ignores a non-positive available width before positioning', () => {
     const content = document.createElement('div');
     const root = document.createElement('div');
+
     content.style.setProperty('--media-menu-available-width', '0px');
     content.append(root);
     setSize(root, 180, 120);

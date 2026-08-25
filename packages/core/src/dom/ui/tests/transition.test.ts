@@ -5,6 +5,7 @@ import { createTransition } from '../transition';
 describe('createTransition', () => {
   it('starts with idle state', () => {
     const handler = createTransition();
+
     expect(handler.state.current).toEqual({ active: false, status: 'idle' });
   });
 
@@ -21,6 +22,7 @@ describe('createTransition', () => {
       const handler = createTransition();
 
       const promise = handler.open();
+
       expect(handler.state.current.status).toBe('starting');
 
       await vi.waitFor(() => {
@@ -39,6 +41,7 @@ describe('createTransition', () => {
         finishAnimation = resolve;
       });
       const getAnimations = vi.fn(() => [{ finished }] as unknown as Animation[]);
+
       Object.defineProperty(el, 'getAnimations', { value: getAnimations });
 
       let resolved = false;
@@ -61,6 +64,7 @@ describe('createTransition', () => {
       const el = document.createElement('div');
       const getOffsetHeight = vi.spyOn(el, 'offsetHeight', 'get');
       const cancel = vi.fn();
+
       Object.defineProperty(el, 'getAnimations', {
         value: vi.fn(() => [{ cancel }]),
       });

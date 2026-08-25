@@ -31,6 +31,7 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
         watchFiles.add(resolve(path));
       },
     });
+
     return compiler.build([]);
   };
 
@@ -43,6 +44,7 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
 
       const css = design.candidatesToCss([candidate])[0];
       const recognized = typeof css === 'string' && css.trim().length > 0;
+
       candidateCache.set(candidate, recognized);
       return recognized;
     },

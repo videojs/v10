@@ -37,6 +37,7 @@ export const reactComponentTransform: ComponentTargetTransform = {
 
       if (name === 'VolumePopover') {
         const usePlayer = imports.reference({ from: '@videojs/react', name: 'usePlayer' });
+
         prependBlockBody(
           magicString,
           fn.body,
@@ -51,6 +52,7 @@ export const reactComponentTransform: ComponentTargetTransform = {
 
       if (menu) {
         const hook = imports.reference({ from: '@videojs/react', name: menu.hook });
+
         prependBlockBody(
           magicString,
           fn.body,
@@ -72,6 +74,7 @@ export const reactComponentTransform: ComponentTargetTransform = {
         const bindings = optionMenus
           .map(({ binding, hook }) => {
             const reference = imports.reference({ from: '@videojs/react', name: hook });
+
             return `const ${binding} = ${reference}();`;
           })
           .join('\n');
@@ -135,5 +138,6 @@ function selectedLabelEdit(code: string, root: Node, binding: string): SourceEdi
 
   const attributes = value.openingElement.attributes.map((attribute) => code.slice(attribute.start, attribute.end));
   const opening = `<span${attributes.length ? ` ${attributes.join(' ')}` : ''}>`;
+
   return { start: value.start, end: value.end, content: `${opening}{${binding}?.selectedLabel}</span>` };
 }

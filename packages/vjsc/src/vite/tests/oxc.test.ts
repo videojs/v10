@@ -19,6 +19,7 @@ describe('viteOxcPlugin', () => {
 
         usedFallback = meta.magicString instanceof MagicString;
         const start = code.indexOf(`'before'`);
+
         meta.magicString.overwrite(start, start + 8, `'after'`);
         return { code: meta.magicString };
       },

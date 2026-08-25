@@ -55,6 +55,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
     const tooltipCtx = useOptionalTooltipContext();
     const translator = useTranslator();
     const [core] = useState(() => new LiveButtonCore());
+
     core.setProps({ label, disabled });
 
     const { getButtonProps, buttonRef } = useButton({

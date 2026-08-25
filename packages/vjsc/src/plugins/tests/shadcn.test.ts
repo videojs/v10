@@ -37,6 +37,7 @@ describe('shadcnPlugin', () => {
     ]);
     const manifest = assetJson(output, 'registry.json');
     const rootItem = assetJson(output, 'root.json');
+
     registrySchema.parse(manifest);
 
     for (const outputItem of output.output) {
@@ -54,6 +55,7 @@ describe('shadcnPlugin', () => {
       'components/example/root/root.tsx',
     ]);
     const rootSource = rootItem.files.find((file: { target: string }) => file.target.endsWith('/root.tsx')).content;
+
     expect(rootSource).toContain('interface RootProps');
     expect(rootSource).toContain('<main>');
     expect(rootSource).toContain(`from '@/components/example/public/public'`);
@@ -151,6 +153,7 @@ describe('shadcnPlugin', () => {
       'components/first.tsx': `${meta('root', 'block')} export const First = <main/>;`,
       'components/second.tsx': `${meta('root', 'block')} export const Second = <main/>;`,
     });
+
     await expect(
       build(root, { paths: { ...baseOptions().paths, output: '../registry' }, styles: undefined })
     ).rejects.toThrow(/output path must be a non-empty relative path/);
@@ -172,6 +175,7 @@ describe('shadcnPlugin', () => {
     });
     const plugin = shadcnPlugin({ root, ...baseOptions({ styles: undefined }) });
     const first = await build(root, { styles: undefined }, ['vjsc', plugin]);
+
     writeFileSync(
       join(root, 'components/root.tsx'),
       `${meta('root', 'block')} export const Root = <main>second</main>;`
@@ -205,6 +209,7 @@ async function build(
     external: (id) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
     plugins,
   });
+
   return bundle.generate({ format: 'es', entryFileNames: '[name].js' });
 }
 
@@ -244,6 +249,7 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
 
           const skin = transform.skin;
           const name = skin && skin !== 'default' ? `${itemMeta.name}-${skin}` : itemMeta.name;
+
           return [
             {
               module,
@@ -269,6 +275,7 @@ function setup(files: Readonly<Record<string, string>>): string {
 
   for (const [filename, source] of Object.entries(files)) {
     const path = join(root, filename);
+
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, source);
   }

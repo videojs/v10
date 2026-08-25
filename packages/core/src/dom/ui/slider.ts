@@ -114,6 +114,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     if (isNull(capturedPointerId)) return;
 
     const id = capturedPointerId;
+
     capturedPointerId = null;
 
     try {
@@ -227,6 +228,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation());
       const releaseRect = options.getElement().getBoundingClientRect();
+
       pointingOnRelease =
         event.pointerType !== 'touch' &&
         event.clientX >= releaseRect.left &&

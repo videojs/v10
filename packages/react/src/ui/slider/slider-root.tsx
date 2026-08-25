@@ -43,6 +43,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
 
   const [core] = useState(() => new SliderCore());
   const translator = useTranslator();
+
   core.setProps({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
 
   const {
@@ -85,6 +86,7 @@ export const SliderRoot = forwardRef(function SliderRoot(
         stateAttrMap: SliderDataAttrs,
         getAttrs: (sliderState) => {
           const attrs = core.getAttrs(sliderState);
+
           return { ...attrs, 'aria-label': translateText(attrs['aria-label'], translator) };
         },
         formatValue: undefined,

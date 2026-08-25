@@ -119,6 +119,7 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
 
           if (targetElement) {
             const name = renderTargetElement(targetElement, { target: path.target, imports });
+
             nodeEdits.push({
               start: node.openingElement.name.start,
               end: node.openingElement.name.end,
@@ -224,6 +225,7 @@ export function selectComponentTargets(selection: ComponentTargetSelection, id: 
   if (typeof selection !== 'function') return selection;
 
   const parsed = parseModuleId(id);
+
   return selection({ id, ...parsed }) ?? [];
 }
 
@@ -330,6 +332,7 @@ function collectPrimitiveBindings(
 
       const owners = targets.flatMap((target) => {
         const rule = primitiveRule(target, name);
+
         return rule ? [{ target, rule }] : [];
       });
 
@@ -357,6 +360,7 @@ function collectImportBindings(
       namespaces.set(specifier.local.name, target);
     } else if (specifier.type === 'ImportSpecifier' && specifier.importKind !== 'type') {
       const component = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
+
       named.set(specifier.local.name, { target, component, part: null });
     }
   }
@@ -409,6 +413,7 @@ function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | unde
 
 function resolveDefault(path: CanonicalPath): ComponentTargetRule<object> | undefined {
   const targetPath: ComponentTargetPath = { component: path.component, part: path.part };
+
   return path.target.resolve(targetPath) as ComponentTargetRule<object> | undefined;
 }
 
@@ -468,6 +473,7 @@ function createSourceParts(
         node.closingElement?.start ?? node.openingElement.end,
         firstElementChild(node)?.openingElement
       );
+
       group!.values.push({
         value: {
           props: createSourceProps(source, node.openingElement, children),
@@ -526,6 +532,7 @@ function renderSourceScope(source: string, scope: ComponentSourceScope, imports:
   if (!runtime) return source;
 
   const name = imports.reference(runtime);
+
   return `<${name} prefix=${JSON.stringify(scope.prefix)}>${source}</${name}>`;
 }
 
@@ -539,6 +546,7 @@ function wrapSourceScope(
   if (scope.root !== node || !scope.used || !scope.target.jsx.scope) return edits;
 
   const source = renderSourceRange(createSourceText(code, edits), node.start, node.end).value;
+
   return [{ start: node.start, end: node.end, content: renderSourceScope(source, scope, imports) }];
 }
 
@@ -564,6 +572,7 @@ function collectJsxEdits(
       if (stack.pop() !== node) throw new Error('vjsc: JSX traversal stack became unbalanced.');
 
       const childEdits = pending.get(node) ?? [];
+
       descendants.set(node, childEdits);
       const edits = transform(node, childEdits);
       const parent = stack.at(-1);

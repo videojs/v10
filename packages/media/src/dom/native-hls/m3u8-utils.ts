@@ -147,5 +147,6 @@ export async function getStreamInfoFromSrc(src: string, signal?: AbortSignal): P
   if (!mediaUrl) throw new Error('No media playlist URL found in multivariant playlist');
 
   const media = await fetchPlaylist(mediaUrl, init);
+
   return parseStreamInfo(media.text);
 }

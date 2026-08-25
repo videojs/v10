@@ -49,6 +49,7 @@ export class RemotePlayback extends EventTarget {
   async watchAvailability(callback: AvailabilityCallback) {
     this.#assertEnabled();
     const id = ++callbackIdCount;
+
     this.#callbacks.set(id, callback);
     queueMicrotask(() => callback(this.#provider.hasDevicesAvailable()));
     return id;

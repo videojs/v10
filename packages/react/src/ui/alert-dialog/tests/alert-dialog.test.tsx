@@ -57,6 +57,7 @@ describe('AlertDialogPopup', () => {
     );
 
     const popup = container.querySelector('[role="alertdialog"]')!;
+
     expect(popup.getAttribute('aria-modal')).toBe('true');
     expect(popup.getAttribute('tabindex')).toBe('-1');
   });
@@ -69,6 +70,7 @@ describe('AlertDialogPopup', () => {
     );
 
     const popup = container.querySelector('[role="alertdialog"]')!;
+
     expect(popup.hasAttribute('data-open')).toBe(true);
   });
 
@@ -83,6 +85,7 @@ describe('AlertDialogPopup', () => {
 
     const popup = container.querySelector('[role="alertdialog"]')!;
     const title = popup.querySelector('h2')!;
+
     expect(popup.getAttribute('aria-labelledby')).toBe(title.id);
   });
 
@@ -97,6 +100,7 @@ describe('AlertDialogPopup', () => {
 
     const popup = container.querySelector('[role="alertdialog"]')!;
     const desc = popup.querySelector('p')!;
+
     expect(popup.getAttribute('aria-describedby')).toBe(desc.id);
   });
 
@@ -124,6 +128,7 @@ describe('AlertDialogTitle', () => {
     );
 
     const title = container.querySelector('h2')!;
+
     expect(title.textContent).toBe('My Title');
     expect(title.id).toMatch(/^alert-dialog-title-/);
   });
@@ -154,6 +159,7 @@ describe('AlertDialogDescription', () => {
     );
 
     const desc = container.querySelector('p')!;
+
     expect(desc.textContent).toBe('My Description');
     expect(desc.id).toMatch(/^alert-dialog-desc-/);
   });
@@ -184,6 +190,7 @@ describe('AlertDialogClose', () => {
     );
 
     const button = container.querySelector('button')!;
+
     expect(button.textContent).toBe('OK');
     expect(button.type).toBe('button');
   });

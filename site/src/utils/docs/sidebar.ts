@@ -46,6 +46,7 @@ export function filterSidebar(
     .map((item) => {
       if (isSection(item)) {
         const filteredContents = filterSidebar(framework, item.contents, isDev);
+
         return {
           ...item,
           contents: filteredContents,

@@ -104,6 +104,7 @@ describe('useComposedRefs', () => {
     }
 
     const { rerender } = render(<TestComponent />);
+
     rerender(<TestComponent />);
 
     // Same refs should produce same composed ref

@@ -63,6 +63,7 @@ type BackgroundVideoElement = HTMLElement & {
 /** The error the Media surfaces, or null while none has. */
 function readSurfacedError(): SurfacedError | null {
   const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
+
   return media?.error ?? null;
 }
 
@@ -70,6 +71,7 @@ function readSurfacedError(): SurfacedError | null {
 function readReportedCodes(): number[] {
   const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
   const errors = media?.getMediaTarget?.()?.engine?.state?.errors?.get() ?? [];
+
   return errors.map((error) => error.code);
 }
 
@@ -77,12 +79,14 @@ function readReportedCodes(): number[] {
 function readInnerVideoState(): { error: number | null; readyState: number } | null {
   const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
   const video = media?.video;
+
   return video ? { error: video.error?.code ?? null, readyState: video.readyState } : null;
 }
 
 function readPlaybackState(): { readyState: number; currentTime: number; width: number; height: number } | null {
   const media = document.querySelector('hls-background-video') as BackgroundVideoElement | null;
   const video = media?.video;
+
   return video
     ? {
         readyState: video.readyState,
@@ -101,6 +105,7 @@ async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
   );
 
   const error = await page.evaluate(readSurfacedError);
+
   expect(error).not.toBeNull();
   return error as SurfacedError;
 }
@@ -111,6 +116,7 @@ async function waitForPlayback(page: Page): Promise<void> {
     () => {
       const video = (document.querySelector('hls-background-video') as { video?: HTMLVideoElement | null } | null)
         ?.video;
+
       return !!video && video.readyState >= 3 && video.currentTime > 0;
     },
     undefined,
@@ -215,6 +221,7 @@ test.describe('SPF background video', () => {
     await page.waitForFunction(
       () => {
         const media = document.querySelector('hls-background-video') as (HTMLElement & { error?: unknown }) | null;
+
         return !!media && !media.error;
       },
       undefined,
@@ -232,6 +239,7 @@ test.describe('SPF background video', () => {
     await page.waitForFunction(() => window.__backgroundVideoErrors > 0, undefined, { timeout: 20_000 });
 
     const videoError = await page.evaluate(() => document.querySelector('video')?.error?.code ?? null);
+
     expect(videoError).toBeNull();
   });
 
@@ -251,6 +259,7 @@ test.describe('SPF background video', () => {
     const readPickedSize = async (page: Page) => {
       await waitForPlayback(page);
       const state = await page.evaluate(readPlaybackState);
+
       expect(state).not.toBeNull();
       return state as NonNullable<typeof state>;
     };

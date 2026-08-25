@@ -16,6 +16,7 @@ export function applyElementProps(element: HTMLElement, props: object, options?:
   for (const [key, value] of Object.entries(props)) {
     if (isFunction(value) && key.startsWith('on')) {
       const event = key.slice(2).toLowerCase();
+
       listen(element, event, value as EventListener, signal ? { signal } : undefined);
     } else if (isUndefined(value) || value === false) {
       element.removeAttribute(key);

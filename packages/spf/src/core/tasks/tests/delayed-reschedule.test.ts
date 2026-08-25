@@ -103,6 +103,7 @@ describe('delayedReschedule', () => {
     const ac = new AbortController();
 
     const done = reschedule(fakeTask(async () => 1, undefined, ac.signal));
+
     await vi.advanceTimersByTimeAsync(0); // run settles → into the wait
     ac.abort(new DOMException('Aborted', 'AbortError'));
 

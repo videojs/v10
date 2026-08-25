@@ -192,6 +192,7 @@ export class PopupPositioner {
     if (popupRect.width === position.popupRect.width && popupRect.height === position.popupRect.height) return;
 
     const nextPosition = getPosition(popupRect);
+
     applyStyles(options.popup, nextPosition.style);
 
     if (nextPosition.side !== position.side) options.onSideChange(nextPosition.side);
@@ -223,9 +224,11 @@ export class PopupPositioner {
 
     const generatedName = `--${anchorName}`;
     const triggerAnchor = this.#readStyle(trigger, 'anchor-name');
+
     this.#popupAnchor = this.#readStyle(popup, 'position-anchor');
 
     const names = getAnchorNames(trigger);
+
     this.#triggerAnchorName = generatedName;
     this.#triggerAnchorAdded = !names.includes(generatedName);
 
@@ -243,6 +246,7 @@ export class PopupPositioner {
     if (this.#triggerAnchorName && this.#triggerAnchorAdded) {
       const current = this.#readStyle(options.trigger, 'anchor-name');
       const names = getAnchorNames(options.trigger).filter((name) => name !== this.#triggerAnchorName);
+
       this.#writeStyle(options.trigger, 'anchor-name', { value: names.join(', '), priority: current.priority });
     }
 
@@ -255,6 +259,7 @@ export class PopupPositioner {
 
   #readStyle(element: HTMLElement, prop: string): InlineStyleValue {
     const name = prop.startsWith('--') ? prop : kebabCase(prop);
+
     return {
       value: element.style.getPropertyValue(name),
       priority: element.style.getPropertyPriority(name),

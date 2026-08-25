@@ -15,6 +15,7 @@ afterEach(() => {
 describe('LiveIndicator', () => {
   it('uses authored HTML as the mounted visual surface', () => {
     const host = document.createElement('media-volume-indicator');
+
     host.hidden = true;
     host.innerHTML = `
       <media-volume-indicator-fill>

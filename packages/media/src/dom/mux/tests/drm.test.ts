@@ -6,6 +6,7 @@ import { createMuxDrmSystems } from '../drm';
 // like a real JWT, so it survives a query string untouched.
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 

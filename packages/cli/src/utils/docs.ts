@@ -16,6 +16,7 @@ function safePath(...segments: string[]): string | null {
 export function docExistsInAnyFramework(slug: string): boolean {
   return ['html', 'react'].some((fw) => {
     const mdPath = safePath(fw, `${slug}.md`);
+
     return mdPath !== null && existsSync(mdPath);
   });
 }

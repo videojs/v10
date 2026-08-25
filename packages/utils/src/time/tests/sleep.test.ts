@@ -36,6 +36,7 @@ describe('sleep', () => {
   it('rejects immediately when the signal is already aborted', async () => {
     const controller = new AbortController();
     const reason = new DOMException('Aborted', 'AbortError');
+
     controller.abort(reason);
 
     await expect(sleep(100, controller.signal)).rejects.toBe(reason);

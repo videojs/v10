@@ -37,17 +37,20 @@ describe('HlsBackgroundVideoMediaElement', () => {
   describe('src', () => {
     it('returns empty string before any src is set', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       expect(media.src).toBe('');
     });
 
     it('reflects the set value synchronously', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       expect(media.src).toBe('https://example.com/v.m3u8');
     });
 
     it('synchronously updates engine presentation state when src is set', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
@@ -56,6 +59,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
       // How a cap is expressed, `?max_resolution=720p` on a Mux stream URL being
       // the case this replaces — so it has to survive the round trip untouched.
       const media = new HlsBackgroundVideoMediaElement();
+
       media.src = 'https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p';
       expect(media.engine.state.presentation.get()?.url).toBe(
         'https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p'
@@ -64,6 +68,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('clears engine presentation state when src is set to empty string', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
       expect(media.engine.state.presentation.get()?.url).toBeFalsy();
@@ -71,6 +76,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('leaves engine presentation state alone when src is set to the URL already playing', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       const presentation = media.engine.state.presentation.get();
 
@@ -84,12 +90,14 @@ describe('HlsBackgroundVideoMediaElement', () => {
   describe('attach / detach', () => {
     it('exposes the engine immediately (created at construction)', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       expect(media.engine).toBeDefined();
     });
 
     it('reuses the same engine instance across attach calls', () => {
       const media = new HlsBackgroundVideoMediaElement();
       const firstEngine = media.engine;
+
       media.attach(document.createElement('video'));
       media.attach(document.createElement('video'));
       expect(media.engine).toBe(firstEngine);
@@ -98,12 +106,14 @@ describe('HlsBackgroundVideoMediaElement', () => {
     it('sets mediaElement in context when attached', () => {
       const media = new HlsBackgroundVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
     it('clears mediaElement in context when detached', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       media.attach(document.createElement('video'));
       media.detach();
       expect(media.engine.context.mediaElement.get()).toBeUndefined();
@@ -114,6 +124,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
       // neither has to be rewired.
       const media = new HlsBackgroundVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       media.src = 'https://example.com/v.m3u8';
       expect(media.engine.context.mediaElement.get()).toBe(el);
@@ -121,8 +132,10 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('detach does not destroy the engine', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       media.attach(document.createElement('video'));
       const spy = vi.spyOn(media.engine, 'destroy');
+
       media.detach();
       expect(spy).not.toHaveBeenCalled();
     });
@@ -134,6 +147,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
     it('fixes loop, muted, autoplay, and preload on the element at attach', () => {
       const media = new HlsBackgroundVideoMediaElement();
       const el = document.createElement('video');
+
       // Start in the opposite state so attach is what we observe.
       el.loop = false;
       el.muted = false;
@@ -150,9 +164,11 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('re-applies them to a second element', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       media.attach(document.createElement('video'));
 
       const next = document.createElement('video');
+
       next.loop = false;
       media.attach(next);
 
@@ -164,6 +180,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
       // afterwards keeps that state across re-resolution.
       const media = new HlsBackgroundVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       el.loop = false;
       el.muted = false;
@@ -205,6 +222,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('picks the largest rendition on offer', async () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       // The default chain caps to the screen, so this is written explicitly —
       // left ambient, the expected pick would vary with the runner's display.
       media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
@@ -216,6 +234,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('caps the pick to the screen when the manifest offers more than it can show', async () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       // 1080p (2,073,600) is over a 1,555,200 px screen; 720p (921,600) fits.
       media.engine.state.screenResolution.set({ width: 1440, height: 1080 });
       media.engine.state.presentation.set(presentationWithFourTracks());
@@ -228,12 +247,14 @@ describe('HlsBackgroundVideoMediaElement', () => {
       // What `?max_resolution=720p` produces: the excluded renditions are absent
       // from the manifest rather than present and skipped.
       const capped = presentationWithFourTracks();
+
       capped.selectionSets![0]!.switchingSets[0]!.tracks = [
         videoTrack('360p', 640, 360, 500_000),
         videoTrack('720p', 1280, 720, 2_000_000),
       ] as never;
 
       const media = new HlsBackgroundVideoMediaElement();
+
       media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
       media.engine.state.presentation.set(capped);
       await new Promise<void>((resolve) => queueMicrotask(resolve));
@@ -248,6 +269,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
       const media = new HlsBackgroundVideoMediaElement({
         config: { rules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === '360p')] },
       });
+
       media.engine.state.presentation.set(presentationWithFourTracks());
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('360p');
@@ -266,6 +288,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('exposes no error before anything is reported', () => {
       const media = new TestMedia();
+
       expect(media.error).toBeNull();
       media.destroy();
     });
@@ -273,6 +296,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
     it('surfaces a reported fatal condition and fires error', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
@@ -288,6 +312,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
     it('surfaces a cause with no verdict behind it — the pinned variant never re-picks', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       // What an MPEG-TS source actually produces here (measured on Chromium): a
@@ -295,6 +320,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
       // pick's playlist resolves and dropping it is final. Verdict-only fatality
       // would leave this a silent stall.
       const data = { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' };
+
       media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data }]);
       await flush();
 
@@ -307,6 +333,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('surfaces the same code for an encrypted pick', async () => {
       const media = new TestMedia();
+
       media.engine.state.errors.set([
         { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
       ]);
@@ -323,6 +350,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
       try {
         const media = new TestMedia();
+
         media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } }]);
         await flush();
         media.engine.state.errors.set([
@@ -334,6 +362,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
         // The prose is console-only — `error.message` stays empty — and a later
         // append must not repeat it.
         const logged = spy.mock.calls.filter(([message]) => message === UNPLAYABLE_SOURCE_MESSAGE);
+
         expect(logged).toHaveLength(1);
         expect(logged[0]?.[1]).toEqual({
           conditions: [{ code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video' } }],
@@ -349,6 +378,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
       try {
         const media = new TestMedia();
+
         // The shape that used to reach a developer as a bare 2011: a verdict with
         // no cause behind it, so nothing was substituted and nothing was said.
         media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
@@ -365,6 +395,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
     it('ignores a condition outside the fatal set', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       // 2039 (manifest feature unsupported) is the degraded-but-playable tier.
@@ -378,6 +409,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('carries the first fatal condition data even when the code is substituted', async () => {
       const media = new TestMedia();
+
       // Sequence order is causal, so the cause is the one whose context rides
       // along, while both conditions collapse to the same surfaced code.
       media.engine.state.errors.set([
@@ -394,6 +426,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
     it('fires once per distinct condition, not per re-report', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
@@ -410,6 +443,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
     it('clears when the sequence resets for a new source', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
@@ -430,14 +464,17 @@ describe('HlsBackgroundVideoMediaElement', () => {
   describe('play()', () => {
     it('returns a Promise', () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       media.attach(document.createElement('video'));
       const result = media.play();
+
       expect(result).toBeInstanceOf(Promise);
       result.catch(() => {});
     });
 
     it('rejects when no media element is attached', async () => {
       const media = new HlsBackgroundVideoMediaElement();
+
       await expect(media.play()).rejects.toThrow('no media element attached');
     });
   });
@@ -446,6 +483,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
     it('destroys the underlying engine', () => {
       const media = new HlsBackgroundVideoMediaElement();
       const spy = vi.spyOn(media.engine, 'destroy');
+
       media.destroy();
       expect(spy).toHaveBeenCalled();
     });

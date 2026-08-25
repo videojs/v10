@@ -7,6 +7,7 @@ describe('focus', () => {
     const host = document.createElement('div');
     const shadow = host.attachShadow({ mode: 'open' });
     const button = document.createElement('button');
+
     shadow.append(button);
     document.body.append(host);
 

@@ -17,6 +17,7 @@ const decoder = new TextDecoder();
 
 export function collectTailwindDefaults(rules: readonly Rule[]): Map<string, readonly TokenOrValue[]> {
   const defaults = new Map<string, readonly TokenOrValue[]>();
+
   visitCssRules(rules, (rule) => {
     if (rule.type !== 'property' || !rule.value.name.startsWith('--tw-')) return;
 
@@ -89,6 +90,7 @@ export function inlinePrivateTailwindVariables(
     },
   });
   const output = decoder.decode(result.code).trim();
+
   assertNoPrivateTailwindVariables(output);
   return output;
 }
@@ -105,6 +107,7 @@ export function optimizeSemanticCss(css: string): string {
           Rule: {
             style(rule) {
               const clone = cloneCssAst(rule);
+
               removeExactDuplicateDeclarations(clone.value.declarations);
               return withoutNullValues(clone);
             },
@@ -359,6 +362,7 @@ function appendDeclarationBlock(target: DeclarationBlock, incoming: DeclarationB
 
 function styleRuleKey(rule: Extract<Rule, { type: 'style' | 'nesting' }>): string {
   const style = rule.type === 'style' ? rule.value : rule.value.style;
+
   return `${rule.type}:${JSON.stringify(style.selectors)}`;
 }
 
@@ -442,6 +446,7 @@ function assertNoPrivateTailwindVariables(css: string): void {
   if (!css.includes('--tw-')) return;
 
   const names = new Set<string>();
+
   transform({
     filename: 'emitted.css',
     code: encoder.encode(css),

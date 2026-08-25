@@ -43,6 +43,7 @@ function hasSource(img: HTMLImageElement): boolean {
   if (img.hasAttribute('src') || img.hasAttribute('srcset')) return true;
 
   const parent = img.parentElement;
+
   return parent?.localName === 'picture' && parent.querySelector('source') !== null;
 }
 

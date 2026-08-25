@@ -71,6 +71,7 @@ describe('StatusAnnouncerCore', () => {
   it('rechecks volume suppression when the debounced announcement fires', () => {
     let shouldAnnounce = true;
     const core = new StatusAnnouncerCore();
+
     core.setProps({ shouldAnnounce: () => shouldAnnounce });
 
     core.processSnapshot({ volume: 0.5, muted: false });
@@ -85,6 +86,7 @@ describe('StatusAnnouncerCore', () => {
   it('rechecks seek suppression when the debounced announcement fires', () => {
     let shouldAnnounce = true;
     const core = new StatusAnnouncerCore();
+
     core.setProps({ shouldAnnounce: () => shouldAnnounce });
 
     core.processSnapshot({ currentTime: 10, duration: 120, seeking: false });
@@ -240,6 +242,7 @@ describe('StatusAnnouncerCore', () => {
 
   it('allows seek announcements to be suppressed by callers', () => {
     const core = new StatusAnnouncerCore();
+
     core.setProps({ shouldAnnounce: () => false });
     const process = createSnapshotProcessor(core, { currentTime: 10, duration: 120, seeking: false });
 
@@ -253,6 +256,7 @@ describe('StatusAnnouncerCore', () => {
 
   it('allows volume announcements to be suppressed by callers', () => {
     const core = new StatusAnnouncerCore();
+
     core.setProps({ shouldAnnounce: () => false });
     const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
 
@@ -266,6 +270,7 @@ describe('StatusAnnouncerCore', () => {
 
 function createSnapshotProcessor(core: StatusAnnouncerCore, initial: MediaSnapshot) {
   let snapshot = initial;
+
   core.processSnapshot(snapshot);
 
   return (partial: MediaSnapshot) => {

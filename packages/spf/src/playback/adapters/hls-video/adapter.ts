@@ -185,6 +185,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       super(...args);
 
       const { config } = args?.[0] ?? {};
+
       this.#config = config;
       this.#engine = this.#createEngine();
 
@@ -195,6 +196,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       // `timeupdate`/`progress`), so a sliding window needs no event churn.
       this.#stopLiveSync = effect(() => {
         const presentation = this.#signals.state.presentation.get();
+
         this.#setDetectedStreamType(presentation?.streamType ?? MediaStreamTypes.UNKNOWN);
         this.#setTargetLiveWindow(deriveTargetLiveWindow(presentation, liveTrackId(this.#signals.state)));
         this.#reportDeliveryNotices(presentation);
@@ -206,6 +208,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       // this needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
         const errors = this.#signals.state.errors.get();
+
         this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
     }
@@ -270,6 +273,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
         state: this.#signals.state as LiveWindowState,
         config: { resolveLiveLatency },
       });
+
       return edge?.liveEdgeStart ?? Number.NaN;
     }
 
@@ -455,6 +459,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
               this.#loadstartListener = null;
               mediaElement.play().then(resolve, reject);
             };
+
             this.#loadstartListener = listener;
             mediaElement.addEventListener('loadstart', listener, { once: true });
           });
@@ -522,6 +527,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
       if (!this.#loadstartListener) return;
 
       const mediaElement = this.#signals.context.mediaElement.get();
+
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;
     }

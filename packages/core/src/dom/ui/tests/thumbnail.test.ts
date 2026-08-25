@@ -284,6 +284,7 @@ describe('createThumbnail', () => {
 
     it('detects already-loaded img on connect', () => {
       const img = createMockImg();
+
       // Mark the img as already complete (cached image).
       Object.defineProperty(img, 'complete', { value: true, configurable: true });
 

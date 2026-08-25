@@ -125,6 +125,7 @@ describe('pollForPlaybackId', () => {
   describe('abort signal', () => {
     it('throws when signal is aborted before first poll', async () => {
       const controller = new AbortController();
+
       controller.abort();
 
       await expect(

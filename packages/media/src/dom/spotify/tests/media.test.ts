@@ -16,6 +16,7 @@ import type { Video } from '../../../core/types';
 
 vi.mock(import('@videojs/utils/dom'), async (importOriginal) => {
   const mod = await importOriginal();
+
   return { ...mod, loadScript: vi.fn(async () => {}) };
 });
 
@@ -80,6 +81,7 @@ class MockController {
       duration: 60_000,
       ...data,
     };
+
     this.playbackListeners.forEach((listener) => listener({ data: payload }));
   }
 }
@@ -106,6 +108,7 @@ afterEach(() => {
 /** An iframe as a framework renders it: in the document, where it can be swapped out. */
 function createIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
+
   document.body.append(iframe);
   return iframe;
 }
@@ -113,6 +116,7 @@ function createIframe(): HTMLIFrameElement {
 /** An iframe as React renders it before a source resolves: `src` present but empty. */
 function createEmptySrcIframe(): HTMLIFrameElement {
   const iframe = createIframe();
+
   iframe.setAttribute('src', '');
   return iframe;
 }
@@ -140,8 +144,10 @@ async function attachAndLoad(media: SpotifyMedia): Promise<{
   if (!media.src) media.src = TRACK_URL;
 
   const iframe = createIframe();
+
   media.attach(iframe);
   const controller = await waitForEngine(media);
+
   controller.ready();
   return { iframe, controller };
 }
@@ -216,6 +222,7 @@ describe('buildSpotifyIframeSrc', () => {
 
   it('serializes Spotify embed options verbatim', () => {
     const src = buildSpotifyIframeSrc(TRACK_URL, { source: { engine: { spotify: { theme: 0 } } } });
+
     expect(src).toContain('theme=0');
   });
 
@@ -223,17 +230,20 @@ describe('buildSpotifyIframeSrc', () => {
     const src = buildSpotifyIframeSrc(TRACK_URL, {
       source: { engine: { spotify: { utm_source: 'generator' } } },
     });
+
     expect(src).toContain('utm_source=generator');
   });
 
   it('lets embed options override the start position the src carries', () => {
     const src = buildSpotifyIframeSrc(`${EPISODE_URL}?t=1200`, { source: { engine: { spotify: { t: 30 } } } });
+
     expect(src).toContain('t=30');
     expect(src).not.toContain('t=1200');
   });
 
   it('embeds the video variant at its own path instead of as a parameter', () => {
     const src = buildSpotifyIframeSrc(EPISODE_URL, { source: { engine: { spotify: { preferVideo: true } } } });
+
     expect(src).toBe('https://open.spotify.com/embed/episode/7makk4oTQel546B0PZlDM5/video');
   });
 
@@ -241,6 +251,7 @@ describe('buildSpotifyIframeSrc', () => {
     const src = buildSpotifyIframeSrc(TRACK_URL, {
       source: { engine: { spotify: { referrerPolicy: 'no-referrer' } } },
     });
+
     expect(src).not.toContain('referrerPolicy');
   });
 
@@ -252,6 +263,7 @@ describe('buildSpotifyIframeSrc', () => {
 describe('SpotifyMedia', () => {
   it('has expected default state before attach', () => {
     const media = new SpotifyMedia();
+
     expect(media.engine).toBe(null);
     expect(media.target).toBe(null);
     expect(media.paused).toBe(true);
@@ -266,8 +278,10 @@ describe('SpotifyMedia', () => {
 
   it('sets the initial iframe src and creates a controller when attached', async () => {
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.src).toContain(`https://open.spotify.com/embed/track/${TRACK_ID}`);
@@ -334,10 +348,12 @@ describe('SpotifyMedia', () => {
   it('defers the controller until a source arrives', async () => {
     const media = new SpotifyMedia();
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     // How every framework builds the element: created first, `src` set after.
     const iframe = createIframe();
+
     media.attach(iframe);
     expect(iframe.getAttribute('src')).toBe(null);
     expect(media.engine).toBe(null);
@@ -357,6 +373,7 @@ describe('SpotifyMedia', () => {
     // React renders `src=""` before a source resolves. The `src` property reports
     // the document URL for it, so only the attribute says there is no embed.
     const iframe = createEmptySrcIframe();
+
     media.attach(iframe);
     expect(media.engine).toBe(null);
 
@@ -371,6 +388,7 @@ describe('SpotifyMedia', () => {
   it('builds a deferred embed once for repeated source changes in the same task', async () => {
     const media = new SpotifyMedia();
     const iframe = createIframe();
+
     media.attach(iframe);
 
     media.src = TRACK_URL;
@@ -384,6 +402,7 @@ describe('SpotifyMedia', () => {
 
   it('does not leave play() waiting while the embed is deferred', async () => {
     const media = new SpotifyMedia();
+
     media.attach(createIframe());
 
     // No embed means no controller is coming to report a load; waiting would hang.
@@ -393,6 +412,7 @@ describe('SpotifyMedia', () => {
 
   it('waits for a deferred embed to load before playing', async () => {
     const media = new SpotifyMedia();
+
     media.attach(createIframe());
 
     media.src = TRACK_URL;
@@ -404,6 +424,7 @@ describe('SpotifyMedia', () => {
     // The controller the deferred embed creates has not reported readiness, so
     // playing now would run against a controller that cannot accept it.
     const controller = await waitForEngine(media);
+
     expect(played).toBe(false);
 
     controller.ready();
@@ -437,6 +458,7 @@ describe('SpotifyMedia', () => {
     const { controller } = await attachAndLoad(media);
     const durationChange = vi.fn();
     const timeUpdate = vi.fn();
+
     media.addEventListener('durationchange', durationChange);
     media.addEventListener('timeupdate', timeUpdate);
 
@@ -507,6 +529,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const pause = vi.fn();
+
     media.addEventListener('pause', pause);
     controller.update({ isPaused: false, position: 1_000 });
 
@@ -534,6 +557,7 @@ describe('SpotifyMedia', () => {
 
   it('starts playback on load when autoplay is set', async () => {
     const media = new SpotifyMedia();
+
     media.autoplay = true;
     const { controller } = await attachAndLoad(media);
 
@@ -548,6 +572,7 @@ describe('SpotifyMedia', () => {
     const { controller } = await attachAndLoad(media);
     const seeking = vi.fn();
     const seeked = vi.fn();
+
     media.addEventListener('seeking', seeking);
     media.addEventListener('seeked', seeked);
 
@@ -571,6 +596,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const seeked = vi.fn();
+
     media.addEventListener('seeked', seeked);
     controller.update({ isPaused: false, position: 10_000, duration: 60_000 });
 
@@ -593,6 +619,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const seeked = vi.fn();
+
     media.addEventListener('seeked', seeked);
 
     // Paused, the position stops moving once the seek lands, so a snapshot at the
@@ -609,6 +636,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const ended = vi.fn();
+
     media.addEventListener('ended', ended);
 
     controller.update({ isPaused: false, position: 0, duration: 60_000 });
@@ -628,9 +656,11 @@ describe('SpotifyMedia', () => {
 
   it('seeks back instead of ending when loop is set', async () => {
     const media = new SpotifyMedia();
+
     media.loop = true;
     const { controller } = await attachAndLoad(media);
     const ended = vi.fn();
+
     media.addEventListener('ended', ended);
 
     controller.update({ isPaused: false, position: 0, duration: 60_000 });
@@ -647,6 +677,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const play = vi.fn();
+
     media.addEventListener('play', play);
 
     controller.update({ isPaused: false, position: 0, duration: 60_000 });
@@ -672,6 +703,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const ended = vi.fn();
+
     media.addEventListener('ended', ended);
 
     controller.update({ isPaused: false, position: 0, duration: 60_000 });
@@ -722,6 +754,7 @@ describe('SpotifyMedia', () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
     const ended = vi.fn();
+
     media.addEventListener('ended', ended);
 
     // An update that carries no duration at all, then one that reports the entity
@@ -741,6 +774,7 @@ describe('SpotifyMedia', () => {
     // read as an incapable media, where inert ones would have the player render a
     // volume slider and a mute button that do nothing.
     const media = new SpotifyMedia() as Partial<Video>;
+
     expect(media.volume).toBeUndefined();
     expect(media.muted).toBeUndefined();
     expect(media.defaultMuted).toBeUndefined();
@@ -758,6 +792,7 @@ describe('SpotifyMedia', () => {
 
     // The first playback update after a reload completes the load.
     const loadCompleteSpy = vi.fn();
+
     media.addEventListener('loadcomplete', loadCompleteSpy);
     controller.update();
     expect(loadCompleteSpy).toHaveBeenCalledTimes(1);
@@ -803,8 +838,10 @@ describe('SpotifyMedia', () => {
 
   it('defers the load when src changes before the controller is ready', async () => {
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     const iframe = createIframe();
+
     media.attach(iframe);
     const controller = await waitForEngine(media);
 
@@ -825,6 +862,7 @@ describe('SpotifyMedia', () => {
     const { controller } = await attachAndLoad(media);
 
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     media.src = 'https://example.com/not-a-spotify-url';
@@ -840,12 +878,14 @@ describe('SpotifyMedia', () => {
 
   it('surfaces a failed API load', async () => {
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     // Without the global the loader falls back to the script tag, which is what
     // fails here.
     vi.stubGlobal('SpotifyIframeApi', undefined);
     vi.mocked(loadScript).mockRejectedValueOnce(new Error('offline'));
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     media.attach(createIframe());
@@ -869,6 +909,7 @@ describe('SpotifyMedia', () => {
     controller.update({ isPaused: true, position: 400 });
 
     const played = media.played;
+
     expect(played.length).toBe(1);
     expect(played.start(0)).toBe(0);
     expect(played.end(0)).toBe(0.4);
@@ -902,6 +943,7 @@ describe('SpotifyMedia', () => {
     // The live API builds the controller as `createController` is called, whether
     // or not the caller is still there to be handed it, so hand it over on demand.
     const deliveries: (() => void)[] = [];
+
     vi.stubGlobal('SpotifyIframeApi', {
       createController: (
         target: HTMLIFrameElement,
@@ -909,13 +951,16 @@ describe('SpotifyMedia', () => {
         callback: (controller: MockController) => void
       ) => {
         const controller = new MockController(target, options);
+
         deliveries.push(() => callback(controller));
       },
     });
 
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     const attached = createIframe();
+
     media.attach(attached);
     await vi.waitFor(() => {
       if (!deliveries.length) throw new Error('controller not constructed yet');
@@ -926,6 +971,7 @@ describe('SpotifyMedia', () => {
     await flushDeferredEmbed();
 
     const controller = MockController.instances[0]!;
+
     expect(controller.destroy).toHaveBeenCalled();
     expect(media.engine).toBe(null);
     expect(attached.isConnected).toBe(true);
@@ -934,11 +980,13 @@ describe('SpotifyMedia', () => {
 
   it('unblocks pending play() when detached before load completes', async () => {
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     media.attach(createIframe());
 
     // Await load without the controller ever becoming ready.
     const pending = media.play();
+
     media.detach();
 
     await expect(pending).resolves.toBeUndefined();
@@ -947,6 +995,7 @@ describe('SpotifyMedia', () => {
 
   it('does not create a controller when detached before the API resolves', async () => {
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     media.attach(createIframe());
     media.detach();
@@ -961,14 +1010,17 @@ describe('SpotifyMedia', () => {
 
   it('ignores ready and playback callbacks from a superseded controller', async () => {
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     const { controller: stale } = await attachAndLoad(media);
 
     media.detach();
     const { controller: current } = await attachAndLoad(media);
+
     expect(current).not.toBe(stale);
 
     const playSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
 
     // The iframe API keeps invoking callbacks it already scheduled for the
@@ -1004,6 +1056,7 @@ describe('SpotifyMedia source', () => {
   it('derives src from a structured source and announces the change', () => {
     const media = new SpotifyMedia();
     const sourceChange = vi.fn();
+
     media.addEventListener('sourcechange', sourceChange);
 
     media.source = { src: TRACK_URL };
@@ -1014,6 +1067,7 @@ describe('SpotifyMedia source', () => {
 
   it('re-derives source from src, carrying Spotify embed options over', () => {
     const media = new SpotifyMedia();
+
     media.source = { src: TRACK_URL, engine: { spotify: { theme: 0 } } };
 
     media.src = EPISODE_URL;
@@ -1049,6 +1103,7 @@ describe('SpotifyMedia source', () => {
 
   it('rebuilds the embed for a new entity while the source prefers video', async () => {
     const media = new SpotifyMedia();
+
     media.source = { src: EPISODE_URL, engine: { spotify: { preferVideo: true } } };
     const { iframe, controller } = await attachAndLoad(media);
 
@@ -1064,8 +1119,10 @@ describe('SpotifyMedia source', () => {
 
   it('serializes Spotify embed options onto the initial iframe src', () => {
     const media = new SpotifyMedia();
+
     media.source = { src: TRACK_URL, engine: { spotify: { theme: 0 } } };
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.src).toContain('theme=0');
@@ -1074,6 +1131,7 @@ describe('SpotifyMedia source', () => {
 
   it('clears src when the source is set to null', () => {
     const media = new SpotifyMedia();
+
     media.source = { src: TRACK_URL };
 
     media.source = null;
@@ -1085,6 +1143,7 @@ describe('SpotifyMedia source', () => {
   it('stops the embed and resets state when the source is cleared', async () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
+
     controller.update({ isPaused: false, position: 5_000, duration: 60_000 });
     expect(media.duration).toBe(60);
 
@@ -1103,9 +1162,11 @@ describe('SpotifyMedia source', () => {
   it('announces the reset when the source is cleared', async () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
+
     controller.update({ isPaused: false, position: 5_000, duration: 60_000 });
 
     const emptied = vi.fn();
+
     media.addEventListener('emptied', emptied);
     media.source = null;
     await Promise.resolve();
@@ -1119,6 +1180,7 @@ describe('SpotifyMedia source', () => {
   it('does not let a cleared source come back through a playback update', async () => {
     const media = new SpotifyMedia();
     const { controller } = await attachAndLoad(media);
+
     controller.update({ isPaused: false, position: 5_000, duration: 60_000 });
 
     media.source = null;
@@ -1159,8 +1221,10 @@ describe('SpotifyMedia source', () => {
 
   it('unblocks pending play() when the source is cleared before the controller is ready', async () => {
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     const iframe = createIframe();
+
     media.attach(iframe);
     const controller = await waitForEngine(media);
 
@@ -1170,6 +1234,7 @@ describe('SpotifyMedia source', () => {
     media.src = EPISODE_URL;
     media.source = null;
     const pending = media.play();
+
     controller.ready();
 
     await expect(pending).resolves.toBeUndefined();
@@ -1187,14 +1252,17 @@ describe('loadSpotifyIframeApi', () => {
     // Spotify's own tutorial tells pages to define.
     vi.stubGlobal('SpotifyIframeApi', undefined);
     const hostReady = vi.fn();
+
     vi.stubGlobal('onSpotifyIframeApiReady', hostReady);
 
     const media = new SpotifyMedia();
+
     media.src = TRACK_URL;
     media.attach(createIframe());
 
     const globals = globalThis as { onSpotifyIframeApiReady?: (api: unknown) => void };
     const ready = globals.onSpotifyIframeApiReady;
+
     expect(ready).not.toBe(hostReady);
     ready?.({
       createController: (target: HTMLIFrameElement, options: unknown, callback: (controller: MockController) => void) =>

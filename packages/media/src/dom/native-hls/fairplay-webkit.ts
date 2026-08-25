@@ -99,6 +99,7 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
 
   function onKeyError(session: WebKitMediaKeySession): void {
     const error = createDrmError(NativeHlsDrmMessages.CDM_ERROR, NativeHlsDrmErrors.CDM_ERROR);
+
     error.data = session.error;
     reportError(error);
   }
@@ -128,6 +129,7 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
         FAIRPLAY_CONTENT_TYPE,
         packInitData(event.initData, appCertificate)
       );
+
       sessions.add(session);
 
       session.addEventListener(
@@ -202,6 +204,7 @@ function packInitData(initData: ArrayBuffer, certificate: ArrayBuffer): Uint8Arr
 function getContentId(initData: ArrayBuffer): string {
   const decoded = new TextDecoder('utf-16le').decode(initData);
   const start = decoded.indexOf('skd://');
+
   return start === -1 ? decoded : decoded.slice(start + 'skd://'.length);
 }
 

@@ -16,6 +16,7 @@ export function replaceSelectorClasses(
     if (component.type !== 'class') return component;
 
     const replacement = replacements.get(component.name);
+
     return replacement ? { ...component, name: replacement } : component;
   });
 }
@@ -40,6 +41,7 @@ export function foldGroupDescendantSelectors(selectors: SelectorList): SelectorL
   return selectors.map((selector) => {
     const relationships = selector.flatMap((component) => {
       const relationship = groupDescendantRelationship(component);
+
       return relationship ? [relationship] : [];
     });
 
@@ -53,6 +55,7 @@ export function foldGroupDescendantSelectors(selectors: SelectorList): SelectorL
 
     const relationshipComponents = new Set(relationships.map((relationship) => relationship.component));
     const subject = selector.filter((component) => !relationshipComponents.has(component)).map(cloneSelectorComponent);
+
     return [
       cloneSelectorComponent(relationships[0]!.owner),
       ...relationships.flatMap((relationship) => relationship.conditions.map(cloneSelectorComponent)),

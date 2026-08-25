@@ -306,6 +306,7 @@ function normalizeDescription(description: unknown): string | undefined {
       })
       .join('')
       .trim();
+
     return text || undefined;
   }
 
@@ -473,6 +474,7 @@ function fixDegradedTypes(overloads: UtilOverload[], filePath: string, program: 
 
       const rawType = astParam.type.getText(sourceFile);
       const abbreviated = abbreviateType(paramName, rawType);
+
       paramDef.type = abbreviated ?? rawType;
 
       if (abbreviated && rawType !== abbreviated) {
@@ -488,6 +490,7 @@ function fixDegradedTypes(overloads: UtilOverload[], filePath: string, program: 
     if (isDegradedType(effectiveReturn) && decl.type) {
       const rawReturn = decl.type.getText(sourceFile);
       const abbreviated = abbreviateType('return', rawReturn);
+
       overload.returnValue.type = abbreviated ?? rawReturn;
 
       if (abbreviated && rawReturn !== abbreviated) {
@@ -625,6 +628,7 @@ function extractPublicMembers(
         .map((p) => {
           const pName = ts.isIdentifier(p.name) ? p.name.text : '...';
           const pType = p.type ? p.type.getText(sourceFile) : 'unknown';
+
           return `${pName}: ${pType}`;
         })
         .join(', ');
@@ -707,6 +711,7 @@ function getJSDocParamDescription(node: ts.Node, paramName: string): string | un
           typeof tag.comment === 'string'
             ? tag.comment
             : tag.comment.map((c: ts.JSDocComment) => ('text' in c ? c.text : '')).join('');
+
         return raw.replace(/^\s*-\s+/, '');
       }
     }
@@ -1171,6 +1176,7 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
     // (e.g., PlayerController re-exported from packages/html/src/index.ts)
     try {
       const indexAst = tae.parseFromProgram(indexPath, program);
+
       allExports.push(...indexAst.exports);
 
       for (const exportNode of indexAst.exports) {
@@ -1224,6 +1230,7 @@ function findClassSourceModule(className: string, localModules: string[], progra
     if (!sourceFile) continue;
 
     let found = false;
+
     function visit(node: ts.Node) {
       if (ts.isClassDeclaration(node) && node.name?.text === className) {
         found = true;
@@ -1267,5 +1274,6 @@ function createUtilProgram(monorepoRoot: string): ts.Program {
 
 export function getUtilEntries(monorepoRoot: string): UtilEntry[] {
   const program = createUtilProgram(monorepoRoot);
+
   return discoverUtilExports(monorepoRoot, program);
 }

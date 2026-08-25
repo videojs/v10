@@ -8,6 +8,7 @@ function fakeJwt(payload: Record<string, unknown>): string {
     btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(obj))))
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
+
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 

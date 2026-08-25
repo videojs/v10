@@ -78,6 +78,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   function createConfiguredStore(values: Record<string, unknown>) {
     const store = createStore<PlayerTarget>()(slice);
+
     applyConfigValues(store, featureConfig, values);
     return store;
   }
@@ -138,6 +139,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   function usePlayer<R>(selector?: (state: object) => R): AnyPlayerStore | R {
     const { store } = usePlayerContext();
+
     return useStore(store, selector as any);
   }
 

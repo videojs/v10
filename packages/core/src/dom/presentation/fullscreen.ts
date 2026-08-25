@@ -10,11 +10,13 @@ export function isFullscreenEnabled() {
   }
 
   const video = document.createElement('video') as WebKitVideoElement;
+
   return isFunction(video.webkitSetPresentationMode);
 }
 
 export function getFullscreenElement() {
   const doc = document as WebKitDocument;
+
   return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
 }
 
@@ -52,6 +54,7 @@ export function isFullscreen(container: HTMLElement | null, media: EventTarget) 
   // isFullscreen is a non-standard property that is set by the video host
   // and checks internally if the video host target is the fullscreen element.
   const video = media as unknown as MediaFullscreenCapability;
+
   return video.isFullscreen ?? false;
 }
 

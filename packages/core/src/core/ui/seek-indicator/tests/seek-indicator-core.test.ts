@@ -39,6 +39,7 @@ describe('SeekIndicatorCore', () => {
 
   it('closes and resets accumulation after the configured delay', () => {
     const core = new SeekIndicatorCore();
+
     core.setProps({ closeDelay: 100 });
     core.processEvent({ action: 'seekStep', value: -10 }, { currentTime: 30, duration: 120 });
 

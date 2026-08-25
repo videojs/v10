@@ -50,12 +50,14 @@ function maskNamedPlaceholders(source: string): { masked: string; slots: readonl
     slots.push(name);
     return `{${slots.length - 1}}`;
   });
+
   return { masked, slots };
 }
 
 function restoreNamedPlaceholders(translated: string, slots: readonly string[]): string {
   return translated.replace(INDEX_PLACEHOLDER, (match, index: string) => {
     const name = slots[Number(index)];
+
     return name !== undefined ? `{${name}}` : match;
   });
 }
@@ -68,6 +70,7 @@ async function translateProtectingPlaceholders(translator: BrowserTranslatorInst
   }
 
   const translated = await translator.translate(masked);
+
   return restoreNamedPlaceholders(translated, slots);
 }
 
@@ -107,6 +110,7 @@ export function shouldAttemptBrowserTranslation(
 
 function hasMissingEnglishTranslations(translations: Partial<FlatTranslations>): boolean {
   const english = flattenTranslations(en);
+
   return (Object.keys(english) as (keyof FlatTranslations)[]).some((key) => translations[key] === undefined);
 }
 
@@ -177,11 +181,13 @@ export async function getBrowserTranslations(
       if (!value) return [key, ''] as const;
 
       const translated = await translateProtectingPlaceholders(translator, value);
+
       return [key, translated] as const;
     })
   );
 
   const result = Object.fromEntries(entries) as Partial<FlatTranslations>;
+
   cache.set(target, result);
   return result;
 }

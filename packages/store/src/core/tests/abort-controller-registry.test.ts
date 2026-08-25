@@ -48,11 +48,13 @@ describe('AbortControllerRegistry', () => {
   describe('base', () => {
     it('returns an AbortSignal', () => {
       const signals = new AbortControllerRegistry();
+
       expect(signals.base).toBeInstanceOf(AbortSignal);
     });
 
     it('is not aborted initially', () => {
       const signals = new AbortControllerRegistry();
+
       expect(signals.base.aborted).toBe(false);
     });
 
@@ -72,6 +74,7 @@ describe('AbortControllerRegistry', () => {
       signals.reset();
 
       const base2 = signals.base;
+
       expect(base1).not.toBe(base2);
       expect(base2.aborted).toBe(false);
     });
@@ -107,6 +110,7 @@ describe('AbortControllerRegistry', () => {
     it('does not abort base', () => {
       const signals = new AbortControllerRegistry();
       const base = signals.base;
+
       signals.supersede('test');
 
       signals.clear();
@@ -161,6 +165,7 @@ describe('AbortControllerRegistry', () => {
       signals.reset();
 
       const base2 = signals.base;
+
       expect(base1).not.toBe(base2);
       expect(base2.aborted).toBe(false);
     });
@@ -226,6 +231,7 @@ describe('AbortControllerRegistry', () => {
       signals.clear();
 
       const signal2 = signals.supersede('test');
+
       expect(signal1.aborted).toBe(true);
       expect(signal2.aborted).toBe(false);
     });

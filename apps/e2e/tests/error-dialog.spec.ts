@@ -44,6 +44,7 @@ test.describe('Error Dialog', () => {
 
     // Click the close/OK button
     const closeButton = page.locator('media-alert-dialog-close, .media-button--primary').first();
+
     await closeButton.click();
 
     // Dialog should close

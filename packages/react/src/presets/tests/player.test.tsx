@@ -27,6 +27,7 @@ describe('preset players', () => {
   it('forwards preset configuration props to the player store', () => {
     function Title() {
       const title = useVideoPlayer((state) => state.title);
+
       return <span>{title}</span>;
     }
 

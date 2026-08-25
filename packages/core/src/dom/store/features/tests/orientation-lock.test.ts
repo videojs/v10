@@ -49,6 +49,7 @@ const stores: { destroy(): void }[] = [];
 
 function createOrientationStore() {
   const store = createStore<PlayerTarget>()(orientationLockFeature);
+
   stores.push(store);
   return store;
 }
@@ -67,6 +68,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -83,6 +85,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.setOrientationLockType('portrait');
     store.attach({ media: video, container });
 
@@ -100,6 +103,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -124,6 +128,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.setOrientationLockType('portrait');
     expect(store.orientationLockType).toBe('portrait');
 
@@ -144,9 +149,11 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.setOrientationLockType('portrait');
 
     const detach = store.attach({ media: video, container });
+
     detach();
 
     expect(store.orientationLockType).toBe('portrait');
@@ -183,6 +190,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -207,6 +215,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -226,10 +235,12 @@ describe('orientationLockFeature', () => {
   it('handles webkit presentation mode changes', async () => {
     const orientation = stubOrientation();
     const video = createMockVideo() as HTMLVideoElement & WebKitVideoElement;
+
     video.webkitPresentationMode = 'inline';
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.attach({ media: video, container });
 
     video.webkitPresentationMode = 'fullscreen';
@@ -254,6 +265,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -273,6 +285,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createOrientationStore();
+
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -292,6 +305,7 @@ describe('orientationLockFeature', () => {
     stubOrientation();
 
     const store = createOrientationStore();
+
     store.state.setOrientationLockType('' as ScreenOrientationLockType);
 
     expect(store.state.orientationLockType).toBe('landscape');
@@ -329,6 +343,7 @@ describe('orientationLockFeature', () => {
     const container = document.createElement('div');
 
     const store = createStore<PlayerTarget>()(combine(orientationLockFeature, noiseSlice));
+
     stores.push(store);
     store.attach({ media: video, container });
 

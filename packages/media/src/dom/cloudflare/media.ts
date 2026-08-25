@@ -144,6 +144,7 @@ export class CloudflareMedia extends CloudflareMediaBase implements Partial<Vide
       // This load is what finally builds the embed; wait a microtask so the one-shot embed URL sees every prop a
       // framework sets around `src`.
       const load = this.#beginLoad();
+
       this.#resetState();
       await Promise.resolve();
 
@@ -155,6 +156,7 @@ export class CloudflareMedia extends CloudflareMediaBase implements Partial<Vide
     }
 
     const load = this.#beginLoad();
+
     // Reset before bailing on an empty src: a cleared source has nothing to load, but the old video's state still goes.
     this.#resetState();
     // `emptied` announces that reset and so precedes the empty-src bail; a cleared source is the one case where the
@@ -492,10 +494,12 @@ export class CloudflareMedia extends CloudflareMediaBase implements Partial<Vide
       // A server-rendered embed posted its one `iframeReady` message before the SDK existed; reloading the frame now
       // re-sends it, which only works once the script is in hand.
       const embedSrc = target.src;
+
       target.src = embedSrc;
     }
 
     const player = api(target);
+
     this.#player = player;
     this.#creatingPlayer = false;
     this.#bindPlayerEvents(player, attachId);
@@ -605,6 +609,7 @@ export class CloudflareMedia extends CloudflareMediaBase implements Partial<Vide
 
         handle();
       };
+
       player.addEventListener(type, listener);
       this.#playerListeners.push([type, listener]);
     };
@@ -700,6 +705,7 @@ function toDuration(duration: number) {
 
 function toBufferedEnd(player: CloudflareStreamPlayerApi) {
   const { buffered } = player;
+
   return buffered?.length ? buffered.end(buffered.length - 1) : 0;
 }
 
@@ -708,6 +714,7 @@ function toBufferedEnd(player: CloudflareStreamPlayerApi) {
 function embedParamsOf(src: string): string {
   try {
     const url = new URL(src);
+
     return `${url.origin}${url.search}`;
   } catch {
     // Not a URL yet, so nothing it holds can match what is being built.

@@ -59,6 +59,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
     if (!open) return;
 
     const closeOnDocumentScroll = () => setOpen(false);
+
     window.addEventListener('scroll', closeOnDocumentScroll, { passive: true });
 
     return () => window.removeEventListener('scroll', closeOnDocumentScroll);

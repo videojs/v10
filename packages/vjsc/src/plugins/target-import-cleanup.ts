@@ -5,6 +5,7 @@ import type { Plugin } from 'rolldown';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
+
 export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions): Plugin {
   return {
     name: 'vjsc:target-import-cleanup',
@@ -119,8 +120,10 @@ function renderImport(
       const imported =
         specifier.imported.type === 'Identifier' ? specifier.imported.name : JSON.stringify(specifier.imported.value);
       const alias = imported === specifier.local.name ? imported : `${imported} as ${specifier.local.name}`;
+
       return declaration.importKind !== 'type' && specifier.importKind === 'type' ? `type ${alias}` : alias;
     });
+
     clauses.push(`{ ${entries.join(', ')} }`);
   }
 

@@ -91,6 +91,7 @@ describe('callback endpoint', () => {
   describe('successful authentication', () => {
     it('should complete OAuth flow successfully', async () => {
       const mockContext = createMockContext({ code: '123', state: 'abc', storedState: 'abc' });
+
       await callbackHandler(mockContext);
 
       expect(mockContext.cookies.delete).toHaveBeenCalledWith('state', { path: '/' });
@@ -118,6 +119,7 @@ describe('callback endpoint', () => {
       vi.stubEnv('PROD', true);
 
       const mockContext = createMockContext({ code: '123', state: 'abc', storedState: 'abc' });
+
       await callbackHandler(mockContext);
 
       expect(mockContext.cookies.set).toHaveBeenCalledWith(
@@ -138,6 +140,7 @@ describe('callback endpoint', () => {
         env[envVar as keyof typeof env] = undefined;
 
         const mockContext = createMockContext({ code: '123', state: 'abc', storedState: 'abc' });
+
         await callbackHandler(mockContext);
 
         expect(consoleErrorSpy).toHaveBeenCalledWith('OAuth configuration missing');
@@ -157,6 +160,7 @@ describe('callback endpoint', () => {
       ['stored state cookie is missing', { code: 'valid-code', state: 'valid-state' }],
     ])('should reject when %s', async (_description, mockParams) => {
       const mockContext = createMockContext(mockParams);
+
       await callbackHandler(mockContext);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid state parameter');
@@ -168,6 +172,7 @@ describe('callback endpoint', () => {
   describe('authorization code validation', () => {
     it('should redirect to error when code is missing', async () => {
       const mockContext = createMockContext({ state: 'valid-state', storedState: 'valid-state' });
+
       await callbackHandler(mockContext);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('Authorization code missing');
@@ -188,6 +193,7 @@ describe('callback endpoint', () => {
       setupMock();
 
       const mockContext = createMockContext({ code: 'valid-code', state: 'valid-state', storedState: 'valid-state' });
+
       await callbackHandler(mockContext);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith('OAuth callback error:', expect.any(Error));

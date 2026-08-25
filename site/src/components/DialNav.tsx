@@ -34,6 +34,7 @@ export default function DialNav({ left, right }: DialNavProps) {
 
   function dotStyle(href: string): React.CSSProperties {
     const active = activeHref === href;
+
     return {
       transition: 'background-color 0.3s ease, border-color 0.3s ease',
       backgroundColor: active ? 'var(--color-orange)' : '',
@@ -48,6 +49,7 @@ export default function DialNav({ left, right }: DialNavProps) {
       <div className="flex flex-col gap-2">
         {left.map((link) => {
           const Tag = link.href === '/docs' ? GetStartedLink : 'a';
+
           return (
             <Tag
               key={link.href}
@@ -96,6 +98,7 @@ export default function DialNav({ left, right }: DialNavProps) {
       <div className="flex flex-col gap-2">
         {right.map((link) => {
           const Tag = link.href === '/docs' ? GetStartedLink : 'a';
+
           return (
             <Tag
               key={link.href}

@@ -62,6 +62,7 @@ export function isTikTokPlayerMessage(data: unknown): data is TikTokPlayerEventM
   if (!isObject(data)) return false;
 
   const message = data as Partial<TikTokPlayerEventMessage>;
+
   return !!message[PLAYER_MESSAGE_KEY] && isString(message.type);
 }
 

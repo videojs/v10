@@ -219,6 +219,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     if (active && status !== 'ending') return;
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
+
     onOpenChange(true, details);
 
     if (!options.deferOpenChanges) commitOpen();
@@ -232,6 +233,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     if (!active || status === 'ending') return;
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
+
     onOpenChange(false, details);
 
     if (!options.deferOpenChanges) commitClose();
@@ -312,6 +314,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
       if (state.current.active) return;
 
       const delay = options.delay?.() ?? 300;
+
       hoverTimeout = setTimeout(() => applyOpen('hover'), delay);
     },
 
@@ -325,6 +328,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
       if (!state.current.active) return;
 
       const closeDelay = options.closeDelay?.() ?? 0;
+
       hoverTimeout = setTimeout(() => applyClose('hover'), closeDelay);
     },
 
@@ -372,6 +376,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
       if (!state.current.active) return;
 
       const closeDelay = options.closeDelay?.() ?? 0;
+
       hoverTimeout = setTimeout(() => applyClose('hover'), closeDelay);
     },
 

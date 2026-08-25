@@ -20,5 +20,6 @@ interface AstroData {
 /** Typed accessor for the Astro frontmatter bag a Sätteri plugin writes into. */
 export function getAstroFrontmatter(ctx: MdastVisitorContext): Record<string, unknown> | undefined {
   const astro = (ctx.data as { astro?: AstroData }).astro;
+
   return astro?.frontmatter;
 }

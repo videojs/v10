@@ -60,11 +60,13 @@ test.describe('Visual — Live Button', () => {
     const styles = await page.evaluate(() => {
       const container = document.querySelector('video-skin')?.shadowRoot?.querySelector('media-container');
       const liveButton = document.createElement('button');
+
       liveButton.className = 'media-button media-button--live';
       liveButton.setAttribute('aria-disabled', 'true');
       liveButton.setAttribute('data-live-edge', '');
 
       const disabledButton = document.createElement('button');
+
       disabledButton.className = 'media-button';
       disabledButton.setAttribute('aria-disabled', 'true');
 
@@ -72,6 +74,7 @@ test.describe('Visual — Live Button', () => {
 
       const liveStyle = getComputedStyle(liveButton);
       const disabledStyle = getComputedStyle(disabledButton);
+
       return {
         live: { filter: liveStyle.filter, opacity: liveStyle.opacity },
         disabled: { filter: disabledStyle.filter, opacity: disabledStyle.opacity },
@@ -148,11 +151,13 @@ test.describe('Visual — HTML Portrait Layout', () => {
       const thumbnail = document.querySelector('video-skin')!.shadowRoot!.querySelector('media-slider-thumbnail')!;
       const style = getComputedStyle(thumbnail);
       const probe = document.createElement('div');
+
       probe.style.position = 'absolute';
       probe.style.height = style.getPropertyValue('--thumbnail-max-height');
       thumbnail.parentElement!.append(probe);
 
       const configuredMaxHeight = parseFloat(getComputedStyle(probe).height);
+
       probe.remove();
 
       return {

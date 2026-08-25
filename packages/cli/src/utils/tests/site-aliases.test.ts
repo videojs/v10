@@ -23,6 +23,7 @@ describe('site source aliases', () => {
   for (const file of ALIASED_FILES) {
     it(`site/src/${file} exists`, () => {
       const fullPath = resolve(SITE_ROOT, file);
+
       expect(existsSync(fullPath), `Aliased site file missing: ${fullPath}`).toBe(true);
     });
   }

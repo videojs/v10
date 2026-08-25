@@ -235,6 +235,7 @@ function parseDefineFile(
 
   // Resolve host class import path
   let hostImportPath: string | undefined;
+
   ts.forEachChild(mediaSourceFile, (node) => {
     if (!ts.isImportDeclaration(node)) return;
 
@@ -298,6 +299,7 @@ function parseCustomMediaElementCall(
     if (!extendsClause || extendsClause.types.length === 0) return;
 
     const extendsExpr = unwrapExpression(extendsClause.types[0]!.expression);
+
     // Handle hoisted bases: `const Base = Mixin(CustomMediaElement(...)); class X extends (Base as ...)`
     findCustomMediaElement(
       ts.isIdentifier(extendsExpr)
@@ -372,6 +374,7 @@ function extractHostProperties(
 ): Record<string, HostPropertyDef> {
   const properties: Record<string, HostPropertyDef> = {};
   const visitedFiles: string[] = [];
+
   extractClassProperties(filePath, hostClassName, properties, compilerOptions, new Set(), nativeNames, visitedFiles);
 
   const defaults = new Map<string, string>();
@@ -414,6 +417,7 @@ function extractClassProperties(
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
 
   let classNode: ts.ClassDeclaration | undefined;
+
   ts.forEachChild(sourceFile, (node) => {
     if (ts.isClassDeclaration(node) && node.name?.text === className) {
       classNode = node;
@@ -428,6 +432,7 @@ function extractClassProperties(
 
   if (extendsClause && extendsClause.types.length > 0) {
     const extendsExpr = unwrapExpression(extendsClause.types[0]!.expression);
+
     processExtendsExpression(
       extendsExpr,
       sourceFile,
@@ -514,6 +519,7 @@ function processExtendsExpression(
 
   if (ts.isCallExpression(extendsExpr)) {
     const { mixins, base } = unwindMixinChain(extendsExpr);
+
     // Process the base class first (innermost identifier), then layer each
     // mixin from innermost to outermost so outer mixins override inner ones.
     processExtendsExpression(base, sourceFile, filePath, properties, compilerOptions, seen, nativeNames, visitedFiles);
@@ -691,6 +697,7 @@ function findReExportSource(
   name: string
 ): { moduleSpecifier: string; exportedName: string } | undefined {
   let result: { moduleSpecifier: string; exportedName: string } | undefined;
+
   ts.forEachChild(sourceFile, (node) => {
     if (result) return;
 
@@ -820,6 +827,7 @@ function applyClassMembers(
       }
 
       const description = getJSDocDescription(member);
+
       getters.set(name, { type, description });
     } else if (ts.isSetAccessorDeclaration(member)) {
       setters.add(name);
@@ -865,6 +873,7 @@ function resolveInferredTypes(
 
     if (!classNode) ts.forEachChild(node, visit);
   };
+
   visit(sourceFile);
 
   if (!classNode?.name) return types;
@@ -875,6 +884,7 @@ function resolveInferredTypes(
 
   for (const prop of checker.getDeclaredTypeOfSymbol(symbol).getProperties()) {
     const propType = checker.getTypeOfSymbolAtLocation(prop, classNode);
+
     types.set(prop.name, checker.typeToString(propType));
   }
 
@@ -911,6 +921,7 @@ function extractEngineOptions(
 
     if (!classNode) ts.forEachChild(node, visit);
   };
+
   visit(sourceFile);
 
   if (!classNode?.name) return undefined;
@@ -972,6 +983,7 @@ function extractEngineOptions(
 
 function findImportPath(sourceFile: ts.SourceFile, name: string): string | undefined {
   let importPath: string | undefined;
+
   ts.forEachChild(sourceFile, (node) => {
     if (importPath) return;
 
@@ -1010,6 +1022,7 @@ function collectFileDefaults(filePath: string, compilerOptions: ts.CompilerOptio
   if (cached) return cached;
 
   const defaults = new Map<string, string>();
+
   fileDefaultsCache.set(filePath, defaults);
 
   if (!fs.existsSync(filePath)) return defaults;
@@ -1122,11 +1135,13 @@ function resolveConstObjectLiteral(
 
   const content = fs.readFileSync(importedFilePath, 'utf-8');
   const importedSourceFile = ts.createSourceFile(importedFilePath, content, ts.ScriptTarget.Latest, true);
+
   return resolveConstObjectLiteral(name, importedSourceFile, importedFilePath, compilerOptions, visitedFiles);
 }
 
 function findConstObjectLiteral(sourceFile: ts.SourceFile, name: string): ts.ObjectLiteralExpression | undefined {
   let result: ts.ObjectLiteralExpression | undefined;
+
   ts.forEachChild(sourceFile, (node) => {
     if (result || !ts.isVariableStatement(node)) return;
 
@@ -1186,6 +1201,7 @@ function serializeDefaultValue(
 
   if (ts.isArrayLiteralExpression(value)) {
     const text = value.getText(sourceFile);
+
     return text.length <= 24 ? text : '[…]';
   }
 
@@ -1445,6 +1461,7 @@ function extractPublicMethodNames(filePath: string, className: string): string[]
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
 
   let classNode: ts.ClassDeclaration | undefined;
+
   ts.forEachChild(sourceFile, (node) => {
     if (ts.isClassDeclaration(node) && node.name?.text === className) {
       classNode = node;
@@ -1573,10 +1590,12 @@ function extractDispatchedEvents(
     seen.add(fileScanKey);
     const content = fs.readFileSync(filePath, 'utf-8');
     const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+
     scanForDispatchEvents(sourceFile, events);
     scanForFiresTags(sourceFile, fires);
 
     let classNode: ts.ClassDeclaration | undefined;
+
     ts.forEachChild(sourceFile, (n) => {
       if (ts.isClassDeclaration(n) && n.name?.text === className) {
         classNode = n;
@@ -1588,6 +1607,7 @@ function extractDispatchedEvents(
 
       if (extendsClause && extendsClause.types.length > 0) {
         const extendsExpr = unwrapExpression(extendsClause.types[0]!.expression);
+
         walkExtendsForDispatchEvents(extendsExpr, sourceFile, filePath, compilerOptions, seen, events, fires);
       }
     }
@@ -1627,6 +1647,7 @@ function walkExtendsForDispatchEvents(
 
   if (ts.isCallExpression(extendsExpr)) {
     const { mixins, base } = unwindMixinChain(extendsExpr);
+
     walkExtendsForDispatchEvents(base, sourceFile, filePath, compilerOptions, seen, events, fires);
 
     for (const mixin of mixins) {
@@ -1656,6 +1677,7 @@ function walkExtendsForDispatchEvents(
       seen.add(key);
       const content = fs.readFileSync(mixinFilePath, 'utf-8');
       const mixinSourceFile = ts.createSourceFile(mixinFilePath, content, ts.ScriptTarget.Latest, true);
+
       scanForDispatchEvents(mixinSourceFile, events);
       scanForFiresTags(mixinSourceFile, fires);
     }
@@ -1988,6 +2010,7 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     // it also lives in the typed media events contract (e.g. streamtypechange).
     const fires = new Map<string, string>();
     const dispatchedEvents = new Set<string>();
+
     extractDispatchedEvents(
       source.hostFilePath,
       source.hostClassName,

@@ -25,6 +25,7 @@ export function addSubtitlesTracksToMedia(
 ): void {
   for (const modelTrack of modelTextTracks) {
     const el = document.createElement('track');
+
     el.id = modelTrack.id;
     el.kind = modelTrack.kind;
     el.label = modelTrack.label;

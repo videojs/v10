@@ -144,6 +144,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     if (!this.#target) return;
 
     const load = this.#beginLoad();
+
     // Wait a microtask so a framework's `src` and prop writes all land before the URL is built, once.
     await Promise.resolve();
 
@@ -443,6 +444,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     if (isUndefined(win)) return;
 
     const attachId = this.#attachId;
+
     this.#messages = new AbortController();
     win.addEventListener('message', (event) => this.#onMessage(event, target, attachId), {
       signal: this.#messages.signal,
@@ -648,6 +650,7 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     }
 
     const named = errorType ? ` (${errorType})` : '';
+
     this.#onError(
       `TikTok player error ${errorCode}${named}; visit https://developers.tiktok.com/doc/embed-player for what the embed supports.`,
       toMediaErrorCode(errorCode)

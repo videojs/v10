@@ -36,12 +36,14 @@ const diagContext = document.getElementById('diag-context') as HTMLSpanElement;
 // over (DRM, for one), so it is out too.
 const HLS_SOURCE_IDS = (Object.keys(SOURCES) as Array<keyof typeof SOURCES>).filter((id) => {
   const source = SOURCES[id];
+
   return source.type === 'hls' && source.subType === 'mp4' && !source.live && Boolean(source.url);
 });
 const DEFAULT_ID = (HLS_SOURCE_IDS[0] ?? 'hls-1') as keyof typeof SOURCES;
 
 for (const id of HLS_SOURCE_IDS) {
   const option = document.createElement('option');
+
   option.value = id;
   option.textContent = SOURCES[id].label;
 
@@ -64,12 +66,14 @@ type VideoTrack = ReturnType<typeof videoTracksOf>[number];
 function stableTrackId(track: VideoTrack): string {
   const w = 'width' in track && typeof track.width === 'number' ? track.width : 0;
   const h = 'height' in track && typeof track.height === 'number' ? track.height : 0;
+
   return `${w}x${h}@${track.bandwidth}`;
 }
 
 function trackDimensions(track: VideoTrack): { w: number; h: number } {
   const w = 'width' in track && typeof track.width === 'number' ? track.width : 0;
   const h = 'height' in track && typeof track.height === 'number' ? track.height : 0;
+
   return { w, h };
 }
 
@@ -139,6 +143,7 @@ function attachDiagnostic(): () => void {
     if (selected) {
       const { w, h } = trackDimensions(selected);
       const res = w && h ? `${w}x${h} ` : '';
+
       diagRendition.textContent = `${res}${formatBandwidth(selected.bandwidth)}`;
       diagRendition.className = 'val ok';
     } else {
@@ -149,6 +154,7 @@ function attachDiagnostic(): () => void {
     // List the context keys present at runtime — the absence of any audio-side
     // actor key is the visible subtraction proof.
     const keys = Object.keys(context).filter((k) => (context as Record<string, unknown>)[k] !== undefined);
+
     diagContext.textContent = keys.length ? keys.join(', ') : '—';
 
     renderRenditionList(tracks, state.selectedVideoTrackId);
@@ -185,9 +191,11 @@ function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefine
   for (const track of sorted) {
     const { w, h } = trackDimensions(track);
     const row = document.createElement('div');
+
     row.className = 'rendition';
     const tier = h ? `${h}p` : '—';
     const dims = w && h ? ` · ${w}x${h}` : '';
+
     row.textContent = `${tier} - ${formatBandwidth(track.bandwidth)}${dims}`;
     row.title = stableTrackId(track);
 

@@ -25,5 +25,6 @@ export function deepEqual(a: unknown, b: unknown): boolean {
 
   const keysA = Object.keys(a).filter((key) => !isUndefined(a[key]));
   const keysB = Object.keys(b).filter((key) => !isUndefined(b[key]));
+
   return keysA.length === keysB.length && keysA.every((key) => deepEqual(a[key], b[key]));
 }

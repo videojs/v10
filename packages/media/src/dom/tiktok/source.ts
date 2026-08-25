@@ -77,6 +77,7 @@ export function parseTikTokSource(src: string): ParsedTikTokSource | null {
   if (MATCH_ID.test(src)) return { id: src };
 
   const id = MATCH_SRC.exec(src)?.[1];
+
   return id ? { id } : null;
 }
 
@@ -118,6 +119,7 @@ export function buildTikTokIframeSrc(src: string, props: Partial<TikTokMediaProp
     // through here.
     ...tiktok,
   };
+
   return `${EMBED_BASE}/${parsed.id}?${serializeEmbedParams(params)}`;
 }
 

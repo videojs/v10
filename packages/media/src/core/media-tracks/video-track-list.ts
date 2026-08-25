@@ -14,6 +14,7 @@ export function addVideoTrack(media: HTMLMediaElement, track: VideoTrack) {
   }
 
   const trackSet = getPrivate(trackList).trackSet as Set<VideoTrack>;
+
   trackSet.add(track);
 
   const index = trackSet.size - 1;

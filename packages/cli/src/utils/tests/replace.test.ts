@@ -13,6 +13,7 @@ old content here
 ## Footer`;
 
     const result = replaceMarker(markdown, 'test', 'new content');
+
     expect(result).toBe(`# Title
 
 new content
@@ -23,6 +24,7 @@ new content
   it('returns unchanged markdown when marker not found', () => {
     const markdown = '# Title\n\nSome content';
     const result = replaceMarker(markdown, 'missing', 'replacement');
+
     expect(result).toBe(markdown);
   });
 
@@ -34,6 +36,7 @@ middle
 after`;
 
     const result = replaceMarker(markdown, 'id', 'replaced');
+
     expect(result).toContain('before');
     expect(result).toContain('after');
     expect(result).toContain('replaced');
@@ -48,6 +51,7 @@ old
 end`;
 
     const result = replaceMarker(markdown, 'test', 'https://example.com/video.php?id=$1&ref=$&');
+
     expect(result).toContain('https://example.com/video.php?id=$1&ref=$&');
   });
 
@@ -61,6 +65,7 @@ line 3
 end`;
 
     const result = replaceMarker(markdown, 'multi', 'single line');
+
     expect(result).toBe('start\nsingle line\nend');
   });
 });
@@ -76,6 +81,7 @@ CLI-only hint
 ## Footer`;
 
     const result = stripOmitMarkers(markdown);
+
     expect(result).not.toContain('CLI-only hint');
     expect(result).not.toContain('cli:omit');
     expect(result).toContain('# Title');
@@ -84,6 +90,7 @@ CLI-only hint
 
   it('returns unchanged markdown when no markers are present', () => {
     const markdown = '# Title\n\nSome content';
+
     expect(stripOmitMarkers(markdown)).toBe(markdown);
   });
 
@@ -99,6 +106,7 @@ beta
 after`;
 
     const result = stripOmitMarkers(markdown);
+
     expect(result).not.toContain('alpha');
     expect(result).not.toContain('beta');
     expect(result).toContain('before');

@@ -13,6 +13,7 @@ const skinsDir = resolve(packageDir, 'src');
 const entries = Object.fromEntries(
   globSync('src/**/*.tailwind.ts', { cwd: packageDir }).map((file) => {
     const key = file.replace('src/', '').replace('.ts', '');
+
     return [key, file];
   })
 );

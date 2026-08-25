@@ -178,6 +178,7 @@ export class PlayerPage {
       (selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         return actual && actual.readyState >= 1;
       },
       SELECTORS.media,
@@ -208,6 +209,7 @@ export class PlayerPage {
     await this.page.evaluate(async (selector) => {
       const media = document.querySelector(selector) as HTMLMediaElement | null;
       const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
       await actual?.play();
     }, SELECTORS.media);
     await expect(this.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
@@ -242,6 +244,7 @@ export class PlayerPage {
     return this.page.evaluate((selector) => {
       const media = document.querySelector(selector) as HTMLMediaElement | null;
       const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
       return actual?.playbackRate ?? 1;
     }, SELECTORS.media);
   }
@@ -255,6 +258,7 @@ export class PlayerPage {
       (selector) => {
         const media = document.querySelector(selector) as HTMLMediaElement | null;
         const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+
         return actual && actual.readyState >= 1 && actual.duration > 0 && Number.isFinite(actual.duration);
       },
       SELECTORS.media,
@@ -267,6 +271,7 @@ export class PlayerPage {
 
     const x = box.x + box.width * (percent / 100);
     const y = box.y + box.height / 2;
+
     await this.page.mouse.click(x, y);
 
     // Wait for the seek to complete
@@ -281,6 +286,7 @@ export class PlayerPage {
 
     const x = box.x + box.width * (percent / 100);
     const y = box.y + box.height / 2;
+
     await this.page.mouse.move(x, y);
   }
 
@@ -302,6 +308,7 @@ export class PlayerPage {
     const option = this.page
       .locator(usesSettingsMenu ? SELECTORS.activeMenuUncheckedOptions : SELECTORS.playbackRateUncheckedOptions)
       .first();
+
     await expect(option).toBeVisible({ timeout: 5_000 });
     // Menu popovers can intercept pointer events on nested radio items.
     await option.dispatchEvent('click');

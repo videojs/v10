@@ -22,6 +22,7 @@ export function readConfig(): CliConfig {
 
 function writeConfig(config: CliConfig): void {
   const dir = dirname(CONFIG_FILE);
+
   mkdirSync(dir, { recursive: true });
   writeFileSync(CONFIG_FILE, `${JSON.stringify(config, null, 2)}\n`, 'utf-8');
 }
@@ -36,6 +37,7 @@ export function getConfigValue(key: string): string | undefined {
   }
 
   const config = readConfig();
+
   return config[key as keyof CliConfig];
 }
 
@@ -51,6 +53,7 @@ export function setConfigValue(key: string, value: string): void {
   }
 
   const config = readConfig();
+
   (config as Record<string, string>)[key] = value;
   writeConfig(config);
 }

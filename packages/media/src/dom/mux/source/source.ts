@@ -140,6 +140,7 @@ export function createMuxQuery(params: Record<string, unknown> = {}): string {
   }
 
   const query = search.toString();
+
   return query ? `?${query}` : '';
 }
 

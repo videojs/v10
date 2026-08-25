@@ -154,6 +154,7 @@ export class MenuElement extends UIElement {
     if (!this.hasUpdated && this.defaultOpen && !this.open) this.open = true;
 
     const parentCtx = this.#parentCtx.value ?? null;
+
     this.#syncParentRegistration(parentCtx);
 
     this.#core.setProps({
@@ -179,6 +180,7 @@ export class MenuElement extends UIElement {
     const isSubmenu = parentCtx !== null;
 
     const input = this.#menu.input.current;
+
     this.#core.setInput({ ...input, isSubmenu });
     const state = this.#core.getState();
 
@@ -222,6 +224,7 @@ export class MenuElement extends UIElement {
     if (!this.#menu) return;
 
     const triggerElement = this.#position.findTrigger();
+
     this.#syncTrigger(triggerElement);
 
     applyElementProps(this, {
@@ -248,6 +251,7 @@ export class MenuElement extends UIElement {
 
     this.#cleanupSizeObserver?.();
     const syncSize = () => syncMenuSizeChain(this);
+
     syncSize();
     this.#cleanupSizeObserver = observeMenuSize(this, syncSize);
 
@@ -291,6 +295,7 @@ export class MenuElement extends UIElement {
     this.#cleanupSizeObserver?.();
     const parentContentElement = parentCtx.menu.contentElement;
     const syncSize = () => syncMenuSizeChain(parentContentElement);
+
     syncSize();
     this.#cleanupSizeObserver =
       isActive && parentContentElement ? observeMenuSize(parentContentElement, syncSize) : null;
@@ -361,6 +366,7 @@ export class MenuElement extends UIElement {
     if (!trigger) return;
 
     const disabled = this.#triggerState.disabled || isTriggerExplicitlyDisabled(trigger);
+
     applyElementProps(trigger, {
       'aria-disabled': disabled ? 'true' : undefined,
       'data-availability': this.#triggerState.availability,

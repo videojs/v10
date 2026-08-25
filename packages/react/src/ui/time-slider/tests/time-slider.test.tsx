@@ -36,6 +36,7 @@ const {
     pointing: false,
     focused: false,
   };
+
   return {
     mockSliderApi: (options: { onDragStart?: () => void; onDragEnd?: () => void }) => {
       capturedSliderOptions.current = options;
@@ -91,6 +92,7 @@ const {
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
   const orig: Record<string, unknown> = await importOriginal();
+
   return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
@@ -150,6 +152,7 @@ describe('TimeSliderRoot', () => {
   it('forwards ref to the root element', () => {
     const { Wrapper } = createPlayerWrapper();
     const ref = createRef<HTMLDivElement>();
+
     render(
       <Wrapper>
         <TimeSliderRoot ref={ref} />
@@ -179,6 +182,7 @@ describe('TimeSliderRoot', () => {
     );
 
     const el = container.querySelector('[data-orientation]');
+
     expect(el?.getAttribute('data-orientation')).toBe('horizontal');
   });
 
@@ -191,6 +195,7 @@ describe('TimeSliderRoot', () => {
     );
 
     const el = container.querySelector('[data-orientation]') as HTMLElement;
+
     expect(el?.style.getPropertyValue('--media-slider-fill')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-pointer')).toBeTruthy();
     expect(el?.style.getPropertyValue('--media-slider-buffer')).toBeTruthy();
@@ -249,6 +254,7 @@ describe('TimeSlider compound', () => {
 
     const chapters = container.querySelectorAll('.chapter');
     const collection = container.querySelector('.chapters');
+
     expect(chapters).toHaveLength(3);
     expect(collection?.getAttribute('data-orientation')).toBe('horizontal');
     expect(chapters[0]?.getAttribute('data-orientation')).toBe('horizontal');
@@ -275,6 +281,7 @@ describe('TimeSlider compound', () => {
 
   it('renders one full-range chapter when chapter cues are unavailable', () => {
     const cues = mockTextTrackState.chaptersCues;
+
     mockTextTrackState.chaptersCues = [];
 
     try {
@@ -292,6 +299,7 @@ describe('TimeSlider compound', () => {
 
       expect(container.querySelector('.chapters')).toBeTruthy();
       const chapter = container.querySelector('.chapter') as HTMLElement;
+
       expect(chapter).toBeTruthy();
       expect(chapter.dataset.hasCue).toBe('false');
       expect(chapter.style.getPropertyValue('--media-slider-chapter-start')).toBe('0%');
@@ -306,6 +314,7 @@ describe('TimeSlider compound', () => {
     const duration = mockTimeState.duration;
     const currentTime = mockTimeState.currentTime;
     const cues = mockTextTrackState.chaptersCues;
+
     mockTimeState.duration = 0.5;
     mockTimeState.currentTime = 0.25;
     mockTextTrackState.chaptersCues = [{ id: 'short', startTime: 0, endTime: 0.5, text: 'Short' }];
@@ -321,6 +330,7 @@ describe('TimeSlider compound', () => {
       );
 
       const chapter = container.querySelector('.chapter') as HTMLElement;
+
       expect(chapter.style.getPropertyValue('--media-slider-chapter-end')).toBe('100%');
       expect(chapter.style.getPropertyValue('--media-slider-chapter-width')).toBe('100%');
     } finally {
@@ -333,6 +343,7 @@ describe('TimeSlider compound', () => {
   it('keeps the final chapter at the exact right edge', () => {
     const duration = mockTimeState.duration;
     const cues = mockTextTrackState.chaptersCues;
+
     mockTimeState.duration = 487.626;
     mockTextTrackState.chaptersCues = [
       { id: 'first', startTime: 0, endTime: 200, text: 'First' },
@@ -362,6 +373,7 @@ describe('TimeSlider compound', () => {
 
   it('announces the current chapter while using the keyboard', () => {
     const currentTime = mockTimeState.currentTime;
+
     mockTimeState.currentTime = 70;
     mockSliderInput.focused = true;
 
@@ -418,6 +430,7 @@ describe('TimeSlider compound', () => {
     );
 
     const thumb = container.querySelector('[data-testid="thumb"]');
+
     expect(thumb?.getAttribute('role')).toBe('slider');
     expect(thumb?.getAttribute('aria-label')).toBe('Seek');
   });
@@ -435,6 +448,7 @@ describe('TimeSlider compound', () => {
     );
 
     const thumb = container.querySelector('[data-testid="thumb"]');
+
     expect(thumb?.getAttribute('aria-valuetext')).toBe(
       `${formatTimeAsPhrase(30, { locale: 'fr' })} sur ${formatTimeAsPhrase(120, { locale: 'fr' })}`
     );
@@ -451,6 +465,7 @@ describe('TimeSlider compound', () => {
     );
 
     const output = container.querySelector('[data-testid="value"]');
+
     expect(output?.textContent).toBeTruthy();
   });
 });
@@ -462,6 +477,7 @@ describe('TimeSliderRoot pauseOnDrag', () => {
     mockPlaybackState.pause.mockClear();
 
     const { Wrapper } = createPlayerWrapper();
+
     render(
       <Wrapper>
         <TimeSliderRoot />
@@ -481,6 +497,7 @@ describe('TimeSliderRoot pauseOnDrag', () => {
     mockPlaybackState.pause.mockClear();
 
     const { Wrapper } = createPlayerWrapper();
+
     render(
       <Wrapper>
         <TimeSliderRoot pauseOnDrag />
@@ -500,6 +517,7 @@ describe('TimeSliderRoot pauseOnDrag', () => {
     mockPlaybackState.pause.mockClear();
 
     const { Wrapper } = createPlayerWrapper();
+
     render(
       <Wrapper>
         <TimeSliderRoot pauseOnDrag />
@@ -519,6 +537,7 @@ describe('TimeSliderRoot pauseOnDrag', () => {
     const onDragEnd = vi.fn();
 
     const { Wrapper } = createPlayerWrapper();
+
     render(
       <Wrapper>
         <TimeSliderRoot pauseOnDrag onDragStart={onDragStart} onDragEnd={onDragEnd} />

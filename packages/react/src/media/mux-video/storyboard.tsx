@@ -39,6 +39,7 @@ export function MuxStoryboard({ media }: { media: MuxStoryboardMedia }) {
           if (!cancelled) onChange();
         });
       };
+
       media.addEventListener('streamtypechange', notify);
       media.addEventListener('sourcechange', notify);
       return () => {

@@ -76,6 +76,7 @@ function resolveExportPath(exportValue: unknown): string | undefined {
     const obj = exportValue as Record<string, unknown>;
     // Prefer types (points to source in some configs), fall back to default
     const raw = (obj.types ?? obj.default) as string | undefined;
+
     return raw;
   }
 
@@ -354,16 +355,19 @@ function featureDocsSlug(featureName: string): string {
   if (override) return `reference/feature-${override}`;
 
   const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+
   return `reference/feature-${kebab}`;
 }
 
 function featureReferenceExists(monorepoRoot: string, slug: string): boolean {
   const mdxPath = path.join(monorepoRoot, 'site/src/content/docs', `${slug}.mdx`);
+
   return fs.existsSync(mdxPath);
 }
 
 function resolveFeatureRef(name: string, monorepoRoot: string): PresetFeatureRef {
   const slug = featureDocsSlug(name);
+
   return { name, slug, hasReference: featureReferenceExists(monorepoRoot, slug) };
 }
 
@@ -393,6 +397,7 @@ function parseFeatureBundles(presetsFilePath: string): Map<string, string[]> {
         for (const element of decl.initializer.elements) {
           if (ts.isIdentifier(element)) {
             const featureName = element.text.replace(/Feature$/, '');
+
             features.push(featureName);
           }
         }

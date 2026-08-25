@@ -50,11 +50,13 @@ describe('HlsVideoMediaElement', () => {
   describe('src', () => {
     it('returns empty string before any src is set', () => {
       const media = new HlsVideoMediaElement();
+
       expect(media.src).toBe('');
     });
 
     it('reflects the set value synchronously', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       // Must be synchronous — no await needed
       expect(media.src).toBe('https://example.com/v.m3u8');
@@ -62,6 +64,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('reflects the most recently set value', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
       expect(media.src).toBe('https://example.com/v2.m3u8');
@@ -69,6 +72,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('reflects empty string when set to empty', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
       expect(media.src).toBe('');
@@ -77,12 +81,14 @@ describe('HlsVideoMediaElement', () => {
     // Setting src triggers the load algorithm — engine state update is synchronous
     it('synchronously updates engine presentation state when src is set', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('synchronously updates engine presentation state when src changes', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v2.m3u8');
@@ -90,6 +96,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('clears engine presentation state when src is set to empty string', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
       expect(media.engine.state.presentation.get()?.url).toBeFalsy();
@@ -97,6 +104,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('leaves engine presentation state alone when src is set to the URL already playing', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       const presentation = media.engine.state.presentation.get();
 
@@ -114,6 +122,7 @@ describe('HlsVideoMediaElement', () => {
   describe('attach / detach', () => {
     it('exposes the engine immediately (created at construction, not on attach)', () => {
       const media = new HlsVideoMediaElement();
+
       expect(media.engine).not.toBeNull();
     });
 
@@ -121,16 +130,20 @@ describe('HlsVideoMediaElement', () => {
       const media = new HlsVideoMediaElement();
       const el1 = document.createElement('video');
       const el2 = document.createElement('video');
+
       media.attach(el1);
       const engineAfterFirstAttach = media.engine;
+
       media.attach(el2);
       expect(media.engine).toBe(engineAfterFirstAttach);
     });
 
     it('reuses the same engine instance across attach/detach cycles', () => {
       const media = new HlsVideoMediaElement();
+
       media.attach(document.createElement('video'));
       const engine = media.engine;
+
       media.detach();
       media.attach(document.createElement('video'));
       expect(media.engine).toBe(engine);
@@ -139,22 +152,27 @@ describe('HlsVideoMediaElement', () => {
     it('reuses the same engine instance when src is set', () => {
       const media = new HlsVideoMediaElement();
       const initial = media.engine;
+
       media.src = 'https://example.com/v1.m3u8';
       expect(media.engine).toBe(initial);
     });
 
     it('reuses the same engine instance when src changes', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v1.m3u8';
       const engine = media.engine;
+
       media.src = 'https://example.com/v2.m3u8';
       expect(media.engine).toBe(engine);
     });
 
     it('does not destroy the engine when src changes', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v1.m3u8';
       const spy = vi.spyOn(media.engine, 'destroy');
+
       media.src = 'https://example.com/v2.m3u8';
       expect(spy).not.toHaveBeenCalled();
     });
@@ -162,6 +180,7 @@ describe('HlsVideoMediaElement', () => {
     it('keeps the attached media element across src changes', () => {
       const media = new HlsVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
@@ -171,6 +190,7 @@ describe('HlsVideoMediaElement', () => {
     it('cancels pending play listener when src changes', async () => {
       const media = new HlsVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
       el.play = () => Promise.reject(new Error('no supported sources'));
@@ -178,6 +198,7 @@ describe('HlsVideoMediaElement', () => {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
       const spy = vi.spyOn(el, 'removeEventListener');
+
       media.src = 'https://example.com/v2.m3u8';
       expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
     });
@@ -185,12 +206,14 @@ describe('HlsVideoMediaElement', () => {
     it('sets mediaElement in owners when attached', () => {
       const media = new HlsVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
     it('clears mediaElement in owners when detached', () => {
       const media = new HlsVideoMediaElement();
+
       media.attach(document.createElement('video'));
       media.detach();
       expect(media.engine.context.mediaElement.get()).toBeUndefined();
@@ -200,6 +223,7 @@ describe('HlsVideoMediaElement', () => {
       const media = new HlsVideoMediaElement();
       const el1 = document.createElement('video');
       const el2 = document.createElement('video');
+
       media.attach(el1);
       media.attach(el2);
       expect(media.engine.context.mediaElement.get()).toBe(el2);
@@ -207,6 +231,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('preserves src across attach/detach cycles', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       media.attach(document.createElement('video'));
       media.detach();
@@ -215,6 +240,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('src set before attach is reflected in engine state', () => {
       const media = new HlsVideoMediaElement();
+
       media.src = 'https://example.com/v.m3u8';
       media.attach(document.createElement('video'));
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
@@ -222,8 +248,10 @@ describe('HlsVideoMediaElement', () => {
 
     it('detach does not destroy the engine', () => {
       const media = new HlsVideoMediaElement();
+
       media.attach(document.createElement('video'));
       const spy = vi.spyOn(media.engine, 'destroy');
+
       media.detach();
       expect(spy).not.toHaveBeenCalled();
     });
@@ -235,8 +263,10 @@ describe('HlsVideoMediaElement', () => {
   describe('play()', () => {
     it('returns a Promise', () => {
       const media = new HlsVideoMediaElement();
+
       media.attach(document.createElement('video'));
       const result = media.play();
+
       expect(result).toBeInstanceOf(Promise);
       // Prevent unhandled rejection — play without src is expected to fail
       result.catch(() => {});
@@ -244,6 +274,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('sets loadActivated on engine state when called', () => {
       const media = new HlsVideoMediaElement();
+
       media.attach(document.createElement('video'));
       media.play().catch(() => {});
       expect(media.engine.state.loadActivated.get()).toBe(true);
@@ -252,6 +283,7 @@ describe('HlsVideoMediaElement', () => {
     it('retries play() via loadstart when element has no src but adapter has one', async () => {
       const media = new HlsVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       media.src = 'https://example.com/v.m3u8';
 
@@ -259,6 +291,7 @@ describe('HlsVideoMediaElement', () => {
       // hasn't attached yet, then succeed on retry
       let playCallCount = 0;
       const originalPlay = el.play.bind(el);
+
       el.play = () => {
         playCallCount++;
 
@@ -285,10 +318,12 @@ describe('HlsVideoMediaElement', () => {
     it('re-throws when play() rejects and no adapter src is set', async () => {
       const media = new HlsVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       // No src on adapter — nothing pending to wait for
 
       const err = new Error('autoplay policy');
+
       el.play = () => Promise.reject(err);
 
       await expect(media.play()).rejects.toThrow('autoplay policy');
@@ -297,6 +332,7 @@ describe('HlsVideoMediaElement', () => {
     it('removes the pending loadstart listener on detach', async () => {
       const media = new HlsVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       media.src = 'https://example.com/v.m3u8';
 
@@ -306,6 +342,7 @@ describe('HlsVideoMediaElement', () => {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
       const spy = vi.spyOn(el, 'removeEventListener');
+
       media.detach();
 
       expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
@@ -314,6 +351,7 @@ describe('HlsVideoMediaElement', () => {
     it('removes the pending loadstart listener on destroy', async () => {
       const media = new HlsVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       media.src = 'https://example.com/v.m3u8';
 
@@ -323,6 +361,7 @@ describe('HlsVideoMediaElement', () => {
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
 
       const spy = vi.spyOn(el, 'removeEventListener');
+
       media.destroy();
 
       expect(spy).toHaveBeenCalledWith('loadstart', expect.any(Function));
@@ -339,23 +378,27 @@ describe('HlsVideoMediaElement', () => {
   describe('preload', () => {
     it('returns empty string before any preload is set', () => {
       const media = new HlsVideoMediaElement();
+
       expect(media.preload).toBe('');
     });
 
     it('reflects the set value synchronously', () => {
       const media = new HlsVideoMediaElement();
+
       media.preload = 'auto';
       expect(media.preload).toBe('auto');
     });
 
     it('updates engine state immediately when set', () => {
       const media = new HlsVideoMediaElement();
+
       media.preload = 'none';
       expect(media.engine.state.preload.get()).toBe('none');
     });
 
     it('setting preload to empty string resets the stored value but does not clear current engine state', () => {
       const media = new HlsVideoMediaElement();
+
       media.preload = 'auto';
       media.preload = '';
       // '' only clears #preload so the next engine recreation won't re-apply
@@ -365,6 +408,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('survives src reassignment — explicit preload persists on the recycled engine', () => {
       const media = new HlsVideoMediaElement();
+
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
       expect(media.preload).toBe('none');
@@ -374,6 +418,7 @@ describe('HlsVideoMediaElement', () => {
     it('keeps explicit preload in engine state across src changes', () => {
       const media = new HlsVideoMediaElement();
       const el = document.createElement('video');
+
       media.attach(el);
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
@@ -396,6 +441,7 @@ describe('HlsVideoMediaElement', () => {
     it('destroys the underlying engine', () => {
       const media = new HlsVideoMediaElement();
       const spy = vi.spyOn(media.engine, 'destroy');
+
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
     });
@@ -436,6 +482,7 @@ describe('HlsVideoMediaElement', () => {
           [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 0, targetDuration: 2, playlistType, endList: complete },
         },
       };
+
       return {
         id: 'pres-1',
         url: 'https://example.com/master.m3u8',
@@ -449,6 +496,7 @@ describe('HlsVideoMediaElement', () => {
 
     function liveMedia(playlistType?: 'VOD' | 'EVENT') {
       const media = new TestMedia();
+
       media.engine.state.presentation.set(liveVideoPresentation(playlistType));
       media.engine.state.selectedVideoTrackId.set('v-1');
       return media;
@@ -458,6 +506,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('starts unknown / NaN before anything resolves', () => {
       const media = new TestMedia();
+
       expect(media.streamType).toBe('unknown');
       expect(media.targetLiveWindow).toBeNaN();
       expect(media.liveEdgeStart).toBeNaN();
@@ -468,6 +517,7 @@ describe('HlsVideoMediaElement', () => {
       const media = new TestMedia();
       const streamTypeChange = vi.fn();
       const targetLiveWindowChange = vi.fn();
+
       media.addEventListener('streamtypechange', streamTypeChange);
       media.addEventListener('targetlivewindowchange', targetLiveWindowChange);
 
@@ -484,6 +534,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('reports Infinity targetLiveWindow for an EVENT (DVR) playlist', async () => {
       const media = liveMedia('EVENT');
+
       await flush();
       expect(media.streamType).toBe('live');
       expect(media.targetLiveWindow).toBe(Number.POSITIVE_INFINITY);
@@ -492,6 +543,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('reports on-demand / NaN for a VOD playlist', async () => {
       const media = liveMedia('VOD');
+
       await flush();
       expect(media.streamType).toBe('on-demand');
       expect(media.targetLiveWindow).toBeNaN();
@@ -501,6 +553,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('derives liveEdgeStart at read time: window end minus HOLD-BACK, sliding with the window', async () => {
       const media = liveMedia();
+
       await flush();
       // Window [100, 110], HOLD-BACK 3 × targetDuration(2) = 6 → 104.
       expect(media.liveEdgeStart).toBe(104);
@@ -518,6 +571,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('supports a user streamType override, reverting on unknown', async () => {
       const media = liveMedia();
+
       await flush();
       expect(media.streamType).toBe('live');
 
@@ -536,6 +590,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('resets to unknown / NaN when the source is cleared', async () => {
       const media = liveMedia();
+
       await flush();
       expect(media.streamType).toBe('live');
 
@@ -608,11 +663,13 @@ describe('HlsVideoMediaElement', () => {
     it('warns that LL-HLS falls back to standard live', async () => {
       const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const media = new TestMedia();
+
       media.engine.state.selectedVideoTrackId.set('v1');
       media.engine.state.presentation.set(livePresentation({ lowLatency: true }));
       await flush();
 
       const notices = noticesMatching(spy, /Low-Latency HLS/);
+
       expect(notices).toHaveLength(1);
       expect(notices[0]).toMatch(/standard live/i);
       media.destroy();
@@ -621,6 +678,7 @@ describe('HlsVideoMediaElement', () => {
     it('warns that DVR/EVENT support is experimental', async () => {
       const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const media = new TestMedia();
+
       media.engine.state.selectedVideoTrackId.set('v1');
       media.engine.state.presentation.set(livePresentation({ playlistType: 'EVENT' }));
       await flush();
@@ -634,6 +692,7 @@ describe('HlsVideoMediaElement', () => {
       // time; a per-parse warning would repeat forever.
       const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const media = new TestMedia();
+
       media.engine.state.selectedVideoTrackId.set('v1');
 
       media.engine.state.presentation.set(livePresentation({ lowLatency: true }));
@@ -649,6 +708,7 @@ describe('HlsVideoMediaElement', () => {
     it('says nothing for a plain live source', async () => {
       const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const media = new TestMedia();
+
       media.engine.state.selectedVideoTrackId.set('v1');
       media.engine.state.presentation.set(livePresentation({}));
       await flush();
@@ -669,6 +729,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('exposes no error before anything is reported', () => {
       const media = new TestMedia();
+
       expect(media.error).toBeNull();
       media.destroy();
     });
@@ -676,6 +737,7 @@ describe('HlsVideoMediaElement', () => {
     it('surfaces a reported fatal condition as an ErrorLike and fires error', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
@@ -690,6 +752,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('surfaces the first fatal condition — the root cause, not the consequence', async () => {
       const media = new TestMedia();
+
       // A reporter states the cause before selection reports the consequence;
       // sequence order is causal, so the first fatal is the actionable one.
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
@@ -702,6 +765,7 @@ describe('HlsVideoMediaElement', () => {
     it('ignores non-fatal reports — they stay in the sequence only', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       // 2039 (manifest feature unsupported) is the degraded-but-playable tier;
@@ -717,6 +781,7 @@ describe('HlsVideoMediaElement', () => {
     it('fires once per distinct condition, not per re-report', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
@@ -732,6 +797,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('clears when the sequence resets for a new source', async () => {
       const media = new TestMedia();
+
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
       await flush();
       expect(media.error).not.toBeNull();
@@ -746,6 +812,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('surfaces the unsupported-playback-feature code when a container cause explains the verdict', async () => {
       const media = new TestMedia();
+
       // The verdict alone only says nothing was selectable. The cause says why
       // it can't be fixed here — no retry, CDN, or rendition helps — which is a
       // different thing to tell a viewer, so it gets its own code.
@@ -761,6 +828,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('surfaces the same code for an encrypted source', async () => {
       const media = new TestMedia();
+
       media.engine.state.errors.set([
         { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
         { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
@@ -775,6 +843,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('surfaces it for a cause on a different track type than the verdict', async () => {
       const media = new TestMedia();
+
       // Encrypted audio empties audio while video is MPEG-TS. Attributing causes
       // per type would miss this; the source is unplayable either way.
       media.engine.state.errors.set([
@@ -789,6 +858,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('keeps the verdict code when nothing unsupported explains it', async () => {
       const media = new TestMedia();
+
       // A type can empty for reasons that are not "we don't implement this" —
       // that stays a plain verdict.
       media.engine.state.errors.set([{ code: 2039 }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
@@ -807,6 +877,7 @@ describe('HlsVideoMediaElement', () => {
         ],
       ] satisfies SvtaError[][]) {
         const media = new TestMedia();
+
         media.engine.state.errors.set(errors);
         await flush();
 
@@ -818,6 +889,7 @@ describe('HlsVideoMediaElement', () => {
     it('does not re-fire when a cause is appended after the verdict surfaced', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
+
       media.addEventListener('error', (event) => fired.push(event));
 
       media.engine.state.errors.set([
@@ -843,6 +915,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('prefers a message the reporter supplied', async () => {
       const media = new TestMedia();
+
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: 'Reporter knows best.' }]);
       await flush();
 
@@ -852,6 +925,7 @@ describe('HlsVideoMediaElement', () => {
 
     it('carries reporter context through as data', async () => {
       const media = new TestMedia();
+
       media.engine.state.errors.set([
         { code: SVTA_NO_SUPPORTED_VIDEO_TRACK, data: { selectionKey: 'selectedVideoTrackId' } },
       ]);
@@ -884,6 +958,7 @@ describe('HlsVideoMediaElement', () => {
     it('logs the message once', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const media = new TestMedia();
+
       media.engine.state.errors.set(unsupportedSource);
       await flush();
 
@@ -896,10 +971,12 @@ describe('HlsVideoMediaElement', () => {
       // than in a sentence the engine would have to localize.
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const media = new TestMedia();
+
       media.engine.state.errors.set(unsupportedSource);
       await flush();
 
       const call = spy.mock.calls.find((entry) => String(entry[0]).startsWith(MESSAGE));
+
       expect(call?.[1]).toEqual({ conditions: unsupportedSource });
       media.destroy();
     });
@@ -907,6 +984,7 @@ describe('HlsVideoMediaElement', () => {
     it('says nothing for a verdict with no unsupported cause', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const media = new TestMedia();
+
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
       await flush();
 
@@ -916,12 +994,14 @@ describe('HlsVideoMediaElement', () => {
 
     it('appends the alternative-Media suggestion when the class names one', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
       class Suggesting extends HlsVideoMediaMixin(EventTarget) {
         static override get alternativeMediaSuggestion(): string {
           return 'Import from "/media/mux/hls-js" instead.';
         }
       }
       const media = new Suggesting();
+
       media.engine.state.errors.set(unsupportedSource);
       await flush();
 

@@ -97,6 +97,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
 
       if (type === 'AUDIO' && groupId && name) {
         const uri = mediaAttrs.get('URI');
+
         audioRenditions.push({
           groupId,
           name,

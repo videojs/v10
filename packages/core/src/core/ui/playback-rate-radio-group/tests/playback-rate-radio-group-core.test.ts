@@ -31,6 +31,7 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('projects playbackRate and playbackRates', () => {
       const core = new PlaybackRateRadioGroupCore();
       const media = createMediaState({ playbackRate: 1.5, playbackRates: [1, 1.5] });
+
       core.setMedia(media);
       const state = core.getState();
 
@@ -45,6 +46,7 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('marks state disabled when no rates are available', () => {
       const core = new PlaybackRateRadioGroupCore();
       const media = createMediaState({ playbackRates: [] });
+
       core.setMedia(media);
 
       expect(core.getState().disabled).toBe(true);
@@ -52,6 +54,7 @@ describe('PlaybackRateRadioGroupCore', () => {
 
     it('marks availability unavailable when no rates are available', () => {
       const core = new PlaybackRateRadioGroupCore();
+
       core.setMedia(createMediaState({ playbackRates: [] }));
 
       expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
@@ -59,6 +62,7 @@ describe('PlaybackRateRadioGroupCore', () => {
 
     it('marks availability available when rates exist', () => {
       const core = new PlaybackRateRadioGroupCore();
+
       core.setMedia(createMediaState());
 
       expect(core.getState()).toMatchObject({ availability: 'available', hidden: false });
@@ -68,6 +72,7 @@ describe('PlaybackRateRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns a stable default group label', () => {
       const core = new PlaybackRateRadioGroupCore();
+
       expect(core.getLabel(createState({ rate: 1.5 }))).toMatchObject({
         key: 'menu.playbackRate',
         text: 'Playback rate',
@@ -76,6 +81,7 @@ describe('PlaybackRateRadioGroupCore', () => {
 
     it('returns custom string label', () => {
       const core = new PlaybackRateRadioGroupCore({ label: 'Speed' });
+
       expect(core.getLabel(createState())).toBe('Speed');
     });
 
@@ -83,6 +89,7 @@ describe('PlaybackRateRadioGroupCore', () => {
       const core = new PlaybackRateRadioGroupCore({
         label: (state) => `${state.rate}× speed`,
       });
+
       expect(core.getLabel(createState({ rate: 2 }))).toBe('2× speed');
     });
   });
@@ -90,6 +97,7 @@ describe('PlaybackRateRadioGroupCore', () => {
   describe('getLabelParams', () => {
     it('returns no parameters for the stable group label', () => {
       const core = new PlaybackRateRadioGroupCore();
+
       expect(core.getLabelParams(createState({ rate: 2 }))).toBeUndefined();
     });
   });
@@ -97,6 +105,7 @@ describe('PlaybackRateRadioGroupCore', () => {
   describe('getRateLabel', () => {
     it('formats rate labels by default', () => {
       const core = new PlaybackRateRadioGroupCore();
+
       expect(core.getRateLabel(1.5)).toBe('1.5×');
     });
 
@@ -113,18 +122,21 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('returns aria-label', () => {
       const core = new PlaybackRateRadioGroupCore();
       const attrs = core.getAttrs(createState({ rate: 1.5 }));
+
       expect(attrs['aria-label']).toMatchObject({ key: 'menu.playbackRate', text: 'Playback rate' });
     });
 
     it('sets aria-disabled when disabled', () => {
       const core = new PlaybackRateRadioGroupCore();
       const attrs = core.getAttrs(createState({ disabled: true }));
+
       expect(attrs['aria-disabled']).toBe('true');
     });
 
     it('sets hidden when unavailable', () => {
       const core = new PlaybackRateRadioGroupCore();
       const attrs = core.getAttrs(createState({ hidden: true }));
+
       expect(attrs.hidden).toBe('');
     });
   });
@@ -133,6 +145,7 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('sets a rate from the available list', () => {
       const core = new PlaybackRateRadioGroupCore();
       const media = createMediaState();
+
       core.select(media, 1.5);
       expect(media.setPlaybackRate).toHaveBeenCalledWith(1.5);
     });
@@ -140,6 +153,7 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('does nothing when disabled', () => {
       const core = new PlaybackRateRadioGroupCore({ disabled: true });
       const media = createMediaState();
+
       core.select(media, 1.5);
       expect(media.setPlaybackRate).not.toHaveBeenCalled();
     });
@@ -147,6 +161,7 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('does nothing for unavailable rates', () => {
       const core = new PlaybackRateRadioGroupCore();
       const media = createMediaState();
+
       core.select(media, 3);
       expect(media.setPlaybackRate).not.toHaveBeenCalled();
     });
@@ -156,6 +171,7 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('sets the rate matching a menu value', () => {
       const core = new PlaybackRateRadioGroupCore();
       const media = createMediaState();
+
       core.selectValue(media, '2');
       expect(media.setPlaybackRate).toHaveBeenCalledWith(2);
     });
@@ -163,6 +179,7 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('does nothing for an unknown menu value', () => {
       const core = new PlaybackRateRadioGroupCore();
       const media = createMediaState();
+
       core.selectValue(media, '3');
       expect(media.setPlaybackRate).not.toHaveBeenCalled();
     });

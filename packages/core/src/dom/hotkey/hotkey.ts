@@ -144,5 +144,6 @@ export function getHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator {
  */
 export function createHotkey(target: HTMLElement, options: HotkeyOptions): () => void {
   const coordinator = getHotkeyCoordinator(target);
+
   return coordinator.add(options);
 }

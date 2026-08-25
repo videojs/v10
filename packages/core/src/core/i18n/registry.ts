@@ -34,6 +34,7 @@ function getRegistry(): I18nRegistry {
   }
 
   const registry: I18nRegistry = { layers: new Map(), subscribers: new Set() };
+
   host[I18N_REGISTRY_KEY] = registry;
   return registry;
 }
@@ -67,6 +68,7 @@ function chineseFallback(segments: string[]): Locale | undefined {
   }
 
   const script = segments.find((segment) => segment === 'hant' || segment === 'hans');
+
   return script === 'hant' ? 'zh-tw' : script === 'hans' ? 'zh-cn' : undefined;
 }
 
@@ -145,6 +147,7 @@ export function registerI18n(locale: Locale, translations: Partial<Translations>
   const { layers } = getRegistry();
   const tag = getCanonicalLocaleKey(locale);
   const existing = layers.get(tag) ?? {};
+
   layers.set(tag, { ...existing, ...flattenTranslations(translations) });
   notify();
 }
@@ -167,6 +170,7 @@ export function getI18nTranslations(locale: Locale): FlatTranslations {
  */
 export function onI18nRegistryChange(callback: () => void): () => void {
   const { subscribers } = getRegistry();
+
   subscribers.add(callback);
   return () => {
     subscribers.delete(callback);
@@ -186,6 +190,7 @@ export function hasRegisteredLocale(locale: Locale): boolean {
 /** Clears registered locale overlays (test isolation). */
 export function resetI18nRegistry(): void {
   const { layers, subscribers } = getRegistry();
+
   layers.clear();
   subscribers.clear();
 }

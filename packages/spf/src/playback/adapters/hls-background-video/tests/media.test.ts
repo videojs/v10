@@ -23,6 +23,7 @@ describe('HlsBackgroundVideoMedia', () => {
   it('follows the element when it is changed underneath', () => {
     const media = new HlsBackgroundVideoMedia();
     const el = document.createElement('video');
+
     media.attach(el);
 
     el.loop = false;

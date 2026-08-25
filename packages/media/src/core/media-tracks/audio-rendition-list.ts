@@ -12,6 +12,7 @@ export function addRendition(track: AudioTrack, rendition: AudioRendition) {
   getPrivate(rendition).track = track;
 
   const renditionSet = getPrivate(track).renditionSet as Set<AudioRendition>;
+
   renditionSet.add(rendition);
   const index = renditionSet.size - 1;
 
@@ -34,6 +35,7 @@ export function removeRendition(rendition: AudioRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
   const track = getPrivate(rendition).track as AudioTrack;
   const renditionSet = getPrivate(track).renditionSet as Set<AudioRendition>;
+
   renditionSet.delete(rendition);
 
   queueMicrotask(() => {

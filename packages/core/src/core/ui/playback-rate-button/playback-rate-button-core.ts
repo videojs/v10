@@ -71,6 +71,7 @@ export class PlaybackRateButtonCore {
 
   getState(): PlaybackRateButtonState {
     const media = this.#media!;
+
     this.state.patch({ rate: media.playbackRate });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 

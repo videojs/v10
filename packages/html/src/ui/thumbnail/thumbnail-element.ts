@@ -54,6 +54,7 @@ export class ThumbnailElement extends UIElement {
     const shadow = this.attachShadow({ mode: 'open' });
 
     const style = document.createElement('style');
+
     style.textContent = SHADOW_CSS;
     shadow.appendChild(style);
 
@@ -131,6 +132,7 @@ export class ThumbnailElement extends UIElement {
       this.#resetStyles();
 
       const state = this.#core.getState(false, false, undefined);
+
       applyElementProps(this, this.#core.getAttrs(state));
       applyStateDataAttrs(this, state, ThumbnailDataAttrs);
       return;
@@ -143,6 +145,7 @@ export class ThumbnailElement extends UIElement {
 
     const api = this.#api;
     const state = this.#core.getState(api?.loading ?? false, api?.error ?? false, thumbnail);
+
     applyElementProps(this, this.#core.getAttrs(state));
     applyStateDataAttrs(this, state, ThumbnailDataAttrs);
 
@@ -181,6 +184,7 @@ export class ThumbnailElement extends UIElement {
     this.style.height = `${result.containerHeight}px`;
 
     const imgStyle = this.#img.style;
+
     imgStyle.width = `${result.imageWidth}px`;
     imgStyle.height = `${result.imageHeight}px`;
     imgStyle.maxWidth = 'none';
@@ -193,6 +197,7 @@ export class ThumbnailElement extends UIElement {
     this.style.height = '';
 
     const imgStyle = this.#img.style;
+
     imgStyle.width = '';
     imgStyle.height = '';
     imgStyle.maxWidth = '';

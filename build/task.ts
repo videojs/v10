@@ -33,6 +33,7 @@ export const cachedTaskOutputs: TaskPath[] = [
 /** Build the same task in each workspace dependency used by the current package. */
 export function workspaceTaskDependencies(task = 'build') {
   const from: WorkspaceDependencyField[] = ['dependencies', 'devDependencies'];
+
   return [{ task, from }];
 }
 

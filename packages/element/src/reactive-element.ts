@@ -396,6 +396,7 @@ function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
         },
         set(this: ReactiveElement, value: unknown) {
           const old = (this as unknown as Record<symbol, unknown>)[key];
+
           (this as unknown as Record<symbol, unknown>)[key] = value;
 
           if (!Object.is(old, value)) {
@@ -409,6 +410,7 @@ function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
   }
 
   const meta: ResolvedMeta = { props, attrToProp };
+
   cache.set(ctor, meta);
   return meta;
 }

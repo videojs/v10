@@ -8,6 +8,7 @@ const OPEN: TooltipInput = { active: true, status: 'idle' };
 describe('TooltipCore', () => {
   it('uses default props', () => {
     const core = new TooltipCore();
+
     core.setInput(CLOSED);
     const state = core.getState();
 
@@ -27,6 +28,7 @@ describe('TooltipCore', () => {
 
   it('applies custom props', () => {
     const core = new TooltipCore({ side: 'bottom', align: 'start' });
+
     core.setInput(OPEN);
     const state = core.getState();
 
@@ -48,6 +50,7 @@ describe('TooltipCore', () => {
   describe('getPopupAttrs', () => {
     it('returns presentation role', () => {
       const core = new TooltipCore();
+
       core.setInput(OPEN);
       const attrs = core.getPopupAttrs(core.getState());
 
@@ -56,6 +59,7 @@ describe('TooltipCore', () => {
 
     it('returns popover manual attribute', () => {
       const core = new TooltipCore();
+
       core.setInput(OPEN);
       const attrs = core.getPopupAttrs(core.getState());
 
@@ -66,6 +70,7 @@ describe('TooltipCore', () => {
   describe('transition flags', () => {
     it('sets transitionStarting when status is starting', () => {
       const core = new TooltipCore();
+
       core.setInput({ active: true, status: 'starting' });
       const state = core.getState();
 
@@ -75,6 +80,7 @@ describe('TooltipCore', () => {
 
     it('sets transitionEnding when status is ending', () => {
       const core = new TooltipCore();
+
       core.setInput({ active: true, status: 'ending' });
       const state = core.getState();
 
@@ -84,6 +90,7 @@ describe('TooltipCore', () => {
 
     it('both false when status is idle', () => {
       const core = new TooltipCore();
+
       core.setInput(OPEN);
       const state = core.getState();
 

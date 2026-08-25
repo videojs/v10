@@ -175,6 +175,7 @@ function setupAirPlaySetup({
 
                 if (!stillActive) {
                   const ownerUrl = sessionPresentationUrl;
+
                   sessionPresentationUrl = undefined;
 
                   // Snapshot only while the session's own presentation is still
@@ -199,6 +200,7 @@ function setupAirPlaySetup({
             }
           };
           const listenerCleanup = new AbortController();
+
           listen(mediaElement, 'webkitcurrentplaybacktargetiswirelesschanged', sync, {
             signal: listenerCleanup.signal,
           });
@@ -209,6 +211,7 @@ function setupAirPlaySetup({
               if (!pendingRestore) return;
 
               const { position, wasPlaying, presentationUrl } = pendingRestore;
+
               pendingRestore = undefined;
 
               if (peek(state.presentation)?.url !== presentationUrl) return;

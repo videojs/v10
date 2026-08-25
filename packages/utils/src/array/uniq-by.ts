@@ -11,6 +11,7 @@
  */
 export function uniqBy<T, K>(arr: T[], mapper: (item: T) => K): T[] {
   const seen = new Map<K, number>();
+
   arr.forEach((item, i) => seen.set(mapper(item), i));
   return arr.filter((_, i) => [...seen.values()].includes(i));
 }

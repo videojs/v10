@@ -40,6 +40,7 @@ describe('AirPlayButton', () => {
     renderAirPlayButton({ hidden: true, 'aria-label': 'Custom AirPlay' });
 
     const button = screen.getByTestId('airplay');
+
     expect(button.hidden).toBe(true);
     expect(button.getAttribute('aria-label')).toBe('Custom AirPlay');
   });

@@ -7,10 +7,12 @@ export function isPictureInPictureEnabled() {
   if (document.pictureInPictureEnabled) {
     const isSafari = /.*Version\/.*Safari\/.*/.test(navigator.userAgent);
     const isPWA = typeof matchMedia === 'function' && matchMedia('(display-mode: standalone)').matches;
+
     return !isSafari || !isPWA;
   }
 
   const video = document.createElement('video') as WebKitVideoElement;
+
   return isFunction(video.webkitSetPresentationMode);
 }
 
@@ -43,6 +45,7 @@ export function isPictureInPicture(media: EventTarget) {
   // isPictureInPicture is a non-standard property that is set by the video host
   // and checks internally if the video host target is the picture-in-picture element.
   const video = media as unknown as MediaPictureInPictureCapability;
+
   return video.isPictureInPicture ?? false;
 }
 

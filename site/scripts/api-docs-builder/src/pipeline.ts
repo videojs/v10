@@ -145,6 +145,7 @@ function discoverExtraDataAttrs(componentDir: string, componentKebab: string): E
     const sourceFile = ts.createSourceFile(filePath, fs.readFileSync(filePath, 'utf-8'), ts.ScriptTarget.Latest, true);
 
     let tagValue: string | undefined;
+
     ts.forEachChild(sourceFile, (node) => {
       if (!ts.isVariableStatement(node)) return;
 
@@ -323,6 +324,7 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
 function instantiatesCore(filePath: string, componentName: string): boolean {
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
+
     return new RegExp(`new ${componentName}Core\\b`).test(content);
   } catch {
     return false;
@@ -340,6 +342,7 @@ function usesDataAttrs(filePath: string): boolean {
 function resolvePartElement(htmlDir: string, componentKebab: string, source: string, partKebab: string): string {
   const override = PART_ELEMENT_OVERRIDES[`${componentKebab}/${partKebab}`];
   const relative = source.replace(/^\.\//, '');
+
   return path.join(htmlDir, override ? `${override}.ts` : `${relative}-element.ts`);
 }
 
@@ -395,6 +398,7 @@ export function discoverParts(source: ComponentSource, program: ts.Program, mono
 
     for (const exp of nonLocalExports) {
       const list = bySource.get(exp.source) ?? [];
+
       list.push(exp);
       bySource.set(exp.source, list);
     }

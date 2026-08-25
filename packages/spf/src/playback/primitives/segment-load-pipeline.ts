@@ -197,12 +197,14 @@ export const fetchStep: LoadStep = async (frame, signal, deps) => {
   if (op.type === 'remove') return; // fetchStep only appears in append pipelines
 
   const { fetch } = stepWiring(deps);
+
   frame.data = await fetch(op, op.type === 'append-init' ? { signal, minChunkSize: Infinity } : { signal });
 };
 
 /** Dispatch the frame's message to the SourceBufferActor and await its return to idle. */
 export const dispatchStep: LoadStep = async (frame, signal, deps) => {
   const { sourceBufferActor } = stepWiring(deps);
+
   sourceBufferActor.send(toMessage(frame));
   await waitForIdle(sourceBufferActor.snapshot, signal);
 };

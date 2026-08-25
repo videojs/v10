@@ -223,6 +223,7 @@ export function Navbar({
             })
             .map((id) => {
               const note = expectedOutcomeNote(sources[id], preset);
+
               return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
             })}
           // `<background-video>` is the one background preset with a fixed source:

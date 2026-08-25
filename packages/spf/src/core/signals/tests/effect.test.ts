@@ -32,6 +32,7 @@ describe('effect', () => {
 
         if (own.get() === undefined) own.set('locked');
       });
+
       await flush();
       external.set(2);
       await flush();
@@ -49,10 +50,12 @@ describe('effect', () => {
       const runs: string[] = [];
       const stop = effect(() => {
         const shouldWrite = trigger.get() === 1;
+
         runs.push(inter.get());
 
         if (shouldWrite && own.get() === undefined) own.set('locked');
       });
+
       await flush();
       trigger.set(1); // this flush run performs the self-write
       await flush();
@@ -72,9 +75,11 @@ describe('effect', () => {
 
         if (own.get() === undefined) own.set('locked');
       });
+
       await flush();
       await flush();
       const settled = runCount;
+
       await flush();
       // No dirty dependency left behind → no phantom re-runs.
       expect(runCount).toBe(settled);

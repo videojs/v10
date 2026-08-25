@@ -50,6 +50,7 @@ export class AlertDialogCore {
 
   getState(): AlertDialogState {
     const input = this.#input!;
+
     return {
       open: input.active,
       status: input.status,

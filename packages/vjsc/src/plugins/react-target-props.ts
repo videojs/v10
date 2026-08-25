@@ -54,6 +54,7 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
                 from: '@videojs/utils/style',
                 name: 'resolveClassName',
               });
+
               args.push(`${resolveClassName}(className, state)`);
             } else if (forwarded) {
               args.push('className');
@@ -61,6 +62,7 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
 
             const expression = `${cn}(${args.join(', ')})`;
             const replacement = callback ? `{state => ${expression}}` : `{${expression}}`;
+
             transform.magicString!.overwrite(node.value.start, node.value.end, replacement);
             changed = true;
           },
@@ -92,6 +94,7 @@ function collectImportBindings(declaration: ImportDeclaration, bindings: Map<str
     if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
 
     const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
+
     bindings.set(specifier.local.name, { imported, source: declaration.source.value });
   }
 }
@@ -99,6 +102,7 @@ function collectImportBindings(declaration: ImportDeclaration, bindings: Map<str
 function acceptsClassNameCallback(name: JSXElementName, bindings: ReadonlyMap<string, ImportBinding>): boolean {
   const root = jsxNameRoot(name);
   const binding = root ? bindings.get(root) : undefined;
+
   return binding?.source === '@videojs/react' && binding.imported !== 'Container';
 }
 

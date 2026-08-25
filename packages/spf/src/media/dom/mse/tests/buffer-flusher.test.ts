@@ -35,6 +35,7 @@ describe('flushBuffer', () => {
 
   it('resolves when updateend fires', async () => {
     const sourceBuffer = makeSourceBuffer();
+
     await expect(flushBuffer(sourceBuffer, 0, 10)).resolves.toBeUndefined();
   });
 
@@ -104,6 +105,7 @@ describe('flushBuffer', () => {
 
   it('rejects when remove() throws synchronously', async () => {
     const sourceBuffer = makeSourceBuffer();
+
     (sourceBuffer.remove as ReturnType<typeof vi.fn>).mockImplementation(() => {
       throw new Error('QuotaExceededError');
     });

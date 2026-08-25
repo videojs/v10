@@ -120,6 +120,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
 
   async function createSession(mediaKeys: MediaKeys, initDataType: string, initData: ArrayBuffer): Promise<void> {
     const session = mediaKeys.createSession();
+
     sessions.add(session);
 
     session.addEventListener('message', (event) => void onMessage(session, event as MediaKeyMessageEvent), { signal });
@@ -168,9 +169,11 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
 
     async close(): Promise<void> {
       const closing = [...sessions].map((session) => session.close().catch(() => {}));
+
       sessions.clear();
 
       const pending = keys;
+
       keys = null;
       certificate = null;
 

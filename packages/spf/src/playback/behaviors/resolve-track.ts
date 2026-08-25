@@ -189,6 +189,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // source change can't strand a gated task.
                   if (gateFirstParse && !isResolvedTrack(current)) {
                     const { selectedVideoTrackId, selectedAudioTrackId } = state as SiblingSelectionSignals;
+
                     await when(
                       () =>
                         gateFirstParse(
@@ -252,6 +253,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                     const relabeled = NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
                       ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
                       : patched;
+
                     // Stream nature (live vs on-demand), rewritten from whichever
                     // track just parsed — every type's resolve and every live
                     // reload takes this path. Idempotent in practice rather than
@@ -266,6 +268,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                 { id: track.id }
               )
             );
+
             scheduled.catch(() => {});
           },
         ],
@@ -321,6 +324,7 @@ export const resolveVideoTrack = defineBehavior({
     // is then placed AFTER the spread so the failover-decorated fetch wins —
     // unlike segments, playlists expose no overridable per-type fetch.
     const trackConfig = { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config };
+
     return setupTrackResolution({
       state,
       config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
@@ -344,6 +348,7 @@ export const resolveAudioTrack = defineBehavior({
   }) => {
     // Key order is load-bearing — see resolveVideoTrack.
     const trackConfig = { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config };
+
     return setupTrackResolution({
       state,
       config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
@@ -367,6 +372,7 @@ export const resolveTextTrack = defineBehavior({
   }) => {
     // Key order is load-bearing — see resolveVideoTrack.
     const trackConfig = { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config };
+
     return setupTrackResolution({
       state,
       config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },

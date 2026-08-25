@@ -56,6 +56,7 @@ export function ErrorDialogRoot({ children }: ErrorDialogRootProps): ReactNode {
   useDestroy(dialog);
 
   const input = useSnapshot(dialog.input);
+
   core.setInput(input);
   const state = core.getState();
 

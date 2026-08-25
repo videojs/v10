@@ -428,6 +428,7 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
   if (!key) return tracks;
 
   const filter = state[key]?.get();
+
   return filter ? tracks.filter((track) => matchesPartialTrack(track, filter)) : tracks;
 }
 
@@ -498,6 +499,7 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
 
   const getCdnId = config.getCdnId ?? defaultGetCdnId;
   const failedSet = new Set(failed);
+
   return tracks.filter((track) => !failedSet.has(getCdnId(track.url)));
 }
 
@@ -605,6 +607,7 @@ export function stickToSelectedCodecs<S extends SelectionKey, T extends Switchab
 
   return tracks.filter((track) => {
     const candidateFamilies = getCodecFamilies(track);
+
     return (
       !!candidateFamilies &&
       candidateFamilies.length === families.length &&
@@ -664,6 +667,7 @@ function rankByBandwidth<S extends SelectionKey, T extends SwitchableTrack>(
   const over = tracks
     .filter((track) => bitrate(track) > threshold)
     .sort((a, b) => bitrate(a) - bitrate(b) || resolutionArea(b) - resolutionArea(a));
+
   return [...fitting, ...over];
 }
 

@@ -9,6 +9,7 @@ export interface ParsedModuleId {
 /** Split a host module ID into its physical filename and query parameters. */
 export function parseModuleId(id: string): ParsedModuleId {
   const queryIndex = id.indexOf('?');
+
   return queryIndex === -1
     ? { filename: id, parameters: new URLSearchParams() }
     : { filename: id.slice(0, queryIndex), parameters: new URLSearchParams(id.slice(queryIndex + 1)) };
@@ -28,6 +29,7 @@ export function moduleId(filename: string, parameters?: URLSearchParams | Readon
   if (entries.length === 0) return filename;
 
   const query = new URLSearchParams(entries.sort(([left], [right]) => left.localeCompare(right)));
+
   return `${filename}?${query}`;
 }
 
@@ -35,6 +37,7 @@ export function moduleId(filename: string, parameters?: URLSearchParams | Readon
 export function normalizeModuleId(id: string): string {
   const parsed = parseModuleId(id);
   const filename = isAbsolute(parsed.filename) ? resolveModuleFilename(parsed.filename) : parsed.filename;
+
   return moduleId(filename, parsed.parameters);
 }
 

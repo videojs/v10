@@ -17,6 +17,7 @@ function resolveMediaHost(media: Media | null): MediaHost | null {
   if (media instanceof HTMLMediaElementHost) return media;
 
   const host = (media as { host?: unknown } | null)?.host;
+
   return host instanceof HTMLMediaElementHost ? host : null;
 }
 

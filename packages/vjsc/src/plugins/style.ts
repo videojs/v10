@@ -70,6 +70,7 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
     },
     load(id) {
       const publicId = id.startsWith('\0') ? id.slice(1) : id;
+
       return cssById.get(publicId)?.source ?? null;
     },
     transform: {
@@ -115,6 +116,7 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
             ...(options.stylesheet.scope ? { scope: options.stylesheet.scope } : {}),
             ...(options.variant ? { variant: options.variant } : {}),
           });
+
           cachedDesign.versions = await fileVersions(cachedDesign.design.watchFiles);
 
           for (const file of cachedDesign.design.watchFiles) this.addWatchFile(file);
@@ -124,6 +126,7 @@ export function stylePlugin(config: StylePluginConfig): Plugin {
 
           for (const [fileName, source] of assets) {
             const publicId = cssVirtualId(fileName, source);
+
             modules.push([publicId, source]);
             imports.push(`import ${JSON.stringify(publicId)};`);
           }
@@ -152,6 +155,7 @@ function replaceVirtualCss(
     if (nextIds.has(id)) continue;
 
     const module = cssById.get(id);
+
     module?.owners.delete(owner);
 
     if (module?.owners.size === 0) cssById.delete(id);
@@ -329,6 +333,7 @@ function assertNoUntransformedReferences(
 
       if (!inImport && !inTransform) {
         const positions = unresolved.get(node.name) ?? [];
+
         positions.push(node.start);
         unresolved.set(node.name, positions);
       }
@@ -351,6 +356,7 @@ async function cachedManifest(cache: Map<string, CachedManifest>, files: readonl
   if (cached && (await versionsMatch(cached.versions))) return cached.manifest;
 
   const manifest = await loadStyleManifest(files);
+
   cache.set(key, { manifest, versions: await fileVersions(manifest.watchFiles) });
   return manifest;
 }
@@ -383,11 +389,13 @@ async function cachedDesignSystem(
     design,
     versions: await fileVersions(design.watchFiles),
   }));
+
   cache.set(input, loading);
   return loading;
 }
 
 function cssVirtualId(fileName: string, source: string): string {
   const hash = createHash('sha256').update(fileName).update('\0').update(source).digest('hex').slice(0, 12);
+
   return `virtual:vjsc/css/${hash}/${encodeURIComponent(fileName)}`;
 }

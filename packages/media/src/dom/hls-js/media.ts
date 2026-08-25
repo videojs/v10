@@ -380,6 +380,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
         if (ignored.length > 0) {
           const [verb, pronoun] = ignored.length > 1 ? ['require', 'them'] : ['requires', 'it'];
+
           console.warn(
             `[vjs-media] ${ignored.join(', ')} ${verb} the hls.js (MSE) engine; native HLS playback ignores ${pronoun}.`
           );
@@ -483,6 +484,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
    */
   #engineConfigKey() {
     const { type, preferPlayback, drm, engine } = this.#source ?? {};
+
     return { drm, engine, preferPlayback, contentType: type ?? inferContentType(this.src) };
   }
 

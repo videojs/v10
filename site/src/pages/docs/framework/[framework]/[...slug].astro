@@ -31,6 +31,7 @@ export async function getStaticPaths() {
   for (const framework of SUPPORTED_FRAMEWORKS) {
     const sidebarForFramework = filterSidebar(framework);
     const slugsForFramework = getAllGuideSlugs(sidebarForFramework);
+
     allowedSlugsMap.set(framework, new Set(slugsForFramework));
   }
 
@@ -67,6 +68,7 @@ const conditionalHeadings = remarkPluginFrontmatter?.conditionalHeadings;
 const filteredHeadings = conditionalHeadings
   ? conditionalHeadings.filter((h: any) => {
       const matchesFramework = !h.frameworks || h.frameworks.includes(framework);
+
       return matchesFramework;
     })
   : headings;

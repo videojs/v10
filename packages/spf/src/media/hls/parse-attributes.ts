@@ -98,6 +98,7 @@ export function parseCodecs(codecs: string): { video?: string; audio?: string } 
 export function parseExtInfDuration(value: string): number {
   const durationPart = value.split(',')[0] ?? value;
   const duration = Number.parseFloat(durationPart);
+
   return Number.isNaN(duration) ? 0 : duration;
 }
 
@@ -159,6 +160,7 @@ export function createAttributeList(line: string): AttributeList {
       if (value === undefined) return defaultValue;
 
       const parsed = Number.parseInt(value, 10);
+
       return Number.isNaN(parsed) ? defaultValue : parsed;
     },
 
@@ -168,6 +170,7 @@ export function createAttributeList(line: string): AttributeList {
       if (value === undefined) return defaultValue;
 
       const parsed = Number.parseFloat(value);
+
       return Number.isNaN(parsed) ? defaultValue : parsed;
     },
 

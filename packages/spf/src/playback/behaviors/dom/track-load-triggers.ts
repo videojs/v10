@@ -136,6 +136,7 @@ function trackLoadTriggersSetup({
 
           const cleanupPlay = listen(el, 'play', setLoadActivated);
           const cleanupSeeking = listen(el, 'seeking', setLoadActivated);
+
           return () => {
             cleanupPlay();
             cleanupSeeking();

@@ -70,6 +70,7 @@ export class TooltipCore {
 
   getState(): TooltipState {
     const input = this.#input!;
+
     return {
       open: input.active,
       status: input.status,

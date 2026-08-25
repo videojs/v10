@@ -80,6 +80,7 @@ export class GestureCoordinator {
     this.#connect();
 
     let removed = false;
+
     return () => {
       if (removed) return;
 

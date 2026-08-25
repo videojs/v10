@@ -65,6 +65,7 @@ export function effect(fn: () => (() => void) | void): () => void {
 
     cleanup = fn();
   });
+
   watcher.watch(c);
   c.get(); // initial run
   revalidateSources(c); // an initial run may self-write too — see the note

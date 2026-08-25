@@ -14,6 +14,7 @@ describe('useSelector', () => {
 
     function TestComponent() {
       const volume = useSelector(subscribe, getSnapshot, selector);
+
       return <div data-testid="volume">{volume}</div>;
     }
 
@@ -37,6 +38,7 @@ describe('useSelector', () => {
 
     function TestComponent() {
       const selected = useSelector(subscribe, getSnapshot, selector);
+
       return <div data-testid="vol">{selected.vol}</div>;
     }
 
@@ -61,6 +63,7 @@ describe('useSelector', () => {
 
     function TestComponent() {
       const items = useSelector(subscribe, getSnapshot, selector, alwaysEqual);
+
       return <div data-testid="count">{items.length}</div>;
     }
 

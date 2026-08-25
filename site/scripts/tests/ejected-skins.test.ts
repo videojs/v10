@@ -37,11 +37,13 @@ describe('ejected skin configuration', () => {
 describe('ejected HTML skins', () => {
   it('extracts and evaluates the skin template', () => {
     const source = `function getTemplateHTML() { return /*html*/ \`\n  <button>\${label}</button>\n\`; }`;
+
     expect(evaluateTemplate(extractTemplateLiteral(source), { label: 'Play' })).toBe('<button>Play</button>');
   });
 
   it('collects imported names and aliases', () => {
     const imports = parseImportedNames("import { playText, pauseText as pause } from '@videojs/core';");
+
     expect([...imports]).toEqual([
       ['playText', '@videojs/core'],
       ['pause', '@videojs/core'],
@@ -60,6 +62,7 @@ describe('ejected HTML skins', () => {
 
   it('replaces the media slot and collapses the poster slot to its fallback image', () => {
     const result = replaceSlots(slotSource, { mediaType: 'video', live: false });
+
     expect(result).toContain(`<video src="${DEMO_VIDEO_SRC}" playsinline></video>`);
     expect(result).toContain('  <img alt="" decoding="async" />');
     expect(result).not.toContain('<slot name="poster">');
@@ -67,6 +70,7 @@ describe('ejected HTML skins', () => {
 
   it('gives live skins a media element and a live source', () => {
     const result = replaceSlots(slotSource, { mediaType: 'video', live: true });
+
     expect(result).toContain(`<hlsjs-video src="${DEMO_LIVE_SRC}" playsinline></hlsjs-video>`);
     expect(result).toContain('  <img alt="" decoding="async" />');
   });
@@ -93,6 +97,7 @@ describe('ejected HTML skins', () => {
     if (skin?.platform !== 'html') throw new Error('Missing live HTML skin fixture');
 
     const result = prependHtmlSkinScripts('<media-controls></media-controls>', skin);
+
     expect(result).toContain('/live-video-minimal-ui.js"></script>');
     expect(result).toContain('/media/hlsjs-video.js"></script>');
     expect(result).toContain('<live-video-player poster=');

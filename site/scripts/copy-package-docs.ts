@@ -87,6 +87,7 @@ function escapeForRegex(value: string): string {
 
 function toRelativePath(sourceDir: string, targetFile: string): string {
   const relativePath = posix.relative(sourceDir === '.' || sourceDir === '' ? '.' : sourceDir, targetFile);
+
   return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
 }
 
@@ -108,6 +109,7 @@ function sourceSlug(relativePath: string): string {
 
 function replaceDirectory(targetDirectory: string, build: (stagingDirectory: string) => void): void {
   const parentDirectory = dirname(targetDirectory);
+
   mkdirSync(parentDirectory, { recursive: true });
   const stagingDirectory = mkdtempSync(join(parentDirectory, `.${basename(targetDirectory)}-`));
 
@@ -142,6 +144,7 @@ function copyFrameworkDocumentation({
       : withoutFooter;
 
     const destinationPath = join(targetDirectory, relativePath);
+
     mkdirSync(dirname(destinationPath), { recursive: true });
     writeFileSync(destinationPath, transformed, 'utf-8');
   }
@@ -209,6 +212,7 @@ function main(): void {
 
   try {
     const copiedFiles = packageDocumentation({ target, version: process.env.npm_package_version });
+
     console.log(`✓ Copied ${copiedFiles} doc files to packages/${target}/docs/`);
   } catch (error) {
     console.error(`✗ ${error instanceof Error ? error.message : String(error)}`);

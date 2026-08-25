@@ -28,6 +28,7 @@ export function isMediaPauseCapable(value: unknown): value is MediaPauseCapabili
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.paused) && !isUndefined(media.ended) && isFunction(media.pause);
 }
 
@@ -35,6 +36,7 @@ export function isMediaSeekCapable(value: unknown): value is MediaSeekCapability
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.currentTime) && !isUndefined(media.duration) && !isUndefined(media.seeking);
 }
 
@@ -42,6 +44,7 @@ export function isMediaSourceCapable(value: unknown): value is MediaSourceCapabi
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return (
     !isUndefined(media.src) &&
     !isUndefined(media.currentSrc) &&
@@ -54,6 +57,7 @@ export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapabi
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.volume) && !isUndefined(media.muted);
 }
 
@@ -66,6 +70,7 @@ export function isMediaMutedCapable(value: unknown): value is Pick<MediaVolumeCa
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.muted);
 }
 
@@ -73,6 +78,7 @@ export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlayba
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.playbackRate);
 }
 
@@ -85,6 +91,7 @@ export function isMediaPictureInPictureCapable(value: unknown): value is MediaPi
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return isFunction(media.requestPictureInPicture);
 }
 
@@ -92,6 +99,7 @@ export function isMediaBufferCapable(value: unknown): value is MediaBufferCapabi
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return (
     !isUndefined(media.buffered) &&
     media.buffered !== EMPTY_TIME_RANGES &&
@@ -104,6 +112,7 @@ export function isMediaErrorCapable(value: unknown): value is MediaErrorCapabili
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.error);
 }
 
@@ -111,6 +120,7 @@ export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrack
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.textTracks) && media.textTracks !== EMPTY_TEXT_TRACKS;
 }
 
@@ -118,6 +128,7 @@ export function isMediaVideoRenditionCapable(value: unknown): value is MediaVide
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.videoRenditions);
 }
 
@@ -125,6 +136,7 @@ export function isMediaAudioTrackCapable(value: unknown): value is MediaAudioTra
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.audioTracks);
 }
 
@@ -132,6 +144,7 @@ export function isMediaVideoDimensionsCapable(value: unknown): value is MediaVid
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.videoWidth) && !isUndefined(media.videoHeight);
 }
 
@@ -139,6 +152,7 @@ export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemo
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return isObject(media.remote) && media.remote !== EMPTY_REMOTE;
 }
 
@@ -146,6 +160,7 @@ export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTy
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.streamType);
 }
 
@@ -159,6 +174,7 @@ export function isMediaLiveCapable(value: unknown): value is MediaLiveCapability
   if (!isObject(value)) return false;
 
   const media = value as Record<string, unknown>;
+
   return !isUndefined(media.liveEdgeStart) && !isUndefined(media.targetLiveWindow);
 }
 

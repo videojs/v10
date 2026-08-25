@@ -32,12 +32,14 @@ describe('getCdnId', () => {
   it('treats different paths on the same host as the same CDN', () => {
     const a = getCdnId('https://cdn-a.example.com/720p.m3u8');
     const b = getCdnId('https://cdn-a.example.com/1080p/index.m3u8');
+
     expect(a).toBe(b);
   });
 
   it('treats different hosts as different CDNs', () => {
     const a = getCdnId('https://cdn-a.example.com/720p.m3u8');
     const b = getCdnId('https://cdn-b.example.com/720p.m3u8');
+
     expect(a).not.toBe(b);
   });
 
@@ -57,6 +59,7 @@ describe('getOrderedCdnIds', () => {
       video: ['https://cdn-a.example.com/720p.m3u8', 'https://cdn-b.example.com/720p.m3u8'],
       audio: ['https://cdn-a.example.com/audio.m3u8', 'https://cdn-b.example.com/audio.m3u8'],
     });
+
     expect(getOrderedCdnIds(presentation)).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
   });
 
@@ -68,11 +71,13 @@ describe('getOrderedCdnIds', () => {
         'https://cdn-b.example.com/720p.m3u8',
       ],
     });
+
     expect(getOrderedCdnIds(presentation)).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
   });
 
   it('returns a single CDN for a non-redundant source', () => {
     const presentation = presentationWith({ video: ['https://cdn-a.example.com/720p.m3u8'] });
+
     expect(getOrderedCdnIds(presentation)).toEqual(['https://cdn-a.example.com']);
   });
 
@@ -117,6 +122,7 @@ describe('getOrderedCdnIds', () => {
         },
       ] as MaybeResolvedPresentation['selectionSets'],
     };
+
     expect(getOrderedCdnIds(presentation)).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
   });
 });
@@ -136,6 +142,7 @@ describe('addFailedCdn', () => {
 
   it('is idempotent — re-adding a present CDN returns the same array reference', () => {
     const failed = ['https://cdn-a.example.com'];
+
     expect(addFailedCdn(failed, 'https://cdn-a.example.com')).toBe(failed);
   });
 });

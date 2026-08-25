@@ -51,6 +51,7 @@ function containerMimeFromSegment(url: string | undefined): string | undefined {
   }
 
   const dot = path.lastIndexOf('.');
+
   return dot === -1 ? undefined : CONTAINER_MIME_BY_EXTENSION[path.slice(dot)];
 }
 
@@ -136,6 +137,7 @@ function placeOnPreviousTimeline(
   }
 
   const shift = anchor - localBase;
+
   return shift === 0 ? segments : segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift }));
 }
 
@@ -242,12 +244,14 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
 
     if (trimmed.startsWith('#EXT-X-PROGRAM-DATE-TIME:')) {
       const parsed = Date.parse(trimmed.slice('#EXT-X-PROGRAM-DATE-TIME:'.length).trim());
+
       currentStartDate = Number.isNaN(parsed) ? currentStartDate : parsed / 1000;
       continue;
     }
 
     if (trimmed.startsWith('#EXT-X-PLAYLIST-TYPE:')) {
       const value = trimmed.slice('#EXT-X-PLAYLIST-TYPE:'.length).trim();
+
       playlistType = value === 'VOD' || value === 'EVENT' ? value : undefined;
       continue;
     }

@@ -10,6 +10,7 @@ const ENDING: AlertDialogInput = { active: true, status: 'ending' };
 describe('AlertDialogCore', () => {
   it('uses default props', () => {
     const core = new AlertDialogCore();
+
     core.setInput(CLOSED);
     const state = core.getState();
 
@@ -57,6 +58,7 @@ describe('AlertDialogCore', () => {
 
   it('keeps open true during ending transition', () => {
     const core = new AlertDialogCore();
+
     core.setInput(ENDING);
     const state = core.getState();
 
@@ -66,6 +68,7 @@ describe('AlertDialogCore', () => {
 
   it('accepts setProps without error', () => {
     const core = new AlertDialogCore();
+
     core.setProps({ open: true, defaultOpen: false });
     core.setInput(OPEN);
 
@@ -74,6 +77,7 @@ describe('AlertDialogCore', () => {
 
   it('includes titleId and descriptionId in state', () => {
     const core = new AlertDialogCore();
+
     core.setInput(OPEN);
 
     expect(core.getState().titleId).toBeUndefined();
@@ -88,6 +92,7 @@ describe('AlertDialogCore', () => {
 
   it('clears ids when set to undefined', () => {
     const core = new AlertDialogCore();
+
     core.setInput(OPEN);
     core.setTitleId('title-1');
     core.setDescriptionId('desc-1');
@@ -102,6 +107,7 @@ describe('AlertDialogCore', () => {
   describe('getAttrs', () => {
     it('returns alertdialog role and aria-modal', () => {
       const core = new AlertDialogCore();
+
       core.setInput(OPEN);
       const attrs = core.getAttrs(core.getState());
 
@@ -111,6 +117,7 @@ describe('AlertDialogCore', () => {
 
     it('derives aria-labelledby and aria-describedby from state', () => {
       const core = new AlertDialogCore();
+
       core.setInput(OPEN);
       core.setTitleId('title-1');
       core.setDescriptionId('desc-1');
@@ -122,6 +129,7 @@ describe('AlertDialogCore', () => {
 
     it('omits aria-labelledby and aria-describedby when no ids set', () => {
       const core = new AlertDialogCore();
+
       core.setInput(OPEN);
       const attrs = core.getAttrs(core.getState());
 

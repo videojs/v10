@@ -16,6 +16,7 @@ describe('sourceFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
@@ -25,10 +26,12 @@ describe('sourceFeature', () => {
     it('returns null source when no source set', () => {
       // Note: Don't set src at all - setting src="" resolves to page URL
       const video = document.createElement('video');
+
       Object.defineProperty(video, 'currentSrc', { value: '', writable: false });
       Object.defineProperty(video, 'readyState', { value: HTMLMediaElement.HAVE_NOTHING, writable: false });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe(null);
@@ -42,6 +45,7 @@ describe('sourceFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.canPlay).toBe(false);
@@ -63,6 +67,7 @@ describe('sourceFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.source).toBe('https://example.com/video.mp4');
@@ -85,6 +90,7 @@ describe('sourceFeature', () => {
       });
 
       const store = createStore<PlayerTarget>()(sourceFeature);
+
       store.attach({ media: video, container: null });
 
       expect(store.state.canPlay).toBe(true);
@@ -107,9 +113,11 @@ describe('sourceFeature', () => {
     describe('loadSource', () => {
       it('sets src on target and calls load', async () => {
         const video = createMockVideo({});
+
         video.load = vi.fn();
 
         const store = createStore<PlayerTarget>()(sourceFeature);
+
         store.attach({ media: video, container: null });
 
         const result = await store.loadSource('https://example.com/new.mp4');
@@ -123,9 +131,11 @@ describe('sourceFeature', () => {
         const video = createMockVideo({
           readyState: HTMLMediaElement.HAVE_METADATA,
         });
+
         video.load = vi.fn();
 
         const store = createStore<PlayerTarget>()(combine(sourceFeature, timeFeature));
+
         store.attach({ media: video, container: null });
 
         // Start a seek that will wait for seeked event
@@ -136,6 +146,7 @@ describe('sourceFeature', () => {
 
         // Seek should resolve immediately (aborted)
         const result = await seekPromise;
+
         expect(result).toBe(30); // Returns current position
 
         expect(video.load).toHaveBeenCalled();

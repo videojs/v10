@@ -54,6 +54,7 @@ export function getPositionedSide(
   if (preferredSpace >= size) return preferred;
 
   const oppositeSpace = getSideAvailable(triggerRect, boundaryRect, opposite, offsets);
+
   return oppositeSpace > preferredSpace ? opposite : preferred;
 }
 

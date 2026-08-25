@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 export function useLoop(): boolean {
   const [loop, setLoop] = useState(getInitialLoop);
+
   useEffect(() => onLoopChange(setLoop), []);
   return loop;
 }

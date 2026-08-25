@@ -139,6 +139,7 @@ export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProp
 function resolveParentHosts(parent: TwitchEngineConfig['parent']): string[] {
   const configured = isString(parent) ? [parent] : (parent ?? []);
   const hosts = [...configured, globalThis.location?.hostname];
+
   return [...new Set(hosts.filter((host): host is string => isString(host) && host !== ''))];
 }
 

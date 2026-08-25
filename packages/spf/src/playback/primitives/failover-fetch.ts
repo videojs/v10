@@ -47,6 +47,7 @@ export function failoverFetch<K extends SelectedTrackKey, Fetch extends Failover
   config: { selectedKey: K; getCdnId?: GetCdnId }
 ): Fetch {
   const getCdnId = config.getCdnId ?? defaultGetCdnId;
+
   return (async (addressable: Resource, options?: FetchOptions) => {
     try {
       return await baseFetch(addressable, options);

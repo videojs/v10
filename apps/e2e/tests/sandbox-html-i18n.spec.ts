@@ -11,12 +11,14 @@ test.use({ trace: 'off' });
 
 async function expectSpanishPlayLabel(scope: Page | Frame): Promise<void> {
   const playButton = scope.locator(SELECTORS.playButton).first();
+
   await expect(playButton).toHaveAttribute('aria-label', 'Reproducir', { timeout: 15_000 });
 }
 
 async function expectLTRControlOrder(scope: Page | Frame): Promise<void> {
   const getX = async (selector: string): Promise<number> => {
     const control = scope.locator(selector).first();
+
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
 
@@ -38,6 +40,7 @@ async function expectLTRControlOrder(scope: Page | Frame): Promise<void> {
 
 async function expectLTRThumbnailCrop(page: Page): Promise<void> {
   const slider = page.locator('[role="slider"]:visible').first();
+
   await expect(slider).toBeVisible();
   const box = await slider.boundingBox();
 
@@ -45,6 +48,7 @@ async function expectLTRThumbnailCrop(page: Page): Promise<void> {
 
   await page.mouse.move(box.x + box.width * 0.75, box.y + box.height / 2);
   const thumbnail = page.locator('media-slider-thumbnail, .media-thumbnail__image').first();
+
   await expect(thumbnail).toBeAttached({ timeout: 15_000 });
   await expect(thumbnail).not.toHaveAttribute('data-loading', { timeout: 15_000 });
   await expect(thumbnail).toHaveAttribute('dir', 'ltr');
@@ -57,6 +61,7 @@ async function expectLTRThumbnailCrop(page: Page): Promise<void> {
     const hostBox = element.getBoundingClientRect();
     const imageBox = image.getBoundingClientRect();
     const transform = new DOMMatrix(getComputedStyle(image).transform);
+
     return { actual: imageBox.left, expected: hostBox.left + transform.m41 };
   });
 
@@ -74,6 +79,7 @@ function getPlayer(page: Page) {
 
 async function getControlOrder(page: Page): Promise<string[]> {
   const player = getPlayer(page);
+
   await expect(player).toBeVisible({ timeout: 15_000 });
   const controls = player.locator('button, [role="button"], [role="slider"], time');
   const visible = await Promise.all(
@@ -81,6 +87,7 @@ async function getControlOrder(page: Page): Promise<string[]> {
       if (!(await control.isVisible())) return;
 
       const box = await control.boundingBox();
+
       return box ? { index, x: box.x } : undefined;
     })
   );
@@ -120,6 +127,7 @@ test.describe('Sandbox HTML i18n', () => {
       waitUntil: 'domcontentloaded',
     });
     const frame = await getPreviewFrame(page, '/html-video/');
+
     await expectSpanishPlayLabel(frame);
   });
 
@@ -129,6 +137,7 @@ test.describe('Sandbox HTML i18n', () => {
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     const provider = page.locator('media-i18n');
+
     await expect(provider.locator('video-skin')).toHaveCSS('direction', 'rtl');
     await expectLTRControlOrder(page);
     await expectLTRThumbnailCrop(page);
@@ -146,6 +155,7 @@ test.describe('Sandbox React i18n', () => {
       waitUntil: 'domcontentloaded',
     });
     const frame = await getPreviewFrame(page, '/react-video/');
+
     await expectSpanishPlayLabel(frame);
   });
 
@@ -242,6 +252,7 @@ test.describe('Sandbox RTL playback control order', () => {
 
   test('Explicit LTR Tailwind player in an RTL document keeps LTR controls', async ({ page }) => {
     const query = 'styling=tailwind&skin=default&source=hls-1&autoplay=0&muted=0&loop=0&preload=metadata';
+
     await page.goto(`${SANDBOX_BASE}/react-video/?locale=en&${query}`, {
       waitUntil: 'domcontentloaded',
     });
@@ -252,6 +263,7 @@ test.describe('Sandbox RTL playback control order', () => {
     });
 
     const player = getPlayer(page);
+
     await expect(player).toBeVisible({ timeout: 15_000 });
     await player.evaluate((element) => element.setAttribute('dir', 'ltr'));
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');

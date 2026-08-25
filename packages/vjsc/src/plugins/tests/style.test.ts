@@ -46,6 +46,7 @@ describe('stylePlugin', () => {
 
   it('tracks imported design-system files and preserves directives', async () => {
     const design = await loadDesignSystem(designPath);
+
     await compileStyles({ design, manifest });
     const { source } = await transform(
       `
@@ -73,6 +74,7 @@ describe('stylePlugin', () => {
     `;
 
     const first = await transform(input, undefined, styles);
+
     scope = '.second';
     const second = await transform(input, undefined, styles);
     const firstId = virtualCssIds(first.source)[0];
@@ -125,6 +127,7 @@ async function resolvePluginId(plugin: Plugin, id: string): Promise<unknown> {
   if (!hook) return null;
 
   const handler = typeof hook === 'function' ? hook : hook.handler;
+
   return (handler as (id: string) => unknown)(id);
 }
 

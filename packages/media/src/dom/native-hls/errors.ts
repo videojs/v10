@@ -68,6 +68,7 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
 
           const code = native.code;
           const useCanonicalMessage = code >= MediaError.MEDIA_ERR_ABORTED && code <= MediaError.MEDIA_ERR_ENCRYPTED;
+
           this.setError(new MediaError(useCanonicalMessage ? undefined : native.message, code, true));
         },
         { signal, capture: true }

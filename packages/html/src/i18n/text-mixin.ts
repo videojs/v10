@@ -37,6 +37,7 @@ export function createTextMixin({ context }: TextMixinConfig): I18nTextMixin {
         }
 
         const text: Text | string = this.token ? { key: this.token, text: this.#text } : this.#text;
+
         this.textContent = typeof text === 'string' ? text : translateText(text, this.#i18n.value);
       }
     }

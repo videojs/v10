@@ -96,6 +96,7 @@ describe('usePlaybackRateOptions', () => {
 
   it('sets the selected playback rate', () => {
     const setPlaybackRate = vi.fn();
+
     renderPlaybackRateOptions({ setPlaybackRate });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: '2×' }));

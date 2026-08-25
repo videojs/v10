@@ -142,6 +142,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       super(...args);
 
       const { config } = args?.[0] ?? {};
+
       this.#config = config;
       this.#engine = this.#createEngine();
 
@@ -151,6 +152,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       // needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
         const errors = this.#signals.state.errors.get();
+
         this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
     }
@@ -284,6 +286,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
               this.#loadstartListener = null;
               mediaElement.play().then(resolve, reject);
             };
+
             this.#loadstartListener = listener;
             mediaElement.addEventListener('loadstart', listener, { once: true });
           });
@@ -313,6 +316,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       if (!this.#loadstartListener) return;
 
       const mediaElement = this.#signals.context.mediaElement.get();
+
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;
     }

@@ -34,6 +34,7 @@ function formatBitrate(bitrate: number): string {
 
 function getWidescreenSize(width: number): number | undefined {
   const size = Math.round((width * 9) / 16);
+
   return STANDARD_RENDITION_SIZES.includes(size) ? size : undefined;
 }
 
@@ -57,6 +58,7 @@ function getRenditionSize(rendition: MediaVideoRendition): number | undefined {
 
 function hasSameSize(rendition: MediaVideoRendition, renditions: readonly MediaVideoRendition[]): boolean {
   const size = getRenditionSize(rendition);
+
   return Boolean(size && renditions.some((other) => other !== rendition && getRenditionSize(other) === size));
 }
 

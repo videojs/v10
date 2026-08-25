@@ -76,6 +76,7 @@ describe('sampleBandwidth', () => {
 
     // Both estimates should be around 8_000_000 bps
     const estimate = getBandwidthEstimate(state, 1_000_000);
+
     expect(estimate).toBeCloseTo(8_000_000, -5);
   });
 

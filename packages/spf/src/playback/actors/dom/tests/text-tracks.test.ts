@@ -8,6 +8,7 @@ function makeMediaElement(trackIds: string[]): HTMLMediaElement {
 
   for (const id of trackIds) {
     const el = document.createElement('track');
+
     el.id = id;
     el.kind = 'subtitles';
     video.appendChild(el);
@@ -34,6 +35,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
@@ -45,6 +47,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.send({
@@ -54,6 +57,7 @@ describe('TextTracksActor', () => {
     });
 
     const loaded = actor.snapshot.get().context.loaded['track-en'];
+
     expect(loaded).toHaveLength(2);
     expect(loaded![0]).toMatchObject({ startTime: 0, endTime: 2, text: 'Hello' });
     expect(loaded![1]).toMatchObject({ startTime: 2, endTime: 4, text: 'World' });
@@ -63,6 +67,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
@@ -78,6 +83,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
@@ -91,6 +97,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
@@ -103,6 +110,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
@@ -117,6 +125,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });
@@ -167,6 +176,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.destroy();
@@ -181,6 +191,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
@@ -202,6 +213,7 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     // Source A: track-en has seg-0 + seg-1.
@@ -223,9 +235,11 @@ describe('TextTracksActor', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);
     const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+
     textTrack.mode = 'hidden';
 
     const snapshots: ReturnType<typeof actor.snapshot.get>[] = [];
+
     snapshots.push(actor.snapshot.get());
 
     actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'Hello')] });

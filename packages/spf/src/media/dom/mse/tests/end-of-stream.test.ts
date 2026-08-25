@@ -46,6 +46,7 @@ describe('isLastSegmentAppended', () => {
 
   it('returns false when the last segment is present but marked partial', () => {
     const appended: AppendedSegment[] = [{ id: 'seg-0' }, { id: 'seg-1', partial: true }];
+
     expect(isLastSegmentAppended([{ id: 'seg-0' }, { id: 'seg-1' }], appended)).toBe(false);
   });
 });

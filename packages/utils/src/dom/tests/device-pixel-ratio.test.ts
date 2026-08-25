@@ -16,8 +16,10 @@ class FakeMediaQueryList extends EventTarget {
 
 function stubMatchMedia(): FakeMediaQueryList[] {
   const queries: FakeMediaQueryList[] = [];
+
   vi.stubGlobal('matchMedia', (media: string) => {
     const query = new FakeMediaQueryList(media);
+
     queries.push(query);
     return query;
   });

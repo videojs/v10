@@ -42,6 +42,7 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
   options: ShadcnPluginOptions<Item>
 ): Promise<ShadcnOutputFile[]> {
   const modules = validateSourceGraph(graph);
+
   validateOptions(options);
   const published = describePublishedModules(modules, options);
   const style = options.styles ? await loadStyle(graph.root, options.styles, options) : undefined;
@@ -84,6 +85,7 @@ export async function createShadcnRegistryFiles<Item extends ComponentMeta>(
           }
         : {}),
     };
+
     registryItemSchema.parse(output);
     assets.push({ path: `${item.name}.json`, content: JSON.stringify(output) });
   }
@@ -156,6 +158,7 @@ function buildPublishedItem<Item extends ComponentMeta>(
       for (const dependency of rewritten.dependencies) dependencies.add(dependency);
 
       const path = posix.join(normalizePath(options.paths.output), module.outputPath);
+
       addUnique(sourceFiles, path, rewritten.source, 'source');
       return {
         path,
@@ -265,6 +268,7 @@ function publishedImport<Item extends ComponentMeta>(
   options: ShadcnPluginOptions<Item>
 ): string {
   const filename = publication.item.filename ?? basename(publication.module.sourcePath);
+
   return publication.item.type === 'registry:lib'
     ? posix.join(options.paths.import, stripScriptExtension(filename))
     : posix.join(options.paths.import, publication.item.name, stripScriptExtension(filename));
@@ -272,6 +276,7 @@ function publishedImport<Item extends ComponentMeta>(
 
 function relativeImport(importerTarget: string, dependencyTarget: string): string {
   const specifier = posix.relative(posix.dirname(importerTarget), stripScriptExtension(dependencyTarget));
+
   return specifier.startsWith('.') ? specifier : `./${specifier}`;
 }
 
@@ -285,6 +290,7 @@ async function loadStyle<Item extends ComponentMeta>(
   options: ShadcnPluginOptions<Item>
 ): Promise<LoadedStyle> {
   const input = await realpath(resolve(root, style.input)).catch(() => resolve(root, style.input));
+
   assertInsideRoot(root, input, style.input);
   const sourceRoot = normalizePath(options.paths.source);
   const outputRoot = normalizePath(options.paths.output);
@@ -296,6 +302,7 @@ async function loadStyle<Item extends ComponentMeta>(
     if (visited.has(filename)) return;
 
     const source = await readFile(filename, 'utf8');
+
     visited.set(filename, source);
 
     for (const specifier of cssImports(source)) {
@@ -304,13 +311,16 @@ async function loadStyle<Item extends ComponentMeta>(
       const dependency = await realpath(resolve(dirname(filename), specifier)).catch(() =>
         resolve(dirname(filename), specifier)
       );
+
       assertInsideRoot(root, dependency, specifier);
       await visit(dependency);
     }
   };
+
   await visit(input);
 
   const entryName = normalizePath(style.filename ?? basename(input));
+
   validateRelativePath(entryName, 'Shadcn style filename');
   const files = [...visited]
     .sort(([left], [right]) => left.localeCompare(right))
@@ -323,9 +333,11 @@ async function loadStyle<Item extends ComponentMeta>(
 
       const path = posix.join(outputRoot, sourceRoot, 'styles', relativePath);
       const target = posix.join(installRoot, 'styles', relativePath);
+
       return { file: { path, target, type: 'registry:style' as const }, content };
     });
   const name = style.name ?? 'styles';
+
   return {
     files,
     manifest: {
@@ -392,16 +404,19 @@ function packageDependency(id: string): string | undefined {
 
 function moduleJsxImportSource(source: string): string | undefined {
   const match = source.match(/@jsxImportSource\s+([^\s*]+)/);
+
   return match ? packageDependency(match[1]!) : undefined;
 }
 
 function mergedMeta(...values: Array<RegistryItem['meta'] | undefined>): { meta?: RegistryItem['meta'] } {
   const defined = values.filter((value): value is NonNullable<typeof value> => Boolean(value));
+
   return defined.length ? { meta: Object.assign({}, ...defined) } : {};
 }
 
 function optionalList<Key extends string>(key: Key, values: ReadonlySet<string>): Partial<Record<Key, string[]>> {
   const list = [...values].sort();
+
   return list.length ? ({ [key]: list } as Partial<Record<Key, string[]>>) : {};
 }
 

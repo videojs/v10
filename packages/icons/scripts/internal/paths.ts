@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const ROOT = join(__dirname, '../..');
+
 export const ASSETS_DIR = join(ROOT, 'src/assets');
 export const DIST_DIR = join(ROOT, 'dist');
 

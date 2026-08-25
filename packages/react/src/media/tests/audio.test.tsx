@@ -26,6 +26,7 @@ describe('Audio', () => {
     it('renders without error', () => {
       const { container } = render(<Audio data-testid="audio" />);
       const audio = container.querySelector('audio');
+
       expect(audio).toBeTruthy();
       expect(audio?.getAttribute('data-testid')).toBe('audio');
     });
@@ -34,6 +35,7 @@ describe('Audio', () => {
       const { container } = render(<Audio src="test.mp3" controls autoPlay />);
 
       const audio = container.querySelector('audio') as HTMLAudioElement;
+
       expect(audio?.getAttribute('src')).toBe('test.mp3');
       expect(audio?.hasAttribute('controls')).toBe(true);
       expect(audio?.hasAttribute('autoplay')).toBe(true);
@@ -47,11 +49,13 @@ describe('Audio', () => {
       );
 
       const audio = container.querySelector('audio');
+
       expect(audio?.querySelector('source')).toBeTruthy();
     });
 
     it('forwards ref correctly', () => {
       const ref = createRef<HTMLAudioElement>();
+
       render(<Audio ref={ref} />);
 
       expect(ref.current).toBeInstanceOf(HTMLAudioElement);
@@ -106,6 +110,7 @@ describe('Audio', () => {
       };
 
       const ref = createRef<HTMLAudioElement>();
+
       render(<Audio ref={ref} />, { wrapper: createWrapper(value) });
 
       expect(ref.current).toBeInstanceOf(HTMLAudioElement);

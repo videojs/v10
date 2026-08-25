@@ -25,10 +25,12 @@ function createDurationFormatter(
   if (style === 'digital') {
     const number = new Intl.NumberFormat(locale, { useGrouping: false });
     const padded = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false });
+
     return {
       format: (duration) => {
         const body = `${padded.format(duration.minutes ?? 0)}:${padded.format(duration.seconds ?? 0)}`;
         const showHours = hoursDisplay === 'always' || duration.hours !== undefined;
+
         return showHours ? `${number.format(duration.hours ?? 0)}:${body}` : body;
       },
     };
@@ -116,6 +118,7 @@ export function formatTime(seconds: number, guide?: number, options?: Pick<TimeF
 
   if (!padMinutes) {
     const zero = new Intl.NumberFormat(locale, { useGrouping: false }).format(0);
+
     body = body.replace(new RegExp(`^${zero}(?=\\p{Nd}\\D)`, 'u'), '');
   }
 

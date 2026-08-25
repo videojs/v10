@@ -35,6 +35,7 @@ function readBoolean(name: string): boolean {
 
 function readPreload(): PreloadValue {
   const value = params.get('preload');
+
   return PRELOAD_VALUES.includes(value as PreloadValue) ? (value as PreloadValue) : DEFAULT_PRELOAD;
 }
 
@@ -57,6 +58,7 @@ function readOptionalBoolean(name: string): boolean | undefined {
 
 function readPreferPlayback(): PreferPlaybackValue | undefined {
   const value = params.get('preferPlayback');
+
   return PREFER_PLAYBACK_VALUES.includes(value as PreferPlaybackValue) ? (value as PreferPlaybackValue) : undefined;
 }
 
@@ -91,6 +93,7 @@ window.addEventListener('message', (event) => {
 
 function readLocale(): SandboxLocaleTag {
   const value = params.get('locale');
+
   return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag) ? (value as SandboxLocaleTag) : DEFAULT_SANDBOX_LOCALE;
 }
 

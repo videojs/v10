@@ -30,6 +30,7 @@ export class SkinElement extends ReactiveElement {
 
     if (!this.shadowRoot) {
       const ctor = this.constructor as typeof SkinElement;
+
       this.attachShadow(ctor.shadowRootOptions);
 
       if (ctor.template) {

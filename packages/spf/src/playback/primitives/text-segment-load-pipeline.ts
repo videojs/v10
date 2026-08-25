@@ -144,6 +144,7 @@ export const dispatchCuesStep = <C extends Cue>(
   deps: TextStepDeps
 ): void => {
   const { op } = frame;
+
   textStepWiring<C>(deps).textTracksActor.send({
     type: 'add-cues',
     meta: {

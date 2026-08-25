@@ -87,6 +87,7 @@ describe('API docs output', () => {
   it('writes current JSON, removes stale JSON, and preserves other files', () => {
     tempPath = fs.mkdtempSync(path.join(os.tmpdir(), 'api-docs-output-'));
     const outputPath = path.join(tempPath, 'generated');
+
     fs.mkdirSync(outputPath);
     fs.writeFileSync(path.join(outputPath, 'stale.json'), '{}');
     fs.writeFileSync(path.join(outputPath, 'keep.txt'), 'keep');
@@ -97,6 +98,7 @@ describe('API docs output', () => {
       schema: stringSchema,
       docs: [{ fileName: 'current.json', label: 'Current', data: 'value' }],
     });
+
     expect(validation.success).toBe(true);
 
     if (!validation.success) return;

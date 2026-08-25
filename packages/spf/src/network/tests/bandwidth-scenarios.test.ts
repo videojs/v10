@@ -125,6 +125,7 @@ describe('realistic bandwidth patterns', () => {
       }
 
       const congestedEstimate = getBandwidthEstimate(state, 500_000);
+
       expect(congestedEstimate).toBeLessThan(normalEstimate * 0.7);
 
       // Recovery (bandwidth returns to normal)
@@ -243,6 +244,7 @@ describe('threshold boundary conditions', () => {
       expect(state.bytesSampled).toBeLessThan(128_000);
 
       const estimate = getBandwidthEstimate(state, 500_000);
+
       expect(estimate).toBe(500_000); // Uses default
       expect(hasGoodEstimate(state)).toBe(false);
     });
@@ -258,6 +260,7 @@ describe('threshold boundary conditions', () => {
       expect(state.bytesSampled).toBe(128_000);
 
       const estimate = getBandwidthEstimate(state, 500_000);
+
       expect(estimate).not.toBe(500_000); // Uses actual estimate
       expect(hasGoodEstimate(state)).toBe(true);
     });
@@ -271,12 +274,14 @@ describe('threshold boundary conditions', () => {
       }
 
       const beforeThreshold = getBandwidthEstimate(state, 1_000_000);
+
       expect(beforeThreshold).toBe(1_000_000); // Default
 
       // Cross threshold
       state = sampleBandwidth(state, 1000, 18_000);
 
       const afterThreshold = getBandwidthEstimate(state, 1_000_000);
+
       expect(afterThreshold).not.toBe(1_000_000); // Actual estimate
     });
   });

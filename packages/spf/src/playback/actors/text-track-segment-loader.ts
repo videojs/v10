@@ -154,6 +154,7 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
     // carries the dispatcher's intended window upper bound but doesn't
     // override the actor's planning.
     const segmentsToLoad = getSegmentsToLoad(track.segments, bufferedSegments, range.start, forwardBufferConfig);
+
     return segmentsToLoad.map((segment) => ({ segment, trackId }));
   };
 
@@ -173,6 +174,7 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
       if (signal.aborted) return;
 
       const frame: TextFrame<C> = { op };
+
       setContext({ ...getContext(), inFlightTrackId: op.trackId, inFlightSegmentId: op.segment.id });
 
       try {

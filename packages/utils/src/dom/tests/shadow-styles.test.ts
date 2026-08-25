@@ -9,6 +9,7 @@ describe('createShadowStyle', () => {
 
   it('returns a CSSStyleSheet when constructable stylesheets are available', () => {
     const result = createShadowStyle('div { color: red; }');
+
     expect(result).toBeInstanceOf(CSSStyleSheet);
   });
 
@@ -17,6 +18,7 @@ describe('createShadowStyle', () => {
 
     const css = 'div { color: red; }';
     const result = createShadowStyle(css);
+
     expect(result).toBe(css);
   });
 });
@@ -24,6 +26,7 @@ describe('createShadowStyle', () => {
 describe('applyShadowStyles', () => {
   function createHost(): HTMLElement {
     const host = document.createElement('div');
+
     host.attachShadow({ mode: 'open' });
     document.body.appendChild(host);
     return host;
@@ -38,9 +41,11 @@ describe('applyShadowStyles', () => {
     const host = createHost();
     const shadowRoot = host.shadowRoot!;
     const sheet = new CSSStyleSheet();
+
     sheet.replaceSync('div { color: red; }');
 
     let assigned: CSSStyleSheet[] = [];
+
     Object.defineProperty(shadowRoot, 'adoptedStyleSheets', {
       get: () => assigned,
       set: (value: CSSStyleSheet[]) => {
@@ -60,6 +65,7 @@ describe('applyShadowStyles', () => {
 
     applyShadowStyles(host.shadowRoot!, [css]);
     const styleEls = host.shadowRoot!.querySelectorAll('style');
+
     expect(styleEls.length).toBe(1);
     expect(styleEls[0]!.textContent).toBe(css);
   });
@@ -67,11 +73,13 @@ describe('applyShadowStyles', () => {
   it('falls back to <style> injection when styles are mixed', () => {
     const host = createHost();
     const sheet = new CSSStyleSheet();
+
     sheet.replaceSync('div { color: red; }');
     const css = 'div { color: blue; }';
 
     applyShadowStyles(host.shadowRoot!, [sheet, css]);
     const styleEls = host.shadowRoot!.querySelectorAll('style');
+
     expect(styleEls.length).toBe(2);
   });
 });
@@ -86,6 +94,7 @@ describe('ensureGlobalStyle', () => {
     ensureGlobalStyle('test-style', 'body { margin: 0; }');
 
     const el = document.getElementById('test-style');
+
     expect(el).toBeInstanceOf(HTMLStyleElement);
     expect(el!.textContent).toBe('body { margin: 0; }');
   });

@@ -50,6 +50,7 @@ export function globWithParser({ parser, generateId, ...globOptions }: GlobWithP
   const wrappedGenerateId = generateId
     ? (ctx: Parameters<NonNullable<typeof generateId>>[0]) => {
         const newId = generateId(ctx);
+
         // Store mapping: transformed ID -> original filename
         entryMap.set(newId, ctx.entry);
         return newId;
@@ -67,6 +68,7 @@ export function globWithParser({ parser, generateId, ...globOptions }: GlobWithP
       parseData: async (entry) => {
         // Retrieve the original filename from our map, falling back to entry.id if not found
         const originalEntry = entryMap.get(entry.id) || entry.id;
+
         // Call user's parser with both the transformed entry and original filename
         return parseData(await parser(entry, originalEntry));
       },

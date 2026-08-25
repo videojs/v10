@@ -158,6 +158,7 @@ export function createMachineReactor<State extends string>(
     })),
     ...(Object.entries(def.states) as Array<[State, ReactorStateDefinition]>).flatMap(([state, stateDef]) => {
       const isNotState = (snapshot: { value: FullState }) => snapshot.value !== state;
+
       return [
         ...toArray(stateDef.entry).map((fn) => ({ fn, shouldSkip: isNotState, toFnCall: untracked })),
         ...toArray(stateDef.effects).map((fn) => ({ fn, shouldSkip: isNotState })),
@@ -172,6 +173,7 @@ export function createMachineReactor<State extends string>(
       if (shouldSkip(snapshot)) return;
 
       const baseCall = () => fn();
+
       return wrapResult(toFnCall(baseCall)());
     });
 

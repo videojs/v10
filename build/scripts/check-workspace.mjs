@@ -33,6 +33,7 @@ function readJson(path) {
   const text = readText(path);
   // Strip single-line // comments (for tsconfig files).
   const stripped = text.replace(/^\s*\/\/.*$/gm, '');
+
   return JSON.parse(stripped);
 }
 
@@ -376,6 +377,7 @@ function localeAliases(tags) {
     if (!tag.includes('-')) continue;
 
     const lang = tag.split('-')[0];
+
     counts.set(lang, (counts.get(lang) ?? 0) + 1);
   }
 
@@ -623,6 +625,7 @@ function checkAgentContext() {
     const chainBytes = agentDocs
       .filter((candidate) => {
         const candidateDirectory = dirname(candidate);
+
         return directory === candidateDirectory || directory.startsWith(`${candidateDirectory}${sep}`);
       })
       .reduce((total, candidate) => total + Buffer.byteLength(readText(candidate)), 0);
@@ -711,6 +714,7 @@ function checkAgentContext() {
     }
 
     const frontmatter = frontmatterMatch[1];
+
     metadataBytes += Buffer.byteLength(frontmatter);
     const fields = [...frontmatter.matchAll(/^([A-Za-z][A-Za-z0-9-]*):/gm)].map((match) => match[1]);
 
@@ -849,6 +853,7 @@ function checkInternalRecords() {
     const recordMaxLines = path.startsWith(`${join(designDir, 'spf')}${sep}`)
       ? RESTORED_SPF_RECORD_MAX_LINES
       : INTERNAL_RECORD_MAX_LINES;
+
     checkFileBudget(path, recordMaxLines, Number.POSITIVE_INFINITY, warnings);
     checkLocalMarkdownLinks(path, warnings);
     const frontmatter = recordFrontmatter(path, warnings);
@@ -877,6 +882,7 @@ function checkInternalRecords() {
     const recordMaxLines = path.startsWith(`${join(decisionsDir, 'spf')}${sep}`)
       ? RESTORED_SPF_RECORD_MAX_LINES
       : INTERNAL_RECORD_MAX_LINES;
+
     checkFileBudget(path, recordMaxLines, Number.POSITIVE_INFINITY, warnings);
     checkLocalMarkdownLinks(path, warnings);
     const frontmatter = recordFrontmatter(path, warnings);

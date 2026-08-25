@@ -46,6 +46,7 @@ export default function llmsMarkdown(): AstroIntegration {
           filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-replace') !== null,
           replacement: (content, node) => {
             const id = (node as Element).getAttribute('data-cli-replace');
+
             return `\n<!-- cli:replace ${id} -->\n${content}\n<!-- /cli:replace ${id} -->\n`;
           },
         });
@@ -55,6 +56,7 @@ export default function llmsMarkdown(): AstroIntegration {
           filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-omit') !== null,
           replacement: (content, node) => {
             const id = (node as Element).getAttribute('data-cli-omit');
+
             return `\n<!-- cli:omit ${id} -->\n${content}\n<!-- /cli:omit ${id} -->\n`;
           },
         });
@@ -91,9 +93,11 @@ export default function llmsMarkdown(): AstroIntegration {
 
             // For each content element, strip non-content elements before conversion
             const contentParts: string[] = [];
+
             contentElements.forEach((contentEl) => {
               const clone = contentEl.cloneNode(true) as Element;
               const ignoreElements = clone.querySelectorAll('[data-llms-ignore]');
+
               ignoreElements.forEach((el) => el.remove());
 
               // Remove script and style tags (includes Astro island hydration scripts)
@@ -125,6 +129,7 @@ export default function llmsMarkdown(): AstroIntegration {
             // docs/framework/html/how-to/slug -> docs/framework/html/how-to/slug.md
             const mdPath = join(siteDir, `${pathname}.md`);
             const footer = generatePageFooter(pathname, framework, siteUrl);
+
             await mkdir(dirname(mdPath), { recursive: true });
             await writeFile(mdPath, markdown + footer, 'utf-8');
 
@@ -156,6 +161,7 @@ export default function llmsMarkdown(): AstroIntegration {
             await processPage(pathname);
           }
         });
+
         await Promise.all(workers);
 
         // Group docs by framework
@@ -178,6 +184,7 @@ export default function llmsMarkdown(): AstroIntegration {
           frameworks.push(fw);
           const subIndex = generateDocsIndex(fw, fwPages, siteUrl);
           const subIndexPath = join(siteDir, 'docs', 'framework', fw, 'llms.txt');
+
           await mkdir(dirname(subIndexPath), { recursive: true });
           await writeFile(subIndexPath, subIndex, 'utf-8');
         }
@@ -186,6 +193,7 @@ export default function llmsMarkdown(): AstroIntegration {
         if (blogPages.length > 0) {
           const blogIndex = generateBlogIndex(blogPages, siteUrl);
           const blogIndexPath = join(siteDir, 'blog', 'llms.txt');
+
           await mkdir(dirname(blogIndexPath), { recursive: true });
           await writeFile(blogIndexPath, blogIndex, 'utf-8');
         }
@@ -193,9 +201,11 @@ export default function llmsMarkdown(): AstroIntegration {
         // Write root llms.txt index
         const rootIndex = generateRootIndex(frameworks, blogPages.length > 0, otherPages, siteUrl);
         const rootIndexPath = join(siteDir, 'llms.txt');
+
         await writeFile(rootIndexPath, rootIndex, 'utf-8');
 
         const subIndexCount = frameworks.length + (blogPages.length > 0 ? 1 : 0);
+
         logger.info(
           `Generated ${docsPages.length + blogPages.length + otherPages.length} markdown files, llms.txt root index, and ${subIndexCount} sub-indexes`
         );
@@ -229,6 +239,7 @@ function generateIndexFooter(siteUrl: string): string {
 
 function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: PageEntry[], siteUrl: string): string {
   let content = `# Video.js v10\n\n`;
+
   content += `> Modern video player framework with multi-platform support\n\n`;
 
   content += `## Documentation\n\n`;
@@ -270,6 +281,7 @@ function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: strin
   for (const page of pages) {
     if (page.pathname.startsWith(prefix)) {
       const slug = page.pathname.slice(prefix.length).replace(/\/$/, '');
+
       pageBySlug.set(slug, page);
     }
   }
@@ -296,6 +308,7 @@ function renderSidebarToMarkdown(
   for (const item of items) {
     if (isSection(item)) {
       const heading = '#'.repeat(depth + 2);
+
       content += `${heading} ${item.sidebarLabel}\n\n`;
 
       if (item.llmsDescription) {

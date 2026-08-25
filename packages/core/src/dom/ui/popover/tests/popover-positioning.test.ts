@@ -13,6 +13,7 @@ import {
 // Mock supportsAnchorPositioning for deterministic tests.
 vi.mock('@videojs/utils/dom', async (importOriginal) => {
   const original = (await importOriginal()) as Record<string, unknown>;
+
   return {
     ...original,
     supportsAnchorPositioning: vi.fn(() => false),
@@ -369,6 +370,7 @@ describe('getPopupPositionRect', () => {
     ['left', 120, 60],
   ] as const)('includes overflow on the %s side axis', (side, expectedWidth, expectedHeight) => {
     const el = document.createElement('div');
+
     vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => makeDOMRect(20, 40, 100, 60));
     Object.defineProperty(el, 'offsetWidth', { configurable: true, value: 100 });
     Object.defineProperty(el, 'offsetHeight', { configurable: true, value: 60 });
@@ -376,12 +378,14 @@ describe('getPopupPositionRect', () => {
     Object.defineProperty(el, 'scrollHeight', { configurable: true, value: 80 });
 
     const rect = getPopupPositionRect(el, side);
+
     expect(rect.width).toBe(expectedWidth);
     expect(rect.height).toBe(expectedHeight);
   });
 
   it('does not change available-size styles while measuring', () => {
     const el = document.createElement('div');
+
     el.style.setProperty(PopoverCSSVars.availableHeight, '20px');
     vi.spyOn(el, 'getBoundingClientRect').mockImplementation(() => {
       expect(el.style.getPropertyValue(PopoverCSSVars.availableHeight)).toBe('20px');
@@ -406,9 +410,11 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
     vi.resetModules();
     vi.doMock('@videojs/utils/dom', async (importOriginal) => {
       const original = (await importOriginal()) as Record<string, unknown>;
+
       return { ...original, supportsAnchorPositioning: () => true };
     });
     const mod = await import('../popover-positioning');
+
     return mod.getAnchorPositionStyle;
   }
 

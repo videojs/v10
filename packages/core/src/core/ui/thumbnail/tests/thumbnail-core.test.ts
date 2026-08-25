@@ -24,6 +24,7 @@ function createTimeline(count: number, interval = 5): ThumbnailImage[] {
   for (let i = 0; i < count; i++) {
     const col = i % cols;
     const row = Math.floor(i / cols);
+
     images.push(
       createImage({
         startTime: i * interval,
@@ -40,6 +41,7 @@ describe('ThumbnailCore', () => {
   describe('findActiveThumbnail', () => {
     it('returns undefined for empty array', () => {
       const core = new ThumbnailCore();
+
       expect(core.findActiveThumbnail([], 5)).toBeUndefined();
     });
 
@@ -294,6 +296,7 @@ describe('ThumbnailCore', () => {
       });
 
       const scale = result!.scale;
+
       expect(result!.containerWidth).toBeLessThanOrEqual(256 * scale);
       expect(result!.containerHeight).toBeLessThanOrEqual(160 * scale);
       expect(result!.imageWidth).toBeGreaterThanOrEqual(result!.containerWidth);
@@ -312,6 +315,7 @@ describe('ThumbnailCore', () => {
       });
 
       const scale = result!.scale;
+
       expect(result!.offsetX).toBeGreaterThanOrEqual(512 * scale);
       expect(result!.offsetY).toBeGreaterThanOrEqual(320 * scale);
     });
@@ -330,6 +334,7 @@ describe('ThumbnailCore', () => {
       const scale = result!.scale;
       const nextTileX = (512 + 256) * scale;
       const nextTileY = (320 + 160) * scale;
+
       expect(result!.offsetX + result!.containerWidth).toBeLessThanOrEqual(nextTileX);
       expect(result!.offsetY + result!.containerHeight).toBeLessThanOrEqual(nextTileY);
     });

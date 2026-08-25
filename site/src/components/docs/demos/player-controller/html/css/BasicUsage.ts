@@ -37,6 +37,7 @@ class PlayerActions extends UIElement {
 
     const bind = (el: HTMLElement, action: () => void) => {
       const props = createButton({ onActivate: action, isDisabled: () => !this.#player.value });
+
       applyElementProps(el, props, { signal });
     };
 

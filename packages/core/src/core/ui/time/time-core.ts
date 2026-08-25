@@ -112,6 +112,7 @@ export class TimeCore {
     const media = this.#media!;
     const seconds = this.#getSeconds();
     const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };
+
     return formatTime(Math.abs(seconds), media.duration, options);
   }
 
@@ -129,6 +130,7 @@ export class TimeCore {
 
   #getDatetime(): string {
     const seconds = this.#getSeconds();
+
     return secondsToIsoDuration(Math.abs(seconds));
   }
 
@@ -187,6 +189,7 @@ export class TimeCore {
 
   getState(): TimeState {
     const seconds = this.#getSeconds();
+
     return {
       type: this.#props.type,
       seconds,

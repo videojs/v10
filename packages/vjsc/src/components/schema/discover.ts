@@ -63,6 +63,7 @@ function discoverManifests(
 ): ManifestSchemaComponent[] {
   return globSync(pattern, { cwd, ...(exclude ? { exclude: toArray(exclude) } : {}) }).map((path) => {
     const fileName = absolutePath(cwd, path);
+
     return { kind: 'manifest', fileName, ...parseComponentManifest(fileName) };
   });
 }
@@ -74,6 +75,7 @@ function discoverFiles(source: ComponentFileSet, cwd: string): FileSchemaCompone
   }).map((path) => {
     const fileName = absolutePath(cwd, path);
     const name = source.name(fileStem(path));
+
     return { kind: 'file', fileName, name, definition: { name } };
   });
 }
@@ -108,6 +110,7 @@ function isDefineComponentCall(node: unknown): node is CallExpression {
   if (candidate.type !== 'CallExpression' || !candidate.callee || typeof candidate.callee !== 'object') return false;
 
   const callee = candidate.callee as { readonly type?: unknown; readonly name?: unknown };
+
   return callee.type === 'Identifier' && callee.name === 'defineComponent';
 }
 

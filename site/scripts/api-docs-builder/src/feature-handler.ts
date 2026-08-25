@@ -133,6 +133,7 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
 
           if (prop.name.text === 'state') {
             const fn = prop.initializer;
+
             stateFunction = fn;
 
             if ((ts.isArrowFunction(fn) || ts.isFunctionExpression(fn)) && fn.type && ts.isTypeReferenceNode(fn.type)) {
@@ -378,6 +379,7 @@ function isEmptyState(node: ts.Expression): boolean {
   if (ts.isBlock(node.body)) return false;
 
   const body = unwrapParentheses(node.body);
+
   return ts.isObjectLiteralExpression(body) && body.properties.length === 0;
 }
 
@@ -433,6 +435,7 @@ function extractInterfaceMembers(
         .map((p) => {
           const pName = p.name.getText(sourceFile);
           const pType = p.type ? formatCheckerType(checker.getTypeFromTypeNode(p.type), checker) : 'unknown';
+
           return `${pName}: ${pType}`;
         })
         .join(', ');
@@ -628,6 +631,7 @@ function namedActionInputType(
 function findComputedMember(decl: ts.InterfaceDeclaration, identifier: string): ts.TypeElement | undefined {
   return decl.members.find((member) => {
     const name = member.name;
+
     return name && ts.isComputedPropertyName(name) && ts.isIdentifier(name.expression)
       ? name.expression.text === identifier
       : false;
@@ -668,6 +672,7 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
 
   // Build a map of interface name → declaration
   const interfaces = new Map<string, ts.InterfaceDeclaration>();
+
   ts.forEachChild(stateSourceFile, (node) => {
     if (ts.isInterfaceDeclaration(node)) {
       interfaces.set(node.name.text, node);
@@ -747,6 +752,7 @@ function resolvePublishedShape(
   }
 
   const featureSourceFile = program.getSourceFile(source.filePath);
+
   return {
     ...extractPublishedShape(
       sourceStateDecl,
@@ -768,6 +774,7 @@ function findSourceStateDecl(program: ts.Program, source: FeatureSource): ts.Int
   if (!featureSourceFile) return undefined;
 
   let found: ts.InterfaceDeclaration | undefined;
+
   ts.forEachChild(featureSourceFile, (node) => {
     if (ts.isInterfaceDeclaration(node) && node.name.text === source.stateTypeName) {
       found = node;

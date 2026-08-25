@@ -77,6 +77,7 @@ export function shouldForceEnded(
   }
 
   const gap = bufferedEnd - currentTime;
+
   return gap >= 0 && gap < nudgeWindow;
 }
 

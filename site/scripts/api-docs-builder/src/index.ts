@@ -21,6 +21,7 @@ const CONTENT_ROOT = path.join(MONOREPO_ROOT, 'site/src/content');
 /** Suppress known extractor gaps without hiding warnings from the builder itself. */
 function suppressExtractorWarnings(): () => void {
   const originalWarn = console.warn;
+
   console.warn = (...args: unknown[]) => {
     if (typeof args[0] === 'string' && args[0].startsWith('Unable to handle a type with flag')) return;
 
@@ -166,6 +167,7 @@ function main(): void {
 
       for (const doc of validation.group.docs) {
         const detail = doc.detail ? ` (${doc.detail})` : '';
+
         log.success(`✅ Generated ${doc.fileName}${detail}`);
       }
 

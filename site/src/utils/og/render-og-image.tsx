@@ -134,6 +134,7 @@ export async function renderOgImage(options: { title?: string; size: OgSize }): 
   if (displayTitle && displayTitle.length > MAX_CHAR_LIMIT) {
     const truncated = displayTitle.slice(0, MAX_CHAR_LIMIT);
     const lastSpace = truncated.lastIndexOf(' ');
+
     displayTitle = `${lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated}…`;
     console.warn(
       `⚠ OG image for "${title}": title truncated (${title!.length} chars > ${MAX_CHAR_LIMIT} max). Consider adding ogTitle to frontmatter.`
@@ -205,5 +206,6 @@ export async function renderOgImage(options: { title?: string; size: OgSize }): 
     fitTo: { mode: 'width', value: width },
   });
   const pngData = resvg.render();
+
   return Buffer.from(pngData.asPng());
 }

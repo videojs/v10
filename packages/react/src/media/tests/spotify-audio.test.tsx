@@ -66,6 +66,7 @@ describe('SpotifyAudio', () => {
     const controller = await waitForSwap();
 
     const iframe = container.querySelector('iframe')!;
+
     expect(iframe).toBe(controller.iframeElement);
     expect(iframe.getAttribute('src')).toContain('/embed/track/');
     expect(iframe.style.display).toBe('none');
@@ -73,6 +74,7 @@ describe('SpotifyAudio', () => {
 
   it('unmounts without throwing after the controller replaces its iframe', async () => {
     const { container, unmount } = render(<SpotifyAudio src={TRACK_URL} />);
+
     await waitForSwap();
 
     // React removes the node it rendered, which the swap took out of the document;

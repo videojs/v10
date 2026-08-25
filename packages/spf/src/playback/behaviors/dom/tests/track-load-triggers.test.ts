@@ -19,6 +19,7 @@ function setupTrackLoadTriggers(initialState: LoadTriggersState = {}, initialCon
   const state = makeState(initialState);
   const context = makeContext(initialContext);
   const reactor = trackLoadTriggers.setup({ state, context });
+
   return { state, context, reactor };
 }
 
@@ -33,9 +34,11 @@ function makeMediaElement({
   autoplay?: boolean;
 } = {}) {
   const el = document.createElement('video');
+
   el.autoplay = autoplay;
   let pausedFlag = paused;
   let seekingFlag = seeking;
+
   Object.defineProperty(el, 'paused', { get: () => pausedFlag, configurable: true });
   Object.defineProperty(el, 'seeking', { get: () => seekingFlag, configurable: true });
   return {

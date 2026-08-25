@@ -93,6 +93,7 @@ function manifestRef(entry: SchemaComponent): string {
 function emitDefinitions(entries: readonly SchemaComponent[]): string {
   const typeLines = entries.map((entry) => {
     const type = entry.kind === 'manifest' ? `typeof ${entry.name}Def` : `{ readonly name: '${entry.name}' }`;
+
     return `  readonly ${entry.name}: ${type};`;
   });
   const lines = entries.map((entry) => `  ${entry.name}: ${manifestRef(entry)},`);
@@ -131,6 +132,7 @@ function emitDeclarationHeader(entries: readonly SchemaComponent[], outputFile: 
 function emitDeclarationDefinitions(entries: readonly SchemaComponent[]): string {
   const lines = entries.map((entry) => {
     const type = entry.kind === 'manifest' ? `typeof ${entry.name}Def` : `{ readonly name: '${entry.name}' }`;
+
     return `  readonly ${entry.name}: ${type};`;
   });
 

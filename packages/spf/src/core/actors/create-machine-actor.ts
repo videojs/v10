@@ -210,6 +210,7 @@ export function createMachineActor<
 
         if (newStateDef?.onSettled && runner) {
           const targetState = newStateDef.onSettled as FullState;
+
           runner.whenSettled(() => {
             if (getState() !== newState) return;
 

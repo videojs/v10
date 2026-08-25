@@ -29,6 +29,7 @@ const renderer: MarkedExtension['renderer'] = {
     const tag = token.ordered ? 'ol' : 'ul';
     const cls = token.ordered ? classes.ol : classes.ul;
     const body = token.items.map((item) => this.listitem(item)).join('\n');
+
     return `<${tag} class="${cls}">${body}</${tag}>`;
   },
 

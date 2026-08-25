@@ -62,6 +62,7 @@ export function usePlayer(): UnknownStore;
 export function usePlayer<R>(selector: (state: UnknownState) => R): R;
 export function usePlayer<R>(selector?: (state: UnknownState) => R) {
   const { store } = usePlayerContext();
+
   return useStore(store, selector as any);
 }
 
@@ -79,35 +80,41 @@ export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
   const ctx = useContext(PlayerContext);
   const store = (ctx?.store ?? (EMPTY_STORE as unknown as UnknownStore)) as UnknownStore;
   const value = useStore(store, (ctx ? selector : undefined) as any);
+
   return ctx ? value : undefined;
 }
 
 /** Access the media element from within a Player. */
 export function useMedia(): Media | null {
   const { media } = usePlayerContext();
+
   return media;
 }
 
 /** Access the container element from within a Player. */
 export function useContainer(): MediaContainer | null {
   const { container } = usePlayerContext();
+
   return container;
 }
 
 /** Access the container element when a Player is available. */
 export function useOptionalContainer(): MediaContainer | null {
   const ctx = useContext(PlayerContext);
+
   return ctx?.container ?? null;
 }
 
 /** Access the media attach setter for connecting a media element to the player. */
 export function useMediaAttach(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
+
   return ctx?.setMedia;
 }
 
 /** Access the container attach setter for connecting a container element to the player. */
 export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null>> | undefined {
   const ctx = useContext(PlayerContext);
+
   return ctx?.setContainer;
 }

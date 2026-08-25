@@ -24,6 +24,7 @@ function containsActivePath(item: SidebarItemType): boolean {
     return false;
   } else {
     const itemPath = `/docs/framework/${framework}/${item.slug}`;
+
     return itemPath === currentPath;
   }
 }
@@ -32,19 +33,27 @@ const isActive = containsActivePath(item);
 
 function getGroup(depth: number) {
   if (depth === 0) return 'group';
+
   if (depth === 1) return 'group/1';
+
   if (depth === 2) return 'group/2';
+
   return '';
 }
 function getGroupMargin(depth: number) {
   if (depth === 1) return 'group-open/1:mb-1';
+
   if (depth === 2) return 'group-open/2:mb-1';
+
   return '';
 }
 function getGroupRotate(depth: number) {
   if (depth === 0) return 'group-open:rotate-180';
+
   if (depth === 1) return 'group-open/1:rotate-180';
+
   if (depth === 2) return 'group-open/2:rotate-180';
+
   return '';
 }
 ---

@@ -58,6 +58,7 @@ export function getSelectedTrack<T extends TrackType>(
   // Get track ID based on type
   const trackIdKey = SelectedTrackIdKeyByType[type];
   const trackId = state[trackIdKey];
+
   return presentation.selectionSets
     .find(({ type: selectionSetType }) => selectionSetType === type)
     ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId) as any;

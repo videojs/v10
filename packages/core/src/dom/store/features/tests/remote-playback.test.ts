@@ -9,6 +9,7 @@ type RemotePlaybackState = ReturnType<typeof remotePlaybackFeature.state>;
 
 function createRemote(overrides: Partial<RemotePlaybackLike> = {}) {
   const target = new EventTarget();
+
   return Object.assign(target, {
     state: 'disconnected',
     watchAvailability: vi.fn().mockResolvedValue(1),
@@ -45,6 +46,7 @@ describe('remotePlaybackFeature', () => {
     const media = { remote } as unknown as Media;
 
     const { controller } = attach(media);
+
     controller.abort();
 
     expect(remote.cancelWatchAvailability).toHaveBeenCalledOnce();

@@ -45,6 +45,7 @@ function readParams() {
   const params = new URLSearchParams(location.search);
   const preload = params.get('preload');
   const preset = (params.get('preset') ?? 'video') as Preset;
+
   return {
     platform: (params.get('platform') ?? 'html') as Platform,
     styling: (params.get('styling') ?? 'css') as Styling,
@@ -59,6 +60,7 @@ function readParams() {
     accentColor: params.get('accent')?.trim() ?? '',
     locale: (() => {
       const value = params.get('locale');
+
       return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag)
         ? (value as SandboxLocaleTag)
         : DEFAULT_SANDBOX_LOCALE;
@@ -196,8 +198,10 @@ export function App() {
   // `readParams` covers the first-mount half. Keyed on entry, so a source picked
   // afterwards sticks.
   const previousPreset = useRef(preset);
+
   useEffect(() => {
     const entered = spfBackgroundPreset && previousPreset.current !== preset;
+
     previousPreset.current = preset;
 
     if (entered) setSource(DEFAULT_BACKGROUND_SOURCE);

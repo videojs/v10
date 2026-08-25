@@ -28,6 +28,7 @@ function importBinding(tag: string): string {
 
 function objectEntry(tag: string): string {
   const binding = importBinding(tag);
+
   return tag === binding ? `  ${tag},` : `  '${tag}': ${binding},`;
 }
 
@@ -94,6 +95,7 @@ function generatePlatformAllReExport(): string {
 
 function exportName(key: string): string {
   const name = key.slice(key.indexOf('.') + 1);
+
   return name === 'default' ? 'defaultText' : `${name}Text`;
 }
 
@@ -139,6 +141,7 @@ function generateTextModules(): void {
   for (const [key, text] of flattenEntries(en)) {
     const namespace = key.slice(0, key.indexOf('.'));
     const entries = namespaces.get(namespace) ?? [];
+
     entries.push([key, text]);
     namespaces.set(namespace, entries);
   }
@@ -189,12 +192,14 @@ function syncPlatformLocaleDir(dir: string): void {
   for (const tag of PLATFORM_LOCALE_TAGS) {
     writeGenerated(resolve(dir, `${tag}.ts`), generatePlatformDefaultReExport(tag));
     const registerDir = resolve(dir, tag);
+
     mkdirSync(registerDir, { recursive: true });
     writeGenerated(resolve(registerDir, 'register.ts'), generatePlatformRegisterTs(tag));
   }
 
   writeGenerated(resolve(dir, 'all.ts'), generatePlatformAllReExport());
   const allRegisterDir = resolve(dir, 'all');
+
   mkdirSync(allRegisterDir, { recursive: true });
   writeGenerated(resolve(allRegisterDir, 'register.ts'), generatePlatformRegisterAllTs());
 

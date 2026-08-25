@@ -29,6 +29,7 @@ function getCdnFileName(useCase: UseCase, skin: Skin): string {
 // in the manifest.
 export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean {
   const subpath = getMediaSubpath(renderer);
+
   return subpath === null || cdnMediaSubpaths.includes(subpath);
 }
 

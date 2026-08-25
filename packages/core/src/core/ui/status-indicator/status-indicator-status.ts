@@ -29,6 +29,7 @@ export function deriveStatus(
   switch (event.action) {
     case 'togglePaused': {
       const paused = snapshot.paused !== undefined ? !snapshot.paused : true;
+
       return {
         status: paused ? 'pause' : 'play',
         label: paused ? labels.paused : labels.playing,
@@ -42,6 +43,7 @@ export function deriveStatus(
       if (snapshot.subtitlesAvailable === false) return null;
 
       const showing = snapshot.subtitlesShowing !== undefined ? !snapshot.subtitlesShowing : true;
+
       return {
         status: showing ? 'captions-on' : 'captions-off',
         label: showing ? labels.captionsOn : labels.captionsOff,
@@ -50,6 +52,7 @@ export function deriveStatus(
     }
     case 'toggleFullscreen': {
       const fullscreen = snapshot.fullscreen !== undefined ? !snapshot.fullscreen : true;
+
       return {
         status: fullscreen ? 'fullscreen' : 'exit-fullscreen',
         label: fullscreen ? labels.fullscreen : labels.exitFullscreen,
@@ -58,6 +61,7 @@ export function deriveStatus(
     }
     case 'togglePictureInPicture': {
       const pip = snapshot.pip !== undefined ? !snapshot.pip : true;
+
       return {
         status: pip ? 'pip' : 'exit-pip',
         label: pip ? labels.pictureInPicture : labels.exitPictureInPicture,

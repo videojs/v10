@@ -78,12 +78,14 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
 
   while (performance.now() < deadline) {
     const provider = document.querySelector('media-i18n') as LitElementLike | null;
+
     provider?.requestUpdate?.();
 
     if (provider?.updateComplete) await provider.updateComplete;
 
     for (const button of document.querySelectorAll('media-play-button')) {
       const el = button as LitElementLike;
+
       el.requestUpdate?.();
 
       if (el.updateComplete) await el.updateComplete;
@@ -133,6 +135,7 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
 
 async function applyLocale(next: SandboxLocaleTag): Promise<void> {
   const seq = ++localeApplySeq;
+
   await ensureCdnSandboxLocale(next);
 
   if (seq !== localeApplySeq) return;
@@ -523,6 +526,7 @@ onLocaleChange((next) => {
   }
 
   const seq = ++localeApplySeq;
+
   void (async () => {
     await ensureCdnSandboxLocale(next);
 

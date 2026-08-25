@@ -31,6 +31,7 @@ export function extractCore(filePath: string, program: ts.Program, componentName
 
   if (propsExport?.type instanceof tae.ObjectNode) {
     const formatted = formatProperties(propsExport.type.properties, ast.exports);
+
     props = Object.entries(formatted).map(([name, def]) => ({
       name,
       ...def,
@@ -43,6 +44,7 @@ export function extractCore(filePath: string, program: ts.Program, componentName
 
   if (stateExport?.type instanceof tae.ObjectNode) {
     const formatted = formatProperties(stateExport.type.properties, ast.exports);
+
     state = Object.entries(formatted).map(([name, def]) => ({
       name,
       ...def,

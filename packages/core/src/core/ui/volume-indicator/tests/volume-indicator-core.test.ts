@@ -66,6 +66,7 @@ describe('VolumeIndicatorCore', () => {
 
   it('closes after the configured delay', () => {
     const core = new VolumeIndicatorCore();
+
     core.setProps({ closeDelay: 100 });
     core.processEvent({ action: 'toggleMuted' }, { volume: 0.5, muted: false });
 

@@ -220,6 +220,7 @@ function endOfStreamSetup({
 
     msIsOpen.set(mediaSource.readyState === 'open');
     const controller = new AbortController();
+
     onMediaSourceReadyStateChange(mediaSource, controller.signal, (rs) => {
       msIsOpen.set(rs === 'open');
     });

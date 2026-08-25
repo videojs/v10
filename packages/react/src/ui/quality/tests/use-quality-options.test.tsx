@@ -83,6 +83,7 @@ describe('useQualityOptions', () => {
 
   it('sets the selected rendition', () => {
     const selectVideoRendition = vi.fn();
+
     renderQualityOptions({ selectVideoRendition });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: '720p' }));

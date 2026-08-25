@@ -16,6 +16,7 @@ export function createComponentTargets(config: SkinConfig): readonly ComponentTa
 
   if (!icons) {
     const created = config.target === 'react' ? createReactIconTarget({ family }) : createHtmlIconTarget({ family });
+
     cache.set(family, created);
     icons = created;
   }

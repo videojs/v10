@@ -93,6 +93,7 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       this.#restoreAbr();
 
       const videoTrack = this.addVideoTrack('main');
+
       // Selecting the track is what puts its renditions in `videoRenditions`, so
       // it happens before any is added and their `addrendition` events land.
       videoTrack.selected = true;
@@ -213,6 +214,7 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #onSourceChange = () => {
       const srcChanged = this.src !== this.#src;
+
       this.#src = this.src;
 
       // A new asset announces tracks of its own, and the one that is going away

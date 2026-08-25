@@ -30,6 +30,7 @@ function makePresentation(): Presentation {
     })),
     metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, targetDuration: 2, endList: false } },
   };
+
   return {
     id: 'pres-1',
     url: 'https://example.com/master.m3u8',
@@ -52,6 +53,7 @@ function run(opts: { presentation?: MaybeResolvedPresentation; trackId?: string;
     selectedVideoTrackId: signal<string | undefined>(opts.trackId),
   };
   const context = { mediaSource: signal<MediaSource | undefined>(opts.mediaSource) };
+
   return syncLiveSeekableRange.setup({ state, context, config: {} }) as () => void;
 }
 
@@ -90,6 +92,7 @@ describe('syncLiveSeekableRange', () => {
   it('no-ops for a complete (finite-duration) playlist — VoD / ended live', () => {
     const ms = fakeMediaSource();
     const presentation = makePresentation();
+
     (presentation.selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack).duration = 110;
 
     const cleanup = run({ presentation, trackId: 'v-1', mediaSource: ms });

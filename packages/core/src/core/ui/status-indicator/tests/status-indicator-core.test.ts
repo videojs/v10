@@ -8,6 +8,7 @@ describe('StatusIndicatorCore', () => {
 
   it('honors the optional action filter', () => {
     const core = new StatusIndicatorCore();
+
     core.setProps({ actions: ['toggleSubtitles'] });
 
     expect(core.processEvent({ action: 'togglePaused' }, { paused: false })).toBe(false);
@@ -26,6 +27,7 @@ describe('StatusIndicatorCore', () => {
 
   it('clears after the configured delay', () => {
     const core = new StatusIndicatorCore();
+
     core.setProps({ closeDelay: 100 });
     core.processEvent({ action: 'toggleFullscreen' }, { fullscreen: false });
 

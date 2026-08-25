@@ -51,6 +51,7 @@ export class StatusAnnouncerCore {
 
   processSnapshot(snapshot: MediaSnapshot): boolean {
     const previous = this.#snapshot;
+
     this.#snapshot = snapshot;
 
     if (!previous) return false;
@@ -114,6 +115,7 @@ export class StatusAnnouncerCore {
 
     const targetTime = snapshot.currentTime ?? this.#seekTargetTime;
     const startTime = this.#seekStartTime;
+
     this.#seekStartTime = null;
     this.#seekTargetTime = null;
 

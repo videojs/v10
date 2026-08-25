@@ -13,10 +13,12 @@ const DRM: NativeHlsSource['engine'] = {
  */
 function setup() {
   const video = document.createElement('video');
+
   document.body.append(video);
 
   const loads: string[] = [];
   let src = '';
+
   Object.defineProperty(video, 'src', {
     configurable: true,
     get: () => src,
@@ -27,6 +29,7 @@ function setup() {
   });
 
   const media = new NativeHlsMedia();
+
   media.attach(video);
 
   return { media, video, loads };

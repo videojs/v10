@@ -22,5 +22,6 @@ export function toPercent(value: number, min: number, max: number): number {
 export function roundToStep(value: number, step: number, min: number): number {
   const nearest = Math.round((value - min) / step) * step + min;
   const dot = `${step}`.indexOf('.');
+
   return dot === -1 ? nearest : Number(nearest.toFixed(`${step}`.length - dot - 1));
 }

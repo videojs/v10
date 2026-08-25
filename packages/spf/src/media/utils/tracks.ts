@@ -209,6 +209,7 @@ export function updateTrackInPresentation<T extends ResolvedTrack>(
   resolvedTrack: T
 ): Presentation {
   const trackId = resolvedTrack.id;
+
   return {
     ...presentation,
     selectionSets: presentation.selectionSets.map((selectionSet) => ({

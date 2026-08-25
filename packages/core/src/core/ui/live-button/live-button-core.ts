@@ -89,6 +89,7 @@ export class LiveButtonCore {
 
   getAttrs(state: LiveButtonState) {
     const inactive = this.#props.disabled || state.liveEdge;
+
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': inactive ? 'true' : undefined,
@@ -159,5 +160,6 @@ function liveEdgeTarget(media: LiveButtonMediaState): number | null {
   if (seekable.length === 0) return null;
 
   const end = seekable[seekable.length - 1]![1];
+
   return Number.isFinite(end) ? end : null;
 }

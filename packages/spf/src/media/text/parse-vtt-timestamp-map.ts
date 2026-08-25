@@ -27,6 +27,7 @@ const TIMESTAMP_MAP_PREFIX = 'X-TIMESTAMP-MAP=';
  */
 export function parseVttTimestampMap(text: string): TimestampMap | undefined {
   const timestampMapLine = text.split(/\r\n|\r|\n/).find((line) => line.startsWith(TIMESTAMP_MAP_PREFIX));
+
   return timestampMapLine ? parseTimestampMapBody(timestampMapLine.slice(TIMESTAMP_MAP_PREFIX.length)) : undefined;
 }
 
@@ -41,6 +42,7 @@ function parseTimestampMapBody(body: string): TimestampMap | undefined {
   return Object.fromEntries(
     body.split(',').map((kvStr) => {
       const [k, v] = kvStr.split(/:(.*)/).map((kOrV) => kOrV.trim());
+
       return [k?.toLowerCase(), TimeStampMapParserMap[k as keyof TimeStampMapParserMap](v as string)];
     })
   ) as TimestampMap;
@@ -51,5 +53,6 @@ const VTT_TIMESTAMP_WEIGHTS = [3600, 60, 1, 0.001];
 
 function parseWebVttTimestamp(value: string): number {
   const parts = value.split(/[:.]/);
+
   return parts.reduce((acc, val, i) => acc + +val * (VTT_TIMESTAMP_WEIGHTS[i + 4 - parts.length] ?? 0), 0);
 }

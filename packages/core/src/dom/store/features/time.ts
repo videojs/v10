@@ -48,6 +48,7 @@ export const timeFeature = definePlayerFeature({
 
       if (duration === Number.POSITIVE_INFINITY && isMediaBufferCapable(media)) {
         const { seekable } = media;
+
         return seekable.length > 0 ? seekable.end(seekable.length - 1) : 0;
       }
 

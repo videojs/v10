@@ -22,12 +22,14 @@ describe('Popover', () => {
     );
 
     const trigger = screen.getByTestId('trigger');
+
     expect(trigger.hasAttribute('aria-controls')).toBe(false);
 
     fireEvent.click(trigger);
 
     await waitFor(() => {
       const popup = screen.getByTestId('popup');
+
       expect(trigger.getAttribute('aria-controls')).toBe(popup.id);
     });
 

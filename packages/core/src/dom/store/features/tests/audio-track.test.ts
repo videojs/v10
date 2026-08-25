@@ -76,6 +76,7 @@ describe('audioTrackFeature', () => {
     expect(store.state.audioTrackList).toEqual([]);
 
     const list = new TestAudioTrackList([createTrack({ id: '0', label: 'English', enabled: true })]);
+
     (media as unknown as TestMedia).audioTracks = list;
     media.dispatchEvent(new Event('loadstart'));
 
@@ -93,6 +94,7 @@ describe('audioTrackFeature', () => {
   it('resyncs on audio track change', () => {
     const media = createMedia([createTrack({ id: '0', label: 'English' }), createTrack({ id: '1', label: 'Spanish' })]);
     const store = createStore<PlayerTarget>()(audioTrackFeature);
+
     store.attach({ media, container: null });
 
     (media as any).audioTracks.tracks[1].enabled = true;
@@ -107,6 +109,7 @@ describe('audioTrackFeature', () => {
       createTrack({ id: '1', label: 'Spanish' }),
     ]);
     const store = createStore<PlayerTarget>()(audioTrackFeature);
+
     store.attach({ media, container: null });
 
     store.state.selectAudioTrack('1');
@@ -120,6 +123,7 @@ describe('audioTrackFeature', () => {
   it('ignores unknown audio track values', () => {
     const media = createMedia([createTrack({ id: '0', label: 'English', enabled: true })]);
     const store = createStore<PlayerTarget>()(audioTrackFeature);
+
     store.attach({ media, container: null });
 
     store.state.selectAudioTrack('missing');

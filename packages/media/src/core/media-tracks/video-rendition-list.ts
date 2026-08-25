@@ -12,6 +12,7 @@ export function addRendition(track: VideoTrack, rendition: VideoRendition) {
   getPrivate(rendition).track = track;
 
   const renditionSet = getPrivate(track).renditionSet as Set<VideoRendition>;
+
   renditionSet.add(rendition);
   const index = renditionSet.size - 1;
 
@@ -34,6 +35,7 @@ export function removeRendition(rendition: VideoRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.videoRenditions as VideoRenditionList | undefined;
   const track = getPrivate(rendition).track as VideoTrack;
   const renditionSet = getPrivate(track).renditionSet as Set<VideoRendition>;
+
   renditionSet.delete(rendition);
 
   queueMicrotask(() => {

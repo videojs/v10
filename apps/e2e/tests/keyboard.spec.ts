@@ -14,6 +14,7 @@ function getMediaValue(page: Page, key: 'currentTime' | 'volume'): Promise<numbe
     ({ selector, key }) => {
       const host = document.querySelector(selector) as HTMLMediaElement | null;
       const media = (host?.querySelector?.('video, audio') as HTMLMediaElement) ?? host;
+
       return media?.[key] ?? 0;
     },
     { selector: SELECTORS.media, key }
@@ -44,6 +45,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
       await player.playerRoot.evaluate((root) => {
         const before = document.createElement('button');
         const after = document.createElement('button');
+
         before.tabIndex = 0;
         after.tabIndex = 0;
         before.dataset.focusSentinel = 'before';
@@ -53,6 +55,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
       });
       const before = page.locator('[data-focus-sentinel="before"]');
       const after = page.locator('[data-focus-sentinel="after"]');
+
       await before.focus();
 
       await expectTabFocus(page, player.playerRoot);
@@ -106,12 +109,14 @@ for (const entry of PAGES as readonly PageEntry[]) {
 
       await player.timeSliderThumb.focus();
       const timeBefore = await getMediaValue(page, 'currentTime');
+
       await page.keyboard.press('ArrowRight');
       await expect.poll(() => getMediaValue(page, 'currentTime')).toBeGreaterThan(timeBefore);
       await page.keyboard.press('Home');
       await expect.poll(() => getMediaValue(page, 'currentTime')).toBe(0);
 
       const timeType = await player.timeToggle.getAttribute('data-type');
+
       await player.timeToggle.focus();
       await page.keyboard.press('Enter');
       await expect(player.timeToggle).not.toHaveAttribute('data-type', timeType!);
@@ -134,10 +139,12 @@ for (const entry of PAGES as readonly PageEntry[]) {
       if (isAudio) {
         await player.seekTo(50);
         const middle = await getMediaValue(page, 'currentTime');
+
         await player.seekBackward.focus();
         await page.keyboard.press('Enter');
         await expect.poll(() => getMediaValue(page, 'currentTime')).toBeLessThan(middle);
         const back = await getMediaValue(page, 'currentTime');
+
         await player.seekForward.focus();
         await page.keyboard.press('Space');
         await expect.poll(() => getMediaValue(page, 'currentTime')).toBeGreaterThan(back);
@@ -177,6 +184,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
         await page.keyboard.press('ArrowDown');
         await expect(focusedOption).toBeFocused();
         const nextRate = await focusedOption.getAttribute(DATA_ATTRS.rate);
+
         expect(nextRate).not.toBeNull();
 
         await page.keyboard.press('Enter');
@@ -198,6 +206,7 @@ for (const entry of PAGES as readonly PageEntry[]) {
           if (!video) return;
 
           const track = document.createElement('track');
+
           track.kind = 'subtitles';
           track.label = 'English';
           track.srclang = 'en';

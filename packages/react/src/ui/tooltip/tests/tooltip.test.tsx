@@ -73,6 +73,7 @@ describe('Tooltip', () => {
     await waitFor(() => {
       expect(container.querySelector('[data-testid="popup"] span')?.textContent).toBe('Play');
       const hint = container.querySelector('[data-testid="popup"] kbd');
+
       expect(hint?.textContent).toBe('K');
       expect(hint?.localName).toBe('kbd');
     });

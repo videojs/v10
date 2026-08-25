@@ -35,6 +35,7 @@ describe('vjscPlugin', () => {
     const filename = join(root, 'fixture.ts');
     const id = `${filename}?target=react`;
     const configurations = new Map<string, number>();
+
     writeFileSync(filename, `export const value = 'before';`);
 
     const bundle = await rolldown({

@@ -54,6 +54,7 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
   }
 
   const isAudio = getInstallationPreset(useCase).mediaType === 'audio';
+
   return [
     { value: isAudio ? 'audio' : 'video', label: 'Default' },
     { value: isAudio ? 'minimal-audio' : 'minimal-video', label: 'Minimal' },

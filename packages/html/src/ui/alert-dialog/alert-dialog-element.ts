@@ -90,6 +90,7 @@ export class AlertDialogElement extends UIElement {
     if (!this.#dialog) return;
 
     const input = this.#dialog.input.current;
+
     this.#core.setInput(input);
     const state = this.#core.getState();
 

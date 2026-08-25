@@ -43,6 +43,7 @@ describe('smallestCoveringPixelArea', () => {
   // Area `0` covers nothing, so a dimensionless track can't pin the cap to zero.
   it('ignores tracks that declare no dimensions', () => {
     const withUnsized = [{ id: 'no-resolution', bandwidth: 900_000 }, ...tracks];
+
     expect(smallestCoveringPixelArea(withUnsized, 160 * 90)).toBe(640 * 360);
   });
 });
@@ -71,6 +72,7 @@ describe('tracksUnderPixelArea', () => {
   // which tracks are admissible. Given a shuffled ladder it filters and nothing else.
   it('preserves the incoming order rather than ranking', () => {
     const shuffled = [tracks[2], tracks[0], tracks[3], tracks[1]] as typeof tracks;
+
     expect(tracksUnderPixelArea(shuffled, 1920 * 1080).map((track) => track.id)).toEqual(['1080p', '360p', '720p']);
   });
 
@@ -91,6 +93,7 @@ describe('tracksUnderPixelArea', () => {
       { id: 'wide-2160', width: 3840, height: 1714, bandwidth: 12_000_000 },
       { id: 'uhd', width: 3840, height: 2160, bandwidth: 15_000_000 },
     ];
+
     expect(tracksUnderPixelArea(anamorphic, 3456 * 2234).map((track) => track.id)).toEqual(['wide-2160']);
   });
 });

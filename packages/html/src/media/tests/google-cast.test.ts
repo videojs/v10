@@ -73,6 +73,7 @@ describe('GoogleCastElement', () => {
 
   it('forwards attributes to the component', () => {
     const { host, provider, el } = setup();
+
     provider.setMedia(host as unknown as Media);
 
     el.setAttribute('receiver', 'APP_ID');
@@ -81,6 +82,7 @@ describe('GoogleCastElement', () => {
     el.setAttribute('src', 'https://example.com/stream.m3u8');
 
     const component = getMediaComponents(host).get(GoogleCast)!;
+
     expect(component.receiver).toBe('APP_ID');
     expect(component.contentType).toBe('application/x-mpegURL');
     expect(component.streamType).toBe('live');
@@ -111,6 +113,7 @@ describe('GoogleCastElement', () => {
 
   it('removes the component when the element disconnects', () => {
     const { host, provider, el } = setup();
+
     provider.setMedia(host as unknown as Media);
 
     el.remove();
@@ -120,6 +123,7 @@ describe('GoogleCastElement', () => {
 
   it('removes the component on destroy', () => {
     const { host, provider, el } = setup();
+
     provider.setMedia(host as unknown as Media);
 
     el.destroy();

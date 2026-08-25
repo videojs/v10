@@ -15,6 +15,7 @@ function renderWithMedia(ui: ReactElement) {
   const source = vi.spyOn(MuxMedia.prototype, 'source', 'set');
   const result = render(ui);
   const media = source.mock.contexts[0] as MuxMedia;
+
   source.mockRestore();
   return { ...result, media };
 }
@@ -31,6 +32,7 @@ describe('MuxVideo', () => {
     const src = vi.spyOn(HlsJsMedia.prototype, 'src', 'set');
 
     const { rerender } = render(<MuxVideo source={{ playbackId: 'abc123', preferPlayback: 'native' }} />);
+
     src.mockClear();
 
     // A fresh object literal every render must be absorbed by the structural guard.
@@ -53,6 +55,7 @@ describe('MuxVideo', () => {
     );
 
     const url = new URL(media.src);
+
     expect(url.host).toBe('stream.example.com');
     expect(url.searchParams.get('max_resolution')).toBe('1080p');
   });
@@ -63,6 +66,7 @@ describe('MuxVideo', () => {
     );
 
     const url = new URL(media.src);
+
     expect(url.searchParams.get('token')).toBe('jwt');
     expect(url.searchParams.has('asset_start_time')).toBe(false);
   });
@@ -94,6 +98,7 @@ describe('MuxVideo', () => {
     const { container } = render(<MuxVideo source={{ playbackId: 'abc123' }} />);
 
     const track = container.querySelector('track');
+
     expect(track?.kind).toBe('metadata');
     expect(track?.getAttribute('src')).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
   });
@@ -116,6 +121,7 @@ describe('MuxVideo', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const { container, rerender } = render(<MuxVideo source={{ playbackId: 'abc123' }} />);
+
     rerender(<MuxVideo source={{ playbackId: 'xyz789' }} />);
 
     expect(container.querySelector('track')?.getAttribute('src')).toBe(

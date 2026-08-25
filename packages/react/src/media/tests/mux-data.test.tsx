@@ -10,6 +10,7 @@ import { MuxData } from '../mux-data';
 function setup() {
   const media = new MuxMedia();
   const { value, Wrapper } = createPlayerWrapper();
+
   value.media = media as unknown as Media;
   return { media, Wrapper };
 }
@@ -29,6 +30,7 @@ describe('MuxData', () => {
     render(<MuxData envKey="test-key" playerSoftwareName="mux-video" disableCookies />, { wrapper: Wrapper });
 
     const component = getMediaComponents(media).get(MuxDataComponent)!;
+
     expect(component.envKey).toBe('test-key');
     expect(component.playerSoftwareName).toBe('mux-video');
     expect(component.disableCookies).toBe(true);
@@ -43,6 +45,7 @@ describe('MuxData', () => {
 
     const { rerender } = render(<MuxData MuxDataSdk={MuxDataSdk} />, { wrapper: Wrapper });
     const component = getMediaComponents(media).get(MuxDataComponent)!;
+
     expect(component.MuxDataSdk).toBe(MuxDataSdk);
 
     rerender(<MuxData MuxDataSdk={undefined} />);
@@ -56,6 +59,7 @@ describe('MuxData', () => {
     const { media, Wrapper } = setup();
 
     const { rerender } = render(<MuxData disableCookies />, { wrapper: Wrapper });
+
     rerender(<MuxData />);
 
     expect(getMediaComponents(media).get(MuxDataComponent)!.disableCookies).toBe(false);
@@ -76,6 +80,7 @@ describe('MuxData', () => {
     expect(getMediaComponents(media).get(MuxDataComponent)).toBeUndefined();
 
     const next = new MuxMedia();
+
     addMediaComponent(next, component);
     expect(getMediaComponents(next).get(MuxDataComponent)).toBe(component);
 
@@ -86,6 +91,7 @@ describe('MuxData', () => {
     const { media, Wrapper } = setup();
 
     const { unmount } = render(<MuxData />, { wrapper: Wrapper });
+
     unmount();
 
     expect(getMediaComponents(media).get(MuxDataComponent)).toBeUndefined();

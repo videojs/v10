@@ -16,6 +16,7 @@ describe('createScreenOrientationLock', () => {
       lock: vi.fn(async () => {}),
       unlock: vi.fn(),
     };
+
     stubOrientation(orientation);
 
     const screenLock = createScreenOrientationLock();
@@ -30,6 +31,7 @@ describe('createScreenOrientationLock', () => {
       lock: vi.fn(async () => {}),
       unlock: vi.fn(),
     };
+
     stubOrientation(orientation);
 
     const screenLock = createScreenOrientationLock();
@@ -47,6 +49,7 @@ describe('createScreenOrientationLock', () => {
       lock: vi.fn(async () => {}),
       unlock: vi.fn(),
     };
+
     stubOrientation(orientation);
 
     const screenLock = createScreenOrientationLock();
@@ -80,6 +83,7 @@ describe('createScreenOrientationLock', () => {
       lock: vi.fn(() => lockPromise),
       unlock: vi.fn(),
     };
+
     stubOrientation(orientation);
 
     const screenLock = createScreenOrientationLock();
@@ -102,6 +106,7 @@ describe('createScreenOrientationLock', () => {
       lock: vi.fn<ScreenOrientation['lock']>().mockReturnValue(lockPromise),
       unlock: vi.fn(),
     };
+
     stubOrientation(orientation);
 
     const screenLock = createScreenOrientationLock();
@@ -130,6 +135,7 @@ describe('createScreenOrientationLock', () => {
       lock: vi.fn<ScreenOrientation['lock']>().mockReturnValueOnce(firstLock).mockResolvedValue(undefined),
       unlock: vi.fn(),
     };
+
     stubOrientation(orientation);
 
     const screenLock = createScreenOrientationLock();
@@ -158,6 +164,7 @@ describe('createScreenOrientationLock', () => {
       lock: vi.fn<ScreenOrientation['lock']>().mockResolvedValue(undefined),
       unlock: vi.fn(),
     };
+
     stubOrientation(orientation);
 
     const screenLock = createScreenOrientationLock();
@@ -182,6 +189,7 @@ describe('createScreenOrientationLock', () => {
         throw new Error('InvalidStateError');
       }),
     };
+
     stubOrientation(orientation);
 
     const rejectedLock = createScreenOrientationLock();
@@ -192,6 +200,7 @@ describe('createScreenOrientationLock', () => {
     expect(orientation.unlock).not.toHaveBeenCalled();
 
     const acceptedLock = createScreenOrientationLock();
+
     orientation.lock.mockResolvedValue(undefined);
 
     await acceptedLock.lock('landscape');

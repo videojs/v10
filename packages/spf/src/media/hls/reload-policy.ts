@@ -49,6 +49,7 @@ export function mediaPlaylistReloadDelay(current: ResolvedTrack, previous: Resol
 
   const target = targetDurationOf(current);
   const changed = !previous || snapshotSignature(current) !== snapshotSignature(previous);
+
   return (changed ? target : target / 2) * 1000;
 }
 
@@ -81,5 +82,6 @@ export function resolveLiveLatency(
   if (!isResolvedPresentation(presentation) || !trackId) return 0;
 
   const track = findTrackById(presentation, trackId);
+
   return track && isResolvedTrack(track) ? liveLatencyFor(track) : 0;
 }

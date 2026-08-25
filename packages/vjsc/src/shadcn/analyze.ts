@@ -29,6 +29,7 @@ export function analyzeImports(source: string, fileName: string): ImportReferenc
       if (!reference) return;
 
       const { literal, kind } = reference;
+
       references.push({
         specifier: literal.value,
         kind,
@@ -72,6 +73,7 @@ function importReference(
       node.importKind === 'type' ||
       (node.specifiers.length > 0 &&
         node.specifiers.every((specifier) => specifier.type === 'ImportSpecifier' && specifier.importKind === 'type'));
+
     return { literal: node.source, kind: typeOnly ? 'type' : 'static' };
   }
 
@@ -79,6 +81,7 @@ function importReference(
     const typeOnly =
       node.exportKind === 'type' ||
       (node.specifiers.length > 0 && node.specifiers.every((specifier) => specifier.exportKind === 'type'));
+
     return { literal: node.source, kind: typeOnly ? 'type' : 'static' };
   }
 

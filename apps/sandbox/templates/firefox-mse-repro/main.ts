@@ -59,6 +59,7 @@ let audioSegIdx = 0;
 
 function log(msg: string, type: 'info' | 'ok' | 'err' | 'warn' | 'sep' = 'info') {
   const el = document.createElement('div');
+
   el.className = type;
   const ts = new Date().toLocaleTimeString('en', {
     hour12: false,
@@ -66,6 +67,7 @@ function log(msg: string, type: 'info' | 'ok' | 'err' | 'warn' | 'sep' = 'info')
     minute: '2-digit',
     second: '2-digit',
   });
+
   el.textContent = `[${ts}] ${msg}`;
   logEl.appendChild(el);
   logEl.scrollTop = logEl.scrollHeight;
@@ -180,6 +182,7 @@ function splitCodecs(codecsAttr: string) {
   const parts = codecsAttr.split(',').map((c) => c.trim());
   const video = parts.filter((c) => /^(avc|hvc|vp0|av0)/i.test(c)).join(',');
   const audio = parts.filter((c) => /^(mp4a|ac-3|ec-3|opus)/i.test(c)).join(',');
+
   return { video: video || 'avc1.64001f', audio: audio || 'mp4a.40.2' };
 }
 
@@ -191,6 +194,7 @@ btnParse.addEventListener('click', async () => {
   btnParse.disabled = true;
   log('--- Parsing HLS playlist ---', 'sep');
   const url = urlInput.value.trim();
+
   log(`GET ${url}`);
 
   try {
@@ -211,6 +215,7 @@ btnParse.addEventListener('click', async () => {
     const audioMedia = audioUrl ? parseMedia(audioText, audioUrl) : { initUrl: '', segmentUrls: [] };
 
     const codecs = splitCodecs(codecsAttr);
+
     log(`Video codec: ${codecs.video}`, 'ok');
     log(`Audio codec: ${codecs.audio}`, 'ok');
     log(`Video init: ${videoMedia.initUrl}`, 'ok');
@@ -307,6 +312,7 @@ function addSB(type: 'video' | 'audio') {
 
   try {
     const sb = mediaSource.addSourceBuffer(mime);
+
     sb.addEventListener('updateend', updateState);
     sb.addEventListener('error', (e) => {
       log(`${type} SB error: ${e}`, 'err');
@@ -340,6 +346,7 @@ btnAsb.addEventListener('click', () => addSB('audio'));
 async function append(sb: SourceBuffer, url: string, label: string): Promise<void> {
   log(`Fetching ${label}…`);
   const data = await fetch(url).then((r) => r.arrayBuffer());
+
   log(`${label}: ${data.byteLength} bytes`);
 
   if (sb.updating)
@@ -361,6 +368,7 @@ async function append(sb: SourceBuffer, url: string, label: string): Promise<voi
       sb.removeEventListener('updateend', onEnd);
       sb.removeEventListener('error', onErr);
     };
+
     sb.addEventListener('updateend', onEnd);
     sb.addEventListener('error', onErr);
 

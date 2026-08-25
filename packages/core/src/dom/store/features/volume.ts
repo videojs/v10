@@ -76,6 +76,7 @@ export const volumeFeature = definePlayerFeature({
         volume: volumeCapable ? media.volume : 1,
         muted: mutedCapable ? media.muted : false,
       });
+
     sync();
 
     listen(media, 'volumechange', sync, { signal });

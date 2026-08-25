@@ -176,6 +176,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
       // The target attached with nothing to embed; wait a microtask so the one embed URL sees every prop set this task.
       const load = this.#beginLoad();
+
       this.#resetState();
       await Promise.resolve();
 
@@ -187,6 +188,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     }
 
     const load = this.#beginLoad();
+
     // Reset before the empty-src bail: a cleared source has nothing to load, but the old video's state still has to go.
     this.#resetState();
     // `emptied` announces that reset, so it precedes the bail; a cleared source is the one case reporting nothing more.
@@ -534,6 +536,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   async #onLoaded() {
     const load = this.#loadComplete;
+
     this.#readyState = READY_STATE_HAVE_METADATA;
 
     const player = this.#player;
@@ -568,6 +571,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   #bindPlayerEvents(player: VimeoPlayer) {
     const emit = (type: string) => this.dispatchEvent(new Event(type));
+
     player.on('loaded', () => this.#onLoaded());
     player.on('bufferstart', () => emit('waiting'));
     player.on('play', () => {
@@ -651,6 +655,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
     this.#teardownTextTracks();
     const host = doc.createElement('video');
+
     this.#textTracksHost = host;
     player
       .getTextTracks()
@@ -734,6 +739,7 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps>
 
   if (parsed.kind === 'event') {
     const hashPath = parsed.hash ? `/${parsed.hash}` : '';
+
     delete params.h;
     return `${EMBED_EVENT_BASE}/${parsed.id}/embed${hashPath}?${serializeEmbedParams(params)}`;
   }
@@ -756,5 +762,6 @@ function toLoadVideoOptions(src: string, vimeo?: VimeoEngineConfig) {
 
   const base = parsed.kind === 'event' ? `${EMBED_EVENT_BASE}/${parsed.id}/embed` : `${EMBED_VIDEO_BASE}/${parsed.id}`;
   const url = `${base}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
+
   return { url, ...vimeo } as LoadVideoOptions;
 }

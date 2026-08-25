@@ -24,6 +24,7 @@ export const fullscreenFeature = definePlayerFeature({
 
     async exitFullscreen() {
       const { media } = target();
+
       return exitFullscreen(media);
     },
 

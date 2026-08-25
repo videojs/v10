@@ -232,6 +232,7 @@ export class MuxData implements MuxDataProps {
 
     const { view_session_id = this.MuxDataSdk?.utils.generateUUID() } = metadata;
     const video_id = toVideoId({ metadata, src: media.src });
+
     metadata.view_session_id = view_session_id;
 
     if (video_id) metadata.video_id = video_id;
@@ -279,6 +280,7 @@ export function toPlaybackIdFromSrc(src: string): string | undefined {
   if (!src?.startsWith('https://stream.')) return undefined;
 
   const [playbackId] = new URL(src).pathname.slice(1).split(/\.m3u8|\//);
+
   return playbackId || undefined;
 }
 
@@ -287,5 +289,6 @@ export function isMuxVideoSrc({ src }: MuxVideoIdProps): boolean {
 
   const base = window?.location.href;
   const hostname = new URL(src, base).hostname.toLocaleLowerCase();
+
   return hostname.includes(MUX_VIDEO_DOMAIN);
 }

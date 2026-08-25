@@ -9,6 +9,7 @@ import { createTestTooltip } from './tooltip-helpers';
 describe('createTooltip', () => {
   it('starts closed', () => {
     const { tooltip } = createTestTooltip();
+
     expect(tooltip.input.current).toEqual({ active: false, status: 'idle' });
   });
 
@@ -174,6 +175,7 @@ describe('createTooltip', () => {
 
       it('closes on pointer down', () => {
         const { tooltip, onOpenChange } = createTestTooltip();
+
         tooltip.open();
         onOpenChange.mockClear();
 
@@ -214,6 +216,7 @@ describe('createTooltip', () => {
         const owner = createTestPopover({ group: () => group });
         const { tooltip, onOpenChange } = createTestTooltip({ popupGroup: () => group });
         const trigger = document.createElement('button');
+
         owner.popover.setTriggerElement(trigger);
         tooltip.setTriggerElement(trigger);
         owner.popover.open();
@@ -238,6 +241,7 @@ describe('createTooltip', () => {
         const owner = createTestPopover({ group: () => group });
         const { tooltip, onOpenChange } = createTestTooltip({ popupGroup: () => group });
         const trigger = document.createElement('button');
+
         owner.popover.setTriggerElement(trigger);
         tooltip.setTriggerElement(trigger);
         tooltip.open();
@@ -256,6 +260,7 @@ describe('createTooltip', () => {
           sticky: () => true,
         });
         const trigger = document.createElement('button');
+
         owner.popover.setTriggerElement(trigger);
         tooltip.setTriggerElement(trigger);
         tooltip.open();

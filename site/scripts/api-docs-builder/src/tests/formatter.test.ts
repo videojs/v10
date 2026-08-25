@@ -57,39 +57,46 @@ describe('abbreviateType', () => {
 
   it("returns 'type | function' for short callback unions (< 40 chars, 2 members)", () => {
     const type = 'string | ((state: TimeState) => string)';
+
     expect(abbreviateType('label', type)).toBe('string | function');
   });
 
   it("returns 'type | function' for unions containing functions", () => {
     const type = "string | ((state: State) => string) | 'auto'";
+
     expect(abbreviateType('label', type)).toBe("string | 'auto' | function");
   });
 
   it('returns undefined for complex unions (NOT "Union")', () => {
     // Complex union with 3+ members, no function
     const complexUnion = "'small' | 'medium' | 'large' | 'xlarge'";
+
     expect(abbreviateType('size', complexUnion)).toBeUndefined();
   });
 
   it('returns "object" for object literals > 40 chars', () => {
     const longObject = '{ volume: number; muted: boolean; level: string }';
+
     expect(longObject.length).toBeGreaterThan(40);
     expect(abbreviateType('result', longObject)).toBe('object');
   });
 
   it('returns undefined for object literals <= 40 chars', () => {
     const shortObject = '{ x: number; y: number }';
+
     expect(abbreviateType('point', shortObject)).toBeUndefined();
   });
 
   it('truncates other types > 40 chars', () => {
     const longType = "'option-a' | 'option-b' | 'option-c' | 'option-d' | 'option-e'";
+
     expect(longType.length).toBeGreaterThan(40);
     expect(abbreviateType('choice', longType)).toBe(`${longType.slice(0, 37)}...`);
   });
 
   it('returns undefined for other types <= 40 chars', () => {
     const shortType = "'small' | 'medium' | 'large' | 'xlarge'";
+
     expect(shortType.length).toBeLessThanOrEqual(40);
     expect(abbreviateType('size', shortType)).toBeUndefined();
   });
@@ -597,6 +604,7 @@ function createDocumentation(options: {
 
 function createIntrinsicNode(intrinsic: string): tae.IntrinsicNode {
   const node = Object.create(tae.IntrinsicNode.prototype);
+
   node.intrinsic = intrinsic;
   node.typeName = undefined;
   return node;
@@ -604,6 +612,7 @@ function createIntrinsicNode(intrinsic: string): tae.IntrinsicNode {
 
 function createUnionNode(types: tae.AnyType[], typeName?: tae.TypeName): tae.UnionNode {
   const node = Object.create(tae.UnionNode.prototype);
+
   node.types = types;
   node.typeName = typeName;
   return node;
@@ -614,6 +623,7 @@ function createObjectNode(
   typeName?: tae.TypeName
 ): tae.ObjectNode {
   const node = Object.create(tae.ObjectNode.prototype);
+
   node.properties = properties.map((p) => ({
     name: p.name,
     type: p.type,
@@ -625,12 +635,14 @@ function createObjectNode(
 
 function createArrayNode(elementType: tae.AnyType): tae.ArrayNode {
   const node = Object.create(tae.ArrayNode.prototype);
+
   node.elementType = elementType;
   return node;
 }
 
 function createLiteralNode(value: string): tae.LiteralNode {
   const node = Object.create(tae.LiteralNode.prototype);
+
   node.value = value;
   return node;
 }
@@ -641,12 +653,14 @@ function createExternalTypeNode(
   typeArguments?: Array<{ type: tae.AnyType; equalToDefault: boolean }>
 ): tae.ExternalTypeNode {
   const node = Object.create(tae.ExternalTypeNode.prototype);
+
   node.typeName = createTypeName(name, namespaces, typeArguments);
   return node;
 }
 
 function createIntersectionNode(types: tae.AnyType[], typeName?: tae.TypeName): tae.IntersectionNode {
   const node = Object.create(tae.IntersectionNode.prototype);
+
   node.types = types;
   node.typeName = typeName;
   node.properties = [];
@@ -655,6 +669,7 @@ function createIntersectionNode(types: tae.AnyType[], typeName?: tae.TypeName): 
 
 function createFunctionNode(callSignatures: tae.CallSignature[], typeName?: tae.TypeName): tae.FunctionNode {
   const node = Object.create(tae.FunctionNode.prototype);
+
   node.callSignatures = callSignatures;
   node.typeName = typeName;
   return node;
@@ -662,6 +677,7 @@ function createFunctionNode(callSignatures: tae.CallSignature[], typeName?: tae.
 
 function createTupleNode(types: tae.AnyType[], typeName?: tae.TypeName): tae.TupleNode {
   const node = Object.create(tae.TupleNode.prototype);
+
   node.types = types;
   node.typeName = typeName;
   return node;
@@ -669,6 +685,7 @@ function createTupleNode(types: tae.AnyType[], typeName?: tae.TypeName): tae.Tup
 
 function createTypeParameterNode(name: string, constraint?: tae.AnyType): tae.TypeParameterNode {
   const node = Object.create(tae.TypeParameterNode.prototype);
+
   node.name = name;
   node.constraint = constraint;
   return node;

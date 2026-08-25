@@ -50,6 +50,7 @@ export function useButton(params: UseButtonParameters): UseButtonReturnValue {
   const getButtonProps = useCallback(
     (externalProps?: ComponentPropsWithRef<'button'>): ComponentPropsWithRef<'button'> => {
       const buttonProps = createButton({ onActivate, isDisabled });
+
       return mergeProps(buttonProps, externalProps);
     },
     [onActivate, isDisabled]

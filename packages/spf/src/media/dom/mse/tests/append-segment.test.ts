@@ -38,12 +38,14 @@ async function* chunks(...buffers: ArrayBuffer[]): AsyncGenerator<Uint8Array> {
 describe('appendSegment', () => {
   it('calls appendBuffer once for an ArrayBuffer', async () => {
     const sb = makeSourceBuffer();
+
     await appendSegment(sb, new ArrayBuffer(8));
     expect(sb.appendBuffer).toHaveBeenCalledTimes(1);
   });
 
   it('resolves after updateend for ArrayBuffer', async () => {
     const sb = makeSourceBuffer();
+
     await expect(appendSegment(sb, new ArrayBuffer(4))).resolves.toBeUndefined();
   });
 
@@ -88,12 +90,14 @@ describe('appendSegment', () => {
 
   it('calls appendBuffer once per chunk for AsyncIterable', async () => {
     const sb = makeSourceBuffer();
+
     await appendSegment(sb, chunks(new ArrayBuffer(4), new ArrayBuffer(4), new ArrayBuffer(4)));
     expect(sb.appendBuffer).toHaveBeenCalledTimes(3);
   });
 
   it('resolves after all chunks are appended', async () => {
     const sb = makeSourceBuffer();
+
     await expect(appendSegment(sb, chunks(new ArrayBuffer(4), new ArrayBuffer(4)))).resolves.toBeUndefined();
   });
 
@@ -164,6 +168,7 @@ describe('appendSegment', () => {
     );
 
     const appended = (sb.appendBuffer as ReturnType<typeof vi.fn>).mock.calls[0]?.[0];
+
     expect(Array.from(new Uint8Array(appended as ArrayBuffer))).toEqual([1, 2, 3, 4]);
   });
 

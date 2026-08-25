@@ -18,6 +18,7 @@ import {
 // exercise the actual implementation.
 vi.mock('../../../../media/dom/mse/mediasource-setup', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../../media/dom/mse/mediasource-setup')>();
+
   return {
     ...actual,
     createSourceBuffer: vi.fn((_mediaSource: MediaSource, mimeCodec: string) => ({
@@ -33,6 +34,7 @@ vi.mock('../../../../media/dom/mse/mediasource-setup', async (importOriginal) =>
 // verifies the call shape and slot publication, not actor internals.
 vi.mock('../../../actors/dom/segment-loader', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../actors/dom/segment-loader')>();
+
   return {
     ...actual,
     createSegmentLoaderActor: vi.fn(
@@ -144,6 +146,7 @@ describe('buildMimeCodec', () => {
   it('constructs MIME codec string with single codec', () => {
     const track = createResolvedVideoTrack();
     const result = buildMimeCodec(track);
+
     expect(result).toBe('video/mp4; codecs="avc1.42E01E"');
   });
 
@@ -153,6 +156,7 @@ describe('buildMimeCodec', () => {
       codecs: ['avc1.42E01E', 'mp4a.40.2'],
     };
     const result = buildMimeCodec(track);
+
     expect(result).toBe('video/mp4; codecs="avc1.42E01E,mp4a.40.2"');
   });
 
@@ -162,6 +166,7 @@ describe('buildMimeCodec', () => {
       codecs: [],
     };
     const result = buildMimeCodec(track);
+
     expect(result).toBe('video/mp4; codecs=""');
   });
 });
@@ -211,6 +216,7 @@ function setupSetupBufferActors(initialState: BufferActorsState = {}, initialCon
     videoReactor.destroy();
     audioReactor.destroy();
   };
+
   return { state, context, cleanup };
 }
 
@@ -227,6 +233,7 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
     const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = makeMediaSource();
+
     context.mediaSource.set(mediaSource);
     state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
     state.selectedVideoTrackId.set('video-1');
@@ -248,6 +255,7 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
     const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = makeMediaSource();
+
     context.mediaSource.set(mediaSource);
     state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
     state.selectedVideoTrackId.set('video-1');
@@ -281,6 +289,7 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
     const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = makeMediaSource();
+
     context.mediaSource.set(mediaSource);
     state.presentation.set(createPresentationWithTracks({ audio: audioTrack }));
     state.selectedAudioTrackId.set('audio-1');
@@ -306,6 +315,7 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
     const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = makeMediaSource();
+
     context.mediaSource.set(mediaSource);
     state.presentation.set(createPresentationWithTracks({ video: videoTrack, audio: audioTrack }));
     state.selectedVideoTrackId.set('video-1');
@@ -369,6 +379,7 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
     const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = makeMediaSource();
+
     context.mediaSource.set(mediaSource);
     state.presentation.set(createPresentationWithTracks({ audio: partiallyResolvedAudio as AudioTrack }));
     state.selectedAudioTrackId.set('audio-1');
@@ -448,6 +459,7 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
     const { state, context, cleanup } = setupSetupBufferActors();
 
     const mediaSource = makeMediaSource();
+
     context.mediaSource.set(mediaSource);
     state.presentation.set(createPresentationWithTracks({ video: videoTrack }));
     state.selectedVideoTrackId.set('video-1');
@@ -459,6 +471,7 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
 
     const loader = context.videoSegmentLoaderActor.get()!;
     const loaderDestroy = loader.destroy as ReturnType<typeof vi.fn>;
+
     expect(createSegmentLoaderActor).toHaveBeenCalledTimes(1);
 
     // Detach mediaSource → state machine transitions to 'preconditions-unmet'

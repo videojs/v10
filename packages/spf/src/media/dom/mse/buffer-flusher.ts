@@ -26,6 +26,7 @@ export async function flushBuffer(sourceBuffer: SourceBuffer, start: number, end
         sourceBuffer.removeEventListener('updateend', onUpdateEnd);
         resolve();
       };
+
       sourceBuffer.addEventListener('updateend', onUpdateEnd);
     });
   }

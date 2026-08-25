@@ -47,6 +47,7 @@ function renderAudioTrackRadioGroup({
 describe('AudioTrackRadioGroup', () => {
   it('renders generated radio item props and option state', () => {
     const states: AudioTrackRadioGroupItemState[] = [];
+
     renderAudioTrackRadioGroup({
       group: (
         <AudioTrackRadioGroup
@@ -73,6 +74,7 @@ describe('AudioTrackRadioGroup', () => {
 
   it('selects an audio track', () => {
     const selectAudioTrack = vi.fn();
+
     renderAudioTrackRadioGroup({ selectAudioTrack });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Spanish' }));
@@ -82,6 +84,7 @@ describe('AudioTrackRadioGroup', () => {
 
   it('exposes group state through attributes and callbacks', () => {
     const ref = createRef<HTMLDivElement>();
+
     renderAudioTrackRadioGroup({
       group: (
         <AudioTrackRadioGroup
@@ -94,6 +97,7 @@ describe('AudioTrackRadioGroup', () => {
     });
 
     const group = screen.getByTestId('group');
+
     expect(ref.current).toBe(group);
     expect(group.classList.contains('audio-available')).toBe(true);
     expect(group.getAttribute('aria-label')).toBe('Audio');
@@ -107,6 +111,7 @@ describe('AudioTrackRadioGroup', () => {
     renderAudioTrackRadioGroup({ audioTrackList: [defaultAudioTrackList[0]!] });
 
     const group = document.querySelector<HTMLElement>('[role="group"]');
+
     expect(group).toBeTruthy();
     expect(group?.hidden).toBe(true);
     expect(group?.getAttribute('aria-disabled')).toBe('true');
@@ -131,6 +136,7 @@ describe('AudioTrackRadioGroup', () => {
     });
 
     const group = screen.getByRole('group', { name: 'Audio' });
+
     expect(group.tagName).toBe('SECTION');
     expect(group.getAttribute('data-value')).toBe('0');
     expect(screen.getByRole('menuitemradio', { name: 'English' }).querySelector('[aria-hidden="true"]')).toBeTruthy();
@@ -155,6 +161,7 @@ describe('AudioTrackRadioGroup', () => {
     });
 
     const group = screen.getByRole('group', { name: 'Choose audio' });
+
     expect(group.hasAttribute('aria-label')).toBe(false);
   });
 });

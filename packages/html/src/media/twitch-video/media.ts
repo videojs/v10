@@ -8,6 +8,7 @@ class TwitchCustomMediaElement extends CustomMediaElement('iframe', TwitchMedia)
   static override getTemplateHTML = (attrs: Record<string, string>): string => {
     const initialSrc = buildTwitchIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
     const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
+
     return /*html*/ `
       <style>
         :host {

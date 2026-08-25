@@ -80,6 +80,7 @@ export class SnapshotController<T extends object, R = T> implements ReactiveCont
     }
 
     const selector = this.#selector;
+
     this.#cached = selector(this.#state.current);
 
     this.#unsubscribe = this.#state.subscribe(() => {

@@ -10,6 +10,7 @@ const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 
 function setup(): { dir: string; output: string; pattern: string } {
   const dir = mkdtempSync(join(tmpdir(), 'videojs-components-'));
+
   mkdirSync(join(dir, 'play-button'));
   mkdirSync(join(dir, 'slider'));
 
@@ -83,6 +84,7 @@ describe('createSchemaModule', () => {
 
   it('rejects duplicate component names', () => {
     const { dir, output, pattern } = setup();
+
     mkdirSync(join(dir, 'duplicate'));
     writeFileSync(
       join(dir, 'duplicate', 'duplicate-component.ts'),
@@ -96,6 +98,7 @@ describe('createSchemaModule', () => {
 
   it('supports generated components derived from non-manifest files', () => {
     const { dir, output } = setup();
+
     mkdirSync(join(dir, 'icons'));
     writeFileSync(join(dir, 'icons', 'play.svg'), '<svg/>');
     writeFileSync(join(dir, 'icons', 'pause.svg'), '<svg/>');

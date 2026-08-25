@@ -117,6 +117,7 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
     }
 
     const state = getRenderedIndicatorState(currentState, this.#payloadSnapshot(), transitionState);
+
     this.liveIndicator.render(state);
   }
 
@@ -162,6 +163,7 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
 
     const visibility = getIndicatorVisibilityCoordinator(container);
     const visibilityHandle = this.#getVisibilityHandle();
+
     this.#visibilityUnsubscribe = visibility.register(visibilityHandle);
 
     this.#inputActionUnsubscribe = subscribeToInputActions(container, (event) => {

@@ -214,8 +214,10 @@ export function preferCodecFamilies<T, State, Context, Config>(
   if (!preferred.length) return tracks;
 
   const preferredFamilies = new Set(preferred.map(getCodecFamily));
+
   return tracks.filter((track) => {
     const families = getCodecFamilies(track as { codecs?: string[] });
+
     return !!families && families.every((family) => preferredFamilies.has(family));
   });
 }

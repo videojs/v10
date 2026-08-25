@@ -107,6 +107,7 @@ function updateMediaSourceDurationSetup({
             if (mediaSource.duration === Number.POSITIVE_INFINITY) return;
 
             const controller = new AbortController();
+
             void (async () => {
               await waitForMediaSourceOpen(mediaSource, controller.signal);
 
@@ -157,6 +158,7 @@ function updateMediaSourceDurationSetup({
             // during the wait is included in the clamp.
             const maxBufferedEnd = getMaxBufferedEnd(mediaSource.sourceBuffers);
             const duration = maxBufferedEnd > presentation.duration! ? maxBufferedEnd : presentation.duration!;
+
             mediaSource.duration = duration;
           };
 

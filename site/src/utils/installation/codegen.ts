@@ -74,6 +74,7 @@ function getDefaultSourceUrl(renderer: Renderer, useCase: UseCase): string {
     tiktok: VJS10_DEMO_TIKTOK,
     twitch: VJS10_DEMO_TWITCH,
   };
+
   return map[renderer];
 }
 
@@ -149,6 +150,7 @@ function getRendererTag(renderer: Renderer): string {
     tiktok: 'tiktok-video',
     twitch: 'twitch-video',
   };
+
   return map[renderer];
 }
 
@@ -197,6 +199,7 @@ ${mediaComment}
   }
 
   const skinTag = getSkinTag(useCase, skin as Exclude<Skin, 'none'>);
+
   return `${providerComment}
 <${providerTag}>
   <!--
@@ -215,6 +218,7 @@ function generateHTMLJSImports(useCase: UseCase, skin: Skin, renderer: Renderer)
   if (useCase === 'background-video') {
     const mediaSubpath = getMediaSubpath(renderer);
     const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
+
     return `import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
 import '@videojs/html/background/video';${mediaImport}`;
@@ -237,6 +241,7 @@ export function generateHTMLUsageCode(
 ): { html: string; js?: string } {
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
   const js = opts.installMethod !== 'cdn' ? generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer) : undefined;
+
   return { html, js };
 }
 
@@ -260,11 +265,13 @@ function getRendererComponent(renderer: Renderer): string {
     tiktok: 'TikTokVideo',
     twitch: 'TwitchVideo',
   };
+
   return map[renderer];
 }
 
 function getSkinComponent(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   const name = `${getInstallationPreset(useCase).componentPrefix}Skin`;
+
   return getSkinFile(skin) === 'minimal-skin' ? `Minimal${name}` : name;
 }
 

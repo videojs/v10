@@ -54,6 +54,7 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
     if (slotted instanceof HTMLVideoElement) return slotted;
 
     const video = this.querySelector('video') ?? this.shadowRoot?.querySelector('video');
+
     return video instanceof HTMLVideoElement ? video : null;
   }
 }

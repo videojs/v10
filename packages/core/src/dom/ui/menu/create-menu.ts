@@ -269,6 +269,7 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function handleTypeahead(char: string): void {
     const repeatedChar = typeaheadBuffer.length === 1 && typeaheadBuffer.toLowerCase() === char.toLowerCase();
+
     typeaheadBuffer = repeatedChar ? char : typeaheadBuffer + char;
 
     if (typeaheadTimer !== null) clearTimeout(typeaheadTimer);
@@ -285,6 +286,7 @@ export function createMenu(options: MenuOptions): MenuApi {
     const needle = typeaheadBuffer.toLowerCase();
     const match = candidates.find((candidate) => {
       const text = candidate.textContent?.trim().toLowerCase() ?? '';
+
       return text.startsWith(needle);
     });
 

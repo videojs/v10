@@ -24,6 +24,7 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
   const [core] = useState(() => new StatusAnnouncerCore());
   const store = usePlayer();
   const container = useContainer();
+
   useDestroy(core);
   core.setProps({
     closeDelay,

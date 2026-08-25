@@ -149,10 +149,12 @@ export class PopoverElement extends UIElement {
 
     // Discover trigger via commandfor linkage.
     const triggerEl = this.#position.findTrigger();
+
     this.#syncTrigger(triggerEl);
 
     // Derive state from core + input.
     const input = this.#popover.input.current;
+
     this.#core.setInput(input);
     const state = this.#core.getState();
 

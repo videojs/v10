@@ -49,6 +49,7 @@ describe('failoverFetch', () => {
     const state = makeState(presentationWithVideo('https://cdn-a.example.com/r.m3u8?cdn=fastly'), 'v0');
     const fetch = failoverFetch(reject, state, { selectedKey: 'selectedVideoTrackId', getCdnId: byCdnParam });
     const controller = new AbortController();
+
     controller.abort();
 
     await expect(fetch(segment, { signal: controller.signal })).rejects.toThrow();

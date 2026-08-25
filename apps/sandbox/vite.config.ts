@@ -53,6 +53,7 @@ function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
 
 function resolveHtmlCdnDevEntry(subpath: string): string | null {
   const devPath = resolve(htmlCdnDir, `${subpath}.dev.js`);
+
   return existsSync(devPath) ? devPath : null;
 }
 
@@ -128,6 +129,7 @@ function serveAppShell(): Plugin {
     name: 'serve-app-shell',
     buildStart() {
       const html = readFileSync(shellSrc, 'utf-8').replace(/(src|href)="\.\/([^"]+)"/g, '$1="../app/$2"');
+
       writeFileSync(shellDest, html);
     },
     closeBundle() {

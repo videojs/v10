@@ -31,6 +31,7 @@ for (const { platform, skin, styling } of CASES) {
     await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, { waitUntil: 'domcontentloaded' });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
+
     await expect(root).toBeVisible({ timeout: 15_000 });
 
     const host =
@@ -45,6 +46,7 @@ for (const { platform, skin, styling } of CASES) {
     });
 
     const playButton = page.getByRole('button', { name: 'Play' }).first();
+
     await playButton.hover();
     await expect(playButton).toHaveCSS('color', 'rgb(171, 205, 239)');
 
@@ -54,6 +56,7 @@ for (const { platform, skin, styling } of CASES) {
         (part) => getComputedStyle(part).backgroundColor === accent
       );
       const style = getComputedStyle(element);
+
       return {
         borderRadius: style.borderRadius,
         fillUsesAccent,
@@ -84,9 +87,11 @@ for (const { platform, skin, styling } of CASES) {
     await page.goto(`${SANDBOX_BASE}/${platform}-video/?${query}`, { waitUntil: 'domcontentloaded' });
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
+
     await expect(root).toBeVisible({ timeout: 15_000 });
 
     const muteButton = page.getByRole('button', { name: 'Unmute' }).first();
+
     await muteButton.hover();
     const muteTooltip = page.locator('[popover="manual"]').filter({ hasText: 'Unmute' }).first();
 
@@ -94,6 +99,7 @@ for (const { platform, skin, styling } of CASES) {
     else await expect(muteTooltip).toHaveCount(0);
 
     const volumeThumb = page.getByRole('slider', { name: 'Volume' }).first();
+
     await expect(volumeThumb).toBeVisible();
     await expect(volumeThumb).toHaveCSS('opacity', '1');
     await expect(volumeThumb).toHaveCSS('scale', '1');
@@ -125,6 +131,7 @@ for (const styling of ['css', 'tailwind'] as const) {
 
     const root = page.getByRole('group', { name: 'Media player' }).first();
     const slider = page.getByRole('slider', { name: 'Seek' }).first();
+
     await expect(root).toBeVisible({ timeout: 15_000 });
     await expect(slider).toBeVisible();
 

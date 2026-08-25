@@ -41,6 +41,7 @@ export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInp
     const { playbackRates, playbackRate } = rate;
     const idx = playbackRates.indexOf(playbackRate);
     const next = idx < 0 || idx >= playbackRates.length - 1 ? 0 : idx + 1;
+
     rate.setPlaybackRate(playbackRates[next]!);
   },
 
@@ -52,6 +53,7 @@ export const MEDIA_INPUT_ACTION_OVERRIDES: Record<MediaInputActionName, MediaInp
     const { playbackRates, playbackRate } = rate;
     const idx = playbackRates.indexOf(playbackRate);
     const next = idx <= 0 ? playbackRates.length - 1 : idx - 1;
+
     rate.setPlaybackRate(playbackRates[next]!);
   },
 };

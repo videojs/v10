@@ -24,6 +24,7 @@ export function copyCssPlugin(options: CopyCssPluginOptions): BuildPlugin {
     return new Map(
       [...getCssFiles()].map((file) => {
         const { mtimeMs, size } = statSync(file);
+
         return [file, `${mtimeMs}:${size}`];
       })
     );

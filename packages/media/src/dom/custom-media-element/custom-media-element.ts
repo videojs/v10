@@ -211,6 +211,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         if (prop in CustomMedia.prototype) continue;
 
         const attr = attribute ?? prop.toLowerCase();
+
         Object.defineProperty(CustomMedia.prototype, prop, {
           get: function (this: CustomMedia) {
             return type === Boolean ? this.hasAttribute(attr) : this.getAttribute(attr);
@@ -238,6 +239,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
       if (!this.shadowRoot) {
         const ctor = this.constructor as typeof CustomMedia;
+
         this.attachShadow(ctor.shadowRootOptions);
 
         const allowedKeys = getAttrsFromProps(ctor.properties);
@@ -340,6 +342,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
           const valueType = typeof this.#mediaHost[prop];
           const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
           const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
+
           this.#mediaHost[prop] =
             valueType === 'boolean'
               ? newValue !== null

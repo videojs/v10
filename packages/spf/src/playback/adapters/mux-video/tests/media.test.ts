@@ -17,6 +17,7 @@ describe('MuxVideoMedia', () => {
 
   it('derives src from source.playbackId', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123' };
 
     expect(media.src).toBe('https://stream.mux.com/abc123.m3u8');
@@ -24,6 +25,7 @@ describe('MuxVideoMedia', () => {
 
   it('derives src using the custom domain', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123', customDomain: 'video.example.com' };
 
     expect(media.src).toBe('https://stream.video.example.com/abc123.m3u8');
@@ -31,6 +33,7 @@ describe('MuxVideoMedia', () => {
 
   it('appends playback params as snake_case query params', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123', playback: { maxResolution: '720p' } };
 
     expect(media.src).toBe('https://stream.mux.com/abc123.m3u8?max_resolution=720p');
@@ -38,6 +41,7 @@ describe('MuxVideoMedia', () => {
 
   it('clears src when source is cleared', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123' };
     media.source = null;
 
@@ -46,6 +50,7 @@ describe('MuxVideoMedia', () => {
 
   it('parses source from a Mux stream src', () => {
     const media = new MuxVideoMedia();
+
     media.src = 'https://stream.mux.com/abc123.m3u8';
 
     expect(media.source).toEqual({ playbackId: 'abc123' });
@@ -53,6 +58,7 @@ describe('MuxVideoMedia', () => {
 
   it('parses the custom domain and playback params from a Mux stream src', () => {
     const media = new MuxVideoMedia();
+
     media.src = 'https://stream.video.example.com/abc123.m3u8?max_resolution=720p';
 
     expect(media.source).toEqual({
@@ -64,6 +70,7 @@ describe('MuxVideoMedia', () => {
 
   it('keeps a non-Mux src as a plain source url', () => {
     const media = new MuxVideoMedia();
+
     media.src = 'https://example.com/stream.m3u8';
 
     expect(media.source).toEqual({ src: 'https://example.com/stream.m3u8' });
@@ -72,6 +79,7 @@ describe('MuxVideoMedia', () => {
 
   it('plays a non-Mux source url given through source', () => {
     const media = new MuxVideoMedia();
+
     media.source = { src: 'https://example.com/stream.m3u8' };
 
     expect(media.src).toBe('https://example.com/stream.m3u8');
@@ -79,6 +87,7 @@ describe('MuxVideoMedia', () => {
 
   it('exposes the content poster and storyboard derived from source', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123' };
 
     expect(media.contentData).toEqual({
@@ -89,6 +98,7 @@ describe('MuxVideoMedia', () => {
 
   it('tracks source changes in the content data', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123' };
     media.source = { playbackId: 'def456' };
 
@@ -97,6 +107,7 @@ describe('MuxVideoMedia', () => {
 
   it('has no content data without a playback id', () => {
     const media = new MuxVideoMedia();
+
     media.source = { src: 'https://example.com/stream.m3u8' };
 
     expect(media.contentData).toEqual({});
@@ -104,6 +115,7 @@ describe('MuxVideoMedia', () => {
 
   it('has no content data for signed playback without image tokens', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123', playback: { token: 'signed-playback-token' } };
 
     expect(media.contentData).toEqual({});
@@ -112,6 +124,7 @@ describe('MuxVideoMedia', () => {
   it('dispatches `contentdatachange` when the derived urls change', () => {
     const media = new MuxVideoMedia();
     const handler = vi.fn();
+
     media.addEventListener('contentdatachange', handler);
 
     media.source = { playbackId: 'abc123' };
@@ -127,9 +140,11 @@ describe('MuxVideoMedia', () => {
 
   it('dedupes `contentdatachange` when a source change leaves the urls alone', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123' };
 
     const handler = vi.fn();
+
     media.addEventListener('contentdatachange', handler);
 
     // A new object, so `sourcechange` still fires, but nothing the images are
@@ -141,9 +156,11 @@ describe('MuxVideoMedia', () => {
 
   it('clears the content data and announces it when the source is dropped', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123' };
 
     const handler = vi.fn();
+
     media.addEventListener('contentdatachange', handler);
 
     media.source = null;
@@ -155,6 +172,7 @@ describe('MuxVideoMedia', () => {
   it('has the content data in step when `sourcechange` fires', () => {
     const media = new MuxVideoMedia();
     const seen: (string | null | undefined)[] = [];
+
     media.addEventListener('sourcechange', () => seen.push(media.contentData.poster));
 
     media.source = { playbackId: 'abc123' };
@@ -165,6 +183,7 @@ describe('MuxVideoMedia', () => {
   it('fires sourcechange when source is set', () => {
     const media = new MuxVideoMedia();
     const onSourceChange = vi.fn();
+
     media.addEventListener('sourcechange', onSourceChange);
 
     media.source = { playbackId: 'abc123' };
@@ -175,9 +194,11 @@ describe('MuxVideoMedia', () => {
   it('ignores the same source object', () => {
     const media = new MuxVideoMedia();
     const source = { playbackId: 'abc123' };
+
     media.source = source;
 
     const onSourceChange = vi.fn();
+
     media.addEventListener('sourcechange', onSourceChange);
     media.source = source;
 
@@ -186,6 +207,7 @@ describe('MuxVideoMedia', () => {
 
   it('keeps the presentation when only image params change', () => {
     const media = new MuxVideoMedia();
+
     media.source = { playbackId: 'abc123' };
     const presentation = media.engine.state.presentation.get();
 

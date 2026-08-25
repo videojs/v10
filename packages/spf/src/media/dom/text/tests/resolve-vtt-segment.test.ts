@@ -142,10 +142,12 @@ Second
 `);
 
     const cues1 = await resolveVttSegment(vtt1);
+
     expect(cues1).toHaveLength(1);
     expect(cues1[0]!.text).toBe('First');
 
     const cues2 = await resolveVttSegment(vtt2);
+
     expect(cues2).toHaveLength(1);
     expect(cues2[0]!.text).toBe('Second');
   });
@@ -164,6 +166,7 @@ Test
     destroyVttResolver();
 
     const cues = await resolveVttSegment(vttDataUrl);
+
     expect(cues).toHaveLength(1);
     expect(cues[0]!.text).toBe('Test');
   });
@@ -190,6 +193,7 @@ Test
 `);
 
     const cues = await resolveVttSegment(vttDataUrl);
+
     expect(cues).toHaveLength(1);
   });
 });
@@ -207,6 +211,7 @@ Bip!
 `);
 
     const metadata = await resolveVttSegmentMetadata(vttDataUrl);
+
     expect(metadata.timestampMap).toEqual({ mpegts: 900000, local: 0 });
   });
 
@@ -221,6 +226,7 @@ The robot.
 `);
 
     const metadata = await resolveVttSegmentMetadata(vttDataUrl);
+
     expect(metadata.timestampMap).toBeUndefined();
   });
 });
@@ -238,6 +244,7 @@ Bip!
 `);
 
     const { cues, metadata } = await resolveVttSegmentWithMetadata(vttDataUrl);
+
     expect(cues).toHaveLength(1);
     expect(cues[0]!.text).toBe('Bip!');
     expect(metadata.timestampMap).toEqual({ mpegts: 900000, local: 0 });

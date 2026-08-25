@@ -3,5 +3,6 @@
 // `media` project. Test-only — the media source itself imports no fixtures.
 declare module '*?raw' {
   const content: string;
+
   export default content;
 }

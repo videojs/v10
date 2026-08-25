@@ -100,6 +100,7 @@ export class ErrorDialogElement extends UIElement {
     }
 
     const errorForCopy = errorState?.error ?? (isOpen ? this.#lastError : null);
+
     this.#syncDialogCopy(errorForCopy);
 
     if (!hasError && !isOpen) {
@@ -120,6 +121,7 @@ export class ErrorDialogElement extends UIElement {
     if (!this.#dialog) return;
 
     const input = this.#dialog.input.current;
+
     this.#core.setInput(input);
     const state = this.#core.getState();
 
@@ -151,6 +153,7 @@ export class ErrorDialogElement extends UIElement {
       }
 
       const copy = description ?? this.#lastDescription;
+
       desc.textContent = copy ? translateText(copy, t) : translateText(getErrorDialogUnexpectedText(), t);
     }
 

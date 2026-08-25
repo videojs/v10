@@ -102,6 +102,7 @@ export function targetTypePlugin(options: ComponentTargetPluginOptions): Plugin 
             }
 
             const insertion = parent?.type === 'ExportNamedDeclaration' ? parent.start : node.start;
+
             transform.magicString!.appendLeft(
               insertion,
               `export interface ${interfaceName} extends ${heritage} {${members.length ? `\n${members.join('\n')}\n` : ''}}\n`
@@ -141,6 +142,7 @@ function collectBindings(ast: Program, targets: readonly ComponentTarget[]): Can
 
         if (specifier.type === 'ImportSpecifier' && specifier.importKind !== 'type') {
           const component = importedName(specifier);
+
           named.set(specifier.local.name, { target, component, part: null });
         }
       }
@@ -194,6 +196,7 @@ function transformSourceTypes(
         if (!targetType) return;
 
         const componentProps = imports.reference(targetType);
+
         magicString.overwrite(node.start, node.end, `${componentProps}<typeof ${query.exprName.name}>`);
         changed = true;
         this.skip();
@@ -216,6 +219,7 @@ function transformSourceTypes(
         if (!targetType) return;
 
         const componentProps = imports.reference(targetType);
+
         magicString.overwrite(node.start, node.end, `${componentProps}<typeof ${query.exprName.name}>`);
         changed = true;
         this.skip();
@@ -306,6 +310,7 @@ function forwardedBinding(parameter: OxcFunction['params'][number] | undefined):
   if (pattern?.type !== 'ObjectPattern') return undefined;
 
   const rest = pattern.properties.find((property) => property.type === 'RestElement');
+
   return rest?.type === 'RestElement' && rest.argument.type === 'Identifier' ? rest.argument.name : undefined;
 }
 
@@ -352,6 +357,7 @@ function openingTarget(
     if (isTargetElement(configured)) return { target: path.target, element: configured };
 
     const resolved = path.target.resolve({ component: path.component, part: path.part });
+
     return isTargetElement(resolved) ? { target: path.target, element: resolved } : undefined;
   }
 
@@ -361,6 +367,7 @@ function openingTarget(
   if (!primitive) return undefined;
 
   const rule = primitiveRule(primitive.target, primitive.name);
+
   return isTargetElement(rule) ? { target: primitive.target, element: rule } : undefined;
 }
 
@@ -385,6 +392,7 @@ function targetReferenceProps(
 
   if (reference.kind === 'component') {
     const resolved = target.resolve({ component: reference.component, part: reference.part });
+
     return isTargetElement(resolved)
       ? targetReferenceProps(resolved[TARGET_ELEMENT], target, imports, typeImports, seen)
       : undefined;
@@ -413,6 +421,7 @@ function renderPropsReference(
   }
 
   const path = props.path?.length ? `.${props.path.join('.')}` : '';
+
   return props.intrinsic ? `${local}${path}<${JSON.stringify(props.intrinsic)}>` : `${local}${path}`;
 }
 
@@ -440,6 +449,7 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
   }
 
   const named = bindings.named.get(path[0]!);
+
   return named ? { ...named, part: path.length > 1 ? path.slice(1).join('.') : null } : undefined;
 }
 
@@ -531,8 +541,10 @@ class TargetTypeImports {
       const specifiers = [...imports].map(([imported, local]) =>
         imported === local ? imported : `${imported} as ${local}`
       );
+
       return `import type { ${specifiers.join(', ')} } from ${JSON.stringify(source)};`;
     });
+
     insertModuleImports(this.#ast, this.#magicString, statements);
   }
 

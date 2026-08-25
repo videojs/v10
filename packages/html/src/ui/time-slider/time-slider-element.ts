@@ -164,6 +164,7 @@ export class TimeSliderElement extends UIElement {
 
     this.#core.setInput(this.#slider.input.current);
     const media = { ...time, ...(buffer ?? { buffered: [], seekable: [] }) };
+
     this.#core.setMedia(media);
     const state = this.#core.getState();
 

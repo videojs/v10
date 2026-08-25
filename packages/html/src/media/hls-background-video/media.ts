@@ -123,6 +123,7 @@ export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
   /** The inner `<video>` the engine renders into. */
   get video(): HTMLVideoElement | null {
     const video = this.shadowRoot?.querySelector('video');
+
     return video instanceof HTMLVideoElement ? video : null;
   }
 

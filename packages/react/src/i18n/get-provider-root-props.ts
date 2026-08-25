@@ -19,6 +19,7 @@ function mergeTranslations(
             .map((key) => {
               const parentValue = parent[key];
               const childValue = child[key];
+
               return [
                 key,
                 isRecord(parentValue) && isRecord(childValue) ? { ...parentValue, ...childValue } : childValue,

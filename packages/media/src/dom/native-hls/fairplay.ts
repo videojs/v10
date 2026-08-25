@@ -93,6 +93,7 @@ export function toDrmError(cause: unknown, message: string, context: NativeHlsDr
   if (cause instanceof MediaError) return cause;
 
   const error = createDrmError(message, context);
+
   error.data = cause;
   return error;
 }

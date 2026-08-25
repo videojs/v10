@@ -43,6 +43,7 @@ function renderPlaybackRateRadioGroup({
 describe('PlaybackRateRadioGroup', () => {
   it('renders generated radio item props and item state', () => {
     const states: PlaybackRateRadioGroupItemState[] = [];
+
     renderPlaybackRateRadioGroup({
       group: (
         <PlaybackRateRadioGroup
@@ -66,6 +67,7 @@ describe('PlaybackRateRadioGroup', () => {
 
   it('sets the playback rate', () => {
     const setPlaybackRate = vi.fn();
+
     renderPlaybackRateRadioGroup({ setPlaybackRate });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: '2×' }));
@@ -75,6 +77,7 @@ describe('PlaybackRateRadioGroup', () => {
 
   it('exposes group state through attributes and callbacks', () => {
     const ref = createRef<HTMLDivElement>();
+
     renderPlaybackRateRadioGroup({
       group: (
         <PlaybackRateRadioGroup
@@ -87,6 +90,7 @@ describe('PlaybackRateRadioGroup', () => {
     });
 
     const group = screen.getByTestId('group');
+
     expect(ref.current).toBe(group);
     expect(group.classList.contains('rate-available')).toBe(true);
     expect(group.getAttribute('aria-label')).toBe('Playback rate');
@@ -98,6 +102,7 @@ describe('PlaybackRateRadioGroup', () => {
     renderPlaybackRateRadioGroup({ playbackRates: [] });
 
     const group = document.querySelector<HTMLElement>('[role="group"]');
+
     expect(group).toBeTruthy();
     expect(group?.hidden).toBe(true);
     expect(group?.getAttribute('aria-disabled')).toBe('true');
@@ -121,6 +126,7 @@ describe('PlaybackRateRadioGroup', () => {
     });
 
     const group = screen.getByRole('group', { name: 'Playback rate' });
+
     expect(group.tagName).toBe('SECTION');
     expect(group.getAttribute('data-value')).toBe('1.5');
     expect(screen.getByRole('menuitemradio', { name: '1.5×' }).querySelector('[aria-hidden="true"]')).toBeTruthy();

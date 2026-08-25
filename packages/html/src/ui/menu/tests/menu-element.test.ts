@@ -25,6 +25,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -129,6 +130,7 @@ afterEach(() => {
 describe('MenuElement', () => {
   it('initializes from defaultOpen before the first update', async () => {
     const root = createElement(MenuElement);
+
     root.defaultOpen = true;
     document.body.append(root);
 
@@ -368,6 +370,7 @@ describe('MenuElement', () => {
     const root = createElement(MenuElement);
     const child = createElement(MenuElement);
     const grandchild = createElement(MenuElement);
+
     root.open = true;
     child.id = 'child-menu';
     grandchild.id = 'grandchild-menu';
@@ -400,6 +403,7 @@ describe('MenuElement', () => {
     const childItems = document.createElement('div');
     const grandchild = createElement(MenuElement);
     const grandchildItems = document.createElement('div');
+
     root.open = true;
     child.id = 'child-menu';
     grandchild.id = 'grandchild-menu';

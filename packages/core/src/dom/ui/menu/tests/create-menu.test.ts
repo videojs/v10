@@ -52,12 +52,14 @@ describe('createMenu', () => {
 
   function addItem(text: string): HTMLButtonElement {
     const element = createItemElement(text);
+
     items.push(element);
     return element;
   }
 
   it('starts closed', () => {
     const { menu } = createTestMenu();
+
     expect(menu.input.current).toEqual({ active: false, status: 'idle' });
   });
 
@@ -141,6 +143,7 @@ describe('createMenu', () => {
       const parent = createTestMenu();
       const child = createTestMenu();
       const grandchild = createTestMenu();
+
       parent.menu.registerSubmenu(child.menu);
       child.menu.registerSubmenu(grandchild.menu);
       parent.menu.open();
@@ -193,6 +196,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       b.setAttribute('role', 'menuitemradio');
       b.setAttribute('aria-checked', 'true');
       const focus = vi.spyOn(b, 'focus');
@@ -216,6 +220,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       b.setAttribute('role', 'menuitemradio');
       b.setAttribute('aria-checked', 'true');
       const focus = vi.spyOn(b, 'focus');
@@ -239,6 +244,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const checkbox = addItem('Loop');
       const radio = addItem('Auto');
+
       checkbox.setAttribute('role', 'menuitemcheckbox');
       checkbox.setAttribute('aria-checked', 'true');
       radio.setAttribute('role', 'menuitemradio');
@@ -262,6 +268,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       b.setAttribute('aria-selected', 'true');
 
       menu.registerItem(a);
@@ -351,10 +358,12 @@ describe('createMenu', () => {
     it('handles navigation keys while the open trigger has focus', () => {
       const { menu } = createTestMenu();
       const element = addItem('Auto');
+
       menu.registerItem(element);
       menu.open();
 
       const event = makeKeyEvent('ArrowDown');
+
       menu.triggerProps.onKeyDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -364,9 +373,11 @@ describe('createMenu', () => {
 
     it('swallows left and right keys while the menu is open', () => {
       const { menu } = createTestMenu();
+
       menu.open();
 
       const event = makeKeyEvent('ArrowRight');
+
       menu.triggerProps.onKeyDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -375,9 +386,11 @@ describe('createMenu', () => {
 
     it('lets Escape bubble while the menu is open', () => {
       const { menu } = createTestMenu();
+
       menu.open();
 
       const event = makeKeyEvent('Escape');
+
       menu.triggerProps.onKeyDown(event);
 
       expect(event.stopPropagation).not.toHaveBeenCalled();
@@ -387,6 +400,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
 
       const event = makeKeyEvent('ArrowRight');
+
       menu.triggerProps.onKeyDown(event);
 
       expect(event.stopPropagation).not.toHaveBeenCalled();
@@ -491,6 +505,7 @@ describe('createMenu', () => {
       const b = addItem('Beta');
 
       const cleanup = menu.registerItem(a);
+
       menu.registerItem(b);
       menu.open();
       menu.highlight(a);
@@ -499,6 +514,7 @@ describe('createMenu', () => {
 
       // After cleanup, a is no longer in the set — ArrowDown should wrap to b
       const event = makeKeyEvent('ArrowDown');
+
       menu.contentProps.onKeyDown(event);
 
       expect(menu.input.current.active).toBe(true); // still open
@@ -509,6 +525,7 @@ describe('createMenu', () => {
       const element = addItem('Alpha');
 
       const cleanup = menu.registerItem(element);
+
       menu.highlight(element);
       onHighlightChange.mockClear();
 
@@ -528,6 +545,7 @@ describe('createMenu', () => {
     it('sets data-highlighted attribute and tabIndex=0 on highlighted item', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       menu.highlight(element);
@@ -539,6 +557,7 @@ describe('createMenu', () => {
     it('sets the highlight type for pointer highlights', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       menu.highlight(element, { focus: false, pointer: true });
@@ -552,6 +571,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
 
@@ -567,6 +587,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.highlight(b, { focus: false, pointer: true });
@@ -587,6 +608,7 @@ describe('createMenu', () => {
     it('calls onHighlightChange with the new element', () => {
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       menu.highlight(element);
@@ -597,6 +619,7 @@ describe('createMenu', () => {
     it('calls onHighlightChange with null when cleared', () => {
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       menu.highlight(element);
@@ -610,6 +633,7 @@ describe('createMenu', () => {
     it('is a no-op when same item is already highlighted', () => {
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       menu.highlight(element);
@@ -624,6 +648,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(b);
       menu.registerItem(a);
 
@@ -637,6 +662,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const hidden = addItem('Hidden');
       const visible = addItem('Visible');
+
       hidden.hidden = true;
       menu.registerItem(hidden);
       menu.registerItem(visible);
@@ -651,6 +677,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
       const focus = vi.spyOn(element, 'focus');
+
       menu.registerItem(element);
 
       menu.highlightFirstItem({ preventScroll: true });
@@ -662,6 +689,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
       const focus = vi.spyOn(element, 'focus');
+
       menu.registerItem(element);
 
       menu.highlight(element, { focus: false });
@@ -680,6 +708,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
 
@@ -692,6 +721,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(b);
       menu.registerItem(a);
 
@@ -704,6 +734,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.highlight(a);
@@ -718,6 +749,7 @@ describe('createMenu', () => {
       const a = addItem('Alpha');
       const hidden = addItem('Beta');
       const c = addItem('Gamma');
+
       hidden.setAttribute('data-hidden', '');
       menu.registerItem(a);
       menu.registerItem(hidden);
@@ -734,6 +766,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const hidden = addItem('Hidden');
       const visible = addItem('Visible');
+
       hidden.setAttribute('data-availability', availability);
       menu.registerItem(hidden);
       menu.registerItem(visible);
@@ -749,6 +782,7 @@ describe('createMenu', () => {
       const a = addItem('Alpha');
       const b = addItem('Beta');
       const c = addItem('Gamma');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.registerItem(c);
@@ -764,6 +798,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.highlight(b);
@@ -777,6 +812,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
 
@@ -789,6 +825,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.highlight(b);
@@ -803,6 +840,7 @@ describe('createMenu', () => {
       const a = addItem('Alpha');
       const b = addItem('Beta');
       const c = addItem('Gamma');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.registerItem(c);
@@ -818,6 +856,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.highlight(a);
@@ -832,6 +871,7 @@ describe('createMenu', () => {
       const a = addItem('Alpha');
       const b = addItem('Beta');
       const c = addItem('Gamma');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.registerItem(c);
@@ -847,6 +887,7 @@ describe('createMenu', () => {
       const a = addItem('Alpha');
       const b = addItem('Beta');
       const c = addItem('Gamma');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.registerItem(c);
@@ -861,6 +902,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
       const onClick = vi.fn();
+
       element.addEventListener('click', onClick);
       menu.registerItem(element);
       menu.highlight(element);
@@ -874,6 +916,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
       const onClick = vi.fn();
+
       element.addEventListener('click', onClick);
       menu.registerItem(element);
       menu.highlight(element);
@@ -886,9 +929,11 @@ describe('createMenu', () => {
     it('ArrowDown calls preventDefault', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       const event = makeKeyEvent('ArrowDown');
+
       menu.contentProps.onKeyDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -918,6 +963,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Beta');
+
       menu.registerItem(a);
       menu.registerItem(b);
 
@@ -930,6 +976,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const hidden = addItem('Beta');
       const visible = addItem('Bravo');
+
       hidden.setAttribute('aria-hidden', 'true');
       menu.registerItem(hidden);
       menu.registerItem(visible);
@@ -946,6 +993,7 @@ describe('createMenu', () => {
       const b = addItem('Beta');
       const br = addItem('Bravo');
       const bu = addItem('Button');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.registerItem(br);
@@ -965,6 +1013,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const al = addItem('Almond');
+
       menu.registerItem(a);
       menu.registerItem(al);
       menu.highlight(a);
@@ -980,6 +1029,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Almond');
+
       menu.registerItem(a);
       menu.registerItem(b);
 
@@ -998,6 +1048,7 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
       const b = addItem('Almond');
+
       menu.registerItem(a);
       menu.registerItem(b);
       menu.highlight(a);
@@ -1016,6 +1067,7 @@ describe('createMenu', () => {
     it('ignores printable chars with modifier keys', () => {
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
       onHighlightChange.mockClear();
 
@@ -1048,6 +1100,7 @@ describe('createMenu', () => {
 
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       menu.open();
@@ -1067,6 +1120,7 @@ describe('createMenu', () => {
 
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       menu.contentProps.onKeyDown(makeKeyEvent('a'));
@@ -1091,6 +1145,7 @@ describe('createMenu', () => {
 
       const { menu, onHighlightChange } = createTestMenu();
       const element = addItem('Alpha');
+
       menu.registerItem(element);
 
       menu.open();

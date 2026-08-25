@@ -79,6 +79,7 @@ export class VolumeSliderCore extends SliderCore {
   getWheelStepPercent(): number {
     const props = this.props as NonNullableObject<VolumeSliderProps>;
     const range = props.max - props.min;
+
     return range > 0 ? (props.wheelStep / range) * 100 : 0;
   }
 

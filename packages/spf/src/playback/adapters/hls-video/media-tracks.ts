@@ -80,6 +80,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
       // reflection effect's job).
       const reflectRenditions = () => {
         const renditions = renditionsSignal.get();
+
         this.#renditions = renditions;
         this.#removeVideoTracks();
 
@@ -96,6 +97,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
         // so exactly one video track is always exposed; when it lands, this
         // becomes one track (selection set) per angle.
         const videoTrack = this.addVideoTrack('main');
+
         videoTrack.selected = true;
 
         const resolved = untrack(() => findVideoTrackById(state.presentation.get(), state.selectedVideoTrackId.get()));
@@ -109,6 +111,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
             rendition.bandwidth,
             rendition.frameRate ? frameRateToNumber(rendition.frameRate) : undefined
           );
+
           domRendition.id = rendition.id;
           domRendition.active = isSameVideoTrack(toVideoKey(domRendition), resolved);
         }
@@ -126,6 +129,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
       // current resolved selection.
       const reflectAudioTracks = () => {
         const tracks = audioTracksSignal.get();
+
         this.#audioTracks = tracks;
         this.#removeAudioTracks();
 
@@ -135,6 +139,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
 
         for (const track of tracks) {
           const domTrack = this.addAudioTrack(track.default ? 'main' : 'alternative', track.name, track.language ?? '');
+
           domTrack.id = track.id;
           domTrack.enabled = isSameAudioTrack(toAudioKey(domTrack), resolved);
         }
@@ -190,6 +195,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
       const index = this.videoRenditions.selectedIndex;
       const domRendition = index < 0 ? undefined : this.videoRenditions[index];
       const rendition = this.#renditions.find((candidate) => candidate.id === domRendition?.id);
+
       userVideoTrackSelection.set(toUserVideoTrackSelection(rendition));
     };
 
@@ -215,6 +221,7 @@ export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTrac
       if (target === current) return;
 
       const audioTrack = this.#audioTracks.find((candidate) => candidate.id === target.id);
+
       userAudioTrackSelection.set(toUserAudioTrackSelection(audioTrack));
     };
 

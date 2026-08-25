@@ -29,5 +29,6 @@ export function findLastAtOrBefore<Item>(
   getValue: (item: Item) => number
 ): Item | undefined {
   const index = findLastIndexAtOrBefore(items, value, getValue);
+
   return index < 0 ? undefined : items[index];
 }

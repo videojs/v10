@@ -12,12 +12,14 @@ function createTestLayer(overrides?: Partial<Parameters<typeof createDismissLaye
     onEscapeDismiss,
     ...overrides,
   });
+
   return { layer, onEscapeDismiss, transition };
 }
 
 describe('createDismissLayer', () => {
   it('starts closed', () => {
     const { layer } = createTestLayer();
+
     expect(layer.input.current).toEqual({ active: false, status: 'idle' });
   });
 

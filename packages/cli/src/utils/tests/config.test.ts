@@ -7,6 +7,7 @@ const testDir = join(tmpdir(), `videojs-cli-test-${Date.now()}`);
 
 vi.mock('node:os', async () => {
   const actual = await vi.importActual<typeof import('node:os')>('node:os');
+
   return {
     ...actual,
     homedir: () => testDir,
@@ -19,6 +20,7 @@ const { getConfigValue, listConfig, setConfigValue } = await import('../config.j
 describe('config', () => {
   it('returns empty config when no file exists', () => {
     const config = listConfig();
+
     expect(config).toEqual({});
   });
 
@@ -40,6 +42,7 @@ describe('config', () => {
   it('lists all config entries', () => {
     setConfigValue('framework', 'html');
     const config = listConfig();
+
     expect(config).toHaveProperty('framework', 'html');
   });
 

@@ -12,6 +12,7 @@ describe('TextTrack cue preservation across mode transitions', () => {
   function makeTrack(): { video: HTMLVideoElement; trackEl: HTMLTrackElement; track: TextTrack } {
     const video = document.createElement('video');
     const trackEl = document.createElement('track');
+
     trackEl.kind = 'subtitles';
     // No src — SPF manages cues via addCue() only
     video.appendChild(trackEl);
@@ -20,18 +21,21 @@ describe('TextTrack cue preservation across mode transitions', () => {
 
   it('track.cues is null when mode="disabled"', () => {
     const { track } = makeTrack();
+
     track.mode = 'disabled';
     expect(track.cues).toBeNull();
   });
 
   it('track.cues is a list when mode="showing"', () => {
     const { track } = makeTrack();
+
     track.mode = 'showing';
     expect(track.cues).not.toBeNull();
   });
 
   it('track.cues is a list when mode="hidden"', () => {
     const { track } = makeTrack();
+
     track.mode = 'hidden';
     expect(track.cues).not.toBeNull();
   });

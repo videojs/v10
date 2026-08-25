@@ -35,6 +35,7 @@ describe('AudioTrackRadioGroupCore', () => {
     it('projects audio tracks', () => {
       const core = new AudioTrackRadioGroupCore();
       const media = createMediaState();
+
       core.setMedia(media);
 
       const state = core.getState();
@@ -55,6 +56,7 @@ describe('AudioTrackRadioGroupCore', () => {
           { id: '2', label: '', language: '', enabled: false },
         ],
       });
+
       core.setMedia(media);
 
       expect(core.getState().options).toEqual([
@@ -72,6 +74,7 @@ describe('AudioTrackRadioGroupCore', () => {
           { label: 'Spanish', language: 'es', enabled: true },
         ],
       });
+
       core.setMedia(media);
 
       expect(core.getState().options.map((track) => track.value)).toEqual(['0', '1']);
@@ -80,6 +83,7 @@ describe('AudioTrackRadioGroupCore', () => {
 
     it('marks availability unavailable with one track', () => {
       const core = new AudioTrackRadioGroupCore();
+
       core.setMedia(
         createMediaState({ audioTrackList: [{ id: '0', label: 'English', language: 'en', enabled: true }] })
       );
@@ -91,11 +95,13 @@ describe('AudioTrackRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns the default label', () => {
       const core = new AudioTrackRadioGroupCore();
+
       expect(core.getLabel(createState())).toMatchObject({ key: 'menu.audio', text: 'Audio' });
     });
 
     it('returns a custom string label', () => {
       const core = new AudioTrackRadioGroupCore({ label: 'Audio tracks' });
+
       expect(core.getLabel(createState())).toBe('Audio tracks');
     });
   });

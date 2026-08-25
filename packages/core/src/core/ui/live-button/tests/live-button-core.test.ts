@@ -28,12 +28,14 @@ describe('LiveButtonCore', () => {
     it('uses default props', () => {
       const core = new LiveButtonCore();
       const attrs = core.getAttrs(createState());
+
       expect(attrs['aria-disabled']).toBeUndefined();
     });
 
     it('accepts constructor props', () => {
       const core = new LiveButtonCore({ disabled: true });
       const attrs = core.getAttrs(createState());
+
       expect(attrs['aria-disabled']).toBe('true');
     });
   });
@@ -41,21 +43,26 @@ describe('LiveButtonCore', () => {
   describe('getState', () => {
     it('reports not-live when stream is on-demand', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(createMediaState({ targetLiveWindow: Number.NaN }));
       const state = core.getState();
+
       expect(state.live).toBe(false);
       expect(state.liveEdge).toBe(false);
     });
 
     it('reports live for low-latency live (`targetLiveWindow === 0`)', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(createMediaState({ targetLiveWindow: 0, seekable: [[0, 100]], liveEdgeStart: 95 }));
       const state = core.getState();
+
       expect(state.live).toBe(true);
     });
 
     it('reports live for DVR (`targetLiveWindow === Infinity`)', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(
         createMediaState({
           targetLiveWindow: Number.POSITIVE_INFINITY,
@@ -68,6 +75,7 @@ describe('LiveButtonCore', () => {
 
     it('flags liveEdge when currentTime >= liveEdgeStart', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(
         createMediaState({
           targetLiveWindow: 0,
@@ -81,6 +89,7 @@ describe('LiveButtonCore', () => {
 
     it('clears liveEdge when behind live', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(
         createMediaState({
           targetLiveWindow: Number.POSITIVE_INFINITY,
@@ -94,6 +103,7 @@ describe('LiveButtonCore', () => {
 
     it('falls back to seekable end when liveEdgeStart is unknown', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(
         createMediaState({
           targetLiveWindow: 0,
@@ -107,6 +117,7 @@ describe('LiveButtonCore', () => {
 
     it('clears liveEdge when behind the default 10s offset fallback', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(
         createMediaState({
           targetLiveWindow: 0,
@@ -120,6 +131,7 @@ describe('LiveButtonCore', () => {
 
     it('flags liveEdge within the default 5s tolerance before liveEdgeStart', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(
         createMediaState({
           targetLiveWindow: 0,
@@ -133,6 +145,7 @@ describe('LiveButtonCore', () => {
 
     it('clears liveEdge when beyond the tolerance before liveEdgeStart', () => {
       const core = new LiveButtonCore();
+
       core.setMedia(
         createMediaState({
           targetLiveWindow: 0,
@@ -148,6 +161,7 @@ describe('LiveButtonCore', () => {
   describe('getLabel', () => {
     it('returns "Seek to live edge" when behind live', () => {
       const core = new LiveButtonCore();
+
       expect(core.getLabel(createState({ live: true, liveEdge: false }))).toMatchObject({
         key: 'live.seekToEdge',
         text: 'Seek to live edge',
@@ -156,6 +170,7 @@ describe('LiveButtonCore', () => {
 
     it('returns "Playing live" when at live edge', () => {
       const core = new LiveButtonCore();
+
       expect(core.getLabel(createState({ live: true, liveEdge: true }))).toMatchObject({
         key: 'live.playing',
         text: 'Playing live',
@@ -164,11 +179,13 @@ describe('LiveButtonCore', () => {
 
     it('returns custom string label', () => {
       const core = new LiveButtonCore({ label: 'LIVE' });
+
       expect(core.getLabel(createState())).toBe('LIVE');
     });
 
     it('returns custom function label', () => {
       const core = new LiveButtonCore({ label: (state) => (state.liveEdge ? 'LIVE' : 'GO LIVE') });
+
       expect(core.getLabel(createState({ liveEdge: true }))).toBe('LIVE');
       expect(core.getLabel(createState({ liveEdge: false }))).toBe('GO LIVE');
     });
@@ -178,12 +195,14 @@ describe('LiveButtonCore', () => {
     it('sets aria-disabled when at live edge', () => {
       const core = new LiveButtonCore();
       const attrs = core.getAttrs(createState({ liveEdge: true, live: true }));
+
       expect(attrs['aria-disabled']).toBe('true');
     });
 
     it('sets aria-disabled when disabled', () => {
       const core = new LiveButtonCore({ disabled: true });
       const attrs = core.getAttrs(createState({ live: true }));
+
       expect(attrs['aria-disabled']).toBe('true');
     });
   });
@@ -197,6 +216,7 @@ describe('LiveButtonCore', () => {
         liveEdgeStart: 95,
         currentTime: 50,
       });
+
       await core.seekToLive(media);
       expect(media.seek).toHaveBeenCalledWith(100);
     });
@@ -212,6 +232,7 @@ describe('LiveButtonCore', () => {
         liveEdgeStart: 195,
         currentTime: 70,
       });
+
       await core.seekToLive(media);
       expect(media.seek).toHaveBeenCalledWith(200);
     });
@@ -219,6 +240,7 @@ describe('LiveButtonCore', () => {
     it('does nothing when stream is not live', async () => {
       const core = new LiveButtonCore();
       const media = createMediaState({ targetLiveWindow: Number.NaN });
+
       await core.seekToLive(media);
       expect(media.seek).not.toHaveBeenCalled();
     });
@@ -231,6 +253,7 @@ describe('LiveButtonCore', () => {
         liveEdgeStart: 95,
         currentTime: 99,
       });
+
       await core.seekToLive(media);
       expect(media.seek).not.toHaveBeenCalled();
     });
@@ -243,6 +266,7 @@ describe('LiveButtonCore', () => {
         liveEdgeStart: 95,
         currentTime: 50,
       });
+
       await core.seekToLive(media);
       expect(media.seek).not.toHaveBeenCalled();
     });
@@ -255,6 +279,7 @@ describe('LiveButtonCore', () => {
         liveEdgeStart: Number.NaN,
         currentTime: 0,
       });
+
       await core.seekToLive(media);
       expect(media.seek).not.toHaveBeenCalled();
     });

@@ -13,6 +13,7 @@ function getCueKey(cue: MediaTextCue): string {
 
   if (!key) {
     const id = (cue as MediaTextCue & { id?: unknown }).id;
+
     key = `cue-${typeof id === 'string' && id ? `${id}-` : ''}${cueKey++}`;
     cueKeys.set(cue, key);
   }

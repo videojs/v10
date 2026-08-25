@@ -65,6 +65,7 @@ export class HotkeyCoordinator {
     this.#notify();
 
     let removed = false;
+
     return () => {
       if (removed) return;
 

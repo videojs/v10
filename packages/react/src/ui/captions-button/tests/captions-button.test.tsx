@@ -55,6 +55,7 @@ describe('CaptionsButton', () => {
 
     function TooltipContentProbe() {
       const tooltip = useOptionalTooltipContext();
+
       return <span data-testid="tooltip-label">{tooltip?.content?.label}</span>;
     }
 

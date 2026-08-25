@@ -11,6 +11,7 @@ describe('walkAncestors', () => {
     const outer = document.createElement('section');
     const middle = document.createElement('div');
     const inner = document.createElement('span');
+
     outer.appendChild(middle);
     middle.appendChild(inner);
     document.body.appendChild(outer);

@@ -40,6 +40,7 @@ export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
     if (configurations.has(module.id)) return configurations.get(module.id) ?? null;
 
     const config = options.configure(module);
+
     configurations.set(module.id, config);
     return config;
   };

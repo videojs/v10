@@ -74,6 +74,7 @@ function setupTextTrackActorsSetup({
       // Composition deps forwarded into each step (relocation reads the primary A/V origin).
       { state, context, config }
     );
+
     context.textTracksActor.set(textTracksActor);
     context.textTrackSegmentLoaderActor.set(textTrackSegmentLoaderActor);
 

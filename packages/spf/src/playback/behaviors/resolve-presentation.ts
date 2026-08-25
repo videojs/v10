@@ -77,6 +77,7 @@ function deriveState(
   if (isResolvedPresentation(presentation)) return 'resolved';
 
   const gateOpen = !!loadActivated || !isBlockingPreload(preload, defaultPreload);
+
   return gateOpen ? 'resolving' : 'idle';
 }
 
@@ -113,6 +114,7 @@ function resolvePresentationSetup({
             .then((response) => getResponseText(response))
             .then((text) => {
               const parsed = parsePresentation(text, presentation);
+
               state.presentation.set(parsed);
             })
             .catch((error) => {

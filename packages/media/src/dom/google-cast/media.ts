@@ -79,6 +79,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
 
   #createRemoteOverride(): Partial<HTMLMediaTargetLike> {
     const provider = this.#provider!;
+
     return {
       get remote() {
         return provider.remote;

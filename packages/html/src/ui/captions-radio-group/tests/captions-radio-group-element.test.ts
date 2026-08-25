@@ -112,9 +112,11 @@ describe('CaptionsRadioGroupElement', () => {
 
   it('preserves authored accessible names', async () => {
     const explicit = setup('en').options;
+
     explicit.setAttribute('aria-label', 'Subtitle tracks');
 
     const labelled = setup('en').options;
+
     labelled.setAttribute('aria-labelledby', 'captions-heading');
 
     await Promise.all([explicit.updateComplete, labelled.updateComplete]);
@@ -133,6 +135,7 @@ describe('CaptionsRadioGroupElement', () => {
 
     await waitForAssertion(() => {
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
       expect(items.map((item) => item.textContent)).toEqual(['Desactive', 'Legendes']);
     });
   });
@@ -141,12 +144,14 @@ describe('CaptionsRadioGroupElement', () => {
     const { menu, options } = setup('en', {
       textTrackList: [{ id: 'es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' }],
     });
+
     options.formatTrack = (track) => `${track.language.toUpperCase()} subtitles`;
     options.requestUpdate();
 
     await options.updateComplete;
 
     const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
     expect(items.map((item) => item.textContent)).toEqual(['Off', 'ES subtitles']);
   });
 
@@ -156,6 +161,7 @@ describe('CaptionsRadioGroupElement', () => {
     await options.updateComplete;
 
     const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
     expect(options.getAttribute('aria-disabled')).toBe('true');
     expect(options.hidden).toBe(true);
     expect(options.hasAttribute('data-hidden')).toBe(true);

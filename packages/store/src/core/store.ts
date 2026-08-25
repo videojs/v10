@@ -70,6 +70,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
     sourceState = initialSourceState;
     const initialDerivedState = derive(sourceState);
+
     state = createState(publish(sourceState, initialDerivedState));
 
     const store = {
@@ -151,6 +152,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
       // Derive before committing so a thrown formula leaves every snapshot unchanged.
       const nextDerived = derive(patched.next);
+
       sourceState = patched.next;
       state.replace(publish(sourceState, nextDerived));
     }

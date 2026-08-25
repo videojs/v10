@@ -15,6 +15,7 @@ const instances: { engine: { state: { errors: { set(value: unknown): void } } } 
 
 vi.mock('@videojs/spf/hls-background-video', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@videojs/spf/hls-background-video')>();
+
   return {
     ...actual,
     HlsBackgroundVideoMedia: class extends actual.HlsBackgroundVideoMedia {
@@ -67,6 +68,7 @@ describe('HlsBackgroundVideo', () => {
 
     it('stays quiet for a condition the Media does not treat as fatal', async () => {
       const onError = vi.fn();
+
       render(<HlsBackgroundVideo src="https://example.com/v.m3u8" onError={onError} />);
 
       // A degraded-but-playable notice must not reach the surface.

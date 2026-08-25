@@ -73,6 +73,7 @@ function trackPlayerResolutionSetup({
     // Clear before (re-)observing so the previous element's measurement can't
     // stand while the new one's first observation is in flight.
     let current: PlayerResolution | undefined;
+
     state.playerResolution.set(current);
 
     if (!capRenditionToPlayerSize || !mediaElement) return;

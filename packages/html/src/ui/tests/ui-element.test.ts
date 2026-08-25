@@ -10,6 +10,7 @@ function uniqueTag(base: string): string {
 
 function createElement<T extends HTMLElement>(ctor: abstract new () => T): T {
   const tag = uniqueTag('test-media');
+
   customElements.define(tag, class extends (ctor as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as T;
 }
@@ -22,6 +23,7 @@ afterEach(() => {
 describe('UIElement', () => {
   it('extends DestroyMixin(ReactiveElement)', () => {
     const el = createElement(UIElement);
+
     expect(el).toBeInstanceOf(UIElement);
     expect(el.destroyed).toBe(false);
   });

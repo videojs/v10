@@ -91,6 +91,7 @@ describe('MediaComponentElement', () => {
 
   it('does not create a component when destroyed before use', () => {
     const el = new TestMediaComponentElement();
+
     // `componentDuringFieldInit` already forced creation, so assert through a
     // subclass that never touches it.
     class Untouched extends MediaComponentElement<FakeComponent> {
@@ -103,6 +104,7 @@ describe('MediaComponentElement', () => {
     customElements.define('test-media-component-untouched', Untouched);
 
     const untouched = new Untouched();
+
     untouched.destroy();
 
     expect(el.instance).toBeInstanceOf(FakeComponent);

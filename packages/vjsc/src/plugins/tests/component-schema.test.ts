@@ -14,6 +14,7 @@ describe('componentSchemaPlugin', () => {
     const sourceDir = join(root, 'play-button');
     const source = join(sourceDir, 'play-button-component.ts');
     const existing = join(root, 'existing.ts');
+
     mkdirSync(sourceDir);
     writeFileSync(existing, 'export const existing = true;');
     writeFileSync(
@@ -42,6 +43,7 @@ describe('componentSchemaPlugin', () => {
   it('provides its companion declaration to the host build', async () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-component-schema-plugin-'));
     const sourceDir = join(root, 'play-button');
+
     mkdirSync(sourceDir);
     writeFileSync(
       join(sourceDir, 'play-button-component.ts'),

@@ -26,6 +26,7 @@ function getFormatter(locale?: string | string[]): Intl.NumberFormat | undefined
 
 function formatFallback(fraction: number): string {
   const percent = Math.round(Math.min(1, Math.max(0, fraction)) * 100);
+
   return `${percent}%`;
 }
 

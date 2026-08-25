@@ -194,8 +194,10 @@ function removeTask(
     const bufferedRanges = snapshotBuffered(sourceBuffer.buffered);
     const filtered = ctx.segments.filter((s) => {
       const midpoint = s.startTime + s.duration / 2;
+
       return bufferedRanges.some((r) => midpoint >= r.start && midpoint < r.end);
     });
+
     return { ...ctx, segments: filtered, bufferedRanges };
   });
 }
@@ -218,6 +220,7 @@ function messageToTask(
   options: MessageTaskOptions
 ): Task<SourceBufferActorContext> {
   const factory = messageTaskFactories[message.type] as MessageTaskFactory<typeof message>;
+
   return factory(message, options);
 }
 
@@ -242,6 +245,7 @@ export function createSourceBufferActor(
   const onMessage = (msg: IndividualSourceBufferMessage, { transition, setContext, getContext, runner }: Ctx): void => {
     transition('updating');
     const task = messageToTask(msg, { getContext, sourceBuffer, setContext });
+
     runner.schedule(task).then(setContext, handleError);
   };
 
@@ -263,6 +267,7 @@ export function createSourceBufferActor(
             transition('updating');
             messages.forEach((msg) => {
               const task = messageToTask(msg, { getContext, sourceBuffer, setContext });
+
               runner.schedule(task).then(setContext, handleError);
             });
           },

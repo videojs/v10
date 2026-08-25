@@ -39,6 +39,7 @@ describe('ContextPartElement', () => {
   it('applies initial context state synchronously on connection', () => {
     const provider = document.createElement('test-context-part-provider');
     const part = document.createElement('test-context-part');
+
     provider.append(part);
     document.body.append(provider);
 

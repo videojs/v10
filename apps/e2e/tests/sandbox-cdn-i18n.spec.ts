@@ -10,6 +10,7 @@ test.use({ trace: 'off' });
 async function expectLTRControlOrder(scope: Page | Frame): Promise<void> {
   const getX = async (selector: string): Promise<number> => {
     const control = scope.locator(selector).first();
+
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
 
@@ -54,6 +55,7 @@ test.describe('Sandbox CDN i18n', () => {
       { waitUntil: 'domcontentloaded' }
     );
     const player = new PlayerPage(page);
+
     await expect(player.playButton).toHaveAttribute('aria-label', 'Reproducir', { timeout: 15_000 });
   });
 
@@ -64,6 +66,7 @@ test.describe('Sandbox CDN i18n', () => {
     );
     const frame = await getPreviewFrame(page, '/cdn/');
     const playButton = frame.locator(SELECTORS.playButton).first();
+
     await expect(playButton).toHaveAttribute('aria-label', 'Reproducir', {
       timeout: 15_000,
     });

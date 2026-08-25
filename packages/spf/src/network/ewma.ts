@@ -43,6 +43,7 @@ export function calculateAlpha(halfLife: number): number {
 export function calculateEwma(prevEstimate: number, value: number, weight: number, halfLife: number): number {
   const alpha = calculateAlpha(halfLife);
   const adjAlpha = alpha ** weight;
+
   return value * (1 - adjAlpha) + adjAlpha * prevEstimate;
 }
 
@@ -71,5 +72,6 @@ export function applyZeroFactor(estimate: number, totalWeight: number, halfLife:
 
   const alpha = calculateAlpha(halfLife);
   const zeroFactor = 1 - alpha ** totalWeight;
+
   return estimate / zeroFactor;
 }

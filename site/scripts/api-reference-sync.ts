@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const SNAPSHOT_KINDS = ['components', 'utils'] as const;
 const MAX_DIFF_BUFFER_BYTES = 32 * 1024 * 1024;
+
 type SnapshotKind = (typeof SNAPSHOT_KINDS)[number];
 
 export interface DirectoryChanges {
@@ -43,6 +44,7 @@ export function classifyDirectory(beforeDirectory: string, afterDirectory: strin
   for (const file of common) {
     const beforeContent = readFileSync(join(beforeDirectory, file));
     const afterContent = readFileSync(join(afterDirectory, file));
+
     (beforeContent.equals(afterContent) ? unchanged : changed).push(file);
   }
 
@@ -96,12 +98,14 @@ export function writeClassification(artifactDirectory: string, changes: ApiRefer
   const patch = SNAPSHOT_KINDS.map((kind) =>
     directoryDiff(join(artifactDirectory, `before-${kind}`), join(artifactDirectory, `after-${kind}`))
   ).join('');
+
   writeFileSync(join(artifactDirectory, 'diff.patch'), patch);
   writeFileSync(join(artifactDirectory, 'classification.json'), `${JSON.stringify(changes, null, 2)}\n`);
 }
 
 export function main(artifactDirectory = process.argv[2] ?? '/tmp/api-sync'): void {
   const changes = classifySnapshots(artifactDirectory);
+
   writeClassification(artifactDirectory, changes);
 
   for (const kind of SNAPSHOT_KINDS) {

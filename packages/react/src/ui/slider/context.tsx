@@ -40,5 +40,6 @@ export function useSliderPointerValue(enabled = true): number {
     () => (enabled ? (context.input?.current.pointerPercent ?? null) : null),
     () => (enabled ? (context.input?.current.pointerPercent ?? null) : null)
   );
+
   return percent === null ? context.pointerValue : (context.getPointerValue?.(percent) ?? context.pointerValue);
 }

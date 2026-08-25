@@ -132,6 +132,7 @@ export function useSlider<State extends SliderState = SliderState>(
       if (!element) return;
 
       const next = optionsRef.current.computeState(slider.input.current);
+
       applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
     },
     [slider]

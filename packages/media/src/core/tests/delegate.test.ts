@@ -49,6 +49,7 @@ describe('Media Mixins', () => {
       const host = new Mixed();
 
       const handler = vi.fn();
+
       host.addEventListener('custom', handler);
 
       host.attach(new EventTarget());
@@ -66,6 +67,7 @@ describe('Media Mixins', () => {
       const Mixed = TestMediaMixin(Base as unknown as Constructor<MediaBase>);
       const host = new Mixed();
       const hostEvents: Event[] = [];
+
       host.addEventListener('custom', (e) => hostEvents.push(e));
 
       host.attach(new EventTarget());

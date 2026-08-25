@@ -35,6 +35,7 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
       sourceEntries.clear();
 
       const files = discoverFiles(root, options.include, options.exclude);
+
       this.addWatchFile(root);
 
       for (const filename of files) this.addWatchFile(filename);
@@ -158,6 +159,7 @@ function discoverFiles(
 ): string[] {
   const patterns = toArray(include);
   const excluded = exclude ? toArray(exclude) : undefined;
+
   return [
     ...new Set(
       patterns.flatMap((pattern) =>
@@ -183,6 +185,7 @@ function discoverStyleFiles(input: string): string[] {
       if (match[1]?.startsWith('.')) visit(resolve(dirname(resolved), match[1]));
     }
   };
+
   visit(input);
   return [...files].sort();
 }

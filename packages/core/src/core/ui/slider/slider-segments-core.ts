@@ -64,6 +64,7 @@ export class SliderSegmentsCore {
     const valid = ranges.filter((segment) => {
       const size = (segment.end - segment.start) / domain;
       const offset = (segment.start - min) / domain;
+
       return Number.isFinite(size) && Number.isFinite(offset) && size > 0;
     });
 

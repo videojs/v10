@@ -96,12 +96,14 @@ export function buildSpotifyIframeSrc(src: string, props: Partial<SpotifyMediaPr
   const videoPath = preferVideo ? '/video' : '';
   // Spotify publishes so few parameters that most embeds need none at all.
   const query = serializeEmbedParams(params);
+
   return `${EMBED_BASE}/embed/${parsed.type}/${parsed.id}${videoPath}${query ? `?${query}` : ''}`;
 }
 
 /** Parse the `t` parameter from a Spotify share URL. Spotify spells it in seconds. */
 function parseStartTime(url: string): number | null {
   const value = /[?&]t=(\d+)/.exec(url)?.[1];
+
   return value ? Number.parseInt(value, 10) : null;
 }
 

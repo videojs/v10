@@ -181,6 +181,7 @@ class ShakaMediaBase
     this.#disarmPlayIntent();
 
     const engine = this.#engine;
+
     // Anything still in flight has nothing left to report to.
     this.#engine = null;
     this.#isDestroyed = true;
@@ -401,6 +402,7 @@ class ShakaMediaBase
    */
   #clampBuffering(engine: shaka.Player) {
     const { bufferingGoal, rebufferingGoal } = engine.getConfiguration().streaming;
+
     this.#clampedGoals = { bufferingGoal, rebufferingGoal };
     engine.configure({ streaming: { bufferingGoal: 1, rebufferingGoal: 1 } });
   }
@@ -581,6 +583,7 @@ function toMediaError(error: unknown): MediaError | null {
 
   const code = categoryToCode[error.category] ?? MediaError.MEDIA_ERR_CUSTOM;
   const mediaError = new MediaError(error.message, code, true, `shaka-${error.code}`);
+
   mediaError.data = error;
 
   return mediaError;

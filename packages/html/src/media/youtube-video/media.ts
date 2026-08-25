@@ -8,6 +8,7 @@ class YouTubeCustomMediaElement extends CustomMediaElement('iframe', YouTubeMedi
   static override getTemplateHTML = (attrs: Record<string, string>): string => {
     const initialSrc = buildYouTubeIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
     const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
+
     return /*html*/ `
       <style>
         :host {

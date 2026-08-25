@@ -31,6 +31,7 @@ describe('composite define registration', () => {
   describe('video/player', () => {
     it('registers video-player before media-container', async () => {
       const before = spy.mock.calls.length;
+
       await import('../video/player');
       const batch = batchSince(before);
 
@@ -43,6 +44,7 @@ describe('composite define registration', () => {
   describe('audio/player', () => {
     it('registers audio-player', async () => {
       const before = spy.mock.calls.length;
+
       await import('../audio/player');
       const batch = batchSince(before);
 
@@ -55,6 +57,7 @@ describe('composite define registration', () => {
   describe('background/player', () => {
     it('registers background-video-player', async () => {
       const before = spy.mock.calls.length;
+
       await import('../background/player');
       const batch = batchSince(before);
 
@@ -68,6 +71,7 @@ describe('composite define registration', () => {
   describe('ui/time-slider', () => {
     it('registers media-time-slider before sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/time-slider');
       const batch = batchSince(before);
 
@@ -88,6 +92,7 @@ describe('composite define registration', () => {
   describe('ui/time-slider-chapters', () => {
     it('registers the opt-in chapter elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/time-slider-chapters');
       const batch = batchSince(before);
 
@@ -99,6 +104,7 @@ describe('composite define registration', () => {
   describe('ui/volume-slider', () => {
     it('registers media-volume-slider and skips already-defined sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/volume-slider');
       const batch = batchSince(before);
 
@@ -115,6 +121,7 @@ describe('composite define registration', () => {
   describe('ui/slider', () => {
     it('registers media-slider', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/slider');
       const batch = batchSince(before);
 
@@ -127,6 +134,7 @@ describe('composite define registration', () => {
   describe('ui/time', () => {
     it('registers media-time before sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/time');
       const batch = batchSince(before);
 
@@ -139,6 +147,7 @@ describe('composite define registration', () => {
   describe('ui/controls', () => {
     it('registers media-controls before sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/controls');
       const batch = batchSince(before);
 
@@ -150,6 +159,7 @@ describe('composite define registration', () => {
   describe('video/ui', () => {
     it('registers the elements used by video skins', async () => {
       const before = spy.mock.calls.length;
+
       await import('../video/ui');
       const batch = batchSince(before);
 

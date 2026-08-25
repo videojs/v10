@@ -77,6 +77,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       this.#levelIdMap.clear();
 
       const videoTrack = this.addVideoTrack('main');
+
       this.#currentVideoTrack = videoTrack;
       videoTrack.selected = true;
 
@@ -104,6 +105,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
       for (const hlsAudioTrack of data.audioTracks) {
         const audioTrack = this.addAudioTrack(getAudioTrackKind(hlsAudioTrack), hlsAudioTrack.name, hlsAudioTrack.lang);
+
         audioTrack.id = `${hlsAudioTrack.id}`;
       }
     };
@@ -128,6 +130,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
       return hlsAudioTracks.every((hlsAudioTrack, index) => {
         const audioTrack = currentTracks[index];
+
         return (
           audioTrack?.id === `${hlsAudioTrack.id}` &&
           audioTrack.kind === getAudioTrackKind(hlsAudioTrack) &&

@@ -164,6 +164,7 @@ describe('createMachineActor', () => {
     const actor = makeCounter();
 
     const before = actor.snapshot.get();
+
     actor.send({ type: 'increment' });
     actor.send({ type: 'start' });
     const after = actor.snapshot.get();

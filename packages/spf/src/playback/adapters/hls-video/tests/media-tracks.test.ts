@@ -72,6 +72,7 @@ const flush = () =>
       stop();
       resolve();
     });
+
     sig.set(1);
   });
 
@@ -253,6 +254,7 @@ describe('HlsVideoMediaMediaTracksMixin', () => {
       vTrack({ id: 'hi', width: 1920, height: 1080, bandwidth: 5_000_000 }),
       vTrack({ id: 'lo', width: 640, height: 360, bandwidth: 800_000 }),
     ];
+
     engine.state.presentation.set(presentation(tracks));
     await flush();
     engine.state.selectedVideoTrackId.set('lo');
@@ -309,6 +311,7 @@ describe('HlsVideoMediaMediaTracksMixin', () => {
       vTrack({ id: 'hi', width: 1920, height: 1080, bandwidth: 5_000_000 }),
       vTrack({ id: 'lo', width: 640, height: 360, bandwidth: 800_000 }),
     ];
+
     engine.state.presentation.set(presentation(tracks));
     await flush();
 

@@ -27,6 +27,7 @@ test.describe('Captions', () => {
       if (!video) return;
 
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       track.label = 'English';
       track.srclang = 'en';
@@ -38,6 +39,7 @@ test.describe('Captions', () => {
     await player.openCaptionsSettings();
 
     const options = page.locator(SELECTORS.activeMenuOptions);
+
     await expect(options).toHaveCount(2, { timeout: 5_000 });
   });
 
@@ -48,6 +50,7 @@ test.describe('Captions', () => {
       if (!video) return;
 
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       track.label = 'English';
       track.srclang = 'en';

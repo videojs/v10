@@ -6,6 +6,7 @@ let id = 0;
 
 function createIcon(): MediaIconElement {
   const tag = `test-media-icon-${id++}`;
+
   customElements.define(tag, class extends MediaIconElement {});
   return document.createElement(tag) as MediaIconElement;
 }
@@ -21,12 +22,14 @@ afterEach(() => {
 describe('MediaIconElement', () => {
   it('renders registered icons and reacts to attributes', () => {
     const family = uniqueFamily();
+
     MediaIconElement.register(family, {
       pause: '<svg data-icon="pause"></svg>',
       play: '<svg data-icon="play"></svg>',
     });
 
     const icon = createIcon();
+
     icon.setAttribute('family', family);
     icon.setAttribute('name', 'play');
     document.body.append(icon);
@@ -65,9 +68,11 @@ describe('MediaIconElement', () => {
   it('does not load disconnected instances', async () => {
     const family = uniqueFamily();
     const load = vi.fn(async () => ({ play: '<svg></svg>' }));
+
     MediaIconElement.registerLoader(family, load);
 
     const icon = createIcon();
+
     icon.setAttribute('family', family);
     icon.setAttribute('name', 'play');
     await Promise.resolve();

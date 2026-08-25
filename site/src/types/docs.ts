@@ -21,6 +21,7 @@ export const DEFAULT_FRAMEWORK = Object.keys(FRAMEWORK_STYLES)[0] as SupportedFr
 
 export const ALL_FRAMEWORK_STYLE_COMBINATIONS = SUPPORTED_FRAMEWORKS.flatMap((framework) => {
   const availableStyles = FRAMEWORK_STYLES[framework];
+
   return availableStyles.map((style) => ({
     framework,
     style,
@@ -34,6 +35,7 @@ export function getDefaultStyle<F extends SupportedFramework>(framework: F): Sup
 
 export function isValidFramework(value: string | undefined | null): value is SupportedFramework {
   if (!value) return false;
+
   return SUPPORTED_FRAMEWORKS.includes(value as SupportedFramework);
 }
 
@@ -42,6 +44,7 @@ export function isValidStyleForFramework(
   style: string | undefined | null
 ): style is AnySupportedStyle {
   if (!style) return false;
+
   return FRAMEWORK_STYLES[framework].includes(style as any);
 }
 

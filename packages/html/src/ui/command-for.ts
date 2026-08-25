@@ -8,5 +8,6 @@ export function toggleCommandTarget(host: HTMLElement, commandfor: string): void
   if (!target || !('open' in target)) return;
 
   const popup = target as { open: boolean };
+
   popup.open = !popup.open;
 }

@@ -46,6 +46,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const locale = useLocale();
 
     const [core] = useState(() => new TimeSliderCore());
+
     core.setProps({
       label,
       step,
@@ -132,6 +133,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
           stateAttrMap: TimeSliderDataAttrs,
           getAttrs: (sliderState) => {
             const attrs = core.getAttrs(sliderState as TimeSliderCore.State);
+
             return {
               ...attrs,
               'aria-label': translateText(attrs['aria-label'], translator),

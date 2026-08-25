@@ -41,6 +41,7 @@ export const audioSlice = defineSlice<MockMedia>()({
 export function createTestStore() {
   const store = createCoreStore<MockMedia>()(audioSlice);
   const target = new MockMedia();
+
   store.attach(target);
   return { store, target };
 }
@@ -93,6 +94,7 @@ export function createAsyncTestStore() {
   const store = createCoreStore<AsyncMockMedia>()(asyncAudioSlice, { onError: noop });
 
   const target = new AsyncMockMedia();
+
   store.attach(target);
 
   return { store, target };

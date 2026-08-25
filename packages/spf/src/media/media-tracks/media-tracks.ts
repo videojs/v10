@@ -77,6 +77,7 @@ export function findVideoTrackById(
   if (!presentation || !id) return undefined;
 
   const track = findTrackById(presentation, id);
+
   return track?.type === 'video' ? (track as VideoTrack) : undefined;
 }
 
@@ -88,6 +89,7 @@ export function findAudioTrackById(
   if (!presentation || !id) return undefined;
 
   const track = findTrackById(presentation, id);
+
   return track?.type === 'audio' ? (track as AudioTrack) : undefined;
 }
 

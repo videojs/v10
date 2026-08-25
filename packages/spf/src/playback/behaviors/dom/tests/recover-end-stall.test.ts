@@ -45,6 +45,7 @@ describe('shouldForceEnded', () => {
 
   it('respects the configured window', () => {
     const gap015 = { ...atEndStall, currentTime: 599.85, bufferedEnd: 600.0 }; // gap 0.15
+
     expect(shouldForceEnded(gap015, 0.2)).toBe(true);
     expect(shouldForceEnded(gap015, 0.1)).toBe(false);
   });

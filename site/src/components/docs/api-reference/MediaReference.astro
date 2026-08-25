@@ -16,11 +16,15 @@ const { media } = Astro.props;
 const framework = Astro.params.framework === 'react' ? 'react' : 'html';
 const entry = await getEntry('mediaReference', resolveReferenceSlug(media));
 const ref: MediaReference | null = entry?.data ?? null;
+
 if (!ref) return;
 
 const model = createMediaReferenceModel(media, ref);
+
 if (!model) return;
+
 const platform = model.platforms[framework];
+
 if (!platform) return;
 
 // Engine prose comes from the page as `engine-<key>` slots: the paragraph that
@@ -28,8 +32,10 @@ if (!platform) return;
 // names cannot be dynamic in markup, so resolve them here and hand the rendered
 // HTML to whichever platform renderer runs.
 const engineProse: Record<string, string> = {};
+
 for (const engine of model.engines) {
   const slot = `engine-${engine.key}`;
+
   if (Astro.slots.has(slot)) engineProse[engine.key] = await Astro.slots.render(slot);
 }
 ---

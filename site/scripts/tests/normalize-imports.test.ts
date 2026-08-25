@@ -118,6 +118,7 @@ describe('normalizeImports', () => {
 
     const result = normalizeImports(input);
     const lines = result.split('\n');
+
     expect(lines[0]).toBe("import './styles.css';");
     expect(lines[1]).toBe("import React from 'react';");
     expect(lines[2]).toBe("import { useState } from 'react';");

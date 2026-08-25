@@ -18,6 +18,7 @@ function compile(source: string): string {
     },
   };
   const { code } = mdxToJs(source, { mdastPlugins: [satteriCdnVersion()], data });
+
   return code;
 }
 

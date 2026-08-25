@@ -63,6 +63,7 @@ export async function fetchResolvable(addressable: Resource, options?: RequestIn
   // Add Range header for byte range requests
   if (addressable.byteRange) {
     const { start, end } = addressable.byteRange;
+
     headers.set('Range', `bytes=${start}-${end}`);
   }
 
@@ -84,6 +85,7 @@ export async function fetchResolvable(addressable: Resource, options?: RequestIn
  */
 export async function fetchResolvableBytes(addressable: Resource, options?: RequestInit): Promise<ArrayBuffer> {
   const response = await fetchResolvable(addressable, options);
+
   return response.arrayBuffer();
 }
 
@@ -186,6 +188,7 @@ export async function fetchStream(addressable: Resource, options?: FetchOptions)
  */
 export function createTrackedFetch(initial: BandwidthState, onSample: (next: BandwidthState) => void): FetchBytes {
   let state = initial;
+
   return async (addressable, options) => {
     const { minChunkSize, ...fetchOptions } = options ?? {};
     const response = await fetchResolvable(addressable, fetchOptions);
@@ -193,6 +196,7 @@ export function createTrackedFetch(initial: BandwidthState, onSample: (next: Ban
     if (!response.body) throw new Error('Response has no body');
 
     const body = response.body;
+
     return {
       [Symbol.asyncIterator]: async function* () {
         let chunkStart = performance.now();
@@ -202,6 +206,7 @@ export function createTrackedFetch(initial: BandwidthState, onSample: (next: Ban
           ...(minChunkSize !== undefined ? [{ minChunkSize }] : [])
         )) {
           const elapsed = performance.now() - chunkStart;
+
           state = sampleBandwidth(state, elapsed, chunk.byteLength);
           onSample(state);
           yield chunk;

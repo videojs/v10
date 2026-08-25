@@ -80,6 +80,7 @@ describe('createWheelStep', () => {
     const { onWheel } = createWheelStep(createOptions({ isDisabled: () => true, onValueChange }));
 
     const event = wheelEvent(-1);
+
     onWheel(event);
 
     expect(onValueChange).not.toHaveBeenCalled();
@@ -90,6 +91,7 @@ describe('createWheelStep', () => {
     const { onWheel } = createWheelStep(createOptions());
 
     const event = wheelEvent(-1);
+
     onWheel(event);
 
     expect(event.preventDefault).toHaveBeenCalled();
@@ -100,6 +102,7 @@ describe('createWheelStep', () => {
     const { onWheel } = createWheelStep(createOptions({ onValueChange }));
 
     const event = wheelEvent(0);
+
     onWheel(event);
 
     expect(onValueChange).not.toHaveBeenCalled();

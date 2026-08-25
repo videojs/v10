@@ -78,5 +78,6 @@ function toHlsJsClass(engine: object): MuxDataHlsJsClass | undefined {
   if (!isFunction(engineClass)) return undefined;
 
   const statics = engineClass as unknown as MuxDataHlsJsClass;
+
   return isObject(statics.Events) && isObject(statics.ErrorDetails) && isString(statics.version) ? statics : undefined;
 }

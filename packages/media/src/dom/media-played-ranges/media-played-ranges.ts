@@ -133,6 +133,7 @@ export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { 
       if (start >= end) return;
 
       const allRanges: PlayedRange[] = [...this.#playedRanges, { start, end }];
+
       allRanges.sort((a, b) => a.start - b.start);
       const merged: PlayedRange[] = [];
 

@@ -144,6 +144,7 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
       if (this.#target && !this.#controller && !this.#creatingController) {
         // `attach()`'s barrier was settled when there was nothing to embed, so `play()` needs a new one to wait on.
         const load = this.#beginLoad();
+
         // Wait a microtask: frameworks set `src` and the embed props in any order, and the URL is built once.
         await Promise.resolve();
 
@@ -157,6 +158,7 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
     }
 
     const load = this.#beginLoad();
+
     // A cleared source has nothing to load, but what was reported about the old entity still has to go.
     this.#resetState();
     // `emptied` announces that reset, so it precedes the empty-src bail: a cleared source reports nothing further.
@@ -656,6 +658,7 @@ function createControllerPlaceholderFrame(): HTMLIFrameElement {
 function embedOptionsOf(src: string): string {
   const [, query] = src.split('?');
   const params = new URLSearchParams(query);
+
   params.delete('t');
   params.sort();
   return `${isVideoEmbed(src) ? 'video' : 'audio'}?${params}`;

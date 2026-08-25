@@ -21,6 +21,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -119,6 +120,7 @@ function setup({
 
   if (template) {
     const templateElement = document.createElement('template');
+
     templateElement.innerHTML = template;
     options.append(templateElement);
   }
@@ -140,6 +142,7 @@ async function waitForMenu(
   await options?.updateComplete;
 
   const group = menu.querySelector<PlaybackRateRadioGroupElement>(PlaybackRateRadioGroupElement.tagName);
+
   await group?.updateComplete;
 
   const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];

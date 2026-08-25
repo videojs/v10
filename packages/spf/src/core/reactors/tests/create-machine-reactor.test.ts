@@ -24,6 +24,7 @@ describe('createMachineReactor', () => {
 
   it('runs the entry effect for the initial state on creation', () => {
     const fn = vi.fn();
+
     createMachineReactor({
       initial: 'idle' as const,
       states: { idle: { entry: [fn] } },
@@ -34,6 +35,7 @@ describe('createMachineReactor', () => {
 
   it('runs the reaction effect for the initial state on creation', () => {
     const fn = vi.fn();
+
     createMachineReactor({
       initial: 'idle' as const,
       states: { idle: { effects: [fn] } },
@@ -44,6 +46,7 @@ describe('createMachineReactor', () => {
 
   it('does not run effects for states other than the initial state', () => {
     const otherFn = vi.fn();
+
     createMachineReactor<'idle' | 'other'>({
       initial: 'idle',
       states: {
@@ -175,6 +178,7 @@ describe('createMachineReactor', () => {
     });
 
     const before = reactor.snapshot.get();
+
     src.set(true);
     await tick();
     const after = reactor.snapshot.get();

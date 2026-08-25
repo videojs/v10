@@ -46,6 +46,7 @@ export function parseImportedNames(source: string): Map<string, string> {
 
     for (const name of names) {
       const [importedName, localName = importedName] = name.split(/\s+as\s+/);
+
       imports.set(localName, match[2]);
     }
   }
@@ -133,6 +134,7 @@ async function loadImportedNames(
       const url = specifier.startsWith('@videojs/')
         ? pkgDistUrl(specifier)
         : pathToFileURL(resolve(workspaceRoot, dirname(templatePath), specifier)).href;
+
       imported = (await import(url)) as Record<string, unknown>;
       modules.set(specifier, imported);
     }
@@ -144,6 +146,7 @@ async function loadImportedNames(
 export async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
   const sourcePath = resolve(workspaceRoot, skin.template);
   const source = readFileSync(sourcePath, 'utf-8');
+
   validatePackageImports(source, skin.template);
   const templateBody = extractTemplateLiteral(source);
   const context: Record<string, unknown> = { SEEK_TIME: 10 };
@@ -152,5 +155,6 @@ export async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
   context.renderIcon = createRenderMediaIcon(skin.iconSet);
 
   const html = evaluateTemplate(templateBody, context);
+
   return prependHtmlSkinScripts(replaceSlots(html, skin), skin);
 }

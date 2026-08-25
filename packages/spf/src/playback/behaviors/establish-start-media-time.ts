@@ -69,6 +69,7 @@ export interface EstablishStartMediaTimeState {
  */
 function ownOrigin(data: MediaContainerData | undefined): number | undefined {
   const { timescale, baseMediaDecodeTime, segmentStartTime } = data ?? {};
+
   return timescale != null && baseMediaDecodeTime != null && segmentStartTime != null
     ? baseMediaDecodeTime / timescale - segmentStartTime
     : undefined;
@@ -147,6 +148,7 @@ export const derivePerTypeStartMediaTime: DeriveStartMediaTime = (containerData)
 
   for (const [type, data] of Object.entries(containerData)) {
     const origin = ownOrigin(data);
+
     out[type] = origin === undefined ? undefined : thresholdOrigin(origin);
   }
 
@@ -225,6 +227,7 @@ function stampStartDates(presentation: Presentation, anchor: number): Presentati
       }),
     })),
   }));
+
   return changed ? ({ ...presentation, selectionSets } as Presentation) : presentation;
 }
 
@@ -245,6 +248,7 @@ function stampTracks(presentation: Presentation, startMediaTimes: Record<string,
       }),
     })),
   }));
+
   return changed ? ({ ...presentation, selectionSets } as Presentation) : presentation;
 }
 
@@ -282,6 +286,7 @@ function establishStartMediaTimeSetup({
     const ids = [state.selectedVideoTrackId?.get(), state.selectedAudioTrackId?.get()].filter(
       (id): id is string => id !== undefined
     );
+
     return ids.length > 0 && ids.every((id) => findTrackById(presentation, id)?.startMediaTime !== undefined);
   };
 
@@ -333,6 +338,7 @@ function establishStartMediaTimeSetup({
             if (!containerData) return;
 
             const startMediaTimes = derive(containerData, selectionContext());
+
             // `current` is always resolved here — the monitor gates `monitoring` on a
             // resolved presentation and transitions before effects re-run — so we cast
             // to `Presentation` rather than re-narrowing.

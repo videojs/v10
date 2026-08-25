@@ -9,6 +9,7 @@ afterEach(() => {
 describe('focusContainer', () => {
   it('focuses the container when focus is outside', () => {
     const container = document.createElement('div');
+
     container.tabIndex = 0;
     document.body.append(container);
 
@@ -21,6 +22,7 @@ describe('focusContainer', () => {
     const container = document.createElement('div');
     const host = document.createElement('div');
     const button = document.createElement('button');
+
     host.attachShadow({ mode: 'open' }).append(button);
     container.append(host);
     document.body.append(container);

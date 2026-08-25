@@ -39,6 +39,7 @@ interface AttachShape {
 function readAttachShape(): AttachShape {
   const host = document.querySelector('hls-video');
   const video = (host?.shadowRoot?.querySelector('video') ?? host?.querySelector('video') ?? host) as HTMLVideoElement;
+
   return {
     airPlayCapable: 'WebKitPlaybackTargetAvailabilityEvent' in window,
     srcAttr: video.getAttribute('src') ?? '',
@@ -83,6 +84,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
   test('rebuilds a fresh MediaSource when the attachment is torn down out from under the engine', async ({ page }) => {
     const before = await page.evaluate(readAttachShape);
     const beforeAttachment = mseAttachmentOf(before);
+
     expect(beforeAttachment).not.toBe('');
 
     // Simulate the UA killing the MSE attachment (AirPlay handoff return /
@@ -120,6 +122,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
           (s) => s.type === 'video/mp4' && s.src.startsWith('blob:')
         );
         const attachment = srcAttr.startsWith('blob:') ? srcAttr : (sourceChild?.src ?? '');
+
         return attachment !== '' && attachment !== prev && video.readyState >= 1;
       },
       beforeAttachment,
@@ -127,6 +130,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
     );
 
     const after = await page.evaluate(readAttachShape);
+
     expect(mseAttachmentOf(after)).not.toBe(beforeAttachment);
     // The rebuilt source is playable, not just attached.
     await player.play();

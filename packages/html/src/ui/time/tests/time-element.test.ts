@@ -19,6 +19,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -95,6 +96,7 @@ async function setup(props: Partial<TimeElement> = {}, locale?: string, state?: 
 
   if (locale) {
     const i18n = new MediaI18nProviderElement();
+
     i18n.setAttribute('lang', locale);
     i18n.append(provider);
     document.body.append(i18n);

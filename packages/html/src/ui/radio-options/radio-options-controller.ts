@@ -81,6 +81,7 @@ export class RadioOptionsController<Option extends RadioOption> implements React
         const item = itemRoot
           ? (cloneTemplateRoot(itemRoot, this.#host.ownerDocument) as MenuRadioItemElement)
           : (this.#host.ownerDocument.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement);
+
         item.value = option.value;
         this.#config.setItemAttributes?.(item, option);
         const label = translateText(option.label, translator, option.labelParams);
@@ -112,6 +113,7 @@ export class RadioOptionsController<Option extends RadioOption> implements React
     if (event.target !== this.#host) return;
 
     const { value } = (event as CustomEvent<{ value: string }>).detail;
+
     this.#config.onValueChange(value);
   };
 

@@ -74,6 +74,7 @@ export function AlertDialogRoot({
   useDestroy(dialog);
 
   const input = useSnapshot(dialog.input);
+
   core.setInput(input);
   const state = core.getState();
 

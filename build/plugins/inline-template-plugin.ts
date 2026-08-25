@@ -342,10 +342,12 @@ function collectExpression(code: string, start: number): ParsedExpression {
       i++;
     } else if (ch === "'" || ch === '"') {
       const consumed = skipString(code, i);
+
       src += consumed.text;
       i = consumed.end;
     } else if (ch === '`') {
       const consumed = skipNestedTemplate(code, i);
+
       src += consumed.text;
       i = consumed.end;
     } else {

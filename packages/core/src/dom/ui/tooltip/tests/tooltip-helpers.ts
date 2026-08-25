@@ -11,5 +11,6 @@ export function createTestTooltip(overrides?: Partial<TooltipOptions>) {
     onOpenChange,
     ...overrides,
   });
+
   return { tooltip, onOpenChange, transition };
 }

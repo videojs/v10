@@ -57,6 +57,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
         // Fallback for very old browsers (pre-2024)
         const blob = await markdownBlobPromise;
         const text = await blob.text();
+
         await navigator.clipboard.writeText(text);
       } else {
         // Safari requires passing async operation TO clipboard API
@@ -64,6 +65,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
         const clipboardItem = new ClipboardItem({
           'text/plain': markdownBlobPromise,
         });
+
         await navigator.clipboard.write([clipboardItem]);
       }
 
@@ -74,6 +76,7 @@ export default function CopyMarkdownButton({ className, style }: CopyMarkdownBut
     } catch (err) {
       console.error('Failed to copy markdown:', err);
       const message = err instanceof Error ? err.message : 'Failed to copy markdown';
+
       setState({ status: 'error', message });
       setTimeout(() => {
         setState({ status: 'idle' });

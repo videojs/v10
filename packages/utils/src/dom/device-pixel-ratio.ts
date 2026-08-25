@@ -35,6 +35,7 @@ export function watchDevicePixelRatio(onChange: (devicePixelRatio: number) => vo
 
   const setupListener = () => {
     const query = globalThis.matchMedia(`(resolution: ${getDevicePixelRatio()}dppx)`);
+
     removeListener = listen(query, 'change', handleChange, options);
   };
 

@@ -46,6 +46,7 @@ describe('PosterCore', () => {
 
     it('reports exactly one load state at a time', () => {
       const core = new PosterCore();
+
       core.setMedia({ started: false, poster: 'poster.jpg' });
 
       core.setImageLoadState('loading');

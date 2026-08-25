@@ -24,12 +24,14 @@ describe('applyRules', () => {
     const dropA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
     const reverse: SelectionRule<{ id: string }> = (tracks) => [...tracks].reverse();
     const result = applyRules([dropA, reverse], all, noDeps);
+
     expect(result.map((t) => t.id)).toEqual(['c', 'b']);
   });
 
   it('skips a rule that returns nothing (fall-through), keeping the prior set', () => {
     const matchNone: SelectionRule<{ id: string }> = () => [];
     const result = applyRules([matchNone], all, noDeps);
+
     expect(result.map((t) => t.id)).toEqual(['a', 'b', 'c']);
   });
 
@@ -41,6 +43,7 @@ describe('applyRules', () => {
       return tracks;
     };
     const result = applyRules([toA, later], all, noDeps);
+
     expect(result.map((t) => t.id)).toEqual(['a']);
     expect(laterCalled).toBe(false);
   });
@@ -55,6 +58,7 @@ describe('applyRules', () => {
       received = [tracks, ruleDeps];
       return tracks;
     };
+
     applyRules([rule], all, deps);
     expect(received).toEqual([all, deps]);
   });
@@ -82,6 +86,7 @@ describe('applyConstraints', () => {
 
   it('preserves an empty result — no fall-through, unlike applyRules', () => {
     const none: SelectionRule<{ id: string }> = () => [];
+
     expect(applyConstraints([none], all, noDeps)).toEqual([]);
   });
 
@@ -92,6 +97,7 @@ describe('applyConstraints', () => {
       laterCalled = true;
       return tracks;
     };
+
     applyConstraints([toA, later], all, noDeps);
     expect(laterCalled).toBe(true);
   });

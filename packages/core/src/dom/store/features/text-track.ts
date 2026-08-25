@@ -112,6 +112,7 @@ export const textTrackFeature = definePlayerFeature({
           subtitlesTracks.find(({ id }) => id === lastShownId) ??
           findLocaleTrack(subtitlesTracks, globalThis.navigator?.language ?? '') ??
           subtitlesTracks[0]!;
+
         lastShownId = next.id;
         showOnly(subtitlesTracks, next.track);
 
@@ -195,6 +196,7 @@ export const textTrackFeature = definePlayerFeature({
 
       if (thumbnailTrack) {
         const el = findTrackElement(media, thumbnailTrack);
+
         thumbnailTrackSrc = el?.src ?? null;
         // Read the host rather than any inner native element: for a custom media
         // element the attribute lives on the host and is forwarded inward.

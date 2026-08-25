@@ -53,8 +53,10 @@ describe('definePlayerFeature', () => {
     expect(combinePlayerFeatureConfigs([feature])).toEqual(feature.config);
 
     const store = createStore<PlayerTarget>()(feature);
+
     setPlayerConfigValue(store, feature.config!.label, 'provided');
     const detach = store.attach({} as PlayerTarget);
+
     detach();
 
     expect(store.label).toBe('provided');
@@ -113,6 +115,7 @@ describe('definePlayerFeature', () => {
     });
 
     const store = createStore<PlayerTarget>()(feature);
+
     setPlayerConfigValue(store, feature.config!.size, 'large');
 
     expect(store.size).toBe('large');

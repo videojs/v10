@@ -54,6 +54,7 @@ export function createTransition(): TransitionApi {
     if (id !== operationId) return;
 
     const resolve = resolvePending;
+
     resolvePending = null;
     resolve?.();
   }
@@ -78,6 +79,7 @@ export function createTransition(): TransitionApi {
 
         if (restarting) {
           const element = resolveElement(el);
+
           cancelAnimations(element);
           flushStyles(element);
         }

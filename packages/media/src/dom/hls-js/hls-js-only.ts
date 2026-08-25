@@ -49,6 +49,7 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
   constructor(params: HlsJsOnlyMediaParams) {
     super();
     const config = { ...defaultHlsConfig, ...params.config };
+
     this.#engine = new Hls({
       ...config,
       // Layered over whatever controller the config already names, so a

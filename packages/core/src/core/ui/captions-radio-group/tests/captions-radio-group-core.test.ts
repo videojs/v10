@@ -42,6 +42,7 @@ describe('CaptionsRadioGroupCore', () => {
           { id: 'subtitles-es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
         ],
       });
+
       core.setMedia(media);
       const state = core.getState();
 
@@ -60,6 +61,7 @@ describe('CaptionsRadioGroupCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'metadata', label: 'thumbnails', language: '', mode: 'hidden' }],
       });
+
       core.setMedia(media);
 
       expect(core.getState().disabled).toBe(true);
@@ -67,6 +69,7 @@ describe('CaptionsRadioGroupCore', () => {
 
     it('marks availability unavailable when no caption tracks are available', () => {
       const core = new CaptionsRadioGroupCore();
+
       core.setMedia(createMediaState());
 
       expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
@@ -77,6 +80,7 @@ describe('CaptionsRadioGroupCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
+
       core.setMedia(media);
 
       expect(core.getState()).toMatchObject({ availability: 'available', hidden: false });
@@ -90,6 +94,7 @@ describe('CaptionsRadioGroupCore', () => {
           { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
         ],
       });
+
       core.setMedia(media);
 
       expect(core.getState().value).toBe(CAPTIONS_OFF_VALUE);
@@ -99,6 +104,7 @@ describe('CaptionsRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns a stable default group label', () => {
       const core = new CaptionsRadioGroupCore();
+
       expect(core.getLabel(createState({ subtitlesShowing: false }))).toMatchObject({
         key: 'menu.captions',
         text: 'Captions',
@@ -111,6 +117,7 @@ describe('CaptionsRadioGroupCore', () => {
 
     it('returns custom string label', () => {
       const core = new CaptionsRadioGroupCore({ label: 'Captions' });
+
       expect(core.getLabel(createState())).toBe('Captions');
     });
 
@@ -118,6 +125,7 @@ describe('CaptionsRadioGroupCore', () => {
       const core = new CaptionsRadioGroupCore({
         label: (state) => (state.subtitlesShowing ? 'Hide subtitles' : 'Show subtitles'),
       });
+
       expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('Hide subtitles');
     });
   });
@@ -125,6 +133,7 @@ describe('CaptionsRadioGroupCore', () => {
   describe('getTrackLabel', () => {
     it('formats track labels by default', () => {
       const core = new CaptionsRadioGroupCore();
+
       expect(
         core.getTrackLabel({
           kind: 'subtitles',
@@ -183,6 +192,7 @@ describe('CaptionsRadioGroupCore', () => {
           { id: 'subtitles-es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
         ],
       });
+
       core.select(media, 'subtitles-es');
       expect(media.selectSubtitlesTrack).toHaveBeenCalledWith('subtitles-es');
     });
@@ -192,6 +202,7 @@ describe('CaptionsRadioGroupCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' }],
       });
+
       core.select(media, CAPTIONS_OFF_VALUE);
       expect(media.selectSubtitlesTrack).toHaveBeenCalledWith(CAPTIONS_OFF_VALUE);
     });
@@ -201,6 +212,7 @@ describe('CaptionsRadioGroupCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
+
       core.select(media, 'subtitles-en');
       expect(media.selectSubtitlesTrack).not.toHaveBeenCalled();
     });
@@ -210,6 +222,7 @@ describe('CaptionsRadioGroupCore', () => {
       const media = createMediaState({
         textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
       });
+
       core.select(media, 'subtitles-es');
       expect(media.selectSubtitlesTrack).not.toHaveBeenCalled();
     });

@@ -38,6 +38,7 @@ describe('CastButtonCore', () => {
       stubCastSupport();
       const core = new CastButtonCore();
       const media = createMediaState({ remotePlaybackState: 'connected' });
+
       core.setMedia(media);
       const state = core.getState();
 
@@ -50,6 +51,7 @@ describe('CastButtonCore', () => {
     it('marks disabled when no cast device is available', () => {
       stubCastSupport();
       const core = new CastButtonCore();
+
       core.setMedia(createMediaState({ remotePlaybackAvailability: 'unavailable' }));
       const state = core.getState();
 
@@ -59,6 +61,7 @@ describe('CastButtonCore', () => {
 
     it('marks disabled and hidden when unsupported', () => {
       const core = new CastButtonCore();
+
       core.setMedia(createMediaState({ remotePlaybackAvailability: 'unsupported' }));
       const state = core.getState();
 
@@ -70,6 +73,7 @@ describe('CastButtonCore', () => {
     it('marks disabled when the disabled prop is set, even if available', () => {
       stubCastSupport();
       const core = new CastButtonCore({ disabled: true });
+
       core.setMedia(createMediaState({ remotePlaybackAvailability: 'available' }));
       const state = core.getState();
 
@@ -81,6 +85,7 @@ describe('CastButtonCore', () => {
   describe('getLabel', () => {
     it('returns Start casting when disconnected', () => {
       const core = new CastButtonCore();
+
       expect(core.getLabel(createState({ connection: 'disconnected' }))).toMatchObject({
         key: 'cast.start',
         text: 'Start casting',
@@ -89,6 +94,7 @@ describe('CastButtonCore', () => {
 
     it('returns Stop casting when connected', () => {
       const core = new CastButtonCore();
+
       expect(core.getLabel(createState({ connection: 'connected' }))).toMatchObject({
         key: 'cast.stop',
         text: 'Stop casting',
@@ -97,6 +103,7 @@ describe('CastButtonCore', () => {
 
     it('returns Connecting when connecting', () => {
       const core = new CastButtonCore();
+
       expect(core.getLabel(createState({ connection: 'connecting' }))).toMatchObject({
         key: 'cast.connecting',
         text: 'Connecting',
@@ -105,6 +112,7 @@ describe('CastButtonCore', () => {
 
     it('returns custom string label', () => {
       const core = new CastButtonCore({ label: 'Cast' });
+
       expect(core.getLabel(createState())).toBe('Cast');
     });
 
@@ -112,6 +120,7 @@ describe('CastButtonCore', () => {
       const core = new CastButtonCore({
         label: (state) => (state.connection === 'connected' ? 'Disconnect' : 'Connect'),
       });
+
       expect(core.getLabel(createState({ connection: 'connected' }))).toBe('Disconnect');
     });
   });
@@ -120,18 +129,21 @@ describe('CastButtonCore', () => {
     it('returns aria-label', () => {
       const core = new CastButtonCore();
       const attrs = core.getAttrs(createState());
+
       expect(attrs['aria-label']).toMatchObject({ key: 'cast.start', text: 'Start casting' });
     });
 
     it('sets aria-disabled when state.disabled is true', () => {
       const core = new CastButtonCore();
       const attrs = core.getAttrs(createState({ disabled: true }));
+
       expect(attrs['aria-disabled']).toBe('true');
     });
 
     it('sets the hidden attribute when state.hidden is true', () => {
       const core = new CastButtonCore();
       const attrs = core.getAttrs(createState({ hidden: true }));
+
       expect(attrs.hidden).toBe('');
     });
   });
@@ -141,6 +153,7 @@ describe('CastButtonCore', () => {
       stubCastSupport();
       const core = new CastButtonCore();
       const media = createMediaState({ remotePlaybackState: 'disconnected' });
+
       await core.toggle(media);
       expect(media.toggleRemotePlayback).toHaveBeenCalled();
     });
@@ -149,6 +162,7 @@ describe('CastButtonCore', () => {
       stubCastSupport();
       const core = new CastButtonCore({ disabled: true });
       const media = createMediaState();
+
       await core.toggle(media);
       expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
     });
@@ -157,6 +171,7 @@ describe('CastButtonCore', () => {
       stubCastSupport();
       const core = new CastButtonCore();
       const media = createMediaState({ remotePlaybackAvailability: 'unavailable' });
+
       await core.toggle(media);
       expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
     });
@@ -164,6 +179,7 @@ describe('CastButtonCore', () => {
     it('does nothing when unsupported', async () => {
       const core = new CastButtonCore();
       const media = createMediaState({ remotePlaybackAvailability: 'unsupported' });
+
       await core.toggle(media);
       expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
     });
@@ -176,6 +192,7 @@ describe('CastButtonCore', () => {
           throw new Error('user cancelled');
         }),
       });
+
       await expect(core.toggle(media)).rejects.toThrow('user cancelled');
     });
   });

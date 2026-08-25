@@ -37,6 +37,7 @@ describe('QualityRadioGroupCore', () => {
     it('projects video renditions', () => {
       const core = new QualityRadioGroupCore();
       const media = createMediaState();
+
       core.setMedia(media);
 
       const state = core.getState();
@@ -58,6 +59,7 @@ describe('QualityRadioGroupCore', () => {
           { id: '2', width: 1280, height: 720, bitrate: 1_500_000, selected: false },
         ],
       });
+
       core.setMedia(media);
 
       expect(core.getState().options).toEqual([
@@ -77,6 +79,7 @@ describe('QualityRadioGroupCore', () => {
           { id: '2', width: 7680, height: 4320, selected: false },
         ],
       });
+
       core.setMedia(media);
 
       expect(core.getState().options).toEqual([
@@ -95,6 +98,7 @@ describe('QualityRadioGroupCore', () => {
           { id: '1', height: 720, selected: true },
         ],
       });
+
       core.setMedia(media);
 
       expect(core.getState().value).toBe('1');
@@ -105,6 +109,7 @@ describe('QualityRadioGroupCore', () => {
       const media = createMediaState({
         activeVideoRendition: { id: '1', height: 720, selected: false },
       });
+
       core.setMedia(media);
 
       const state = core.getState();
@@ -120,6 +125,7 @@ describe('QualityRadioGroupCore', () => {
 
     it('marks availability unavailable with one rendition', () => {
       const core = new QualityRadioGroupCore();
+
       core.setMedia(createMediaState({ videoRenditionList: [{ id: '0', height: 1080, selected: false }] }));
 
       expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
@@ -129,11 +135,13 @@ describe('QualityRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns the default label', () => {
       const core = new QualityRadioGroupCore();
+
       expect(core.getLabel(createState())).toMatchObject({ key: 'menu.quality', text: 'Quality' });
     });
 
     it('returns a custom string label', () => {
       const core = new QualityRadioGroupCore({ label: 'Video quality' });
+
       expect(core.getLabel(createState())).toBe('Video quality');
     });
   });
@@ -141,11 +149,13 @@ describe('QualityRadioGroupCore', () => {
   describe('getRenditionLabel', () => {
     it('formats height labels by default', () => {
       const core = new QualityRadioGroupCore();
+
       expect(core.getRenditionLabel({ height: 1080, selected: false })).toBe('1080p');
     });
 
     it('formats portrait labels using the shorter dimension', () => {
       const core = new QualityRadioGroupCore();
+
       expect(core.getRenditionLabel({ width: 1080, height: 1920, selected: false })).toBe('1080p');
     });
 
@@ -164,6 +174,7 @@ describe('QualityRadioGroupCore', () => {
 
     it('formats bitrate labels when height is missing', () => {
       const core = new QualityRadioGroupCore();
+
       expect(core.getRenditionLabel({ bitrate: 1_500_000, selected: false })).toBe('1.5 Mbps');
     });
 

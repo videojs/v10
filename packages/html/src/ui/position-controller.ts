@@ -75,6 +75,7 @@ export class PositionController implements ReactiveController {
     }
 
     const id = nextPopupId(root);
+
     this.#host.id = id;
     adjacent.setAttribute('commandfor', id);
     this.#implicitBinding = { id, trigger: adjacent };

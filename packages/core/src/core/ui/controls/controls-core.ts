@@ -14,6 +14,7 @@ export class ControlsCore {
 
   getState(): ControlsState {
     const media = this.#media!;
+
     return {
       visible: media.controlsVisible,
       userActive: media.userActive,

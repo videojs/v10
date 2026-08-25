@@ -242,6 +242,7 @@ const DEFAULT_VIDEO_RULES: readonly SelectTrackRule<SelectVideoTrackConfig>[] = 
 const preferAudioPolicy: SelectTrackRule<SelectAudioTrackConfig> = (tracks, { config }) => {
   const id = pickAudioTrackFromTracks(tracks as readonly { id: string }[], config);
   const pick = tracks.find((track) => track.id === id);
+
   return pick ? [pick] : [];
 };
 

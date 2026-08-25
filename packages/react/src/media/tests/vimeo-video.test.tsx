@@ -22,6 +22,7 @@ describe('VimeoVideo', () => {
     // The iframe has no embed to point the player at until a source resolves.
     const { container, rerender } = render(<VimeoVideo />);
     const iframe = container.querySelector('iframe')!;
+
     expect(iframe.getAttribute('src')).toBe(null);
 
     rerender(<VimeoVideo src="https://vimeo.com/1181503036" />);

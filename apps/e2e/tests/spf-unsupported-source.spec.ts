@@ -60,6 +60,7 @@ interface SurfacedError {
 /** The error the media surface exposes, or null while none has surfaced. */
 function readSurfacedError(): SurfacedError | null {
   const media = document.querySelector('hls-video') as (HTMLElement & { error?: SurfacedError | null }) | null;
+
   return media?.error ?? null;
 }
 
@@ -68,6 +69,7 @@ function readReportedCodes(): number[] {
   const media = document.querySelector('hls-video') as
     | (HTMLElement & { engine?: { state?: { errors?: { get(): Array<{ code: number }> | undefined } } } })
     | null;
+
   return (media?.engine?.state?.errors?.get() ?? []).map((error) => error.code);
 }
 
@@ -75,6 +77,7 @@ async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
   await page.waitForFunction(
     () => {
       const media = document.querySelector('hls-video') as (HTMLElement & { error?: unknown }) | null;
+
       return !!media?.error;
     },
     undefined,
@@ -82,6 +85,7 @@ async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
   );
 
   const error = await page.evaluate(readSurfacedError);
+
   expect(error).not.toBeNull();
   return error as SurfacedError;
 }
@@ -127,6 +131,7 @@ test.describe('SPF unsupported-source errors', () => {
     await page.goto(TS_PAGE);
 
     const errorDialog = page.locator(SELECTORS.errorDialog).first();
+
     await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 20_000 });
 
     // Strict on provenance: the copy has to be the translation the surfaced code
@@ -134,6 +139,7 @@ test.describe('SPF unsupported-source errors', () => {
     // what proves the code travelled the whole chain — engine → adapter `error`
     // → the store's error feature → `resolveErrorDialogDescription`.
     const description = page.locator('media-alert-dialog-description').first();
+
     await expect(description).not.toHaveText(UNEXPECTED_COPY);
     await expect(description).toContainText(UNPLAYABLE_COPY);
   });
@@ -142,6 +148,7 @@ test.describe('SPF unsupported-source errors', () => {
     await page.goto(TS_PAGE);
 
     const errorDialog = page.locator(SELECTORS.errorDialog).first();
+
     await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 20_000 });
 
     await page.evaluate((url) => {
@@ -158,6 +165,7 @@ test.describe('SPF unsupported-source errors', () => {
     await page.waitForFunction(
       () => {
         const media = document.querySelector('hls-video') as (HTMLElement & { error?: unknown }) | null;
+
         return !!media && !media.error;
       },
       undefined,
@@ -172,6 +180,7 @@ test.describe('SPF unsupported-source errors', () => {
         const host = document.querySelector('hls-video');
         const video = (host?.querySelector('video') ??
           host?.shadowRoot?.querySelector('video')) as HTMLVideoElement | null;
+
         return !!video && video.readyState >= 1;
       },
       undefined,
@@ -181,6 +190,7 @@ test.describe('SPF unsupported-source errors', () => {
 
   test('a playable fMP4 source surfaces no error and leaves the dialog closed', async ({ page }) => {
     const player = new PlayerPage(page);
+
     await page.goto(FMP4_PAGE);
     await player.waitForMediaReady();
 

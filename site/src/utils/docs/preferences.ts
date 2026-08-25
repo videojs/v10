@@ -29,6 +29,7 @@ export function getPreferencesServer(cookies: AstroCookies): Preference {
   const frameworkCookie = cookies.has(FRAMEWORK_COOKIE) ? cookies.get(FRAMEWORK_COOKIE) : null;
 
   const framework = frameworkCookie && isValidFramework(frameworkCookie.value) ? frameworkCookie.value : null;
+
   return { framework } as Preference;
 }
 
@@ -51,6 +52,7 @@ export function getFrameworkPreferenceClient(): SupportedFramework | null {
   );
 
   const framework = cookies[FRAMEWORK_COOKIE];
+
   return framework && isValidFramework(framework) ? framework : DEFAULT_FRAMEWORK;
 }
 
@@ -89,6 +91,7 @@ export function setStylePreferenceClient<F extends SupportedFramework>(framework
   }
 
   const storageKey = STYLE_STORAGE_KEY_PREFIX + framework;
+
   localStorage.setItem(storageKey, style);
 }
 

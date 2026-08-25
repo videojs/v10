@@ -30,6 +30,7 @@ export const pipFeature = definePlayerFeature({
 
     async exitPictureInPicture() {
       const { media } = target();
+
       return exitPictureInPicture(media);
     },
 

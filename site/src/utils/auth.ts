@@ -53,6 +53,7 @@ export async function refreshToken(refreshToken: string): Promise<OAuthResponse>
 
   if (!response.ok) {
     const error = await response.text();
+
     console.error('Token refresh failed:', error);
     throw new Error('Failed to refresh authorization token');
   }
@@ -79,6 +80,7 @@ export async function exchangeAuthorizationCode(code: string): Promise<OAuthResp
 
   if (!response.ok) {
     const error = await response.text();
+
     console.error('Token exchange failed:', error);
     throw new Error('Failed to exchange authorization code');
   }
@@ -90,6 +92,7 @@ export async function exchangeAuthorizationCode(code: string): Promise<OAuthResp
  *  JSON Web Key Set for verifying JWT tokens - lazily initialized
  */
 let _jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
+
 export function getJWKS() {
   if (!_jwks) {
     _jwks = createRemoteJWKSet(new URL(`${OAUTH_URL}/oauth2/jwks`));

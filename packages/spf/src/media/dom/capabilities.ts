@@ -72,6 +72,7 @@ export const canPlayTrack: CanPlayTrack = (track) => {
   if (cached !== undefined) return cached;
 
   const supported = isCodecSupported(mimeCodec);
+
   codecSupportCache.set(mimeCodec, supported);
   return supported;
 };

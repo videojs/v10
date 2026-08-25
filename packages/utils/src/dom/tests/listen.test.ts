@@ -27,6 +27,7 @@ describe('listen', () => {
     const handler = vi.fn();
 
     const cleanup = listen(target, 'click', handler);
+
     cleanup();
     target.dispatchEvent(new Event('click'));
 
@@ -48,6 +49,7 @@ describe('listen', () => {
   it('passes capture option correctly', () => {
     const parent = document.createElement('div');
     const child = document.createElement('span');
+
     parent.appendChild(child);
 
     const order: string[] = [];
@@ -66,6 +68,7 @@ describe('listen', () => {
     const handler = vi.fn();
 
     const cleanup = listen(target, 'click', handler, { passive: true });
+
     cleanup();
     target.dispatchEvent(new Event('click'));
 

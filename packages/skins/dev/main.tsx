@@ -50,11 +50,13 @@ function App({ Skin }: { Skin: React.ComponentType<React.PropsWithChildren<{ cla
 
 const root = document.getElementById('root')!;
 const links = document.createElement('nav');
+
 links.ariaLabel = 'Skin preview variants';
 links.innerHTML = Object.keys(modules)
   .map((value) => {
     const [nextFramework, nextSkin, nextStyle] = value.split('/');
     const href = `?framework=${nextFramework}&skin=${nextSkin}&style=${nextStyle}`;
+
     return `<a href="${href}"${value === key ? ' aria-current="page"' : ''}>${value}</a>`;
   })
   .join('');
@@ -87,5 +89,6 @@ if (framework === 'react') {
     '<slot></slot>',
     '<video src="https://stream.mux.com/VcmKA6aqzIzlg3MayLJDnbF55kX00mds028Z65QxvBYaA.m3u8" playsinline crossorigin="anonymous"></video>'
   );
+
   root.innerHTML = `<video-player>${skin}</video-player>`;
 }

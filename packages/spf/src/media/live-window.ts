@@ -41,6 +41,7 @@ export function liveWindowFor(
 
   const { segments } = track;
   const last = segments[segments.length - 1]!;
+
   return {
     start: segments[0]!.startTime,
     end: last.startTime + last.duration,

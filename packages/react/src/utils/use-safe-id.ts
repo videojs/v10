@@ -12,5 +12,6 @@ const UNSAFE_CHARS = /[^a-zA-Z0-9_-]/g;
  */
 export function useSafeId(prefix?: string): string {
   const raw = useId().replace(UNSAFE_CHARS, '');
+
   return prefix ? `${prefix}-${raw}` : raw;
 }

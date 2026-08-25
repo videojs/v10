@@ -96,6 +96,7 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #registerMedia = (media: Media): (() => void) => {
         const registration = { value: media };
+
         this.#mediaRegistrations.push(registration);
         this.#syncMedia();
 
@@ -112,6 +113,7 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #registerContainer = (container: MediaContainer): (() => void) => {
         const registration = { value: container };
+
         this.#containerRegistrations.push(registration);
         this.#syncContainer();
 
