@@ -1,23 +1,21 @@
 import { expect, test } from '@playwright/test';
+
 import { DATA_ATTRS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 /**
- * Gesture tests — validates the media-gesture components respond to
- * pointer events on the player container (not individual buttons).
+ * Gesture tests — validates the media-gesture components respond to pointer events on the player container (not
+ * individual buttons).
  *
- * The player's gesture system:
- * - tap (mouse, center):  togglePaused
- * - tap (touch):          toggleControls
- * - doubletap (left):     seek backward 10s
- * - doubletap (center):   toggleFullscreen
- * - doubletap (right):    seek forward 10s
+ * The player's gesture system: - tap (mouse, center): togglePaused - tap (touch): toggleControls - doubletap (left):
+ * seek backward 10s - doubletap (center): toggleFullscreen - doubletap (right): seek forward 10s
  */
 
 // Helper to get center coordinates of an element
 async function getCenter(player: PlayerPage) {
   const box = await player.playerRoot.boundingBox();
   if (!box) throw new Error('Player not visible');
+
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
 
@@ -37,6 +35,7 @@ test.describe('Mouse Gestures', () => {
 
     // Click the center of the player (not a button) — should toggle play
     const { x, y } = await getCenter(player);
+
     await page.mouse.click(x, y);
     await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
 
@@ -88,6 +87,7 @@ test.describe('React Mouse Gestures', () => {
     await expect(player.playButton).toHaveAttribute(DATA_ATTRS.paused, '');
 
     const { x, y } = await getCenter(player);
+
     await page.mouse.click(x, y);
     await expect(player.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
   });
@@ -133,6 +133,7 @@ test.describe('Touch Gestures', () => {
   test('tap container toggles controls visibility', async ({ page }) => {
     // Tap the center of the player container with touch
     const { x, y } = await getCenter(player);
+
     await page.touchscreen.tap(x, y);
     await page.waitForTimeout(300);
 
@@ -148,6 +149,7 @@ test.describe('Touch Gestures', () => {
     // Get a point in the right third of the player
     const box = await player.playerRoot.boundingBox();
     if (!box) throw new Error('Player not visible');
+
     const rightX = box.x + box.width * 0.85;
     const centerY = box.y + box.height / 2;
 
@@ -168,6 +170,7 @@ test.describe('Touch Gestures', () => {
     // Get a point in the left third of the player
     const box = await player.playerRoot.boundingBox();
     if (!box) throw new Error('Player not visible');
+
     const leftX = box.x + box.width * 0.15;
     const centerY = box.y + box.height / 2;
 

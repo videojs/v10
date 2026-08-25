@@ -14,7 +14,6 @@ import { PopoverElement } from '../../ui/popover/popover-element';
 import { TextElement } from '../../ui/text/text-element';
 import { safeDefine } from '../safe-define';
 import { defineErrorDialog, defineTime, defineTimeSlider, defineTooltip, defineVolumeSlider } from '../ui/compounds';
-
 // Value import — player.ts body runs before this module's body.
 import { LiveAudioPlayerElement } from './player';
 

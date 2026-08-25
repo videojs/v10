@@ -1,16 +1,7 @@
 @layer theme, base, videojs.base, components, videojs.theme, videojs.components, utilities;
 
-@import "tailwindcss" theme(inline);
+@import "tailwindcss";
 @import "./base.css";
-@import "./captions.css";
-@import "./themes/video.css";
-@import "./themes/default.css";
-@import "./themes/minimal.css";
 @import "./tailwind.shared.css";
 
-@source "../**/*.tsx";
-@source "./**/*.styles.ts";
-
-@theme inline {
-  --spacing: var(--media-spacing);
-}
+@source "../**/*.{ts,tsx,html}";

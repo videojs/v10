@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { EMPTY_TEXT_TRACKS } from '../constants';
 
 describe('EMPTY_TEXT_TRACKS', () => {

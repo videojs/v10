@@ -73,7 +73,9 @@ function getId(
   live: boolean
 ): string {
   const base = `${variant}-${live ? 'live-' : ''}${mediaType}`;
+
   if (platform === 'react') return `${base}-react${style === 'tailwind' ? '-tailwind' : ''}`;
+
   return `${base}${style === 'tailwind' ? '-tailwind' : ''}`;
 }
 
@@ -85,7 +87,9 @@ function getName(
   live: boolean
 ): string {
   const base = `${titleCase(variant)} ${live ? 'Live ' : ''}${titleCase(mediaType)}`;
+
   if (platform === 'react') return `${base} (React${style === 'tailwind' ? ' + Tailwind' : ''})`;
+
   return style === 'tailwind' ? `${base} (Tailwind)` : base;
 }
 

@@ -16,7 +16,6 @@ import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TextElement } from '../../ui/text/text-element';
 import { safeDefine } from '../safe-define';
 import { defineErrorDialog, defineMenu, defineSliders, defineTime, defineTooltip } from '../ui/compounds';
-
 // Value import — player.ts body runs before this module's body.
 import { AudioPlayerElement } from './player';
 

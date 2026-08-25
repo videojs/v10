@@ -1,5 +1,6 @@
 import { createSelector, createStore, type StateContext } from '@videojs/store';
-import { assertType, describe, expect, it } from 'vitest';
+import { assertType, describe, expect, it } from 'vite-plus/test';
+
 import { combinePlayerFeatureConfigs, definePlayerFeature, setPlayerConfigValue } from '../feature';
 import type { PlayerFeatureConfig, PlayerTarget } from '../player';
 
@@ -52,8 +53,10 @@ describe('definePlayerFeature', () => {
     expect(combinePlayerFeatureConfigs([feature])).toEqual(feature.config);
 
     const store = createStore<PlayerTarget>()(feature);
+
     setPlayerConfigValue(store, feature.config!.label, 'provided');
     const detach = store.attach({} as PlayerTarget);
+
     detach();
 
     expect(store.label).toBe('provided');
@@ -112,6 +115,7 @@ describe('definePlayerFeature', () => {
     });
 
     const store = createStore<PlayerTarget>()(feature);
+
     setPlayerConfigValue(store, feature.config!.size, 'large');
 
     expect(store.size).toBe('large');

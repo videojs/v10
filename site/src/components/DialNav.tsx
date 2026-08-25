@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import { useRef, useState } from 'react';
+
 import DialInner from '@/assets/icons/dial-inner.svg?react';
 import DialOuter from '@/assets/icons/dial-outer.svg?react';
 import GetStartedLink from '@/components/NavBar/GetStartedLink';
@@ -21,7 +22,9 @@ export default function DialNav({ left, right }: DialNavProps) {
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>, link: Link) {
     e.preventDefault();
     const resolvedHref = e.currentTarget.href;
+
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
     setActiveAngle(link.angle);
     setActiveHref(link.href);
     timeoutRef.current = setTimeout(() => {
@@ -31,6 +34,7 @@ export default function DialNav({ left, right }: DialNavProps) {
 
   function dotStyle(href: string): React.CSSProperties {
     const active = activeHref === href;
+
     return {
       transition: 'background-color 0.3s ease, border-color 0.3s ease',
       backgroundColor: active ? 'var(--color-orange)' : '',
@@ -45,6 +49,7 @@ export default function DialNav({ left, right }: DialNavProps) {
       <div className="flex flex-col gap-2">
         {left.map((link) => {
           const Tag = link.href === '/docs' ? GetStartedLink : 'a';
+
           return (
             <Tag
               key={link.href}
@@ -57,7 +62,7 @@ export default function DialNav({ left, right }: DialNavProps) {
             >
               {link.label}
               <span
-                className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"
+                className="border-faded-black dark:border-manila-light h-2.5 w-2.5 rounded-full border"
                 style={dotStyle(link.href)}
               />
             </Tag>
@@ -70,10 +75,10 @@ export default function DialNav({ left, right }: DialNavProps) {
         onClick={(e) => handleClick(e, left[0])}
         aria-hidden="true"
         tabIndex={-1}
-        className="w-20 h-20 md:w-32 md:h-32 shrink-0 relative z-10 text-faded-black dark:text-manila-light [--fill:var(--color-manila-light)] dark:[--fill:var(--color-faded-black)]"
+        className="text-faded-black dark:text-manila-light relative z-10 h-20 w-20 shrink-0 [--fill:var(--color-manila-light)] md:h-32 md:w-32 dark:[--fill:var(--color-faded-black)]"
       >
         <DialOuter
-          className="outline-8 rounded-full outline-manila-dark dark:outline-soot"
+          className="outline-manila-dark dark:outline-soot rounded-full outline-8"
           width={'100%'}
           height={'auto'}
         />
@@ -93,6 +98,7 @@ export default function DialNav({ left, right }: DialNavProps) {
       <div className="flex flex-col gap-2">
         {right.map((link) => {
           const Tag = link.href === '/docs' ? GetStartedLink : 'a';
+
           return (
             <Tag
               key={link.href}
@@ -104,7 +110,7 @@ export default function DialNav({ left, right }: DialNavProps) {
               )}
             >
               <span
-                className="w-2.5 h-2.5 rounded-full border border-faded-black dark:border-manila-light"
+                className="border-faded-black dark:border-manila-light h-2.5 w-2.5 rounded-full border"
                 style={dotStyle(link.href)}
               />
               {link.label}

@@ -1,11 +1,11 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { ErrorDialog } from '..';
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Dialog } from '../../dialog';
-import { ErrorDialog } from '..';
 
 afterEach(() => {
   resetI18nRegistry();
@@ -34,6 +34,7 @@ describe('ErrorDialog', () => {
       <Wrapper>
         <I18nProvider locale="es">
           <ErrorDialog.Root>
+            <Dialog.Backdrop data-testid="backdrop" />
             <Dialog.Popup>
               <ErrorDialog.Title data-testid="title" />
               <ErrorDialog.Description data-testid="description" />
@@ -44,6 +45,7 @@ describe('ErrorDialog', () => {
       </Wrapper>
     );
 
+    expect(screen.getByTestId('backdrop').getAttribute('aria-hidden')).toBe('true');
     expect(screen.getByTestId('title').textContent).toBe('Algo salió mal.');
     expect(screen.getByTestId('description').textContent).toBe('Error de red.');
     expect(screen.getByTestId('close').textContent).toBe('Aceptar');

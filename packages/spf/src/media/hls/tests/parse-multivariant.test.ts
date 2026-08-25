@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { PartiallyResolvedAudioTrack, PartiallyResolvedTextTrack, PartiallyResolvedVideoTrack } from '../../types';
 import { parseMultivariantPlaylist } from '../parse-multivariant';
 
@@ -35,10 +36,12 @@ video-1080p.m3u8`;
     // audio is muxed into each rendition — both codecs are retained on the track
     // (the SourceBuffer mimetype must cover the muxed media).
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
+
     expect(videoSet).toBeDefined();
     expect(videoSet?.switchingSets).toHaveLength(1);
 
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
+
     expect(videoTracks).toHaveLength(3);
 
     // First track (360p)
@@ -64,6 +67,7 @@ video-1080p.m3u8`;
 
     // Third track (1080p) - verify all fields
     const track1080p = videoTracks?.[2] as PartiallyResolvedVideoTrack;
+
     expect(track1080p).toMatchObject({
       type: 'video',
       url: 'https://example.com/video-1080p.m3u8',
@@ -121,6 +125,7 @@ https://example.com/v720.m3u8`;
     expect(videoTracks).toHaveLength(2);
 
     const v1080 = videoTracks.find((t) => t.url === 'https://example.com/v1080.m3u8');
+
     expect(v1080?.audioGroupIds).toEqual(['audio-51', 'audio-hi']);
     // Lowest combined BANDWIDTH across the duplicates (the stereo pairing).
     expect(v1080?.bandwidth).toBe(2800000);
@@ -128,6 +133,7 @@ https://example.com/v720.m3u8`;
     expect(v1080?.codecs).toEqual(['avc1.640028']);
 
     const v720 = videoTracks.find((t) => t.url === 'https://example.com/v720.m3u8');
+
     expect(v720?.audioGroupIds).toEqual(['audio-51', 'audio-hi']);
     expect(v720?.bandwidth).toBe(1400000);
   });
@@ -173,6 +179,7 @@ video.m3u8`;
       bandwidth: 800000,
     });
     const videoTrack = videoTracks?.[0] as PartiallyResolvedVideoTrack | undefined;
+
     expect(videoTrack?.width).toBeUndefined();
     expect(videoTrack?.height).toBeUndefined();
     expect(videoTrack?.codecs).toEqual([]); // Default when not in playlist
@@ -220,6 +227,7 @@ video.m3u8`;
     const videoTracks = videoSet?.switchingSets[0]?.tracks;
 
     const videoTrack = videoTracks?.[0] as PartiallyResolvedVideoTrack | undefined;
+
     expect(videoTrack?.frameRate).toEqual({
       frameRateNumerator: 30000,
       frameRateDenominator: 1001,
@@ -335,12 +343,14 @@ https://example.com/v.m3u8`;
       const audioMed = audioTracks?.find((t) => (t as PartiallyResolvedAudioTrack).groupId === 'audio-med-0') as
         | PartiallyResolvedAudioTrack
         | undefined;
+
       expect(audioMed?.codecs).toEqual(['mp4a.40.2']);
 
       // audio-hi-0 is NOT referenced - no codec info
       const audioHi = audioTracks?.find((t) => (t as PartiallyResolvedAudioTrack).groupId === 'audio-hi-0') as
         | PartiallyResolvedAudioTrack
         | undefined;
+
       expect(audioHi?.codecs).toEqual([]); // Default when not extracted from streams
     });
 
@@ -420,6 +430,7 @@ video.m3u8`;
       expect(textTracks).toHaveLength(2);
 
       const englishTrack = textTracks?.[0] as PartiallyResolvedTextTrack | undefined;
+
       expect(englishTrack).toMatchObject({
         type: 'text',
         label: 'English',
@@ -449,6 +460,7 @@ video.m3u8`;
       const textTracks = textSet?.switchingSets[0]?.tracks;
 
       const textTrack = textTracks?.[0] as PartiallyResolvedTextTrack | undefined;
+
       expect(textTrack?.forced).toBe(true);
     });
 
@@ -481,18 +493,21 @@ video.m3u8`;
 
       // DEFAULT=YES only: default flag should NOT be set (following hls.js pattern)
       const defaultOnly = textTracks?.[0];
+
       expect(defaultOnly?.label).toBe('Only Default');
       expect(defaultOnly?.default).toBeUndefined();
       expect(defaultOnly?.autoselect).toBeUndefined();
 
       // AUTOSELECT=YES only: default flag should NOT be set
       const autoselectOnly = textTracks?.[1];
+
       expect(autoselectOnly?.label).toBe('Only Autoselect');
       expect(autoselectOnly?.default).toBeUndefined();
       expect(autoselectOnly?.autoselect).toBe(true);
 
       // Both DEFAULT=YES and AUTOSELECT=YES: default flag SHOULD be set
       const both = textTracks?.[2];
+
       expect(both?.label).toBe('Both');
       expect(both?.default).toBe(true);
       expect(both?.autoselect).toBe(true);
@@ -513,11 +528,13 @@ video.m3u8`;
 
       // Track with AUTOSELECT=YES
       const autoTrack = textTracks?.[0];
+
       expect(autoTrack?.autoselect).toBe(true);
       expect(autoTrack?.default).toBeUndefined();
 
       // Track without flags
       const normalTrack = textTracks?.[1];
+
       expect(normalTrack?.autoselect).toBeUndefined();
       expect(normalTrack?.default).toBeUndefined();
     });
@@ -648,6 +665,7 @@ v2/prog_index.m3u8
 
       // Find video selection set
       const videoSet = result.selectionSets.find((s) => s.type === 'video');
+
       expect(videoSet).toBeDefined();
       expect(videoSet!.switchingSets).toBeDefined();
 
@@ -655,10 +673,12 @@ v2/prog_index.m3u8
       // entries (8 URIs × 3 audio groups: mp4a / ac-3 / ec-3), the HLS
       // cross-product; the parser de-duplicates by URI to one track per rendition.
       const allVideoTracks = videoSet!.switchingSets.flatMap((ss) => ss.tracks);
+
       expect(allVideoTracks.length).toBe(8);
 
       // Check first track details (960x540, 60fps, avc1+mp4a, aud1)
       const firstTrack = allVideoTracks.find((t) => t.bandwidth === 2177116);
+
       expect(firstTrack).toBeDefined();
       expect(firstTrack!.width).toBe(960);
       expect(firstTrack!.height).toBe(540);
@@ -668,23 +688,28 @@ v2/prog_index.m3u8
 
       // Find audio selection set
       const audioSet = result.selectionSets.find((s) => s.type === 'audio');
+
       expect(audioSet).toBeDefined();
       expect(audioSet!.switchingSets.length).toBeGreaterThan(0);
 
       // Should have 3 audio groups (aud1, aud2, aud3)
       const allAudioTracks = audioSet!.switchingSets.flatMap((ss) => ss.tracks);
+
       expect(allAudioTracks.length).toBe(3);
 
       // Check audio track details
       const stereoTrack = allAudioTracks.find((t) => t.url.includes('a1/'));
+
       expect(stereoTrack).toBeDefined();
 
       // Find text/subtitle selection set
       const textSet = result.selectionSets.find((s) => s.type === 'text');
+
       expect(textSet).toBeDefined();
 
       // Should have subtitle track
       const allTextTracks = textSet!.switchingSets.flatMap((ss) => ss.tracks);
+
       expect(allTextTracks.length).toBeGreaterThan(0);
       expect(allTextTracks[0]?.url).toContain('s1/en/prog_index.m3u8');
     });

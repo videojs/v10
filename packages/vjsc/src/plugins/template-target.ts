@@ -17,7 +17,12 @@ import {
 import { jsx } from '../target/jsx-runtime';
 import { createTargetModuleImports } from '../target/module-imports';
 import { isTargetNode, renderTargetAttributes, renderTargetOutput } from '../target/render';
-import { createSourceChildren, createSourceProps, type SourceChildrenToken } from '../target/source';
+import {
+  createSourceChildren,
+  createSourceProps,
+  type SourceChildrenToken,
+  singleJsxElementChild,
+} from '../target/source';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -62,11 +67,14 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
               const name = staticName(template, code);
               const owned = binding.targets.flatMap((target) => {
                 const rule = target.primitives.Template?.[name];
+
                 return rule ? [{ target, rule }] : [];
               });
+
               if (owned.length === 0) {
                 throw new Error(`Component target does not define <Template name=${JSON.stringify(name)}>.`);
               }
+
               if (owned.length > 1) {
                 throw new Error(`More than one component target defines <Template name=${JSON.stringify(name)}>.`);
               }
@@ -86,13 +94,16 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
 
               if (isHostOutput(output)) {
                 const attributes = renderTargetAttributes(output, { target: owner.target, imports });
+
                 assertAvailableHostAttributes(node.openingElement, attributes, code);
+
                 if (attributes.length > 0) {
                   transform.magicString!.appendLeft(
                     openingInsertion(node.openingElement, code),
                     ` ${attributes.join(' ')}`
                   );
                 }
+
                 transform.magicString!.remove(template.start, template.end);
               } else {
                 transform.magicString!.overwrite(
@@ -111,6 +122,7 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
         });
 
         if (!changed) return null;
+
         imports.commit();
         return { code: transform.magicString };
       },
@@ -124,6 +136,7 @@ function collectTemplateBinding(ast: Program, targets: readonly ComponentTarget[
 
     for (const specifier of statement.specifiers) {
       if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
+
       const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
       if (imported === 'Template') return { local: specifier.local.name, targets };
     }
@@ -142,6 +155,7 @@ function isComponentImport(statement: Program['body'][number]): statement is Imp
 
 function normalizeTemplateRule(rule: TemplateTargetRule): TemplateTargetDefinition {
   if (!isTargetElement(rule) && typeof rule === 'object' && rule !== null && 'render' in rule) return rule;
+
   return { render: rule };
 }
 
@@ -153,7 +167,7 @@ function templateChildren(
   target: ComponentTarget,
   imports: ModuleImports
 ): SourceChildrenToken {
-  const root = template.children.find((child): child is JSXElement => child.type === 'JSXElement');
+  const root = singleJsxElementChild(template);
   const closingStart = template.closingElement?.start ?? template.openingElement.end;
   const children = createSourceChildren(code, template.openingElement, closingStart, root?.openingElement);
   const replacements: Replacement[] = [];
@@ -195,15 +209,19 @@ function applyRule(
   if (typeof rule === 'function' && !isTargetElement(rule)) {
     return rule({ props, children, id: (name) => `${id}-${name}` });
   }
+
   if (isTargetElement(rule)) return jsx(rule, { ...props, children });
+
   throw new Error('Template target rules must be target elements or rewrite functions.');
 }
 
 function applyReplacements(source: string, replacements: readonly Replacement[]): string {
   let output = source;
+
   for (const replacement of [...replacements].sort((a, b) => b.start - a.start)) {
     output = `${output.slice(0, replacement.start)}${replacement.code}${output.slice(replacement.end)}`;
   }
+
   return output;
 }
 
@@ -213,6 +231,7 @@ function isTemplate(node: JSXElement, local: string): boolean {
 
 function isTemplatePart(node: JSXElement, local: string): boolean {
   const name = node.openingElement.name;
+
   return (
     name.type === 'JSXMemberExpression' &&
     name.object.type === 'JSXIdentifier' &&
@@ -223,8 +242,8 @@ function isTemplatePart(node: JSXElement, local: string): boolean {
 
 function staticName(node: JSXElement, code: string): string {
   const value = findJsxAttribute(node, 'name')?.value;
-
   if (value?.type === 'Literal' && typeof value.value === 'string') return value.value;
+
   if (value?.type === 'JSXExpressionContainer') {
     const expression = value.expression;
     if (expression.type === 'Literal' && typeof expression.value === 'string') return expression.value;
@@ -252,6 +271,7 @@ function assertAvailableHostAttributes(opening: JSXOpeningElement, attributes: r
 
   for (const attribute of attributes) {
     const name = /^([:$\w-]+)/.exec(attribute)?.[1];
+
     if (name && declared.has(name)) {
       throw new Error(
         `Template parent already declares ${JSON.stringify(name)} in ${code.slice(opening.start, opening.end)}.`

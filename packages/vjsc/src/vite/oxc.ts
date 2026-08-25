@@ -16,6 +16,10 @@ interface ViteTransformOptions {
   readonly ssr?: boolean | undefined;
 }
 
+interface PositionedError extends Error {
+  readonly pos: number;
+}
+
 type RolldownTransformHandler = (
   this: TransformPluginContext,
   code: string,
@@ -44,12 +48,20 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
     const magicString = new MagicString(code, { filename });
     const ast = this.parse(code, { lang: parserLanguage(moduleType, filename) });
 
-    const result = await handler.call(this, code, id, {
-      ...options,
-      moduleType,
-      ast,
-      magicString: magicString as unknown as RolldownMagicString,
-    });
+    let result: TransformResult;
+
+    try {
+      result = await handler.call(this, code, id, {
+        ...options,
+        moduleType,
+        ast,
+        magicString: magicString as unknown as RolldownMagicString,
+      });
+    } catch (error) {
+      if (isPositionedError(error)) this.error(error, error.pos);
+
+      throw error;
+    }
 
     if (!result || typeof result === 'string' || result.code === undefined || typeof result.code === 'string') {
       return result;
@@ -77,17 +89,28 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
   };
 }
 
+function isPositionedError(error: unknown): error is PositionedError {
+  return error instanceof Error && 'pos' in error && typeof error.pos === 'number';
+}
+
 function scriptModuleType(filename: string): ModuleType {
   if (/\.tsx$/.test(filename)) return 'tsx';
+
   if (/\.jsx$/.test(filename)) return 'jsx';
+
   if (/\.(?:ts|mts|cts)$/.test(filename)) return 'ts';
+
   return 'js';
 }
 
 function parserLanguage(moduleType: ModuleType, filename: string): 'js' | 'jsx' | 'ts' | 'tsx' | 'dts' {
   if (/\.d\.(?:ts|mts|cts)$/.test(filename)) return 'dts';
+
   if (moduleType === 'jsx') return 'jsx';
+
   if (moduleType === 'ts') return 'ts';
+
   if (moduleType === 'tsx') return 'tsx';
+
   return scriptModuleType(filename) as 'js' | 'jsx' | 'ts' | 'tsx';
 }

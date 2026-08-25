@@ -27,8 +27,8 @@ import { type ErrorEmitterState, emitError } from './collect-errors';
 // ============================================================================
 
 /**
- * State shape for track resolution. Uses `MaybeResolvedPresentation` so it
- * matches the engine's slot type; resolution narrows internally.
+ * State shape for track resolution. Uses `MaybeResolvedPresentation` so it matches the engine's slot type; resolution
+ * narrows internally.
  */
 export interface ResolveTrackState {
   presentation?: MaybeResolvedPresentation;
@@ -45,10 +45,9 @@ type ResolveTrackStateMap<K extends SelectedTrackKey> = {
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
 /**
- * Sibling-owned A/V selection signals, present at runtime iff a sibling
- * behavior owns them. Deliberately not in the typed slice / `stateKeys`
- * (declaring them would force every composition to carry both selections);
- * read only to build the injected first-parse gate's selection context.
+ * Sibling-owned A/V selection signals, present at runtime iff a sibling behavior owns them. Deliberately not in the
+ * typed slice / `stateKeys` (declaring them would force every composition to carry both selections); read only to build
+ * the injected first-parse gate's selection context.
  */
 type SiblingSelectionSignals = {
   selectedVideoTrackId?: ReadonlySignal<ResolveTrackState['selectedVideoTrackId']>;
@@ -67,17 +66,11 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
   gateFirstParse?: GateFirstParse;
   /** Live re-run policy for the `RecurringRunner`; absent → resolve once (VOD). */
   reschedule?: Reschedule<ResolvedTrack>;
-  /**
-   * Report conditions found in the parsed playlist (see
-   * `primitives/report-track-conditions`); absent → report nothing.
-   */
+  /** Report conditions found in the parsed playlist (see `primitives/report-track-conditions`); absent → report nothing. */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
 }
 
-/**
- * Engine-config slice each `resolve*` behavior reads to build its failover-
- * decorated playlist fetch.
- */
+/** Engine-config slice each `resolve*` behavior reads to build its failover- decorated playlist fetch. */
 interface ResolveTrackConfig {
   /** CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
   getCdnId?: GetCdnId;
@@ -186,6 +179,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // source change can't strand a gated task.
                   if (gateFirstParse && !isResolvedTrack(current)) {
                     const { selectedVideoTrackId, selectedAudioTrackId } = state as SiblingSelectionSignals;
+
                     await when(
                       () =>
                         gateFirstParse(
@@ -213,6 +207,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   const live = peek(state.presentation);
                   const previous = live ? findTrackToResolve(live, trackId) : undefined;
                   if (!previous) throw new Error('resolve-track: selected track not found');
+
                   const mediaTrack = parseMediaPlaylist(text, previous);
 
                   // Report what the parse revealed about this rendition, before
@@ -234,6 +229,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // against is the live one.
                   update(state.presentation, (current) => {
                     if (!isResolvedPresentation(current)) return current;
+
                     const patched = updateTrackInPresentation(current, mediaTrack);
                     // Container is uniform within a type (an ABR ladder shares
                     // its container), so a detected non-fMP4 rendition (TS,
@@ -246,6 +242,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                     const relabeled = NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
                       ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
                       : patched;
+
                     // Stream nature (live vs on-demand), rewritten from whichever
                     // track just parsed — every type's resolve and every live
                     // reload takes this path. Idempotent in practice rather than
@@ -260,6 +257,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                 { id: track.id }
               )
             );
+
             scheduled.catch(() => {});
           },
         ],
@@ -295,9 +293,8 @@ const TEXT_TRACK_RESOLUTION_CONFIG = {
 // ============================================================================
 
 /**
- * Resolve unresolved video tracks. Schedules a fetch task whenever the
- * selected video track is partially resolved, parses the manifest, and
- * writes the resolved track back into `state.presentation`.
+ * Resolve unresolved video tracks. Schedules a fetch task whenever the selected video track is partially resolved,
+ * parses the manifest, and writes the resolved track back into `state.presentation`.
  */
 export const resolveVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
@@ -315,6 +312,7 @@ export const resolveVideoTrack = defineBehavior({
     // is then placed AFTER the spread so the failover-decorated fetch wins —
     // unlike segments, playlists expose no overridable per-type fetch.
     const trackConfig = { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config };
+
     return setupTrackResolution({
       state,
       config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
@@ -322,10 +320,7 @@ export const resolveVideoTrack = defineBehavior({
   },
 });
 
-/**
- * Resolve unresolved audio tracks. Same shape as `resolveVideoTrack`,
- * narrowed to audio.
- */
+/** Resolve unresolved audio tracks. Same shape as `resolveVideoTrack`, narrowed to audio. */
 export const resolveAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
@@ -338,6 +333,7 @@ export const resolveAudioTrack = defineBehavior({
   }) => {
     // Key order is load-bearing — see resolveVideoTrack.
     const trackConfig = { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config };
+
     return setupTrackResolution({
       state,
       config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
@@ -345,10 +341,7 @@ export const resolveAudioTrack = defineBehavior({
   },
 });
 
-/**
- * Resolve unresolved text tracks. Same shape as `resolveVideoTrack`,
- * narrowed to text.
- */
+/** Resolve unresolved text tracks. Same shape as `resolveVideoTrack`, narrowed to text. */
 export const resolveTextTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
@@ -361,6 +354,7 @@ export const resolveTextTrack = defineBehavior({
   }) => {
     // Key order is load-bearing — see resolveVideoTrack.
     const trackConfig = { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config };
+
     return setupTrackResolution({
       state,
       config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },

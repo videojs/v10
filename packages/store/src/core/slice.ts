@@ -1,4 +1,5 @@
 import type { Simplify, UnionToIntersection } from '@videojs/utils/types';
+
 import type { AbortControllerRegistry } from './abort-controller-registry';
 import type { UnknownState } from './state';
 
@@ -33,11 +34,10 @@ export interface StateContext<Target> {
    * Cancellation signals for async operations.
    *
    * - `signals.base` — Aborts on detach or reattach. Use for cleanup.
-   * - `signals.supersede(key)` — Returns a signal that aborts when the same key
-   *   is superseded or when base aborts. Use for operations that should cancel
-   *   previous in-flight work (e.g., seek superseding seek).
-   * - `signals.clear()` — Aborts all keyed signals. Use when starting fresh
-   *   (e.g., loading a new source cancels pending seeks).
+   * - `signals.supersede(key)` — Returns a signal that aborts when the same key is superseded or when base aborts. Use
+   *   for operations that should cancel previous in-flight work (e.g., seek superseding seek).
+   * - `signals.clear()` — Aborts all keyed signals. Use when starting fresh (e.g., loading a new source cancels pending
+   *   seeks).
    */
   signals: AbortControllerRegistry;
   /** Read slice state before derived values. Safe inside action closures, not during `state()` init. */

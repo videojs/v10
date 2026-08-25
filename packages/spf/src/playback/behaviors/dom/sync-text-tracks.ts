@@ -1,52 +1,38 @@
 /**
- * **Own the text-track slots on the host media element, mirroring the SPF
- * model.** When a presentation is resolved and a media element is
- * available, allocate one slot in `mediaElement.textTracks` per model text
- * track — via creating `<track>` children, since that's the only spec
- * mechanism for adding *and* removing entries to `textTracks` (no
- * `removeTextTrack` API exists). Once slots are provisioned, mirror the
- * resolved `selectedTextTrackId` into their `mode`s (one-way: state → DOM),
- * and propagate user-initiated DOM `change` events back to
- * `userTextTrackSelection` — the standing *intent* (a language-based partial,
- * or `'off'`) that `switchTextTrack` resolves into `selectedTextTrackId`. So
- * non-SPF consumers (host-page captions buttons, browser native UI, video.js
- * store) drive selection by expressing intent, not by writing the resolved id.
+ * **Own the text-track slots on the host media element, mirroring the SPF model.** When a presentation is resolved and
+ * a media element is available, allocate one slot in `mediaElement.textTracks` per model text track — via creating
+ * `<track>` children, since that's the only spec mechanism for adding _and_ removing entries to `textTracks` (no
+ * `removeTextTrack` API exists). Once slots are provisioned, mirror the resolved `selectedTextTrackId` into their
+ * `mode`s (one-way: state → DOM), and propagate user-initiated DOM `change` events back to `userTextTrackSelection` —
+ * the standing _intent_ (a language-based partial, or `'off'`) that `switchTextTrack` resolves into
+ * `selectedTextTrackId`. So non-SPF consumers (host-page captions buttons, browser native UI, video.js store) drive
+ * selection by expressing intent, not by writing the resolved id.
  *
- * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'sync-active'`):
- * the entry allocates the slots, applies the initial selection, attaches
- * the `change` listener, and opens a brief Chromium settling-window guard —
- * all transition-driven, fire-once on state entry, with paired cleanup on
- * state exit. A single `effects:` mirrors subsequent
- * `selectedTextTrackId` changes into `mode`s; that's the only
- * continuous-reactivity concern.
+ * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'sync-active'`): the entry allocates the slots, applies the
+ * initial selection, attaches the `change` listener, and opens a brief Chromium settling-window guard — all
+ * transition-driven, fire-once on state entry, with paired cleanup on state exit. A single `effects:` mirrors
+ * subsequent `selectedTextTrackId` changes into `mode`s; that's the only continuous-reactivity concern.
  *
- * State-exit cleanup also sends a `'clear'` message to the
- * `TextTracksActor` so its cue+segment cache (keyed by trackId) is
- * dropped alongside the DOM `<track>` slots. The actor itself is owned
- * by `setupTextTrackActors` and bound to mediaElement, not presentation,
- * so it survives source resets; clearing its context here keeps the
- * cache consistent with the DOM. Without this, a subsequent
- * presentation reusing a trackId would have `getSegmentsToLoad` treat
- * its segments as already-buffered and skip loading them.
+ * State-exit cleanup also sends a `'clear'` message to the `TextTracksActor` so its cue+segment cache (keyed by
+ * trackId) is dropped alongside the DOM `<track>` slots. The actor itself is owned by `setupTextTrackActors` and bound
+ * to mediaElement, not presentation, so it survives source resets; clearing its context here keeps the cache consistent
+ * with the DOM. Without this, a subsequent presentation reusing a trackId would have `getSegmentsToLoad` treat its
+ * segments as already-buffered and skip loading them.
  *
- * Single-writer separation: `selectedTextTrackId` is the resolved *output*
- * owned solely by `switchTextTrack`; this behavior only reads it (to mirror
- * modes). The write path here is `userTextTrackSelection` — the user-intent
- * *input* — so DOM action and the resolver never contend for one slot. The
- * intent isn't cleared on source unload (it's a standing preference, like
- * `userAudioTrackSelection`); `'off'` is written when the user disables all
- * tracks via native UI.
+ * Single-writer separation: `selectedTextTrackId` is the resolved _output_ owned solely by `switchTextTrack`; this
+ * behavior only reads it (to mirror modes). The write path here is `userTextTrackSelection` — the user-intent _input_ —
+ * so DOM action and the resolver never contend for one slot. The intent isn't cleared on source unload (it's a standing
+ * preference, like `userAudioTrackSelection`); `'off'` is written when the user disables all tracks via native UI.
  *
- * Echo guard: `selectedTextTrackId` is exactly the id this behavior last drove
- * into the DOM, so a `change` event still showing it is our own echo (or a
- * resolver-driven correction — e.g. the picked track's CDN failed and the
- * resolver disabled it) and is ignored, never written back as a spurious user
- * action. Only a showing id that *differs* from the resolved id is a real user
- * pick. The settling-window guard additionally swallows Chromium's init-time
- * auto-selection before the resolved selection has settled.
+ * Echo guard: `selectedTextTrackId` is exactly the id this behavior last drove into the DOM, so a `change` event still
+ * showing it is our own echo (or a resolver-driven correction — e.g. the picked track's CDN failed and the resolver
+ * disabled it) and is ignored, never written back as a spurious user action. Only a showing id that _differs_ from the
+ * resolved id is a real user pick. The settling-window guard additionally swallows Chromium's init-time auto-selection
+ * before the resolved selection has settled.
  */
 
 import { listen } from '@videojs/utils/dom';
+
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
@@ -60,24 +46,22 @@ type SyncTextTracksFsmState = 'preconditions-unmet' | 'sync-active';
 
 export interface SyncTextTracksConfig {
   /**
-   * Create and append SPF-owned `<track>` slots on `mediaElement`, one per
-   * model text track. Implementation tags each element so the read/remove
-   * helpers can scope to SPF-owned slots. **Required** — the behavior is
-   * DOM-binding-neutral and the composing engine supplies the integration.
+   * Create and append SPF-owned `<track>` slots on `mediaElement`, one per model text track. Implementation tags each
+   * element so the read/remove helpers can scope to SPF-owned slots. **Required** — the behavior is DOM-binding-neutral
+   * and the composing engine supplies the integration.
    */
   addSubtitlesTracksToMedia: (
     mediaElement: HTMLMediaElement,
     modelTextTracks: readonly (PartiallyResolvedTextTrack | TextTrack)[]
   ) => void;
   /**
-   * Return the SPF-owned subtitle/caption `TextTrack` currently in `'showing'`
-   * mode, or `undefined` if none. Used by the DOM `change` bridge to mirror
-   * native-UI selection back into `selectedTextTrackId`.
+   * Return the SPF-owned subtitle/caption `TextTrack` currently in `'showing'` mode, or `undefined` if none. Used by
+   * the DOM `change` bridge to mirror native-UI selection back into `selectedTextTrackId`.
    */
   getShowingSubtitlesTrackFromMedia: (mediaElement: HTMLMediaElement) => globalThis.TextTrack | undefined;
   /**
-   * Remove every SPF-owned `<track>` child from `mediaElement`. Called on
-   * state exit (source unload, behavior destroy) to evict slots.
+   * Remove every SPF-owned `<track>` child from `mediaElement`. Called on state exit (source unload, behavior destroy)
+   * to evict slots.
    */
   removeAllSubtitlesTracksFromMedia: (mediaElement: HTMLMediaElement) => void;
 }
@@ -87,13 +71,13 @@ function deriveState(
   mediaElement: HTMLMediaElement | undefined
 ): SyncTextTracksFsmState {
   if (!mediaElement || !presentation) return 'preconditions-unmet';
+
   return getTracksByType(presentation, 'text').length > 0 ? 'sync-active' : 'preconditions-unmet';
 }
 
 /**
- * Map the DOM-showing track back to standing user intent. No showing track is an
- * explicit `'off'`. Otherwise prefer a language-based partial (so the pick
- * persists across source changes); fall back to `{ id }` for a track without a
+ * Map the DOM-showing track back to standing user intent. No showing track is an explicit `'off'`. Otherwise prefer a
+ * language-based partial (so the pick persists across source changes); fall back to `{ id }` for a track without a
  * language (precise within a source, just not portable).
  */
 function deriveTextTrackIntent(
@@ -101,7 +85,9 @@ function deriveTextTrackIntent(
   modelTextTracks: readonly (PartiallyResolvedTextTrack | TextTrack)[]
 ): Partial<TextTrack> | 'off' {
   if (!showingId) return 'off';
+
   const language = modelTextTracks.find((track) => track.id === showingId)?.language;
+
   return language ? { language } : { id: showingId };
 }
 
@@ -178,6 +164,7 @@ function syncTextTracksSetup({
               syncTextTrackModes(mediaElement.textTracks, state.selectedTextTrackId.get());
               return;
             }
+
             const showingTrack = getShowingSubtitlesTrackFromMedia(mediaElement);
             // `showingTrack.id` matches the SPF id we set when the slot was
             // allocated. Empty-string ids fall through to `undefined`.
@@ -186,6 +173,7 @@ function syncTextTracksSetup({
             // DOM (mirror / resolver correction). A change still showing it is our
             // own echo — ignore it rather than write spurious intent.
             if (showingId === state.selectedTextTrackId.get()) return;
+
             // Genuine user action → write intent (resolved into selectedTextTrackId
             // by switchTextTrack), not the resolved id.
             state.userTextTrackSelection.set(deriveTextTrackIntent(showingId, modelTextTracks));
@@ -214,6 +202,7 @@ function syncTextTracksSetup({
         // round-trips, so we peek mediaElement here.
         effects: () => {
           const mediaElement = peek(context.mediaElement)!;
+
           syncTextTrackModes(mediaElement.textTracks, state.selectedTextTrackId.get());
         },
       },

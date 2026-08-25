@@ -1,5 +1,3 @@
-import { actions } from 'astro:actions';
-
 import MuxUploader, {
   MuxUploaderDrop,
   MuxUploaderFileSelect,
@@ -7,12 +5,14 @@ import MuxUploader, {
   MuxUploaderRetry,
   MuxUploaderStatus,
 } from '@mux/mux-uploader-react';
+import { actions } from 'astro:actions';
 import { useCallback, useRef, useState } from 'react';
+
 import { muxPlaybackId, renderer, sourceUrl } from '@/stores/installation';
 import { initiateAuthPopup } from '@/utils/mux/auth-flow';
 import { pollForPlaybackId } from '@/utils/mux/polling';
-import type { UploaderState } from './UploaderOverlay';
 
+import type { UploaderState } from './UploaderOverlay';
 import UploaderOverlay from './UploaderOverlay';
 
 // import './MuxUploaderPanel.module.css';
@@ -20,13 +20,9 @@ import UploaderOverlay from './UploaderOverlay';
 /**
  * Mux video uploader with auth-gated flow.
  *
- * Flow:
- * 1. User drops/selects file → endpoint() called
- * 2. Try to create upload URL (requires auth)
- * 3. If 401: show login overlay, wait for auth, retry
- * 4. Upload begins with returned URL
- * 5. On success: poll for playback ID
- * 6. When ready: update renderer to 'hls', store playback ID in nanostore
+ * Flow: 1. User drops/selects file → endpoint() called 2. Try to create upload URL (requires auth) 3. If 401: show
+ * login overlay, wait for auth, retry 4. Upload begins with returned URL 5. On success: poll for playback ID 6. When
+ * ready: update renderer to 'hls', store playback ID in nanostore
  */
 export default function MuxUploaderPanel() {
   // Local state for upload flow (not shared across islands)
@@ -42,8 +38,7 @@ export default function MuxUploaderPanel() {
   const uploaderRef = useRef<HTMLElement>(null);
 
   /**
-   * Endpoint function called by MuxUploader when file is selected.
-   * Returns a Promise that resolves with the upload URL.
+   * Endpoint function called by MuxUploader when file is selected. Returns a Promise that resolves with the upload URL.
    * The upload waits for this Promise before starting.
    */
   const getEndpoint = useCallback(async (): Promise<string> => {
@@ -73,12 +68,10 @@ export default function MuxUploaderPanel() {
     return result.data.uploadUrl;
   }, []);
 
-  /**
-   * Handles OAuth login via popup.
-   * On success: fetches upload URL and resolves the pending Promise.
-   */
+  /** Handles OAuth login via popup. On success: fetches upload URL and resolves the pending Promise. */
   const handleLogin = useCallback(async () => {
     const result = await actions.auth.initiateLogin();
+
     if (result.error) {
       setError(result.error.message);
       setState('polling_error');
@@ -111,10 +104,7 @@ export default function MuxUploaderPanel() {
     });
   }, []);
 
-  /**
-   * Polls Mux API for playback ID after upload completes.
-   * Updates renderer to 'mux' and stores playback ID on success.
-   */
+  /** Polls Mux API for playback ID after upload completes. Updates renderer to 'mux' and stores playback ID on success. */
   const handleUploadSuccess = useCallback(async () => {
     if (!uploadId) return;
 
@@ -124,9 +114,8 @@ export default function MuxUploaderPanel() {
       uploadId,
       getUploadStatus: async (id) => {
         const response = await actions.mux.getUploadStatus({ uploadId: id });
-        if (response.error) {
-          return { error: { message: response.error.message } };
-        }
+        if (response.error) return { error: { message: response.error.message } };
+
         return {
           data: {
             status: response.data.status as 'waiting' | 'asset_created' | 'errored' | 'cancelled' | 'timed_out',
@@ -136,9 +125,8 @@ export default function MuxUploaderPanel() {
       },
       getAssetStatus: async (assetId) => {
         const response = await actions.mux.getAssetStatus({ assetId });
-        if (response.error) {
-          return { error: { message: response.error.message } };
-        }
+        if (response.error) return { error: { message: response.error.message } };
+
         return {
           data: {
             status: response.data.status as 'preparing' | 'ready' | 'errored',
@@ -175,7 +163,7 @@ export default function MuxUploaderPanel() {
   }, []);
 
   return (
-    <div className="flex-1 relative rounded-xs border border-dashed border-light-40 overflow-hidden border-faded-black dark:border-manila-dark">
+    <div className="border-light-40 border-faded-black dark:border-manila-dark relative flex-1 overflow-hidden rounded-xs border border-dashed">
       <MuxUploader
         // @ts-expect-error — MuxUploaderElement type not hoisted by pnpm; only used for dispatchEvent
         ref={uploaderRef}
@@ -191,20 +179,20 @@ export default function MuxUploaderPanel() {
       {/* Custom Mux Uploader UI */}
       <MuxUploaderDrop
         muxUploader="mux-uploader"
-        className="w-full h-full flex flex-col items-center justify-center p-4"
+        className="flex h-full w-full flex-col items-center justify-center p-4"
         overlay
         overlayText="Let it go"
       >
-        <span slot="heading" className="text-p3 font-bold mb-2">
+        <span slot="heading" className="text-p3 mb-2 font-bold">
           Drop a video
         </span>
-        <span slot="separator" className="text-p3 block mb-3">
+        <span slot="separator" className="text-p3 mb-3 block">
           — or —
         </span>
         <MuxUploaderFileSelect muxUploader="mux-uploader">
           <button
             type="button"
-            className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black rounded-xs text-p3 font-bold intent:bg-orange intent:text-faded-black"
+            className="bg-faded-black text-manila-light dark:bg-manila-light dark:text-faded-black text-p3 intent:bg-orange intent:text-faded-black inline-flex cursor-pointer items-center gap-2 rounded-xs px-4 py-2 font-bold"
           >
             Select a file
           </button>

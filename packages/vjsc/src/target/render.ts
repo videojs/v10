@@ -37,15 +37,23 @@ export function renderTargetElement(element: TargetElement, context: TargetRende
 
 export function renderTargetOutput(output: TargetOutput, context: TargetRenderContext): string {
   if (output === null || output === undefined || output === false) return '';
+
   if (Array.isArray(output)) {
     const children = output.map((item) => renderTargetOutput(item, context)).join('');
+
     return children ? `<>${children}</>` : '';
   }
+
   if (isSourceChildrenToken(output)) return output.value;
+
   if (isSourcePropToken(output)) return renderSourcePropValue(output);
+
   if (isTargetExpression(output)) return `{${renderTargetExpression(readTargetExpression(output), context)}}`;
+
   if (isTargetWithProps(output)) return renderWithProps(output.children, output.props, context);
+
   if (isTargetNode(output)) return renderTargetNode(output, context);
+
   if (typeof output === 'string' || typeof output === 'number' || typeof output === 'boolean') {
     return `{${JSON.stringify(output)}}`;
   }
@@ -55,7 +63,9 @@ export function renderTargetOutput(output: TargetOutput, context: TargetRenderCo
 
 function renderTargetNode(node: TargetNode, context: TargetRenderContext): string {
   if (node.type === TARGET_FRAGMENT) return `<>${renderChildren(node.props.children, context)}</>`;
+
   if (node.type === TARGET_HOST) return renderWithProps(node.props.children as TargetOutput, node.props, context);
+
   if (!isTargetElement(node.type)) throw new Error('vjsc/target: target JSX contains an invalid element type.');
 
   const name = renderTargetElement(node.type, context);
@@ -75,21 +85,27 @@ export function renderTargetAttributes(node: TargetNode, context: TargetRenderCo
 
   for (const property of Reflect.ownKeys(node.props)) {
     if (property === 'children') continue;
+
     const value = props[property];
 
     if (property === SOURCE_PROPS) {
       if (isSourcePropsToken(value)) attributes.push(...renderSourceProps(value, context.target.jsx.attributes));
+
       continue;
     }
+
     if (property === TARGET_SPREAD) {
       if (isTargetExpression(value)) {
         attributes.push(`{...${renderTargetExpression(readTargetExpression(value), context)}}`);
       }
+
       continue;
     }
+
     if (typeof property !== 'string' || value === undefined) continue;
 
     const attribute = renderAttribute(property, value, context);
+
     if (attribute) attributes.push(attribute);
   }
 
@@ -98,12 +114,19 @@ export function renderTargetAttributes(node: TargetNode, context: TargetRenderCo
 
 function renderChildren(value: unknown, context: TargetRenderContext): string {
   if (isSourceChildrenToken(value)) return value.value;
+
   if (isSourcePropToken(value)) return renderSourcePropValue(value);
+
   if (isTargetExpression(value)) return `{${renderTargetExpression(readTargetExpression(value), context)}}`;
+
   if (isTargetWithProps(value)) return renderWithProps(value.children, value.props, context);
+
   if (isTargetNode(value)) return renderTargetNode(value, context);
+
   if (Array.isArray(value)) return value.map((child) => renderChildren(child, context)).join('');
+
   if (value === null || value === undefined || value === false) return '';
+
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return `{${JSON.stringify(value)}}`;
   }
@@ -115,7 +138,9 @@ function renderAttribute(name: string, value: unknown, context: TargetRenderCont
   const targetName = targetAttributeName(name, context.target.jsx.attributes);
 
   if (isSourcePropToken(value)) return renderSourcePropAttribute(targetName, value);
+
   if (isSourceChildrenToken(value)) return `${targetName}=${renderChildrenAttribute(value)}`;
+
   if (isTargetExpression(value)) {
     return `${targetName}={${renderTargetExpression(readTargetExpression(value), context)}}`;
   }
@@ -125,14 +150,21 @@ function renderAttribute(name: string, value: unknown, context: TargetRenderCont
 
 function renderGeneratedAttribute(name: string, value: unknown, context: TargetRenderContext): string {
   if (value === true) return name;
+
   if (isTargetExpression(value)) {
     return `${name}={${renderTargetExpression(readTargetExpression(value), context)}}`;
   }
+
   if (isTargetWithProps(value)) return `${name}={${renderWithProps(value.children, value.props, context)}}`;
+
   if (isTargetNode(value)) return `${name}={${renderTargetNode(value, context)}}`;
+
   if (Array.isArray(value)) return `${name}={<>${renderChildren(value, context)}</>}`;
+
   if (value === null) return `${name}={null}`;
+
   if (typeof value === 'string') return `${name}=${JSON.stringify(value)}`;
+
   if (typeof value === 'number' || typeof value === 'boolean') return `${name}={${String(value)}}`;
 
   throw new Error(`vjsc/target: target JSX prop \`${name}\` contains an unsupported value.`);
@@ -141,10 +173,12 @@ function renderGeneratedAttribute(name: string, value: unknown, context: TargetR
 function renderSourceProps(token: SourcePropsToken, attributes: ComponentTarget['jsx']['attributes']): string[] {
   return token.attributes.flatMap((attribute) => {
     if (attribute.type === 'JSXSpreadAttribute') return [sliceSource(token.source, attribute.start, attribute.end)];
+
     if (attribute.name.type !== 'JSXIdentifier' || token.omitted.has(attribute.name.name)) return [];
 
     const name = targetAttributeName(attribute.name.name, attributes);
     if (name === attribute.name.name) return [sliceSource(token.source, attribute.start, attribute.end)];
+
     if (!attribute.value) return [name];
 
     return [`${name}=${sliceSource(token.source, attribute.value.start, attribute.value.end)}`];
@@ -154,6 +188,7 @@ function renderSourceProps(token: SourcePropsToken, attributes: ComponentTarget[
 function renderSourcePropAttribute(name: string, token: SourcePropToken): string | undefined {
   const attribute = token.attribute;
   if (!attribute) return undefined;
+
   if (!attribute.value) return name;
 
   return `${name}=${sliceSource(token.source, attribute.value.start, attribute.value.end)}`;
@@ -162,7 +197,9 @@ function renderSourcePropAttribute(name: string, token: SourcePropToken): string
 function renderSourcePropValue(token: SourcePropToken): string {
   const attribute = token.attribute;
   if (!attribute) return '{undefined}';
+
   if (!attribute.value) return '{true}';
+
   if (attribute.value.type === 'JSXExpressionContainer') {
     return sliceSource(token.source, attribute.value.start, attribute.value.end);
   }
@@ -173,13 +210,17 @@ function renderSourcePropValue(token: SourcePropToken): string {
 function renderChildrenAttribute(token: SourceChildrenToken): string {
   const value = token.value.trim();
   if (!value) return '{null}';
+
   if (value.startsWith('{') && value.endsWith('}')) return value;
+
+  if (token.rootOpeningEnd !== undefined) return `{${value}}`;
 
   return `{<>${token.value}</>}`;
 }
 
 function renderTargetExpression(expression: TargetExpressionNode, context: TargetRenderContext): string {
   if (expression.kind === 'reference') return expression.code;
+
   if (expression.kind === 'conditional') {
     return `${renderTargetExpression(expression.test, context)} ? ${renderExpressionOutput(expression.output, context)} : null`;
   }
@@ -189,7 +230,9 @@ function renderTargetExpression(expression: TargetExpressionNode, context: Targe
 
 function renderExpressionOutput(output: TargetOutput, context: TargetRenderContext): string {
   if (isTargetExpression(output)) return renderTargetExpression(readTargetExpression(output), context);
+
   if (isTargetWithProps(output)) return renderWithProps(output.children, output.props, context).trim();
+
   return renderTargetOutput(output, context).trim();
 }
 
@@ -201,6 +244,7 @@ function renderWithProps(
   if (!isSourceChildrenToken(children)) {
     throw new Error('vjsc/target: host props require source-backed children.');
   }
+
   const attributes = isExpressionNode(props)
     ? [`{...${renderTargetExpression(props, context)}}`]
     : renderTargetAttributes({ [TARGET_NODE]: true, type: TARGET_HOST, props: { ...props }, key: null }, context);
@@ -208,11 +252,14 @@ function renderWithProps(
   if (children.rootOpeningEnd === undefined) {
     const host = context.target.jsx.host;
     if (!host) throw new Error('vjsc/target: dynamic host children require a target JSX host runtime.');
+
     const name = context.imports.reference(host);
+
     return `<${name}${attributes.length ? ` ${attributes.join(' ')}` : ''}>${children.value}</${name}>`;
   }
 
   const insertion = children.rootOpeningEnd - (children.value[children.rootOpeningEnd - 2] === '/' ? 2 : 1);
+
   return `${children.value.slice(0, insertion)}${attributes.length ? ` ${attributes.join(' ')}` : ''}${children.value.slice(insertion)}`;
 }
 
@@ -228,16 +275,20 @@ function renderTargetReference(
   seen: Set<TargetReference>
 ): string {
   if (seen.has(reference)) throw new Error('vjsc/target: component target references form a cycle.');
+
   seen.add(reference);
 
   if (reference.kind === 'element') {
     if (reference.import) context.imports.sideEffect(reference.import.from);
+
     return reference.tagName;
   }
+
   if (reference.kind === 'import') return context.imports.reference(reference.import);
 
   const path: ComponentTargetPath = { component: reference.component, part: reference.part };
   const resolved = context.target.resolve(path);
+
   if (!resolved || !isTargetElement(resolved)) {
     throw new Error(
       `Component target did not resolve <${reference.component}${reference.part ? `.${reference.part}` : ''}>.`
@@ -249,6 +300,7 @@ function renderTargetReference(
 
 function targetAttributeName(name: string, attributes: ComponentTarget['jsx']['attributes']): string {
   if (attributes === 'react') return name;
+
   return htmlAttributeName(name);
 }
 

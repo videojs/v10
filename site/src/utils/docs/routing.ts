@@ -1,18 +1,15 @@
 import { sidebar as defaultSidebar } from '@/docs.config';
 import type { Sidebar, SupportedFramework } from '@/types/docs';
 import { DEFAULT_FRAMEWORK, isValidFramework } from '@/types/docs';
+
 import { findFirstGuide, findGuideBySlug, getValidFrameworksForGuide } from './sidebar';
 
-/**
- * Build a docs URL from framework and guide slug components.
- */
+/** Build a docs URL from framework and guide slug components. */
 export function buildDocsUrl(framework: SupportedFramework, guideSlug: string): string {
   return `/docs/framework/${framework}/${guideSlug}`;
 }
 
-/**
- * Input for resolveIndexRedirect
- */
+/** Input for resolveIndexRedirect */
 export interface IndexRedirectInput {
   preferences: {
     framework: string | null;
@@ -22,9 +19,7 @@ export interface IndexRedirectInput {
   };
 }
 
-/**
- * Output from resolveIndexRedirect
- */
+/** Output from resolveIndexRedirect */
 export interface IndexRedirectResult {
   url: string;
   selectedFramework: SupportedFramework;
@@ -33,12 +28,10 @@ export interface IndexRedirectResult {
 }
 
 /**
- * Resolve redirect for index pages (/docs, /docs/framework/X).
- * Nothing is pinned - we must select framework AND slug.
+ * Resolve redirect for index pages (/docs, /docs/framework/X). Nothing is pinned - we must select framework AND slug.
  *
- * Logic:
- * 1. If params.framework → validate → find first guide
- * 2. If no param → get from preferences or defaults → find first guide
+ * Logic: 1. If params.framework → validate → find first guide 2. If no param → get from preferences or defaults → find
+ * first guide
  *
  * @param input - The input containing preferences and params
  * @param sidebar - Optional sidebar to search (defaults to main sidebar config)
@@ -57,6 +50,7 @@ export function resolveIndexRedirect(
     if (!isValidFramework(params.framework)) {
       throw new Error(`Invalid framework param: ${params.framework}`);
     }
+
     selectedFramework = params.framework;
     reason = 'Using validated params.framework';
   } else {
@@ -83,18 +77,14 @@ export function resolveIndexRedirect(
   };
 }
 
-/**
- * Input for resolveFrameworkChange
- */
+/** Input for resolveFrameworkChange */
 export interface FrameworkChangeInput {
   currentFramework: SupportedFramework;
   currentSlug: string;
   newFramework: SupportedFramework;
 }
 
-/**
- * Output from resolveFrameworkChange
- */
+/** Output from resolveFrameworkChange */
 export interface FrameworkChangeResult {
   url: string;
   shouldReplace: boolean;
@@ -105,13 +95,10 @@ export interface FrameworkChangeResult {
 }
 
 /**
- * Resolve URL when user changes framework selector.
- * newFramework is PINNED (must keep), slug MAY change if not visible.
+ * Resolve URL when user changes framework selector. newFramework is PINNED (must keep), slug MAY change if not visible.
  *
- * Logic:
- * 1. framework = newFramework (PINNED)
- * 2. If currentSlug visible in newFramework → slug = currentSlug, shouldReplace = true
- *    Else → slug = first guide in newFramework, shouldReplace = false
+ * Logic: 1. framework = newFramework (PINNED) 2. If currentSlug visible in newFramework → slug = currentSlug,
+ * shouldReplace = true Else → slug = first guide in newFramework, shouldReplace = false
  *
  * @param input - The input containing current state and new framework
  * @param sidebar - Optional sidebar to search (defaults to main sidebar config)
@@ -121,10 +108,7 @@ export function resolveFrameworkChange(
   sidebar: Sidebar = defaultSidebar
 ): FrameworkChangeResult {
   const { currentSlug, newFramework } = input;
-
-  if (!isValidFramework(newFramework)) {
-    throw new Error(`Invalid framework: ${newFramework}`);
-  }
+  if (!isValidFramework(newFramework)) throw new Error(`Invalid framework: ${newFramework}`);
 
   const selectedFramework = newFramework; // PINNED
 
@@ -136,6 +120,7 @@ export function resolveFrameworkChange(
 
   const guide = findGuideBySlug(currentSlug, sidebar);
   const validFrameworks = guide ? getValidFrameworksForGuide(guide, sidebar) : [];
+
   if (guide && validFrameworks.includes(selectedFramework)) {
     // Current slug is visible in the new framework
     selectedSlug = currentSlug;
@@ -162,17 +147,13 @@ export function resolveFrameworkChange(
   };
 }
 
-/**
- * Input for resolveDocsLinkUrl
- */
+/** Input for resolveDocsLinkUrl */
 export interface DocsLinkInput {
   targetSlug: string;
   contextFramework: SupportedFramework;
 }
 
-/**
- * Output from resolveDocsLinkUrl
- */
+/** Output from resolveDocsLinkUrl */
 export interface DocsLinkResult {
   url: string;
   selectedFramework: SupportedFramework;
@@ -182,14 +163,12 @@ export interface DocsLinkResult {
 }
 
 /**
- * Resolve the best URL for a guide slug link given current context.
- * targetSlug is PINNED (must keep), framework MAY change.
+ * Resolve the best URL for a guide slug link given current context. targetSlug is PINNED (must keep), framework MAY
+ * change.
  *
- * Logic (2-level priority cascade):
- * 1. slug = targetSlug (PINNED)
- * 2. Try to find best framework that supports targetSlug:
- *    - Priority 1: If targetSlug visible in contextFramework → use it (best UX)
- *    - Priority 2: Use guide's first valid framework
+ * Logic (2-level priority cascade): 1. slug = targetSlug (PINNED) 2. Try to find best framework that supports
+ * targetSlug: - Priority 1: If targetSlug visible in contextFramework → use it (best UX) - Priority 2: Use guide's
+ * first valid framework
  *
  * @param input - The input containing target slug and context
  * @param sidebar - Optional sidebar to search (defaults to main sidebar config)
@@ -198,9 +177,7 @@ export function resolveDocsLinkUrl(input: DocsLinkInput, sidebar: Sidebar = defa
   const { targetSlug, contextFramework } = input;
 
   const guide = findGuideBySlug(targetSlug, sidebar);
-  if (!guide) {
-    throw new Error(`No guide found with slug "${targetSlug}"`);
-  }
+  if (!guide) throw new Error(`No guide found with slug "${targetSlug}"`);
 
   if (!isValidFramework(contextFramework)) {
     throw new Error(`Invalid context framework: ${contextFramework}`);
@@ -213,6 +190,7 @@ export function resolveDocsLinkUrl(input: DocsLinkInput, sidebar: Sidebar = defa
 
   // Priority 1: Try current framework
   const validFrameworks = getValidFrameworksForGuide(guide, sidebar);
+
   if (validFrameworks.includes(contextFramework)) {
     selectedFramework = contextFramework;
     priorityLevel = 1;

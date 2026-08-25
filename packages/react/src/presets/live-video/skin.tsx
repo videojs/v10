@@ -3,6 +3,7 @@
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -49,6 +50,7 @@ import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseVideoSkinProps } from '../types';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
@@ -96,10 +98,9 @@ function VolumePopover(): ReactNode {
 }
 
 /**
- * Default video skin configured for live playback. Mirrors {@link VideoSkin}
- * but omits the time slider and the duration / current-time displays. A
- * flexible spacer stretches between the start and end button groups so they
- * sit at opposite edges of the control bar.
+ * Default video skin configured for live playback. Mirrors {@link VideoSkin} but omits the time slider and the duration
+ * / current-time displays. A flexible spacer stretches between the start and end button groups so they sit at opposite
+ * edges of the control bar.
  */
 function CaptionsTrigger(): ReactNode {
   const t = useTranslator();
@@ -140,28 +141,30 @@ function CaptionsTrigger(): ReactNode {
           </CaptionsButton>
         }
       />
-      <Menu.Content className="media-surface media-popover media-menu media-menu--captions">
-        <Menu.RadioGroup
-          className="media-menu__group"
-          value={value}
-          onValueChange={setValue}
-          aria-label={t(captionsText)}
-        >
-          {options.map((option) => (
-            <Menu.RadioItem
-              key={option.value}
-              className="media-menu__item"
-              value={option.value}
-              disabled={option.disabled}
-            >
-              <bdi dir="auto">{option.label}</bdi>
-              <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
-                <CheckIcon className="media-icon" />
-              </Menu.ItemIndicator>
-            </Menu.RadioItem>
-          ))}
-        </Menu.RadioGroup>
-      </Menu.Content>
+      <Menu.Popup className="media-surface media-popover media-menu media-menu--captions">
+        <Menu.Content className="media-menu__content">
+          <Menu.RadioGroup
+            className="media-menu__group"
+            value={value}
+            onValueChange={setValue}
+            aria-label={t(captionsText)}
+          >
+            {options.map((option) => (
+              <Menu.RadioItem
+                key={option.value}
+                className="media-menu__item"
+                value={option.value}
+                disabled={option.disabled}
+              >
+                <bdi dir="auto">{option.label}</bdi>
+                <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
+                  <CheckIcon className="media-icon" />
+                </Menu.ItemIndicator>
+              </Menu.RadioItem>
+            ))}
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

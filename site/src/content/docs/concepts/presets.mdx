@@ -5,7 +5,6 @@ description: Pre-packaged player configurations that bundle state management, sk
 
 import PresetReference from '@/components/docs/api-reference/PresetReference.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
 A **preset** packages what you need for a specific player use case. It can include special <DocsLink slug="concepts/features">state management</DocsLink>, one or more <DocsLink slug="concepts/skins">skins</DocsLink> for UI, and specific media elements. Instead of assembling these pieces individually, you pick a preset that matches what you're building.
@@ -15,6 +14,7 @@ For example, the `@videojs/react/background` preset includes a media element wit
 
 ```tsx title="App.tsx"
 import { BackgroundVideo, BackgroundVideoPlayer, BackgroundVideoSkin } from '@videojs/react/background'; // [!code focus]
+import '@videojs/react/background/skin.css';
 
 function Hero() {
   return (
@@ -29,7 +29,7 @@ function Hero() {
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 For example, the `@videojs/html/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
-    
+
 ```html title="index.html"
 <script type="module">
   import '@videojs/html/background/player';
@@ -79,7 +79,7 @@ Add features to a preset's feature bundle to enable new functionality. For examp
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
-import { Container, createPlayer, playbackFeature } from '@videojs/react';
+import { Container, createPlayer, playbackFeature, PlayButton } from '@videojs/react';
 import { backgroundFeatures, BackgroundVideo } from '@videojs/react/background';
 
 const { Player } = createPlayer({ // [!code focus]
@@ -103,6 +103,7 @@ function Hero() {
 <script type="module">
   import { createPlayer, playbackFeature, UIElement } from '@videojs/html';
   import { backgroundFeatures } from '@videojs/html/background';
+  import '@videojs/html/background/video';
   import '@videojs/html/ui/container';
   import '@videojs/html/ui/play-button';
 
@@ -111,7 +112,7 @@ function Hero() {
   }); // [!code focus]
 
   class MyPlayer extends ProviderMixin(UIElement) {
-    static readonly tagName = 'my-player';
+    static tagName = 'my-player';
   }
 
   customElements.define('my-player', MyPlayer);

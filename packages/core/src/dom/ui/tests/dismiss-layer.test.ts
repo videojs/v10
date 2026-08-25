@@ -1,5 +1,6 @@
 import { flush } from '@videojs/store';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { createDismissLayer } from '../dismiss-layer';
 import { createTransition } from '../transition';
 
@@ -11,12 +12,14 @@ function createTestLayer(overrides?: Partial<Parameters<typeof createDismissLaye
     onEscapeDismiss,
     ...overrides,
   });
+
   return { layer, onEscapeDismiss, transition };
 }
 
 describe('createDismissLayer', () => {
   it('starts closed', () => {
     const { layer } = createTestLayer();
+
     expect(layer.input.current).toEqual({ active: false, status: 'idle' });
   });
 

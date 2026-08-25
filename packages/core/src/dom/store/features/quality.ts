@@ -6,6 +6,7 @@ import type {
 } from '@videojs/media';
 import { isMediaVideoDimensionsCapable, isMediaVideoRenditionCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 
 const QUALITY_AUTO_VALUE = 'auto';
@@ -28,6 +29,7 @@ function toMediaRendition(rendition: VideoRenditionLike): MediaVideoRendition {
 
 function getSize(rendition: Pick<VideoRenditionLike, 'width' | 'height'>): number | undefined {
   if (rendition.width && rendition.height) return Math.min(rendition.width, rendition.height);
+
   return rendition.height ?? rendition.width;
 }
 

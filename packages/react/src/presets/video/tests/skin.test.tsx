@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { VideoSkin } from '../skin';
@@ -27,6 +27,7 @@ describe('VideoSkin', () => {
 
     // The skin reaches the poster as a direct child, so it carries no class of its own.
     const img = container.querySelector('.media-default-skin > img');
+
     expect(img?.getAttribute('src')).toBe('poster.jpg');
   });
 
@@ -39,6 +40,7 @@ describe('VideoSkin', () => {
     );
 
     const custom = container.querySelector('[data-testid="custom"]');
+
     expect(container.querySelectorAll('.media-default-skin > img')).toHaveLength(1);
     expect(custom?.getAttribute('src')).toBe('poster.jpg');
     expect(custom?.getAttribute('style')).toContain('poster-placeholder.jpg');
@@ -52,6 +54,7 @@ describe('VideoSkin', () => {
     expect(container.querySelector('.media-default-skin > img')).toBeNull();
 
     const custom = container.querySelector('[data-testid="custom"]');
+
     expect(custom?.getAttribute('src')).toBe('poster.jpg');
   });
 });

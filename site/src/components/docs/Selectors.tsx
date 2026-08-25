@@ -1,4 +1,5 @@
 import { useStore } from '@nanostores/react';
+
 import { Select } from '@/components/Select';
 import { currentStyle as styleStore } from '@/stores/preferences';
 import type { AnySupportedStyle, SupportedFramework } from '@/types/docs';
@@ -26,6 +27,7 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
 
   const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
     if (newFramework === null) return;
+
     if (!isValidFramework(newFramework)) return;
 
     const { url, shouldReplace } = resolveFrameworkChange({
@@ -47,6 +49,7 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
       } catch {
         // Ignore storage errors
       }
+
       window.location.replace(url);
     } else {
       window.location.href = url;
@@ -55,6 +58,7 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
 
   const handleStyleChange = (newStyle: AnySupportedStyle | null) => {
     if (newStyle === null) return;
+
     if (!isValidStyleForFramework(currentFramework, newStyle)) return;
 
     // Update localStorage for this framework
@@ -78,9 +82,9 @@ export function Selectors({ currentFramework, currentSlug }: SelectorProps) {
   }));
 
   return (
-    <div className="px-6 pb-6 pt-2.5 md:py-6 xl:p-6 border-b border-manila-75 dark:border-faded-black">
+    <div className="border-manila-75 dark:border-faded-black border-b px-6 pt-2.5 pb-6 md:py-6 xl:p-6">
       <div
-        className="max-w-3xl mx-auto w-full grid grid-flow-col grid-cols-2 grid-rows-2 gap-x-2 md:grid-flow-row md:grid-cols-(--md-grid-cols) md:gap-x-6 md:gap-y-2 items-center"
+        className="mx-auto grid w-full max-w-3xl grid-flow-col grid-cols-2 grid-rows-2 items-center gap-x-2 md:grid-flow-row md:grid-cols-(--md-grid-cols) md:gap-x-6 md:gap-y-2"
         style={{ '--md-grid-cols': 'auto minmax(0, 1fr)' } as React.CSSProperties}
       >
         <span className="text-p3 text-faded-black dark:text-manila-light">Framework</span>

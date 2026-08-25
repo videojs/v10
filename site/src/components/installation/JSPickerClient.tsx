@@ -1,5 +1,6 @@
 import { Atom, Globe } from 'lucide-react';
 import type { ReactNode } from 'react';
+
 import ImageRadioGroup from '@/components/ImageRadioGroup';
 import type { SupportedFramework } from '@/types/docs';
 import { FRAMEWORK_LABELS, isValidFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
@@ -18,6 +19,7 @@ interface Props {
 export default function JSPickerClient({ currentFramework, currentSlug }: Props) {
   const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
     if (newFramework === null) return;
+
     if (!isValidFramework(newFramework)) return;
 
     const { url, shouldReplace } = resolveFrameworkChange({
@@ -39,6 +41,7 @@ export default function JSPickerClient({ currentFramework, currentSlug }: Props)
       } catch {
         // Ignore storage errors
       }
+
       window.location.replace(url);
     } else {
       window.location.href = url;

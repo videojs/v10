@@ -1,12 +1,15 @@
 import { useStore } from '@nanostores/react';
 import { Globe, Image, RadioTower } from 'lucide-react';
+
 import ImageRadioGroup from '@/components/ImageRadioGroup';
 import { useCase } from '@/stores/installation';
 import { getInstallationPreset, USE_CASES, type UseCase } from '@/utils/installation/types';
 
 function getPresetIcon(useCase: UseCase) {
   if (useCase === 'background-video') return <Image size={32} />;
+
   if (getInstallationPreset(useCase).live) return <RadioTower size={32} />;
+
   return <Globe size={32} />;
 }
 

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { BackgroundVideo } from '../index';
 
@@ -10,6 +10,7 @@ let tagCounter = 0;
 
 function defineElement() {
   const tag = `test-background-video-${++tagCounter}`;
+
   customElements.define(tag, class extends BackgroundVideo {});
   return tag;
 }
@@ -17,6 +18,7 @@ function defineElement() {
 // innerHTML on a connected container so attributes are present when the constructor runs.
 function create(tag: string, attrs: Record<string, string> = {}): Element {
   const container = document.createElement('div');
+
   document.body.appendChild(container);
   const attrStr = Object.entries(attrs)
     .map(
@@ -24,6 +26,7 @@ function create(tag: string, attrs: Record<string, string> = {}): Element {
         ` ${k}="${v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}"`
     )
     .join('');
+
   container.innerHTML = `<${tag}${attrStr}></${tag}>`;
   return container.querySelector(tag)!;
 }
@@ -83,9 +86,11 @@ describe('BackgroundVideo', () => {
         disablepictureinpicture: '',
       };
       const container = document.createElement('div');
+
       container.innerHTML = (Ctor as any).getTemplateHTML(attrs);
 
       const video = container.querySelector('video')!;
+
       expect(video.getAttribute('crossorigin')).toBe('anonymous');
       expect(video.getAttribute('preload')).toBe('metadata');
     });

@@ -1,5 +1,7 @@
 import { useStore } from '@nanostores/react';
+
 import { framework } from '@/stores/homePageDemos';
+
 import ToggleGroup from '../ToggleGroup';
 
 export default function FrameworkControl({ className }: { className?: string }) {

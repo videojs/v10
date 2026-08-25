@@ -32,12 +32,14 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
     setItemAttributes: (item, option) => item.setAttribute('data-rate', option.value),
     onValueChange: (value) => {
       const media = this.#mediaState.value;
+
       if (media) this.#core.selectValue(media, value);
     },
   });
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     if (__DEV__ && !this.#mediaState.value && this.#mediaState.displayName) {

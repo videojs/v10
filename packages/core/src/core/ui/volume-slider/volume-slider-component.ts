@@ -1,8 +1,9 @@
 import { defineComponent } from 'vjsc/components';
+
+import type { SliderPreviewProps } from '../slider/core';
 import type { SliderValueProps } from '../slider/slider-component';
-import type { SliderPreviewProps } from '../slider/slider-core';
-import type { VolumeSliderProps } from './volume-slider-core';
-import { VolumeSliderDataAttrs } from './volume-slider-data-attrs';
+import type { VolumeSliderProps } from './core';
+import { VolumeSliderDataAttrs } from './data';
 
 export default defineComponent({
   name: 'VolumeSlider',

@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+
 import MagicString from 'magic-string';
+
 import { inlineTemplatePlugin } from '../inline-template-plugin.ts';
 
 // Helper: run the plugin's transform on a code string.
 function transform(code: string): string {
   const plugin = inlineTemplatePlugin({ minify: true });
   const result = plugin.transform?.(code, 'test.ts', { magicString: new MagicString(code) });
+
   return result?.code.toString() ?? code;
 }
 
@@ -15,6 +18,7 @@ function minifyHTML(template: string): string {
   const code = `/*html*/ \`${template}\``;
   const result = transform(code);
   const match = result.match(/`([\s\S]*)`/);
+
   return match?.[1] ?? '';
 }
 
@@ -49,6 +53,7 @@ describe('minifyHtmlQuasis', () => {
         <span></span>
       </div>
     `;
+
     assert.equal(minifyHTML(input), '<div><span></span></div>');
   });
 
@@ -67,6 +72,7 @@ describe('minifyHtmlQuasis', () => {
       -->
       <div></div>
     `;
+
     assert.equal(minifyHTML(input), '<div></div>');
   });
 
@@ -89,6 +95,7 @@ describe('minifyHtmlQuasis', () => {
       <slot name="media"></slot>
       <slot></slot>
     `;
+
     assert.equal(minifyHTML(input), '<slot name="media"></slot><slot></slot>');
   });
 
@@ -98,6 +105,7 @@ describe('minifyHtmlQuasis', () => {
       <slot></slot>
       <slot name="poster"></slot>
     `;
+
     assert.equal(minifyHTML(input), '<slot name="media"></slot><slot></slot><slot name="poster"></slot>');
   });
 
@@ -164,24 +172,28 @@ describe('processTemplates (expressions)', () => {
   it('preserves template expressions', () => {
     const code = 'const html = /*html*/ `<div>${expr}</div>`;';
     const result = transform(code);
+
     assert.equal(result, 'const html = /*html*/ `<div>${expr}</div>`;');
   });
 
   it('handles multiple expressions', () => {
     const code = 'const html = /*html*/ `<div>${a}</div><span>${b}</span>`;';
     const result = transform(code);
+
     assert.equal(result, 'const html = /*html*/ `<div>${a}</div><span>${b}</span>`;');
   });
 
   it('handles expressions with nested braces', () => {
     const code = "const html = /*html*/ `<div>${fn({ class: 'icon' })}</div>`;";
     const result = transform(code);
+
     assert.equal(result, "const html = /*html*/ `<div>${fn({ class: 'icon' })}</div>`;");
   });
 
   it('handles expressions with nested template literals', () => {
     const code = 'const html = /*html*/ `<div>${`nested ${value}`}</div>`;';
     const result = transform(code);
+
     assert.equal(result, 'const html = /*html*/ `<div>${`nested ${value}`}</div>`;');
   });
 
@@ -192,6 +204,7 @@ describe('processTemplates (expressions)', () => {
       </div>
     \`;`;
     const result = transform(code);
+
     assert.equal(result, 'const html = /*html*/ `<div> ${expr} </div>`;');
   });
 
@@ -203,6 +216,7 @@ describe('processTemplates (expressions)', () => {
       <span></span>
     \`;`;
     const result = transform(code);
+
     assert.equal(result, 'const html = /*html*/ `<div> ${expr} </div><span></span>`;');
   });
 });
@@ -215,6 +229,7 @@ describe('minifyCssQuasis', () => {
   it('minifies simple CSS', () => {
     const code = 'const css = /* css */ `  .foo  {  color: red;  }  `;';
     const result = transform(code);
+
     assert.match(result, /\.foo\s*\{/);
     assert.match(result, /color:\s*red/);
   });
@@ -222,6 +237,7 @@ describe('minifyCssQuasis', () => {
   it('preserves CSS expressions', () => {
     const code = 'const css = /* css */ `.foo { color: ${color}; }`;';
     const result = transform(code);
+
     assert.match(result, /\$\{color\}/);
   });
 });
@@ -233,23 +249,27 @@ describe('minifyCssQuasis', () => {
 describe('edge cases', () => {
   it('returns null when minify is disabled', () => {
     const plugin = inlineTemplatePlugin({ minify: false });
+
     assert.equal(plugin.transform?.('/*html*/ `<div></div>`', 'test.ts'), null);
   });
 
   it('returns null when code contains no markers', () => {
     const plugin = inlineTemplatePlugin({ minify: true });
+
     assert.equal(plugin.transform?.('const x = 1;', 'test.ts'), null);
   });
 
   it('returns null when marker is not followed by a template literal', () => {
     const code = 'const marker = "/*html*/"; const x = 1;';
     const result = transform(code);
+
     assert.equal(result, code);
   });
 
   it('handles multiple HTML templates in one file', () => {
     const code = ['const a = /*html*/ `<div>  </div>`;', 'const b = /*html*/ `<span>  </span>`;'].join('\n');
     const result = transform(code);
+
     assert.match(result, /`<div><\/div>`/);
     assert.match(result, /`<span><\/span>`/);
   });

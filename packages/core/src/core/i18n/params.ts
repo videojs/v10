@@ -1,4 +1,5 @@
 import type { Contains, UnionToIntersection } from '@videojs/utils/types';
+
 import type { LOCALES } from './locales';
 import type { TranslationParams } from './params.generated';
 

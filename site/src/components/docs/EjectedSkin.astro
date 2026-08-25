@@ -11,6 +11,7 @@ interface Props {
 const { id } = Astro.props;
 const entry = await getEntry('ejectedSkins', id);
 if (!entry) return;
+
 const skin = entry.data;
 
 const EXT_TO_LANG: Record<string, BundledLanguage> = {
@@ -22,6 +23,7 @@ const EXT_TO_LANG: Record<string, BundledLanguage> = {
 
 function langFromFilename(filename: string): BundledLanguage {
   const ext = filename.split('.').pop() ?? '';
+
   return EXT_TO_LANG[ext] ?? 'tsx';
 }
 
@@ -31,6 +33,7 @@ const reactFiles = skin.tsx
       const aIsComponent = a.endsWith('.tsx') || a.endsWith('.jsx');
       const bIsComponent = b.endsWith('.tsx') || b.endsWith('.jsx');
       if (aIsComponent === bIsComponent) return a.localeCompare(b);
+
       return aIsComponent ? -1 : 1;
     })
   : [];

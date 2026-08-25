@@ -81,9 +81,11 @@ export function validateReferenceGroup<T>(group: ReferenceGroup<T>): ReferenceGr
       });
       continue;
     }
+
     seenFileNames.add(doc.fileName);
 
     const validated = group.schema.safeParse(doc.data);
+
     if (!validated.success) {
       errors.push({ label: doc.label, issues: validated.error.issues });
       continue;
@@ -106,12 +108,10 @@ export function validateReferenceGroup<T>(group: ReferenceGroup<T>): ReferenceGr
   };
 }
 
-/**
- * Write a validated group and remove JSON files that are no longer generated.
- * Non-JSON files are left untouched.
- */
+/** Write a validated group and remove JSON files that are no longer generated. Non-JSON files are left untouched. */
 export function writeReferenceGroup(group: ValidatedReferenceGroup): { written: number; removed: string[] } {
   const parentPath = path.dirname(group.outputPath);
+
   fs.mkdirSync(parentPath, { recursive: true });
 
   // Stage every serialized file before touching the current output.
@@ -133,6 +133,7 @@ export function writeReferenceGroup(group: ValidatedReferenceGroup): { written: 
 
     for (const fileName of fs.readdirSync(group.outputPath)) {
       if (!fileName.endsWith('.json') || expectedFiles.has(fileName)) continue;
+
       fs.unlinkSync(path.join(group.outputPath, fileName));
       removed.push(fileName);
     }

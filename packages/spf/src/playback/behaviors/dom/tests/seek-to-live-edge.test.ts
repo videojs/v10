@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { signal } from '../../../../core/signals/primitives';
 import {
   type MaybeResolvedPresentation,
@@ -9,9 +10,8 @@ import {
 import { type SeekToLiveEdgeConfig, seekToLiveEdge } from '../seek-to-live-edge';
 
 /**
- * 5-segment, 2s window sliding at `[windowStart, windowStart + 10]`.
- * With the injected 6s live latency, the live-edge start is
- * `(windowStart + 10) − 6 = windowStart + 4` (104 for the default 100).
+ * 5-segment, 2s window sliding at `[windowStart, windowStart + 10]`. With the injected 6s live latency, the live-edge
+ * start is `(windowStart + 10) − 6 = windowStart + 4` (104 for the default 100).
  */
 function makePresentation(windowStart = 100, mediaSequence = 50): Presentation {
   const video: VideoTrack = {
@@ -33,6 +33,7 @@ function makePresentation(windowStart = 100, mediaSequence = 50): Presentation {
     })),
     metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence, targetDuration: 2, endList: false } },
   };
+
   return {
     id: 'pres-1',
     url: 'https://example.com/master.m3u8',
@@ -49,9 +50,8 @@ type FakeMediaElement = HTMLMediaElement & {
 };
 
 /**
- * Event-capable fake: `seekToLiveEdge` attaches a `play` listener, so the
- * element must be a real `EventTarget`. Defaults to paused + `readyState`
- * HAVE_ENOUGH_DATA (the post-initial-seek resting state).
+ * Event-capable fake: `seekToLiveEdge` attaches a `play` listener, so the element must be a real `EventTarget`.
+ * Defaults to paused + `readyState` HAVE_ENOUGH_DATA (the post-initial-seek resting state).
  */
 function fakeMediaElement(
   init: Partial<Pick<FakeMediaElement, 'currentTime' | 'paused' | 'seeking' | 'readyState'>> = {}
@@ -90,6 +90,7 @@ function run(opts: {
   // The manual `Behavior<>` literal widens the setup return to `BehaviorCleanup`;
   // narrow back to the reactor's destroy handle for teardown.
   const reactor = seekToLiveEdge.setup({ state, context, config }) as { destroy: () => void };
+
   return { cleanup: () => reactor.destroy(), state, context };
 }
 
@@ -116,6 +117,7 @@ describe('seekToLiveEdge', () => {
     const presentation = makePresentation();
     // Complete playlist → parser sets a finite Track.duration.
     const video = presentation.selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack;
+
     video.duration = 110;
 
     const { cleanup, state } = run({ presentation, trackId: 'v-1', mediaElement: el });
@@ -139,6 +141,7 @@ describe('seekToLiveEdge', () => {
     const el = fakeMediaElement();
 
     const { cleanup, state } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el });
+
     expect(state.startPosition.get()).toBe(104); // initial command
 
     // `applyStartPosition` consumes (clears) the command and seeks; the viewer
@@ -162,6 +165,7 @@ describe('seekToLiveEdge', () => {
     const el = fakeMediaElement();
 
     const { cleanup, state } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el });
+
     expect(state.startPosition.get()).toBe(104);
     state.startPosition.set(undefined); // consumed by applyStartPosition
     el.currentTime = 100; // viewer moved
@@ -171,6 +175,7 @@ describe('seekToLiveEdge', () => {
     state.presentation.set(undefined);
     await flush();
     const next = makePresentation(200, 80);
+
     next.url = 'https://example.com/other.m3u8';
     state.presentation.set(next);
     await flush();
@@ -198,6 +203,7 @@ describe('seekToLiveEdge', () => {
     function started() {
       const el = fakeMediaElement();
       const { cleanup, state } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el });
+
       // Stand in for `applyStartPosition`: consume the command and seek, leaving
       // the playhead at the live edge (104) inside the window [100, 110].
       expect(state.startPosition.get()).toBe(104);
@@ -208,6 +214,7 @@ describe('seekToLiveEdge', () => {
 
     it('leaves the playhead alone when playing inside the window (resume)', () => {
       const { el, cleanup } = started();
+
       el.paused = false;
       el.currentTime = 106; // within [100, 110]
       el.dispatchEvent(new Event('play'));
@@ -217,6 +224,7 @@ describe('seekToLiveEdge', () => {
 
     it('repositions to the live edge on resume when the playhead is behind the window start', () => {
       const { el, cleanup } = started();
+
       el.paused = false;
       el.currentTime = 90; // fell behind windowStart (100)
       el.dispatchEvent(new Event('play'));
@@ -226,6 +234,7 @@ describe('seekToLiveEdge', () => {
 
     it('does not reposition while paused as the window slides; repositions on resume', async () => {
       const { el, state, cleanup } = started();
+
       el.currentTime = 90; // window slid past while paused
       el.paused = true;
 
@@ -242,6 +251,7 @@ describe('seekToLiveEdge', () => {
 
     it('does not yank an in-window DVR scrub-back across a window update', async () => {
       const { el, state, cleanup } = started();
+
       el.paused = false;
       el.currentTime = 102; // user scrubbed back, still within [100, 110]
 
@@ -253,6 +263,7 @@ describe('seekToLiveEdge', () => {
 
     it('does not yank an in-flight seek to an in-window position (DVR scrub-back)', () => {
       const { el, cleanup } = started();
+
       el.paused = false;
       el.currentTime = 102; // scrubbing back to a valid position within [100, 110]
       el.seeking = true;
@@ -265,6 +276,7 @@ describe('seekToLiveEdge', () => {
 
     it('rescues a seek stranded behind the window start, even while still seeking', async () => {
       const { el, state, cleanup } = started();
+
       el.paused = false;
       // A scrub toward the back of the window lands on data that has since slid
       // out and been evicted: the seek hangs (readyState drops, `seeking` stays
@@ -285,6 +297,7 @@ describe('seekToLiveEdge', () => {
 
     it('tolerates a sub-threshold boundary excursion without a jitter seek', () => {
       const { el, cleanup } = started();
+
       el.paused = false;
       el.currentTime = 99.95; // within REPOSITION_TOLERANCE (0.1) of windowStart 100
       el.dispatchEvent(new Event('play'));
@@ -298,6 +311,7 @@ describe('seekToLiveEdge', () => {
 
     it('does not reposition while paused as the window slides across reloads; snaps in on resume', async () => {
       const { el, state, cleanup } = started();
+
       el.paused = true;
 
       // Window slides forward past the frozen paused playhead over several reloads.
@@ -316,6 +330,7 @@ describe('seekToLiveEdge', () => {
 
     it('repositions on the window-update re-fire when playback has stalled behind the window', async () => {
       const { el, state, cleanup } = started();
+
       el.paused = false; // a stall is not a pause; currentTime is frozen at 104
       el.readyState = 2; // HAVE_CURRENT_DATA — buffer drained
 

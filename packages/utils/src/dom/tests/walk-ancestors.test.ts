@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { walkAncestors } from '../walk-ancestors';
 
@@ -11,6 +11,7 @@ describe('walkAncestors', () => {
     const outer = document.createElement('section');
     const middle = document.createElement('div');
     const inner = document.createElement('span');
+
     outer.appendChild(middle);
     middle.appendChild(inner);
     document.body.appendChild(outer);
@@ -18,7 +19,9 @@ describe('walkAncestors', () => {
     expect(
       walkAncestors(inner, (node) => {
         if (node === middle) return 'middle';
+
         if (node === outer) return 'outer';
+
         return undefined;
       })
     ).toBe('middle');

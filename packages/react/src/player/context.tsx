@@ -34,16 +34,16 @@ export function PlayerContextProvider({
 export function usePlayerContext(): PlayerContextValue {
   const ctx = useContext(PlayerContext);
   if (!ctx) throw new Error('usePlayerContext must be used within a Player');
+
   return ctx;
 }
 
 /**
  * Access the player store from within a Player.
  *
- * This standalone hook has no knowledge of your configured features, so it
- * returns an untyped `UnknownStore` whose state properties are typed as
- * `unknown`. For typed access, use the `usePlayer` returned by `createPlayer()`,
- * or pass a premade selector to recover the type from its return value.
+ * This standalone hook has no knowledge of your configured features, so it returns an untyped `UnknownStore` whose
+ * state properties are typed as `unknown`. For typed access, use the `usePlayer` returned by `createPlayer()`, or pass
+ * a premade selector to recover the type from its return value.
  *
  * @label Without Selector
  */
@@ -51,23 +51,24 @@ export function usePlayer(): UnknownStore;
 /**
  * Select a value from the player store. Re-renders when the selected value changes.
  *
- * The selector receives `UnknownState`, so an inline selector returns `unknown`.
- * Pass a premade selector (e.g. `selectPlayback`) to get a typed result.
+ * The selector receives `UnknownState`, so an inline selector returns `unknown`. Pass a premade selector (e.g.
+ * `selectPlayback`) to get a typed result.
  *
- * @label With Selector
  * @param selector - Derives a value from the player store state.
+ * @label With Selector
  */
 export function usePlayer<R>(selector: (state: UnknownState) => R): R;
 export function usePlayer<R>(selector?: (state: UnknownState) => R) {
   const { store } = usePlayerContext();
+
   return useStore(store, selector as any);
 }
 
 /**
  * Access player state when available, but return `undefined` outside a Player.
  *
- * This is useful for components that can operate without player context
- * (e.g. they accept fully explicit props as a fallback).
+ * This is useful for components that can operate without player context (e.g. they accept fully explicit props as a
+ * fallback).
  */
 /** @label Without Selector */
 export function useOptionalPlayer(): UnknownStore | undefined;
@@ -77,35 +78,41 @@ export function useOptionalPlayer<R>(selector?: (state: UnknownState) => R) {
   const ctx = useContext(PlayerContext);
   const store = (ctx?.store ?? (EMPTY_STORE as unknown as UnknownStore)) as UnknownStore;
   const value = useStore(store, (ctx ? selector : undefined) as any);
+
   return ctx ? value : undefined;
 }
 
 /** Access the media element from within a Player. */
 export function useMedia(): Media | null {
   const { media } = usePlayerContext();
+
   return media;
 }
 
 /** Access the container element from within a Player. */
 export function useContainer(): MediaContainer | null {
   const { container } = usePlayerContext();
+
   return container;
 }
 
 /** Access the container element when a Player is available. */
 export function useOptionalContainer(): MediaContainer | null {
   const ctx = useContext(PlayerContext);
+
   return ctx?.container ?? null;
 }
 
 /** Access the media attach setter for connecting a media element to the player. */
 export function useMediaAttach(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
+
   return ctx?.setMedia;
 }
 
 /** Access the container attach setter for connecting a container element to the player. */
 export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null>> | undefined {
   const ctx = useContext(PlayerContext);
+
   return ctx?.setContainer;
 }

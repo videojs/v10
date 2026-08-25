@@ -1,4 +1,5 @@
 import {
+  type BlockBody,
   collectFunctionDeclarations,
   createSourceText,
   findJsxAttribute,
@@ -8,8 +9,8 @@ import {
   prependBlockBody,
   renderSourceRange,
   type SourceEdit,
-} from 'vjsc/ast';
-import type { ComponentTargetTransform, ComponentTargetTransformContext } from 'vjsc/target';
+} from '../../../vjsc/src/ast/index.ts';
+import type { ComponentTargetTransform, ComponentTargetTransformContext } from '../../../vjsc/src/target/index.ts';
 
 const optionMenus = [
   { component: 'QualityMenu', binding: 'quality', hook: 'useQualityOptions' },
@@ -22,11 +23,10 @@ const optionMenus = [
 export const reactComponentTransform: ComponentTargetTransform = {
   name: 'videojs:react-components',
   transform(context) {
-    const { code, ast, magicString } = context;
-
+    const { code, ast } = context;
     if (!code.includes('function ')) return false;
 
-    const imports = new ModuleImports(ast, magicString);
+    const imports = new ModuleImports(ast, context.magicString);
 
     let changed = false;
 
@@ -34,61 +34,112 @@ export const reactComponentTransform: ComponentTargetTransform = {
       const name = fn.id?.name;
       if (!name || !fn.body) continue;
 
-      if (name === 'VolumePopover') {
-        const usePlayer = imports.reference({ from: '@videojs/react', name: 'usePlayer' });
-        prependBlockBody(
-          magicString,
-          fn.body,
-          `const volumeAvailability = ${usePlayer}(state => state.volumeAvailability);`
-        );
-        wrapElement(context, fn.body, '$.Popover.Root', `volumeAvailability === 'available'`, '<MuteButton />');
-        changed = true;
-        continue;
-      }
-
-      const menu = optionMenus.find((candidate) => candidate.component === name);
-      if (menu) {
-        const hook = imports.reference({ from: '@videojs/react', name: menu.hook });
-        prependBlockBody(
-          magicString,
-          fn.body,
-          `const ${menu.binding} = ${hook}();\nconst available = ${menu.binding}?.state.availability === 'available';`
-        );
-        wrapElement(
-          context,
-          fn.body,
-          'Submenu',
-          'available',
-          undefined,
-          selectedLabelEdit(code, fn.body, menu.binding)
-        );
-        changed = true;
-        continue;
-      }
-
-      if (name === 'VideoSettingsMenu') {
-        const bindings = optionMenus
-          .map(({ binding, hook }) => {
-            const reference = imports.reference({ from: '@videojs/react', name: hook });
-            return `const ${binding} = ${reference}();`;
-          })
-          .join('\n');
-
-        const availability = optionMenus
-          .map(({ binding }) => `${binding}?.state.availability === 'available'`)
-          .join(' || ');
-
-        prependBlockBody(magicString, fn.body, `${bindings}\nconst hasSettings = ${availability};`);
-        wrapElement(context, fn.body, 'SettingsMenu', 'hasSettings');
-
-        changed = true;
-      }
+      changed = transformReactComponent(context, imports, name, fn.body) || changed;
     }
 
     if (changed) imports.commit();
+
     return changed;
   },
 };
+
+function transformReactComponent(
+  context: ComponentTargetTransformContext,
+  imports: ModuleImports,
+  name: string,
+  body: BlockBody
+): boolean {
+  if (name === 'VolumePopover') return transformVolumePopover(context, imports, body);
+
+  const menu = optionMenus.find((candidate) => candidate.component === name);
+  if (menu) return transformOptionMenu(context, imports, body, menu);
+
+  return name === 'VideoSettingsMenu' ? transformVideoSettingsMenu(context, imports, body) : false;
+}
+
+/**
+ * Replace an unavailable volume popover with its mute-button fallback.
+ *
+ * ```diff
+ * - <$.Popover.Root>...</$.Popover.Root>
+ * + volumeAvailability === 'available' ? <$.Popover.Root>...</$.Popover.Root> : <MuteButton />
+ * ```
+ */
+function transformVolumePopover(
+  context: ComponentTargetTransformContext,
+  imports: ModuleImports,
+  body: BlockBody
+): true {
+  const usePlayer = imports.reference({ from: '@videojs/react', name: 'usePlayer' });
+
+  prependBlockBody(
+    context.magicString,
+    body,
+    `const volumeAvailability = ${usePlayer}(state => state.volumeAvailability);`
+  );
+  wrapElement(context, body, '$.Popover.Root', `volumeAvailability === 'available'`, '<MuteButton />');
+  return true;
+}
+
+/**
+ * Bind an option menu to its player collection and omit it when unavailable.
+ *
+ * ```diff
+ * - <Submenu selectedLabel={<span />} />
+ * + available && <Submenu selectedLabel={<span>{quality?.selectedLabel}</span>} />
+ * ```
+ */
+function transformOptionMenu(
+  context: ComponentTargetTransformContext,
+  imports: ModuleImports,
+  body: BlockBody,
+  menu: (typeof optionMenus)[number]
+): true {
+  const hook = imports.reference({ from: '@videojs/react', name: menu.hook });
+
+  prependBlockBody(
+    context.magicString,
+    body,
+    `const ${menu.binding} = ${hook}();\nconst available = ${menu.binding}?.state.availability === 'available';`
+  );
+  wrapElement(
+    context,
+    body,
+    'Submenu',
+    'available',
+    undefined,
+    createSelectedLabelBindingEdit(context.code, body, menu.binding)
+  );
+  return true;
+}
+
+/**
+ * Hide the settings-menu trigger when every option collection is unavailable.
+ *
+ * ```diff
+ * - <SettingsMenu />
+ * + hasSettings && <SettingsMenu />
+ * ```
+ */
+function transformVideoSettingsMenu(
+  context: ComponentTargetTransformContext,
+  imports: ModuleImports,
+  body: BlockBody
+): true {
+  const bindings = optionMenus
+    .map(({ binding, hook }) => {
+      const reference = imports.reference({ from: '@videojs/react', name: hook });
+
+      return `const ${binding} = ${reference}();`;
+    })
+    .join('\n');
+
+  const availability = optionMenus.map(({ binding }) => `${binding}?.state.availability === 'available'`).join(' || ');
+
+  prependBlockBody(context.magicString, body, `${bindings}\nconst hasSettings = ${availability};`);
+  wrapElement(context, body, 'SettingsMenu', 'hasSettings');
+  return true;
+}
 
 function wrapElement(
   context: ComponentTargetTransformContext,
@@ -100,8 +151,10 @@ function wrapElement(
 ): void {
   const { code, magicString } = context;
   const element = findJsxElement(root, expected);
+
   if (!element) {
     if (nestedEdit) magicString.overwrite(nestedEdit.start, nestedEdit.end, nestedEdit.content);
+
     return;
   }
 
@@ -116,16 +169,16 @@ function wrapElement(
   magicString.overwrite(element.start, element.end, replacement);
 }
 
-function selectedLabelEdit(code: string, root: Node, binding: string): SourceEdit | undefined {
+function createSelectedLabelBindingEdit(code: string, root: Node, binding: string): SourceEdit | undefined {
   const submenu = findJsxElement(root, 'Submenu');
   const selectedLabel = submenu && findJsxAttribute(submenu, 'selectedLabel');
-  if (selectedLabel?.value?.type !== 'JSXExpressionContainer') {
-    return undefined;
-  }
+  if (selectedLabel?.value?.type !== 'JSXExpressionContainer') return undefined;
+
   const value = selectedLabel.value.expression;
   if (value.type !== 'JSXElement') return undefined;
 
   const attributes = value.openingElement.attributes.map((attribute) => code.slice(attribute.start, attribute.end));
   const opening = `<span${attributes.length ? ` ${attributes.join(' ')}` : ''}>`;
+
   return { start: value.start, end: value.end, content: `${opening}{${binding}?.selectedLabel}</span>` };
 }

@@ -35,11 +35,15 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
       sourceEntries.clear();
 
       const files = discoverFiles(root, options.include, options.exclude);
+
       this.addWatchFile(root);
+
       for (const filename of files) this.addWatchFile(filename);
+
       if (options.styles) {
         for (const filename of discoverStyleFiles(resolve(root, options.styles.input))) this.addWatchFile(filename);
       }
+
       const discovered = files.map(
         (filename): ShadcnModule<Item> => ({
           id: filename,
@@ -50,9 +54,12 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
 
       for (const module of discovered) {
         const transformations = options.publish.modules?.(module, discovered) ?? [{}];
+
         for (const transform of transformations) {
           const id = moduleId(module.filename, transform);
+
           if (sources.has(id)) this.error(`Shadcn source transformation is declared twice: \`${id}\`.`);
+
           sources.set(id, { ...module, id, transform: { ...transform } });
           sourceEntries.add(this.emitFile({ type: 'chunk', id }));
         }
@@ -60,22 +67,28 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
     },
     async buildEnd(error) {
       if (error) return;
+
       const modules: SourceModule<Item>[] = [];
 
       for (const module of sources.values()) {
         const info = this.getModuleInfo(module.id);
         const source = readComponentSource(info?.meta);
+
         if (source === undefined) this.error(`Shadcn source has no captured component output: \`${module.id}\`.`);
+
         const meta = readComponentMeta(info?.meta) as Item | undefined;
         const imports: SourceImport[] = [];
+
         for (const reference of analyzeImports(source, module.filename)) {
           const resolved = await this.resolve(reference.specifier, module.id);
           const resolvedId = resolved ? normalizeResolvedId(resolved.id) : undefined;
+
           if (reference.specifier.startsWith('.') && !resolvedId) {
             this.error(
               `Shadcn source cannot resolve relative import \`${reference.specifier}\` from \`${module.filename}\`.`
             );
           }
+
           if (
             reference.specifier.startsWith('.') &&
             resolvedId &&
@@ -86,15 +99,20 @@ function shadcnEmitterPlugin<Item extends ComponentMeta>(options: ShadcnPluginOp
               `Shadcn relative import \`${reference.specifier}\` from \`${module.filename}\` resolves outside the registry source root.`
             );
           }
+
           imports.push({ ...reference, ...(resolvedId ? { resolvedId } : {}) });
         }
+
         modules.push({ ...module, ...(meta ? { meta } : {}), source, imports });
       }
+
       graph = { root, modules: new Map(modules.map((module) => [module.id, module])) };
     },
     async generateBundle(_outputOptions, bundle) {
       if (!graph) this.error('Shadcn source graph was not collected before output generation.');
+
       removeSourceEntryChunks(this, bundle, sourceEntries);
+
       for (const file of await createShadcnRegistryFiles(graph, options)) {
         this.emitFile({ type: 'asset', fileName: file.path, source: file.content });
       }
@@ -119,12 +137,17 @@ function collectChunkDependencies(bundle: OutputBundle, roots: Iterable<string>)
   const collected = new Set<string>();
   const visit = (fileName: string): void => {
     if (collected.has(fileName)) return;
+
     const output = bundle[fileName];
     if (output?.type !== 'chunk') return;
+
     collected.add(fileName);
+
     for (const dependency of [...output.imports, ...output.dynamicImports]) visit(dependency);
   };
+
   for (const root of roots) visit(root);
+
   return collected;
 }
 
@@ -135,6 +158,7 @@ function discoverFiles(
 ): string[] {
   const patterns = toArray(include);
   const excluded = exclude ? toArray(exclude) : undefined;
+
   return [
     ...new Set(
       patterns.flatMap((pattern) =>
@@ -151,12 +175,15 @@ function discoverStyleFiles(input: string): string[] {
   const visit = (filename: string): void => {
     const resolved = resolveModulePath(filename);
     if (files.has(resolved)) return;
+
     files.add(resolved);
     const source = readFileSync(resolved, 'utf8');
+
     for (const match of source.matchAll(/@import\s+(?:url\()?\s*["']([^"']+)["']/g)) {
       if (match[1]?.startsWith('.')) visit(resolve(dirname(resolved), match[1]));
     }
   };
+
   visit(input);
   return [...files].sort();
 }

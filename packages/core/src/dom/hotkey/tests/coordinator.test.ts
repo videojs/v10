@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HotkeyCoordinator } from '../coordinator';
 
 function keydown(target: EventTarget, key: string, mods?: Partial<KeyboardEventInit>): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...mods });
+
   target.dispatchEvent(event);
   return event;
 }
@@ -37,6 +38,7 @@ describe('HotkeyCoordinator', () => {
     it('fires onActivate for matching keydown', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate });
 
       keydown(container, 'k');
@@ -46,6 +48,7 @@ describe('HotkeyCoordinator', () => {
 
     it('calls preventDefault on match', () => {
       const c = setup();
+
       c.add({ keys: 'k', onActivate: vi.fn() });
 
       const event = keydown(container, 'k');
@@ -56,6 +59,7 @@ describe('HotkeyCoordinator', () => {
     it('does not fire for non-matching keys', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate });
 
       keydown(container, 'j');
@@ -131,9 +135,11 @@ describe('HotkeyCoordinator', () => {
     it('suppresses single-key shortcuts in text inputs', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate });
 
       const input = document.createElement('input');
+
       input.type = 'text';
       container.appendChild(input);
 
@@ -145,9 +151,11 @@ describe('HotkeyCoordinator', () => {
     it('allows modifier combos in text inputs', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'Ctrl+k', onActivate });
 
       const input = document.createElement('input');
+
       input.type = 'text';
       container.appendChild(input);
 
@@ -161,9 +169,11 @@ describe('HotkeyCoordinator', () => {
     it('skips Space on button elements', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'Space', onActivate });
 
       const button = document.createElement('button');
+
       container.appendChild(button);
 
       keydown(button, ' ');
@@ -174,9 +184,11 @@ describe('HotkeyCoordinator', () => {
     it('skips Enter on role="button" elements', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'Enter', onActivate });
 
       const div = document.createElement('div');
+
       div.setAttribute('role', 'button');
       container.appendChild(div);
 
@@ -188,9 +200,11 @@ describe('HotkeyCoordinator', () => {
     it('fires for non-activation keys on buttons', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate });
 
       const button = document.createElement('button');
+
       container.appendChild(button);
 
       keydown(button, 'k');
@@ -203,6 +217,7 @@ describe('HotkeyCoordinator', () => {
     it('ignores repeat events when repeat is false', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate, repeatable: false });
 
       keydown(container, 'k', { repeat: true });
@@ -213,6 +228,7 @@ describe('HotkeyCoordinator', () => {
     it('fires repeat events when repeatable is true', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate, repeatable: true });
 
       keydown(container, 'k', { repeat: true });
@@ -223,6 +239,7 @@ describe('HotkeyCoordinator', () => {
     it('allows repeat by default', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate });
 
       keydown(container, 'k', { repeat: true });
@@ -235,6 +252,7 @@ describe('HotkeyCoordinator', () => {
     it('skips disabled bindings', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate, disabled: true });
 
       keydown(container, 'k');
@@ -266,6 +284,7 @@ describe('HotkeyCoordinator', () => {
 
       // Re-add to verify listener was removed (new listener needed).
       const onActivate2 = vi.fn();
+
       c.add({ keys: 'k', onActivate: onActivate2 });
       keydown(container, 'k');
 
@@ -275,6 +294,7 @@ describe('HotkeyCoordinator', () => {
 
     it('destroy is idempotent', () => {
       const c = setup();
+
       c.destroy();
       c.destroy();
     });
@@ -282,6 +302,7 @@ describe('HotkeyCoordinator', () => {
     it('does not fire after destroy', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate });
 
       c.destroy();
@@ -295,6 +316,7 @@ describe('HotkeyCoordinator', () => {
     it('listens on document for document-scoped bindings', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate, target: 'document' });
 
       keydown(document, 'k');
@@ -316,6 +338,7 @@ describe('HotkeyCoordinator', () => {
     it('fires document-scoped binding once when key originates in container', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.add({ keys: 'k', onActivate, target: 'document' });
 
       // Key in container bubbles to document — doc listener fires once.
@@ -329,6 +352,7 @@ describe('HotkeyCoordinator', () => {
     it('still invokes onActivate when a subscriber throws', () => {
       const c = setup();
       const onActivate = vi.fn();
+
       c.subscribe(() => {
         throw new Error('subscriber boom');
       });
@@ -342,6 +366,7 @@ describe('HotkeyCoordinator', () => {
     it('runs subsequent subscribers after one throws', () => {
       const c = setup();
       const second = vi.fn();
+
       c.subscribe(() => {
         throw new Error('first');
       });
@@ -357,11 +382,13 @@ describe('HotkeyCoordinator', () => {
   describe('ARIA registry', () => {
     it('returns undefined for unregistered action', () => {
       const c = setup();
+
       expect(c.getAriaKeys('togglePaused')).toBeUndefined();
     });
 
     it('returns formatted key for registered action', () => {
       const c = setup();
+
       c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
 
       expect(c.getAriaKeys('togglePaused')).toBe('k');
@@ -369,6 +396,7 @@ describe('HotkeyCoordinator', () => {
 
     it('accumulates multiple bindings for same action', () => {
       const c = setup();
+
       c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
       c.add({ keys: 'Space', onActivate: vi.fn(), action: 'togglePaused' });
 
@@ -386,6 +414,7 @@ describe('HotkeyCoordinator', () => {
 
     it('returns the latest registered shortcut as the preferred display key', () => {
       const c = setup();
+
       c.add({ keys: 'Space', onActivate: vi.fn(), action: 'togglePaused' });
       c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
 
@@ -397,6 +426,7 @@ describe('HotkeyCoordinator', () => {
 
     it('filters shortcuts by action value', () => {
       const c = setup();
+
       c.add({ keys: 'ArrowLeft', onActivate: vi.fn(), action: 'seekStep', value: -5 });
       c.add({ keys: 'j', onActivate: vi.fn(), action: 'seekStep', value: -10 });
       c.add({ keys: 'l', onActivate: vi.fn(), action: 'seekStep', value: 10 });
@@ -409,6 +439,7 @@ describe('HotkeyCoordinator', () => {
 
     it('excludes disabled bindings from shortcut lookup', () => {
       const c = setup();
+
       c.add({ keys: 'Space', onActivate: vi.fn(), action: 'togglePaused', disabled: true });
       c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
 
@@ -424,6 +455,7 @@ describe('HotkeyCoordinator', () => {
       const unsubscribe = c.subscribeShortcutChanges(subscriber);
 
       const remove = c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
+
       remove();
 
       expect(subscriber).toHaveBeenCalledTimes(2);

@@ -1,0 +1,42 @@
+---
+title: Bundlers
+description: Bundler requirements for Video.js package exports, CSS, and wrapper libraries
+---
+
+Before the browser runs your application, a bundler such as Vite combines its imports into files the browser can load. Your bundler must understand the import paths published by Video.js packages.
+
+## Package exports
+
+Each Video.js package has an `exports` field in its `package.json`. This field lists the import paths that applications and libraries can use, such as `@videojs/html/video/player` and `@videojs/react/live-video`.
+
+If an older bundler reports that one of these paths is missing or not exported, upgrade the bundler before adding an alias that bypasses the package's public API.
+
+## Vite compatibility
+
+Use a current Vite release. Testing confirmed that Vite 5.4.19 can load Video.js JavaScript and CSS package exports. Vite 3.2.8 can load the JavaScript, but it cannot load an exported stylesheet such as `@videojs/html/video/skin.css`.
+
+Packaged HTML skins import their own styles, so an HTML application using `@videojs/html/video/skin` doesn't need to import `skin.css` separately. The CSS limitation matters only when your application imports that stylesheet directly.
+
+## Externalize Video.js in a wrapper library
+
+You can skip this section when building an application.
+
+If you publish a library that expects its users to install Video.js separately, leave Video.js out of your library's bundle. Rollup calls a dependency left out of the bundle **external**.
+
+Rollup's array form matches only the exact package name, so `external: ['@videojs/html']` misses imports such as `@videojs/html/video/player`.
+
+Match the package name and everything below it instead:
+
+```js title="rollup.config.js"
+const videojsPeers = ['@videojs/html'];
+
+export default {
+  external(id) {
+    return videojsPeers.some(
+      (packageName) => id === packageName || id.startsWith(`${packageName}/`)
+    );
+  }
+};
+```
+
+Add every `@videojs/*` package your library imports directly to `videojsPeers` and list it in `peerDependencies`.

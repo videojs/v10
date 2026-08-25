@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { createDOMRect, getPositioningBoundaryRect, intersectDOMRects, resolvePositioningBoundary } from '../layout';
 
 describe('createDOMRect', () => {
@@ -90,6 +91,7 @@ describe('resolvePositioningBoundary', () => {
   it('resolves selector boundaries from the provided root', () => {
     const root = document.createElement('div');
     const boundary = document.createElement('div');
+
     boundary.className = 'boundary';
     root.append(boundary);
 

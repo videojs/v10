@@ -1,15 +1,14 @@
 /**
  * Shared test helpers for `@videojs/react`.
  *
- * Provides factory functions for common mock objects used across component
- * tests. `vi.mock()` blocks must still live in each test file (Vitest hoists
- * them before imports), but non-mock helpers like store and wrapper factories
- * can be shared here.
+ * Provides factory functions for common mock objects used across component tests. `vi.mock()` blocks must still live in
+ * each test file (Vitest hoists them before imports), but non-mock helpers like store and wrapper factories can be
+ * shared here.
  */
 
 import type { ReactNode } from 'react';
-import type { Mock } from 'vitest';
-import { vi } from 'vitest';
+import type { Mock } from 'vite-plus/test';
+import { vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../i18n';
 import { PlayerContextProvider, type PlayerContextValue } from '../player/context';
@@ -38,8 +37,8 @@ export function createMockStore(state: Record<string, unknown> = {}): MockStore 
 /**
  * Create a React wrapper that provides `PlayerContextProvider`.
  *
- * Accepts an optional store state seed. Returns the wrapper component,
- * the mock store, and the context value for assertions.
+ * Accepts an optional store state seed. Returns the wrapper component, the mock store, and the context value for
+ * assertions.
  */
 export function createPlayerWrapper(storeState: Record<string, unknown> = {}): {
   store: MockStore;

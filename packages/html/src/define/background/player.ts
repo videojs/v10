@@ -1,4 +1,5 @@
 import { backgroundFeatures } from '@videojs/core/dom';
+
 import { createPlayer } from '../../player/create-player';
 import { ContainerElement } from '../../ui/container/container-element';
 import { UIElement } from '../../ui/ui-element';

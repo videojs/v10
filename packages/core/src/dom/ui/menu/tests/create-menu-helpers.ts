@@ -1,4 +1,5 @@
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
+
 import { createTransition } from '../../transition';
 import { createMenu, type MenuApi, type MenuChangeDetails } from '../create-menu';
 
@@ -25,6 +26,7 @@ export function createTestMenu(overrides?: Partial<Parameters<typeof createMenu>
 
 export function createItemElement(text: string): HTMLButtonElement {
   const element = document.createElement('button');
+
   element.textContent = text;
   document.body.appendChild(element);
   return element;

@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import {
@@ -28,12 +29,14 @@ function setupTrackCurrentTime(
   const state = makeState(initialState);
   const context = makeContext(initialContext);
   const cleanup = trackCurrentTime.setup({ state, context, config });
+
   return { state, context, cleanup };
 }
 
 describe('trackCurrentTime', () => {
   it('syncs currentTime immediately when mediaElement is provided', async () => {
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 5.5, writable: true });
 
     const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
@@ -47,6 +50,7 @@ describe('trackCurrentTime', () => {
 
   it('updates currentTime on timeupdate events', async () => {
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
     const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
@@ -63,6 +67,7 @@ describe('trackCurrentTime', () => {
 
   it('continues tracking on subsequent timeupdate events', async () => {
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
     const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
@@ -80,6 +85,7 @@ describe('trackCurrentTime', () => {
 
   it('does not re-setup when context updates but mediaElement is unchanged', async () => {
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 5, writable: true });
 
     const addEventListenerSpy = vi.spyOn(mediaElement, 'addEventListener');
@@ -113,6 +119,7 @@ describe('trackCurrentTime', () => {
 
   it('resets to defaultCurrentTime when mediaElement is removed', async () => {
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 5.5, writable: true });
 
     const { state, context, cleanup } = setupTrackCurrentTime({}, { mediaElement });
@@ -132,6 +139,7 @@ describe('trackCurrentTime', () => {
     await vi.waitFor(() => expect(state.currentTime.get()).toBe(10));
 
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 5.5, writable: true });
     context.mediaElement.set(mediaElement);
 
@@ -150,6 +158,7 @@ describe('trackCurrentTime', () => {
     await vi.waitFor(() => expect(state.currentTime.get()).toBe(0));
 
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 2.0, writable: true });
     context.mediaElement.set(mediaElement);
 
@@ -162,8 +171,10 @@ describe('trackCurrentTime', () => {
 
   it('stops listening to old mediaElement when replaced', async () => {
     const element1 = document.createElement('video');
+
     Object.defineProperty(element1, 'currentTime', { value: 1.0, writable: true });
     const element2 = document.createElement('video');
+
     Object.defineProperty(element2, 'currentTime', { value: 20.0, writable: true });
 
     const { state, context, cleanup } = setupTrackCurrentTime({}, { mediaElement: element1 });
@@ -185,6 +196,7 @@ describe('trackCurrentTime', () => {
   it('resets currentTime on emptied event (src change reuses engine)', async () => {
     const mediaElement = document.createElement('video');
     let currentTime = 5.5;
+
     Object.defineProperty(mediaElement, 'currentTime', {
       get: () => currentTime,
       set: (v: number) => {
@@ -209,6 +221,7 @@ describe('trackCurrentTime', () => {
 
   it('updates currentTime on seeking events (seek while paused)', async () => {
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
     const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
@@ -225,6 +238,7 @@ describe('trackCurrentTime', () => {
 
   it('removes all listeners on cleanup', async () => {
     const mediaElement = document.createElement('video');
+
     Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
 
     const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });

@@ -22,6 +22,7 @@ export const MAX_CHAR_LIMIT = 80;
 
 const BG_COLOR = '#1e1d1d'; // faded-black
 const TEXT_COLOR = '#f3e7d2'; // manila-light
+
 const LOGO_WIDTH = 800;
 const LOGO_HEIGHT = Math.round(LOGO_WIDTH * (68 / 381)); // ≈143px
 const LARGE_TITLE_GAP = 52; // px between logo and title for short titles
@@ -54,9 +55,8 @@ let fontDataPromise: Promise<ArrayBuffer> | null = null;
 
 async function fetchFont(url: string): Promise<ArrayBuffer> {
   const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to load font: ${response.status}`);
-  }
+  if (!response.ok) throw new Error(`Failed to load font: ${response.status}`);
+
   return response.arrayBuffer();
 }
 
@@ -70,6 +70,7 @@ function loadFont(): Promise<ArrayBuffer> {
       );
     });
   }
+
   return fontDataPromise;
 }
 
@@ -126,9 +127,11 @@ export async function renderOgImage(options: { title?: string; size: OgSize }): 
   // Uppercase (unless the title is a code identifier like PlaybackRateButton),
   // then truncate if needed
   let displayTitle = title && isCodeIdentifier(title) ? title : title?.toUpperCase();
+
   if (displayTitle && displayTitle.length > MAX_CHAR_LIMIT) {
     const truncated = displayTitle.slice(0, MAX_CHAR_LIMIT);
     const lastSpace = truncated.lastIndexOf(' ');
+
     displayTitle = `${lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated}…`;
     console.warn(
       `⚠ OG image for "${title}": title truncated (${title!.length} chars > ${MAX_CHAR_LIMIT} max). Consider adding ogTitle to frontmatter.`
@@ -200,5 +203,6 @@ export async function renderOgImage(options: { title?: string; size: OgSize }): 
     fitTo: { mode: 'width', value: width },
   });
   const pngData = resvg.render();
+
   return Buffer.from(pngData.asPng());
 }

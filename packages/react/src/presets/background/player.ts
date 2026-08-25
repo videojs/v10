@@ -1,6 +1,7 @@
 'use client';
 
 import { backgroundFeatures } from '@videojs/core/dom';
+
 import { createPlayer } from '../../player/create-player';
 
 /** Preconfigured player with the background video features. */

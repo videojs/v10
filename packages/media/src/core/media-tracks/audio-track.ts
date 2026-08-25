@@ -21,6 +21,7 @@ export class AudioTrack {
 
   addRendition(src: string, codec?: string, bitrate?: number) {
     const rendition = new AudioRendition();
+
     rendition.src = src;
     rendition.codec = codec;
     rendition.bitrate = bitrate;
@@ -38,6 +39,7 @@ export class AudioTrack {
 
   set enabled(value: boolean) {
     if (this.#enabled === value) return;
+
     this.#enabled = value;
 
     enabledChanged(this);

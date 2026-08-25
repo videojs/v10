@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { isEventLike } from '../event-like';
 
@@ -23,11 +23,13 @@ describe('event-like', () => {
 
     it('returns true for DOM Events', () => {
       const event = new Event('click');
+
       expect(isEventLike(event)).toBe(true);
     });
 
     it('returns true for CustomEvent', () => {
       const event = new CustomEvent('custom', { detail: { foo: 'bar' } });
+
       expect(isEventLike(event)).toBe(true);
     });
 

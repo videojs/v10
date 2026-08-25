@@ -42,25 +42,20 @@ type NavbarProps = {
 };
 
 /**
- * What the selected media will do with a source, when that's worth labelling for
- * someone smoke-testing. The plain HLS presets are the SPF engine: no TS transmux pipeline
- * and no EME, so it refuses MPEG-TS on format and encrypted renditions on
- * protection. Derived from the pair rather than stored on the source, since every
- * source here plays fine under some other media.
+ * What the selected media will do with a source, when that's worth labelling for someone smoke-testing. The plain HLS
+ * presets are the SPF engine: no TS transmux pipeline and no EME, so it refuses MPEG-TS on format and encrypted
+ * renditions on protection. Derived from the pair rather than stored on the source, since every source here plays fine
+ * under some other media.
  *
- * Keyed on the *preset*, not a single is-SPF-HLS flag, because the variants answer
- * differently and a note promising the wrong outcome is worse than none — a
- * reviewer would file the difference as a bug:
+ * Keyed on the _preset_, not a single is-SPF-HLS flag, because the variants answer differently and a note promising the
+ * wrong outcome is worse than none — a reviewer would file the difference as a bug:
  *
- * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only
- *   engine resolves only the audio rendition, so it never fetches an encrypted
- *   playlist and plays the source instead of refusing it.
- * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the
- *   source carries an audio rendition of its own or muxes audio into its video
- *   renditions — an absent type reports nothing and stalls silently rather than
- *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean
- *   nothing plays, so the note stops at that rather than naming a verdict that
- *   only appears for one of them.
+ * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only engine resolves only the audio
+ *   rendition, so it never fetches an encrypted playlist and plays the source instead of refusing it.
+ * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the source carries an audio rendition of its
+ *   own or muxes audio into its video renditions — an absent type reports nothing and stalls silently rather than
+ *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean nothing plays, so the note stops at
+ *   that rather than naming a verdict that only appears for one of them.
  */
 function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
   // The background presets are the same engine again, error surface included:
@@ -73,19 +68,24 @@ function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | un
   // video-only, so an absent video type is fatal here too.
   if (preset === 'hls-background-video' || preset === 'mux-background-video') {
     if (source.drm) return 'expects protected error';
+
     if (source.subType && source.subType !== 'mp4') return 'expects unsupported-format error';
+
     return undefined;
   }
 
   if (preset !== 'hls-video' && preset !== 'hls-audio') return undefined;
+
   const audioOnlyPreset = preset === 'hls-audio';
 
   if (source.drm) {
     return audioOnlyPreset ? 'plays — Mux leaves audio clear' : 'expects protected error';
   }
+
   if (source.subType && source.subType !== 'mp4') {
     return audioOnlyPreset ? 'expects no playback' : 'expects unsupported-format error';
   }
+
   return undefined;
 }
 
@@ -157,7 +157,7 @@ export function Navbar({
   sources,
 }: NavbarProps) {
   return (
-    <header className="shrink-0 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex items-center px-4 h-14 gap-6">
+    <header className="flex h-14 shrink-0 items-center gap-6 border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-950">
       <span className="text-sm font-semibold tracking-tight whitespace-nowrap text-zinc-950 dark:text-zinc-50">
         Video.js v10
       </span>
@@ -207,14 +207,18 @@ export function Navbar({
               // The empty-src entry carries no media, so it's offered wherever
               // the preset can render one rather than being filtered by format.
               if (sources[id].type === 'none') return true;
+
               // Any HLS source, including formats the SPF engine can't play — reaching
               // those failures on purpose is how the error paths get smoke-tested.
               if (isSpfHls || isSpfBackgroundVideo) return sources[id].type === 'hls';
+
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
+
               return true;
             })
             .map((id) => {
               const note = expectedOutcomeNote(sources[id], preset);
+
               return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
             })}
           // `<background-video>` is the one background preset with a fixed source:
@@ -243,7 +247,7 @@ export function Navbar({
           href="https://github.com/videojs/v10"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center size-8 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="inline-flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
         >
           <span className="sr-only">GitHub repository</span>
           <svg
@@ -338,7 +342,7 @@ function SettingsMenu({
         aria-expanded={open}
         aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex items-center justify-center size-8 rounded-md text-zinc-500 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors aria-expanded:bg-zinc-100 dark:aria-expanded:bg-zinc-800 aria-expanded:text-zinc-950 dark:aria-expanded:text-zinc-50"
+        className="inline-flex size-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950 aria-expanded:bg-zinc-100 aria-expanded:text-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 dark:aria-expanded:bg-zinc-800 dark:aria-expanded:text-zinc-50"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -359,7 +363,7 @@ function SettingsMenu({
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 top-full mt-2 z-20 grid grid-cols-[1fr_auto] auto-rows-[1.75rem] items-center gap-x-6 gap-y-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 shadow-md shadow-black/5 max-h-[min(24rem,70vh)] overflow-y-auto"
+          className="absolute top-full right-0 z-20 mt-2 grid max-h-[min(24rem,70vh)] auto-rows-[1.75rem] grid-cols-[1fr_auto] items-center gap-x-6 gap-y-1 overflow-y-auto rounded-md border border-zinc-200 bg-white p-3 shadow-md shadow-black/5 dark:border-zinc-800 dark:bg-zinc-950"
         >
           <SelectItem
             id={localeId}
@@ -396,7 +400,7 @@ function ColorItem({ id, value, onChange }: ColorItemProps) {
 
   return (
     <>
-      <label htmlFor={id} className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 cursor-pointer">
+      <label htmlFor={id} className="cursor-pointer text-[13px] font-medium text-zinc-700 dark:text-zinc-200">
         Accent color
       </label>
       <div className="flex items-center gap-1.5 justify-self-start">
@@ -407,14 +411,14 @@ function ColorItem({ id, value, onChange }: ColorItemProps) {
           onChange={(event) => onChange(event.target.value)}
           placeholder="Default"
           spellCheck={false}
-          className="h-7 w-28 rounded border-none bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-900 px-2 text-[13px] font-medium text-zinc-950 dark:text-zinc-50 shadow-xs shadow-black/20 focus:outline-2 focus:outline-zinc-950 dark:focus:outline-zinc-50 focus:outline-offset-2"
+          className="h-7 w-28 rounded border-none bg-white bg-clip-border px-2 text-[13px] font-medium text-zinc-950 shadow-xs ring shadow-black/20 ring-zinc-800/10 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-950 dark:bg-zinc-900 dark:text-zinc-50 dark:ring-white/10 dark:focus:outline-zinc-50"
         />
         <input
           type="color"
           value={pickerValue}
           onChange={(event) => onChange(event.target.value)}
           aria-label="Choose accent color"
-          className="size-7 rounded border-none bg-transparent p-0 cursor-pointer"
+          className="size-7 cursor-pointer rounded border-none bg-transparent p-0"
         />
       </div>
     </>
@@ -431,7 +435,7 @@ type CheckboxItemProps = {
 function CheckboxItem({ id, label, checked, onChange }: CheckboxItemProps) {
   return (
     <>
-      <label htmlFor={id} className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 cursor-pointer">
+      <label htmlFor={id} className="cursor-pointer text-[13px] font-medium text-zinc-700 dark:text-zinc-200">
         {label}
       </label>
       <input
@@ -439,7 +443,7 @@ function CheckboxItem({ id, label, checked, onChange }: CheckboxItemProps) {
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="justify-self-start size-3.5 rounded border-zinc-300 dark:border-zinc-700 accent-zinc-950 dark:accent-zinc-50 cursor-pointer"
+        className="size-3.5 cursor-pointer justify-self-start rounded border-zinc-300 accent-zinc-950 dark:border-zinc-700 dark:accent-zinc-50"
       />
     </>
   );
@@ -457,7 +461,7 @@ type SelectItemProps = {
 function SelectItem({ id, label, value, onChange, options, optionGroups }: SelectItemProps) {
   return (
     <>
-      <label htmlFor={id} className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 cursor-pointer">
+      <label htmlFor={id} className="cursor-pointer text-[13px] font-medium text-zinc-700 dark:text-zinc-200">
         {label}
       </label>
       <div className="relative justify-self-start">
@@ -465,7 +469,7 @@ function SelectItem({ id, label, value, onChange, options, optionGroups }: Selec
           id={id}
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="h-7 appearance-none rounded border-none bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-900 pl-2 pr-7 text-[13px] font-medium text-zinc-950 dark:text-zinc-50 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 focus:outline-2 focus:outline-zinc-950 dark:focus:outline-zinc-50 focus:outline-offset-2 cursor-pointer"
+          className="h-7 cursor-pointer appearance-none rounded border-none bg-white bg-clip-border pr-7 pl-2 text-[13px] font-medium text-zinc-950 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-950 dark:bg-zinc-900 dark:text-zinc-50 dark:ring-white/10 dark:hover:bg-zinc-900 dark:focus:outline-zinc-50"
         >
           {optionGroups
             ? optionGroups.map((group) => (
@@ -484,7 +488,7 @@ function SelectItem({ id, label, value, onChange, options, optionGroups }: Selec
               ))}
         </select>
         <svg
-          className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 dark:text-zinc-400"
+          className="pointer-events-none absolute top-1/2 right-1.5 size-3 -translate-y-1/2 text-zinc-500 dark:text-zinc-400"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="none"
@@ -529,7 +533,7 @@ function Select({ label, value, onChange, options, disabled }: SelectProps) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
-          className="h-8 appearance-none rounded-md border-none bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-900 pl-3 pr-8 text-[13px] font-medium text-zinc-950 dark:text-zinc-50 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 focus:outline-2 focus:outline-zinc-950 dark:focus:outline-zinc-50 focus:outline-offset-2 disabled:pointer-events-none disabled:opacity-50"
+          className="h-8 appearance-none rounded-md border-none bg-white bg-clip-border pr-8 pl-3 text-[13px] font-medium text-zinc-950 shadow-xs ring shadow-black/20 ring-zinc-800/10 transition-colors hover:bg-zinc-50 focus:outline-2 focus:outline-offset-2 focus:outline-zinc-950 disabled:pointer-events-none disabled:opacity-50 dark:bg-zinc-900 dark:text-zinc-50 dark:ring-white/10 dark:hover:bg-zinc-900 dark:focus:outline-zinc-50"
         >
           {options.map((opt) => (
             <option key={opt.value} value={opt.value} disabled={opt.disabled}>
@@ -538,7 +542,7 @@ function Select({ label, value, onChange, options, disabled }: SelectProps) {
           ))}
         </select>
         <svg
-          className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500 dark:text-zinc-400"
+          className="pointer-events-none absolute top-1/2 right-2 size-3.5 -translate-y-1/2 text-zinc-500 dark:text-zinc-400"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="none"

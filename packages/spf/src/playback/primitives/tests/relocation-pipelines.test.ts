@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { signal } from '../../../core/signals/primitives';
 import { initSegment, mediaSegment, trak } from '../../../media/mp4/tests/synthetic-boxes';
 import type { Cue, MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
@@ -28,13 +29,17 @@ function makeDeps(): {
   slot: ReturnType<typeof signal<Record<string, MediaContainerData> | undefined>>;
 } {
   const slot = signal<Record<string, MediaContainerData> | undefined>(undefined);
+
   return { deps: { state: { mediaContainerData: slot }, context: {}, config: {} }, slot };
 }
 
-/** The discover steps at their pipeline positions: `[fetch, discover, dispatch]`. The
- * derive is irrelevant here (only the stamp step consumes it), so a no-op suffices. */
+/**
+ * The discover steps at their pipeline positions: `[fetch, discover, dispatch]`. The derive is irrelevant here (only
+ * the stamp step consumes it), so a no-op suffices.
+ */
 function discoverSteps(trackType: 'video' | 'audio') {
   const pipelines = relocationPipelinesFor(trackType, () => ({}))();
+
   return { readInitTrackInfo: pipelines['append-init'][1]!, readSegmentOrigin: pipelines['append-segment'][1]! };
 }
 
@@ -48,6 +53,7 @@ describe('relocationPipelinesFor', () => {
       op: { type: 'append-init', meta: { trackId: 'v', language: undefined }, url: 'init.mp4' },
       data: streamOf(captionFirstInit),
     } as unknown as Frame;
+
     await readInitTrackInfo(initFrame, signalNotAborted, deps);
 
     // The `vide` track — id 1, timescale 6000 — not the caption track (id 2).
@@ -57,10 +63,12 @@ describe('relocationPipelinesFor', () => {
       op: { type: 'append-segment', meta: { id: 's0', startTime: 0, duration: 6, trackId: 'v' } },
       data: streamOf(captionFirstSegment),
     } as unknown as Frame;
+
     await readSegmentOrigin(segmentFrame, signalNotAborted, deps);
 
     // Track 1's tfdt (60000), never the caption track's (300000).
     const video = slot.get()?.video;
+
     expect(video?.baseMediaDecodeTime).toBe(60000);
     expect(video!.baseMediaDecodeTime! / video!.timescale!).toBe(10);
   });
@@ -75,6 +83,7 @@ describe('relocationPipelinesFor', () => {
       op: { type: 'append-init', meta: { trackId: 'a', language: undefined }, url: 'init.mp4' },
       data: streamOf(captionFirstInit),
     } as unknown as Frame;
+
     await readInitTrackInfo(initFrame, signalNotAborted, deps);
     expect(slot.get()?.audio).toBeUndefined();
 
@@ -83,6 +92,7 @@ describe('relocationPipelinesFor', () => {
       op: { type: 'append-segment', meta: { id: 's0', startTime: 0, duration: 6, trackId: 'a' } },
       data: streamOf(captionFirstSegment),
     } as unknown as Frame;
+
     await readSegmentOrigin(segmentFrame, signalNotAborted, deps);
     expect(slot.get()?.audio?.baseMediaDecodeTime).toBeUndefined();
   });
@@ -123,6 +133,7 @@ describe('relocatingTextPipelines — relocateCues origin resolution', () => {
     const frame = { cues: [c], metadata: appleMap } as unknown as TextFrame<Cue>;
 
     const done = relocateCues(frame, notAborted, deps);
+
     await Promise.resolve();
     expect(c.startTime).toBe(5); // still waiting — NOT shifted to 15
 

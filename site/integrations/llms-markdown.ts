@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import type { AstroIntegration } from 'astro';
 import { parseHTML } from 'linkedom';
 import TurndownService from 'turndown';
@@ -45,6 +46,7 @@ export default function llmsMarkdown(): AstroIntegration {
           filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-replace') !== null,
           replacement: (content, node) => {
             const id = (node as Element).getAttribute('data-cli-replace');
+
             return `\n<!-- cli:replace ${id} -->\n${content}\n<!-- /cli:replace ${id} -->\n`;
           },
         });
@@ -54,6 +56,7 @@ export default function llmsMarkdown(): AstroIntegration {
           filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-omit') !== null,
           replacement: (content, node) => {
             const id = (node as Element).getAttribute('data-cli-omit');
+
             return `\n<!-- cli:omit ${id} -->\n${content}\n<!-- /cli:omit ${id} -->\n`;
           },
         });
@@ -90,14 +93,18 @@ export default function llmsMarkdown(): AstroIntegration {
 
             // For each content element, strip non-content elements before conversion
             const contentParts: string[] = [];
+
             contentElements.forEach((contentEl) => {
               const clone = contentEl.cloneNode(true) as Element;
               const ignoreElements = clone.querySelectorAll('[data-llms-ignore]');
+
               ignoreElements.forEach((el) => el.remove());
+
               // Remove script and style tags (includes Astro island hydration scripts)
               for (const tag of clone.querySelectorAll('script, style')) {
                 tag.remove();
               }
+
               contentParts.push(clone.innerHTML);
             });
 
@@ -122,6 +129,7 @@ export default function llmsMarkdown(): AstroIntegration {
             // docs/framework/html/how-to/slug -> docs/framework/html/how-to/slug.md
             const mdPath = join(siteDir, `${pathname}.md`);
             const footer = generatePageFooter(pathname, framework, siteUrl);
+
             await mkdir(dirname(mdPath), { recursive: true });
             await writeFile(mdPath, markdown + footer, 'utf-8');
 
@@ -148,27 +156,34 @@ export default function llmsMarkdown(): AstroIntegration {
           while (queue.length > 0) {
             const pathname = queue.shift();
             if (pathname === undefined) return;
+
             await processPage(pathname);
           }
         });
+
         await Promise.all(workers);
 
         // Group docs by framework
         const docsByFramework = new Map<string, PageEntry[]>();
+
         for (const doc of docsPages) {
           const fw = doc.framework ?? 'unknown';
+
           if (!docsByFramework.has(fw)) {
             docsByFramework.set(fw, []);
           }
+
           docsByFramework.get(fw)!.push(doc);
         }
 
         // Write per-framework docs sub-indexes
         const frameworks: string[] = [];
+
         for (const [fw, fwPages] of docsByFramework) {
           frameworks.push(fw);
           const subIndex = generateDocsIndex(fw, fwPages, siteUrl);
           const subIndexPath = join(siteDir, 'docs', 'framework', fw, 'llms.txt');
+
           await mkdir(dirname(subIndexPath), { recursive: true });
           await writeFile(subIndexPath, subIndex, 'utf-8');
         }
@@ -177,6 +192,7 @@ export default function llmsMarkdown(): AstroIntegration {
         if (blogPages.length > 0) {
           const blogIndex = generateBlogIndex(blogPages, siteUrl);
           const blogIndexPath = join(siteDir, 'blog', 'llms.txt');
+
           await mkdir(dirname(blogIndexPath), { recursive: true });
           await writeFile(blogIndexPath, blogIndex, 'utf-8');
         }
@@ -184,9 +200,11 @@ export default function llmsMarkdown(): AstroIntegration {
         // Write root llms.txt index
         const rootIndex = generateRootIndex(frameworks, blogPages.length > 0, otherPages, siteUrl);
         const rootIndexPath = join(siteDir, 'llms.txt');
+
         await writeFile(rootIndexPath, rootIndex, 'utf-8');
 
         const subIndexCount = frameworks.length + (blogPages.length > 0 ? 1 : 0);
+
         logger.info(
           `Generated ${docsPages.length + blogPages.length + otherPages.length} markdown files, llms.txt root index, and ${subIndexCount} sub-indexes`
         );
@@ -202,11 +220,13 @@ function capitalize(str: string): string {
 /** Breadcrumb footer linking a per-page .md back to its parent index and root llms.txt. */
 function generatePageFooter(pathname: string, framework: string | undefined, siteUrl: string): string {
   const lines = ['\n\n---\n'];
+
   if (pathname.startsWith('docs/') && framework) {
     lines.push(`${capitalize(framework)} documentation: ${siteUrl}/docs/framework/${framework}/llms.txt`);
   } else if (pathname.startsWith('blog/')) {
     lines.push(`All blog posts: ${siteUrl}/blog/llms.txt`);
   }
+
   lines.push(`All documentation: ${siteUrl}/llms.txt`);
   return lines.join('\n');
 }
@@ -218,12 +238,15 @@ function generateIndexFooter(siteUrl: string): string {
 
 function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: PageEntry[], siteUrl: string): string {
   let content = `# Video.js v10\n\n`;
+
   content += `> Modern video player framework with multi-platform support\n\n`;
 
   content += `## Documentation\n\n`;
+
   for (const fw of [...frameworks].sort()) {
     content += `- [${capitalize(fw)} Docs](${siteUrl}/docs/framework/${fw}/llms.txt)\n`;
   }
+
   content += `\n`;
 
   if (hasBlog) {
@@ -234,11 +257,13 @@ function generateRootIndex(frameworks: string[], hasBlog: boolean, otherPages: P
   if (otherPages.length > 0) {
     content += `## Other\n\n`;
     const sorted = [...otherPages].sort((a, b) => a.pathname.localeCompare(b.pathname));
+
     for (const page of sorted) {
       content += page.description
         ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
         : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
     }
+
     content += `\n`;
   }
 
@@ -251,15 +276,18 @@ function generateDocsIndex(framework: string, pages: PageEntry[], siteUrl: strin
   // Build slug → page lookup
   const prefix = `/docs/framework/${framework}/`;
   const pageBySlug = new Map<string, PageEntry>();
+
   for (const page of pages) {
     if (page.pathname.startsWith(prefix)) {
       const slug = page.pathname.slice(prefix.length).replace(/\/$/, '');
+
       pageBySlug.set(slug, page);
     }
   }
 
   // Get sidebar filtered for this framework (production only)
   if (!isValidFramework(framework)) return content;
+
   const filtered = filterSidebarForLlms(sidebar, framework);
 
   content += renderSidebarToMarkdown(filtered, pageBySlug, siteUrl);
@@ -279,14 +307,18 @@ function renderSidebarToMarkdown(
   for (const item of items) {
     if (isSection(item)) {
       const heading = '#'.repeat(depth + 2);
+
       content += `${heading} ${item.sidebarLabel}\n\n`;
+
       if (item.llmsDescription) {
         content += `${item.llmsDescription}\n\n`;
       }
+
       content += renderSidebarToMarkdown(item.contents, pageBySlug, siteUrl, depth + 1);
     } else if (!isLink(item)) {
       const page = pageBySlug.get(item.slug);
       if (!page) continue;
+
       content += page.description
         ? `- [${page.title}](${siteUrl}${page.pathname}.md): ${page.description}\n`
         : `- [${page.title}](${siteUrl}${page.pathname}.md)\n`;
@@ -301,21 +333,22 @@ function renderSidebarToMarkdown(
 }
 
 /**
- * Inline sidebar filter for the integration context where `@/` path aliases
- * aren't available (can't import `filterSidebar` from `src/utils/docs/sidebar`).
- * Filters out `devOnly` items and sections restricted to other frameworks,
- * then removes empty sections.
+ * Inline sidebar filter for the integration context where `@/` path aliases aren't available (can't import
+ * `filterSidebar` from `src/utils/docs/sidebar`). Filters out `devOnly` items and sections restricted to other
+ * frameworks, then removes empty sections.
  */
 function filterSidebarForLlms(items: Sidebar, framework: SupportedFramework): Sidebar {
   return items
     .filter((item) => {
       if (item.devOnly) return false;
+
       return !item.frameworks || item.frameworks.includes(framework);
     })
     .map((item) => {
       if (isSection(item)) {
         return { ...item, contents: filterSidebarForLlms(item.contents, framework) };
       }
+
       return item;
     })
     .filter((item) => !isSection(item) || item.contents.length > 0);
@@ -328,13 +361,16 @@ function generateBlogIndex(pages: PageEntry[], siteUrl: string): string {
     if (a.sort && b.sort) {
       return b.sort.localeCompare(a.sort);
     }
+
     return b.pathname.localeCompare(a.pathname);
   });
+
   for (const post of sorted) {
     content += post.description
       ? `- [${post.title}](${siteUrl}${post.pathname}.md): ${post.description}\n`
       : `- [${post.title}](${siteUrl}${post.pathname}.md)\n`;
   }
+
   content += generateIndexFooter(siteUrl);
   return content;
 }

@@ -1,14 +1,13 @@
 /**
  * Zod schemas for feature API reference JSON files.
  *
- * FeatureStateDef and FeatureActionDef reuse StateDefSchema (identical shape)
- * from component-reference.ts, following the same pattern as util-reference.ts.
- * FeatureConfigDef reuses PropDefSchema for the same reason: a config input is
- * rendered as a provider prop. Its HTML attribute name is derived from the key,
- * unless the feature declares one, which it does when the derived name would
- * collide with a global attribute.
+ * FeatureStateDef and FeatureActionDef reuse StateDefSchema (identical shape) from component-reference.ts, following
+ * the same pattern as util-reference.ts. FeatureConfigDef reuses PropDefSchema for the same reason: a config input is
+ * rendered as a provider prop. Its HTML attribute name is derived from the key, unless the feature declares one, which
+ * it does when the derived name would collide with a global attribute.
  */
 import { z } from 'astro/zod';
+
 import { PropDefSchema, StateDefSchema } from './component-reference';
 
 export const FeatureStateDefSchema = StateDefSchema;

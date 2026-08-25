@@ -1,4 +1,5 @@
 import type { MuxSource } from '@videojs/media/dom/mux';
+
 import { getMuxAssetId } from './mux';
 
 export interface ChapterTrack {
@@ -18,8 +19,8 @@ export interface SandboxSource {
   /** DRM protected, so only a preset that can license it should offer it. */
   drm?: boolean;
   /**
-   * Ready-made poster image URL, for a source with no Mux playback ID to derive
-   * one from. Takes precedence over the derived URL.
+   * Ready-made poster image URL, for a source with no Mux playback ID to derive one from. Takes precedence over the
+   * derived URL.
    */
   poster?: string;
   /** Structured source, for what a plain `url` cannot express. Takes precedence. */
@@ -73,10 +74,9 @@ const SIGNED_AUDIO_TOKENS = {
 } as const;
 
 /**
- * License servers for the DRM asset below, named outright rather than derived
- * from a Mux token. `source.drm` is engine neutral, so naming every system here
- * licenses whichever path the browser takes — native HLS reads the FairPlay
- * entry and leaves the rest to hls.js.
+ * License servers for the DRM asset below, named outright rather than derived from a Mux token. `source.drm` is engine
+ * neutral, so naming every system here licenses whichever path the browser takes — native HLS reads the FairPlay entry
+ * and leaves the rest to hls.js.
  */
 const DRM_SYSTEMS = {
   'com.apple.fps': {
@@ -157,13 +157,11 @@ const SOURCE_MAP = {
     subType: 'mp4',
   },
   /**
-   * Apple's official HLS example stream (bipbop advanced, fMP4): HEVC and AVC
-   * renditions of the same content in one multivariant playlist, which makes
-   * it the shared mixed-codec source — the initial pick decides a codec
-   * family and SPF's ABR must hold it for the source's lifetime (no
-   * `SourceBuffer.changeType()`). Deliberately messy beyond the codecs: not
-   * CMAF-compliant, ~44ms A/V origin skew, a 10s timestamp origin, and VTT
-   * subtitles relying on `X-TIMESTAMP-MAP`.
+   * Apple's official HLS example stream (bipbop advanced, fMP4): HEVC and AVC renditions of the same content in one
+   * multivariant playlist, which makes it the shared mixed-codec source — the initial pick decides a codec family and
+   * SPF's ABR must hold it for the source's lifetime (no `SourceBuffer.changeType()`). Deliberately messy beyond the
+   * codecs: not CMAF-compliant, ~44ms A/V origin skew, a 10s timestamp origin, and VTT subtitles relying on
+   * `X-TIMESTAMP-MAP`.
    */
   'hls-mixed-codec': {
     label: 'HLS - Apple bipbop (HEVC + AVC)',
@@ -250,19 +248,15 @@ const SOURCE_MAP = {
   /**
    * A 4K ladder over HLS, and the default source for the SPF background presets.
    *
-   * Deliberately *not* the clip {@link BACKGROUND_VIDEO_SRC} plays: the rendition
-   * ladder has to straddle a real screen for the screen-resolution cap to have
-   * anything to choose between. Its rungs run 640x360 → 3838x2160, so a display
-   * under the top rung caps to 2558x1440 instead. (Those off-by-two widths are the
-   * source's near-square pixel aspect ratio, not a typo, and they are the reason
-   * the cap compares pixel areas rather than matching `1920x1080`-style tiers.)
-   * Video-only — the source carries no audio track.
+   * Deliberately _not_ the clip {@link BACKGROUND_VIDEO_SRC} plays: the rendition ladder has to straddle a real screen
+   * for the screen-resolution cap to have anything to choose between. Its rungs run 640x360 → 3838x2160, so a display
+   * under the top rung caps to 2558x1440 instead. (Those off-by-two widths are the source's near-square pixel aspect
+   * ratio, not a typo, and they are the reason the cap compares pixel areas rather than matching `1920x1080`-style
+   * tiers.) Video-only — the source carries no audio track.
    *
-   * CMAF/fMP4, because SPF appends fMP4 segments directly and does no MPEG-TS
-   * transmuxing. Packaging follows the video quality tier — `premium` yields CMAF,
-   * while `plus`/`basic` (legacy `encoding_tier: smart`) yield MPEG-TS — which is
-   * also why a 4K ladder needs `max_resolution_tier: '2160p'` alongside
-   * `video_quality: 'premium'`.
+   * CMAF/fMP4, because SPF appends fMP4 segments directly and does no MPEG-TS transmuxing. Packaging follows the video
+   * quality tier — `premium` yields CMAF, while `plus`/`basic` (legacy `encoding_tier: smart`) yield MPEG-TS — which is
+   * also why a 4K ladder needs `max_resolution_tier: '2160p'` alongside `video_quality: 'premium'`.
    */
   'hls-4k': {
     label: 'HLS - Short 4K UHD 2160p',
@@ -338,24 +332,21 @@ export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter(
   (id) => SOURCES[id].type !== 'dash' && !isDrmSource(id) && !isMuxSource(id)
 );
 /**
- * HLS presets add the DRM asset that names its license servers outright. Both
- * hls.js and native HLS read it, each from its own half of the source — which
- * half depends on the path the browser ends up taking.
+ * HLS presets add the DRM asset that names its license servers outright. Both hls.js and native HLS read it, each from
+ * its own half of the source — which half depends on the path the browser ends up taking.
  */
 export const HLS_SOURCE_IDS = SOURCE_IDS.filter(
   (id) => SOURCES[id].type !== 'dash' && !isMuxSource(id) && id !== 'hls-drm-unlicensed'
 );
 /**
- * Mux presets add everything reached by playback ID, plus the DRM asset licensed
- * by a Mux token, which only they can read.
+ * Mux presets add everything reached by playback ID, plus the DRM asset licensed by a Mux token, which only they can
+ * read.
  */
 export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && id !== 'hls-drm-unlicensed');
 /**
- * The SPF engine has no EME, so it can license neither DRM asset. It still gets
- * the unlicensed one: refusing a protected source visibly is the behavior worth
- * reaching here, unlike the licensable assets that would only fail obscurely.
- * Signed playback is not DRM and stays — SPF plays it once the token authorizes
- * the URL.
+ * The SPF engine has no EME, so it can license neither DRM asset. It still gets the unlicensed one: refusing a
+ * protected source visibly is the behavior worth reaching here, unlike the licensable assets that would only fail
+ * obscurely. Signed playback is not DRM and stays — SPF plays it once the token authorizes the URL.
  */
 export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter(
   (id) => SOURCES[id].type !== 'dash' && (!isDrmSource(id) || id === 'hls-drm-unlicensed')
@@ -365,35 +356,33 @@ export const SPF_HLS_SOURCE_IDS = MUX_SPF_SOURCE_IDS.filter((id) => !isMuxSource
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 /**
- * Shaka plays DASH and HLS from one element, so it is the only preset offered
- * both. The DRM assets are left out until the sandbox hands it license servers.
+ * Shaka plays DASH and HLS from one element, so it is the only preset offered both. The DRM assets are left out until
+ * the sandbox hands it license servers.
  */
 export const SHAKA_SOURCE_IDS = SOURCE_IDS.filter((id) => !isDrmSource(id) && !isMuxSource(id));
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
 export const DEFAULT_AUDIO_SOURCE: SourceId = 'mp4-1';
 export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
 /**
- * Where the SPF background presets land when entered. The 4K ladder rather than
- * {@link DEFAULT_SOURCE}, which is MPEG-TS and so is a failure case for this
- * engine rather than a demo of it.
+ * Where the SPF background presets land when entered. The 4K ladder rather than {@link DEFAULT_SOURCE}, which is
+ * MPEG-TS and so is a failure case for this engine rather than a demo of it.
  */
 export const DEFAULT_BACKGROUND_SOURCE: SourceId = 'hls-4k';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';
 
 /**
- * Add Mux's rendition cap to a stream URL, the param `<mux-background-video>`
- * exists to demonstrate. Merged rather than appended, since a sandbox source may
- * already carry params of its own (clip bounds, a playback token).
+ * Add Mux's rendition cap to a stream URL, the param `<mux-background-video>` exists to demonstrate. Merged rather than
+ * appended, since a sandbox source may already carry params of its own (clip bounds, a playback token).
  *
- * Left alone when the URL is signed: Mux validates the whole query against the
- * token, so a param added beside one answers 403 instead of capping — which would
- * replace whatever failure that source was chosen to reach.
+ * Left alone when the URL is signed: Mux validates the whole query against the token, so a param added beside one
+ * answers 403 instead of capping — which would replace whatever failure that source was chosen to reach.
  */
 export function withMuxMaxResolution(url: string, maxResolution: string): string {
   if (!url || url.includes('token=')) return url;
 
   const capped = new URL(url);
+
   capped.searchParams.set('max_resolution', maxResolution);
   return capped.href;
 }
@@ -425,9 +414,8 @@ export function isDrmSource(id: SourceId): boolean {
 }
 
 /**
- * Returns true when the given source is reached by playback ID, so only a preset
- * whose media builds Mux URLs can offer it — anything else has no `url` to fall
- * back to.
+ * Returns true when the given source is reached by playback ID, so only a preset whose media builds Mux URLs can offer
+ * it — anything else has no `url` to fall back to.
  */
 export function isMuxSource(id: SourceId): boolean {
   return SOURCES[id].source?.playbackId !== undefined;
@@ -439,9 +427,11 @@ function imageQuery(id: SourceId, kind: 'poster' | 'storyboard', params?: string
   const query = new URLSearchParams(params);
 
   const token = SOURCES[id].source?.[kind]?.token;
+
   if (token) query.set('token', token);
 
   const search = query.toString();
+
   return search ? `?${search}` : '';
 }
 
@@ -450,22 +440,26 @@ export function getPosterSrc(source: SourceId): string | undefined {
   if (poster) return poster;
 
   const id = getMuxAssetId(source);
+
   return id ? `https://image.mux.com/${id}/thumbnail.webp${imageQuery(source, 'poster')}` : undefined;
 }
 
 /**
- * A CSS image to sit behind the poster while it loads. This upscales a 20px
- * thumbnail, and the browser's own smoothing does the blurring.
+ * A CSS image to sit behind the poster while it loads. This upscales a 20px thumbnail, and the browser's own smoothing
+ * does the blurring.
  */
 export function getPlaceholderSrc(source: SourceId): string | undefined {
   const id = getMuxAssetId(source);
+
   return id ? `https://image.mux.com/${id}/thumbnail.webp${imageQuery(source, 'poster', 'width=20')}` : undefined;
 }
 
 export function getStoryboardSrc(source: SourceId): string | undefined {
   // Storyboards aren't generated for live streams, so skip the request entirely.
   if (isLiveSource(source)) return undefined;
+
   const id = getMuxAssetId(source);
+
   return id ? `https://image.mux.com/${id}/storyboard.vtt${imageQuery(source, 'storyboard')}` : undefined;
 }
 

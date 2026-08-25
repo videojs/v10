@@ -10,7 +10,9 @@ import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { isNull } from '@videojs/utils/predicate';
 import { camelCase, kebabCase } from '@videojs/utils/string';
+
 import type { UIElementConstructor } from '@/ui/ui-element';
+
 import type { ContainerContext, MediaContext, PlayerContext } from '../player/context';
 import type { PlayerProviderConstructor } from './types';
 
@@ -39,8 +41,8 @@ interface ConfigInput {
 }
 
 /**
- * Name each input on the element. A key whose own name is taken there declares
- * an `html.attribute` instead, and the property follows from that.
+ * Name each input on the element. A key whose own name is taken there declares an `html.attribute` instead, and the
+ * property follows from that.
  */
 function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
   return Object.entries(config).map(([key, entry]) => {
@@ -57,15 +59,12 @@ function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
 }
 
 /**
- * Create a mixin that provides player context to descendant elements and
- * owns the `store.attach()` lifecycle.
+ * Create a mixin that provides player context to descendant elements and owns the `store.attach()` lifecycle.
  *
- * Media and container elements register themselves via media/container
- * contexts. When a media element is available, the provider calls
- * `store.attach({ media, container })`.
+ * Media and container elements register themselves via media/container contexts. When a media element is available, the
+ * provider calls `store.attach({ media, container })`.
  *
- * Plain `<video>`/`<audio>` elements that cannot consume context are tracked
- * through the provider subtree.
+ * Plain `<video>`/`<audio>` elements that cannot consume context are tracked through the provider subtree.
  *
  * @param options - Provider options with contexts, store factory, and feature configuration.
  */
@@ -94,12 +93,14 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #registerMedia = (media: Media): (() => void) => {
         const registration = { value: media };
+
         this.#mediaRegistrations.push(registration);
         this.#syncMedia();
 
         return () => {
           const index = this.#mediaRegistrations.indexOf(registration);
           if (index < 0) return;
+
           this.#mediaRegistrations.splice(index, 1);
           this.#syncNativeMedia();
           this.#syncMedia();
@@ -108,12 +109,14 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       #registerContainer = (container: MediaContainer): (() => void) => {
         const registration = { value: container };
+
         this.#containerRegistrations.push(registration);
         this.#syncContainer();
 
         return () => {
           const index = this.#containerRegistrations.indexOf(registration);
           if (index < 0) return;
+
           this.#containerRegistrations.splice(index, 1);
           this.#syncContainer();
         };
@@ -181,6 +184,7 @@ export function createProviderMixin<Store extends PlayerStore>(
         // write to the store. Store-side writers do not reflect back here.
         for (const { property, entry } of inputs) {
           if (!changed.has(property)) continue;
+
           setPlayerConfigValue(this.store, entry, (this as unknown as Record<string, unknown>)[property]);
         }
       }
@@ -189,6 +193,7 @@ export function createProviderMixin<Store extends PlayerStore>(
         const registered = this.#mediaRegistrations.at(-1)?.value ?? null;
         const media = registered ?? this.#nativeMedia;
         if (this.#media === media) return;
+
         this.#media = media;
         this.#publishMedia();
         this.#tryAttach();
@@ -197,6 +202,7 @@ export function createProviderMixin<Store extends PlayerStore>(
       #syncContainer(): void {
         const container = this.#containerRegistrations.at(-1)?.value ?? null;
         if (this.#container === container) return;
+
         this.#container = container;
         this.#publishContainer();
         this.#tryAttach();
@@ -205,6 +211,7 @@ export function createProviderMixin<Store extends PlayerStore>(
       #syncNativeMedia(): void {
         const media = this.querySelector<HTMLMediaElement>('video, audio');
         if (this.#nativeMedia === media) return;
+
         this.#nativeMedia = media;
         this.#syncMedia();
       }
@@ -255,6 +262,7 @@ export function createProviderMixin<Store extends PlayerStore>(
         for (const { property, entry } of inputs) {
           setPlayerConfigValue(store, entry, (this as unknown as Record<string, unknown>)[property]);
         }
+
         this.#configuredStore = store;
       }
     }

@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { usePositionedState } from '../use-positioned-state';
 
@@ -9,6 +9,7 @@ describe('usePositionedState', () => {
     const { result, rerender } = renderHook(
       ({ open }: { open: boolean }) => {
         const positioned = usePositionedState<{ open: boolean; side: 'top' | 'bottom' }>({ open, side: 'top' });
+
         sides.push(positioned.state.side);
         return positioned;
       },

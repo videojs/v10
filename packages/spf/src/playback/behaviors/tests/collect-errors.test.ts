@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { signal } from '../../../core/signals/primitives';
 import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import type { MaybeResolvedPresentation, Presentation } from '../../../media/types';
@@ -17,12 +18,14 @@ const flush = () => Promise.resolve().then(() => Promise.resolve());
 describe('emitError', () => {
   it('appends onto an empty slot', () => {
     const errors = signal<SvtaError[] | undefined>(undefined);
+
     emitError({ errors }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
     expect(errors.get()).toEqual([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
   });
 
   it('preserves emission order across reporters', () => {
     const errors = signal<SvtaError[] | undefined>(undefined);
+
     emitError({ errors }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
     emitError({ errors }, { code: SVTA_NO_SUPPORTED_AUDIO_TRACK });
     expect(errors.get()?.map((error) => error.code)).toEqual([
@@ -33,6 +36,7 @@ describe('emitError', () => {
 
   it('keeps duplicate codes — a repeat is a real observation, not noise', () => {
     const errors = signal<SvtaError[] | undefined>(undefined);
+
     emitError({ errors }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
     emitError({ errors }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
     expect(errors.get()).toHaveLength(2);
@@ -40,6 +44,7 @@ describe('emitError', () => {
 
   it('carries optional message and data through unchanged', () => {
     const errors = signal<SvtaError[] | undefined>(undefined);
+
     emitError({ errors }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: 'nope', data: { trackType: 'video' } });
     expect(errors.get()?.[0]).toEqual({
       code: SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -50,8 +55,10 @@ describe('emitError', () => {
 
   it('replaces the array rather than mutating it, so signal consumers notify', () => {
     const errors = signal<SvtaError[] | undefined>(undefined);
+
     emitError({ errors }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
     const first = errors.get();
+
     emitError({ errors }, { code: SVTA_NO_SUPPORTED_AUDIO_TRACK });
     expect(errors.get()).not.toBe(first);
     expect(first).toHaveLength(1);
@@ -88,6 +95,7 @@ describe('collectErrors', () => {
   it('retains emitted errors while the source stays resolved', async () => {
     const state = makeState(resolved());
     const reactor = collectErrors.setup({ state });
+
     await flush();
 
     emitError(state, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
@@ -101,6 +109,7 @@ describe('collectErrors', () => {
   it('does not clear on a live reload — a new presentation object, still resolved', async () => {
     const state = makeState(resolved());
     const reactor = collectErrors.setup({ state });
+
     await flush();
 
     emitError(state, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
@@ -119,6 +128,7 @@ describe('collectErrors', () => {
   it('clears errors on src unload so the next source starts clean', async () => {
     const state = makeState(resolved());
     const reactor = collectErrors.setup({ state });
+
     await flush();
 
     emitError(state, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
@@ -135,6 +145,7 @@ describe('collectErrors', () => {
   it('clears errors on behavior destroy', async () => {
     const state = makeState(resolved());
     const reactor = collectErrors.setup({ state });
+
     await flush();
 
     emitError(state, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
@@ -149,6 +160,7 @@ describe('collectErrors', () => {
   it('stays inert while no source is resolved', async () => {
     const state = makeState(undefined);
     const reactor = collectErrors.setup({ state });
+
     await flush();
 
     expect(state.errors.get()).toBeUndefined();

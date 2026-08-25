@@ -1,7 +1,9 @@
 import { renderIcon } from '@videojs/icons/render/minimal';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
+
 import styles from './minimal-skin.css?inline';
 
 // Register the live video player, container, and minimal UI custom elements.
@@ -51,11 +53,15 @@ function getTemplateHTML() {
 
             <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
 
-            <media-mute-button commandfor="live-video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
+            <media-mute-button id="live-video-mute-trigger" commandfor="live-video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
+            <media-tooltip trigger="live-video-mute-trigger" delay="0" sticky side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="media-popover media-popover--volume">
               <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
@@ -75,16 +81,18 @@ function getTemplateHTML() {
               ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             </media-captions-button>
             <media-menu id="captions-menu" side="top" align="center" class="media-popover media-menu media-menu--captions">
-              <media-captions-radio-group class="media-menu__group">
-                <template>
-                  <media-menu-radio-item class="media-menu__item">
-                    <bdi data-part="label" dir="auto"></bdi>
-                    <media-menu-item-indicator force-mount class="media-menu__indicator">
-                      ${renderIcon('check', { class: 'media-icon' })}
-                    </media-menu-item-indicator>
-                  </media-menu-radio-item>
-                </template>
-              </media-captions-radio-group>
+              <media-menu-content class="media-menu__content">
+                <media-captions-radio-group class="media-menu__group">
+                  <template>
+                    <media-menu-radio-item class="media-menu__item">
+                      <bdi data-part="label" dir="auto"></bdi>
+                      <media-menu-item-indicator force-mount class="media-menu__indicator">
+                        ${renderIcon('check', { class: 'media-icon' })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-captions-radio-group>
+              </media-menu-content>
             </media-menu>
             <media-tooltip id="captions-tooltip" side="top" class="media-tooltip">
               <media-tooltip-label></media-tooltip-label>

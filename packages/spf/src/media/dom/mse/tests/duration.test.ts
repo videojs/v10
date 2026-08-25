@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { Presentation } from '../../../types';
 import {
   canUpdateDuration,
@@ -17,14 +18,18 @@ function makeUpdatingSourceBuffer() {
     addEventListener: (_event: string, handler: () => void, options?: { once?: boolean; signal?: AbortSignal }) => {
       const wrapped = () => {
         if (options?.signal?.aborted) return;
+
         handler();
       };
+
       updateEndListeners.push(wrapped);
+
       if (options?.signal) {
         options.signal.addEventListener(
           'abort',
           () => {
             const idx = updateEndListeners.indexOf(wrapped);
+
             if (idx >= 0) updateEndListeners.splice(idx, 1);
           },
           { once: true }
@@ -36,6 +41,7 @@ function makeUpdatingSourceBuffer() {
 
   const finishUpdating = () => {
     (buffer as unknown as { updating: boolean }).updating = false;
+
     for (const h of updateEndListeners.slice()) h();
   };
 
@@ -90,6 +96,7 @@ describe('shouldUpdateDuration', () => {
     // readyState is a non-reactive DOM property the caller resolves at
     // write time (e.g., via `waitForMediaSourceOpen` inside an entry).
     const closedMs = { readyState: 'closed' } as MediaSource;
+
     expect(shouldUpdateDuration({ duration: 60 } as Presentation, closedMs)).toBe(true);
   });
 
@@ -97,6 +104,7 @@ describe('shouldUpdateDuration', () => {
     // Same rationale as the readyState case above — non-reactive DOM
     // properties stay out of the signal-driven predicate.
     const ms = { readyState: 'open', duration: 60 } as MediaSource;
+
     expect(shouldUpdateDuration({ duration: 60 } as Presentation, ms)).toBe(true);
   });
 });
@@ -185,6 +193,7 @@ describe('getMinBufferedEnd', () => {
 describe('waitForSourceBuffersReady', () => {
   it('resolves immediately when the buffer list is empty', async () => {
     const controller = new AbortController();
+
     await waitForSourceBuffersReady([], controller.signal);
   });
 
@@ -215,6 +224,7 @@ describe('waitForSourceBuffersReady', () => {
   it('returns an already-resolved promise when signal is pre-aborted', async () => {
     const { buffer: video } = makeUpdatingSourceBuffer();
     const controller = new AbortController();
+
     controller.abort();
 
     await waitForSourceBuffersReady([video], controller.signal);

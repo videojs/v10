@@ -1,17 +1,11 @@
 <video-player class="video-player">
-    <media-container>
-        <video
-            src="{{VJS10_DEMO_VIDEO_MP4}}"
-            autoplay
-            muted
-            playsinline
-            loop
-        >
-            <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srclang="en" label="English" />
-        </video>
-        <media-captions-button class="media-captions-button">
-            <span class="active">Captions Off</span>
-            <span class="inactive">Captions On</span>
-        </media-captions-button>
-    </media-container>
+  <media-container>
+    <video src="{{VJS10_DEMO_VIDEO_MP4}}" autoplay muted playsinline loop>
+      <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srclang="en" label="English" />
+    </video>
+    <media-captions-button class="media-captions-button">
+      <span class="active">Captions Off</span>
+      <span class="inactive">Captions On</span>
+    </media-captions-button>
+  </media-container>
 </video-player>

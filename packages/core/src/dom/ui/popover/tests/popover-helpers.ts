@@ -1,4 +1,5 @@
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
+
 import { createTransition } from '../../transition';
 import { createPopover, type PopoverChangeDetails } from '../popover';
 
@@ -12,5 +13,6 @@ export function createTestPopover(overrides?: Partial<Parameters<typeof createPo
     closeOnOutsideClick: () => true,
     ...overrides,
   });
+
   return { popover, onOpenChange, transition };
 }

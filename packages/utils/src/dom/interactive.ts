@@ -32,6 +32,7 @@ export function isEditableElement(el: Element): boolean {
 /** Whether the keyboard event target is an editable element (input, textarea, etc). */
 export function isEditableTarget(event: KeyboardEvent): boolean {
   const target = resolveEventTarget(event);
+
   return target instanceof Element && isEditableElement(target);
 }
 
@@ -39,15 +40,15 @@ export function isEditableTarget(event: KeyboardEvent): boolean {
 export function isInteractiveTarget(event: Event): boolean {
   const target = resolveEventTarget(event);
   if (!(target instanceof Element)) return false;
+
   return target.closest(INTERACTIVE_SELECTOR) !== null;
 }
 
 const ACTIVATION_KEYS = new Set([' ', 'Enter']);
 
 /**
- * Selector for elements that use Space/Enter as a native activation key.
- * Narrower than `INTERACTIVE_SELECTOR` — excludes editable elements like
- * `input`, `textarea`, `select` where Space/Enter is text input, not activation.
+ * Selector for elements that use Space/Enter as a native activation key. Narrower than `INTERACTIVE_SELECTOR` —
+ * excludes editable elements like `input`, `textarea`, `select` where Space/Enter is text input, not activation.
  */
 const ACTIVATABLE_SELECTOR = 'button,a[href],[role="slider"],[role="button"]';
 
@@ -56,5 +57,6 @@ export function isInteractiveActivation(event: KeyboardEvent): boolean {
   if (!ACTIVATION_KEYS.has(event.key)) return false;
 
   const target = resolveEventTarget(event);
+
   return target instanceof Element && target.matches(ACTIVATABLE_SELECTOR);
 }

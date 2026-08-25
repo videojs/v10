@@ -1,9 +1,10 @@
 import type { ComponentTarget } from 'vjsc/target';
-import { createHtmlIconTarget, createReactIconTarget } from '../../../icons/vjsc/target';
-import type { SkinConfig } from '../config';
-import { skinStyles } from '../meta';
-import { htmlComponentTarget } from './html';
-import { reactComponentTarget } from './react';
+
+import { createHtmlIconTarget, createReactIconTarget } from '../../../icons/vjsc/target.ts';
+import type { SkinConfig } from '../config.ts';
+import { skinStyles } from '../meta.ts';
+import { htmlComponentTarget } from './html.tsx';
+import { reactComponentTarget } from './react.tsx';
 
 const reactIcons = new Map<string, ComponentTarget>();
 const htmlIcons = new Map<string, ComponentTarget>();
@@ -16,6 +17,7 @@ export function createComponentTargets(config: SkinConfig): readonly ComponentTa
 
   if (!icons) {
     const created = config.target === 'react' ? createReactIconTarget({ family }) : createHtmlIconTarget({ family });
+
     cache.set(family, created);
     icons = created;
   }

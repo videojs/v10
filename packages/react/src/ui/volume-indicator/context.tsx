@@ -14,5 +14,6 @@ export function VolumeIndicatorProvider({ value, children }: ProviderProps<Volum
 export function useVolumeIndicatorContext(): VolumeIndicatorContextValue {
   const ctx = useContext(VolumeIndicatorContext);
   if (!ctx) throw new Error('VolumeIndicator child compounds must be used within a VolumeIndicator.Root');
+
   return ctx;
 }

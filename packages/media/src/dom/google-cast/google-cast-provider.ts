@@ -1,4 +1,5 @@
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
+
 import type { HTMLMediaTargetLike } from '../media-host';
 import type { GoogleCastProps } from './index';
 import { castFramework, ensureCastFramework, googleCastInstances } from './registry';
@@ -22,13 +23,11 @@ type RemotePlayerListener = (event?: cast.framework.RemotePlayerChangedEvent) =>
 type GoogleCastConfig = GoogleCastProps;
 
 /**
- * Cast provider + lifecycle. Created by the {@link GoogleCast} component and
- * installed as the host's `targetOverride` while a cast session is connected,
- * so its getters/setters route through the cast receiver; when disconnected the
- * host falls through to the attached target. Also owns the cast framework
- * integration, the `RemotePlayback` instance exposed via
- * {@link GoogleCastProvider#remote}, and dispatches media events on the attached
- * target (forwarded by the host) while casting.
+ * Cast provider + lifecycle. Created by the {@link GoogleCast} component and installed as the host's `targetOverride`
+ * while a cast session is connected, so its getters/setters route through the cast receiver; when disconnected the host
+ * falls through to the attached target. Also owns the cast framework integration, the `RemotePlayback` instance exposed
+ * via {@link GoogleCastProvider#remote}, and dispatches media events on the attached target (forwarded by the host)
+ * while casting.
  */
 export class GoogleCastProvider {
   target: HTMLMediaTargetLike | null = null;
@@ -57,6 +56,7 @@ export class GoogleCastProvider {
     if (this.target && !this.target.disableRemotePlayback) {
       ensureCastFramework();
     }
+
     return this.#remotePlayback;
   }
 
@@ -86,6 +86,7 @@ export class GoogleCastProvider {
 
   hasDevicesAvailable() {
     const state = getCastContext()?.getCastState();
+
     return !!state && state !== cast.framework.CastState.NO_DEVICES_AVAILABLE;
   }
 
@@ -101,6 +102,7 @@ export class GoogleCastProvider {
     }
 
     const willDisconnect = this.#isCasting;
+
     this.#isCasting = true;
 
     this.#applyCastOptions();
@@ -143,6 +145,7 @@ export class GoogleCastProvider {
     }
 
     const mediaInfo = new chrome.cast.media.MediaInfo(this.#googleCast.src, this.#googleCast.contentType ?? '');
+
     mediaInfo.customData = this.#googleCast.customData ?? null;
 
     const { target } = this;
@@ -156,9 +159,11 @@ export class GoogleCastProvider {
     if (subtitles.length) {
       mediaInfo.tracks = subtitles.map((el, i) => {
         const trackId = i + 1;
+
         if (!activeTrackIds.length && el.track.mode === 'showing') activeTrackIds.push(trackId);
 
         const track = new Track(trackId, TrackType.TEXT);
+
         track.trackContentId = el.src;
         track.trackContentType = 'text/vtt';
         track.subtype = el.kind === 'captions' ? TextTrackType.CAPTIONS : TextTrackType.SUBTITLES;
@@ -192,6 +197,7 @@ export class GoogleCastProvider {
     }
 
     const request = new chrome.cast.media.LoadRequest(mediaInfo);
+
     // Use `super.currentTime` to read the local element's time even though our
     // own `currentTime` getter is overridden to return the remote player's.
     request.currentTime = this.target?.currentTime ?? 0;
@@ -205,6 +211,7 @@ export class GoogleCastProvider {
 
   get paused() {
     if (!this.#remotePlayer.isMediaLoaded) return this.target?.paused ?? true;
+
     return this.#remotePlayer.isPaused || this.ended;
   }
 
@@ -232,11 +239,13 @@ export class GoogleCastProvider {
 
   get duration() {
     if (!this.#remotePlayer.isMediaLoaded) return this.target?.duration ?? NaN;
+
     return this.#remotePlayer.duration ?? NaN;
   }
 
   get currentTime() {
     if (!this.#remotePlayer.isMediaLoaded) return this.target?.currentTime ?? 0;
+
     return this.#remotePlayer.currentTime ?? 0;
   }
 
@@ -280,6 +289,7 @@ export class GoogleCastProvider {
       await this.load();
       return;
     }
+
     if (this.paused) {
       this.#remotePlayer.controller?.playOrPause();
       return new Promise<void>((resolve) => {
@@ -296,6 +306,7 @@ export class GoogleCastProvider {
 
   onCastFrameworkAvailable() {
     if (!castFramework || this.#isInit) return;
+
     this.#isInit = true;
 
     this.#applyCastOptions();
@@ -308,6 +319,7 @@ export class GoogleCastProvider {
     this.#remoteListeners = {
       [castFramework.RemotePlayerEventType.IS_CONNECTED_CHANGED]: (event?: cast.framework.RemotePlayerChangedEvent) => {
         const value = event?.value;
+
         if (value === true) {
           this.#hooks.setState?.('connected');
         } else {
@@ -326,6 +338,7 @@ export class GoogleCastProvider {
       },
       [castFramework.RemotePlayerEventType.CURRENT_TIME_CHANGED]: () => {
         if (!this.#isCasting || !this.#remotePlayer.isMediaLoaded) return;
+
         this.#notifySeeked();
         this.target?.dispatchEvent(new Event('timeupdate'));
       },
@@ -340,10 +353,12 @@ export class GoogleCastProvider {
         const state = this.#isCasting ? this.#remotePlayer.playerState : undefined;
 
         if (state !== PS.BUFFERING) this.#notifySeeked();
+
         if (state === PS.PAUSED) return;
 
         if (state === PS.IDLE) {
           const finished = currentMedia()?.idleReason === chrome.cast.media.IdleReason.FINISHED;
+
           this.target?.dispatchEvent(new Event(finished ? 'ended' : 'emptied'));
           return;
         }
@@ -362,6 +377,7 @@ export class GoogleCastProvider {
 
   onCastStateChanged() {
     if (!this.#isInit) return;
+
     const CS = cast.framework.CastState;
     const state = getCastContext()!.getCastState();
 
@@ -374,7 +390,9 @@ export class GoogleCastProvider {
 
   async onSessionStateChanged() {
     if (!this.#isInit) return;
+
     const { SESSION_RESUMED } = castFramework!.SessionState;
+
     if (getCastContext()!.getSessionState() === SESSION_RESUMED) {
       if (this.#googleCast.src === currentMedia()?.media?.contentId) {
         this.#isCasting = true;
@@ -402,6 +420,7 @@ export class GoogleCastProvider {
 
   #applyCastOptions() {
     const { receiver } = this.#googleCast;
+
     setCastOptions(receiver ? { receiverApplicationId: receiver } : {});
   }
 
@@ -410,17 +429,20 @@ export class GoogleCastProvider {
   // cancel/retry and stop-casting flows.
   #attachRemoteListeners() {
     if (this.#listenersAttached) return;
+
     const controller = this.#remotePlayer?.controller;
     if (!controller) return;
 
     for (const [type, handler] of Object.entries(this.#remoteListeners)) {
       controller.addEventListener(type as cast.framework.RemotePlayerEventType, handler);
     }
+
     this.#listenersAttached = true;
   }
 
   #detachRemoteListeners() {
     if (!this.#listenersAttached) return;
+
     const controller = this.#remotePlayer?.controller;
 
     if (controller) {
@@ -428,6 +450,7 @@ export class GoogleCastProvider {
         controller.removeEventListener(type as cast.framework.RemotePlayerEventType, handler);
       }
     }
+
     this.#listenersAttached = false;
   }
 
@@ -445,10 +468,12 @@ export class GoogleCastProvider {
     }
 
     const saved = this.#remotePlayer.savedPlayerState;
+
     if (saved) {
       if (this.target) {
         this.target.currentTime = saved.currentTime;
       }
+
       if (saved.isPaused === false && this.target) {
         this.target.play();
       }
@@ -462,6 +487,7 @@ export class GoogleCastProvider {
 
   #notifySeeked() {
     if (!this.#seeking) return;
+
     this.#seeking = false;
     this.target?.dispatchEvent(new Event('seeked'));
   }
@@ -474,6 +500,7 @@ export class GoogleCastProvider {
 
   #checkPlaybackRate() {
     const rate = currentMedia()?.playbackRate ?? 1;
+
     if (rate !== this.#playbackRate) {
       this.#playbackRate = rate;
       this.target?.dispatchEvent(new Event('ratechange'));
@@ -489,6 +516,7 @@ export class GoogleCastProvider {
       .filter(({ type }) => type === chrome.cast.media.TrackType.TEXT)
       .flatMap(({ language, name, trackId }) => {
         const local = localSubs.find((l) => l.language === language && l.label === name);
+
         return local?.mode ? [{ mode: local.mode, trackId }] : [];
       });
 
@@ -497,6 +525,7 @@ export class GoogleCastProvider {
 
     const active = currentSession()?.getSessionObj().media[0]?.activeTrackIds ?? [];
     const next = new Set(active.filter((id) => !hidden.has(id)));
+
     if (showing) next.add(showing);
 
     if (next.size === active.length && active.every((id) => next.has(id))) return;

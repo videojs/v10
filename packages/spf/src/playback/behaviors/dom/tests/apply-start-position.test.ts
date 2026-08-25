@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation } from '../../../../media/types';
@@ -10,12 +11,12 @@ function makeResolvedPresentation(url = 'https://example.com/a.m3u8'): Presentat
 }
 
 /**
- * A real `<video>` with controllable `currentTime` / `readyState` — no media
- * is loaded in tests, so both are stubbed the way `track-current-time.test.ts`
- * stubs `currentTime`.
+ * A real `<video>` with controllable `currentTime` / `readyState` — no media is loaded in tests, so both are stubbed
+ * the way `track-current-time.test.ts` stubs `currentTime`.
  */
 function makeVideo(opts: { readyState?: number } = {}): HTMLVideoElement {
   const video = document.createElement('video');
+
   Object.defineProperty(video, 'currentTime', { value: 0, writable: true });
   Object.defineProperty(video, 'readyState', { value: opts.readyState ?? 0, writable: true });
   // jsdom has no media pipeline; `play()` must exist for the resume command.
@@ -46,6 +47,7 @@ function setupApplyStartPosition(initialState: StartPositionState = {}, initialC
   const state = makeState(initialState);
   const context = makeContext(initialContext);
   const reactor = applyStartPosition.setup({ state, context });
+
   return { state, context, reactor };
 }
 
@@ -74,6 +76,7 @@ describe('applyStartPosition', () => {
       { presentation: makeResolvedPresentation(), startPosition: 42 },
       { mediaElement: video }
     );
+
     await vi.waitFor(() => expect(state.currentTime.get()).toBe(42));
 
     reachMetadata(video);
@@ -133,6 +136,7 @@ describe('applyStartPosition', () => {
       { presentation: makeResolvedPresentation(), startPosition: 42 },
       { mediaElement: video }
     );
+
     await vi.waitFor(() => expect(state.currentTime.get()).toBe(42));
 
     // Source resets (URL replacement routes the presentation back through
@@ -179,6 +183,7 @@ describe('applyStartPosition', () => {
       { presentation: makeResolvedPresentation(), startPosition: 42 },
       { mediaElement: video }
     );
+
     await vi.waitFor(() => expect(state.currentTime.get()).toBe(42));
 
     reactor.destroy();

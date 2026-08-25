@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import type { GestureRegion } from '../gesture';
 import { resolveRegion } from '../region';
@@ -51,12 +51,14 @@ describe('resolveRegion', () => {
   it('returns null for zero-width container', () => {
     const zeroRect = { left: 0, width: 0 } as DOMRect;
     const regions = new Set<GestureRegion>(['left', 'right']);
+
     expect(resolveRegion(0, zeroRect, regions)).toBe(null);
   });
 
   describe('single region', () => {
     it('left-only covers the left half', () => {
       const regions = new Set<GestureRegion>(['left']);
+
       expect(resolveRegion(0, rect, regions)).toBe('left');
       expect(resolveRegion(100, rect, regions)).toBe('left');
       // Right half returns null (full-surface gesture handles it).
@@ -65,6 +67,7 @@ describe('resolveRegion', () => {
 
     it('center-only covers the whole surface', () => {
       const regions = new Set<GestureRegion>(['center']);
+
       expect(resolveRegion(0, rect, regions)).toBe('center');
       expect(resolveRegion(150, rect, regions)).toBe('center');
       expect(resolveRegion(299, rect, regions)).toBe('center');
@@ -72,6 +75,7 @@ describe('resolveRegion', () => {
 
     it('right-only covers the right half', () => {
       const regions = new Set<GestureRegion>(['right']);
+
       // Left half returns null.
       expect(resolveRegion(100, rect, regions)).toBe(null);
       expect(resolveRegion(150, rect, regions)).toBe('right');

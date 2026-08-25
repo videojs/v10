@@ -11,23 +11,23 @@ import {
 import { useSnapshot } from '@videojs/store/react';
 import { applyStyles } from '@videojs/utils/dom';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+
 import { useOptionalPlayer } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useForceRender } from '../../utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
 
-export interface UseSliderOptions<State extends SliderState = SliderState>
-  extends Pick<
-    SliderOptions,
-    | 'getPercent'
-    | 'getStepPercent'
-    | 'getLargeStepPercent'
-    | 'changeThrottle'
-    | 'onValueChange'
-    | 'onValueCommit'
-    | 'onDragStart'
-    | 'onDragEnd'
-  > {
+export interface UseSliderOptions<State extends SliderState = SliderState> extends Pick<
+  SliderOptions,
+  | 'getPercent'
+  | 'getStepPercent'
+  | 'getLargeStepPercent'
+  | 'changeThrottle'
+  | 'onValueChange'
+  | 'onValueCommit'
+  | 'onDragStart'
+  | 'onDragEnd'
+> {
   computeState: (input: SliderInput) => State;
   orientation?: 'horizontal' | 'vertical' | undefined;
   disabled?: boolean | undefined;
@@ -51,14 +51,14 @@ export interface UseSliderReturnValue<State extends SliderState = SliderState> {
 /**
  * Manages slider input lifecycle for React.
  *
- * Wraps `createSlider()` from `@videojs/core/dom` and subscribes to its
- * input state via `useSnapshot`. Returns split props for the root
- * (pointer events) and thumb (keyboard/focus) elements.
+ * Wraps `createSlider()` from `@videojs/core/dom` and subscribes to its input state via `useSnapshot`. Returns split
+ * props for the root (pointer events) and thumb (keyboard/focus) elements.
  */
 export function useSlider<State extends SliderState = SliderState>(
   options: UseSliderOptions<State>
 ): UseSliderReturnValue<State> {
   const optionsRef = useLatestRef(options);
+
   const controls = useOptionalPlayer(selectControls);
   const requestControlsLock = controls?.requestControlsLock;
   const releaseControlsLockRef = useRef<(() => void) | null>(null);
@@ -129,7 +129,9 @@ export function useSlider<State extends SliderState = SliderState>(
   const syncStyles = useCallback(
     (element = rootElementRef.current) => {
       if (!element) return;
+
       const next = optionsRef.current.computeState(slider.input.current);
+
       applyStyles(element, optionsRef.current.getCSSVars(slider.adjustForAlignment(next)));
     },
     [slider]

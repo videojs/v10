@@ -32,6 +32,7 @@ type ValidationResult = { valid: true } | { valid: false; reason: string };
 
 export function validateInstallationOptions(opts: InstallationOptions): ValidationResult {
   const preset = getInstallationPreset(opts.useCase);
+
   if (!preset.renderers.includes(opts.renderer)) {
     return {
       valid: false,
@@ -73,6 +74,7 @@ function getDefaultSourceUrl(renderer: Renderer, useCase: UseCase): string {
     tiktok: VJS10_DEMO_TIKTOK,
     twitch: VJS10_DEMO_TWITCH,
   };
+
   return map[renderer];
 }
 
@@ -148,6 +150,7 @@ function getRendererTag(renderer: Renderer): string {
     tiktok: 'tiktok-video',
     twitch: 'twitch-video',
   };
+
   return map[renderer];
 }
 
@@ -157,7 +160,9 @@ function getProviderTag(useCase: UseCase): string {
 
 function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   const prefix = getInstallationPreset(useCase).tagPrefix;
+
   if (useCase === 'background-video') return `${prefix}-skin`;
+
   return getSkinFile(skin) === 'minimal-skin' ? `${prefix}-minimal-skin` : `${prefix}-skin`;
 }
 
@@ -194,6 +199,7 @@ ${mediaComment}
   }
 
   const skinTag = getSkinTag(useCase, skin as Exclude<Skin, 'none'>);
+
   return `${providerComment}
 <${providerTag}>
   <!--
@@ -212,16 +218,20 @@ function generateHTMLJSImports(useCase: UseCase, skin: Skin, renderer: Renderer)
   if (useCase === 'background-video') {
     const mediaSubpath = getMediaSubpath(renderer);
     const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
+
     return `import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
 import '@videojs/html/background/video';${mediaImport}`;
   }
+
   const group = getInstallationPreset(useCase).group;
   const mediaSubpath = getMediaSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
+
   if (skin === 'none') {
     return `import '@videojs/html/${group}/player';${mediaImport}`;
   }
+
   return `import '@videojs/html/${group}/player';
 import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}`;
 }
@@ -231,6 +241,7 @@ export function generateHTMLUsageCode(
 ): { html: string; js?: string } {
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
   const js = opts.installMethod !== 'cdn' ? generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer) : undefined;
+
   return { html, js };
 }
 
@@ -254,11 +265,13 @@ function getRendererComponent(renderer: Renderer): string {
     tiktok: 'TikTokVideo',
     twitch: 'TwitchVideo',
   };
+
   return map[renderer];
 }
 
 function getSkinComponent(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   const name = `${getInstallationPreset(useCase).componentPrefix}Skin`;
+
   return getSkinFile(skin) === 'minimal-skin' ? `Minimal${name}` : name;
 }
 
@@ -303,6 +316,7 @@ export function generateReactCreateCode(
   } else {
     skinComponent = getSkinComponent(useCase, skin);
     skinCssImport = `@videojs/react/${group}/${getSkinFile(skin)}.css`;
+
     if (isPresetRenderer(renderer)) {
       presetImport = `import { ${playerComponent}, ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
     } else {

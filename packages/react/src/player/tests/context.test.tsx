@@ -1,6 +1,6 @@
 import { cleanup, render, renderHook, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createI18n } from '../../i18n/create-i18n';
 import { createMockStore } from '../../testing/mocks';
@@ -70,6 +70,7 @@ describe('usePlayerContext', () => {
 describe('useMediaAttach', () => {
   it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useMediaAttach());
+
     expect(result.current).toBeUndefined();
   });
 
@@ -111,6 +112,7 @@ describe('useContainer', () => {
 describe('useContainerAttach', () => {
   it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useContainerAttach());
+
     expect(result.current).toBeUndefined();
   });
 
@@ -129,6 +131,7 @@ describe('useContainerAttach', () => {
 describe('useOptionalContainer', () => {
   it('returns null outside a Player', () => {
     const { result } = renderHook(() => useOptionalContainer());
+
     expect(result.current).toBeNull();
   });
 
@@ -160,17 +163,20 @@ describe('usePlayer', () => {
 describe('useOptionalPlayer', () => {
   it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useOptionalPlayer());
+
     expect(result.current).toBeUndefined();
   });
 
   it('returns undefined outside a Player with selector', () => {
     const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused));
+
     expect(result.current).toBeUndefined();
   });
 
   it('does not run selector outside a Player', () => {
     const selector = vi.fn(() => true);
     const { result } = renderHook(() => useOptionalPlayer(selector));
+
     expect(result.current).toBeUndefined();
     expect(selector).not.toHaveBeenCalled();
   });
@@ -274,6 +280,7 @@ describe('Container', () => {
     );
 
     const el = container.firstElementChild;
+
     expect(el?.getAttribute('role')).toBe('group');
     expect(el?.getAttribute('aria-label')).toBe('Media player');
   });
@@ -393,6 +400,7 @@ describe('Container', () => {
     );
 
     const el = container.firstElementChild;
+
     expect(el?.getAttribute('role')).toBe('region');
     expect(el?.getAttribute('aria-label')).toBe('Video player');
   });
@@ -407,6 +415,7 @@ describe('Container', () => {
     );
 
     const el = container.firstElementChild;
+
     expect(el?.getAttribute('aria-labelledby')).toBe('player-title');
     expect(el?.hasAttribute('aria-label')).toBe(false);
   });
@@ -461,6 +470,7 @@ describe('Container', () => {
 
     function Label() {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 
@@ -488,6 +498,7 @@ describe('Container', () => {
 
     function Label() {
       const t = useTranslator();
+
       return <span>{t('Play')}</span>;
     }
 

@@ -2,6 +2,7 @@ import type { MediaTimeState } from '@videojs/media';
 import { hasMetadata, isMediaBufferCapable, isMediaSeekCapable, isMediaSourceCapable } from '@videojs/media';
 import { listen, onEvent } from '@videojs/utils/dom';
 import { noop } from '@videojs/utils/function';
+
 import { definePlayerFeature } from '../../feature';
 import { signalKeys } from '../signal-keys';
 
@@ -14,7 +15,6 @@ export const timeFeature = definePlayerFeature({
     async seek(time: number) {
       const { media } = target(),
         signal = signals.supersede(signalKeys.seek);
-
       if (!isMediaSeekCapable(media) || !isMediaSourceCapable(media)) return 0;
 
       if (!hasMetadata(media)) {
@@ -35,7 +35,6 @@ export const timeFeature = definePlayerFeature({
 
   attach({ target, signal, set, get }) {
     const { media } = target;
-
     if (!isMediaSeekCapable(media)) return;
 
     // For live streams `media.duration` is `Infinity` — fall back to the end
@@ -43,10 +42,13 @@ export const timeFeature = definePlayerFeature({
     // the sliding DVR window as new segments become available.
     const resolveDuration = () => {
       const { duration } = media;
+
       if (duration === Number.POSITIVE_INFINITY && isMediaBufferCapable(media)) {
         const { seekable } = media;
+
         return seekable.length > 0 ? seekable.end(seekable.length - 1) : 0;
       }
+
       return Number.isFinite(duration) ? duration : 0;
     };
 
@@ -65,6 +67,7 @@ export const timeFeature = definePlayerFeature({
     // active seek.
     const syncUnlessSeeking = () => {
       if (get().seeking) return;
+
       sync();
     };
 

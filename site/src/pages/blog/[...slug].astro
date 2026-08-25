@@ -11,6 +11,7 @@ import { createBlogPostingSchema } from '@/utils/jsonLd/schemas';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
+
   return posts
     .filter((post) => !post.data.devOnly || import.meta.env.DEV)
     .map((post) => ({
@@ -83,7 +84,7 @@ const jsonLdSchema = createBlogPostingSchema({
             .formatToParts(authors.map((author) => author.data.name))
             .map((part) =>
               part.type === "element" ? (
-                // inline-block removes the whitespace that prettier+astro adds around the text
+                // inline-block removes the whitespace that the Astro formatter adds around the text
                 <a
                   href={`/blog/authors/${authors.find((a) => a.data.name === part.value)?.id}`}
                   class="inline-block intent:underline"

@@ -1,9 +1,8 @@
 /**
  * Segment appender helper.
  *
- * Appends media data (ArrayBuffer or AsyncIterable<Uint8Array> stream) to a
- * SourceBuffer, waiting for `updateend` between calls so the browser can
- * process each append before the next one arrives.
+ * Appends media data (ArrayBuffer or AsyncIterable<Uint8Array> stream) to a SourceBuffer, waiting for `updateend`
+ * between calls so the browser can process each append before the next one arrives.
  */
 
 import type { SegmentData } from '../../types';
@@ -14,12 +13,10 @@ export type AppendData = SegmentData;
 /**
  * Append media data to a SourceBuffer.
  *
- * Accepts either a full ArrayBuffer (single append) or an AsyncIterable of
- * Uint8Array chunks (one append per chunk, in order). Waits for `updateend`
- * between each call so appends are serialized correctly.
+ * Accepts either a full ArrayBuffer (single append) or an AsyncIterable of Uint8Array chunks (one append per chunk, in
+ * order). Waits for `updateend` between each call so appends are serialized correctly.
  *
- * Errors from the SourceBuffer (`error` event) or from the iterable are
- * propagated as rejections.
+ * Errors from the SourceBuffer (`error` event) or from the iterable are propagated as rejections.
  */
 export async function appendSegment(sourceBuffer: SourceBuffer, data: AppendData, signal?: AbortSignal): Promise<void> {
   if (data instanceof ArrayBuffer) {
@@ -31,6 +28,7 @@ export async function appendSegment(sourceBuffer: SourceBuffer, data: AppendData
         // appendBuffer call. The current chunk (if any) has already landed in the
         // SourceBuffer; the partial: true flag in the actor model reflects this.
         if (signal?.aborted) throw signal.reason ?? new DOMException('Aborted', 'AbortError');
+
         await appendChunk(sourceBuffer, chunk);
       }
     } catch (e) {
@@ -54,6 +52,7 @@ export async function appendSegment(sourceBuffer: SourceBuffer, data: AppendData
           // Thrown if the MediaSource is not "open" (e.g. during teardown).
         }
       }
+
       throw e;
     }
   }
@@ -66,6 +65,7 @@ async function appendChunk(sourceBuffer: SourceBuffer, data: ArrayBuffer | Uint8
         sourceBuffer.removeEventListener('updateend', onUpdateEnd);
         resolve();
       };
+
       sourceBuffer.addEventListener('updateend', onUpdateEnd);
     });
   }

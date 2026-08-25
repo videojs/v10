@@ -79,6 +79,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
 
   #createRemoteOverride(): Partial<HTMLMediaTargetLike> {
     const provider = this.#provider!;
+
     return {
       get remote() {
         return provider.remote;
@@ -97,6 +98,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
 
   set src(value: string | undefined) {
     if (this.#src === value) return;
+
     this.#src = value;
     this.#load();
   }
@@ -108,6 +110,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
 
   set contentType(value: string | undefined) {
     if (this.#contentType === value) return;
+
     this.#contentType = value;
     this.#load();
   }
@@ -119,6 +122,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
 
   set streamType(value: MediaStreamType | undefined) {
     if (this.#streamType === value) return;
+
     this.#streamType = value;
     this.#load();
   }
@@ -130,6 +134,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
 
   set receiver(value: string | undefined) {
     if (this.#receiver === value) return;
+
     this.#receiver = value;
     this.#load();
   }
@@ -141,6 +146,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
 
   set customData(value: Record<string, unknown> | null | undefined) {
     if (this.#customData === value) return;
+
     this.#customData = value;
     this.#load();
   }

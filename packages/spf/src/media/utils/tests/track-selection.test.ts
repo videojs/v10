@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { AudioTrack, Presentation, VideoTrack } from '../../types';
 import { getResolvedSelectedTrackDuration, type TrackSelectionState } from '../track-selection';
 
@@ -82,6 +83,7 @@ describe('getResolvedSelectedTrackDuration', () => {
       presentation: createPresentation({ video: [resolvedVideoTrack({ duration: 120.5 })] }),
       selectedVideoTrackId: 'video-1',
     };
+
     expect(getResolvedSelectedTrackDuration(state)).toBe(120.5);
   });
 
@@ -90,6 +92,7 @@ describe('getResolvedSelectedTrackDuration', () => {
       presentation: createPresentation({ audio: [resolvedAudioTrack({ duration: 90.25 })] }),
       selectedAudioTrackId: 'audio-1',
     };
+
     expect(getResolvedSelectedTrackDuration(state)).toBe(90.25);
   });
 
@@ -102,6 +105,7 @@ describe('getResolvedSelectedTrackDuration', () => {
       selectedVideoTrackId: 'video-1',
       selectedAudioTrackId: 'audio-1',
     };
+
     expect(getResolvedSelectedTrackDuration(state)).toBe(120.5);
   });
 
@@ -118,6 +122,7 @@ describe('getResolvedSelectedTrackDuration', () => {
       } as any,
       selectedVideoTrackId: 'video-1',
     };
+
     expect(getResolvedSelectedTrackDuration(state)).toBeUndefined();
   });
 
@@ -125,6 +130,7 @@ describe('getResolvedSelectedTrackDuration', () => {
     const state: TrackSelectionState = {
       presentation: createPresentation({ video: [resolvedVideoTrack()] }),
     };
+
     expect(getResolvedSelectedTrackDuration(state)).toBeUndefined();
   });
 

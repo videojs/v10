@@ -29,6 +29,7 @@ export const TooltipContextProvider = TooltipContext.Provider;
 export function useTooltipContext(): TooltipContextValue {
   const ctx = useContext(TooltipContext);
   if (!ctx) throw new Error('Tooltip compound components must be used within a Tooltip.Root');
+
   return ctx;
 }
 

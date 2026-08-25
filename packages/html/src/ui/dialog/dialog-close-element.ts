@@ -38,6 +38,7 @@ export class DialogCloseElement extends UIElement {
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
     const ctx = this.#ctx.value;
+
     if (ctx) applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
   }
 }

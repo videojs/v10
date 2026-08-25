@@ -9,12 +9,13 @@ export function walkAncestors<Value>(
   }
 
   let node: Element | null = start;
+
   while (node) {
     const value = callback(node);
-    if (!isUndefined(value)) {
-      return value;
-    }
+    if (!isUndefined(value)) return value;
+
     node = node.parentElement;
   }
+
   return undefined;
 }

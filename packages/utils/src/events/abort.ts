@@ -1,7 +1,6 @@
 /**
- * Compose multiple abort signals into one that aborts when **any** input fires.
- * Uses native `AbortSignal.any` when available, otherwise falls back to a
- * manual `AbortController` composition for Chromium ≤115 and similar runtimes.
+ * Compose multiple abort signals into one that aborts when **any** input fires. Uses native `AbortSignal.any` when
+ * available, otherwise falls back to a manual `AbortController` composition for Chromium ≤115 and similar runtimes.
  */
 export function anyAbortSignal(signals: AbortSignal[]): AbortSignal {
   if ('any' in AbortSignal) {
@@ -25,8 +24,8 @@ export function anyAbortSignal(signals: AbortSignal[]): AbortSignal {
 }
 
 /**
- * Race a promise against an abort signal. Rejects immediately if the signal
- * is already aborted or becomes aborted before the promise settles.
+ * Race a promise against an abort signal. Rejects immediately if the signal is already aborted or becomes aborted
+ * before the promise settles.
  */
 export function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
   if (signal.aborted) {

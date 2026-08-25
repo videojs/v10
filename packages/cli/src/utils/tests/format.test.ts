@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { InstallationOptions } from '@/utils/installation/codegen';
+
 import { formatInstallationCode } from '../format.js';
 
 const baseHTML: InstallationOptions = {
@@ -23,6 +25,7 @@ const baseReact: InstallationOptions = {
 describe('formatInstallationCode', () => {
   it('formats HTML + npm with install, JS imports, and HTML sections', () => {
     const result = formatInstallationCode(baseHTML);
+
     expect(result).toContain('## Install Video.js');
     expect(result).toContain('npm install @videojs/html');
     expect(result).toContain('## JavaScript imports');
@@ -32,6 +35,7 @@ describe('formatInstallationCode', () => {
 
   it('formats HTML + CDN without JS imports section', () => {
     const result = formatInstallationCode({ ...baseHTML, installMethod: 'cdn' });
+
     expect(result).toContain('## Install Video.js');
     expect(result).toContain('<script');
     expect(result).not.toContain('## JavaScript imports');
@@ -40,6 +44,7 @@ describe('formatInstallationCode', () => {
 
   it('formats React with install, create, and use sections', () => {
     const result = formatInstallationCode(baseReact);
+
     expect(result).toContain('## Install Video.js');
     expect(result).toContain('npm install @videojs/react');
     expect(result).toContain('## Create your player');
@@ -49,11 +54,13 @@ describe('formatInstallationCode', () => {
 
   it('uses pnpm install command when specified', () => {
     const result = formatInstallationCode({ ...baseReact, installMethod: 'pnpm' });
+
     expect(result).toContain('pnpm add @videojs/react');
   });
 
   it('formats HTML with skin none — omits skin tag and skin import', () => {
     const result = formatInstallationCode({ ...baseHTML, skin: 'none' });
+
     expect(result).toContain('<video-player>');
     expect(result).not.toContain('<video-skin>');
     expect(result).not.toContain("'@videojs/html/video/skin'");
@@ -61,6 +68,7 @@ describe('formatInstallationCode', () => {
 
   it('formats the HTML live-video preset', () => {
     const result = formatInstallationCode({ ...baseHTML, useCase: 'live-video', renderer: 'hls' });
+
     expect(result).toContain('<live-video-player>');
     expect(result).toContain("import '@videojs/html/live-video/skin'");
   });
@@ -72,6 +80,7 @@ describe('formatInstallationCode', () => {
       skin: 'audio',
       renderer: 'mux-audio',
     });
+
     expect(result).toContain('<LiveAudioPlayer>');
     expect(result).toContain('<LiveAudioSkin>');
   });

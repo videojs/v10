@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createTranslator } from '../translator';
 
@@ -9,11 +9,13 @@ describe('createTranslator', () => {
 
   it('resolves a simple key', () => {
     const t = createTranslator({ 'buttons.play': 'Start' }, 'en');
+
     expect(t('buttons.play')).toBe('Start');
   });
 
   it('interpolates {param} placeholders', () => {
     const t = createTranslator({ 'seek.forward': 'Jump {seconds} s' }, 'en');
+
     expect(t('seek.forward', { seconds: 10 })).toBe('Jump 10 s');
   });
 
@@ -33,11 +35,13 @@ describe('createTranslator', () => {
 
   it('falls back to the source phrase when no translation is defined', () => {
     const t = createTranslator({}, 'en');
+
     expect(t('buttons.play')).toBe('buttons.play');
   });
 
   it('uses an inline default for a semantic key', () => {
     const t = createTranslator({}, 'en');
+
     expect(t('buttons.play', { default: 'Play' })).toBe('Play');
   });
 
@@ -65,16 +69,19 @@ describe('createTranslator', () => {
 
   it('interpolates the source phrase fallback', () => {
     const t = createTranslator({}, 'en');
+
     expect(t('seek.forward', { seconds: 10 })).toBe('seek.forward');
   });
 
   it('keeps tokens that are not supplied as params', () => {
     const t = createTranslator({ 'buttons.play': 'Hi {name}' }, 'en');
+
     expect(t('buttons.play')).toBe('Hi {name}');
   });
 
   it('coerces numeric params to strings', () => {
     const t = createTranslator({ 'playback.rate': 'Speed {rate}' }, 'en');
+
     expect(t('playback.rate', { rate: 1.25 })).toBe('Speed 1.25');
   });
 });

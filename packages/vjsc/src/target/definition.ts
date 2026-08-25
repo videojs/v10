@@ -1,5 +1,6 @@
 import type { Program } from '@oxc-project/types';
 import type { RolldownMagicString } from 'rolldown';
+
 import type { ModuleImport } from '../ast/imports';
 import type {
   ComponentDefinition,
@@ -8,7 +9,7 @@ import type {
   EmptyProps,
   InferProps,
 } from '../components/definition';
-import type { GroupProps, SlotProps, TemplatePartProps, TemplateProps, TextProps } from '../components/jsx-runtime';
+import type { BoxProps, SlotProps, TemplatePartProps, TemplateProps, TextProps } from '../components/jsx-runtime';
 import { createTargetCode } from './expression';
 
 export const TARGET_ELEMENT = Symbol.for('vjsc/target-element');
@@ -180,7 +181,7 @@ export interface TemplateTargetDefinition {
 export type TemplateTargetRule = PrimitiveTargetRule<Omit<TemplateProps, 'name'>> | TemplateTargetDefinition;
 
 export interface ComponentTargetPrimitives {
-  readonly Group?: PrimitiveTargetRule<GroupProps> | undefined;
+  readonly Box?: PrimitiveTargetRule<BoxProps> | undefined;
   readonly Slot?: PrimitiveTargetRule<SlotProps> | undefined;
   readonly Text?: PrimitiveTargetRule<TextProps> | undefined;
   readonly Template?: Readonly<Record<string, TemplateTargetRule>> | undefined;
@@ -353,6 +354,7 @@ function createComponentTargetReference(path: readonly string[]): TargetElement 
   return new Proxy(reference, {
     get(target, property) {
       if (property === 'then' && path.length === 0) return undefined;
+
       const ownTarget = target as TargetElement & Readonly<Record<PropertyKey, unknown>>;
       if (property in ownTarget) return ownTarget[property];
 

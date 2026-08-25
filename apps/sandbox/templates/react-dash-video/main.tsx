@@ -31,7 +31,7 @@ function App() {
   return (
     <SandboxI18nProvider>
       <VideoPlayer>
-        <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
+        <VideoSkinComponent skin={skin} styling={styling} className="mx-auto aspect-video max-w-4xl">
           <DashVideo
             src={SOURCES[source].url ?? ''}
             autoPlay={autoplay}

@@ -1,12 +1,8 @@
-/**
- * Centralized media API subsection definitions shared by the renderer and the
- * generated table of contents.
- */
+/** Centralized media API subsection definitions shared by the renderer and the generated table of contents. */
 
 /**
- * Options under `source.engine`, shared by both platforms: the structured source
- * has the same shape in HTML and React, so the section is defined once and
- * placed after the properties or props it extends.
+ * Options under `source.engine`, shared by both platforms: the structured source has the same shape in HTML and React,
+ * so the section is defined once and placed after the properties or props it extends.
  */
 const ENGINE_OPTIONS_SUBSECTION = Object.freeze({
   key: 'engineOptions',
@@ -76,6 +72,7 @@ const REACT_SUBSECTIONS = Object.freeze([
 function createSections(definitions, source, ref) {
   return definitions.flatMap((definition) => {
     if (definition.isEmpty(source, ref)) return [];
+
     return [
       {
         key: definition.key,
@@ -88,9 +85,8 @@ function createSections(definitions, source, ref) {
 }
 
 /**
- * One entry per engine under `source.engine`, in the order the generator emitted
- * them. Ids are lowercased so `hlsJs` and `nativeHls` anchor predictably; titles
- * are the exact path a reader types.
+ * One entry per engine under `source.engine`, in the order the generator emitted them. Ids are lowercased so `hlsJs`
+ * and `nativeHls` anchor predictably; titles are the exact path a reader types.
  */
 function createEngines(ref) {
   return Object.keys(ref.engineOptions ?? {}).map((key) => ({
@@ -145,6 +141,7 @@ export function buildMediaReferenceTocHeadings(model) {
   for (const framework of ['html', 'react']) {
     const platform = model.platforms[framework];
     if (!platform) continue;
+
     for (const section of platform.sections) {
       headings.push({
         depth: section.depth,

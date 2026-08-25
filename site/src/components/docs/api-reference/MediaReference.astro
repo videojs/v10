@@ -20,6 +20,7 @@ if (!ref) return;
 
 const model = createMediaReferenceModel(media, ref);
 if (!model) return;
+
 const platform = model.platforms[framework];
 if (!platform) return;
 
@@ -28,8 +29,10 @@ if (!platform) return;
 // names cannot be dynamic in markup, so resolve them here and hand the rendered
 // HTML to whichever platform renderer runs.
 const engineProse: Record<string, string> = {};
+
 for (const engine of model.engines) {
   const slot = `engine-${engine.key}`;
+
   if (Astro.slots.has(slot)) engineProse[engine.key] = await Astro.slots.render(slot);
 }
 ---

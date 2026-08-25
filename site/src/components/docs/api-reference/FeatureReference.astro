@@ -17,9 +17,7 @@ interface Props {
 
 const { feature } = Astro.props;
 const { framework } = Astro.params;
-if (!framework || !isValidFramework(framework)) {
-  throw new Error(`Invalid or missing framework param.`);
-}
+if (!framework || !isValidFramework(framework)) throw new Error(`Invalid or missing framework param.`);
 
 const entry = await getEntry('featureReference', feature);
 const ref: FeatureReference | null = entry?.data ?? null;

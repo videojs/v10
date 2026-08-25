@@ -1,4 +1,5 @@
 import { MediaError } from '@videojs/media';
+
 import type { TranslationParams } from '../../i18n/params';
 import type { Text } from '../../i18n/text';
 import { emptyText, okText } from '../../i18n/text/common';
@@ -14,17 +15,13 @@ import {
 } from '../../i18n/text/errors';
 
 /**
- * SVTA 99 [Custom] 001 — an engine reporting that it has no pipeline for
- * something the source requires. Not a `MediaError.MEDIA_ERR_*` value: engines
- * that report SVTA codes surface them on `error.code` directly.
+ * SVTA 99 [Custom] 001 — an engine reporting that it has no pipeline for something the source requires. Not a
+ * `MediaError.MEDIA_ERR_*` value: engines that report SVTA codes surface them on `error.code` directly.
  *
- * The literal rather than an import. `@videojs/spf` defines this as
- * `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` and owns its meaning, but core doesn't
- * depend on spf, and reaching it through `@videojs/media` would pull an engine
- * entry point into a barrel that has no other reason to load one. Same trade
- * `HlsVideoMediaStreamType` makes in the other direction — compatibility by
- * value, stated in a comment, instead of a dependency edge neither package
- * wants.
+ * The literal rather than an import. `@videojs/spf` defines this as `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` and owns its
+ * meaning, but core doesn't depend on spf, and reaching it through `@videojs/media` would pull an engine entry point
+ * into a barrel that has no other reason to load one. Same trade `HlsVideoMediaStreamType` makes in the other direction
+ * — compatibility by value, stated in a comment, instead of a dependency edge neither package wants.
  */
 const SVTA_UNSUPPORTED_PLAYBACK_FEATURE = 99001;
 
@@ -77,8 +74,8 @@ export function getErrorDialogUnexpectedText(): Text {
 }
 
 /**
- * Resolves dialog body copy: default phrases for known {@link MediaError} defaults, literal text for
- * custom messages, otherwise the generic fallback key.
+ * Resolves dialog body copy: default phrases for known {@link MediaError} defaults, literal text for custom messages,
+ * otherwise the generic fallback key.
  */
 export function resolveErrorDialogDescription(
   error: (Pick<MediaError, 'code' | 'message'> & { context?: MediaError['context'] }) | null | undefined,
@@ -87,17 +84,17 @@ export function resolveErrorDialogDescription(
   if (error) {
     const text = MEDIA_ERROR_TRANSLATIONS[error.code];
     const message = error.message?.trim();
+
     if (message) {
       const defaultForCode = MediaError.defaultMessages[error.code];
-      if (text && defaultForCode && message === defaultForCode) {
-        return text;
-      }
+      if (text && defaultForCode && message === defaultForCode) return text;
+
       const uaVariants = STANDARD_CODE_UA_MESSAGES[error.code];
-      if (text && isStandardMediaErrorCode(error.code) && !error.context && uaVariants?.includes(message)) {
-        return text;
-      }
+      if (text && isStandardMediaErrorCode(error.code) && !error.context && uaVariants?.includes(message)) return text;
+
       return message;
     }
+
     if (text) return text;
   }
 

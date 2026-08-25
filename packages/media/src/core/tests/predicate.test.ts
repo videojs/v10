@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
 import {
   isMediaBufferCapable,
@@ -26,6 +27,7 @@ describe('isMediaBufferCapable', () => {
 
   it('accepts defined non-stub time ranges', () => {
     const range = { length: 1, start: () => 0, end: () => 10 };
+
     expect(isMediaBufferCapable({ buffered: range, seekable: range })).toBe(true);
   });
 });

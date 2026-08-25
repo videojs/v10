@@ -1,4 +1,5 @@
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vite-plus/test';
+
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget, isTargetElement, TARGET_ELEMENT, type TargetElement } from '../definition';
 import { jsx } from '../jsx-runtime';

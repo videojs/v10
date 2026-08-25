@@ -3,29 +3,34 @@ import { settingsText } from '@videojs/core/i18n/text/menu';
 import * as $ from '@videojs/core/vjsc';
 import { GearIcon } from '@videojs/icons/vjsc';
 import { type PropsWithChildren, Text } from 'vjsc/components';
-import buttonStyles from '../../styles/components/button.styles';
-import styles from '../../styles/components/menu.styles';
-import popupStyles from '../../styles/components/popup.styles';
+
+import buttonStyles from '../../styles/buttons/button.styles';
+import styles from '../../styles/menus/menu.styles';
+import popupStyles from '../../styles/popups/popup.styles';
+import tooltipStyles from '../../styles/popups/tooltip.styles';
+import surfaceStyles from '../../styles/surfaces/surface.styles';
 
 export function SettingsMenu({ children, className, ...props }: PropsWithChildren<MenuProps>) {
   return (
     <$.Menu.Root side="top" align="center" {...props}>
       <$.Tooltip.Root side="top">
         <$.Tooltip.Trigger>
-          <$.Menu.Trigger className={[buttonStyles.root, styles.trigger]}>
-            <GearIcon className={[buttonStyles.icon, styles.triggerIcon]} />
-            <Text className={styles.srOnly} token={settingsText.key}>
+          <$.Menu.Trigger className={[buttonStyles.root, styles.settingsTrigger]}>
+            <GearIcon className={[buttonStyles.icon, styles.settingsTriggerIcon]} />
+            <Text className={styles.triggerLabel} token={settingsText.key}>
               {settingsText.text}
             </Text>
           </$.Menu.Trigger>
         </$.Tooltip.Trigger>
-        <$.Tooltip.Popup className={[popupStyles.surface, popupStyles.tooltip]}>
+        <$.Tooltip.Popup
+          className={[popupStyles.root, popupStyles.transition, surfaceStyles.root, tooltipStyles.popup]}
+        >
           <Text token={settingsText.key}>{settingsText.text}</Text>
         </$.Tooltip.Popup>
       </$.Tooltip.Root>
-      <$.Menu.Content className={[popupStyles.surface, popupStyles.popover, styles.root, styles.group, className]}>
-        <$.Menu.Group className={styles.group}>{children}</$.Menu.Group>
-      </$.Menu.Content>
+      <$.Menu.Popup className={[popupStyles.root, popupStyles.safeArea, surfaceStyles.root, styles.popup, className]}>
+        <$.Menu.Content className={styles.content}>{children}</$.Menu.Content>
+      </$.Menu.Popup>
     </$.Menu.Root>
   );
 }

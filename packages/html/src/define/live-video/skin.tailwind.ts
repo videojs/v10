@@ -22,9 +22,9 @@ import {
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
-
 // Register the live video player, container, and all UI custom elements.
 import './ui';
 
@@ -96,16 +96,18 @@ function getTemplateHTML() {
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>
               <media-menu id="captions-menu" side="top" align="center" class="${cn(popup.popover, menu.root)}">
-                <media-captions-radio-group class="${menu.group}">
-                  <template>
-                    <media-menu-radio-item class="${menu.item}">
-                      <bdi data-part="label" dir="auto"></bdi>
-                      <media-menu-item-indicator force-mount class="${menu.indicator}">
-                        ${renderIcon('check', { class: cn(icon, menu.icon) })}
-                      </media-menu-item-indicator>
-                    </media-menu-radio-item>
-                  </template>
-                </media-captions-radio-group>
+                <media-menu-content class="${menu.content}">
+                  <media-captions-radio-group class="${menu.group}">
+                    <template>
+                      <media-menu-radio-item class="${menu.item}">
+                        <bdi data-part="label" dir="auto"></bdi>
+                        <media-menu-item-indicator force-mount class="${menu.indicator}">
+                          ${renderIcon('check', { class: cn(icon, menu.icon) })}
+                        </media-menu-item-indicator>
+                      </media-menu-radio-item>
+                    </template>
+                  </media-captions-radio-group>
+                </media-menu-content>
               </media-menu>
               <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <media-tooltip-label></media-tooltip-label>

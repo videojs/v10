@@ -1,4 +1,5 @@
 import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import {
   type EventLike,
@@ -11,13 +12,7 @@ import {
 } from '../../core/types';
 import { getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
-export {
-  addMediaComponent,
-  getMediaComponents,
-  getMediaOwner,
-  getMediaProp,
-  setMediaProp,
-} from '../utils';
+export { addMediaComponent, getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
 export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelector<E extends Element = Element>(selectors: string): E | null;
@@ -55,6 +50,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
 
   attach(target: Target) {
     if (!target || this.#target === target) return;
+
     this.#target = target;
 
     for (const type of this.#eventTypes) {
@@ -107,6 +103,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
       this.#eventTypes.add(type);
       this.target?.addEventListener(type, this.#forwardEvent);
     }
+
     super.addEventListener(type, listener as EventListener, options);
   }
 
@@ -123,15 +120,15 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   };
 
   /**
-   * Current stream type (`'on-demand'`, `'live'`, or `'unknown'`). Defaults to
-   * `'unknown'`; detecting hosts update it automatically, and consumers can set
-   * it to override detection.
+   * Current stream type (`'on-demand'`, `'live'`, or `'unknown'`). Defaults to `'unknown'`; detecting hosts update it
+   * automatically, and consumers can set it to override detection.
    */
   get streamType() {
     return getMediaProp(this, 'streamType') ?? this.#streamType;
   }
   set streamType(value) {
     if (this.streamType === value) return;
+
     this.#streamType = value;
     setMediaProp(this, 'streamType', value);
     this.dispatchEvent(new Event('streamtypechange'));
@@ -180,11 +177,13 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
 
   play() {
     const owner = getMediaOwner(this, 'play');
+
     return owner?.play?.() ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
   }
 
   pause() {
     const owner = getMediaOwner(this, 'pause');
+
     owner?.pause?.();
   }
 
@@ -241,11 +240,13 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
 
   load() {
     const owner = getMediaOwner(this, 'load');
+
     return owner?.load?.();
   }
 
   canPlayType(type: string) {
     const owner = getMediaOwner(this, 'canPlayType');
+
     return owner?.canPlayType?.(type) ?? '';
   }
 
@@ -306,6 +307,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
 
   addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
     const owner = getMediaOwner(this, 'addTextTrack');
+
     return owner?.addTextTrack?.(kind, label, language) as TextTrackLike;
   }
 

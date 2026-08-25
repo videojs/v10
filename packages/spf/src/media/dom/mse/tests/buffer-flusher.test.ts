@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { flushBuffer } from '../buffer-flusher';
 
 function makeSourceBuffer(): SourceBuffer {
@@ -34,6 +35,7 @@ describe('flushBuffer', () => {
 
   it('resolves when updateend fires', async () => {
     const sourceBuffer = makeSourceBuffer();
+
     await expect(flushBuffer(sourceBuffer, 0, 10)).resolves.toBeUndefined();
   });
 
@@ -53,6 +55,7 @@ describe('flushBuffer', () => {
       addEventListener: vi.fn((type: string, listener: EventListener) => {
         listeners[type] ??= [];
         listeners[type].push(listener);
+
         if (type === 'updateend' && sourceBuffer.updating) {
           updateEndCallback = () => listener(new Event('updateend'));
         }
@@ -69,6 +72,7 @@ describe('flushBuffer', () => {
 
     // Simulate the previous operation finishing
     (sourceBuffer as any).updating = false;
+
     if (updateEndCallback) updateEndCallback();
 
     await flushPromise;
@@ -101,6 +105,7 @@ describe('flushBuffer', () => {
 
   it('rejects when remove() throws synchronously', async () => {
     const sourceBuffer = makeSourceBuffer();
+
     (sourceBuffer.remove as ReturnType<typeof vi.fn>).mockImplementation(() => {
       throw new Error('QuotaExceededError');
     });

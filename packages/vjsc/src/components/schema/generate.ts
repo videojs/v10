@@ -31,10 +31,7 @@ export function createSchemaModule(options: CreateSchemaModuleOptions): SchemaMo
   const discovered = discoverSchema({ cwd, include, ...(exclude ? { exclude } : {}) });
 
   const entries = [...discovered.components].sort((a, b) => a.name.localeCompare(b.name));
-
-  if (entries.length === 0) {
-    throw new Error(`No component sources matched: ${JSON.stringify(include)}`);
-  }
+  if (entries.length === 0) throw new Error(`No component sources matched: ${JSON.stringify(include)}`);
 
   const duplicate = entries.find((entry, index) => entry.name === entries[index - 1]?.name);
   if (duplicate) throw new Error(`Duplicate component name: ${duplicate.name}`);
@@ -92,6 +89,7 @@ function manifestRef(entry: SchemaComponent): string {
 function emitDefinitions(entries: readonly SchemaComponent[]): string {
   const typeLines = entries.map((entry) => {
     const type = entry.kind === 'manifest' ? `typeof ${entry.name}Def` : `{ readonly name: '${entry.name}' }`;
+
     return `  readonly ${entry.name}: ${type};`;
   });
   const lines = entries.map((entry) => `  ${entry.name}: ${manifestRef(entry)},`);
@@ -130,6 +128,7 @@ function emitDeclarationHeader(entries: readonly SchemaComponent[], outputFile: 
 function emitDeclarationDefinitions(entries: readonly SchemaComponent[]): string {
   const lines = entries.map((entry) => {
     const type = entry.kind === 'manifest' ? `typeof ${entry.name}Def` : `{ readonly name: '${entry.name}' }`;
+
     return `  readonly ${entry.name}: ${type};`;
   });
 

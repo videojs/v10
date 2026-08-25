@@ -41,5 +41,6 @@ export function isInputActionIncluded(
   actions: readonly InputAction[] | undefined
 ): boolean {
   if (!action) return false;
+
   return !actions || actions.includes(action);
 }

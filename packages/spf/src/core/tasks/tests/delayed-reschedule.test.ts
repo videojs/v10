@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { delayedReschedule } from '../delayed-reschedule';
 import type { TaskLike } from '../task';
 
@@ -7,8 +8,8 @@ afterEach(() => {
 });
 
 /**
- * A minimal {@link TaskLike} for exercising `delayedReschedule` in isolation:
- * the cadence only reads `run()`, `previous`, and `signal`.
+ * A minimal {@link TaskLike} for exercising `delayedReschedule` in isolation: the cadence only reads `run()`,
+ * `previous`, and `signal`.
  */
 function fakeTask(
   run: () => Promise<number>,
@@ -102,6 +103,7 @@ describe('delayedReschedule', () => {
     const ac = new AbortController();
 
     const done = reschedule(fakeTask(async () => 1, undefined, ac.signal));
+
     await vi.advanceTimersByTimeAsync(0); // run settles → into the wait
     ac.abort(new DOMException('Aborted', 'AbortError'));
 

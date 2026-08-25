@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { signal } from '../../signals/primitives';
 import type { ContextSignals, StateSignals } from '../create-composition';
 import { makeShareSignals } from '../share-signals';
@@ -19,6 +20,7 @@ function makeDeps() {
   const context: ContextSignals<Context> = {
     element: signal<{ id: string } | undefined>(undefined),
   };
+
   return { state, context };
 }
 
@@ -71,6 +73,7 @@ describe('makeShareSignals', () => {
   it('does not require an onSignalsReady callback', () => {
     const shareSignals = makeShareSignals<State, Context>();
     const { state, context } = makeDeps();
+
     expect(() => {
       shareSignals.setup({ state, context, config: {} });
     }).not.toThrow();
@@ -78,6 +81,7 @@ describe('makeShareSignals', () => {
 
   it('declares no stateKeys or contextKeys (passthrough behavior)', () => {
     const shareSignals = makeShareSignals<State, Context>();
+
     expect(shareSignals.stateKeys).toEqual([]);
     expect(shareSignals.contextKeys).toEqual([]);
   });

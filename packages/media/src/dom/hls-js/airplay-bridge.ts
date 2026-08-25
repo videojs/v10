@@ -1,14 +1,13 @@
 import { isWebKitAirPlayCapable, listen, type WebKitVideoElement } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
+
 import type { HlsEngineHost } from './types';
 
 /**
- * Adds an AirPlay-capable fallback `<source>` to the attached video element so
- * Safari can hand the original HLS manifest off to AirPlay receivers while
- * local playback continues through hls.js (MSE).
- * When wireless-target changes, suspends hls.js loading so we don't double-fetch
- * alongside the AirPlay receiver.
+ * Adds an AirPlay-capable fallback `<source>` to the attached video element so Safari can hand the original HLS
+ * manifest off to AirPlay receivers while local playback continues through hls.js (MSE). When wireless-target changes,
+ * suspends hls.js loading so we don't double-fetch alongside the AirPlay receiver.
  *
  * Implements the WebKit-recommended pattern:
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/

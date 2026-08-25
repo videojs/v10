@@ -2,6 +2,7 @@
  * Build ejected skin snippets for copy-paste usage.
  *
  * Produces `site/src/content/ejected-skins.json` with:
+ *
  * - HTML skins: rendered HTML templates with <media-icon> elements and resolved classes
  * - React skins: TSX (with types) and JSX (types stripped) with public icon imports
  * - CSS variants include a `css` field with all @imports resolved
@@ -13,7 +14,9 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import ts from 'typescript';
+
 import { resolveImports } from '../../../build/plugins/resolve-css-imports.ts';
 import { normalizeImports } from '../normalize-imports.ts';
 import {
@@ -62,6 +65,7 @@ function getStatementName(statement: ts.Statement): string | null {
 
   if (ts.isVariableStatement(statement)) {
     const decl = statement.declarationList.declarations[0];
+
     return decl && ts.isIdentifier(decl.name) ? decl.name.text : null;
   }
 
@@ -171,9 +175,7 @@ function collectDeclarationClosure(
   }
 
   const declarationText = declarations.get(declarationName) ?? getNamedExportText(sourceFile, declarationName);
-  if (!declarationText) {
-    throw new Error(`Could not find declaration "${declarationName}" in "${sourceFile.fileName}"`);
-  }
+  if (!declarationText) throw new Error(`Could not find declaration "${declarationName}" in "${sourceFile.fileName}"`);
 
   seen.add(declarationName);
 
@@ -183,6 +185,7 @@ function collectDeclarationClosure(
 
   while ((match = identifierRegex.exec(declarationText)) !== null) {
     const identifier = match[0];
+
     if (identifier !== declarationName && declarations.has(identifier)) {
       dependencyNames.add(identifier);
     }
@@ -210,12 +213,14 @@ function inlineModuleExport(
   }
 
   const aliasKeyword = isTypeOnly ? 'type' : 'const';
+
   return `${exportText}\n\n${aliasKeyword} ${localName} = ${importName};`;
 }
 
 function inlineRelativeImports(source: string, sourcePath: string, rewriteSource = (value: string) => value): string {
   source = rewriteSource(source);
   const sourceFile = createSourceFile(sourcePath, source);
+
   const declarationsToInline: string[] = [];
   const extraImports = new Set<string>();
   const declarationsSeen = new Set<string>();
@@ -227,17 +232,17 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
     }
 
     const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
-    if (!isRelativeImport(specifier)) {
-      continue;
-    }
+    if (!isRelativeImport(specifier)) continue;
 
     const importClause = statement.importClause;
+
     if (!importClause?.namedBindings || !ts.isNamedImports(importClause.namedBindings) || importClause.name) {
       throw new Error(`Unsupported relative import in "${toRepoPath(sourcePath)}": ${statement.getText(sourceFile)}`);
     }
 
     const targetPath = resolveRelativeModulePath(sourcePath, specifier);
     const targetSource = rewriteSource(readFileSync(targetPath, 'utf-8'));
+
     validatePackageImports(targetSource, toRepoPath(targetPath));
     const transformedTargetSource = inlineRelativeImports(targetSource, targetPath, rewriteSource);
     const transformedTargetFile = createSourceFile(targetPath, transformedTargetSource);
@@ -252,6 +257,7 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
       }
 
       const targetSpecifier = targetStatement.moduleSpecifier.getText(transformedTargetFile).slice(1, -1);
+
       if (isRelativeImport(targetSpecifier)) {
         throw new Error(
           `Relative import remained after inlining in "${toRepoPath(targetPath)}": ${targetStatement.getText(
@@ -282,6 +288,7 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
   }
 
   let transformedSource = source;
+
   for (const replacement of replacements.sort((a, b) => b.start - a.start)) {
     transformedSource = `${transformedSource.slice(0, replacement.start)}${replacement.text}${transformedSource.slice(
       replacement.end
@@ -295,6 +302,7 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
   if (declarationsToInline.length > 0) {
     const insertPos = findLastImportEnd(transformedSource);
     const block = `\n${declarationsToInline.join('\n\n')}\n`;
+
     transformedSource = `${transformedSource.slice(0, insertPos)}${block}${transformedSource.slice(insertPos)}`;
   }
 
@@ -326,6 +334,7 @@ function collectRelativeImportSpecifiers(source: string): string[] {
 export function resolveCss(cssPath: string): string {
   const abs = resolve(ROOT, cssPath);
   const raw = readFileSync(abs, 'utf-8');
+
   return resolveImports(raw, dirname(abs), SKINS_SRC);
 }
 
@@ -334,17 +343,21 @@ export function resolveCss(cssPath: string): string {
 /** Serialize a JS value to source code. */
 function serializeValue(value: unknown, indent = 0): string {
   if (typeof value === 'string') return JSON.stringify(value);
+
   if (typeof value === 'function') {
     // Function tokens (like `root`) — resolve with false (no shadow DOM)
     return `() => ${JSON.stringify((value as (arg: boolean) => string)(false))}`;
   }
+
   if (typeof value === 'object' && value !== null) {
     const entries = Object.entries(value as Record<string, unknown>);
     const pad = '  '.repeat(indent + 1);
     const closePad = '  '.repeat(indent);
     const parts = entries.map(([k, v]) => `${pad}${k}: ${serializeValue(v, indent + 1)}`);
+
     return `{\n${parts.join(',\n')},\n${closePad}}`;
   }
+
   return String(value);
 }
 
@@ -357,6 +370,7 @@ function tsxToJsx(source: string): string {
       jsx: ts.JsxEmit.Preserve,
     },
   });
+
   return result.outputText;
 }
 
@@ -366,13 +380,14 @@ function tsxToJsx(source: string): string {
 // After all transforms, collected code is inserted after the final import.
 
 /**
- * Remove `cn` import and replace all `cn(...)` calls with template literals.
- * `cn(a, b)` → `` `${a} ${b}` ``, with string literal args inlined directly.
+ * Remove `cn` import and replace all `cn(...)` calls with template literals. `cn(a, b)` → `` `${a} ${b}` ``, with
+ * string literal args inlined directly.
  */
 function inlineCn(source: string): string {
   if (!source.match(/import\s+\{[^}]*\bcn\b[^}]*\}\s+from\s+['"]@videojs\/utils\/style['"]/)) {
     return source;
   }
+
   source = source.replace(/import\s+\{[^}]*\bcn\b[^}]*\}\s+from\s+['"]@videojs\/utils\/style['"];?\n?/g, '');
   return replaceCnCalls(source);
 }
@@ -390,7 +405,9 @@ function cnToConcat(args: string[]): string {
   // Build template literal parts
   const parts = args.map((a) => {
     if (isLiteral(a)) return unwrap(a);
+
     if (a === 'className') return `\${className ?? ''}`;
+
     return `\${${a}}`;
   });
 
@@ -401,35 +418,43 @@ function cnToConcat(args: string[]): string {
 function replaceCnCalls(source: string): string {
   const parts: string[] = [];
   let i = 0;
+
   while (i < source.length) {
     const cnIndex = source.indexOf('cn(', i);
+
     if (cnIndex === -1) {
       parts.push(source.slice(i));
       break;
     }
+
     // Ensure `cn(` is a standalone call, not part of another identifier
     if (cnIndex > 0 && /\w/.test(source[cnIndex - 1])) {
       parts.push(source.slice(i, cnIndex + 3));
       i = cnIndex + 3;
       continue;
     }
+
     parts.push(source.slice(i, cnIndex));
 
     // Find the matching closing paren
     const argsStart = cnIndex + 3;
     let depth = 1;
     let j = argsStart;
+
     while (j < source.length && depth > 0) {
       if (source[j] === '(') depth++;
       else if (source[j] === ')') depth--;
+
       if (depth > 0) j++;
     }
+
     const argsStr = source.slice(argsStart, j);
     const args = splitTopLevelCommas(argsStr).map((a) => a.trim());
 
     parts.push(cnToConcat(args));
     i = j + 1; // skip past closing paren
   }
+
   return parts.join('');
 }
 
@@ -439,8 +464,10 @@ function splitTopLevelCommas(str: string): string[] {
   let current = '';
   let depth = 0;
   let templateDepth = 0;
+
   for (let i = 0; i < str.length; i++) {
     const ch = str[i];
+
     if (ch === '(' || ch === '[') depth++;
     else if (ch === ')' || ch === ']') depth--;
     else if (ch === '`') templateDepth = templateDepth > 0 ? templateDepth - 1 : templateDepth + 1;
@@ -449,16 +476,16 @@ function splitTopLevelCommas(str: string): string[] {
       current = '';
       continue;
     }
+
     current += ch;
   }
+
   if (current) result.push(current);
+
   return result;
 }
 
-/**
- * Rewrite package-private or local React icon imports to public package
- * re-exports for ejected skins.
- */
+/** Rewrite package-private or local React icon imports to public package re-exports for ejected skins. */
 function rewriteReactIconImports(source: string): string {
   return source
     .replace(/from\s+['"]@videojs\/icons\/react(?:\/default)?['"]/g, "from '@videojs/react/icons'")
@@ -470,12 +497,13 @@ function rewriteReactIconImports(source: string): string {
 }
 
 /**
- * Replace `@videojs/skins/*` imports (private package) with inline const
- * declarations containing the resolved token values.
+ * Replace `@videojs/skins/*` imports (private package) with inline const declarations containing the resolved token
+ * values.
  */
 async function inlineSkinTokens(source: string, postImport: string[]): Promise<string> {
   const regex = /import\s+\{([^}]*)\}\s+from\s+['"](@videojs\/skins\/[^'"]+)['"]\s*;?\n?/;
   let match: RegExpMatchArray | null;
+
   while ((match = source.match(regex)) !== null) {
     const names = match[1]
       .split(',')
@@ -489,12 +517,13 @@ async function inlineSkinTokens(source: string, postImport: string[]): Promise<s
     source = source.replace(match[0], '');
     postImport.push(declarations);
   }
+
   return source;
 }
 
 /**
- * Consolidate `@/` path alias imports into `@videojs/react`.
- * All UI components and hooks are re-exported from the main package entry.
+ * Consolidate `@/` path alias imports into `@videojs/react`. All UI components and hooks are re-exported from the main
+ * package entry.
  */
 function rewritePathAliases(source: string): string {
   const aliasRegex = /import\s+(type\s+)?\{([^}]+)\}\s+from\s+['"]@\/[^'"]+['"];?\n?/g;
@@ -503,6 +532,7 @@ function rewritePathAliases(source: string): string {
   const matches: string[] = [];
 
   let match: RegExpExecArray | null;
+
   while ((match = aliasRegex.exec(source)) !== null) {
     matches.push(match[0]);
     const isTypeImport = !!match[1];
@@ -510,6 +540,7 @@ function rewritePathAliases(source: string): string {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+
     for (const name of names) {
       if (isTypeImport || name.startsWith('type ')) {
         typeNames.add(name.replace(/^type\s+/, ''));
@@ -532,27 +563,29 @@ function rewritePathAliases(source: string): string {
   const importLine = `import { ${allNames.join(', ')} } from '@videojs/react';\n`;
 
   const lastImportIndex = findLastImportEnd(source);
+
   source = `${source.slice(0, lastImportIndex)}${importLine}${source.slice(lastImportIndex)}`;
 
   return source;
 }
 
 /**
- * Rewrite imports from private/internal packages:
- * - `@videojs/core/dom` → merge into `@videojs/react` (re-exported publicly)
- * - `@videojs/utils/predicate` → inline function definitions
- * - `isRenderProp` from `@videojs/react` → inline (not a public export)
+ * Rewrite imports from private/internal packages: - `@videojs/core/dom` → merge into `@videojs/react` (re-exported
+ * publicly) - `@videojs/utils/predicate` → inline function definitions - `isRenderProp` from `@videojs/react` → inline
+ * (not a public export)
  */
 function inlinePrivatePackages(source: string): { source: string; utilities: string[] } {
   const utilities: string[] = [];
 
   // Merge @videojs/core/dom imports into @videojs/react
   const coreDomMatch = source.match(/import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/core\/dom['"]/);
+
   if (coreDomMatch) {
     const names = coreDomMatch[1]
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+
     source = source.replace(/import\s+\{[^}]+\}\s+from\s+['"]@videojs\/core\/dom['"];?\n?/g, '');
     source = source.replace(
       /import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/react['"]/,
@@ -562,12 +595,14 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
 
   // Inline @videojs/utils/predicate
   const predicateMatch = source.match(/import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/utils\/predicate['"]/);
+
   if (predicateMatch) {
     source = source.replace(/import\s+\{[^}]+\}\s+from\s+['"]@videojs\/utils\/predicate['"];?\n?/g, '');
     const names = predicateMatch[1]
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+
     for (const name of names) {
       if (name === 'isString') {
         utilities.push("function isString(value: unknown): value is string {\n  return typeof value === 'string';\n}");
@@ -577,6 +612,7 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
 
   // Inline isRenderProp — not a public export from @videojs/react
   const reactImportMatch = source.match(/import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/react['"]/);
+
   if (reactImportMatch?.[1].includes('isRenderProp')) {
     source = source.replace(/import\s+\{([^}]+)\}\s+from\s+['"]@videojs\/react['"]/, (_, names: string) => {
       const nameList = names
@@ -584,14 +620,17 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
         .map((s: string) => s.trim())
         .filter(Boolean);
       const filtered = nameList.filter((n: string) => n !== 'isRenderProp');
+
       if (!filtered.some((n: string) => n.includes('RenderProp'))) {
         filtered.push('type RenderProp');
       }
+
       return `import { ${filtered.join(', ')} } from '@videojs/react'`;
     });
 
     // Ensure isValidElement is in the react import
     const reactCoreMatch = source.match(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/);
+
     if (reactCoreMatch && !reactCoreMatch[1].includes('isValidElement')) {
       source = source.replace(
         /import\s+\{([^}]+)\}\s+from\s+['"]react['"]/,
@@ -610,11 +649,14 @@ function inlinePrivatePackages(source: string): { source: string; utilities: str
 /** Find the index of the closing `)` that matches the `(` at `openIndex`. */
 function findMatchingParen(source: string, openIndex: number): number {
   let depth = 0;
+
   for (let i = openIndex; i < source.length; i++) {
     if (source[i] === '(') depth++;
     else if (source[i] === ')') depth--;
+
     if (depth === 0) return i;
   }
+
   return -1;
 }
 
@@ -624,9 +666,11 @@ function findLastImportEnd(source: string): number {
   const importRegex = /^import\s+(?:.+from\s+)?['"][^'"]+['"];?\s*$/gm;
   let lastEnd = 0;
   let match: RegExpExecArray | null;
+
   while ((match = importRegex.exec(source)) !== null) {
     lastEnd = match.index + match[0].length + 1;
   }
+
   return lastEnd;
 }
 
@@ -635,9 +679,8 @@ function findLastImportEnd(source: string): number {
 // ---------------------------------------------------------------------------
 
 /**
- * The members a `Base*SkinProps` alias adds on top of `BaseSkinProps`, without
- * their JSDoc: the comments describe the skin component, not the player the
- * ejected file exports.
+ * The members a `Base*SkinProps` alias adds on top of `BaseSkinProps`, without their JSDoc: the comments describe the
+ * skin component, not the player the ejected file exports.
  */
 function getAddedMembers(statement: ts.Statement, sourceFile: ts.SourceFile): string[] {
   if (!ts.isTypeAliasDeclaration(statement) || !ts.isIntersectionTypeNode(statement.type)) return [];
@@ -649,15 +692,15 @@ function getAddedMembers(statement: ts.Statement, sourceFile: ts.SourceFile): st
 }
 
 /**
- * Replace the `BaseSkinProps` type chain with a clean interface. Removes the
- * intermediate type aliases and produces a flat exported interface, carrying
- * over whatever members those aliases added.
+ * Replace the `BaseSkinProps` type chain with a clean interface. Removes the intermediate type aliases and produces a
+ * flat exported interface, carrying over whatever members those aliases added.
  */
 export function resolvePropsInterface(source: string): string {
   const sourceFile = createSourceFile('props.tsx', source);
 
   const toRemove: Array<{ start: number; end: number }> = [];
   const addedMembers: string[] = [];
+
   let mainPropsName: string | null = null;
   let mainPropsStart = -1;
   let mainPropsEnd = -1;
@@ -701,6 +744,7 @@ export function resolvePropsInterface(source: string): string {
 
   // Remove PropsWithChildren from react import if no longer used in the body
   const bodyAfterImports = source.slice(findLastImportEnd(source));
+
   if (!bodyAfterImports.includes('PropsWithChildren')) {
     source = source.replace(/import\s+\{([^}]+)\}\s+from\s+['"]react['"]/, (_, names: string) => {
       const nameList = names
@@ -708,6 +752,7 @@ export function resolvePropsInterface(source: string): string {
         .map((s: string) => s.trim())
         .filter(Boolean);
       const filtered = nameList.filter((n: string) => !n.includes('PropsWithChildren'));
+
       return `import { ${filtered.join(', ')} } from 'react'`;
     });
   }
@@ -732,18 +777,27 @@ const SECTION_HEADERS: Partial<Record<SectionKey, string>> = {
 
 function hasExportModifier(statement: ts.Statement): boolean {
   const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
+
   return modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) ?? false;
 }
 
 function classifyDeclaration(name: string, isExported: boolean): SectionKey {
   if (isExported && name.endsWith('Skin')) return 'main';
+
   if (isExported && name.endsWith('SkinProps')) return 'mainType';
+
   if (name === 'SEEK_TIME') return 'mainType';
+
   if (name.endsWith('Label')) return 'labels';
+
   if (name === 'ErrorDialog' || name === 'ErrorDialogClassNames' || name === 'ERROR_CLASSNAMES') return 'errorDialog';
+
   if (name.endsWith('Icon')) return 'icons';
+
   if (name.startsWith('is') && name[2] === name[2]?.toUpperCase()) return 'utilities';
+
   if (name === 'Button' || name.endsWith('Popover') || name.startsWith('Slider')) return 'components';
+
   return 'top';
 }
 
@@ -752,9 +806,8 @@ function sectionHeader(title: string): string {
 }
 
 /**
- * Reorganize the React skin output into well-defined sections.
- * Classifies each top-level declaration and reassembles with section headers.
- * Extra declarations (utilities, icon components) are appended to their sections.
+ * Reorganize the React skin output into well-defined sections. Classifies each top-level declaration and reassembles
+ * with section headers. Extra declarations (utilities, icon components) are appended to their sections.
  */
 function reorganizeReactOutput(source: string, extraUtilities: string[], extraIconComponents: string[]): string {
   const sourceFile = createSourceFile('output.tsx', source);
@@ -782,6 +835,7 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
     const name = getStatementName(statement);
     const exported = hasExportModifier(statement);
     const section = name ? classifyDeclaration(name, exported) : 'top';
+
     sections[section].push(statement.getText(sourceFile));
   }
 
@@ -808,9 +862,11 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
     if (declarations.length === 0) continue;
 
     const header = SECTION_HEADERS[key];
+
     if (header) {
       parts.push(sectionHeader(header));
     }
+
     parts.push(declarations.join('\n\n'));
   }
 
@@ -818,9 +874,8 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
 }
 
 /**
- * Flatten `ERROR_CLASSNAMES` into the inlined `ErrorDialog` component so the
- * ejected output has plain className strings instead of the classNames-prop
- * indirection.
+ * Flatten `ERROR_CLASSNAMES` into the inlined `ErrorDialog` component so the ejected output has plain className strings
+ * instead of the classNames-prop indirection.
  *
  * @temporary Remove once the ErrorDialog component no longer uses the
  *   `classNames` prop pattern. Tracked in https://github.com/videojs/v10/pull/1077.
@@ -834,6 +889,7 @@ function flattenErrorClasses(source: string): string {
   if (!blockMatch) return source;
 
   const classMap = new Map<string, string>();
+
   // Match `key: <value>,` handling multi-char expressions (property access,
   // array/filter/join chains, string literals, etc.)
   for (const [, key, value] of blockMatch[1].matchAll(/(\w+)\s*:\s*(.+?)\s*(?:,\s*$|,?\s*(?=\}))/gm)) {
@@ -846,6 +902,7 @@ function flattenErrorClasses(source: string): string {
     const replacement = isStringLiteral
       ? `className=${value.replace(/'/g, '"')}` // 'foo' → className="foo"
       : `className={${value}}`;
+
     source = source.replace(new RegExp(`className=\\{classNames\\?\\.${key}\\}`, 'g'), replacement);
   }
 
@@ -871,9 +928,8 @@ function flattenErrorClasses(source: string): string {
 }
 
 /**
- * Move the destructured props from the skin function body into the function
- * argument so the signature reads e.g.:
- *   `function VideoSkin({ children, className, style, ...rest }: VideoSkinProps)`
+ * Move the destructured props from the skin function body into the function argument so the signature reads e.g.:
+ * `function VideoSkin({ children, className, style, ...rest }: VideoSkinProps)`
  */
 function destructureSkinProps(source: string): string {
   return source.replace(
@@ -883,15 +939,13 @@ function destructureSkinProps(source: string): string {
 }
 
 /**
- * Flatten the skin into a Player component. Produces two files:
- *   - `player.ts`: owns the `createPlayer({ features })` call and exports `Player`.
- *   - `VideoPlayer.tsx` / `AudioPlayer.tsx`: imports `Player` from `./player` and
- *     owns the React component. Splitting these avoids React Fast Refresh bailing
- *     out (a file must export only components for Fast Refresh to apply edits).
+ * Flatten the skin into a Player component. Produces two files: - `player.ts`: owns the `createPlayer({ features })`
+ * call and exports `Player`. - `VideoPlayer.tsx` / `AudioPlayer.tsx`: imports `Player` from `./player` and owns the
+ * React component. Splitting these avoids React Fast Refresh bailing out (a file must export only components for Fast
+ * Refresh to apply edits).
  *
- * Also: merges SkinProps into PlayerProps (adding `src`), inlines the skin body
- * into VideoPlayer/AudioPlayer wrapped in `Player`, and removes the
- * separate Skin export.
+ * Also: merges SkinProps into PlayerProps (adding `src`), inlines the skin body into VideoPlayer/AudioPlayer wrapped in
+ * `Player`, and removes the separate Skin export.
  */
 function flattenSkinIntoPlayer(
   source: string,
@@ -917,12 +971,15 @@ function flattenSkinIntoPlayer(
     ? `import { ${mediaTag} } from '@videojs/react/media/${LIVE_MEDIA[mediaType].subpath}';`
     : `import { ${mediaTag} } from '@videojs/react/${group}';`;
   const playerImports = [mediaImport];
+
   if (style === 'css') playerImports.push("import './player.css';");
+
   playerImports.push("import { Player } from './player';");
   source = source.replace(/(import \{[^}]*\} from '@videojs\/react';)/, `$1\n${playerImports.join('\n')}`);
 
   // 2. Rename SkinProps → PlayerProps, replace `children` with `src`
   const posterProp = isVideo ? '\n  poster?: string | undefined;' : '';
+
   source = source.replace(/export interface \w+SkinProps/, `export interface ${playerName}Props`);
   source = source.replace(/(\s*)children\?: ReactNode;/, `$1src: string;${posterProp}`);
 
@@ -937,6 +994,7 @@ function flattenSkinIntoPlayer(
       // Wrap the return body in <Player>, re-indenting everything
       // inside `return (...)` by 2 extra spaces for the new wrapper.
       const returnIdx = newBody.indexOf('return (');
+
       if (returnIdx !== -1) {
         const parenStart = newBody.indexOf('(', returnIdx);
         const parenEnd = findMatchingParen(newBody, parenStart);
@@ -946,6 +1004,7 @@ function flattenSkinIntoPlayer(
           .map((line) => (line.trim() === '' ? '' : `  ${line}`))
           .join('\n');
         const playerProps = isVideo ? ' poster={poster}' : '';
+
         newBody = `${newBody.slice(0, returnIdx)}return (\n    <Player${playerProps}>\n${reindented}\n    </Player>\n  )${newBody.slice(parenEnd + 1)}`;
       }
 
@@ -975,15 +1034,13 @@ function flattenSkinIntoPlayer(
   return { player, component: source };
 }
 
-/**
- * Process a React skin: rewrite icon imports, resolve imports,
- * and produce both TSX and JSX versions.
- */
+/** Process a React skin: rewrite icon imports, resolve imports, and produce both TSX and JSX versions. */
 export async function processReactSkin(
   skin: ReactSkinDef
 ): Promise<{ tsx: Record<string, string>; jsx: Record<string, string> }> {
   const absPath = resolve(ROOT, skin.source);
   let source = readFileSync(absPath, 'utf-8');
+
   source = rewriteReactIconImports(source);
   validatePackageImports(source, skin.source);
   const postImport: string[] = [];
@@ -1002,12 +1059,14 @@ export async function processReactSkin(
 
   // 5. Inline private package imports (core/dom → react, predicates, isRenderProp)
   const privates = inlinePrivatePackages(source);
+
   source = privates.source;
 
   // 6. Insert collected non-import code after the final import statement
   if (postImport.length > 0) {
     const insertPos = findLastImportEnd(source);
     const block = `\n${postImport.join('\n\n')}\n`;
+
     source = `${source.slice(0, insertPos)}${block}${source.slice(insertPos)}`;
   }
 

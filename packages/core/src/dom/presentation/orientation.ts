@@ -2,18 +2,14 @@ import { isFunction, isNull } from '@videojs/utils/predicate';
 
 export interface ScreenOrientationLock {
   /**
-   * Requests `type`, replacing a lock already held for a different type.
-   * Requests never overlap: while one is in flight, a later call only records
-   * the new type and the running request applies it once it settles.
+   * Requests `type`, replacing a lock already held for a different type. Requests never overlap: while one is in
+   * flight, a later call only records the new type and the running request applies it once it settles.
    */
   lock(type: ScreenOrientationLockType): Promise<void>;
   unlock(): void;
 }
 
-/**
- * Orientation types accepted by the Screen Orientation API's
- * `screen.orientation.lock()`.
- */
+/** Orientation types accepted by the Screen Orientation API's `screen.orientation.lock()`. */
 export type ScreenOrientationLockType =
   | 'any'
   | 'landscape'
@@ -40,7 +36,6 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
   const releaseOrientation = () => {
     const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
     const unlock = orientation?.unlock;
-
     if (!isFunction(unlock)) return;
 
     try {
@@ -49,13 +44,13 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
   };
 
   /**
-   * Drives the platform toward `desired`, one request at a time. A re-entrant
-   * call returns immediately because the running pass re-reads `desired` before
-   * it exits, so the last requested type wins without overlapping requests
-   * whose settle order the platform does not guarantee.
+   * Drives the platform toward `desired`, one request at a time. A re-entrant call returns immediately because the
+   * running pass re-reads `desired` before it exits, so the last requested type wins without overlapping requests whose
+   * settle order the platform does not guarantee.
    */
   const reconcile = async () => {
     if (settling) return;
+
     settling = true;
 
     try {
@@ -70,7 +65,6 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
 
         const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
         const lock = orientation?.lock;
-
         if (!isFunction(lock)) return;
 
         try {
@@ -79,6 +73,7 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
           // Leave `held` alone so it keeps describing the platform. Retrying
           // the same type here would spin, so wait for the next request.
           if (desired === target) return;
+
           continue;
         }
 

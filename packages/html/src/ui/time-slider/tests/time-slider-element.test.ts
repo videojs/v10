@@ -1,6 +1,7 @@
 import { SliderDataAttrs, type SliderState } from '@videojs/core';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
 import { sliderContext } from '../../slider/context';
 import { SliderThumbElement } from '../../slider/slider-thumb-element';
 import { SliderValueElement } from '../../slider/slider-value-element';
@@ -17,6 +18,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -60,6 +62,7 @@ describe('TimeSliderElement', () => {
 
   it('initializes with default property values', () => {
     const slider = createElement(TimeSliderElement);
+
     expect(slider.label).toBe('');
     expect(slider.changeThrottle).toBe(100);
     expect(slider.step).toBe(1);
@@ -72,6 +75,7 @@ describe('TimeSliderElement', () => {
 
   it('reflects pause-on-drag attribute to property', async () => {
     const slider = createElement(TimeSliderElement);
+
     slider.setAttribute('pause-on-drag', '');
 
     document.body.appendChild(slider);
@@ -166,6 +170,7 @@ describe('TimeSlider chapter elements', () => {
   it('only exposes the chapter title to assistive technology during keyboard interaction', async () => {
     const slider = createElement(TestSliderProviderElement);
     const title = createElement(TimeSliderChapterTitleElement);
+
     slider.appendChild(title);
     document.body.appendChild(slider);
     await title.updateComplete;
@@ -184,6 +189,7 @@ describe('TimeSlider chapter elements', () => {
     const slider = createElement(TestSliderProviderElement);
     const chapters = createElement(TimeSliderChaptersElement);
     const template = document.createElement('template');
+
     template.innerHTML = '<div class="chapter"></div>';
     chapters.appendChild(template);
     slider.appendChild(chapters);
@@ -194,6 +200,7 @@ describe('TimeSlider chapter elements', () => {
     expect(chapters.querySelector('template')).toBe(template);
     expect(chapters.querySelectorAll('.chapter')).toHaveLength(1);
     const chapter = chapters.querySelector<HTMLElement>('.chapter')!;
+
     expect(chapter.style.getPropertyValue('--media-slider-chapter-start')).toBe('0%');
     expect(chapter.style.getPropertyValue('--media-slider-chapter-end')).toBe('100%');
     expect(chapters.querySelector('svg')).toBeNull();
@@ -203,6 +210,7 @@ describe('TimeSlider chapter elements', () => {
     const slider = createElement(TestSliderProviderElement);
     const chapters = createElement(TimeSliderChaptersElement);
     const content = document.createElement('div');
+
     content.className = 'content';
     chapters.appendChild(content);
     slider.appendChild(chapters);
@@ -216,6 +224,7 @@ describe('TimeSlider chapter elements', () => {
     const slider = createElement(TestSliderProviderElement);
     const chapters = createElement(TimeSliderChaptersElement);
     const content = document.createElement('div');
+
     content.className = 'content';
     chapters.appendChild(content);
     slider.appendChild(chapters);
@@ -223,6 +232,7 @@ describe('TimeSlider chapter elements', () => {
     await chapters.updateComplete;
 
     const template = document.createElement('template');
+
     template.innerHTML = '<div class="chapter"></div>';
     chapters.appendChild(template);
     chapters.requestUpdate();
@@ -243,8 +253,10 @@ describe('TimeSlider chapter elements', () => {
       const slider = createElement(TestSliderProviderElement);
       const chapters = createElement(TimeSliderChaptersElement);
       const unexpectedContent = document.createElement('div');
+
       unexpectedContent.className = 'content';
       const template = document.createElement('template');
+
       template.innerHTML = content;
       chapters.append(unexpectedContent, template);
       slider.appendChild(chapters);

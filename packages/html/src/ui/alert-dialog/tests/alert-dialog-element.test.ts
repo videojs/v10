@@ -1,5 +1,6 @@
 import { flush } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { DialogCloseElement } from '../../dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../dialog/dialog-description-element';
 import { DialogTitleElement } from '../../dialog/dialog-title-element';
@@ -13,6 +14,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -32,11 +34,13 @@ describe('AlertDialogElement', () => {
 
   it('initializes with open set to false', () => {
     const el = createElement(AlertDialogElement);
+
     expect(el.open).toBe(false);
   });
 
   it('sets data-open attribute when open is true', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     document.body.appendChild(el);
@@ -56,6 +60,7 @@ describe('AlertDialogElement', () => {
 
   it('removes data-open attribute after close transition completes', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     document.body.appendChild(el);
@@ -74,6 +79,7 @@ describe('AlertDialogElement', () => {
 
   it('applies alertdialog role and aria-modal', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     document.body.appendChild(el);
@@ -92,6 +98,7 @@ describe('AlertDialogElement', () => {
     const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
     const description = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
     const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
+
     el.append(title, description, close);
     el.open = true;
 
@@ -109,6 +116,7 @@ describe('AlertDialogElement', () => {
 
   it('dispatches open-change event on close', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     document.body.appendChild(el);
@@ -116,6 +124,7 @@ describe('AlertDialogElement', () => {
     flush();
 
     const spy = vi.fn();
+
     el.addEventListener('open-change', spy);
 
     // Escape triggers dismiss layer → onOpenChange(false) → open-change event.
@@ -128,6 +137,7 @@ describe('AlertDialogElement', () => {
 
   it('closes on Escape key press', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     document.body.appendChild(el);
@@ -146,6 +156,7 @@ describe('AlertDialogElement', () => {
     await el.updateComplete;
 
     const spy = vi.fn();
+
     el.addEventListener('open-change', spy);
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -156,6 +167,7 @@ describe('AlertDialogElement', () => {
 
   it('ignores non-Escape key presses', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     document.body.appendChild(el);
@@ -169,9 +181,11 @@ describe('AlertDialogElement', () => {
 
   it('does not close on an arbitrary button click within the dialog', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     const button = document.createElement('button');
+
     el.appendChild(button);
 
     document.body.appendChild(el);
@@ -185,9 +199,11 @@ describe('AlertDialogElement', () => {
 
   it('does not close on non-button element click', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     const span = document.createElement('span');
+
     el.appendChild(span);
 
     document.body.appendChild(el);
@@ -201,6 +217,7 @@ describe('AlertDialogElement', () => {
 
   it('cleans up on disconnect', async () => {
     const el = createElement(AlertDialogElement);
+
     el.open = true;
 
     document.body.appendChild(el);

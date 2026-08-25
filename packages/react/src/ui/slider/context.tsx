@@ -28,6 +28,7 @@ export function SliderProvider({ value, children }: SliderProviderProps) {
 export function useSliderContext(): SliderContextValue {
   const ctx = useContext(SliderContext);
   if (!ctx) throw new Error('Slider compound components must be used within a Slider.Root');
+
   return ctx;
 }
 
@@ -38,5 +39,6 @@ export function useSliderPointerValue(enabled = true): number {
     () => (enabled ? (context.input?.current.pointerPercent ?? null) : null),
     () => (enabled ? (context.input?.current.pointerPercent ?? null) : null)
   );
+
   return percent === null ? context.pointerValue : (context.getPointerValue?.(percent) ?? context.pointerValue);
 }

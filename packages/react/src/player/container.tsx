@@ -16,6 +16,7 @@ import {
   useRef,
   useState,
 } from 'react';
+
 import { I18nContext, useTranslator } from '../i18n/context';
 import { useComposedRefs } from '../utils/use-composed-refs';
 import { useContainerAttach } from './context';
@@ -41,7 +42,9 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   const setContainer = useContainerAttach();
   const translator = useTranslator();
   const i18n = useContext(I18nContext);
+
   const [popupGroup] = useState(() => createPopupGroup());
+
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
 
@@ -54,6 +57,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
     props.onPointerUp?.(event);
     const el = internalRef.current;
     if (!el) return;
+
     focusContainer(el);
   };
 

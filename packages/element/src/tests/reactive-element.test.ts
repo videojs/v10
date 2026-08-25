@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { ReactiveElement } from '../reactive-element';
 import type { PropertyValues, ReactiveController } from '../types';
 
@@ -10,9 +11,11 @@ function uniqueTag(base: string): string {
 
 function createElement<T extends HTMLElement>(ctor: { new (): T }): T {
   const tag = uniqueTag('test-el');
+
   if (!customElements.get(tag)) {
     customElements.define(tag, class extends (ctor as typeof HTMLElement) {} as typeof HTMLElement);
   }
+
   return document.createElement(tag) as T;
 }
 
@@ -23,6 +26,7 @@ afterEach(() => {
 describe('ReactiveElement', () => {
   it('extends HTMLElement', () => {
     const el = createElement(ReactiveElement);
+
     expect(el).toBeInstanceOf(HTMLElement);
   });
 
@@ -42,6 +46,7 @@ describe('ReactiveElement', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     expect(connected).toHaveBeenCalledOnce();
 
@@ -65,6 +70,7 @@ describe('ReactiveElement', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -100,6 +106,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     el.setAttribute('label', 'hello');
     expect(el.label).toBe('hello');
   });
@@ -151,6 +158,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     el.setAttribute('negative-sign', '\u2212');
     expect(el.negativeSign).toBe('\u2212');
   });
@@ -171,6 +179,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -181,6 +190,7 @@ describe('ReactiveElement properties', () => {
 
     expect(update).toHaveBeenCalledOnce();
     const changed = update.mock.calls[0]![0] as PropertyValues;
+
     expect(changed.get('label')).toBe('default');
   });
 
@@ -202,6 +212,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -213,6 +224,7 @@ describe('ReactiveElement properties', () => {
 
     expect(update).toHaveBeenCalledOnce();
     const changed = update.mock.calls[0]![0] as PropertyValues;
+
     expect(changed.has('label')).toBe(true);
     expect(changed.has('disabled')).toBe(true);
   });
@@ -232,6 +244,7 @@ describe('ReactiveElement properties', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -254,6 +267,7 @@ describe('ReactiveElement controllers', () => {
     };
 
     const el = createElement(ReactiveElement);
+
     el.addController(controller);
 
     document.body.appendChild(el);
@@ -267,6 +281,7 @@ describe('ReactiveElement controllers', () => {
     };
 
     const el = createElement(ReactiveElement);
+
     el.addController(controller);
 
     document.body.appendChild(el);
@@ -280,6 +295,7 @@ describe('ReactiveElement controllers', () => {
     };
 
     const el = createElement(ReactiveElement);
+
     document.body.appendChild(el);
 
     el.addController(controller);
@@ -292,6 +308,7 @@ describe('ReactiveElement controllers', () => {
     };
 
     const el = createElement(ReactiveElement);
+
     el.addController(controller);
     el.removeController(controller);
 
@@ -305,6 +322,7 @@ describe('ReactiveElement controllers', () => {
     const c2: ReactiveController = { hostConnected: vi.fn() };
 
     const el = createElement(ReactiveElement);
+
     el.addController(c1);
     el.addController(c2);
 
@@ -330,6 +348,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -358,6 +377,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -370,6 +390,7 @@ describe('ReactiveElement lifecycle', () => {
 
     expect(updated).toHaveBeenCalledOnce();
     const changed = updated.mock.calls[0]![0] as PropertyValues;
+
     expect(changed.get('label')).toBe('');
   });
 
@@ -407,6 +428,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -430,6 +452,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     expect(el.hasUpdated).toBe(false);
 
     document.body.appendChild(el);
@@ -453,6 +476,7 @@ describe('ReactiveElement lifecycle', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -466,6 +490,7 @@ describe('ReactiveElement lifecycle', () => {
 describe('ReactiveElement isUpdatePending', () => {
   it('is true after requestUpdate, false after update completes', async () => {
     const el = createElement(ReactiveElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -492,6 +517,7 @@ describe('ReactiveElement isUpdatePending', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
@@ -523,6 +549,7 @@ describe('ReactiveElement performUpdate', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
     update.mockClear();
@@ -550,6 +577,7 @@ describe('ReactiveElement performUpdate', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
     update.mockClear();
@@ -562,9 +590,11 @@ describe('ReactiveElement performUpdate', () => {
 describe('ReactiveElement updateComplete', () => {
   it('resolves after first update when connected', async () => {
     const el = createElement(ReactiveElement);
+
     document.body.appendChild(el);
 
     const result = await el.updateComplete;
+
     expect(result).toBe(true);
     expect(el.hasUpdated).toBe(true);
   });
@@ -578,11 +608,13 @@ describe('ReactiveElement updateComplete', () => {
     }
 
     const el = createElement(TestElement);
+
     document.body.appendChild(el);
     await el.updateComplete;
 
     el.label = 'changed';
     const result = await el.updateComplete;
+
     expect(result).toBe(true);
   });
 });

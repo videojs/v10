@@ -55,6 +55,7 @@ export class VolumeSliderElement extends UIElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
@@ -62,8 +63,10 @@ export class VolumeSliderElement extends UIElement {
 
     const isDisabled = () => {
       const volume = this.#volumeState.value;
+
       return this.disabled || !volume || volume.volumeAvailability !== 'available';
     };
+
     const getPercent = () => (this.#volumeState.value?.volume ?? 0) * 100;
     const getStepPercent = () => this.#core.getStepPercent();
     const setVolume = (percent: number) => this.#setVolume(percent);
@@ -133,6 +136,7 @@ export class VolumeSliderElement extends UIElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#slider) return;
 
     const media = this.#volumeState.value;
@@ -172,6 +176,7 @@ export class VolumeSliderElement extends UIElement {
 
   #setVolume(percent: number): void {
     const media = this.#volumeState.value;
+
     media?.setVolume(this.#core.valueFromPercent(percent) / 100);
   }
 }

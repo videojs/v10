@@ -1,6 +1,8 @@
 import { ReactiveElement } from '@videojs/element';
 import { ensureGlobalStyle } from '@videojs/utils/dom';
+
 import { safeDefine } from '../safe-define';
+
 import styles from './skin.css?inline';
 
 const STYLES_ID = '__media-background-styles';

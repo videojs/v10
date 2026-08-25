@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { idleCallback } from '../idle-callback';
 
@@ -49,6 +49,7 @@ describe('idleCallback', () => {
     const callback = vi.fn();
 
     const cancel = idleCallback(callback);
+
     cancel();
 
     await vi.runAllTimersAsync();
@@ -60,6 +61,7 @@ describe('idleCallback', () => {
     const callback = vi.fn();
 
     const cancel = idleCallback(callback);
+
     cancel();
     cancel();
     cancel();

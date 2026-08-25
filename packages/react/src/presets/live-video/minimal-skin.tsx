@@ -3,6 +3,7 @@
 import { captionsText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -49,6 +50,7 @@ import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseVideoSkinProps } from '../types';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
@@ -78,11 +80,27 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnavailable) return muteButton;
+  if (volumeUnavailable) {
+    return (
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={muteButton} />
+        <Tooltip.Popup className="media-tooltip">
+          <Tooltip.Label />
+          <Tooltip.Shortcut className="media-tooltip__kbd" />
+        </Tooltip.Popup>
+      </Tooltip.Root>
+    );
+  }
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="right">
-      <Popover.Trigger render={muteButton} />
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={<Popover.Trigger render={muteButton} />} />
+        <Tooltip.Popup className="media-tooltip">
+          <Tooltip.Label />
+          <Tooltip.Shortcut className="media-tooltip__kbd" />
+        </Tooltip.Popup>
+      </Tooltip.Root>
       <Popover.Popup className="media-popover media-popover--volume">
         <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
           <VolumeSlider.Track className="media-slider__track">
@@ -96,11 +114,9 @@ function VolumePopover(): ReactNode {
 }
 
 /**
- * Minimal video skin configured for live playback. Mirrors
- * {@link MinimalVideoSkin} but omits the time slider and the current /
- * duration / remaining time displays. A flexible spacer stretches between
- * the start and end button groups so they sit at opposite edges of the
- * control bar.
+ * Minimal video skin configured for live playback. Mirrors {@link MinimalVideoSkin} but omits the time slider and the
+ * current / duration / remaining time displays. A flexible spacer stretches between the start and end button groups so
+ * they sit at opposite edges of the control bar.
  */
 function CaptionsTrigger(): ReactNode {
   const t = useTranslator();
@@ -139,32 +155,34 @@ function CaptionsTrigger(): ReactNode {
           </CaptionsButton>
         }
       />
-      <Menu.Content className="media-popover media-menu media-menu--captions">
-        <Menu.RadioGroup
-          className="media-menu__group"
-          value={captions.value}
-          onValueChange={captions.setValue}
-          aria-label={t(captionsText)}
-        >
-          {captions.options.map((option) => (
-            <Menu.RadioItem
-              key={option.value}
-              className="media-menu__item"
-              value={option.value}
-              disabled={option.disabled}
-            >
-              <bdi dir="auto">{option.label}</bdi>
-              <Menu.ItemIndicator
-                checked={option.value === captions.value}
-                forceMount
-                className="media-menu__indicator"
+      <Menu.Popup className="media-popover media-menu media-menu--captions">
+        <Menu.Content className="media-menu__content">
+          <Menu.RadioGroup
+            className="media-menu__group"
+            value={captions.value}
+            onValueChange={captions.setValue}
+            aria-label={t(captionsText)}
+          >
+            {captions.options.map((option) => (
+              <Menu.RadioItem
+                key={option.value}
+                className="media-menu__item"
+                value={option.value}
+                disabled={option.disabled}
               >
-                <CheckIcon className="media-icon" />
-              </Menu.ItemIndicator>
-            </Menu.RadioItem>
-          ))}
-        </Menu.RadioGroup>
-      </Menu.Content>
+                <bdi dir="auto">{option.label}</bdi>
+                <Menu.ItemIndicator
+                  checked={option.value === captions.value}
+                  forceMount
+                  className="media-menu__indicator"
+                >
+                  <CheckIcon className="media-icon" />
+                </Menu.ItemIndicator>
+              </Menu.RadioItem>
+            ))}
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

@@ -1,4 +1,5 @@
 import { flatten } from '@videojs/utils/object';
+
 import type { FlatTranslations, Translations } from '../params';
 
 export interface FlattenTranslationsOptions {

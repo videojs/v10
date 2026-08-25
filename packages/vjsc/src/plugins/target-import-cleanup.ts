@@ -5,6 +5,7 @@ import type { Plugin } from 'rolldown';
 import { type ComponentTargetPluginOptions, selectComponentTargets } from './component-target';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
+
 export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions): Plugin {
   return {
     name: 'vjsc:target-import-cleanup',
@@ -36,6 +37,7 @@ export function targetImportCleanupPlugin(options: ComponentTargetPluginOptions)
           } else {
             transform.magicString.overwrite(declaration.start, declaration.end, renderImport(declaration, kept));
           }
+
           changed = true;
         }
 
@@ -65,6 +67,7 @@ function referencedBindings(ast: Program, imported: ReadonlySet<string>): Readon
       ) {
         referenced.add(node.name);
       }
+
       if (node.type === 'JSXIdentifier' && imported.has(node.name)) referenced.add(node.name);
     },
   });
@@ -75,13 +78,13 @@ function referencedBindings(ast: Program, imported: ReadonlySet<string>): Readon
 function isPropertyName(node: { readonly type: 'Identifier'; readonly name: string }, parent: Node | null): boolean {
   return Boolean(
     (parent?.type === 'TSQualifiedName' && parent.right === node) ||
-      (parent?.type === 'MemberExpression' && !parent.computed && parent.property === node) ||
-      (parent?.type === 'Property' && !parent.computed && parent.key === node && !parent.shorthand) ||
-      (parent?.type === 'PropertyDefinition' && !parent.computed && parent.key === node) ||
-      (parent?.type === 'MethodDefinition' && !parent.computed && parent.key === node) ||
-      (parent?.type === 'AccessorProperty' && !parent.computed && parent.key === node) ||
-      (parent?.type === 'TSPropertySignature' && !parent.computed && parent.key === node) ||
-      (parent?.type === 'TSMethodSignature' && !parent.computed && parent.key === node)
+    (parent?.type === 'MemberExpression' && !parent.computed && parent.property === node) ||
+    (parent?.type === 'Property' && !parent.computed && parent.key === node && !parent.shorthand) ||
+    (parent?.type === 'PropertyDefinition' && !parent.computed && parent.key === node) ||
+    (parent?.type === 'MethodDefinition' && !parent.computed && parent.key === node) ||
+    (parent?.type === 'AccessorProperty' && !parent.computed && parent.key === node) ||
+    (parent?.type === 'TSPropertySignature' && !parent.computed && parent.key === node) ||
+    (parent?.type === 'TSMethodSignature' && !parent.computed && parent.key === node)
   );
 }
 
@@ -104,15 +107,20 @@ function renderImport(
   const clauses: string[] = [];
 
   if (defaultSpecifier) clauses.push(defaultSpecifier.local.name);
+
   if (namespace?.type === 'ImportNamespaceSpecifier') clauses.push(`* as ${namespace.local.name}`);
+
   if (named.length > 0) {
     const entries = named.map((specifier) => {
       if (specifier.type !== 'ImportSpecifier') throw new Error('Expected a named import.');
+
       const imported =
         specifier.imported.type === 'Identifier' ? specifier.imported.name : JSON.stringify(specifier.imported.value);
       const alias = imported === specifier.local.name ? imported : `${imported} as ${specifier.local.name}`;
+
       return declaration.importKind !== 'type' && specifier.importKind === 'type' ? `type ${alias}` : alias;
     });
+
     clauses.push(`{ ${entries.join(', ')} }`);
   }
 

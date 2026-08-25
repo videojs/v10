@@ -1,6 +1,7 @@
 import { render, renderHook } from '@testing-library/react';
 import { StrictMode } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { useDestroy } from '../use-destroy';
 
 describe('useDestroy', () => {

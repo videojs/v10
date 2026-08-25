@@ -1,9 +1,8 @@
 /**
  * Every media renderer the installation flow can offer.
  *
- * Listed alphabetically; the order a picker shows comes from each preset's
- * `renderers`, not from here. Exported so callers can walk the full set — see
- * `renderersWithoutCdn` in `./cdn-code`.
+ * Listed alphabetically; the order a picker shows comes from each preset's `renderers`, not from here. Exported so
+ * callers can walk the full set — see `renderersWithoutCdn` in `./cdn-code`.
  */
 export const RENDERERS = [
   'background-video',
@@ -41,9 +40,8 @@ export interface InstallationPreset {
 /**
  * Installation presets in the order shown by the site and CLI.
  *
- * Renderer order is also guidance: index 0 is the default when URL detection
- * has no match. Live presets include only media that exposes Video.js live-edge
- * state; DASH playback does not currently provide that capability.
+ * Renderer order is also guidance: index 0 is the default when URL detection has no match. Live presets include only
+ * media that exposes Video.js live-edge state; DASH playback does not currently provide that capability.
  */
 export const INSTALLATION_PRESETS = {
   'default-video': {
@@ -122,5 +120,6 @@ export function getMediaSubpath(renderer: Renderer): string | null {
     tiktok: 'tiktok-video',
     twitch: 'twitch-video',
   };
+
   return map[renderer] ?? null;
 }

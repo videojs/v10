@@ -12,9 +12,11 @@ const audioStylesheets: Record<Skin, string> = {
 
 function loadStylesheet(id: string, url: string) {
   const existing = document.querySelector(`link[rel="stylesheet"][data-sandbox-stylesheet="${id}"]`);
+
   existing?.remove();
 
   const link = document.createElement('link');
+
   link.dataset.sandboxStylesheet = id;
   link.rel = 'stylesheet';
   link.href = url;

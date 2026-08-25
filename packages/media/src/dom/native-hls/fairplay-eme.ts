@@ -1,4 +1,5 @@
 import type { WebKitVideoElement } from '@videojs/utils/dom';
+
 import { KeySystems } from '../../core/drm';
 import {
   createDrmError,
@@ -14,9 +15,8 @@ import {
 } from './fairplay';
 
 /**
- * FairPlay negotiates against the manifest rather than a codec, holds no
- * persistent state, and needs no device identifier — the narrowest
- * configuration Safari will grant.
+ * FairPlay negotiates against the manifest rather than a codec, holds no persistent state, and needs no device
+ * identifier — the narrowest configuration Safari will grant.
  */
 const FAIRPLAY_CONFIGURATION: MediaKeySystemConfiguration = {
   initDataTypes: [FAIRPLAY_INIT_DATA_TYPE],
@@ -28,8 +28,8 @@ const FAIRPLAY_CONFIGURATION: MediaKeySystemConfiguration = {
 
 export interface FairPlayEmeOptions {
   /**
-   * Called when the CDM refuses to create a session in the one situation the
-   * legacy WebKit API still serves: an AirPlay receiver on an affected OS.
+   * Called when the CDM refuses to create a session in the one situation the legacy WebKit API still serves: an AirPlay
+   * receiver on an affected OS.
    */
   onUnsupported?: (() => void) | undefined;
 }
@@ -37,11 +37,9 @@ export interface FairPlayEmeOptions {
 /**
  * Standard EME FairPlay, driven by the media element's `encrypted` event.
  *
- * Key exchange is the documented three-step dance: negotiate access to the key
- * system and give the CDM its application certificate, open a session and let
- * it generate an SPC, then trade that SPC for a CKC at the license server. Key
- * system access and the certificate are shared by every session on the source,
- * so they are resolved once and reused.
+ * Key exchange is the documented three-step dance: negotiate access to the key system and give the CDM its application
+ * certificate, open a session and let it generate an SPC, then trade that SPC for a CKC at the license server. Key
+ * system access and the certificate are shared by every session on the source, so they are resolved once and reused.
  */
 export function createFairPlayEme(context: FairPlayContext, options: FairPlayEmeOptions = {}): FairPlayKeySystem {
   const { media, signal, reportError } = context;
@@ -52,6 +50,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
 
   async function createKeys(): Promise<MediaKeys> {
     let access: MediaKeySystemAccess;
+
     try {
       access = await navigator.requestMediaKeySystemAccess(KeySystems.FAIRPLAY, [FAIRPLAY_CONFIGURATION]);
     } catch (cause) {
@@ -65,6 +64,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
     // only a configuration choice — a rejected one is a real failure.
     if (appCertificate) {
       const accepted = await mediaKeys.setServerCertificate(appCertificate).catch(() => false);
+
       if (!accepted) {
         throw createDrmError(
           NativeHlsDrmMessages.SERVER_CERTIFICATE_FAILED,
@@ -86,6 +86,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
   async function onMessage(session: MediaKeySession, event: MediaKeyMessageEvent): Promise<void> {
     try {
       const ckc = await requestLicenseKey(context, event.message);
+
       if (signal.aborted) return;
 
       await session.update(ckc).catch((cause) => {
@@ -93,6 +94,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
       });
     } catch (cause) {
       if (signal.aborted) return;
+
       // Both steps raise errors that describe themselves; this only covers what
       // neither anticipated.
       reportError(toDrmError(cause, NativeHlsDrmMessages.CDM_ERROR, NativeHlsDrmErrors.CDM_ERROR));
@@ -115,6 +117,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
 
   async function createSession(mediaKeys: MediaKeys, initDataType: string, initData: ArrayBuffer): Promise<void> {
     const session = mediaKeys.createSession();
+
     sessions.add(session);
 
     session.addEventListener('message', (event) => void onMessage(session, event as MediaKeyMessageEvent), { signal });
@@ -144,15 +147,18 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
         if (__DEV__) {
           console.warn(`[vjs-drm] Ignoring unexpected initialization data type "${event.initDataType}".`);
         }
+
         return;
       }
 
       if (!event.initData) {
         if (__DEV__) console.warn('[vjs-drm] Ignoring an `encrypted` event carrying no initialization data.');
+
         return;
       }
 
       const mediaKeys = await (keys ??= createKeys());
+
       if (signal.aborted) return;
 
       await createSession(mediaKeys, event.initDataType, event.initData);
@@ -160,9 +166,11 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
 
     async close(): Promise<void> {
       const closing = [...sessions].map((session) => session.close().catch(() => {}));
+
       sessions.clear();
 
       const pending = keys;
+
       keys = null;
       certificate = null;
 
@@ -171,6 +179,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
       // Only release keys still ours: a source that replaced this one may
       // already have set its own while these sessions were closing.
       const mediaKeys = await pending?.catch(() => null);
+
       if (mediaKeys && media.mediaKeys === mediaKeys) {
         await media.setMediaKeys(null).catch(() => {});
       }

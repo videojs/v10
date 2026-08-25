@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { subscribeAmbientLang } from '../locale/subscribe-ambient-lang';
 
@@ -12,6 +12,7 @@ describe('subscribeAmbientLang', () => {
   it('invokes callback when html lang changes', async () => {
     const spy = vi.fn();
     const off = subscribeAmbientLang(spy);
+
     document.documentElement.setAttribute('lang', 'de');
     await Promise.resolve();
     await Promise.resolve();
@@ -22,6 +23,7 @@ describe('subscribeAmbientLang', () => {
   it('invokes callback when html lang property changes', async () => {
     const spy = vi.fn();
     const off = subscribeAmbientLang(spy);
+
     document.documentElement.lang = 'fr';
     await Promise.resolve();
     await Promise.resolve();
@@ -32,6 +34,7 @@ describe('subscribeAmbientLang', () => {
   it('unsubscribe stops notifications', async () => {
     const spy = vi.fn();
     const off = subscribeAmbientLang(spy);
+
     off();
     spy.mockClear();
     document.documentElement.setAttribute('lang', 'fr');
@@ -45,9 +48,11 @@ describe('subscribeAmbientLang', () => {
     const disconnect = vi.fn();
     const Observer = vi.fn(function (this: MutationObserver, callback: MutationCallback) {
       const observer = new RealObserver(callback);
+
       vi.spyOn(observer, 'disconnect').mockImplementation(disconnect);
       return observer;
     });
+
     vi.stubGlobal('MutationObserver', Observer);
 
     const offA = subscribeAmbientLang(vi.fn());

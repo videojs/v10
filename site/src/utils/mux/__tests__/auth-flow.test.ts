@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import type { CreateUploadResult, LoginResult } from '../auth-flow';
 import { createEndpointCoordinator, initiateAuthPopup } from '../auth-flow';
 
@@ -53,6 +54,7 @@ describe('initiateAuthPopup', () => {
 
     // Mock location with a writable href
     const mockLocation = { ...originalLocation, href: '' };
+
     Object.defineProperty(window, 'location', {
       value: mockLocation,
       writable: true,
@@ -83,6 +85,7 @@ describe('initiateAuthPopup', () => {
 
     // Capture the handler when addEventListener is called
     let messageHandler: ((event: MessageEvent) => void) | null = null;
+
     addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
       if (type === 'message') {
         messageHandler = handler as (event: MessageEvent) => void;
@@ -112,6 +115,7 @@ describe('initiateAuthPopup', () => {
 
     // Capture the handler when addEventListener is called
     let messageHandler: ((event: MessageEvent) => void) | null = null;
+
     addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
       if (type === 'message') {
         messageHandler = handler as (event: MessageEvent) => void;
@@ -141,6 +145,7 @@ describe('initiateAuthPopup', () => {
 
     // Capture the handler when addEventListener is called
     let messageHandler: ((event: MessageEvent) => void) | null = null;
+
     addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
       if (type === 'message') {
         messageHandler = handler as (event: MessageEvent) => void;
@@ -171,6 +176,7 @@ describe('initiateAuthPopup', () => {
 
     // Capture the handler when addEventListener is called
     let messageHandler: ((event: MessageEvent) => void) | null = null;
+
     addEventListenerSpy.mockImplementation((type: string, handler: EventListener) => {
       if (type === 'message') {
         messageHandler = handler as (event: MessageEvent) => void;
@@ -280,6 +286,7 @@ describe('createEndpointCoordinator', () => {
     authCallback!();
 
     const url = await endpointPromise;
+
     expect(url).toBe('https://upload.mux.com/xyz');
     expect(createUpload).toHaveBeenCalledTimes(2);
     expect(coordinator.getUploadId()).toBe('upload-1');

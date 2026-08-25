@@ -1,7 +1,9 @@
 import { renderIcon } from '@videojs/icons/render/minimal';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
+
 import styles from './minimal-skin.css?inline';
 
 // Register the player, container, and all UI custom elements.
@@ -89,11 +91,15 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-button-group">
-            <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
+            <media-mute-button id="audio-mute-trigger" commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
+            <media-tooltip trigger="audio-mute-trigger" delay="0" sticky side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="media-popover media-popover--volume">
               <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
@@ -106,16 +112,18 @@ function getTemplateHTML() {
 
             <media-playback-rate-button commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="media-popover media-menu">
-              <media-playback-rate-radio-group class="media-menu__group">
-                <template>
-                  <media-menu-radio-item class="media-menu__item">
-                    <span data-part="label"></span>
-                    <media-menu-item-indicator force-mount class="media-menu__indicator">
-                      ${renderIcon('check', { class: 'media-icon' })}
-                    </media-menu-item-indicator>
-                  </media-menu-radio-item>
-                </template>
-              </media-playback-rate-radio-group>
+              <media-menu-content class="media-menu__content">
+                <media-playback-rate-radio-group class="media-menu__group">
+                  <template>
+                    <media-menu-radio-item class="media-menu__item">
+                      <span data-part="label"></span>
+                      <media-menu-item-indicator force-mount class="media-menu__indicator">
+                        ${renderIcon('check', { class: 'media-icon' })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-playback-rate-radio-group>
+              </media-menu-content>
             </media-menu>
 
           </div>

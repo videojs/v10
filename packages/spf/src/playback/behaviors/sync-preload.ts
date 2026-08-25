@@ -2,21 +2,17 @@
  * **Bidirectional sync between `state.preload` and `mediaElement.preload`.**
  *
  * Two effects:
- * - **Read (DOM → state)** — on `context.mediaElement` swap or
- *   `state.presentation.url` change, copies `mediaElement.preload` into
- *   `state.preload` if it's a W3C value and `state.preload` isn't holding
- *   an extended (non-W3C) value. When the DOM has no W3C opinion and
- *   `state.preload` is undefined, backfills from `config.defaultPreload`
- *   (default-default `'metadata'`) so `state.preload` is never undefined
- *   in steady state.
- * - **Write (state → DOM)** — on `state.preload` change or
- *   `context.mediaElement` swap, writes `state.preload` back to
+ *
+ * - **Read (DOM → state)** — on `context.mediaElement` swap or `state.presentation.url` change, copies
+ *   `mediaElement.preload` into `state.preload` if it's a W3C value and `state.preload` isn't holding an extended
+ *   (non-W3C) value. When the DOM has no W3C opinion and `state.preload` is undefined, backfills from
+ *   `config.defaultPreload` (default-default `'metadata'`) so `state.preload` is never undefined in steady state.
+ * - **Write (state → DOM)** — on `state.preload` change or `context.mediaElement` swap, writes `state.preload` back to
  *   `mediaElement.preload` if the value is W3C.
  *
- * Extended values (e.g. `'canplay'`) written externally to `state.preload`
- * are sticky: read won't overwrite them, write won't push them to the DOM.
- * All writes are deduped to break echo loops and avoid spurious re-triggers
- * downstream (notably `resolvePresentation`, which reads `state.preload`).
+ * Extended values (e.g. `'canplay'`) written externally to `state.preload` are sticky: read won't overwrite them, write
+ * won't push them to the DOM. All writes are deduped to break echo loops and avoid spurious re-triggers downstream
+ * (notably `resolvePresentation`, which reads `state.preload`).
  */
 import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
@@ -27,8 +23,8 @@ import type { PresentationState } from './resolve-presentation';
 
 export interface SyncPreloadConfig {
   /**
-   * Backfill applied to `state.preload` when neither the host element nor
-   * external code has supplied a W3C value. Defaults to `'metadata'`.
+   * Backfill applied to `state.preload` when neither the host element nor external code has supplied a W3C value.
+   * Defaults to `'metadata'`.
    */
   defaultPreload?: StandardPreload;
 }
@@ -74,6 +70,7 @@ function syncPreloadSetup({
           ? defaultPreload
           : undefined;
     if (target === undefined || target === current) return;
+
     state.preload.set(target);
   });
 
@@ -81,8 +78,11 @@ function syncPreloadSetup({
     const next = state.preload.get();
     const mediaElement = context.mediaElement.get();
     if (!mediaElement) return;
+
     if (!isStandardPreload(next)) return;
+
     if (mediaElement.preload === next) return;
+
     mediaElement.preload = next;
   });
 

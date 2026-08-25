@@ -22,6 +22,7 @@ export class BufferingIndicatorElement extends UIElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
@@ -50,7 +51,6 @@ export class BufferingIndicatorElement extends UIElement {
     super.update(changed);
 
     const media = this.#state.value;
-
     if (!media) return;
 
     this.#core.update(media);

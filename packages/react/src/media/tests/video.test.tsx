@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createRef } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { PlayerContextProvider, type PlayerContextValue } from '../../player/context';
 import { Video } from '../video';
@@ -26,6 +26,7 @@ describe('Video', () => {
     it('renders without error', () => {
       const { container } = render(<Video data-testid="video" />);
       const video = container.querySelector('video');
+
       expect(video).toBeTruthy();
       expect(video?.getAttribute('data-testid')).toBe('video');
     });
@@ -34,6 +35,7 @@ describe('Video', () => {
       const { container } = render(<Video src="test.mp4" controls autoPlay playsInline />);
 
       const video = container.querySelector('video') as HTMLVideoElement;
+
       expect(video?.getAttribute('src')).toBe('test.mp4');
       expect(video?.hasAttribute('controls')).toBe(true);
       expect(video?.hasAttribute('autoplay')).toBe(true);
@@ -49,12 +51,14 @@ describe('Video', () => {
       );
 
       const video = container.querySelector('video');
+
       expect(video?.querySelector('source')).toBeTruthy();
       expect(video?.querySelector('track')).toBeTruthy();
     });
 
     it('forwards ref correctly', () => {
       const ref = createRef<HTMLVideoElement>();
+
       render(<Video ref={ref} />);
 
       expect(ref.current).toBeInstanceOf(HTMLVideoElement);
@@ -109,6 +113,7 @@ describe('Video', () => {
       };
 
       const ref = createRef<HTMLVideoElement>();
+
       render(<Video ref={ref} />, { wrapper: createWrapper(value) });
 
       expect(ref.current).toBeInstanceOf(HTMLVideoElement);

@@ -1,6 +1,7 @@
 import type { VideoRenditionLike } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { PlayerTarget } from '../../../player';
 import { qualityFeature } from '../quality';
 
@@ -45,6 +46,7 @@ class TestMedia extends EventTarget {
 
   constructor(renditions?: VideoRenditionLike[]) {
     super();
+
     if (renditions) this.videoRenditions = new TestRenditionList(renditions);
   }
 
@@ -94,6 +96,7 @@ describe('qualityFeature', () => {
     expect(store.state.videoRenditionList).toEqual([]);
 
     const list = new TestRenditionList([createRendition({ id: '0', height: 1080 })]);
+
     (media as unknown as TestMedia).videoRenditions = list;
     media.dispatchEvent(new Event('loadstart'));
 
@@ -114,6 +117,7 @@ describe('qualityFeature', () => {
       createRendition({ id: '1', height: 720 }),
     ]);
     const store = createStore<PlayerTarget>()(qualityFeature);
+
     store.attach({ media, container: null });
 
     store.state.selectVideoRendition('auto');
@@ -124,6 +128,7 @@ describe('qualityFeature', () => {
   it('selects a rendition by value', () => {
     const media = createMedia([createRendition({ id: '0', height: 1080 }), createRendition({ id: '1', height: 720 })]);
     const store = createStore<PlayerTarget>()(qualityFeature);
+
     store.attach({ media, container: null });
 
     store.state.selectVideoRendition('1');
@@ -134,6 +139,7 @@ describe('qualityFeature', () => {
   it('resyncs on rendition change', () => {
     const media = createMedia([createRendition({ id: '0', height: 1080 }), createRendition({ id: '1', height: 720 })]);
     const store = createStore<PlayerTarget>()(qualityFeature);
+
     store.attach({ media, container: null });
 
     (media as any).videoRenditions.renditions[1].selected = true;
@@ -148,6 +154,7 @@ describe('qualityFeature', () => {
       createRendition({ id: '1', height: 720, active: true }),
     ]);
     const store = createStore<PlayerTarget>()(qualityFeature);
+
     store.attach({ media, container: null });
 
     expect(store.state.activeVideoRendition).toEqual({ id: '1', height: 720, selected: false });
@@ -162,6 +169,7 @@ describe('qualityFeature', () => {
   it('falls back to video dimensions for the active rendition', () => {
     const media = createMedia([createRendition({ id: '0', height: 1080 }), createRendition({ id: '1', height: 720 })]);
     const testMedia = media as unknown as TestMedia;
+
     testMedia.videoWidth = 1280;
     testMedia.videoHeight = 720;
     const store = createStore<PlayerTarget>()(qualityFeature);
@@ -184,6 +192,7 @@ describe('qualityFeature', () => {
       createRendition({ id: '2', height: 720, bitrate: 1_500_000 }),
     ]);
     const testMedia = media as unknown as TestMedia;
+
     testMedia.videoWidth = 1920;
     testMedia.videoHeight = 1080;
     const store = createStore<PlayerTarget>()(qualityFeature);

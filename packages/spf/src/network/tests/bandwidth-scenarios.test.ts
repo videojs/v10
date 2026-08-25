@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { BandwidthState } from '../bandwidth-estimator';
 import { getBandwidthEstimate, hasGoodEstimate, sampleBandwidth } from '../bandwidth-estimator';
 
@@ -124,6 +125,7 @@ describe('realistic bandwidth patterns', () => {
       }
 
       const congestedEstimate = getBandwidthEstimate(state, 500_000);
+
       expect(congestedEstimate).toBeLessThan(normalEstimate * 0.7);
 
       // Recovery (bandwidth returns to normal)
@@ -242,6 +244,7 @@ describe('threshold boundary conditions', () => {
       expect(state.bytesSampled).toBeLessThan(128_000);
 
       const estimate = getBandwidthEstimate(state, 500_000);
+
       expect(estimate).toBe(500_000); // Uses default
       expect(hasGoodEstimate(state)).toBe(false);
     });
@@ -257,6 +260,7 @@ describe('threshold boundary conditions', () => {
       expect(state.bytesSampled).toBe(128_000);
 
       const estimate = getBandwidthEstimate(state, 500_000);
+
       expect(estimate).not.toBe(500_000); // Uses actual estimate
       expect(hasGoodEstimate(state)).toBe(true);
     });
@@ -270,12 +274,14 @@ describe('threshold boundary conditions', () => {
       }
 
       const beforeThreshold = getBandwidthEstimate(state, 1_000_000);
+
       expect(beforeThreshold).toBe(1_000_000); // Default
 
       // Cross threshold
       state = sampleBandwidth(state, 1000, 18_000);
 
       const afterThreshold = getBandwidthEstimate(state, 1_000_000);
+
       expect(afterThreshold).not.toBe(1_000_000); // Actual estimate
     });
   });
@@ -404,24 +410,28 @@ describe('real-world segment patterns', () => {
     for (let i = 0; i < 3; i++) {
       state = sampleBandwidth(state, 2000, 30_000); // 3 × 30KB = 90KB < 128KB
     }
+
     history.push({ phase: 'startup', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Phase 2: Steady state (enough data for real estimate)
     for (let i = 0; i < 5; i++) {
       state = sampleBandwidth(state, 2000, 30_000); // Now > 128KB total
     }
+
     history.push({ phase: 'steady', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Phase 3: Congestion (bandwidth drops significantly)
     for (let i = 0; i < 5; i++) {
       state = sampleBandwidth(state, 2000, 10_000); // Drop to 40 Kbps
     }
+
     history.push({ phase: 'congestion', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Phase 4: Recovery (bandwidth returns)
     for (let i = 0; i < 5; i++) {
       state = sampleBandwidth(state, 2000, 30_000); // Back to normal
     }
+
     history.push({ phase: 'recovery', estimate: getBandwidthEstimate(state, 2_000_000) });
 
     // Verify phase transitions

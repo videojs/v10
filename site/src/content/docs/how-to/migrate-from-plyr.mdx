@@ -69,7 +69,7 @@ The easiest path is the CDN:
       <track kind="metadata" label="thumbnails" src="/path/to/storyboard.vtt" default />
     </video>
 
-    <img slot="poster" src="/path/to/poster.jpg" alt="Video poster" />
+    <img slot="poster" src="/path/to/poster.jpg" alt="" />
   </video-minimal-skin>
 </video-player>
 ```
@@ -79,12 +79,11 @@ If you prefer not to use the CDN, you can use the individual modules:
 ```js
 import '@videojs/html/video/player';
 import '@videojs/html/video/minimal-skin';
-import '@videojs/html/video/minimal-skin.css';
 ```
 
 ### Notes
 
-- CSS styles are injected automatically into the Shadow DOM we create for the player.
+- The skin attaches its styles automatically to its shadow root.
 - The poster is a slotted `img` rather than a `poster` attribute, which gives the skin control over how it appears. That's much like Plyr's `data-poster`.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by removing the `-minimal` suffix from the script `src` if you're using the CDN, or the `minimal-` prefix from the imports.
 
@@ -134,7 +133,7 @@ export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
 
 </FrameworkCase>
 
-## Advanced migration
+## Map common features
 
 ### Streaming
 
@@ -389,11 +388,7 @@ Individual HTML buttons include no text, icon, or finished styling. Add your own
 Individual React buttons do not include visible content. Use their `render` props to add an icon or text and style the element you return. Eject a ready-made skin when you need to change its control set or layout.
 </FrameworkCase>
 
-## Dynamic sources
-
-In Video.js v10 you can swap out the `src` or the media component itself and the UI will update.
-
-## Imperative API
+## Use the imperative API
 
 Use the media element for standard playback operations:
 
@@ -407,6 +402,8 @@ Use the media element for standard playback operations:
 | `player.speed = 1.5` | `video.playbackRate = 1.5` |
 | `player.fullscreen.enter()` | Fullscreen feature or fullscreen control |
 | `player.toggleCaptions()` | Text-track feature or captions control |
+
+To change content without changing media type, set `src` on the media component. Replace the component when the media type changes, such as moving from `Video` to `HlsVideo`. The player UI follows the attached media.
 
 For custom UI, read and write through the Video.js player store.
 
@@ -478,7 +475,7 @@ video-player {
 
 `--media-accent-color` reaches the sliders, active buttons, and accent surfaces, so it's the closest match for Plyr's `--plyr-color-main`. Video.js picks a readable text color to sit on top of it; set `--media-accent-text-color` to choose that yourself. `--media-border-radius` and `--media-scale-unit` cover rounding and control sizing. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> for the full list.
 
-## Ejecting
+## Eject a skin
 
 If you need extra customization of layout, styles, or icons, you can "eject" the skin into your application, much like a shadcn installation. Copy the skin and its CSS into your project, then modify the components and styles directly. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has copy-paste-ready implementations for every packaged skin.
 

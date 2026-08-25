@@ -1,12 +1,14 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { buildSpotifyIframeSrc, SpotifyMedia } from '@videojs/media/dom/spotify';
 import { escapeHtml } from '@videojs/utils/string';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 class SpotifyCustomMediaElement extends CustomMediaElement('iframe', SpotifyMedia) {
   static override getTemplateHTML = (attrs: Record<string, string>): string => {
     const initialSrc = buildSpotifyIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
     const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
+
     return /*html*/ `
       <style>
         :host {

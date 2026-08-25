@@ -33,6 +33,7 @@ export class StatusAnnouncerElement extends UIElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.setAttribute('role', 'status');
@@ -82,6 +83,7 @@ export class StatusAnnouncerElement extends UIElement {
   #reconnect(store: StatusAnnouncerStore | undefined = this.#player.value): void {
     this.#storeUnsubscribe?.();
     this.#storeUnsubscribe = null;
+
     if (!store) {
       this.#core.resetSnapshot();
       return;
@@ -94,6 +96,7 @@ export class StatusAnnouncerElement extends UIElement {
     if (this.#liveText?.isConnected) return this.#liveText;
 
     const existing = this.querySelector<HTMLElement>('[data-status-announcer-content]');
+
     this.#liveText = existing ?? document.createElement('span');
     this.#liveText.setAttribute('data-status-announcer-content', '');
 

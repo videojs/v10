@@ -1,13 +1,12 @@
-import { ActionError, defineAction } from 'astro:actions';
-import { MUX_API_URL, MUX_TOKEN_ID, MUX_TOKEN_SECRET } from 'astro:env/server';
 import Mux from '@mux/mux-node';
 import { z } from 'astro/zod';
+import { ActionError, defineAction } from 'astro:actions';
+import { MUX_API_URL, MUX_TOKEN_ID, MUX_TOKEN_SECRET } from 'astro:env/server';
 
 /**
  * Creates an authenticated Mux API client
  *
- * Uses the access token from the user's session (provided by middleware)
- * to authenticate requests to the Mux API.
+ * Uses the access token from the user's session (provided by middleware) to authenticate requests to the Mux API.
  *
  * @param token - OAuth access token from user session
  * @throws {Error} If token is missing or invalid
@@ -46,6 +45,7 @@ export const mux = {
     handler: async () => {
       try {
         const muxClient = getHealthMuxClient();
+
         await muxClient.video.assets.list({ limit: 0 });
         return { ok: true };
       } catch (error) {
@@ -61,8 +61,7 @@ export const mux = {
   /**
    * List video assets with pagination
    *
-   * Fetches a paginated list of video assets from Mux.
-   * Requires an authenticated session with valid access token.
+   * Fetches a paginated list of video assets from Mux. Requires an authenticated session with valid access token.
    *
    * @param limit - Number of assets per page (default: 25)
    * @param page - Page number to fetch (default: 1)
@@ -95,8 +94,8 @@ export const mux = {
   /**
    * Retrieve a single video asset by ID
    *
-   * Fetches detailed information about a specific video asset.
-   * Requires an authenticated session with valid access token.
+   * Fetches detailed information about a specific video asset. Requires an authenticated session with valid access
+   * token.
    *
    * @param id - The unique Mux asset ID
    * @returns Video asset object with full details
@@ -121,10 +120,7 @@ export const mux = {
     },
   }),
 
-  /**
-   * Create a direct upload URL for client-side uploads.
-   * Returns the signed upload URL and upload ID for tracking.
-   */
+  /** Create a direct upload URL for client-side uploads. Returns the signed upload URL and upload ID for tracking. */
   createDirectUpload: defineAction({
     input: z.object({
       corsOrigin: z.string().optional(),
@@ -140,10 +136,7 @@ export const mux = {
             video_quality: 'basic',
           },
         });
-
-        if (!upload.url || !upload.id) {
-          throw new Error('Mux did not return an upload URL and ID');
-        }
+        if (!upload.url || !upload.id) throw new Error('Mux did not return an upload URL and ID');
 
         return {
           uploadUrl: upload.url,
@@ -159,8 +152,8 @@ export const mux = {
   }),
 
   /**
-   * Poll upload status to get asset_id once processing begins.
-   * Status: 'waiting' | 'asset_created' | 'errored' | 'cancelled' | 'timed_out'
+   * Poll upload status to get asset_id once processing begins. Status: 'waiting' | 'asset_created' | 'errored' |
+   * 'cancelled' | 'timed_out'
    */
   getUploadStatus: defineAction({
     input: z.object({
@@ -185,10 +178,7 @@ export const mux = {
     },
   }),
 
-  /**
-   * Poll asset status to get playback_id once ready.
-   * Status: 'preparing' | 'ready' | 'errored'
-   */
+  /** Poll asset status to get playback_id once ready. Status: 'preparing' | 'ready' | 'errored' */
   getAssetStatus: defineAction({
     input: z.object({
       assetId: z.string(),

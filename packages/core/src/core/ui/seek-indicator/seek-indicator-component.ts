@@ -1,7 +1,7 @@
 import { defineComponent } from 'vjsc/components';
 
-import type { SeekIndicatorProps } from './seek-indicator-core';
-import { SeekIndicatorDataAttrs } from './seek-indicator-data-attrs';
+import type { SeekIndicatorProps } from './core';
+import { SeekIndicatorDataAttrs } from './data';
 
 export default defineComponent({
   name: 'SeekIndicator',

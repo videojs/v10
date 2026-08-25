@@ -1,6 +1,7 @@
 import type { Constructor } from '@videojs/utils/types';
 import type { LevelLoadedData } from 'hls.js';
 import Hls from 'hls.js';
+
 import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import type { HlsEngineHost } from './types';
 
@@ -36,11 +37,13 @@ export function HlsJsMediaStreamTypeMixin<Base extends Constructor<HlsEngineHost
 
     #setDetected(value: MediaStreamType): void {
       if (this.#isUserStreamType) return;
+
       this.#update(value);
     }
 
     #update(value: MediaStreamType): void {
       if (this.#streamType === value) return;
+
       this.#streamType = value;
       this.dispatchEvent(new Event('streamtypechange'));
     }

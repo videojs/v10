@@ -41,8 +41,8 @@ export function deriveVolumeAnnouncement(
 
   const volume = snapshot.volume ?? previous.volume;
   const muted = snapshot.muted ?? previous.muted;
-
   if (volume === undefined && muted === undefined) return null;
+
   return muted || (volume ?? 0) <= 0 ? labels.muted : labels.volumeWithValue(formatVolumeValue(volume ?? 0));
 }
 

@@ -1,45 +1,53 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { applyStateDataAttrs, getStateDataAttrs } from '../state-data-attrs';
 
 describe('getStateDataAttrs', () => {
   it('converts true to empty string attribute', () => {
     const state = { paused: true };
+
     expect(getStateDataAttrs(state)).toEqual({ 'data-paused': '' });
   });
 
   it('ignores false values', () => {
     const state = { paused: false };
+
     expect(getStateDataAttrs(state)).toEqual({});
   });
 
   it('ignores undefined values', () => {
     const state = { paused: undefined };
+
     expect(getStateDataAttrs(state)).toEqual({});
   });
 
   it('ignores null values', () => {
     const state = { paused: null };
+
     expect(getStateDataAttrs(state)).toEqual({});
   });
 
   it('converts string values to attribute', () => {
     const state = { status: 'loading' };
+
     expect(getStateDataAttrs(state)).toEqual({ 'data-status': 'loading' });
   });
 
   it('converts number values to string attribute', () => {
     const state = { volume: 0.5 };
+
     expect(getStateDataAttrs(state)).toEqual({ 'data-volume': '0.5' });
   });
 
   it('ignores zero values', () => {
     const state = { volume: 0 };
+
     expect(getStateDataAttrs(state)).toEqual({});
   });
 
   it('converts keys to lowercase', () => {
     const state = { isPaused: true, currentTime: 10 };
+
     expect(getStateDataAttrs(state)).toEqual({
       'data-ispaused': '',
       'data-currenttime': '10',
@@ -48,6 +56,7 @@ describe('getStateDataAttrs', () => {
 
   it('handles multiple state properties', () => {
     const state = { paused: true, ended: false, waiting: true, volume: 0.8 };
+
     expect(getStateDataAttrs(state)).toEqual({
       'data-paused': '',
       'data-waiting': '',
@@ -57,11 +66,13 @@ describe('getStateDataAttrs', () => {
 
   it('returns empty object for empty state', () => {
     const state = {};
+
     expect(getStateDataAttrs(state)).toEqual({});
   });
 
   it('ignores empty string values', () => {
     const state = { label: '' };
+
     expect(getStateDataAttrs(state)).toEqual({});
   });
 

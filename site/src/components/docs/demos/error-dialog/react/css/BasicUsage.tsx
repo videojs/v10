@@ -11,6 +11,7 @@ export default function BasicUsage() {
   const triggerError = () => {
     const video = videoRef.current;
     if (!video) return;
+
     video.src = brokenSource;
     video.load();
   };

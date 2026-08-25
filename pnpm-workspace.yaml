@@ -14,6 +14,11 @@ peerDependencyRules:
     '@svta/cml-cta': 1.0.1
     '@svta/cml-structured-field-values': 1.0.1
     '@svta/cml-utils': 1.0.1
+    vite: '*'
+    vitest: '*'
+  allowAny:
+    - vite
+    - vitest
 
 # Also install musl Linux binaries alongside the current platform's. The site's
 # OG image route depends on the native @resvg/resvg-js binding, and the
@@ -43,4 +48,19 @@ allowBuilds:
   '@sentry/cli@2.58.5': true
   'esbuild@0.28.0 || 0.28.1': true
   'sharp@0.34.5': true
-  'simple-git-hooks@2.13.1': true
+catalog:
+  vite: npm:@voidzero-dev/vite-plus-core@0.2.8
+  vitest: 4.1.10
+  vite-plus: 0.2.8
+overrides:
+  vite: 'catalog:'
+  vitest: 'catalog:'
+minimumReleaseAgeExclude:
+  - vite-plus
+  - '@voidzero-dev/*'
+  - oxlint
+  - '@oxlint/*'
+  - oxlint-tsgolint
+  - '@oxlint-tsgolint/*'
+  - oxfmt
+  - '@oxfmt/*'

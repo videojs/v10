@@ -1,14 +1,14 @@
 export * from './definition';
 export {
   type BaseProps,
+  Box,
+  type BoxProps,
   type ClassNameValue,
   type Component,
   type ComponentType,
   type CreateComponentResult,
   createComponent,
   Fragment,
-  Group,
-  type GroupProps,
   type JSX,
   jsx,
   jsxs,

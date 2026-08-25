@@ -9,5 +9,4 @@ export interface StyleOutputFile {
   layer: string;
   rules: readonly StyleOutputRule[];
   groupOwners: ReadonlyMap<string, string>;
-  peerOwners: ReadonlyMap<string, string>;
 }

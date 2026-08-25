@@ -68,7 +68,7 @@ function renderAttributes(attributes, context) {
 
   for (const [name, value] of entries) {
     if (value == null || value === false || typeof value === 'function') continue;
-    const normalized = name === 'className'
+    const normalized = name === 'className' || name === 'class'
       ? [value].flat(Infinity).filter(Boolean).join(' ')
       : resolveScopedId(value, context);
     const attribute = htmlAttributeName(name);

@@ -1,5 +1,6 @@
 import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
+
 import type { Video, VideoEvents, VideoTargetLike } from '../../core/types';
 import { getMediaProp, HTMLMediaElementHost, type HTMLMediaTargetLike, setMediaProp } from '../media-host';
 
@@ -49,11 +50,13 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLi
   get webkitSetPresentationMode(): ((mode: WebKitPresentationMode) => void) | undefined {
     const target = this.target as unknown as WebKitVideoElement | null;
     const fn = target?.webkitSetPresentationMode;
+
     return isFunction(fn) ? fn.bind(target) : undefined;
   }
 
   get isPictureInPicture(): boolean {
     const el = this.target as HTMLVideoElement | null;
+
     return (
       (!!el && globalThis.document?.pictureInPictureElement === el) ||
       this.webkitPresentationMode === 'picture-in-picture'
@@ -63,28 +66,35 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLi
   get isFullscreen(): boolean {
     const el = this.target as HTMLVideoElement | null;
     if (!el) return false;
+
     if (this.webkitPresentationMode === 'fullscreen') return true;
+
     const doc = globalThis.document as WebKitDocument;
+
     return doc?.fullscreenElement === el || doc?.webkitFullscreenElement === el;
   }
 
   async requestPictureInPicture() {
     if (!this.target) return Promise.reject();
+
     return this.target.requestPictureInPicture();
   }
 
   async exitPictureInPicture() {
     if (!this.target) return Promise.reject();
+
     return globalThis.document?.exitPictureInPicture();
   }
 
   requestFullscreen() {
     if (!this.target) return Promise.reject();
+
     return this.target.requestFullscreen();
   }
 
   exitFullscreen() {
     if (!this.target) return Promise.reject();
+
     return globalThis.document?.exitFullscreen();
   }
 }

@@ -11,7 +11,10 @@ import { TooltipShortcut } from './tooltip-shortcut';
 
 export interface TooltipPopupProps extends UIComponentProps<'div', TooltipState> {}
 
-/** Container for the tooltip content. Positioned relative to the trigger using CSS anchor positioning with a JavaScript fallback. */
+/**
+ * Container for the tooltip content. Positioned relative to the trigger using CSS anchor positioning with a JavaScript
+ * fallback.
+ */
 export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(function TooltipPopup(
   { render, className, style, children, ...elementProps },
   forwardedRef

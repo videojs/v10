@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { SerialRunner, Task } from '../../tasks/task';
 import { createMachineActor } from '../create-machine-actor';
 
@@ -163,6 +164,7 @@ describe('createMachineActor', () => {
     const actor = makeCounter();
 
     const before = actor.snapshot.get();
+
     actor.send({ type: 'increment' });
     actor.send({ type: 'start' });
     const after = actor.snapshot.get();

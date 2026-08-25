@@ -1,4 +1,5 @@
-import type { JSXAttribute, JSXOpeningElement } from '@oxc-project/types';
+import type { JSXAttribute, JSXElement, JSXOpeningElement } from '@oxc-project/types';
+
 import { createSourceText, renderSourceRange, type SourceText } from '../ast';
 import type { SourceProps } from './definition';
 
@@ -24,7 +25,14 @@ export interface SourceChildrenToken {
   readonly [SOURCE_CHILDREN]: true;
   readonly source: SourceText;
   readonly value: string;
+  /** Opening-tag offset when the children contain exactly one JSX element. */
   readonly rootOpeningEnd?: number | undefined;
+}
+
+export function singleJsxElementChild(node: JSXElement): JSXElement | undefined {
+  const children = node.children.filter((child) => child.type !== 'JSXText' || child.value.trim() !== '');
+
+  return children.length === 1 && children[0]?.type === 'JSXElement' ? children[0] : undefined;
 }
 
 export function createSourceProps<Props extends object>(
@@ -47,19 +55,25 @@ function createSourcePropsFromAttributes<Props extends object>(
   return new Proxy(Object.create(null) as SourceProps<Props>, {
     get(_target, property) {
       if (property === SOURCE_PROPS) return token;
+
       if (property === 'has') return (name: string) => findAttribute(attributes, name) !== undefined;
+
       if (property === 'get') return (name: string) => createSourceProp(source, attributes, name, children);
+
       if (property === 'omit') {
         return (...names: string[]) =>
           createSourcePropsFromAttributes<Props>(source, attributes, children, new Set([...omitted, ...names]));
       }
+
       if (property === 'merge') {
         return (other: SourceProps<object>) => {
           const otherSource = (other as SourceProps<object> & { readonly [SOURCE_PROPS]?: SourcePropsToken })[
             SOURCE_PROPS
           ];
+
           if (!otherSource || otherSource.source.code !== token.source.code)
             throw new Error('vjsc/target: source props can only merge within one module.');
+
           return createSourcePropsFromAttributes<Props & object>(
             token.source,
             [...attributes, ...otherSource.attributes],
@@ -68,8 +82,11 @@ function createSourcePropsFromAttributes<Props extends object>(
           );
         };
       }
+
       if (property === 'children') return children;
+
       if (typeof property === 'string') return createSourceProp(source, attributes, property, children);
+
       return undefined;
     },
     ownKeys() {

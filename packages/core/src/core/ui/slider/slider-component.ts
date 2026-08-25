@@ -1,6 +1,7 @@
 import { defineComponent } from 'vjsc/components';
-import type { SliderPreviewProps, SliderProps } from './slider-core';
-import { SliderDataAttrs } from './slider-data-attrs';
+
+import type { SliderPreviewProps, SliderProps } from './core';
+import { SliderDataAttrs } from './data';
 
 export interface SliderValueProps {
   /** Which slider value to display. */

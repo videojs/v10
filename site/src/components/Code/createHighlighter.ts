@@ -15,6 +15,7 @@ function getShikiGlobalCache(): ShikiGlobalCache {
   const global = globalThis as typeof globalThis & {
     [SHIKI_CACHE_SYMBOL]?: ShikiGlobalCache;
   };
+
   global[SHIKI_CACHE_SYMBOL] ??= {};
   return global[SHIKI_CACHE_SYMBOL];
 }
@@ -25,6 +26,7 @@ export function getOrCreateCachedHighlighter(
   factory: () => Promise<Highlighter>
 ): Promise<Highlighter> {
   const cache = getShikiGlobalCache();
+
   cache[key] ??= factory();
   return cache[key];
 }

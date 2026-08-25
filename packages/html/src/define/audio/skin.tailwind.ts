@@ -19,9 +19,9 @@ import {
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
-
 // Register the player, container, and all UI custom elements.
 import './ui';
 
@@ -105,16 +105,18 @@ function getTemplateHTML() {
           <div class="${buttonGroup}">
             <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
-              <media-playback-rate-radio-group class="${menu.group}">
-                <template>
-                  <media-menu-radio-item class="${menu.item}">
-                    <span data-part="label"></span>
-                    <media-menu-item-indicator force-mount class="${menu.indicator}">
-                      ${renderIcon('check', { class: cn(icon, menu.icon) })}
-                    </media-menu-item-indicator>
-                  </media-menu-radio-item>
-                </template>
-              </media-playback-rate-radio-group>
+              <media-menu-content class="${menu.content}">
+                <media-playback-rate-radio-group class="${menu.group}">
+                  <template>
+                    <media-menu-radio-item class="${menu.item}">
+                      <span data-part="label"></span>
+                      <media-menu-item-indicator force-mount class="${menu.indicator}">
+                        ${renderIcon('check', { class: cn(icon, menu.icon) })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-playback-rate-radio-group>
+              </media-menu-content>
             </media-menu>
 
             <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">

@@ -37,6 +37,7 @@ class PlayerActions extends UIElement {
 
     const bind = (el: HTMLElement, action: () => void) => {
       const props = createButton({ onActivate: action, isDisabled: () => !this.#player.value });
+
       applyElementProps(el, props, { signal });
     };
 
@@ -64,9 +65,11 @@ class PlayerState extends UIElement {
     const playback = this.#playback.value;
     const time = this.#time.value;
     const volume = this.#volume.value;
+
     if (!playback) return;
 
     const el = this.querySelector('.text');
+
     if (el) {
       el.textContent = `Paused: ${playback.paused ? 'Yes' : 'No'} | Time: ${(time?.currentTime ?? 0).toFixed(1)}s | Volume: ${Math.round((volume?.volume ?? 0) * 100)}%`;
     }

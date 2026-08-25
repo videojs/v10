@@ -18,7 +18,7 @@ function App() {
 
   return (
     <AudioPlayer>
-      <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
+      <AudioSkinComponent skin={skin} styling={styling} className="mx-auto w-full max-w-xl">
         {/* Hidden unless it is showing Spotify's own chrome, so it takes no room and needs no size. */}
         <SpotifyAudio src={SPOTIFY_AUDIO_SRC} />
       </AudioSkinComponent>

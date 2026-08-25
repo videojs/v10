@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
   getBrowserTranslations,
@@ -100,6 +100,7 @@ describe('getBrowserTranslations', () => {
 
   it('returns empty when availability is not available', async () => {
     const translator = installMockTranslator({ availability: 'downloadable' });
+
     await expect(getBrowserTranslations('fr')).resolves.toEqual({});
     expect(translator.create).not.toHaveBeenCalled();
   });
@@ -110,6 +111,7 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
+
     expect(result['buttons.play']).toBe('Jouer');
     expect(result['buttons.pause']).toBe('translated:Pause');
   });
@@ -120,25 +122,31 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
+
     expect(result['seek.forward']).toBe('FR:Seek forward {seconds} seconds');
   });
 
   it('masks named placeholders as numeric slots for whole-string translation', async () => {
     const translatedInputs: string[] = [];
+
     installMockTranslator({
       translate: (text) => {
         translatedInputs.push(text);
+
         if (text === 'Seek backward {0} seconds') {
           return 'Mencari mundur {0} detik';
         }
+
         if (text === 'Seek forward {0} seconds') {
           return 'Mencari maju {0} detik';
         }
+
         return text;
       },
     });
 
     const result = await getBrowserTranslations('fr');
+
     expect(translatedInputs).toContain('Seek backward {0} seconds');
     expect(translatedInputs.some((text) => text.includes('{seconds}'))).toBe(false);
     expect(result['seek.backward']).toBe('Mencari mundur {seconds} detik');
@@ -151,6 +159,7 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
+
     expect(result['playback.rate']).toBe('Kecepatan pemutaran {rate}');
   });
 
@@ -168,6 +177,7 @@ describe('getBrowserTranslations', () => {
 
   it('caches results per target language', async () => {
     const translator = installMockTranslator();
+
     await getBrowserTranslations('fr');
     await getBrowserTranslations('fr');
 
@@ -186,6 +196,7 @@ describe('getBrowserTranslations', () => {
       downloadIfNeeded: true,
       onModelDownload: { start: onStart, finish: onFinish },
     });
+
     expect(translator.create).toHaveBeenCalledTimes(1);
     expect(result['buttons.play']).toBe('Main');
     expect(onStart).toHaveBeenCalledWith('id');
@@ -195,6 +206,7 @@ describe('getBrowserTranslations', () => {
   it('does not invoke download callbacks when the model is already available', async () => {
     const onStart = vi.fn();
     const onFinish = vi.fn();
+
     installMockTranslator();
 
     await getBrowserTranslations('fr', {

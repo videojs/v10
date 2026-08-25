@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { observeElementSize, observeElements, observeRenderedSize, observeResize } from '../observe-elements';
 
@@ -15,6 +15,7 @@ class ResizeObserverStub {
 /** Drive one observation, carrying the content box the size observers read. */
 function deliver(observer: ResizeObserverStub, width: number, height: number) {
   const entry = { contentBoxSize: [{ inlineSize: width, blockSize: height }] } as unknown as ResizeObserverEntry;
+
   observer.callback([entry], observer as unknown as ResizeObserver);
 }
 
@@ -27,8 +28,10 @@ class FakeMediaQueryList extends EventTarget {
 
 function stubMatchMedia(): FakeMediaQueryList[] {
   const queries: FakeMediaQueryList[] = [];
+
   vi.stubGlobal('matchMedia', (media: string) => {
     const query = new FakeMediaQueryList(media);
+
     queries.push(query);
     return query;
   });
@@ -84,6 +87,7 @@ describe('observeElementSize', () => {
 
     const cleanup = observeElementSize(document.createElement('div'), onResize);
     const observer = ResizeObserverStub.instances[0]!;
+
     deliver(observer, 320, 180);
 
     expect(onResize).toHaveBeenCalledWith({ width: 320, height: 180 });
@@ -98,6 +102,7 @@ describe('observeElementSize', () => {
 
     observeElementSize(document.createElement('div'), onResize);
     const observer = ResizeObserverStub.instances[0]!;
+
     observer.callback([], observer as unknown as ResizeObserver);
 
     expect(onResize).not.toHaveBeenCalled();
@@ -154,6 +159,7 @@ describe('observeRenderedSize', () => {
     const onResize = vi.fn();
 
     const cleanup = observeRenderedSize(document.createElement('div'), onResize);
+
     deliver(ResizeObserverStub.instances[0]!, 320, 180);
     cleanup();
 

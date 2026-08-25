@@ -20,6 +20,7 @@ import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { ErrorLike } from '@videojs/media';
 import { SnapshotController } from '@videojs/store/html';
+
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
@@ -58,6 +59,7 @@ export class ErrorDialogElement extends UIElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#dialog = createDialog({
@@ -86,6 +88,7 @@ export class ErrorDialogElement extends UIElement {
 
   protected override willUpdate(_changed: PropertyValues): void {
     super.willUpdate(_changed);
+
     if (!this.#dialog) return;
 
     const errorState = this.#errorState.value;
@@ -97,6 +100,7 @@ export class ErrorDialogElement extends UIElement {
     }
 
     const errorForCopy = errorState?.error ?? (isOpen ? this.#lastError : null);
+
     this.#syncDialogCopy(errorForCopy);
 
     if (!hasError && !isOpen) {
@@ -113,9 +117,11 @@ export class ErrorDialogElement extends UIElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#dialog) return;
 
     const input = this.#dialog.input.current;
+
     this.#core.setInput(input);
     const state = this.#core.getState();
 
@@ -132,21 +138,27 @@ export class ErrorDialogElement extends UIElement {
   #syncDialogCopy(error: ErrorLike | null): void {
     const t = this.#i18n.value;
     const title = this.querySelector<HTMLElement>('media-dialog-title');
+
     if (title && !this.#hasAuthoredCopy(title)) {
       title.textContent = translateText(getErrorDialogTitleText(), t);
     }
 
     const desc = this.querySelector<HTMLElement>('media-dialog-description');
+
     if (desc && !this.#hasAuthoredCopy(desc)) {
       const description = error ? resolveErrorDialogDescription(error) : null;
+
       if (description) {
         this.#lastDescription = description;
       }
+
       const copy = description ?? this.#lastDescription;
+
       desc.textContent = copy ? translateText(copy, t) : translateText(getErrorDialogUnexpectedText(), t);
     }
 
     const close = this.querySelector<HTMLElement>('media-dialog-close');
+
     if (close && !this.#hasAuthoredCopy(close)) {
       close.textContent = translateText(getErrorDialogDismissText(), t);
     }
@@ -155,10 +167,12 @@ export class ErrorDialogElement extends UIElement {
   #hasAuthoredCopy(el: HTMLElement): boolean {
     if (!this.#seenCopyParts.has(el)) {
       this.#seenCopyParts.add(el);
+
       if (hasAuthoredContent(el)) {
         this.#authoredCopyParts.add(el);
       }
     }
+
     return this.#authoredCopyParts.has(el);
   }
 }

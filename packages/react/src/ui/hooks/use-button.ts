@@ -1,6 +1,7 @@
 import { createButton, type UIEvent } from '@videojs/core/dom';
 import type { ComponentPropsWithRef, Ref } from 'react';
 import { useCallback } from 'react';
+
 import { mergeProps } from '../../utils/merge-props';
 
 export interface UseButtonParameters {
@@ -18,19 +19,19 @@ export interface UseButtonReturnValue {
  * Hook for button behavior with keyboard and pointer interaction.
  *
  * @example
- * ```tsx
- * const { getButtonProps, buttonRef } = useButton({
- *   displayName: 'PlayButton',
- *   onActivate: () => togglePlayback(),
- *   isDisabled: () => disabled,
- * });
+ *   ```tsx
+ *   const { getButtonProps, buttonRef } = useButton({
+ *     displayName: 'PlayButton',
+ *     onActivate: () => togglePlayback(),
+ *     isDisabled: () => disabled,
+ *   });
  *
- * return useRender('button', componentProps, {
- *   state,
- *   ref: [forwardedRef, buttonRef],
- *   props: [elementProps, getButtonProps],
- * });
- * ```
+ *   return useRender('button', componentProps, {
+ *     state,
+ *     ref: [forwardedRef, buttonRef],
+ *     props: [elementProps, getButtonProps],
+ *   });
+ *   ```;
  *
  * @param params - Button configuration with activation handler and disabled check.
  */
@@ -49,6 +50,7 @@ export function useButton(params: UseButtonParameters): UseButtonReturnValue {
   const getButtonProps = useCallback(
     (externalProps?: ComponentPropsWithRef<'button'>): ComponentPropsWithRef<'button'> => {
       const buttonProps = createButton({ onActivate, isDisabled });
+
       return mergeProps(buttonProps, externalProps);
     },
     [onActivate, isDisabled]

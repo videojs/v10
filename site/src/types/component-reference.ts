@@ -1,8 +1,8 @@
 /**
  * Zod schemas for API reference JSON files.
  *
- * This is the single source of truth for the shape of generated API reference data.
- * Both the builder (scripts/api-docs-builder) and Astro components import from here.
+ * This is the single source of truth for the shape of generated API reference data. Both the builder
+ * (scripts/api-docs-builder) and Astro components import from here.
  */
 import { z } from 'astro/zod';
 

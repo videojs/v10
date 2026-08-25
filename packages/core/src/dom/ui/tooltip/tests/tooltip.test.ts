@@ -1,6 +1,7 @@
 import { flush } from '@videojs/store';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TooltipGroupCore } from '../../../../core/ui/tooltip/tooltip-group-core';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
+import { TooltipGroupCore } from '../../../../core/ui/tooltip/group-core';
 import { createPopupGroup } from '../../popover/popup-group';
 import { createTestPopover } from '../../popover/tests/popover-helpers';
 import { createTestTooltip } from './tooltip-helpers';
@@ -8,6 +9,7 @@ import { createTestTooltip } from './tooltip-helpers';
 describe('createTooltip', () => {
   it('starts closed', () => {
     const { tooltip } = createTestTooltip();
+
     expect(tooltip.input.current).toEqual({ active: false, status: 'idle' });
   });
 
@@ -173,6 +175,7 @@ describe('createTooltip', () => {
 
       it('closes on pointer down', () => {
         const { tooltip, onOpenChange } = createTestTooltip();
+
         tooltip.open();
         onOpenChange.mockClear();
 
@@ -213,6 +216,7 @@ describe('createTooltip', () => {
         const owner = createTestPopover({ group: () => group });
         const { tooltip, onOpenChange } = createTestTooltip({ popupGroup: () => group });
         const trigger = document.createElement('button');
+
         owner.popover.setTriggerElement(trigger);
         tooltip.setTriggerElement(trigger);
         owner.popover.open();
@@ -237,6 +241,7 @@ describe('createTooltip', () => {
         const owner = createTestPopover({ group: () => group });
         const { tooltip, onOpenChange } = createTestTooltip({ popupGroup: () => group });
         const trigger = document.createElement('button');
+
         owner.popover.setTriggerElement(trigger);
         tooltip.setTriggerElement(trigger);
         tooltip.open();
@@ -245,6 +250,26 @@ describe('createTooltip', () => {
         owner.popover.open();
 
         expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
+      });
+
+      it('stays open with its trigger popup when requested', () => {
+        const group = createPopupGroup();
+        const owner = createTestPopover({ group: () => group });
+        const { tooltip, onOpenChange } = createTestTooltip({
+          popupGroup: () => group,
+          sticky: () => true,
+        });
+        const trigger = document.createElement('button');
+
+        owner.popover.setTriggerElement(trigger);
+        tooltip.setTriggerElement(trigger);
+        tooltip.open();
+        onOpenChange.mockClear();
+
+        owner.popover.open();
+
+        expect(onOpenChange).not.toHaveBeenCalled();
+        expect(tooltip.input.current.active).toBe(true);
       });
 
       it('does not open via focus after pointer down (tap)', () => {

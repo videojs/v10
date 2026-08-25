@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { type CreateThumbnailOptions, createThumbnail } from '../thumbnail';
 
@@ -284,6 +284,7 @@ describe('createThumbnail', () => {
 
     it('detects already-loaded img on connect', () => {
       const img = createMockImg();
+
       // Mark the img as already complete (cached image).
       Object.defineProperty(img, 'complete', { value: true, configurable: true });
 

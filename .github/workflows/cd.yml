@@ -14,11 +14,6 @@ on:
   # needed here.
   workflow_dispatch:
 
-# To use Turborepo Remote Caching, set the following environment variables.
-# env:
-#   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-#   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -60,14 +55,14 @@ jobs:
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm i --frozen-lockfile
 
-      - name: Cache turbo build setup
+      - name: Restore Vite Task cache
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        uses: actions/cache@v5
+        uses: actions/cache/restore@v6
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-restore-only-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            vite-task-${{ runner.os }}-${{ runner.arch }}-packages-
 
       - name: Clean
         if: ${{ steps.release.outputs.releases_created == 'true' }}
@@ -94,8 +89,7 @@ jobs:
       # The site build emits per-framework markdown to site/dist/docs/framework/{html,react}/.
       # The @videojs/html and @videojs/react packages' prepack scripts (fired by `pnpm publish`
       # below) copy that subtree into each package's docs/ directory so it ships in the tarball.
-      # build:cli also depends on the site build transitively; turbo caches it, so this step
-      # adds no rebuild cost — it just makes the dependency visible in CI.
+      # The site task and CLI dependency graph let Vite Task reuse the package builds here.
       - name: Build site (required by html/react prepack and CLI)
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:site
@@ -106,7 +100,7 @@ jobs:
 
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}
-        run: pnpm -r publish --filter "./packages/*" --access public --provenance --no-git-checks
+        run: pnpm --fail-if-no-match -r publish --filter "./packages/*" --access public --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

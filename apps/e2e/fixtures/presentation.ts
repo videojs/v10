@@ -48,6 +48,7 @@ export async function mockPresentation(page: Page): Promise<void> {
         configurable: true,
         value: function webkitSetPresentationMode(this: HTMLVideoElement, mode: string) {
           const wasPip = pipElement === this;
+
           pipElement = mode === 'picture-in-picture' ? this : null;
 
           if (!wasPip && pipElement === this) {
@@ -63,6 +64,7 @@ export async function mockPresentation(page: Page): Promise<void> {
       configurable: true,
       value: async () => {
         const video = pipElement;
+
         pipElement = null;
         video?.dispatchEvent(new Event('leavepictureinpicture'));
       },

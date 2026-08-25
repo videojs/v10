@@ -1,6 +1,7 @@
 import * as dashjs from 'dashjs';
 import Hls from 'hls.js';
-import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vite-plus/test';
+
 import { toMuxDataEngineOptions } from '../mux-data-engine';
 
 /** Shaped like an hls.js instance, class statics included. */

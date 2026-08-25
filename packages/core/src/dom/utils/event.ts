@@ -8,5 +8,6 @@ export function isEventWithinElement(event: Event, element: Element | null): boo
   }
 
   const target = event.target;
+
   return target instanceof Node && element.contains(target);
 }

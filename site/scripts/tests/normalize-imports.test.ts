@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { normalizeImports } from '../normalize-imports.js';
 
 describe('normalizeImports', () => {
@@ -117,6 +118,7 @@ describe('normalizeImports', () => {
 
     const result = normalizeImports(input);
     const lines = result.split('\n');
+
     expect(lines[0]).toBe("import './styles.css';");
     expect(lines[1]).toBe("import React from 'react';");
     expect(lines[2]).toBe("import { useState } from 'react';");

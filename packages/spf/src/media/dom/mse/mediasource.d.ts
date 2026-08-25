@@ -1,10 +1,8 @@
-/**
- * Global type declarations for MediaSource APIs.
- */
+/** Global type declarations for MediaSource APIs. */
 
 /**
- * ManagedMediaSource is a newer Safari API not yet in standard DOM types.
- * Provides better lifecycle management for background tabs and picture-in-picture.
+ * ManagedMediaSource is a newer Safari API not yet in standard DOM types. Provides better lifecycle management for
+ * background tabs and picture-in-picture.
  */
 declare global {
   interface ManagedMediaSource extends MediaSource {

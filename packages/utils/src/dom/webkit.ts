@@ -3,7 +3,7 @@ export type WebKitPresentationMode = 'inline' | 'fullscreen' | 'picture-in-pictu
 
 /** Extended HTMLVideoElement with WebKit vendor APIs. */
 export interface WebKitVideoElement extends HTMLVideoElement {
-  /**  Whether the current playback target is wireless (WebKit) */
+  /** Whether the current playback target is wireless (WebKit) */
   webkitCurrentPlaybackTargetIsWireless?: boolean;
   /** Current WebKit presentation mode (iOS Safari). */
   webkitPresentationMode?: WebKitPresentationMode;

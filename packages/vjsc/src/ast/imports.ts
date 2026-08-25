@@ -31,6 +31,7 @@ export class ModuleImports {
 
     for (const statement of ast.body) {
       if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type') continue;
+
       this.#collectExisting(statement);
     }
   }
@@ -41,12 +42,14 @@ export class ModuleImports {
 
     if (!local) {
       let imports = this.#requested.get(moduleImport.from);
+
       if (!imports) {
         imports = new Map();
         this.#requested.set(moduleImport.from, imports);
       }
 
       local = imports.get(moduleImport.name);
+
       if (!local) {
         local = this.#allocateName(moduleImport.name);
         imports.set(moduleImport.name, local);
@@ -80,6 +83,7 @@ export class ModuleImports {
 
     for (const specifier of declaration.specifiers) {
       if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
+
       const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
 
       this.#existing.set(importKey(source, imported), specifier.local.name);
@@ -88,6 +92,7 @@ export class ModuleImports {
 
   #allocateName(imported: string): string {
     const base = imported === 'default' ? (this.#options.defaultImportName ?? 'Imported') : imported;
+
     if (!this.#usedNames.has(base)) {
       this.#usedNames.add(base);
       return base;
@@ -141,8 +146,10 @@ export function insertModuleImports(
   if (statements.length === 0) return;
 
   let leadingEnd: number | undefined;
+
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' && !('directive' in statement && statement.directive)) break;
+
     leadingEnd = statement.end;
   }
 
@@ -153,5 +160,6 @@ export function insertModuleImports(
 
   const insertion = ast.body[0]?.start ?? ast.hashbang?.end ?? 0;
   const prefix = ast.body.length === 0 && ast.hashbang ? '\n' : '';
+
   magicString.appendLeft(insertion, `${prefix}${statements.join('\n')}\n`);
 }

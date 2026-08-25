@@ -20,6 +20,7 @@ let tagCounter = 0;
 
 function defineTestElement<Element extends CustomElementConstructor>(Base: Element): string {
   const tagName = `test-player-context-${tagCounter++}`;
+
   customElements.define(tagName, Base);
   return tagName;
 }
@@ -181,6 +182,7 @@ describe('createPlayer', () => {
     const player = document.createElement(defineTestElement(PlayerElement)) as InstanceType<typeof PlayerElement>;
     const background = document.createElement(defineTestElement(BackgroundVideo));
     const video = document.createElement('video');
+
     video.slot = 'media';
 
     background.append(video);
@@ -217,9 +219,11 @@ describe('createPlayer', () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
     const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-metadata-provider';
+
     customElements.define(tagName, ProviderElement);
 
     const player = document.createElement(tagName) as InstanceType<typeof ProviderElement>;
+
     player.setAttribute('content-title', 'Attribute title');
     document.body.append(player);
 
@@ -249,9 +253,11 @@ describe('createPlayer', () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
     const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-title-provider';
+
     customElements.define(tagName, ProviderElement);
 
     const player = document.createElement(tagName) as InstanceType<typeof ProviderElement>;
+
     document.body.append(player);
 
     // Nothing was installed over the native accessor, so this is still the tooltip.
@@ -269,9 +275,11 @@ describe('createPlayer', () => {
     const { ProviderMixin } = createPlayer({ features: [features.orientationLock] });
     const ProviderElement = ProviderMixin(UIElement);
     const tagName = 'test-orientation-lock-provider';
+
     customElements.define(tagName, ProviderElement);
 
     const player = document.createElement(tagName) as InstanceType<typeof ProviderElement>;
+
     player.setAttribute('orientation-lock-type', 'portrait');
     document.body.append(player);
 

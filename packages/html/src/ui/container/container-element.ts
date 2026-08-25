@@ -13,8 +13,7 @@ import { UIElement } from '../ui-element';
 /**
  * The visual, interactive player boundary.
  *
- * A container registers itself with its closest player and provides popup
- * coordination to the controls it contains.
+ * A container registers itself with its closest player and provides popup coordination to the controls it contains.
  */
 export class ContainerElement extends UIElement implements MediaContainer {
   static readonly tagName = 'media-container';
@@ -77,10 +76,12 @@ export class ContainerElement extends UIElement implements MediaContainer {
         this.removeAttribute('aria-label');
         this.#label = null;
       }
+
       return;
     }
 
     const label = this.#i18n.value(labelText);
+
     this.setAttribute('aria-label', label);
     this.#label = label;
   }

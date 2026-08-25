@@ -3,7 +3,8 @@ import { observeResize } from '@videojs/utils/dom';
 import { throttle } from '@videojs/utils/function';
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { isNull } from '@videojs/utils/predicate';
-import type { SliderInput, SliderState } from '../../core/ui/slider/slider-core';
+
+import type { SliderInput, SliderState } from '../../core/ui/slider/core';
 import { getPercentFromPointerEvent } from '../utils/pointer';
 import type { UIKeyboardEvent, UIPointerEvent } from './event';
 
@@ -25,10 +26,9 @@ export interface SliderOptions {
   getLargeStepPercent: () => number;
 
   /**
-   * Leading+trailing throttle (ms) for `onValueChange` during drag. When
-   * `> 0`, `onValueChange` fires immediately on the first drag move (leading
-   * edge), then at most once per window during subsequent moves. `0` (default)
-   * disables throttling — `onValueChange` fires on every pointermove.
+   * Leading+trailing throttle (ms) for `onValueChange` during drag. When `> 0`, `onValueChange` fires immediately on
+   * the first drag move (leading edge), then at most once per window during subsequent moves. `0` (default) disables
+   * throttling — `onValueChange` fires on every pointermove.
    */
   changeThrottle?: number | undefined;
   /** Adjust a raw 0–100 percent for thumb alignment. Enables `adjustForAlignment()`. */
@@ -68,9 +68,8 @@ export interface SliderApi {
   rootStyle: SliderRootStyle;
   thumbProps: SliderThumbProps;
   /**
-   * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using
-   * live DOM measurements from the root/thumb elements. No-op when
-   * `adjustPercent` was not provided or `thumbAlignment` is not `'edge'`.
+   * Adjust `fillPercent` and `pointerPercent` for edge thumb alignment using live DOM measurements from the root/thumb
+   * elements. No-op when `adjustPercent` was not provided or `thumbAlignment` is not `'edge'`.
    */
   adjustForAlignment: <S extends SliderState>(state: S) => S;
   destroy: () => void;
@@ -113,6 +112,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     if (isNull(capturedPointerId)) return;
 
     const id = capturedPointerId;
+
     capturedPointerId = null;
 
     try {
@@ -226,6 +226,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
       const percent = getPercentFromPointerEvent(event, cachedRect!, options.getOrientation());
       const releaseRect = options.getElement().getBoundingClientRect();
+
       pointingOnRelease =
         event.pointerType !== 'touch' &&
         event.clientX >= releaseRect.left &&
@@ -242,6 +243,7 @@ export function createSlider(options: SliderOptions): SliderApi {
 
     onPointerLeave() {
       if (!isNull(capturedPointerId)) return;
+
       input.patch({ pointing: false });
     },
 
@@ -255,6 +257,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     onKeyDown(event) {
       if (options.isDisabled()) {
         if (event.key !== 'Tab') event.preventDefault();
+
         return;
       }
 
@@ -350,6 +353,7 @@ export function createSlider(options: SliderOptions): SliderApi {
     adjustForAlignment,
     destroy() {
       if (abort.signal.aborted) return;
+
       abort.abort();
       stopObservingResize?.();
       releaseCapture();

@@ -1,6 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
 import type { Ref, RefCallback } from 'react';
-
 import { useCallback } from 'react';
 
 type OptionalRef<T> = Ref<T> | undefined;
@@ -24,10 +23,10 @@ function setRef<T>(ref: OptionalRef<T>, value: T): (() => void) | void | undefin
  * Compose multiple refs into a single callback ref.
  *
  * @example
- * ```tsx
- * const composedRef = composeRefs(ref1, ref2, ref3);
- * return <div ref={composedRef} />;
- * ```
+ *   ```tsx
+ *   const composedRef = composeRefs(ref1, ref2, ref3);
+ *   return <div ref={composedRef} />;
+ *   ```;
  */
 export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): RefCallback<T> {
   const flatRefs = refs.flat();
@@ -41,6 +40,7 @@ export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): 
       return () => {
         for (let i = 0; i < cleanups.length; i++) {
           const cleanup = cleanups[i];
+
           if (isFunction(cleanup)) {
             cleanup();
           } else {
@@ -58,10 +58,10 @@ export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): 
  * Memoized for stable reference.
  *
  * @example
- * ```tsx
- * const composedRef = useComposedRefs(forwardedRef, localRef);
- * return <div ref={composedRef} />;
- * ```
+ *   ```tsx
+ *   const composedRef = useComposedRefs(forwardedRef, localRef);
+ *   return <div ref={composedRef} />;
+ *   ```;
  */
 export function useComposedRefs<T>(...refs: OptionalRef<T>[]): RefCallback<T> {
   return useCallback(composeRefs(...refs), [...refs]);

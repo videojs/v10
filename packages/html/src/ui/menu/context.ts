@@ -1,5 +1,5 @@
-import type { MenuState, StateAttrMap } from '@videojs/core';
-import type { MenuApi } from '@videojs/core/dom';
+import type { MenuCore, MenuState } from '@videojs/core';
+import type { MenuApi, MenuPopupApi } from '@videojs/core/dom';
 import { createContext } from '@videojs/element/context';
 
 export interface MenuTriggerState {
@@ -9,9 +9,10 @@ export interface MenuTriggerState {
 }
 
 export interface MenuContextValue {
+  core: MenuCore;
   menu: MenuApi;
+  popup: MenuPopupApi;
   state: MenuState;
-  stateAttrMap: StateAttrMap<MenuState>;
   /** Publish display and interaction state to this submenu's trigger. */
   setTriggerState: (state: MenuTriggerState) => void;
 }

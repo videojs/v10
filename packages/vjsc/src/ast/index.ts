@@ -1,5 +1,5 @@
 export type { Node } from '@oxc-project/types';
-export { prependBlockBody } from './edit';
+export { type BlockBody, prependBlockBody } from './edit';
 export { type ModuleImport, ModuleImports, type ModuleImportsOptions } from './imports';
 export {
   createSourceText,

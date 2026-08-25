@@ -1,6 +1,7 @@
 import { defineComponent } from 'vjsc/components';
-import type { MuteButtonProps } from './mute-button-core';
-import { MuteButtonDataAttrs } from './mute-button-data-attrs';
+
+import type { MuteButtonProps } from './core';
+import { MuteButtonDataAttrs } from './data';
 
 export default defineComponent<MuteButtonProps>({
   name: 'MuteButton',

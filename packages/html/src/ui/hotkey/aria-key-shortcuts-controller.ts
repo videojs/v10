@@ -45,6 +45,7 @@ export class AriaKeyShortcutsController implements ReactiveController {
   get details(): HotkeyShortcutDetails {
     const container = this.#container.value?.container;
     if (!container) return {};
+
     return getHotkeyCoordinator(container).getShortcut(this.#action, this.#getValue?.());
   }
 

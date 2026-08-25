@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { transformSync } from 'oxc-transform';
+
 import { DIST_DIR } from '../internal/paths.js';
 import type { IconFamily } from './model.js';
 import { writeOutput } from './output.js';
@@ -30,6 +31,7 @@ export function emitElementBase(families: readonly IconFamily[]): void {
 
   if (result.errors.length > 0 || !result.code) {
     const errors = result.errors.map((error) => error.codeframe ?? error.message).join('\n');
+
     throw new Error(`Could not transpile MediaIconElement:\n${errors}`);
   }
 

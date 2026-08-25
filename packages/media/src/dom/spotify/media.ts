@@ -5,6 +5,7 @@
 import { createPublicPromise, type PublicPromise, tryCall } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNumber } from '@videojs/utils/predicate';
+
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import { MediaError } from '../../core/media-error';
 import type { Video } from '../../core/types';
@@ -22,7 +23,8 @@ import { buildSpotifyIframeSrc, parseSpotifySource, type SpotifySource } from '.
 const SpotifyMediaBase = MediaPlayedRangesMixin(EventTarget);
 
 /**
- * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
+ *   new value.
  */
 export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
@@ -77,7 +79,9 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   /** Bind the iframe hosting the embed; the API and controller follow as soon as an embed URL resolves. */
   attach(target: HTMLIFrameElement | null): void {
     if (!target || this.#target === target) return;
+
     if (this.#target) this.detach();
+
     this.#target = target;
     this.#beginLoad();
     this.#createPlayer();
@@ -85,6 +89,7 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
 
   detach(): void {
     if (!this.#target) return;
+
     this.#attachId++;
     // `destroy()` removes whatever `iframeElement` points at, and the embed belongs to React or the shadow root;
     // pointing the controller at a throwaway first leaves `destroy()` with nothing to remove but its listener.
@@ -135,31 +140,41 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
     if (!this.#controller || !this.#controllerReady) {
       // `loadUri` is dropped before the controller is ready, so replay then; a cleared src replays too.
       this.#pendingLoad = !!this.#target;
+
       // The target can be attached before it has anything to embed, in which case this load is what builds it.
       if (this.#target && !this.#controller && !this.#creatingController) {
         // `attach()`'s barrier was settled when there was nothing to embed, so `play()` needs a new one to wait on.
         const load = this.#beginLoad();
+
         // Wait a microtask: frameworks set `src` and the embed props in any order, and the URL is built once.
         await Promise.resolve();
+
         // A later load took over while waiting; building the embed is its job now.
         if (load !== this.#loadComplete) return;
+
         this.#createPlayer();
       }
+
       return;
     }
+
     const load = this.#beginLoad();
+
     // A cleared source has nothing to load, but what was reported about the old entity still has to go.
     this.#resetState();
     // `emptied` announces that reset, so it precedes the empty-src bail: a cleared source reports nothing further.
     this.dispatchEvent(new Event('emptied'));
+
     if (!this.#src) {
       // Left running, the embed keeps playing and writes the cleared state back; pausing is as far as it goes.
       load.resolve();
       tryCall(() => this.#controller?.pause());
       return;
     }
+
     this.dispatchEvent(new Event('loadstart'));
     const parsed = parseSpotifySource(this.#src);
+
     if (!parsed) {
       this.#error = new MediaError(`Unrecognized Spotify source: ${this.#src}`, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
       this.dispatchEvent(new Event('error'));
@@ -167,6 +182,7 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
       load.resolve();
       return;
     }
+
     const target = this.#target;
     const embedSrc = buildSpotifyIframeSrc(this.#src, this.#snapshotProps());
     const embeddedSrc = target?.getAttribute('src') ?? '';
@@ -175,13 +191,16 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
     const rebuild =
       embedOptionsOf(embedSrc) !== embedOptionsOf(embeddedSrc) ||
       (isVideoEmbed(embedSrc) && embedPathOf(embedSrc) !== embedPathOf(embeddedSrc));
+
     if (target && embedSrc && rebuild) {
       target.src = embedSrc;
       return;
     }
+
     this.#controller.loadUri(`spotify:${parsed.type}:${parsed.id}`);
     // `loadUri` restarts the entity, so seek to the start position; an engine option outranks the `t` in `src`.
     const startTime = this.#source?.engine?.spotify?.t ?? parsed.startTime;
+
     if (isNumber(startTime)) this.currentTime = startTime;
   }
 
@@ -206,8 +225,10 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
 
   async play() {
     await this.#loadComplete;
+
     // The embed still holds the paused entity, so playing it would resume a cleared source.
     if (!this.#src) return;
+
     // `resume()` picks playback up where it stopped; `play()` would restart the entity.
     this.#controller?.resume();
   }
@@ -223,6 +244,7 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   }
   set currentTime(value) {
     if (this.#currentTime === value) return;
+
     this.#seeking = true;
     // Seeking starts a fresh run, so whatever ran out before it is behind us.
     this.#closeToEnded = false;
@@ -336,11 +358,13 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
     // The `src` property resolves an empty attribute to the document URL; only the attribute spots a placeholder.
     if (!target.getAttribute('src')) {
       const initialSrc = buildSpotifyIframeSrc(this.#src, this.#snapshotProps());
+
       // No embed means no controller is coming to settle this load.
       if (!initialSrc) {
         this.#loadComplete.resolve();
         return false;
       }
+
       target.src = initialSrc;
     }
 
@@ -353,11 +377,13 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   async #createControllerApi(target: HTMLIFrameElement) {
     const attachId = this.#attachId;
     let api: SpotifyIframeApi;
+
     try {
       api = await loadSpotifyIframeApi();
     } catch {
       // The failed load belongs to the attach that started it; a newer one must not be marked failed.
       if (this.#isStale(attachId)) return;
+
       this.#creatingController = false;
       this.#error = new MediaError('Failed to load the Spotify iframe API', MediaError.MEDIA_ERR_NETWORK);
       this.dispatchEvent(new Event('error'));
@@ -365,7 +391,9 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
       this.#loadComplete.resolve();
       return;
     }
+
     if (this.#isStale(attachId) || this.#target !== target) return;
+
     // `referrerPolicy` configures the iframe rather than the embed, so Spotify has no use for it.
     const { referrerPolicy: _referrerPolicy, ...options } = this.#source?.engine?.spotify ?? {};
     const controller = await new Promise<SpotifyControllerApi>((resolve) =>
@@ -374,10 +402,12 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
       // performs cannot fire and the controller is simply pointed at the iframe this host already built.
       api.createController(createControllerPlaceholder(), options, resolve)
     );
+
     if (this.#isStale(attachId) || this.#target !== target) {
       tryCall(() => controller.destroy());
       return;
     }
+
     // Both directions of the protocol read this: commands post to its `contentWindow`, and inbound messages match it.
     controller.iframeElement = target;
     this.#controller = controller;
@@ -395,6 +425,7 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
     this.#loadComplete.then(
       () => {
         const controller = this.#controller;
+
         if (controller) tryCall(() => fn(controller));
       },
       () => {}
@@ -428,24 +459,30 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
 
   #onControllerReady() {
     this.#controllerReady = true;
+
     if (this.#pendingLoad) {
       // The embed was built from a stale src; skip its metadata and reload (`#onPlaybackUpdate` completes the load).
       this.#pendingLoad = false;
       void this.load();
       return;
     }
+
     this.#onLoaded();
   }
 
   #onLoaded() {
     if (this.#loaded) return;
+
     this.#loaded = true;
     this.#readyState = READY_STATE_HAVE_METADATA;
+
     // Duration arrives with the first playback update, which dispatches its own `durationchange`; no volume to report.
     for (const type of ['loadedmetadata', 'durationchange', 'loadcomplete']) {
       this.dispatchEvent(new Event(type));
     }
+
     this.#loadComplete.resolve();
+
     // The embed URL carries no autoplay parameter, so asking the controller to play is the only way to honor the prop.
     if (this.#autoplay) void this.play();
   }
@@ -453,11 +490,13 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   #bindControllerEvents(controller: SpotifyControllerApi, attachId: number) {
     controller.addListener('ready', () => {
       if (this.#isStale(attachId)) return;
+
       this.#onControllerReady();
     });
 
     controller.addListener('playback_update', (event) => {
       if (this.#isStale(attachId)) return;
+
       this.#onPlaybackUpdate(event.data);
     });
   }
@@ -488,6 +527,7 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   // left to play. The seek makes this update the start of a fresh run, so nothing else acts on it.
   #restartFromEnd(data: SpotifyPlaybackState): boolean {
     if (!this.#closeToEnded || !this.#paused || !this.#isStarting(data)) return false;
+
     this.#closeToEnded = false;
     this.currentTime = REPLAY_POSITION;
     return true;
@@ -496,6 +536,7 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   #syncDuration(duration: number) {
     const seconds = duration / 1000;
     if (seconds === this.#duration) return;
+
     // A different duration is a different entity, so whatever ended before is no longer what is playing.
     this.#closeToEnded = false;
     this.#duration = seconds;
@@ -504,19 +545,24 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
 
   #syncPosition(position: number) {
     const seconds = position / 1000;
+
     if (this.#seeking) {
       // The embed announces no seeks and keeps reporting the old position, so only a snapshot at the requested one says
       // the seek landed. `seek` truncates to whole seconds and the snapshot after it can be a snapshot late.
       if (seconds < Math.floor(this.#currentTime) || seconds > this.#currentTime + SNAPSHOT_INTERVAL) return;
+
       this.#seeking = false;
       this.dispatchEvent(new Event('seeked'));
     }
+
     if (seconds === this.#currentTime) return;
+
     // Only a position back inside the entity is a new run; one still at the end belongs to the run that finished there.
     if (Math.ceil(seconds) < this.#duration) {
       this.#closeToEnded = false;
       this.#ended = false;
     }
+
     this.#currentTime = seconds;
     this.dispatchEvent(new Event('timeupdate'));
   }
@@ -530,10 +576,12 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
       if (data.isBuffering && !this.#pauseRequested) {
         // A run that is already waiting has nothing new to report.
         if (this.#waiting) return false;
+
         this.#waiting = true;
         this.dispatchEvent(new Event('waiting'));
         return true;
       }
+
       this.#pauseRequested = false;
       this.#waiting = false;
       this.#paused = true;
@@ -548,7 +596,9 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
       this.dispatchEvent(new Event('play'));
       // Buffering at the start means the entity is still loading, so playback has begun without playing yet.
       this.#waiting = data.isBuffering;
+
       if (!this.#waiting) this.#readyState = READY_STATE_HAVE_FUTURE_DATA;
+
       this.dispatchEvent(new Event(this.#waiting ? 'waiting' : 'playing'));
       return true;
     }
@@ -567,9 +617,12 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   // arrive about once a second, so the last one lands short of the end — hence rounding it up.
   #checkEnded() {
     if (this.#paused || this.#seeking || this.#closeToEnded) return;
+
     // An unresolved duration (`NaN` before the first update, `0` while the entity resolves) is nothing to end against.
     if (!(this.#duration > 0) || !Number.isFinite(this.#duration)) return;
+
     if (Math.ceil(this.#currentTime) < this.#duration) return;
+
     // The position stops moving at the end, so every later update reports the same thing; only the first one acts.
     this.#closeToEnded = true;
 
@@ -603,6 +656,7 @@ function createControllerPlaceholderFrame(): HTMLIFrameElement {
 function embedOptionsOf(src: string): string {
   const [, query] = src.split('?');
   const params = new URLSearchParams(query);
+
   params.delete('t');
   params.sort();
   return `${isVideoEmbed(src) ? 'video' : 'audio'}?${params}`;

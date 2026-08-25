@@ -1,21 +1,18 @@
-import { resolve } from 'node:path';
-import { build } from 'tsdown';
-import { describe, expect, it } from 'vitest';
+import { build } from 'vite-plus/pack';
+import { describe, expect, it } from 'vite-plus/test';
 import type { ShadcnRegistry } from 'vjsc/shadcn';
 
-const packageDir = resolve(import.meta.dirname, '../..');
-const configFile = resolve(packageDir, 'tsdown.shadcn.config.ts');
+import { shadcnPackConfig } from '../../shadcn/vite.config';
 
 describe('Skins Shadcn registry', () => {
   it('emits editable React and Tailwind JSON without a synthetic runtime chunk', async () => {
     const [result] = await build({
-      cwd: packageDir,
-      config: configFile,
-      configLoader: 'unrun',
+      ...shadcnPackConfig,
       logLevel: 'silent',
       write: false,
     });
     if (!result) throw new Error('Expected one registry build output.');
+
     const output = result.chunks;
 
     expect(output.some((item) => item.type === 'chunk')).toBe(false);
@@ -33,6 +30,7 @@ describe('Skins Shadcn registry', () => {
     const volumePopover = assetJson<BuiltItem>(assets, 'volume-popover.json');
     const styles = assetJson<BuiltItem>(assets, 'styles.json');
     const utils = assetJson<BuiltItem>(assets, 'utils.json');
+
     const playSource = playButton.files.find((file) => file.target?.endsWith('/play-button.tsx'))?.content;
     const posterSource = poster.files.find((file) => file.target?.endsWith('/poster.tsx'))?.content;
     const qualityMenuSource = videoSettingsMenu.files.find((file) =>
@@ -45,7 +43,7 @@ describe('Skins Shadcn registry', () => {
       file.target?.endsWith('/volume-popover.tsx')
     )?.content;
 
-    expect(registry.items).toHaveLength(52);
+    expect(registry.items).toHaveLength(50);
     expect(registry.items.map((item: { name: string }) => item.name)).toEqual(
       expect.arrayContaining(['button-tooltip', 'minimal-video', 'play-button', 'play-button-minimal'])
     );
@@ -65,7 +63,7 @@ describe('Skins Shadcn registry', () => {
     expect(playSource).toContain('size-9');
     expect(minimalPlayButton.files[0]?.content).toContain('size-9.5');
     expect(defaultVideo.registryDependencies).toEqual(
-      expect.arrayContaining(['@videojs/container', '@videojs/overlay', '@videojs/play-button', '@videojs/poster'])
+      expect.arrayContaining(['@videojs/container', '@videojs/play-button', '@videojs/poster'])
     );
     expect(defaultVideo.registryDependencies).not.toContain('@videojs/seek-button');
     expect(minimalVideo.registryDependencies).toContain('@videojs/play-button-minimal');
@@ -109,5 +107,6 @@ type BuiltItem = Omit<ShadcnRegistry['items'][number], 'files'> & {
 function assetJson<Value>(assets: ReadonlyMap<string, string>, fileName: string): Value {
   const source = assets.get(fileName);
   if (!source) throw new Error(`Missing registry asset: ${fileName}`);
+
   return JSON.parse(source) as Value;
 }

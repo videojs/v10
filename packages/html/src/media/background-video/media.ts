@@ -1,5 +1,6 @@
 import type { Media } from '@videojs/media/dom';
 import { namedNodeMapToObject } from '@videojs/utils/dom';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { getTemplateHTML } from './template';
 
@@ -52,6 +53,7 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
     if (slotted instanceof HTMLVideoElement) return slotted;
 
     const video = this.querySelector('video') ?? this.shadowRoot?.querySelector('video');
+
     return video instanceof HTMLVideoElement ? video : null;
   }
 }

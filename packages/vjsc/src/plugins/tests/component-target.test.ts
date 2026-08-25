@@ -1,5 +1,5 @@
 import { type Plugin, rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
@@ -190,8 +190,24 @@ describe('componentTargetPlugin', () => {
       export const poster = <$.Poster><$.PlayButton /></$.Poster>;
     `);
 
-    expect(source).toContain('<Poster render={<><PlayButton /></>} />');
+    expect(source).toContain('<Poster render={<PlayButton />} />');
     expect(source).not.toContain('<$.');
+  });
+
+  it('keeps fragments when a render prop contains multiple children', async () => {
+    const source = await transform(`
+      import * as $ from '@fixture/components';
+      export const poster = (
+        <$.Poster>
+          <$.PlayButton />
+          <span>Caption</span>
+        </$.Poster>
+      );
+    `);
+
+    expect(source).toContain('<Poster render={<>');
+    expect(source).toContain('<PlayButton />');
+    expect(source).toContain('<span>Caption</span>');
   });
 
   it('keeps nested component roots out of the parent part collection', async () => {
@@ -255,6 +271,7 @@ async function transform(
 
   const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
+
   return output;
 }
 

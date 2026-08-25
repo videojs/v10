@@ -1,5 +1,5 @@
 import { type OutputAsset, type OutputChunk, type Plugin, RolldownMagicString, rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { CDN_I18N_REGISTRY, cdnI18nExternalPlugin } from '../../../../build/plugins/cdn-i18n-external-plugin';
 import { inlineTemplatePlugin } from '../../../../build/plugins/inline-template-plugin';
@@ -94,7 +94,9 @@ async function build(source: string, plugin: Plugin): Promise<{ chunk: OutputChu
   );
 
   if (!chunk) throw new Error('Expected fixture build to emit a chunk.');
+
   if (!map) throw new Error('Expected fixture build to emit a source map.');
+
   return { chunk, map: JSON.parse(String(map.source)) as SourceMapOutput };
 }
 

@@ -26,9 +26,8 @@ export const PRESETS = [
 ] as const;
 
 /**
- * Presets that hand playback to a third-party embed. They render one fixed
- * source rather than the source picker's list, and have no Tailwind skin
- * variant, so the navbar disables both controls for them.
+ * Presets that hand playback to a third-party embed. They render one fixed source rather than the source picker's list,
+ * and have no Tailwind skin variant, so the navbar disables both controls for them.
  */
 export const EMBED_PRESETS = [
   'vimeo-video',

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { BandwidthState } from '../bandwidth-estimator';
 import {
   DEFAULT_BANDWIDTH_CONFIG,
@@ -75,6 +76,7 @@ describe('sampleBandwidth', () => {
 
     // Both estimates should be around 8_000_000 bps
     const estimate = getBandwidthEstimate(state, 1_000_000);
+
     expect(estimate).toBeCloseTo(8_000_000, -5);
   });
 

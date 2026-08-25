@@ -4,6 +4,7 @@ import html from 'shiki/langs/html.mjs';
 import javascript from 'shiki/langs/javascript.mjs';
 import tsx from 'shiki/langs/tsx.mjs';
 import ts from 'shiki/langs/typescript.mjs';
+
 import createHighlighter, { getOrCreateCachedHighlighter } from './createHighlighter';
 
 // The highlighter is a long-lived singleton at module scope; it is never

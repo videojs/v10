@@ -33,6 +33,7 @@ class PlayToggle extends UIElement {
       onActivate: () => {
         const state = this.#player.value;
         if (!state) return;
+
         state.paused ? state.play() : state.pause();
       },
       isDisabled: () => !this.#player.value,
@@ -51,6 +52,7 @@ class PlayToggle extends UIElement {
     super.update(changed);
     const state = this.#player.value;
     if (!state) return;
+
     applyStateDataAttrs(this, state, { paused: 'data-paused', ended: 'data-ended' });
   }
 }

@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { MediaAudioTrack } from '@videojs/media';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
@@ -33,9 +33,11 @@ function renderAudioTrackRadioGroup({
   const { Wrapper } = createPlayerWrapper({ audioTrackList, selectAudioTrack });
   const content = (
     <Menu.Root defaultOpen>
-      <Menu.Content>
-        {group ?? <AudioTrackRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
-      </Menu.Content>
+      <Menu.Popup>
+        <Menu.Content>
+          {group ?? <AudioTrackRadioGroup renderItem={(props) => <Menu.RadioItem {...props} />} />}
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 
@@ -47,6 +49,7 @@ function renderAudioTrackRadioGroup({
 describe('AudioTrackRadioGroup', () => {
   it('renders generated radio item props and option state', () => {
     const states: AudioTrackRadioGroupItemState[] = [];
+
     renderAudioTrackRadioGroup({
       group: (
         <AudioTrackRadioGroup
@@ -73,6 +76,7 @@ describe('AudioTrackRadioGroup', () => {
 
   it('selects an audio track', () => {
     const selectAudioTrack = vi.fn();
+
     renderAudioTrackRadioGroup({ selectAudioTrack });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Spanish' }));
@@ -82,6 +86,7 @@ describe('AudioTrackRadioGroup', () => {
 
   it('exposes group state through attributes and callbacks', () => {
     const ref = createRef<HTMLDivElement>();
+
     renderAudioTrackRadioGroup({
       group: (
         <AudioTrackRadioGroup
@@ -94,6 +99,7 @@ describe('AudioTrackRadioGroup', () => {
     });
 
     const group = screen.getByTestId('group');
+
     expect(ref.current).toBe(group);
     expect(group.classList.contains('audio-available')).toBe(true);
     expect(group.getAttribute('aria-label')).toBe('Audio');
@@ -107,6 +113,7 @@ describe('AudioTrackRadioGroup', () => {
     renderAudioTrackRadioGroup({ audioTrackList: [defaultAudioTrackList[0]!] });
 
     const group = document.querySelector<HTMLElement>('[role="group"]');
+
     expect(group).toBeTruthy();
     expect(group?.hidden).toBe(true);
     expect(group?.getAttribute('aria-disabled')).toBe('true');
@@ -131,6 +138,7 @@ describe('AudioTrackRadioGroup', () => {
     });
 
     const group = screen.getByRole('group', { name: 'Audio' });
+
     expect(group.tagName).toBe('SECTION');
     expect(group.getAttribute('data-value')).toBe('0');
     expect(screen.getByRole('menuitemradio', { name: 'English' }).querySelector('[aria-hidden="true"]')).toBeTruthy();
@@ -155,6 +163,7 @@ describe('AudioTrackRadioGroup', () => {
     });
 
     const group = screen.getByRole('group', { name: 'Choose audio' });
+
     expect(group.hasAttribute('aria-label')).toBe(false);
   });
 });

@@ -1,12 +1,14 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { buildYouTubeIframeSrc, YouTubeMedia } from '@videojs/media/dom/youtube';
 import { escapeHtml } from '@videojs/utils/string';
+
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 class YouTubeCustomMediaElement extends CustomMediaElement('iframe', YouTubeMedia) {
   static override getTemplateHTML = (attrs: Record<string, string>): string => {
     const initialSrc = buildYouTubeIframeSrc(attrs.src ?? '', templateAttrsToEmbedProps(attrs));
     const srcAttr = initialSrc ? ` src="${escapeHtml(initialSrc)}"` : '';
+
     return /*html*/ `
       <style>
         :host {

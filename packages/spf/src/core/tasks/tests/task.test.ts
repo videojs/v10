@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import { ConcurrentRunner, RecurringRunner, type Reschedule, runOnce, SerialRunner, Task } from '../task';
 
 // =============================================================================
@@ -9,6 +10,7 @@ describe('Task', () => {
   describe('status lifecycle', () => {
     it('starts in pending status', () => {
       const task = new Task(async () => {});
+
       expect(task.status).toBe('pending');
     });
 
@@ -26,6 +28,7 @@ describe('Task', () => {
 
     it('transitions to done when run() resolves', async () => {
       const task = new Task(async () => 42);
+
       await task.run();
       expect(task.status).toBe('done');
     });
@@ -34,6 +37,7 @@ describe('Task', () => {
       const task = new Task<void, Error>(async () => {
         throw new Error('boom');
       });
+
       await expect(task.run()).rejects.toThrow('boom');
       expect(task.status).toBe('error');
     });
@@ -43,6 +47,7 @@ describe('Task', () => {
     it('returns value from run() promise', async () => {
       const task = new Task(async () => 'hello');
       const result = await task.run();
+
       expect(result).toBe('hello');
     });
 
@@ -51,6 +56,7 @@ describe('Task', () => {
       // After run() resolves, both are correct — the guarantee is structural
       // (sequential assignment with no async gap between the two writes).
       const task = new Task(async () => 99);
+
       await task.run();
       expect(task.value).toBe(99);
       expect(task.status).toBe('done');
@@ -61,6 +67,7 @@ describe('Task', () => {
       const task = new Task<void, Error>(async () => {
         throw err;
       });
+
       await expect(task.run()).rejects.toThrow('fail');
       expect(task.error).toBe(err);
       expect(task.status).toBe('error');
@@ -68,16 +75,19 @@ describe('Task', () => {
 
     it('value is undefined before completion', () => {
       const task = new Task(async () => 42);
+
       expect(task.value).toBeUndefined();
     });
 
     it('error is undefined before failure', () => {
       const task = new Task(async () => {});
+
       expect(task.error).toBeUndefined();
     });
 
     it('value is undefined for Task<void>', async () => {
       const task = new Task(async () => {});
+
       await task.run();
       expect(task.value).toBeUndefined();
     });
@@ -105,6 +115,7 @@ describe('Task', () => {
       });
 
       const runPromise = task.run();
+
       task.abort();
       await runPromise;
 
@@ -124,6 +135,7 @@ describe('Task', () => {
       );
 
       const runPromise = task.run();
+
       external.abort();
       await runPromise;
 
@@ -143,6 +155,7 @@ describe('Task', () => {
       );
 
       const runPromise = task.run();
+
       task.abort();
       await runPromise;
 
@@ -153,12 +166,14 @@ describe('Task', () => {
   describe('id', () => {
     it('uses provided string id', () => {
       const task = new Task(async () => {}, { id: 'my-task' });
+
       expect(task.id).toBe('my-task');
     });
 
     it('calls provided function id once at construction', () => {
       const idFn = vi.fn(() => 'fn-task-id');
       const task = new Task(async () => {}, { id: idFn });
+
       expect(task.id).toBe('fn-task-id');
       expect(idFn).toHaveBeenCalledTimes(1);
     });
@@ -166,6 +181,7 @@ describe('Task', () => {
     it('generates a unique id when none provided', () => {
       const t1 = new Task(async () => {});
       const t2 = new Task(async () => {});
+
       expect(typeof t1.id).toBe('string');
       expect(t1.id).not.toBe(t2.id);
     });
@@ -200,9 +216,11 @@ describe('Task', () => {
     it('produces a fresh, pending task with the same id and work', async () => {
       let runs = 0;
       const original = new Task<number>(async () => ++runs, { id: 'x' });
+
       await original.run();
 
       const cloned = original.clone();
+
       expect(cloned).not.toBe(original);
       expect(cloned.id).toBe('x');
       expect(cloned.status).toBe('pending');
@@ -221,6 +239,7 @@ describe('Task', () => {
 
       const cloned = original.clone();
       const run = cloned.run();
+
       cloned.abort();
       await run;
 
@@ -232,10 +251,12 @@ describe('Task', () => {
 
     it('carries the run value forward as the clone’s `previous`', async () => {
       const original = new Task<number>(async () => 1, { id: 'x' });
+
       expect(original.previous).toBeUndefined();
       await original.run();
 
       const cloned = original.clone();
+
       expect(cloned.previous).toBe(1);
     });
 
@@ -244,14 +265,19 @@ describe('Task', () => {
       // Cycle 1 → 1, cycle 2 → throws, cycle 3 → 3.
       const run = async () => {
         n += 1;
+
         if (n === 2) throw new Error('boom');
+
         return n;
       };
       const c1 = new Task<number>(run, { id: 'x' });
+
       await c1.run();
       const c2 = c1.clone(); // previous = 1
+
       await c2.run().catch(() => {});
       const c3 = c2.clone(); // errored cycle keeps previous = 1
+
       expect(c3.previous).toBe(1);
     });
   });
@@ -507,6 +533,7 @@ describe('SerialRunner', () => {
     const runner = new SerialRunner();
     const task = new Task(async () => 'result');
     const value = await runner.schedule(task);
+
     expect(value).toBe('result');
   });
 
@@ -515,6 +542,7 @@ describe('SerialRunner', () => {
     const task = new Task(async () => {
       throw new Error('task failed');
     });
+
     await expect(runner.schedule(task)).rejects.toThrow('task failed');
   });
 
@@ -660,8 +688,10 @@ describe('SerialRunner', () => {
 });
 
 describe('RecurringRunner', () => {
-  /** A reschedule that parks forever, rejecting only when its signal aborts — so a
-   *  recurrence stays "live" (awaiting) until superseded or aborted. */
+  /**
+   * A reschedule that parks forever, rejecting only when its signal aborts — so a recurrence stays "live" (awaiting)
+   * until superseded or aborted.
+   */
   const parkUntilAborted: Reschedule<number> = (task) =>
     new Promise<boolean>((_resolve, reject) => {
       task.signal.addEventListener('abort', () => reject(task.signal.reason), { once: true });
@@ -701,6 +731,7 @@ describe('RecurringRunner', () => {
     const seen: Array<[number, number | undefined]> = [];
     const runner = new RecurringRunner<number>(async (t) => {
       const current = await t.run(); // observe via the memoized run
+
       seen.push([current, t.previous]); // `previous` carried forward by the clone
       return current < 2;
     });
@@ -718,7 +749,9 @@ describe('RecurringRunner', () => {
     let n = 0;
     const task = new Task<number>(async () => {
       n += 1;
+
       if (n === 1) throw new Error('boom');
+
       return n;
     });
     // A reschedule that would otherwise keep going — but a run error ends it.

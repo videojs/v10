@@ -1,6 +1,7 @@
 import { flush } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
+import { DialogBackdropElement } from '../dialog-backdrop-element';
 import { DialogCloseElement } from '../dialog-close-element';
 import { DialogElement } from '../dialog-element';
 
@@ -8,6 +9,7 @@ let tagCounter = 0;
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = `test-dialog-${tagCounter++}`;
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -19,6 +21,7 @@ afterEach(() => {
 describe('DialogElement', () => {
   it('uses modal dialog semantics', async () => {
     const dialog = createElement(DialogElement);
+
     dialog.open = true;
     document.body.append(dialog);
     await dialog.updateComplete;
@@ -32,6 +35,7 @@ describe('DialogElement', () => {
   it('opens from an adjacent trigger', async () => {
     const trigger = document.createElement('button');
     const dialog = createElement(DialogElement);
+
     document.body.append(trigger, dialog);
     await dialog.updateComplete;
     flush();
@@ -49,6 +53,7 @@ describe('DialogElement', () => {
     const dialog = createElement(DialogElement);
     const playerControl = document.createElement('button');
     const close = createElement(DialogCloseElement);
+
     dialog.append(playerControl, close);
     dialog.open = true;
     document.body.append(dialog);
@@ -65,15 +70,35 @@ describe('DialogElement', () => {
 
   it('dispatches lifecycle events', async () => {
     const dialog = createElement(DialogElement);
+
     document.body.append(dialog);
     await dialog.updateComplete;
 
     const onOpenChange = vi.fn();
+
     dialog.addEventListener('open-change', onOpenChange);
     dialog.open = true;
     await dialog.updateComplete;
 
     expect(onOpenChange).toHaveBeenCalledOnce();
     expect((onOpenChange.mock.calls[0]![0] as CustomEvent).detail).toEqual({ open: true });
+  });
+});
+
+describe('DialogBackdropElement', () => {
+  it('is presentational and receives dialog state attributes', async () => {
+    const dialog = createElement(DialogElement);
+    const backdrop = createElement(DialogBackdropElement);
+
+    dialog.open = true;
+    dialog.append(backdrop);
+    document.body.append(dialog);
+    await dialog.updateComplete;
+
+    await vi.waitFor(() => {
+      expect(backdrop.getAttribute('role')).toBe('presentation');
+      expect(backdrop.getAttribute('aria-hidden')).toBe('true');
+      expect(backdrop.hasAttribute('data-open')).toBe(true);
+    });
   });
 });

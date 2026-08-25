@@ -50,10 +50,10 @@ export function getPositionedSide(
   const opposite = OPPOSITE_SIDE[preferred];
   const size = preferred === 'top' || preferred === 'bottom' ? positionedRect.height : positionedRect.width;
   const preferredSpace = getSideAvailable(triggerRect, boundaryRect, preferred, offsets);
-
   if (preferredSpace >= size) return preferred;
 
   const oppositeSpace = getSideAvailable(triggerRect, boundaryRect, opposite, offsets);
+
   return oppositeSpace > preferredSpace ? opposite : preferred;
 }
 

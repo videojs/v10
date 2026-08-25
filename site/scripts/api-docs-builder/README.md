@@ -11,7 +11,7 @@ Generates API reference JSON from TypeScript sources for Video.js 10 components 
 ```
 TypeScript Sources (core/html/media/react/store packages)
          ↓
-   api-docs-builder (typescript-api-extractor)
+       api-docs-builder (Oxc parser + project resolver)
          ↓
    JSON files (component + util references)
          ↓
@@ -24,7 +24,7 @@ TypeScript Sources (core/html/media/react/store packages)
 
 ### Building
 
-The builder runs automatically before dev/build through the site's Turbo task:
+The builder runs automatically before dev/build through the site's Vite+ tasks:
 
 ```bash
 # Run manually
@@ -58,7 +58,7 @@ site/scripts/api-docs-builder/
     ├── output.ts              # Shared validation, staged writing, and stale-file cleanup
     ├── pipeline.ts            # Component discovery, extraction, and reference building
     ├── types.ts               # TypeScript interfaces
-    ├── typescript.ts          # Shared TypeScript program configuration
+    ├── oxc-project.ts         # Cached Oxc parsing, source/module resolution, and JSDoc helpers
     ├── formatter.ts           # Type formatting utilities
     ├── utils.ts               # Utility functions (naming helpers)
     ├── core-handler.ts        # Extracts Props/State from core packages
@@ -99,7 +99,9 @@ site/src/
 
 ## Dependencies
 
-- `typescript-api-extractor`: AST parsing for TypeScript types
+- `oxc-parser`: TypeScript/TSX parsing
+- `oxc-walker`: Syntax-tree traversal
+- `@oxc-project/types`: Oxc AST type definitions
 - `es-toolkit`: Utility functions (kebabCase, etc.)
 - `tsx`: TypeScript execution
 

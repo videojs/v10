@@ -1,5 +1,4 @@
 import '@app/styles.css';
-
 import { SOURCES } from '@app/shared/sources';
 import { createPlayer, metadataFeature, Title } from '@videojs/react';
 import { Video } from '@videojs/react/video';
@@ -32,9 +31,12 @@ function MetadataVideo({ mediaTitle }: { mediaTitle: string | null | undefined }
 
   useLayoutEffect(() => {
     if (!media.current || Object.is(media.current.contentData.title, mediaTitle)) return;
+
     const contentData = { ...media.current.contentData };
+
     if (mediaTitle === undefined) delete contentData.title;
     else contentData.title = mediaTitle;
+
     media.current.contentData = contentData;
     media.current.dispatchEvent(new Event('contentdatachange'));
   }, [mediaTitle]);
@@ -57,7 +59,7 @@ function PlayerPreview({ mediaTitle }: { mediaTitle: string | null | undefined }
   return (
     <div className="relative mt-6 overflow-hidden rounded-lg bg-black shadow-lg">
       <MetadataVideo mediaTitle={mediaTitle} />
-      <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 to-transparent px-5 pb-12 pt-4">
+      <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 to-transparent px-5 pt-4 pb-12">
         {/* Renders nothing until a title resolves, which is what the fallback below covers. */}
         <Title className="block text-xl font-semibold text-white drop-shadow" />
         {!title && <span className="text-sm text-white/70">No content title is defined</span>}

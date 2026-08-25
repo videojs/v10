@@ -19,13 +19,16 @@ export function getSeekIndicatorDisplayValue(state: { value: string | null; curr
 
 export function getSeekToPercent(event: InputActionEvent): number | null {
   if (event.value !== undefined) return clamp(event.value, 0, 100);
+
   if (!event.key || event.key < '0' || event.key > '9') return null;
+
   return Number(event.key) * 10;
 }
 
 export function getSeekDirection(event: InputActionEvent, snapshot: MediaSnapshot): IndicatorDirection | null {
   if (event.action === 'seekStep' && event.value !== undefined) {
     if (event.value > 0) return 'forward';
+
     if (event.value < 0) return 'backward';
   }
 
@@ -36,6 +39,7 @@ export function getSeekDirection(event: InputActionEvent, snapshot: MediaSnapsho
     const targetTime = (percent / 100) * snapshot.duration;
     const currentTime = snapshot.currentTime ?? 0;
     if (targetTime > currentTime) return 'forward';
+
     if (targetTime < currentTime) return 'backward';
   }
 

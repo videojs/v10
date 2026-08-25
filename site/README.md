@@ -39,7 +39,7 @@ Mostly a standard [Astro](https://astro.build/) project.
 ├── README.md
 ├── TODO.md
 ├── tsconfig.json
-└── vitest.config.ts
+└── vite.config.ts           # Vite+, Vitest, and site task configuration
 ```
 
 ## Commands
@@ -56,9 +56,9 @@ If you're in `site/`...
 | Command              | Action                                           |
 | :------------------- | :----------------------------------------------- |
 | `pnpm install`       | Installs dependencies                            |
-| `pnpm dev`           | Starts local dev server at `localhost:4321`      |
-| `pnpm build`         | Build your production site to `./dist/`          |
-| `pnpm preview`       | Preview your build locally, before deploying     |
+| `pnpm exec vp run dev`   | Starts local dev server at `localhost:4321`  |
+| `pnpm exec vp run build` | Build your production site to `./dist/`      |
+| `pnpm astro preview`     | Preview your build locally, before deploying |
 | `pnpm api-docs`      | Regenerate API reference JSON from TypeScript    |
 | `pnpm astro ...`     | Run CLI commands like `astro add`, `astro check` |
 | `pnpm test`          | Run tests with Vitest                            |
@@ -168,7 +168,7 @@ Use `ogTitle` in docs/blog frontmatter when the page title is too long for the s
 
 API reference pages are generated from TypeScript source code by the builder in [`scripts/api-docs-builder/`](scripts/api-docs-builder/). It extracts component, utility, feature, media, and preset information into the gitignored `src/content/generated-*-reference/` collections.
 
-The JSON is regenerated automatically on `pnpm dev` and `pnpm build`, or manually via `pnpm api-docs`.
+The JSON is regenerated automatically by the root `pnpm dev` and `pnpm build` commands, or manually via `pnpm api-docs`.
 
 See [`scripts/api-docs-builder/README.md`](scripts/api-docs-builder/README.md) for full documentation.
 

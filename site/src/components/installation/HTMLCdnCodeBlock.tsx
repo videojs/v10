@@ -1,4 +1,5 @@
 import { useStore } from '@nanostores/react';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { renderer, skin, useCase } from '@/stores/installation';
 import { generateCdnCode } from '@/utils/installation/cdn-code';

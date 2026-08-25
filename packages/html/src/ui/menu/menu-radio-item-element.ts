@@ -63,6 +63,7 @@ export class MenuRadioItemElement extends UIElement {
           },
           onPointerenter: () => {
             const currentMenuCtx = this.#menuCtx.value;
+
             if (!this.disabled) currentMenuCtx?.menu.highlight(this, { focus: false, pointer: true });
           },
         },

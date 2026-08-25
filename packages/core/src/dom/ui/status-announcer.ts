@@ -1,4 +1,4 @@
-import type { StatusAnnouncerCore } from '../../core/ui/status-announcer/status-announcer-core';
+import type { StatusAnnouncerCore } from '../../core/ui/status-announcer/core';
 import { getMediaSnapshot, type MediaSnapshotStore } from './input-action';
 import { isSliderFocused } from './slider-focus';
 
@@ -17,6 +17,7 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
     target = store.target;
     pending = true;
     const current = ++revision;
+
     core.resetSnapshot();
 
     queueMicrotask(() => {
@@ -24,6 +25,7 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
 
       pending = false;
       target = store.target;
+
       if (target) core.processSnapshot(getMediaSnapshot(store));
     });
   };
@@ -37,6 +39,7 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
     }
 
     if (!nextTarget || pending) return;
+
     core.processSnapshot(getMediaSnapshot(store));
   });
 

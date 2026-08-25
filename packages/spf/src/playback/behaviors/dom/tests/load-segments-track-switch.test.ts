@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation, VideoSelectionSet } from '../../../../media/types';
@@ -104,6 +105,7 @@ const makeMockSourceBuffer = () => {
     appendBuffer: vi.fn(),
     remove: vi.fn(),
   } as unknown as SourceBuffer;
+
   return sb;
 };
 
@@ -113,6 +115,7 @@ function makeControllableFetch() {
 
   const fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
     fetchedUrls.push(url);
     return new Promise<Response>((resolve) => {
       resolvers.set(url, () => resolve(new Response(new ArrayBuffer(100), { status: 200 })));
@@ -168,8 +171,10 @@ describe('loadSegments — track switch', () => {
     const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const fetchedUrls: string[] = [];
+
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
     });
@@ -197,6 +202,7 @@ describe('loadSegments — track switch', () => {
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
     const ctx = videoBufferActor.snapshot.get().context;
+
     // Init switches to the new rendition...
     expect(ctx?.initTrackId).toBe('track-b');
     expect(fetchedUrls).toContain('https://example.com/track-b-init.mp4');
@@ -241,8 +247,10 @@ describe('loadSegments — track switch', () => {
     const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const fetchedUrls: string[] = [];
+
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
     });
@@ -308,8 +316,10 @@ describe('loadSegments — track switch', () => {
     const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const fetchedUrls: string[] = [];
+
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
     });
@@ -370,6 +380,7 @@ describe('loadSegments — track switch', () => {
     const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const { fetch, fetchedUrls, resolveAll } = makeControllableFetch();
+
     globalThis.fetch = fetch;
 
     const state = makeState({
@@ -406,6 +417,7 @@ describe('loadSegments — track switch', () => {
 
   it('preempts in-flight fetch when track switches; loads new track init', async () => {
     const { fetch: controllableFetch, fetchedUrls, resolve } = makeControllableFetch();
+
     globalThis.fetch = controllableFetch;
 
     const trackA = makeResolvedVideoTrack('track-a', [seg('a1', 0), seg('a2', 10)]);
@@ -478,8 +490,10 @@ describe('loadSegments — track switch', () => {
     state.selectedVideoTrackId.set('track-b');
 
     const fetchedUrls: string[] = [];
+
     globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+
       fetchedUrls.push(url);
       return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
     });
@@ -520,6 +534,7 @@ describe('loadSegments — track switch', () => {
     const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
 
     const reactor = loadVideoSegments.setup({ state, context });
+
     await new Promise((r) => setTimeout(r, 50));
 
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);

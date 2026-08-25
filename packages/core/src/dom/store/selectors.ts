@@ -20,7 +20,7 @@ import { volumeFeature } from './features/volume';
 
 /** Select the audio track state (audioTrackList, selectAudioTrack). */
 export const selectAudioTrack = createSelector(audioTrackFeature);
-/** Select the buffer state (buffered ranges, percent buffered). */
+/** Select the buffer state (buffered and seekable ranges). */
 export const selectBuffer = createSelector(bufferFeature);
 /** Select the controls state (controls visible, user-active). */
 export const selectControls = createSelector(controlsFeature);

@@ -1,4 +1,4 @@
-import { AlertDialogCore, type AlertDialogProps, DialogDataAttrs } from '@videojs/core';
+import { AlertDialogCore, AlertDialogDataAttrs, type AlertDialogProps } from '@videojs/core';
 import type { ReactNode } from 'react';
 
 import { DialogContextProvider } from '../dialog/context';
@@ -17,7 +17,7 @@ export function AlertDialogRoot({ children, ...props }: AlertDialogRootProps): R
   const context = useDialogRoot({
     ...props,
     coreFactory: createAlertDialogCore,
-    stateAttrMap: DialogDataAttrs,
+    stateAttrMap: AlertDialogDataAttrs,
     idPrefix: 'alert-dialog',
   });
 

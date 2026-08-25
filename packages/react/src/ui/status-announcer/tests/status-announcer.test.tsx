@@ -1,7 +1,8 @@
 import { act, cleanup, render } from '@testing-library/react';
 import type { UnknownStore } from '@videojs/store';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { StatusAnnouncer } from '../status-announcer';
 
@@ -19,6 +20,7 @@ describe('StatusAnnouncer', () => {
   it('updates live text from store snapshots', async () => {
     const { store, setState } = createTestStore({ paused: true });
     const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store);
+
     await act(async () => {});
 
     expect(getByRole('status').textContent).toBe('');
@@ -35,6 +37,7 @@ describe('StatusAnnouncer', () => {
     try {
       const { store, setState } = createTestStore({ volume: 0.5, muted: false });
       const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store);
+
       await act(async () => {});
 
       setState({ volume: 0 });
@@ -55,6 +58,7 @@ describe('StatusAnnouncer', () => {
   it('uses custom labels', async () => {
     const { store, setState } = createTestStore({ paused: true });
     const { getByRole } = renderWithPlayer(<StatusAnnouncer labels={{ playing: 'Custom playing' }} />, store);
+
     await act(async () => {});
 
     setState({ paused: false });
@@ -71,6 +75,7 @@ describe('StatusAnnouncer', () => {
         <StatusAnnouncer />
       </PlayerContextProvider>
     );
+
     await act(async () => {});
 
     first.setState({ paused: true });
@@ -111,6 +116,7 @@ describe('StatusAnnouncer', () => {
     try {
       const { store, setState } = createTestStore(initialState);
       const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store, container);
+
       await act(async () => {});
 
       await update(setState);
@@ -131,6 +137,7 @@ describe('StatusAnnouncer', () => {
     try {
       const { store, setState } = createTestStore({ volume: 0.5, muted: false });
       const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store);
+
       await act(async () => {});
 
       setState({ volume: 0.75 });
@@ -165,6 +172,7 @@ function createTestStore(initialState: Record<string, unknown> = {}) {
   const setState = (partial: Record<string, unknown>) => {
     act(() => {
       state = { ...state, ...partial };
+
       for (const listener of listeners) listener();
     });
   };
@@ -191,6 +199,7 @@ function renderWithPlayer(ui: ReactNode, store: UnknownStore = createTestStore()
 
 function focusSliderInContainer(container = document.createElement('div')) {
   const slider = document.createElement('button');
+
   slider.setAttribute('role', 'slider');
   container.append(slider);
   document.body.append(container);

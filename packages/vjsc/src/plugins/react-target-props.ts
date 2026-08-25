@@ -20,6 +20,7 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
         if (!targets.some((target) => target.jsx.attributes === 'react')) return null;
+
         if (!transform.ast || !transform.magicString) return null;
 
         const bindings = importBindings(transform.ast);
@@ -52,6 +53,7 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
                 from: '@videojs/utils/style',
                 name: 'resolveClassName',
               });
+
               args.push(`${resolveClassName}(className, state)`);
             } else if (forwarded) {
               args.push('className');
@@ -59,12 +61,14 @@ export function reactTargetPropsPlugin(options: ComponentTargetPluginOptions): P
 
             const expression = `${cn}(${args.join(', ')})`;
             const replacement = callback ? `{state => ${expression}}` : `{${expression}}`;
+
             transform.magicString!.overwrite(node.value.start, node.value.end, replacement);
             changed = true;
           },
         });
 
         if (!changed) return null;
+
         imports.commit();
         return { code: transform.magicString };
       },
@@ -77,6 +81,7 @@ function importBindings(ast: Program): ReadonlyMap<string, ImportBinding> {
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type') continue;
+
     collectImportBindings(statement, bindings);
   }
 
@@ -86,7 +91,9 @@ function importBindings(ast: Program): ReadonlyMap<string, ImportBinding> {
 function collectImportBindings(declaration: ImportDeclaration, bindings: Map<string, ImportBinding>): void {
   for (const specifier of declaration.specifiers) {
     if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
+
     const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
+
     bindings.set(specifier.local.name, { imported, source: declaration.source.value });
   }
 }
@@ -94,11 +101,14 @@ function collectImportBindings(declaration: ImportDeclaration, bindings: Map<str
 function acceptsClassNameCallback(name: JSXElementName, bindings: ReadonlyMap<string, ImportBinding>): boolean {
   const root = jsxNameRoot(name);
   const binding = root ? bindings.get(root) : undefined;
+
   return binding?.source === '@videojs/react' && binding.imported !== 'Container';
 }
 
 function jsxNameRoot(name: JSXElementName): string | undefined {
   if (name.type === 'JSXIdentifier') return name.name;
+
   if (name.type === 'JSXNamespacedName') return undefined;
+
   return jsxNameRoot(name.object);
 }

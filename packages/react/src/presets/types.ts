@@ -11,18 +11,17 @@ export type BaseSkinProps<T = unknown> = PropsWithChildren<
 
 export type BaseVideoSkinProps<T = unknown> = BaseSkinProps<T> & {
   /**
-   * Draws the poster image, in place of the `<img>` the skin renders. The URL
-   * still comes from the player, as `src` alongside the rest of the image
-   * props — undefined until one resolves.
+   * Draws the poster image, in place of the `<img>` the skin renders. The URL still comes from the player, as `src`
+   * alongside the rest of the image props — undefined until one resolves.
    *
    * @example
-   * ```tsx
-   * <VideoSkin
-   *   renderPoster={({ src, ...props }: ComponentProps<'img'>) =>
-   *     src ? <Image {...props} src={src} alt="" fill /> : null
-   *   }
-   * />
-   * ```
+   *   ```tsx
+   *   <VideoSkin
+   *     renderPoster={({ src, ...props }: ComponentProps<'img'>) =>
+   *       src ? <Image {...props} src={src} alt="" fill /> : null
+   *     }
+   *   />;
+   *   ```;
    */
   renderPoster?: Poster.Props['render'];
 };

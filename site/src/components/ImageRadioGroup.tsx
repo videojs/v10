@@ -2,6 +2,7 @@ import { Radio } from '@base-ui/react/radio';
 import { RadioGroup } from '@base-ui/react/radio-group';
 import clsx from 'clsx';
 import type { ReactNode } from 'react';
+
 import { twMerge } from '@/utils/twMerge';
 
 export interface ImageRadioOption<T = string> {
@@ -61,7 +62,7 @@ export default function ImageRadioGroup<T extends string = string>({
               )}
             >
               <Radio.Indicator className="sr-only" />
-              <div className="flex items-center justify-center w-full h-full">{option.image}</div>
+              <div className="flex h-full w-full items-center justify-center">{option.image}</div>
             </div>
             <span className={clsx('text-center text-p3', isSelected && 'font-bold')}>{option.label}</span>
           </Radio.Root>

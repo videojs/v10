@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { Segment } from '../../types';
 import { calculateBackBufferFlushPoint, DEFAULT_BACK_BUFFER_CONFIG } from '../back-buffer';
 
@@ -62,6 +63,7 @@ describe('calculateBackBufferFlushPoint', () => {
   describe('edge cases', () => {
     it('should return 0 for empty segment list', () => {
       const flushEnd = calculateBackBufferFlushPoint([], 10);
+
       expect(flushEnd).toBe(0);
     });
 
@@ -71,6 +73,7 @@ describe('calculateBackBufferFlushPoint', () => {
       const currentTime = 0;
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(0);
     });
 
@@ -80,6 +83,7 @@ describe('calculateBackBufferFlushPoint', () => {
       const currentTime = 5;
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(0);
     });
 
@@ -90,6 +94,7 @@ describe('calculateBackBufferFlushPoint', () => {
 
       // Keep last 2 segments, flush first one
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(6); // Flush [0, 6), keep [6-18)
     });
 
@@ -99,6 +104,7 @@ describe('calculateBackBufferFlushPoint', () => {
       const currentTime = 3;
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(0);
     });
   });
@@ -110,6 +116,7 @@ describe('calculateBackBufferFlushPoint', () => {
       const currentTime = 12;
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(4);
     });
 
@@ -125,6 +132,7 @@ describe('calculateBackBufferFlushPoint', () => {
       const currentTime = 20;
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(8);
     });
   });
@@ -143,6 +151,7 @@ describe('calculateBackBufferFlushPoint', () => {
       const currentTime = 20;
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(12);
     });
 
@@ -157,6 +166,7 @@ describe('calculateBackBufferFlushPoint', () => {
       const currentTime = 12;
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(0);
     });
   });
@@ -173,6 +183,7 @@ describe('calculateBackBufferFlushPoint', () => {
       const currentTime = 18;
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime);
+
       expect(flushEnd).toBe(6);
     });
 
@@ -186,6 +197,7 @@ describe('calculateBackBufferFlushPoint', () => {
       };
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime, config);
+
       expect(flushEnd).toBe(12);
     });
 
@@ -205,6 +217,7 @@ describe('calculateBackBufferFlushPoint', () => {
       };
 
       const flushEnd = calculateBackBufferFlushPoint(segments, currentTime, config);
+
       expect(flushEnd).toBe(0);
     });
   });

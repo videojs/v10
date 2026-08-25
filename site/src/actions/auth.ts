@@ -1,15 +1,15 @@
+import { z } from 'astro/zod';
 import { ActionError, defineAction } from 'astro:actions';
 import { OAUTH_CLIENT_ID, OAUTH_REDIRECT_URI, OAUTH_URL } from 'astro:env/server';
-import { z } from 'astro/zod';
+
 import { SESSION_COOKIE_NAME } from '@/utils/auth';
 
 export const auth = {
   /**
    * Initiates the OAuth 2.0 login flow
    *
-   * Generates a CSRF-protected state parameter and returns the authorization URL
-   * for the client to redirect to. The state is stored in a short-lived cookie
-   * and verified in the callback endpoint.
+   * Generates a CSRF-protected state parameter and returns the authorization URL for the client to redirect to. The
+   * state is stored in a short-lived cookie and verified in the callback endpoint.
    *
    * @returns {authorizationUrl} - The OAuth authorization URL to redirect to
    */

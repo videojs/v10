@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { Dialog } from '..';
 
@@ -18,12 +18,14 @@ describe('Dialog', () => {
     );
 
     const trigger = getByRole('button', { name: 'Open video' });
+
     expect(queryByRole('dialog')).toBeNull();
     expect(trigger.getAttribute('aria-expanded')).toBe('false');
 
     fireEvent.click(trigger);
 
     const popup = await waitFor(() => getByRole('dialog'));
+
     expect(popup.getAttribute('aria-modal')).toBe('true');
     expect(popup.getAttribute('aria-labelledby')).toBe(getByRole('heading').id);
     expect(trigger.getAttribute('aria-expanded')).toBe('true');
@@ -58,6 +60,7 @@ describe('Dialog', () => {
     );
 
     const popup = getByRole('dialog');
+
     expect(popup.getAttribute('aria-describedby')).toBe(getByRole('paragraph').id);
   });
 

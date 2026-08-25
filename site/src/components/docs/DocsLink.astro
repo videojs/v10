@@ -10,6 +10,7 @@ interface Props extends Omit<HTMLAttributes<'a'>, 'href'> {
 const { slug, class: className } = Astro.props;
 
 const { framework: paramFramework } = Astro.params;
+
 if (!paramFramework || !isValidFramework(paramFramework)) {
   throw new Error(`Invalid or missing framework param "${paramFramework ?? 'undefined'}".`);
 }

@@ -1,5 +1,6 @@
 import type { Plugin } from 'rolldown';
 
+import type { VjscDiagnosticsOptions } from '../styles/diagnostics';
 import type { StylePluginOptions } from '../styles/options';
 import type { ComponentTarget } from '../target/definition';
 import type { ParsedModuleId } from '../utils/module-id';
@@ -25,21 +26,37 @@ export interface VjscModuleConfig {
 }
 
 export interface VjscPluginOptions {
+  /** Controls compiler warnings. Unsafe isolated-transform relationships always throw. */
+  readonly diagnostics?: VjscDiagnosticsOptions | undefined;
   configure(module: VjscModule): VjscModuleConfig | null;
 }
 
 /**
- * Create the ordered compiler passes for query-selected component modules.
- * Use this as the default VJSC integration for Rolldown-compatible builds.
+ * Create the ordered compiler passes for query-selected component modules. Use this as the default VJSC integration for
+ * Rolldown-compatible builds.
+ *
+ * @example
+ *   Promote suspicious structural selectors to build errors.
+ *   ```ts
+ *   vjscPlugin({
+ *   diagnostics: { complexSelectors: 'error' },
+ *   configure,
+ *   });
+ *   ```
  *
  * @param options - Resolves targets and styles once for each module identity.
  */
 export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
+  return createVjscPluginPipeline(options);
+}
+
+export function createVjscPluginPipeline(options: VjscPluginOptions): Plugin[] {
   const configurations = new Map<string, VjscModuleConfig | null>();
   const configure = (module: VjscModule): VjscModuleConfig | null => {
     if (configurations.has(module.id)) return configurations.get(module.id) ?? null;
 
     const config = options.configure(module);
+
     configurations.set(module.id, config);
     return config;
   };
@@ -52,11 +69,13 @@ export function vjscPlugin(options: VjscPluginOptions): Plugin[] {
         configurations.clear();
       },
     },
-    componentModulesPlugin({ ignore: (module) => configure(module) === null }),
+    componentModulesPlugin({
+      ignore: (module) => configure(module) === null,
+    }),
     htmlRuntimePlugin(),
     componentMetaPlugin(),
     targetJsxPlugin({ targets }),
-    stylePlugin((module) => configure(module)?.styles ?? null),
+    stylePlugin((module) => configure(module)?.styles ?? null, options.diagnostics),
     targetTransformPlugin({ targets }),
     targetTypePlugin({ targets }),
     primitiveTargetPlugin({ targets }),

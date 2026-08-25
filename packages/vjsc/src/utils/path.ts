@@ -17,6 +17,7 @@ export function toPosixPath(path: string): string {
 /** Whether a path is a strict descendant of a root directory. */
 export function isInsideRoot(root: string, path: string): boolean {
   const relativePath = relative(root, path);
+
   return Boolean(relativePath) && !escapesRoot(toPosixPath(relativePath));
 }
 

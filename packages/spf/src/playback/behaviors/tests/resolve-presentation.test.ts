@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
@@ -37,17 +38,20 @@ variant2.m3u8`)
 
     await vi.waitFor(() => {
       const pres = state.presentation.get();
+
       expect(pres).toBeDefined();
       expect(pres).toHaveProperty('id');
       expect(pres).toHaveProperty('selectionSets');
     });
 
     const resolved = state.presentation.get() as Presentation;
+
     expect(resolved.url).toBe('http://example.com/playlist.m3u8');
     expect(resolved.selectionSets).toBeDefined();
     expect(resolved.selectionSets.length).toBeGreaterThan(0);
 
     const videoSet = resolved.selectionSets.find((s) => s.type === 'video');
+
     expect(videoSet).toBeDefined();
     expect(videoSet!.switchingSets).toBeDefined();
     expect(videoSet!.switchingSets[0]?.tracks.length).toBeGreaterThan(0);
@@ -108,11 +112,13 @@ variant1.m3u8`)
 
     await vi.waitFor(() => {
       const pres = state.presentation.get();
+
       expect(pres).toHaveProperty('id');
       expect(pres).toHaveProperty('selectionSets');
     });
 
     const resolved = state.presentation.get() as Presentation;
+
     expect(resolved.url).toBe('http://example.com/initial.m3u8');
     expect(resolved.selectionSets).toBeDefined();
 
@@ -184,12 +190,14 @@ variant2.m3u8`)
 
     await vi.waitFor(() => {
       const pres = state.presentation.get();
+
       expect(pres).toHaveProperty('id');
       expect((pres as Presentation).url).toBe('http://example.com/second.m3u8');
     });
 
     expect(fetchSpy).toHaveBeenCalledOnce();
     const resolved = state.presentation.get() as Presentation;
+
     expect(resolved.url).toBe('http://example.com/second.m3u8');
     expect(resolved.selectionSets).toBeDefined();
 
@@ -440,6 +448,7 @@ variant1.m3u8`)
 
       await vi.waitFor(() => {
         const pres = state.presentation.get() as Presentation;
+
         expect(pres).toHaveProperty('id');
         expect(pres.url).toBe('http://example.com/second.m3u8');
       });

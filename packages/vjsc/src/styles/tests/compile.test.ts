@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { compileStyles } from '../compile';
 import { loadDesignSystem } from '../design-system';
@@ -60,22 +60,56 @@ describe('compileStyles', () => {
     expect(styles.get('buttons.css')).not.toContain('calc(2px * -1)');
   });
 
-  it('rewrites named peer variants to their semantic owner', async () => {
-    const peer = rule('control', 'media-control', ['peer/control']);
-    const overlay = rule('overlay', 'media-overlay', ['opacity-0', 'peer-data-visible/control:opacity-100']);
-
+  it('keeps responsive overrides after each semantic rule base', async () => {
+    const primary = rule('primary', 'media-controls-primary', ['flex', '@lg/media-root:contents']);
+    const root = rule('root', 'media-controls-root', ['contents', '@lg/media-root:flex']);
     const styles = await compileStyles({
       design: await loadDesignSystem(designPath),
-      manifest: manifest([peer, overlay]),
+      manifest: manifest([primary, root]),
       scope: '.media-skin-video',
     });
 
-    expect(styles.get('buttons.css')).toContain('.media-overlay:is(:where(.media-control)[data-visible] ~ *)');
-    expect(styles.get('buttons.css')).not.toContain('peer\\/control');
+    const css = styles.get('buttons.css') ?? '';
+    const rootBase = css.indexOf('.media-controls-root {\n      display: contents;');
+    const rootResponsive = css.indexOf('.media-controls-root {\n        display: flex;');
+
+    expect(rootBase).toBeGreaterThanOrEqual(0);
+    expect(rootResponsive).toBeGreaterThan(rootBase);
+  });
+  it('combines selected variants in order across rules', async () => {
+    const button = rule('root', 'media-button', ['grid', 'p-3'], {
+      compact: ['p-1'],
+      spacious: ['p-4'],
+    });
+    const icon = rule('icon', 'media-icon', ['size-4'], { interactive: ['pointer-events-none'] });
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      manifest: manifest([button, icon]),
+      variants: ['compact', 'interactive', 'spacious'],
+    });
+
+    expect(styles.get('buttons.css')).toContain('padding: 1rem');
+    expect(styles.get('buttons.css')).not.toContain('padding: .25rem');
+    expect(styles.get('buttons.css')).toContain('pointer-events: none');
+  });
+
+  it('ignores selected variants absent from an isolated manifest', async () => {
+    const styles = await compileStyles({
+      design: await loadDesignSystem(designPath),
+      manifest: manifest([rule('root', 'media-button', ['grid'])]),
+      variants: ['shadow-dom'],
+    });
+
+    expect(styles.get('buttons.css')).toContain('display: grid');
   });
 });
 
-function rule(token: string, className: string, utilities: readonly string[]): StyleManifestRule {
+function rule(
+  token: string,
+  className: string,
+  utilities: readonly string[],
+  variantGroups: Readonly<Record<string, readonly string[]>> = {}
+): StyleManifestRule {
   return {
     modulePath: 'test.styles.ts',
     tokenPath: token.split('.'),
@@ -85,8 +119,8 @@ function rule(token: string, className: string, utilities: readonly string[]): S
     scopeRoot: false,
     utilityGroups: utilities,
     utilities,
-    variantGroups: {},
-    variants: {},
+    variantGroups,
+    variants: variantGroups,
   };
 }
 

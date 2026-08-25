@@ -7,7 +7,6 @@ const { Player, useMedia } = createPlayer({
 
 function MediaInfo() {
   const media = useMedia();
-
   if (!media) return null;
 
   return (

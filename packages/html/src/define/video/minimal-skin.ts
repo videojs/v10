@@ -1,9 +1,11 @@
 import { audioText, captionsText, qualityText, settingsText, speedText } from '@videojs/core/i18n/text/menu';
 import { renderIcon } from '@videojs/icons/render/minimal';
 import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+
 import { renderText } from '../../i18n/render-text';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
+
 import styles from './minimal-skin.css?inline';
 
 // Register the player, container, and all UI custom elements.
@@ -51,11 +53,15 @@ function getTemplateHTML() {
               <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
             </media-tooltip>
 
-            <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
+            <media-mute-button id="video-mute-trigger" commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
+            <media-tooltip trigger="video-mute-trigger" delay="0" sticky side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="media-popover media-popover--volume">
               <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
@@ -115,42 +121,41 @@ function getTemplateHTML() {
               ${renderText(settingsText, { id: 'settings-label', class: 'media-sr-only' })}
             </button>
             <media-menu id="settings-menu" side="top" align="center" class="media-popover media-menu media-menu--settings">
-              <div class="media-menu__group">
-                  <media-menu-item commandfor="settings-quality-menu" class="media-menu__item media-menu__item--submenu">
-                    ${renderIcon('switches', { class: 'media-icon' })}
-                    ${renderText(qualityText)}
-                    <span class="media-menu__hint">
-                      <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
-                      ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
-                    </span>
-                  </media-menu-item>
-                  <media-menu-item commandfor="settings-audio-menu" class="media-menu__item media-menu__item--submenu">
-                    ${renderIcon('speech', { class: 'media-icon' })}
-                    ${renderText(audioText)}
-                    <span class="media-menu__hint">
-                      <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
-                      ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
-                    </span>
-                  </media-menu-item>
-                  <media-menu-item commandfor="settings-speed-menu" class="media-menu__item media-menu__item--submenu">
-                    ${renderIcon('speed', { class: 'media-icon' })}
-                    ${renderText(speedText)}
-                    <span class="media-menu__hint">
-                      <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
-                      ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
-                    </span>
-                  </media-menu-item>
-                  <media-menu-item commandfor="settings-captions-menu" class="media-menu__item media-menu__item--submenu">
-                    ${renderIcon('captions-off', { class: 'media-icon' })}
-                    ${renderText(captionsText)}
-                    <span class="media-menu__hint">
-                      <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
-                      ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
-                    </span>
-                  </media-menu-item>
-              </div>
-
-              <media-menu id="settings-quality-menu" class="media-menu__panel">
+              <media-menu-content class="media-menu__content">
+                <media-menu-item commandfor="settings-quality-menu" class="media-menu__item media-menu__item--submenu">
+                  ${renderIcon('switches', { class: 'media-icon' })}
+                  ${renderText(qualityText)}
+                  <span class="media-menu__hint">
+                    <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
+                    ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
+                  </span>
+                </media-menu-item>
+                <media-menu-item commandfor="settings-audio-menu" class="media-menu__item media-menu__item--submenu">
+                  ${renderIcon('speech', { class: 'media-icon' })}
+                  ${renderText(audioText)}
+                  <span class="media-menu__hint">
+                    <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
+                    ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
+                  </span>
+                </media-menu-item>
+                <media-menu-item commandfor="settings-speed-menu" class="media-menu__item media-menu__item--submenu">
+                  ${renderIcon('speed', { class: 'media-icon' })}
+                  ${renderText(speedText)}
+                  <span class="media-menu__hint">
+                    <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
+                    ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
+                  </span>
+                </media-menu-item>
+                <media-menu-item commandfor="settings-captions-menu" class="media-menu__item media-menu__item--submenu">
+                  ${renderIcon('captions-off', { class: 'media-icon' })}
+                  ${renderText(captionsText)}
+                  <span class="media-menu__hint">
+                    <bdi data-part="hint" dir="auto" class="media-menu__hint-label"></bdi>
+                    ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
+                  </span>
+                </media-menu-item>
+              </media-menu-content>
+              <media-menu-content id="settings-quality-menu" class="media-menu__panel">
                 <media-menu-item class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
                   ${renderText(qualityText)}
@@ -170,9 +175,8 @@ function getTemplateHTML() {
                     </media-menu-radio-item>
                   </template>
                 </media-quality-radio-group>
-              </media-menu>
-
-              <media-menu id="settings-audio-menu" class="media-menu__panel">
+              </media-menu-content>
+              <media-menu-content id="settings-audio-menu" class="media-menu__panel">
                 <media-menu-item class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
                   ${renderText(audioText)}
@@ -188,9 +192,8 @@ function getTemplateHTML() {
                     </media-menu-radio-item>
                   </template>
                 </media-audio-track-radio-group>
-              </media-menu>
-
-              <media-menu id="settings-speed-menu" class="media-menu__panel">
+              </media-menu-content>
+              <media-menu-content id="settings-speed-menu" class="media-menu__panel">
                 <media-menu-item class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
                   ${renderText(speedText)}
@@ -206,9 +209,8 @@ function getTemplateHTML() {
                     </media-menu-radio-item>
                   </template>
                 </media-playback-rate-radio-group>
-              </media-menu>
-
-              <media-menu id="settings-captions-menu" class="media-menu__panel">
+              </media-menu-content>
+              <media-menu-content id="settings-captions-menu" class="media-menu__panel">
                 <media-menu-item class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
                   ${renderText(captionsText)}
@@ -224,7 +226,7 @@ function getTemplateHTML() {
                     </media-menu-radio-item>
                   </template>
                 </media-captions-radio-group>
-              </media-menu>
+              </media-menu-content>
             </media-menu>
             <media-tooltip id="settings-tooltip" trigger="settings-trigger" side="top" class="media-tooltip">
               ${renderText(settingsText)}

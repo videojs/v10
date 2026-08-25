@@ -1,5 +1,5 @@
 import { cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { Dialog } from '../../dialog';
 import { AlertDialogRoot } from '../alert-dialog-root';
@@ -19,6 +19,7 @@ describe('AlertDialogRoot', () => {
     );
 
     const popup = getByRole('alertdialog');
+
     expect(popup.getAttribute('aria-modal')).toBe('true');
     expect(popup.getAttribute('aria-labelledby')).toBe(getByRole('heading').id);
     expect(popup.getAttribute('aria-describedby')).toBe(getByRole('paragraph').id);

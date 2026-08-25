@@ -4,6 +4,7 @@ import type { CloudflareMediaProps } from '@videojs/media/dom/cloudflare';
 import { buildCloudflareIframeSrc, CloudflareMedia, cloudflareMediaDefaultProps } from '@videojs/media/dom/cloudflare';
 import type { ReactNode } from 'react';
 import { forwardRef, useState } from 'react';
+
 import { useAttachIframe } from '../../utils/use-attach-iframe';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';

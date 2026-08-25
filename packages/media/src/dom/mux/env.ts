@@ -2,6 +2,7 @@ const getEnvPlayerVersion = () => {
   try {
     return __PLAYER_VERSION__ as string;
   } catch {}
+
   return 'UNKNOWN';
 };
 

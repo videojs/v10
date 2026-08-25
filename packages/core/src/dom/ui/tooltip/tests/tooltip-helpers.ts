@@ -1,4 +1,5 @@
-import { vi } from 'vitest';
+import { vi } from 'vite-plus/test';
+
 import { createTransition } from '../../transition';
 import { createTooltip, type TooltipChangeDetails, type TooltipOptions } from '../tooltip';
 
@@ -10,5 +11,6 @@ export function createTestTooltip(overrides?: Partial<TooltipOptions>) {
     onOpenChange,
     ...overrides,
   });
+
   return { tooltip, onOpenChange, transition };
 }

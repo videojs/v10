@@ -52,10 +52,10 @@ export function createTextTracksActor(mediaElement: HTMLMediaElement): TextTrack
     const existingSegments = context.segments[trackId] ?? [];
     const prunedCues = cues.filter((cue) => !isDuplicateCue(cue, existingCues));
     const segmentAlreadyLoaded = existingSegments.some((s) => s.id === segmentId);
-
     if (prunedCues.length === 0 && segmentAlreadyLoaded) return context;
 
     for (const cue of prunedCues) textTrack.addCue(cue);
+
     return {
       ...context,
       loaded: {

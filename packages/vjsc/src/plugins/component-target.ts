@@ -21,7 +21,7 @@ import {
 } from '../target/definition';
 import { createTargetModuleImports } from '../target/module-imports';
 import { renderTargetElement, renderTargetOutput } from '../target/render';
-import { createSourceChildren, createSourceProps } from '../target/source';
+import { createSourceChildren, createSourceProps, singleJsxElementChild } from '../target/source';
 import { type ParsedModuleId, parseModuleId } from '../utils/module-id';
 
 const SCRIPT_ID = /\.[cm]?[jt]sx?(?:\?|$)/;
@@ -82,17 +82,19 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
         const edits = collectJsxEdits(transform.ast, descendants, (node, childEdits) => {
           const path = canonicalPath(node.openingElement.name, bindings);
           if (!path) return childEdits;
+
           const scope = scopes.nodes.get(node);
           if (!scope) throw new Error('Component target could not resolve the source component scope.');
 
           const rule = configuredRule(path) ?? resolveDefault(path);
+
           if (typeof rule === 'function' && !isTargetElement(rule)) {
             const source = createSourceText(code, childEdits);
             const children = createSourceChildren(
               source,
               node.openingElement,
               node.closingElement?.start ?? node.openingElement.end,
-              firstElementChild(node)?.openingElement
+              singleJsxElementChild(node)?.openingElement
             );
             const context: ComponentRewriteContext<RuntimeComponentDefinition> = {
               props: createSourceProps(source, node.openingElement, children),
@@ -102,6 +104,7 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
             };
             const output = (rule as ComponentRewrite<RuntimeComponentDefinition>)(context);
             let replacement = renderTargetOutput(output, { target: path.target, imports });
+
             if (scope.root === node && scope.used) replacement = renderSourceScope(replacement, scope, imports);
 
             return [{ start: node.start, end: node.end, content: replacement }];
@@ -109,13 +112,16 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
 
           const targetElement = isTargetElement(rule) ? rule : undefined;
           const nodeEdits = [...childEdits];
+
           if (targetElement) {
             const name = renderTargetElement(targetElement, { target: path.target, imports });
+
             nodeEdits.push({
               start: node.openingElement.name.start,
               end: node.openingElement.name.end,
               content: name,
             });
+
             if (node.closingElement) {
               nodeEdits.push({
                 start: node.closingElement.name.start,
@@ -127,8 +133,8 @@ export function componentTargetPlugin(options: ComponentTargetPluginOptions): Pl
 
           return wrapSourceScope(code, node, nodeEdits, scope, imports);
         });
-
         if (edits.length === 0) return null;
+
         for (const edit of edits) transform.magicString.overwrite(edit.start, edit.end, edit.content);
 
         imports.commit();
@@ -178,11 +184,13 @@ export function primitiveTargetPlugin(options: ComponentTargetPluginOptions): Pl
           }
 
           if (!isTargetElement(rule)) return childEdits;
+
           const name = renderTargetElement(rule, { target: binding.target, imports });
           const nodeEdits = [
             ...childEdits,
             { start: node.openingElement.name.start, end: node.openingElement.name.end, content: name },
           ];
+
           if (node.closingElement) {
             nodeEdits.push({
               start: node.closingElement.name.start,
@@ -190,11 +198,13 @@ export function primitiveTargetPlugin(options: ComponentTargetPluginOptions): Pl
               content: name,
             });
           }
+
           return nodeEdits;
         });
-
         if (edits.length === 0) return null;
+
         for (const edit of edits) transform.magicString.overwrite(edit.start, edit.end, edit.content);
+
         imports.commit();
         return { code: transform.magicString };
       },
@@ -206,6 +216,7 @@ export function selectComponentTargets(selection: ComponentTargetSelection, id: 
   if (typeof selection !== 'function') return selection;
 
   const parsed = parseModuleId(id);
+
   return selection({ id, ...parsed }) ?? [];
 }
 
@@ -218,11 +229,13 @@ function collectCanonicalBindings(ast: Program, targets: readonly ComponentTarge
     if (bySource.has(target.source)) {
       throw new Error(`More than one component target was provided for \`${target.source}\`.`);
     }
+
     bySource.set(target.source, target);
   }
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type') continue;
+
     collectImportBindings(statement, bySource, namespaces, named);
   }
 
@@ -237,6 +250,7 @@ function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: s
   walk(ast, {
     enter(node) {
       if (node.type !== 'JSXElement') return;
+
       const path = canonicalPath(node.openingElement.name, bindings);
       if (!path) return;
 
@@ -250,11 +264,14 @@ function collectComponentScopes(ast: Program, bindings: CanonicalBindings, id: s
       };
 
       nodes.set(node, scope);
+
       if (isRoot || !owner) stack.push({ path, scope });
     },
     leave(node) {
       if (node.type !== 'JSXElement') return;
+
       const scope = nodes.get(node);
+
       if (scope?.root === node) stack.pop();
     },
   });
@@ -270,6 +287,7 @@ function enclosingScope(
     const entry = stack[index]!;
     if (entry.path.target === path.target && entry.path.component === path.component) return entry.scope;
   }
+
   return undefined;
 }
 
@@ -296,14 +314,17 @@ function collectPrimitiveBindings(
 
     for (const specifier of statement.specifiers) {
       if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
+
       const name = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
       if (name === 'Template') continue;
 
       const owners = targets.flatMap((target) => {
         const rule = primitiveRule(target, name);
+
         return rule ? [{ target, rule }] : [];
       });
       if (owners.length > 1) throw new Error(`More than one component target defines the \`${name}\` primitive.`);
+
       if (owners[0]) bindings.set(specifier.local.name, { name, ...owners[0] });
     }
   }
@@ -325,6 +346,7 @@ function collectImportBindings(
       namespaces.set(specifier.local.name, target);
     } else if (specifier.type === 'ImportSpecifier' && specifier.importKind !== 'type') {
       const component = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
+
       named.set(specifier.local.name, { target, component, part: null });
     }
   }
@@ -335,6 +357,7 @@ function canonicalPath(name: JSXElementName, bindings: CanonicalBindings): Canon
   if (path.length === 0) return undefined;
 
   const namespace = bindings.namespaces.get(path[0]!);
+
   if (namespace && path.length > 1) {
     return {
       target: namespace,
@@ -357,11 +380,14 @@ function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | unde
   if (!path.part || !rule) return rule;
 
   const parts = path.part.split('.');
+
   for (const [index, part] of parts.entries()) {
     if (!rule) return undefined;
+
     if (typeof rule === 'function' || isTargetElement(rule)) {
       return part === 'Root' && index === parts.length - 1 ? rule : undefined;
     }
+
     rule = (rule as Readonly<Record<string, ComponentTargetRule<object> | undefined>>)[part];
   }
 
@@ -370,6 +396,7 @@ function configuredRule(path: CanonicalPath): ComponentTargetRule<object> | unde
 
 function resolveDefault(path: CanonicalPath): ComponentTargetRule<object> | undefined {
   const targetPath: ComponentTargetPath = { component: path.component, part: path.part };
+
   return path.target.resolve(targetPath) as ComponentTargetRule<object> | undefined;
 }
 
@@ -397,8 +424,10 @@ function createSourceParts(
   walk(root, {
     enter(node) {
       if (node === root || node.type !== 'JSXElement') return;
+
       const path = canonicalPath(node.openingElement.name, bindings);
       if (!path || path.target !== rootPath.target || path.component !== rootPath.component || !path.part) return;
+
       if (scopes.nodes.get(node) !== rootScope) {
         this.skip();
         return;
@@ -407,12 +436,15 @@ function createSourceParts(
       const names = path.part.split('.');
       let current = groups;
       let group: CollectedPartGroup | undefined;
+
       for (const name of names) {
         group = current.get(name);
+
         if (!group) {
           group = { values: [], children: new Map() };
           current.set(name, group);
         }
+
         current = group.children;
       }
 
@@ -421,8 +453,9 @@ function createSourceParts(
         source,
         node.openingElement,
         node.closingElement?.start ?? node.openingElement.end,
-        firstElementChild(node)?.openingElement
+        singleJsxElementChild(node)?.openingElement
       );
+
       group!.values.push({
         value: {
           props: createSourceProps(source, node.openingElement, children),
@@ -442,6 +475,7 @@ function sourcePartCollection(name: string, group: CollectedPartGroup): RuntimeS
       if (group.values.length !== 1) {
         throw new Error(`Component rewrite expected one <${name}> part, found ${group.values.length}.`);
       }
+
       return group.values[0]!.value;
     },
     all() {
@@ -453,15 +487,12 @@ function sourcePartCollection(name: string, group: CollectedPartGroup): RuntimeS
     props: { enumerable: true, get: () => collection.one().props },
     children: { enumerable: true, get: () => collection.one().children },
   });
+
   for (const [childName, child] of group.children) {
     collection[childName] = sourcePartCollection(`${name}.${childName}`, child);
   }
 
   return collection;
-}
-
-function firstElementChild(node: JSXElement): JSXElement | undefined {
-  return node.children.find((child): child is JSXElement => child.type === 'JSXElement');
 }
 
 function sourceId(scope: ComponentSourceScope, name: string): string {
@@ -476,7 +507,9 @@ function sourceId(scope: ComponentSourceScope, name: string): string {
 function renderSourceScope(source: string, scope: ComponentSourceScope, imports: ModuleImports): string {
   const runtime = scope.target.jsx.scope;
   if (!runtime) return source;
+
   const name = imports.reference(runtime);
+
   return `<${name} prefix=${JSON.stringify(scope.prefix)}>${source}</${name}>`;
 }
 
@@ -488,7 +521,9 @@ function wrapSourceScope(
   imports: ModuleImports
 ): readonly SourceEdit[] {
   if (scope.root !== node || !scope.used || !scope.target.jsx.scope) return edits;
+
   const source = renderSourceRange(createSourceText(code, edits), node.start, node.end).value;
+
   return [{ start: node.start, end: node.end, content: renderSourceScope(source, scope, imports) }];
 }
 
@@ -504,17 +539,21 @@ function collectJsxEdits(
   walk(ast, {
     enter(node) {
       if (node.type !== 'JSXElement') return;
+
       stack.push(node);
       pending.set(node, []);
     },
     leave(node) {
       if (node.type !== 'JSXElement') return;
+
       if (stack.pop() !== node) throw new Error('vjsc: JSX traversal stack became unbalanced.');
 
       const childEdits = pending.get(node) ?? [];
+
       descendants.set(node, childEdits);
       const edits = transform(node, childEdits);
       const parent = stack.at(-1);
+
       if (parent) pending.get(parent)!.push(...edits);
       else roots.push(...edits);
     },

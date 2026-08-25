@@ -1,7 +1,6 @@
 import { loadScript } from '@videojs/utils/dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaError } from '../../../core/media-error';
-import type { Video } from '../../../core/types';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import {
   buildCloudflareIframeSrc,
   CloudflareMedia,
@@ -9,9 +8,12 @@ import {
   parseCloudflareSource,
   parseCloudflareVideoId,
 } from '..';
+import { MediaError } from '../../../core/media-error';
+import type { Video } from '../../../core/types';
 
 vi.mock(import('@videojs/utils/dom'), async (importOriginal) => {
   const mod = await importOriginal();
+
   return { ...mod, loadScript: vi.fn(async () => {}) };
 });
 
@@ -54,10 +56,12 @@ class MockPlayer {
 
   addEventListener(type: string, listener: (event: Event) => void): void {
     let set = this.listeners.get(type);
+
     if (!set) {
       set = new Set();
       this.listeners.set(type, set);
     }
+
     set.add(listener);
   }
 
@@ -90,17 +94,18 @@ function createIframe(): HTMLIFrameElement {
 /** An iframe as React renders it before a source resolves: `src` present but empty. */
 function createEmptySrcIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
+
   iframe.setAttribute('src', '');
   return iframe;
 }
 
 /**
- * An iframe as a server-rendered page delivers it: the embed URL is already in
- * the markup and the frame has navigated to it, so a same-origin read of its
- * location throws the way a real cross-origin embed does.
+ * An iframe as a server-rendered page delivers it: the embed URL is already in the markup and the frame has navigated
+ * to it, so a same-origin read of its location throws the way a real cross-origin embed does.
  */
 function createServerRenderedIframe(src: string): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
+
   iframe.setAttribute('src', src);
   Object.defineProperty(iframe, 'contentWindow', {
     configurable: true,
@@ -116,6 +121,7 @@ function createServerRenderedIframe(src: string): HTMLIFrameElement {
 /** Record every `src` assignment, so a same-URL reload is visible. */
 function spyOnSrcAssignment(iframe: HTMLIFrameElement, current: string): string[] {
   const assigned: string[] = [];
+
   Object.defineProperty(iframe, 'src', {
     configurable: true,
     get: () => current,
@@ -141,9 +147,12 @@ async function attachAndLoad(media: CloudflareMedia): Promise<{ iframe: HTMLIFra
   // There is no embed to attach to without a source, so tests that don't care
   // which video is playing get one.
   if (!media.src) media.src = VIDEO_ID;
+
   const iframe = createIframe();
+
   media.attach(iframe);
   const player = await waitForEngine(media);
+
   player.emit('loadedmetadata');
   return { iframe, player };
 }
@@ -217,6 +226,7 @@ describe('parseCloudflareSource', () => {
 describe('buildCloudflareIframeSrc', () => {
   it('builds embed URL with hidden controls and the default preload', () => {
     const src = buildCloudflareIframeSrc(VIDEO_ID);
+
     expect(src).toContain(`https://iframe.videodelivery.net/${VIDEO_ID}?`);
     expect(src).toContain('controls=0');
     expect(src).toContain('preload=metadata');
@@ -224,6 +234,7 @@ describe('buildCloudflareIframeSrc', () => {
 
   it('encodes autoplay, defaultMuted, loop', () => {
     const src = buildCloudflareIframeSrc(VIDEO_ID, { autoplay: true, defaultMuted: true, loop: true });
+
     expect(src).toContain('autoplay=1');
     expect(src).toContain('muted=1');
     expect(src).toContain('loop=1');
@@ -234,12 +245,14 @@ describe('buildCloudflareIframeSrc', () => {
     // autoplays and `muted=0` starts the video silenced — which also makes the
     // volume control look broken, since the embed is muted underneath it.
     const src = buildCloudflareIframeSrc(VIDEO_ID, { autoplay: false, defaultMuted: false, loop: false });
+
     expect(src).not.toContain('autoplay');
     expect(src).not.toContain('muted');
     expect(src).not.toContain('loop');
 
     // The props the HTML and React wrappers pass by default must be just as quiet.
     const fromDefaults = buildCloudflareIframeSrc(VIDEO_ID, cloudflareMediaDefaultProps);
+
     expect(fromDefaults).not.toContain('autoplay');
     expect(fromDefaults).not.toContain('muted');
     expect(fromDefaults).not.toContain('loop');
@@ -247,6 +260,7 @@ describe('buildCloudflareIframeSrc', () => {
 
   it('shows Cloudflare controls when controls=true', () => {
     const src = buildCloudflareIframeSrc(VIDEO_ID, { controls: true });
+
     expect(src).not.toContain('controls=');
   });
 
@@ -254,12 +268,14 @@ describe('buildCloudflareIframeSrc', () => {
     // A bare `preload` attribute reads as empty, which serializes to `1` — not
     // one of the values Cloudflare accepts.
     const src = buildCloudflareIframeSrc(VIDEO_ID, { preload: '' });
+
     expect(src).toContain(`preload=${cloudflareMediaDefaultProps.preload}`);
     expect(src).not.toContain('preload=1');
   });
 
   it('forwards preload and poster', () => {
     const src = buildCloudflareIframeSrc(VIDEO_ID, { preload: 'auto', poster: 'https://example.com/poster.jpg' });
+
     expect(src).toContain('preload=auto');
     expect(src).toContain('poster=https%3A%2F%2Fexample.com%2Fposter.jpg');
   });
@@ -290,6 +306,7 @@ describe('buildCloudflareIframeSrc', () => {
         },
       },
     });
+
     expect(src).toContain('defaultTextTrack=de');
     expect(src).toContain('primaryColor=%23ff0000');
     expect(src).toContain('letterboxColor=transparent');
@@ -303,17 +320,20 @@ describe('buildCloudflareIframeSrc', () => {
     const src = buildCloudflareIframeSrc(VIDEO_ID, {
       source: { engine: { cloudflare: { referrerPolicy: 'no-referrer' } } },
     });
+
     expect(src).not.toContain('referrerPolicy');
     expect(src).not.toContain('no-referrer');
   });
 
   it('carries undeclared Cloudflare embed parameters through', () => {
     const src = buildCloudflareIframeSrc(VIDEO_ID, { source: { engine: { cloudflare: { someFutureParam: 'on' } } } });
+
     expect(src).toContain('someFutureParam=on');
   });
 
   it('lets Cloudflare embed parameters override the defaults the host sets', () => {
     const src = buildCloudflareIframeSrc(VIDEO_ID, { source: { engine: { cloudflare: { controls: 1 } } } });
+
     expect(src).toContain('controls=1');
   });
 
@@ -327,6 +347,7 @@ describe('buildCloudflareIframeSrc', () => {
 
   it('embeds on the per-customer origin when the source names one', () => {
     const src = buildCloudflareIframeSrc(`https://customer-abc123.cloudflarestream.com/${VIDEO_ID}/iframe`);
+
     expect(src).toContain(`https://customer-abc123.cloudflarestream.com/${VIDEO_ID}/iframe?`);
     expect(src).not.toContain('videodelivery.net');
   });
@@ -335,6 +356,7 @@ describe('buildCloudflareIframeSrc', () => {
     // Signed playback is only authorized for the customer origin, so collapsing
     // it onto the shared host would answer 401.
     const src = buildCloudflareIframeSrc(`https://customer-abc123.cloudflarestream.com/${SIGNED_TOKEN}/iframe`);
+
     expect(src).toContain(`https://customer-abc123.cloudflarestream.com/${SIGNED_TOKEN}/iframe?`);
   });
 
@@ -348,6 +370,7 @@ describe('buildCloudflareIframeSrc', () => {
 describe('CloudflareMedia', () => {
   it('has expected default state before attach', () => {
     const media = new CloudflareMedia();
+
     expect(media.engine).toBe(null);
     expect(media.target).toBe(null);
     expect(media.paused).toBe(true);
@@ -364,6 +387,7 @@ describe('CloudflareMedia', () => {
     // event, so the members are absent rather than present and inert — a control
     // the player cannot drive is worse than one it does not offer.
     const media = new CloudflareMedia() as Partial<Video>;
+
     expect(media.requestPictureInPicture).toBeUndefined();
     expect(media.exitPictureInPicture).toBeUndefined();
     expect(media.isPictureInPicture).toBeUndefined();
@@ -378,6 +402,7 @@ describe('CloudflareMedia', () => {
     const assigned = spyOnSrcAssignment(iframe, embedSrc);
 
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     media.attach(iframe);
     await waitForEngine(media);
@@ -397,6 +422,7 @@ describe('CloudflareMedia', () => {
     const assignedAtPlayerCreation: number[] = [];
 
     let resolveSdk!: () => void;
+
     vi.stubGlobal('Stream', undefined);
     vi.mocked(loadScript).mockImplementationOnce(
       () =>
@@ -412,6 +438,7 @@ describe('CloudflareMedia', () => {
     );
 
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     media.attach(iframe);
     await flushDeferredEmbed();
@@ -434,10 +461,12 @@ describe('CloudflareMedia', () => {
     // changing what the attribute reads.
     const embedSrc = `https://iframe.videodelivery.net/${VIDEO_ID}?controls=0`;
     const iframe = document.createElement('iframe');
+
     iframe.setAttribute('src', embedSrc);
     const assigned = spyOnSrcAssignment(iframe, embedSrc);
 
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     media.attach(iframe);
     await waitForEngine(media);
@@ -448,8 +477,10 @@ describe('CloudflareMedia', () => {
 
   it('sets the initial iframe src and creates a player when attached', async () => {
     const media = new CloudflareMedia();
+
     media.src = `https://customer-abc123.cloudflarestream.com/${VIDEO_ID}/iframe`;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.src).toContain(`https://customer-abc123.cloudflarestream.com/${VIDEO_ID}/iframe`);
@@ -463,10 +494,12 @@ describe('CloudflareMedia', () => {
   it('defers the player until a source arrives', async () => {
     const media = new CloudflareMedia();
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     // How every framework builds the element: created first, `src` set after.
     const iframe = createIframe();
+
     media.attach(iframe);
     expect(iframe.getAttribute('src')).toBe(null);
     expect(media.engine).toBe(null);
@@ -486,6 +519,7 @@ describe('CloudflareMedia', () => {
     // React renders `src=""` before a source resolves. The `src` property reports
     // the document URL for it, so only the attribute says there is no embed.
     const iframe = createEmptySrcIframe();
+
     media.attach(iframe);
     expect(media.engine).toBe(null);
 
@@ -500,6 +534,7 @@ describe('CloudflareMedia', () => {
   it('builds a deferred embed once for repeated source changes in the same task', async () => {
     const media = new CloudflareMedia();
     const iframe = createIframe();
+
     media.attach(iframe);
 
     media.src = VIDEO_ID;
@@ -513,6 +548,7 @@ describe('CloudflareMedia', () => {
 
   it('does not leave play() waiting while the embed is deferred', async () => {
     const media = new CloudflareMedia();
+
     media.attach(createIframe());
 
     // No embed means no player is coming to report a load; waiting would hang.
@@ -522,6 +558,7 @@ describe('CloudflareMedia', () => {
 
   it('waits for a deferred embed to load before playing', async () => {
     const media = new CloudflareMedia();
+
     media.attach(createIframe());
 
     media.src = VIDEO_ID;
@@ -533,6 +570,7 @@ describe('CloudflareMedia', () => {
     // The player the deferred embed creates has not reported metadata, so
     // playing now would run against a video that is not there yet.
     const player = await waitForEngine(media);
+
     expect(played).toBe(false);
 
     player.emit('loadedmetadata');
@@ -545,6 +583,7 @@ describe('CloudflareMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete after metadata', async () => {
     const media = new CloudflareMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete', 'durationchange'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -565,6 +604,7 @@ describe('CloudflareMedia', () => {
 
     const playSpy = vi.fn();
     const waitingSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
     media.addEventListener('waiting', waitingSpy);
 
@@ -624,6 +664,7 @@ describe('CloudflareMedia', () => {
     const media = new CloudflareMedia();
     const { player } = await attachAndLoad(media);
     const adStart = vi.fn();
+
     media.addEventListener('stream-adstart', adStart);
 
     player.emit('stream-adstart');
@@ -637,6 +678,7 @@ describe('CloudflareMedia', () => {
     const { player } = await attachAndLoad(media);
     const encrypted = vi.fn();
     const waitingForKey = vi.fn();
+
     media.addEventListener('encrypted', encrypted);
     media.addEventListener('waitingforkey', waitingForKey);
 
@@ -650,6 +692,7 @@ describe('CloudflareMedia', () => {
 
   it('reports the mute the embed is being built with before it reports one', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     media.defaultMuted = true;
     media.attach(createIframe());
@@ -664,6 +707,7 @@ describe('CloudflareMedia', () => {
 
   it('carries a runtime mute onto a rebuilt embed', async () => {
     const media = new CloudflareMedia();
+
     media.source = { src: VIDEO_ID, engine: { cloudflare: { primaryColor: '#ff0000' } } };
     const { iframe, player } = await attachAndLoad(media);
 
@@ -723,6 +767,7 @@ describe('CloudflareMedia', () => {
 
   it('swaps the video on the existing player when src changes after attach', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const { iframe, player } = await attachAndLoad(media);
     const embedSrc = iframe.getAttribute('src');
@@ -737,6 +782,7 @@ describe('CloudflareMedia', () => {
 
     // The new video's metadata completes the reload.
     const loadCompleteSpy = vi.fn();
+
     media.addEventListener('loadcomplete', loadCompleteSpy);
     player.emit('loadedmetadata');
     expect(loadCompleteSpy).toHaveBeenCalledTimes(1);
@@ -745,8 +791,10 @@ describe('CloudflareMedia', () => {
 
   it('defers the swap when src changes while the SDK is still loading', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     // The embed is already built from the first src; only the player can be
@@ -761,6 +809,7 @@ describe('CloudflareMedia', () => {
 
   it('completes the deferred swap rather than the embed it replaced', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     media.attach(createIframe());
     media.src = OTHER_VIDEO_ID;
@@ -769,6 +818,7 @@ describe('CloudflareMedia', () => {
     // task, so the swap owns the barrier before any metadata can arrive.
     const player = await waitForEngine(media);
     const loadCompleteSpy = vi.fn();
+
     media.addEventListener('loadcomplete', loadCompleteSpy);
     expect(media.readyState).toBe(0);
 
@@ -782,10 +832,12 @@ describe('CloudflareMedia', () => {
 
   it('errors and unblocks pending play() when src is unrecognized', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     await attachAndLoad(media);
 
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     media.src = 'https://example.com/not-a-cloudflare-video';
@@ -800,8 +852,10 @@ describe('CloudflareMedia', () => {
 
   it('stops the embed when src is unrecognized', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const { player } = await attachAndLoad(media);
+
     player.emit('playing');
     player.pause.mockClear();
     player.play.mockClear();
@@ -829,6 +883,7 @@ describe('CloudflareMedia', () => {
     const { player } = await attachAndLoad(media);
 
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
     player.emit('error');
 
@@ -841,8 +896,10 @@ describe('CloudflareMedia', () => {
   it('errors and unblocks pending play() when the SDK is unavailable', async () => {
     vi.stubGlobal('Stream', undefined);
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const errorSpy = vi.fn();
+
     media.addEventListener('error', errorSpy);
 
     media.attach(createIframe());
@@ -868,6 +925,7 @@ describe('CloudflareMedia', () => {
     player.emit('pause');
 
     const played = media.played;
+
     expect(played.length).toBe(1);
     expect(played.start(0)).toBe(0);
     expect(played.end(0)).toBe(0.16);
@@ -892,11 +950,13 @@ describe('CloudflareMedia', () => {
 
   it('unblocks pending play() when detached before load completes', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     media.attach(createIframe());
 
     // Await load without the player ever reporting metadata.
     const pending = media.play();
+
     media.detach();
 
     await expect(pending).resolves.toBeUndefined();
@@ -905,6 +965,7 @@ describe('CloudflareMedia', () => {
 
   it('does not create a player when detached before the SDK resolves', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     media.attach(createIframe());
     media.detach();
@@ -923,9 +984,11 @@ describe('CloudflareMedia', () => {
 
     media.detach();
     const { player: current } = await attachAndLoad(media);
+
     expect(current).not.toBe(stale);
 
     const playSpy = vi.fn();
+
     media.addEventListener('play', playSpy);
 
     // The old embed keeps reporting; none of it may touch the new session.
@@ -941,6 +1004,7 @@ describe('CloudflareMedia', () => {
 
   it('unblocks waiters from a superseded load when a reload starts first', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const { player } = await attachAndLoad(media);
 
@@ -970,6 +1034,7 @@ describe('CloudflareMedia source', () => {
   it('derives src from a structured source and announces the change', () => {
     const media = new CloudflareMedia();
     const sourceChange = vi.fn();
+
     media.addEventListener('sourcechange', sourceChange);
 
     media.source = { src: `https://videodelivery.net/${VIDEO_ID}` };
@@ -980,6 +1045,7 @@ describe('CloudflareMedia source', () => {
 
   it('re-derives source from src, carrying Cloudflare embed parameters over', () => {
     const media = new CloudflareMedia();
+
     media.source = { src: VIDEO_ID, engine: { cloudflare: { primaryColor: '#ff0000' } } };
 
     media.src = OTHER_VIDEO_ID;
@@ -989,8 +1055,10 @@ describe('CloudflareMedia source', () => {
 
   it('rebuilds the embed when only Cloudflare embed parameters change', async () => {
     const media = new CloudflareMedia();
+
     media.source = { src: VIDEO_ID, engine: { cloudflare: { primaryColor: '#ff0000' } } };
     const { iframe, player } = await attachAndLoad(media);
+
     expect(iframe.getAttribute('src')).toContain('primaryColor=%23ff0000');
     player.src = '';
 
@@ -1008,8 +1076,10 @@ describe('CloudflareMedia source', () => {
 
   it('serializes Cloudflare embed parameters onto the initial iframe src', () => {
     const media = new CloudflareMedia();
+
     media.source = { src: VIDEO_ID, engine: { cloudflare: { defaultTextTrack: 'de' } } };
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.src).toContain('defaultTextTrack=de');
@@ -1018,6 +1088,7 @@ describe('CloudflareMedia source', () => {
 
   it('clears src when the source is set to null', () => {
     const media = new CloudflareMedia();
+
     media.source = { src: VIDEO_ID };
 
     media.source = null;
@@ -1028,8 +1099,10 @@ describe('CloudflareMedia source', () => {
 
   it('pauses the embed and resets state when the source is cleared', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const { player } = await attachAndLoad(media);
+
     player.emit('playing');
     expect(media.duration).toBe(60);
     player.pause.mockClear();
@@ -1048,11 +1121,14 @@ describe('CloudflareMedia source', () => {
 
   it('announces the reset when the source is cleared', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const { player } = await attachAndLoad(media);
+
     player.emit('playing');
 
     const emptied = vi.fn();
+
     media.addEventListener('emptied', emptied);
     media.source = null;
     await Promise.resolve();
@@ -1065,8 +1141,10 @@ describe('CloudflareMedia source', () => {
 
   it('does not let a cleared source come back through a player event', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const { player } = await attachAndLoad(media);
+
     player.emit('playing');
 
     media.source = null;
@@ -1085,6 +1163,7 @@ describe('CloudflareMedia source', () => {
 
   it('does not play a source that was cleared', async () => {
     const media = new CloudflareMedia();
+
     media.src = VIDEO_ID;
     const { player } = await attachAndLoad(media);
 

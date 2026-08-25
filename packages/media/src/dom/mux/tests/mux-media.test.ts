@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { Hls, HlsJsMedia } from '../../hls-js';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { MuxMedia, type MuxSource } from '..';
+import { Hls, HlsJsMedia } from '../../hls-js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -11,6 +12,7 @@ afterEach(() => {
 // like a real JWT, so it survives a query string untouched.
 function fakeJwt(payload: Record<string, unknown>): string {
   const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 
@@ -32,6 +34,7 @@ describe('MuxMedia', () => {
 
   it('derives src from source.playbackId', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123' };
 
     expect(media.src).toBe('https://stream.mux.com/abc123.m3u8');
@@ -39,6 +42,7 @@ describe('MuxMedia', () => {
 
   it('clears src when source is cleared', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123' };
     media.source = null;
 
@@ -47,6 +51,7 @@ describe('MuxMedia', () => {
 
   it('derives src using the custom domain', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123', customDomain: 'example.com' };
 
     expect(media.src).toBe('https://stream.example.com/abc123.m3u8');
@@ -54,6 +59,7 @@ describe('MuxMedia', () => {
 
   it('appends playback params as snake_case query params', () => {
     const media = new MuxMedia();
+
     media.source = {
       playbackId: 'abc123',
       playback: {
@@ -67,6 +73,7 @@ describe('MuxMedia', () => {
     };
 
     const url = new URL(media.src);
+
     expect(url.searchParams.get('max_resolution')).toBe('1080p');
     expect(url.searchParams.get('min_resolution')).toBe('480p');
     expect(url.searchParams.get('rendition_order')).toBe('desc');
@@ -77,12 +84,14 @@ describe('MuxMedia', () => {
 
   it('applies a playback token and drops all other playback params', () => {
     const media = new MuxMedia();
+
     media.source = {
       playbackId: 'abc123',
       playback: { token: 'jwt', maxResolution: '1080p', assetStartTime: 3 },
     };
 
     const url = new URL(media.src);
+
     expect(url.searchParams.get('token')).toBe('jwt');
     expect(url.searchParams.has('max_resolution')).toBe(false);
     expect(url.searchParams.has('asset_start_time')).toBe(false);
@@ -90,6 +99,7 @@ describe('MuxMedia', () => {
 
   it('parses source from a Mux stream src', () => {
     const media = new MuxMedia();
+
     media.src = 'https://stream.mux.com/abc123.m3u8';
 
     expect(media.src).toBe('https://stream.mux.com/abc123.m3u8');
@@ -98,6 +108,7 @@ describe('MuxMedia', () => {
 
   it('parses the custom domain and playback params from a Mux stream src', () => {
     const media = new MuxMedia();
+
     media.src = 'https://stream.example.com/abc123.m3u8?token=jwt';
 
     expect(media.source).toEqual({
@@ -109,6 +120,7 @@ describe('MuxMedia', () => {
 
   it('keeps a non-Mux src as a plain source url', () => {
     const media = new MuxMedia();
+
     media.src = 'https://example.com/custom.m3u8';
 
     expect(media.src).toBe('https://example.com/custom.m3u8');
@@ -117,6 +129,7 @@ describe('MuxMedia', () => {
 
   it('plays a non-Mux source url given through source', () => {
     const media = new MuxMedia();
+
     media.source = { src: 'https://example.com/custom.m3u8', preferPlayback: 'native' };
 
     expect(media.src).toBe('https://example.com/custom.m3u8');
@@ -124,6 +137,7 @@ describe('MuxMedia', () => {
 
   it('preserves engine options across a src change', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123', preferPlayback: 'native' };
 
     media.src = 'https://stream.mux.com/other.m3u8';
@@ -133,6 +147,7 @@ describe('MuxMedia', () => {
 
   it('keeps source.poster as data, without applying it to the media poster', () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
 
     media.source = { playbackId: 'abc123', poster: { time: 5 } };
@@ -143,6 +158,7 @@ describe('MuxMedia', () => {
 
   it('exposes the content poster and storyboard derived from source', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123', poster: { time: 5, ext: 'jpg' }, storyboard: { format: 'jpg' } };
 
     expect(media.contentData).toEqual({
@@ -153,6 +169,7 @@ describe('MuxMedia', () => {
 
   it('tracks source changes in the content data', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123' };
     media.source = { playbackId: 'xyz789' };
 
@@ -172,6 +189,7 @@ describe('MuxMedia', () => {
 
   it('has no content data for signed playback without image tokens', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
 
     expect(media.contentData).toEqual({});
@@ -180,6 +198,7 @@ describe('MuxMedia', () => {
   it('dispatches `contentdatachange` when the derived urls change', () => {
     const media = new MuxMedia();
     const handler = vi.fn();
+
     media.addEventListener('contentdatachange', handler);
 
     media.source = { playbackId: 'abc123' };
@@ -195,9 +214,11 @@ describe('MuxMedia', () => {
 
   it('dedupes `contentdatachange` when a source change leaves the urls alone', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123' };
 
     const handler = vi.fn();
+
     media.addEventListener('contentdatachange', handler);
 
     // A new object, so `sourcechange` still fires, but nothing the images are
@@ -209,9 +230,11 @@ describe('MuxMedia', () => {
 
   it('clears the content data and announces it when the source is dropped', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123' };
 
     const handler = vi.fn();
+
     media.addEventListener('contentdatachange', handler);
 
     media.source = null;
@@ -223,6 +246,7 @@ describe('MuxMedia', () => {
   it('has the content data in step when `sourcechange` fires', () => {
     const media = new MuxMedia();
     const seen: (string | null | undefined)[] = [];
+
     media.addEventListener('sourcechange', () => seen.push(media.contentData.poster));
 
     media.source = { playbackId: 'abc123' };
@@ -232,6 +256,7 @@ describe('MuxMedia', () => {
 
   it('hands back the same content data object until it changes', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123' };
 
     const first = media.contentData;
@@ -245,11 +270,13 @@ describe('MuxMedia', () => {
 
   it('does not reload when only image params change', async () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     media.source = { playbackId: 'abc123', preferPlayback: 'native' };
     await flushLoad();
 
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     // `poster` describes an image, not the stream, so playback must not restart.
@@ -263,12 +290,14 @@ describe('MuxMedia', () => {
     vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
 
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     media.source = { playbackId: 'abc123', maxAutoResolution: '1080p' };
     await flushLoad();
 
     const engine = media.engine;
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     media.source = { playbackId: 'abc123', maxAutoResolution: '720p' };
@@ -283,6 +312,7 @@ describe('MuxMedia', () => {
 
   it('keeps the client-side cap separate from the server-side manifest filter', async () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     // `playback.maxResolution` asks Mux to leave higher renditions out of the
     // manifest; `maxAutoResolution` caps what ABR picks from the ones that
@@ -305,12 +335,14 @@ describe('MuxMedia', () => {
     vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
 
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     media.source = { playbackId: 'abc123', capRenditionToPlayerSize: false };
     await flushLoad();
 
     const engine = media.engine;
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     media.source = { playbackId: 'abc123', capRenditionToPlayerSize: true, minAutoResolution: '1080p' };
@@ -326,6 +358,7 @@ describe('MuxMedia', () => {
 
   it('keeps the client-side floor separate from the server-side one it resembles', async () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     // `playback.minResolution` asks Mux which renditions to put in the manifest.
     // `minAutoResolution` is unrelated: it bounds how far the element's own size
@@ -346,11 +379,13 @@ describe('MuxMedia', () => {
 
   it('reloads when the playback id changes', async () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     media.source = { playbackId: 'abc123', preferPlayback: 'native' };
     await flushLoad();
 
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     media.source = { playbackId: 'xyz789', preferPlayback: 'native' };
@@ -361,12 +396,15 @@ describe('MuxMedia', () => {
 
   it('does not reload for an equivalent nested engine option', async () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     const hlsJs = { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } };
+
     media.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { hlsJs } };
     await flushLoad();
 
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     // Same values, new object identity all the way down — as React would hand it
@@ -384,6 +422,7 @@ describe('MuxMedia', () => {
 
   it('reloads when a nested engine option changes', async () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     media.source = {
       playbackId: 'abc123',
@@ -393,6 +432,7 @@ describe('MuxMedia', () => {
     await flushLoad();
 
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     media.source = {
@@ -407,11 +447,13 @@ describe('MuxMedia', () => {
 
   it('reloads when engine options change', async () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     media.source = { playbackId: 'abc123', preferPlayback: 'native' };
     await flushLoad();
 
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     media.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { hlsJs: { maxBufferLength: 60 } } };
@@ -423,6 +465,7 @@ describe('MuxMedia', () => {
   it('fires sourcechange when source is set', () => {
     const media = new MuxMedia();
     const onSourceChange = vi.fn(() => media.source);
+
     media.addEventListener('sourcechange', onSourceChange);
 
     media.source = { playbackId: 'abc123' };
@@ -439,9 +482,11 @@ describe('MuxMedia', () => {
   it('ignores the same source object', () => {
     const media = new MuxMedia();
     const source = { playbackId: 'abc123' };
+
     media.source = source;
 
     const onSourceChange = vi.fn();
+
     media.addEventListener('sourcechange', onSourceChange);
     media.source = source;
 
@@ -450,9 +495,11 @@ describe('MuxMedia', () => {
 
   it('announces a new source object even when it is equal', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123' };
 
     const onSourceChange = vi.fn();
+
     media.addEventListener('sourcechange', onSourceChange);
     media.source = { playbackId: 'abc123' };
 
@@ -461,11 +508,13 @@ describe('MuxMedia', () => {
 
   it('does not reload for a structurally equal source', async () => {
     const media = new MuxMedia();
+
     media.attach(document.createElement('video'));
     media.source = { playbackId: 'abc123', preferPlayback: 'native' };
     await flushLoad();
 
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     media.source = { playbackId: 'abc123', preferPlayback: 'native' };
@@ -481,6 +530,7 @@ describe('MuxMedia', () => {
 
   it('parses typed playback params from a Mux stream src', () => {
     const media = new MuxMedia();
+
     media.src = 'https://stream.mux.com/abc123.m3u8?asset_start_time=3&redundant_streams=true';
 
     expect(media.source).toEqual({
@@ -492,6 +542,7 @@ describe('MuxMedia', () => {
   it('fires sourcechange when a Mux stream src is parsed', () => {
     const media = new MuxMedia();
     const onSourceChange = vi.fn();
+
     media.addEventListener('sourcechange', onSourceChange);
 
     media.src = 'https://stream.mux.com/abc123.m3u8';
@@ -501,9 +552,11 @@ describe('MuxMedia', () => {
 
   it('fires sourcechange when a non-Mux src replaces another', () => {
     const media = new MuxMedia();
+
     media.src = 'https://example.com/a.m3u8';
 
     const onSourceChange = vi.fn();
+
     media.addEventListener('sourcechange', onSourceChange);
     media.src = 'https://example.com/b.m3u8';
 
@@ -513,9 +566,11 @@ describe('MuxMedia', () => {
 
   it('ignores a src that already describes the current source', () => {
     const media = new MuxMedia();
+
     media.source = { playbackId: 'abc123', poster: { time: 5 } };
 
     const onSourceChange = vi.fn();
+
     media.addEventListener('sourcechange', onSourceChange);
 
     // `<mux-video>` reflects the derived URL back to the host, so this has to be
@@ -534,6 +589,7 @@ describe('MuxMedia', () => {
       vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
 
       const media = new MuxMedia();
+
       media.attach(document.createElement('video'));
       return media;
     }
@@ -549,6 +605,7 @@ describe('MuxMedia', () => {
       });
 
       const fetchMock = vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4) }) as Response);
+
       vi.stubGlobal('fetch', fetchMock);
       return fetchMock;
     }
@@ -556,6 +613,7 @@ describe('MuxMedia', () => {
     async function setupNative(source: MuxSource) {
       const media = new MuxMedia();
       const video = document.createElement('video');
+
       video.setMediaKeys = async () => {};
       media.attach(video);
       media.source = { playbackId: 'abc123', preferPlayback: 'native', ...source };
@@ -563,13 +621,14 @@ describe('MuxMedia', () => {
       return { media, video };
     }
 
-    /** jsdom has no `MediaEncryptedEvent`; only these two fields are read. */
+    /** Jsdom has no `MediaEncryptedEvent`; only these two fields are read. */
     function fireEncrypted(video: HTMLVideoElement) {
       video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new ArrayBuffer(8) }));
     }
 
     it('configures the hls.js engine from a DRM token', async () => {
       const media = setupMse();
+
       media.source = { playbackId: 'abc123', playback: { token: PLAYBACK_TOKEN }, drm: { token: DRM_TOKEN } };
       await flushLoad();
 
@@ -588,6 +647,7 @@ describe('MuxMedia', () => {
 
     it('leaves EME alone without a DRM token', async () => {
       const media = setupMse();
+
       media.source = { playbackId: 'abc123' };
       await flushLoad();
 
@@ -596,6 +656,7 @@ describe('MuxMedia', () => {
 
     it('keeps the Mux token out of the source handed to the engine', async () => {
       const media = setupMse();
+
       media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
       await flushLoad();
 
@@ -636,6 +697,7 @@ describe('MuxMedia', () => {
 
     it('lets a license server named alongside the token replace the derived one', async () => {
       const media = setupMse();
+
       media.source = {
         playbackId: 'abc123',
         drm: { token: DRM_TOKEN, 'com.widevine.alpha': { licenseUrl: 'https://drm.example/widevine' } },
@@ -658,6 +720,7 @@ describe('MuxMedia', () => {
 
     it('lets an explicit hlsJs.drmSystems override the derived one', async () => {
       const media = setupMse();
+
       media.source = {
         playbackId: 'abc123',
         drm: { token: DRM_TOKEN },
@@ -674,10 +737,12 @@ describe('MuxMedia', () => {
 
     it('does not reload for an equivalent DRM token', async () => {
       const media = setupMse();
+
       media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
       await flushLoad();
 
       const loadstart = vi.fn();
+
       media.addEventListener('loadstart', loadstart);
 
       media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
@@ -688,10 +753,12 @@ describe('MuxMedia', () => {
 
     it('reloads when the DRM token changes', async () => {
       const media = setupMse();
+
       media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
       await flushLoad();
 
       const loadstart = vi.fn();
+
       media.addEventListener('loadstart', loadstart);
 
       media.source = { playbackId: 'abc123', drm: { token: fakeJwt({ aud: 'd', exp: 1 }) } };

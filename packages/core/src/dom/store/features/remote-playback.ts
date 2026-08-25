@@ -1,6 +1,7 @@
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '@videojs/media';
 import { isMediaRemotePlaybackCapable } from '@videojs/media';
 import { isWebKitAirPlayCapable, listen, type WebkitAvailabilityEvent } from '@videojs/utils/dom';
+
 import { definePlayerFeature } from '../../feature';
 import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import { isRemotePlaybackConnected, requestRemotePlayback } from '../../presentation/remote-playback';
@@ -13,10 +14,7 @@ export const remotePlaybackFeature = definePlayerFeature({
 
     async toggleRemotePlayback() {
       const { media, container } = target();
-
-      if (isRemotePlaybackConnected(media)) {
-        return requestRemotePlayback(media);
-      }
+      if (isRemotePlaybackConnected(media)) return requestRemotePlayback(media);
 
       if (isFullscreen(container, media)) {
         await exitFullscreen(media);
@@ -28,7 +26,6 @@ export const remotePlaybackFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaRemotePlaybackCapable(media)) return;
 
     // Safari's W3C `media.remote` events don't fire reliably for AirPlay
@@ -44,6 +41,7 @@ export const remotePlaybackFeature = definePlayerFeature({
 
       const syncAvailability = (event: Event) => {
         const { availability } = event as WebkitAvailabilityEvent;
+
         set({ remotePlaybackAvailability: availability === 'available' ? 'available' : 'unavailable' });
       };
 

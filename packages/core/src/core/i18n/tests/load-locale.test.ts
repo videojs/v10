@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { loadLocale } from '../load-locale';
 import { registerI18n, resetI18nRegistry } from '../registry';
@@ -16,33 +16,39 @@ describe('loadLocale', () => {
 
   it('loads shipped locale packs by tag', async () => {
     const es = await loadLocale('es');
+
     expect(es?.['buttons.play']).toBe('Reproducir');
   });
 
   it('loads alias tags', async () => {
     const pt = await loadLocale('pt');
+
     expect(pt?.['buttons.play']).toBeTruthy();
   });
 
   it('loads regional tags regardless of casing', async () => {
     const ptBr = await loadLocale('pt-br');
     const zhTw = await loadLocale('zh-TW');
+
     expect(ptBr?.['buttons.play']).toBeTruthy();
     expect(zhTw?.['buttons.play']).toBeTruthy();
   });
 
   it('loads regional tags via the locale lookup chain', async () => {
     const esMx = await loadLocale('es-MX');
+
     expect(esMx?.['buttons.play']).toBe('Reproducir');
   });
 
   it('loads Traditional Chinese for zh-Hant regional tags', async () => {
     const zhHantHk = await loadLocale('zh-Hant-HK');
+
     expect(zhHantHk?.['buttons.pause']).toBe('暫停');
   });
 
   it('loads packs when unicode locale extensions are present', async () => {
     const zhCn = await loadLocale('zh-CN-u-nu-hans');
+
     expect(zhCn?.['buttons.play']).toBeTruthy();
   });
 });

@@ -18,13 +18,16 @@ export interface ImportReplacement extends ImportReference {
 export function analyzeImports(source: string, fileName: string): ImportReference[] {
   const parsed = parseSync(fileName, source);
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
+
   const references: ImportReference[] = [];
 
   walk(parsed.program, {
     enter(node) {
       const reference = importReference(node);
       if (!reference) return;
+
       const { literal, kind } = reference;
+
       references.push({
         specifier: literal.value,
         kind,
@@ -41,6 +44,7 @@ export function analyzeImports(source: string, fileName: string): ImportReferenc
 /** Replace import specifiers while preserving all other authored source text. */
 export function replaceImportSpecifiers(source: string, replacements: readonly ImportReplacement[]): string {
   let output = source;
+
   for (const replacement of [...replacements].sort((left, right) => right.start - left.start)) {
     output =
       output.slice(0, replacement.start) +
@@ -49,6 +53,7 @@ export function replaceImportSpecifiers(source: string, replacements: readonly I
       replacement.quote +
       output.slice(replacement.end);
   }
+
   return output;
 }
 
@@ -66,29 +71,38 @@ function importReference(
       node.importKind === 'type' ||
       (node.specifiers.length > 0 &&
         node.specifiers.every((specifier) => specifier.type === 'ImportSpecifier' && specifier.importKind === 'type'));
+
     return { literal: node.source, kind: typeOnly ? 'type' : 'static' };
   }
+
   if (node.type === 'ExportNamedDeclaration' && node.source) {
     const typeOnly =
       node.exportKind === 'type' ||
       (node.specifiers.length > 0 && node.specifiers.every((specifier) => specifier.exportKind === 'type'));
+
     return { literal: node.source, kind: typeOnly ? 'type' : 'static' };
   }
+
   if (node.type === 'ExportAllDeclaration') {
     return { literal: node.source, kind: node.exportKind === 'type' ? 'type' : 'static' };
   }
+
   if (node.type === 'ImportExpression') {
     if (node.source.type === 'Literal' && typeof node.source.value === 'string') {
       return { literal: node.source, kind: 'dynamic' };
     }
+
     if (node.source.type === 'TemplateLiteral' && node.source.expressions.length === 0) {
       const value = node.source.quasis[0]?.value.cooked;
+
       if (value !== null && value !== undefined) {
         return { literal: { value, start: node.source.start, end: node.source.end }, kind: 'dynamic' };
       }
     }
   }
+
   if (node.type === 'TSImportType') return { literal: node.source, kind: 'type' };
+
   return undefined;
 }
 

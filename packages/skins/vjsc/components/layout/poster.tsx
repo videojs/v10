@@ -1,8 +1,9 @@
 import type { PosterProps as CoreProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import { type PropsWithChildren, Slot } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/poster.styles';
+import styles from '../../styles/layout/poster.styles';
 
 export function Poster({ children, className, src, ...props }: PropsWithChildren<CoreProps> = {}) {
   return (

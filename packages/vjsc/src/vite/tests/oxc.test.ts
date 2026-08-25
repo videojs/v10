@@ -1,7 +1,7 @@
 import MagicString from 'magic-string';
 import type { OutputAsset, OutputChunk, Plugin, RolldownOutput } from 'rolldown';
 import { build } from 'vite';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { viteOxcPlugin } from '../oxc';
 
@@ -19,6 +19,7 @@ describe('viteOxcPlugin', () => {
 
         usedFallback = meta.magicString instanceof MagicString;
         const start = code.indexOf(`'before'`);
+
         meta.magicString.overwrite(start, start + 8, `'after'`);
         return { code: meta.magicString };
       },
@@ -61,6 +62,38 @@ describe('viteOxcPlugin', () => {
     expect(sourceMap?.mappings).not.toBe('');
     expect(sourceMap?.sources.length).toBeGreaterThan(0);
   });
+
+  it('reports positioned transform errors against the authored source', async () => {
+    const transform: Plugin = {
+      name: 'vite-oxc-positioned-error',
+      transform(code, id) {
+        if (id !== ENTRY_ID) return null;
+
+        throw Object.assign(new Error('Failed to transform fixture.'), { pos: code.indexOf(`'before'`) });
+      },
+    };
+
+    await expect(
+      build({
+        configFile: false,
+        logLevel: 'silent',
+        plugins: [fixturePlugin(), viteOxcPlugin(transform)],
+        build: {
+          write: false,
+          rolldownOptions: { input: ENTRY_ID },
+        },
+      })
+    ).rejects.toMatchObject({
+      errors: [
+        expect.objectContaining({
+          plugin: 'vite-oxc-positioned-error',
+          id: ENTRY_ID,
+          loc: expect.objectContaining({ line: 1 }),
+          frame: expect.stringContaining(`globalThis.value = 'before';`),
+        }),
+      ],
+    });
+  });
 });
 
 function metadataProbe(record: (hasMetadata: boolean) => void): Plugin {
@@ -70,6 +103,7 @@ function metadataProbe(record: (hasMetadata: boolean) => void): Plugin {
       if (id === ENTRY_ID) {
         record('ast' in (options ?? {}) || 'magicString' in (options ?? {}));
       }
+
       return null;
     },
   };

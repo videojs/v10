@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { MediaError } from '../../../core/media-error';
 import type { RemotePlaybackLike } from '../../../core/types';
 import { addMediaComponent, type MediaComponent } from '../../media-host';
@@ -26,12 +27,15 @@ function fireNativeError(video: HTMLVideoElement, code: number, message = '') {
 
 function setup() {
   const video = document.createElement('video');
+
   document.body.appendChild(video);
 
   const media = new HlsJsMedia();
+
   media.attach(video);
 
   const handler = vi.fn();
+
   media.addEventListener('error', handler);
 
   media.source = { type: ContentTypes.M3U8, preferPlayback: 'native' };
@@ -50,6 +54,7 @@ describe('HlsJsMedia', () => {
       expect(handler).toHaveBeenCalledOnce();
 
       const event = handler.mock.calls[0]![0] as ErrorEvent;
+
       expect(event).toBeInstanceOf(ErrorEvent);
       expect(event.error).toBeInstanceOf(MediaError);
       expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);
@@ -72,6 +77,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
 
       const playHandler = vi.fn();
+
       media.addEventListener('play', playHandler);
 
       video.dispatchEvent(new Event('play'));
@@ -81,12 +87,15 @@ describe('HlsJsMedia', () => {
 
     it('forwards events added before load', () => {
       const video = document.createElement('video');
+
       document.body.appendChild(video);
 
       const media = new HlsJsMedia();
+
       media.attach(video);
 
       const pauseHandler = vi.fn();
+
       media.addEventListener('pause', pauseHandler);
 
       media.source = { type: ContentTypes.M3U8, preferPlayback: 'native' };
@@ -101,12 +110,15 @@ describe('HlsJsMedia', () => {
   describe('loadstart', () => {
     it('dispatches loadstart to listeners once per load', () => {
       const video = document.createElement('video');
+
       document.body.appendChild(video);
 
       const media = new HlsJsMedia();
+
       media.attach(video);
 
       const handler = vi.fn();
+
       media.addEventListener('loadstart', handler);
 
       media.load();
@@ -118,6 +130,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
 
       const handler = vi.fn();
+
       media.addEventListener('loadstart', handler);
 
       video.dispatchEvent(new Event('loadstart'));
@@ -134,6 +147,7 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       // New hls.js option values must recreate the engine to take effect.
@@ -163,6 +177,7 @@ describe('HlsJsMedia', () => {
 
       fireDurationChange(video, Infinity);
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       // Same option values in a new object (e.g. an inline React prop).
@@ -188,6 +203,7 @@ describe('HlsJsMedia', () => {
     it('derives src from source and fires sourcechange', () => {
       const media = new HlsJsMedia();
       const handler = vi.fn();
+
       media.addEventListener('sourcechange', handler);
 
       media.source = { src: 'https://example.com/video.m3u8' };
@@ -205,9 +221,11 @@ describe('HlsJsMedia', () => {
       vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
 
       const video = document.createElement('video');
+
       document.body.appendChild(video);
 
       const media = new HlsJsMedia();
+
       media.attach(video);
 
       media.src = 'https://example.com/video.mp4';
@@ -240,9 +258,11 @@ describe('HlsJsMedia', () => {
       vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
 
       const video = document.createElement('video');
+
       document.body.appendChild(video);
 
       const media = new HlsJsMedia();
+
       media.attach(video);
       media.source = { ...source, src: 'https://example.com/video.m3u8' };
       media.load();
@@ -266,6 +286,7 @@ describe('HlsJsMedia', () => {
 
     it('leaves EME alone when `source.drm` names nothing', () => {
       const { media } = setupMse({ drm: {} });
+
       expect(media.engine!.config.emeEnabled).toBe(false);
     });
 
@@ -308,6 +329,7 @@ describe('HlsJsMedia', () => {
 
     it('leaves EME disabled for unprotected playback', () => {
       const { media } = setupMse({});
+
       expect(media.engine!.config.emeEnabled).toBe(false);
     });
 
@@ -352,6 +374,7 @@ describe('HlsJsMedia', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const { media } = setup();
+
       media.source = { ...media.source, engine: { hlsJs: drmEngine } };
       media.load();
 
@@ -363,6 +386,7 @@ describe('HlsJsMedia', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const { media } = setup();
+
       // `source.drm` names FairPlay, but the escape hatch replaces it and does
       // not — so the field to go and look at is the escape hatch.
       media.source = {
@@ -378,9 +402,11 @@ describe('HlsJsMedia', () => {
     it('hands `source.drm` to the native delegate', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const requestMediaKeySystemAccess = vi.fn(() => new Promise<never>(() => {}));
+
       vi.stubGlobal('navigator', { ...navigator, requestMediaKeySystemAccess });
 
       const { media, video } = setup();
+
       // Every system named, as a source describing both paths would: the native
       // delegate takes the FairPlay entry and leaves the rest to an MSE engine.
       media.source = { ...media.source, drm };
@@ -397,6 +423,7 @@ describe('HlsJsMedia', () => {
 
     it('recreates the native delegate when `source.drm` changes', () => {
       const { media, video } = setup();
+
       media.source = { ...media.source, drm };
       media.load();
 
@@ -404,6 +431,7 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       media.source = { ...media.source, drm: { ...drm } };
@@ -421,9 +449,11 @@ describe('HlsJsMedia', () => {
     it('hands `nativeHls` to the native delegate', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const requestMediaKeySystemAccess = vi.fn(() => new Promise<never>(() => {}));
+
       vi.stubGlobal('navigator', { ...navigator, requestMediaKeySystemAccess });
 
       const { media, video } = setup();
+
       media.source = {
         ...media.source,
         engine: {
@@ -444,6 +474,7 @@ describe('HlsJsMedia', () => {
 
     it('recreates the native delegate when `nativeHls` changes', () => {
       const { media, video } = setup();
+
       media.source = {
         ...media.source,
         engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } } },
@@ -454,6 +485,7 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       media.source = {
@@ -475,6 +507,7 @@ describe('HlsJsMedia', () => {
 
       fireDurationChange(video, Infinity);
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       media.source = { ...media.source, engine: { nativeHls: { ...nativeHls } } };
@@ -492,6 +525,7 @@ describe('HlsJsMedia', () => {
       // Let any queued load settle, then tear the engines down, so no manifest
       // request outlives the test that started it.
       await Promise.resolve();
+
       while (built.length) built.pop()!.destroy();
     });
 
@@ -499,9 +533,11 @@ describe('HlsJsMedia', () => {
       vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
 
       const video = document.createElement('video');
+
       document.body.appendChild(video);
 
       const media = new HlsJsMedia();
+
       built.push(media);
       media.attach(video);
       media.source = { ...source, src: M3U8 };
@@ -511,11 +547,12 @@ describe('HlsJsMedia', () => {
     }
 
     /**
-     * Minimal stand-in for an `Hls` instance, enough to build the controller the
-     * element installed and ask it what the current policy resolves to.
+     * Minimal stand-in for an `Hls` instance, enough to build the controller the element installed and ask it what the
+     * current policy resolves to.
      */
     function probeEngine(levels: Array<{ width: number; height: number; bitrate: number }>) {
       const listeners = new Map<string, Array<{ fn: (...args: any[]) => void; ctx: unknown }>>();
+
       return {
         levels,
         autoLevelCapping: -1,
@@ -541,9 +578,8 @@ describe('HlsJsMedia', () => {
     /**
      * What the engine's installed cap controller resolves the policy to now.
      *
-     * The probe defaults to a viewport larger than the whole ladder, so the
-     * player-size ceiling never binds and a requested resolution is what is
-     * being measured. Pass a smaller one to measure the size cap itself.
+     * The probe defaults to a viewport larger than the whole ladder, so the player-size ceiling never binds and a
+     * requested resolution is what is being measured. Pass a smaller one to measure the size cap itself.
      */
     function cappedIndex(media: HlsJsMedia, playerSize = { width: 4096, height: 2160 }) {
       const engine = probeEngine(LADDER);
@@ -551,11 +587,13 @@ describe('HlsJsMedia', () => {
       const controller = new Controller(engine);
 
       const probeVideo = document.createElement('video');
+
       probeVideo.width = playerSize.width;
       probeVideo.height = playerSize.height;
       (engine as any).emit(Hls.Events.MEDIA_ATTACHING, { media: probeVideo });
 
       const index = controller.getMaxLevel(LADDER.length - 1);
+
       controller.destroy();
       return index;
     }
@@ -632,6 +670,7 @@ describe('HlsJsMedia', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const media = new HlsJsMedia();
+
       built.push(media);
       media.attach(document.createElement('video'));
       media.source = { src: M3U8, type: ContentTypes.M3U8, preferPlayback: 'native', maxAutoResolution: '720p' };
@@ -737,6 +776,7 @@ describe('HlsJsMedia', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const media = new HlsJsMedia();
+
       built.push(media);
       media.attach(document.createElement('video'));
       media.source = {
@@ -757,9 +797,11 @@ describe('HlsJsMedia', () => {
   describe('remote playback load', () => {
     function setupConnected(load: () => Promise<void>) {
       const video = document.createElement('video');
+
       document.body.appendChild(video);
 
       const media = new HlsJsMedia();
+
       media.attach(video);
 
       const component: MediaComponent = {
@@ -767,6 +809,7 @@ describe('HlsJsMedia', () => {
           return { remote: { state: 'connected' } as RemotePlaybackLike, load };
         },
       };
+
       addMediaComponent(media, component);
 
       return { media };
@@ -804,6 +847,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
 
       const playHandler = vi.fn();
+
       media.addEventListener('play', playHandler);
 
       video.dispatchEvent(new Event('play'));
@@ -820,11 +864,13 @@ describe('HlsJsMedia', () => {
   describe('property proxying', () => {
     it('proxies paused from the native element', () => {
       const { media } = setup();
+
       expect(media.paused).toBe(true);
     });
 
     it('proxies volume to the native element', () => {
       const { media, video } = setup();
+
       media.volume = 0.5;
       expect(video.volume).toBe(0.5);
     });
@@ -833,6 +879,7 @@ describe('HlsJsMedia', () => {
   describe('streamType', () => {
     it('defaults to `unknown` before load', () => {
       const media = new HlsJsMedia();
+
       expect(media.streamType).toBe('unknown');
     });
 
@@ -840,6 +887,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       fireDurationChange(video, Infinity);
@@ -852,6 +900,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       fireDurationChange(video, 120);
@@ -864,6 +913,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       fireDurationChange(video, 120);
@@ -876,6 +926,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       fireDurationChange(video, Infinity);
@@ -901,6 +952,7 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
 
       const seen: string[] = [];
+
       media.addEventListener('streamtypechange', () => {
         seen.push(media.streamType);
       });
@@ -917,6 +969,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       media.streamType = 'live';
@@ -943,6 +996,7 @@ describe('HlsJsMedia', () => {
     it('dispatches `streamtypechange` when set before a delegate exists', () => {
       const media = new HlsJsMedia();
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       media.streamType = 'live';
@@ -957,6 +1011,7 @@ describe('HlsJsMedia', () => {
       media.streamType = 'live';
 
       const handler = vi.fn();
+
       media.addEventListener('streamtypechange', handler);
 
       media.load();
@@ -997,12 +1052,14 @@ describe('HlsJsMedia', () => {
   describe('live edge', () => {
     it('defaults to `NaN` for both values before load', () => {
       const media = new HlsJsMedia();
+
       expect(media.liveEdgeStart).toBeNaN();
       expect(media.targetLiveWindow).toBeNaN();
     });
 
     it('forwards `NaN` from the native delegate', () => {
       const { media } = setup();
+
       expect(media.liveEdgeStart).toBeNaN();
       expect(media.targetLiveWindow).toBeNaN();
     });
@@ -1021,14 +1078,17 @@ describe('HlsJsMedia', () => {
 describe('NativeHlsMedia streamType', () => {
   function setupNative() {
     const video = document.createElement('video');
+
     document.body.appendChild(video);
     const media = new NativeHlsMedia();
+
     media.attach(video);
     return { media, video };
   }
 
   it('defaults to `unknown`', () => {
     const media = new NativeHlsMedia();
+
     expect(media.streamType).toBe('unknown');
   });
 
@@ -1036,6 +1096,7 @@ describe('NativeHlsMedia streamType', () => {
     const { media, video } = setupNative();
 
     const handler = vi.fn();
+
     media.addEventListener('streamtypechange', handler);
 
     fireDurationChange(video, Infinity);

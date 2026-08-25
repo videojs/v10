@@ -24,6 +24,7 @@ export function callKeyDownHandler<T extends HTMLElement>(
 
   let defaultPreventedByHandler = false;
   const preventDefault = event.preventDefault;
+
   event.preventDefault = () => {
     defaultPreventedByHandler = true;
     preventDefault.call(event);

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { containsComposed } from '../tree';
 
@@ -8,6 +8,7 @@ describe('tree', () => {
     const host = document.createElement('div');
     const shadow = host.attachShadow({ mode: 'open' });
     const button = document.createElement('button');
+
     shadow.append(button);
     container.append(host);
     document.body.append(container);
@@ -19,6 +20,7 @@ describe('tree', () => {
   it('returns false for elements outside the composed tree', () => {
     const container = document.createElement('div');
     const button = document.createElement('button');
+
     document.body.append(container, button);
 
     expect(containsComposed(container, button)).toBe(false);

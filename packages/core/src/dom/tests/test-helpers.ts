@@ -1,5 +1,5 @@
-import type { SliderState } from '../../core/ui/slider/slider-core';
-import type { TimeSliderState } from '../../core/ui/time-slider/time-slider-core';
+import type { SliderState } from '../../core/ui/slider/core';
+import type { TimeSliderState } from '../../core/ui/time-slider/core';
 
 // ---------------------------------------------------------------------------
 // Mock Video
@@ -22,9 +22,8 @@ interface MockVideoOverrides {
 /**
  * Create an `HTMLVideoElement` with overridable properties.
  *
- * Readonly properties (`paused`, `ended`, `readyState`, `duration`, `currentSrc`,
- * `buffered`, `seekable`) are set via `Object.defineProperty`.
- * Writable properties (`currentTime`, `volume`, `muted`, `src`) are assigned directly.
+ * Readonly properties (`paused`, `ended`, `readyState`, `duration`, `currentSrc`, `buffered`, `seekable`) are set via
+ * `Object.defineProperty`. Writable properties (`currentTime`, `volume`, `muted`, `src`) are assigned directly.
  */
 export function createMockVideo(overrides: MockVideoOverrides = {}): HTMLVideoElement {
   const video = document.createElement('video');
@@ -46,8 +45,11 @@ export function createMockVideo(overrides: MockVideoOverrides = {}): HTMLVideoEl
   }
 
   if (overrides.currentTime !== undefined) video.currentTime = overrides.currentTime;
+
   if (overrides.volume !== undefined) video.volume = overrides.volume;
+
   if (overrides.muted !== undefined) video.muted = overrides.muted;
+
   if (overrides.src !== undefined) video.src = overrides.src;
 
   return video;
@@ -63,16 +65,14 @@ export function createTimeRanges(ranges: Array<[number, number]>): TimeRanges {
     length: ranges.length,
     start(index: number): number {
       const range = ranges[index];
-      if (index < 0 || index >= ranges.length || !range) {
-        throw new DOMException('Index out of range', 'IndexSizeError');
-      }
+      if (index < 0 || index >= ranges.length || !range) throw new DOMException('Index out of range', 'IndexSizeError');
+
       return range[0];
     },
     end(index: number): number {
       const range = ranges[index];
-      if (index < 0 || index >= ranges.length || !range) {
-        throw new DOMException('Index out of range', 'IndexSizeError');
-      }
+      if (index < 0 || index >= ranges.length || !range) throw new DOMException('Index out of range', 'IndexSizeError');
+
       return range[1];
     },
   };

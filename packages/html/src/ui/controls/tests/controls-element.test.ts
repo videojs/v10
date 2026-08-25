@@ -3,17 +3,19 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
 import { createStore, flush } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
 import { MenuElement } from '../../menu/menu-element';
 import { PopoverElement } from '../../popover/popover-element';
 import { TooltipElement } from '../../tooltip/tooltip-element';
 import { UIElement } from '../../ui-element';
+import { ControlsBackdropElement } from '../controls-backdrop-element';
 import { ControlsElement } from '../controls-element';
 
 function ensureCustomElementDefined(Constructor: CustomElementConstructor & { readonly tagName: string }): void {
   const { tagName } = Constructor;
+
   if (!customElements.get(tagName)) {
     customElements.define(tagName, Constructor);
   }
@@ -64,7 +66,6 @@ class TestPlayerProviderElement extends UIElement {
 
   setVisible(visible: boolean): void {
     const state = this.store.state as MediaControlsState;
-
     if (state.controlsVisible === visible) return;
 
     state.toggleControls();
@@ -167,8 +168,10 @@ describe('ControlsElement', () => {
     const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
     const controls = createDefinedElement(ControlsElement);
     const withoutClose = document.createElement('div');
+
     withoutClose.setAttribute(POPUP_HOST_ATTR, '');
     const wrongClose = document.createElement('div');
+
     wrongClose.setAttribute(POPUP_HOST_ATTR, '');
     Object.assign(wrongClose, { close: 'not-callable' });
 
@@ -179,5 +182,30 @@ describe('ControlsElement', () => {
     await controls.updateComplete;
 
     expect(() => provider.setVisible(false)).not.toThrow();
+  });
+});
+
+describe('ControlsBackdropElement', () => {
+  it('has the correct tag name', () => {
+    expect(ControlsBackdropElement.tagName).toBe('media-controls-backdrop');
+  });
+
+  it('is presentational and receives controls state attributes', async () => {
+    const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
+    const controls = createDefinedElement(ControlsElement);
+    const backdrop = createDefinedElement(ControlsBackdropElement);
+
+    controls.append(backdrop);
+
+    document.body.append(provider);
+    provider.append(controls);
+    await controls.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(backdrop.getAttribute('role')).toBe('presentation');
+      expect(backdrop.getAttribute('aria-hidden')).toBe('true');
+      expect(backdrop.hasAttribute('data-visible')).toBe(true);
+      expect(backdrop.hasAttribute('data-user-active')).toBe(true);
+    });
   });
 });

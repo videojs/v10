@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { getPositionedSide } from '../popover';
 
 function makeDOMRect(x: number, y: number, width: number, height: number): DOMRect {

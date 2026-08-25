@@ -18,7 +18,7 @@ Read the relevant core contract, nearest React component and tests, public expor
 7. Preserve the default semantic element while allowing deliberate replacement through `render`. Ensure omitted parts and unsupported features do not leave hidden behavior or required markup behind.
 8. Export compound APIs as tree-shakeable ESM namespaces with `export * as Name from './index.parts'`; keep parts as direct re-exports and do not assemble a runtime namespace object. Avoid pulling optional dependencies into unrelated imports. Add focused tests for rendered behavior, ref/prop composition, context boundaries, and customization.
 
-Use `packages/react/src/ui/create-media-button.tsx`, `packages/react/src/utils/use-render.tsx`, and `packages/react/src/ui/slider/index.parts.ts` as implementation anchors. Check `packages/react/package.json` and `packages/react/tsdown.config.ts` when the public or bundle boundary changes.
+Use `packages/react/src/ui/create-media-button.tsx`, `packages/react/src/utils/use-render.tsx`, and `packages/react/src/ui/slider/index.parts.ts` as implementation anchors. Check `packages/react/package.json` and `packages/react/vite.config.ts` when the public or bundle boundary changes.
 
 ## Example
 

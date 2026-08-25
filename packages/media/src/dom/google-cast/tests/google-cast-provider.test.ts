@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { addMediaComponent, type HTMLMediaTargetLike } from '../../media-host';
 import { HTMLVideoElementHost } from '../../video-host';
 import { GoogleCastProvider } from '../google-cast-provider';
@@ -7,6 +8,7 @@ import { ensureCastFramework } from '../registry';
 
 vi.mock('../registry', async (importOriginal) => {
   const original = await importOriginal<typeof import('../registry')>();
+
   return {
     ...original,
     ensureCastFramework: vi.fn(() => Promise.resolve({} as typeof cast.framework)),
@@ -21,6 +23,7 @@ function createTarget(disableRemotePlayback = false) {
     textTracks,
     disableRemotePlayback,
   }) as unknown as HTMLMediaTargetLike;
+
   return { target, textTracks };
 }
 
@@ -103,6 +106,7 @@ describe('GoogleCast', () => {
 
     const host = new HTMLVideoElementHost();
     const { target } = createTarget();
+
     host.attach(target as Parameters<HTMLVideoElementHost['attach']>[0]);
 
     addMediaComponent(host, new GoogleCast());
@@ -119,6 +123,7 @@ describe('GoogleCast', () => {
     vi.stubGlobal('chrome', {});
 
     const host = new HTMLVideoElementHost();
+
     addMediaComponent(host, new GoogleCast());
 
     void host.remote;

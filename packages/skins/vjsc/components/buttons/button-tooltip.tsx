@@ -1,14 +1,17 @@
 import type { TooltipProps } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import type { PropsWithChildren, VjscElement } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
-import styles from '../../styles/components/popup.styles';
+import popupStyles from '../../styles/popups/popup.styles';
+import styles from '../../styles/popups/tooltip.styles';
+import surfaceStyles from '../../styles/surfaces/surface.styles';
 
 export function ButtonTooltip({ children, ...props }: PropsWithChildren<TooltipProps> & { children: VjscElement }) {
   return (
     <$.Tooltip.Root {...props}>
       <$.Tooltip.Trigger>{children}</$.Tooltip.Trigger>
-      <$.Tooltip.Popup className={[styles.surface, styles.tooltip]}>
+      <$.Tooltip.Popup className={[popupStyles.root, popupStyles.transition, surfaceStyles.root, styles.popup]}>
         <$.Tooltip.Label />
         <$.Tooltip.Shortcut className={styles.shortcut} />
       </$.Tooltip.Popup>

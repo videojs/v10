@@ -101,34 +101,46 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
       protected override willUpdate(changed: PropertyValues): void {
         super.willUpdate(changed);
         const locale = resolveProviderLocale(this);
+
         if (this.#resolvedLocaleForLazy !== locale) {
           const hadLocale = this.#resolvedLocaleForLazy !== undefined;
+
           this.#resolvedLocaleForLazy = locale;
           const localeDriftedBeforeFirstPaint =
             !hadLocale && this.#lazyResetStartedForLocale !== undefined && locale !== this.#lazyResetStartedForLocale;
+
           if (hadLocale || localeDriftedBeforeFirstPaint) {
             this.#resetLazyAndLoad();
           }
         }
+
         this.#syncDirection(locale);
         this.#publish();
       }
 
       #resetLazyAndLoad(): void {
         const localeSnapshot = resolveProviderLocale(this);
+
         this.#lazyResetStartedForLocale = localeSnapshot;
         this.#lazySeq += 1;
         const seq = this.#lazySeq;
+
         this.#lazyLayer = {};
         void (async () => {
           const { merged, loadedTags } = await mergeLocaleOverlays(localeSnapshot, loader, findLocaleKeys);
+
           if (seq !== this.#lazySeq) return;
+
           if (shouldAttemptBrowserTranslation(localeSnapshot, loadedTags, merged)) {
             const browser = await getBrowserTranslations(localeSnapshot);
+
             if (seq !== this.#lazySeq) return;
+
             if (Object.keys(browser).length) registerI18n(localeSnapshot, browser);
           }
+
           if (seq !== this.#lazySeq) return;
+
           this.#lazyLayer = merged;
           this.requestUpdate();
         })();
@@ -144,6 +156,7 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
 
         if (!this.lang.trim()) {
           if (isDerived) this.dir = '';
+
           this.#derivedDirection = undefined;
           return;
         }
@@ -154,12 +167,15 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
         }
 
         const direction = getTextDirection(locale);
+
         this.#derivedDirection = direction;
+
         if (this.dir !== direction) this.dir = direction;
       }
 
       #publish(): void {
         const locale = this.#resolvedLocale();
+
         if (
           this.#publishedLocale === locale &&
           this.#publishedRegistryEpoch === this.#registryEpoch &&
@@ -167,12 +183,14 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
         ) {
           return;
         }
+
         const registryLayer = getI18nTranslations(locale);
         const translations: FlatTranslations = {
           ...this.#lazyLayer,
           ...registryLayer,
         };
         const translator = createTranslator(translations, locale);
+
         this.#i18nValue = { translator, locale };
         this.#publishedLocale = locale;
         this.#publishedRegistryEpoch = this.#registryEpoch;

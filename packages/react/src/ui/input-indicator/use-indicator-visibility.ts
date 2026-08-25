@@ -17,6 +17,7 @@ export function useIndicatorVisibility(close: () => void): () => void {
     if (!container) return;
 
     const coordinator = getIndicatorVisibilityCoordinator(container);
+
     coordinatorRef.current = coordinator;
 
     return coordinator.register(handle);

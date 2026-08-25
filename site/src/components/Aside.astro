@@ -13,10 +13,7 @@ type Props = {
 };
 
 const { type, title, class: className } = Astro.props;
-
-if (!['note', 'tip', 'caution', 'danger'].includes(type)) {
-  throw new Error(`Invalid aside type: ${type}`);
-}
+if (!['note', 'tip', 'caution', 'danger'].includes(type)) throw new Error(`Invalid aside type: ${type}`);
 
 const icons: Record<AsideType, typeof Info> = {
   note: Info,

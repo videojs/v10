@@ -5,11 +5,18 @@
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
-      "@videojs/react/video": ["../react/src/presets/video/index.ts"]
+      "@videojs/react/video": ["../react/src/presets/video/index.ts"],
+      "vjsc/*": ["../vjsc/src/*"]
     },
     "types": ["node"],
     "declarationDir": "types"
   },
-  "include": ["src", "dev", "vjsc/*.ts", "vjsc/target", "vite.config.ts"],
-  "references": [{ "path": "../core" }, { "path": "../html" }, { "path": "../icons" }, { "path": "../react" }]
+  "include": ["src", "dev", "vjsc/*.ts", "vjsc/target"],
+  "references": [
+    { "path": "../core" },
+    { "path": "../html" },
+    { "path": "../icons" },
+    { "path": "../react" },
+    { "path": "../vjsc" }
+  ]
 }

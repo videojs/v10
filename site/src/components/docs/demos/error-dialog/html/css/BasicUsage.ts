@@ -9,6 +9,7 @@ document.querySelectorAll<HTMLElement>('.html-error-dialog-basic').forEach((demo
 
   trigger?.addEventListener('click', () => {
     if (!video) return;
+
     video.src = brokenSource;
     video.load();
   });

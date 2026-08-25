@@ -1,5 +1,5 @@
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { componentMetaPlugin, readComponentMeta, readComponentSource } from '../component-meta';
 import { componentSourcePlugin } from '../component-source';
@@ -46,7 +46,6 @@ async function build(source: string): Promise<{ code: string; meta: unknown }> {
   });
   const output = await bundle.generate({ format: 'es' });
   const chunk = output.output.find((item): item is OutputChunk => item.type === 'chunk');
-
   if (!chunk) throw new Error('Fixture build did not emit a chunk.');
 
   return { code: chunk.code, meta };

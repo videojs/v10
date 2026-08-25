@@ -1,5 +1,5 @@
 import { flush } from '@videojs/store';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { UIKeyboardEvent, UIPointerEvent } from '../event';
 import { createSlider, type SliderApi, type SliderOptions } from '../slider';
@@ -172,6 +172,7 @@ describe('createSlider', () => {
 
     it('focuses thumb element when getThumbElement is provided', () => {
       const thumb = document.createElement('div');
+
       thumb.focus = vi.fn();
 
       const slider = createSlider(createOptions({ getThumbElement: () => thumb }));
@@ -187,6 +188,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions());
 
       const event = pointerEvent();
+
       slider.rootProps.onPointerDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -198,6 +200,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ isDisabled: () => true }));
 
       const event = pointerEvent();
+
       slider.rootProps.onPointerDown(event);
 
       expect(event.preventDefault).not.toHaveBeenCalled();
@@ -502,6 +505,7 @@ describe('createSlider', () => {
       );
 
       const event = keyboardEvent('ArrowRight');
+
       slider.thumbProps.onKeyDown(event);
 
       expect(onValueChange).toHaveBeenCalledWith(51);
@@ -638,6 +642,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions());
 
       const event = keyboardEvent('ArrowRight');
+
       slider.thumbProps.onKeyDown(event);
 
       expect(event.preventDefault).toHaveBeenCalled();
@@ -650,6 +655,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ onValueChange }));
 
       const event = keyboardEvent('Tab');
+
       slider.thumbProps.onKeyDown(event);
 
       expect(event.preventDefault).not.toHaveBeenCalled();
@@ -693,6 +699,7 @@ describe('createSlider', () => {
   describe('keyboard in an RTL document', () => {
     it('keeps ArrowRight increasing', () => {
       const onValueChange = vi.fn();
+
       document.documentElement.dir = 'rtl';
       const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
 
@@ -705,6 +712,7 @@ describe('createSlider', () => {
 
     it('keeps ArrowLeft decreasing', () => {
       const onValueChange = vi.fn();
+
       document.documentElement.dir = 'rtl';
       const slider = createSlider(createOptions({ getPercent: () => 50, getStepPercent: () => 1, onValueChange }));
 
@@ -717,6 +725,7 @@ describe('createSlider', () => {
 
     it('keeps ArrowUp and ArrowDown unchanged', () => {
       const onValueChange = vi.fn();
+
       document.documentElement.dir = 'rtl';
       const slider = createSlider(
         createOptions({
@@ -743,6 +752,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ isDisabled: () => true, onValueChange }));
 
       const arrowEvent = keyboardEvent('ArrowRight');
+
       slider.thumbProps.onKeyDown(arrowEvent);
 
       expect(onValueChange).not.toHaveBeenCalled();
@@ -755,6 +765,7 @@ describe('createSlider', () => {
       const slider = createSlider(createOptions({ isDisabled: () => true }));
 
       const tabEvent = keyboardEvent('Tab');
+
       slider.thumbProps.onKeyDown(tabEvent);
 
       expect(tabEvent.preventDefault).not.toHaveBeenCalled();
@@ -818,6 +829,7 @@ describe('createSlider', () => {
   describe('pointer in an RTL document', () => {
     it('keeps horizontal percent chronological', () => {
       const el = createMockElement({ left: 0, width: 200 });
+
       el.dir = 'rtl';
       const slider = createSlider(createOptions({ getElement: () => el }));
 

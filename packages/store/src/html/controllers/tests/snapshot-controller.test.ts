@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { createState, flush } from '../../../core/state';
 import { createTestHost } from '../../tests/test-utils';
@@ -15,6 +15,7 @@ describe('SnapshotController', () => {
       const host = createTestHost();
 
       const controller = new SnapshotController(host, state);
+
       document.body.appendChild(host);
 
       expect(controller.value).toEqual({ volume: 0.8, muted: false });
@@ -44,6 +45,7 @@ describe('SnapshotController', () => {
       const host = createTestHost();
 
       const controller = new SnapshotController(host, state, (s) => s.volume);
+
       document.body.appendChild(host);
 
       expect(controller.value).toBe(0.7);
@@ -54,6 +56,7 @@ describe('SnapshotController', () => {
       const host = createTestHost();
 
       const controller = new SnapshotController(host, state, (s) => s.volume);
+
       document.body.appendChild(host);
 
       expect(controller.value).toBe(1);
@@ -107,6 +110,7 @@ describe('SnapshotController', () => {
       const host = createTestHost();
 
       const controller = new SnapshotController(host, state, (s) => s.volume);
+
       document.body.appendChild(host);
 
       expect(controller.value).toBe(1);
@@ -130,6 +134,7 @@ describe('SnapshotController', () => {
       const host = createTestHost();
 
       const controller = new SnapshotController(host, state1, (s) => s.volume);
+
       document.body.appendChild(host);
 
       expect(controller.value).toBe(1);
@@ -145,6 +150,7 @@ describe('SnapshotController', () => {
       const host = createTestHost();
 
       const controller = new SnapshotController(host, state1, (s) => s.volume);
+
       document.body.appendChild(host);
 
       await Promise.resolve();

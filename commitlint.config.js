@@ -5,6 +5,7 @@ export default {
     /** @param {string} message */
     (message) => {
       const lower = message.toLowerCase().trim();
+
       return ['wip'].some((word) => lower.startsWith(word));
     },
   ],

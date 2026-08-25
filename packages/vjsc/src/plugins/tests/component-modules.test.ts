@@ -4,7 +4,7 @@ import { basename, join } from 'node:path';
 
 import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { moduleFilename } from '../../utils/module-id';
 import { componentModulesPlugin } from '../component-modules';
@@ -15,6 +15,7 @@ describe('componentModulesPlugin', () => {
     const entry = join(root, 'entry.tsx');
     const child = join(root, 'child.tsx');
     const model = join(root, 'model.ts');
+
     writeFileSync(
       entry,
       `import { Child } from './child'; import type { Label } from './model'; export const Entry = ({ label }: { label: Label }) => <Child>{label}</Child>;`
@@ -45,8 +46,11 @@ describe('componentModulesPlugin', () => {
 
     await bundle.generate({ format: 'es' });
 
-    expect(
-      transformed.filter((id) => id.includes('?style=tailwind&target=react')).map((id) => basename(moduleFilename(id)))
-    ).toEqual(expect.arrayContaining(['entry.tsx', 'child.tsx', 'model.ts']));
+    const selected = transformed
+      .filter((id) => id.includes('?style=tailwind&target=react'))
+      .map((id) => basename(moduleFilename(id)));
+
+    expect(selected).toEqual(expect.arrayContaining(['entry.tsx', 'child.tsx']));
+    expect(selected).not.toContain('model.ts');
   });
 });

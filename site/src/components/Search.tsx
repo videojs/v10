@@ -1,5 +1,6 @@
 import { DocSearch } from '@docsearch/react';
 import { useStore } from '@nanostores/react';
+
 import { GITHUB_REPO_URL } from '@/consts';
 import {
   DOCSEARCH_API_KEY,

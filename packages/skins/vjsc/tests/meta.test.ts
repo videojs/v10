@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { skinStyles } from '../meta';
 import { meta as defaultVideo } from '../skins/default-video/skin';
 import { meta as minimalVideo } from '../skins/minimal-video/skin';

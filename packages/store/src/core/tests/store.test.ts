@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { combine } from '../combine';
 import { defineSlice } from '../slice';
@@ -73,11 +73,13 @@ describe('store', () => {
     it('exposes $state container matching store.state', () => {
       const store = createStore<MockMedia>()(audioSlice);
       const media = new MockMedia();
+
       store.attach(media);
 
       expect(store.$state.current).toBe(store.state);
 
       const callback = vi.fn();
+
       store.$state.subscribe(callback);
 
       media.volume = 0.5;
@@ -111,6 +113,7 @@ describe('store', () => {
       const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
+
       media.volume = 0.5;
       media.muted = true;
 
@@ -125,6 +128,7 @@ describe('store', () => {
       const store = createStore<MockMedia>()(audioSlice, { onAttach });
 
       const media = new MockMedia();
+
       store.attach(media);
 
       expect(onAttach).toHaveBeenCalledWith({
@@ -152,6 +156,7 @@ describe('store', () => {
       const removeListenerSpy = vi.spyOn(media, 'removeEventListener');
 
       const detach = store.attach(media);
+
       detach();
 
       expect(store.target).toBeNull();
@@ -182,6 +187,7 @@ describe('store', () => {
       const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
+
       store.attach(media);
 
       store.setVolume(0.5);
@@ -201,9 +207,11 @@ describe('store', () => {
       const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
+
       store.attach(media);
 
       const listener = vi.fn();
+
       store.subscribe(listener);
 
       store.setVolume(0.5);
@@ -217,10 +225,12 @@ describe('store', () => {
       const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
+
       store.attach(media);
 
       const listener = vi.fn();
       const unsubscribe = store.subscribe(listener);
+
       unsubscribe();
 
       store.setVolume(0.5);
@@ -233,10 +243,12 @@ describe('store', () => {
       const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
+
       store.attach(media);
 
       const listener = vi.fn();
       const controller = new AbortController();
+
       store.subscribe(listener, { signal: controller.signal });
 
       controller.abort();
@@ -307,9 +319,11 @@ describe('store', () => {
 
     it('keeps lower-precedence source state live without publishing an unchanged public snapshot', () => {
       const store = createStore<MockMedia>()(responsiveSlice);
+
       store.setValue('user');
       flush();
       const listener = vi.fn();
+
       store.subscribe(listener);
       const publicSnapshot = store.state;
 
@@ -329,6 +343,7 @@ describe('store', () => {
 
     it('resets attachment state on detach while preserving declared source keys', () => {
       const store = createStore<MockMedia>()(responsiveSlice);
+
       store.setValue('user');
       const detach = store.attach(new MockMedia());
 
@@ -353,12 +368,14 @@ describe('store', () => {
           doubled: ({ get }) => {
             const { value } = get();
             if (value < 0) throw new Error('invalid value');
+
             return value * 2;
           },
         },
       });
       const store = createStore<MockMedia>()(throwingSlice);
       const listener = vi.fn();
+
       store.subscribe(listener);
 
       expect(() => store.setValue(-1)).toThrow('invalid value');
@@ -375,6 +392,7 @@ describe('store', () => {
       const store = createStore<MockMedia>()(audioSlice);
 
       const media = new MockMedia();
+
       store.attach(media);
       store.destroy();
 
@@ -384,6 +402,7 @@ describe('store', () => {
 
     it('throws on attach after destroy', () => {
       const store = createStore<MockMedia>()(audioSlice);
+
       store.destroy();
 
       expect(() => store.attach(new MockMedia())).toThrow();
@@ -401,17 +420,20 @@ describe('store', () => {
           doubled: ({ get }) => {
             const { value } = get();
             if (value < 0) throw invalidValueError;
+
             return value * 2;
           },
         },
         attach({ target, signal, set }) {
           const sync = () => set({ value: target.volume });
+
           target.addEventListener('volumechange', sync);
           signal.addEventListener('abort', () => target.removeEventListener('volumechange', sync));
         },
       });
       const store = createStore<MockMedia>()(slice, { onError });
       const media = new MockMedia();
+
       store.attach(media);
       store.subscribe(listener);
       const snapshot = store.state;
@@ -455,6 +477,7 @@ describe('store', () => {
       });
 
       const store = createStore<MockMedia>()(slice);
+
       store.attach(new MockMedia());
 
       const sig = store.getBase();
@@ -474,6 +497,7 @@ describe('store', () => {
       const detach = store.attach(new MockMedia());
 
       const sig = store.getBase();
+
       expect(sig.aborted).toBe(false);
 
       detach();
@@ -489,9 +513,11 @@ describe('store', () => {
       });
 
       const store = createStore<MockMedia>()(slice);
+
       store.attach(new MockMedia());
 
       const sig = store.getBase();
+
       expect(sig.aborted).toBe(false);
 
       store.attach(new MockMedia()); // Reattach
@@ -507,6 +533,7 @@ describe('store', () => {
       });
 
       const store = createStore<MockMedia>()(slice);
+
       store.attach(new MockMedia());
 
       const sig = store.supersede('test');
@@ -523,6 +550,7 @@ describe('store', () => {
       });
 
       const store = createStore<MockMedia>()(slice);
+
       store.attach(new MockMedia());
 
       const sig1 = store.supersede('seek');
@@ -543,6 +571,7 @@ describe('store', () => {
       const detach = store.attach(new MockMedia());
 
       const sig = store.supersede('test');
+
       expect(sig.aborted).toBe(false);
 
       detach();
@@ -560,6 +589,7 @@ describe('store', () => {
       });
 
       const store = createStore<MockMedia>()(slice);
+
       store.attach(new MockMedia());
 
       const base = store.getBase();

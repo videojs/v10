@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { applyZeroFactor, calculateAlpha, calculateEwma } from '../ewma';
 
 describe('calculateAlpha', () => {
@@ -6,12 +7,14 @@ describe('calculateAlpha', () => {
     // alpha = exp(ln(0.5) / halfLife)
     // For halfLife = 2: alpha ≈ 0.7071
     const alpha = calculateAlpha(2);
+
     expect(alpha).toBeCloseTo(Math.SQRT1_2, 4);
   });
 
   it('should calculate correct alpha for 5-second half-life', () => {
     // For halfLife = 5: alpha ≈ 0.8706
     const alpha = calculateAlpha(5);
+
     expect(alpha).toBeCloseTo(0.8706, 4);
   });
 
@@ -19,23 +22,27 @@ describe('calculateAlpha', () => {
     // Shorter half-life = faster decay = smaller alpha
     const shortAlpha = calculateAlpha(1);
     const longAlpha = calculateAlpha(10);
+
     expect(shortAlpha).toBeLessThan(longAlpha);
   });
 
   it('should produce alpha between 0 and 1', () => {
     const alpha = calculateAlpha(5);
+
     expect(alpha).toBeGreaterThan(0);
     expect(alpha).toBeLessThan(1);
   });
 
   it('should handle very short half-life', () => {
     const alpha = calculateAlpha(0.1);
+
     expect(alpha).toBeGreaterThan(0);
     expect(alpha).toBeLessThan(1);
   });
 
   it('should handle very long half-life', () => {
     const alpha = calculateAlpha(100);
+
     expect(alpha).toBeGreaterThan(0);
     expect(alpha).toBeLessThan(1);
     expect(alpha).toBeCloseTo(1, 1); // Should be very close to 1
@@ -58,6 +65,7 @@ describe('calculateEwma', () => {
     // Manual calculation: adjAlpha = alpha^weight
     const adjAlpha = alpha ** weight;
     const expected = 2_000_000 * (1 - adjAlpha) + adjAlpha * 1_000_000;
+
     expect(result).toBeCloseTo(expected, 2);
   });
 
@@ -129,6 +137,7 @@ describe('calculateEwma', () => {
 
   it('should return NaN for invalid inputs gracefully', () => {
     const result = calculateEwma(NaN, 1_000_000, 1, 2);
+
     expect(result).toBeNaN();
   });
 });
@@ -172,6 +181,7 @@ describe('applyZeroFactor', () => {
 
     // With high weight, correction should be minimal
     const ratio = corrected / uncorrected;
+
     expect(ratio).toBeCloseTo(1, 1);
   });
 
@@ -214,12 +224,14 @@ describe('applyZeroFactor', () => {
 
   it('should handle very small totalWeight', () => {
     const result = applyZeroFactor(1_000_000, 0.001, 2);
+
     expect(result).toBeGreaterThan(0);
     expect(Number.isFinite(result)).toBe(true);
   });
 
   it('should handle very large totalWeight', () => {
     const result = applyZeroFactor(1_000_000, 1000, 2);
+
     expect(result).toBeGreaterThan(0);
     expect(Number.isFinite(result)).toBe(true);
   });

@@ -1,5 +1,5 @@
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { DialogCloseElement } from '../../dialog/dialog-close-element';
@@ -15,6 +15,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-el');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -81,6 +82,7 @@ describe('ErrorDialogElement', () => {
     ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
 
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
     const el = createElement(ErrorDialogElement);
     const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
@@ -110,11 +112,13 @@ describe('ErrorDialogElement', () => {
     ensureDefined(DialogCloseElement.tagName, DialogCloseElement);
 
     const provider = new MediaI18nProviderElement();
+
     provider.setAttribute('lang', 'es');
     const el = createElement(ErrorDialogElement);
     const title = document.createElement(DialogTitleElement.tagName) as DialogTitleElement;
     const desc = document.createElement(DialogDescriptionElement.tagName) as DialogDescriptionElement;
     const close = document.createElement(DialogCloseElement.tagName) as DialogCloseElement;
+
     title.textContent = 'Custom title';
 
     el.append(title, desc, close);

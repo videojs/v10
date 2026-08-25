@@ -1,5 +1,6 @@
 import { createStore, flush } from '@videojs/store';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { getGestureCoordinator } from '../../../gesture/coordinator';
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
@@ -374,10 +375,12 @@ describe('controlsFeature', () => {
     it('resets the idle timer when tapping a control button while a toggleControls gesture is registered', () => {
       const video = createMockVideo({ paused: false });
       const { store, container } = createPlayerStore(video);
+
       addToggleControlsGesture(container!);
 
       // A real control button (e.g. mute, seek ±10s) inside the player.
       const button = document.createElement('button');
+
       container!.appendChild(button);
 
       // Advance partway through the idle delay.
@@ -405,6 +408,7 @@ describe('controlsFeature', () => {
     it('does not reset the idle timer when tapping the video area (gesture owns the toggle)', () => {
       const video = createMockVideo({ paused: false });
       const { store, container } = createPlayerStore(video);
+
       addToggleControlsGesture(container!);
 
       vi.advanceTimersByTime(IDLE_DELAY - 500);
@@ -493,6 +497,7 @@ describe('controlsFeature', () => {
       const target = { media: video, container: createContainer() };
 
       const detach = store.attach(target);
+
       flush();
 
       expect(store.state.requestControlsLock).toBe(requestControlsLock);
@@ -518,6 +523,7 @@ describe('controlsFeature', () => {
       const release = store.state.requestControlsLock();
 
       const detach = store.attach(target);
+
       flush();
 
       vi.advanceTimersByTime(IDLE_DELAY * 2);
@@ -549,6 +555,7 @@ describe('controlsFeature', () => {
       expect(store.state.controlsVisible).toBe(false);
 
       const release = store.state.requestControlsLock();
+
       flush();
 
       expect(store.state.controlsVisible).toBe(true);
@@ -611,6 +618,7 @@ describe('controlsFeature', () => {
       const { store } = createPlayerStore(video);
 
       const result = store.state.toggleControls();
+
       flush();
 
       expect(store.state.userActive).toBe(false);
@@ -630,6 +638,7 @@ describe('controlsFeature', () => {
 
       // Second toggle to show
       const result = store.state.toggleControls();
+
       flush();
 
       expect(store.state.userActive).toBe(true);
@@ -664,6 +673,7 @@ describe('controlsFeature', () => {
       const { store } = createPlayerStore(video);
 
       const result = store.state.toggleControls();
+
       flush();
 
       expect(store.state.userActive).toBe(false);
@@ -756,6 +766,7 @@ describe('controlsFeature', () => {
 
       const container = createContainer();
       const detach = store.attach({ media: video, container });
+
       flush();
 
       detach();
@@ -774,6 +785,7 @@ describe('controlsFeature', () => {
 
       const container = createContainer();
       const detach = store.attach({ media: video, container });
+
       flush();
 
       vi.advanceTimersByTime(IDLE_DELAY);
@@ -806,6 +818,7 @@ function createContainer(): HTMLElement {
 
 function createPointerEvent(type: string, init?: { pointerType?: string }): Event {
   const event = new Event(type, { bubbles: true });
+
   (event as unknown as Record<string, unknown>).pointerType = init?.pointerType ?? '';
   return event;
 }
@@ -822,6 +835,7 @@ function addToggleControlsGesture(container: HTMLElement): () => void {
 
 function createMockRemote(): EventTarget & { state: string; prompt: () => Promise<void> } {
   const target = new EventTarget() as EventTarget & { state: string; prompt: () => Promise<void> };
+
   target.state = 'disconnected';
   target.prompt = () => Promise.resolve();
   return target;
@@ -830,6 +844,7 @@ function createMockRemote(): EventTarget & { state: string; prompt: () => Promis
 function createGoogleCastVideo(overrides: Parameters<typeof createMockVideo>[0] = {}) {
   const video = createMockVideo(overrides);
   const remote = createMockRemote();
+
   Object.defineProperty(video, 'remote', { value: remote, configurable: true });
   return { video, remote };
 }

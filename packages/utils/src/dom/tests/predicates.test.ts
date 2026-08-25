@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { isDocument, isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement, isShadowRoot } from '../predicates';
 
@@ -32,16 +32,19 @@ describe('DOM predicates', () => {
   describe('isHTMLVideoElement', () => {
     it('returns true for video elements', () => {
       const video = document.createElement('video');
+
       expect(isHTMLVideoElement(video)).toBe(true);
     });
 
     it('returns false for audio elements', () => {
       const audio = document.createElement('audio');
+
       expect(isHTMLVideoElement(audio)).toBe(false);
     });
 
     it('returns false for other elements', () => {
       const div = document.createElement('div');
+
       expect(isHTMLVideoElement(div)).toBe(false);
     });
 
@@ -56,16 +59,19 @@ describe('DOM predicates', () => {
   describe('isHTMLAudioElement', () => {
     it('returns true for audio elements', () => {
       const audio = document.createElement('audio');
+
       expect(isHTMLAudioElement(audio)).toBe(true);
     });
 
     it('returns false for video elements', () => {
       const video = document.createElement('video');
+
       expect(isHTMLAudioElement(video)).toBe(false);
     });
 
     it('returns false for other elements', () => {
       const div = document.createElement('div');
+
       expect(isHTMLAudioElement(div)).toBe(false);
     });
 
@@ -80,16 +86,19 @@ describe('DOM predicates', () => {
   describe('isHTMLMediaElement', () => {
     it('returns true for video elements', () => {
       const video = document.createElement('video');
+
       expect(isHTMLMediaElement(video)).toBe(true);
     });
 
     it('returns true for audio elements', () => {
       const audio = document.createElement('audio');
+
       expect(isHTMLMediaElement(audio)).toBe(true);
     });
 
     it('returns false for other elements', () => {
       const div = document.createElement('div');
+
       expect(isHTMLMediaElement(div)).toBe(false);
     });
 

@@ -19,9 +19,9 @@ import {
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
-
 // Register the player, container, and all UI custom elements.
 import './minimal-ui';
 
@@ -107,34 +107,40 @@ function getTemplateHTML() {
           </div>
 
           <div class="${buttonGroup}">
-            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+            <media-mute-button id="audio-mute-trigger" commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
               ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
               ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
             </media-mute-button>
+            <media-tooltip trigger="audio-mute-trigger" delay="0" sticky side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
               <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
                   <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
                 </media-slider-track>
-                <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
+                <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
 
             <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
             </media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
-              <media-playback-rate-radio-group class="${menu.group}">
-                <template>
-                  <media-menu-radio-item class="${menu.item}">
-                    <span data-part="label"></span>
-                    <media-menu-item-indicator force-mount class="${menu.indicator}">
-                      ${renderIcon('check', { class: cn(icon, menu.icon) })}
-                    </media-menu-item-indicator>
-                  </media-menu-radio-item>
-                </template>
-              </media-playback-rate-radio-group>
+              <media-menu-content class="${menu.content}">
+                <media-playback-rate-radio-group class="${menu.group}">
+                  <template>
+                    <media-menu-radio-item class="${menu.item}">
+                      <span data-part="label"></span>
+                      <media-menu-item-indicator force-mount class="${menu.indicator}">
+                        ${renderIcon('check', { class: cn(icon, menu.icon) })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-playback-rate-radio-group>
+              </media-menu-content>
             </media-menu>
 
           </div>

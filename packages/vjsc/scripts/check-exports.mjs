@@ -9,6 +9,7 @@ for (const [subpath, conditions] of Object.entries(packageJson.exports)) {
 
     try {
       await access(targetUrl);
+
       if (condition === 'default') await import(targetUrl.href);
     } catch (error) {
       throw new Error(`Invalid ${subpath} ${condition} export: ${target}`, { cause: error });

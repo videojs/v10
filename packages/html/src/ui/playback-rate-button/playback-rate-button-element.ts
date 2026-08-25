@@ -30,15 +30,20 @@ export class PlaybackRateButtonElement extends MediaButtonElement<PlaybackRateBu
         // Dispatch one so the linked menu follows its normal open lifecycle.
         this.click();
       }
+
       return;
     }
+
     this.core.cycle(state);
   }
 
   protected override getIsButtonDisabled(): boolean {
     const media = this.mediaState.value;
+
     if (super.getIsButtonDisabled()) return true;
+
     if (this.commandfor && media && media.playbackRates.length === 0) return true;
+
     return false;
   }
 

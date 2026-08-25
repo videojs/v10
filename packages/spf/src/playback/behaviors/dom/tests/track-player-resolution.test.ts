@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import {
@@ -11,12 +12,12 @@ import {
 const elements: HTMLElement[] = [];
 
 /**
- * A laid-out `<video>`. Size has to come from a real box in a real document — an
- * element that isn't being rendered reports a `0 × 0` box, which is exactly the
- * "nothing to measure" case one of the tests covers.
+ * A laid-out `<video>`. Size has to come from a real box in a real document — an element that isn't being rendered
+ * reports a `0 × 0` box, which is exactly the "nothing to measure" case one of the tests covers.
  */
 function makeVideo(width: number, height: number): HTMLVideoElement {
   const element = document.createElement('video');
+
   element.style.display = 'block';
   element.style.width = `${width}px`;
   element.style.height = `${height}px`;
@@ -44,18 +45,19 @@ function setupTrackPlayerResolution(
   const state = makeState();
   const context = makeContext(initialContext);
   const cleanup = trackPlayerResolution.setup({ state, context, config });
+
   return { state, context, cleanup };
 }
 
 /**
- * Device-pixel scaling is environment-dependent (headless Chromium reports 1, a
- * retina run reports 2), so a test asserting an exact reading either stubs the
- * ratio or opts out of it.
+ * Device-pixel scaling is environment-dependent (headless Chromium reports 1, a retina run reports 2), so a test
+ * asserting an exact reading either stubs the ratio or opts out of it.
  */
 const CSS_PIXELS: TrackPlayerResolutionConfig = { useDevicePixelRatio: false };
 
 afterEach(() => {
   vi.unstubAllGlobals();
+
   for (const element of elements.splice(0)) element.remove();
 });
 
@@ -139,6 +141,7 @@ describe('trackPlayerResolution', () => {
 
   it('leaves the reading unset for an unrendered element so the cap stays inert', async () => {
     const mediaElement = makeVideo(320, 180);
+
     mediaElement.style.display = 'none';
 
     const { state, cleanup } = setupTrackPlayerResolution({ mediaElement }, CSS_PIXELS);

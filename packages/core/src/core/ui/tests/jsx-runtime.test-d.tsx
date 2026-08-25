@@ -14,7 +14,7 @@ import {
   Tooltip,
   VolumeSlider,
 } from '@videojs/core/vjsc';
-import { describe, it } from 'vitest';
+import { describe, it } from 'vite-plus/test';
 import { Slot, Text } from 'vjsc/components';
 
 describe('constrained JSX', () => {
@@ -75,8 +75,10 @@ describe('constrained JSX', () => {
 
     void (
       <Menu.Root>
-        <Menu.SubmenuTrigger>Quality</Menu.SubmenuTrigger>
-        <Menu.Content />
+        <Menu.Trigger>Settings</Menu.Trigger>
+        <Menu.Popup>
+          <Menu.Content />
+        </Menu.Popup>
       </Menu.Root>
     );
 

@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
@@ -32,7 +32,9 @@ function renderCaptionsTrigger({
   render(
     <Menu.Root>
       <Menu.Trigger render={<CaptionsButton data-testid="trigger" />} />
-      <Menu.Content>Captions</Menu.Content>
+      <Menu.Popup>
+        <Menu.Content>Captions</Menu.Content>
+      </Menu.Popup>
     </Menu.Root>,
     { wrapper: Wrapper }
   );
@@ -55,6 +57,7 @@ describe('CaptionsButton', () => {
 
     function TooltipContentProbe() {
       const tooltip = useOptionalTooltipContext();
+
       return <span data-testid="tooltip-label">{tooltip?.content?.label}</span>;
     }
 

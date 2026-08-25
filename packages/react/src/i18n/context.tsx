@@ -50,6 +50,7 @@ export function useTranslator(): Translator {
   if (!ctx) {
     return fallback;
   }
+
   return ctx.translator;
 }
 
@@ -60,5 +61,6 @@ export function useTranslator(): Translator {
  */
 export function useLocale(): Locale {
   const ctx = useContext(I18nContext);
+
   return ctx?.locale ?? DEFAULT_LOCALE;
 }

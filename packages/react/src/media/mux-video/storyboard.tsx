@@ -7,8 +7,8 @@ import { useCallback, useSyncExternalStore } from 'react';
 /**
  * What the storyboard track needs from whichever Mux Media renders it.
  *
- * Structural on purpose: the hls.js-backed `MuxMedia` and the SPF-backed one
- * satisfy it identically, so this component carries no engine.
+ * Structural on purpose: the hls.js-backed `MuxMedia` and the SPF-backed one satisfy it identically, so this component
+ * carries no engine.
  */
 export interface MuxStoryboardMedia {
   readonly streamType: MediaStreamType | undefined;
@@ -17,10 +17,7 @@ export interface MuxStoryboardMedia {
   removeEventListener(type: string, listener: () => void): void;
 }
 
-/**
- * Renders the storyboard track in its own component so media changes don't
- * re-render the whole media component.
- */
+/** Renders the storyboard track in its own component so media changes don't re-render the whole media component. */
 export function MuxStoryboard({ media }: { media: MuxStoryboardMedia }) {
   const subscribe = useCallback(
     (onChange: () => void) => {
@@ -31,12 +28,15 @@ export function MuxStoryboard({ media }: { media: MuxStoryboardMedia }) {
       let scheduled = false;
       const notify = () => {
         if (scheduled) return;
+
         scheduled = true;
         queueMicrotask(() => {
           scheduled = false;
+
           if (!cancelled) onChange();
         });
       };
+
       media.addEventListener('streamtypechange', notify);
       media.addEventListener('sourcechange', notify);
       return () => {
@@ -52,7 +52,7 @@ export function MuxStoryboard({ media }: { media: MuxStoryboardMedia }) {
   // The '' fallback keeps the snapshot a string rather than sometimes undefined.
   const getSnapshot = () => (media.streamType === MediaStreamTypes.LIVE ? '' : (media.contentData.storyboard ?? ''));
   const src = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-
   if (!src) return null;
+
   return <track kind="metadata" label="thumbnails" src={src} default />;
 }

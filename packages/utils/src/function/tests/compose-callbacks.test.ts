@@ -1,15 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { composeCallbacks } from '../compose-callbacks';
 
 describe('composeCallbacks', () => {
   it('returns undefined when no callbacks provided', () => {
     const result = composeCallbacks();
+
     expect(result).toBeUndefined();
   });
 
   it('returns undefined when all callbacks are null/undefined', () => {
     const result = composeCallbacks(null, undefined, null);
+
     expect(result).toBeUndefined();
   });
 
@@ -33,6 +35,7 @@ describe('composeCallbacks', () => {
     const fn3 = vi.fn();
 
     const composed = composeCallbacks(fn1, fn2, fn3);
+
     composed?.('arg1', 'arg2');
 
     expect(fn1).toHaveBeenCalledWith('arg1', 'arg2');
@@ -47,6 +50,7 @@ describe('composeCallbacks', () => {
     const fn3 = () => order.push(3);
 
     const composed = composeCallbacks(fn1, fn2, fn3);
+
     composed?.();
 
     expect(order).toEqual([1, 2, 3]);
@@ -57,6 +61,7 @@ describe('composeCallbacks', () => {
     const fn2 = vi.fn();
 
     const composed = composeCallbacks(fn1, null, undefined, fn2);
+
     composed?.();
 
     expect(fn1).toHaveBeenCalled();
@@ -71,6 +76,7 @@ describe('composeCallbacks', () => {
 
     const composed = composeCallbacks<OnSetup>(fn1, fn2);
     const ctx = { name: 'test' };
+
     composed?.(ctx);
 
     expect(fn1).toHaveBeenCalledWith(ctx);

@@ -6,13 +6,12 @@ import { useMedia } from '../player/context';
 import { useDestroy } from './use-destroy';
 
 /**
- * Create a media component (e.g. `GoogleCast`, `MuxData`) and register it
- * with the media provided by the surrounding player context.
+ * Create a media component (e.g. `GoogleCast`, `MuxData`) and register it with the media provided by the surrounding
+ * player context.
  *
- * Instantiates the component class once, registers it when a media host is
- * available, follows the media when it changes, and destroys the component
- * on unmount. Media that is not a media host (e.g. a plain `<video>`
- * element) cannot carry media components and is ignored.
+ * Instantiates the component class once, registers it when a media host is available, follows the media when it
+ * changes, and destroys the component on unmount. Media that is not a media host (e.g. a plain `<video>` element)
+ * cannot carry media components and is ignored.
  */
 export function useMediaComponent<Component extends MediaComponent & { destroy(): void }>(
   ComponentClass: new () => Component
@@ -24,6 +23,7 @@ export function useMediaComponent<Component extends MediaComponent & { destroy()
 
   useEffect(() => {
     if (!(media instanceof HTMLMediaElementHost)) return;
+
     return addMediaComponent(media as HTMLMediaElementHost<HTMLMediaTargetLike, any>, component);
   }, [media, component]);
 

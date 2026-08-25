@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import type { UnknownStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { useIndicatorVisibility } from '../use-indicator-visibility';
 
@@ -26,6 +27,7 @@ describe('useIndicatorVisibility', () => {
 
 function VisibilityProbe({ close, id }: { close: () => void; id: string }) {
   const show = useIndicatorVisibility(close);
+
   return (
     <button data-testid={id} onClick={show} type="button">
       {id}

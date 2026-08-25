@@ -1,10 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { getGestureCoordinator } from '../coordinator';
 import { createDoubleTapGesture, createTapGesture } from '../create-tap-gesture';
 
 function setup() {
   const container = document.createElement('div');
+
   vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({
     left: 0,
     right: 300,
@@ -79,6 +80,7 @@ describe('GestureCoordinator.subscribe', () => {
     const subscriber = vi.fn();
 
     const unsubscribe = getGestureCoordinator(container).subscribe(subscriber);
+
     createTapGesture(container, vi.fn());
 
     unsubscribe();
@@ -125,6 +127,7 @@ describe('GestureCoordinator.subscribe', () => {
 describe('GestureCoordinator.claimsTap', () => {
   it('claims a tap when a matching binding is registered', () => {
     const container = setup();
+
     createTapGesture(container, vi.fn(), { action: 'toggleControls', pointer: 'touch' });
 
     const event = pointerUp(container, { pointerType: 'touch', clientX: 150 });
@@ -135,6 +138,7 @@ describe('GestureCoordinator.claimsTap', () => {
   it('does not claim a tap on an interactive target', () => {
     const container = setup();
     const button = document.createElement('button');
+
     container.appendChild(button);
     createTapGesture(container, vi.fn(), { action: 'toggleControls', pointer: 'touch' });
 
@@ -145,6 +149,7 @@ describe('GestureCoordinator.claimsTap', () => {
 
   it('does not claim when no binding matches the action', () => {
     const container = setup();
+
     createTapGesture(container, vi.fn(), { action: 'togglePaused', pointer: 'touch' });
 
     const event = pointerUp(container, { pointerType: 'touch', clientX: 150 });
@@ -154,6 +159,7 @@ describe('GestureCoordinator.claimsTap', () => {
 
   it('does not claim when the binding pointer does not match the event', () => {
     const container = setup();
+
     createTapGesture(container, vi.fn(), { action: 'toggleControls', pointer: 'mouse' });
 
     const event = pointerUp(container, { pointerType: 'touch', clientX: 150 });
@@ -163,6 +169,7 @@ describe('GestureCoordinator.claimsTap', () => {
 
   it('still claims when the binding is disabled', () => {
     const container = setup();
+
     createTapGesture(container, vi.fn(), { action: 'toggleControls', pointer: 'touch', disabled: true });
 
     const event = pointerUp(container, { pointerType: 'touch', clientX: 150 });
@@ -177,12 +184,14 @@ describe('GestureCoordinator.claimsTap', () => {
 
 function pointerDown(target: HTMLElement, init: { button?: number } = {}): void {
   const event = new Event('pointerdown', { bubbles: true });
+
   Object.defineProperty(event, 'button', { value: init.button ?? 0 });
   target.dispatchEvent(event);
 }
 
 function pointerUp(target: HTMLElement, init: { pointerType: string; clientX: number; button?: number }): PointerEvent {
   const event = new Event('pointerup', { bubbles: true });
+
   Object.defineProperty(event, 'pointerType', { value: init.pointerType });
   Object.defineProperty(event, 'clientX', { value: init.clientX });
   Object.defineProperty(event, 'button', { value: init.button ?? 0 });

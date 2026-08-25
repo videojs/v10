@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { Presentation } from '../../types';
 import { applyContainerMimeType } from '../tracks';
 
@@ -35,17 +36,20 @@ const mimeOf = (p: Presentation, type: string) =>
 describe('applyContainerMimeType', () => {
   it('sets the MIME on every track of the given type', () => {
     const result = applyContainerMimeType(presentation(), 'video', 'video/mp2t');
+
     expect(mimeOf(result, 'video')).toEqual(['video/mp2t', 'video/mp2t']);
   });
 
   it('leaves other types untouched (never crosses audio↔video)', () => {
     const result = applyContainerMimeType(presentation(), 'video', 'video/mp2t');
+
     expect(mimeOf(result, 'audio')).toEqual(['audio/mp4']);
   });
 
   it('is idempotent — re-applying the same MIME is a no-op', () => {
     const once = applyContainerMimeType(presentation(), 'video', 'video/mp2t');
     const twice = applyContainerMimeType(once, 'video', 'video/mp2t');
+
     expect(twice).toEqual(once);
   });
 });

@@ -29,6 +29,7 @@ const { title, description, image, twitterImage, withCompact } = Astro.props;
 
 function resolveImageUrl(img: ImageMetadata | string): string {
   if (typeof img === 'string') return img;
+
   return new URL(img.src, Astro.url).toString();
 }
 

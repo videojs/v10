@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createDoubleTapGesture, createTapGesture } from '../create-tap-gesture';
 
@@ -6,6 +6,7 @@ const DOUBLETAP_WINDOW = 200;
 
 function setup() {
   const container = document.createElement('div');
+
   vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({
     left: 0,
     right: 300,
@@ -27,6 +28,7 @@ describe('createTapGesture', () => {
   it('fires on quick pointer down + up', () => {
     const container = setup();
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(container);
@@ -39,6 +41,7 @@ describe('createTapGesture', () => {
   it('does not fire on long press', () => {
     const container = setup();
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(container);
@@ -51,6 +54,7 @@ describe('createTapGesture', () => {
   it('does not fire on secondary button (right-click)', () => {
     const container = setup();
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(container, { button: 2 });
@@ -63,6 +67,7 @@ describe('createTapGesture', () => {
   it('does not fire on auxiliary button (middle-click)', () => {
     const container = setup();
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(container, { button: 1 });
@@ -75,6 +80,7 @@ describe('createTapGesture', () => {
   it('does not fire when disabled', () => {
     const container = setup();
     const handler = vi.fn();
+
     createTapGesture(container, handler, { disabled: true });
 
     pointerDown(container);
@@ -87,6 +93,7 @@ describe('createTapGesture', () => {
   it('fires immediately when no doubletap bindings exist', () => {
     const container = setup();
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(container);
@@ -113,6 +120,7 @@ describe('createTapGesture', () => {
   it('double cleanup is safe', () => {
     const container = setup();
     const cleanup = createTapGesture(container, vi.fn());
+
     cleanup();
     cleanup();
   });
@@ -140,6 +148,7 @@ describe('createTapGesture', () => {
 
     // Register and immediately clean up.
     const cleanup = createTapGesture(container, first);
+
     cleanup();
 
     // Re-register on the same element — should re-attach pointer listeners.
@@ -161,6 +170,7 @@ describe('createDoubleTapGesture', () => {
   it('fires on two quick taps', () => {
     const container = setup();
     const handler = vi.fn();
+
     createDoubleTapGesture(container, handler);
 
     pointerDown(container);
@@ -178,6 +188,7 @@ describe('createDoubleTapGesture', () => {
   it('does not fire on single tap', () => {
     const container = setup();
     const handler = vi.fn();
+
     createDoubleTapGesture(container, handler);
 
     pointerDown(container);
@@ -192,6 +203,7 @@ describe('createDoubleTapGesture', () => {
   it('does not fire when taps are too far apart', () => {
     const container = setup();
     const handler = vi.fn();
+
     createDoubleTapGesture(container, handler);
 
     pointerDown(container);
@@ -209,6 +221,7 @@ describe('createDoubleTapGesture', () => {
   it('does not fire when disabled', () => {
     const container = setup();
     const handler = vi.fn();
+
     createDoubleTapGesture(container, handler, { disabled: true });
 
     pointerDown(container);
@@ -277,6 +290,7 @@ describe('tap/doubletap disambiguation', () => {
     const doubletapHandler = vi.fn();
 
     const tapCleanup = createTapGesture(container, tapHandler);
+
     createDoubleTapGesture(container, doubletapHandler);
 
     pointerDown(container);
@@ -313,6 +327,7 @@ describe('pointer filtering', () => {
   it('fires for all pointer types when no filter set', () => {
     const container = setup();
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(container);
@@ -403,9 +418,11 @@ describe('interactive child filtering', () => {
   it('does not fire when event originates from a child button', () => {
     const container = setup();
     const button = document.createElement('button');
+
     container.appendChild(button);
 
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(button);
@@ -418,10 +435,12 @@ describe('interactive child filtering', () => {
   it('does not fire when event originates from a child with role="slider"', () => {
     const container = setup();
     const slider = document.createElement('div');
+
     slider.setAttribute('role', 'slider');
     container.appendChild(slider);
 
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(slider);
@@ -434,10 +453,12 @@ describe('interactive child filtering', () => {
   it('does not fire when event originates from a child with role="menuitemradio"', () => {
     const container = setup();
     const item = document.createElement('div');
+
     item.setAttribute('role', 'menuitemradio');
     container.appendChild(item);
 
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(item);
@@ -451,10 +472,12 @@ describe('interactive child filtering', () => {
     const container = setup();
     const button = document.createElement('button');
     const icon = document.createElement('span');
+
     button.appendChild(icon);
     container.appendChild(button);
 
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(icon);
@@ -468,11 +491,13 @@ describe('interactive child filtering', () => {
     const container = setup();
     const controls = document.createElement('div');
     const label = document.createElement('span');
+
     controls.setAttribute('data-interactive', '');
     controls.appendChild(label);
     container.appendChild(controls);
 
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(label);
@@ -485,9 +510,11 @@ describe('interactive child filtering', () => {
   it('fires when event originates from a non-interactive child', () => {
     const container = setup();
     const overlay = document.createElement('div');
+
     container.appendChild(overlay);
 
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(overlay);
@@ -500,6 +527,7 @@ describe('interactive child filtering', () => {
   it('fires when event targets the container directly', () => {
     const container = setup();
     const handler = vi.fn();
+
     createTapGesture(container, handler);
 
     pointerDown(container);
@@ -516,12 +544,14 @@ describe('interactive child filtering', () => {
 
 function pointerDown(target: HTMLElement, init: { button?: number } = {}): void {
   const event = new Event('pointerdown', { bubbles: true });
+
   Object.defineProperty(event, 'button', { value: init.button ?? 0 });
   target.dispatchEvent(event);
 }
 
 function pointerUp(target: HTMLElement, init: { pointerType: string; clientX: number; button?: number }): void {
   const event = new Event('pointerup', { bubbles: true });
+
   Object.defineProperty(event, 'pointerType', { value: init.pointerType });
   Object.defineProperty(event, 'clientX', { value: init.clientX });
   Object.defineProperty(event, 'button', { value: init.button ?? 0 });

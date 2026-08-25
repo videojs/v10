@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaStreamTypes } from '../../../core/types';
 import { HTMLVideoElementHost } from '../../video-host';
@@ -14,6 +14,7 @@ function createEngine({ live = false, inProgress = false } = {}) {
     isInProgress: vi.fn(() => engine.inProgress),
     addEventListener(type: string, listener: (event: unknown) => void) {
       const typeListeners = listeners.get(type) ?? new Set();
+
       typeListeners.add(listener);
       listeners.set(type, typeListeners);
     },
@@ -44,6 +45,7 @@ const ShakaMediaStreamType = ShakaMediaStreamTypeMixin(FakeHost as any) as unkno
 describe('ShakaMediaStreamTypeMixin', () => {
   it('starts unknown', () => {
     const media = new ShakaMediaStreamType(createEngine());
+
     expect(media.streamType).toBe(MediaStreamTypes.UNKNOWN);
   });
 
@@ -51,6 +53,7 @@ describe('ShakaMediaStreamTypeMixin', () => {
     const engine = createEngine({ live: true });
     const media = new ShakaMediaStreamType(engine);
     const onChange = vi.fn();
+
     media.addEventListener('streamtypechange', onChange);
 
     engine.emit('loaded');
@@ -80,6 +83,7 @@ describe('ShakaMediaStreamTypeMixin', () => {
   it('forgets the detection when a new load starts', () => {
     const engine = createEngine({ live: true });
     const media = new ShakaMediaStreamType(engine);
+
     engine.emit('loaded');
 
     engine.emit('loading');

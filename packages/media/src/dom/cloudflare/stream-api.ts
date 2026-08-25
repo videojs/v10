@@ -39,8 +39,10 @@ const API_URL = 'https://embed.videodelivery.net/embed/sdk.latest.js';
 export async function loadCloudflareStreamApi(): Promise<CloudflareStreamApi> {
   const existing = (globalThis as { Stream?: CloudflareStreamApi }).Stream;
   if (existing) return existing;
+
   await loadScript(API_URL);
   const api = (globalThis as { Stream?: CloudflareStreamApi }).Stream;
   if (!api) throw new Error('Cloudflare Stream SDK failed to load');
+
   return api;
 }

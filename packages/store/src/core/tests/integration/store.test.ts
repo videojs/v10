@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { combine, createStore, defineSlice } from '../../index';
 
@@ -37,6 +37,7 @@ describe('store lifecycle integration', () => {
     expect(events).toEqual(['setup']);
 
     const targetInstance = new Target();
+
     targetInstance.value = 5;
     const detach = store.attach(targetInstance);
 
@@ -77,6 +78,7 @@ describe('state syncing', () => {
     const store = createStore<{ volume: number; rate: number }>()(combine(audioSlice, playbackSlice));
 
     const target = { volume: 0.5, rate: 1.5 };
+
     store.attach(target);
 
     expect(store.state).toMatchObject({
@@ -113,6 +115,7 @@ describe('immediate execution', () => {
 
     const store = createStore<MockMedia>()(playbackSlice);
     const target = new MockMedia();
+
     store.attach(target);
 
     expect(store.state.paused).toBe(true);

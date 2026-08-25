@@ -1,5 +1,5 @@
 import type { HlsBackgroundVideoMedia } from '@videojs/spf/hls-background-video';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MuxBackgroundVideo } from '../../mux-background-video';
 import { HlsBackgroundVideo } from '../index';
@@ -26,6 +26,7 @@ let tagCounter = 0;
 
 function defineElement() {
   const tag = `test-hls-background-video-${++tagCounter}`;
+
   customElements.define(tag, class extends HlsBackgroundVideo {});
   return tag;
 }
@@ -33,10 +34,12 @@ function defineElement() {
 // innerHTML on a connected container so attributes are present when the constructor runs.
 function create(tag: string, attrs: Record<string, string> = {}): HlsBackgroundVideo {
   const container = document.createElement('div');
+
   document.body.appendChild(container);
   const attrStr = Object.entries(attrs)
     .map(([k, v]) => ` ${k}="${v.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"`)
     .join('');
+
   container.innerHTML = `<${tag}${attrStr}></${tag}>`;
   return container.querySelector(tag) as HlsBackgroundVideo;
 }
@@ -76,6 +79,7 @@ describe('HlsBackgroundVideo', () => {
 
   it('tracks src when the attribute changes', () => {
     const element = create(defineElement(), { src: 'https://example.com/v.m3u8' });
+
     element.setAttribute('src', 'https://example.com/v2.m3u8');
 
     expect(element.src).toBe('https://example.com/v2.m3u8');
@@ -83,6 +87,7 @@ describe('HlsBackgroundVideo', () => {
 
   it('clears src when the attribute is removed', () => {
     const element = create(defineElement(), { src: 'https://example.com/v.m3u8' });
+
     element.removeAttribute('src');
 
     expect(element.src).toBe('');
@@ -115,6 +120,7 @@ describe('HlsBackgroundVideo', () => {
     it('re-fires the Media error as its own, and exposes the condition', async () => {
       const element = create(defineElement());
       const fired: Event[] = [];
+
       element.addEventListener('error', (event) => fired.push(event));
 
       mediaOf(element).engine.state.errors.set([{ code: NO_SUPPORTED_VIDEO_TRACK }]);
@@ -130,6 +136,7 @@ describe('HlsBackgroundVideo', () => {
 
     it('clears when a new source resets the sequence', async () => {
       const element = create(defineElement());
+
       mediaOf(element).engine.state.errors.set([{ code: NO_SUPPORTED_VIDEO_TRACK }]);
       await flush();
 

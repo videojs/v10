@@ -1,17 +1,27 @@
 {
   "name": "@videojs/html",
-  "type": "module",
   "version": "10.0.0-beta.31",
   "description": "HTML library for building media players",
+  "keywords": [
+    "components",
+    "html",
+    "media",
+    "player",
+    "ui",
+    "videojs"
+  ],
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/videojs/v10",
     "directory": "packages/html"
   },
-  "main": "dist/default/index.js",
-  "module": "dist/default/index.js",
-  "types": "dist/dev/index.d.ts",
+  "files": [
+    "dist",
+    "cdn",
+    "docs"
+  ],
+  "type": "module",
   "sideEffects": [
     "./dist/*/define/**/*.js",
     "./dist/*/i18n/index.js",
@@ -20,11 +30,9 @@
     "./dist/*/icons/dist/element/**/*.js",
     "./cdn/**/*.js"
   ],
-  "files": [
-    "dist",
-    "cdn",
-    "docs"
-  ],
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
@@ -164,14 +172,15 @@
       "default": "./dist/default/define/*.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsdown",
-    "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
     "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts",
     "build:archive": "node --import tsx ./scripts/build-dist-archive.ts",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build:watch": "vp pack --filter package --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
+    "test": "vp test run",
     "clean": "rimraf --glob dist cdn archive docs types '*.tsbuildinfo'",
     "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts html"
   },
@@ -189,20 +198,9 @@
     "@videojs/skins": "workspace:*",
     "happy-dom": "^20.11.1",
     "rolldown": "~1.2.5",
-    "tsdown": "^0.22.14",
     "tsx": "^4.23.1",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.10"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "keywords": [
-    "media",
-    "player",
-    "html",
-    "ui",
-    "components",
-    "videojs"
-  ]
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
 }

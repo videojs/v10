@@ -6,6 +6,7 @@ import {
   renderTemplate,
   type ShadowStyle,
 } from '@videojs/utils/dom';
+
 import globalStyles from './global.css?inline';
 import sharedStyles from './shared.css?inline';
 
@@ -13,9 +14,8 @@ const STYLES_ID = '__media-styles';
 const sharedSheet = createShadowStyle(sharedStyles);
 
 /**
- * Base element for skin definitions. Attaches a shadow root, clones
- * `static template` into it, and applies shared + per-skin styles
- * via `adoptedStyleSheets` (or `<style>` fallback).
+ * Base element for skin definitions. Attaches a shadow root, clones `static template` into it, and applies shared +
+ * per-skin styles via `adoptedStyleSheets` (or `<style>` fallback).
  */
 export class SkinElement extends ReactiveElement {
   static shadowRootOptions: ShadowRootInit = { mode: 'open' };
@@ -29,6 +29,7 @@ export class SkinElement extends ReactiveElement {
 
     if (!this.shadowRoot) {
       const ctor = this.constructor as typeof SkinElement;
+
       this.attachShadow(ctor.shadowRootOptions);
 
       if (ctor.template) {
@@ -36,9 +37,11 @@ export class SkinElement extends ReactiveElement {
       }
 
       const sheets: ShadowStyle[] = [sharedSheet];
+
       if (ctor.styles) {
         sheets.push(ctor.styles);
       }
+
       applyShadowStyles(this.shadowRoot!, sheets);
     }
   }

@@ -2,6 +2,7 @@ import { Popover } from '@base-ui/react/popover';
 import type { MarkdownHeading } from 'astro';
 import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
+
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
 import { calculateRailGeometry } from './utils';
 
@@ -58,6 +59,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
     if (!open) return;
 
     const closeOnDocumentScroll = () => setOpen(false);
+
     window.addEventListener('scroll', closeOnDocumentScroll, { passive: true });
 
     return () => window.removeEventListener('scroll', closeOnDocumentScroll);
@@ -92,7 +94,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
             return (
               <span
                 key={heading.slug}
-                className={isActive ? 'block bg-faded-black dark:bg-manila-light' : 'block bg-current'}
+                className={isActive ? 'bg-faded-black dark:bg-manila-light block' : 'block bg-current'}
                 style={{ width, height: railGeometry.stripeHeight }}
               />
             );

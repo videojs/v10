@@ -67,7 +67,7 @@ export interface TextProps extends BaseProps {
   'data-part'?: string | undefined;
 }
 
-export type GroupProps = BaseProps;
+export type BoxProps = BaseProps;
 
 export interface Component<Props extends object> {
   (props: ComponentAttributes<Props>): VjscElement;
@@ -107,7 +107,7 @@ function createRuntimeComponentPart<Props extends object>(name: string, part: st
 }
 
 export const Slot = createRuntimeComponentPart<SlotProps>('Slot', null);
-export const Group = createRuntimeComponentPart<GroupProps>('Group', null);
+export const Box = createRuntimeComponentPart<BoxProps>('Box', null);
 export const Template = Object.assign(createRuntimeComponentPart<TemplateProps>('Template', null), {
   Part: createRuntimeComponentPart<TemplatePartProps>('Template', 'Part'),
 });

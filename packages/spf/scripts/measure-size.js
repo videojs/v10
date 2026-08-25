@@ -3,9 +3,7 @@
 /**
  * Measure SPF bundle size
  *
- * Usage:
- *   pnpm size                    # Measure the HLS engine entry (@videojs/spf/hls)
- *   pnpm size:all                # Measure all exports (all.ts)
+ * Usage: pnpm size # Measure the HLS engine entry (@videojs/spf/hls) pnpm size:all # Measure all exports (all.ts)
  */
 
 import { execSync } from 'node:child_process';
@@ -33,20 +31,22 @@ if (measureAll) {
 
 console.log(`\n📦 Measuring ${label} bundle size...\n`);
 
-// Temporarily modify tsdown config to use the correct entry and enable minification
-const configPath = './tsdown.config.ts';
+// Temporarily modify the Vite+ config to use the correct pack entry and enable minification
+const configPath = './vite.config.ts';
 const originalConfig = readFileSync(configPath, 'utf8');
 
-const tempConfig = `import { defineConfig } from 'tsdown';
+const tempConfig = `import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
-  entry: ['src/${entry}'],
-  platform: 'browser',
-  format: 'es',
-  sourcemap: false,
-  clean: true,
-  minify: true,
-  dts: false,
+  pack: {
+    entry: ['src/${entry}'],
+    platform: 'browser',
+    format: 'es',
+    sourcemap: false,
+    clean: true,
+    minify: true,
+    dts: false,
+  },
 });
 `;
 
@@ -68,6 +68,7 @@ try {
   // Format sizes
   const formatSize = (bytes) => {
     if (bytes < 1024) return `${bytes} B`;
+
     return `${(bytes / 1024).toFixed(2)} KB`;
   };
 
@@ -100,5 +101,5 @@ try {
 } finally {
   // Restore original config
   writeFileSync(configPath, originalConfig);
-  console.log('Restored tsdown config\n');
+  console.log('Restored Vite+ pack config\n');
 }

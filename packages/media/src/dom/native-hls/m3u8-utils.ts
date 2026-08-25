@@ -11,20 +11,17 @@
 
 export interface StreamInfo {
   /**
-   * Offset representing the seekable range size for live content.
-   * `0` for standard latency live, `Infinity` for DVR, `NaN` for on-demand.
+   * Describes the kind of live window available. `0` for a sliding live window, `Infinity` for a live event with
+   * playback history, and `NaN` for on-demand. This value is not a duration.
    */
   targetLiveWindow: number;
-  /**
-   * Offset (seconds) from `seekable.end` at which the live edge window begins.
-   * `undefined` when the stream is not live.
-   */
+  /** Offset (seconds) from `seekable.end` at which the live edge window begins. `undefined` when the stream is not live. */
   liveEdgeStartOffset: number | undefined;
 }
 
 /**
- * Returns `true` when `src` looks like an HLS playlist URL. Permissive: a
- * path or query string containing `.m3u8` is enough.
+ * Returns `true` when `src` looks like an HLS playlist URL. Permissive: a path or query string containing `.m3u8` is
+ * enough.
  */
 export function looksLikeM3u8(src: string) {
   return src.toLowerCase().includes('.m3u8');
@@ -33,17 +30,15 @@ export function looksLikeM3u8(src: string) {
 /**
  * Returns `true` when the playlist text is a multivariant (master) playlist.
  *
- * The presence of `#EXT-X-STREAM-INF` is conclusive — media playlists only
- * contain `#EXTINF` segment tags.
+ * The presence of `#EXT-X-STREAM-INF` is conclusive — media playlists only contain `#EXTINF` segment tags.
  */
 export function isMultivariantPlaylist(playlist: string) {
   return playlist.includes('#EXT-X-STREAM-INF');
 }
 
 /**
- * Resolves the first media playlist URL referenced by a multivariant
- * playlist, relative to `baseUrl`. Returns `null` when none is found or the
- * URL cannot be parsed.
+ * Resolves the first media playlist URL referenced by a multivariant playlist, relative to `baseUrl`. Returns `null`
+ * when none is found or the URL cannot be parsed.
  */
 export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: string): string | null {
   const lines = multivariant.split(/\r?\n/);
@@ -65,17 +60,13 @@ export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: stri
 }
 
 /**
- * Parses the subset of media-playlist tags needed to derive live edge state:
- * `#EXT-X-PLAYLIST-TYPE`, `#EXT-X-ENDLIST`, `#EXT-X-TARGETDURATION`,
- * `#EXT-X-PART-INF`.
+ * Parses the subset of media-playlist tags needed to derive live edge state: `#EXT-X-PLAYLIST-TYPE`, `#EXT-X-ENDLIST`,
+ * `#EXT-X-TARGETDURATION`, `#EXT-X-PART-INF`.
  *
- * See spec:
- * - VOD or `#EXT-X-ENDLIST` present → on-demand, `targetLiveWindow = NaN`.
- * - `EVENT` playlist → DVR, `targetLiveWindow = Infinity`.
- * - Otherwise → standard live sliding window, `targetLiveWindow = 0`.
+ * See spec: - VOD or `#EXT-X-ENDLIST` present → on-demand, `targetLiveWindow = NaN`. - `EVENT` playlist → DVR,
+ * `targetLiveWindow = Infinity`. - Otherwise → standard live sliding window, `targetLiveWindow = 0`.
  *
- * The edge offset is `PART-TARGET * 2` for low-latency live and
- * `TARGETDURATION * 3` otherwise.
+ * The edge offset is `PART-TARGET * 2` for low-latency live and `TARGETDURATION * 3` otherwise.
  */
 export function parseStreamInfo(playlist: string): StreamInfo {
   const lines = playlist.split(/\r?\n/);
@@ -87,17 +78,21 @@ export function parseStreamInfo(playlist: string): StreamInfo {
 
   for (const raw of lines) {
     const line = raw.trim();
+
     if (line.startsWith('#EXT-X-PLAYLIST-TYPE:')) {
       playlistType = line.slice('#EXT-X-PLAYLIST-TYPE:'.length).trim().toUpperCase();
     } else if (line === '#EXT-X-ENDLIST') {
       hasEndList = true;
     } else if (line.startsWith('#EXT-X-TARGETDURATION:')) {
       const value = Number(line.slice('#EXT-X-TARGETDURATION:'.length));
+
       if (Number.isFinite(value)) targetDuration = value;
     } else if (line.startsWith('#EXT-X-PART-INF')) {
       const match = /PART-TARGET\s*=\s*([0-9.]+)/i.exec(line);
+
       if (match) {
         const value = Number(match[1]);
+
         if (Number.isFinite(value)) partTarget = value;
       }
     }
@@ -118,23 +113,25 @@ export function parseStreamInfo(playlist: string): StreamInfo {
 async function fetchPlaylist(url: string, init: RequestInit): Promise<{ text: string; url: string }> {
   const response = await fetch(url, init);
   if (!response.ok) throw new Error(`Failed to fetch playlist (${response.status}): ${url}`);
+
   return { text: await response.text(), url: response.url || url };
 }
 
 /**
- * Fetches the HLS playlist at `src`, following the first variant if it's a
- * multivariant playlist, and parses it into a {@link StreamInfo}.
+ * Fetches the HLS playlist at `src`, following the first variant if it's a multivariant playlist, and parses it into a
+ * {@link StreamInfo}.
  *
- * @throws when the fetch fails or no media playlist URL can be resolved.
+ * @throws When the fetch fails or no media playlist URL can be resolved.
  */
 export async function getStreamInfoFromSrc(src: string, signal?: AbortSignal): Promise<StreamInfo> {
   const init: RequestInit = signal ? { signal } : {};
   const { text, url } = await fetchPlaylist(src, init);
-
   if (!isMultivariantPlaylist(text)) return parseStreamInfo(text);
 
   const mediaUrl = resolveFirstMediaPlaylistUrl(text, url);
   if (!mediaUrl) throw new Error('No media playlist URL found in multivariant playlist');
+
   const media = await fetchPlaylist(mediaUrl, init);
+
   return parseStreamInfo(media.text);
 }

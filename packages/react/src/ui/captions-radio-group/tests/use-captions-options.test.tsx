@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
@@ -41,9 +41,11 @@ function renderCaptionsMenu({
   });
   const content = (
     <Menu.Root defaultOpen align="center">
-      <Menu.Content data-testid="content">
-        <CaptionsRadioGroup />
-      </Menu.Content>
+      <Menu.Popup data-testid="popup">
+        <Menu.Content data-testid="content">
+          <CaptionsRadioGroup />
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 
@@ -75,6 +77,7 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
   return {
     updateState(next: Record<string, unknown>) {
       store.state = next;
+
       for (const listener of listeners) listener();
     },
     Wrapper({ children }: { children: ReactNode }) {
@@ -85,6 +88,7 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
 
 function CaptionsAvailability(): ReactNode {
   const captions = useCaptionsOptions();
+
   return (
     <div data-testid="availability">
       {captions ? `${captions.state.availability}:${captions.hidden ? 'hidden' : 'visible'}` : 'missing'}
@@ -125,11 +129,12 @@ describe('useCaptionsOptions', () => {
   it('center aligns the popup by default', () => {
     renderCaptionsMenu();
 
-    expect(screen.getByTestId('content').getAttribute('data-align')).toBe('center');
+    expect(screen.getByTestId('popup').getAttribute('data-align')).toBe('center');
   });
 
   it('selects a captions track', () => {
     const selectSubtitlesTrack = vi.fn();
+
     renderCaptionsMenu({ selectSubtitlesTrack });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'English' }));
@@ -155,6 +160,7 @@ describe('useCaptionsOptions', () => {
 
   it('turns captions off', () => {
     const selectSubtitlesTrack = vi.fn();
+
     renderCaptionsMenu({ selectSubtitlesTrack });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Off' }));

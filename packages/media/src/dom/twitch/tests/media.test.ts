@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MediaError } from '../../../core/media-error';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { buildTwitchIframeSrc, parseTwitchSource, parseTwitchVideoId, TwitchMedia, twitchMediaDefaultProps } from '..';
+import { MediaError } from '../../../core/media-error';
 
 const VOD_SRC = 'https://www.twitch.tv/videos/123456789';
 const CHANNEL_SRC = 'https://www.twitch.tv/twitchpresents';
@@ -27,12 +28,12 @@ afterEach(() => {
 });
 
 /**
- * An iframe with a stand-in for the embed's window. It is the whole protocol
- * surface: commands are posted to it, and only messages claiming to come from it
- * are allowed to drive state.
+ * An iframe with a stand-in for the embed's window. It is the whole protocol surface: commands are posted to it, and
+ * only messages claiming to come from it are allowed to drive state.
  */
 function createIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
+
   Object.defineProperty(iframe, 'contentWindow', {
     value: { postMessage: vi.fn() } satisfies EmbedWindow,
     configurable: true,
@@ -43,6 +44,7 @@ function createIframe(): HTMLIFrameElement {
 /** An iframe as React renders it before a source resolves: `src` present but empty. */
 function createEmptySrcIframe(): HTMLIFrameElement {
   const iframe = createIframe();
+
   iframe.setAttribute('src', '');
   return iframe;
 }
@@ -52,11 +54,12 @@ function embedOf(iframe: HTMLIFrameElement): EmbedWindow {
 }
 
 /**
- * Post a message as the embed would. A real `MessageEvent` cannot name an
- * arbitrary object as its `source`, so the event is assembled by hand.
+ * Post a message as the embed would. A real `MessageEvent` cannot name an arbitrary object as its `source`, so the
+ * event is assembled by hand.
  */
 function postFromWindow(source: unknown, data: unknown): void {
   const event = new Event('message');
+
   Object.defineProperties(event, { data: { value: data }, source: { value: source } });
   globalThis.dispatchEvent(event);
 }
@@ -88,7 +91,9 @@ async function attachAndLoad(media: TwitchMedia): Promise<{ iframe: HTMLIFrameEl
   // There is no embed to attach to without a source, so tests that don't care
   // which video is playing get one.
   if (!media.src) media.src = VOD_SRC;
+
   const iframe = createIframe();
+
   media.attach(iframe);
   postEmbedEvent(iframe, 'ready');
   await settle();
@@ -151,6 +156,7 @@ describe('parseTwitchSource', () => {
 describe('buildTwitchIframeSrc', () => {
   it('builds a VOD embed URL with the page hostname as parent', () => {
     const src = buildTwitchIframeSrc(VOD_SRC);
+
     expect(src).toContain(`${ORIGIN}/?video=v123456789`);
     expect(src).toContain('controls=false');
     expect(src).toContain('autoplay=false');
@@ -165,6 +171,7 @@ describe('buildTwitchIframeSrc', () => {
 
   it('leaves the embed on its own defaults when controls and autoplay are set', () => {
     const src = buildTwitchIframeSrc(VOD_SRC, { controls: true, autoplay: true, defaultMuted: true });
+
     expect(src).not.toContain('controls=');
     expect(src).not.toContain('autoplay=');
     expect(src).toContain('muted=true');
@@ -175,6 +182,7 @@ describe('buildTwitchIframeSrc', () => {
       source: { engine: { twitch: { parent: ['embed.example.com', 'www.example.com'] } } },
     });
     const parents = new URL(src).searchParams.getAll('parent');
+
     expect(parents).toEqual(['embed.example.com', 'www.example.com', globalThis.location.hostname]);
   });
 
@@ -182,6 +190,7 @@ describe('buildTwitchIframeSrc', () => {
     const src = buildTwitchIframeSrc(VOD_SRC, {
       source: { engine: { twitch: { parent: globalThis.location.hostname } } },
     });
+
     expect(new URL(src).searchParams.getAll('parent')).toEqual([globalThis.location.hostname]);
   });
 
@@ -189,6 +198,7 @@ describe('buildTwitchIframeSrc', () => {
     const src = buildTwitchIframeSrc(VOD_SRC, {
       source: { engine: { twitch: { time: '1h30m10s', collection: 'abc123', allowfullscreen: false } } },
     });
+
     expect(src).toContain('time=1h30m10s');
     expect(src).toContain('collection=abc123');
     expect(src).toContain('allowfullscreen=false');
@@ -198,6 +208,7 @@ describe('buildTwitchIframeSrc', () => {
     const src = buildTwitchIframeSrc(VOD_SRC, {
       source: { engine: { twitch: { time: '', collection: 'abc123' } } },
     });
+
     // An empty value is not presence: written through, `time=1` is a timestamp
     // the embed cannot read.
     expect(src).not.toContain('time=');
@@ -208,6 +219,7 @@ describe('buildTwitchIframeSrc', () => {
     const src = buildTwitchIframeSrc(VOD_SRC, {
       source: { engine: { twitch: { referrerPolicy: 'no-referrer' } } },
     });
+
     expect(src).not.toContain('referrerPolicy');
   });
 
@@ -220,6 +232,7 @@ describe('buildTwitchIframeSrc', () => {
 describe('TwitchMedia', () => {
   it('has expected default state before attach', () => {
     const media = new TwitchMedia();
+
     expect(media.engine).toBe(null);
     expect(media.target).toBe(null);
     expect(media.paused).toBe(true);
@@ -234,8 +247,10 @@ describe('TwitchMedia', () => {
 
   it('sets the initial iframe src and binds the embed when attached', () => {
     const media = new TwitchMedia();
+
     media.src = VOD_SRC;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     expect(iframe.getAttribute('src')).toContain(`${ORIGIN}/?video=v123456789`);
@@ -247,8 +262,10 @@ describe('TwitchMedia', () => {
 
   it('names the page as a parent on an embed URL that arrived without one', () => {
     const media = new TwitchMedia();
+
     media.src = VOD_SRC;
     const iframe = createIframe();
+
     // Server rendering has no `location`, so the URL it froze names only the
     // hostnames the app configured, and the embed would refuse to play.
     iframe.setAttribute('src', `${ORIGIN}/?video=v123456789&parent=embed.example.com`);
@@ -263,9 +280,11 @@ describe('TwitchMedia', () => {
 
   it('leaves an embed URL that already names the page alone', () => {
     const media = new TwitchMedia();
+
     media.src = VOD_SRC;
     const iframe = createIframe();
     const src = `${ORIGIN}/?video=v123456789&parent=${globalThis.location.hostname}`;
+
     iframe.setAttribute('src', src);
     media.attach(iframe);
 
@@ -276,10 +295,12 @@ describe('TwitchMedia', () => {
   it('defers the embed until a source arrives', async () => {
     const media = new TwitchMedia();
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
 
     // How every framework builds the element: created first, `src` set after.
     const iframe = createIframe();
+
     media.attach(iframe);
     expect(iframe.getAttribute('src')).toBe(null);
     expect(media.engine).toBe(null);
@@ -299,6 +320,7 @@ describe('TwitchMedia', () => {
     // React renders `src=""` before a source resolves. The `src` property reports
     // the document URL for it, so only the attribute says there is no embed.
     const iframe = createEmptySrcIframe();
+
     media.attach(iframe);
     expect(media.engine).toBe(null);
 
@@ -312,8 +334,10 @@ describe('TwitchMedia', () => {
   it('builds a deferred embed once for repeated source changes in the same task', async () => {
     const media = new TwitchMedia();
     const loadstart = vi.fn();
+
     media.addEventListener('loadstart', loadstart);
     const iframe = createIframe();
+
     media.attach(iframe);
 
     media.src = VOD_SRC;
@@ -327,6 +351,7 @@ describe('TwitchMedia', () => {
 
   it('does not leave play() waiting while the embed is deferred', async () => {
     const media = new TwitchMedia();
+
     media.attach(createIframe());
 
     // No embed means no `ready` is coming to report a load; waiting would hang.
@@ -337,6 +362,7 @@ describe('TwitchMedia', () => {
   it('emits loadstart on attach and loadedmetadata/loadcomplete after ready', async () => {
     const media = new TwitchMedia();
     const events: string[] = [];
+
     for (const type of ['loadstart', 'loadedmetadata', 'loadcomplete'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -350,14 +376,17 @@ describe('TwitchMedia', () => {
 
   it('waits for the embed to report ready before playing', async () => {
     const media = new TwitchMedia();
+
     media.src = VOD_SRC;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     let played = false;
     const pending = media.play().then(() => {
       played = true;
     });
+
     await flushDeferredEmbed();
     expect(played).toBe(false);
 
@@ -371,13 +400,17 @@ describe('TwitchMedia', () => {
 
   it('does not complete the load on a snapshot that arrives before ready', async () => {
     const media = new TwitchMedia();
+
     media.src = VOD_SRC;
     const iframe = createIframe();
+
     media.attach(iframe);
     const loadcomplete = vi.fn();
+
     media.addEventListener('loadcomplete', loadcomplete);
 
     let played = false;
+
     void media.play().then(() => {
       played = true;
     });
@@ -438,6 +471,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const volumechange = vi.fn();
+
     media.addEventListener('volumechange', volumechange);
 
     // A snapshot is a patch against what is already reported, so nothing else
@@ -469,6 +503,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['durationchange', 'timeupdate', 'volumechange', 'progress'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -506,6 +541,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const waiting = vi.fn();
+
     media.addEventListener('waiting', waiting);
 
     postPlayerState(iframe, { playback: 'Buffering' });
@@ -524,6 +560,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const ended = vi.fn();
+
     media.addEventListener('ended', ended);
 
     postPlayerState(iframe, { playback: 'Ended' });
@@ -540,6 +577,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['seeking', 'seeked', 'playing'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -560,6 +598,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const events: string[] = [];
+
     for (const type of ['play', 'pause', 'offline'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
@@ -577,6 +616,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const timeupdate = vi.fn();
+
     media.addEventListener('timeupdate', timeupdate);
 
     postFromWindow({ postMessage: vi.fn() }, { namespace: PROXY_NAMESPACE, eventName: 'UPDATE_STATE', params: {} });
@@ -592,6 +632,7 @@ describe('TwitchMedia', () => {
     const { iframe } = await attachAndLoad(media);
 
     const options = addEventListener.mock.calls.find(([type]) => type === 'message')?.[2] as AddEventListenerOptions;
+
     expect(options.signal?.aborted).toBe(false);
 
     media.detach();
@@ -599,6 +640,7 @@ describe('TwitchMedia', () => {
 
     // Nothing the embed says afterwards can reach the host.
     const timeupdate = vi.fn();
+
     media.addEventListener('timeupdate', timeupdate);
     postPlayerState(iframe, { currentTime: 9 });
     expect(timeupdate).not.toHaveBeenCalled();
@@ -609,6 +651,7 @@ describe('TwitchMedia', () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
     const playing = vi.fn();
+
     media.addEventListener('playing', playing);
 
     // The event is in flight when the attach it belongs to goes away.
@@ -621,10 +664,12 @@ describe('TwitchMedia', () => {
 
   it('unblocks pending play() when detached before the embed reports ready', async () => {
     const media = new TwitchMedia();
+
     media.src = VOD_SRC;
     media.attach(createIframe());
 
     const pending = media.play();
+
     media.detach();
 
     await expect(pending).resolves.toBeUndefined();
@@ -632,8 +677,10 @@ describe('TwitchMedia', () => {
 
   it('errors and unblocks pending play() when src is unrecognized', async () => {
     const media = new TwitchMedia();
+
     await attachAndLoad(media);
     const error = vi.fn();
+
     media.addEventListener('error', error);
 
     media.src = 'https://example.com/not-twitch';
@@ -657,6 +704,7 @@ describe('TwitchMedia', () => {
     await settle();
 
     const played = media.played;
+
     expect(played.length).toBeGreaterThanOrEqual(1);
     expect(played.end(0)).toBeGreaterThan(0);
     media.detach();
@@ -664,6 +712,7 @@ describe('TwitchMedia', () => {
 
   it('does not report fullscreen when there is no element to request it on', async () => {
     const media = new TwitchMedia();
+
     await media.requestFullscreen();
     expect(media.isFullscreen).toBe(false);
   });
@@ -672,6 +721,7 @@ describe('TwitchMedia', () => {
 describe('TwitchMedia live channels', () => {
   it('reports an infinite duration and no seekable range', async () => {
     const media = new TwitchMedia();
+
     media.src = CHANNEL_SRC;
     const { iframe } = await attachAndLoad(media);
 
@@ -683,9 +733,11 @@ describe('TwitchMedia live channels', () => {
 
   it('keeps the infinite duration and never ends', async () => {
     const media = new TwitchMedia();
+
     media.src = CHANNEL_SRC;
     const { iframe } = await attachAndLoad(media);
     const durationchange = vi.fn();
+
     media.addEventListener('durationchange', durationchange);
 
     // Twitch sends the seconds it has been streaming, which is not a duration.
@@ -702,6 +754,7 @@ describe('TwitchMedia source', () => {
   it('derives src from a structured source and announces the change', () => {
     const media = new TwitchMedia();
     const sourceChange = vi.fn();
+
     media.addEventListener('sourcechange', sourceChange);
 
     media.source = { src: VOD_SRC };
@@ -712,6 +765,7 @@ describe('TwitchMedia source', () => {
 
   it('re-derives source from src, carrying Twitch embed parameters over', () => {
     const media = new TwitchMedia();
+
     media.source = { src: VOD_SRC, engine: { twitch: { time: '0h1m0s' } } };
 
     media.src = CHANNEL_SRC;
@@ -721,11 +775,14 @@ describe('TwitchMedia source', () => {
 
   it('serializes Twitch embed parameters onto the initial iframe src', () => {
     const media = new TwitchMedia();
+
     media.source = { src: VOD_SRC, engine: { twitch: { time: '0h1m0s', parent: 'embed.example.com' } } };
     const iframe = createIframe();
+
     media.attach(iframe);
 
     const src = iframe.getAttribute('src') ?? '';
+
     expect(src).toContain('time=0h1m0s');
     expect(new URL(src).searchParams.getAll('parent')).toContain('embed.example.com');
     media.detach();
@@ -745,6 +802,7 @@ describe('TwitchMedia source', () => {
 
     // A swap reports no readiness of its own, so the first snapshot completes it.
     const loadcomplete = vi.fn();
+
     media.addEventListener('loadcomplete', loadcomplete);
     postPlayerState(iframe, { duration: 30 });
     expect(loadcomplete).toHaveBeenCalledTimes(1);
@@ -775,6 +833,7 @@ describe('TwitchMedia source', () => {
 
     // The rebuilt embed reports `ready` again, which completes the load.
     const loadcomplete = vi.fn();
+
     media.addEventListener('loadcomplete', loadcomplete);
     postEmbedEvent(iframe, 'ready');
     await settle();
@@ -790,6 +849,7 @@ describe('TwitchMedia source', () => {
     await flushDeferredEmbed();
 
     const loadcomplete = vi.fn();
+
     media.addEventListener('loadcomplete', loadcomplete);
     // The iframe keeps its window across the `src` change, so the document on its
     // way out still reaches the host, describing the video being replaced.
@@ -806,8 +866,10 @@ describe('TwitchMedia source', () => {
 
   it('replays a source change that arrived before the embed was ready', async () => {
     const media = new TwitchMedia();
+
     media.src = VOD_SRC;
     const iframe = createIframe();
+
     media.attach(iframe);
 
     media.src = 'https://www.twitch.tv/videos/222';
@@ -825,6 +887,7 @@ describe('TwitchMedia source', () => {
   it('stops the embed and resets state when the source is cleared', async () => {
     const media = new TwitchMedia();
     const { iframe, embed } = await attachAndLoad(media);
+
     postPlayerState(iframe, { duration: 120, currentTime: 5, playback: 'Playing' });
 
     media.source = null;
@@ -840,9 +903,11 @@ describe('TwitchMedia source', () => {
   it('announces the reset when the source is cleared', async () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
+
     postPlayerState(iframe, { duration: 120, currentTime: 5, playback: 'Playing' });
 
     const emptied = vi.fn();
+
     media.addEventListener('emptied', emptied);
     media.source = null;
     await flushDeferredEmbed();
@@ -856,15 +921,18 @@ describe('TwitchMedia source', () => {
   it('ignores what the stopped embed reports after the source is cleared', async () => {
     const media = new TwitchMedia();
     const { iframe } = await attachAndLoad(media);
+
     postPlayerState(iframe, { duration: 120, currentTime: 5, playback: 'Playing' });
 
     media.source = null;
     await flushDeferredEmbed();
 
     const events: string[] = [];
+
     for (const type of ['durationchange', 'timeupdate', 'progress', 'playing'] as const) {
       media.addEventListener(type, () => events.push(type));
     }
+
     // A paused embed keeps describing the video it still holds.
     postPlayerState(iframe, { duration: 120, currentTime: 5, stats: { videoStats: { bufferSize: 10 } } });
     postEmbedEvent(iframe, 'playing');

@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { createDOMRect } from '../../../utils/layout';
 import { PopupPositioner } from '../popup-positioner';
 
@@ -16,6 +17,7 @@ describe('PopupPositioner', () => {
     vi.stubGlobal('ResizeObserver', undefined);
     const trigger = document.createElement('button');
     const popup = document.createElement('div');
+
     popup.style.position = 'absolute';
     popup.style.top = '12px';
 
@@ -26,6 +28,7 @@ describe('PopupPositioner', () => {
     Object.defineProperty(popup, 'offsetHeight', { configurable: true, value: 80 });
 
     const positioner = new PopupPositioner();
+
     positioner.sync({
       anchorName: 'settings',
       position: { side: 'top', align: 'center' },
@@ -50,6 +53,7 @@ describe('PopupPositioner', () => {
     vi.stubGlobal('ResizeObserver', undefined);
     const trigger = document.createElement('button');
     const popup = document.createElement('div');
+
     trigger.dir = 'rtl';
 
     mockRect(document.documentElement, 0, 0, 800, 600);
@@ -59,6 +63,7 @@ describe('PopupPositioner', () => {
     Object.defineProperty(popup, 'offsetHeight', { configurable: true, value: 80 });
 
     const positioner = new PopupPositioner();
+
     positioner.sync({
       anchorName: 'settings',
       position: { side: 'top', align: 'start' },
@@ -74,6 +79,7 @@ describe('PopupPositioner', () => {
     let resize: (() => void) | undefined;
     const disconnect = vi.fn();
     const observe = vi.fn();
+
     class MockResizeObserver {
       constructor(callback: () => void) {
         resize = callback;
@@ -87,12 +93,14 @@ describe('PopupPositioner', () => {
       frameCallback = callback;
       return 1;
     });
+
     vi.stubGlobal('ResizeObserver', MockResizeObserver);
     vi.stubGlobal('requestAnimationFrame', requestFrame);
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
 
     const trigger = document.createElement('button');
     const popup = document.createElement('div');
+
     mockRect(document.documentElement, 0, 0, 800, 600);
     mockRect(trigger, 100, 200, 120, 40);
     mockRect(popup, 0, 0, 200, 80);
@@ -101,6 +109,7 @@ describe('PopupPositioner', () => {
 
     const onSideChange = vi.fn();
     const positioner = new PopupPositioner();
+
     positioner.sync({
       anchorName: 'settings',
       position: { side: 'top', align: 'center' },
@@ -137,6 +146,7 @@ describe('PopupPositioner', () => {
       popupWidth = 100;
     });
     const positioner = new PopupPositioner();
+
     positioner.sync({
       anchorName: 'settings',
       position: { side: 'top', align: 'center' },
@@ -153,20 +163,24 @@ describe('PopupPositioner', () => {
     vi.resetModules();
     vi.doMock('@videojs/utils/dom', async (importOriginal) => {
       const original = (await importOriginal()) as Record<string, unknown>;
+
       return { ...original, supportsAnchorPositioning: () => true };
     });
     const { PopupPositioner: AnchorPopupPositioner } = await import('../popup-positioner');
+
     vi.stubGlobal('ResizeObserver', undefined);
 
     const trigger = document.createElement('button');
     const popup = document.createElement('div');
     const secondPopup = document.createElement('div');
+
     trigger.style.setProperty('anchor-name', '--consumer');
     popup.style.setProperty('position-anchor', '--consumer-popup');
     mockRect(document.documentElement, 0, 0, 800, 600);
     mockRect(trigger, 100, 200, 120, 40);
 
     const positioner = new AnchorPopupPositioner();
+
     positioner.sync({
       anchorName: 'settings',
       position: { side: 'top', align: 'center' },
@@ -178,6 +192,7 @@ describe('PopupPositioner', () => {
     expect(popup.style.getPropertyValue('position-anchor')).toBe('--settings');
 
     const secondPositioner = new AnchorPopupPositioner();
+
     secondPositioner.sync({
       anchorName: 'tooltip',
       position: { side: 'top', align: 'center' },

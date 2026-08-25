@@ -50,6 +50,7 @@ test.describe('Accessibility', () => {
   for (const entry of PLAYER_PAGES) {
     test(`${entry.name} initial state`, async ({ page }, testInfo) => {
       const player = new PlayerPage(page);
+
       await page.goto(entry.path);
       await player.waitForMediaReady();
 
@@ -60,6 +61,7 @@ test.describe('Accessibility', () => {
   for (const entry of VIDEO_PAGES) {
     test(`${entry.name} settings menu`, async ({ page }, testInfo) => {
       const player = new PlayerPage(page);
+
       await page.goto(entry.path);
       await player.waitForMediaReady();
       await player.showControls();
@@ -71,6 +73,7 @@ test.describe('Accessibility', () => {
 
     test(`${entry.name} playback rate menu`, async ({ page }, testInfo) => {
       const player = new PlayerPage(page);
+
       await page.goto(entry.path);
       await player.waitForMediaReady();
       await player.openPlaybackRateSettings();

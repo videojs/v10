@@ -1,5 +1,6 @@
 import type { MixinReturn } from '@videojs/utils/types';
 import Hls, { type HlsConfig } from 'hls.js';
+
 import type { MediaError } from '../../core/media-error';
 import { MediaTracksMixin, type WithMediaTracks } from '../../core/media-tracks';
 import type {
@@ -48,6 +49,7 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
   constructor(params: HlsJsOnlyMediaParams) {
     super();
     const config = { ...defaultHlsConfig, ...params.config };
+
     this.#engine = new Hls({
       ...config,
       // Layered over whatever controller the config already names, so a
@@ -69,6 +71,7 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
 
   set maxAutoResolution(value: MediaResolution | undefined) {
     if (this.#capPolicy.maxAutoResolution === value) return;
+
     this.#capPolicy.maxAutoResolution = value;
     this.#capPolicy.controller?.apply();
   }
@@ -83,6 +86,7 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
     // cap that is actually in force instead of what a source happened to name.
     const next = value ?? true;
     if (this.#capPolicy.capToPlayerSize === next) return;
+
     this.#capPolicy.capToPlayerSize = next;
     this.#capPolicy.controller?.apply();
   }
@@ -95,6 +99,7 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
   set minAutoResolution(value: MediaResolution | undefined) {
     const next = value ?? DEFAULT_MIN_AUTO_RESOLUTION;
     if (this.#capPolicy.minAutoResolution === next) return;
+
     this.#capPolicy.minAutoResolution = next;
     this.#capPolicy.controller?.apply();
   }
@@ -127,9 +132,7 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
 }
 
 interface HlsJsMediaCapabilities
-  extends MediaStreamTypeCapability,
-    MediaLiveCapability,
-    Pick<MediaSourceCapability, 'preload'> {
+  extends MediaStreamTypeCapability, MediaLiveCapability, Pick<MediaSourceCapability, 'preload'> {
   readonly error: MediaError | null;
 }
 

@@ -1,5 +1,4 @@
 import '@app/styles.css';
-
 // SPF HLS Background Video — sandbox demo
 // http://localhost:5173/spf-hls-background-video/
 //
@@ -15,7 +14,6 @@ import '@app/styles.css';
 // is the manifest's job — pick a source whose URL caps it. Reload tears the adapter
 // down and builds a new one, which is the only way to re-run resolution against a
 // URL that is already playing.
-
 import { SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
 import type { BackgroundVideoEngineState } from '@videojs/spf/hls';
@@ -26,6 +24,7 @@ const video = document.getElementById('bg-video') as HTMLVideoElement;
 const sourceSelect = document.getElementById('source-select') as HTMLSelectElement;
 const renditionButtons = document.getElementById('rendition-buttons') as HTMLDivElement;
 const loadBtn = document.getElementById('load-btn') as HTMLButtonElement;
+
 const diagLoad = document.getElementById('diag-load') as HTMLSpanElement;
 const diagRendition = document.getElementById('diag-rendition') as HTMLSpanElement;
 const diagContext = document.getElementById('diag-context') as HTMLSpanElement;
@@ -37,15 +36,19 @@ const diagContext = document.getElementById('diag-context') as HTMLSpanElement;
 // over (DRM, for one), so it is out too.
 const HLS_SOURCE_IDS = (Object.keys(SOURCES) as Array<keyof typeof SOURCES>).filter((id) => {
   const source = SOURCES[id];
+
   return source.type === 'hls' && source.subType === 'mp4' && !source.live && Boolean(source.url);
 });
 const DEFAULT_ID = (HLS_SOURCE_IDS[0] ?? 'hls-1') as keyof typeof SOURCES;
 
 for (const id of HLS_SOURCE_IDS) {
   const option = document.createElement('option');
+
   option.value = id;
   option.textContent = SOURCES[id].label;
+
   if (id === DEFAULT_ID) option.selected = true;
+
   sourceSelect.appendChild(option);
 }
 
@@ -63,12 +66,14 @@ type VideoTrack = ReturnType<typeof videoTracksOf>[number];
 function stableTrackId(track: VideoTrack): string {
   const w = 'width' in track && typeof track.width === 'number' ? track.width : 0;
   const h = 'height' in track && typeof track.height === 'number' ? track.height : 0;
+
   return `${w}x${h}@${track.bandwidth}`;
 }
 
 function trackDimensions(track: VideoTrack): { w: number; h: number } {
   const w = 'width' in track && typeof track.width === 'number' ? track.width : 0;
   const h = 'height' in track && typeof track.height === 'number' ? track.height : 0;
+
   return { w, h };
 }
 
@@ -120,6 +125,7 @@ loadBtn.addEventListener('click', () => {
 // ── Diagnostic strip + rendition picker ──────────────────────────────────────
 function formatBandwidth(bps: number): string {
   if (bps >= 1_000_000) return `${(bps / 1_000_000).toFixed(1)} Mbps`;
+
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
@@ -133,9 +139,11 @@ function attachDiagnostic(): () => void {
 
     const tracks = videoTracksOf(state.presentation);
     const selected = tracks.find((t) => t.id === state.selectedVideoTrackId);
+
     if (selected) {
       const { w, h } = trackDimensions(selected);
       const res = w && h ? `${w}x${h} ` : '';
+
       diagRendition.textContent = `${res}${formatBandwidth(selected.bandwidth)}`;
       diagRendition.className = 'val ok';
     } else {
@@ -146,6 +154,7 @@ function attachDiagnostic(): () => void {
     // List the context keys present at runtime — the absence of any audio-side
     // actor key is the visible subtraction proof.
     const keys = Object.keys(context).filter((k) => (context as Record<string, unknown>)[k] !== undefined);
+
     diagContext.textContent = keys.length ? keys.join(', ') : '—';
 
     renderRenditionList(tracks, state.selectedVideoTrackId);
@@ -159,9 +168,11 @@ function renditionSignature(tracks: VideoTrack[], selectedId: string | undefined
 function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefined): void {
   const signature = renditionSignature(tracks, selectedId);
   if (signature === lastRenditionSignature) return;
+
   lastRenditionSignature = signature;
 
   renditionButtons.innerHTML = '';
+
   if (tracks.length === 0) return;
 
   // Sort by area desc so the list reads top-down high-to-low.
@@ -171,18 +182,23 @@ function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefine
     const areaA = da.w * da.h;
     const areaB = db.w * db.h;
     if (areaB !== areaA) return areaB - areaA;
+
     return b.bandwidth - a.bandwidth;
   });
 
   for (const track of sorted) {
     const { w, h } = trackDimensions(track);
     const row = document.createElement('div');
+
     row.className = 'rendition';
     const tier = h ? `${h}p` : '—';
     const dims = w && h ? ` · ${w}x${h}` : '';
+
     row.textContent = `${tier} - ${formatBandwidth(track.bandwidth)}${dims}`;
     row.title = stableTrackId(track);
+
     if (track.id === selectedId) row.classList.add('selected');
+
     renditionButtons.appendChild(row);
   }
 }

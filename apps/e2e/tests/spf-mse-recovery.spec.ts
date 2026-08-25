@@ -1,28 +1,24 @@
 import { expect, test } from '@playwright/test';
+
 import { PlayerPage } from '../page-objects/player';
 
 /**
  * SPF MediaSource attach + sourceclose-recovery smoke tests.
  *
- * Runs against the SPF engine page (`hls-video`) on every vite-*
- * project (Chromium, WebKit, Firefox). Two things under test:
+ * Runs against the SPF engine page (`hls-video`) on every vite-* project (Chromium, WebKit, Firefox). Two things under
+ * test:
  *
- * 1. The attach shape: the object URL rides a `<source>` child on every
- *    platform, not the `src` attribute. The HLS engine bakes
- *    `attachMediaSourceAsSourceElement` unconditionally because it composes
- *    `setupAirPlay`, whose native-HLS fallback has to stay a selectable
- *    sibling — `src`/`srcObject` would commit the element to the MSE resource
- *    and make any sibling inert.
- * 2. Sourceclose recovery: when the MSE attachment is torn down out from under
- *    the engine (the observable shape of an AirPlay handoff return or MMS
- *    eviction — the MediaSource fires `sourceclose`), `setupMediaSource`
- *    must rebuild a fresh MediaSource for the same source and playback
- *    must come back.
+ * 1. The attach shape: the object URL rides a `<source>` child on every platform, not the `src` attribute. The HLS engine
+ *    bakes `attachMediaSourceAsSourceElement` unconditionally because it composes `setupAirPlay`, whose native-HLS
+ *    fallback has to stay a selectable sibling — `src`/`srcObject` would commit the element to the MSE resource and
+ *    make any sibling inert.
+ * 2. Sourceclose recovery: when the MSE attachment is torn down out from under the engine (the observable shape of an
+ *    AirPlay handoff return or MMS eviction — the MediaSource fires `sourceclose`), `setupMediaSource` must rebuild a
+ *    fresh MediaSource for the same source and playback must come back.
  *
- * Position restore across the rebuild is asserted in unit tests
- * (`setup-mediasource.test.ts`, `apply-start-position.test.ts`) and verified
- * on-device for true AirPlay — this simulation's `load()` races the position
- * snapshot, so exact-position assertions would be flaky here.
+ * Position restore across the rebuild is asserted in unit tests (`setup-mediasource.test.ts`,
+ * `apply-start-position.test.ts`) and verified on-device for true AirPlay — this simulation's `load()` races the
+ * position snapshot, so exact-position assertions would be flaky here.
  */
 
 const PAGE = '/pages/html-hls-video-fmp4.html';
@@ -38,6 +34,7 @@ interface AttachShape {
 function readAttachShape(): AttachShape {
   const host = document.querySelector('hls-video');
   const video = (host?.shadowRoot?.querySelector('video') ?? host?.querySelector('video') ?? host) as HTMLVideoElement;
+
   return {
     airPlayCapable: 'WebKitPlaybackTargetAvailabilityEvent' in window,
     srcAttr: video.getAttribute('src') ?? '',
@@ -49,6 +46,7 @@ function readAttachShape(): AttachShape {
 /** The blob URL of the current MSE attachment, wherever it rides. */
 function mseAttachmentOf(shape: AttachShape): string {
   if (shape.srcAttr.startsWith('blob:')) return shape.srcAttr;
+
   return shape.sources.find((s) => s.type === 'video/mp4' && s.src.startsWith('blob:'))?.src ?? '';
 }
 
@@ -81,6 +79,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
   test('rebuilds a fresh MediaSource when the attachment is torn down out from under the engine', async ({ page }) => {
     const before = await page.evaluate(readAttachShape);
     const beforeAttachment = mseAttachmentOf(before);
+
     expect(beforeAttachment).not.toBe('');
 
     // Simulate the UA killing the MSE attachment (AirPlay handoff return /
@@ -95,11 +94,13 @@ test.describe('SPF MediaSource attach + recovery', () => {
       const mseSource = Array.from(video.querySelectorAll('source')).find(
         (s) => s.type === 'video/mp4' && s.src.startsWith('blob:')
       );
+
       if (mseSource) {
         mseSource.remove();
       } else {
         video.removeAttribute('src');
       }
+
       video.load();
     });
 
@@ -116,6 +117,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
           (s) => s.type === 'video/mp4' && s.src.startsWith('blob:')
         );
         const attachment = srcAttr.startsWith('blob:') ? srcAttr : (sourceChild?.src ?? '');
+
         return attachment !== '' && attachment !== prev && video.readyState >= 1;
       },
       beforeAttachment,
@@ -123,6 +125,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
     );
 
     const after = await page.evaluate(readAttachShape);
+
     expect(mseAttachmentOf(after)).not.toBe(beforeAttachment);
     // The rebuilt source is playable, not just attached.
     await player.play();

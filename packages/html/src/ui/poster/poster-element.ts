@@ -17,9 +17,8 @@ function composedChildren(element: Element): Element[] {
 }
 
 /**
- * The first image an element composes. A skin forwards its own
- * `<slot name="poster">` in, so the image is a slot or two down and may be
- * wrapped in a `<picture>` or a framework image component.
+ * The first image an element composes. A skin forwards its own `<slot name="poster">` in, so the image is a slot or two
+ * down and may be wrapped in a `<picture>` or a framework image component.
  */
 function findImage(element: Element): HTMLImageElement | null {
   for (const child of composedChildren(element)) {
@@ -33,21 +32,21 @@ function findImage(element: Element): HTMLImageElement | null {
 }
 
 /**
- * Whether anything already points this image somewhere, which answers both
- * whether the author owns the source and whether there is a download to wait
- * for. A `<source>` counts: inside a `<picture>` it can win over the `src`.
+ * Whether anything already points this image somewhere, which answers both whether the author owns the source and
+ * whether there is a download to wait for. A `<source>` counts: inside a `<picture>` it can win over the `src`.
  */
 function hasSource(img: HTMLImageElement): boolean {
   if (img.hasAttribute('src') || img.hasAttribute('srcset')) return true;
 
   const parent = img.parentElement;
+
   return parent?.localName === 'picture' && parent.querySelector('source') !== null;
 }
 
 /**
- * Whether `complete` on this image describes a request. It is also true for one
- * that omits both `src` and `srcset`, whatever a parent `<picture>` is fetching
- * on its behalf, so only an image sourced from its own attributes can be read.
+ * Whether `complete` on this image describes a request. It is also true for one that omits both `src` and `srcset`,
+ * whatever a parent `<picture>` is fetching on its behalf, so only an image sourced from its own attributes can be
+ * read.
  */
 function hasOwnSource(img: HTMLImageElement): boolean {
   return !!img.getAttribute('src') || img.hasAttribute('srcset');
@@ -59,15 +58,12 @@ type ImageLoadState = 'pending' | 'loaded' | 'error';
 /**
  * `<media-poster>` — sets `src` on a poster image it does not own.
  *
- * The image is a child, as in `<picture>`, but sourcing runs the other way
- * around: `<picture>` treats the `src` on its `<img>` as the fallback, while
- * here an image with no source of its own is the one this element fills in.
- * Give the child a `src`, a `srcset`, or `<source>` candidates and it is yours,
- * left alone.
+ * The image is a child, as in `<picture>`, but sourcing runs the other way around: `<picture>` treats the `src` on its
+ * `<img>` as the fallback, while here an image with no source of its own is the one this element fills in. Give the
+ * child a `src`, a `srcset`, or `<source>` candidates and it is yours, left alone.
  *
- * Renders no image of its own, so include one:
- * `<media-poster><img alt=""></media-poster>`. Inside a skin, an
- * `<img slot="poster">` of yours replaces the one the skin carries.
+ * Renders no image of its own, so include one: `<media-poster><img alt=""></media-poster>`. Inside a skin, an `<img
+ * slot="poster">` of yours replaces the one the skin carries.
  */
 export class PosterElement extends UIElement {
   static readonly tagName = 'media-poster';
@@ -89,6 +85,7 @@ export class PosterElement extends UIElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
@@ -115,6 +112,7 @@ export class PosterElement extends UIElement {
 
   get #loadState(): PosterImageLoadState {
     if (!this.#image || !hasSource(this.#image)) return 'none';
+
     return this.#imageLoadState === 'pending' ? 'loading' : this.#imageLoadState;
   }
 
@@ -141,15 +139,15 @@ export class PosterElement extends UIElement {
   }
 
   /**
-   * Ownership is settled once, when an image becomes active: after the first fill
-   * the `src` we set would itself look authored. Re-slot an image with a source
-   * to hand it back, the way React decides a field is controlled at mount.
+   * Ownership is settled once, when an image becomes active: after the first fill the `src` we set would itself look
+   * authored. Re-slot an image with a source to hand it back, the way React decides a field is controlled at mount.
    */
   #adopt(next: HTMLImageElement | null): void {
     if (next === this.#image) return;
 
     // An image that steps aside keeps downloading whatever we pointed it at.
     if (this.#owned) this.#image?.removeAttribute('src');
+
     this.#imageEvents?.abort();
     this.#imageEvents = null;
 
@@ -187,6 +185,7 @@ export class PosterElement extends UIElement {
             `Add one as a child: <${this.localName}><img alt=""></${this.localName}>`
         );
       }
+
       return;
     }
 

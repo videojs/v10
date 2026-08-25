@@ -21,6 +21,7 @@ export class VideoTrack {
 
   addRendition(src: string, width?: number, height?: number, codec?: string, bitrate?: number, frameRate?: number) {
     const rendition = new VideoRendition();
+
     rendition.src = src;
     rendition.width = width;
     rendition.height = height;
@@ -41,6 +42,7 @@ export class VideoTrack {
 
   set selected(value: boolean) {
     if (this.#selected === value) return;
+
     this.#selected = value;
 
     if (value !== true) return;

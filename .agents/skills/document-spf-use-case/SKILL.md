@@ -1,6 +1,6 @@
 ---
 name: document-spf-use-case
-description: Create or update an SPF use-case record only when the user explicitly requests it. Use for delivery scenarios, variants, constituent features, status, constraints, or verification under internal/design/spf/use-cases.
+description: Document an SPF use-case record. Use when the user explicitly requests delivery scenarios, variants, relationships, status, or verification.
 ---
 
 # Document an SPF use case

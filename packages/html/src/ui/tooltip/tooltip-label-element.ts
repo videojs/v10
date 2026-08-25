@@ -25,6 +25,7 @@ export class TooltipLabelElement extends UIElement {
 
   setSyncedText(text: string): void {
     if (this.#hasAuthoredContent) return;
+
     this.textContent = text;
   }
 }

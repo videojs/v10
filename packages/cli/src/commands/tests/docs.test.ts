@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vite-plus/test';
 
 // --- Fixtures ---
 
@@ -50,6 +50,7 @@ vi.mock('@clack/prompts', () => ({
 }));
 
 import * as p from '@clack/prompts';
+
 import { getConfigValue } from '../../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../../utils/docs.js';
 import { handleDocs } from '../docs.js';
@@ -90,7 +91,9 @@ beforeEach(() => {
 
   (readBundledDoc as Mock).mockImplementation((_fw: string, slug: string) => {
     if (slug === 'how-to/installation') return INSTALLATION_DOC;
+
     if (slug === 'concepts/skins') return REGULAR_DOC;
+
     return null;
   });
   (readLlmsTxt as Mock).mockReturnValue(LLMS_TXT);
@@ -191,6 +194,7 @@ describe('handleDocs', () => {
     it('prints version header followed by markdown content', async () => {
       await handleDocs({ framework: 'html' }, ['concepts/skins']);
       const out = output();
+
       expect(out).toContain('@videojs/cli v');
       expect(out).toContain('# Skins');
       expect(out).toContain('Video.js comes with several skins');
@@ -222,6 +226,7 @@ describe('handleDocs', () => {
       it('generates npm installation with JS imports and HTML sections', async () => {
         await handleDocs(htmlFlags(), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('## Install Video.js');
         expect(out).toContain('npm install @videojs/html');
         expect(out).toContain('## JavaScript imports');
@@ -237,6 +242,7 @@ describe('handleDocs', () => {
       it('generates CDN installation without JS imports section', async () => {
         await handleDocs(htmlFlags({ 'install-method': 'cdn' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('## Install Video.js');
         expect(out).toContain('<script');
         expect(out).not.toContain('## JavaScript imports');
@@ -263,6 +269,7 @@ describe('handleDocs', () => {
       it('generates headless (no skin) variant with skin none', async () => {
         await handleDocs(htmlFlags({ skin: 'none' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<video-player>');
         expect(out).not.toContain('<video-skin>');
         expect(out).not.toContain("'@videojs/html/video/skin'");
@@ -288,6 +295,7 @@ describe('handleDocs', () => {
       it('generates DASH media variant', async () => {
         await handleDocs(htmlFlags({ media: 'dash' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<dash-video src=');
         expect(out).toContain("import '@videojs/html/media/dash-video'");
       });
@@ -295,6 +303,7 @@ describe('handleDocs', () => {
       it('generates Mux media variant', async () => {
         await handleDocs(htmlFlags({ media: 'mux-video' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<mux-video src=');
         expect(out).toContain("import '@videojs/html/media/mux-video'");
       });
@@ -302,6 +311,7 @@ describe('handleDocs', () => {
       it('generates Vimeo media variant via npm', async () => {
         await handleDocs(htmlFlags({ media: 'vimeo' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<vimeo-video src=');
         expect(out).toContain("import '@videojs/html/media/vimeo-video'");
       });
@@ -309,6 +319,7 @@ describe('handleDocs', () => {
       it('generates YouTube media variant via npm', async () => {
         await handleDocs(htmlFlags({ media: 'youtube' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<youtube-video src=');
         expect(out).toContain("import '@videojs/html/media/youtube-video'");
       });
@@ -316,6 +327,7 @@ describe('handleDocs', () => {
       it('generates Spotify media variant for the audio preset', async () => {
         await handleDocs(htmlFlags({ preset: 'audio', skin: 'default', media: 'spotify' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<spotify-audio src=');
         expect(out).toContain("import '@videojs/html/media/spotify-audio'");
       });
@@ -323,6 +335,7 @@ describe('handleDocs', () => {
       it('generates a CDN media script for renderers with a CDN build (mux)', async () => {
         await handleDocs(htmlFlags({ media: 'mux-video', 'install-method': 'cdn' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<script');
         expect(out).toContain('media/mux-video.js');
       });
@@ -337,6 +350,7 @@ describe('handleDocs', () => {
       it('generates the live-video preset', async () => {
         await handleDocs(htmlFlags({ preset: 'live-video', media: 'hls' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<live-video-player>');
         expect(out).toContain('<live-video-skin>');
         expect(out).toContain("import '@videojs/html/live-video/player'");
@@ -348,6 +362,7 @@ describe('handleDocs', () => {
           'how-to/installation',
         ]);
         const out = output();
+
         expect(out).toContain('cdn/live-video.js');
         expect(out).toContain('media/hlsjs-video.js');
       });
@@ -357,6 +372,7 @@ describe('handleDocs', () => {
       it('generates npm installation with create and use sections', async () => {
         await handleDocs(reactFlags(), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('## Install Video.js');
         expect(out).toContain('npm install @videojs/react');
         expect(out).toContain('## Create your player');
@@ -372,6 +388,7 @@ describe('handleDocs', () => {
       it('generates the live-audio preset with its player and skin', async () => {
         await handleDocs(reactFlags({ preset: 'live-audio', media: 'mux-audio' }), ['how-to/installation']);
         const out = output();
+
         expect(out).toContain('<LiveAudioPlayer>');
         expect(out).toContain('<LiveAudioSkin>');
       });

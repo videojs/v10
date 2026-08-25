@@ -1,5 +1,5 @@
 import { flush } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createDialog, type DialogOptions } from '../dialog';
 import { createTransition } from '../transition';
@@ -13,12 +13,14 @@ function createTestDialog(overrides?: Partial<DialogOptions>) {
     onOpenChange,
     ...overrides,
   });
+
   dialogs.add(dialog);
   return { dialog, onOpenChange };
 }
 
 afterEach(() => {
   for (const dialog of dialogs) dialog.destroy();
+
   dialogs.clear();
   document.body.innerHTML = '';
 });
@@ -42,8 +44,10 @@ describe('createDialog', () => {
   it('focuses the first tabbable element on open', async () => {
     const { dialog } = createTestDialog();
     const popup = document.createElement('div');
+
     popup.tabIndex = -1;
     const first = document.createElement('button');
+
     popup.append(first);
     document.body.append(popup);
     dialog.setPopupElement(popup);
@@ -57,9 +61,11 @@ describe('createDialog', () => {
   it('traps Tab focus within the popup', () => {
     const { dialog } = createTestDialog();
     const popup = document.createElement('div');
+
     popup.tabIndex = -1;
     const first = document.createElement('button');
     const last = document.createElement('button');
+
     popup.append(first, last);
     document.body.append(popup);
     dialog.setPopupElement(popup);
@@ -75,11 +81,13 @@ describe('createDialog', () => {
   it('traps Tab focus across open shadow roots', () => {
     const { dialog } = createTestDialog();
     const popup = document.createElement('div');
+
     popup.tabIndex = -1;
     const first = document.createElement('button');
     const skin = document.createElement('div');
     const shadow = skin.attachShadow({ mode: 'open' });
     const last = document.createElement('button');
+
     shadow.append(last);
     popup.append(first, skin);
     document.body.append(popup);
@@ -89,6 +97,7 @@ describe('createDialog', () => {
 
     first.focus();
     const forward = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+
     document.dispatchEvent(forward);
     expect(forward.defaultPrevented).toBe(false);
 
@@ -106,10 +115,12 @@ describe('createDialog', () => {
   it('restores focus to the trigger after closing', async () => {
     const trigger = document.createElement('button');
     const popup = document.createElement('div');
+
     popup.tabIndex = -1;
     document.body.append(trigger, popup);
 
     const { dialog } = createTestDialog();
+
     dialog.setTriggerElement(trigger);
     dialog.setPopupElement(popup);
     trigger.focus();
@@ -123,9 +134,11 @@ describe('createDialog', () => {
   it('makes content outside the popup inert while open', async () => {
     const trigger = document.createElement('button');
     const popup = document.createElement('div');
+
     document.body.append(trigger, popup);
 
     const { dialog } = createTestDialog();
+
     dialog.setTriggerElement(trigger);
     dialog.setPopupElement(popup);
     dialog.open();
@@ -140,6 +153,7 @@ describe('createDialog', () => {
 
   it('closes on Escape', () => {
     const { dialog, onOpenChange } = createTestDialog();
+
     dialog.open();
     onOpenChange.mockClear();
     flush();
@@ -151,6 +165,7 @@ describe('createDialog', () => {
 
   it('does not close on Escape when disabled', () => {
     const { dialog, onOpenChange } = createTestDialog({ closeOnEscape: () => false });
+
     dialog.open();
     onOpenChange.mockClear();
     flush();
@@ -164,6 +179,7 @@ describe('createDialog', () => {
     const { dialog, onOpenChange } = createTestDialog();
     const popup = document.createElement('div');
     const playerControl = document.createElement('button');
+
     popup.append(playerControl);
     document.body.append(popup);
     dialog.setPopupElement(popup);
@@ -178,11 +194,14 @@ describe('createDialog', () => {
 
   it('restores pre-existing inert state after closing', async () => {
     const background = document.createElement('div');
+
     background.setAttribute('inert', '');
     const popup = document.createElement('div');
+
     document.body.append(background, popup);
 
     const { dialog } = createTestDialog();
+
     dialog.setPopupElement(popup);
     dialog.open();
     dialog.close();
@@ -194,9 +213,11 @@ describe('createDialog', () => {
   it('restores background interaction when destroyed', () => {
     const background = document.createElement('button');
     const popup = document.createElement('div');
+
     document.body.append(background, popup);
 
     const { dialog } = createTestDialog();
+
     dialog.setPopupElement(popup);
     dialog.open();
     dialog.destroy();

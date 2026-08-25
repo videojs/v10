@@ -1,13 +1,13 @@
 /**
- * createBackgroundVideoEngine tests.
+ * CreateBackgroundVideoEngine tests.
  *
- * The variant subtracts audio, text, ABR, and preload-monitoring behaviors
- * from the HLS video engine, then seeds `loadActivated: true` so the
- * composition behaves as if preload has already been activated. These tests
- * confirm the seed, the absence of subtracted state slots, and the selection
- * rule chain — its screen-size cap and its configurability.
+ * The variant subtracts audio, text, ABR, and preload-monitoring behaviors from the HLS video engine, then seeds
+ * `loadActivated: true` so the composition behaves as if preload has already been activated. These tests confirm the
+ * seed, the absence of subtracted state slots, and the selection rule chain — its screen-size cap and its
+ * configurability.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { snapshot } from '../../../../core/signals/primitives';
 import { SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../../../media/errors';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
@@ -40,6 +40,7 @@ describe('createBackgroundVideoEngine', () => {
 
   it('seeds loadActivated: true so preload gates pass from frame 0', () => {
     const engine = createBackgroundVideoEngine();
+
     expect(engine.state.loadActivated.get()).toBe(true);
     engine.destroy();
   });
@@ -99,6 +100,7 @@ describe('createBackgroundVideoEngine', () => {
 
     it('declares the errors slot', () => {
       const engine = createBackgroundVideoEngine();
+
       expect('errors' in (snapshot(engine.state) as Record<string, unknown>)).toBe(true);
       engine.destroy();
     });
@@ -108,6 +110,7 @@ describe('createBackgroundVideoEngine', () => {
     // the track is picked and resolves first; this presentation starts pre-relabeled.
     it('makes no pick for an unplayable container', async () => {
       const engine = createBackgroundVideoEngine();
+
       engine.state.presentation.set(unplayablePresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -121,6 +124,7 @@ describe('createBackgroundVideoEngine', () => {
     // survivor set is the only thing left to report, which is why 2011 covers it.
     it('reports for a ladder the environment cannot decode', async () => {
       const engine = createBackgroundVideoEngine({ canPlayTrack: () => false });
+
       engine.state.presentation.set(undecodablePresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -175,6 +179,7 @@ describe('createBackgroundVideoEngine', () => {
     // is what covers it, composed because this engine is video-only.
     it('reports for a source with no video renditions at all', async () => {
       const engine = createBackgroundVideoEngine();
+
       engine.state.presentation.set(audioOnlyPresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -219,6 +224,7 @@ describe('createBackgroundVideoEngine', () => {
       // The constraint chain runs inside a `computed` that re-derives on every
       // write, and the sequence keeps duplicates, so the guard is load-bearing.
       const engine = createBackgroundVideoEngine();
+
       engine.state.presentation.set(audioOnlyPresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
       engine.state.presentation.set(audioOnlyPresentation());
@@ -230,6 +236,7 @@ describe('createBackgroundVideoEngine', () => {
 
     it('clears the sequence on src unload so the next source starts clean', async () => {
       const engine = createBackgroundVideoEngine();
+
       engine.state.presentation.set(audioOnlyPresentation());
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(engine.state.errors.get()).toHaveLength(1);
@@ -265,6 +272,7 @@ describe('createBackgroundVideoEngine', () => {
   // so an ambient reading would make the expected pick machine-dependent.
   it('defaults the rule chain to the largest rendition that fits the screen', async () => {
     const engine = createBackgroundVideoEngine();
+
     // Roomy enough that the cap admits both, leaving the ranker to decide.
     engine.state.screenResolution.set({ width: 3840, height: 2160 });
 
@@ -324,6 +332,7 @@ describe('createBackgroundVideoEngine', () => {
 
   it('caps the default pick to the screen', async () => {
     const engine = createBackgroundVideoEngine();
+
     // 921,600 px: the 1080p rung's 2,073,600 is over it, the 480p rung's 409,920 fits.
     engine.state.screenResolution.set({ width: 1280, height: 720 });
 
@@ -436,6 +445,7 @@ describe('createBackgroundVideoEngine', () => {
 
     function stubScreen(width: number, height: number, ratio = 1) {
       const screen = Object.assign(new EventTarget(), { width, height, orientation: new EventTarget() });
+
       vi.stubGlobal('screen', screen);
       vi.stubGlobal('devicePixelRatio', ratio);
       return screen;

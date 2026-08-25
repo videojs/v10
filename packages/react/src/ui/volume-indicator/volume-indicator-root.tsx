@@ -9,8 +9,7 @@ import { useInputIndicatorRoot } from '../input-indicator/use-input-indicator-ro
 import { VolumeIndicatorProvider } from './context';
 
 export interface VolumeIndicatorRootProps
-  extends UIComponentProps<'div', VolumeIndicatorCore.State>,
-    Omit<VolumeIndicatorCore.Props, 'labels'> {}
+  extends UIComponentProps<'div', VolumeIndicatorCore.State>, Omit<VolumeIndicatorCore.Props, 'labels'> {}
 
 export const VolumeIndicatorRoot = forwardRef(function VolumeIndicatorRoot(
   componentProps: VolumeIndicatorRootProps,
@@ -26,7 +25,6 @@ export const VolumeIndicatorRoot = forwardRef(function VolumeIndicatorRoot(
     },
     { replayOnUpdate: false }
   );
-
   if (!present) return null;
 
   return (

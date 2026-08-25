@@ -1,6 +1,7 @@
 import { useStore } from '@nanostores/react';
 import { Code2, Minus, Sparkles } from 'lucide-react';
 import { useEffect } from 'react';
+
 import type { ImageRadioOption } from '@/components/ImageRadioGroup';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
 import { skin, useCase } from '@/stores/installation';
@@ -27,6 +28,7 @@ export default function SkinPicker() {
   // Auto-switch skin when use case changes and current skin is invalid
   useEffect(() => {
     const validValues = options.map((o) => o.value);
+
     if (!validValues.includes(skin.get())) {
       skin.set(options[0].value);
     }

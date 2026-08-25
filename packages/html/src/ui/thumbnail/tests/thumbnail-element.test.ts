@@ -2,7 +2,7 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaTextTrackState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { playerContext } from '../../../player/context';
 import { UIElement } from '../../ui-element';
@@ -37,6 +37,7 @@ class TestPlayerProviderElement extends UIElement {
 if (!customElements.get(ThumbnailElement.tagName)) {
   customElements.define(ThumbnailElement.tagName, ThumbnailElement);
 }
+
 if (!customElements.get('test-thumbnail-player')) {
   customElements.define('test-thumbnail-player', TestPlayerProviderElement);
 }
@@ -46,10 +47,9 @@ function nextFrame(): Promise<void> {
 }
 
 /**
- * Mount a thumbnail inside a player reporting the given media CORS mode and
- * return the `crossorigin` attribute its inner `<img>` settles on. The player
- * context resolves a frame after connect, so settle across a few updates
- * rather than reading the first one.
+ * Mount a thumbnail inside a player reporting the given media CORS mode and return the `crossorigin` attribute its
+ * inner `<img>` settles on. The player context resolves a frame after connect, so settle across a few updates rather
+ * than reading the first one.
  */
 async function renderCrossOrigin(
   mediaCrossOrigin: MediaTextTrackState['thumbnailTrackCrossOrigin'],
@@ -90,11 +90,13 @@ describe('ThumbnailElement', () => {
       const attribute = await renderCrossOrigin('use-credentials', (el) => {
         el.setAttribute('crossorigin', 'anonymous');
       });
+
       expect(attribute).toBe('anonymous');
 
       const property = await renderCrossOrigin('use-credentials', (el) => {
         el.crossOrigin = 'anonymous';
       });
+
       expect(property).toBe('anonymous');
     });
 

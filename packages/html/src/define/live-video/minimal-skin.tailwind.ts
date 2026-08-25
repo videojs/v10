@@ -21,9 +21,9 @@ import {
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
-
 // Register the live video player, container, and minimal UI custom elements.
 import './minimal-ui';
 
@@ -71,18 +71,22 @@ function getTemplateHTML() {
 
               <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
 
-              <media-mute-button commandfor="live-video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+              <media-mute-button id="live-video-mute-trigger" commandfor="live-video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
                 ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
                 ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
                 ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
               </media-mute-button>
+              <media-tooltip trigger="live-video-mute-trigger" delay="0" sticky side="top" class="${cn(popup.tooltip)}">
+                <media-tooltip-label></media-tooltip-label>
+                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+              </media-tooltip>
 
               <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="${cn(popup.volume)}">
                 <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
                   <media-slider-track class="${slider.track}">
                     <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
                   </media-slider-track>
-                  <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
+                  <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
                 </media-volume-slider>
               </media-popover>
           </div>
@@ -95,16 +99,18 @@ function getTemplateHTML() {
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>
               <media-menu id="captions-menu" side="top" align="center" class="${cn(popup.popover, menu.root)}">
-                <media-captions-radio-group class="${menu.group}">
-                  <template>
-                    <media-menu-radio-item class="${menu.item}">
-                      <bdi data-part="label" dir="auto"></bdi>
-                      <media-menu-item-indicator force-mount class="${menu.indicator}">
-                        ${renderIcon('check', { class: cn(icon, menu.icon) })}
-                      </media-menu-item-indicator>
-                    </media-menu-radio-item>
-                  </template>
-                </media-captions-radio-group>
+                <media-menu-content class="${menu.content}">
+                  <media-captions-radio-group class="${menu.group}">
+                    <template>
+                      <media-menu-radio-item class="${menu.item}">
+                        <bdi data-part="label" dir="auto"></bdi>
+                        <media-menu-item-indicator force-mount class="${menu.indicator}">
+                          ${renderIcon('check', { class: cn(icon, menu.icon) })}
+                        </media-menu-item-indicator>
+                      </media-menu-radio-item>
+                    </template>
+                  </media-captions-radio-group>
+                </media-menu-content>
               </media-menu>
               <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <media-tooltip-label></media-tooltip-label>

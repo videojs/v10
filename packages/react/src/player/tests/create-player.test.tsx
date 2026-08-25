@@ -3,7 +3,8 @@ import { features, metadataFeature, type PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import { Component, type ErrorInfo, type ReactNode, StrictMode, useState } from 'react';
 import { renderToString } from 'react-dom/server';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { I18nProvider, useLocale } from '../../i18n';
 import { Container } from '../../index';
 import { useContainer, usePlayerContext } from '../context';
@@ -65,6 +66,7 @@ describe('createPlayer', () => {
       );
 
       const destroySpy = vi.spyOn(store, 'destroy');
+
       unmount();
       vi.runAllTimers();
 
@@ -84,6 +86,7 @@ describe('createPlayer', () => {
       function TestComponent() {
         store = usePlayer();
         const { setMedia } = usePlayerContext();
+
         setMediaFn = setMedia;
         return null;
       }
@@ -95,6 +98,7 @@ describe('createPlayer', () => {
       );
 
       const originalStore = store;
+
       expect(originalStore.destroyed).toBe(false);
 
       // Simulate the Activity gap: the deferred timeout fires before React gets
@@ -132,6 +136,7 @@ describe('createPlayer', () => {
       );
 
       const destroyedStore = store;
+
       destroyedStore.destroy();
 
       act(() => setMedia(document.createElement('video')));
@@ -311,6 +316,7 @@ describe('createPlayer', () => {
       }
 
       const container = document.createElement('div');
+
       container.innerHTML = renderToString(
         <Player title="Hydrated title">
           <Consumer />
@@ -351,7 +357,9 @@ describe('createPlayer', () => {
 
       function Consumer({ fail = false }: { fail?: boolean }) {
         store = usePlayer();
+
         if (fail) throw new Error('abandon render');
+
         return null;
       }
 
@@ -384,6 +392,7 @@ describe('createPlayer', () => {
       function Locale() {
         const container = useContainer();
         const locale = useLocale();
+
         return <span>{container ? locale : 'pending'}</span>;
       }
 
@@ -406,6 +415,7 @@ describe('createPlayer', () => {
       function Locale() {
         const container = useContainer();
         const locale = useLocale();
+
         return <span>{container ? locale : 'pending'}</span>;
       }
 
@@ -431,13 +441,16 @@ describe('createPlayer', () => {
 
       function ContextConsumer() {
         const ctx = usePlayerContext();
+
         receivedValues.push(ctx);
         return null;
       }
 
       let forceParentRerender!: () => void;
+
       function Parent() {
         const [, setTick] = useState(0);
+
         forceParentRerender = () => setTick((t) => t + 1);
         return (
           <Player>
@@ -530,10 +543,12 @@ describe('createPlayer', () => {
 
       // Container should render
       const containerEl = container.querySelector('[data-testid="container"]');
+
       expect(containerEl).toBeTruthy();
 
       // Video should render inside container
       const videoEl = container.querySelector('[data-testid="video"]');
+
       expect(videoEl).toBeTruthy();
     });
   });

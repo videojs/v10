@@ -1,10 +1,15 @@
-import type { ComponentSchema } from 'vjsc/components';
-import { type ComponentTarget, defineComponentTarget, type SourceProps } from 'vjsc/target';
-import { jsx } from 'vjsc/target/jsx-runtime';
+import type { ComponentSchema } from '../../vjsc/src/components/index.ts';
+import { type ComponentTarget, defineComponentTarget, type SourceProps } from '../../vjsc/src/target/index.ts';
+import { jsx } from '../../vjsc/src/target/jsx-runtime.ts';
 
 export interface IconTargetOptions {
   readonly family?: string | undefined;
 }
+
+const htmlIconNames: Readonly<Record<string, string>> = {
+  AirPlayEnterIcon: 'airplay-enter',
+  AirPlayExitIcon: 'airplay-exit',
+};
 
 export function createHtmlIconTarget(options: IconTargetOptions = {}): ComponentTarget<ComponentSchema> {
   const family = options.family ?? 'default';
@@ -21,10 +26,12 @@ export function createHtmlIconTarget(options: IconTargetOptions = {}): Component
           jsx(Icon, {
             ...props,
             ...(family === 'default' ? {} : { family }),
-            name: component
-              .replace(/Icon$/, '')
-              .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-              .toLowerCase(),
+            name:
+              htmlIconNames[component] ??
+              component
+                .replace(/Icon$/, '')
+                .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+                .toLowerCase(),
           }),
       jsx: {
         importSource: 'vjsc/html-runtime',

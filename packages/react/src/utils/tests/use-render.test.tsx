@@ -1,7 +1,7 @@
 import { cleanup, render } from '@testing-library/react';
 import type { ForwardedRef, Ref } from 'react';
 import { createRef, forwardRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { renderElement } from '../use-render';
 
@@ -174,11 +174,13 @@ describe('renderElement', () => {
       expect(renderFn).toHaveBeenCalled();
 
       const [receivedProps, receivedState] = renderFn.mock.calls[0]!;
+
       expect(receivedProps['data-testid']).toBe('custom');
       expect(receivedProps['data-component']).toBe('test');
       expect(receivedState).toEqual({ active: true });
 
       const element = container.firstElementChild;
+
       expect(element?.tagName).toBe('SPAN');
       expect(element?.getAttribute('data-active')).toBe('true');
     });
@@ -197,6 +199,7 @@ describe('renderElement', () => {
       render(<TestComponent className="my-class" style={{ color: 'red' }} render={renderFn} />);
 
       const [receivedProps] = renderFn.mock.calls[0]!;
+
       expect(receivedProps.className).toContain('my-class');
       expect(receivedProps.style).toEqual({ color: 'red' });
     });
@@ -207,6 +210,7 @@ describe('renderElement', () => {
       const { container } = render(<TestComponent render={<span />} data-testid="merged" />);
 
       const element = container.firstElementChild;
+
       expect(element?.tagName).toBe('SPAN');
       expect(element?.getAttribute('data-testid')).toBe('merged');
       expect(element?.getAttribute('data-component')).toBe('test');
@@ -218,6 +222,7 @@ describe('renderElement', () => {
       );
 
       const element = container.firstElementChild;
+
       expect(element?.className).toContain('component-class');
       expect(element?.className).toContain('render-class');
     });
@@ -228,6 +233,7 @@ describe('renderElement', () => {
       );
 
       const element = container.firstElementChild as HTMLElement;
+
       expect(element?.style.color).toBe('red');
       expect(element?.style.fontSize).toBe('16px');
     });

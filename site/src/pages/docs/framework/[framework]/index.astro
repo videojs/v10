@@ -6,10 +6,7 @@ import { getPreferencesServer } from '@/utils/docs/preferences';
 import { resolveIndexRedirect } from '@/utils/docs/routing';
 
 const { framework } = Astro.params;
-
-if (!framework) {
-  return Astro.redirect('/docs', 307);
-}
+if (!framework) return Astro.redirect('/docs', 307);
 
 if (!isValidFramework(framework)) {
   return new Response('Not Found', { status: 404 });

@@ -2,10 +2,10 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
 import type { Plugin } from 'vite';
-import { optimizeSvg } from '../scripts/internal/svg.js';
+
+import { optimizeSvg } from '../scripts/internal/svg.ts';
 
 const elementId = '@videojs/icons/element';
-const elementRuntimeId = 'virtual:videojs/icons/element-runtime';
 const familyName = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const iconsRoot = resolve(import.meta.dirname, '..');
 const assetsRoot = resolve(iconsRoot, 'src/assets');
@@ -16,8 +16,10 @@ export function iconElementSourcePlugin(): Plugin {
   return {
     name: 'videojs:icons:element-source',
     enforce: 'pre',
+    configureServer(server) {
+      server.watcher.add(assetsRoot);
+    },
     resolveId(id) {
-      if (id === elementRuntimeId) return elementSource;
       return iconFamily(id) ? `\0${id}` : null;
     },
     load(id) {
@@ -29,35 +31,34 @@ export function iconElementSourcePlugin(): Plugin {
       const directory = resolve(assetsRoot, family);
       if (!existsSync(directory)) throw new Error(`Unknown icon family: ${family}`);
 
-      this.addWatchFile(directory);
-
       const files = readdirSync(directory)
         .filter((file) => file.endsWith('.svg'))
         .sort();
-
       if (files.length === 0) throw new Error(`Icon family \`${family}\` does not contain any SVG assets.`);
 
       const icons = Object.fromEntries(
         files.map((file) => {
           const path = resolve(directory, file);
+
           this.addWatchFile(path);
           return [basename(file, '.svg'), optimizeSvg(readFileSync(path, 'utf8'))];
         })
       );
 
-      return iconFamilyModule(family, icons);
+      return iconFamilyModule(family, icons, elementSource);
     },
   };
 }
 
 function iconFamily(id: string): string | null {
   const family = id === elementId ? 'default' : id.startsWith(`${elementId}/`) ? id.slice(elementId.length + 1) : '';
+
   return familyName.test(family) ? family : null;
 }
 
-function iconFamilyModule(family: string, icons: Readonly<Record<string, string>>): string {
+function iconFamilyModule(family: string, icons: Readonly<Record<string, string>>, runtime: string): string {
   return [
-    `import { MediaIconElement } from ${JSON.stringify(elementRuntimeId)};`,
+    `import { MediaIconElement } from ${JSON.stringify(runtime)};`,
     `const icons = ${JSON.stringify(icons)};`,
     ``,
     `if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {`,

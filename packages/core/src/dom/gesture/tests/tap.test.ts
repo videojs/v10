@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { GestureMatchResult, GestureType } from '../gesture';
 import { TapRecognizer } from '../tap';
@@ -12,6 +12,7 @@ function createMatches(handlers: Partial<Record<GestureType, (() => void) | null
     resolve(type) {
       const handler = handlers[type];
       if (!handler) return [];
+
       return [{ type, recognizer: NOOP_RECOGNIZER, onActivate: handler }];
     },
   };

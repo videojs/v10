@@ -1,6 +1,7 @@
 'use client';
 
 import type { ComponentProps, ReactNode } from 'react';
+
 import { useTranslator } from './context';
 
 export interface TextProps extends Omit<ComponentProps<'span'>, 'children'> {

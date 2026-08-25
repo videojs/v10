@@ -14,22 +14,28 @@ export class IterableWeakSet<T extends WeakKey> {
 
   add(value: T): this {
     if (this.#seen.has(value)) return this;
+
     const ref = new WeakRef(value);
+
     this.#seen.set(value, ref);
     this.#refs.add(ref);
+
     return this;
   }
 
   delete(value: T): boolean {
     const ref = this.#seen.get(value);
     if (!ref) return false;
+
     this.#seen.delete(value);
+
     return this.#refs.delete(ref);
   }
 
   forEach(fn: (value: T) => void): void {
     for (const ref of this.#refs) {
       const value = ref.deref();
+
       if (value) fn(value);
       else this.#refs.delete(ref);
     }
@@ -55,6 +61,7 @@ export function requiresCastFramework() {
 
 export async function loadCastFramework() {
   if (globalThis.chrome?.cast) return;
+
   await loadScript(GOOGLE_CAST_FRAMEWORK_URL);
 }
 
@@ -87,6 +94,7 @@ let requestId = 0;
 
 export function setPlaybackRate(rate: number) {
   const media = currentMedia();
+
   return currentSession()!.sendMessage(MEDIA_NAMESPACE, {
     type: 'SET_PLAYBACK_RATE',
     playbackRate: rate,
@@ -120,6 +128,7 @@ function getFormat(segment: string | undefined) {
 
   const regex = /\.([a-zA-Z0-9]+)(?:\?.*)?$/;
   const match = segment.match(regex);
+
   return match ? match[1] : null;
 }
 
@@ -132,6 +141,7 @@ function parsePlaylistUrls(playlistContent: string) {
 
     if (line.startsWith('#EXT-X-STREAM-INF')) {
       const nextLine = lines[i + 1] ? lines[i + 1]!.trim() : '';
+
       if (nextLine && !nextLine.startsWith('#')) {
         urls.push(nextLine);
       }
@@ -143,19 +153,24 @@ function parsePlaylistUrls(playlistContent: string) {
 
 function parseSegment(playlistContent: string) {
   const lines = playlistContent.split('\n');
+
   return lines.find((line) => !line.trim().startsWith('#') && line.trim() !== '');
 }
 
 export async function isHls(url: string) {
   if (!url) return false;
+
   if (/\.m3u8?(\?.*)?$/i.test(url)) return true;
+
   if (url.startsWith('blob:')) return false;
 
   try {
     const response = await fetch(url, { method: 'HEAD' });
     const contentType = response.headers.get('Content-Type');
     if (!contentType) return false;
+
     const normalizedContentType = contentType.toLowerCase().split(';')[0]!.trim();
+
     return HLS_RESPONSE_HEADERS.some((header) => normalizedContentType === header.toLowerCase());
   } catch (err) {
     console.error('Error while trying to get the Content-Type of the manifest', err);
@@ -169,13 +184,16 @@ export async function getPlaylistSegmentFormat(url: string) {
     let availableChunksContent = mainManifestContent;
 
     const playlists = parsePlaylistUrls(mainManifestContent);
+
     if (playlists.length > 0) {
       const chosenPlaylistUrl = new URL(playlists[0]!, url).toString();
+
       availableChunksContent = await (await fetch(chosenPlaylistUrl)).text();
     }
 
     const segment = parseSegment(availableChunksContent);
     const format = getFormat(segment);
+
     return format;
   } catch (err) {
     console.error('Error while trying to parse the manifest playlist', err);

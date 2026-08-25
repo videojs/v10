@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
+
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, Presentation } from '../../../media/types';
@@ -92,6 +93,7 @@ describe('calculatePresentationDuration', () => {
     });
 
     const lastCall = resolveDuration.mock.calls.at(-1)?.[0];
+
     expect(lastCall).toMatchObject({
       selectedVideoTrackId: 'video-1',
       selectedAudioTrackId: 'audio-1',

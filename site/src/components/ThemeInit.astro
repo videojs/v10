@@ -17,11 +17,14 @@ import { THEME_KEY } from '@/consts';
       localStorageValue === "light" ||
       localStorageValue === "dark" ||
       localStorageValue === "system";
+
     if (!localStorageValue || !isValidKey) {
       localStorage[localStorageKey] = "system";
       localStorageValue = "system";
     }
+
     let isDark = false;
+
     if (localStorageValue === "dark") {
       document.documentElement.classList.add("dark");
       isDark = true;
@@ -34,7 +37,9 @@ import { THEME_KEY } from '@/consts';
         isDark = true;
       }
     }
+
     const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+
     if (themeColorMeta) {
       themeColorMeta.setAttribute("content", isDark ? "#393836" : "#ebe4c1");
     }

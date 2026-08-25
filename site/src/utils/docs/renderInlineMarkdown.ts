@@ -1,4 +1,5 @@
 import { Marked, type MarkedExtension, type Tokens } from 'marked';
+
 import { shared } from '@/components/typography/styles';
 import { twMerge } from '@/utils/twMerge';
 
@@ -28,14 +29,17 @@ const renderer: MarkedExtension['renderer'] = {
     const tag = token.ordered ? 'ol' : 'ul';
     const cls = token.ordered ? classes.ol : classes.ul;
     const body = token.items.map((item) => this.listitem(item)).join('\n');
+
     return `<${tag} class="${cls}">${body}</${tag}>`;
   },
 
   listitem(item: Tokens.ListItem) {
     let body = this.parser.parse(item.tokens);
+
     if (!item.loose) {
       body = body.replace(/^<p class="[^"]*">/, '').replace(/<\/p>$/, '');
     }
+
     return `<li class="${classes.li}">${body}</li>`;
   },
 
@@ -95,22 +99,20 @@ const marked = new Marked({ renderer });
 /**
  * Unwrap a single `<p>` wrapper so simple descriptions sit inline.
  *
- * If the output is a lone `<p class="…">…</p>` with no other block-level
- * elements, strip the wrapper and return only the inner content.
+ * If the output is a lone `<p class="…">…</p>` with no other block-level elements, strip the wrapper and return only
+ * the inner content.
  */
 function unwrapSingleParagraph(html: string): string {
   const trimmed = html.trim();
   const match = trimmed.match(/^<p class="[^"]*">([\s\S]*)<\/p>$/);
-  if (match && !trimmed.includes('<p', 1)) {
-    return match[1]!;
-  }
+  if (match && !trimmed.includes('<p', 1)) return match[1]!;
+
   return trimmed;
 }
 
 export function renderInlineMarkdown(markdown: string): string {
   const raw = marked.parse(markdown);
-  if (typeof raw !== 'string') {
-    return markdown;
-  }
+  if (typeof raw !== 'string') return markdown;
+
   return unwrapSingleParagraph(raw);
 }

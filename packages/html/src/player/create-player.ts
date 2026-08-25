@@ -36,42 +36,42 @@ export interface CreatePlayerResult<Store extends PlayerStore> {
  * Creates a player factory with a typed store, provider mixin, and controller.
  *
  * @example
- * ```ts
- * import { createPlayer, UIElement, selectPlayback } from '@videojs/html';
- * import { videoFeatures } from '@videojs/html/video';
+ *   ```ts
+ *   import { createPlayer, UIElement, selectPlayback } from '@videojs/html';
+ *   import { videoFeatures } from '@videojs/html/video';
  *
- * const { ProviderMixin, PlayerController, context } = createPlayer({
- *   features: videoFeatures,
- * });
+ *   const { ProviderMixin, PlayerController, context } = createPlayer({
+ *     features: videoFeatures,
+ *   });
  *
- * // Provider element: owns the store, provides context to descendants
- * class VideoPlayer extends ProviderMixin(UIElement) {}
- * customElements.define('video-player', VideoPlayer);
+ *   // Provider element: owns the store, provides context to descendants
+ *   class VideoPlayer extends ProviderMixin(UIElement) {}
+ *   customElements.define('video-player', VideoPlayer);
  *
- * // Control element with selector
- * class PlayButton extends UIElement {
- *   #playback = new PlayerController(this, context, selectPlayback);
- * }
- * ```
+ *   // Control element with selector
+ *   class PlayButton extends UIElement {
+ *     #playback = new PlayerController(this, context, selectPlayback);
+ *   }
+ *   ```;
  *
- * @label Video
  * @param config - Player configuration with features.
+ * @label Video
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
  * Creates a player factory for audio media.
  *
- * @label Audio
  * @param config - Player configuration with features.
+ * @label Audio
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
  * Creates a player factory with custom features.
  *
- * @label Generic
  * @param config - Player configuration with features.
+ * @label Generic
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>

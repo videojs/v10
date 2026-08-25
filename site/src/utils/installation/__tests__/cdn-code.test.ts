@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { VJS10_HTML_CDN_BASE } from '@/consts';
+
 import htmlPackage from '../../../../../packages/html/package.json' with { type: 'json' };
 import { generateCdnCode, rendererSupportsCdn } from '../cdn-code';
 

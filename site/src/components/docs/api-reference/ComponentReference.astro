@@ -24,9 +24,7 @@ interface Props {
 
 const { component, partOrder } = Astro.props;
 const { framework } = Astro.params;
-if (!framework || !isValidFramework(framework)) {
-  throw new Error(`Invalid or missing framework param.`);
-}
+if (!framework || !isValidFramework(framework)) throw new Error(`Invalid or missing framework param.`);
 
 const entry = await getEntry('componentReference', resolveReferenceSlug(component));
 const apiRef: ComponentReference | null = entry?.data ?? null;
@@ -34,6 +32,7 @@ if (!apiRef) return;
 
 const apiReferenceModel = createComponentReferenceModel(component, apiRef, partOrder);
 if (!apiReferenceModel) return;
+
 const showAttributeName = framework === 'html';
 
 const singlePropsSection = !apiReferenceModel.hasParts

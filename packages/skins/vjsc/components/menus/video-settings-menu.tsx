@@ -1,4 +1,5 @@
 import type { PropsOf } from 'vjsc/components';
+
 import type { SkinComponentMeta } from '../../meta';
 import { AudioTrackMenu } from './audio-track-menu';
 import { CaptionsMenu } from './captions-menu';

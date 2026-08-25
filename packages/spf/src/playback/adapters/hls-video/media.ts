@@ -1,5 +1,6 @@
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
 import { MediaTracksMixin } from '@videojs/media/media-tracks';
+
 import { HlsVideoMediaMixin } from './adapter';
 import { HlsVideoMediaMediaTracksMixin } from './media-tracks';
 

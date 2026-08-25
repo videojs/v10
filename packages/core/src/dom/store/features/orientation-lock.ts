@@ -16,8 +16,8 @@ export interface OrientationLockState {
   /** Screen orientation type locked while fullscreen is active. */
   orientationLockType: ScreenOrientationLockType;
   /**
-   * Sets the locked orientation type. Absent input — nullish, or the empty
-   * string a valueless HTML attribute produces — restores the default.
+   * Sets the locked orientation type. Absent input — nullish, or the empty string a valueless HTML attribute produces —
+   * restores the default.
    */
   setOrientationLockType(value: ScreenOrientationLockType | null | undefined): void;
 }
@@ -25,9 +25,8 @@ export interface OrientationLockState {
 /**
  * Locks screen orientation while fullscreen is active.
  *
- * The orientation type is provider configuration, so it can change during the
- * player's lifetime. Unsupported browsers and rejected lock requests are
- * ignored.
+ * The orientation type is provider configuration, so it can change during the player's lifetime. Unsupported browsers
+ * and rejected lock requests are ignored.
  */
 export const orientationLockFeature = definePlayerFeature({
   name: 'orientationLock',
@@ -58,8 +57,8 @@ export const orientationLockFeature = definePlayerFeature({
     // from re-issuing a platform request on every unrelated state change.
     const sync = () => {
       const next = isFullscreen(container, media) ? get().orientationLockType : null;
-
       if (next === synced) return;
+
       synced = next;
 
       if (isNull(next)) {
@@ -76,6 +75,7 @@ export const orientationLockFeature = definePlayerFeature({
 
     // iOS Safari presentation mode change (covers fullscreen)
     const video = media as WebKitVideoElement;
+
     if ('webkitPresentationMode' in video) {
       listen(media, 'webkitpresentationmodechanged', sync, { signal });
     }
@@ -105,8 +105,7 @@ export const orientationLockFeature = definePlayerFeature({
 // in the site's api-docs-builder scans this module so the selector still gets
 // a reference page.
 /**
- * Select the orientation lock state (`orientationLockType`,
- * `setOrientationLockType`). Returns `undefined` when the feature is not
- * configured.
+ * Select the orientation lock state (`orientationLockType`, `setOrientationLockType`). Returns `undefined` when the
+ * feature is not configured.
  */
 export const selectOrientationLock = createSelector(orientationLockFeature);

@@ -48,24 +48,24 @@ export type UsePlayerHook<Store extends PlayerStore> = {
 /**
  * Create a player instance with a typed Player component and hooks.
  *
- * @label Video
  * @param config - Player configuration with features and optional display name.
+ * @label Video
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
  * Create a player for audio media.
  *
- * @label Audio
  * @param config - Player configuration with features and optional display name.
+ * @label Audio
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
  * Create a player with custom features.
  *
- * @label Generic
  * @param config - Player configuration with features and optional display name.
+ * @label Generic
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>
@@ -78,6 +78,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   function createConfiguredStore(values: Record<string, unknown>) {
     const store = createStore<PlayerTarget>()(slice);
+
     applyConfigValues(store, featureConfig, values);
     return store;
   }
@@ -88,6 +89,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     const configValues = pick(props, configKeys);
     const [store, setStore] = useState(() => createConfiguredStore(configValues));
     const syncedValues = useRef({ store, values: configValues });
+
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
 
@@ -105,6 +107,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
       for (const key of configKeys) {
         if (Object.is(previous.values[key], configValues[key])) continue;
+
         setPlayerConfigValue(store, featureConfig[key]!, configValues[key]);
       }
 
@@ -136,6 +139,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   function usePlayer<R>(selector?: (state: object) => R): AnyPlayerStore | R {
     const { store } = usePlayerContext();
+
     return useStore(store, selector as any);
   }
 

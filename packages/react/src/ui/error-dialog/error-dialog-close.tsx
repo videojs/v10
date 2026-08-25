@@ -1,6 +1,7 @@
 import { type DialogCore, getErrorDialogDismissText } from '@videojs/core';
 import { translateText } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useCallback } from 'react';
+
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -18,6 +19,7 @@ export const ErrorDialogClose = forwardRef<HTMLButtonElement, ErrorDialogClosePr
 
   const handleClick = useCallback(() => {
     if (disabled) return;
+
     dialog.close();
   }, [dialog, disabled]);
 

@@ -11,8 +11,8 @@ export const FAIRPLAY_INIT_DATA_TYPE = 'skd';
 export const FAIRPLAY_CONTENT_TYPE = 'application/vnd.apple.mpegurl';
 
 /**
- * `context` values carried by the `MediaError`s key exchange produces. The
- * message is prose meant for a person; this is the part to branch on.
+ * `context` values carried by the `MediaError`s key exchange produces. The message is prose meant for a person; this is
+ * the part to branch on.
  */
 export const NativeHlsDrmErrors = {
   /** The content is encrypted but `source.engine.nativeHls.drmSystems` is missing something required. */
@@ -53,8 +53,8 @@ export const NativeHlsDrmMessages = {
 } as const;
 
 /**
- * One FairPlay implementation, driven by the DRM mixin: it hands over each key
- * request the media element makes and closes everything down between sources.
+ * One FairPlay implementation, driven by the DRM mixin: it hands over each key request the media element makes and
+ * closes everything down between sources.
  */
 export interface FairPlayKeySystem {
   /** Serve a single key request (`encrypted` or `webkitneedkey`). */
@@ -68,9 +68,8 @@ export interface FairPlayContext {
   /** The element the CDM is bound to. */
   media: HTMLMediaElement;
   /**
-   * The FairPlay entry of the source's DRM configuration, read on every use
-   * rather than captured — a license server updated on a playing source (a
-   * rotated token, say) has to reach the next request.
+   * The FairPlay entry of the source's DRM configuration, read on every use rather than captured — a license server
+   * updated on a playing source (a rotated token, say) has to reach the next request.
    */
   readonly config: DrmSystemConfig;
   /** Aborted when the source is replaced or the media detaches. */
@@ -85,21 +84,21 @@ export function createDrmError(message: string, context: NativeHlsDrmErrorContex
 }
 
 /**
- * Coerce anything thrown during key exchange into a reportable error. An error
- * raised further down already describes what failed, so it passes through
- * rather than being flattened into the caller's more general message.
+ * Coerce anything thrown during key exchange into a reportable error. An error raised further down already describes
+ * what failed, so it passes through rather than being flattened into the caller's more general message.
  */
 export function toDrmError(cause: unknown, message: string, context: NativeHlsDrmErrorContext): MediaError {
   if (cause instanceof MediaError) return cause;
+
   const error = createDrmError(message, context);
+
   error.data = cause;
   return error;
 }
 
 /**
- * Fetch the FairPlay application certificate. Resolves `null` when the source
- * names no certificate URL — EME can still negotiate with a pre-provisioned
- * CDM, so whether that is fatal is the caller's call.
+ * Fetch the FairPlay application certificate. Resolves `null` when the source names no certificate URL — EME can still
+ * negotiate with a pre-provisioned CDM, so whether that is fatal is the caller's call.
  */
 export async function requestAppCertificate({ config, signal }: FairPlayContext): Promise<ArrayBuffer | null> {
   const { serverCertificateUrl } = config;
@@ -124,8 +123,8 @@ export async function requestAppCertificate({ config, signal }: FairPlayContext)
 }
 
 /**
- * Exchange a server playback context (SPC) for a content key context (CKC).
- * FairPlay license servers take the raw SPC bytes as the request body.
+ * Exchange a server playback context (SPC) for a content key context (CKC). FairPlay license servers take the raw SPC
+ * bytes as the request body.
  */
 export async function requestLicenseKey(
   { config, signal }: FairPlayContext,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { mergeLocaleOverlays } from '../locale/merge-locale-overlays';
 
@@ -9,6 +9,7 @@ describe('mergeLocaleOverlays', () => {
       tag === 'en' ? { a: 'en-a', b: 'en-b' } : tag === 'es' ? { b: 'es-b', c: 'es-c' } : undefined;
 
     const { merged, loadedTags } = await mergeLocaleOverlays('es', load, chain);
+
     expect(merged).toEqual({ a: 'en-a', b: 'es-b', c: 'es-c' });
     expect(loadedTags).toEqual(['es', 'en']);
   });
@@ -17,6 +18,7 @@ describe('mergeLocaleOverlays', () => {
     const chain = () => ['xx', 'en'];
     const load = async (tag: string) => (tag === 'en' ? { k: 'v' } : undefined);
     const { merged, loadedTags } = await mergeLocaleOverlays('xx', load, chain);
+
     expect(merged).toEqual({ k: 'v' });
     expect(loadedTags).toEqual(['en']);
   });

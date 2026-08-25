@@ -2,9 +2,7 @@ import type { ComponentPropsWithRef, CSSProperties, ElementType, SyntheticEvent 
 
 type Props<T extends ElementType = ElementType> = ComponentPropsWithRef<T>;
 
-/**
- * Check if a key is an event handler key (on* with capital letter).
- */
+/** Check if a key is an event handler key (on* with capital letter). */
 function isEventHandlerKey(key: string): boolean {
   return (
     key.charCodeAt(0) === 111 /* o */ &&
@@ -14,21 +12,18 @@ function isEventHandlerKey(key: string): boolean {
   );
 }
 
-/**
- * Check if a key/value pair is an event handler (includes undefined values).
- */
+/** Check if a key/value pair is an event handler (includes undefined values). */
 function isEventHandler(key: string, value: unknown): boolean {
   return isEventHandlerKey(key) && (typeof value === 'function' || typeof value === 'undefined');
 }
 
-/**
- * Merge two event handlers - external runs first, ours runs second.
- */
+/** Merge two event handlers - external runs first, ours runs second. */
 function mergeEventHandlers(
   ours: ((event: SyntheticEvent) => void) | undefined,
   theirs: ((event: SyntheticEvent) => void) | undefined
 ): ((event: SyntheticEvent) => void) | undefined {
   if (!theirs) return ours;
+
   if (!ours) return theirs;
 
   return (event: SyntheticEvent) => {
@@ -37,26 +32,23 @@ function mergeEventHandlers(
   };
 }
 
-/**
- * Merge two className values - concatenate strings.
- */
+/** Merge two className values - concatenate strings. */
 function mergeClassNames(ours: string | undefined, theirs: string | undefined): string | undefined {
   if (theirs && ours) return `${theirs} ${ours}`;
+
   return theirs || ours;
 }
 
-/**
- * Merge two style objects - theirs overwrites conflicts.
- */
+/** Merge two style objects - theirs overwrites conflicts. */
 function mergeStyles(ours: CSSProperties | undefined, theirs: CSSProperties | undefined): CSSProperties | undefined {
   if (!theirs) return ours;
+
   if (!ours) return theirs;
+
   return { ...ours, ...theirs };
 }
 
-/**
- * Merge a single props object into accumulated result.
- */
+/** Merge a single props object into accumulated result. */
 function mergeOne<T extends ElementType>(
   merged: Record<string, unknown>,
   props: Props<T> | undefined
@@ -87,19 +79,20 @@ function mergeOne<T extends ElementType>(
  * Merge multiple props objects.
  *
  * - Event handlers (on*): chained - external first, ours second
- * - className: concatenated
- * - style: merged objects (external wins conflicts)
- * - other: last one wins
+ * - ClassName: concatenated
+ * - Style: merged objects (external wins conflicts)
+ * - Other: last one wins
+ *
+ * @example
+ *   ```ts
+ *   const merged = mergeProps(
+ *     { onClick: ourHandler, className: 'base' },
+ *     { onClick: theirHandler, className: 'custom' }
+ *   );
+ *   // { onClick: chainedHandler, className: 'custom base' }
+ *   ```;
  *
  * @public
- * @example
- * ```ts
- * const merged = mergeProps(
- *   { onClick: ourHandler, className: 'base' },
- *   { onClick: theirHandler, className: 'custom' }
- * );
- * // { onClick: chainedHandler, className: 'custom base' }
- * ```
  */
 export function mergeProps<T extends ElementType>(...propSets: (Props<T> | undefined)[]): Props<T> {
   let merged: Record<string, unknown> = {};

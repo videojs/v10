@@ -1,12 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { getDevicePixelRatio, watchDevicePixelRatio } from '../device-pixel-ratio';
 
 /**
- * A `MediaQueryList` stand-in — `listen` only needs an `EventTarget`, and a real
- * one lets the test drive `change` through `dispatchEvent`. The ratio itself
- * can't be changed from a test, so `matchMedia` is stubbed to record which query
- * each arming built.
+ * A `MediaQueryList` stand-in — `listen` only needs an `EventTarget`, and a real one lets the test drive `change`
+ * through `dispatchEvent`. The ratio itself can't be changed from a test, so `matchMedia` is stubbed to record which
+ * query each arming built.
  */
 class FakeMediaQueryList extends EventTarget {
   constructor(readonly media: string) {
@@ -16,8 +15,10 @@ class FakeMediaQueryList extends EventTarget {
 
 function stubMatchMedia(): FakeMediaQueryList[] {
   const queries: FakeMediaQueryList[] = [];
+
   vi.stubGlobal('matchMedia', (media: string) => {
     const query = new FakeMediaQueryList(media);
+
     queries.push(query);
     return query;
   });

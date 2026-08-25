@@ -13,9 +13,13 @@ import {
 // Background video is the exception: all skin choices resolve to one bundle.
 function getCdnFileName(useCase: UseCase, skin: Skin): string {
   const { group } = getInstallationPreset(useCase);
+
   if (useCase === 'background-video') return group;
+
   if (skin === 'none') return `${group}-player`;
+
   if (skin === 'minimal-video' || skin === 'minimal-audio') return `${group}-minimal`;
+
   return group;
 }
 
@@ -25,6 +29,7 @@ function getCdnFileName(useCase: UseCase, skin: Skin): string {
 // in the manifest.
 export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean {
   const subpath = getMediaSubpath(renderer);
+
   return subpath === null || cdnMediaSubpaths.includes(subpath);
 }
 

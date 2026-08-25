@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { discoverSchema } from '../discover';
 
@@ -11,10 +11,12 @@ describe('discoverSchema', () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-schema-discovery-'));
     const componentsDir = join(root, 'components');
     const iconsDir = join(root, 'icons');
+
     mkdirSync(componentsDir);
     mkdirSync(iconsDir);
     const component = join(componentsDir, 'play-button.ts');
     const icon = join(iconsDir, 'play.svg');
+
     writeFileSync(
       component,
       `const defineComponent: any = (value: any) => value;

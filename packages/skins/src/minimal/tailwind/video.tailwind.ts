@@ -1,4 +1,5 @@
 import { cn } from '@videojs/utils/style';
+
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
@@ -180,7 +181,7 @@ export const slider = {
 
 export const popup = {
   ...basePopup,
-  volume: cn(basePopup.popover, 'p-0 bg-transparent', '@max-2xl/media-root:[--media-popover-side-offset:--spacing(3)]'),
+  volume: cn(basePopup.popover, 'p-0 px-3 bg-transparent [--media-popover-side-offset:0rem]'),
 };
 
 /* Menu */

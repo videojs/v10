@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 
 import { rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { HTML_RUNTIME } from '../html-runtime';
 
@@ -37,6 +37,13 @@ describe('htmlRuntimePlugin', () => {
     expect(String(output)).toBe('<button class="button active" id="trigger"></button>');
   });
 
+  it('flattens class arrays after HTML attribute normalization', async () => {
+    const runtime = await loadRuntime();
+    const output = runtime.jsx('media-icon', { class: ['icon', ['active', false, undefined]] });
+
+    expect(String(output)).toBe('<media-icon class="icon active"></media-icon>');
+  });
+
   it('escapes attribute and child text with the shared HTML contract', async () => {
     const runtime = await loadRuntime();
     const value = `&<>"'\``;
@@ -69,6 +76,7 @@ async function loadRuntime(): Promise<HtmlRuntime> {
         name: 'test-runtime',
         resolveId(id) {
           if (id === 'runtime') return id;
+
           return id === 'vjsc/target' ? resolve(import.meta.dirname, '../../target/index.ts') : null;
         },
         load(id) {
@@ -82,5 +90,6 @@ async function loadRuntime(): Promise<HtmlRuntime> {
   if (!chunk) throw new Error('Expected the HTML runtime bundle to contain a chunk.');
 
   const url = `data:text/javascript;base64,${Buffer.from(chunk.code).toString('base64')}`;
+
   return (await import(url)) as HtmlRuntime;
 }

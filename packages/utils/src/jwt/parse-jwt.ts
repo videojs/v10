@@ -11,6 +11,7 @@ export function parseJwt<Payload = Record<string, unknown>>(token: string | unde
         .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
         .join('')
     );
+
     return JSON.parse(json);
   } catch {
     return undefined;

@@ -1,6 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderBuffer } from '../slider-buffer';
@@ -56,12 +56,15 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
           S extends { thumbAlignment?: string; orientation?: string; fillPercent: number; pointerPercent: number },
         >(state: S): S {
           if (!options?.adjustPercent || state.thumbAlignment !== 'edge') return state;
+
           const thumbEl = options.getThumbElement?.();
           if (!thumbEl) return state;
+
           const rootEl = options.getElement!();
           const isHorizontal = state.orientation === 'horizontal';
           const thumbSize = isHorizontal ? thumbEl.offsetWidth : thumbEl.offsetHeight;
           const trackSize = isHorizontal ? rootEl.offsetWidth : rootEl.offsetHeight;
+
           return {
             ...state,
             fillPercent: options.adjustPercent(state.fillPercent, thumbSize, trackSize),
@@ -76,6 +79,7 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
   const orig: Record<string, unknown> = await importOriginal();
+
   return { ...orig, createSlider: vi.fn(mockSliderApi) };
 });
 
@@ -99,6 +103,7 @@ describe('SliderRoot', () => {
 
   it('forwards ref to the root element', () => {
     const ref = createRef<HTMLDivElement>();
+
     render(<SliderRoot ref={ref} />);
 
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
@@ -164,6 +169,7 @@ describe('SliderTrack', () => {
 
   it('forwards ref', () => {
     const ref = createRef<HTMLDivElement>();
+
     render(
       <SliderRoot>
         <SliderTrack ref={ref} />
@@ -223,6 +229,7 @@ describe('SliderThumb', () => {
 
   it('forwards ref', () => {
     const ref = createRef<HTMLDivElement>();
+
     render(
       <SliderRoot>
         <SliderThumb ref={ref} />
@@ -240,6 +247,7 @@ describe('SliderThumb', () => {
     );
 
     const thumb = container.querySelector('[data-testid="thumb"]');
+
     expect(thumb?.getAttribute('role')).toBe('slider');
   });
 });
@@ -253,6 +261,7 @@ describe('SliderValue', () => {
     );
 
     const el = container.querySelector('[data-testid="value"]');
+
     expect(el?.tagName).toBe('OUTPUT');
   });
 
@@ -268,6 +277,7 @@ describe('SliderValue', () => {
     );
 
     const output = container.querySelector('output');
+
     expect(output?.textContent).toBe('42');
   });
 
@@ -280,6 +290,7 @@ describe('SliderValue', () => {
     );
 
     const output = container.querySelector('output');
+
     expect(output?.textContent).toBe('75%');
   });
 
@@ -291,6 +302,7 @@ describe('SliderValue', () => {
     );
 
     const output = container.querySelector('output');
+
     expect(output?.getAttribute('aria-live')).toBe('off');
   });
 });

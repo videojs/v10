@@ -1,15 +1,17 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { omit } from '../omit';
 
 describe('omit', () => {
   it('removes specified keys from object', () => {
     const obj = { a: 1, b: 2, c: 3 };
+
     expect(omit(obj, ['b'])).toEqual({ a: 1, c: 3 });
   });
 
   it('removes multiple keys', () => {
     const obj = { a: 1, b: 2, c: 3 };
+
     expect(omit(obj, ['a', 'c'])).toEqual({ b: 2 });
   });
 
@@ -23,11 +25,13 @@ describe('omit', () => {
 
   it('ignores non-existent keys', () => {
     const obj = { a: 1, b: 2 };
+
     expect(omit(obj, ['nonexistent' as keyof typeof obj])).toEqual({ a: 1, b: 2 });
   });
 
   it('returns empty object when all keys are removed', () => {
     const obj = { a: 1, b: 2 };
+
     expect(omit(obj, ['a', 'b'])).toEqual({});
   });
 

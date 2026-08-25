@@ -43,44 +43,37 @@ import { excludeUnplayableTracks } from '../../primitives/selection-rules';
 /**
  * State shape for the background-video playback engine.
  *
- * Mostly narrower than `HlsVideoEngineState`: audio/text track slots are absent
- * because their selection/resolution behaviors are subtracted. `bandwidthState`
- * is present because `setupVideoBufferActors` declares it and `loadVideoSegments`
- * samples into it (wasted work in this variant — a Phase 3 alt-impl will skip
- * sampling).
+ * Mostly narrower than `HlsVideoEngineState`: audio/text track slots are absent because their selection/resolution
+ * behaviors are subtracted. `bandwidthState` is present because `setupVideoBufferActors` declares it and
+ * `loadVideoSegments` samples into it (wasted work in this variant — a Phase 3 alt-impl will skip sampling).
  *
- * `screenResolution` is the one slot this variant has and the HLS video engine
- * doesn't, because the screen-size cap is being built here first. It generalizes
- * — the cap is a selection rule both engines can compose — so expect the slot to
+ * `screenResolution` is the one slot this variant has and the HLS video engine doesn't, because the screen-size cap is
+ * being built here first. It generalizes — the cap is a selection rule both engines can compose — so expect the slot to
  * appear there too rather than staying variant-specific.
  */
 export interface BackgroundVideoEngineState {
   /**
-   * The presentation being played. A caller writes `{ url }`;
-   * `resolvePresentation` parses the manifest and populates the rest.
+   * The presentation being played. A caller writes `{ url }`; `resolvePresentation` parses the manifest and populates
+   * the rest.
    */
   presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedVideoTrackId?: string;
   loadActivated?: boolean;
   /**
-   * The screen's pixel dimensions, or `undefined` where there is none to read.
-   * Written by `trackScreenResolution`, read by the `screenResolutionCap`
-   * selection rule — which treats `undefined` as "don't cap".
+   * The screen's pixel dimensions, or `undefined` where there is none to read. Written by `trackScreenResolution`, read
+   * by the `screenResolutionCap` selection rule — which treats `undefined` as "don't cap".
    */
   screenResolution?: ScreenResolution;
   /**
-   * Conditions reported while this source is loaded — the per-rendition causes
-   * `resolveVideoTrack` reports and the verdict `selectVideoTrack` reports when
-   * the constraints prune every rendition. Owned and cleared per source by
+   * Conditions reported while this source is loaded — the per-rendition causes `resolveVideoTrack` reports and the
+   * verdict `selectVideoTrack` reports when the constraints prune every rendition. Owned and cleared per source by
    * `collectErrors`; the adapter derives which are fatal.
    */
   errors?: SvtaError[];
 }
 
-/**
- * Context shape for the background-video engine.
- */
+/** Context shape for the background-video engine. */
 export interface BackgroundVideoEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
@@ -89,10 +82,8 @@ export interface BackgroundVideoEngineContext {
 }
 
 /**
- * The composition signal refs handed to `onSignalsReady` callers — the
- * canonical way to drive the engine externally (writes) or observe its
- * state (reads) without touching `composition.state` / `composition.context`
- * directly.
+ * The composition signal refs handed to `onSignalsReady` callers — the canonical way to drive the engine externally
+ * (writes) or observe its state (reads) without touching `composition.state` / `composition.context` directly.
  */
 export type BackgroundVideoEngineSignals = {
   state: StateSignals<BackgroundVideoEngineState>;
@@ -102,51 +93,40 @@ export type BackgroundVideoEngineSignals = {
 /**
  * Configuration for the background-video engine.
  *
- * Each option is consumed by the appropriate behavior — the engine itself
- * has no config beyond what its behaviors read. Compared to
- * `HlsVideoEngineConfig`, audio/text/ABR/bandwidth/quality knobs are
- * dropped: the variant subtracts the behaviors that read them.
+ * Each option is consumed by the appropriate behavior — the engine itself has no config beyond what its behaviors read.
+ * Compared to `HlsVideoEngineConfig`, audio/text/ABR/bandwidth/quality knobs are dropped: the variant subtracts the
+ * behaviors that read them.
  */
-export interface BackgroundVideoEngineConfig
-  extends ShareSignalsConfig<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
+export interface BackgroundVideoEngineConfig extends ShareSignalsConfig<
+  BackgroundVideoEngineState,
+  BackgroundVideoEngineContext
+> {
   /**
-   * Hard-constraint pre-pass handed to `selectVideoTrack`. Defaults to
-   * `[excludeUnplayableTracks, reportAbsentTrackType(2011)]` — prune the renditions
-   * this environment can't decode, then report 2011 if nothing is left (this engine
-   * composes only video, so a source with none playable can never play).
+   * Hard-constraint pre-pass handed to `selectVideoTrack`. Defaults to `[excludeUnplayableTracks,
+   * reportAbsentTrackType(2011)]` — prune the renditions this environment can't decode, then report 2011 if nothing is
+   * left (this engine composes only video, so a source with none playable can never play).
    */
   constraints?: SelectVideoTrackConfig['constraints'];
   /**
-   * Selection-rule chain handed to `selectVideoTrack`. Defaults to
-   * `[screenResolutionCap, preferHighestResolution]` — narrows to the renditions
-   * that fit the screen, takes the largest of those, and pins it for the session.
+   * Selection-rule chain handed to `selectVideoTrack`. Defaults to `[screenResolutionCap, preferHighestResolution]` —
+   * narrows to the renditions that fit the screen, takes the largest of those, and pins it for the session.
    *
-   * The cap sits ahead of the ranker because a scope that narrows first wins over
-   * one applied later; pass `[preferHighestResolution]` alone to opt out and always
-   * pin the largest rendition on offer.
+   * The cap sits ahead of the ranker because a scope that narrows first wins over one applied later; pass
+   * `[preferHighestResolution]` alone to opt out and always pin the largest rendition on offer.
    */
   rules?: readonly NonNullable<SelectVideoTrackConfig['rules']>[number][];
-  /**
-   * Manifest parser handed to `resolvePresentation`. Defaults to the HLS
-   * multivariant-playlist parser.
-   */
+  /** Manifest parser handed to `resolvePresentation`. Defaults to the HLS multivariant-playlist parser. */
   parsePresentation?: ParsePresentation;
-  /**
-   * Whether `state.screenResolution` is reported in device pixels. Read by
-   * `trackScreenResolution`; defaults to `true`.
-   */
+  /** Whether `state.screenResolution` is reported in device pixels. Read by `trackScreenResolution`; defaults to `true`. */
   useDevicePixelRatio?: boolean;
   /**
-   * Codec/container capability probe read by `selectVideoTrack`'s constraint
-   * pre-pass. Defaults to the DOM `canPlayTrack`; override to force-exclude a
-   * codec.
+   * Codec/container capability probe read by `selectVideoTrack`'s constraint pre-pass. Defaults to the DOM
+   * `canPlayTrack`; override to force-exclude a codec.
    */
   canPlayTrack?: CanPlayTrack;
   /**
-   * Per-rendition condition reporting, called by `resolveVideoTrack` once a
-   * media playlist parses. Defaults to
-   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
-   * (1004) and encryption (4008).
+   * Per-rendition condition reporting, called by `resolveVideoTrack` once a media playlist parses. Defaults to
+   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers (1004) and encryption (4008).
    */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
 }
@@ -160,39 +140,34 @@ const shareSignals = makeShareSignals<BackgroundVideoEngineState, BackgroundVide
 /**
  * Create a background-video playback engine.
  *
- * Subtractive composition over the HLS engine baseline:
- * audio-side, text-side, ABR-driven, preload-monitoring, and play/seek
- * load-trigger behaviors are removed. `selectVideoTrack` (with a
- * highest-resolution rule by default) replaces `switchVideoQuality`, pinning
- * a single rendition for the session. The initial state seeds
- * `loadActivated: true` so the composition behaves as if preload has
- * already been activated — appropriate for ambient / hero / GIF-replacement
+ * Subtractive composition over the HLS engine baseline: audio-side, text-side, ABR-driven, preload-monitoring, and
+ * play/seek load-trigger behaviors are removed. `selectVideoTrack` (with a highest-resolution rule by default) replaces
+ * `switchVideoQuality`, pinning a single rendition for the session. The initial state seeds `loadActivated: true` so
+ * the composition behaves as if preload has already been activated — appropriate for ambient / hero / GIF-replacement
  * surfaces that should start loading the moment a src is set.
  *
- * Error reporting is *not* subtracted: `collectErrors` owns the sequence,
- * `resolveVideoTrack` reports per-rendition causes, and `selectVideoTrack`
- * reports the video verdict when nothing survives its constraints. Without them
- * every unplayable source here is a silent stall — an unsupported container,
- * encryption this engine can't decrypt, and an undecodable codec all leave
- * `HTMLMediaElement.error` null on both Chromium and WebKit.
+ * Error reporting is _not_ subtracted: `collectErrors` owns the sequence, `resolveVideoTrack` reports per-rendition
+ * causes, and `selectVideoTrack` reports the video verdict when nothing survives its constraints. Without them every
+ * unplayable source here is a silent stall — an unsupported container, encryption this engine can't decrypt, and an
+ * undecodable codec all leave `HTMLMediaElement.error` null on both Chromium and WebKit.
  *
- * Native `loop` / `muted` / `autoplay` are adapter concerns and live on
- * `HlsBackgroundVideoMediaElement` rather than the engine.
+ * Native `loop` / `muted` / `autoplay` are adapter concerns and live on `HlsBackgroundVideoMediaElement` rather than
+ * the engine.
  *
  * @example
- * ```ts
- * let signals: BackgroundVideoEngineSignals;
- * const engine = createBackgroundVideoEngine({
- *   onSignalsReady: (refs) => {
- *     signals = refs;
- *   },
- * });
+ *   ```ts
+ *   let signals: BackgroundVideoEngineSignals;
+ *   const engine = createBackgroundVideoEngine({
+ *     onSignalsReady: (refs) => {
+ *       signals = refs;
+ *     },
+ *   });
  *
- * signals.context.mediaElement.set(videoEl);
- * signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
+ *   signals.context.mediaElement.set(videoEl);
+ *   signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
  *
- * await engine.destroy();
- * ```
+ *   await engine.destroy();
+ *   ```;
  */
 export function createBackgroundVideoEngine(
   config: BackgroundVideoEngineConfig = {}

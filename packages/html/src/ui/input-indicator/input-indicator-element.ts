@@ -67,6 +67,7 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#snapshot = this.core.state.current;
@@ -116,6 +117,7 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
     }
 
     const state = getRenderedIndicatorState(currentState, this.#payloadSnapshot(), transitionState);
+
     this.liveIndicator.render(state);
   }
 
@@ -124,19 +126,23 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
 
     if (currentState.open) {
       this.#snapshot = currentState;
+
       if (this.#lastGeneration !== currentState.generation) {
         this.#lastGeneration = currentState.generation;
         const transitionState = this.transition.state.current;
+
         if (!transitionState.active || this.options.replayOnUpdate !== false) {
           void this.transition.open(this.liveIndicator.element);
         } else if (transitionState.status === 'ending') {
           this.transition.cancel();
         }
       }
+
       return;
     }
 
     const { active, status } = this.transition.state.current;
+
     if (active && status !== 'ending') {
       void this.transition.close(this.liveIndicator.element);
     }
@@ -156,6 +162,7 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
 
     const visibility = getIndicatorVisibilityCoordinator(container);
     const visibilityHandle = this.#getVisibilityHandle();
+
     this.#visibilityUnsubscribe = visibility.register(visibilityHandle);
 
     this.#inputActionUnsubscribe = subscribeToInputActions(container, (event) => {

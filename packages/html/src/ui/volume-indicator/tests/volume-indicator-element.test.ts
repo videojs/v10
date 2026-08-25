@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { VolumeIndicatorElement } from '../volume-indicator-element';
 import { VolumeIndicatorFillElement } from '../volume-indicator-fill-element';
 import { VolumeIndicatorValueElement } from '../volume-indicator-value-element';

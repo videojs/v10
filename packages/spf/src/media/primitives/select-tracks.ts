@@ -1,8 +1,6 @@
 import type { MaybeResolvedPresentation, PartiallyResolvedTextTrack, TextTrack } from '../types';
 
-/**
- * State shape for track selection.
- */
+/** State shape for track selection. */
 export interface TrackSelectionState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
@@ -10,44 +8,31 @@ export interface TrackSelectionState {
   selectedTextTrackId?: string;
 }
 
-/**
- * Configuration for audio track selection.
- */
+/** Configuration for audio track selection. */
 export interface AudioSelectionConfig {
-  /**
-   * Preferred audio language (ISO 639 code, e.g., "en", "es").
-   * If not specified, selects first audio track.
-   */
+  /** Preferred audio language (ISO 639 code, e.g., "en", "es"). If not specified, selects first audio track. */
   preferredAudioLanguage?: string;
 }
 
-/**
- * Configuration for text track selection.
- */
+/** Configuration for text track selection. */
 export interface TextSelectionConfig {
-  /**
-   * Preferred subtitle language (ISO 639 code, e.g., "en", "es").
-   * If specified, selects matching track if available.
-   */
+  /** Preferred subtitle language (ISO 639 code, e.g., "en", "es"). If specified, selects matching track if available. */
   preferredSubtitleLanguage?: string;
 
   /**
-   * Include FORCED subtitle tracks in selection.
-   * Default: false (follows hls.js/http-streaming pattern)
+   * Include FORCED subtitle tracks in selection. Default: false (follows hls.js/http-streaming pattern)
    *
-   * Note: Per Apple's HLS spec, if content has forced and regular subtitles
-   * in the same language, the regular track MUST contain both forced and
-   * regular content. Therefore, forced-only tracks are redundant and excluded
-   * by default.
+   * Note: Per Apple's HLS spec, if content has forced and regular subtitles in the same language, the regular track
+   * MUST contain both forced and regular content. Therefore, forced-only tracks are redundant and excluded by default.
    */
   includeForcedTracks?: boolean;
 
   /**
-   * Auto-select DEFAULT track (requires DEFAULT=YES + AUTOSELECT=YES in HLS).
-   * Default: false (user opt-in, matches hls.js/http-streaming)
+   * Auto-select DEFAULT track (requires DEFAULT=YES + AUTOSELECT=YES in HLS). Default: false (user opt-in, matches
+   * hls.js/http-streaming)
    *
-   * When enabled, tracks marked with both DEFAULT=YES and AUTOSELECT=YES
-   * will be automatically selected if no user preference matches.
+   * When enabled, tracks marked with both DEFAULT=YES and AUTOSELECT=YES will be automatically selected if no user
+   * preference matches.
    */
   enableDefaultTrack?: boolean;
 }
@@ -63,10 +48,9 @@ export interface TextSelectionConfig {
 // =============================================================================
 
 /**
- * Test whether a track matches a partial-track description: every present,
- * defined field of `filter` equals the track's. Absent or `undefined` filter
- * fields don't constrain. Used to narrow candidates by a user selection
- * (`{ id }`, `{ language }`, `{ height }`, …).
+ * Test whether a track matches a partial-track description: every present, defined field of `filter` equals the
+ * track's. Absent or `undefined` filter fields don't constrain. Used to narrow candidates by a user selection (`{ id
+ * }`, `{ language }`, `{ height }`, …).
  *
  * @param track - The track to test
  * @param filter - Partial-track description; only present, defined fields constrain
@@ -77,6 +61,7 @@ export function matchesPartialTrack<T>(track: T, filter: Partial<T>): boolean {
     const filterValue = filter[key as keyof T];
     if (filterValue !== undefined && track[key as keyof T] !== filterValue) return false;
   }
+
   return true;
 }
 
@@ -88,16 +73,13 @@ function pixelArea(track: RankableTrack): number {
 }
 
 /**
- * Narrow to the tracks at or below `maxPixelArea`, and nothing else: no ordering,
- * no fallback. Survivors keep their incoming order, and an empty result is a real
- * answer — "none of these fit".
+ * Narrow to the tracks at or below `maxPixelArea`, and nothing else: no ordering, no fallback. Survivors keep their
+ * incoming order, and an empty result is a real answer — "none of these fit".
  *
- * Deliberately only the filter, because as a selection rule this composes under
- * `applyRules`, which already owns both halves a caller might expect here: an empty
- * result is skipped, so a preference can never narrow the candidate set to nothing;
- * and ordering the survivors is a separate rule's job
- * ({@link byDescendingResolution}, bandwidth ABR). Doing either here would duplicate
- * the composer and give one rule two responsibilities.
+ * Deliberately only the filter, because as a selection rule this composes under `applyRules`, which already owns both
+ * halves a caller might expect here: an empty result is skipped, so a preference can never narrow the candidate set to
+ * nothing; and ordering the survivors is a separate rule's job ({@link byDescendingResolution}, bandwidth ABR). Doing
+ * either here would duplicate the composer and give one rule two responsibilities.
  */
 export function tracksUnderPixelArea<T extends RankableTrack>(
   tracks: readonly T[],
@@ -107,16 +89,14 @@ export function tracksUnderPixelArea<T extends RankableTrack>(
 }
 
 /**
- * The smallest track area that still covers `minPixelArea`, or `undefined` when
- * no track reaches it.
+ * The smallest track area that still covers `minPixelArea`, or `undefined` when no track reaches it.
  *
- * The cap a surface-size rule wants when it should round *up* to the ladder: a
- * surface between two tiers is covered by the upper one, and capping at the
- * surface's own area instead would serve a picture smaller than the surface and
+ * The cap a surface-size rule wants when it should round _up_ to the ladder: a surface between two tiers is covered by
+ * the upper one, and capping at the surface's own area instead would serve a picture smaller than the surface and
  * upscale it.
  *
- * Tracks declaring no dimensions compare as area `0` and so never cover anything,
- * which keeps them out of the cap rather than pinning it to zero.
+ * Tracks declaring no dimensions compare as area `0` and so never cover anything, which keeps them out of the cap
+ * rather than pinning it to zero.
  */
 export function smallestCoveringPixelArea(tracks: readonly RankableTrack[], minPixelArea: number): number | undefined {
   const covering = tracks.map(pixelArea).filter((area) => area >= minPixelArea);
@@ -125,21 +105,19 @@ export function smallestCoveringPixelArea(tracks: readonly RankableTrack[], minP
 }
 
 /**
- * Compare two tracks by resolution, largest first, with bandwidth as the tiebreak
- * for renditions of identical dimensions. Missing dimensions are treated as area
- * `0`, so a track without them sorts last.
+ * Compare two tracks by resolution, largest first, with bandwidth as the tiebreak for renditions of identical
+ * dimensions. Missing dimensions are treated as area `0`, so a track without them sorts last.
  *
- * A comparator rather than a "highest track" function: the selection-rule chain
- * takes the head of the list it produces, so ranking never has to collapse to a
- * single track. `preferHighestResolution` is `sort` over this and nothing more.
+ * A comparator rather than a "highest track" function: the selection-rule chain takes the head of the list it produces,
+ * so ranking never has to collapse to a single track. `preferHighestResolution` is `sort` over this and nothing more.
  */
 export function byDescendingResolution(a: RankableTrack, b: RankableTrack): number {
   return pixelArea(b) - pixelArea(a) || (b.bandwidth ?? 0) - (a.bandwidth ?? 0);
 }
 
 /**
- * Default audio policy over a candidate list: the three-tier pick a selection-rule
- * chain applies once it has narrowed the candidates.
+ * Default audio policy over a candidate list: the three-tier pick a selection-rule chain applies once it has narrowed
+ * the candidates.
  *
  * Priority: `preferredAudioLanguage` match → `DEFAULT=YES` → first track.
  */
@@ -150,29 +128,23 @@ export function pickAudioTrackFromTracks(
   // Try preferred language first
   if (config?.preferredAudioLanguage) {
     const languageMatch = tracks.find((track) => track.language === config.preferredAudioLanguage);
-    if (languageMatch) {
-      return languageMatch.id;
-    }
+    if (languageMatch) return languageMatch.id;
   }
 
   // Try default track
   const defaultTrack = tracks.find((track) => track.default === true);
-  if (defaultTrack) {
-    return defaultTrack.id;
-  }
+  if (defaultTrack) return defaultTrack.id;
 
   // Fall back to first track
   return tracks[0]?.id;
 }
 
 /**
- * Default text-track policy over a candidate list: the opt-in three-tier pick
- * `switchTextTrack`'s terminal applies once it has narrowed the renditions to the
- * constrained, CDN-scoped set.
+ * Default text-track policy over a candidate list: the opt-in three-tier pick `switchTextTrack`'s terminal applies once
+ * it has narrowed the renditions to the constrained, CDN-scoped set.
  *
- * Priority: `preferredSubtitleLanguage` match → `DEFAULT=YES + AUTOSELECT=YES`
- * (only when `enableDefaultTrack`) → `undefined` (opt-in). FORCED tracks are
- * excluded unless `includeForcedTracks` (Apple-spec: a regular track must carry
+ * Priority: `preferredSubtitleLanguage` match → `DEFAULT=YES + AUTOSELECT=YES` (only when `enableDefaultTrack`) →
+ * `undefined` (opt-in). FORCED tracks are excluded unless `includeForcedTracks` (Apple-spec: a regular track must carry
  * forced content when both exist, so a forced-only track is redundant).
  */
 export function pickTextTrackFromTracks(

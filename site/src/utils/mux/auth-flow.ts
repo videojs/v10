@@ -1,10 +1,8 @@
 /**
  * OAuth popup and endpoint coordination utilities for Mux uploader.
  *
- * Handles:
- * - Opening OAuth popup with proper dimensions
- * - Listening for auth-complete message from popup
- * - Coordinating the endpoint flow that pauses for auth when needed
+ * Handles: - Opening OAuth popup with proper dimensions - Listening for auth-complete message from popup - Coordinating
+ * the endpoint flow that pauses for auth when needed
  */
 
 export interface AuthPopupOptions {
@@ -47,6 +45,7 @@ export function initiateAuthPopup(options: AuthPopupOptions): () => void {
   const handleMessage = (event: MessageEvent) => {
     // Validate origin for security
     if (event.origin !== window.location.origin) return;
+
     if (event.data?.type !== 'auth-complete') return;
 
     window.removeEventListener('message', handleMessage);
@@ -97,13 +96,10 @@ export interface EndpointCoordinator {
 /**
  * Creates a coordinator that handles the auth-gated endpoint flow.
  *
- * Flow:
- * 1. Call createUpload()
- * 2. If 401: pause, initiate login, wait for popup auth-complete, retry
- * 3. Return the upload URL
+ * Flow: 1. Call createUpload() 2. If 401: pause, initiate login, wait for popup auth-complete, retry 3. Return the
+ * upload URL
  *
- * The Promise resolver pattern allows getEndpoint() to pause mid-execution
- * and resume when auth completes.
+ * The Promise resolver pattern allows getEndpoint() to pause mid-execution and resume when auth completes.
  */
 export function createEndpointCoordinator(options: EndpointCoordinatorOptions): EndpointCoordinator {
   const { createUpload, initiateLogin, openAuthPopup, onStateChange } = options;
@@ -121,6 +117,7 @@ export function createEndpointCoordinator(options: EndpointCoordinatorOptions): 
 
         // Wait for auth to complete
         const uploadUrl = await waitForAuthAndRetry();
+
         return uploadUrl;
       }
 
@@ -137,9 +134,7 @@ export function createEndpointCoordinator(options: EndpointCoordinatorOptions): 
   async function waitForAuthAndRetry(): Promise<string> {
     // Get authorization URL
     const loginResult = await initiateLogin();
-    if (loginResult.error) {
-      throw new Error(loginResult.error.message);
-    }
+    if (loginResult.error) throw new Error(loginResult.error.message);
 
     // Create a Promise that resolves when auth completes
     return new Promise((resolve, reject) => {

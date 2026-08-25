@@ -72,9 +72,11 @@ const indicatorVisibilityCoordinators = new WeakMap<HTMLElement, IndicatorVisibi
 
 export function getIndicatorVisibilityCoordinator(container: HTMLElement): IndicatorVisibilityCoordinator {
   let coordinator = indicatorVisibilityCoordinators.get(container);
+
   if (!coordinator) {
     coordinator = new IndicatorVisibilityCoordinator();
     indicatorVisibilityCoordinators.set(container, coordinator);
   }
+
   return coordinator;
 }

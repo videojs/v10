@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { ThumbnailElement } from '../../thumbnail/thumbnail-element';
 import { SliderElement } from '../slider-element';
@@ -12,6 +12,7 @@ function uniqueTag(base: string): string {
 
 function createElement<Element extends HTMLElement>(Base: abstract new () => Element): Element {
   const tag = uniqueTag('test-slt');
+
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
 }
@@ -27,20 +28,24 @@ describe('SliderThumbnailElement', () => {
 
   it('extends ThumbnailElement', () => {
     const el = createElement(SliderThumbnailElement);
+
     expect(el).toBeInstanceOf(ThumbnailElement);
   });
 
   it('has a shadow root with an img element', () => {
     const el = createElement(SliderThumbnailElement);
+
     expect(el.shadowRoot).toBeTruthy();
 
     const img = el.shadowRoot!.querySelector('img');
+
     expect(img).toBeTruthy();
     expect(img!.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('inherits time property from ThumbnailElement', () => {
     const el = createElement(SliderThumbnailElement);
+
     expect(el.time).toBe(0);
 
     el.time = 10;
@@ -74,6 +79,7 @@ describe('SliderThumbnailElement', () => {
 
     // In idle state, pointerPercent=0 → pointerValue=0 → selects 'thumb-0.jpg'.
     const img = thumbnail.shadowRoot!.querySelector('img');
+
     expect(img!.getAttribute('src')).toBe('thumb-0.jpg');
   });
 

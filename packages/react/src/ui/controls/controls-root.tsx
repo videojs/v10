@@ -25,6 +25,7 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
 
   if (!controls) {
     if (__DEV__) logMissingFeature('Controls.Root', 'controls');
+
     return null;
   }
 

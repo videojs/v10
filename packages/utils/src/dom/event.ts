@@ -1,6 +1,7 @@
 /** Resolve the deepest event target, preferring composedPath for shadow DOM. */
 export function resolveEventTarget(event: Event): EventTarget | null {
   const path = event.composedPath();
+
   return path.length > 0 ? path[0]! : event.target;
 }
 
@@ -17,9 +18,9 @@ export interface OnEventOptions extends AddEventListenerOptions {
  * Wait for an event to occur on a target.
  *
  * @example
- * ```ts
- * const event = await onEvent(video, 'seeked');
- * ```
+ *   ```ts
+ *   const event = await onEvent(video, 'seeked');
+ *   ```;
  */
 export function onEvent<K extends keyof HTMLMediaElementEventMap>(
   target: HTMLMediaElement,

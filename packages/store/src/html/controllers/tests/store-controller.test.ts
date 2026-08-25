@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { createCoreTestStore, createTestHost } from '../../tests/test-utils';
 import { StoreController } from '../store-controller';
@@ -52,6 +52,7 @@ describe('StoreController', () => {
     const host = createTestHost();
 
     const controller = new StoreController(host, store, (s) => s.volume);
+
     document.body.appendChild(host);
 
     expect(controller.value).toBe(1);
@@ -71,6 +72,7 @@ describe('StoreController', () => {
     host.remove();
 
     const updateCountBefore = host.updateCount;
+
     await store.setVolume(0.5);
 
     expect(host.updateCount).toBe(updateCountBefore);
@@ -81,6 +83,7 @@ describe('StoreController', () => {
     const host = createTestHost();
 
     const controller = new StoreController(host, store, (s) => s.volume);
+
     document.body.appendChild(host);
 
     await store.setVolume(0.5);

@@ -1,13 +1,13 @@
 import { render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { SpotifyAudio } from '../spotify-audio/media';
 
 const TRACK_URL = 'https://open.spotify.com/track/1301WleyT98MSxVHPZCA6M';
 
 /**
- * Stands in for a controller from the live iframe API, including the part React
- * has to survive: `createController` builds an iframe of its own and replaces the
- * element it was handed with it.
+ * Stands in for a controller from the live iframe API, including the part React has to survive: `createController`
+ * builds an iframe of its own and replaces the element it was handed with it.
  */
 class MockController {
   static instances: MockController[] = [];
@@ -65,6 +65,7 @@ describe('SpotifyAudio', () => {
     const controller = await waitForSwap();
 
     const iframe = container.querySelector('iframe')!;
+
     expect(iframe).toBe(controller.iframeElement);
     expect(iframe.getAttribute('src')).toContain('/embed/track/');
     expect(iframe.style.display).toBe('none');
@@ -72,6 +73,7 @@ describe('SpotifyAudio', () => {
 
   it('unmounts without throwing after the controller replaces its iframe', async () => {
     const { container, unmount } = render(<SpotifyAudio src={TRACK_URL} />);
+
     await waitForSwap();
 
     // React removes the node it rendered, which the swap took out of the document;

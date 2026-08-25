@@ -1,4 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
+
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
@@ -42,6 +43,7 @@ test.describe('Error Dialog', () => {
 
     // Click the close/OK button
     const closeButton = page.locator('media-dialog-close, .media-button--primary').first();
+
     await closeButton.click();
 
     // Dialog should close

@@ -1,5 +1,5 @@
 import { type Plugin, rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
@@ -15,6 +15,7 @@ const target = defineComponentTarget<typeof schema>()(({ code, element }) => {
   const Div = element('div');
   const Span = element('span');
   const Sup = element('sup');
+
   const props = code.param('props');
   const item = code.param<{ label: unknown; tier: unknown }>('item');
 
@@ -88,6 +89,7 @@ async function transform(source: string): Promise<string> {
   await bundle.generate({ format: 'es' });
   const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
+
   return output;
 }
 

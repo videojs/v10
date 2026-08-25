@@ -1,4 +1,5 @@
 import type { DerivedContext, SliceConfig } from '@videojs/store';
+
 import type { AnyPlayerFeature, PlayerFeature, PlayerFeatureConfig, PlayerTarget } from './player';
 
 type DerivedFunctions<State> = Record<string, (ctx: DerivedContext<State>) => unknown>;
@@ -45,11 +46,13 @@ export function combinePlayerFeatureConfigs(features: readonly AnyPlayerFeature[
 
   if (__DEV__) {
     const seen = new Set<string>();
+
     for (const definition of definitions) {
       for (const key of Object.keys(definition)) {
         if (seen.has(key)) {
           console.warn(`[vjs-core] duplicate config key "${key}" — later feature overwrites earlier one`);
         }
+
         seen.add(key);
       }
     }
@@ -61,8 +64,7 @@ export function combinePlayerFeatureConfigs(features: readonly AnyPlayerFeature[
 /** Forward one configuration input through its feature-owned private action. */
 export function setPlayerConfigValue(store: object, entry: PlayerFeatureConfig[string], value: unknown): void {
   const action = (store as Record<PropertyKey, unknown>)[entry.action];
-  if (typeof action !== 'function') {
-    throw new TypeError(`Missing config action "${String(entry.action)}"`);
-  }
+  if (typeof action !== 'function') throw new TypeError(`Missing config action "${String(entry.action)}"`);
+
   action(value);
 }

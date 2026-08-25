@@ -2,7 +2,8 @@ import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { getMediaComponents, type MediaComponent } from '@videojs/media/dom/media-host';
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { mediaContext } from '../../player/context';
 import { UIElement } from '../../ui/ui-element';
 import { MediaComponentElement } from '../media-component-element';
@@ -29,9 +30,8 @@ class TestMediaComponentElement extends MediaComponentElement<FakeComponent> {
   static readonly tagName = 'test-media-component';
 
   /**
-   * Subclass field initializers run after the base constructor, which is the
-   * window the media context callback can fire in during a custom element
-   * upgrade. Reading the component here proves it resolves that early.
+   * Subclass field initializers run after the base constructor, which is the window the media context callback can fire
+   * in during a custom element upgrade. Reading the component here proves it resolves that early.
    */
   readonly componentDuringFieldInit = this.component;
 
@@ -90,6 +90,7 @@ describe('MediaComponentElement', () => {
 
   it('does not create a component when destroyed before use', () => {
     const el = new TestMediaComponentElement();
+
     // `componentDuringFieldInit` already forced creation, so assert through a
     // subclass that never touches it.
     class Untouched extends MediaComponentElement<FakeComponent> {
@@ -102,6 +103,7 @@ describe('MediaComponentElement', () => {
     customElements.define('test-media-component-untouched', Untouched);
 
     const untouched = new Untouched();
+
     untouched.destroy();
 
     expect(el.instance).toBeInstanceOf(FakeComponent);

@@ -25,6 +25,7 @@ export function createPopupGroup(): PopupGroup {
       if (current === member) return;
 
       const previous = current;
+
       current = member;
       previous?.close('group-open');
       notify();

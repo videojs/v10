@@ -9,8 +9,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
 
 export interface BufferingIndicatorProps
-  extends UIComponentProps<'div', BufferingIndicatorCore.State>,
-    BufferingIndicatorCore.Props {}
+  extends UIComponentProps<'div', BufferingIndicatorCore.State>, BufferingIndicatorCore.Props {}
 
 /**
  * Displays a buffering indicator when media is waiting for data.
@@ -18,17 +17,17 @@ export interface BufferingIndicatorProps
  * Visibility is delayed (default 500ms) to avoid flashing on quick buffers.
  *
  * @example
- * ```tsx
- * <BufferingIndicator />
+ *   ```tsx
+ *   <BufferingIndicator />
  *
- * <BufferingIndicator delay={1000} />
+ *   <BufferingIndicator delay={1000} />
  *
- * <BufferingIndicator
+ *   <BufferingIndicator
  *   render={(props, state) => (
- *     <div {...props}>{state.visible && <Spinner />}</div>
+ *   <div {...props}>{state.visible && <Spinner />}</div>
  *   )}
- * />
- * ```
+ *   />
+ *   ```;
  */
 export const BufferingIndicator = forwardRef(function BufferingIndicator(
   componentProps: BufferingIndicatorProps,
@@ -39,6 +38,7 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
   const playback = usePlayer(selectPlayback);
 
   const [core] = useState(() => new BufferingIndicatorCore());
+
   useDestroy(core);
   core.setProps({ delay });
 
@@ -52,6 +52,7 @@ export const BufferingIndicator = forwardRef(function BufferingIndicator(
 
   if (!playback) {
     if (__DEV__) logMissingFeature('BufferingIndicator', 'playback');
+
     return null;
   }
 

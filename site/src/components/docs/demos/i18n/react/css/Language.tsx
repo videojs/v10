@@ -8,6 +8,7 @@ import './Language.css';
 
 const { Player } = createPlayer({ features: videoFeatures });
 const locales = ['en', ...LOCALES] as const;
+
 type Locale = (typeof locales)[number];
 const languageNames = new Intl.DisplayNames(['en'], { type: 'language' });
 

@@ -1,11 +1,11 @@
 /**
  * Cross-renderer selectors that work for both HTML (Web Components) and React.
  *
- * HTML uses custom element tags: `media-play-button`, `media-time-slider`, etc.
- * React uses standard elements with CSS classes: `button.media-button--play`, etc.
+ * HTML uses custom element tags: `media-play-button`, `media-time-slider`, etc. React uses standard elements with CSS
+ * classes: `button.media-button--play`, etc.
  *
- * Both renderers apply the **same data attributes** for state (`data-paused`,
- * `data-muted`, etc.), which is what tests assert against.
+ * Both renderers apply the **same data attributes** for state (`data-paused`, `data-muted`, etc.), which is what tests
+ * assert against.
  *
  * Each selector uses a CSS `,` (or) to match either renderer.
  */

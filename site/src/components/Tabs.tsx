@@ -1,26 +1,24 @@
 /**
- * Accessible tabs component implementing the WAI-ARIA Tabs pattern.
- * Reference: https://www.w3.org/WAI/ARIA/apg/patterns/tabs/
+ * Accessible tabs component implementing the WAI-ARIA Tabs pattern. Reference:
+ * https://www.w3.org/WAI/ARIA/apg/patterns/tabs/
  *
- * Built without context, using some unusual patterns,
- * to work around some restrictions with Astro islands:
- * namely, that separate islands can't share context, and that,
- * depending on rendering context, Astro may render the component tree
+ * Built without context, using some unusual patterns, to work around some restrictions with Astro islands: namely, that
+ * separate islands can't share context, and that, depending on rendering context, Astro may render the component tree
  * bottom-up or top-down
  *
- * IMPORTANT: Use `client:idle` instead of `client:visible` when hydrating
- * these components. TabsPanel elements start with `hidden` attribute,
- * which prevents them from triggering Intersection Observer visibility,
- * causing `client:visible` to never hydrate non-initial panels.
+ * IMPORTANT: Use `client:idle` instead of `client:visible` when hydrating these components. TabsPanel elements start
+ * with `hidden` attribute, which prevents them from triggering Intersection Observer visibility, causing
+ * `client:visible` to never hydrate non-initial panels.
  */
 
 import clsx from 'clsx';
-
 import { Check } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+
 import CopyIcon from '@/assets/icons/copy.svg?react';
 import { twMerge } from '@/utils/twMerge';
 import useIsHydrated from '@/utils/useIsHydrated';
+
 import CopyButton from './CopyButton';
 
 export type TabsVariant = 'expanded' | 'compact';
@@ -35,34 +33,37 @@ interface TabsRootProps {
 export function TabsRoot({ children, maxWidth = true, className, id: propId, variant = 'compact' }: TabsRootProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isHydrated = useIsHydrated();
+
   /**
-   * When this component initializes,
-   * it generates an ID for itself, and then
-   * uses that ID to
-   * - set [role="tab"] ID
-   * - set [role="tab"][aria-controls]
-   * - set [role="tabpanel"] ID
-   * - set [role="tabpanel"][aria-labelledby]
+   * When this component initializes, it generates an ID for itself, and then uses that ID to
    *
-   * This allows tabs and tabpanels to be associated
-   * without relying on context or parent-child relationships,
-   * as well as complying with WAI-ARIA authoring practices.
+   * - Set [role="tab"] ID
+   * - Set [role="tab"][aria-controls]
+   * - Set [role="tabpanel"] ID
+   * - Set [role="tabpanel"][aria-labelledby]
+   *
+   * This allows tabs and tabpanels to be associated without relying on context or parent-child relationships, as well
+   * as complying with WAI-ARIA authoring practices.
    */
   useEffect(() => {
     // I know this isHydrated check looks weird,
     // but it actually delays this effect until later,
     // giving tab and tabpanel elements time to mount.
     if (!isHydrated) return;
+
     const id = propId || Date.now().toString();
     const tabs = ref.current?.querySelectorAll('[role="tab"]') || [];
     const panels = ref.current?.querySelectorAll('[role="tabpanel"]') || [];
+
     tabs.forEach((tab) => {
       const value = tab.getAttribute('data-value');
+
       tab.id = `tab-${id}-${value}`;
       tab.setAttribute('aria-controls', `panel-${id}-${value}`);
     });
     panels.forEach((panel) => {
       const value = panel.getAttribute('data-value');
+
       panel.id = `panel-${id}-${value}`;
       panel.setAttribute('aria-labelledby', `tab-${id}-${value}`);
     });
@@ -138,6 +139,7 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
       ref.current.setAttribute('data-tab-active', 'true');
       // set data-tab-active on all sibling buttons to false
       const siblings = ref.current.closest('[data-tabs-root]')?.querySelectorAll('[role="tab"]') || [];
+
       siblings.forEach((sibling) => {
         if (sibling !== ref.current) {
           sibling.setAttribute('data-tab-active', 'false');
@@ -152,7 +154,6 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
     const tabsRoot = ref.current?.closest('[data-tabs-root]');
     const allTabs = Array.from(tabsRoot?.querySelectorAll('[role="tab"]') || []) as HTMLElement[];
     const currentIndex = allTabs.indexOf(ref.current!);
-
     if (currentIndex === -1) return;
 
     let targetIndex: number | null = null;
@@ -161,12 +162,16 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
       case 'ArrowLeft':
         // Move to previous tab, wrap to last if at start
         targetIndex = currentIndex - 1;
+
         if (targetIndex < 0) targetIndex = allTabs.length - 1;
+
         break;
       case 'ArrowRight':
         // Move to next tab, wrap to first if at end
         targetIndex = currentIndex + 1;
+
         if (targetIndex >= allTabs.length) targetIndex = 0;
+
         break;
       case 'Home':
         // Jump to first tab
@@ -207,13 +212,16 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
           // Fix: mutation.target is Node, cast to Element to use getAttribute
           const target = mutation.target as Element;
           const newValue = target.getAttribute('data-tab-active') === 'true';
+
           setIsActive(newValue);
         }
       });
     });
+
     if (ref.current) {
       observer.observe(ref.current, { attributes: true });
     }
+
     return () => {
       observer.disconnect();
     };
@@ -253,7 +261,7 @@ export function Tab({ value, children, initial, variant = 'compact' }: TabProps)
         )}
         <span className="relative">
           {/* to prevent layout shift on state change, we have an invisible bold version of the text preserving space */}
-          <span className="font-bold invisible" aria-hidden="true" data-search-ignore data-llms-ignore>
+          <span className="invisible font-bold" aria-hidden="true" data-search-ignore data-llms-ignore>
             {children}
           </span>
           <span className={clsx('absolute top-0 left-0', isActive && 'font-bold')}>{children}</span>
@@ -279,7 +287,6 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
   useEffect(() => {
     const tabsRoot = ref.current?.closest('[data-tabs-root]');
     const correspondingTab = tabsRoot?.querySelector(`[role="tab"][data-value="${value}"]`);
-
     if (!correspondingTab) return;
 
     const observer = new MutationObserver((mutations) => {
@@ -287,6 +294,7 @@ export function TabsPanel({ value, children, initial, className, variant = 'comp
         if (mutation.type === 'attributes' && mutation.attributeName === 'data-tab-active') {
           const target = mutation.target as Element;
           const newValue = target.getAttribute('data-tab-active') === 'true';
+
           setIsActive(newValue);
         }
       });

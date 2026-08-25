@@ -1,6 +1,6 @@
 import type { StateAttrMap } from '@videojs/core';
 import { ContextConsumer, ContextProvider, createContext } from '@videojs/element/context';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { ContextPartElement, type PartContextValue } from '../context-part-element';
 import { UIElement } from '../ui-element';
@@ -39,6 +39,7 @@ describe('ContextPartElement', () => {
   it('applies initial context state synchronously on connection', () => {
     const provider = document.createElement('test-context-part-provider');
     const part = document.createElement('test-context-part');
+
     provider.append(part);
     document.body.append(provider);
 

@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
+
 import { NativeHlsMedia, type NativeHlsSource } from '../index';
 
 const MANIFEST = 'https://example.test/video.m3u8';
@@ -7,15 +8,17 @@ const DRM: NativeHlsSource['engine'] = {
 };
 
 /**
- * jsdom implements neither the media load algorithm nor its events, so what
- * reaches the element is observed through the assignments themselves.
+ * Jsdom implements neither the media load algorithm nor its events, so what reaches the element is observed through the
+ * assignments themselves.
  */
 function setup() {
   const video = document.createElement('video');
+
   document.body.append(video);
 
   const loads: string[] = [];
   let src = '';
+
   Object.defineProperty(video, 'src', {
     configurable: true,
     get: () => src,
@@ -26,6 +29,7 @@ function setup() {
   });
 
   const media = new NativeHlsMedia();
+
   media.attach(video);
 
   return { media, video, loads };

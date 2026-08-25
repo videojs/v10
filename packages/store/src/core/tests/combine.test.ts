@@ -1,4 +1,4 @@
-import { assertType, describe, expect, it, vi } from 'vitest';
+import { assertType, describe, expect, it, vi } from 'vite-plus/test';
 
 import { combine } from '../combine';
 import { defineSlice, type InferSliceTarget } from '../slice';
@@ -28,6 +28,7 @@ describe('combine', () => {
     const b = slice({ state: () => ({ label: '' }), attach: attachB });
 
     const store = createStore<MockTarget>()(combine(a, b));
+
     store.attach(new MockTarget());
 
     expect(attachA).toHaveBeenCalledOnce();
@@ -57,6 +58,7 @@ describe('combine', () => {
     const b = slice({ state: () => ({ label: '' }) });
 
     const store = createStore<MockTarget>()(combine(a, b), { onError });
+
     store.attach(new MockTarget());
 
     expect(onError).toHaveBeenCalled();

@@ -4,11 +4,11 @@ import { basename, dirname, join } from 'node:path';
 
 import { type RolldownOutput, rolldown } from 'rolldown';
 import { registryItemSchema, registrySchema } from 'shadcn/schema';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
+import { shadcnPlugin, vjscPlugin } from '..';
 import type { ComponentMeta } from '../../components';
 import type { ShadcnItem, ShadcnPluginOptions } from '../../shadcn';
-import { shadcnPlugin, vjscPlugin } from '..';
 
 interface FixtureMeta extends ComponentMeta {
   readonly type: 'block' | 'component';
@@ -37,9 +37,12 @@ describe('shadcnPlugin', () => {
     ]);
     const manifest = assetJson(output, 'registry.json');
     const rootItem = assetJson(output, 'root.json');
+
     registrySchema.parse(manifest);
+
     for (const outputItem of output.output) {
       if (outputItem.type !== 'asset' || outputItem.fileName === 'registry.json') continue;
+
       registryItemSchema.parse(JSON.parse(String(outputItem.source)));
     }
 
@@ -52,6 +55,7 @@ describe('shadcnPlugin', () => {
       'components/example/root/root.tsx',
     ]);
     const rootSource = rootItem.files.find((file: { target: string }) => file.target.endsWith('/root.tsx')).content;
+
     expect(rootSource).toContain('interface RootProps');
     expect(rootSource).toContain('<main>');
     expect(rootSource).toContain(`from '@/components/example/public/public'`);
@@ -149,6 +153,7 @@ describe('shadcnPlugin', () => {
       'components/first.tsx': `${meta('root', 'block')} export const First = <main/>;`,
       'components/second.tsx': `${meta('root', 'block')} export const Second = <main/>;`,
     });
+
     await expect(
       build(root, { paths: { ...baseOptions().paths, output: '../registry' }, styles: undefined })
     ).rejects.toThrow(/output path must be a non-empty relative path/);
@@ -170,6 +175,7 @@ describe('shadcnPlugin', () => {
     });
     const plugin = shadcnPlugin({ root, ...baseOptions({ styles: undefined }) });
     const first = await build(root, { styles: undefined }, ['vjsc', plugin]);
+
     writeFileSync(
       join(root, 'components/root.tsx'),
       `${meta('root', 'block')} export const Root = <main>second</main>;`
@@ -203,6 +209,7 @@ async function build(
     external: (id) => !id.startsWith('.') && !id.startsWith('/') && !id.startsWith('\0'),
     plugins,
   });
+
   return bundle.generate({ format: 'es', entryFileNames: '[name].js' });
 }
 
@@ -224,6 +231,7 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
       items: (modules) =>
         modules.flatMap<ShadcnItem<FixtureMeta>>((module) => {
           const { filename, meta: itemMeta, transform } = module;
+
           if (basename(filename) === 'utils.ts') {
             return [
               {
@@ -236,9 +244,12 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
               },
             ];
           }
+
           if (!itemMeta) return [];
+
           const skin = transform.skin;
           const name = skin && skin !== 'default' ? `${itemMeta.name}-${skin}` : itemMeta.name;
+
           return [
             {
               module,
@@ -261,16 +272,20 @@ function meta(name: string, type: FixtureMeta['type'] = 'component'): string {
 
 function setup(files: Readonly<Record<string, string>>): string {
   const root = mkdtempSync(join(tmpdir(), 'vjsc-shadcn-'));
+
   for (const [filename, source] of Object.entries(files)) {
     const path = join(root, filename);
+
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, source);
   }
+
   return root;
 }
 
 function assetJson(output: RolldownOutput, filename: string): any {
   const asset = output.output.find((item) => item.type === 'asset' && item.fileName === filename);
   if (asset?.type !== 'asset') throw new Error(`Missing asset: ${filename}`);
+
   return JSON.parse(String(asset.source));
 }

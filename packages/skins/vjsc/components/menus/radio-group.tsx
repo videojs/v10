@@ -6,7 +6,8 @@ import type {
 } from '@videojs/core';
 import * as $ from '@videojs/core/vjsc';
 import type { PropsWithChildren } from 'vjsc/components';
-import styles from '../../styles/components/menu.styles';
+
+import styles from '../../styles/menus/menu.styles';
 
 export function QualityRadioGroup({ className, ...props }: PropsWithChildren<CoreQualityRadioGroupProps>) {
   return <$.QualityRadioGroup className={[styles.radioGroup, className]} {...props} />;

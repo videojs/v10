@@ -81,9 +81,11 @@ export { CaptionsRadioGroupElement } from './ui/captions-radio-group/captions-ra
 export { CastButtonElement } from './ui/cast-button/cast-button-element';
 export { ContainerElement } from './ui/container/container-element';
 export { ContextPartElement, type PartContextValue } from './ui/context-part-element';
+export { ControlsBackdropElement } from './ui/controls/controls-backdrop-element';
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { type DialogContextValue, dialogContext } from './ui/dialog/context';
+export { DialogBackdropElement } from './ui/dialog/dialog-backdrop-element';
 export { DialogCloseElement } from './ui/dialog/dialog-close-element';
 export { DialogDescriptionElement } from './ui/dialog/dialog-description-element';
 export { DialogElement } from './ui/dialog/dialog-element';
@@ -105,6 +107,7 @@ export {
   menuRadioGroupContext,
 } from './ui/menu/context';
 export { MenuCheckboxItemElement } from './ui/menu/menu-checkbox-item-element';
+export { MenuContentElement } from './ui/menu/menu-content-element';
 export { MenuElement } from './ui/menu/menu-element';
 export { MenuGroupElement } from './ui/menu/menu-group-element';
 export { MenuGroupLabelElement } from './ui/menu/menu-group-label-element';

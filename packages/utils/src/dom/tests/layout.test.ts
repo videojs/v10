@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import {
   getBlockExtent,
@@ -37,6 +37,7 @@ function setDimensions(
 describe('DOM layout utilities', () => {
   it('reads bounding, layout, and overflow sizes', () => {
     const element = document.createElement('div');
+
     setDimensions(element, {
       rectWidth: 120,
       rectHeight: 80,
@@ -53,6 +54,7 @@ describe('DOM layout utilities', () => {
 
   it('temporarily applies styles while measuring', () => {
     const element = document.createElement('div');
+
     element.style.setProperty('width', '80px', 'important');
     setDimensions(element, { rectWidth: 160, rectHeight: 90 });
 
@@ -67,6 +69,7 @@ describe('DOM layout utilities', () => {
 
   it('reads logical padding', () => {
     const element = document.createElement('div');
+
     vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue({
       paddingInlineStart: '4px',
       paddingInlineEnd: '6px',
@@ -75,6 +78,7 @@ describe('DOM layout utilities', () => {
     } as CSSStyleDeclaration);
 
     const padding = getElementPadding(element);
+
     expect(getInlineExtent(padding)).toBe(10);
     expect(getBlockExtent(padding)).toBe(18);
   });
@@ -83,6 +87,7 @@ describe('DOM layout utilities', () => {
     const container = document.createElement('div');
     const first = document.createElement('div');
     const second = document.createElement('div');
+
     container.append(first, second);
     Object.defineProperties(first, {
       offsetLeft: { configurable: true, value: 5 },
@@ -122,6 +127,7 @@ describe('DOM layout utilities', () => {
   it('preserves a zero maximum width', () => {
     const container = document.createElement('div');
     const child = document.createElement('div');
+
     container.append(child);
 
     expect(

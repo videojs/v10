@@ -24,6 +24,7 @@ import {
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -70,6 +71,7 @@ import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { LiveVideoSkinProps } from './skin';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
@@ -183,23 +185,25 @@ function CaptionsTrigger(): ReactNode {
           </CaptionsButton>
         }
       />
-      <Menu.Content className={cn(popup.popover, menu.root)}>
-        <Menu.RadioGroup
-          className={menu.group}
-          value={captions.value}
-          onValueChange={captions.setValue}
-          aria-label={t(captionsText)}
-        >
-          {captions.options.map((option) => (
-            <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
-              <bdi dir="auto">{option.label}</bdi>
-              <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
-                <CheckIcon className={cn(icon, menu.icon)} />
-              </Menu.ItemIndicator>
-            </Menu.RadioItem>
-          ))}
-        </Menu.RadioGroup>
-      </Menu.Content>
+      <Menu.Popup className={cn(popup.popover, menu.root)}>
+        <Menu.Content className={menu.content}>
+          <Menu.RadioGroup
+            className={menu.group}
+            value={captions.value}
+            onValueChange={captions.setValue}
+            aria-label={t(captionsText)}
+          >
+            {captions.options.map((option) => (
+              <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
+                <bdi dir="auto">{option.label}</bdi>
+                <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
+                  <CheckIcon className={cn(icon, menu.icon)} />
+                </Menu.ItemIndicator>
+              </Menu.RadioItem>
+            ))}
+          </Menu.RadioGroup>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

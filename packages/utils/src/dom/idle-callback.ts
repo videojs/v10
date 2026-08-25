@@ -4,14 +4,15 @@ import { supportsIdleCallback } from './supports';
  * Request an idle callback with cleanup. Falls back to setTimeout for Safari.
  *
  * @example
- * ```ts
- * const cancel = idleCallback(doWork, { timeout: 1000 });
- * cancel(); // Cancel if needed
- * ```
+ *   ```ts
+ *   const cancel = idleCallback(doWork, { timeout: 1000 });
+ *   cancel(); // Cancel if needed
+ *   ```;
  */
 export function idleCallback(callback: IdleRequestCallback, options?: IdleRequestOptions): () => void {
   if (supportsIdleCallback()) {
     const id = requestIdleCallback(callback, options);
+
     return () => cancelIdleCallback(id);
   }
 

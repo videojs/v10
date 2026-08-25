@@ -1,4 +1,5 @@
 import { isNull, isObject } from '@videojs/utils/predicate';
+
 import { AbortControllerRegistry } from './abort-controller-registry';
 import type { StoreCallbacks } from './config';
 import { throwDestroyedError, throwNoTargetError } from './errors';
@@ -51,6 +52,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
     function validate() {
       if (destroyed) throwDestroyedError();
+
       if (!target) throwNoTargetError();
     }
 
@@ -68,6 +70,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
     sourceState = initialSourceState;
     const initialDerivedState = derive(sourceState);
+
     state = createState(publish(sourceState, initialDerivedState));
 
     const store = {
@@ -100,6 +103,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
     // configuration adapters without becoming part of the public state snapshot.
     for (const key of Object.getOwnPropertySymbols(sourceState as object)) {
       if (typeof sourceState[key as keyof SourceState] !== 'function') continue;
+
       Object.defineProperty(store, key, {
         get: () => sourceState[key as keyof SourceState],
       });
@@ -146,6 +150,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
       // Derive before committing so a thrown formula leaves every snapshot unchanged.
       const nextDerived = derive(patched.next);
+
       sourceState = patched.next;
       state.replace(publish(sourceState, nextDerived));
     }
@@ -200,18 +205,22 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
 
     function detach(): void {
       if (isNull(target)) return;
+
       signals.reset();
       target = null;
 
       const resetState = { ...initialSourceState } as SourceState;
+
       for (const key of slice.preserve ?? []) {
         (resetState as Record<PropertyKey, unknown>)[key] = (sourceState as Record<PropertyKey, unknown>)[key];
       }
+
       setSource(resetState);
     }
 
     function destroy(): void {
       if (destroyed) return;
+
       destroyed = true;
       detach();
       setupAbort.abort();
@@ -241,8 +250,10 @@ function patchSource<State>(current: Readonly<State>, partial: Partial<State>): 
 
   for (const key of Reflect.ownKeys(partial as object) as (keyof State)[]) {
     if (!hasOwnProp.call(partial, key)) continue;
+
     const value = partial[key];
     if (Object.is(current[key], value)) continue;
+
     (next as { -readonly [Key in keyof State]: State[Key] })[key] = value!;
     changed = true;
   }
@@ -275,6 +286,8 @@ export type AnyStore<Target = any> = BaseStore<Target, object>;
 
 export type UnknownStore<Target = unknown> = Store<Target, UnknownState>;
 
-export type InferStoreTarget<S extends AnyStore> = S extends { readonly target: infer Target | null } ? Target : never;
+export type InferStoreTarget<S extends AnyStore> = S extends { readonly target: (infer Target) | null }
+  ? Target
+  : never;
 
 export type InferStoreState<S extends AnyStore> = S extends { readonly state: infer State } ? State : never;

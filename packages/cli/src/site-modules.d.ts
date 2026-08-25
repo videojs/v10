@@ -1,9 +1,8 @@
 /**
- * Ambient type declarations for site modules imported via tsdown aliases.
+ * Ambient type declarations for site modules imported via Vite+ pack aliases.
  *
- * The CLI bundles code from `site/src/utils/installation/` at build time using
- * tsdown's `alias` config. These declarations let `tsc` typecheck against the
- * same signatures without following into the site source tree.
+ * The CLI bundles code from `site/src/utils/installation/` at build time using Vite+ pack's `alias` config. These
+ * declarations let `tsc` typecheck against the same signatures without following into the site source tree.
  */
 
 declare module '@/utils/installation/types' {
@@ -115,5 +114,6 @@ declare module '@/utils/installation/renderer-options' {
 
 declare module '@/content/cdn-media.json' {
   const entries: Array<{ id: string }>;
+
   export default entries;
 }

@@ -1,5 +1,5 @@
 import { type Plugin, rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { defineComponent, defineSchema } from '../../components/definition';
 import { defineComponentTarget } from '../../target/definition';
@@ -23,7 +23,7 @@ const target = defineComponentTarget<typeof schema>()(({ element, imported }) =>
       props: { from: '@fixture/react', name: component, path: ['Props'] },
     }),
   primitives: {
-    Group: element('div', {
+    Box: element('div', {
       props: { from: 'react', name: 'ComponentProps', intrinsic: 'div' },
     }),
   },
@@ -39,7 +39,7 @@ describe('targetTypePlugin', () => {
     const source = await transform(`
       'use client';
       import * as $ from '@fixture/components';
-      import { Group, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
+      import { Box, type Props, type PropsOf, type VjscNode } from 'vjsc/components';
       import { Local } from './local';
       import { setup } from './setup';
       import type { BuildOnly } from './build-only';
@@ -60,7 +60,7 @@ describe('targetTypePlugin', () => {
       }
 
       export function Panel({ className, ...props }: Props = {}) {
-        return <Group className={className} {...props} />;
+        return <Box className={className} {...props} />;
       }
     `);
 
@@ -110,6 +110,7 @@ async function transform(source: string): Promise<string> {
   await bundle.generate({ format: 'es' });
   const output = readComponentSource(meta);
   if (output === undefined) throw new Error('Fixture build did not retain editable source.');
+
   return output;
 }
 

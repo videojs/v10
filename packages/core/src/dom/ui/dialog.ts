@@ -1,7 +1,7 @@
 import type { State } from '@videojs/store';
 import { containsComposed, getDeepActiveElement, getTabbableElements, listen } from '@videojs/utils/dom';
 
-import type { DialogInput } from '../../core/ui/dialog/dialog-core';
+import type { DialogInput } from '../../core/ui/dialog/core';
 import { createDismissLayer } from './dismiss-layer';
 import type { TransitionApi } from './transition';
 
@@ -37,10 +37,7 @@ export interface DialogApi {
   destroy(): void;
 }
 
-/**
- * Manages modal dialog transitions, dismissal, initial focus, focus trapping,
- * and focus restoration.
- */
+/** Manages modal dialog transitions, dismissal, initial focus, focus trapping, and focus restoration. */
 export function createDialog(options: DialogOptions): DialogApi {
   let popupElement: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
@@ -76,6 +73,7 @@ export function createDialog(options: DialogOptions): DialogApi {
 
     opening.then(() => {
       if (layer.signal.aborted || !state.current.active || state.current.status !== 'idle') return;
+
       options.onOpenChangeComplete?.(true);
     });
   }
@@ -93,7 +91,9 @@ export function createDialog(options: DialogOptions): DialogApi {
 
       restoreBackground();
       const restoreTarget = triggerElement?.isConnected ? triggerElement : previousFocus;
+
       if (restoreTarget?.isConnected) restoreTarget.focus();
+
       previousFocus = null;
 
       options.onOpenChangeComplete?.(false);
@@ -104,10 +104,12 @@ export function createDialog(options: DialogOptions): DialogApi {
     cancelAnimationFrame(focusFrame);
     focusFrame = requestAnimationFrame(() => {
       focusFrame = 0;
+
       if (layer.signal.aborted || !state.current.active || !popupElement) return;
 
       const autofocus = popupElement.querySelector<HTMLElement>('[autofocus]');
       const target = autofocus ?? getTabbableElements(popupElement)[0] ?? popupElement;
+
       target.focus();
     });
   }
@@ -116,6 +118,7 @@ export function createDialog(options: DialogOptions): DialogApi {
     if (event.key !== 'Tab' || !state.current.active || !popupElement) return;
 
     const tabbable = getTabbableElements(popupElement);
+
     if (tabbable.length === 0) {
       event.preventDefault();
       popupElement.focus();
@@ -137,9 +140,11 @@ export function createDialog(options: DialogOptions): DialogApi {
 
   function handleDocumentFocusin(event: FocusEvent): void {
     if (!state.current.active || !popupElement) return;
+
     if (event.target instanceof Element && containsComposed(popupElement, event.target)) return;
 
     const target = getTabbableElements(popupElement)[0] ?? popupElement;
+
     target.focus();
   }
 
@@ -149,9 +154,13 @@ export function createDialog(options: DialogOptions): DialogApi {
 
   function setPopupElement(el: HTMLElement | null): void {
     if (popupElement !== el) restoreBackground();
+
     popupElement = el;
+
     if (el && state.current.active) isolateBackground();
+
     const active = getDeepActiveElement();
+
     if (el && state.current.active && (!active || !containsComposed(el, active))) {
       scheduleInitialFocus();
     }
@@ -184,12 +193,15 @@ export function createDialog(options: DialogOptions): DialogApi {
     if (!popupElement?.isConnected || isolatedElements.size > 0) return;
 
     let current: Element = popupElement;
+
     while (current !== document.body) {
       const parent = current.parentElement;
+
       if (parent) {
         for (const sibling of parent.children) {
           if (sibling !== current && sibling instanceof HTMLElement) makeInert(sibling);
         }
+
         current = parent;
         continue;
       }
@@ -200,6 +212,7 @@ export function createDialog(options: DialogOptions): DialogApi {
       for (const sibling of root.children) {
         if (sibling !== current && sibling instanceof HTMLElement) makeInert(sibling);
       }
+
       current = root.host;
     }
   }
@@ -213,6 +226,7 @@ export function createDialog(options: DialogOptions): DialogApi {
     for (const [element, wasInert] of isolatedElements) {
       if (!wasInert) element.removeAttribute('inert');
     }
+
     isolatedElements.clear();
   }
 }

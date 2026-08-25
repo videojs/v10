@@ -24,6 +24,7 @@ export function isVolumeIndicatorAction(action: string | null | undefined): acti
 
 export function getVolumeLevel(volume: number): IndicatorVolumeLevel {
   if (volume <= 0) return 'off';
+
   return volume <= 0.5 ? 'low' : 'high';
 }
 
@@ -48,6 +49,7 @@ export function predictVolumeActionOutcome(event: InputActionEvent, snapshot: Me
     const nextVolume = clamp(snapshotVolume + (event.value ?? 0), 0, 1);
     /** Mirrors `volumeFeature.setVolume`: mute clears only when the clamped volume is greater than 0. */
     const nextMuted = muted && nextVolume <= 0;
+
     return { snapshotVolume, nextMuted, nextVolume };
   }
 

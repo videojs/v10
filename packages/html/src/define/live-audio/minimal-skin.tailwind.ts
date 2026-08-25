@@ -14,9 +14,9 @@ import {
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
+
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
-
 // Register the live audio player, container, and minimal UI custom elements.
 import './minimal-ui';
 
@@ -63,18 +63,22 @@ function getTemplateHTML() {
           <div class="${spacer}" aria-hidden="true"></div>
 
           <div class="${buttonGroup}">
-            <media-mute-button commandfor="live-audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+            <media-mute-button id="live-audio-mute-trigger" commandfor="live-audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
               ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
               ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
             </media-mute-button>
+            <media-tooltip trigger="live-audio-mute-trigger" delay="0" sticky side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
               <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
                   <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
                 </media-slider-track>
-                <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
+                <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
           </div>

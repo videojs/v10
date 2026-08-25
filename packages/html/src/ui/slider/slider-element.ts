@@ -11,6 +11,7 @@ import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles } from '@videojs/utils/dom';
+
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
@@ -54,6 +55,7 @@ export class SliderElement extends UIElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#disconnect = new AbortController();
@@ -117,6 +119,7 @@ export class SliderElement extends UIElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#slider) return;
 
     this.#core.setInput(this.#slider.input.current);
@@ -136,6 +139,7 @@ export class SliderElement extends UIElement {
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: (() => {
         const attrs = this.#core.getAttrs(state);
+
         return { ...attrs, 'aria-label': translateText(attrs['aria-label'], this.#i18n.value) };
       })(),
       thumbProps: this.#slider.thumbProps,

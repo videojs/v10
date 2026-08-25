@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { type MaybeResolvedPresentation, MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack } from '../../types';
 import { liveLatencyFor, mediaPlaylistReloadDelay, resolveLiveLatency } from '../reload-policy';
 
@@ -36,12 +37,14 @@ describe('mediaPlaylistReloadDelay', () => {
   it('polls at half target duration when the window is unchanged', () => {
     const prev = track({ targetDuration: 4, mediaSequence: 10, segments: 3 });
     const same = track({ targetDuration: 4, mediaSequence: 10, segments: 3 });
+
     expect(mediaPlaylistReloadDelay(same, prev)).toBe(2000);
   });
 
   it('polls at full target duration when the window slid or grew', () => {
     const prev = track({ targetDuration: 4, mediaSequence: 10, segments: 3 });
     const slid = track({ targetDuration: 4, mediaSequence: 11, segments: 3 });
+
     expect(mediaPlaylistReloadDelay(slid, prev)).toBe(4000);
   });
 
@@ -80,6 +83,7 @@ describe('resolveLiveLatency', () => {
       segments: [{ id: 's0', url: 's0.m4s', duration: 2, startTime: 0 }],
       metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { targetDuration, mediaSequence: 0, endList: false } },
     };
+
     return {
       id: 'p-1',
       url: 'master.m3u8',

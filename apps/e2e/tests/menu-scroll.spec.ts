@@ -1,4 +1,5 @@
 import { type ElementHandle, expect, type Page, test } from '@playwright/test';
+
 import { VIDEO_PAGES } from '../fixtures/media';
 import { SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
@@ -10,8 +11,8 @@ type PanelHandle = ElementHandle<HTMLElement>;
 /**
  * Resolve the on-screen menu panel once the submenu view transition settled.
  *
- * The transition briefly leaves two panels on screen and clips their overflow,
- * so the panel is pinned to a handle to keep every later read on one element.
+ * The transition briefly leaves two panels on screen and clips their overflow, so the panel is pinned to a handle to
+ * keep every later read on one element.
  */
 async function resolveActiveMenuPanel(page: Page, player: PlayerPage): Promise<PanelHandle> {
   await expect(page.locator(SELECTORS.activeMenuPanel)).toHaveCount(1);
@@ -36,6 +37,7 @@ async function getStableBox(panel: PanelHandle): Promise<{ x: number; y: number;
         ? `${Math.round(box.x)},${Math.round(box.y)},${Math.round(box.width)},${Math.round(box.height)}`
         : '';
       const settled = key !== '' && key === previous;
+
       previous = key;
       return settled;
     })
@@ -73,6 +75,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
     // https://github.com/videojs/v10/issues/2095
     test('hovering options keeps the scroll position', async ({ page }) => {
       const overflows = await panel.evaluate((element) => element.scrollHeight > element.clientHeight + 1);
+
       expect(overflows, 'speed menu must overflow for this test to be meaningful').toBe(true);
 
       const box = await getStableBox(panel);
@@ -81,6 +84,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
         element.scrollTop = element.scrollHeight - element.clientHeight;
       });
       const scrollTop = await getScrollTop(panel);
+
       expect(scrollTop).toBeGreaterThan(0);
 
       const centerX = box.x + box.width / 2;
@@ -119,6 +123,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
         .poll(() =>
           panel.evaluate((element) => {
             const root = element.getRootNode() as Document | ShadowRoot;
+
             return element.contains(root.activeElement);
           })
         )

@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host"
+    "dev": "vp dev --host"
   }
 }

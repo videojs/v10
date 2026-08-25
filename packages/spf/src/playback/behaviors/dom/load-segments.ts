@@ -1,50 +1,41 @@
 /**
- * **Per-type segment loading dispatch.** Per available track type (video /
- * audio / text), reads the per-type segment-loader actor from context and
- * sends typed `'load'` messages whenever a meaningful loading condition
- * changes (selected track, current time crossing a segment boundary).
+ * **Per-type segment loading dispatch.** Per available track type (video / audio / text), reads the per-type
+ * segment-loader actor from context and sends typed `'load'` messages whenever a meaningful loading condition changes
+ * (selected track, current time crossing a segment boundary).
  *
  * Loader-actor lifecycle is owned upstream:
+ *
  * - Video: `setupVideoBufferActors`
  * - Audio: `setupAudioBufferActors`
  * - Text: `setupTextTrackActors`
  *
- * This behavior is pure-consumer: it reads `context[loaderKey]` and
- * dispatches typed messages via the variant's per-type `findResolvedTrack`
- * resolver.
+ * This behavior is pure-consumer: it reads `context[loaderKey]` and dispatches typed messages via the variant's
+ * per-type `findResolvedTrack` resolver.
  *
  * # Load modes as reactor states
  *
  * Four states encode the load-gating policy directly:
  *
- * - `'preconditions-unmet'` — no loader actor in context, or the selected
- *   track hasn't resolved.
- * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended`
- *   (highest precedence) or `preload === 'none' && !loadActivated`. Nothing
- *   fires; already-queued loader work drains. Auto-resumes into the derived
- *   state when the policy lifts.
- * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`.
- *   Fires an init-segment-only `load` message **once on entry**. The
- *   variant's loader actor decides what to do — v/a's actor fetches the
- *   init segment; text's actor no-ops (no init concept).
- * - `'full-range'` — `loadActivated || preload === 'auto'`. Effect re-fires
- *   on selected-track change and on segment-boundary crossing.
+ * - `'preconditions-unmet'` — no loader actor in context, or the selected track hasn't resolved.
+ * - `'dormant'` — loading disabled by policy: an observed `loadingSuspended` (highest precedence) or `preload === 'none'
+ *   && !loadActivated`. Nothing fires; already-queued loader work drains. Auto-resumes into the derived state when the
+ *   policy lifts.
+ * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`. Fires an init-segment-only `load`
+ *   message **once on entry**. The variant's loader actor decides what to do — v/a's actor fetches the init segment;
+ *   text's actor no-ops (no init concept).
+ * - `'full-range'` — `loadActivated || preload === 'auto'`. Effect re-fires on selected-track change and on
+ *   segment-boundary crossing.
  *
  * # Per-type parameterization (inference-driven)
  *
- * The helper is generic over `Track` — the resolved-track type. Each
- * variant supplies its own `findResolvedTrack` resolver via config; TS
- * infers `Track` from the resolver's return type. The loader signal's
- * value type is constrained to `SegmentLoaderLike<Track>` — anything with
- * a `send` method accepting the `Track`-parameterized message. Concrete
- * actor types (`SegmentLoaderActor`, `TextTrackSegmentLoaderActor`)
- * satisfy this via function-parameter contravariance: an actor whose
- * `.send` accepts a wider track type is assignable to a slot expecting a
- * narrower track type.
+ * The helper is generic over `Track` — the resolved-track type. Each variant supplies its own `findResolvedTrack`
+ * resolver via config; TS infers `Track` from the resolver's return type. The loader signal's value type is constrained
+ * to `SegmentLoaderLike<Track>` — anything with a `send` method accepting the `Track`-parameterized message. Concrete
+ * actor types (`SegmentLoaderActor`, `TextTrackSegmentLoaderActor`) satisfy this via function-parameter contravariance:
+ * an actor whose `.send` accepts a wider track type is assignable to a slot expecting a narrower track type.
  *
- * No widening of actor message types is needed; no casts inside the
- * helper. Per-variant wiring (right loader paired with right resolver)
- * is enforced at the variant call site.
+ * No widening of actor message types is needed; no casts inside the helper. Per-variant wiring (right loader paired
+ * with right resolver) is enforced at the variant call site.
  */
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
@@ -77,14 +68,11 @@ export interface SegmentLoadingState {
   /** True once a preload-overriding event has fired for the current source. */
   loadActivated?: boolean;
   /**
-   * Intent-level policy input: initiate no new loading work while `true`.
-   * Read here by the `loadXSegments` dispatchers (park in `'dormant'`,
-   * highest precedence) and by `setupMediaSource` (a pending MediaSource
-   * rebuild waits — attach runs the element's load algorithm). **Observed,
-   * never declared**: no reader lists this key in `stateKeys`, so the slot
-   * exists only in compositions where a feature behavior declares and
-   * writes it (e.g. `setupAirPlay`, while a remote-playback session owns
-   * presentation). An absent slot means never suspended.
+   * Intent-level policy input: initiate no new loading work while `true`. Read here by the `loadXSegments` dispatchers
+   * (park in `'dormant'`, highest precedence) and by `setupMediaSource` (a pending MediaSource rebuild waits — attach
+   * runs the element's load algorithm). **Observed, never declared**: no reader lists this key in `stateKeys`, so the
+   * slot exists only in compositions where a feature behavior declares and writes it (e.g. `setupAirPlay`, while a
+   * remote-playback session owns presentation). An absent slot means never suspended.
    */
   loadingSuspended?: boolean;
   selectedVideoTrackId?: string;
@@ -128,15 +116,12 @@ interface SegmentLoaderLike<Track> {
 }
 
 /**
- * Specialization helper. Generic over `Track` (inferred from
- * `findResolvedTrack`'s return type). The loader value type is
- * constrained to `SegmentLoaderLike<Track>` — concrete actor types
- * (whose `.send` accepts a wider track union) satisfy this via
- * function-parameter contravariance.
+ * Specialization helper. Generic over `Track` (inferred from `findResolvedTrack`'s return type). The loader value type
+ * is constrained to `SegmentLoaderLike<Track>` — concrete actor types (whose `.send` accepts a wider track union)
+ * satisfy this via function-parameter contravariance.
  *
- * Tracks that the helper handles must have a `segments` field — used by
- * `segmentBoundarySignal` to compute the load-anchor boundary. Each
- * variant's resolver narrows to the right resolved-track shape.
+ * Tracks that the helper handles must have a `segments` field — used by `segmentBoundarySignal` to compute the
+ * load-anchor boundary. Each variant's resolver narrows to the right resolved-track shape.
  */
 function setupSegmentLoading<
   K extends SelectedTrackKey,
@@ -175,6 +160,7 @@ function setupSegmentLoading<
   const segmentBoundarySignal = computed(() => {
     const track = selectedTrack.get();
     if (!track) return undefined;
+
     return segmentStartForTime(state.currentTime.get() ?? 0, track.segments);
   });
 
@@ -182,9 +168,13 @@ function setupSegmentLoading<
     // Policy-off wins even over preconditions: a loader arriving while
     // suspended must not dispatch.
     if (state.loadingSuspended?.get()) return 'dormant';
+
     if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
+
     if (state.loadActivated.get() || state.preload.get() === 'auto') return 'full-range';
+
     if (state.preload.get() === 'none') return 'dormant';
+
     return 'metadata-only';
   });
 
@@ -203,6 +193,7 @@ function setupSegmentLoading<
         // intentionally not followed.
         entry: () => {
           const track = selectedTrack.get()!;
+
           context[loaderKey].get()!.send({ type: 'load', track });
         },
       },
@@ -212,8 +203,10 @@ function setupSegmentLoading<
         // boundary-dedup signal already handles re-firing policy.
         effects: () => {
           const track = selectedTrack.get()!;
+
           segmentBoundarySignal.get();
           const currentTime = peek(state.currentTime) ?? 0;
+
           peek(context[loaderKey])!.send({
             type: 'load',
             track,

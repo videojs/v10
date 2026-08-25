@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { HTMLVideoElementHost } from '../../video-host';
 import { NativeHlsMediaLiveMixin } from '../live';
@@ -14,8 +14,10 @@ const NativeHlsMediaLive = NativeHlsMediaLiveMixin(FakeHost);
 
 function createVideoWithSrc(src: string, seekableEnd: number | null = null): HTMLVideoElement {
   const video = document.createElement('video');
+
   // JSDOM doesn't actually load the src; we just need the attribute to stick.
   Object.defineProperty(video, 'currentSrc', { configurable: true, value: src });
+
   if (seekableEnd !== null) {
     Object.defineProperty(video, 'seekable', {
       configurable: true,
@@ -28,6 +30,7 @@ function createVideoWithSrc(src: string, seekableEnd: number | null = null): HTM
       },
     });
   }
+
   return video;
 }
 
@@ -37,12 +40,12 @@ function mockFetch(responses: Record<string, string | { status: number; body?: s
     vi.fn(async (input: string | URL | Request) => {
       const url = input instanceof Request ? input.url : input.toString();
       const entry = responses[url] ?? responses[Object.keys(responses).find((key) => url.endsWith(key)) ?? ''];
-      if (entry === undefined) {
-        return new Response('not found', { status: 404 });
-      }
+      if (entry === undefined) return new Response('not found', { status: 404 });
+
       if (typeof entry === 'string') {
         return new Response(entry, { status: 200 });
       }
+
       return new Response(entry.body ?? '', { status: entry.status });
     })
   );
@@ -62,6 +65,7 @@ describe('NativeHlsMediaLiveMixin', () => {
   describe('defaults', () => {
     it('returns `NaN` for both properties before a playlist is parsed', () => {
       const host = new NativeHlsMediaLive();
+
       expect(host.liveEdgeStart).toBeNaN();
       expect(host.targetLiveWindow).toBeNaN();
     });
@@ -84,6 +88,7 @@ describe('NativeHlsMediaLiveMixin', () => {
       const video = createVideoWithSrc('https://example.com/live.m3u8', 60);
 
       const handler = vi.fn();
+
       host.addEventListener('targetlivewindowchange', handler);
 
       host.attach(video);
@@ -201,6 +206,7 @@ describe('NativeHlsMediaLiveMixin', () => {
   describe('non-HLS sources', () => {
     it('does not fetch for `.mp4` sources', async () => {
       const fetchSpy = vi.fn();
+
       vi.stubGlobal('fetch', fetchSpy);
 
       const host = new NativeHlsMediaLive();
@@ -233,6 +239,7 @@ describe('NativeHlsMediaLiveMixin', () => {
 
     it('resets to `NaN` on `emptied`', async () => {
       const playlist = ['#EXTM3U', '#EXT-X-TARGETDURATION:6', '#EXTINF:6.0,', 'segment0.ts'].join('\n');
+
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
       const host = new NativeHlsMediaLive();
@@ -252,6 +259,7 @@ describe('NativeHlsMediaLiveMixin', () => {
 
     it('resets to `NaN` after `destroy`', async () => {
       const playlist = ['#EXTM3U', '#EXT-X-TARGETDURATION:6', '#EXTINF:6.0,', 'segment0.ts'].join('\n');
+
       mockFetch({ 'https://example.com/live.m3u8': playlist });
 
       const host = new NativeHlsMediaLive();

@@ -2,6 +2,7 @@ import { join } from 'node:path';
 
 import { transform } from '@svgr/core';
 import { transformSync } from 'oxc-transform';
+
 import { DIST_DIR } from '../internal/paths.js';
 import type { IconDefinition, IconFamily } from './model.js';
 import { writeOutput } from './output.js';
@@ -23,6 +24,7 @@ async function buildComponent(icon: IconDefinition): Promise<string> {
 
   if (result.errors.length > 0 || !result.code) {
     const errors = result.errors.map((error) => error.codeframe ?? error.message).join('\n');
+
     throw new Error(`Could not transpile ${componentName}:\n${errors}`);
   }
 

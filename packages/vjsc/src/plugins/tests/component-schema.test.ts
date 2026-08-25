@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { rolldown } from 'rolldown';
-import { build } from 'tsdown';
-import { describe, expect, it } from 'vitest';
+import { build } from 'vite-plus/pack';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { componentSchemaPlugin } from '..';
 
@@ -14,6 +14,7 @@ describe('componentSchemaPlugin', () => {
     const sourceDir = join(root, 'play-button');
     const source = join(sourceDir, 'play-button-component.ts');
     const existing = join(root, 'existing.ts');
+
     mkdirSync(sourceDir);
     writeFileSync(existing, 'export const existing = true;');
     writeFileSync(
@@ -42,6 +43,7 @@ describe('componentSchemaPlugin', () => {
   it('provides its companion declaration to the host build', async () => {
     const root = mkdtempSync(join(tmpdir(), 'vjsc-component-schema-plugin-'));
     const sourceDir = join(root, 'play-button');
+
     mkdirSync(sourceDir);
     writeFileSync(
       join(sourceDir, 'play-button-component.ts'),
@@ -68,7 +70,7 @@ describe('componentSchemaPlugin', () => {
         entry: ['does-not-match.ts'],
       },
       deps: { neverBundle: ['vjsc/components'] },
-      // tsdown currently owns a newer compatible Rolldown type instance than this package.
+      // Vite+ pack owns a newer compatible Rolldown type instance than this package.
       plugins: [plugin],
       unbundle: true,
       write: false,
@@ -76,8 +78,8 @@ describe('componentSchemaPlugin', () => {
       report: false,
     });
     const declaration = results[0]?.chunks.find((chunk) => /\.d\.[cm]?ts$/.test(chunk.fileName));
-
     if (declaration?.type !== 'chunk') throw new Error('The host build did not emit the schema declaration');
+
     expect(declaration.code).toContain('declare const PlayButton');
   });
 });

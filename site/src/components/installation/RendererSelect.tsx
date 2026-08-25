@@ -1,5 +1,6 @@
 import { useStore } from '@nanostores/react';
 import { useEffect } from 'react';
+
 import { Select } from '@/components/Select';
 import { renderer, sourceUrl, useCase } from '@/stores/installation';
 import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
@@ -26,6 +27,7 @@ export default function RendererSelect() {
       // No valid detection — ensure current renderer is valid for use case
       const current = renderer.get();
       const validRenderers = getInstallationPreset($useCase).renderers;
+
       if (!validRenderers.includes(current)) {
         renderer.set(validRenderers[0]!);
       }
@@ -49,7 +51,7 @@ export default function RendererSelect() {
           value={$sourceUrl}
           onChange={(e) => sourceUrl.set(e.target.value)}
           placeholder="https://..."
-          className="bg-manila-50 dark:bg-warm-gray border border-manila-75 dark:border-soot rounded-xs text-p3 p-2"
+          className="bg-manila-50 dark:bg-warm-gray border-manila-75 dark:border-soot text-p3 rounded-xs border p-2"
         />
       </div>
 
@@ -64,7 +66,7 @@ export default function RendererSelect() {
               <button
                 type="button"
                 onClick={() => renderer.set(detection.renderer)}
-                className="cursor-pointer underline intent:decoration-gold"
+                className="intent:decoration-gold cursor-pointer underline"
               >
                 Select {detection.label}
               </button>

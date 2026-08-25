@@ -1,7 +1,9 @@
 import type { StateAttrMap } from '@videojs/core';
 import type { ForwardRefExoticComponent } from 'react';
 import { forwardRef } from 'react';
+
 import type { UIComponentProps } from '@/utils/types';
+
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
 

@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import type { Resource, ResponseLike } from '../fetch';
 import { fetchResolvable, fetchResolvableStream, getResponseText } from '../fetch';
 
@@ -22,6 +23,7 @@ describe('fetchResolvable', () => {
 
   it('returns Response from fetch', async () => {
     const mockResponse = new Response('test content');
+
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(mockResponse);
 
     const response = await fetchResolvable({ url: 'https://example.com/test.m3u8' });
@@ -69,6 +71,7 @@ describe('fetchResolvableStream', () => {
 
   function makeBodyStream(...chunks: Uint8Array[]): ReadableStream<Uint8Array> {
     let i = 0;
+
     return new ReadableStream({
       pull(controller) {
         if (i < chunks.length) {
@@ -82,17 +85,21 @@ describe('fetchResolvableStream', () => {
 
   async function collect(gen: AsyncGenerator<Uint8Array>): Promise<Uint8Array[]> {
     const result: Uint8Array[] = [];
+
     for await (const chunk of gen) result.push(chunk);
+
     return result;
   }
 
   it('yields chunks from the response body', async () => {
     const data = new Uint8Array(256).fill(0xff);
     const body = makeBodyStream(data);
+
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(body));
 
     const chunks = await collect(fetchResolvableStream({ url: 'https://example.com/seg.m4s' }, { minChunkSize: 128 }));
     const total = chunks.reduce((sum, c) => sum + c.length, 0);
+
     expect(total).toBe(256);
   });
 
@@ -107,11 +114,13 @@ describe('fetchResolvableStream', () => {
     );
 
     const req: Request = fetchSpy.mock.calls[0]![0] as Request;
+
     expect(req.headers.get('Range')).toBe('bytes=0-99');
   });
 
   it('throws when the response has no body', async () => {
     const nullBodyResponse = new Response(null, { status: 204 });
+
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(nullBodyResponse);
 
     await expect(collect(fetchResolvableStream({ url: 'https://example.com/seg.m4s' }))).rejects.toThrow(
@@ -126,6 +135,7 @@ describe('fetchResolvableStream', () => {
 
     // fetch should have been called with a Request, not an object with minChunkSize
     const req: Request = fetchSpy.mock.calls[0]![0] as Request;
+
     expect(req).toBeInstanceOf(Request);
   });
 });
@@ -137,6 +147,7 @@ describe('getResponseText', () => {
     };
 
     const text = await getResponseText(response);
+
     expect(text).toBe('#EXTM3U\n#EXT-X-VERSION:7');
   });
 
@@ -155,6 +166,7 @@ describe('getResponseText', () => {
   it('works with actual Response object', async () => {
     const response = new Response('#EXTM3U');
     const text = await getResponseText(response);
+
     expect(text).toBe('#EXTM3U');
   });
 

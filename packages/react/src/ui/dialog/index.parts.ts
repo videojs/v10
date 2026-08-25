@@ -1,3 +1,4 @@
+export { DialogBackdrop as Backdrop, type DialogBackdropProps as BackdropProps } from './dialog-backdrop';
 export { DialogClose as Close, type DialogCloseProps as CloseProps } from './dialog-close';
 export {
   DialogDescription as Description,

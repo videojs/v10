@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 describe('video/minimal-ui ejected registration', () => {
   it('upgrades input feedback when light DOM exists before registration', async () => {

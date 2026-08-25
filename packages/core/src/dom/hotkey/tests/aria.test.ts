@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { toAriaKeyShortcut, toDisplayKeyShortcut } from '../aria';
 import { parseHotkeyPattern } from '../hotkey';
@@ -18,11 +18,13 @@ describe('toAriaKeyShortcut', () => {
 
   it('formats multiple modifiers in consistent order', () => {
     const result = toAriaKeyShortcut(parseHotkeyPattern('Ctrl+Shift+f'));
+
     expect(result).toBe('Control+Shift+f');
   });
 
   it('separates alternatives with space', () => {
     const bindings = [...parseHotkeyPattern('k'), ...parseHotkeyPattern('Space')];
+
     expect(toAriaKeyShortcut(bindings)).toBe('k Space');
   });
 
@@ -33,6 +35,7 @@ describe('toAriaKeyShortcut', () => {
   it('handles digit range bindings', () => {
     const bindings = parseHotkeyPattern('0-9');
     const result = toAriaKeyShortcut(bindings);
+
     expect(result).toBe('0 1 2 3 4 5 6 7 8 9');
   });
 });

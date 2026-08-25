@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { cloneTemplateRoot, createTemplate, getTemplateElement, getTemplateRoot, renderTemplate } from '../template';
 
 describe('createTemplate', () => {
@@ -34,6 +35,7 @@ describe('renderTemplate', () => {
   it('appends without clearing existing content', () => {
     const template = createTemplate('<span>new</span>')!;
     const container = document.createElement('div');
+
     container.innerHTML = '<span>existing</span>';
 
     renderTemplate(container, template);
@@ -47,6 +49,7 @@ describe('renderTemplate', () => {
 describe('getTemplateRoot', () => {
   it('returns the only element root', () => {
     const template = createTemplate('<div class="root"><span>Hello</span></div>')!;
+
     expect(getTemplateRoot(template)).toBe(template.content.firstElementChild);
   });
 
@@ -64,6 +67,7 @@ describe('getTemplateElement', () => {
     const nested = document.createElement('div');
     const nestedTemplate = document.createElement('template');
     const template = document.createElement('template');
+
     nested.append(nestedTemplate);
     container.append(nested, template);
 

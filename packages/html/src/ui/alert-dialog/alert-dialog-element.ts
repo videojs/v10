@@ -1,4 +1,4 @@
-import { AlertDialogCore, DialogDataAttrs } from '@videojs/core';
+import { AlertDialogCore, AlertDialogDataAttrs } from '@videojs/core';
 
 import { DialogElementBase } from '../dialog/dialog-element';
 
@@ -9,7 +9,7 @@ export class AlertDialogElement extends DialogElementBase {
   constructor() {
     super({
       core: new AlertDialogCore(),
-      stateAttrMap: DialogDataAttrs,
+      stateAttrMap: AlertDialogDataAttrs,
       idPrefix: 'alert-dialog',
       bindTrigger: false,
     });

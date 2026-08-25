@@ -26,14 +26,14 @@ interface ExportedMeta {
 }
 
 /**
- * Extract static component metadata and remove its export from runtime code.
- * Use before source capture when registry tooling needs a component's `meta` export.
+ * Extract static component metadata and remove its export from runtime code. Use before source capture when registry
+ * tooling needs a component's `meta` export.
  *
  * @example
- * ```diff
- * - export const meta = { name: 'play-button' };
+ *   ```diff
+ *   - export const meta = { name: 'play-button' };
  *   export function PlayButton() {}
- * ```
+ *   ```;
  *
  * @param exportName - Metadata export to extract. Defaults to `meta`.
  */
@@ -48,9 +48,7 @@ export function componentMetaPlugin(exportName = 'meta'): Plugin {
 
         const componentMeta = parseComponentMeta(exported.declarator.init, id, exportName);
         const magicString = transform.magicString;
-        if (!magicString) {
-          throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
-        }
+        if (!magicString) throw new Error('vjsc: Rolldown did not provide MagicString to the component metadata pass.');
 
         removeDeclarator(magicString, exported);
 
@@ -143,21 +141,27 @@ function staticValue(expression: Expression, id: string): unknown {
     ) {
       return value.value;
     }
+
     throw nonStaticMeta(id);
   }
+
   if (value.type === 'UnaryExpression' && value.operator === '-') {
     const operand = staticValue(value.argument, id);
     if (typeof operand === 'number') return -operand;
   }
+
   if (value.type === 'TemplateLiteral' && value.expressions.length === 0) {
     return value.quasis[0]?.value.cooked ?? value.quasis[0]?.value.raw ?? '';
   }
+
   if (value.type === 'ArrayExpression') {
     return value.elements.map((element) => {
       if (!element || element.type === 'SpreadElement') throw nonStaticMeta(id);
+
       return staticValue(element, id);
     });
   }
+
   if (value.type === 'ObjectExpression') return staticObject(value, id);
 
   throw nonStaticMeta(id);
@@ -177,8 +181,8 @@ function staticObject(expression: ObjectExpression, id: string): Readonly<Record
 
 function staticPropertyName(property: ObjectProperty, id: string): string {
   const key: PropertyKey = property.key;
-
   if (!property.computed && key.type === 'Identifier') return key.name;
+
   if (key.type === 'Literal' && (typeof key.value === 'string' || typeof key.value === 'number')) {
     return String(key.value);
   }

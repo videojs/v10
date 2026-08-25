@@ -23,28 +23,27 @@ export interface CreateI18nOptions {
 
 export interface I18nProviderProps {
   /**
-   * Forces the active locale. Omit to inherit the nearest non-empty `lang` by walking DOM
-   * ancestors from {@link langRootRef} when set, otherwise from `document.documentElement`
-   * (typically `<html lang>`). Updates when any `lang` attribute changes anywhere under `<html>`,
-   * or when subtree moves alter which ancestor supplies `lang`. For SSR, pass `locale` explicitly.
+   * Forces the active locale. Omit to inherit the nearest non-empty `lang` by walking DOM ancestors from
+   * {@link langRootRef} when set, otherwise from `document.documentElement` (typically `<html lang>`). Updates when any
+   * `lang` attribute changes anywhere under `<html>`, or when subtree moves alter which ancestor supplies `lang`. For
+   * SSR, pass `locale` explicitly.
    */
   locale?: Locale;
   /**
-   * Element whose ancestor chain is searched for a non-empty `lang` when {@link locale} is
-   * omitted—for example a ref to your player shell `HTMLElement`.
+   * Element whose ancestor chain is searched for a non-empty `lang` when {@link locale} is omitted—for example a ref to
+   * your player shell `HTMLElement`.
    */
   langRootRef?: RefObject<Element | null>;
   /**
-   * Per-locale string overrides merged on top of the global registry and any lazy built-in
-   * packs for {@link locale}. Applies to translated
-   * `aria-label` values and tooltip copy for skin controls wired through `useTranslator`.
+   * Per-locale string overrides merged on top of the global registry and any lazy built-in packs for {@link locale}.
+   * Applies to translated `aria-label` values and tooltip copy for skin controls wired through `useTranslator`.
    *
    * @example
-   * ```tsx
-   * <I18nProvider locale="ja" translations={{ buttons: { play: '再生', pause: '一時停止' } }}>
-   *   <VideoSkin />
-   * </I18nProvider>
-   * ```
+   *   ```tsx
+   *   <I18nProvider locale="ja" translations={{ buttons: { play: '再生', pause: '一時停止' } }}>
+   *     <VideoSkin />
+   *   </I18nProvider>;
+   *   ```;
    */
   translations?: Partial<Translations>;
   children: ReactNode;
@@ -129,8 +128,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
 const defaultI18n = createI18n();
 
 /**
- * Resolves locale and supplies a typed translator to descendants. Mount this explicitly for
- * translated controls, forced locales, SSR copy, or locale-aware player roots.
+ * Resolves locale and supplies a typed translator to descendants. Mount this explicitly for translated controls, forced
+ * locales, SSR copy, or locale-aware player roots.
  *
  * @public
  */

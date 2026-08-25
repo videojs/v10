@@ -1,6 +1,6 @@
 import type { Plugin } from 'rolldown';
 import { rolldown } from 'rolldown';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import type { ComponentTarget } from '../../target/definition';
 import { readComponentSource } from '../component-meta';
@@ -49,6 +49,7 @@ describe('reactTargetPropsPlugin', () => {
     await bundle.generate({ format: 'es' });
 
     const source = readComponentSource(meta);
+
     expect(source).toContain(`import { cn, resolveClassName } from "@videojs/utils/style";`);
     expect(source).toContain(`className={state => cn('poster', resolveClassName(className, state))}`);
     expect(source).toContain(`className={cn('container', className)}`);

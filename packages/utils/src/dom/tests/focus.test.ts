@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { getDeepActiveElement, getTabbableElements } from '../focus';
 
@@ -7,6 +7,7 @@ describe('focus', () => {
     const host = document.createElement('div');
     const shadow = host.attachShadow({ mode: 'open' });
     const button = document.createElement('button');
+
     shadow.append(button);
     document.body.append(host);
 
@@ -18,6 +19,7 @@ describe('focus', () => {
 
   it('gets tabbable elements in document order', () => {
     const root = document.createElement('div');
+
     root.innerHTML = `
       <a href="#target">Link</a>
       <button type="button">Button</button>
@@ -36,20 +38,25 @@ describe('focus', () => {
   it('gets tabbable elements in composed tree order', () => {
     const root = document.createElement('div');
     const first = document.createElement('button');
+
     first.textContent = 'First';
 
     const host = document.createElement('div');
     const slotted = document.createElement('button');
+
     slotted.textContent = 'Slotted';
     host.append(slotted);
 
     const shadow = host.attachShadow({ mode: 'open' });
     const shadowButton = document.createElement('button');
+
     shadowButton.textContent = 'Shadow';
     const slot = document.createElement('slot');
+
     shadow.append(shadowButton, slot);
 
     const last = document.createElement('button');
+
     last.textContent = 'Last';
     root.append(first, host, last);
 
@@ -63,6 +70,7 @@ describe('focus', () => {
 
   it('excludes elements hidden from interaction by an ancestor', () => {
     const root = document.createElement('div');
+
     root.innerHTML = `
       <div inert><button type="button">Inert</button></div>
       <div hidden><button type="button">Hidden</button></div>
@@ -75,9 +83,11 @@ describe('focus', () => {
   it('excludes elements hidden by a shadow host', () => {
     const root = document.createElement('div');
     const host = document.createElement('div');
+
     host.hidden = true;
     const shadow = host.attachShadow({ mode: 'open' });
     const button = document.createElement('button');
+
     shadow.append(button);
     root.append(host);
 

@@ -1,18 +1,18 @@
 /**
  * Investigation: Do manually added TextTrack cues persist after async operations?
  *
- * This test file investigates whether cues added via TextTrack.addCue() persist
- * after async boundaries (setTimeout, Promise.resolve, etc.) in the vitest
- * browser test environment.
+ * This test file investigates whether cues added via TextTrack.addCue() persist after async boundaries (setTimeout,
+ * Promise.resolve, etc.) in the vitest browser test environment.
  */
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 describe('TextTrack Cue Persistence Investigation', () => {
   describe('Baseline: Synchronous cue addition', () => {
     it('cues exist immediately after addCue (no async)', () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -29,6 +29,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist after setTimeout(0)', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -45,6 +46,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist after setTimeout(1)', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -61,6 +63,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist after setTimeout(10)', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -77,6 +80,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist after setTimeout(50)', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -95,6 +99,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist after Promise.resolve', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -113,6 +118,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist after queueMicrotask', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -131,6 +137,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('multiple cues persist after setTimeout', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -151,6 +158,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist with track appended before setting mode', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
 
       // Append BEFORE setting mode
@@ -169,6 +177,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist with track appended after setting mode', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
 
       // Set mode BEFORE appending
@@ -187,6 +196,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist with track in document body', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
 
       // Add to actual document
@@ -209,6 +219,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues persist when track.src is not set', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -230,6 +241,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it.skip('cues persist when mode changes after adding', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';
@@ -250,6 +262,7 @@ describe('TextTrack Cue Persistence Investigation', () => {
     it('cues are cleared when mode set to disabled', async () => {
       const video = document.createElement('video');
       const track = document.createElement('track');
+
       track.kind = 'subtitles';
       video.appendChild(track);
       track.track.mode = 'hidden';

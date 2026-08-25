@@ -2,6 +2,7 @@
  * Mux upload polling utilities.
  *
  * Handles the 2-phase polling flow after upload completes:
+ *
  * 1. Poll upload status until asset_id is available
  * 2. Poll asset status until playback_id is ready
  */
@@ -35,14 +36,14 @@ export type PollResult = { status: 'ready'; playbackId: string } | { status: 'er
 /**
  * Polls Mux API for playback ID after upload completes.
  *
- * Phase 1: Poll getUploadStatus until assetId is available
- * Phase 2: Poll getAssetStatus until playbackId is ready
+ * Phase 1: Poll getUploadStatus until assetId is available Phase 2: Poll getAssetStatus until playbackId is ready
  */
 export async function pollForPlaybackId(options: PollOptions): Promise<PollResult> {
   const { uploadId, getUploadStatus, getAssetStatus, interval = 2000, signal } = options;
 
   // Phase 1: Poll until asset_id is available
   let assetId: string | undefined;
+
   while (!assetId) {
     if (signal?.aborted) {
       throw new Error('Aborted');
@@ -51,10 +52,7 @@ export async function pollForPlaybackId(options: PollOptions): Promise<PollResul
     await sleep(interval);
 
     const result = await getUploadStatus(uploadId);
-
-    if (result.error) {
-      return { status: 'error', message: result.error.message };
-    }
+    if (result.error) return { status: 'error', message: result.error.message };
 
     if (result.data?.status === 'errored') {
       return { status: 'error', message: 'Upload processing failed' };
@@ -72,10 +70,7 @@ export async function pollForPlaybackId(options: PollOptions): Promise<PollResul
     await sleep(interval);
 
     const result = await getAssetStatus(assetId);
-
-    if (result.error) {
-      return { status: 'error', message: result.error.message };
-    }
+    if (result.error) return { status: 'error', message: result.error.message };
 
     if (result.data?.status === 'errored') {
       return { status: 'error', message: 'Asset processing failed' };

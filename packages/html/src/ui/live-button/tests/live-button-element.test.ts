@@ -2,7 +2,7 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
@@ -50,7 +50,9 @@ function setup(locale: string, text?: string) {
 
   i18n.setAttribute('lang', locale);
   player.setStore(createLiveStore());
+
   if (text) button.textContent = text;
+
   player.append(button);
   i18n.append(player);
   document.body.append(i18n);

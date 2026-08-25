@@ -21,19 +21,20 @@ import {
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { Navbar } from './navbar';
 import { Preview } from './preview';
 
 function getPagePath(platform: Platform, preset: Preset): string {
   if (platform === 'cdn') return '/cdn/';
+
   return `/${platform}-${preset}/`;
 }
 
 /**
- * The SPF background presets default to their own source rather than the global
- * one, which is MPEG-TS and so is a failure case for that engine rather than a
- * demo of it. Only when nothing was asked for — an explicit `?source=` still wins,
- * so a shared link reaches the source it names.
+ * The SPF background presets default to their own source rather than the global one, which is MPEG-TS and so is a
+ * failure case for that engine rather than a demo of it. Only when nothing was asked for — an explicit `?source=` still
+ * wins, so a shared link reaches the source it names.
  */
 function isSpfBackgroundPreset(preset: Preset): boolean {
   return preset === 'hls-background-video' || preset === 'mux-background-video';
@@ -43,6 +44,7 @@ function readParams() {
   const params = new URLSearchParams(location.search);
   const preload = params.get('preload');
   const preset = (params.get('preset') ?? 'video') as Preset;
+
   return {
     platform: (params.get('platform') ?? 'html') as Platform,
     styling: (params.get('styling') ?? 'css') as Styling,
@@ -57,6 +59,7 @@ function readParams() {
     accentColor: params.get('accent')?.trim() ?? '',
     locale: (() => {
       const value = params.get('locale');
+
       return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag)
         ? (value as SandboxLocaleTag)
         : DEFAULT_SANDBOX_LOCALE;
@@ -77,6 +80,7 @@ export function App() {
   const [preload, setPreload] = useState<PreloadValue>(initial.preload);
   const [accentColor, setAccentColor] = useState(initial.accentColor);
   const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const pagePath = getPagePath(platform, preset);
@@ -128,7 +132,9 @@ export function App() {
       preload,
       locale,
     });
+
     if (accentColor) params.set('accent', accentColor);
+
     history.replaceState(null, '', `/?${params}`);
   }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, accentColor, locale]);
 
@@ -191,9 +197,12 @@ export function App() {
   // `readParams` covers the first-mount half. Keyed on entry, so a source picked
   // afterwards sticks.
   const previousPreset = useRef(preset);
+
   useEffect(() => {
     const entered = spfBackgroundPreset && previousPreset.current !== preset;
+
     previousPreset.current = preset;
+
     if (entered) setSource(DEFAULT_BACKGROUND_SOURCE);
   }, [preset, spfBackgroundPreset]);
 
@@ -215,7 +224,7 @@ export function App() {
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden">
       <Navbar
         platform={platform}
         onPlatformChange={setPlatform}

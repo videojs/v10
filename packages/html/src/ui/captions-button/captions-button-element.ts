@@ -34,6 +34,7 @@ export class CaptionsButtonElement extends MediaButtonElement<CaptionsButtonCore
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.commandfor && this.commandfor !== this.menuFor) {
       this.#defaultCommandfor = this.commandfor;
     }
@@ -44,6 +45,7 @@ export class CaptionsButtonElement extends MediaButtonElement<CaptionsButtonCore
       if (event instanceof KeyboardEvent) {
         toggleCommandTarget(this, this.menuFor);
       }
+
       return;
     }
 
@@ -52,8 +54,11 @@ export class CaptionsButtonElement extends MediaButtonElement<CaptionsButtonCore
 
   protected override getIsButtonDisabled(): boolean {
     const media = this.mediaState.value;
+
     if (super.getIsButtonDisabled()) return true;
+
     if (media && getCaptionTrackCount(media) === 0) return true;
+
     return false;
   }
 

@@ -1,12 +1,14 @@
 import { useStore } from '@nanostores/react';
 import clsx from 'clsx';
 import { useEffect, useRef } from 'react';
+
 import ClientCode from '@/components/Code/ClientCode';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 import { installMethod, renderer } from '@/stores/installation';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import type { InstallMethod } from '@/utils/installation/types';
+
 import HTMLCdnCodeBlock from './HTMLCdnCodeBlock';
 
 interface HTMLInstallTabsProps {
@@ -30,6 +32,7 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
 
     const observer = new MutationObserver(() => {
       const value = el.querySelector('[role="tab"][data-tab-active="true"]')?.getAttribute('data-value');
+
       if (value) installMethod.set(value as InstallMethod);
     });
 

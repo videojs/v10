@@ -134,9 +134,11 @@ export function createComponentReferenceModel(
 
     if (partOrder) {
       const orderMap = new Map(partOrder.map((id, i) => [id, i]));
+
       partEntries = partEntries.slice().sort((a, b) => {
         const ai = orderMap.has(a[0]) ? orderMap.get(a[0])! : Number.MAX_SAFE_INTEGER;
         const bi = orderMap.has(b[0]) ? orderMap.get(b[0])! : Number.MAX_SAFE_INTEGER;
+
         return ai - bi;
       });
     }
@@ -210,6 +212,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
           frameworks: ['react'],
         });
       }
+
       if (part.frameworks.includes('html')) {
         headings.push({
           depth: 3,
@@ -223,6 +226,7 @@ export function buildComponentReferenceTocHeadings(apiReferenceModel: ComponentR
         const frameworks = section.frameworks
           ? part.frameworks.filter((framework) => section.frameworks!.includes(framework))
           : part.frameworks;
+
         headings.push({
           depth: section.depth,
           text: section.title,

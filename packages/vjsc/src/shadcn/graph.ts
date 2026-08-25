@@ -38,23 +38,29 @@ export function validateSourceGraph<Item extends ComponentMeta>(
   graph: SourceGraph<Item>
 ): ReadonlyMap<string, RegistrySourceModule<Item>> {
   if (!isAbsolute(graph.root)) throw new Error(`Shadcn graph root must be absolute: \`${graph.root}\`.`);
+
   const root = resolve(graph.root);
   const modules = new Map<string, RegistrySourceModule<Item>>();
 
   for (const [key, module] of graph.modules) {
     if (key !== module.id)
       throw new Error(`Shadcn graph module must use its host ID as its map key: \`${module.id}\`.`);
+
     if (!isAbsolute(module.filename)) {
       throw new Error(`Shadcn graph module filename must be absolute: \`${module.filename}\`.`);
     }
+
     const filename = resolve(module.filename);
     const sourcePath = toPosixPath(relative(root, filename));
+
     if (!sourcePath || escapesRoot(sourcePath)) {
       throw new Error(`Shadcn graph module must be inside the graph root: \`${module.filename}\`.`);
     }
+
     if (module.meta && !module.meta.name) {
       throw new Error(`Shadcn graph module has an empty component name: \`${module.id}\`.`);
     }
+
     assertMetaRemoved(module);
     modules.set(module.id, { ...module, filename, sourcePath });
   }
@@ -62,11 +68,15 @@ export function validateSourceGraph<Item extends ComponentMeta>(
   for (const module of modules.values()) {
     for (const sourceImport of module.imports) {
       if (!sourceImport.resolvedId) continue;
+
       const dependency = graph.modules.get(sourceImport.resolvedId);
       if (dependency) continue;
+
       const dependencyFilename = moduleFilename(sourceImport.resolvedId);
       if (!isAbsolute(dependencyFilename)) continue;
+
       const dependencyPath = toPosixPath(relative(root, dependencyFilename));
+
       if (dependencyPath && !escapesRoot(dependencyPath)) {
         throw new Error(
           `Shadcn source dependency was not captured: \`${sourceImport.specifier}\` from \`${module.id}\`.`
@@ -88,12 +98,15 @@ export function collectOwnedModules<Item extends ComponentMeta>(
 
   const visit = (module: RegistrySourceModule<Item>): void => {
     if (owned.has(module.id)) return;
+
     owned.set(module.id, module);
 
     for (const sourceImport of module.imports) {
       const dependency = sourceImport.resolvedId ? modules.get(sourceImport.resolvedId) : undefined;
       if (!dependency) continue;
+
       const dependencyItem = published.get(dependency.id);
+
       if (dependency.id !== root.id && dependencyItem) publishedDependencies.add(dependencyItem.item.name);
       else visit(dependency);
     }
@@ -106,6 +119,7 @@ export function collectOwnedModules<Item extends ComponentMeta>(
 function assertMetaRemoved(module: SourceModule): void {
   const parsed = parseSync(module.filename, module.source);
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
+
   for (const statement of parsed.program.body) {
     if (
       statement.type === 'ExportNamedDeclaration' &&

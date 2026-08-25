@@ -1,3 +1,4 @@
+import { DialogBackdropElement } from '../../ui/dialog/dialog-backdrop-element';
 import { DialogCloseElement } from '../../ui/dialog/dialog-close-element';
 import { DialogDescriptionElement } from '../../ui/dialog/dialog-description-element';
 import { DialogTitleElement } from '../../ui/dialog/dialog-title-element';
@@ -9,6 +10,7 @@ defineErrorDialog();
 declare global {
   interface HTMLElementTagNameMap {
     [ErrorDialogElement.tagName]: ErrorDialogElement;
+    [DialogBackdropElement.tagName]: DialogBackdropElement;
     [DialogCloseElement.tagName]: DialogCloseElement;
     [DialogDescriptionElement.tagName]: DialogDescriptionElement;
     [DialogTitleElement.tagName]: DialogTitleElement;

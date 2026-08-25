@@ -1,4 +1,4 @@
-import { MenuCore, MenuDataAttrs } from '@videojs/core';
+import { MenuCore } from '@videojs/core';
 import {
   createMenu,
   createTransition,
@@ -9,6 +9,7 @@ import {
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+
 import { useOptionalContainer, useOptionalPlayer } from '../../player/context';
 import { useOptionalPopupGroup } from '../../player/popup-group-context';
 import { useDestroy } from '../../utils/use-destroy';
@@ -55,8 +56,10 @@ export function MenuRoot({
 
   const onOpenChangeRef = useLatestRef(onOpenChangeProp);
   const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
+
   const closeOnEscapeRef = useLatestRef(closeOnEscape);
   const closeOnOutsideClickRef = useLatestRef(closeOnOutsideClick);
+
   const popupGroupRef = useLatestRef(popupGroup);
   const isSubmenuRef = useLatestRef(isSubmenu);
 
@@ -65,6 +68,7 @@ export function MenuRoot({
       transition: createTransition(),
       onOpenChange(nextOpen, details) {
         if (!isControlled) setUncontrolledOpen(nextOpen);
+
         onOpenChangeRef.current?.(nextOpen, details);
       },
       onOpenChangeComplete(nextOpen) {
@@ -119,7 +123,6 @@ export function MenuRoot({
       state,
       preferredSide,
       setPositionedSide,
-      stateAttrMap: MenuDataAttrs,
       contentId,
       anchorName,
       boundary,

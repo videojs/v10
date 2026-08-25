@@ -1,6 +1,6 @@
 /**
- * Syncs the generated ejected skin source from the docs site build
- * into the e2e test app so the ejected React test uses real output.
+ * Syncs the generated ejected skin source from the docs site build into the e2e test app so the ejected React test uses
+ * real output.
  *
  * Run after `pnpm -F site ejected-skins` and before e2e tests.
  */

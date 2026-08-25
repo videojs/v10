@@ -1,4 +1,5 @@
 import { isUndefined } from '@videojs/utils/predicate';
+
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 import type { AnyPlayerStore } from '../player';
 import {
@@ -39,6 +40,7 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
   togglePaused({ store }) {
     const playback = selectPlayback(store.state);
     if (!playback) return;
+
     playback.paused ? playback.play() : playback.pause();
   },
 
@@ -49,6 +51,7 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
   toggleFullscreen({ store }) {
     const fs = selectFullscreen(store.state);
     if (!fs) return;
+
     fs.fullscreen ? fs.exitFullscreen() : fs.requestFullscreen();
   },
 
@@ -59,6 +62,7 @@ const HOTKEY_ACTIONS: Record<HotkeyActionName, HotkeyActionResolver> = {
   togglePictureInPicture({ store }) {
     const pip = selectPiP(store.state);
     if (!pip) return;
+
     pip.pip ? pip.exitPictureInPicture() : pip.requestPictureInPicture();
   },
 

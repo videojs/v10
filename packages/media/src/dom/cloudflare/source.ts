@@ -3,16 +3,14 @@ import { type CloudflareMediaProps, cloudflareMediaDefaultProps } from './props'
 
 /**
  * Cloudflare Stream engine options, spelled exactly as Cloudflare spells them
- * (https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/).
- * They are serialized onto the embed URL verbatim, so what you write here is
- * what the player reads. The embed reads them once, when its URL is built, so
- * changing them after the iframe exists only takes effect on the next embed.
+ * (https://developers.cloudflare.com/stream/viewing-videos/using-the-stream-player/). They are serialized onto the
+ * embed URL verbatim, so what you write here is what the player reads. The embed reads them once, when its URL is
+ * built, so changing them after the iframe exists only takes effect on the next embed.
  *
- * Parameters the host owns are deliberately absent: `controls`, `autoplay`,
- * `loop`, `muted`, `preload`, and `poster` come from the props of the same name,
- * so configuring them here would give two ways to say one thing. The index
- * signature still carries anything not listed here, so undocumented knobs and
- * whatever Cloudflare adds next keep working.
+ * Parameters the host owns are deliberately absent: `controls`, `autoplay`, `loop`, `muted`, `preload`, and `poster`
+ * come from the props of the same name, so configuring them here would give two ways to say one thing. The index
+ * signature still carries anything not listed here, so undocumented knobs and whatever Cloudflare adds next keep
+ * working.
  */
 export interface CloudflareEngineConfig extends Record<string, unknown> {
   /** BCP 47 language of the text track to show by default (`'en'`, `'de'`). */
@@ -50,9 +48,8 @@ export interface ParsedCloudflareSource {
   /** Whether `id` is a signed token rather than a plain video UID. */
   signed: boolean;
   /**
-   * Per-customer embed origin (`https://customer-<code>.cloudflarestream.com`)
-   * when the source names one, otherwise null for the shared host. Signed and
-   * access-controlled videos are only served from the customer origin, so it has
+   * Per-customer embed origin (`https://customer-<code>.cloudflarestream.com`) when the source names one, otherwise
+   * null for the shared host. Signed and access-controlled videos are only served from the customer origin, so it has
    * to survive parsing rather than being collapsed into the shared one.
    */
   origin: string | null;
@@ -64,15 +61,16 @@ export function parseCloudflareVideoId(src: string) {
 }
 
 /**
- * Parse a Cloudflare Stream source string. Recognizes `videodelivery.net` and
- * `cloudflarestream.com` URLs (embed, iframe, manifest, and thumbnail paths all
- * carry the id in the same position), raw 32-character video UIDs, and signed
+ * Parse a Cloudflare Stream source string. Recognizes `videodelivery.net` and `cloudflarestream.com` URLs (embed,
+ * iframe, manifest, and thumbnail paths all carry the id in the same position), raw 32-character video UIDs, and signed
  * tokens, which stand in for the UID wherever it appears.
  */
 export function parseCloudflareSource(src: string): ParsedCloudflareSource | null {
   if (!src) return null;
+
   const id = MATCH_SRC.exec(src)?.[1] ?? (MATCH_VIDEO_ID.test(src) || MATCH_SIGNED_TOKEN.test(src) ? src : null);
   if (!id) return null;
+
   return { id, signed: MATCH_SIGNED_TOKEN.test(id), origin: MATCH_CUSTOMER_ORIGIN.exec(src)?.[1] ?? null };
 }
 
@@ -80,6 +78,7 @@ export function parseCloudflareSource(src: string): ParsedCloudflareSource | nul
 export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareMediaProps> = {}) {
   const parsed = parseCloudflareSource(src);
   if (!parsed) return '';
+
   // `referrerPolicy` is an attribute of the iframe hosting the embed rather than
   // something the player reads, so it never reaches the URL.
   const { referrerPolicy: _referrerPolicy, ...cloudflare } = props.source?.engine?.cloudflare ?? {};
@@ -111,6 +110,7 @@ export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareM
   // `/<id>`; rebuilding onto the shared host would drop the very origin a signed
   // or access-controlled video is authorized for.
   const base = parsed.origin ? `${parsed.origin}/${parsed.id}/iframe` : `${EMBED_BASE}/${parsed.id}`;
+
   return `${base}?${serializeEmbedParams(params)}`;
 }
 

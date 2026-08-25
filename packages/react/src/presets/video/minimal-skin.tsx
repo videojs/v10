@@ -10,6 +10,7 @@ import {
 } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -70,6 +71,7 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { BaseVideoSkinProps } from '../types';
 
 const SEEK_TIME = 10;
@@ -100,11 +102,27 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnavailable) return muteButton;
+  if (volumeUnavailable) {
+    return (
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={muteButton} />
+        <Tooltip.Popup className="media-tooltip">
+          <Tooltip.Label />
+          <Tooltip.Shortcut className="media-tooltip__kbd" />
+        </Tooltip.Popup>
+      </Tooltip.Root>
+    );
+  }
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="right">
-      <Popover.Trigger render={muteButton} />
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={<Popover.Trigger render={muteButton} />} />
+        <Tooltip.Popup className="media-tooltip">
+          <Tooltip.Label />
+          <Tooltip.Shortcut className="media-tooltip__kbd" />
+        </Tooltip.Popup>
+      </Tooltip.Root>
       <Popover.Popup className="media-popover media-popover--volume">
         <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
           <VolumeSlider.Track className="media-slider__track">
@@ -131,7 +149,6 @@ function SettingsMenu(): ReactNode {
   const hasQuality = quality?.state.availability === 'available';
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   const hasCaptions = captions?.state.availability === 'available';
-
   if (!hasPlaybackRate && !hasQuality && !hasAudioTrack && !hasCaptions) return null;
 
   return (
@@ -148,8 +165,8 @@ function SettingsMenu(): ReactNode {
           <Tooltip.Label>{t(settingsText)}</Tooltip.Label>
         </Tooltip.Popup>
       </Tooltip.Root>
-      <Menu.Content className="media-popover media-menu media-menu--settings">
-        <div className="media-menu__group">
+      <Menu.Popup className="media-popover media-menu media-menu--settings">
+        <Menu.Content className="media-menu__content">
           {hasQuality ? (
             <Menu.Root>
               <Menu.Trigger
@@ -309,8 +326,8 @@ function SettingsMenu(): ReactNode {
               </Menu.Content>
             </Menu.Root>
           ) : null}
-        </div>
-      </Menu.Content>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

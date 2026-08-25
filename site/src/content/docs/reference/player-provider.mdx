@@ -19,7 +19,7 @@ The `<video-player>` element is the state boundary of your player. It creates a 
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
-import { videoFeatures } from '@videojs/react/video';
+import { Video, videoFeatures } from '@videojs/react/video';
 import { Container, createPlayer } from '@videojs/react';
 
 const { Player } = createPlayer({ features: videoFeatures });
@@ -29,7 +29,7 @@ function App() {
     <Player>
       {/* Everything inside can access the player store */}
       <Container>
-        <video src="video.mp4" />
+        <Video src="video.mp4" />
       </Container>
     </Player>
   );
@@ -141,13 +141,15 @@ If you omit `<video-skin>` and import only the player and media elements, those 
 Use `usePlayer` to read state or call actions from any component inside `Player`:
 
 ```tsx title="PlayPauseButton.tsx"
+import { selectPlayback, usePlayer } from '@videojs/react';
+
 function PlayPauseButton() {
-  const paused = usePlayer(selectPlayback).paused;
-  const store = usePlayer();
+  const playback = usePlayer(selectPlayback);
+  if (!playback) return null;
 
   return (
-    <button onClick={() => store.dispatch('toggle-playback')}>
-      {paused ? 'Play' : 'Pause'}
+    <button onClick={() => playback.togglePaused()}>
+      {playback.paused ? 'Play' : 'Pause'}
     </button>
   );
 }
@@ -159,18 +161,25 @@ function PlayPauseButton() {
 Use `PlayerController` to subscribe to store state from any custom element inside the provider:
 
 ```ts title="play-pause-button.ts"
-import { selectPlayback } from '@videojs/html';
+import { PlayerController, UIElement, playerContext, selectPlayback } from '@videojs/html';
 
 class PlayPauseButton extends UIElement {
-  #playback = new PlayerController(this, context, selectPlayback);
+  readonly #playback = new PlayerController(this, playerContext, selectPlayback);
 
   connectedCallback() {
     super.connectedCallback();
-    this.addEventListener('click', () => {
-      this.#playback.store?.dispatch('toggle-playback');
-    });
+    this.addEventListener('click', this.#togglePlayback);
   }
+
+  disconnectedCallback() {
+    this.removeEventListener('click', this.#togglePlayback);
+    super.disconnectedCallback();
+  }
+
+  readonly #togglePlayback = () => this.#playback.value?.togglePaused();
 }
+
+customElements.define('play-pause-button', PlayPauseButton);
 ```
 
 <DocsLinkCard slug="reference/player-controller">PlayerController reference</DocsLinkCard>
@@ -184,7 +193,7 @@ The player's scope can extend beyond the fullscreen target. Playlists, transcrip
 ```tsx
 <Player>
   <Container>
-    <video src="video.mp4" />
+    <Video src="video.mp4" />
     <Controls.Root>          {/* goes fullscreen with the video */}
       {/* ... */}
     </Controls.Root>

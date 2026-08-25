@@ -1,4 +1,5 @@
 import type { Rule, Selector, SelectorComponent, SelectorList } from 'lightningcss';
+
 import { cloneCssAst, visitCssRules } from './css-ast';
 
 function cloneSelectorList(selectors: SelectorList): SelectorList {
@@ -13,7 +14,9 @@ export function replaceSelectorClasses(
 
   return mapSelectorList(selectors, (component) => {
     if (component.type !== 'class') return component;
+
     const replacement = replacements.get(component.name);
+
     return replacement ? { ...component, name: replacement } : component;
   });
 }
@@ -32,23 +35,28 @@ export function replaceRuleClasses(rule: Rule, replacements: ReadonlyMap<string,
   return clone;
 }
 
-/** Render Tailwind group descendants in the component-oriented form a person
- * would normally author, while retaining Tailwind's zero-specificity owner. */
+/**
+ * Render Tailwind group descendants in the component-oriented form a person would normally author, while retaining
+ * Tailwind's zero-specificity owner.
+ */
 export function foldGroupDescendantSelectors(selectors: SelectorList): SelectorList {
   return selectors.map((selector) => {
     const relationships = selector.flatMap((component) => {
       const relationship = groupDescendantRelationship(component);
+
       return relationship ? [relationship] : [];
     });
     if (relationships.length === 0) return cloneSelector(selector);
 
     const owner = JSON.stringify(relationships[0]?.owner);
+
     if (relationships.some((relationship) => JSON.stringify(relationship.owner) !== owner)) {
       return cloneSelector(selector);
     }
 
     const relationshipComponents = new Set(relationships.map((relationship) => relationship.component));
     const subject = selector.filter((component) => !relationshipComponents.has(component)).map(cloneSelectorComponent);
+
     return [
       cloneSelectorComponent(relationships[0]!.owner),
       ...relationships.flatMap((relationship) => relationship.conditions.map(cloneSelectorComponent)),
@@ -66,11 +74,14 @@ interface GroupDescendantRelationship {
 
 function groupDescendantRelationship(component: SelectorComponent): GroupDescendantRelationship | undefined {
   if (component.type !== 'pseudo-class' || component.kind !== 'is' || component.selectors.length !== 1) return;
+
   const selector = component.selectors[0]!;
   if (selector.length < 3) return;
+
   const owner = selector[0];
   const combinator = selector.at(-2);
   const target = selector.at(-1);
+
   if (
     owner?.type !== 'pseudo-class' ||
     owner.kind !== 'where' ||
@@ -83,8 +94,10 @@ function groupDescendantRelationship(component: SelectorComponent): GroupDescend
   ) {
     return;
   }
+
   const conditions = selector.slice(1, -2);
   if (conditions.some((condition) => condition.type === 'combinator' || condition.type === 'nesting')) return;
+
   return { component, owner, conditions };
 }
 
@@ -120,20 +133,25 @@ function mapNestedSelectorComponent(
         selectors: mapNestedSelectorList(component.selectors, map),
       };
     }
+
     if (component.kind === 'host') {
       if (!component.selectors) return component;
+
       return {
         ...component,
         selectors: mapNestedSelector(component.selectors, map),
       };
     }
+
     if (component.kind === 'nth-child' || component.kind === 'nth-last-child') {
       if (!component.of) return component;
+
       return {
         ...component,
         of: mapNestedSelectorList(component.of, map),
       };
     }
+
     if (component.kind === 'local' || component.kind === 'global') {
       return {
         ...component,

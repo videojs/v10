@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { MediaVideoRendition } from '@videojs/media';
 import type { ReactNode } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
@@ -33,9 +33,11 @@ function renderQualityOptions({
   const { Wrapper } = createPlayerWrapper({ videoRenditionList, activeVideoRendition, selectVideoRendition });
   const content = (
     <Menu.Root defaultOpen align="center">
-      <Menu.Content data-testid="content">
-        <QualityRadioGroup formatRendition={formatRendition} />
-      </Menu.Content>
+      <Menu.Popup>
+        <Menu.Content data-testid="content">
+          <QualityRadioGroup formatRendition={formatRendition} />
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 
@@ -82,6 +84,7 @@ describe('useQualityOptions', () => {
 
   it('sets the selected rendition', () => {
     const selectVideoRendition = vi.fn();
+
     renderQualityOptions({ selectVideoRendition });
 
     fireEvent.click(screen.getByRole('menuitemradio', { name: '720p' }));

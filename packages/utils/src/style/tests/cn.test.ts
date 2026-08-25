@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { cn, resolveClassName } from '../cn';
 
 describe('cn', () => {

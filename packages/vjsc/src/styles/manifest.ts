@@ -43,10 +43,7 @@ export async function loadStyleManifest(files: readonly string[]): Promise<Style
       const modulePath = await realpath(inputFile);
       const evaluated = await evaluateStyleModule(modulePath);
       const definition = getStyleDefinition(evaluated.module.default);
-
-      if (!definition) {
-        throw new Error(`Style module \`${inputFile}\` must default-export \`styles({...})\`.`);
-      }
+      if (!definition) throw new Error(`Style module \`${inputFile}\` must default-export \`styles({...})\`.`);
 
       return { definition, modulePath, watchFiles: evaluated.watchFiles };
     })
@@ -63,20 +60,15 @@ export function ruleForToken(
   return manifest.modules.get(modulePath)?.get(tokenKey(tokenPath));
 }
 
-export function utilityGroupsForRule(rule: StyleManifestRule, variant?: string): readonly string[] {
-  if (!variant || Object.keys(rule.variantGroups).length === 0) return rule.utilityGroups;
-
-  const selected = rule.variantGroups[variant];
-
-  if (!selected) {
-    throw new Error(`Style rule \`${displayRule(rule)}\` does not define the \`${variant}\` variant.`);
-  }
+export function utilityGroupsForRule(rule: StyleManifestRule, variants: readonly string[] = []): readonly string[] {
+  const selected = variants.flatMap((variant) => rule.variantGroups[variant] ?? []);
+  if (selected.length === 0) return rule.utilityGroups;
 
   return mergeUtilityGroups([...rule.utilityGroups, ...selected]);
 }
 
-export function utilitiesForRule(rule: StyleManifestRule, variant?: string): readonly string[] {
-  return utilityGroupsForRule(rule, variant).flatMap(splitClassNames);
+export function utilitiesForRule(rule: StyleManifestRule, variants: readonly string[] = []): readonly string[] {
+  return utilityGroupsForRule(rule, variants).flatMap(splitClassNames);
 }
 
 /** Collect the exact semantic rules referenced by JSX source. */
@@ -90,8 +82,8 @@ export async function collectReferencedStyleRules(
     const sourceText = await readFile(file, 'utf8');
     const parsed = parseSync(file, sourceText);
     if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
-    const bindings = styleBindings(parsed.program, file, manifest);
 
+    const bindings = styleBindings(parsed.program, file, manifest);
     if (bindings.size === 0) continue;
 
     walk(parsed.program, {
@@ -109,11 +101,13 @@ export async function collectReferencedStyleRules(
         walk(node.value.expression, {
           enter(expression) {
             if (expression.type !== 'MemberExpression') return;
+
             const path = readAccessPath(expression);
             const [root, ...tokenPath] = path ?? [];
             const modulePath = root ? bindings.get(root) : undefined;
             const rule = modulePath ? ruleForToken(manifest, modulePath, tokenPath) : undefined;
             if (!rule) return;
+
             referenced.add(rule.className);
             this.skip();
           },
@@ -125,16 +119,8 @@ export async function collectReferencedStyleRules(
   return referenced;
 }
 
-export function isGroupPeerMarker(value: string): boolean {
-  return isGroupMarker(value) || isPeerMarker(value);
-}
-
 export function isGroupMarker(value: string): boolean {
   return value === 'group' || value.startsWith('group/');
-}
-
-export function isPeerMarker(value: string): boolean {
-  return value === 'peer' || value.startsWith('peer/');
 }
 
 function createStyleManifest(
@@ -216,9 +202,12 @@ function styleBindings(ast: Program, filename: string, manifest: StyleManifest):
 
   for (const statement of ast.body) {
     if (statement.type !== 'ImportDeclaration' || !statement.source.value.startsWith('.')) continue;
+
     const defaults = statement.specifiers.filter((specifier) => specifier.type === 'ImportDefaultSpecifier');
     if (defaults.length !== 1 || statement.specifiers.length !== 1) continue;
+
     const modulePath = resolveManifestStyleModule(filename, statement.source.value, manifest);
+
     if (modulePath) bindings.set(defaults[0]!.local.name, modulePath);
   }
 
@@ -227,13 +216,18 @@ function styleBindings(ast: Program, filename: string, manifest: StyleManifest):
 
 function readAccessPath(expression: Expression): string[] | undefined {
   if (expression.type === 'Identifier') return [expression.name];
+
   if (expression.type !== 'MemberExpression') return undefined;
+
   const object = readAccessPath(expression.object);
   if (!object) return undefined;
+
   if (!expression.computed) return [...object, expression.property.name];
+
   if (expression.property.type === 'Literal' && typeof expression.property.value === 'string') {
     return [...object, expression.property.value];
   }
+
   return undefined;
 }
 
@@ -243,7 +237,7 @@ function splitUtilityGroups(value: StyleValue): string[] {
   return values.map((part) => part.trim().replace(/\s+/g, ' ')).filter(Boolean);
 }
 
-/** Preserve authored groups while removing utilities superseded by the selected variant. */
+/** Preserve authored groups while removing utilities superseded by the selected variants. */
 function mergeUtilityGroups(groups: readonly string[]): readonly string[] {
   const merged = twMerge(groups.join(' ')).split(/\s+/).filter(Boolean);
   const retained = new Map<string, number>();
@@ -255,12 +249,10 @@ function mergeUtilityGroups(groups: readonly string[]): readonly string[] {
 
   for (const { index, utilities } of indexedGroups.reverse()) {
     const outputGroup = output[index];
-
     if (!outputGroup) throw new Error('Failed to preserve a style utility group.');
 
     for (const utility of utilities.reverse()) {
       const remaining = retained.get(utility) ?? 0;
-
       if (remaining === 0) continue;
 
       outputGroup.unshift(utility);

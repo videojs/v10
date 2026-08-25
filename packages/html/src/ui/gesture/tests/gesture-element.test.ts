@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vite-plus/test';
 
 import { GestureElement } from '../gesture-element';
 
@@ -17,6 +17,7 @@ describe('GestureElement', () => {
 
   it('declares expected properties', () => {
     const props = GestureElement.properties;
+
     expect(props).toHaveProperty('type');
     expect(props).toHaveProperty('action');
     expect(props).toHaveProperty('value');
@@ -27,6 +28,7 @@ describe('GestureElement', () => {
 
   it('initializes with default property values', () => {
     const el = document.createElement('media-gesture') as GestureElement;
+
     expect(el.type).toBe('');
     expect(el.action).toBe('');
     expect(el.value).toBeUndefined();
@@ -37,6 +39,7 @@ describe('GestureElement', () => {
 
   it('is hidden when connected', () => {
     const el = document.createElement('media-gesture') as GestureElement;
+
     document.body.appendChild(el);
     expect(el.style.display).toBe('none');
   });

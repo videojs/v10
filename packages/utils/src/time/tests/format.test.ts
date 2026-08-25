@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '../format';
 
@@ -57,6 +57,7 @@ describe('formatTime', () => {
 
   it('defaults to English digital formatting', () => {
     const english = formatTime(90, undefined, { locale: 'en' });
+
     expect(formatTime(90)).toBe(english);
   });
 
@@ -92,6 +93,7 @@ describe('formatTimeAsPhrase', () => {
 
   it('omits English remaining suffix for non-English locales without formatRemaining', () => {
     const formatted = formatTimeAsPhrase(-30, { locale: 'es' });
+
     expect(formatted).toMatch(/30/);
     expect(formatted).not.toMatch(/remaining$/i);
   });
@@ -99,6 +101,7 @@ describe('formatTimeAsPhrase', () => {
   it('localizes duration units and lists', () => {
     const en = formatTimeAsPhrase(125, { locale: 'en' });
     const fr = formatTimeAsPhrase(125, { locale: 'fr' });
+
     expect(formatTimeAsPhrase(125)).toBe(en);
     expect(en).toBe('2 minutes, 5 seconds');
     expect(fr).toContain('2 minutes');

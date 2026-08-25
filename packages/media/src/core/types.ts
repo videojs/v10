@@ -31,9 +31,8 @@ export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupporte
 /**
  * Rendition height, as the `{height}p` shorthand streaming providers use.
  *
- * Options that accept one match renditions by pixel area rather than by
- * literal height, so anamorphic variants land in the bucket their source
- * material belongs to.
+ * Options that accept one match renditions by pixel area rather than by literal height, so anamorphic variants land in
+ * the bucket their source material belongs to.
  */
 export type MediaResolution = '270p' | '360p' | '480p' | '540p' | '720p' | '1080p' | '1440p' | '2160p';
 
@@ -425,12 +424,10 @@ export interface MediaPictureInPictureCapability {
 /**
  * Canonical values for {@link MediaStreamType}.
  *
- * - `ON_DEMAND` — a finite-duration asset (VOD). Scrubbing is generally
- *   supported across the full timeline.
- * - `LIVE` — a live or DVR stream. The seekable window may slide as new
- *   segments are published, and `duration` is typically `Infinity`.
- * - `UNKNOWN` — the stream type has not been determined yet (no source,
- *   or metadata has not loaded).
+ * - `ON_DEMAND` — a finite-duration asset (VOD). Scrubbing is generally supported across the full timeline.
+ * - `LIVE` — a live or DVR stream. The seekable window may slide as new segments are published, and `duration` is
+ *   typically `Infinity`.
+ * - `UNKNOWN` — the stream type has not been determined yet (no source, or metadata has not loaded).
  */
 export const MediaStreamTypes = {
   ON_DEMAND: 'on-demand',
@@ -454,20 +451,19 @@ export interface MediaLiveEvents {
 
 export interface MediaLiveCapability {
   /**
-   * Presentation time marking the start of the Live Edge Window. Playing at
-   * the live edge when `currentTime >= liveEdgeStart`. `NaN` when the stream
-   * isn't live or the value is unknown.
+   * Playback time where the live edge begins. Playback is live when `currentTime >= liveEdgeStart`. `NaN` when the
+   * stream is not live or the value is unknown.
    *
-   * Derived — no dedicated change event; re-read when `seekable`,
-   * `targetLiveWindow`, or `streamType` change.
+   * No change event fires for this value alone. Read it again when `seekable`, `targetLiveWindow`, or `streamType`
+   * changes.
    *
    * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
    */
   readonly liveEdgeStart: number;
   /**
-   * Offset representing the seekable range size for live content. `0` for
-   * standard latency live, `Infinity` for DVR, `NaN` for on-demand or
-   * unknown. Fires `targetlivewindowchange` when the value changes.
+   * Describes the kind of live window available. `0` for a sliding live window, `Infinity` for a live event with
+   * playback history, and `NaN` for on-demand or unknown. This value is not a duration. Fires `targetlivewindowchange`
+   * when it changes.
    */
   readonly targetLiveWindow: number;
 }
@@ -518,13 +514,11 @@ export interface MediaPosterCapability {
 export type MediaContentValue = string | null | undefined;
 
 /**
- * Standardized content metadata reported by a media implementation. The named
- * keys are the shared vocabulary player features read; a media may report keys
- * of its own alongside them.
+ * Standardized content metadata reported by a media implementation. The named keys are the shared vocabulary player
+ * features read; a media may report keys of its own alongside them.
  *
- * Report a key only for a value the media can vouch for. Omit it otherwise —
- * an empty string is a deliberate blank that stops a feature's fallback chain,
- * so reporting `''` for "not loaded yet" suppresses the author's fallback.
+ * Report a key only for a value the media can vouch for. Omit it otherwise — an empty string is a deliberate blank that
+ * stops a feature's fallback chain, so reporting `''` for "not loaded yet" suppresses the author's fallback.
  */
 export interface MediaContentData {
   /** Title of the content. */
@@ -544,15 +538,12 @@ export interface MediaContentDataEvents {
 /**
  * Optional media-owned content metadata.
  *
- * `undefined` means the media does not support content data at all. A defined
- * bag — including an empty one — means it does, and its keys may come and go
- * as a source loads or is replaced.
+ * `undefined` means the media does not support content data at all. A defined bag — including an empty one — means it
+ * does, and its keys may come and go as a source loads or is replaced.
  *
- * Implementations dispatch `contentdatachange` when the bag changes, and only
- * then; an assignment that leaves every key and value alone stays quiet. They
- * are also expected to clear content data when the source is replaced. Nothing
- * enforces that second half, so a media that skips it reports stale metadata
- * across a source change.
+ * Implementations dispatch `contentdatachange` when the bag changes, and only then; an assignment that leaves every key
+ * and value alone stays quiet. They are also expected to clear content data when the source is replaced. Nothing
+ * enforces that second half, so a media that skips it reports stale metadata across a source change.
  */
 export interface MediaContentDataCapability {
   readonly contentData: MediaContentData | undefined;
@@ -578,15 +569,15 @@ export interface MediaVideoDimensionsCapability {
 export interface MediaEvents extends MediaPlaybackEvents {}
 
 export interface Media<Events extends { [K in keyof Events]: EventLike } = MediaEvents>
-  extends MediaPlaybackCapability,
-    EventTargetLike<Events> {}
+  extends MediaPlaybackCapability, EventTargetLike<Events> {}
 
 // ----------------------------------------
 // Composed shapes
 // ----------------------------------------
 
 export interface MediaFullEvents
-  extends MediaEvents,
+  extends
+    MediaEvents,
     MediaPauseEvents,
     MediaSeekEvents,
     MediaSourceEvents,
@@ -600,7 +591,8 @@ export interface MediaFullEvents
     MediaContentDataEvents {}
 
 export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
-  extends Media<Events>,
+  extends
+    Media<Events>,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
@@ -620,7 +612,8 @@ export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = M
 export interface VideoEvents extends MediaFullEvents, MediaPictureInPictureEvents, MediaVideoDimensionsEvents {}
 
 export interface Video
-  extends MediaFull<VideoEvents>,
+  extends
+    MediaFull<VideoEvents>,
     MediaPlaysInlineCapability,
     MediaPosterCapability,
     MediaFullscreenCapability,
@@ -636,7 +629,8 @@ export interface Audio extends MediaFull<AudioEvents> {}
 // ----------------------------------------
 
 export interface MediaTargetLike
-  extends MediaPlaybackCapability,
+  extends
+    MediaPlaybackCapability,
     MediaPauseCapability,
     MediaSeekCapability,
     MediaSourceCapability,
@@ -656,10 +650,7 @@ export interface MediaTargetLike
 }
 
 export interface VideoTargetLike
-  extends MediaTargetLike,
-    MediaPosterCapability,
-    MediaPlaysInlineCapability,
-    MediaVideoDimensionsCapability {
+  extends MediaTargetLike, MediaPosterCapability, MediaPlaysInlineCapability, MediaVideoDimensionsCapability {
   disablePictureInPicture: boolean;
   requestPictureInPicture(): Promise<unknown>;
   requestFullscreen(): Promise<unknown>;

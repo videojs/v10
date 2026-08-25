@@ -5,6 +5,7 @@ export const DEFAULT_LOCALE = 'en';
 export function isDefaultLocale(locale?: string | string[]): boolean {
   const tag = Array.isArray(locale) ? locale[0] : locale;
   if (!tag) return true;
+
   return tag === DEFAULT_LOCALE || tag.startsWith(`${DEFAULT_LOCALE}-`);
 }
 

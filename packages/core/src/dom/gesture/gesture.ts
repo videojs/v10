@@ -1,6 +1,6 @@
-import type { GestureProps, GestureType } from '../../core/ui/gesture/gesture-core';
+import type { GestureProps, GestureType } from '../../core/ui/gesture/core';
 
-export type { GesturePointerType, GestureRegion, GestureType } from '../../core/ui/gesture/gesture-core';
+export type { GesturePointerType, GestureRegion, GestureType } from '../../core/ui/gesture/core';
 
 export interface GestureOptions extends Pick<GestureProps, 'pointer' | 'region' | 'disabled' | 'value'> {
   action?: GestureProps['action'] | undefined;

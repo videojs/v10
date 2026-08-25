@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { findNearestLang } from '../locale/find-nearest-lang';
 
@@ -14,6 +14,7 @@ describe('findNearestLang', () => {
 
   it('reads lang on the start element', () => {
     const el = document.createElement('div');
+
     el.setAttribute('lang', 'fr');
     document.body.appendChild(el);
     expect(findNearestLang(el)).toBe('fr');
@@ -21,8 +22,10 @@ describe('findNearestLang', () => {
 
   it('walks ancestors and prefers closest lang', () => {
     const outer = document.createElement('section');
+
     outer.setAttribute('lang', 'de');
     const inner = document.createElement('div');
+
     inner.setAttribute('lang', 'fr');
     outer.appendChild(inner);
     document.body.appendChild(outer);
@@ -31,8 +34,10 @@ describe('findNearestLang', () => {
 
   it('inherits from an ancestor when start has no lang', () => {
     const outer = document.createElement('section');
+
     outer.setAttribute('lang', 'de');
     const inner = document.createElement('div');
+
     outer.appendChild(inner);
     document.body.appendChild(outer);
     expect(findNearestLang(inner)).toBe('de');
@@ -40,8 +45,10 @@ describe('findNearestLang', () => {
 
   it('ignores empty lang and continues walking', () => {
     const outer = document.createElement('section');
+
     outer.setAttribute('lang', 'de');
     const inner = document.createElement('div');
+
     inner.setAttribute('lang', '  ');
     outer.appendChild(inner);
     document.body.appendChild(outer);
@@ -51,6 +58,7 @@ describe('findNearestLang', () => {
   it('reads lang IDL property on html when set via documentElement.lang', () => {
     document.documentElement.lang = 'fr';
     const inner = document.createElement('div');
+
     document.body.appendChild(inner);
     expect(findNearestLang(inner)).toBe('fr');
   });

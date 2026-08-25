@@ -34,6 +34,7 @@ import {
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -94,6 +95,7 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
+
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
 const SEEK_TIME = 10;
@@ -139,7 +141,7 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   return (
     <div
       ref={ref}
-      className={cn(slider.thumb.base, persistent ? undefined : slider.thumb.interactive, className)}
+      className={cn(slider.thumb.base, persistent ? slider.thumb.persistent : slider.thumb.interactive, className)}
       {...props}
     />
   );
@@ -156,11 +158,27 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnavailable) return muteButton;
+  if (volumeUnavailable) {
+    return (
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={muteButton} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
+      </Tooltip.Root>
+    );
+  }
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="right">
-      <Popover.Trigger render={muteButton} />
+      <Tooltip.Root side="top" delay={0} sticky>
+        <Tooltip.Trigger render={<Popover.Trigger render={muteButton} />} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
+      </Tooltip.Root>
       <Popover.Popup className={popup.volume}>
         <VolumeSlider.Root orientation="horizontal" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
@@ -191,7 +209,6 @@ function SettingsMenu(): ReactNode {
   const hasQuality = quality?.state.availability === 'available';
   const hasAudioTrack = audioTrack?.state.availability === 'available';
   const hasCaptions = captions?.state.availability === 'available';
-
   if (!hasPlaybackRate && !hasQuality && !hasAudioTrack && !hasCaptions) return null;
 
   return (
@@ -211,8 +228,8 @@ function SettingsMenu(): ReactNode {
           <Tooltip.Label>{t(settingsText)}</Tooltip.Label>
         </Tooltip.Popup>
       </Tooltip.Root>
-      <Menu.Content className={menu.settings}>
-        <div className={menu.group}>
+      <Menu.Popup className={menu.settings}>
+        <Menu.Content className={menu.settingsContent}>
           {hasQuality ? (
             <Menu.Root>
               <Menu.Trigger
@@ -372,8 +389,8 @@ function SettingsMenu(): ReactNode {
               </Menu.Content>
             </Menu.Root>
           ) : null}
-        </div>
-      </Menu.Content>
+        </Menu.Content>
+      </Menu.Popup>
     </Menu.Root>
   );
 }

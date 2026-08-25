@@ -1,6 +1,7 @@
 'use client';
 
 import { liveVideoFeatures } from '@videojs/core/dom';
+
 import { createPlayer } from '../../player/create-player';
 
 /** Preconfigured player with the live video features. */

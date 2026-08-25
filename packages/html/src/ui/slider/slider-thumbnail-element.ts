@@ -15,7 +15,9 @@ export class SliderThumbnailElement extends ThumbnailElement {
 
   protected override update(changed: PropertyValues): void {
     const ctx = this.#ctx.value;
+
     if (ctx) this.time = ctx.pointerValue;
+
     super.update(changed);
   }
 }

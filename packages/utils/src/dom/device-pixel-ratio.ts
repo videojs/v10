@@ -9,20 +9,17 @@ export function getDevicePixelRatio(): number {
 /**
  * Call `onChange` with the new ratio whenever `devicePixelRatio` changes.
  *
- * `devicePixelRatio` fires no change event, so the ratio is watched through a
- * `(resolution: …dppx)` media query. Each query only answers about the ratio it
- * was built for, so it reports a single change and the handler builds the next.
- * `once: true` is what keeps that from accumulating listeners: the fired one is
- * gone before the replacement is armed. Same shape as MDN's snippet for this,
- * whose earlier non-re-arming version fired exactly once and stopped.
+ * `devicePixelRatio` fires no change event, so the ratio is watched through a `(resolution: …dppx)` media query. Each
+ * query only answers about the ratio it was built for, so it reports a single change and the handler builds the next.
+ * `once: true` is what keeps that from accumulating listeners: the fired one is gone before the replacement is armed.
+ * Same shape as MDN's snippet for this, whose earlier non-re-arming version fired exactly once and stopped.
  *
- * Worth watching separately from an element's size: browser zoom, or dragging
- * the window to a display with a different ratio, changes the ratio without
- * resizing the element.
+ * Worth watching separately from an element's size: browser zoom, or dragging the window to a display with a different
+ * ratio, changes the ratio without resizing the element.
  *
  * @param onChange - Called with the new `devicePixelRatio` after each change
- * @param signal - Optional, for a caller that tears every subscription down
- * through one signal rather than a handle each; aborting it stops the watching
+ * @param signal - Optional, for a caller that tears every subscription down through one signal rather than a handle
+ *   each; aborting it stops the watching
  * @returns Cleanup that detaches the armed query
  */
 export function watchDevicePixelRatio(onChange: (devicePixelRatio: number) => void, signal?: AbortSignal): () => void {
@@ -35,6 +32,7 @@ export function watchDevicePixelRatio(onChange: (devicePixelRatio: number) => vo
 
   const setupListener = () => {
     const query = globalThis.matchMedia(`(resolution: ${getDevicePixelRatio()}dppx)`);
+
     removeListener = listen(query, 'change', handleChange, options);
   };
 

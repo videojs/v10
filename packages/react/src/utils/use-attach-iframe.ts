@@ -7,6 +7,7 @@ export function useAttachIframe<T extends HTMLIFrameElement>(media: MediaEngineH
     (element: T | null) => {
       if (element) media.attach?.(element);
       else media.detach?.();
+
       return () => media.detach?.();
     },
     [media]

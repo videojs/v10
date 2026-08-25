@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
+
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { SvtaError } from '../../../media/errors';
@@ -217,6 +218,7 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
     const state = makeErrorState(createPresentation({ video: [undecodable, playable] }));
 
     const reactor = selectVideoTrack.setup({ state, config: { canPlayTrack: noHevc } });
+
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedVideoTrackId.get()).toBe('video-mp4');
@@ -229,6 +231,7 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
     const state = makeErrorState(createPresentation({ video: [undecodable] }));
 
     const reactor = selectVideoTrack.setup({ state, config: { canPlayTrack: noHevc } });
+
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedVideoTrackId.get()).toBeUndefined();
@@ -253,6 +256,7 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
       state,
       config: { canPlayTrack: (track: { mimeType?: string }) => track.mimeType !== 'video/mp2t' },
     });
+
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(state.selectedVideoTrackId.get()).toBe('video-1');
 
@@ -286,6 +290,7 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
       state,
       config: { canPlayTrack: (track: { id?: string }) => !(pruneEncrypted && track.id === 'video-encrypted') },
     });
+
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(state.selectedVideoTrackId.get()).toBe('video-encrypted');
 
@@ -308,6 +313,7 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
     const state = makeErrorState(createPresentation({ video: [undecodable] }));
 
     const reactor = selectVideoTrack.setup({ state });
+
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedVideoTrackId.get()).toBe('video-hevc');
@@ -322,6 +328,7 @@ describe('selectVideoTrack — capability constraint + verdict', () => {
     const state = makeState({ presentation: createPresentation({ video: [undecodable] }) });
 
     const reactor = selectVideoTrack.setup({ state, config: { canPlayTrack: noHevc } });
+
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedVideoTrackId.get()).toBeUndefined();
@@ -519,6 +526,7 @@ describe('preferHighestResolution', () => {
       { id: '1440p', width: 2560, height: 1440, bandwidth: 8_000_000 },
       { id: '360p', width: 640, height: 360, bandwidth: 500_000 },
     ];
+
     expect(preferHighestResolution(tracks, noDeps).map((track) => track.id)).toEqual(['1440p', '720p', '360p']);
   });
 
@@ -527,6 +535,7 @@ describe('preferHighestResolution', () => {
       { id: '360p', width: 640, height: 360, bandwidth: 500_000 },
       { id: '1080p', width: 1920, height: 1080, bandwidth: 4_000_000 },
     ];
+
     preferHighestResolution(tracks, noDeps);
     expect(tracks.map((track) => track.id)).toEqual(['360p', '1080p']);
   });
@@ -551,6 +560,7 @@ describe('screenResolutionCap', () => {
   // survivors is the following ranker's job, exercised at the bottom of this block.
   it('narrows to the renditions that fit the screen', () => {
     const survivors = screenResolutionCap(ladder, depsWith(laptopScreen));
+
     expect(survivors.map((track) => track.id)).toEqual(['360p', '1080p', '1440p']);
   });
 
@@ -573,12 +583,14 @@ describe('screenResolutionCap', () => {
   it('leaves the chain unnarrowed when nothing fits, so the ranker still decides', () => {
     const deps = depsWith({ width: 320, height: 240 });
     const survivors = applyRules([screenResolutionCap, preferHighestResolution], ladder, deps);
+
     expect(survivors[0]?.id).toBe('2160p');
   });
 
   it('picks the largest rendition that fits when composed ahead of the ranker', () => {
     const deps = depsWith(laptopScreen);
     const survivors = applyRules([screenResolutionCap, preferHighestResolution], ladder, deps);
+
     expect(survivors[0]?.id).toBe('1440p');
   });
 
@@ -586,12 +598,14 @@ describe('screenResolutionCap', () => {
   // filter preserves order, so the head is the same either way round.
   it('reaches the same pick with the cap after the ranker', () => {
     const deps = depsWith(laptopScreen);
+
     expect(applyRules([preferHighestResolution, screenResolutionCap], ladder, deps)[0]?.id).toBe('1440p');
   });
 
   // Without the cap the same ladder pins the top rung — the difference the rule makes.
   it('is what pulls the pick below the top rung', () => {
     const deps = depsWith(laptopScreen);
+
     expect(applyRules([preferHighestResolution], ladder, deps)[0]?.id).toBe('2160p');
     expect(applyRules([screenResolutionCap, preferHighestResolution], ladder, deps)[0]?.id).toBe('1440p');
   });

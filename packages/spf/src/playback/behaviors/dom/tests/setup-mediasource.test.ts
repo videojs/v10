@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import type { ContextSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import { attachMediaSourceAsSourceElement } from '../../../../media/dom/mse/mediasource-setup';
@@ -14,6 +15,7 @@ vi.mock('../../../../media/dom/mse/mediasource-setup', async () => {
   const actual = await vi.importActual<typeof import('../../../../media/dom/mse/mediasource-setup')>(
     '../../../../media/dom/mse/mediasource-setup'
   );
+
   return {
     ...actual,
     createMediaSource: vi.fn(),
@@ -23,6 +25,7 @@ vi.mock('../../../../media/dom/mse/mediasource-setup', async () => {
 
 function makeMediaSource({ readyState = 'open' as MediaSource['readyState'] } = {}) {
   const target = new EventTarget();
+
   return Object.create(MediaSource.prototype, {
     readyState: { value: readyState, writable: true },
     addEventListener: { value: target.addEventListener.bind(target) },
@@ -57,6 +60,7 @@ function makeState(initial: MediaSourceState & { loadingSuspended?: boolean } = 
 /** A media element whose `currentTime`/`paused` tests can stage for snapshot assertions. */
 function makeVideo(currentTime = 0, opts: { paused?: boolean } = {}): HTMLMediaElement {
   const video = document.createElement('video');
+
   Object.defineProperty(video, 'currentTime', { value: currentTime, writable: true });
   Object.defineProperty(video, 'paused', { value: opts.paused ?? true, writable: true });
   return video;
@@ -76,6 +80,7 @@ function setupSetupMediaSource(
   const state = makeState(initialState);
   const context = makeContext(initialContext);
   const reactor = setupMediaSource.setup({ state, context });
+
   return { state, context, reactor };
 }
 
@@ -86,6 +91,7 @@ describe('setupMediaSource', () => {
     // into this one.
     vi.resetAllMocks();
     const { createMediaSource, attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
+
     // Default mock behavior — open MediaSource, no-op detach. Individual
     // tests override as needed.
     vi.mocked(createMediaSource).mockImplementation(() => makeMediaSource());
@@ -114,9 +120,11 @@ describe('setupMediaSource', () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const closedMediaSource = makeMediaSource({ readyState: 'closed' });
+
     vi.mocked(createMediaSource).mockImplementation(() => closedMediaSource);
 
     const { state, context, reactor } = setupSetupMediaSource();
+
     context.mediaElement.set({} as HTMLMediaElement);
     state.presentation.set(makeResolvedPresentation());
 
@@ -138,9 +146,11 @@ describe('setupMediaSource', () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const closedMediaSource = makeMediaSource({ readyState: 'closed' });
+
     vi.mocked(createMediaSource).mockImplementation(() => closedMediaSource);
 
     const { state, context, reactor } = setupSetupMediaSource();
+
     context.mediaElement.set({} as HTMLMediaElement);
     state.presentation.set(makeResolvedPresentation());
 
@@ -157,6 +167,7 @@ describe('setupMediaSource', () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const { state, reactor } = setupSetupMediaSource();
+
     state.presentation.set(makeResolvedPresentation());
 
     await new Promise((resolve) => setTimeout(resolve, 50));
@@ -169,6 +180,7 @@ describe('setupMediaSource', () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const { state, context, reactor } = setupSetupMediaSource();
+
     context.mediaElement.set({} as HTMLMediaElement);
     // Unresolved presentation — has url but no id / selectionSets.
     state.presentation.set({ url: 'https://example.com/video.m3u8' });
@@ -184,10 +196,12 @@ describe('setupMediaSource', () => {
 
     const mockMediaSource = makeMediaSource();
     const detach = vi.fn();
+
     vi.mocked(createMediaSource).mockImplementation(() => mockMediaSource);
     vi.mocked(attachMediaSource).mockImplementation(() => ({ url: 'blob:mock', detach }));
 
     const { state, context, reactor } = setupSetupMediaSource();
+
     context.mediaElement.set({} as HTMLMediaElement);
     state.presentation.set(makeResolvedPresentation());
 
@@ -213,6 +227,7 @@ describe('setupMediaSource', () => {
     const secondMediaSource = makeMediaSource();
     const firstDetach = vi.fn();
     const secondDetach = vi.fn();
+
     vi.mocked(createMediaSource)
       .mockImplementationOnce(() => firstMediaSource)
       .mockImplementationOnce(() => secondMediaSource);
@@ -221,6 +236,7 @@ describe('setupMediaSource', () => {
       .mockImplementationOnce(() => ({ url: 'blob:2', detach: secondDetach }));
 
     const { state, context, reactor } = setupSetupMediaSource();
+
     context.mediaElement.set({} as HTMLMediaElement);
     state.presentation.set(makeResolvedPresentation({ url: 'https://example.com/a.m3u8' }));
 
@@ -254,10 +270,12 @@ describe('setupMediaSource', () => {
 
     const mockMediaSource = makeMediaSource();
     const detach = vi.fn();
+
     vi.mocked(createMediaSource).mockImplementation(() => mockMediaSource);
     vi.mocked(attachMediaSource).mockImplementation(() => ({ url: 'blob:mock', detach }));
 
     const { state, context, reactor } = setupSetupMediaSource();
+
     context.mediaElement.set({} as HTMLMediaElement);
     state.presentation.set(makeResolvedPresentation());
 
@@ -275,6 +293,7 @@ describe('setupMediaSource', () => {
     const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
     const { state, context, reactor } = setupSetupMediaSource();
+
     context.mediaElement.set({} as HTMLMediaElement);
     state.presentation.set(makeResolvedPresentation({ duration: 60 }));
 
@@ -299,11 +318,13 @@ describe('setupMediaSource', () => {
     const state = makeState();
     const context = makeContext();
     const reactor = setupMediaSource.setup({ state, context, config: { attachMediaSource: customAttach } });
+
     context.mediaElement.set(makeVideo());
     state.presentation.set(makeResolvedPresentation());
 
     await vi.waitFor(() => expect(customAttach).toHaveBeenCalledTimes(1));
     const { attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
+
     expect(attachMediaSource).not.toHaveBeenCalled();
 
     reactor.destroy();
@@ -340,6 +361,7 @@ describe('setupMediaSource', () => {
       // in both HLS engines) and only then awaited together.
       const destroy = async () => {
         const results = [mediaSourceReactor.destroy(), airPlayReactor.destroy()];
+
         await Promise.all(results);
         delete (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY];
       };
@@ -354,22 +376,24 @@ describe('setupMediaSource', () => {
     /** A `<video>` WebKit's AirPlay probe recognizes (`'…IsWireless' in media`). */
     function makeAirPlayVideo(): WebKitVideoLike {
       const video = document.createElement('video') as WebKitVideoLike;
+
       video.webkitCurrentPlaybackTargetIsWireless = false;
       return video;
     }
 
     /**
-     * Composes both behaviors, attaches, and arms detach's reset: waits for
-     * both `<source>` children, stages the element as committed to the MSE
-     * object URL (real resource selection is async), and records whether the
-     * fallback was still in the DOM when the reset `load()` ran.
+     * Composes both behaviors, attaches, and arms detach's reset: waits for both `<source>` children, stages the
+     * element as committed to the MSE object URL (real resource selection is async), and records whether the fallback
+     * was still in the DOM when the reset `load()` ran.
      */
     async function arrangeAttached() {
       const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
+
       vi.mocked(createMediaSource).mockImplementation(() => new MediaSource());
 
       const { state, context, destroy } = composeWithAirPlay();
       const mediaElement = makeAirPlayVideo();
+
       context.mediaElement.set(mediaElement);
       state.presentation.set(makeResolvedPresentation());
 
@@ -380,6 +404,7 @@ describe('setupMediaSource', () => {
       });
 
       const mseUrl = mediaElement.querySelector<HTMLSourceElement>('source[type="video/mp4"]')!.src;
+
       Object.defineProperty(mediaElement, 'currentSrc', { value: mseUrl, configurable: true });
 
       const seen: { fallbackPresentAtReset?: boolean } = {};
@@ -426,6 +451,7 @@ describe('setupMediaSource', () => {
       const second = makeMediaSource();
       const firstDetach = vi.fn();
       const secondDetach = vi.fn();
+
       vi.mocked(createMediaSource)
         .mockImplementationOnce(() => first)
         .mockImplementationOnce(() => second);
@@ -434,6 +460,7 @@ describe('setupMediaSource', () => {
         .mockImplementationOnce(() => ({ url: 'blob:second', detach: secondDetach }));
 
       const { state, context, reactor } = setupSetupMediaSource();
+
       context.mediaElement.set(makeVideo());
       state.presentation.set(makeResolvedPresentation());
       await vi.waitFor(() => expect(context.mediaSource.get()).toBe(first));
@@ -459,6 +486,7 @@ describe('setupMediaSource', () => {
       const first = makeMediaSource();
       const second = makeMediaSource();
       const firstDetach = vi.fn();
+
       vi.mocked(createMediaSource)
         .mockImplementationOnce(() => first)
         .mockImplementationOnce(() => second);
@@ -467,6 +495,7 @@ describe('setupMediaSource', () => {
         .mockImplementationOnce(() => ({ url: 'blob:second', detach: vi.fn() }));
 
       const { state, context, reactor } = setupSetupMediaSource();
+
       context.mediaElement.set(makeVideo(12, { paused: false }));
       state.presentation.set(makeResolvedPresentation());
       await vi.waitFor(() => expect(context.mediaSource.get()).toBe(first));
@@ -495,9 +524,11 @@ describe('setupMediaSource', () => {
     it('never tears down an existing attachment on suspension alone', async () => {
       const { attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
       const detach = vi.fn();
+
       vi.mocked(attachMediaSource).mockImplementation(() => ({ url: 'blob:mock', detach }));
 
       const { state, context, reactor } = setupSetupMediaSource();
+
       context.mediaElement.set(makeVideo());
       state.presentation.set(makeResolvedPresentation());
       await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());

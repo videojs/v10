@@ -1,5 +1,6 @@
 import { createState, type State } from '@videojs/store';
 import { noop } from '@videojs/utils/function';
+
 import type { TransitionState } from '../../core/ui/transition';
 
 export interface TransitionApi {
@@ -15,15 +16,12 @@ export type TransitionElement = HTMLElement | null | (() => HTMLElement | null);
 /**
  * Manages open/close transition lifecycle via `createState`.
  *
- * **Open:** patches `{ active: true, status: 'starting' }`, then after a
- * double-RAF patches `{ status: 'idle' }` so the browser paints the
- * initial ("from") state before transitioning. It then waits for the resulting
- * element animations to finish. Reopening an active transition flushes styles
- * first so CSS transitions can restart.
+ * **Open:** patches `{ active: true, status: 'starting' }`, then after a double-RAF patches `{ status: 'idle' }` so the
+ * browser paints the initial ("from") state before transitioning. It then waits for the resulting element animations to
+ * finish. Reopening an active transition flushes styles first so CSS transitions can restart.
  *
- * **Close:** patches `{ status: 'ending' }` (keeping `active: true` so the
- * element stays mounted), then after a double-RAF waits for
- * `getAnimations()` to settle before patching `{ active: false, status: 'idle' }`.
+ * **Close:** patches `{ status: 'ending' }` (keeping `active: true` so the element stays mounted), then after a
+ * double-RAF waits for `getAnimations()` to settle before patching `{ active: false, status: 'idle' }`.
  */
 export function createTransition(): TransitionApi {
   const state = createState<TransitionState>({ active: false, status: 'idle' });
@@ -51,13 +49,16 @@ export function createTransition(): TransitionApi {
 
   function finishOperation(id: number): void {
     if (id !== operationId) return;
+
     const resolve = resolvePending;
+
     resolvePending = null;
     resolve?.();
   }
 
   function open(el: TransitionElement = null): Promise<void> {
     if (destroyed) return Promise.resolve();
+
     const id = beginOperation();
 
     const restarting = state.current.active;
@@ -72,20 +73,27 @@ export function createTransition(): TransitionApi {
       resolvePending = resolve;
       rafId1 = requestAnimationFrame(() => {
         rafId1 = 0;
+
         if (restarting) {
           const element = resolveElement(el);
+
           cancelAnimations(element);
           flushStyles(element);
         }
+
         rafId2 = requestAnimationFrame(() => {
           rafId2 = 0;
+
           if (destroyed || id !== operationId || !state.current.active) return finishOperation(id);
+
           state.patch({ status: 'idle' });
           // Wait one more frame for framework adapters to remove the starting
           // style attribute before collecting the resulting CSS animations.
           rafId1 = requestAnimationFrame(() => {
             rafId1 = 0;
+
             if (destroyed || id !== operationId || !state.current.active) return finishOperation(id);
+
             waitForAnimations(resolveElement(el)).finally(() => finishOperation(id));
           });
         });
@@ -95,6 +103,7 @@ export function createTransition(): TransitionApi {
 
   function close(el: HTMLElement | null): Promise<void> {
     if (destroyed) return Promise.resolve();
+
     const id = beginOperation();
 
     state.patch({ status: 'ending' });
@@ -105,9 +114,12 @@ export function createTransition(): TransitionApi {
         rafId1 = 0;
         rafId2 = requestAnimationFrame(() => {
           rafId2 = 0;
+
           if (destroyed || id !== operationId) return finishOperation(id);
+
           waitForAnimations(el).finally(() => {
             if (destroyed || id !== operationId || state.current.status !== 'ending') return finishOperation(id);
+
             state.patch({ active: false, status: 'idle' });
             finishOperation(id);
           });
@@ -121,6 +133,7 @@ export function createTransition(): TransitionApi {
     cancelFrames();
     resolvePending?.();
     resolvePending = null;
+
     if (state.current.status !== 'idle') {
       state.patch({ status: 'idle' });
     }
@@ -133,6 +146,7 @@ export function createTransition(): TransitionApi {
     cancel,
     destroy() {
       if (destroyed) return;
+
       destroyed = true;
       cancel();
     },
@@ -145,6 +159,7 @@ function resolveElement(element: TransitionElement): HTMLElement | null {
 
 function flushStyles(el: HTMLElement | null): void {
   if (!el) return;
+
   void el.offsetHeight;
 }
 
@@ -160,7 +175,6 @@ function waitForAnimations(el: HTMLElement | null): Promise<void> {
   if (!el) return Promise.resolve();
 
   const animations = el.getAnimations?.() ?? [];
-
   if (animations.length === 0) return Promise.resolve();
 
   return Promise.all(animations.map((a) => a.finished)).then(noop, noop);

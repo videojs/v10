@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { createState, flush, isState } from '../state';
 
@@ -19,12 +19,14 @@ describe('createState', () => {
   describe('current', () => {
     it('returns the current state', () => {
       const state = createTestState();
+
       expect(state.current.volume).toBe(1);
       expect(state.current.muted).toBe(false);
     });
 
     it('reflects changes after patch', () => {
       const state = createTestState();
+
       state.patch({ volume: 0.5, muted: true });
       expect(state.current.volume).toBe(0.5);
       expect(state.current.muted).toBe(true);
@@ -34,6 +36,7 @@ describe('createState', () => {
   describe('patch', () => {
     it('updates multiple keys', () => {
       const state = createTestState();
+
       state.patch({ volume: 0.5, muted: true });
       expect(state.current.volume).toBe(0.5);
       expect(state.current.muted).toBe(true);
@@ -43,6 +46,7 @@ describe('createState', () => {
     it('does not notify if no values changed', () => {
       const state = createTestState();
       const listener = vi.fn();
+
       state.subscribe(listener);
 
       state.patch({ volume: 1, muted: false }); // same as initial
@@ -55,6 +59,7 @@ describe('createState', () => {
     it('notifies on change after microtask', async () => {
       const state = createTestState();
       const listener = vi.fn();
+
       state.subscribe(listener);
 
       state.patch({ volume: 0.5 });
@@ -67,6 +72,7 @@ describe('createState', () => {
     it('can force immediate notification with flush()', () => {
       const state = createTestState();
       const listener = vi.fn();
+
       state.subscribe(listener);
 
       state.patch({ volume: 0.5 });
@@ -79,6 +85,7 @@ describe('createState', () => {
     it('batches multiple patches into one notification', () => {
       const state = createTestState();
       const listener = vi.fn();
+
       state.subscribe(listener);
 
       state.patch({ volume: 0.5 });
@@ -94,6 +101,7 @@ describe('createState', () => {
       const listener = vi.fn();
 
       const unsub = state.subscribe(listener);
+
       state.patch({ volume: 0.5 });
       flush();
       expect(listener).toHaveBeenCalledOnce();
@@ -121,6 +129,7 @@ describe('createState', () => {
   describe('isState', () => {
     it('returns true for state created by createState', () => {
       const state = createTestState();
+
       expect(isState(state)).toBe(true);
     });
 

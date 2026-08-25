@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 async function waitForUpdates(elements: Element[]): Promise<void> {
   for (const element of elements) {
     const maybeReactive = element as Element & { updateComplete?: Promise<boolean> };
+
     await maybeReactive.updateComplete;
   }
 }

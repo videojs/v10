@@ -1,682 +1,127 @@
-import * as tae from 'typescript-api-extractor';
-import { describe, expect, it } from 'vitest';
+import * as path from 'node:path';
+
+import { parseSync } from 'oxc-parser';
+import { describe, expect, it } from 'vite-plus/test';
+
 import { abbreviateType, formatDetailedType, formatProperties, formatType } from '../formatter';
+import type { ResolvedType, SourceFile } from '../oxc-project';
+import { OxcProject } from '../oxc-project';
+
+const FIXTURE_ROOT = path.resolve(import.meta.dirname, 'fixtures/monorepo');
 
 describe('abbreviateType', () => {
-  it("returns 'function' for pure function types (no union)", () => {
-    expect(abbreviateType('selector', '((state: UnknownState) => R)')).toBe('function');
-    expect(abbreviateType('subscribe', '((state: State) => void)')).toBe('function');
-    expect(abbreviateType('isEqual', '((a: R, b: R) => boolean)')).toBe('function');
-    expect(abbreviateType('config', '((options: Options) => Config)')).toBe('function');
-  });
-
-  it("returns 'function' for function types with union return", () => {
-    expect(abbreviateType('selector', '(state: object) => InferSliceState<S> | undefined')).toBe('function');
-    expect(abbreviateType('selector', '(state: object) => string | undefined')).toBe('function');
-  });
-
-  it("returns 'undefined | function' for true top-level union of undefined and function", () => {
+  it('abbreviates functions and callback unions', () => {
+    expect(abbreviateType('selector', '((state: object) => string)')).toBe('function');
     expect(abbreviateType('selector', '((state: object) => string) | undefined')).toBe('undefined | function');
-  });
-
-  it("returns 'function' for callback props (onX with =>)", () => {
-    expect(abbreviateType('onClick', '(event: Event) => void')).toBe('function');
     expect(abbreviateType('onChange', '(value: string) => void')).toBe('function');
+    expect(abbreviateType('label', "string | ((state: object) => string) | 'auto'")).toBe("string | 'auto' | function");
   });
 
-  it("returns 'function' for getter props (getX with =>)", () => {
-    expect(abbreviateType('getValue', '() => string')).toBe('function');
-    expect(abbreviateType('getState', '() => State')).toBe('function');
-  });
-
-  it("returns 'string | function' for className with =>", () => {
-    expect(abbreviateType('className', 'string | ((state: State) => string)')).toBe('string | function');
-  });
-
-  it("returns 'CSSProperties | function' for style with =>", () => {
-    expect(abbreviateType('style', 'CSSProperties | ((state: State) => CSSProperties)')).toBe(
+  it('uses the conventional component display types', () => {
+    expect(abbreviateType('className', 'string | ((state: object) => string)')).toBe('string | function');
+    expect(abbreviateType('style', 'CSSProperties | ((state: object) => CSSProperties)')).toBe(
       'CSSProperties | function'
+    );
+    expect(abbreviateType('render', 'ReactElement | ((state: object) => ReactElement)')).toBe(
+      'ReactElement | function'
     );
   });
 
-  it("returns 'ReactElement | function' for render with =>", () => {
-    expect(abbreviateType('render', 'ReactElement | ((state: State) => ReactElement)')).toBe('ReactElement | function');
-  });
-
-  it('returns undefined for simple types (boolean, string, number)', () => {
+  it('leaves compact scalar and union types alone', () => {
     expect(abbreviateType('disabled', 'boolean')).toBeUndefined();
-    expect(abbreviateType('label', 'string')).toBeUndefined();
-    expect(abbreviateType('count', 'number')).toBeUndefined();
-  });
-
-  it('returns undefined for short unions (< 3 members and < 40 chars)', () => {
     expect(abbreviateType('size', "'small' | 'large'")).toBeUndefined();
-    expect(abbreviateType('value', 'string | number')).toBeUndefined();
+    expect(abbreviateType('size', "'small' | 'medium' | 'large' | 'xlarge'")).toBeUndefined();
   });
 
-  it("returns 'type | function' for short callback unions (< 40 chars, 2 members)", () => {
-    const type = 'string | ((state: TimeState) => string)';
-    expect(abbreviateType('label', type)).toBe('string | function');
-  });
+  it('abbreviates long object and union types', () => {
+    expect(abbreviateType('result', '{ volume: number; muted: boolean; level: string }')).toBe('object');
 
-  it("returns 'type | function' for unions containing functions", () => {
-    const type = "string | ((state: State) => string) | 'auto'";
-    expect(abbreviateType('label', type)).toBe("string | 'auto' | function");
-  });
+    const union = "'option-a' | 'option-b' | 'option-c' | 'option-d' | 'option-e'";
 
-  it('returns undefined for complex unions (NOT "Union")', () => {
-    // Complex union with 3+ members, no function
-    const complexUnion = "'small' | 'medium' | 'large' | 'xlarge'";
-    expect(abbreviateType('size', complexUnion)).toBeUndefined();
-  });
-
-  it('returns "object" for object literals > 40 chars', () => {
-    const longObject = '{ volume: number; muted: boolean; level: string }';
-    expect(longObject.length).toBeGreaterThan(40);
-    expect(abbreviateType('result', longObject)).toBe('object');
-  });
-
-  it('returns undefined for object literals <= 40 chars', () => {
-    const shortObject = '{ x: number; y: number }';
-    expect(abbreviateType('point', shortObject)).toBeUndefined();
-  });
-
-  it('truncates other types > 40 chars', () => {
-    const longType = "'option-a' | 'option-b' | 'option-c' | 'option-d' | 'option-e'";
-    expect(longType.length).toBeGreaterThan(40);
-    expect(abbreviateType('choice', longType)).toBe(`${longType.slice(0, 37)}...`);
-  });
-
-  it('returns undefined for other types <= 40 chars', () => {
-    const shortType = "'small' | 'medium' | 'large' | 'xlarge'";
-    expect(shortType.length).toBeLessThanOrEqual(40);
-    expect(abbreviateType('size', shortType)).toBeUndefined();
-  });
-});
-
-describe('formatProperties', () => {
-  it('skips ref prop', () => {
-    const props: tae.PropertyNode[] = [
-      createPropertyNode('label', 'string', { optional: true }),
-      createPropertyNode('ref', 'any', { optional: true }),
-    ];
-
-    const result = formatProperties(props);
-
-    expect(result).toHaveProperty('label');
-    expect(result).not.toHaveProperty('ref');
-  });
-
-  it('skips props with @ignore JSDoc tag', () => {
-    const props: tae.PropertyNode[] = [
-      createPropertyNode('label', 'string', { optional: true }),
-      createPropertyNode('ignoredProp', 'string', { optional: true, hasIgnoreTag: true }),
-    ];
-
-    const result = formatProperties(props);
-
-    expect(result).toHaveProperty('label');
-    expect(result).not.toHaveProperty('ignoredProp');
-  });
-
-  it('sets required: true for non-optional props', () => {
-    const props: tae.PropertyNode[] = [
-      createPropertyNode('required', 'string', { optional: false }),
-      createPropertyNode('optional', 'string', { optional: true }),
-    ];
-
-    const result = formatProperties(props);
-
-    expect(result.required?.required).toBe(true);
-    expect(result.optional?.required).toBeUndefined();
-  });
-
-  it('cleans up undefined values from result', () => {
-    const props: tae.PropertyNode[] = [createPropertyNode('simple', 'boolean', { optional: true })];
-
-    const result = formatProperties(props);
-
-    expect(result.simple).toEqual({ type: 'boolean' });
-    expect(Object.keys(result.simple!)).not.toContain('detailedType');
-    expect(Object.keys(result.simple!)).not.toContain('default');
-    expect(Object.keys(result.simple!)).not.toContain('required');
-  });
-
-  it('passes through description from documentation', () => {
-    const props: tae.PropertyNode[] = [
-      createPropertyNode('label', 'string', { optional: true, description: 'The button label.' }),
-    ];
-
-    const result = formatProperties(props);
-
-    expect(result.label?.description).toBe('The button label.');
-  });
-
-  it('passes through default from documentation.defaultValue', () => {
-    const props: tae.PropertyNode[] = [
-      createPropertyNode('disabled', 'boolean', { optional: true, defaultValue: 'false' }),
-    ];
-
-    const result = formatProperties(props);
-
-    expect(result.disabled?.default).toBe('false');
-  });
-
-  it('expands type aliases when allExports is provided', () => {
-    // Create a property with an ExternalTypeNode referencing 'TimeType'
-    const externalType = createExternalTypeNode('TimeType');
-    const prop = {
-      name: 'type',
-      type: externalType,
-      optional: true,
-      documentation: undefined,
-    } as tae.PropertyNode;
-
-    // Create allExports with TimeType resolved to a union
-    const timeTypeExport = {
-      name: 'TimeType',
-      type: createUnionNode([
-        createLiteralNode("'current'"),
-        createLiteralNode("'duration'"),
-        createLiteralNode("'remaining'"),
-      ]),
-      documentation: undefined,
-    } as tae.ExportNode;
-
-    const result = formatProperties([prop], [timeTypeExport]);
-
-    expect(result.type?.type).toBe("'current' | 'duration' | 'remaining'");
-  });
-
-  it('sets abbreviated type and detailedType for callback props', () => {
-    const fnType = createFunctionNode([
-      {
-        parameters: [
-          {
-            name: 'event',
-            type: createIntrinsicNode('Event'),
-            optional: false,
-            documentation: undefined,
-            defaultValue: undefined,
-          } as tae.Parameter,
-        ],
-        returnValueType: createIntrinsicNode('void'),
-      } as tae.CallSignature,
-    ]);
-
-    const prop = {
-      name: 'onClick',
-      type: fnType,
-      optional: true,
-      documentation: undefined,
-    } as tae.PropertyNode;
-
-    const result = formatProperties([prop]);
-
-    expect(result.onClick?.type).toBe('function');
-    expect(result.onClick?.detailedType).toBe('((event: Event) => void)');
+    expect(abbreviateType('choice', union)).toBe(`${union.slice(0, 37)}...`);
   });
 });
 
 describe('formatType', () => {
-  it('formats IntrinsicNode (boolean, string, number)', () => {
-    const boolNode = createIntrinsicNode('boolean');
-    const strNode = createIntrinsicNode('string');
-    const numNode = createIntrinsicNode('number');
-
-    expect(formatType(boolNode, false)).toBe('boolean');
-    expect(formatType(strNode, false)).toBe('string');
-    expect(formatType(numNode, false)).toBe('number');
+  it.each([
+    ['boolean', 'boolean'],
+    ['string | undefined', 'string | undefined'],
+    ['string | undefined', 'string', true],
+    ['string | (number | boolean)', 'string | number | boolean'],
+    ['{ x: number; y?: number }', '{ x: number; y?: number }'],
+    ['string[]', 'string[]'],
+    ['(string | number)[]', '(string | number)[]'],
+    ['[string, number]', '[string, number]'],
+    ['"hello"', "'hello'"],
+    ['React.ReactElement<{ x: string }>', 'ReactElement'],
+    ['React.CSSProperties', 'CSSProperties'],
+    ['Map<string, number>', 'Map<string, number>'],
+    ['(x: string) => void', '((x: string) => void)'],
+  ])('formats %s', (input, expected, removeUndefined = false) => {
+    expect(formatType(parseType(input), removeUndefined)).toBe(expected);
   });
 
-  it('formats UnionNode and removes undefined when optional', () => {
-    const unionNode = createUnionNode([createIntrinsicNode('string'), createIntrinsicNode('undefined')]);
-
-    expect(formatType(unionNode, true)).toBe('string');
-    expect(formatType(unionNode, false)).toBe('string | undefined');
-  });
-
-  it('flattens nested unions', () => {
-    const innerUnion = createUnionNode([createIntrinsicNode('string'), createIntrinsicNode('number')]);
-    const outerUnion = createUnionNode([innerUnion, createIntrinsicNode('boolean')]);
-
-    expect(formatType(outerUnion, false)).toBe('string | number | boolean');
-  });
-
-  it('formats ObjectNode with properties', () => {
-    const objNode = createObjectNode([
-      { name: 'x', type: createIntrinsicNode('number'), optional: false },
-      { name: 'y', type: createIntrinsicNode('number'), optional: true },
-    ]);
-
-    expect(formatType(objNode, false)).toBe('{ x: number; y?: number }');
-  });
-
-  it('formats ArrayNode with parentheses for complex element types', () => {
-    const simpleArray = createArrayNode(createIntrinsicNode('string'));
-    const complexArray = createArrayNode(
-      createUnionNode([createIntrinsicNode('string'), createIntrinsicNode('number')])
+  it('orders null and undefined last and deduplicates unions', () => {
+    expect(formatType(parseType('null | string | undefined | number | string'), false)).toBe(
+      'string | number | null | undefined'
     );
-
-    expect(formatType(simpleArray, false)).toBe('string[]');
-    expect(formatType(complexArray, false)).toBe('(string | number)[]');
-  });
-
-  it('orders members with null/undefined/any last', () => {
-    const unionNode = createUnionNode([
-      createIntrinsicNode('null'),
-      createIntrinsicNode('string'),
-      createIntrinsicNode('undefined'),
-      createIntrinsicNode('number'),
-    ]);
-
-    expect(formatType(unionNode, false)).toBe('string | number | null | undefined');
-  });
-
-  it('normalizes quotes (double to single)', () => {
-    const literalNode = createLiteralNode('"hello"');
-
-    expect(formatType(literalNode, false)).toBe("'hello'");
-  });
-
-  // --- ExternalTypeNode ---
-
-  it('formats ExternalTypeNode ReactElement to just ReactElement', () => {
-    const node = createExternalTypeNode('ReactElement', undefined, [
-      { type: createIntrinsicNode('Props'), equalToDefault: false },
-    ]);
-
-    expect(formatType(node, false)).toBe('ReactElement');
-  });
-
-  it('formats ExternalTypeNode with React namespace by stripping namespace', () => {
-    const node = createExternalTypeNode('CSSProperties', ['React']);
-
-    expect(formatType(node, false)).toBe('CSSProperties');
-  });
-
-  it('formats ExternalTypeNode with fully qualified name', () => {
-    const node = createExternalTypeNode('Baz', ['Foo', 'Bar']);
-
-    expect(formatType(node, false)).toBe('Foo.Bar.Baz');
-  });
-
-  it('formats ExternalTypeNode with non-default type arguments', () => {
-    const node = createExternalTypeNode('Map', undefined, [
-      { type: createIntrinsicNode('string'), equalToDefault: false },
-      { type: createIntrinsicNode('number'), equalToDefault: false },
-    ]);
-
-    expect(formatType(node, false)).toBe('Map<string, number>');
-  });
-
-  // --- IntersectionNode ---
-
-  it('formats IntersectionNode without typeName', () => {
-    const node = createIntersectionNode([createIntrinsicNode('string'), createIntrinsicNode('number')]);
-
-    expect(formatType(node, false)).toBe('string & number');
-  });
-
-  it('formats IntersectionNode with typeName as fully qualified name', () => {
-    const typeName = createTypeName('Combined');
-    const node = createIntersectionNode([createIntrinsicNode('string'), createIntrinsicNode('number')], typeName);
-
-    expect(formatType(node, false)).toBe('Combined');
-  });
-
-  // --- FunctionNode ---
-
-  it('formats FunctionNode without typeName', () => {
-    const node = createFunctionNode([
-      {
-        parameters: [
-          {
-            name: 'x',
-            type: createIntrinsicNode('string'),
-            optional: false,
-            documentation: undefined,
-            defaultValue: undefined,
-          } as tae.Parameter,
-        ],
-        returnValueType: createIntrinsicNode('void'),
-      } as tae.CallSignature,
-    ]);
-
-    expect(formatType(node, false)).toBe('((x: string) => void)');
-  });
-
-  it('formats FunctionNode with typeName as fully qualified name', () => {
-    const typeName = createTypeName('MyHandler');
-    const node = createFunctionNode(
-      [
-        {
-          parameters: [],
-          returnValueType: createIntrinsicNode('void'),
-        } as tae.CallSignature,
-      ],
-      typeName
-    );
-
-    expect(formatType(node, false)).toBe('MyHandler');
-  });
-
-  // --- TupleNode ---
-
-  it('formats TupleNode without typeName', () => {
-    const node = createTupleNode([createIntrinsicNode('string'), createIntrinsicNode('number')]);
-
-    expect(formatType(node, false)).toBe('[string, number]');
-  });
-
-  it('formats TupleNode with typeName as fully qualified name', () => {
-    const typeName = createTypeName('Pair');
-    const node = createTupleNode([createIntrinsicNode('string'), createIntrinsicNode('number')], typeName);
-
-    expect(formatType(node, false)).toBe('Pair');
-  });
-
-  // --- TypeParameterNode ---
-
-  it('formats TypeParameterNode with constraint', () => {
-    const node = createTypeParameterNode('T', createIntrinsicNode('string'));
-
-    expect(formatType(node, false)).toBe('string');
-  });
-
-  it('formats TypeParameterNode without constraint returns the name', () => {
-    const node = createTypeParameterNode('T');
-
-    expect(formatType(node, false)).toBe('T');
-  });
-
-  it('returns type name for TypeParameterNode with large union constraint (>5 members)', () => {
-    const largeUnion = createUnionNode([
-      createLiteralNode("'a'"),
-      createLiteralNode("'b'"),
-      createLiteralNode("'c'"),
-      createLiteralNode("'d'"),
-      createLiteralNode("'e'"),
-      createLiteralNode("'f'"),
-    ]);
-    const node = createTypeParameterNode('TagName', largeUnion);
-
-    expect(formatType(node, false)).toBe('TagName');
-  });
-
-  it('expands TypeParameterNode with small union constraint (<=5 members)', () => {
-    const smallUnion = createUnionNode([createLiteralNode("'a'"), createLiteralNode("'b'"), createLiteralNode("'c'")]);
-    const node = createTypeParameterNode('T', smallUnion);
-
-    expect(formatType(node, false)).toBe("'a' | 'b' | 'c'");
-  });
-
-  // --- UnionNode with typeName ---
-
-  it('formats UnionNode with typeName as fully qualified name', () => {
-    const typeName = createTypeName('Status');
-    const node = createUnionNode([createIntrinsicNode('string'), createIntrinsicNode('number')], typeName);
-
-    expect(formatType(node, false)).toBe('Status');
-  });
-
-  // --- ObjectNode edge cases ---
-
-  it('formats empty ObjectNode as object', () => {
-    const node = createObjectNode([]);
-
-    expect(formatType(node, false)).toBe('object');
-  });
-
-  // --- Unknown node ---
-
-  it('returns unknown for unrecognized node type', () => {
-    const node = {} as tae.AnyType;
-
-    expect(formatType(node, false)).toBe('unknown');
-  });
-
-  // --- Union dedup ---
-
-  it('deduplicates union members via uniq', () => {
-    const node = createUnionNode([
-      createIntrinsicNode('string'),
-      createIntrinsicNode('string'),
-      createIntrinsicNode('number'),
-    ]);
-
-    expect(formatType(node, false)).toBe('string | number');
-  });
-
-  // --- TypeParameterNode constraint flattening in union ---
-
-  it('flattens TypeParameterNode constraint in union when small (<=5 members)', () => {
-    const constraintUnion = createUnionNode([createIntrinsicNode('string'), createIntrinsicNode('number')]);
-    const typeParam = createTypeParameterNode('T', constraintUnion);
-    const union = createUnionNode([typeParam, createIntrinsicNode('boolean')]);
-
-    expect(formatType(union, false)).toBe('string | number | boolean');
-  });
-
-  it('does not flatten TypeParameterNode constraint in union when large (>5 members)', () => {
-    const largeConstraint = createUnionNode([
-      createLiteralNode("'a'"),
-      createLiteralNode("'b'"),
-      createLiteralNode("'c'"),
-      createLiteralNode("'d'"),
-      createLiteralNode("'e'"),
-      createLiteralNode("'f'"),
-    ]);
-    const typeParam = createTypeParameterNode('TagName', largeConstraint);
-    const union = createUnionNode([typeParam, createIntrinsicNode('boolean')]);
-
-    expect(formatType(union, false)).toBe('TagName | boolean');
   });
 });
 
 describe('formatDetailedType', () => {
-  it('expands ExternalTypeNode when found in allExports', () => {
-    const externalType = createExternalTypeNode('TimeType');
-    const resolvedUnion = createUnionNode([
-      createLiteralNode("'current'"),
-      createLiteralNode("'duration'"),
-      createLiteralNode("'remaining'"),
-    ]);
-    const allExports = [{ name: 'TimeType', type: resolvedUnion, documentation: undefined }] as tae.ExportNode[];
+  const project = new OxcProject(FIXTURE_ROOT);
+  const gaugeFile = path.join(FIXTURE_ROOT, 'packages/core/src/core/ui/gauge/core.ts');
 
-    expect(formatDetailedType(externalType, allExports, false)).toBe("'current' | 'duration' | 'remaining'");
+  it('expands a local alias through the Oxc project resolver', () => {
+    const file = project.source(gaugeFile)!;
+    const type = parseType('FillLevel', file);
+
+    expect(formatDetailedType(project, type, false)).toBe("'empty' | 'partial' | 'full'");
   });
 
-  it('returns qualified name when not found in allExports', () => {
-    const externalType = createExternalTypeNode('UnknownType');
+  it('falls back to the authored reference when it cannot resolve a name', () => {
+    const file = project.source(gaugeFile)!;
 
-    expect(formatDetailedType(externalType, [], false)).toBe('UnknownType');
-  });
-
-  it('skips re-exported types (reexportedFrom is set)', () => {
-    const externalType = createExternalTypeNode('TimeType');
-    const resolvedUnion = createUnionNode([createLiteralNode("'current'"), createLiteralNode("'duration'")]);
-    const reexport = {
-      name: 'TimeType',
-      type: resolvedUnion,
-      documentation: undefined,
-      reexportedFrom: 'OriginalTimeType',
-    } as unknown as tae.ExportNode;
-
-    expect(formatDetailedType(externalType, [reexport], false)).toBe('TimeType');
-  });
-
-  it('expands UnionNode with typeName (ignores alias, expands members)', () => {
-    const typeName = createTypeName('VolumeLevel');
-    const union = createUnionNode(
-      [
-        createLiteralNode("'off'"),
-        createLiteralNode("'low'"),
-        createLiteralNode("'medium'"),
-        createLiteralNode("'high'"),
-      ],
-      typeName
-    );
-    const allExports: tae.ExportNode[] = [];
-
-    expect(formatDetailedType(union, allExports, false)).toBe("'off' | 'low' | 'medium' | 'high'");
-  });
-
-  it('handles removeUndefined for optional props', () => {
-    const union = createUnionNode([createIntrinsicNode('string'), createIntrinsicNode('undefined')]);
-
-    expect(formatDetailedType(union, [], true)).toBe('string');
-    expect(formatDetailedType(union, [], false)).toBe('string | undefined');
-  });
-
-  it('prevents infinite recursion via visited set', () => {
-    const externalType = createExternalTypeNode('SelfRef');
-    // SelfRef resolves to itself
-    const selfRefExport = {
-      name: 'SelfRef',
-      type: createExternalTypeNode('SelfRef'),
-      documentation: undefined,
-    } as tae.ExportNode;
-
-    // Should not stack overflow; falls back to formatType
-    expect(formatDetailedType(externalType, [selfRefExport], false)).toBe('SelfRef');
-  });
-
-  it('expands IntersectionNode members', () => {
-    const externalA = createExternalTypeNode('BaseProps');
-    const basePropsExport = {
-      name: 'BaseProps',
-      type: createObjectNode([{ name: 'id', type: createIntrinsicNode('string'), optional: false }]),
-      documentation: undefined,
-    } as tae.ExportNode;
-    const intersection = createIntersectionNode([externalA, createIntrinsicNode('number')]);
-
-    expect(formatDetailedType(intersection, [basePropsExport], false)).toBe('{ id: string } & number');
-  });
-
-  it('delegates non-expandable nodes to formatType', () => {
-    const intrinsic = createIntrinsicNode('boolean');
-
-    expect(formatDetailedType(intrinsic, [], false)).toBe('boolean');
+    expect(formatDetailedType(project, parseType('UnknownType', file), false)).toBe('UnknownType');
   });
 });
 
-// --- Helper factories ---
+describe('formatProperties', () => {
+  const project = new OxcProject(FIXTURE_ROOT);
+  const coreFile = path.join(FIXTURE_ROOT, 'packages/core/src/core/ui/toggle-button/core.ts');
+  const declaration = project.resolveName(coreFile, 'ToggleButtonProps')!;
+  const type = parseType('ToggleButtonProps', declaration.file);
+  const properties = formatProperties(project, project.interfaceMembers(type));
 
-function createPropertyNode(
-  name: string,
-  typeName: string,
-  options: { optional?: boolean; hasIgnoreTag?: boolean; description?: string; defaultValue?: string } = {}
-): tae.PropertyNode {
-  const type = createIntrinsicNode(typeName);
-  const documentation =
-    options.hasIgnoreTag || options.description !== undefined || options.defaultValue !== undefined
-      ? createDocumentation(options)
-      : undefined;
+  it('skips ref and @ignore members', () => {
+    expect(properties.ref).toBeUndefined();
+    expect(properties._internalFlag).toBeUndefined();
+  });
+
+  it('preserves descriptions, defaults, required state, and detailed callback types', () => {
+    expect(properties.disabled).toMatchObject({
+      type: 'boolean',
+      description: 'Whether the button is disabled.',
+      required: true,
+    });
+    expect(properties.onPressedChange).toMatchObject({ type: 'function' });
+    expect(properties.onPressedChange?.detailedType).toContain('=>');
+  });
+});
+
+function parseType(typeText: string, context?: SourceFile): ResolvedType {
+  const source = `type __Test = ${typeText};`;
+  const parsed = parseSync('formatter-test.ts', source);
+  const declaration = parsed.program.body[0];
+  if (declaration?.type !== 'TSTypeAliasDeclaration') throw new Error(`Could not parse type: ${typeText}`);
 
   return {
-    name,
-    type,
-    optional: options.optional ?? false,
-    documentation,
-  } as tae.PropertyNode;
-}
-
-function createDocumentation(options: {
-  hasIgnoreTag?: boolean;
-  description?: string;
-  defaultValue?: string;
-}): tae.Documentation {
-  return {
-    description: options.description,
-    defaultValue: options.defaultValue,
-    hasTag: (tag: string) => (tag === 'ignore' ? (options.hasIgnoreTag ?? false) : false),
-  } as unknown as tae.Documentation;
-}
-
-function createIntrinsicNode(intrinsic: string): tae.IntrinsicNode {
-  const node = Object.create(tae.IntrinsicNode.prototype);
-  node.intrinsic = intrinsic;
-  node.typeName = undefined;
-  return node;
-}
-
-function createUnionNode(types: tae.AnyType[], typeName?: tae.TypeName): tae.UnionNode {
-  const node = Object.create(tae.UnionNode.prototype);
-  node.types = types;
-  node.typeName = typeName;
-  return node;
-}
-
-function createObjectNode(
-  properties: Array<{ name: string; type: tae.AnyType; optional: boolean }>,
-  typeName?: tae.TypeName
-): tae.ObjectNode {
-  const node = Object.create(tae.ObjectNode.prototype);
-  node.properties = properties.map((p) => ({
-    name: p.name,
-    type: p.type,
-    optional: p.optional,
-  }));
-  node.typeName = typeName;
-  return node;
-}
-
-function createArrayNode(elementType: tae.AnyType): tae.ArrayNode {
-  const node = Object.create(tae.ArrayNode.prototype);
-  node.elementType = elementType;
-  return node;
-}
-
-function createLiteralNode(value: string): tae.LiteralNode {
-  const node = Object.create(tae.LiteralNode.prototype);
-  node.value = value;
-  return node;
-}
-
-function createExternalTypeNode(
-  name: string,
-  namespaces?: string[],
-  typeArguments?: Array<{ type: tae.AnyType; equalToDefault: boolean }>
-): tae.ExternalTypeNode {
-  const node = Object.create(tae.ExternalTypeNode.prototype);
-  node.typeName = createTypeName(name, namespaces, typeArguments);
-  return node;
-}
-
-function createIntersectionNode(types: tae.AnyType[], typeName?: tae.TypeName): tae.IntersectionNode {
-  const node = Object.create(tae.IntersectionNode.prototype);
-  node.types = types;
-  node.typeName = typeName;
-  node.properties = [];
-  return node;
-}
-
-function createFunctionNode(callSignatures: tae.CallSignature[], typeName?: tae.TypeName): tae.FunctionNode {
-  const node = Object.create(tae.FunctionNode.prototype);
-  node.callSignatures = callSignatures;
-  node.typeName = typeName;
-  return node;
-}
-
-function createTupleNode(types: tae.AnyType[], typeName?: tae.TypeName): tae.TupleNode {
-  const node = Object.create(tae.TupleNode.prototype);
-  node.types = types;
-  node.typeName = typeName;
-  return node;
-}
-
-function createTypeParameterNode(name: string, constraint?: tae.AnyType): tae.TypeParameterNode {
-  const node = Object.create(tae.TypeParameterNode.prototype);
-  node.name = name;
-  node.constraint = constraint;
-  return node;
-}
-
-function createTypeName(
-  name: string,
-  namespaces?: string[],
-  typeArguments?: Array<{ type: tae.AnyType; equalToDefault: boolean }>
-): tae.TypeName {
-  return new tae.TypeName(name, namespaces, typeArguments);
+    file: context ?? {
+      filePath: 'formatter-test.ts',
+      source,
+      program: parsed.program,
+      comments: parsed.comments,
+    },
+    type: declaration.typeAnnotation,
+  };
 }

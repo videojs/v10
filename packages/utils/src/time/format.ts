@@ -25,10 +25,12 @@ function createDurationFormatter(
   if (style === 'digital') {
     const number = new Intl.NumberFormat(locale, { useGrouping: false });
     const padded = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false });
+
     return {
       format: (duration) => {
         const body = `${padded.format(duration.minutes ?? 0)}:${padded.format(duration.seconds ?? 0)}`;
         const showHours = hoursDisplay === 'always' || duration.hours !== undefined;
+
         return showHours ? `${number.format(duration.hours ?? 0)}:${body}` : body;
       },
     };
@@ -53,6 +55,7 @@ function createDurationFormatter(
 
 function localeCacheKey(locale?: string | string[]): string {
   if (locale === undefined) return '';
+
   return Array.isArray(locale) ? locale.join(':') : locale;
 }
 
@@ -63,10 +66,12 @@ function getDurationFormatter(
 ): DurationFormatter {
   const key = `${localeCacheKey(locale)}:${style}:${hoursDisplay ?? ''}`;
   let formatter = durationFormatters.get(key);
+
   if (!formatter) {
     formatter = createDurationFormatter(style, hoursDisplay, locale);
     durationFormatters.set(key, formatter);
   }
+
   return formatter;
 }
 
@@ -77,16 +82,16 @@ function isValidTime(value: number): boolean {
 /**
  * Format seconds to digital display string.
  *
+ * @example
+ *   formatTime(90); // "1:30"
+ *   formatTime(3661); // "1:01:01"
+ *   formatTime(35, 3600); // "0:00:35" (guided by 1-hour duration)
+ *   formatTime(35, 600); // "00:35" (guided by 10-minute duration)
+ *
  * @param seconds - Time in seconds (can be negative)
  * @param guide - Guide time (typically duration) to determine display format
  * @param options - Digital formatting options
  * @returns Formatted string like "1:30" or "1:05:30"
- *
- * @example
- * formatTime(90) // "1:30"
- * formatTime(3661) // "1:01:01"
- * formatTime(35, 3600) // "0:00:35" (guided by 1-hour duration)
- * formatTime(35, 600) // "00:35" (guided by 10-minute duration)
  */
 export function formatTime(seconds: number, guide?: number, options?: Pick<TimeFormatOptions, 'locale'>): string {
   if (!isValidTime(seconds)) {
@@ -113,6 +118,7 @@ export function formatTime(seconds: number, guide?: number, options?: Pick<TimeF
 
   if (!padMinutes) {
     const zero = new Intl.NumberFormat(locale, { useGrouping: false }).format(0);
+
     body = body.replace(new RegExp(`^${zero}(?=\\p{Nd}\\D)`, 'u'), '');
   }
 
@@ -122,12 +128,12 @@ export function formatTime(seconds: number, guide?: number, options?: Pick<TimeF
 /**
  * Convert seconds to ISO 8601 duration for datetime attribute.
  *
+ * @example
+ *   secondsToIsoDuration(90); // "PT1M30S"
+ *   secondsToIsoDuration(3661); // "PT1H1M1S"
+ *
  * @param seconds - Time in seconds
  * @returns ISO 8601 duration string like "PT1M30S"
- *
- * @example
- * secondsToIsoDuration(90) // "PT1M30S"
- * secondsToIsoDuration(3661) // "PT1H1M1S"
  */
 export function secondsToIsoDuration(seconds: number): string {
   if (!isValidTime(seconds)) {
@@ -141,8 +147,11 @@ export function secondsToIsoDuration(seconds: number): string {
   const s = Math.floor(positiveSeconds % 60);
 
   let duration = 'PT';
+
   if (h > 0) duration += `${h}H`;
+
   if (m > 0) duration += `${m}M`;
+
   if (s > 0 || duration === 'PT') duration += `${s}S`;
 
   return duration;
@@ -151,8 +160,8 @@ export function secondsToIsoDuration(seconds: number): string {
 /**
  * Human-readable duration using `Intl.NumberFormat` and `Intl.ListFormat`.
  *
- * Negative `seconds` denote remaining time: the absolute value is formatted, then wrapped in a
- * localized phrase via {@link TimeFormatOptions.formatRemaining}; otherwise `{duration} remaining`.
+ * Negative `seconds` denote remaining time: the absolute value is formatted, then wrapped in a localized phrase via
+ * {@link TimeFormatOptions.formatRemaining}; otherwise `{duration} remaining`.
  */
 export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions): string {
   if (!isValidTime(seconds)) {
@@ -160,6 +169,7 @@ export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions)
   }
 
   const { locale = DEFAULT_LOCALE, style = 'long', formatRemaining } = options ?? {};
+
   const negative = seconds < 0;
   const positiveSeconds = Math.abs(seconds);
   const totalSeconds = Math.floor(positiveSeconds);
@@ -168,15 +178,20 @@ export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions)
   const secondsPart = totalSeconds % 60;
 
   const record: DurationRecord = {};
+
   if (hours > 0) record.hours = hours;
+
   if (minutes > 0) record.minutes = minutes;
+
   if (secondsPart > 0 || (hours === 0 && minutes === 0)) record.seconds = secondsPart;
 
   const body = getDurationFormatter(locale, style).format(record);
 
   if (negative) {
     if (formatRemaining) return formatRemaining(body);
+
     if (isDefaultLocale(locale)) return `${body} remaining`;
+
     return body;
   }
 

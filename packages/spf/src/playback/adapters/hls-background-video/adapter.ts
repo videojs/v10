@@ -1,4 +1,5 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
+
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import {
@@ -41,27 +42,22 @@ export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps
 }
 
 /**
- * Which reported conditions this composition treats as **fatal** — the ones that
- * reach `error` and fire `'error'`. Severity isn't part of an SVTA code
- * (§Approach: "impact varies with player implementation"), so it's decided at
- * this boundary rather than by the reporter.
+ * Which reported conditions this composition treats as **fatal** — the ones that reach `error` and fire `'error'`.
+ * Severity isn't part of an SVTA code (§Approach: "impact varies with player implementation"), so it's decided at this
+ * boundary rather than by the reporter.
  *
- * **Causes are fatal here, unlike on the other two adapters.** There, a cause is
- * context — one unplayable rendition doesn't fail a source whose others still
- * play, and a verdict follows if the type empties. In the pinned variant a cause
- * *is* the verdict: only the pinned rendition's playlist is ever resolved, so a
- * cause can only be about the pick itself, and dropping that pick is final —
- * nothing here re-picks (that is what `switchVideoTrack` exists for, and this
- * engine doesn't compose it). Measured on Chromium: an MPEG-TS source reports
- * 1004 and an encrypted one 4008, each with no verdict behind it, and the element
- * then sits at `readyState 0` with `error` null forever.
+ * **Causes are fatal here, unlike on the other two adapters.** There, a cause is context — one unplayable rendition
+ * doesn't fail a source whose others still play, and a verdict follows if the type empties. In the pinned variant a
+ * cause _is_ the verdict: only the pinned rendition's playlist is ever resolved, so a cause can only be about the pick
+ * itself, and dropping that pick is final — nothing here re-picks (that is what `switchVideoTrack` exists for, and this
+ * engine doesn't compose it). Measured on Chromium: an MPEG-TS source reports 1004 and an encrypted one 4008, each with
+ * no verdict behind it, and the element then sits at `readyState 0` with `error` null forever.
  *
- * The verdict is still listed, for the shapes that report nothing else: no video
- * renditions at all, or a ladder pruned before anything resolves — both of which
- * `reportAbsentTrackType` covers from the tail of the constraint chain.
+ * The verdict is still listed, for the shapes that report nothing else: no video renditions at all, or a ladder pruned
+ * before anything resolves — both of which `reportAbsentTrackType` covers from the tail of the constraint chain.
  *
- * First-fatal-wins then surfaces the cause rather than the verdict when both are
- * present, which is the more specific of the two.
+ * First-fatal-wins then surfaces the cause rather than the verdict when both are present, which is the more specific of
+ * the two.
  */
 const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -70,55 +66,44 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
 ]);
 
 /**
- * Mixin that adds the background-video SPF playback engine to any base class,
- * for an HLS URL.
+ * Mixin that adds the background-video SPF playback engine to any base class, for an HLS URL.
  *
- * `src` is the whole input surface, and `error` is the one output: nothing about
- * an unplayable source reaches the media element on its own here — an unsupported
- * container, encryption with no EME, and an undecodable codec all leave
- * `HTMLMediaElement.error` null with the element stalled at `readyState 0`
- * (measured on Chromium and WebKit) — so a consumer that watched only the
- * `<video>` would see a source that never appears and never says why. The engine
- * reports each condition onto `engine.state.errors` and logs it; this adapter
- * promotes the first fatal one, mapping it the same way the video and audio Medias
- * map theirs. See `internal/design/spf/features/errors.md`.
+ * `src` is the whole input surface, and `error` is the one output: nothing about an unplayable source reaches the media
+ * element on its own here — an unsupported container, encryption with no EME, and an undecodable codec all leave
+ * `HTMLMediaElement.error` null with the element stalled at `readyState 0` (measured on Chromium and WebKit) — so a
+ * consumer that watched only the `<video>` would see a source that never appears and never says why. The engine reports
+ * each condition onto `engine.state.errors` and logs it; this adapter promotes the first fatal one, mapping it the same
+ * way the video and audio Medias map theirs. See `internal/design/spf/features/errors.md`.
  *
- * Selection pins the largest rendition that *fits the screen*, and holds it for
- * the session. The manifest is still the better place to narrow further: a
- * delivery param — `?max_resolution=720p` on a Mux stream URL, for one — keeps
- * the renditions it excludes out of the manifest entirely, rather than
- * fetched-then-unpicked.
+ * Selection pins the largest rendition that _fits the screen_, and holds it for the session. The manifest is still the
+ * better place to narrow further: a delivery param — `?max_resolution=720p` on a Mux stream URL, for one — keeps the
+ * renditions it excludes out of the manifest entirely, rather than fetched-then-unpicked.
  *
- * The pin is given up, never moved, if the pick turns out to be unplayable: the
- * container is only known once a media playlist resolves, which is after the pick
- * is made, so the selection clears rather than quietly appending bytes nothing can
- * decode.
+ * The pin is given up, never moved, if the pick turns out to be unplayable: the container is only known once a media
+ * playlist resolves, which is after the pick is made, so the selection clears rather than quietly appending bytes
+ * nothing can decode.
  *
- * `@videojs/spf/mux-background-video` is this same Media under a Mux-flavored
- * name — an alias, not a variant. Nothing about the surface changes with the
- * import path.
+ * `@videojs/spf/mux-background-video` is this same Media under a Mux-flavored name — an alias, not a variant. Nothing
+ * about the surface changes with the import path.
  *
- * Everything else the use case fixes rather than exposes: video-only, looping,
- * muted, autoplaying, loading as soon as there is a source. `attach` writes that
- * onto the element and nothing here declares `loop` / `muted` / `autoplay` /
- * `preload` of its own — a host-bound Media inherits all four from the host
- * already, and shadowing them with fixed values would only make reads describe
- * an intention rather than what the element is doing.
+ * Everything else the use case fixes rather than exposes: video-only, looping, muted, autoplaying, loading as soon as
+ * there is a source. `attach` writes that onto the element and nothing here declares `loop` / `muted` / `autoplay` /
+ * `preload` of its own — a host-bound Media inherits all four from the host already, and shadowing them with fixed
+ * values would only make reads describe an intention rather than what the element is doing.
  *
- * A new src re-resolves the presentation, tearing down the state, SourceBuffers,
- * and in-flight requests the previous one built before the next begins. The
- * engine instance and the attached media element are both kept, so neither has to
+ * A new src re-resolves the presentation, tearing down the state, SourceBuffers, and in-flight requests the previous
+ * one built before the next begins. The engine instance and the attached media element are both kept, so neither has to
  * be rewired.
  *
- * @fires error - Fired when a fatal condition is reported. Read `error` for it.
- *
  * @example
- * class HlsBackgroundVideoMedia extends HlsBackgroundVideoMediaMixin(BackgroundVideoHost) {}
+ *   class HlsBackgroundVideoMedia extends HlsBackgroundVideoMediaMixin(BackgroundVideoHost) {}
  *
- * const media = new HlsBackgroundVideoMedia();
- * media.attach(document.querySelector('video'));
- * media.src = 'https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p';
- * media.play();
+ *   const media = new HlsBackgroundVideoMedia();
+ *   media.attach(document.querySelector('video'));
+ *   media.src = 'https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p';
+ *   media.play();
+ *
+ * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  */
 export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class HlsBackgroundVideoMediaImpl extends BaseClass {
@@ -127,9 +112,8 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     #signals!: BackgroundVideoEngineSignals;
     #error: HlsVideoMediaError | null = null;
     /**
-     * The *reported* condition currently surfaced, which is what the re-fire latch
-     * keys on. Not `#error.code`: that's the code this adapter chose to surface,
-     * and the substitution below can make the two differ.
+     * The _reported_ condition currently surfaced, which is what the re-fire latch keys on. Not `#error.code`: that's
+     * the code this adapter chose to surface, and the substitution below can make the two differ.
      */
     #reportedCode: number | null = null;
     #stopErrorSync: () => void;
@@ -141,6 +125,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       super(...args);
 
       const { config } = args?.[0] ?? {};
+
       this.#config = config;
       this.#engine = this.#createEngine();
 
@@ -150,6 +135,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
       // needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
         const errors = this.#signals.state.errors.get();
+
         this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
     }
@@ -159,17 +145,14 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     }
 
     /**
-     * The current fatal condition, or `null`. Only *fatal* ones appear here — the
-     * engine reports non-fatal ones too (they stay in `engine.state.errors`), and
-     * promoting them would say playback had failed when it hadn't. Which ones are
-     * fatal is wider here than on the video and audio Medias; see
-     * {@link FATAL_SVTA_CODES}. Resets per source. Fires `'error'` when set.
+     * The current fatal condition, or `null`. Only _fatal_ ones appear here — the engine reports non-fatal ones too
+     * (they stay in `engine.state.errors`), and promoting them would say playback had failed when it hadn't. Which ones
+     * are fatal is wider here than on the video and audio Medias; see {@link FATAL_SVTA_CODES}. Resets per source.
+     * Fires `'error'` when set.
      *
-     * Mapped the same way theirs are: a sequence holding an
-     * unimplemented-capability cause surfaces as
-     * {@link SVTA_UNSUPPORTED_PLAYBACK_FEATURE} (99001) with the specifics logged,
-     * because "this player can't play this source" is what a consumer can act on,
-     * where a raw container or DRM code only says what to go and look up.
+     * Mapped the same way theirs are: a sequence holding an unimplemented-capability cause surfaces as
+     * {@link SVTA_UNSUPPORTED_PLAYBACK_FEATURE} (99001) with the specifics logged, because "this player can't play this
+     * source" is what a consumer can act on, where a raw container or DRM code only says what to go and look up.
      */
     get error(): HlsVideoMediaError | null {
       return this.#error;
@@ -183,10 +166,12 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
         this.#reportedCode = null;
         return;
       }
+
       // Keyed on the code, not the object: a later append re-runs this effect
       // with an equal-but-new array, and re-firing `'error'` for a condition
       // already surfaced would look like a second failure.
       if (this.#reportedCode === reported.code) return;
+
       this.#reportedCode = reported.code;
 
       // Logged for every fatal condition, not just the substituted ones: a source
@@ -264,9 +249,7 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
 
     async play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
-      if (!mediaElement) {
-        return Promise.reject(new Error('HlsBackgroundVideoMediaElement: no media element attached'));
-      }
+      if (!mediaElement) return Promise.reject(new Error('HlsBackgroundVideoMediaElement: no media element attached'));
 
       try {
         return await mediaElement.play();
@@ -280,10 +263,12 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
               this.#loadstartListener = null;
               mediaElement.play().then(resolve, reject);
             };
+
             this.#loadstartListener = listener;
             mediaElement.addEventListener('loadstart', listener, { once: true });
           });
         }
+
         throw err;
       }
     }
@@ -306,7 +291,9 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
 
     #cancelPendingPlay(): void {
       if (!this.#loadstartListener) return;
+
       const mediaElement = this.#signals.context.mediaElement.get();
+
       mediaElement?.removeEventListener('loadstart', this.#loadstartListener);
       this.#loadstartListener = null;
     }
