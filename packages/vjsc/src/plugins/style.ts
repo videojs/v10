@@ -207,7 +207,6 @@ function reportStyleDiagnostic(
 ): void {
   const message = formatStyleDiagnostic(diagnostic);
   const level = options.complexSelectors ?? 'warn';
-
   if (diagnostic.kind === 'error' || level === 'error') throw new Error(message);
 
   if (level === 'off' || reportedWarnings.has(message)) return;

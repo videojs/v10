@@ -325,7 +325,6 @@ function componentIsComplex(component: SelectorComponent, groupOwners: ReadonlyS
   if (component.kind === 'has') return true;
 
   const selectors = nestedSelectors(component);
-
   if (selectors.length === 0) return false;
 
   if (selectors.some((selector) => selectorContainsGroupOwner(selector, groupOwners))) return false;
