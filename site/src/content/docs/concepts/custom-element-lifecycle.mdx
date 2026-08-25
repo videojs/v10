@@ -1,0 +1,77 @@
+---
+title: Custom element lifecycle
+description: How Video.js HTML elements connect, disconnect, and permanently release resources.
+---
+
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+A custom element can leave the document without being finished. Video.js separates temporary disconnection from permanent destruction so DOM moves and framework reconciliation do not discard reusable state.
+
+## Choose a base
+
+Choose the narrowest base that provides the lifecycle your element needs:
+
+| Base | Lifecycle behavior | Typical use |
+| --- | --- | --- |
+| `HTMLElement` | Browser custom element callbacks only | Elements that manage their own state and cleanup |
+| `ReactiveElement` | Reactive properties, batched updates, and reactive controller callbacks | Reactive elements that do not need Video.js's permanent destruction lifecycle |
+| `UIElement` | `ReactiveElement` plus the `DestroyMixin` lifecycle | Custom player controls and other interactive player UI |
+| `CustomMediaElement(...)` with `MediaAttachMixin` | An `HTMLElement`-based media host lifecycle plus player registration | Custom playback engines and media elements |
+| `PlayerElement` | The `UIElement` lifecycle plus store context and attachment ownership | Player roots |
+
+Use `UIElement` for most custom controls. Built-in custom media elements compose `CustomMediaElement(...)` with <DocsLink slug="reference/media-attach-mixin">`MediaAttachMixin`</DocsLink>. Player roots use the configured <DocsLink slug="reference/player">`PlayerElement`</DocsLink> returned by `createPlayer`. Keep those specialized bases because they own registration and cleanup beyond rendering.
+
+## Clean up each connection
+
+The browser can call `connectedCallback()` and `disconnectedCallback()` many times for the same element. Start listeners, observers, and other connection-scoped work when the element connects. Stop that work when it disconnects. Call the superclass lifecycle methods so reactive controllers and inherited cleanup also run:
+
+```ts
+import { UIElement } from '@videojs/html';
+
+class StatusElement extends UIElement {
+  #disconnect: AbortController | null = null;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this.#disconnect = new AbortController();
+    window.addEventListener('resize', this.#onResize, {
+      signal: this.#disconnect.signal,
+    });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+  }
+
+  #onResize = () => this.requestUpdate();
+}
+```
+
+Reserve `destroyCallback()` for resources that should survive a temporary disconnect, such as an owned store or imperative player API. Overrides must call `super.destroyCallback()` so registered controllers receive `hostDestroyed()`.
+
+## Understand permanent destruction
+
+`UIElement` applies `DestroyMixin`. When it disconnects, the mixin waits for two animation frames and checks `isConnected`. Synchronous moves and brief reparenting that reconnect before the second frame keep the element alive. If it remains disconnected, `destroy()` marks it as destroyed and calls `destroyCallback()` once.
+
+After destruction, the mixin's connection path and update execution no-op. Repeated `destroy()` calls also no-op. Do not reinsert a destroyed instance; create a new element instead. Subclass lifecycle code should still call its superclass methods and can check the public `destroyed` flag when it needs an explicit guard.
+
+Add `keep-alive` to disable automatic destruction for an element that intentionally remains detached longer than two frames. The attribute does not disable manual cleanup: calling `destroy()` still permanently destroys the element.
+
+<Aside type="caution">
+`keep-alive` makes your code responsible for calling `destroy()` when the element is no longer needed.
+</Aside>
+
+## Specialized resource owners
+
+`PlayerElement` follows the `UIElement` lifecycle. It detaches the store's current media target immediately in `disconnectedCallback()`, but keeps the store so a brief move can reconnect with its state intact. It destroys the store only from `destroyCallback()`.
+
+`CustomMediaElement` has a separate lifecycle because it extends `HTMLElement`, not `UIElement`. On disconnect, it queues one microtask and destroys its media host only if the element is still disconnected. This protects a synchronous reparent, but not a longer detached interval. Its `keep-alive` attribute skips that automatic media-host destruction.
+
+## See also
+
+- <DocsLink slug="how-to/build-your-own-component">Build your own UI component</DocsLink>
+- <DocsLink slug="reference/player">`PlayerElement`</DocsLink>
+- <DocsLink slug="reference/media-attach-mixin">`MediaAttachMixin`</DocsLink>
