@@ -19,7 +19,12 @@ function App() {
       <Player poster={getPosterSrc(source)}>
         {/* The skin renders its own <img> from `poster`; supplying one is what lets it carry a CORS mode. */}
         <VideoSkinComponent renderPoster={<img alt="" crossOrigin="" />} live={live}>
-          <HlsVideo src={SOURCES[source].url ?? ''} {...mediaProps} playsInline crossOrigin="">
+          <HlsVideo
+            {...(SOURCES[source].source ? { source: SOURCES[source].source } : { src: SOURCES[source].url ?? '' })}
+            {...mediaProps}
+            playsInline
+            crossOrigin=""
+          >
             <Chapters tracks={getChapters(source)} />
             <Storyboard src={getStoryboardSrc(source)} />
           </HlsVideo>
