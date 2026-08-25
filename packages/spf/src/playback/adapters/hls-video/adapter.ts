@@ -219,6 +219,7 @@ export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Bas
           {
             licenseUrl: () => this.#source?.drm?.[keySystem]?.licenseUrl as string | undefined,
             serverCertificateUrl: () => this.#source?.drm?.[keySystem]?.serverCertificateUrl as string | undefined,
+            headers: () => this.#source?.drm?.[keySystem]?.headers as Record<string, string> | undefined,
           },
         ])
       );

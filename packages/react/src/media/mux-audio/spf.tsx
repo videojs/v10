@@ -13,16 +13,18 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
 // `src` and `source` come from `MuxMediaProps`: the Mux Media owns both, and its
-// `source` is the structured Mux one rather than the generic engine's.
+// `source` is the structured Mux one rather than the generic engine's. Both are
+// omitted from the base rather than intersected with it — the two `source` types
+// describe different things, and an intersection satisfies neither.
 export interface MuxAudioProps
   extends
     Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioMediaProps | keyof MuxMediaProps>,
-    Partial<Omit<HlsAudioMediaProps, 'src'>>,
+    Partial<Omit<HlsAudioMediaProps, 'src' | 'source'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;
 }
 
-const muxAudioDefaultProps: Omit<HlsAudioMediaProps, 'src'> & MuxMediaProps = {
+const muxAudioDefaultProps: Omit<HlsAudioMediaProps, 'src' | 'source'> & MuxMediaProps = {
   ...hlsAudioMediaDefaultProps,
   ...muxMediaDefaultProps,
 };
