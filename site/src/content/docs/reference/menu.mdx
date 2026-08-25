@@ -24,7 +24,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/menu/html/css/BasicUsage.t
 
 ## Anatomy
 
-A root menu owns one positioned popup. Each `Content` is a menu page; nested pages share that popup with the root page.
+A root menu owns one positioned Popup. Nested `Content` elements share that Popup with the root Content.
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
@@ -84,7 +84,7 @@ A root menu owns one positioned popup. Each `Content` is a menu page; nested pag
       <media-menu-item></media-menu-item>
     </media-menu-content>
 
-    <!-- Sibling page opened by the parent item -->
+    <!-- Sibling Content opened by the parent item -->
     <media-menu-content id="submenu">
       <media-menu-item>Back</media-menu-item>
       <media-menu-radio-group>
@@ -102,7 +102,7 @@ A root menu owns one positioned popup. Each `Content` is a menu page; nested pag
 
 Menus open from a trigger and close when you select an item, click outside, move focus away, or press <kbd>Escape</kbd>. Root menus use `side` and `align` as their preferred placement. When the preferred side overflows the positioning boundary, the menu uses the opposite side if it has more space.
 
-In React, create a submenu by nesting another `Menu.Root` in the parent `Menu.Content`; its `Menu.Trigger` behaves as a parent item and its `Menu.Content` becomes the next page. In HTML, add another `<media-menu-content>` as a sibling page, give it an `id`, and point the parent `<media-menu-item>` at it with `commandfor`.
+In React, create a submenu by nesting another `Menu.Root` in the parent `Menu.Content`; its `Menu.Trigger` behaves as a parent item and its `Menu.Content` becomes the active Content. In HTML, add another `<media-menu-content>` as a sibling, give it an `id`, and point the parent `<media-menu-item>` at it with `commandfor`.
 
 Media option groups can render the current selection beside a submenu trigger. See <DocsLink slug="reference/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink>, <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink>, <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink>, and <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink>.
 
@@ -112,7 +112,7 @@ Use data attributes to style open state, highlighted items, selected radio items
 
 `data-highlighted` is added to the current menu item. The highlighted item is the item that keyboard selection will act on. It changes when the menu opens, when the pointer moves over another item, when the user presses arrow keys, or when type-ahead search finds a match.
 
-The root `Menu.Popup` or `<media-menu>` receives `data-open`, `data-side`, and `data-align`. Each Content page receives menu state such as `data-open` and `data-submenu`; a parent page receives `data-submenu-expanded` while one of its child pages is opening or closing.
+The root `Menu.Popup` or `<media-menu>` receives `data-open`, `data-side`, and `data-align`. Each Content receives menu state such as `data-open` and `data-submenu`; a Content with an open logical child receives `data-child-open`.
 
 <FrameworkCase frameworks={["react"]}>
   ```css
@@ -120,7 +120,7 @@ The root `Menu.Popup` or `<media-menu>` receives `data-open`, `data-side`, and `
     opacity: 1;
   }
 
-  .menu-content[data-submenu-expanded="true"] {
+  .menu-content[data-child-open] {
     translate: -100% 0;
   }
 
@@ -140,7 +140,7 @@ The root `Menu.Popup` or `<media-menu>` receives `data-open`, `data-side`, and `
     opacity: 1;
   }
 
-  media-menu-content[data-submenu-expanded="true"] {
+  media-menu-content[data-child-open] {
     translate: -100% 0;
   }
 

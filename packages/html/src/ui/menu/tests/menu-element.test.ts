@@ -93,7 +93,7 @@ describe('MenuElement', () => {
     expect(content.hasAttribute('data-side')).toBe(false);
   });
 
-  it('links an external trigger to the root Content page', async () => {
+  it('links an external trigger to the root Content', async () => {
     const trigger = document.createElement('button');
     const { root, content } = createMenu();
 
@@ -111,7 +111,7 @@ describe('MenuElement', () => {
     expect(trigger.getAttribute('aria-controls')).toBe(content.id);
   });
 
-  it('opens a nested Content page as a sibling of its parent', async () => {
+  it('opens nested Content as a sibling of its parent', async () => {
     const { root, content } = createMenu();
     const trigger = createItem('Quality');
     const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
@@ -134,12 +134,12 @@ describe('MenuElement', () => {
     await waitForAssertion(() => expect(submenu.open).toBe(true));
 
     expect(submenu.hasAttribute('data-submenu')).toBe(true);
-    expect(content.getAttribute('data-submenu-expanded')).toBe('true');
+    expect(content.hasAttribute('data-child-open')).toBe(true);
     expect(content.getAttribute('aria-hidden')).toBe('true');
     expect(content.hasAttribute('inert')).toBe(true);
   });
 
-  it('normalizes arbitrarily nested Content pages under the Popup', async () => {
+  it('normalizes arbitrarily nested Contents under the Popup', async () => {
     const { root, content } = createMenu();
     const firstTrigger = createItem('Quality');
     const first = document.createElement(MenuContentElement.tagName) as MenuContentElement;
@@ -166,12 +166,12 @@ describe('MenuElement', () => {
     secondTrigger.click();
     await waitForAssertion(() => expect(second.open).toBe(true));
 
-    expect(first.getAttribute('data-submenu-expanded')).toBe('true');
+    expect(first.hasAttribute('data-child-open')).toBe(true);
     expect(content.hasAttribute('inert')).toBe(true);
     expect(first.hasAttribute('inert')).toBe(true);
   });
 
-  it('sizes the Popup to the active Content page and includes root padding', async () => {
+  it('sizes the Popup to the active Content and includes root padding', async () => {
     const { root, content } = createMenu();
     const rootItems = document.createElement('div');
     const trigger = createItem('Quality');
@@ -203,7 +203,7 @@ describe('MenuElement', () => {
     });
   });
 
-  it('returns to the parent page when a nested item is selected', async () => {
+  it('returns to the parent Content when a nested item is selected', async () => {
     const { root, content } = createMenu();
     const trigger = createItem('Quality');
     const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
@@ -224,14 +224,14 @@ describe('MenuElement', () => {
     await waitForAssertion(() => {
       expect(submenu.hasAttribute('data-ending-style')).toBe(true);
       expect(submenu.hasAttribute('inert')).toBe(true);
-      expect(content.getAttribute('data-submenu-expanded')).toBe('false');
+      expect(content.hasAttribute('data-child-open')).toBe(false);
       expect(content.hasAttribute('inert')).toBe(false);
     });
     expect(root.open).toBe(true);
     await waitForAssertion(() => expect(submenu.hidden).toBe(true));
   });
 
-  it.each(['Escape', 'ArrowLeft'])('returns to the parent page on %s', async (key) => {
+  it.each(['Escape', 'ArrowLeft'])('returns to the parent Content on %s', async (key) => {
     const { root, content } = createMenu();
     const trigger = createItem('Quality');
     const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
@@ -252,7 +252,7 @@ describe('MenuElement', () => {
     expect(root.open).toBe(true);
   });
 
-  it('resets open descendant pages when the root closes', async () => {
+  it('resets open descendant Contents when the root closes', async () => {
     const { root, content } = createMenu();
     const trigger = createItem('Quality');
     const submenu = document.createElement(MenuContentElement.tagName) as MenuContentElement;
@@ -288,7 +288,7 @@ describe('MenuElement', () => {
     await waitForAssertion(() => expect(root.open).toBe(false));
   });
 
-  it('supports keyboard navigation inside the active Content page', async () => {
+  it('supports keyboard navigation inside the active Content', async () => {
     const { root, content } = createMenu();
     const first = createItem('Quality');
     const second = createItem('Speed');

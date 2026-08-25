@@ -662,7 +662,7 @@ describe('MenuContent', () => {
 
       expect(rootContent.getAttribute('aria-hidden')).toBe('true');
       expect(rootContent.hasAttribute('inert')).toBe(true);
-      expect(rootContent.getAttribute('data-submenu-expanded')).toBe('true');
+      expect(rootContent.hasAttribute('data-child-open')).toBe(true);
     });
   });
 
@@ -680,7 +680,7 @@ describe('MenuContent', () => {
     expect(submenu.hasAttribute('data-ending-style')).toBe(true);
     expect(submenu.hasAttribute('data-open')).toBe(true);
     expect(screen.getByTestId('submenu-trigger').getAttribute('aria-expanded')).toBe('false');
-    expect(screen.getByTestId('root-content').getAttribute('data-submenu-expanded')).toBe('false');
+    expect(screen.getByTestId('root-content').hasAttribute('data-child-open')).toBe(false);
     expect(submenu.hasAttribute('inert')).toBe(true);
   });
 

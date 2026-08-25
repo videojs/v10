@@ -29,7 +29,7 @@ export default styles({
         group,
         'absolute inset-x-0 top-0 max-h-[inherit] overflow-auto overscroll-none p-1 outline-none',
         'transition-[translate,filter] duration-250 ease-out',
-        'data-[submenu-expanded=true]:-translate-x-full data-[submenu-expanded=true]:blur-sm',
+        'data-[child-open]:-translate-x-full data-[child-open]:blur-sm',
       ],
     },
     group: {

@@ -13,7 +13,7 @@ import {
   walkAncestors,
 } from '@videojs/utils/dom';
 
-import { MenuSubmenuExpandedAttr } from '../../../core/ui/menu/data';
+import { MenuContentDataAttrs } from '../../../core/ui/menu/data';
 import { MenuCSSVars } from '../../../core/ui/menu/vars';
 import type { MenuApi } from './create-menu';
 
@@ -37,7 +37,7 @@ interface RegisteredContent extends MenuContentRegistration {
   unsubscribe: () => void;
 }
 
-/** Coordinates sibling Content pages and sizes their shared Popup. */
+/** Coordinates sibling Contents and sizes their shared Popup. */
 export function createMenuPopup(): MenuPopupApi {
   const contents = new Set<RegisteredContent>();
   let element: HTMLElement | null = null;
@@ -132,18 +132,11 @@ export function createMenuPopup(): MenuPopupApi {
 
     for (const content of contents) {
       const activeChild = getActiveChild(content.menu);
-      const exitingChild = getChildren(content.menu).find(({ menu }) => {
-        const input = menu.input.current;
-
-        return input.active && input.status === 'ending';
-      });
 
       if (activeChild) {
-        content.element.setAttribute(MenuSubmenuExpandedAttr, 'true');
-      } else if (exitingChild) {
-        content.element.setAttribute(MenuSubmenuExpandedAttr, 'false');
+        content.element.setAttribute(MenuContentDataAttrs.childOpen, '');
       } else {
-        content.element.removeAttribute(MenuSubmenuExpandedAttr);
+        content.element.removeAttribute(MenuContentDataAttrs.childOpen);
       }
 
       const input = content.menu.input.current;
@@ -155,7 +148,7 @@ export function createMenuPopup(): MenuPopupApi {
     const current = getCurrentContent();
     if (!current) return;
 
-    // Root Content sits inside Popup padding. Positioned submenu pages own their padding.
+    // Root Content sits inside Popup padding. Positioned nested Contents own their padding.
     const popupPadding = current.parent === null ? getElementPadding(element) : null;
     const inlinePadding = popupPadding ? getInlineExtent(popupPadding) : 0;
     const blockPadding = popupPadding ? getBlockExtent(popupPadding) : 0;
@@ -196,7 +189,7 @@ export function createMenuPopup(): MenuPopupApi {
       registered.unsubscribe();
       registered.stopObserving();
       restoreAttributes(registration.element, registered.accessibility);
-      registration.element.removeAttribute(MenuSubmenuExpandedAttr);
+      registration.element.removeAttribute(MenuContentDataAttrs.childOpen);
 
       if (registration.menu.contentElement === registration.element) registration.menu.setContentElement(null);
 
@@ -211,7 +204,7 @@ export function createMenuPopup(): MenuPopupApi {
       content.unsubscribe();
       content.stopObserving();
       restoreAttributes(content.element, content.accessibility);
-      content.element.removeAttribute(MenuSubmenuExpandedAttr);
+      content.element.removeAttribute(MenuContentDataAttrs.childOpen);
 
       if (content.menu.contentElement === content.element) content.menu.setContentElement(null);
     }

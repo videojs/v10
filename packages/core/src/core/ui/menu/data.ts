@@ -13,20 +13,19 @@ export const MenuPopupDataAttrs = {
   ...TransitionDataAttrs,
 } as const satisfies StateAttrMap<MenuState>;
 
-/** State for one root or nested menu page. */
+/** State for one root or nested Content. */
 export const MenuContentDataAttrs = {
-  /** Present while this menu page is active or transitioning out. */
+  /** Present while this Content is active or transitioning out. */
   open: 'data-open',
   /** Present on Content when this menu is nested inside a parent menu. */
   isSubmenu: 'data-submenu',
+  /** Present when this Content has an open logical child. */
+  childOpen: 'data-child-open',
   ...TransitionDataAttrs,
-} as const satisfies StateAttrMap<MenuState>;
+} as const satisfies StateAttrMap<MenuState> & { childOpen: string };
 
-/** Set to `true` while a child page is active and `false` while it exits. */
-export const MenuSubmenuExpandedAttr = 'data-submenu-expanded';
-
-/** All public Menu state attributes exposed to component transforms. */
+/** All public Menu data attributes exposed to component transforms. */
 export const MenuDataAttrs = {
   ...MenuPopupDataAttrs,
   ...MenuContentDataAttrs,
-} as const satisfies StateAttrMap<MenuState>;
+} as const satisfies StateAttrMap<MenuState> & { childOpen: string };

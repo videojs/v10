@@ -4,13 +4,13 @@ import { popup } from './popup';
 import { surface } from './surface';
 
 const submenuPanel = cn(
-  '[--submenu-translate:100%] [&:dir(rtl)]:[--submenu-translate:-100%]',
+  '[--menu-content-enter-translate:100%] [&:dir(rtl)]:[--menu-content-enter-translate:-100%]',
   'absolute inset-x-0 top-0 [max-height:inherit] overflow-auto overscroll-none p-(--menu-padding) outline-none',
   'z-10',
   'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-out',
   'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
-  'data-starting-style:[translate:var(--submenu-translate)_0] data-ending-style:[translate:var(--submenu-translate)_0]',
+  'data-starting-style:[translate:var(--menu-content-enter-translate)_0] data-ending-style:[translate:var(--menu-content-enter-translate)_0]',
   'data-starting-style:blur data-ending-style:blur'
 );
 
@@ -66,11 +66,12 @@ const menuHostShell = cn(
 export const menu = {
   /** Standalone menu popover host (audio playback rate, sandbox demos). */
   root: cn(menuHostShell, 'overflow-auto!'),
-  /** Root menu page. */
+  /** Root menu Content. */
   content: group,
   /** Settings menu host with nested submenu navigation. */
   settings: cn(
     menuHostShell,
+    'group/menu-popup',
     // Only the menu size changes between panels.
     '[--popup-transition:var(--popup-base-transition),width_var(--popup-transition-timing-function)_var(--menu-transition-duration),height_var(--popup-transition-timing-function)_var(--menu-transition-duration)]',
     // Don't transition size on open/close.
@@ -79,16 +80,17 @@ export const menu = {
     'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
     'overflow-hidden!'
   ),
-  /** Root settings page that exits when a submenu page opens. */
+  /** Root settings Content that exits when a nested Content opens. */
   settingsContent: cn(
     group,
     'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-out',
-    '[--submenu-parent-translate:-100%] [&:dir(rtl)]:[--submenu-parent-translate:100%]',
-    'data-[submenu-expanded=true]:[translate:var(--submenu-parent-translate)_0]',
-    'data-[submenu-expanded=true]:blur',
-    // Avoid restarting the parent-page transition in WebKit while the
+    '[--menu-content-exit-translate:-100%] [&:dir(rtl)]:[--menu-content-exit-translate:100%]',
+    'data-[child-open]:[translate:var(--menu-content-exit-translate)_0]',
+    'data-[child-open]:blur',
+    // Avoid restarting the parent Content transition in WebKit while the
     // anchor-positioned highlight is active.
-    'data-[submenu-expanded]:before:hidden'
+    'data-[child-open]:before:hidden',
+    'group-has-[>_[data-submenu][data-ending-style]]/menu-popup:before:hidden'
   ),
   group,
   item: cn(
