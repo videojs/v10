@@ -382,20 +382,18 @@ import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
 import "virtual:vjsc/css/<hash>/common.css";
 import "virtual:vjsc/css/<hash>/dialog.css";
-import { Dialog } from "@videojs/react";
 import { ErrorDialog as ErrorDialogPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
 
 
-
-export interface ErrorDialogProps extends Omit<Dialog.Popup.PopupProps, "children"> {}
+export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.Popup.PopupProps, "children"> {}
 export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <Dialog.Backdrop className={"media-error-dialog-backdrop"} />
-      <Dialog.Popup className={state => cn("media-feedback-surface", "media-error-dialog-popup", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Backdrop className={"media-error-dialog-backdrop"} />
+      <ErrorDialogPrimitive.Popup className={state => cn("media-feedback-surface", "media-error-dialog-popup", resolveClassName(className, state))} {...props}>
         <div className={"media-error-dialog-content"}>
           <ErrorDialogPrimitive.Title className={"media-error-dialog-title"} />
           <ErrorDialogPrimitive.Description className={"media-error-dialog-description"} />
@@ -403,7 +401,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
         <div className={"media-error-dialog-actions"}>
           <ErrorDialogPrimitive.Close className={cn("media-button", "media-error-dialog-close")} />
         </div>
-      </Dialog.Popup>
+      </ErrorDialogPrimitive.Popup>
     </ErrorDialogPrimitive.Root>
   );
 }
@@ -1627,7 +1625,6 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 
 
 
-import { Dialog } from "@videojs/react";
 import { ErrorDialog as ErrorDialogPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -1636,13 +1633,12 @@ import { cn, resolveClassName } from "@videojs/utils/style";
 
 
 
-
-export interface ErrorDialogProps extends Omit<Dialog.Popup.PopupProps, "children"> {}
+export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.Popup.PopupProps, "children"> {}
 export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <Dialog.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
-      <Dialog.Popup className={state => cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 backdrop-saturate-150 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 duration-350"} />
+      <ErrorDialogPrimitive.Popup className={state => cn("text-white backdrop-blur-lg backdrop-saturate-150", "after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit]", "after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.1),inset_0_0_0_1px_rgb(255_255_255/0.05)]", "[@media(prefers-reduced-transparency:reduce)]:bg-black [@media(prefers-reduced-transparency:reduce)]:ring-1 [@media(prefers-reduced-transparency:reduce)]:ring-transparent", "[@media(prefers-reduced-transparency:reduce)]:backdrop-filter-none", "[@media(prefers-reduced-transparency:reduce)]:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "contrast-more:bg-black contrast-more:ring-1 contrast-more:ring-transparent contrast-more:backdrop-filter-none", "contrast-more:after:shadow-[inset_0_1px_0_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.125)]", "forced-colors:bg-[Canvas] forced-colors:ring-1 forced-colors:ring-[CanvasText]", "forced-colors:after:shadow-[inset_0_1px_0_0_CanvasText,inset_0_0_0_1px_CanvasText]", "shadow-sm shadow-black/15 ring-1 ring-black/10", "[@media(prefers-reduced-transparency:reduce)]:shadow-sm [@media(prefers-reduced-transparency:reduce)]:shadow-black/15", "contrast-more:shadow-sm contrast-more:shadow-black/15", "forced-colors:shadow-sm forced-colors:shadow-black/15", "bg-white/10", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-[calc(100%-1.5rem)] max-w-72 rounded-[1.75rem] p-3 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.25)] duration-350", resolveClassName(className, state))} {...props}>
         <div className={"flex flex-col gap-2 px-2 pt-2 pb-1.5"}>
           <ErrorDialogPrimitive.Title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
           <ErrorDialogPrimitive.Description className={"my-[1em] opacity-70 wrap-anywhere"} />
@@ -1650,7 +1646,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
         <div className={"flex gap-2"}>
           <ErrorDialogPrimitive.Close className={cn("grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9")} />
         </div>
-      </Dialog.Popup>
+      </ErrorDialogPrimitive.Popup>
     </ErrorDialogPrimitive.Root>
   );
 }
@@ -2851,20 +2847,18 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 import "virtual:vjsc/css/<hash>/base.css";
 import "virtual:vjsc/css/<hash>/buttons.css";
 import "virtual:vjsc/css/<hash>/dialog.css";
-import { Dialog } from "@videojs/react";
 import { ErrorDialog as ErrorDialogPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
 
 
 
-
-export interface ErrorDialogProps extends Omit<Dialog.Popup.PopupProps, "children"> {}
+export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.Popup.PopupProps, "children"> {}
 export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <Dialog.Backdrop className={"media-error-dialog-backdrop"} />
-      <Dialog.Popup className={state => cn("media-feedback-surface", "media-error-dialog-popup", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Backdrop className={"media-error-dialog-backdrop"} />
+      <ErrorDialogPrimitive.Popup className={state => cn("media-feedback-surface", "media-error-dialog-popup", resolveClassName(className, state))} {...props}>
         <div className={"media-error-dialog-content"}>
           <ErrorDialogPrimitive.Title className={"media-error-dialog-title"} />
           <ErrorDialogPrimitive.Description className={"media-error-dialog-description"} />
@@ -2872,7 +2866,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
         <div className={"media-error-dialog-actions"}>
           <ErrorDialogPrimitive.Close className={cn("media-button", "media-error-dialog-close")} />
         </div>
-      </Dialog.Popup>
+      </ErrorDialogPrimitive.Popup>
     </ErrorDialogPrimitive.Root>
   );
 }
@@ -4094,7 +4088,6 @@ export function BufferingIndicator({ className, ...props }: BufferingIndicatorPr
 
 
 
-import { Dialog } from "@videojs/react";
 import { ErrorDialog as ErrorDialogPrimitive } from "@videojs/react";
 import { cn, resolveClassName } from "@videojs/utils/style";
 
@@ -4103,13 +4096,12 @@ import { cn, resolveClassName } from "@videojs/utils/style";
 
 
 
-
-export interface ErrorDialogProps extends Omit<Dialog.Popup.PopupProps, "children"> {}
+export interface ErrorDialogProps extends Omit<ErrorDialogPrimitive.Popup.PopupProps, "children"> {}
 export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
   return (
     <ErrorDialogPrimitive.Root>
-      <Dialog.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
-      <Dialog.Popup className={state => cn("", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", resolveClassName(className, state))} {...props}>
+      <ErrorDialogPrimitive.Backdrop className={"absolute inset-0 z-40 bg-black/20 backdrop-blur-lg opacity-100 not-data-open:hidden transition-[opacity,backdrop-filter] delay-100 ease-out motion-reduce:duration-50 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:delay-0 motion-reduce:delay-0 backdrop-saturate-120 duration-150"} />
+      <ErrorDialogPrimitive.Popup className={state => cn("", "absolute top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-3 outline-none", "not-data-open:hidden transition-[opacity,scale] delay-100 ease-out motion-reduce:duration-50", "data-starting-style:scale-95 data-starting-style:opacity-0", "data-ending-style:scale-95 data-ending-style:opacity-0 data-ending-style:delay-0", "motion-reduce:delay-0", "w-full max-w-64 p-4 text-white", "text-shadow-[0_1px_0_rgb(0_0_0/0.5)] duration-150", resolveClassName(className, state))} {...props}>
         <div className={"flex flex-col gap-2 py-1.5"}>
           <ErrorDialogPrimitive.Title className={"my-[0.83em] text-media-lg font-semibold leading-tight"} />
           <ErrorDialogPrimitive.Description className={"my-[1em] opacity-70 wrap-anywhere"} />
@@ -4117,7 +4109,7 @@ export function ErrorDialog({ className, ...props }: ErrorDialogProps = {}) {
         <div className={"flex gap-2"}>
           <ErrorDialogPrimitive.Close className={cn("grid min-h-0 shrink-0 touch-manipulation select-none place-items-center rounded-media-control border-0 bg-transparent p-0 text-center text-inherit", "cursor-pointer outline-2 outline-transparent -outline-offset-2", "will-change-[scale] transition-[background-color,color,outline-offset,scale] duration-150 ease-out", "not-aria-disabled:hover:bg-media-control-hover not-aria-disabled:hover:text-media-accent-text", "not-aria-disabled:focus-visible:bg-media-control-hover not-aria-disabled:focus-visible:text-media-accent-text", "not-aria-disabled:aria-expanded:bg-media-control-hover not-aria-disabled:aria-expanded:text-media-accent-text", "focus-visible:outline-white focus-visible:outline-offset-2", "not-aria-disabled:active:scale-[0.97]", "motion-reduce:scale-100 motion-reduce:transition-[background-color,color] motion-reduce:will-change-auto", "aria-disabled:cursor-not-allowed aria-disabled:opacity-50", "size-9.5", "supports-[corner-shape:squircle]:rounded-[--spacing(4)]", "supports-[corner-shape:squircle]:[corner-shape:squircle]", "w-full flex-1 bg-media-accent! px-4 py-2 font-medium text-media-accent-text!", "h-9.5")} />
         </div>
-      </Dialog.Popup>
+      </ErrorDialogPrimitive.Popup>
     </ErrorDialogPrimitive.Root>
   );
 }

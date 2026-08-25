@@ -27,11 +27,11 @@ import basicUsageHtmlTs from "@/components/docs/demos/error-dialog/html/css/Basi
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <ErrorDialog.Root>
-  <Dialog.Popup>
+  <ErrorDialog.Popup>
     <ErrorDialog.Title />
     <ErrorDialog.Description />
     <ErrorDialog.Close />
-  </Dialog.Popup>
+  </ErrorDialog.Popup>
 </ErrorDialog.Root>
 ```
 </FrameworkCase>
@@ -48,7 +48,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/error-dialog/html/css/Basi
 
 ## Behavior
 
-`ErrorDialog` builds on <DocsLink slug="reference/dialog">`Dialog`</DocsLink> with alert semantics and is driven by the player's <DocsLink slug="reference/feature-error">error feature</DocsLink>. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
+`ErrorDialog` builds on <DocsLink slug="reference/dialog">`Dialog`</DocsLink> with alert semantics and is driven by the player's <DocsLink slug="reference/feature-error">error feature</DocsLink>. It re-exports the dialog backdrop and popup under the `ErrorDialog` namespace. It opens when the attached media reports an error and stays hidden otherwise. Closing it dismisses the current error in the player store.
 
 The title, description, and close label use localized default text. Provide children to any of those parts to replace its default content. Known media error codes use the matching translated message, while custom error messages are shown as written.
 

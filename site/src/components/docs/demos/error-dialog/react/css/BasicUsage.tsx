@@ -1,4 +1,4 @@
-import { Container, createPlayer, Dialog, ErrorDialog } from '@videojs/react';
+import { Container, createPlayer, ErrorDialog } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import { useRef } from 'react';
 
@@ -32,11 +32,11 @@ export default function BasicUsage() {
           Trigger a playback error
         </button>
         <ErrorDialog.Root>
-          <Dialog.Popup className="react-error-dialog-basic__dialog">
+          <ErrorDialog.Popup className="react-error-dialog-basic__dialog">
             <ErrorDialog.Title className="react-error-dialog-basic__title" />
             <ErrorDialog.Description className="react-error-dialog-basic__description" />
             <ErrorDialog.Close className="react-error-dialog-basic__close" />
-          </Dialog.Popup>
+          </ErrorDialog.Popup>
         </ErrorDialog.Root>
       </Container>
     </Player>

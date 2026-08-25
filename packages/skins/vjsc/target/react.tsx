@@ -51,28 +51,6 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
       });
     },
     components: {
-      ErrorDialog: {
-        Backdrop: imported({
-          from: '@videojs/react',
-          name: 'Dialog',
-          path: ['Backdrop'],
-          props: {
-            from: '@videojs/react',
-            name: 'Dialog',
-            path: ['BackdropProps'],
-          },
-        }),
-        Popup: imported({
-          from: '@videojs/react',
-          name: 'Dialog',
-          path: ['Popup'],
-          props: {
-            from: '@videojs/react',
-            name: 'Dialog',
-            path: ['PopupProps'],
-          },
-        }),
-      },
       Popover: {
         Trigger: ({ props, children }) => <target.Popover.Trigger render={children} {...props} />,
       },

@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { ErrorDialog } from '..';
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
-import { Dialog } from '../../dialog';
 
 afterEach(() => {
   resetI18nRegistry();
@@ -34,12 +33,12 @@ describe('ErrorDialog', () => {
       <Wrapper>
         <I18nProvider locale="es">
           <ErrorDialog.Root>
-            <Dialog.Backdrop data-testid="backdrop" />
-            <Dialog.Popup>
+            <ErrorDialog.Backdrop data-testid="backdrop" />
+            <ErrorDialog.Popup>
               <ErrorDialog.Title data-testid="title" />
               <ErrorDialog.Description data-testid="description" />
               <ErrorDialog.Close data-testid="close" />
-            </Dialog.Popup>
+            </ErrorDialog.Popup>
           </ErrorDialog.Root>
         </I18nProvider>
       </Wrapper>

@@ -1,21 +1,20 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vite-plus/test';
 
-import { Dialog } from '../../dialog';
-import { AlertDialogRoot } from '../alert-dialog-root';
+import { AlertDialog } from '..';
 
 afterEach(cleanup);
 
-describe('AlertDialogRoot', () => {
-  it('provides alert semantics to generic dialog parts', () => {
+describe('AlertDialog', () => {
+  it('provides alert semantics to its shared dialog parts', () => {
     const { getByRole } = render(
-      <AlertDialogRoot open>
-        <Dialog.Popup>
-          <Dialog.Title>Stop playback?</Dialog.Title>
-          <Dialog.Description>The current video will close.</Dialog.Description>
-          <Dialog.Close>Continue</Dialog.Close>
-        </Dialog.Popup>
-      </AlertDialogRoot>
+      <AlertDialog.Root open>
+        <AlertDialog.Popup>
+          <AlertDialog.Title>Stop playback?</AlertDialog.Title>
+          <AlertDialog.Description>The current video will close.</AlertDialog.Description>
+          <AlertDialog.Close>Continue</AlertDialog.Close>
+        </AlertDialog.Popup>
+      </AlertDialog.Root>
     );
 
     const popup = getByRole('alertdialog');
@@ -27,9 +26,9 @@ describe('AlertDialogRoot', () => {
 
   it('supports uncontrolled mode with defaultOpen', () => {
     const { getByRole } = render(
-      <AlertDialogRoot defaultOpen>
-        <Dialog.Popup>Content</Dialog.Popup>
-      </AlertDialogRoot>
+      <AlertDialog.Root defaultOpen>
+        <AlertDialog.Popup>Content</AlertDialog.Popup>
+      </AlertDialog.Root>
     );
 
     expect(getByRole('alertdialog')).toBeDefined();
@@ -37,9 +36,9 @@ describe('AlertDialogRoot', () => {
 
   it('does not render the popup while closed', () => {
     const { queryByRole } = render(
-      <AlertDialogRoot open={false}>
-        <Dialog.Popup>Content</Dialog.Popup>
-      </AlertDialogRoot>
+      <AlertDialog.Root open={false}>
+        <AlertDialog.Popup>Content</AlertDialog.Popup>
+      </AlertDialog.Root>
     );
 
     expect(queryByRole('alertdialog')).toBeNull();
