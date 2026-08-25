@@ -77,6 +77,7 @@ const SEEK_TIME = 10;
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
+/** Props for the packaged minimal video skin. */
 export type MinimalVideoSkinProps = BaseVideoSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
@@ -331,6 +332,12 @@ function SettingsMenu(): ReactNode {
   );
 }
 
+/**
+ * Renders the compact packaged video UI and the Container that owns player layout and fullscreen.
+ *
+ * Place a video media component in `children` and import `@videojs/react/video/minimal-skin.css` for the packaged
+ * styles.
+ */
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
   const { children, className, renderPoster, style, ...rest } = props;
 

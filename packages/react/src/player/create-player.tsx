@@ -23,25 +23,45 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useDestroy } from '../utils/use-destroy';
 import { PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
+/** Configures the feature-backed store and provider component created by {@link createPlayer}. */
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
+  /** Features combined into the player's store, state, actions, and configuration props. */
   features: Features;
+
+  /** Name shown for the generated provider component in development tools. */
   displayName?: string;
 }
 
+/** Props accepted by a generated Player provider. */
 export type PlayerProps<Config = object> = {
   [Key in keyof Config]?: Config[Key] | undefined;
 } & {
+  /** Content placed inside the player context. The provider does not render a host element of its own. */
   children: ReactNode;
 };
 
+/** The provider component and typed hooks produced by {@link createPlayer}. */
 export interface CreatePlayerResult<Store extends PlayerStore> {
+  /** Provides a new player store to its descendants without adding a layout element. */
   Player: FC<PlayerProps<InferPlayerConfig<Store>>>;
+
+  /** Accesses the configured store, or subscribes to a selected value from it. */
   usePlayer: UsePlayerHook<Store>;
+
+  /** Returns the media currently attached beneath the generated Player, or `null` before attachment. */
   useMedia: () => Media | null;
 }
 
+/** Typed player-store hook returned by {@link createPlayer}. */
 export type UsePlayerHook<Store extends PlayerStore> = {
+  /** Returns the configured player store. */
   (): Store;
+
+  /**
+   * Subscribes to a value derived from the player state.
+   *
+   * @param selector - Derives the value consumed by the calling component.
+   */
   <R>(selector: (state: InferStoreState<Store>) => R): R;
 };
 

@@ -9,6 +9,12 @@ const { PlayerElement, PlayerController: VideoPlayerController } = createPlayer(
 /** Player controller bound to the standard video player store. */
 export const PlayerController = VideoPlayerController;
 
+/**
+ * Player-state provider registered as `<video-player>`.
+ *
+ * The element owns the configured video store but no layout. Put a skin or `<media-container>` inside it to provide the
+ * media, controls, and fullscreen target.
+ */
 export class VideoPlayerElement extends PlayerElement {
   static readonly tagName = 'video-player';
 }
