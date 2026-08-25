@@ -80,7 +80,7 @@ function createSections(
   source: PartReference | ComponentReference,
   options: { forPart: true; partId: string } | { forPart: false }
 ): ApiReferenceSection[] {
-  const sections = API_REFERENCE_SUBSECTIONS.flatMap((definition) => {
+  const sections: ApiReferenceSection[] = API_REFERENCE_SUBSECTIONS.flatMap((definition) => {
     if (!hasEntries(source[definition.key])) {
       return [];
     }

@@ -2,6 +2,8 @@
  * Re-export types from the shared schema. The shared schema in src/types/component-reference.ts is the single source of
  * truth.
  */
+import type { ComponentEventDef } from '../../../src/types/component-reference.js';
+
 export type {
   ComponentReference,
   ComponentEventDef,
