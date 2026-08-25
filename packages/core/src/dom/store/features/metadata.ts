@@ -55,12 +55,12 @@ export const metadataFeature = definePlayerFeature({
   }),
   derived: {
     /** The resolved content title. Set it through the player, not through the store. */
-    title: ({ get }) => get()[USER_TITLE] ?? get()[MEDIA_TITLE] ?? DEFAULT_TITLE,
+    title: ({ get }): string => get()[USER_TITLE] ?? get()[MEDIA_TITLE] ?? DEFAULT_TITLE,
     /**
      * The resolved poster URL, independent of the media element's own `poster`. Set it through the player, not through
      * the store.
      */
-    poster: ({ get }) => get()[USER_POSTER] ?? get()[MEDIA_POSTER] ?? DEFAULT_POSTER,
+    poster: ({ get }): string => get()[USER_POSTER] ?? get()[MEDIA_POSTER] ?? DEFAULT_POSTER,
   },
   attach({ target, signal, set }) {
     const { media } = target;

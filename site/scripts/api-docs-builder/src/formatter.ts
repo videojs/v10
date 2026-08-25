@@ -141,8 +141,8 @@ export function formatProperties(project: OxcProject, props: readonly ResolvedMe
 /**
  * Format a type into a human-readable string, expanding type aliases when possible.
  *
- * Resolves `ExternalTypeNode` references against `allExports` so that type aliases like `TimeType` are expanded to
- * their underlying union (`'current' | 'duration' | 'remaining'`).
+ * Resolves referenced declarations through the OXC project so aliases like `TimeType` expand to their underlying union
+ * (`'current' | 'duration' | 'remaining'`).
  */
 export function formatDetailedType(
   project: OxcProject,
