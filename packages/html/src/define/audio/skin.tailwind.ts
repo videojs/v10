@@ -103,7 +103,7 @@ function getTemplateHTML() {
           </div>
 
           <div class="${buttonGroup}">
-            <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
+            <media-playback-rate-button id="playback-rate-trigger" commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
               <media-playback-rate-radio-group class="${menu.group}">
                 <template>
@@ -116,6 +116,10 @@ function getTemplateHTML() {
                 </template>
               </media-playback-rate-radio-group>
             </media-menu>
+            <media-tooltip trigger="playback-rate-trigger" side="top" boundary="viewport" class="${popup.tooltip}">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
