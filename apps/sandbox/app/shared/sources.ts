@@ -363,10 +363,18 @@ const SOURCE_MAP = {
     // Axinom's H.264 CMAF cbcs vector — the same packaging Mux produces, from a
     // different packager, declaring Widevine and FairPlay in one manifest.
     //
-    // Licensed by the `X-AxDRM-Message` entitlement each system carries, which is
-    // what a per-system `headers` config exists for — a license URL alone cannot
-    // authenticate here. {@link AXINOM_TOKEN} is paired with this asset's key.
-    label: 'HLS - DRM Widevine/FairPlay (Axinom)',
+    // Licensed by the `X-AxDRM-Message` entitlement, which is what a per-system
+    // `headers` config exists for — a license URL alone cannot authenticate here.
+    // {@link AXINOM_TOKEN} is paired with this asset's content key.
+    //
+    // Widevine only, though the manifest also declares FairPlay: Axinom's FairPlay
+    // API answers `An initialization vector must be provided with every key in the
+    // entitlement message`, and no published Axinom token carries one (checked
+    // across their own test-vector list, Shaka's asset list, and dash.js's
+    // samples — 17 tokens, none with a per-key `iv`). The tokens are signed, so
+    // one cannot be minted. Naming FairPlay here would fail on Safari for want of
+    // a credential rather than for anything this engine does.
+    label: 'HLS - DRM Widevine (Axinom)',
     type: 'hls',
     subType: 'mp4',
     drm: true,
@@ -375,11 +383,6 @@ const SOURCE_MAP = {
       drm: {
         'com.widevine.alpha': {
           licenseUrl: 'https://drm-widevine-licensing.axtest.net/AcquireLicense',
-          headers: { 'X-AxDRM-Message': AXINOM_TOKEN },
-        },
-        'com.apple.fps': {
-          licenseUrl: 'https://drm-fairplay-licensing.axtest.net/AcquireLicense',
-          serverCertificateUrl: 'https://vtb.axinom.com/FPScert/fairplay.cer',
           headers: { 'X-AxDRM-Message': AXINOM_TOKEN },
         },
       },
