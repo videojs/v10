@@ -17,7 +17,7 @@ import {
   type VideoTrack,
 } from '../types';
 import { matchTag, parseByteRange, parseExtInfDuration } from './parse-attributes';
-import { resolveUrl } from './resolve-url';
+import { type ResolveKeyUri, resolveKeyUri, resolveUrl } from './resolve-url';
 
 /**
  * MPEG-2 Transport Stream (IANA `video/MP2T`, lowercased for `isTypeSupported`). Video + audio TS — there is no
@@ -170,10 +170,22 @@ function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
  * @param previous - Prior track state (unresolved shell, or previous resolved snapshot)
  * @returns Resolved track with segments (type inferred from input)
  */
+/** Seams a composition can replace when parsing a media playlist. */
+export interface ParseMediaPlaylistConfig {
+  /**
+   * How an `EXT-X-KEY` URI becomes the value on the parsed key. Defaults to
+   * {@link resolveKeyUri}, which resolves relative `identity` key files and leaves
+   * opaque DRM identifiers (`data:`, `skd://`) alone.
+   */
+  resolveKeyUri?: ResolveKeyUri;
+}
+
 export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   text: string,
-  previous: T | ResolveTrack<T>
+  previous: T | ResolveTrack<T>,
+  config: ParseMediaPlaylistConfig = {}
 ): ResolveTrack<T> {
+  const resolveKey = config.resolveKeyUri ?? resolveKeyUri;
   const lines = text.split(/\r?\n/);
 
   // Segments and resources resolve relative to media playlist URL (per HLS spec)
@@ -254,7 +266,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
           seenKeys.add(identity);
           keys.push({
             method,
-            ...(uri !== undefined && { uri: resolveUrl(uri, baseUrl) }),
+            ...(uri !== undefined && { uri: resolveKey(uri, baseUrl) }),
             ...(keyFormat !== undefined && { keyFormat }),
             ...(keyId !== undefined && { keyId }),
             ...(iv !== undefined && { iv }),

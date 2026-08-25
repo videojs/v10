@@ -1224,6 +1224,30 @@ ${keyLines}
     ).toBeUndefined();
   });
 
+  // Key URIs are opaque identifiers for every DRM system — a `data:` PSSH/PRO
+  // payload, a FairPlay `skd://` — and only `identity`/AES-128 names a fetchable
+  // resource. Three real providers delimit the FairPlay form three different ways,
+  // so the parser must hand every one of them back untouched.
+  it.each([
+    ['Axinom keyid:iv', 'skd://302f80dd-411e-4886-bca5-bb1f8018a024:77FD1889AAF4143B085548B3C0F95B9A'],
+    ['EZDRM host/;id', 'skd://fps.ezdrm.com/;b99ed9e5-c641-49d1-bfa8-43692b686ddb'],
+    ['bare id', 'skd://9fd385d5-f389-48b5-b7c3-b1863ee10888'],
+    ['data: payload', 'data:text/plain;base64,AAAAPnBzc2gAAAAA'],
+  ])('preserves an opaque %s key URI verbatim', (_label, uri) => {
+    const track = parseMediaPlaylist(
+      withKey(`#EXT-X-KEY:METHOD=SAMPLE-AES,URI="${uri}",KEYFORMAT="com.apple.streamingkeydelivery"`),
+      unresolved
+    );
+
+    expect(getMediaPlaylistMetadata(track)?.keys?.[0]?.uri).toBe(uri);
+  });
+
+  it('still resolves a relative AES-128 key URI against the playlist', () => {
+    const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=AES-128,URI="keys/1.bin"'), unresolved);
+
+    expect(getMediaPlaylistMetadata(track)?.keys?.[0]?.uri).toBe('https://example.com/keys/1.bin');
+  });
+
   it('surfaces a DRM key declaration with raw attribute values', () => {
     const track = parseMediaPlaylist(
       withKey(

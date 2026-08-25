@@ -4,6 +4,7 @@ import { computed, peek, type ReadonlySignal, type Signal, update } from '../../
 import { when } from '../../core/signals/when';
 import { RecurringRunner, type Reschedule, runOnce, Task } from '../../core/tasks/task';
 import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
+import type { ResolveKeyUri } from '../../media/hls/resolve-url';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
@@ -68,6 +69,8 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
   reschedule?: Reschedule<ResolvedTrack>;
   /** Report conditions found in the parsed playlist (see `primitives/report-track-conditions`); absent → report nothing. */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
+  /** `EXT-X-KEY` URI handling; absent → `parseMediaPlaylist`'s default. */
+  resolveKeyUri?: ResolveKeyUri;
 }
 
 /** Engine-config slice each `resolve*` behavior reads to build its failover- decorated playlist fetch. */
@@ -80,6 +83,8 @@ interface ResolveTrackConfig {
   reschedule?: Reschedule<ResolvedTrack>;
   /** Playlist-derived condition reporting (see `primitives/report-track-conditions`). */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
+  /** `EXT-X-KEY` URI handling; absent → `parseMediaPlaylist`'s default. */
+  resolveKeyUri?: ResolveKeyUri;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
@@ -91,6 +96,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
     gateFirstParse,
     reschedule,
     reportUnsupportedTrackConditions,
+    resolveKeyUri,
   },
 }: {
   // Widened with the optional `errors` slot: reporting writes through it without
@@ -208,7 +214,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   const previous = live ? findTrackToResolve(live, trackId) : undefined;
                   if (!previous) throw new Error('resolve-track: selected track not found');
 
-                  const mediaTrack = parseMediaPlaylist(text, previous);
+                  const mediaTrack = parseMediaPlaylist(text, previous, { resolveKeyUri });
 
                   // Report what the parse revealed about this rendition, before
                   // committing it. Causes only — one unplayable rendition doesn't
