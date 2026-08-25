@@ -1,5 +1,5 @@
 import type { State } from '@videojs/store';
-import { listen, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+import { getDeepActiveElement, listen, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
 import type { PopoverInput } from '../../../core/ui/popover/core';
 import { createDismissLayer } from '../dismiss-layer';
@@ -395,7 +395,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
             return;
           }
 
-          const active = document.activeElement;
+          const active = getDeepActiveElement(popupEl?.ownerDocument);
           if (active && (triggerEl?.contains(active) || popupEl?.contains(active))) return;
 
           applyClose('blur');

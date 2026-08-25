@@ -491,6 +491,38 @@ describe('createPopover', () => {
       popover.destroy();
       popup.remove();
     });
+
+    it('keeps the popover open when focus settles inside a Shadow DOM popup', async () => {
+      const { popover, onOpenChange } = createTestPopover();
+      const host = document.createElement('div');
+      const shadow = host.attachShadow({ mode: 'open' });
+      const popup = document.createElement('div');
+      const child = document.createElement('button');
+
+      popup.append(child);
+      shadow.append(popup);
+      document.body.append(host);
+      popover.setPopupElement(popup);
+      popover.open();
+      flush();
+      child.focus();
+      onOpenChange.mockClear();
+
+      popover.popupProps.onFocusOut({
+        relatedTarget: null,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      });
+      await nextFrame();
+      await nextFrame();
+
+      expect(document.activeElement).toBe(host);
+      expect(shadow.activeElement).toBe(child);
+      expect(onOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
+
+      popover.destroy();
+      host.remove();
+    });
   });
 
   describe('destroy', () => {
