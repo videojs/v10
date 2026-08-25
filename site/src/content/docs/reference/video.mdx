@@ -24,10 +24,10 @@ import basicUsageHtmlTs from "@/components/docs/demos/video/html/css/BasicUsage.
 ## Import
 
 <FrameworkCase frameworks={["react"]}>
-Import `Video` and the matching feature bundle from the video preset:
+Import `Video` from the video preset:
 
 ```tsx
-import { Video, videoFeatures } from '@videojs/react/video';
+import { Video } from '@videojs/react/video';
 ```
 </FrameworkCase>
 
@@ -59,33 +59,21 @@ import '@videojs/html/video/player';
 ```
 </FrameworkCase>
 
-## Player registration
+## Use with a player
 
 <FrameworkCase frameworks={["react"]}>
-Place `Video` inside the `Player` returned by `createPlayer({ features: videoFeatures })`. On mount, its composed ref registers the native `HTMLVideoElement` as that Player's media provider. Replacing or unmounting it detaches the previous element. Outside a Player, `Video` still renders a standalone native `<video>` without creating or attaching a Video.js store.
+Place `Video` anywhere inside a `VideoPlayer`, or inside another Video.js `Player` configured for video. It becomes that player's media provider automatically. Outside a player, `Video` behaves as a standalone native `<video>`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Place a native `<video>` anywhere under `<video-player>`. The player observes its full descendant subtree and attaches the first native `<video>` or `<audio>` in document order. Adding, removing, or replacing native media causes the provider to update and detach the previous element when necessary.
-
-A registered custom media component takes precedence over a descendant native element. If the custom media unregisters, the player can fall back to the first native media element still in its subtree.
+Place a native `<video>` anywhere inside `<video-player>`. It becomes that player's media provider automatically.
 </FrameworkCase>
 
-## Sources and tracks
+## Native behavior
 
-Use the native `src` property for one URL or add child [`<source>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/source) when the browser should choose between candidates. Browser media support determines which native sources can play; see <DocsLink slug="concepts/media-sources">Media sources</DocsLink> when you need an HLS, DASH, Mux, or other playback adapter.
+Video.js does not replace the native video API. Use `src` for one URL or add child [`<source>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/source) when the browser should choose between candidates. See <DocsLink slug="concepts/media-sources">Media sources</DocsLink> when you need an HLS, DASH, Mux, or other playback adapter.
 
-Add native [`<track>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/track) for captions, subtitles, chapters, descriptions, or metadata. React forwards `Video` children unchanged, so `<source>` and `<track>` use their regular React DOM props such as `srcLang` and `default`.
-
-## Native API
-
-<FrameworkCase frameworks={["react"]}>
-`VideoProps` extends React's `VideoHTMLAttributes<HTMLVideoElement>`. Native attributes, event handlers, and children pass through to the `<video>`, and `ref` resolves to its `HTMLVideoElement`. Use that ref for native properties and methods.
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-The element is an ordinary `HTMLVideoElement`; Video.js does not wrap or replace its native DOM API.
-</FrameworkCase>
+Add native [`<track>` elements](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/track) for captions, subtitles, chapters, descriptions, or metadata. React forwards native attributes, event handlers, and children to the `<video>`, and its `ref` resolves to the `HTMLVideoElement`.
 
 See MDN for the complete [`<video>` element](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/video), [`HTMLVideoElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLVideoElement), and shared [`HTMLMediaElement`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement) APIs.
 
