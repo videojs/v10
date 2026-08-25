@@ -124,7 +124,7 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   let typeaheadBuffer = '';
   let typeaheadTimer: ReturnType<typeof setTimeout> | null = null;
-  let deferredNullFocusOut: UIFocusEvent | null = null;
+  let pendingFocusOut: UIFocusEvent | null = null;
 
   let openRafId = 0;
   let lastCloseReason: MenuOpenChangeReason | null = null;
@@ -333,7 +333,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   const contentProps: MenuContentProps = {
     onFocusOut(event) {
       if (event.relatedTarget === null && hasClosingSubmenu()) {
-        deferredNullFocusOut = event;
+        pendingFocusOut = event;
         return;
       }
 
@@ -450,7 +450,7 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function registerSubmenu(menu: MenuApi): () => void {
     submenus.add(menu);
-    const unsubscribe = menu.input.subscribe(flushDeferredNullFocusOut);
+    const unsubscribe = menu.input.subscribe(handlePendingFocusOut);
 
     submenuUnsubscribes.set(menu, unsubscribe);
 
@@ -458,7 +458,7 @@ export function createMenu(options: MenuOptions): MenuApi {
       submenus.delete(menu);
       submenuUnsubscribes.get(menu)?.();
       submenuUnsubscribes.delete(menu);
-      flushDeferredNullFocusOut();
+      handlePendingFocusOut();
     };
   }
 
@@ -466,12 +466,12 @@ export function createMenu(options: MenuOptions): MenuApi {
     return [...submenus].some(({ input }) => input.current.status === 'ending');
   }
 
-  function flushDeferredNullFocusOut(): void {
-    if (!deferredNullFocusOut || hasClosingSubmenu()) return;
+  function handlePendingFocusOut(): void {
+    if (!pendingFocusOut || hasClosingSubmenu()) return;
 
-    const event = deferredNullFocusOut;
+    const event = pendingFocusOut;
 
-    deferredNullFocusOut = null;
+    pendingFocusOut = null;
     popover.popupProps.onFocusOut(event);
   }
 
@@ -492,7 +492,7 @@ export function createMenu(options: MenuOptions): MenuApi {
 
     submenuUnsubscribes.clear();
     submenus.clear();
-    deferredNullFocusOut = null;
+    pendingFocusOut = null;
     popover.destroy();
   }
 
