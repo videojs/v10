@@ -20,7 +20,6 @@ import { PauseIcon, PlayIcon, RestartIcon, SpinnerIcon, VolumeHighIcon, VolumeLo
 import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { Dialog } from '@/ui/dialog';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
@@ -112,7 +111,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
       {children}
 
       <ErrorDialog.Root>
-        <Dialog.Popup className={error.root}>
+        <ErrorDialog.Popup className={error.root}>
           <div className={error.dialog}>
             <div className={error.content}>
               <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
@@ -122,7 +121,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
               <ErrorDialog.Close className={cn(button.base, button.subtle)}></ErrorDialog.Close>
             </div>
           </div>
-        </Dialog.Popup>
+        </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
       <div className={controls}>

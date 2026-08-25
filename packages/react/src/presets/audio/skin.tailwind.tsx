@@ -37,7 +37,6 @@ import {
 import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { Dialog } from '@/ui/dialog';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
@@ -176,7 +175,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
       {children}
 
       <ErrorDialog.Root>
-        <Dialog.Popup className={error.root}>
+        <ErrorDialog.Popup className={error.root}>
           <div className={error.dialog}>
             <div className={error.content}>
               <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
@@ -186,7 +185,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
               <ErrorDialog.Close className={cn(button.base, button.subtle)}></ErrorDialog.Close>
             </div>
           </div>
-        </Dialog.Popup>
+        </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
       <div className={controls}>

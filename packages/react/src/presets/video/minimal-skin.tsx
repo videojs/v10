@@ -47,7 +47,6 @@ import { CaptionsButton } from '@/ui/captions-button';
 import { CaptionsRadioGroup, useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
-import { Dialog } from '@/ui/dialog';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
@@ -350,7 +349,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
       />
 
       <ErrorDialog.Root>
-        <Dialog.Popup className="media-error">
+        <ErrorDialog.Popup className="media-error">
           <div className="media-error__dialog">
             <div className="media-error__content">
               <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
@@ -360,7 +359,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
             </div>
           </div>
-        </Dialog.Popup>
+        </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
       <Controls.Root className="media-controls">
