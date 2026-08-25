@@ -3,12 +3,17 @@ import { resolve } from 'node:path';
 
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite-plus';
+import { vjscPlugin } from 'vjsc/vite';
+
+import { configureSkinModule } from '../../../../packages/skins/vjsc/config.ts';
+
+const packageDir = import.meta.dirname;
 
 function getPageEntries(): Record<string, string> {
   const entries: Record<string, string> = {};
 
   // Hand-written pages in src/ (ejected, captions, etc.)
-  const srcDir = resolve(__dirname, 'src');
+  const srcDir = resolve(packageDir, 'src');
 
   for (const entry of readdirSync(srcDir)) {
     const file = resolve(srcDir, entry);
@@ -19,7 +24,7 @@ function getPageEntries(): Record<string, string> {
   }
 
   // Generated pages in src/pages/
-  const pagesDir = resolve(__dirname, 'src/pages');
+  const pagesDir = resolve(packageDir, 'src/pages');
 
   if (existsSync(pagesDir)) {
     for (const entry of readdirSync(pagesDir)) {
@@ -40,12 +45,9 @@ export default defineConfig({
   define: {
     __DEV__: 'true',
   },
-  plugins: [react()],
+  plugins: [vjscPlugin({ configure: configureSkinModule }), react({ jsxImportSource: 'react' })],
   resolve: {
-    alias: {
-      '@': resolve(__dirname, '../../../../packages/react/src'),
-    },
-    dedupe: ['react', 'react-dom'],
+    dedupe: ['@videojs/html', '@videojs/react', 'react', 'react-dom', 'vjsc'],
   },
   optimizeDeps: {
     exclude: [
@@ -56,10 +58,12 @@ export default defineConfig({
       '@videojs/spf',
       '@videojs/store',
       '@videojs/utils',
+      'vjsc',
+      'vjsc/styles',
     ],
   },
   build: {
-    outDir: resolve(__dirname, 'dist'),
+    outDir: resolve(packageDir, 'dist'),
     emptyOutDir: true,
     sourcemap: true,
     rolldownOptions: {
@@ -67,7 +71,7 @@ export default defineConfig({
         nativeMagicString: true,
       },
       input: {
-        main: resolve(__dirname, 'src/index.html'),
+        main: resolve(packageDir, 'src/index.html'),
         ...getPageEntries(),
       },
     },

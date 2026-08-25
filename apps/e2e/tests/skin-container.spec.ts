@@ -20,16 +20,14 @@ for (const { framework, path } of SOURCE_SKINS) {
 
     test('renders media and poster in one container composition', async ({ page }) => {
       const skin = page.locator('[data-source-skin]');
-      const container = framework === 'HTML' ? skin.locator('media-container') : skin;
+      const posterImage = skin.locator('media-poster img, img.media-poster').first();
 
-      await expect(container).toBeAttached();
+      await expect(skin).toBeAttached();
       await expect(page.locator('video')).toBeAttached();
-      await expect(container.locator('media-poster, img.media-poster')).toBeAttached();
-      await expect(container.locator('media-controls, .media-controls-root')).toBeAttached();
-      await expect(container.locator('.media-overlay')).toBeAttached();
-      await expect(container.locator('media-seek-button, .media-seek-button')).toHaveCount(0);
-
-      await expect(skin.locator('img[style*="background"]').first()).toHaveCSS('background-image', /url\(/);
+      await expect(skin.locator('media-poster, img.media-poster')).toBeAttached();
+      await expect(skin.locator('[data-controls]')).toBeAttached();
+      await expect(skin.locator('media-seek-button, .media-seek-button')).toHaveCount(0);
+      await expect(posterImage).toHaveAttribute('src', /thumbnail/);
     });
 
     test('hides the poster once playback starts', async ({ page }) => {
