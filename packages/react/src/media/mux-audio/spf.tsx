@@ -9,12 +9,14 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
-// `src` and `source` come from `MuxAdapterProps`: the Mux Media owns both, and its
-// `source` is the structured Mux one rather than the generic engine's.
+// `src` and `source` come from `MuxAdapterProps`: the Mux Adapter owns both, and its
+// `source` is the structured Mux one rather than the generic engine's. Both are
+// omitted from the base rather than intersected with it — the two `source` types
+// describe different things, and an intersection satisfies neither.
 export interface MuxAudioProps
   extends
     Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioAdapterProps | keyof MuxAdapterProps>,
-    Partial<Omit<HlsAudioAdapterProps, 'src'>>,
+    Partial<Omit<HlsAudioAdapterProps, 'src' | 'source'>>,
     Partial<MuxAdapterProps> {
   children?: ReactNode;
 }
