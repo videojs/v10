@@ -78,6 +78,8 @@ class MyContainer extends ContainerElement {}
 customElements.define('my-container', MyContainer);
 ```
 
+Extending `ContainerElement` automatically registers the element with the nearest player when it connects and releases that registration when it disconnects.
+
 Import `@videojs/html/ui/container` when you only need to register the standard `<media-container>` element.
 </FrameworkCase>
 

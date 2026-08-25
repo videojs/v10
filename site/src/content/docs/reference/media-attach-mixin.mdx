@@ -43,8 +43,7 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
 
 ## Factory function
 
-{/* TODO: link mediaContext to concept page once written (https://github.com/videojs/v10/issues/1033) */}
-`MediaAttachMixin` is pre-configured with the default `mediaContext`. To use a different context, call `createMediaAttachMixin`:
+`MediaAttachMixin` is pre-configured with the default `mediaContext` published by <DocsLink slug="reference/player">`PlayerElement`</DocsLink>. Call `createMediaAttachMixin` only when a custom player publishes a matching custom `MediaContext`:
 
 ```ts
 import { createMediaAttachMixin } from '@videojs/html';
