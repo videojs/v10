@@ -12,14 +12,24 @@ import {
 } from './volume-indicator-status';
 
 export interface VolumeIndicatorProps extends IndicatorCoreProps {
+  /** Internal translated label overrides supplied by framework adapters. */
   labels?: Partial<InputIndicatorLabels> | undefined;
 }
 
 export interface VolumeIndicatorState extends IndicatorLifecycleState {
+  /** Whether the indicator is open. */
+  open: boolean;
+  /** Increments each time a volume input action updates the indicator. */
+  generation: number;
+  /** Predicted volume level after the input action. */
   level: IndicatorVolumeLevel | null;
+  /** Predicted volume formatted as a percentage. */
   value: string | null;
+  /** Predicted volume percentage used by the Fill part. */
   fill: string | null;
+  /** Whether a downward step tried to move past minimum volume. */
   min: boolean;
+  /** Whether an upward step tried to move past maximum volume. */
   max: boolean;
 }
 
