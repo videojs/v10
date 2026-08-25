@@ -8,8 +8,8 @@ import { useControlsContext } from './context';
 export interface ControlsBackdropProps extends UIComponentProps<'div', ControlsCore.State> {}
 
 /**
- * Presentational layer behind player controls. Renders a `<div>` with the controls state data attributes
- * so skins can style it without reaching across sibling components.
+ * Presentational layer behind player controls. Renders a `<div>` with the controls state data attributes so skins can
+ * style it without reaching across sibling components.
  */
 export const ControlsBackdrop = forwardRef<HTMLDivElement, ControlsBackdropProps>(function ControlsBackdrop(
   { render, className, style, ...elementProps },
