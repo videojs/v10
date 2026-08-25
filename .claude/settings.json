@@ -2,18 +2,6 @@
   "enabledMcpjsonServers": ["astro-docs"],
   "enableAllProjectMcpServers": true,
   "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.agents/hooks/enforce-source-spacing.mjs\"",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
@@ -21,28 +9,6 @@
             "type": "command",
             "command": "npx -y gh-setup-hooks",
             "timeout": 120
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.agents/hooks/enforce-source-spacing.mjs\"",
-            "timeout": 30
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$(git rev-parse --show-toplevel)/.agents/hooks/enforce-source-spacing.mjs\"",
-            "timeout": 30
           }
         ]
       }

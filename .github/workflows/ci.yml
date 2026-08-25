@@ -55,6 +55,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Test lint rules
+        run: pnpm exec vp test run tools/oxlint/anti-slop/rules/tests
+
   typecheck:
     needs: install
     runs-on: ubuntu-latest

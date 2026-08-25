@@ -74,6 +74,7 @@ export default defineConfig({
       'anti-slop/no-known-value-widening': 'warn',
       'anti-slop/no-module-mocking': 'warn',
       'anti-slop/no-object-parameters': 'warn',
+      'anti-slop/padding-line-between-statements': 'error',
       'anti-slop/no-reflect-apply': 'warn',
       'anti-slop/no-reflect-get': 'warn',
       'anti-slop/no-runtime-typeof': 'warn',
