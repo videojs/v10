@@ -30,7 +30,7 @@ export interface SliderProps {
 export type SliderPreviewOverflow = 'clamp' | 'visible';
 
 export interface SliderPreviewProps {
-  /** Whether the preview is clamped to the slider bounds. */
+  /** How the preview handles slider boundaries. `clamp` keeps it within bounds; `visible` lets it extend past them. */
   overflow?: SliderPreviewOverflow | undefined;
 }
 

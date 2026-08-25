@@ -138,7 +138,7 @@ Media discovery is handled by the player provider, not the container. Custom med
 The container is where user intent enters the player. It listens for physical interaction on its surface and translates that into player behavior:
 
 - **User activity** — Mouse movement, touch, and keyboard activity within the container drive idle detection. This is how controls know when to show and hide.
-- **Gestures** — Click-to-play, double-click fullscreen, swipe to seek, and other touch/mouse gestures. Configured via the `Gesture` component.
+- **Gestures** — Tap and double-tap actions, optionally limited by pointer type and left, center, or right region. Configured via the <DocsLink slug="reference/gesture">`Gesture`</DocsLink> component.
 - **Keyboard controls** — Spacebar to play/pause, arrow keys to seek, and other keyboard shortcuts scoped to the container. Configured via the `Hotkey` component.
 
 ## Relationship to skins
