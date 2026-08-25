@@ -47,7 +47,7 @@ function App() {
           className="mx-auto aspect-video max-w-4xl"
         >
           <HlsVideo
-            src={SOURCES[source].url ?? ''}
+            {...(SOURCES[source].source ? { source: SOURCES[source].source } : { src: SOURCES[source].url ?? '' })}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

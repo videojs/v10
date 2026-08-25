@@ -43,10 +43,10 @@ type NavbarProps = {
 
 /**
  * What the selected media will do with a source, when that's worth labelling for someone smoke-testing. The plain HLS
- * presets are the SPF engine reached through `<hls-video>`: no TS transmux pipeline, and no way to name a license
- * server, so it refuses MPEG-TS on format and encrypted renditions on protection. (The Mux SPF presets do license
- * `source.drm`, and are not labelled here.) Derived from the pair rather than stored on the source, since every source
- * here plays fine
+ * presets are the SPF engine reached through `<hls-video>`: no TS transmux pipeline, so MPEG-TS is refused on format.
+ * DRM it does license, from the same `source.drm` the Mux flavor reads — what varies is whether the browser has a CDM
+ * for the key systems a source names. Derived from the pair rather than stored on the source, since every source here
+ * plays fine
  * under some other media.
  *
  * Keyed on the _preset_, not a single is-SPF-HLS flag, because the variants answer differently and a note promising the
@@ -82,7 +82,10 @@ function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | un
   const audioOnlyPreset = preset === 'hls-audio';
 
   if (source.drm) {
-    return audioOnlyPreset ? 'plays — Mux leaves audio clear' : 'expects protected error';
+    // A source naming license servers is licensable here now that `<hls-video>`
+    // takes a structured source; whether it plays is then the browser's CDM.
+    if (!source.source?.drm) return 'expects protected error';
+    return audioOnlyPreset ? 'plays if its audio is clear' : 'plays where the browser has the CDM';
   }
 
   if (source.subType && source.subType !== 'mp4') {

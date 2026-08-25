@@ -33,10 +33,15 @@ async function render() {
   const mediaAttrs = renderMediaAttrs(state);
   const playerTag = live ? 'live-video-player' : 'video-player';
 
+  // A source carrying license servers has no room in the `src` attribute, so it
+  // is assigned as an object below instead.
+  const { source, url } = SOURCES[state.source];
+  const srcAttr = source ? '' : ` src="${url}"`;
+
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <hls-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin>
+        <hls-video${srcAttr} ${mediaAttrs} playsinline crossorigin>
           ${renderChapters(getChapters(state.source))}
           ${renderStoryboard(storyboard)}
         </hls-video>
@@ -44,6 +49,12 @@ async function render() {
       </${tag}>
     </${playerTag}>
   `);
+
+  // `source.drm` licenses protected playback here — the engine reads the license
+  // servers it names.
+  if (source) {
+    document.querySelector('hls-video')!.source = source;
+  }
 }
 
 render();

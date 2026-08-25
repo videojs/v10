@@ -441,13 +441,10 @@ export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'da
 export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
 /**
  * The plain HLS presets are the same engine reached through `<hls-video>`, which
- * takes a `src` string and nothing else. That drops what only a playback ID
- * reaches, and both licensable DRM assets with it — there is nowhere to name a
- * license server — leaving the unlicensed one to be refused.
+ * takes a structured `source` of its own, so it licenses `source.drm` exactly as
+ * the Mux flavor does. Only what a playback ID reaches is dropped.
  */
-export const SPF_HLS_SOURCE_IDS = SOURCE_IDS.filter(
-  (id) => SOURCES[id].type !== 'dash' && !isMuxSource(id) && (!isDrmSource(id) || id === 'hls-drm-unlicensed')
-);
+export const SPF_HLS_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && !isMuxSource(id));
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 /**
  * Shaka plays DASH and HLS from one element, so it is the only preset offered both. The DRM assets are left out until
