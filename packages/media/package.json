@@ -33,6 +33,14 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
+    "./dom/dash": {
+      "types": "./dist/dev/dom/dash/index.d.ts",
+      "browser": {
+        "development": "./dist/dev/dom/dash/index.js",
+        "default": "./dist/default/dom/dash/index.js"
+      },
+      "default": "./dist/default/dom/dash/server.js"
+    },
     "./dom/*": {
       "types": "./dist/dev/dom/*/index.d.ts",
       "development": "./dist/dev/dom/*/index.js",
