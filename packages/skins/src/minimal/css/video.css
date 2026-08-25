@@ -236,12 +236,6 @@
     transition: mask-position 50ms ease-out;
   }
 
-  @container media-root (width <= 42rem) {
-    .media-popover--volume {
-      --media-popover-side-offset: calc(var(--spacing) * 3);
-    }
-  }
-
   &:has(.media-button--mute[aria-expanded="true"]) {
     @container media-root (width <= 42rem) {
       .media-button-group:last-child {
@@ -291,7 +285,8 @@
 /* Popups & Animations */
 
 .media-minimal-skin--video .media-popover--volume {
-  padding: 0;
+  --media-popover-side-offset: 0rem;
+  padding: 0 calc(var(--spacing) * 3);
   background: transparent;
 }
 

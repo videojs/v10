@@ -70,7 +70,7 @@ export class TooltipElement extends UIElement {
   closeDelay = TooltipCore.defaultProps.closeDelay;
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup;
   disabled = TooltipCore.defaultProps.disabled;
-  sticky = false;
+  sticky = TooltipCore.defaultProps.sticky;
   boundary: PositioningBoundary = 'container';
   trigger = '';
 

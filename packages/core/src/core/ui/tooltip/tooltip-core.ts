@@ -22,6 +22,8 @@ export interface TooltipProps {
   disableHoverablePopup?: boolean | undefined;
   /** When true, the tooltip is disabled and will not open. */
   disabled?: boolean | undefined;
+  /** Whether the tooltip stays open when another popup opens from its trigger. */
+  sticky?: boolean | undefined;
 }
 
 export interface TooltipInput extends TransitionState {}
@@ -47,6 +49,7 @@ export class TooltipCore {
     closeDelay: 0,
     disableHoverablePopup: true,
     disabled: false,
+    sticky: false,
   };
 
   #props = { ...TooltipCore.defaultProps };
