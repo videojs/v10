@@ -61,6 +61,7 @@ import {
   resolveDrmUrl,
   shapeLicenseRequest,
   toCencInitData,
+  unplayableEncryptedTypes,
 } from '../../../media/dom/eme';
 import {
   SVTA_BAD_LICENSE_REQUEST,
@@ -68,6 +69,8 @@ import {
   SVTA_DRM_INITIALIZATION_ERROR,
   SVTA_DRM_LICENSE_REJECTED,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
 } from '../../../media/errors';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
@@ -154,6 +157,17 @@ function setupMediaKeysSetup({
               // Gate stays up: parked playback beats guaranteed decode
               // failure. Severity is the adapter's call, per errors.md.
               emitError(state, { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { keySystems: candidates } });
+              // …but a cause alone leaves nothing fatal to surface, so a source
+              // whose every rendition needs the CDM we just failed to get would
+              // park with no reported failure at all. Pruning would have called
+              // that type empty; it only missed because it ran before
+              // negotiation. Say so now, in the same terms.
+              for (const trackType of unplayableEncryptedTypes(presentation)) {
+                emitError(state, {
+                  code: trackType === 'video' ? SVTA_NO_SUPPORTED_VIDEO_TRACK : SVTA_NO_SUPPORTED_AUDIO_TRACK,
+                  data: { trackType },
+                });
+              }
               return;
             }
 
