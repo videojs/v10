@@ -116,6 +116,8 @@ Use data attributes to style open state, highlighted items, selected radio items
 
 The root `Menu.Popup` or `<media-menu>` receives `data-open`, `data-side`, and `data-align`. Each Content receives menu state such as `data-open` and `data-submenu`; a Content with an open logical child receives `data-child-open`.
 
+Every navigable item receives `data-item`. Use `[data-item]` when one rule should target regular, radio, checkbox, and submenu-trigger items together.
+
 <FrameworkCase frameworks={["react"]}>
   ```css
   .menu-popup[data-open] {
