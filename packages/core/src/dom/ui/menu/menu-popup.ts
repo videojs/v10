@@ -65,7 +65,6 @@ export function createMenuPopup(): MenuPopupApi {
 
     while (current) {
       const child = getActiveChild(current.menu);
-
       if (!child) return current;
 
       current = child;
@@ -151,7 +150,6 @@ export function createMenuPopup(): MenuPopupApi {
     }
 
     const current = getCurrentContent();
-
     if (!current) return;
 
     const size = measureContent(current.element, getAvailableWidth(element));

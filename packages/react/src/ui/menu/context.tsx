@@ -41,7 +41,6 @@ export const MenuPopupContextProvider = MenuPopupContext.Provider;
 
 export function useMenuPopupContext(): MenuPopupContextValue {
   const ctx = useContext(MenuPopupContext);
-
   if (!ctx) throw new Error('Menu.Content must be used within a Menu.Popup');
 
   return ctx;

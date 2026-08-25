@@ -18,7 +18,6 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(function Men
 ) {
   const { core, menu, parent, state, preferredSide, setPositionedSide, anchorName, boundary, container } =
     useMenuContext();
-
   if (__DEV__ && parent) throw new Error('Menu.Popup must be a direct child of a root Menu.Root');
 
   const [popup] = useState(createMenuPopup);

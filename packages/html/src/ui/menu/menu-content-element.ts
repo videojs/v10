@@ -94,7 +94,6 @@ export class MenuContentElement extends UIElement {
   protected override update(changed: PropertyValues): void {
     super.update(changed);
     const root = this.#root.value ?? null;
-
     if (!root) return;
 
     if (!this.id) this.id = this.#generatedId;
@@ -119,7 +118,6 @@ export class MenuContentElement extends UIElement {
     }
 
     const menu = this.#menu;
-
     if (!menu) return;
 
     const input = menu.input.current;
@@ -231,7 +229,6 @@ export class MenuContentElement extends UIElement {
   /** Keep every page as a direct popup child, including authored nested pages. */
   #normalize(): void {
     const popup = this.closest('media-menu');
-
     if (!popup || this.parentElement === popup) return;
 
     this.#normalizing = true;
@@ -283,7 +280,6 @@ export class MenuContentElement extends UIElement {
 
   #clearTriggerState(): void {
     const trigger = this.#stateTrigger;
-
     if (!trigger) return;
 
     applyElementProps(trigger, {
