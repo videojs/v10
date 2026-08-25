@@ -183,7 +183,6 @@ describe('Skins Vite workflow', () => {
 
   it('builds the same VJSC configuration for production', async () => {
     const result = await build({
-      configLoader: 'native',
       configFile,
       logLevel: 'silent',
       build: { write: false },
