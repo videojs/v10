@@ -2,9 +2,10 @@ import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaVolumeState } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
+
 import { playerContext } from '../../../player/context';
-import { MediaElement } from '../../media-element';
+import { UIElement } from '../../ui-element';
 import { VolumePopoverElement } from '../volume-popover-element';
 
 let tagCounter = 0;
@@ -23,7 +24,7 @@ function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailabil
   }) as unknown as AnyPlayerStore;
 }
 
-class TestPlayerProviderElement extends MediaElement {
+class TestPlayerProviderElement extends UIElement {
   store: AnyPlayerStore = createVolumeStore('available');
   readonly #provider = new ContextProvider(this, { context: playerContext });
 
