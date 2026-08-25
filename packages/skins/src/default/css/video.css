@@ -27,34 +27,34 @@
 /* Video-specific container styles */
 
 .media-default-skin--video {
-  --default-accent-color: oklch(1 0 0);
-  --border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
-  --focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-  --media-video-border-radius: var(--container-border-radius);
+  --media-default-accent-color: oklch(1 0 0);
+  --media-border-color: light-dark(oklch(0 0 0 / 0.1), oklch(1 0 0 / 0.15));
+  --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-video-border-radius: var(--media-container-border-radius);
 
-  --surface-background-color: oklch(1 0 0 / 0.1);
-  --surface-inner-border-color: oklch(1 0 0 / 0.1);
-  --surface-outer-border-color: oklch(0 0 0 / 0.1);
-  --surface-shadow-color: oklch(0 0 0 / 0.15);
-  --surface-backdrop-filter: blur(16px) saturate(1.5);
+  --media-surface-background-color: oklch(1 0 0 / 0.1);
+  --media-surface-inner-border-color: oklch(1 0 0 / 0.1);
+  --media-surface-outer-border-color: oklch(0 0 0 / 0.1);
+  --media-surface-shadow-color: oklch(0 0 0 / 0.15);
+  --media-surface-backdrop-filter: blur(16px) saturate(1.5);
 
-  --controls-transition-duration: 100ms;
-  --controls-transition-timing-function: ease-out;
+  --media-controls-transition-duration: 100ms;
+  --media-controls-transition-timing-function: ease-out;
 
-  --error-dialog-transition-duration: 350ms;
-  --error-dialog-transition-delay: 100ms;
-  --error-dialog-transition-timing-function: ease-out;
+  --media-error-dialog-transition-duration: 350ms;
+  --media-error-dialog-transition-delay: 100ms;
+  --media-error-dialog-transition-timing-function: ease-out;
 
-  --popup-transition-duration: 100ms;
-  --popup-transition-timing-function: ease-out;
+  --media-popup-transition-duration: 100ms;
+  --media-popup-transition-timing-function: ease-out;
 
   overflow: clip;
   background: oklch(0 0 0);
 
   @media (prefers-reduced-motion: reduce) {
-    --error-dialog-transition-duration: 50ms;
-    --error-dialog-transition-delay: 0ms;
-    --popup-transition-duration: 0ms;
+    --media-error-dialog-transition-duration: 50ms;
+    --media-error-dialog-transition-delay: 0ms;
+    --media-popup-transition-duration: 0ms;
 
     .media-error__dialog {
       scale: 1;
@@ -63,21 +63,21 @@
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
-    --surface-background-color: oklch(0 0 0);
-    --surface-inner-border-color: oklch(1 0 0 / 0.25);
-    --surface-outer-border-color: transparent;
+    --media-surface-background-color: oklch(0 0 0);
+    --media-surface-inner-border-color: oklch(1 0 0 / 0.25);
+    --media-surface-outer-border-color: transparent;
   }
 
   &:has(.media-controls--root:not([data-visible])) {
     /* Slight delay to hide controls on non-touch devices after interaction */
     @media (pointer: fine) {
-      --controls-transition-duration: 300ms;
+      --media-controls-transition-duration: 300ms;
     }
     @media (pointer: coarse) {
-      --controls-transition-duration: 150ms;
+      --media-controls-transition-duration: 150ms;
     }
     @media (prefers-reduced-motion: reduce) {
-      --controls-transition-duration: 50ms;
+      --media-controls-transition-duration: 50ms;
     }
   }
 
@@ -89,29 +89,29 @@
     pointer-events: none;
     content: "";
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1px var(--border-color);
+    box-shadow: inset 0 0 0 1px var(--media-border-color);
   }
 
   &:fullscreen {
-    --container-border-radius: 0;
+    --media-container-border-radius: 0;
 
     &::after {
       display: none;
     }
 
     @media (width >= 1280px) {
-      --scale: 1.25;
+      --media-scale: 1.25;
     }
     @media (width >= 1536px) {
-      --scale: 1.5;
+      --media-scale: 1.5;
     }
     @media (width >= 1920px) {
-      --scale: 1.75;
+      --media-scale: 1.75;
     }
   }
 
   * {
-    --focus-ring-color: oklch(1 0 0);
+    --media-focus-ring-color: oklch(1 0 0);
   }
 }
 
@@ -129,16 +129,16 @@
 .media-default-skin--video .media-error__dialog {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--spacing) * 3);
+  gap: calc(var(--media-spacing) * 3);
   width: 100%;
-  max-width: calc(var(--spacing) * 72);
-  padding: calc(var(--spacing) * 3);
+  max-width: calc(var(--media-spacing) * 72);
+  padding: calc(var(--media-spacing) * 3);
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
-  border-radius: calc(var(--spacing) * 7);
-  transition-delay: var(--error-dialog-transition-delay);
-  transition-timing-function: var(--error-dialog-transition-timing-function);
-  transition-duration: var(--error-dialog-transition-duration);
+  border-radius: calc(var(--media-spacing) * 7);
+  transition-delay: var(--media-error-dialog-transition-delay);
+  transition-timing-function: var(--media-error-dialog-transition-timing-function);
+  transition-duration: var(--media-error-dialog-transition-duration);
   transition-property: opacity, scale;
 }
 
@@ -154,32 +154,32 @@
 .media-default-skin--video .media-error__content {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--spacing) * 2);
-  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2) calc(var(--spacing) * 1.5);
+  gap: calc(var(--media-spacing) * 2);
+  padding: calc(var(--media-spacing) * 2) calc(var(--media-spacing) * 2) calc(var(--media-spacing) * 1.5);
   text-shadow: inherit;
 }
 
 .media-default-skin--video .media-error__title {
-  font-size: var(--font-size-medium);
+  font-size: var(--media-font-size-medium);
 }
 
 .media-default-skin--video .media-slider__value {
-  text-shadow: 0 1px 0 var(--shadow-current-color);
+  text-shadow: 0 1px 0 var(--media-shadow-current-color);
 }
 
 /* Controls (hide/show behavior) */
 
 .media-default-skin--video .media-controls--root {
-  --inset-factor: 2;
-  --inset: calc(var(--spacing) * var(--inset-factor));
-  --base-boundary-offset: var(--inset-factor);
+  --media-inset-factor: 2;
+  --media-inset: calc(var(--media-spacing) * var(--media-inset-factor));
+  --media-base-boundary-offset: var(--media-inset-factor);
 
   z-index: 10;
   display: contents;
   color: oklch(1 0 0);
-  transition-timing-function: var(--controls-transition-timing-function);
+  transition-timing-function: var(--media-controls-transition-timing-function);
   /* Speed up the entry transition */
-  transition-duration: calc(var(--controls-transition-duration) / 2);
+  transition-duration: calc(var(--media-controls-transition-duration) / 2);
 
   .media-controls--primary,
   .media-controls--secondary {
@@ -194,21 +194,21 @@
   }
 
   .media-controls--primary {
-    inset-inline: var(--inset);
-    bottom: var(--inset);
+    inset-inline: var(--media-inset);
+    bottom: var(--media-inset);
     transform-origin: bottom;
   }
 
   .media-controls--secondary {
-    top: var(--inset);
-    right: var(--inset);
+    top: var(--media-inset);
+    right: var(--media-inset);
     container-type: normal;
     transform-origin: top;
   }
 
   .media-time-controls {
     flex: 1;
-    padding-inline: calc(var(--spacing) * 2);
+    padding-inline: calc(var(--media-spacing) * 2);
   }
 
   @container media-root (width < 32rem) {
@@ -236,7 +236,7 @@
         pointer-events: none;
         opacity: 0;
         scale: 0.95;
-        transition-duration: var(--controls-transition-duration);
+        transition-duration: var(--media-controls-transition-duration);
 
         @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
           filter: blur(8px);
@@ -267,8 +267,8 @@
 
   @container media-root (width >= 32rem) {
     position: absolute;
-    inset-inline: var(--inset);
-    bottom: var(--inset);
+    inset-inline: var(--media-inset);
+    bottom: var(--media-inset);
     display: flex;
     transform-origin: bottom;
 
@@ -285,7 +285,7 @@
       pointer-events: none;
       opacity: 0;
       scale: 0.95;
-      transition-duration: var(--controls-transition-duration);
+      transition-duration: var(--media-controls-transition-duration);
 
       @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
         filter: blur(8px);
@@ -301,7 +301,7 @@
     }
 
     .media-time-controls {
-      padding-inline: calc(var(--spacing) * 3);
+      padding-inline: calc(var(--media-spacing) * 3);
     }
   }
 
@@ -314,7 +314,7 @@
   }
 
   @container media-root (width > 42rem) {
-    --inset-factor: 3;
+    --media-inset-factor: 3;
   }
 }
 

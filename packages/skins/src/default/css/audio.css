@@ -17,33 +17,33 @@
 /* Container */
 
 .media-default-skin--audio {
-  --default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-  --text-color: light-dark(oklch(0 0 0), oklch(1 0 0));
-  --border-color: oklch(0 0 0 / 0.1);
-  --focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-default-accent-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-text-color: light-dark(oklch(0 0 0), oklch(1 0 0));
+  --media-border-color: oklch(0 0 0 / 0.1);
+  --media-focus-ring-color: light-dark(oklch(0 0 0), oklch(1 0 0));
 
-  --surface-background-color: light-dark(oklch(1 0 0 / 0.5), oklch(0 0 0 / 0.4));
-  --surface-inner-border-color: oklch(1 0 0 / 0.1);
-  --surface-outer-border-color: oklch(0 0 0 / 0.05);
-  --surface-shadow-color: oklch(0 0 0 / 0.15);
-  --surface-backdrop-filter: blur(16px) saturate(1.5);
+  --media-surface-background-color: light-dark(oklch(1 0 0 / 0.5), oklch(0 0 0 / 0.4));
+  --media-surface-inner-border-color: oklch(1 0 0 / 0.1);
+  --media-surface-outer-border-color: oklch(0 0 0 / 0.05);
+  --media-surface-shadow-color: oklch(0 0 0 / 0.15);
+  --media-surface-backdrop-filter: blur(16px) saturate(1.5);
 
-  --error-dialog-transition-duration: 250ms;
-  --error-dialog-transition-delay: 100ms;
+  --media-error-dialog-transition-duration: 250ms;
+  --media-error-dialog-transition-delay: 100ms;
 
-  --popup-transition-duration: 100ms;
-  --popup-transition-timing-function: ease-out;
+  --media-popup-transition-duration: 100ms;
+  --media-popup-transition-timing-function: ease-out;
 
   @media (prefers-reduced-motion: reduce) {
-    --error-dialog-transition-duration: 50ms;
-    --error-dialog-transition-delay: 0ms;
-    --popup-transition-duration: 0ms;
+    --media-error-dialog-transition-duration: 50ms;
+    --media-error-dialog-transition-delay: 0ms;
+    --media-popup-transition-duration: 0ms;
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
-    --surface-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
-    --surface-inner-border-color: light-dark(oklch(1 0 0 / 0.1), oklch(1 0 0 / 0.2));
-    --surface-outer-border-color: light-dark(oklch(0 0 0 / 0.05), transparent);
+    --media-surface-background-color: light-dark(oklch(1 0 0), oklch(0 0 0));
+    --media-surface-inner-border-color: light-dark(oklch(1 0 0 / 0.1), oklch(1 0 0 / 0.2));
+    --media-surface-outer-border-color: light-dark(oklch(0 0 0 / 0.05), transparent);
   }
 }
 
@@ -54,16 +54,16 @@
   inset: 0;
   z-index: 20;
   display: flex;
-  gap: calc(var(--spacing) * 3);
+  gap: calc(var(--media-spacing) * 3);
   align-items: center;
-  padding-inline: calc(var(--spacing) * 5) calc(var(--spacing) * 0.5);
-  color: var(--text-color);
-  background-color: var(--surface-background-color);
+  padding-inline: calc(var(--media-spacing) * 5) calc(var(--media-spacing) * 0.5);
+  color: var(--media-text-color);
+  background-color: var(--media-surface-background-color);
   border-radius: calc(infinity * 1px);
-  backdrop-filter: var(--surface-backdrop-filter);
-  transition-delay: var(--error-dialog-transition-delay);
+  backdrop-filter: var(--media-surface-backdrop-filter);
+  transition-delay: var(--media-error-dialog-transition-delay);
   transition-timing-function: ease-out;
-  transition-duration: var(--error-dialog-transition-duration);
+  transition-duration: var(--media-error-dialog-transition-duration);
   transition-property: opacity, filter;
 }
 
@@ -79,18 +79,18 @@
 .media-default-skin--audio .media-error__content {
   display: flex;
   flex: 1;
-  gap: calc(var(--spacing) * 2);
+  gap: calc(var(--media-spacing) * 2);
   align-items: center;
 }
 
 /* Controls */
 
 .media-default-skin--audio .media-controls {
-  --base-boundary-offset: 2;
-  color: var(--text-color);
+  --media-base-boundary-offset: 2;
+  color: var(--media-text-color);
 
   .media-time-controls {
-    padding-inline: calc(var(--spacing) * 3);
+    padding-inline: calc(var(--media-spacing) * 3);
   }
 
   .media-button--seek {
@@ -126,5 +126,5 @@
 }
 
 .media-default-skin--audio .media-slider .media-slider__preview .media-slider__value {
-  bottom: calc(var(--spacing) * 10);
+  bottom: calc(var(--media-spacing) * 10);
 }

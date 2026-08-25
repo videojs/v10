@@ -14,9 +14,9 @@ export const volumeIndicator = {
   progress: cn(
     'relative w-full h-0.75 rounded-full bg-current/20',
     'before:absolute before:inset-y-0 before:left-0 before:w-(--media-volume-fill,0%) before:content-[""]',
-    'before:bg-(--accent-color) before:rounded-[inherit]',
+    'before:bg-(--media-internal-accent-color) before:rounded-[inherit]',
     'before:transition-[width] before:duration-200 before:ease-linear',
-    'shadow-[0_1px_0_var(--shadow-subtle-current-color)]'
+    'shadow-[0_1px_0_var(--media-shadow-subtle-current-color)]'
   ),
   value: 'ml-auto',
   icon: {

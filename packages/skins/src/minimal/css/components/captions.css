@@ -1,15 +1,15 @@
 .media-minimal-skin {
-  --media-caption-track-duration: var(--controls-transition-duration);
+  --media-caption-track-duration: var(--media-controls-transition-duration);
   --media-caption-track-delay: 25ms;
-  --media-caption-track-y: calc(var(--spacing) * -2);
+  --media-caption-track-y: calc(var(--media-spacing) * -2);
 
   &:has(.media-controls[data-visible]) {
-    --media-caption-track-y: calc(var(--spacing) * -18);
+    --media-caption-track-y: calc(var(--media-spacing) * -18);
   }
 
   @container media-root (width > 42rem) {
     &:has(.media-controls[data-visible]) > * {
-      --media-caption-track-y: calc(var(--spacing) * -12);
+      --media-caption-track-y: calc(var(--media-spacing) * -12);
     }
   }
 }

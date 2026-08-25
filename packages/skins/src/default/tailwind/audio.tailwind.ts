@@ -12,28 +12,28 @@ import { time as baseTime } from './components/time';
 
 export const container = cn(
   baseContainer,
-  '[--default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
-  '[--border-color:oklch(0_0_0/0.1)]',
-  '[--focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
-  '[--text-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
-  '[--surface-background-color:light-dark(oklch(1_0_0/0.5),oklch(0_0_0/0.4))]',
-  '[--surface-inner-border-color:oklch(1_0_0/0.1)]',
-  '[--surface-outer-border-color:oklch(0_0_0/0.05)]',
-  '[--surface-shadow-color:oklch(0_0_0/0.15)]',
-  '[--surface-backdrop-filter:blur(16px)_saturate(1.5)]',
-  '[--error-dialog-transition-duration:250ms]',
-  '[--error-dialog-transition-delay:100ms]',
-  '[--popup-transition-duration:100ms]',
-  '[--popup-transition-timing-function:ease-out]',
-  'motion-reduce:[--error-dialog-transition-duration:50ms]',
-  'motion-reduce:[--error-dialog-transition-delay:0ms]',
-  'motion-reduce:[--popup-transition-duration:0ms]',
-  '[@media(prefers-reduced-transparency:reduce)]:[--surface-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
-  'contrast-more:[--surface-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
-  '[@media(prefers-reduced-transparency:reduce)]:[--surface-inner-border-color:light-dark(oklch(1_0_0/0.1),oklch(1_0_0/0.2))]',
-  'contrast-more:[--surface-inner-border-color:light-dark(oklch(1_0_0/0.1),oklch(1_0_0/0.2))]',
-  '[@media(prefers-reduced-transparency:reduce)]:[--surface-outer-border-color:light-dark(oklch(0_0_0/0.05),transparent)]',
-  'contrast-more:[--surface-outer-border-color:light-dark(oklch(0_0_0/0.05),transparent)]'
+  '[--media-default-accent-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
+  '[--media-border-color:oklch(0_0_0/0.1)]',
+  '[--media-focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
+  '[--media-text-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
+  '[--media-surface-background-color:light-dark(oklch(1_0_0/0.5),oklch(0_0_0/0.4))]',
+  '[--media-surface-inner-border-color:oklch(1_0_0/0.1)]',
+  '[--media-surface-outer-border-color:oklch(0_0_0/0.05)]',
+  '[--media-surface-shadow-color:oklch(0_0_0/0.15)]',
+  '[--media-surface-backdrop-filter:blur(16px)_saturate(1.5)]',
+  '[--media-error-dialog-transition-duration:250ms]',
+  '[--media-error-dialog-transition-delay:100ms]',
+  '[--media-popup-transition-duration:100ms]',
+  '[--media-popup-transition-timing-function:ease-out]',
+  'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
+  'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
+  'motion-reduce:[--media-popup-transition-duration:0ms]',
+  '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
+  'contrast-more:[--media-surface-background-color:light-dark(oklch(1_0_0),oklch(0_0_0))]',
+  '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-inner-border-color:light-dark(oklch(1_0_0/0.1),oklch(1_0_0/0.2))]',
+  'contrast-more:[--media-surface-inner-border-color:light-dark(oklch(1_0_0/0.1),oklch(1_0_0/0.2))]',
+  '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-outer-border-color:light-dark(oklch(0_0_0/0.05),transparent)]',
+  'contrast-more:[--media-surface-outer-border-color:light-dark(oklch(0_0_0/0.05),transparent)]'
 );
 
 /* Controls */
@@ -41,8 +41,8 @@ export const container = cn(
 export const controls = cn(
   baseControls,
   surface,
-  '[--base-boundary-offset:2]',
-  'text-(--text-color)',
+  '[--media-base-boundary-offset:2]',
+  'text-(--media-text-color)',
   'peer-data-open/error:**:invisible'
 );
 
@@ -91,11 +91,11 @@ export const error = {
   ...baseError,
   dialog: cn(
     'absolute inset-0 z-20 flex items-center gap-3 rounded-full px-5 pr-0.5',
-    'bg-(--surface-background-color) text-(--text-color)',
+    'bg-(--media-surface-background-color) text-(--media-text-color)',
     'backdrop-blur-lg backdrop-saturate-150',
     'transition-[opacity,filter] ease-out',
-    'duration-(--error-dialog-transition-duration)',
-    'delay-(--error-dialog-transition-delay)',
+    'duration-(--media-error-dialog-transition-duration)',
+    'delay-(--media-error-dialog-transition-delay)',
     'group-data-starting-style/error:opacity-0 group-data-starting-style/error:blur-xs',
     'group-data-ending-style/error:opacity-0 group-data-ending-style/error:blur-xs',
     'group-data-ending-style/error:delay-0'

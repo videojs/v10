@@ -2,7 +2,7 @@
   position: relative;
   pointer-events: none;
   background-color: oklch(0 0 0 / 0.9);
-  border-radius: calc(var(--spacing) * 2);
+  border-radius: calc(var(--media-spacing) * 2);
 
   &::after {
     position: absolute;
@@ -18,8 +18,8 @@
   .media-thumbnail__image {
     position: relative;
     display: block;
-    max-width: var(--thumbnail-max-width);
-    max-height: var(--thumbnail-max-height);
+    max-width: var(--media-thumbnail-max-width);
+    max-height: var(--media-thumbnail-max-height);
     overflow: clip;
     border-radius: inherit;
   }
@@ -48,7 +48,7 @@
   }
 
   &:has(.media-thumbnail__image[data-loading]) {
-    width: var(--thumbnail-max-width);
+    width: var(--media-thumbnail-max-width);
     max-width: 100%;
     aspect-ratio: 16 / 9;
     overflow: hidden;

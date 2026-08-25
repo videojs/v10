@@ -4,7 +4,6 @@ description: Learn the public customization surface for packaged Video.js skins 
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
-import StyleCase from '@/components/docs/StyleCase.astro';
 import EjectedSkin from '@/components/docs/EjectedSkin.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
@@ -46,7 +45,7 @@ Set these CSS custom properties directly on the skin:
 | `--media-accent-color` | The color of slider fills and accented controls | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `#f5c518` |
 | `--media-accent-text-color` | The color of text and icons shown on the accent color | [`<color>`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value) | `black` |
 | `--media-border-radius` | The border radius of the media player | A valid [border-radius value](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/border-radius#values) | `1rem` |
-| `--media-scale-unit` | The base sizing unit for Vanilla CSS skins | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1rem` |
+| `--media-scale-unit` | The base sizing unit for skin spacing and icons | [`<length>`](https://developer.mozilla.org/en-US/docs/Web/CSS/length) | `1rem` |
 
 If you omit `--media-accent-text-color`, the skins choose a contrasting text color from `--media-accent-color` using [`contrast-color()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/color_value/contrast-color). You only need to set it when you want to override that result.
 
@@ -62,19 +61,15 @@ The audio skins adapt their main palette for light and dark mode using [`light-d
 
 The video skins keep their dark control presentation in both color schemes.
 
-<StyleCase styles={["css"]}>
-
 ### Scale with the document font size
 
-Vanilla CSS skins use `--media-scale-unit` as the base for control spacing, icon sizes, and font sizes. It defaults to `16px`, so the player UI does not change with the document root font size. Set it to `1rem` on the player or an ancestor to make the UI scale with the document root font size:
+Vanilla CSS and Tailwind skins use `--media-scale-unit` as the base for control spacing and icon sizes. Vanilla CSS skins also use it for font sizes. It defaults to `16px`, so player sizing does not change with the document root font size or the app's Tailwind spacing scale. Set it to `1rem` on the player or an ancestor to make the UI scale with the document root font size:
 
 ```css
 .player {
   --media-scale-unit: 1rem;
 }
 ```
-
-</StyleCase>
 
 You can also add your own class names to the skins.
 

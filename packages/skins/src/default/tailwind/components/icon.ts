@@ -2,7 +2,7 @@ import { cn } from '@videojs/utils/style';
 
 export const icon = cn(
   'block [grid-area:1/1] size-(--media-icon-size) shrink-0',
-  'drop-shadow-[0_1px_0_var(--shadow-current-color)]',
+  'drop-shadow-[0_1px_0_var(--media-shadow-current-color)]',
   'transition-[opacity,scale] duration-150 ease-out'
 );
 

@@ -8,19 +8,19 @@ export const button = {
     'py-2 px-4 rounded-[--spacing(2)]',
     'outline-2 outline-transparent -outline-offset-2',
     'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
-    'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2',
+    'focus-visible:outline-(--media-focus-ring-color) focus-visible:outline-offset-2',
     'not-aria-disabled:active:scale-[0.97]',
     'motion-reduce:scale-100 motion-reduce:transition-[background-color] motion-reduce:will-change-auto',
     'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
     'supports-[corner-shape:squircle]:rounded-[--spacing(4)]',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]'
   ),
-  primary: 'bg-(--accent-color) text-(--accent-contrast-color) font-medium text-shadow-none',
+  primary: 'bg-(--media-internal-accent-color) text-(--media-accent-contrast-color) font-medium text-shadow-none',
   subtle: cn(
     'bg-transparent text-inherit text-shadow-inherit',
-    'not-aria-disabled:hover:bg-(--accent-background-color) not-aria-disabled:hover:text-(--accent-text-color) not-aria-disabled:hover:no-underline',
-    'not-aria-disabled:focus-visible:bg-(--accent-background-color) not-aria-disabled:focus-visible:text-(--accent-text-color)',
-    'not-aria-disabled:aria-expanded:bg-(--accent-background-color) not-aria-disabled:aria-expanded:text-(--accent-text-color)'
+    'not-aria-disabled:hover:bg-(--media-accent-background-color) not-aria-disabled:hover:text-(--media-internal-accent-text-color) not-aria-disabled:hover:no-underline',
+    'not-aria-disabled:focus-visible:bg-(--media-accent-background-color) not-aria-disabled:focus-visible:text-(--media-internal-accent-text-color)',
+    'not-aria-disabled:aria-expanded:bg-(--media-accent-background-color) not-aria-disabled:aria-expanded:text-(--media-internal-accent-text-color)'
   ),
   icon: cn('grid aspect-square p-0!', 'not-aria-disabled:active:scale-[0.97]'),
   seek: hideAtSmall,
@@ -35,7 +35,7 @@ export const button = {
   live: cn(
     'inline-flex items-center gap-1.5',
     'aspect-auto w-auto px-3 py-2',
-    'text-(length:--font-size-small) font-semibold uppercase tracking-wider leading-none',
+    'text-(length:--media-font-size-small) font-semibold uppercase tracking-wider leading-none',
     'before:inline-block before:size-2 before:shrink-0 before:rounded-full',
     'before:bg-current/40 before:transition-colors before:duration-150 before:ease-out',
     'data-[live-edge]:before:bg-red-500'
