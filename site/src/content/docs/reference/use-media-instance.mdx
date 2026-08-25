@@ -1,0 +1,32 @@
+---
+title: useMediaInstance
+description: Hook that owns a media instance within the current Player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useMediaInstance } from "@videojs/react";
+```
+
+## Usage
+
+Pass a media class to create one instance and attach it to the surrounding player.
+
+```tsx
+import { HlsJsMedia } from "@videojs/media/dom/hls-js";
+import { useAttachMedia, useMediaInstance } from "@videojs/react";
+
+function CustomHlsVideo() {
+  const media = useMediaInstance(HlsJsMedia);
+  const attachRef = useAttachMedia(media);
+
+  return <video ref={attachRef} />;
+}
+```
+
+The optional `setup` callback runs before attachment. On real unmount, the hook only clears the player when it still owns the active media, then destroys the instance and its registered media components.
+
+<UtilReference util="useMediaInstance" />

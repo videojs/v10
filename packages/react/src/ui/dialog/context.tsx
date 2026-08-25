@@ -14,6 +14,7 @@ const DialogContext = createContext<DialogContextValue | null>(null);
 
 export const DialogContextProvider = DialogContext.Provider;
 
+/** Returns the current dialog compound-component context. Throws outside a dialog root. */
 export function useDialogContext(): DialogContextValue {
   return useDialogContextFor('Dialog');
 }

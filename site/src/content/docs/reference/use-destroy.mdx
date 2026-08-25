@@ -1,0 +1,30 @@
+---
+title: useDestroy
+description: Hook that destroys an imperative instance after a real React unmount
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useDestroy } from "@videojs/react";
+```
+
+## Usage
+
+Pass an object with a `destroy()` method. Optional setup and teardown callbacks run around the instance's mounted lifetime.
+
+```tsx
+type Destroyable = { destroy(): void };
+
+function ManagedInstance({ instance }: { instance: Destroyable }) {
+  useDestroy(instance);
+
+  return null;
+}
+```
+
+Destruction is deferred to a macrotask so React StrictMode's simulated unmount and remount can cancel it. A real unmount runs teardown before `destroy()`.
+
+<UtilReference util="useDestroy" />

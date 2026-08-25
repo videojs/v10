@@ -1,0 +1,46 @@
+---
+title: selectRemotePlayback
+description: Selector for remote playback state and actions
+---
+
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { selectRemotePlayback, usePlayer } from '@videojs/react';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { PlayerController, UIElement, playerContext, selectRemotePlayback } from '@videojs/html';
+```
+</FrameworkCase>
+
+## Usage
+
+`selectRemotePlayback` reads the <DocsLink slug="reference/feature-remote-playback">remote playback feature</DocsLink> from player state. It returns `undefined` when the feature is not configured.
+
+<FrameworkCase frameworks={["react"]}>
+Pass it to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to remote playback state.
+
+```tsx
+const remotePlayback = usePlayer(selectRemotePlayback);
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass it to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe from a custom element.
+
+```ts
+class RemotePlaybackControl extends UIElement {
+  readonly #remotePlayback = new PlayerController(this, playerContext, selectRemotePlayback);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectRemotePlayback" />

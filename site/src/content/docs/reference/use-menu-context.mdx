@@ -1,0 +1,28 @@
+---
+title: useMenuContext
+description: Hook to access the nearest Menu compound-component context
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useMenuContext } from "@videojs/react";
+```
+
+## Usage
+
+Use this hook to build a custom part rendered inside `Menu.Root`.
+
+```tsx
+function CloseMenuButton() {
+  const { menu } = useMenuContext();
+
+  return <button onClick={() => menu.close()}>Close menu</button>;
+}
+```
+
+The hook throws when there is no surrounding `Menu.Root`.
+
+<UtilReference util="useMenuContext" />

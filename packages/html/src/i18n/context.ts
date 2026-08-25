@@ -16,7 +16,7 @@ export type I18nContextValue = {
 export type I18nContext = Context<symbol, I18nContextValue>;
 
 /**
- * The default i18n context instance for consuming the player store in controllers.
+ * The default HTML context carrying the active translator and locale.
  *
  * @public
  */

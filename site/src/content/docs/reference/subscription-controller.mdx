@@ -1,0 +1,37 @@
+---
+title: SubscriptionController
+description: Reactive controller that resolves a store and manages a derived subscription
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { SubscriptionController } from "@videojs/store/html";
+```
+
+## Usage
+
+Provide a store or store context plus functions that read the current value and subscribe to changes.
+
+```ts
+class QueueController {
+  readonly #tasks;
+
+  constructor(host, storeSource) {
+    this.#tasks = new SubscriptionController(host, storeSource, {
+      getValue: (store) => store.queue.tasks,
+      subscribe: (store, onChange) => store.queue.subscribe(onChange),
+    });
+  }
+
+  get value() {
+    return this.#tasks.value;
+  }
+}
+```
+
+The controller requests a host update when the subscription changes and unsubscribes when the host disconnects. Reading `value` throws until a store is available.
+
+<UtilReference util="SubscriptionController" />

@@ -12,6 +12,11 @@ export interface UseHotkeyOptions {
   disabled?: boolean;
 }
 
+/**
+ * Registers a keyboard shortcut through the current player's hotkey coordinator.
+ *
+ * @param options - Shortcut keys, activation callback, scope, repeat behavior, and disabled state.
+ */
 export function useHotkey(options: UseHotkeyOptions): void {
   const { keys, target = 'player', repeatable = true, disabled = false } = options;
   const container = useContainer();

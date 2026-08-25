@@ -1,0 +1,28 @@
+---
+title: useHotkeyShortcut
+description: Hook that reads display and ARIA metadata for a registered Player hotkey
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useHotkeyShortcut } from "@videojs/react";
+```
+
+## Usage
+
+Look up a registered action to keep a custom control's visible shortcut and `aria-keyshortcuts` value synchronized.
+
+```tsx
+function PlayShortcut() {
+  const { aria, shortcut } = useHotkeyShortcut("togglePaused");
+
+  return <button aria-keyshortcuts={aria}>Play ({shortcut})</button>;
+}
+```
+
+The hook subscribes to registration changes. It returns empty details when the player container or action is unavailable; pass `value` for actions with value-specific registrations.
+
+<UtilReference util="useHotkeyShortcut" />

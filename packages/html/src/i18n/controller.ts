@@ -20,11 +20,16 @@ export function getFallbackTranslator(): Translator {
   return fallbackTranslator;
 }
 
+/** Consumes an i18n context and updates its host when the translator or locale changes. */
 export class I18nController implements ReactiveController {
   readonly #host: I18nControllerHost;
   readonly #consumer: ContextConsumer<I18nContext, I18nControllerHost>;
   #unsubscribeRegistry: (() => void) | undefined;
 
+  /**
+   * @param host - Reactive host updated when the i18n value changes.
+   * @param context - I18n context to consume.
+   */
   constructor(host: I18nControllerHost, context: I18nContext) {
     this.#host = host;
     this.#consumer = new ContextConsumer(host, {

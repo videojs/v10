@@ -1,0 +1,29 @@
+---
+title: mergeProps
+description: Utility for combining React props with predictable handler, class, and style precedence
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { mergeProps } from "@videojs/react";
+```
+
+## Usage
+
+Pass props in increasing precedence order. Event handlers run right to left, class names concatenate right to left, and rightmost style and other prop values win conflicts.
+
+```tsx
+const props = mergeProps(
+  { className: "base", onClick: logInternal },
+  { className: "custom", onClick: onClick, style: { color: "red" } },
+);
+
+return <button {...props}>Play</button>;
+```
+
+`mergeProps` does not compose refs; a rightmost `ref` replaces earlier refs. Use `useComposedRefs` when every ref needs the element.
+
+<UtilReference util="mergeProps" />

@@ -19,6 +19,7 @@ const MenuContext = createContext<MenuContextValue | null>(null);
 
 export const MenuContextProvider = MenuContext.Provider;
 
+/** Returns the current menu compound-component context. Throws outside `Menu.Root`. */
 export function useMenuContext(): MenuContextValue {
   const ctx = useContext(MenuContext);
   if (!ctx) throw new Error('Menu compound components must be used within a Menu.Root');
@@ -26,6 +27,7 @@ export function useMenuContext(): MenuContextValue {
   return ctx;
 }
 
+/** Returns the nearest menu context, or `null` outside `Menu.Root`. */
 export function useOptionalMenuContext(): MenuContextValue | null {
   return useContext(MenuContext);
 }

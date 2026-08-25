@@ -5,6 +5,8 @@ import { useRef } from 'react';
  *
  * Useful for capturing callbacks or derived values inside closures that are created once (e.g. factory callbacks)
  * without stale reads.
+ *
+ * @param value - Value the ref should expose after each render.
  */
 export function useLatestRef<Value>(value: Value): Readonly<{ current: Value }> {
   const ref = useRef(value);

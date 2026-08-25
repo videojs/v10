@@ -78,10 +78,10 @@ function mergeOne<T extends ElementType>(
 /**
  * Merge multiple props objects.
  *
- * - Event handlers (on*): chained - external first, ours second
- * - ClassName: concatenated
- * - Style: merged objects (external wins conflicts)
- * - Other: last one wins
+ * - Event handlers (`on*`): chained right to left
+ * - `className`: concatenated right to left
+ * - `style`: merged with rightmost values winning conflicts
+ * - Other props: rightmost value wins
  *
  * @example
  *   ```ts
@@ -92,6 +92,7 @@ function mergeOne<T extends ElementType>(
  *   // { onClick: chainedHandler, className: 'custom base' }
  *   ```;
  *
+ * @param propSets - Props objects to merge in order.
  * @public
  */
 export function mergeProps<T extends ElementType>(...propSets: (Props<T> | undefined)[]): Props<T> {

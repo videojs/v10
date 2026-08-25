@@ -62,6 +62,8 @@ export function composeRefs<T>(...refs: (OptionalRef<T> | OptionalRef<T>[])[]): 
  *   const composedRef = useComposedRefs(forwardedRef, localRef);
  *   return <div ref={composedRef} />;
  *   ```;
+ *
+ * @param refs - Refs to update from the returned callback.
  */
 export function useComposedRefs<T>(...refs: OptionalRef<T>[]): RefCallback<T> {
   return useCallback(composeRefs(...refs), [...refs]);

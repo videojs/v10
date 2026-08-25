@@ -1,0 +1,31 @@
+---
+title: I18nContext
+description: React context carrying the active translator and locale
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { I18nContext } from "@videojs/react";
+```
+
+## Usage
+
+Read the context directly when building i18n integration infrastructure. It is `null` when no `I18nProvider` is mounted.
+
+```tsx
+import { I18nContext } from "@videojs/react";
+import { useContext } from "react";
+
+function LocaleDebug() {
+  const i18n = useContext(I18nContext);
+
+  return <output>{i18n?.locale ?? "No i18n provider"}</output>;
+}
+```
+
+Application components should normally use `useTranslator` or `useLocale`, which provide English defaults when there is no provider.
+
+<UtilReference util="I18nContext" />

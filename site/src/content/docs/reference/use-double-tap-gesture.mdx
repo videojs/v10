@@ -1,0 +1,28 @@
+---
+title: useDoubleTapGesture
+description: Hook that registers a double-tap gesture for the current Player
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useDoubleTapGesture } from "@videojs/react";
+```
+
+## Usage
+
+Call the hook inside `Player`. It listens on the current player container unless `target` supplies another element.
+
+```tsx
+function DoubleTapFeedback() {
+  useDoubleTapGesture(() => console.log("Double tap"), { region: "right" });
+
+  return null;
+}
+```
+
+Use `pointer`, `region`, and `disabled` to control recognition. Supplying `target` does not make the hook safe outside `Player`, because it still reads the player container context.
+
+<UtilReference util="useDoubleTapGesture" />

@@ -1,0 +1,28 @@
+---
+title: useOptionalMenuContext
+description: Hook to access a Menu context when one is available
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useOptionalMenuContext } from "@videojs/react";
+```
+
+## Usage
+
+Use the optional hook when a component can work both inside and outside `Menu.Root`.
+
+```tsx
+function MenuAwareLabel() {
+  const menu = useOptionalMenuContext();
+
+  return <span>{menu ? "Nested in a menu" : "Standalone"}</span>;
+}
+```
+
+It returns `null` instead of throwing when no menu context is available.
+
+<UtilReference util="useOptionalMenuContext" />

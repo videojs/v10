@@ -1,0 +1,32 @@
+---
+title: i18nContext
+description: Default HTML context carrying the active translator and locale
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```ts
+import { i18nContext } from "@videojs/html";
+```
+
+## Usage
+
+Pass `i18nContext` to `I18nController` when a custom element needs the translator and locale from the nearest `<media-i18n>` provider.
+
+```ts
+import { I18nController, UIElement, i18nContext } from "@videojs/html";
+
+class LocalizedPlayLabel extends UIElement {
+  readonly #i18n = new I18nController(this, i18nContext);
+
+  get label() {
+    return this.#i18n.value("buttons.play", { default: "Play" });
+  }
+}
+```
+
+Most applications use `<media-i18n>` and the stock localized components directly. Consume this context when building custom HTML components or i18n infrastructure.
+
+<UtilReference util="i18nContext" slug="html-i-18-n-context" />

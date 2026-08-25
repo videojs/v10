@@ -10,6 +10,12 @@ export interface UseTapGestureOptions extends Pick<GestureProps, 'pointer' | 're
   target?: RefObject<HTMLElement | null>;
 }
 
+/**
+ * Registers a tap gesture on the current player container or an explicit target.
+ *
+ * @param onActivate - Callback invoked when a matching tap is recognized.
+ * @param options - Gesture matching, target, and disabled options.
+ */
 export function useTapGesture(onActivate: (event: PointerEvent) => void, options?: UseTapGestureOptions): void {
   const { pointer, region, disabled = false, target } = options ?? {};
   const contextContainer = useContainer();

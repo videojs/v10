@@ -1,0 +1,46 @@
+---
+title: selectTextTrack
+description: Selector for text track cue state
+---
+
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { selectTextTrack, usePlayer } from '@videojs/react';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { PlayerController, UIElement, playerContext, selectTextTrack } from '@videojs/html';
+```
+</FrameworkCase>
+
+## Usage
+
+`selectTextTrack` reads the <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> from player state. It returns `undefined` when the feature is not configured.
+
+<FrameworkCase frameworks={["react"]}>
+Pass it to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state.
+
+```tsx
+const textTrack = usePlayer(selectTextTrack);
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass it to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe from a custom element.
+
+```ts
+class TextTrackElement extends UIElement {
+  readonly #textTrack = new PlayerController(this, playerContext, selectTextTrack);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectTextTrack" />

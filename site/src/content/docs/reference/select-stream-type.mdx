@@ -1,0 +1,46 @@
+---
+title: selectStreamType
+description: Selector for detected stream type
+---
+
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { selectStreamType, usePlayer } from '@videojs/react';
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+import { PlayerController, UIElement, playerContext, selectStreamType } from '@videojs/html';
+```
+</FrameworkCase>
+
+## Usage
+
+`selectStreamType` reads the <DocsLink slug="reference/feature-stream-type">stream type feature</DocsLink> from player state. It returns `undefined` when the feature is not configured.
+
+<FrameworkCase frameworks={["react"]}>
+Pass it to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to stream type state.
+
+```tsx
+const streamType = usePlayer(selectStreamType);
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass it to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe from a custom element.
+
+```ts
+class StreamTypeElement extends UIElement {
+  readonly #streamType = new PlayerController(this, playerContext, selectStreamType);
+}
+```
+</FrameworkCase>
+
+<UtilReference util="selectStreamType" />

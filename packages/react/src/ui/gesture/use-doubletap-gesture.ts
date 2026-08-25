@@ -10,6 +10,12 @@ export interface UseDoubleTapGestureOptions extends Pick<GestureProps, 'pointer'
   target?: RefObject<HTMLElement | null>;
 }
 
+/**
+ * Registers a double-tap gesture on the current player container or an explicit target.
+ *
+ * @param onActivate - Callback invoked when a matching double tap is recognized.
+ * @param options - Gesture matching, target, and disabled options.
+ */
 export function useDoubleTapGesture(
   onActivate: (event: PointerEvent) => void,
   options?: UseDoubleTapGestureOptions

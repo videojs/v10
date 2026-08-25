@@ -1,0 +1,28 @@
+---
+title: useErrorDialogContext
+description: Hook to access the nearest ErrorDialog compound-component context
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+## Import
+
+```tsx
+import { useErrorDialogContext } from "@videojs/react";
+```
+
+## Usage
+
+Use this hook to build a custom part rendered inside `ErrorDialog.Root`.
+
+```tsx
+function ErrorCode() {
+  const { lastError } = useErrorDialogContext();
+
+  return lastError ? <code>{lastError.code}</code> : null;
+}
+```
+
+The hook throws when there is no surrounding `ErrorDialog.Root`.
+
+<UtilReference util="useErrorDialogContext" />
