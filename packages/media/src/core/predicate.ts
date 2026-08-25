@@ -62,9 +62,8 @@ export function isMediaVolumeCapable(value: unknown): value is MediaVolumeCapabi
 }
 
 /**
- * Whether the media reports a mute at all, which is a narrower question than
- * `isMediaVolumeCapable`: an embed can take a mute command while offering no way
- * to set a level.
+ * Whether the media reports a mute at all, which is a narrower question than `isMediaVolumeCapable`: an embed can take
+ * a mute command while offering no way to set a level.
  */
 export function isMediaMutedCapable(value: unknown): value is Pick<MediaVolumeCapability, 'muted'> {
   if (!isObject(value)) return false;
@@ -83,9 +82,8 @@ export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlayba
 }
 
 /**
- * Only `requestPictureInPicture` is required. A native video element carries it
- * but leaves exiting to `document`, so demanding the pair would rule out the one
- * media that most certainly can.
+ * Only `requestPictureInPicture` is required. A native video element carries it but leaves exiting to `document`, so
+ * demanding the pair would rule out the one media that most certainly can.
  */
 export function isMediaPictureInPictureCapable(value: unknown): value is MediaPictureInPictureCapability {
   if (!isObject(value)) return false;

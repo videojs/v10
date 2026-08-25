@@ -73,9 +73,8 @@ describe('getScreenResolution', () => {
 
 describe('watchScreenResolution', () => {
   /**
-   * A `matchMedia` stand-in whose queries can be told to fire. The real one only
-   * reports on ratios the environment actually has, so driving a ratio change
-   * means driving the query.
+   * A `matchMedia` stand-in whose queries can be told to fire. The real one only reports on ratios the environment
+   * actually has, so driving a ratio change means driving the query.
    */
   function stubMatchMedia() {
     const queries: Array<{ query: string; fire: () => void }> = [];
@@ -94,8 +93,8 @@ describe('watchScreenResolution', () => {
   }
 
   /**
-   * A mutable screen, so a test can move it the way the environment would. An
-   * `EventTarget` because the real one is: `screen` dispatches its own `change`.
+   * A mutable screen, so a test can move it the way the environment would. An `EventTarget` because the real one is:
+   * `screen` dispatches its own `change`.
    */
   function stubScreen(width: number, height: number, ratio = 1) {
     const screen = Object.assign(new EventTarget(), { width, height, orientation: new EventTarget() });
@@ -105,10 +104,7 @@ describe('watchScreenResolution', () => {
     return screen;
   }
 
-  /**
-   * Subscribe, then forget the call the subscribe itself makes, so a test can
-   * assert on changes alone.
-   */
+  /** Subscribe, then forget the call the subscribe itself makes, so a test can assert on changes alone. */
   function watchChanges(options?: ScreenResolutionOptions) {
     const onChange = vi.fn();
     const stop = watchScreenResolution(onChange, options);

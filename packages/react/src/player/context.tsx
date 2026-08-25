@@ -42,10 +42,9 @@ export function usePlayerContext(): PlayerContextValue {
 /**
  * Access the player store from within a Player.
  *
- * This standalone hook has no knowledge of your configured features, so it
- * returns an untyped `UnknownStore` whose state properties are typed as
- * `unknown`. For typed access, use the `usePlayer` returned by `createPlayer()`,
- * or pass a premade selector to recover the type from its return value.
+ * This standalone hook has no knowledge of your configured features, so it returns an untyped `UnknownStore` whose
+ * state properties are typed as `unknown`. For typed access, use the `usePlayer` returned by `createPlayer()`, or pass
+ * a premade selector to recover the type from its return value.
  *
  * @label Without Selector
  */
@@ -53,11 +52,11 @@ export function usePlayer(): UnknownStore;
 /**
  * Select a value from the player store. Re-renders when the selected value changes.
  *
- * The selector receives `UnknownState`, so an inline selector returns `unknown`.
- * Pass a premade selector (e.g. `selectPlayback`) to get a typed result.
+ * The selector receives `UnknownState`, so an inline selector returns `unknown`. Pass a premade selector (e.g.
+ * `selectPlayback`) to get a typed result.
  *
- * @label With Selector
  * @param selector - Derives a value from the player store state.
+ * @label With Selector
  */
 export function usePlayer<R>(selector: (state: UnknownState) => R): R;
 export function usePlayer<R>(selector?: (state: UnknownState) => R) {
@@ -69,8 +68,8 @@ export function usePlayer<R>(selector?: (state: UnknownState) => R) {
 /**
  * Access player state when available, but return `undefined` outside a Player.
  *
- * This is useful for components that can operate without player context
- * (e.g. they accept fully explicit props as a fallback).
+ * This is useful for components that can operate without player context (e.g. they accept fully explicit props as a
+ * fallback).
  */
 /** @label Without Selector */
 export function useOptionalPlayer(): UnknownStore | undefined;

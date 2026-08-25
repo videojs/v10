@@ -12,8 +12,8 @@ import { defaultGitService } from './utils/gitService';
 import { globWithParser } from './utils/globWithParser';
 
 /**
- * Extract date from filename in format: YYYY-MM-DD-slug.mdx
- * Throws an error if the filename doesn't match the expected pattern
+ * Extract date from filename in format: YYYY-MM-DD-slug.mdx Throws an error if the filename doesn't match the expected
+ * pattern
  */
 export function extractDateFromFilename(id: string): Date {
   const match = id.match(/^(\d{4})-(\d{2})-(\d{2})-/);

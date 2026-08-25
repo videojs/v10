@@ -30,9 +30,7 @@ describe('serializeTimeRanges', () => {
   });
 });
 
-/**
- * Helper to create a mock TimeRanges object.
- */
+/** Helper to create a mock TimeRanges object. */
 function createTimeRanges(ranges: Array<[number, number]>): TimeRanges {
   return {
     length: ranges.length,

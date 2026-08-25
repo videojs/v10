@@ -1,32 +1,29 @@
 /**
  * Feature reference extraction.
  *
- * Discovers features from packages/core/src/dom/store/features/ and extracts
- * state/action definitions from their state interfaces in media/state.ts.
+ * Discovers features from packages/core/src/dom/store/features/ and extracts state/action definitions from their state
+ * interfaces in media/state.ts.
  *
- * Uses the TypeScript checker API (not TAE) for interface extraction because
- * state interfaces use method signatures (play(): void) which TAE doesn't
- * handle — it only handles property-with-function-type syntax.
+ * Uses the TypeScript checker API (not TAE) for interface extraction because state interfaces use method signatures
+ * (play(): void) which TAE doesn't handle — it only handles property-with-function-type syntax.
  *
  * Convention:
- *   - Feature files: *.ts in the features directory (excluding index, presets, feature.parts)
- *   - Feature exports: const matching *Feature (singular, not *Features)
- *   - State type: explicit return type annotation on the state() arrow function
- *   - Silent features: state() returns an empty object
- *   - State interfaces: exported from packages/media/src/core/state.ts
  *
- * Most features annotate state() with an interface from media/state.ts, which is
- * also the shape the store publishes. A feature that resolves several inputs
- * instead keeps them in private, symbol-keyed source state and publishes the
- * resolved value through `derived`, so its annotation names an interface that
- * lives in the feature's own file and describes internals.
+ * - Feature files: *.ts in the features directory (excluding index, presets, feature.parts)
+ * - Feature exports: const matching *Feature (singular, not *Features)
+ * - State type: explicit return type annotation on the state() arrow function
+ * - Silent features: state() returns an empty object
+ * - State interfaces: exported from packages/media/src/core/state.ts
  *
- * When the annotated name isn't in media/state.ts, the published shape is
- * derived from the feature itself: every non-symbol property of the source
- * state (inherited members included, with their JSDoc) plus every `derived`
- * key. Symbol-keyed members are private by construction, so nothing needs to
- * mark them — TypeScript names them `__@SYMBOL@id`, which is how they're
- * recognized. No annotation, and nothing for a feature author to remember.
+ * Most features annotate state() with an interface from media/state.ts, which is also the shape the store publishes. A
+ * feature that resolves several inputs instead keeps them in private, symbol-keyed source state and publishes the
+ * resolved value through `derived`, so its annotation names an interface that lives in the feature's own file and
+ * describes internals.
+ *
+ * When the annotated name isn't in media/state.ts, the published shape is derived from the feature itself: every
+ * non-symbol property of the source state (inherited members included, with their JSDoc) plus every `derived` key.
+ * Symbol-keyed members are private by construction, so nothing needs to mark them — TypeScript names them
+ * `__@SYMBOL@id`, which is how they're recognized. No annotation, and nothing for a feature author to remember.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -60,8 +57,8 @@ interface DerivedKeySource {
 }
 
 /**
- * One `config` entry, resolved to the private source-state keys it drives.
- * `actionKey` types the input; `stateKey` supplies its initial value.
+ * One `config` entry, resolved to the private source-state keys it drives. `actionKey` types the input; `stateKey`
+ * supplies its initial value.
  */
 interface FeatureConfigSource {
   name: string;
@@ -189,11 +186,10 @@ function parseDerivedKeys(node: ts.Expression): DerivedKeySource[] {
 /**
  * Read the `config` map: `{ title: { action: SET_USER_TITLE, state: USER_TITLE } }`.
  *
- * Each value names a source-state member either as an identifier bound to a
- * private symbol or as a string naming the member outright, which is how an
- * input that forwards to the feature's own public setter is written. An entry
- * naming anything else is dropped — and warned about, because a silently
- * missing input reads to a docs reader as "this feature has no such setting".
+ * Each value names a source-state member either as an identifier bound to a private symbol or as a string naming the
+ * member outright, which is how an input that forwards to the feature's own public setter is written. An entry naming
+ * anything else is dropped — and warned about, because a silently missing input reads to a docs reader as "this feature
+ * has no such setting".
  */
 function parseConfigEntries(node: ts.Expression, featureName: string): FeatureConfigSource[] {
   const literal = unwrapObjectLiteral(node);
@@ -253,9 +249,8 @@ function parseConfigEntries(node: ts.Expression, featureName: string): FeatureCo
 /**
  * Read the attribute name out of a config entry's `html` block.
  *
- * The name is text in markup rather than a reference to a state or action key,
- * so only a literal counts: an identifier here would be a constant this pass
- * cannot resolve, and guessing at it would put a wrong attribute in the docs.
+ * The name is text in markup rather than a reference to a state or action key, so only a literal counts: an identifier
+ * here would be a constant this pass cannot resolve, and guessing at it would put a wrong attribute in the docs.
  */
 function htmlAttributeName(node: ts.Expression): string | undefined {
   const literal = unwrapObjectLiteral(node);
@@ -274,11 +269,9 @@ function htmlAttributeName(node: ts.Expression): string | undefined {
 }
 
 /**
- * Read the source-state member a config entry points at. An identifier names a
- * symbol constant, so the member is keyed by that symbol; a string names the
- * member itself. Both collapse to the written text, and the lookups that
- * consume it try each shape, since a symbol constant's name and a member name
- * never collide.
+ * Read the source-state member a config entry points at. An identifier names a symbol constant, so the member is keyed
+ * by that symbol; a string names the member itself. Both collapse to the written text, and the lookups that consume it
+ * try each shape, since a symbol constant's name and a member name never collide.
  */
 function configKeyReference(node: ts.Expression): string | undefined {
   if (ts.isIdentifier(node)) return node.text;
@@ -289,15 +282,13 @@ function configKeyReference(node: ts.Expression): string | undefined {
 }
 
 /**
- * Map each key in the state() object literal to the value it starts at, under
- * the same name a config entry uses to reach it: the identifier inside a
- * computed key, or a published member's own name.
+ * Map each key in the state() object literal to the value it starts at, under the same name a config entry uses to
+ * reach it: the identifier inside a computed key, or a published member's own name.
  *
- * A named constant is resolved to its literal so the docs show the value rather
- * than a private identifier; anything else falls back to the written text. A key
- * that starts at `undefined` is left out, because an unset input is what an
- * absent default already says — and every other reference omits it rather than
- * printing "undefined" in the default column.
+ * A named constant is resolved to its literal so the docs show the value rather than a private identifier; anything
+ * else falls back to the written text. A key that starts at `undefined` is left out, because an unset input is what an
+ * absent default already says — and every other reference omits it rather than printing "undefined" in the default
+ * column.
  */
 function parseStateInitialValues(node: ts.Expression, sourceFile: ts.SourceFile): Map<string, string> {
   const values = new Map<string, string>();
@@ -468,14 +459,12 @@ function extractInterfaceMembers(
 // ─── Derived Publication ──────────────────────────────────────────
 
 /**
- * Derive the published shape from the feature itself, for features whose
- * state() annotation names a private interface rather than a media/state.ts one.
+ * Derive the published shape from the feature itself, for features whose state() annotation names a private interface
+ * rather than a media/state.ts one.
  *
- * Every non-symbol property of the source-state type is public — inherited
- * members included, which is how a `MediaMetadataState`-style base contributes
- * its members and their JSDoc. Symbol-keyed members are private by
- * construction. `derived` keys are published on top, typed from what their
- * function returns.
+ * Every non-symbol property of the source-state type is public — inherited members included, which is how a
+ * `MediaMetadataState`-style base contributes its members and their JSDoc. Symbol-keyed members are private by
+ * construction. `derived` keys are published on top, typed from what their function returns.
  */
 function extractPublishedShape(
   sourceStateDecl: ts.InterfaceDeclaration,
@@ -551,9 +540,8 @@ function derivedValueType(
 /**
  * Type each config input from the action it forwards to.
  *
- * An input whose action can't be found is still emitted — the prop exists
- * either way — with its type left unresolved, and warned about so an unresolved
- * type isn't mistaken for a deliberate one.
+ * An input whose action can't be found is still emitted — the prop exists either way — with its type left unresolved,
+ * and warned about so an unresolved type isn't mistaken for a deliberate one.
  */
 function extractFeatureConfig(
   entries: readonly FeatureConfigSource[],
@@ -606,9 +594,8 @@ function configInputType(
 }
 
 /**
- * Type an action named outright rather than through a symbol. It may be
- * inherited from the published interface the source state extends, so it is
- * matched against the resolved type instead of this declaration's own members.
+ * Type an action named outright rather than through a symbol. It may be inherited from the published interface the
+ * source state extends, so it is matched against the resolved type instead of this declaration's own members.
  */
 function namedActionInputType(
   actionKey: string,
@@ -706,9 +693,8 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
 }
 
 /**
- * A feature file joins the program only when the checker has to read it: to
- * type a config input's private action, or to derive a published shape the
- * state file doesn't hold.
+ * A feature file joins the program only when the checker has to read it: to type a config input's private action, or to
+ * derive a published shape the state file doesn't hold.
  */
 function needsOwnSourceFile(source: FeatureSource): boolean {
   return source.config.length > 0 || source.derivedKeys.length > 0;
@@ -721,9 +707,8 @@ interface PublishedShape {
 }
 
 /**
- * Prefer the media/state.ts interface the annotation names. When it isn't there,
- * the annotation describes private source state, so derive the published shape
- * from the feature itself.
+ * Prefer the media/state.ts interface the annotation names. When it isn't there, the annotation describes private
+ * source state, so derive the published shape from the feature itself.
  */
 function resolvePublishedShape(
   source: FeatureSource,

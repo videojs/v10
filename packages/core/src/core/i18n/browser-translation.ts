@@ -26,8 +26,8 @@ interface BrowserTranslatorConstructor {
 
 export interface GetBrowserTranslationsOptions {
   /**
-   * When true, call `Translator.create()` for `downloadable` / `downloading` (may download the
-   * on-device model). Defaults to false — production providers only use pre-installed models.
+   * When true, call `Translator.create()` for `downloadable` / `downloading` (may download the on-device model).
+   * Defaults to false — production providers only use pre-installed models.
    */
   downloadIfNeeded?: boolean;
   /** Invoked when a model download starts and when `Translator.create()` resolves. */
@@ -41,8 +41,8 @@ const NAMED_PLACEHOLDER = /\{([^{}]+)\}/g;
 const INDEX_PLACEHOLDER = /\{\s*(\d+)\s*\}/g;
 
 /**
- * Replaces `{seconds}` with `{0}`, `{1}`, … so the Browser Translation API sees one full
- * sentence (grammar/word order preserved) while opaque numeric slots are left alone.
+ * Replaces `{seconds}` with `{0}`, `{1}`, … so the Browser Translation API sees one full sentence (grammar/word order
+ * preserved) while opaque numeric slots are left alone.
  */
 function maskNamedPlaceholders(source: string): { masked: string; slots: readonly string[] } {
   const slots: string[] = [];
@@ -115,8 +115,8 @@ function hasMissingEnglishTranslations(translations: Partial<FlatTranslations>):
 }
 
 /**
- * Translates English registry values via the on-device Browser Translation API when a pre-installed
- * model is available. Results are cached per target language tag.
+ * Translates English registry values via the on-device Browser Translation API when a pre-installed model is available.
+ * Results are cached per target language tag.
  */
 export async function getBrowserTranslations(
   locale: string,

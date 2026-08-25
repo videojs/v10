@@ -1,10 +1,8 @@
 /**
  * SPF-backed MuxVideoMedia tests.
  *
- * Mirrors the coverage of the hls.js-backed `MuxMedia`
- * (`packages/media/src/dom/mux/tests/mux-media.test.ts`), minus everything that
- * flavor's `engine` / `preferPlayback` options carry — this source is Mux
- * identity and nothing else.
+ * Mirrors the coverage of the hls.js-backed `MuxMedia` (`packages/media/src/dom/mux/tests/mux-media.test.ts`), minus
+ * everything that flavor's `engine` / `preferPlayback` options carry — this source is Mux identity and nothing else.
  */
 import { describe, expect, it, vi } from 'vite-plus/test';
 

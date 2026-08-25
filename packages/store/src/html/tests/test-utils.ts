@@ -9,10 +9,7 @@ import { createStore as createCoreStore } from '../../core/store';
 /** Concrete base class for mixin tests (ReactiveElement is abstract). */
 export class TestBaseElement extends ReactiveElement {}
 
-/**
- * Test host element that extends ReactiveElement.
- * Tracks update calls for assertions.
- */
+/** Test host element that extends ReactiveElement. Tracks update calls for assertions. */
 export class TestHostElement extends ReactiveElement {
   updateCount = 0;
 

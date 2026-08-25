@@ -4,8 +4,8 @@ import type { MediaMetadataState, MediaPlaybackState } from '@videojs/media';
 export type PosterMediaState = Pick<MediaPlaybackState, 'started'> & Pick<MediaMetadataState, 'poster'>;
 
 /**
- * How the poster image is faring, as the binding holding it sees it. `none`
- * means there is no image, or nothing for it to fetch.
+ * How the poster image is faring, as the binding holding it sees it. `none` means there is no image, or nothing for it
+ * to fetch.
  */
 export type PosterImageLoadState = 'none' | 'loading' | 'loaded' | 'error';
 
@@ -30,8 +30,8 @@ export interface PosterProps {
 /**
  * Turns playback and metadata into poster presentation state.
  *
- * Owns no image of its own: a binding finds one, supplies how it is faring
- * through {@link PosterCore.setImageLoadState}, and paints the result.
+ * Owns no image of its own: a binding finds one, supplies how it is faring through {@link PosterCore.setImageLoadState},
+ * and paints the result.
  */
 export class PosterCore {
   #media: PosterMediaState | null = null;

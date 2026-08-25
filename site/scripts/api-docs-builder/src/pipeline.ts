@@ -1,8 +1,8 @@
 /**
  * Component reference discovery, extraction, and building.
  *
- * Kept separate from the CLI so E2E tests can run the component pipeline
- * against a fixture monorepo by passing a custom root path.
+ * Kept separate from the CLI so E2E tests can run the component pipeline against a fixture monorepo by passing a custom
+ * root path.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';

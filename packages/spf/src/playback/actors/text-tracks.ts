@@ -15,12 +15,9 @@ export interface TextTracksActorContext {
 }
 
 /**
- * Wipe the actor's `loaded` + `segments` context. Sent on source reset
- * (typically by `syncTextTracks` on state exit) so a subsequent
- * presentation starts with a fresh cue+segment cache. Without this, a
- * new presentation reusing trackIds from the prior source would have
- * `getSegmentsToLoad` treat its segments as already-buffered and skip
- * loading them.
+ * Wipe the actor's `loaded` + `segments` context. Sent on source reset (typically by `syncTextTracks` on state exit) so
+ * a subsequent presentation starts with a fresh cue+segment cache. Without this, a new presentation reusing trackIds
+ * from the prior source would have `getSegmentsToLoad` treat its segments as already-buffered and skip loading them.
  */
 export interface ClearMessage {
   type: 'clear';
@@ -31,7 +28,7 @@ export type TextTracksActorMessage<C extends Cue = Cue> = AddCuesMessage<C> | Cl
 /**
  * Host-agnostic text-track actor type.
  *
- * Generic over the concrete cue shape `C` so DOM hosts (using `VTTCue`)
- * and non-DOM hosts (custom cue representations) can both satisfy it.
+ * Generic over the concrete cue shape `C` so DOM hosts (using `VTTCue`) and non-DOM hosts (custom cue representations)
+ * can both satisfy it.
  */
 export type TextTracksActor<C extends Cue = Cue> = TransitionActor<TextTracksActorContext, TextTracksActorMessage<C>>;

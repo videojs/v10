@@ -26,14 +26,14 @@ interface ExportedMeta {
 }
 
 /**
- * Extract static component metadata and remove its export from runtime code.
- * Use before source capture when registry tooling needs a component's `meta` export.
+ * Extract static component metadata and remove its export from runtime code. Use before source capture when registry
+ * tooling needs a component's `meta` export.
  *
  * @example
- * ```diff
- * - export const meta = { name: 'play-button' };
+ *   ```diff
+ *   - export const meta = { name: 'play-button' };
  *   export function PlayButton() {}
- * ```
+ *   ```;
  *
  * @param exportName - Metadata export to extract. Defaults to `meta`.
  */

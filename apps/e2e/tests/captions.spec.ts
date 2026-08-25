@@ -67,20 +67,18 @@ test.describe('Captions', () => {
 });
 
 /**
- * hls.js resets every text track on the media element when it attaches, detaches,
- * or loads a source, so a `<track>` that loaded before the source was known used
- * to end up selected but empty — the browser never parses a loaded track again.
+ * Hls.js resets every text track on the media element when it attaches, detaches, or loads a source, so a `<track>`
+ * that loaded before the source was known used to end up selected but empty — the browser never parses a loaded track
+ * again.
  *
- * Losing cues is the part no one can undo, so that is what these assert. Which
- * track is selected afterwards is the browser's call: loading a source re-runs
- * automatic text-track selection, and WebKit turns off caption tracks it did not
- * pick itself. `withPreservedTextTracks` unit tests cover the mode it restores.
+ * Losing cues is the part no one can undo, so that is what these assert. Which track is selected afterwards is the
+ * browser's call: loading a source re-runs automatic text-track selection, and WebKit turns off caption tracks it did
+ * not pick itself. `withPreservedTextTracks` unit tests cover the mode it restores.
  */
 test.describe('Captions sideloaded before an hls.js source', () => {
   /**
-   * Cues on the sideloaded track, read from the element the page author sees.
-   * A disabled track reports no cues at all, so read them through a mode that
-   * exposes them and put the track back the way it was found.
+   * Cues on the sideloaded track, read from the element the page author sees. A disabled track reports no cues at all,
+   * so read them through a mode that exposes them and put the track back the way it was found.
    */
   const englishCues = (page: Page) => {
     return page.evaluate(() => {
@@ -102,12 +100,10 @@ test.describe('Captions sideloaded before an hls.js source', () => {
   };
 
   /**
-   * Selects the track from the page rather than leaning on its `default`
-   * attribute. The element clones `<track>` children into its inner `<video>`,
-   * and whether a script-added track wins automatic text-track selection is up
-   * to the browser's caption preferences — WebKit leaves it `disabled`, which
-   * also stops it from ever loading its cues. A track has to be enabled once to
-   * load them, which is the state these tests are about.
+   * Selects the track from the page rather than leaning on its `default` attribute. The element clones `<track>`
+   * children into its inner `<video>`, and whether a script-added track wins automatic text-track selection is up to
+   * the browser's caption preferences — WebKit leaves it `disabled`, which also stops it from ever loading its cues. A
+   * track has to be enabled once to load them, which is the state these tests are about.
    */
   const showEnglishTrack = (page: Page) => {
     return page.waitForFunction(() => {

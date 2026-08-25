@@ -27,13 +27,13 @@ const MODIFIER_KEYS = new Set(['shift', 'ctrl', 'alt', 'meta']);
  * Parse a key pattern string into one or more bindings.
  *
  * @example
- * ```ts
- * parseHotkeyPattern('>');
- * // [{ modifiers: Set(), key: '>', originalKey: '>' }]
+ *   ```ts
+ *   parseHotkeyPattern('>');
+ *   // [{ modifiers: Set(), key: '>', originalKey: '>' }]
  *
- * parseHotkeyPattern('0-9');
- * // 10 bindings, one per digit
- * ```
+ *   parseHotkeyPattern('0-9');
+ *   // 10 bindings, one per digit
+ *   ```;
  */
 export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
   // Range expansion: "0-9" → individual digit bindings.
@@ -68,11 +68,10 @@ export function parseHotkeyPattern(pattern: string): ParsedHotkeyBinding[] {
 }
 
 /**
- * Single non-letter character — layout-dependent modifiers (Shift, Alt/Option)
- * were used to produce the character itself, not as deliberate modifiers
- * (e.g. Shift+. → ">", Option+Shift → ">" on some Mac layouts).
- * Letters excluded because Shift changes case intentionally (k vs K).
- * Named keys excluded because event.key.length > 1 (ArrowLeft, Tab, etc.).
+ * Single non-letter character — layout-dependent modifiers (Shift, Alt/Option) were used to produce the character
+ * itself, not as deliberate modifiers (e.g. Shift+. → ">", Option+Shift → ">" on some Mac layouts). Letters excluded
+ * because Shift changes case intentionally (k vs K). Named keys excluded because event.key.length > 1 (ArrowLeft, Tab,
+ * etc.).
  */
 function isImplicitModifierKey(key: string): boolean {
   return key.length === 1 && !/[a-z]/i.test(key);
@@ -130,15 +129,15 @@ export function getHotkeyCoordinator(target: HTMLElement): HotkeyCoordinator {
  * Register a hotkey binding on a target element.
  *
  * @example
- * ```ts
- * const cleanup = createHotkey(container, {
- *   keys: 'k',
- *   onActivate: () => store.paused ? store.play() : store.pause(),
- * });
+ *   ```ts
+ *   const cleanup = createHotkey(container, {
+ *     keys: 'k',
+ *     onActivate: () => (store.paused ? store.play() : store.pause()),
+ *   });
  *
- * // Later: remove the binding
- * cleanup();
- * ```
+ *   // Later: remove the binding
+ *   cleanup();
+ *   ```;
  *
  * @returns A cleanup function that removes the binding.
  */

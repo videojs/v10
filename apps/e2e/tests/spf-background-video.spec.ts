@@ -3,24 +3,19 @@ import { expect, type Page, test } from '@playwright/test';
 import { MEDIA } from '../fixtures/resources';
 
 /**
- * The SPF background-video composition end to end: a real manifest through the
- * engine, onto the Media's `error`, and out to whichever surface the platform
- * gives a consumer.
+ * The SPF background-video composition end to end: a real manifest through the engine, onto the Media's `error`, and
+ * out to whichever surface the platform gives a consumer.
  *
- * What only a browser can establish, and so what this file is for: **nothing
- * about an unplayable source reaches the media element here.** The unit tests
- * write `state.errors` directly and assert the promotion; they cannot show that
- * the engine derives that sequence from a real playlist, and they cannot show
- * that `HTMLMediaElement.error` stays null while it does. That claim is the
- * premise the whole surface rests on — if a browser ever starts reporting these
+ * What only a browser can establish, and so what this file is for: **nothing about an unplayable source reaches the
+ * media element here.** The unit tests write `state.errors` directly and assert the promotion; they cannot show that
+ * the engine derives that sequence from a real playlist, and they cannot show that `HTMLMediaElement.error` stays null
+ * while it does. That claim is the premise the whole surface rests on — if a browser ever starts reporting these
  * itself, this is where we find out.
  *
- * The pinned variant's own shape is the other thing pinned down here. Only the
- * *selected* rendition's playlist is ever resolved, so an unplayable pick
- * produces a **cause with no verdict behind it** — nothing prunes the renditions
- * that were never probed, so the candidate set never empties. A source offering
- * no video at all is the mirror case: a verdict with no cause. Both are fatal,
- * and asserting the sequence (not just the surfaced code) is what would catch a
+ * The pinned variant's own shape is the other thing pinned down here. Only the _selected_ rendition's playlist is ever
+ * resolved, so an unplayable pick produces a **cause with no verdict behind it** — nothing prunes the renditions that
+ * were never probed, so the candidate set never empties. A source offering no video at all is the mirror case: a
+ * verdict with no cause. Both are fatal, and asserting the sequence (not just the surfaced code) is what would catch a
  * `select-tracks` refactor quietly changing which.
  *
  * @see internal/design/spf/features/errors.md

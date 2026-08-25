@@ -22,13 +22,12 @@ export interface ThumbnailProps extends UIComponentProps<'div', ThumbnailCore.St
 }
 
 /**
- * Leaving `crossOrigin` unset means "follow the media element", so thumbnails
- * keep working on a CORS-enabled player without a skin having to thread a prop
- * through. `null` opts out and fetches the sprites no-CORS. `''` is passed
+ * Leaving `crossOrigin` unset means "follow the media element", so thumbnails keep working on a CORS-enabled player
+ * without a skin having to thread a prop through. `null` opts out and fetches the sprites no-CORS. `''` is passed
  * straight through, since the CORS-settings attribute reads it as Anonymous.
  *
- * Only the `<track>` path inherits: `thumbnails` passed directly may point at a
- * host that has nothing to do with the media element.
+ * Only the `<track>` path inherits: `thumbnails` passed directly may point at a host that has nothing to do with the
+ * media element.
  */
 function resolveCrossOrigin(
   explicit: ThumbnailCore.Props['crossOrigin'],

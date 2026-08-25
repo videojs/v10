@@ -1,9 +1,6 @@
 import type { FrameRate } from '../types';
 
-/**
- * Parse HLS attribute list from a tag line.
- * Handles both quoted and unquoted values.
- */
+/** Parse HLS attribute list from a tag line. Handles both quoted and unquoted values. */
 export function parseAttributeList(line: string): Map<string, string> {
   const attributes = new Map<string, string>();
   const regex = /([A-Z0-9-]+)=(?:"([^"]*)"|([^,]*))/g;
@@ -20,9 +17,7 @@ export function parseAttributeList(line: string): Map<string, string> {
   return attributes;
 }
 
-/**
- * Parse RESOLUTION attribute value (WIDTHxHEIGHT).
- */
+/** Parse RESOLUTION attribute value (WIDTHxHEIGHT). */
 export function parseResolution(value: string): { width: number; height: number } | null {
   const match = /^(\d+)x(\d+)$/.exec(value);
 
@@ -34,9 +29,7 @@ export function parseResolution(value: string): { width: number; height: number 
   return { width, height };
 }
 
-/**
- * Parse FRAME-RATE attribute to rational frame rate.
- */
+/** Parse FRAME-RATE attribute to rational frame rate. */
 export function parseFrameRate(value: string): FrameRate | undefined {
   const fps = Number.parseFloat(value);
 
@@ -72,9 +65,7 @@ export function parseFrameRate(value: string): FrameRate | undefined {
 // treated as unprobeable, so it would never be pruned.
 const AUDIO_CODEC_PREFIXES = ['mp4a.', 'ac-3', 'ec-3', 'ac-4', 'opus', 'flac', 'dts', 'alac', 'vorbis'];
 
-/**
- * Parse CODECS attribute into separate video and audio codecs.
- */
+/** Parse CODECS attribute into separate video and audio codecs. */
 export function parseCodecs(codecs: string): { video?: string; audio?: string } {
   const parts = codecs.split(',').map((s) => s.trim());
   const result: { video?: string; audio?: string } = {};
@@ -92,9 +83,7 @@ export function parseCodecs(codecs: string): { video?: string; audio?: string } 
   return result;
 }
 
-/**
- * Parse #EXTINF duration value.
- */
+/** Parse #EXTINF duration value. */
 export function parseExtInfDuration(value: string): number {
   const durationPart = value.split(',')[0] ?? value;
   const duration = Number.parseFloat(durationPart);
@@ -103,9 +92,8 @@ export function parseExtInfDuration(value: string): number {
 }
 
 /**
- * Parse BYTERANGE attribute value.
- * Format: "length[@offset]"
- * If offset is omitted, it continues from the previous byte range end.
+ * Parse BYTERANGE attribute value. Format: "length[@offset]" If offset is omitted, it continues from the previous byte
+ * range end.
  */
 export function parseByteRange(value: string, previousEnd?: number): { start: number; end: number } | null {
   const match = /^(\d+)(?:@(\d+))?$/.exec(value);
@@ -131,9 +119,7 @@ export function parseByteRange(value: string, previousEnd?: number): { start: nu
   return { start, end: start + length - 1 };
 }
 
-/**
- * AttributeList - Typed attribute access wrapper.
- */
+/** AttributeList - Typed attribute access wrapper. */
 export interface AttributeList {
   get: (key: string) => string | undefined;
   getInt: (key: string, defaultValue?: number) => number | undefined;
@@ -143,9 +129,7 @@ export interface AttributeList {
   getFrameRate: (key: string) => FrameRate | undefined;
 }
 
-/**
- * Create AttributeList from raw attribute string.
- */
+/** Create AttributeList from raw attribute string. */
 export function createAttributeList(line: string): AttributeList {
   const map = parseAttributeList(line);
 
@@ -196,10 +180,7 @@ export function createAttributeList(line: string): AttributeList {
   };
 }
 
-/**
- * Match a tag and extract its attributes.
- * Returns null if the line doesn't match the tag.
- */
+/** Match a tag and extract its attributes. Returns null if the line doesn't match the tag. */
 export function matchTag(line: string, tag: string): AttributeList | null {
   const prefix = `#${tag}:`;
 

@@ -29,8 +29,8 @@ export interface VjscPluginOptions {
 }
 
 /**
- * Create the ordered compiler passes for query-selected component modules.
- * Use this as the default VJSC integration for Rolldown-compatible builds.
+ * Create the ordered compiler passes for query-selected component modules. Use this as the default VJSC integration for
+ * Rolldown-compatible builds.
  *
  * @param options - Resolves targets and styles once for each module identity.
  */

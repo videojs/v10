@@ -18,10 +18,7 @@ export interface TimeSliderProps extends SliderProps {
   max?: number | undefined;
   /** Leading+trailing throttle (ms) for `onValueChange` during drag. */
   changeThrottle?: number | undefined;
-  /**
-   * When true, pause playback while the user is dragging the thumb,
-   * resuming on release if it was playing before.
-   */
+  /** When true, pause playback while the user is dragging the thumb, resuming on release if it was playing before. */
   pauseOnDrag?: boolean | undefined;
 }
 
@@ -118,8 +115,8 @@ export class TimeSliderCore extends SliderCore {
   }
 
   /**
-   * Pause playback when a drag begins if `pauseOnDrag` is enabled, remembering
-   * whether media was playing so `endDrag` can resume it.
+   * Pause playback when a drag begins if `pauseOnDrag` is enabled, remembering whether media was playing so `endDrag`
+   * can resume it.
    */
   startDrag(playback: MediaPlaybackState | null | undefined): void {
     this.#wasPlayingBeforeDrag = false;
@@ -131,9 +128,8 @@ export class TimeSliderCore extends SliderCore {
   }
 
   /**
-   * Resume playback if `startDrag` paused it. Resume depends only on the intent
-   * captured at drag start, so it survives `pauseOnDrag` being toggled mid-drag.
-   * Safe to call on teardown — a no-op unless a drag paused playback.
+   * Resume playback if `startDrag` paused it. Resume depends only on the intent captured at drag start, so it survives
+   * `pauseOnDrag` being toggled mid-drag. Safe to call on teardown — a no-op unless a drag paused playback.
    */
   endDrag(playback: MediaPlaybackState | null | undefined): void {
     if (this.#wasPlayingBeforeDrag) {

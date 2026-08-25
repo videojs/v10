@@ -35,8 +35,10 @@ export function replaceRuleClasses(rule: Rule, replacements: ReadonlyMap<string,
   return clone;
 }
 
-/** Render Tailwind group descendants in the component-oriented form a person
- * would normally author, while retaining Tailwind's zero-specificity owner. */
+/**
+ * Render Tailwind group descendants in the component-oriented form a person would normally author, while retaining
+ * Tailwind's zero-specificity owner.
+ */
 export function foldGroupDescendantSelectors(selectors: SelectorList): SelectorList {
   return selectors.map((selector) => {
     const relationships = selector.flatMap((component) => {

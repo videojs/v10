@@ -30,10 +30,11 @@ function OverlayWrapper({ children, className }: { children: React.ReactNode; cl
 
 /**
  * Renders state-based overlays on top of MuxUploader.
- * - needs_login: Login prompt
- * - preparing: Spinner while polling for playback ID
- * - ready: Success message with playback ID
- * - polling_error: Error during post-upload processing (MuxUploader handles upload errors natively)
+ *
+ * - Needs_login: Login prompt
+ * - Preparing: Spinner while polling for playback ID
+ * - Ready: Success message with playback ID
+ * - Polling_error: Error during post-upload processing (MuxUploader handles upload errors natively)
  */
 export default function UploaderOverlay({ state, error, playbackId, onLogin, onRetry }: UploaderOverlayProps) {
   // No overlay needed for idle or uploading (MuxUploader handles its own UI)

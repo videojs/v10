@@ -12,9 +12,8 @@ import {
 const elements: HTMLElement[] = [];
 
 /**
- * A laid-out `<video>`. Size has to come from a real box in a real document — an
- * element that isn't being rendered reports a `0 × 0` box, which is exactly the
- * "nothing to measure" case one of the tests covers.
+ * A laid-out `<video>`. Size has to come from a real box in a real document — an element that isn't being rendered
+ * reports a `0 × 0` box, which is exactly the "nothing to measure" case one of the tests covers.
  */
 function makeVideo(width: number, height: number): HTMLVideoElement {
   const element = document.createElement('video');
@@ -51,9 +50,8 @@ function setupTrackPlayerResolution(
 }
 
 /**
- * Device-pixel scaling is environment-dependent (headless Chromium reports 1, a
- * retina run reports 2), so a test asserting an exact reading either stubs the
- * ratio or opts out of it.
+ * Device-pixel scaling is environment-dependent (headless Chromium reports 1, a retina run reports 2), so a test
+ * asserting an exact reading either stubs the ratio or opts out of it.
  */
 const CSS_PIXELS: TrackPlayerResolutionConfig = { useDevicePixelRatio: false };
 

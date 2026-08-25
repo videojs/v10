@@ -29,15 +29,14 @@ export interface MediaPlayedRangesAPI {
 }
 
 /**
- * Mixin that tracks played ranges for media hosts lacking a native
- * `HTMLMediaElement.played` (e.g. iframe-based embeds like Vimeo).
+ * Mixin that tracks played ranges for media hosts lacking a native `HTMLMediaElement.played` (e.g. iframe-based embeds
+ * like Vimeo).
  *
- * Listens for standard media events the host dispatches on itself
- * (`play`, `pause`, `ended`, `seeking`, `seeked`) and derives a
- * `TimeRanges`-like `played` value from the host's `currentTime` / `paused`.
+ * Listens for standard media events the host dispatches on itself (`play`, `pause`, `ended`, `seeking`, `seeked`) and
+ * derives a `TimeRanges`-like `played` value from the host's `currentTime` / `paused`.
  *
  * @example
- * class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) { ... }
+ *   class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) { ... }
  */
 export function MediaPlayedRangesMixin<Base extends Constructor<EventTarget & { destroy?(): void }>>(
   BaseClass: Base

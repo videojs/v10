@@ -6,17 +6,16 @@ import { MediaComponentElement } from '../media-component-element';
 /**
  * Adds Google Cast support to the surrounding player's media.
  *
- * Renders nothing — place it inside the player as a sibling of the media
- * element and it registers a {@link GoogleCast} media component with the
- * active media host.
+ * Renders nothing — place it inside the player as a sibling of the media element and it registers a {@link GoogleCast}
+ * media component with the active media host.
  *
  * @example
- * ```html
- * <video-player>
+ *   ```html
+ *   <video-player>
  *   <hlsjs-video src="https://example.com/stream.m3u8"></hlsjs-video>
  *   <google-cast receiver="YOUR_APP_ID"></google-cast>
- * </video-player>
- * ```
+ *   </video-player>
+ *   ```;
  */
 export class GoogleCastElement extends MediaComponentElement<GoogleCast> {
   static readonly tagName = 'google-cast';

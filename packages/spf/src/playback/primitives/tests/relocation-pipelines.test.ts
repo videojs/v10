@@ -33,8 +33,10 @@ function makeDeps(): {
   return { deps: { state: { mediaContainerData: slot }, context: {}, config: {} }, slot };
 }
 
-/** The discover steps at their pipeline positions: `[fetch, discover, dispatch]`. The
- * derive is irrelevant here (only the stamp step consumes it), so a no-op suffices. */
+/**
+ * The discover steps at their pipeline positions: `[fetch, discover, dispatch]`. The derive is irrelevant here (only
+ * the stamp step consumes it), so a no-op suffices.
+ */
 function discoverSteps(trackType: 'video' | 'audio') {
   const pipelines = relocationPipelinesFor(trackType, () => ({}))();
 

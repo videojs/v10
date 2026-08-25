@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vite-plus/test';
 import { findTrackElement, isCaptionOrSubtitleTrack } from '../text-track';
 
 /**
- * jsdom does not create unique TextTrack objects per <track> element,
- * so we mock the `.track` property to simulate real browser behavior.
+ * Jsdom does not create unique TextTrack objects per <track> element, so we mock the `.track` property to simulate real
+ * browser behavior.
  */
 function mockTrackProperty(el: HTMLTrackElement): TextTrack {
   const track = {} as TextTrack;

@@ -108,10 +108,7 @@ export function validateReferenceGroup<T>(group: ReferenceGroup<T>): ReferenceGr
   };
 }
 
-/**
- * Write a validated group and remove JSON files that are no longer generated.
- * Non-JSON files are left untouched.
- */
+/** Write a validated group and remove JSON files that are no longer generated. Non-JSON files are left untouched. */
 export function writeReferenceGroup(group: ValidatedReferenceGroup): { written: number; removed: string[] } {
   const parentPath = path.dirname(group.outputPath);
 

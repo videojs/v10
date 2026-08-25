@@ -6,10 +6,7 @@ export interface SkinToken {
   description: string;
 }
 
-/**
- * Stable classification for every `--media-*` custom property used by a
- * Skin.
- */
+/** Stable classification for every `--media-*` custom property used by a Skin. */
 export const tokens = {
   '--media-accent-color': {
     kind: 'public',

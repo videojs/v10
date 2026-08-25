@@ -66,8 +66,8 @@ export class ThumbnailElement extends UIElement {
   }
 
   /**
-   * Set thumbnail images directly, bypassing the automatic `<track>` detection.
-   * When set, this takes priority over the text track path.
+   * Set thumbnail images directly, bypassing the automatic `<track>` detection. When set, this takes priority over the
+   * text track path.
    */
   get thumbnails(): ThumbnailImage[] | undefined {
     return this.#externalThumbnails;
@@ -160,14 +160,13 @@ export class ThumbnailElement extends UIElement {
   }
 
   /**
-   * Leaving `crossOrigin` unset means "follow the media element", so thumbnails
-   * keep working on a CORS-enabled player without a skin having to thread an
-   * attribute through. `null` opts out and fetches the sprites no-CORS, which is
-   * also what removing the attribute produces. A bare `crossorigin` is passed
-   * straight through, since the CORS-settings attribute reads it as Anonymous.
+   * Leaving `crossOrigin` unset means "follow the media element", so thumbnails keep working on a CORS-enabled player
+   * without a skin having to thread an attribute through. `null` opts out and fetches the sprites no-CORS, which is
+   * also what removing the attribute produces. A bare `crossorigin` is passed straight through, since the CORS-settings
+   * attribute reads it as Anonymous.
    *
-   * Only the `<track>` path inherits: `thumbnails` set directly may point at a
-   * host that has nothing to do with the media element.
+   * Only the `<track>` path inherits: `thumbnails` set directly may point at a host that has nothing to do with the
+   * media element.
    */
   #resolveCrossOrigin(textTrack: MediaTextTrackState | undefined): string | undefined {
     if (isNull(this.crossOrigin)) return undefined;

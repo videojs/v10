@@ -7,10 +7,8 @@ import type { CoreExtraction, ExtractedProp } from './types.js';
 /**
  * Extract Props, State, and defaultProps from a core component file.
  *
- * Looks for patterns like:
- * - interface PlayButtonProps { ... }
- * - interface PlayButtonState { ... }
- * - class PlayButtonCore { static defaultProps = { ... } }
+ * Looks for patterns like: - interface PlayButtonProps { ... } - interface PlayButtonState { ... } - class
+ * PlayButtonCore { static defaultProps = { ... } }
  */
 export function extractCore(filePath: string, program: ts.Program, componentName: string): CoreExtraction | null {
   const ast = tae.parseFromProgram(filePath, program);
@@ -116,9 +114,7 @@ export function extractDefaultProps(
   return defaultProps;
 }
 
-/**
- * Get a string representation of a property value.
- */
+/** Get a string representation of a property value. */
 export function getPropertyValue(node: ts.Expression, sourceFile: ts.SourceFile): string | undefined {
   if (ts.isStringLiteral(node)) {
     return `'${node.text}'`;

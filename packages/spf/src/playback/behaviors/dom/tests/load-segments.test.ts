@@ -1,6 +1,4 @@
-/**
- * Tests for segment loading orchestration (F4 + F5)
- */
+/** Tests for segment loading orchestration (F4 + F5) */
 
 import { describe, expect, it, vi } from 'vite-plus/test';
 
@@ -81,12 +79,10 @@ function makeResolvedVideoTrack(segments: Segment[]) {
 /**
  * Creates a minimal SourceBuffer mock.
  *
- * `appendRanges` — added to `buffered` in sequence as `appendBuffer` is called
- *   (for testing the live append path).
- * `startingRanges` — present in `buffered` from the start, before any appends
- *   (for pre-seeded actor context tests where no appendBuffer calls are made).
- * `remove()` clips the current ranges to match real SourceBuffer behaviour,
- * enabling the midpoint-based segment model logic in removeTask.
+ * `appendRanges` — added to `buffered` in sequence as `appendBuffer` is called (for testing the live append path).
+ * `startingRanges` — present in `buffered` from the start, before any appends (for pre-seeded actor context tests where
+ * no appendBuffer calls are made). `remove()` clips the current ranges to match real SourceBuffer behaviour, enabling
+ * the midpoint-based segment model logic in removeTask.
  */
 function makeSourceBuffer(
   appendRanges: Array<[number, number]> = [],
@@ -155,10 +151,9 @@ function makeSourceBuffer(
 /**
  * Creates a SourceBuffer + SourceBufferActor pair.
  *
- * `preloadedRanges` — initial `buffered` ranges (present before any appends).
- *   Use when the actor context is pre-seeded with segments that are already
- *   "in" the SourceBuffer without going through the append path.
- * `initialSegments` — seeds the actor context with pre-existing segments.
+ * `preloadedRanges` — initial `buffered` ranges (present before any appends). Use when the actor context is pre-seeded
+ * with segments that are already "in" the SourceBuffer without going through the append path. `initialSegments` — seeds
+ * the actor context with pre-existing segments.
  */
 function makeSourceBufferWithActor(
   preloadedRanges: Array<[number, number]> = [],
@@ -175,11 +170,9 @@ function makeSourceBufferWithActor(
 }
 
 /**
- * Test driver: composes a per-type segment-loader-actor against the
- * supplied SourceBufferActor and wires it to the per-type
- * `load{Video,Audio}Segments` dispatcher. Production code creates the
- * loader inside `setup{Video,Audio}BufferActors`; tests do the wiring
- * directly to keep the dispatcher under test isolated.
+ * Test driver: composes a per-type segment-loader-actor against the supplied SourceBufferActor and wires it to the
+ * per-type `load{Video,Audio}Segments` dispatcher. Production code creates the loader inside
+ * `setup{Video,Audio}BufferActors`; tests do the wiring directly to keep the dispatcher under test isolated.
  */
 function setupLoadSegments(
   initialState: SegmentLoadingState,

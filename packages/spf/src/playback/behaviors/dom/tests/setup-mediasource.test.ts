@@ -382,10 +382,9 @@ describe('setupMediaSource', () => {
     }
 
     /**
-     * Composes both behaviors, attaches, and arms detach's reset: waits for
-     * both `<source>` children, stages the element as committed to the MSE
-     * object URL (real resource selection is async), and records whether the
-     * fallback was still in the DOM when the reset `load()` ran.
+     * Composes both behaviors, attaches, and arms detach's reset: waits for both `<source>` children, stages the
+     * element as committed to the MSE object URL (real resource selection is async), and records whether the fallback
+     * was still in the DOM when the reset `load()` ran.
      */
     async function arrangeAttached() {
       const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');

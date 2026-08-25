@@ -10,14 +10,13 @@ interface TemplatePluginOptions {
 }
 
 /**
- * Rolldown/Vite+ pack transform plugin that minifies tagged template literals
- * marked with {@link HTML_MARKER} or {@link CSS_MARKER}.
+ * Rolldown/Vite+ pack transform plugin that minifies tagged template literals marked with {@link HTML_MARKER} or
+ * {@link CSS_MARKER}.
  *
  * - `/*html*​/` templates: collapse inter-tag whitespace, strip HTML comments.
  * - `/* css *​/` templates: full CSS minification via lightningcss.
  *
- * Only the static parts (quasis) are processed — `${...}` expression
- * interpolations are preserved as-is.
+ * Only the static parts (quasis) are processed — `${...}` expression interpolations are preserved as-is.
  */
 export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): BuildPlugin {
   const { minify = true } = options;
@@ -48,8 +47,8 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
 // ---------------------------------------------------------------------------
 
 /**
- * Walk `code` looking for known markers followed by a backtick template
- * literal. For each match, minify the static parts and reassemble.
+ * Walk `code` looking for known markers followed by a backtick template literal. For each match, minify the static
+ * parts and reassemble.
  */
 function processTemplates(code: string, output: BuildMagicString): boolean {
   let changed = false;
@@ -138,9 +137,8 @@ function minifyHtmlQuasis(quasis: string[]): string[] {
 }
 
 /**
- * Remove whitespace that sits between a closing `>` and an opening `<`,
- * while respecting quoted attribute values (so `> <` inside an attribute
- * like `title="a > <b"` is left untouched).
+ * Remove whitespace that sits between a closing `>` and an opening `<`, while respecting quoted attribute values (so `>
+ * <` inside an attribute like `title="a > <b"` is left untouched).
  */
 function collapseInterTagWhitespace(s: string): string {
   let out = '';
@@ -197,8 +195,7 @@ const EXPR_PLACEHOLDER = '___EXPR_';
 /**
  * Minify the static parts of a CSS template literal via lightningcss.
  *
- * Expressions are replaced with safe placeholder tokens before minification,
- * then restored afterward.
+ * Expressions are replaced with safe placeholder tokens before minification, then restored afterward.
  */
 function minifyCssQuasis(quasis: string[]): string[] {
   // Fast path: single quasi (no expressions) — minify directly.
@@ -260,9 +257,8 @@ interface ParsedTemplate {
 }
 
 /**
- * Parse a backtick template literal starting at `start` (the opening `` ` ``).
- * Returns the static quasis, the raw expression source strings, and the index
- * immediately after the closing backtick.
+ * Parse a backtick template literal starting at `start` (the opening `` ` ``). Returns the static quasis, the raw
+ * expression source strings, and the index immediately after the closing backtick.
  */
 function parseTemplateLiteral(code: string, start: number): ParsedTemplate {
   const quasis: string[] = [];
@@ -315,8 +311,8 @@ interface SkipResult {
 }
 
 /**
- * Starting right after the `${`, collect everything up to the matching `}`.
- * Returns `{ src, _end }` where `_end` is the index after the closing `}`.
+ * Starting right after the `${`, collect everything up to the matching `}`. Returns `{ src, _end }` where `_end` is the
+ * index after the closing `}`.
  */
 function collectExpression(code: string, start: number): ParsedExpression {
   let i = start;

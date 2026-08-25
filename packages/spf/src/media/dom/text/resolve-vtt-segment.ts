@@ -1,8 +1,8 @@
 /**
  * Parse a VTT segment using browser's native parser.
  *
- * Creates a dummy video element with a track element to leverage
- * the browser's optimized VTT parsing. Returns parsed VTTCue objects.
+ * Creates a dummy video element with a track element to leverage the browser's optimized VTT parsing. Returns parsed
+ * VTTCue objects.
  */
 
 import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../text/resolve-vtt-metadata';
@@ -79,9 +79,8 @@ export function destroyVttResolver(): void {
 }
 
 /**
- * A resolved VTT segment paired with its header metadata — the shape used when a
- * caller needs the `X-TIMESTAMP-MAP` correlation (e.g. non-zero-PTS sources),
- * not just the cues.
+ * A resolved VTT segment paired with its header metadata — the shape used when a caller needs the `X-TIMESTAMP-MAP`
+ * correlation (e.g. non-zero-PTS sources), not just the cues.
  */
 export interface ResolvedVttSegment {
   cues: VTTCue[];
@@ -89,9 +88,8 @@ export interface ResolvedVttSegment {
 }
 
 /**
- * Resolve a VTT segment's cues and header metadata together. Cues still come
- * from the browser's native parser ({@link resolveVttSegment}); the header is
- * scraped in parallel ({@link resolveVttSegmentMetadata}).
+ * Resolve a VTT segment's cues and header metadata together. Cues still come from the browser's native parser ({@link
+ * resolveVttSegment}); the header is scraped in parallel ({@link resolveVttSegmentMetadata}).
  */
 export function resolveVttSegmentWithMetadata(url: string): Promise<ResolvedVttSegment> {
   return Promise.all([resolveVttSegment(url), resolveVttSegmentMetadata(url)]).then(([cues, metadata]) => ({

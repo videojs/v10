@@ -70,10 +70,9 @@ export function TooltipPopup(props: Omit<Tooltip.PopupProps, 'children' | 'class
 }
 
 /**
- * Default audio skin configured for live playback. Mirrors {@link AudioSkin}
- * but omits the time slider and the current / duration time displays. A
- * flexible spacer stretches between the play and volume controls so they
- * sit at opposite edges of the control bar.
+ * Default audio skin configured for live playback. Mirrors {@link AudioSkin} but omits the time slider and the current /
+ * duration time displays. A flexible spacer stretches between the play and volume controls so they sit at opposite
+ * edges of the control bar.
  */
 export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;

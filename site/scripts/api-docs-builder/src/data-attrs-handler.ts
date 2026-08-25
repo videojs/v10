@@ -51,6 +51,7 @@ function inferStateTypes(satisfiesType: ts.TypeNode, program: ts.Program): Map<s
  * Extract data attributes from a component's data.ts file.
  *
  * Looks for patterns like:
+ *
  * ```ts
  * export const PlayButtonDataAttrs = {
  *   /** Present when the media is paused. *\/
@@ -136,9 +137,7 @@ export function extractDataAttrs(
   return { attrs };
 }
 
-/**
- * Parse JSDoc comment, extracting description and optional `@type` tag.
- */
+/** Parse JSDoc comment, extracting description and optional `@type` tag. */
 export function parseJsDoc(
   node: ts.PropertyAssignment,
   sourceFile: ts.SourceFile
@@ -159,9 +158,7 @@ export function parseJsDoc(
   return { description, type };
 }
 
-/**
- * Extract JSDoc comment from a property assignment.
- */
+/** Extract JSDoc comment from a property assignment. */
 export function getJsDocComment(node: ts.PropertyAssignment, sourceFile: ts.SourceFile): string {
   // Get leading comment ranges
   const fullText = sourceFile.getFullText();

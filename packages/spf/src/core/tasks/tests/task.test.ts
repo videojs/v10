@@ -688,8 +688,10 @@ describe('SerialRunner', () => {
 });
 
 describe('RecurringRunner', () => {
-  /** A reschedule that parks forever, rejecting only when its signal aborts — so a
-   *  recurrence stays "live" (awaiting) until superseded or aborted. */
+  /**
+   * A reschedule that parks forever, rejecting only when its signal aborts — so a recurrence stays "live" (awaiting)
+   * until superseded or aborted.
+   */
   const parkUntilAborted: Reschedule<number> = (task) =>
     new Promise<boolean>((_resolve, reject) => {
       task.signal.addEventListener('abort', () => reject(task.signal.reason), { once: true });

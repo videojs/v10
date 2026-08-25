@@ -22,9 +22,8 @@ export interface MenuTriggerProps extends Omit<
 }
 
 /**
- * Button that toggles the menu visibility. At root level renders a `<button>`.
- * When inside a parent menu (as a submenu trigger), renders as a `<div role="menuitem">`
- * that opens the submenu on click or ArrowRight.
+ * Button that toggles the menu visibility. At root level renders a `<button>`. When inside a parent menu (as a submenu
+ * trigger), renders as a `<div role="menuitem">` that opens the submenu on click or ArrowRight.
  */
 export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTriggerProps>(function MenuTrigger(
   { render, className, style, disabled, onClick, onKeyDown, ...elementProps },

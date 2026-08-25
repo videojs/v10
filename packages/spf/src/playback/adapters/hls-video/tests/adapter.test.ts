@@ -1,16 +1,14 @@
 /**
  * HlsVideoMediaElement adapter tests.
  *
- * Covers the HTMLMediaElement-compatible contract for src and play(), per the
- * WHATWG HTML spec (https://html.spec.whatwg.org/multipage/media.html).
+ * Covers the HTMLMediaElement-compatible contract for src and play(), per the WHATWG HTML spec
+ * (https://html.spec.whatwg.org/multipage/media.html).
  *
- * Notable spec anchors:
- * - src IDL attribute reflects synchronously (§4.8.11.2)
- * - Setting src invokes the load algorithm (§4.8.11.5)
- * - play() returns a Promise that resolves when playback starts (§4.8.11.8)
+ * Notable spec anchors: - src IDL attribute reflects synchronously (§4.8.11.2) - Setting src invokes the load algorithm
+ * (§4.8.11.5) - play() returns a Promise that resolves when playback starts (§4.8.11.8)
  *
- * Remote-source integration tests (e.g. full pipeline with Mux streams) are
- * intentionally deferred; see comments below for planned coverage.
+ * Remote-source integration tests (e.g. full pipeline with Mux streams) are intentionally deferred; see comments below
+ * for planned coverage.
  *
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
@@ -457,8 +455,8 @@ describe('HlsVideoMediaElement', () => {
     class TestMedia extends HlsVideoMediaMixin(EventTarget) {}
 
     /**
-     * A resolved live presentation: one selected video track, 5×2s segments at
-     * [100, 110], targetDuration 2 (→ HOLD-BACK latency 6 → liveEdgeStart 104).
+     * A resolved live presentation: one selected video track, 5×2s segments at [100, 110], targetDuration 2 (→
+     * HOLD-BACK latency 6 → liveEdgeStart 104).
      */
     function liveVideoPresentation(playlistType?: 'VOD' | 'EVENT'): Presentation {
       const complete = playlistType === 'VOD';

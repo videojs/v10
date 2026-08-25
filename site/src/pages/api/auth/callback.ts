@@ -9,11 +9,8 @@ export const prerender = false;
 /**
  * OAuth 2.0 callback endpoint - handles the redirect from the authorization server
  *
- * Flow:
- * 1. Validates the state parameter to prevent CSRF attacks
- * 2. Exchanges the authorization code for access & refresh tokens
- * 3. Encrypts and stores tokens in a secure HTTP-only cookie
- * 4. Redirects to success or error page
+ * Flow: 1. Validates the state parameter to prevent CSRF attacks 2. Exchanges the authorization code for access &
+ * refresh tokens 3. Encrypts and stores tokens in a secure HTTP-only cookie 4. Redirects to success or error page
  */
 export const GET: APIRoute = async ({ request, cookies, redirect }) => {
   const url = new URL(request.url);

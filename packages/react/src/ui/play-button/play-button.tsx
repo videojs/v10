@@ -10,17 +10,17 @@ export interface PlayButtonProps extends UIComponentProps<'button', PlayButtonCo
  * A button that toggles playback.
  *
  * @example
- * ```tsx
- * <PlayButton />
+ *   ```tsx
+ *   <PlayButton />
  *
- * <PlayButton
+ *   <PlayButton
  *   render={(props, state) => (
- *     <button {...props}>
- *       {state.paused ? <PlayIcon /> : <PauseIcon />}
- *     </button>
+ *   <button {...props}>
+ *   {state.paused ? <PlayIcon /> : <PauseIcon />}
+ *   </button>
  *   )}
- * />
- * ```
+ *   />
+ *   ```;
  */
 export const PlayButton = createMediaButton<PlayButtonCore, PlayButtonProps>({
   displayName: 'PlayButton',

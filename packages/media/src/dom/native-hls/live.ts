@@ -3,9 +3,7 @@ import type { Constructor } from '@videojs/utils/types';
 import type { NativeMediaHost } from './errors';
 import { getStreamInfoFromSrc, looksLikeM3u8 } from './m3u8-utils';
 
-/**
- * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
- */
+/** @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value. */
 export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   // Native HLS does not expose manifest-level `HOLD-BACK` / `PART-HOLD-BACK`
   // through a JS API, so we fetch the m3u8 ourselves and parse the relevant
@@ -20,18 +18,16 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
     #currentSrc = '';
 
     /**
-     * Describes the kind of live window available. `0` for a sliding live
-     * window, `Infinity` for a live event with playback history, and `NaN` for
-     * on-demand or unknown. This value is not a duration.
+     * Describes the kind of live window available. `0` for a sliding live window, `Infinity` for a live event with
+     * playback history, and `NaN` for on-demand or unknown. This value is not a duration.
      */
     get targetLiveWindow() {
       return this.#targetLiveWindow;
     }
 
     /**
-     * Playback time where the live edge begins. Calculated from the newest
-     * available time and the playlist's live-edge offset. `NaN` when the
-     * stream is not live or the offset is unavailable.
+     * Playback time where the live edge begins. Calculated from the newest available time and the playlist's live-edge
+     * offset. `NaN` when the stream is not live or the offset is unavailable.
      */
     get liveEdgeStart() {
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;

@@ -10,10 +10,9 @@ import { createSourceBufferActor } from '../source-buffer';
 /**
  * Creates a minimal SourceBuffer mock.
  *
- * Pass `appendRanges` to simulate realistic buffered state: each entry is
- * added to `buffered` in sequence as `appendBuffer` is called. `remove()`
- * clips the ranges to match what a real SourceBuffer would report, enabling
- * the midpoint-based segment model logic in removeTask to be tested correctly.
+ * Pass `appendRanges` to simulate realistic buffered state: each entry is added to `buffered` in sequence as
+ * `appendBuffer` is called. `remove()` clips the ranges to match what a real SourceBuffer would report, enabling the
+ * midpoint-based segment model logic in removeTask to be tested correctly.
  */
 function makeSourceBuffer(appendRanges: Array<[number, number]> = []): SourceBuffer {
   const listeners: Record<string, EventListener[]> = {};

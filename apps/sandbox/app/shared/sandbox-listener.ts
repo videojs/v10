@@ -98,15 +98,14 @@ function readLocale(): SandboxLocaleTag {
 }
 
 /**
- * Playback options read once from the query string and folded into the *initial*
- * `source`, so the engine is built with them instead of having them switched in
- * afterwards. Every key is absent unless named, leaving the default sandbox
+ * Playback options read once from the query string and folded into the _initial_ `source`, so the engine is built with
+ * them instead of having them switched in afterwards. Every key is absent unless named, leaving the default sandbox
  * behavior untouched.
  *
  * - `?maxAutoResolution=720p` caps automatic rendition selection.
  * - `?capRenditionToPlayerSize=0` stops the element's size from capping it.
- * - `?minAutoResolution=270p` lowers the floor on that size cap, whose default
- *   is `720p` — low enough here to leave a small player uncapped.
+ * - `?minAutoResolution=270p` lowers the floor on that size cap, whose default is `720p` — low enough here to leave a
+ *   small player uncapped.
  * - `?preferPlayback=native` forces the browser's own HLS.
  */
 export function getInitialPlaybackOverrides(): {

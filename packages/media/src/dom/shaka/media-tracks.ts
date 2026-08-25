@@ -14,17 +14,14 @@ type MediaTracksHost = ShakaEngineHost &
   MediaVideoRenditionCapability;
 
 /**
- * Mirrors the Shaka video and audio tracks of the loaded asset into the media
- * element's `videoRenditions` / `audioTracks` lists, and wires user selection
- * back to `engine.selectVideoTrack()` and `engine.selectAudioTrack()`.
+ * Mirrors the Shaka video and audio tracks of the loaded asset into the media element's `videoRenditions` /
+ * `audioTracks` lists, and wires user selection back to `engine.selectVideoTrack()` and `engine.selectAudioTrack()`.
  *
- * Shaka video tracks are a flattened view over the manifest's variants rather
- * than a list of their own, so they are hung off a single `'main'` video track —
- * the one the renditions of the asset that is playing are read from.
+ * Shaka video tracks are a flattened view over the manifest's variants rather than a list of their own, so they are
+ * hung off a single `'main'` video track — the one the renditions of the asset that is playing are read from.
  *
- * Requires the media-tracks mixin (track-list infrastructure) to be applied
- * earlier in the chain so the host exposes `addVideoTrack`, `videoRenditions`,
- * and friends.
+ * Requires the media-tracks mixin (track-list infrastructure) to be applied earlier in the chain so the host exposes
+ * `addVideoTrack`, `videoRenditions`, and friends.
  */
 export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class ShakaMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {

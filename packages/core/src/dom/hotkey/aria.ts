@@ -20,13 +20,13 @@ const MODIFIER_ORDER: readonly HotkeyModifierKey[] = ['ctrl', 'shift', 'alt', 'm
  * Convert parsed key bindings to a WAI-ARIA `aria-keyshortcuts` formatted string.
  *
  * @example
- * ```ts
- * toAriaKeyShortcut(parseHotkeyPattern('Ctrl+Shift+f'));
- * // "Control+Shift+f"
+ *   ```ts
+ *   toAriaKeyShortcut(parseHotkeyPattern('Ctrl+Shift+f'));
+ *   // "Control+Shift+f"
  *
- * toAriaKeyShortcut([...parseHotkeyPattern('k'), ...parseHotkeyPattern('Space')]);
- * // "k Space"
- * ```
+ *   toAriaKeyShortcut([...parseHotkeyPattern('k'), ...parseHotkeyPattern('Space')]);
+ *   // "k Space"
+ *   ```;
  */
 export function toAriaKeyShortcut(bindings: ParsedHotkeyBinding[]): string {
   return bindings

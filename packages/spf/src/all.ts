@@ -1,8 +1,8 @@
 /**
  * All SPF exports (public + internal) for bundle size measurement.
  *
- * This file exports everything implemented in SPF, including internal APIs.
- * Use this for accurate bundle size measurements during development.
+ * This file exports everything implemented in SPF, including internal APIs. Use this for accurate bundle size
+ * measurements during development.
  *
  * For the public API, import from './index' instead.
  */

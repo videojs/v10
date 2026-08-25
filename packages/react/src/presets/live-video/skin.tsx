@@ -97,10 +97,9 @@ function VolumePopover(): ReactNode {
 }
 
 /**
- * Default video skin configured for live playback. Mirrors {@link VideoSkin}
- * but omits the time slider and the duration / current-time displays. A
- * flexible spacer stretches between the start and end button groups so they
- * sit at opposite edges of the control bar.
+ * Default video skin configured for live playback. Mirrors {@link VideoSkin} but omits the time slider and the duration
+ * / current-time displays. A flexible spacer stretches between the start and end button groups so they sit at opposite
+ * edges of the control bar.
  */
 function CaptionsTrigger(): ReactNode {
   const t = useTranslator();

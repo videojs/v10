@@ -11,57 +11,50 @@ const propertyKeys = new Map<string, symbol>();
 /**
  * Lightweight reactive custom element base class.
  *
- * Drop-in subset of Lit's `ReactiveElement` — supports `static properties`,
- * attribute reflection, batched async updates, and reactive controllers.
- * No Shadow DOM, no `static styles`, no decorators.
+ * Drop-in subset of Lit's `ReactiveElement` — supports `static properties`, attribute reflection, batched async
+ * updates, and reactive controllers. No Shadow DOM, no `static styles`, no decorators.
  *
- * Updates are batched using the same Promise-based scheduling as Lit:
- * property changes enqueue a microtask, and the update is gated behind
- * `connectedCallback` so the first update only runs once the element
- * is in the document.
+ * Updates are batched using the same Promise-based scheduling as Lit: property changes enqueue a microtask, and the
+ * update is gated behind `connectedCallback` so the first update only runs once the element is in the document.
  *
  * Subclasses that extend another element with properties must spread them:
  *
  * @example
- * ```ts
- * class MyButton extends ReactiveElement {
- *   static override properties = {
- *     label: { type: String },
- *     disabled: { type: Boolean },
- *   };
+ *   ```ts
+ *   class MyButton extends ReactiveElement {
+ *     static override properties = {
+ *       label: { type: String },
+ *       disabled: { type: Boolean },
+ *     };
  *
- *   label = 'Click me';
- *   disabled = false;
+ *     label = 'Click me';
+ *     disabled = false;
  *
- *   protected override update(changed: PropertyValues): void {
- *     super.update(changed);
- *     this.textContent = this.label;
+ *     protected override update(changed: PropertyValues): void {
+ *       super.update(changed);
+ *       this.textContent = this.label;
+ *     }
  *   }
- * }
  *
- * // Inheritance — spread parent properties
- * class FancyButton extends MyButton {
- *   static override properties = {
- *     ...MyButton.properties,
- *     variant: { type: String },
- *   };
+ *   // Inheritance — spread parent properties
+ *   class FancyButton extends MyButton {
+ *     static override properties = {
+ *       ...MyButton.properties,
+ *       variant: { type: String },
+ *     };
  *
- *   variant = 'primary';
- * }
- * ```
+ *     variant = 'primary';
+ *   }
+ *   ```;
  */
 export class ReactiveElement extends HTMLElement {
   /**
-   * User-supplied object that maps property names to
-   * {@linkcode PropertyDeclaration} objects containing options for configuring
-   * reactive properties. When a reactive property is set the element will
-   * update and render.
+   * User-supplied object that maps property names to {@linkcode PropertyDeclaration} objects containing options for
+   * configuring reactive properties. When a reactive property is set the element will update and render.
    */
   static properties: PropertyDeclarationMap = {};
 
-  /**
-   * Returns a list of attributes corresponding to the registered properties.
-   */
+  /** Returns a list of attributes corresponding to the registered properties. */
   static get observedAttributes(): string[] {
     return [...resolve(this).attrToProp.keys()];
   }
@@ -73,22 +66,18 @@ export class ReactiveElement extends HTMLElement {
   #instanceProperties: Map<string, unknown> | undefined;
 
   /**
-   * Promise that gates the first update until `connectedCallback`. Also
-   * used to serialize updates — each `#enqueueUpdate` awaits the previous
-   * `#updatePromise`, so property changes are batched and updates never
-   * overlap. Matches Lit's scheduling model.
+   * Promise that gates the first update until `connectedCallback`. Also used to serialize updates — each
+   * `#enqueueUpdate` awaits the previous `#updatePromise`, so property changes are batched and updates never overlap.
+   * Matches Lit's scheduling model.
    */
   #updatePromise: Promise<boolean>;
 
-  /**
-   * True if there is a pending update as a result of calling
-   * `requestUpdate()`. Should only be read.
-   */
+  /** True if there is a pending update as a result of calling `requestUpdate()`. Should only be read. */
   isUpdatePending = false;
 
   /**
-   * Is set to `true` after the first update. The element code cannot assume
-   * that the DOM is fully initialized before the element `hasUpdated`.
+   * Is set to `true` after the first update. The element code cannot assume that the DOM is fully initialized before
+   * the element `hasUpdated`.
    */
   hasUpdated = false;
 
@@ -119,19 +108,17 @@ export class ReactiveElement extends HTMLElement {
   }
 
   /**
-   * Note, this method should be considered final and not overridden. It is
-   * overridden on the element instance with a function that triggers the
-   * first update.
+   * Note, this method should be considered final and not overridden. It is overridden on the element instance with a
+   * function that triggers the first update.
    */
   protected enableUpdating(_requestedUpdate: boolean): void {}
 
   /**
-   * Registers a {@linkcode ReactiveController} to participate in the
-   * element's reactive update cycle. The element automatically calls into
-   * any registered controllers during its lifecycle callbacks.
+   * Registers a {@linkcode ReactiveController} to participate in the element's reactive update cycle. The element
+   * automatically calls into any registered controllers during its lifecycle callbacks.
    *
-   * If the element is connected when `addController()` is called, the
-   * controller's `hostConnected()` callback will be immediately called.
+   * If the element is connected when `addController()` is called, the controller's `hostConnected()` callback will be
+   * immediately called.
    */
   addController(controller: ReactiveController): void {
     this.#controllers.add(controller);
@@ -146,9 +133,7 @@ export class ReactiveElement extends HTMLElement {
     this.#controllers.delete(controller);
   }
 
-  /**
-   * On first connection, enables updating and notifies controllers.
-   */
+  /** On first connection, enables updating and notifies controllers. */
   connectedCallback(): void {
     this.enableUpdating(true);
 
@@ -166,10 +151,8 @@ export class ReactiveElement extends HTMLElement {
   /**
    * Synchronizes property values when attributes change.
    *
-   * Specifically, when an attribute is set, the corresponding property is
-   * set. You should rarely need to implement this callback. If this method
-   * is overridden, `super.attributeChangedCallback(name, _old, value)` must
-   * be called.
+   * Specifically, when an attribute is set, the corresponding property is set. You should rarely need to implement this
+   * callback. If this method is overridden, `super.attributeChangedCallback(name, _old, value)` must be called.
    */
   attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return;
@@ -195,12 +178,10 @@ export class ReactiveElement extends HTMLElement {
   }
 
   /**
-   * Requests an update which is processed asynchronously. This should be
-   * called when an element should update based on some state not triggered
-   * by setting a reactive property. In this case, pass no arguments. It
-   * should also be called when manually implementing a property setter. In
-   * this case, pass the property `name` and `oldValue` to ensure that any
-   * configured property options are honored.
+   * Requests an update which is processed asynchronously. This should be called when an element should update based on
+   * some state not triggered by setting a reactive property. In this case, pass no arguments. It should also be called
+   * when manually implementing a property setter. In this case, pass the property `name` and `oldValue` to ensure that
+   * any configured property options are honored.
    */
   requestUpdate(name?: string, oldValue?: unknown): void {
     if (name !== undefined) {
@@ -213,9 +194,8 @@ export class ReactiveElement extends HTMLElement {
   }
 
   /**
-   * Sets up the element to asynchronously update. Awaits the previous
-   * `#updatePromise` which both serializes updates and (on first update)
-   * waits for `connectedCallback` to resolve the gate.
+   * Sets up the element to asynchronously update. Awaits the previous `#updatePromise` which both serializes updates
+   * and (on first update) waits for `connectedCallback` to resolve the gate.
    */
   async #enqueueUpdate(): Promise<boolean> {
     this.isUpdatePending = true;
@@ -242,11 +222,9 @@ export class ReactiveElement extends HTMLElement {
   }
 
   /**
-   * Schedules an element update. You can override this method to change the
-   * timing of updates by returning a Promise. The update will await the
-   * returned Promise, and you should resolve the Promise to allow the update
-   * to proceed. If this method is overridden, `super.scheduleUpdate()` must
-   * be called.
+   * Schedules an element update. You can override this method to change the timing of updates by returning a Promise.
+   * The update will await the returned Promise, and you should resolve the Promise to allow the update to proceed. If
+   * this method is overridden, `super.scheduleUpdate()` must be called.
    *
    * For instance, to schedule updates to occur just before the next frame:
    *
@@ -262,12 +240,11 @@ export class ReactiveElement extends HTMLElement {
   }
 
   /**
-   * Performs an element update. Note, if an exception is thrown during the
-   * update, `firstUpdated` and `updated` will not be called.
+   * Performs an element update. Note, if an exception is thrown during the update, `firstUpdated` and `updated` will
+   * not be called.
    *
-   * Call `performUpdate()` to immediately process a pending update. This
-   * should generally not be needed, but it can be done in rare cases when
-   * you need to update synchronously.
+   * Call `performUpdate()` to immediately process a pending update. This should generally not be needed, but it can be
+   * done in rare cases when you need to update synchronously.
    */
   protected performUpdate(): void {
     // Abort any update if one is not pending when this is called.
@@ -313,8 +290,8 @@ export class ReactiveElement extends HTMLElement {
   /**
    * Invoked before `update()` to compute values needed during the update.
    *
-   * Implement `willUpdate` to compute property values that depend on other
-   * properties and are used in the rest of the update process.
+   * Implement `willUpdate` to compute property values that depend on other properties and are used in the rest of the
+   * update process.
    *
    * ```ts
    * willUpdate(changed) {
@@ -327,35 +304,30 @@ export class ReactiveElement extends HTMLElement {
   protected willUpdate(_changed: PropertyValues): void {}
 
   /**
-   * Updates the element. This method reflects property values to attributes
-   * and can be overridden to render and keep updated element DOM. Setting
-   * properties inside this method will *not* trigger another update.
+   * Updates the element. This method reflects property values to attributes and can be overridden to render and keep
+   * updated element DOM. Setting properties inside this method will _not_ trigger another update.
    */
   protected update(_changed: PropertyValues): void {}
 
   /**
-   * Invoked when the element is first updated. Implement to perform one
-   * time work on the element after update.
+   * Invoked when the element is first updated. Implement to perform one time work on the element after update.
    *
-   * Setting properties inside this method will trigger the element to
-   * update again after this update cycle completes.
+   * Setting properties inside this method will trigger the element to update again after this update cycle completes.
    */
   protected firstUpdated(_changed: PropertyValues): void {}
 
   /**
-   * Invoked whenever the element is updated. Implement to perform
-   * post-updating tasks via DOM APIs, for example, focusing an element.
+   * Invoked whenever the element is updated. Implement to perform post-updating tasks via DOM APIs, for example,
+   * focusing an element.
    *
-   * Setting properties inside this method will trigger the element to
-   * update again after this update cycle completes.
+   * Setting properties inside this method will trigger the element to update again after this update cycle completes.
    */
   protected updated(_changed: PropertyValues): void {}
 
   /**
-   * Returns a Promise that resolves when the element has completed updating.
-   * The Promise value is a boolean that is `true` if the element completed
-   * the update without triggering another update. The Promise result is
-   * `false` if a property was set inside `updated()`.
+   * Returns a Promise that resolves when the element has completed updating. The Promise value is a boolean that is
+   * `true` if the element completed the update without triggering another update. The Promise result is `false` if a
+   * property was set inside `updated()`.
    */
   get updateComplete(): Promise<boolean> {
     return this.#updatePromise;
@@ -363,11 +335,11 @@ export class ReactiveElement extends HTMLElement {
 }
 
 /**
- * Resolve `ctor.properties` into lookup Maps and install reactive accessors
- * on the prototype. Runs once per class, result is cached.
+ * Resolve `ctor.properties` into lookup Maps and install reactive accessors on the prototype. Runs once per class,
+ * result is cached.
  *
- * Subclasses that need parent properties must spread them:
- * `static override properties = { ...Parent.properties, ... }`.
+ * Subclasses that need parent properties must spread them: `static override properties = { ...Parent.properties, ...
+ * }`.
  */
 function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
   const existing = cache.get(ctor);

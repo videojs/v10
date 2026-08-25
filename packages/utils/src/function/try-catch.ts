@@ -2,10 +2,10 @@
  * Wrap a function to catch and handle errors instead of throwing.
  *
  * @example
- * ```ts
- * const safeFn = tryCatch(riskyFn, (e) => logger.error(e));
- * safeFn?.(); // Never throws
- * ```
+ *   ```ts
+ *   const safeFn = tryCatch(riskyFn, (e) => logger.error(e));
+ *   safeFn?.(); // Never throws
+ *   ```;
  */
 export function tryCatch<T extends (...args: any[]) => unknown>(
   fn: T | undefined,

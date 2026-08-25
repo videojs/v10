@@ -15,14 +15,12 @@ export interface PartExport {
 /**
  * Extract part definitions from a React `index.parts.ts` file.
  *
- * Discovery algorithm:
- * 1. Parses named exports from `index.parts.ts` (filters out type-only exports)
- * 2. Each value export becomes a part: `export { Group } from './time-group'` -> part "Group"
- * 3. Source path is preserved for HTML element matching in the main builder
+ * Discovery algorithm: 1. Parses named exports from `index.parts.ts` (filters out type-only exports) 2. Each value
+ * export becomes a part: `export { Group } from './time-group'` -> part "Group" 3. Source path is preserved for HTML
+ * element matching in the main builder
  *
- * If a part isn't appearing in the output:
- * - Ensure it's exported as a value export (not `type`-only) in `index.parts.ts`
- * - Ensure the source path follows `'./{component}-{part}'` naming
+ * If a part isn't appearing in the output: - Ensure it's exported as a value export (not `type`-only) in
+ * `index.parts.ts` - Ensure the source path follows `'./{component}-{part}'` naming
  */
 export function extractParts(filePath: string, program: ts.Program): PartExport[] {
   const sourceFile = program.getSourceFile(filePath);
@@ -66,8 +64,8 @@ export function extractParts(filePath: string, program: ts.Program): PartExport[
 /**
  * Extract the JSDoc description from a React component export.
  *
- * Parses the file with `typescript-api-extractor`, finds the export matching
- * `partName`, and returns its description (stripping `@example` blocks).
+ * Parses the file with `typescript-api-extractor`, finds the export matching `partName`, and returns its description
+ * (stripping `@example` blocks).
  */
 export function extractPartDescription(filePath: string, program: ts.Program, partName: string): string | undefined {
   const ast = tae.parseFromProgram(filePath, program);
@@ -82,10 +80,9 @@ export function extractPartDescription(filePath: string, program: ts.Program, pa
 /**
  * Extract custom React-specific props from a sub-part's Props interface.
  *
- * Walks syntactic own members of `{localName}Props`, then also includes
- * members from any extended interface declared within the project (i.e., not
- * from `node_modules`). This picks up props from project types like
- * `TooltipGroupProps` while excluding inherited React DOM attributes.
+ * Walks syntactic own members of `{localName}Props`, then also includes members from any extended interface declared
+ * within the project (i.e., not from `node_modules`). This picks up props from project types like `TooltipGroupProps`
+ * while excluding inherited React DOM attributes.
  */
 export function extractSubPartProps(filePath: string, program: ts.Program, localName: string): Record<string, PropDef> {
   const sourceFile = program.getSourceFile(filePath);

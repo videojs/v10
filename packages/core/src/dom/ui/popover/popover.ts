@@ -165,18 +165,15 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   /**
    * The transition handler manages animation lifecycle via `createState`:
    *
-   * **Open:** `transition.open()` patches `{ active: true, status: 'starting' }`.
-   * After a double-RAF it patches `{ status: 'idle' }`, then waits for the
-   * resulting element animations before the promise resolves.
-   * Frameworks render `data-starting-style` / `data-ending-style` via
-   * `getPopupAttrs(state)` — no imperative DOM mutation needed.
+   * **Open:** `transition.open()` patches `{ active: true, status: 'starting' }`. After a double-RAF it patches `{
+   * status: 'idle' }`, then waits for the resulting element animations before the promise resolves. Frameworks render
+   * `data-starting-style` / `data-ending-style` via `getPopupAttrs(state)` — no imperative DOM mutation needed.
    *
-   * **Close:** `transition.close(el)` patches `{ status: 'ending' }` (keeping
-   * `active: true` so the element stays mounted). After a double-RAF it waits
-   * for `getAnimations()` to settle, then patches `{ active: false, status: 'idle' }`.
+   * **Close:** `transition.close(el)` patches `{ status: 'ending' }` (keeping `active: true` so the element stays
+   * mounted). After a double-RAF it waits for `getAnimations()` to settle, then patches `{ active: false, status:
+   * 'idle' }`.
    *
-   * `onOpenChange` fires immediately (before animations).
-   * `onOpenChangeComplete` fires after animations finish.
+   * `onOpenChange` fires immediately (before animations). `onOpenChangeComplete` fires after animations finish.
    */
   function commitOpen(): void {
     // React content can mount after this commit begins, so resolve the popup

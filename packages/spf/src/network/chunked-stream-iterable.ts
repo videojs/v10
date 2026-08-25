@@ -5,13 +5,11 @@ export interface ChunkedStreamIterableOptions {
 }
 
 /**
- * Adapts a `ReadableStream<Uint8Array>` (e.g. `response.body`) into an
- * `AsyncIterable<Uint8Array>` that yields chunks no smaller than
- * `minChunkSize` bytes. Smaller network chunks are accumulated and yielded
- * together once the threshold is met. Any remainder is flushed on stream end.
+ * Adapts a `ReadableStream<Uint8Array>` (e.g. `response.body`) into an `AsyncIterable<Uint8Array>` that yields chunks
+ * no smaller than `minChunkSize` bytes. Smaller network chunks are accumulated and yielded together once the threshold
+ * is met. Any remainder is flushed on stream end.
  *
- * Errors from the underlying stream propagate naturally — the reader lock is
- * always released via `finally`.
+ * Errors from the underlying stream propagate naturally — the reader lock is always released via `finally`.
  */
 export class ChunkedStreamIterable implements AsyncIterable<Uint8Array> {
   readonly minChunkSize: number;

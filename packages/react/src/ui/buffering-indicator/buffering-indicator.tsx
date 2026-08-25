@@ -17,17 +17,17 @@ export interface BufferingIndicatorProps
  * Visibility is delayed (default 500ms) to avoid flashing on quick buffers.
  *
  * @example
- * ```tsx
- * <BufferingIndicator />
+ *   ```tsx
+ *   <BufferingIndicator />
  *
- * <BufferingIndicator delay={1000} />
+ *   <BufferingIndicator delay={1000} />
  *
- * <BufferingIndicator
+ *   <BufferingIndicator
  *   render={(props, state) => (
- *     <div {...props}>{state.visible && <Spinner />}</div>
+ *   <div {...props}>{state.visible && <Spinner />}</div>
  *   )}
- * />
- * ```
+ *   />
+ *   ```;
  */
 export const BufferingIndicator = forwardRef(function BufferingIndicator(
   componentProps: BufferingIndicatorProps,

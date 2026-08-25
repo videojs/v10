@@ -14,10 +14,8 @@ export type RenderProp<State> = ReactElement | RenderFunction<HTMLProps, State>;
 /**
  * Standard props for UI components.
  *
- * Provides consistent API across all UI components:
- * - `className` as string or function of state
- * - `style` as object or function of state
- * - `render` prop for element customization
+ * Provides consistent API across all UI components: - `className` as string or function of state - `style` as object or
+ * function of state - `render` prop for element customization
  */
 export type UIComponentProps<TagName extends keyof React.JSX.IntrinsicElements, State> = Omit<
   React.JSX.IntrinsicElements[TagName],

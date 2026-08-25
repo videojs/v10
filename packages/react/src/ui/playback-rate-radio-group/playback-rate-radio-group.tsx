@@ -33,16 +33,16 @@ export interface PlaybackRateRadioGroupProps
  * Renders menu radio items for the player's available playback rates.
  *
  * @example
- * ```tsx
- * <PlaybackRateRadioGroup
- *   renderItem={(props, item) => (
- *     <Menu.RadioItem {...props}>
- *       {item.label}
- *       <Menu.ItemIndicator checked={item.checked} />
- *     </Menu.RadioItem>
- *   )}
- * />
- * ```
+ *   ```tsx
+ *   <PlaybackRateRadioGroup
+ *     renderItem={(props, item) => (
+ *       <Menu.RadioItem {...props}>
+ *         {item.label}
+ *         <Menu.ItemIndicator checked={item.checked} />
+ *       </Menu.RadioItem>
+ *     )}
+ *   />;
+ *   ```;
  */
 export const PlaybackRateRadioGroup = forwardRef<HTMLDivElement, PlaybackRateRadioGroupProps>(
   function PlaybackRateRadioGroup(componentProps, forwardedRef) {

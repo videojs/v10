@@ -4,17 +4,17 @@ import type { StateAttrMap } from '../../core/ui/types';
  * Convert state object to data attributes.
  *
  * - `true` → `data-keyname=""`
- * - truthy string/number → `data-keyname="value"`
- * - falsy → no attribute
+ * - Truthy string/number → `data-keyname="value"`
+ * - Falsy → no attribute
  *
  * @example
- * ```ts
- * const state = { paused: true, ended: false, volume: 0.5 };
- * getStateDataAttrs(state);
- * // { 'data-paused': '', 'data-volume': '0.5' }
- * ```
+ *   ```ts
+ *   const state = { paused: true, ended: false, volume: 0.5 };
+ *   getStateDataAttrs(state);
+ *   // { 'data-paused': '', 'data-volume': '0.5' }
+ *   ```
  *
- * When a mapping is provided, only mapped keys are converted.
+ *   When a mapping is provided, only mapped keys are converted.
  */
 export function getStateDataAttrs<State extends object>(
   state: State,
@@ -42,15 +42,15 @@ export function getStateDataAttrs<State extends object>(
  * Apply state as data attributes to an element.
  *
  * - `true` → sets `data-keyname=""`
- * - truthy string/number → sets `data-keyname="value"`
- * - falsy → removes the attribute
+ * - Truthy string/number → sets `data-keyname="value"`
+ * - Falsy → removes the attribute
  *
  * @example
- * ```ts
- * const state = { paused: true, ended: false };
- * applyStateDataAttrs(element, state);
- * // element has data-paused="", data-ended is removed
- * ```
+ *   ```ts
+ *   const state = { paused: true, ended: false };
+ *   applyStateDataAttrs(element, state);
+ *   // element has data-paused="", data-ended is removed
+ *   ```;
  */
 export function applyStateDataAttrs<State extends object>(
   element: HTMLElement,

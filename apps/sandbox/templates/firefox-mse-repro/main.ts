@@ -1,9 +1,8 @@
 /**
  * Firefox MSE Init Segment Order Reproduction Harness
  *
- * Tests the Firefox bug where appending a video media segment before the
- * audio SourceBuffer has received its initialization segment causes
- * mozHasAudio to be permanently false.
+ * Tests the Firefox bug where appending a video media segment before the audio SourceBuffer has received its
+ * initialization segment causes mozHasAudio to be permanently false.
  */
 
 // ---------------------------------------------------------------------------

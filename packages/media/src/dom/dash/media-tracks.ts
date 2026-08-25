@@ -11,17 +11,14 @@ type DashEngineHost = HTMLVideoElementHost & {
 type MediaTracksHost = DashEngineHost & MediaVideoTrackCapability & MediaVideoRenditionCapability;
 
 /**
- * Mirrors the dash.js video representations of the active stream into the
- * media element's `videoRenditions` list, and wires user selection back to
- * `engine.setRepresentationForTypeById()`.
+ * Mirrors the dash.js video representations of the active stream into the media element's `videoRenditions` list, and
+ * wires user selection back to `engine.setRepresentationForTypeById()`.
  *
- * DASH representations belong to an adaptation set rather than to a flat list,
- * so they are hung off a single `'main'` video track — the one the renditions of
- * the stream that is playing are read from.
+ * DASH representations belong to an adaptation set rather than to a flat list, so they are hung off a single `'main'`
+ * video track — the one the renditions of the stream that is playing are read from.
  *
- * Requires the media-tracks mixin (track-list infrastructure) to be applied
- * earlier in the chain so the host exposes `addVideoTrack`, `videoRenditions`,
- * and friends.
+ * Requires the media-tracks mixin (track-list infrastructure) to be applied earlier in the chain so the host exposes
+ * `addVideoTrack`, `videoRenditions`, and friends.
  */
 export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class DashMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
@@ -176,17 +173,16 @@ export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHo
 }
 
 /**
- * dash.js plays a pinned representation only while its own bitrate switching is
- * off, so selecting a rendition takes this setting alongside the representation.
+ * Dash.js plays a pinned representation only while its own bitrate switching is off, so selecting a rendition takes
+ * this setting alongside the representation.
  */
 function autoSwitchBitrate(video: boolean): dashjs.MediaPlayerSettingClass {
   return { streaming: { abr: { autoSwitchBitrate: { video } } } };
 }
 
 /**
- * Representation bitrate in bits per second. `bandwidth` is what the manifest
- * declares; the kbit reading is dash.js's own derived value, kept as a fallback
- * for representations that carry one without the other.
+ * Representation bitrate in bits per second. `bandwidth` is what the manifest declares; the kbit reading is dash.js's
+ * own derived value, kept as a fallback for representations that carry one without the other.
  */
 function toBitrate(representation: dashjs.Representation): number | undefined {
   const { bandwidth, bitrateInKbit } = representation;

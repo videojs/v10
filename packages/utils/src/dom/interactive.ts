@@ -48,9 +48,8 @@ export function isInteractiveTarget(event: Event): boolean {
 const ACTIVATION_KEYS = new Set([' ', 'Enter']);
 
 /**
- * Selector for elements that use Space/Enter as a native activation key.
- * Narrower than `INTERACTIVE_SELECTOR` — excludes editable elements like
- * `input`, `textarea`, `select` where Space/Enter is text input, not activation.
+ * Selector for elements that use Space/Enter as a native activation key. Narrower than `INTERACTIVE_SELECTOR` —
+ * excludes editable elements like `input`, `textarea`, `select` where Space/Enter is text input, not activation.
  */
 const ACTIVATABLE_SELECTOR = 'button,a[href],[role="slider"],[role="button"]';
 

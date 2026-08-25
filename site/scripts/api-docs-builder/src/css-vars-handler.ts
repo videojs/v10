@@ -8,6 +8,7 @@ import { unwrapObjectLiteral } from './utils.js';
  * Extract CSS custom properties from a component's vars.ts file.
  *
  * Looks for patterns like:
+ *
  * ```ts
  * export const SliderCSSVars = {
  *   /** Fill level percentage (0–100). *\/

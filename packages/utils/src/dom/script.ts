@@ -9,9 +9,8 @@ export function hasScript(src: string): boolean {
 }
 
 /**
- * Load a script once. Concurrent and repeat calls for the same `src` share a
- * single promise; failed loads are evicted (and the tag removed) so they can
- * be retried.
+ * Load a script once. Concurrent and repeat calls for the same `src` share a single promise; failed loads are evicted
+ * (and the tag removed) so they can be retried.
  */
 export function loadScript(src: string): Promise<void> {
   let promise = cache.get(src);

@@ -1,17 +1,15 @@
 /**
  * Build the CDN media manifest for the installation guide.
  *
- * Scans the built `@videojs/html` CDN media bundles and records which media
- * subpaths actually ship a CDN build. The installation page uses this to hide
- * the CDN install option for a renderer that has no CDN bundle.
+ * Scans the built `@videojs/html` CDN media bundles and records which media subpaths actually ship a CDN build. The
+ * installation page uses this to hide the CDN install option for a renderer that has no CDN bundle.
  *
- * Produces `site/src/content/cdn-media.json` as an array of `{ id }` entries
- * (one per media subpath), consumed via the `cdnMedia` content collection.
+ * Produces `site/src/content/cdn-media.json` as an array of `{ id }` entries (one per media subpath), consumed via the
+ * `cdnMedia` content collection.
  *
- * Source of truth: the built output of `@videojs/html`'s `build:cdn` task
- * (configured in `packages/html/vite.config.ts`). Reading the build
- * output — rather than a hand-maintained list — means a renderer that fails to
- * ship a CDN bundle correctly shows as no-CDN.
+ * Source of truth: the built output of `@videojs/html`'s `build:cdn` task (configured in
+ * `packages/html/vite.config.ts`). Reading the build output — rather than a hand-maintained list — means a renderer
+ * that fails to ship a CDN bundle correctly shows as no-CDN.
  *
  * Prerequisites: `@videojs/html`'s `build:cdn` (wired as a Vite+ task dependency).
  */
@@ -39,9 +37,8 @@ const ManifestSchema = z.array(z.object({ id: z.string() }));
 /**
  * Media subpaths that ship a production bundle, walking the flavor directories.
  *
- * An element with more than one engine ships its flavors in a directory named
- * for the element, so the id keeps the slash and stays equal to the npm media
- * subpath the installation page resolves against.
+ * An element with more than one engine ships its flavors in a directory named for the element, so the id keeps the
+ * slash and stays equal to the npm media subpath the installation page resolves against.
  */
 function collectSubpaths(dir: string, prefix = ''): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

@@ -1,6 +1,9 @@
 import { UIElement } from '../ui-element';
 
-/** Shortcut hint inside `media-tooltip`. CSS skins: `class="media-tooltip__kbd"`; Tailwind skins: `class` from `popup.tooltipShortcut`. */
+/**
+ * Shortcut hint inside `media-tooltip`. CSS skins: `class="media-tooltip__kbd"`; Tailwind skins: `class` from
+ * `popup.tooltipShortcut`.
+ */
 export class TooltipShortcutElement extends UIElement {
   static readonly tagName = 'media-tooltip-shortcut';
 

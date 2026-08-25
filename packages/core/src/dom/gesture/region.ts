@@ -3,14 +3,12 @@ import type { GestureRegion } from './gesture';
 /**
  * Determine which named region a pointer position falls into.
  *
- * Regions divide the container width equally based on how many are active:
- * - `left` + `right` → halves (50% / 50%)
- * - `left` + `center` + `right` → thirds (33% / 34% / 33%)
+ * Regions divide the container width equally based on how many are active: - `left` + `right` → halves (50% / 50%) -
+ * `left` + `center` + `right` → thirds (33% / 34% / 33%)
  *
- * Single region: `left` covers the left half, `right` the right half,
- * and `center` covers the full surface. Partial two-region combos
- * (e.g. `left` + `center`) use the same natural zones — positions outside
- * all active zones return `null` so full-surface gestures can handle them.
+ * Single region: `left` covers the left half, `right` the right half, and `center` covers the full surface. Partial
+ * two-region combos (e.g. `left` + `center`) use the same natural zones — positions outside all active zones return
+ * `null` so full-surface gestures can handle them.
  */
 export function resolveRegion(
   clientX: number,

@@ -15,14 +15,12 @@ export interface ThumbnailProps {
   /**
    * CORS setting forwarded to the inner `<img>`.
    *
-   * Left unset, this follows the media element: a cross-origin thumbnail
-   * `<track>` only loads when the media is CORS-enabled, so the sprite sheets
-   * its cues point at are fetched with that same mode. Pass `null` to opt out
-   * and fetch them without CORS. Thumbnails supplied directly never inherit,
-   * since they need not be related to the media element at all.
+   * Left unset, this follows the media element: a cross-origin thumbnail `<track>` only loads when the media is
+   * CORS-enabled, so the sprite sheets its cues point at are fetched with that same mode. Pass `null` to opt out and
+   * fetch them without CORS. Thumbnails supplied directly never inherit, since they need not be related to the media
+   * element at all.
    *
-   * `''` is a value like any other, read as Anonymous by the CORS-settings
-   * attribute rules — it does not opt out.
+   * `''` is a value like any other, read as Anonymous by the CORS-settings attribute rules — it does not opt out.
    */
   crossOrigin?: ThumbnailCrossOrigin | undefined;
   /** Image loading strategy forwarded to the inner `<img>`. */
@@ -48,8 +46,8 @@ export class ThumbnailCore {
   /**
    * Parse CSS constraint strings into numeric `ThumbnailConstraints`.
    *
-   * Accepts any object with string `minWidth`/`maxWidth`/`minHeight`/`maxHeight`
-   * properties — `CSSStyleDeclaration` satisfies this structurally.
+   * Accepts any object with string `minWidth`/`maxWidth`/`minHeight`/`maxHeight` properties — `CSSStyleDeclaration`
+   * satisfies this structurally.
    */
   parseConstraints(raw: {
     minWidth: string;
@@ -71,8 +69,8 @@ export class ThumbnailCore {
   }
 
   /**
-   * Calculate a uniform scale factor that fits `tileWidth × tileHeight` within the
-   * given CSS min/max constraints while preserving aspect ratio.
+   * Calculate a uniform scale factor that fits `tileWidth × tileHeight` within the given CSS min/max constraints while
+   * preserving aspect ratio.
    *
    * - Scales down when the tile exceeds max constraints.
    * - Scales up when the tile is smaller than min constraints.
@@ -94,11 +92,11 @@ export class ThumbnailCore {
   }
 
   /**
-   * Compute container and image dimensions for the current thumbnail, scaled to
-   * fit within the element's CSS min/max constraints.
+   * Compute container and image dimensions for the current thumbnail, scaled to fit within the element's CSS min/max
+   * constraints.
    *
-   * The container clips the sprite sheet via `overflow: hidden`, and the image is
-   * positioned with `transform: translate()` to show the correct tile.
+   * The container clips the sprite sheet via `overflow: hidden`, and the image is positioned with `transform:
+   * translate()` to show the correct tile.
    */
   resize(
     thumbnail: ThumbnailImage,

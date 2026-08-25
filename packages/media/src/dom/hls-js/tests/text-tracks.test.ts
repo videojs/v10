@@ -3,9 +3,8 @@ import { describe, expect, it, vi } from 'vite-plus/test';
 import { withPreservedTextTracks } from '../text-tracks';
 
 /**
- * jsdom has no text track implementation, so the media element and its tracks
- * are stubbed with the parts the helper touches: `cues` reads as `null` while a
- * track is disabled, exactly as the spec requires.
+ * Jsdom has no text track implementation, so the media element and its tracks are stubbed with the parts the helper
+ * touches: `cues` reads as `null` while a track is disabled, exactly as the spec requires.
  */
 class FakeTextTrack {
   mode: TextTrackMode = 'disabled';

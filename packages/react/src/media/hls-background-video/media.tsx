@@ -21,29 +21,23 @@ export interface HlsBackgroundVideoProps
     Partial<HlsBackgroundVideoMediaProps> {}
 
 /**
- * A muted, looping, chrome-less video over the SPF background-video engine — the
- * React counterpart to `<hls-background-video>`, and the replacement for the
- * standalone `mux-background-video` package's component.
+ * A muted, looping, chrome-less video over the SPF background-video engine — the React counterpart to
+ * `<hls-background-video>`, and the replacement for the standalone `mux-background-video` package's component.
  *
- * `src` is an HLS URL and the whole surface. Capping which rendition is fetched
- * is a param on that URL (`?max_resolution=720p` on a Mux stream, for one) rather
- * than a prop, which keeps the renditions it excludes out of the manifest instead
- * of merely unpicked.
+ * `src` is an HLS URL and the whole surface. Capping which rendition is fetched is a param on that URL
+ * (`?max_resolution=720p` on a Mux stream, for one) rather than a prop, which keeps the renditions it excludes out of
+ * the manifest instead of merely unpicked.
  *
- * There is no structured Mux `source`: playback-ID identity, poster, and
- * storyboard belong to `MuxVideo`, since none of them mean anything without
- * controls to hang them on.
+ * There is no structured Mux `source`: playback-ID identity, poster, and storyboard belong to `MuxVideo`, since none of
+ * them mean anything without controls to hang them on.
  *
- * `onError` fires for an unplayable source, which it could not do on its own:
- * nothing about one reaches the media element, so the `<video>`'s own `error`
- * stays null at `readyState 0`. The engine reports the condition, the Media
- * promotes the fatal one, and this component re-fires it on the `<video>` — where
- * a handler already listening for a failed source receives it. Which condition it
- * was is on the console and `engine.state.errors`; the handler gets "this source
- * won't play", which is the decision a background video actually has to make.
+ * `onError` fires for an unplayable source, which it could not do on its own: nothing about one reaches the media
+ * element, so the `<video>`'s own `error` stays null at `readyState 0`. The engine reports the condition, the Media
+ * promotes the fatal one, and this component re-fires it on the `<video>` — where a handler already listening for a
+ * failed source receives it. Which condition it was is on the console and `engine.state.errors`; the handler gets "this
+ * source won't play", which is the decision a background video actually has to make.
  *
- * `MuxBackgroundVideo` is this same component under the name the package it
- * replaces used — an alias, not a variant.
+ * `MuxBackgroundVideo` is this same component under the name the package it replaces used — an alias, not a variant.
  */
 export const HlsBackgroundVideo = forwardRef<HTMLVideoElement, HlsBackgroundVideoProps>(function HlsBackgroundVideo(
   { children, ...props },

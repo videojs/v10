@@ -127,9 +127,8 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
     }
 
     /**
-     * Arm a one-shot seek-to-live on the first user-initiated `play`. Skipped
-     * when `autoplay` is set, since Shaka positions at the live edge during
-     * its own startup sequence and a programmatic seek would race that.
+     * Arm a one-shot seek-to-live on the first user-initiated `play`. Skipped when `autoplay` is set, since Shaka
+     * positions at the live edge during its own startup sequence and a programmatic seek would race that.
      */
     #armSeekToLive() {
       this.#disarmSeekToLive();

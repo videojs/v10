@@ -1,8 +1,8 @@
 /**
  * Core SPF Types
  *
- * Based on CMAF-HAM (Common Media Application Format - Hypothetical Application Model)
- * Protocol-agnostic representation of streaming media content.
+ * Based on CMAF-HAM (Common Media Application Format - Hypothetical Application Model) Protocol-agnostic representation
+ * of streaming media content.
  *
  * @see https://github.com/streaming-video-technology-alliance/common-media-library
  */
@@ -11,23 +11,18 @@
 // Base Types
 // =============================================================================
 
-/**
- * Base identifier type for all HAM objects.
- */
+/** Base identifier type for all HAM objects. */
 export interface Ham {
   id: string;
   /**
-   * Format-/protocol-specific values that aren't part of the generic CMAF-HAM
-   * model — kept in an open bag so the model stays format-neutral (mirrors how
-   * CMAF-HAM itself stashes protocol extras rather than growing the model).
-   * Typed reads go through dedicated accessors (e.g. `getMediaPlaylistMetadata`).
+   * Format-/protocol-specific values that aren't part of the generic CMAF-HAM model — kept in an open bag so the model
+   * stays format-neutral (mirrors how CMAF-HAM itself stashes protocol extras rather than growing the model). Typed
+   * reads go through dedicated accessors (e.g. `getMediaPlaylistMetadata`).
    */
   metadata?: Record<string, unknown>;
 }
 
-/**
- * Addressable resource with optional byte range.
- */
+/** Addressable resource with optional byte range. */
 export interface AddressableObject {
   url: string;
   byteRange?: {
@@ -41,8 +36,7 @@ export interface AddressableObject {
 // =============================================================================
 
 /**
- * Platform-agnostic media element interface.
- * Captures minimal shape needed for orchestration without DOM dependencies.
+ * Platform-agnostic media element interface. Captures minimal shape needed for orchestration without DOM dependencies.
  * HTMLMediaElement satisfies this interface.
  */
 export interface MediaElementLike {
@@ -53,10 +47,7 @@ export interface MediaElementLike {
 // Time and Duration
 // =============================================================================
 
-/**
- * Time span with start time and duration.
- * Used for segments and other timed ranges.
- */
+/** Time span with start time and duration. Used for segments and other timed ranges. */
 export interface TimeSpan {
   startTime: number;
   duration: number;
@@ -66,9 +57,7 @@ export interface TimeSpan {
 // Enums
 // =============================================================================
 
-/**
- * Track content type.
- */
+/** Track content type. */
 export type TrackType = 'video' | 'audio' | 'text';
 
 // =============================================================================
@@ -78,9 +67,7 @@ export type TrackType = 'video' | 'audio' | 'text';
 /**
  * Video frame rate expressed as numerator/denominator.
  *
- * Examples:
- * - 30 fps: { frameRateNumerator: 30 }
- * - 29.97 fps: { frameRateNumerator: 30000, frameRateDenominator: 1001 }
+ * Examples: - 30 fps: { frameRateNumerator: 30 } - 29.97 fps: { frameRateNumerator: 30000, frameRateDenominator: 1001 }
  */
 export interface FrameRate {
   frameRateNumerator: number;
@@ -92,8 +79,7 @@ export interface FrameRate {
 // =============================================================================
 
 /**
- * Generic type for partially resolved tracks.
- * Removes fields that come from media playlist parsing.
+ * Generic type for partially resolved tracks. Removes fields that come from media playlist parsing.
  *
  * @param T - Track type to make partially resolved (must extend Track)
  */
@@ -105,14 +91,14 @@ export type PartiallyResolved<T extends Track = Track> = Omit<T, 'segments' | 'i
 };
 
 /**
- * Partially resolved video track from multivariant playlist.
- * Has metadata but no segments or initialization yet (media playlist not fetched).
+ * Partially resolved video track from multivariant playlist. Has metadata but no segments or initialization yet (media
+ * playlist not fetched).
  */
 export type PartiallyResolvedVideoTrack = PartiallyResolved<VideoTrack>;
 
 /**
- * Partially resolved audio track from multivariant playlist.
- * Has metadata but no segments or initialization yet (media playlist not fetched).
+ * Partially resolved audio track from multivariant playlist. Has metadata but no segments or initialization yet (media
+ * playlist not fetched).
  */
 export type PartiallyResolvedAudioTrack = PartiallyResolved<AudioTrack>;
 
@@ -121,14 +107,12 @@ export type PartiallyResolvedAudioTrack = PartiallyResolved<AudioTrack>;
 // =============================================================================
 
 /**
- * Base track type containing common properties for all resolved tracks.
- * A resolved track has segments, duration, and initialization data.
- * All URLs are fully qualified (parsers resolve relative URLs).
+ * Base track type containing common properties for all resolved tracks. A resolved track has segments, duration, and
+ * initialization data. All URLs are fully qualified (parsers resolve relative URLs).
  */
 /**
- * Track startTime is always 0 — the presentation-timeline origin (and future
- * multi-period base). The live sliding-window edge is `segments[0].startTime`,
- * derived — never stored here.
+ * Track startTime is always 0 — the presentation-timeline origin (and future multi-period base). The live
+ * sliding-window edge is `segments[0].startTime`, derived — never stored here.
  */
 export type Track = Ham &
   AddressableObject &
@@ -141,52 +125,41 @@ export type Track = Ham &
     initialization?: AddressableObject;
     segments: Segment[];
     /**
-     * Media-timeline (decode/encode) coordinate of the track's timeline origin
-     * (presentation-0) — the media-time base value of the coordinate model, peer
-     * to `startTime` (presentation). Derived from the container
-     * (`tfdt.baseMediaDecodeTime ÷ mdhd.timescale`); the relocation offset is
-     * `−startMediaTime` (targets presentation-0 — `Track.startTime` plays no
-     * part), never stored.
+     * Media-timeline (decode/encode) coordinate of the track's timeline origin (presentation-0) — the media-time base
+     * value of the coordinate model, peer to `startTime` (presentation). Derived from the container
+     * (`tfdt.baseMediaDecodeTime ÷ mdhd.timescale`); the relocation offset is `−startMediaTime` (targets presentation-0
+     * — `Track.startTime` plays no part), never stored.
      *
-     * Optional: `undefined` means not yet established, or never establishable
-     * (e.g. text tracks carry no container origin); a near-zero/native origin is
-     * established as `0` (no relocation). Established once per source by the
-     * `establishStartMediaTime` reactor. See
-     * `internal/design/spf/presentation-timeline-model.md`.
+     * Optional: `undefined` means not yet established, or never establishable (e.g. text tracks carry no container
+     * origin); a near-zero/native origin is established as `0` (no relocation). Established once per source by the
+     * `establishStartMediaTime` reactor. See `internal/design/spf/presentation-timeline-model.md`.
      */
     startMediaTime?: number;
     /**
-     * Wall-clock time (epoch seconds) at the track's timeline origin
-     * (presentation-0) — pure playlist arithmetic over any PDT-bearing segment:
-     * `segment.startDate − segment.startTime`, invariant along a linear
-     * timeline. Optional: absent when no segment carries `startDate`.
+     * Wall-clock time (epoch seconds) at the track's timeline origin (presentation-0) — pure playlist arithmetic over
+     * any PDT-bearing segment: `segment.startDate − segment.startTime`, invariant along a linear timeline. Optional:
+     * absent when no segment carries `startDate`.
      *
-     * The wall-clock member of the coordinate triple (peer to `startTime` and
-     * `startMediaTime`). For live it is the anchor segments are PDT-placed
-     * against on every parse; equal `startDate` across tracks marks the same
-     * presentation instant. See
-     * `internal/design/spf/live-presentation-timeline-model.md`.
+     * The wall-clock member of the coordinate triple (peer to `startTime` and `startMediaTime`). For live it is the
+     * anchor segments are PDT-placed against on every parse; equal `startDate` across tracks marks the same
+     * presentation instant. See `internal/design/spf/live-presentation-timeline-model.md`.
      */
     startDate?: number;
   };
 
 /**
- * Per-track-type origin-establishment data, accumulated across appends (the media
- * track's `track_id` + `mdhd` timescale from the init, `tfdt` baseMediaDecodeTime of
- * that same track from the first media segment) — hence optional. The transient input
- * the `establishStartMediaTime` reactor reduces into `Track.startMediaTime`.
+ * Per-track-type origin-establishment data, accumulated across appends (the media track's `track_id` + `mdhd` timescale
+ * from the init, `tfdt` baseMediaDecodeTime of that same track from the first media segment) — hence optional. The
+ * transient input the `establishStartMediaTime` reactor reduces into `Track.startMediaTime`.
  *
- * `trackId` is the ISO-BMFF `track_ID` of the buffered media track (`vide`/`soun`),
- * read from the init's `tkhd`; it ties the timescale to the *same* track's
- * `baseMediaDecodeTime` (matched via `tfhd.track_id`) so a muxed segment carrying a
- * second track (e.g. `clcp` captions) reads the right `tfdt` rather than the first one.
+ * `trackId` is the ISO-BMFF `track_ID` of the buffered media track (`vide`/`soun`), read from the init's `tkhd`; it
+ * ties the timescale to the _same_ track's `baseMediaDecodeTime` (matched via `tfhd.track_id`) so a muxed segment
+ * carrying a second track (e.g. `clcp` captions) reads the right `tfdt` rather than the first one.
  *
- * `segmentStartTime` is the 0-based presentation start of the segment
- * `baseMediaDecodeTime` was read from — *not* a container value (it's the playlist
- * position), but co-located because the origin is `baseMediaDecodeTime/timescale −
- * segmentStartTime`: the first *loaded* segment isn't necessarily the 0th (a
- * non-zero initial `currentTime`, or live/DVR), so the decode time alone isn't the
- * stream origin.
+ * `segmentStartTime` is the 0-based presentation start of the segment `baseMediaDecodeTime` was read from — _not_ a
+ * container value (it's the playlist position), but co-located because the origin is `baseMediaDecodeTime/timescale −
+ * segmentStartTime`: the first _loaded_ segment isn't necessarily the 0th (a non-zero initial `currentTime`, or
+ * live/DVR), so the decode time alone isn't the stream origin.
  */
 export interface MediaContainerData {
   trackId?: number;
@@ -196,15 +169,13 @@ export interface MediaContainerData {
 }
 
 /**
- * Raw media-segment bytes — a complete buffer or a byte stream. The transport-neutral
- * payload the loader pipeline carries; `AppendData` (the MSE `SourceBuffer` append
- * input in `media/dom/mse`) is an alias of this at the DOM boundary.
+ * Raw media-segment bytes — a complete buffer or a byte stream. The transport-neutral payload the loader pipeline
+ * carries; `AppendData` (the MSE `SourceBuffer` append input in `media/dom/mse`) is an alias of this at the DOM
+ * boundary.
  */
 export type SegmentData = ArrayBuffer | AsyncIterable<Uint8Array>;
 
-/**
- * Resolved video track with segments.
- */
+/** Resolved video track with segments. */
 export type VideoTrack = Track &
   Required<Pick<Track, 'initialization' | 'codecs'>> & {
     type: 'video';
@@ -214,18 +185,14 @@ export type VideoTrack = Track &
     height?: number;
     frameRate?: FrameRate;
     /**
-     * Audio groups (`EXT-X-STREAM-INF:AUDIO`) this video rendition can pair
-     * with. A list because one rendition is typically listed across multiple
-     * `EXT-X-STREAM-INF` entries — one per audio group (the HLS cross-product) —
-     * which the parser collapses into a single track carrying every group it
-     * advertised.
+     * Audio groups (`EXT-X-STREAM-INF:AUDIO`) this video rendition can pair with. A list because one rendition is
+     * typically listed across multiple `EXT-X-STREAM-INF` entries — one per audio group (the HLS cross-product) — which
+     * the parser collapses into a single track carrying every group it advertised.
      */
     audioGroupIds?: string[];
   };
 
-/**
- * Resolved audio track with segments.
- */
+/** Resolved audio track with segments. */
 export type AudioTrack = Track &
   Required<Pick<Track, 'initialization' | 'codecs'>> & {
     type: 'audio';
@@ -237,9 +204,7 @@ export type AudioTrack = Track &
     autoselect?: boolean;
   };
 
-/**
- * Resolved text track with segments.
- */
+/** Resolved text track with segments. */
 export type TextTrack = Track & {
   type: 'text';
   groupId: string;
@@ -251,17 +216,13 @@ export type TextTrack = Track & {
 };
 
 /**
- * Predicate that answers "can this environment decode this track?" — the
- * capability-probing surface, read by the track-switching hard-constraint
- * pre-pass (`excludeUnplayableTracks`) to drop undecodable renditions before
- * selection. Kept DOM-free here (a plain function type over a minimal track
- * shape) so DOM-free behaviors can consume it; the DOM implementation
- * (`canPlayTrack` in `media/dom/capabilities.ts`) wraps
- * `MediaSource.isTypeSupported`.
+ * Predicate that answers "can this environment decode this track?" — the capability-probing surface, read by the
+ * track-switching hard-constraint pre-pass (`excludeUnplayableTracks`) to drop undecodable renditions before selection.
+ * Kept DOM-free here (a plain function type over a minimal track shape) so DOM-free behaviors can consume it; the DOM
+ * implementation (`canPlayTrack` in `media/dom/capabilities.ts`) wraps `MediaSource.isTypeSupported`.
  *
- * Takes the minimal codec-bearing shape both video and audio candidates
- * carry. `mimeType` is optional so unprobeable candidates (no MIME) can be
- * passed straight through as playable rather than dropped.
+ * Takes the minimal codec-bearing shape both video and audio candidates carry. `mimeType` is optional so unprobeable
+ * candidates (no MIME) can be passed straight through as playable rather than dropped.
  */
 export type CanPlayTrack = (track: {
   mimeType?: string;
@@ -272,10 +233,9 @@ export type CanPlayTrack = (track: {
 /**
  * Minimal text-track cue shape — start time, end time, and display text.
  *
- * Host-agnostic representation. `VTTCue` structurally satisfies this
- * interface, so DOM consumers pass `VTTCue` values directly. Non-DOM
- * hosts (workers, test fakes, non-browser engines) can satisfy the same
- * shape without pulling in DOM types.
+ * Host-agnostic representation. `VTTCue` structurally satisfies this interface, so DOM consumers pass `VTTCue` values
+ * directly. Non-DOM hosts (workers, test fakes, non-browser engines) can satisfy the same shape without pulling in DOM
+ * types.
  */
 export interface Cue {
   startTime: number;
@@ -286,29 +246,24 @@ export interface Cue {
 /**
  * Media element with an iterable text-track list, host-agnostic.
  *
- * Extends `MediaElementLike` with the minimum surface needed to observe
- * which text tracks are currently mounted on the media. `HTMLMediaElement`
- * structurally satisfies this (its `textTracks` is a `TextTrackList`,
- * which is iterable with `{ id }` items).
+ * Extends `MediaElementLike` with the minimum surface needed to observe which text tracks are currently mounted on the
+ * media. `HTMLMediaElement` structurally satisfies this (its `textTracks` is a `TextTrackList`, which is iterable with
+ * `{ id }` items).
  */
 export interface MediaElementWithTextTracks extends MediaElementLike {
   readonly textTracks: Iterable<{ readonly id: string }>;
 }
 
 /**
- * Partially resolved text track from multivariant playlist.
- * Has metadata but no segments or initialization yet (media playlist not fetched).
+ * Partially resolved text track from multivariant playlist. Has metadata but no segments or initialization yet (media
+ * playlist not fetched).
  */
 export type PartiallyResolvedTextTrack = PartiallyResolved<TextTrack>;
 
-/**
- * Union of all resolved track types.
- */
+/** Union of all resolved track types. */
 export type ResolvedTrack = VideoTrack | AudioTrack | TextTrack;
 
-/**
- * Union of all partially resolved track types.
- */
+/** Union of all partially resolved track types. */
 export type PartiallyResolvedTrack =
   | PartiallyResolvedVideoTrack
   | PartiallyResolvedAudioTrack
@@ -319,8 +274,7 @@ export type PartiallyResolvedTrack =
 // =============================================================================
 
 /**
- * Generic switching set type.
- * A group of tracks that can be switched between seamlessly.
+ * Generic switching set type. A group of tracks that can be switched between seamlessly.
  *
  * @param T - Track type (VideoTrack, AudioTrack, or TextTrack)
  */
@@ -329,30 +283,20 @@ export type SwitchingSetOf<T extends Track = Track> = Ham & {
   tracks: (PartiallyResolved<T> | T)[];
 };
 
-/**
- * Video switching set - contains only video tracks (partially resolved or fully resolved).
- */
+/** Video switching set - contains only video tracks (partially resolved or fully resolved). */
 export type VideoSwitchingSet = SwitchingSetOf<VideoTrack>;
 
-/**
- * Audio switching set - contains only audio tracks (partially resolved or fully resolved).
- */
+/** Audio switching set - contains only audio tracks (partially resolved or fully resolved). */
 export type AudioSwitchingSet = SwitchingSetOf<AudioTrack>;
 
-/**
- * Text switching set - contains only text tracks (partially resolved or fully resolved).
- */
+/** Text switching set - contains only text tracks (partially resolved or fully resolved). */
 export type TextSwitchingSet = SwitchingSetOf<TextTrack>;
 
-/**
- * Switching set - a group of tracks that can be switched between seamlessly.
- * Discriminated by track type.
- */
+/** Switching set - a group of tracks that can be switched between seamlessly. Discriminated by track type. */
 export type SwitchingSet = VideoSwitchingSet | AudioSwitchingSet | TextSwitchingSet;
 
 /**
- * Generic selection set type.
- * Groups switching sets by track type.
+ * Generic selection set type. Groups switching sets by track type.
  *
  * @param T - Track type (VideoTrack, AudioTrack, or TextTrack)
  */
@@ -361,25 +305,16 @@ export type SelectionSetOf<T extends Track = Track> = Ham & {
   switchingSets: SwitchingSetOf<T>[];
 };
 
-/**
- * Video selection set - contains only video switching sets.
- */
+/** Video selection set - contains only video switching sets. */
 export type VideoSelectionSet = SelectionSetOf<VideoTrack>;
 
-/**
- * Audio selection set - contains only audio switching sets.
- */
+/** Audio selection set - contains only audio switching sets. */
 export type AudioSelectionSet = SelectionSetOf<AudioTrack>;
 
-/**
- * Text selection set - contains only text switching sets.
- */
+/** Text selection set - contains only text switching sets. */
 export type TextSelectionSet = SelectionSetOf<TextTrack>;
 
-/**
- * Selection set - groups switching sets by track type.
- * Discriminated union ensures type-safe track access.
- */
+/** Selection set - groups switching sets by track type. Discriminated union ensures type-safe track access. */
 export type SelectionSet = VideoSelectionSet | AudioSelectionSet | TextSelectionSet;
 
 // =============================================================================
@@ -387,27 +322,21 @@ export type SelectionSet = VideoSelectionSet | AudioSelectionSet | TextSelection
 // =============================================================================
 
 /**
- * Media segment with timing information.
- * Follows CMAF-HAM composition pattern.
+ * Media segment with timing information. Follows CMAF-HAM composition pattern.
  *
- * `startDate` is the absolute wall-clock time of the segment's first
- * sample, in **epoch seconds** (unit-consistent with `startTime`/`duration`),
- * derived from `#EXT-X-PROGRAM-DATE-TIME` (explicit or interpolated forward via
- * `EXTINF`). Unlike the per-track-relative `startTime`, it is comparable across
- * tracks, so it is the cross-track sync anchor for demuxed audio/video and the
- * exact recovery value on a full live-window turnover. Optional: absent when the
- * source carries no PDT (allowed by RFC 8216, required by Apple's HLS authoring
- * spec — so present on conformant content).
+ * `startDate` is the absolute wall-clock time of the segment's first sample, in **epoch seconds** (unit-consistent with
+ * `startTime`/`duration`), derived from `#EXT-X-PROGRAM-DATE-TIME` (explicit or interpolated forward via `EXTINF`).
+ * Unlike the per-track-relative `startTime`, it is comparable across tracks, so it is the cross-track sync anchor for
+ * demuxed audio/video and the exact recovery value on a full live-window turnover. Optional: absent when the source
+ * carries no PDT (allowed by RFC 8216, required by Apple's HLS authoring spec — so present on conformant content).
  */
 export type Segment = Ham & AddressableObject & TimeSpan & { startDate?: number };
 
 /**
- * Floating-point tolerance for matching segments by `startTime`. Two
- * segments are considered the same position when
- * `Math.abs(a.startTime - b.startTime) < SEGMENT_TIME_EPSILON`. Used by
- * the source-buffer dedup and segment-loader quality-aware filter to
- * tolerate sub-millisecond drift in segment timestamps across multiple
- * playlists / quality levels.
+ * Floating-point tolerance for matching segments by `startTime`. Two segments are considered the same position when
+ * `Math.abs(a.startTime - b.startTime) < SEGMENT_TIME_EPSILON`. Used by the source-buffer dedup and segment-loader
+ * quality-aware filter to tolerate sub-millisecond drift in segment timestamps across multiple playlists / quality
+ * levels.
  */
 export const SEGMENT_TIME_EPSILON = 0.0001;
 
@@ -416,14 +345,13 @@ export const SEGMENT_TIME_EPSILON = 0.0001;
 // =============================================================================
 
 /**
- * Playlist-level metadata surfaced from a parsed media playlist. HLS delivery
- * specifics — not part of the generic CMAF-HAM model — so they live under
- * `Ham.metadata` (read via `getMediaPlaylistMetadata`) rather than as
- * first-class `Track` fields:
+ * Playlist-level metadata surfaced from a parsed media playlist. HLS delivery specifics — not part of the generic
+ * CMAF-HAM model — so they live under `Ham.metadata` (read via `getMediaPlaylistMetadata`) rather than as first-class
+ * `Track` fields:
  *
  * - `targetDuration` (`#EXT-X-TARGETDURATION`) — reload-cadence basis.
- * - `mediaSequence` (`#EXT-X-MEDIA-SEQUENCE`, default 0) — sequence number of
- *   `segments[0]`; the join key for merging successive reload snapshots.
+ * - `mediaSequence` (`#EXT-X-MEDIA-SEQUENCE`, default 0) — sequence number of `segments[0]`; the join key for merging
+ *   successive reload snapshots.
  * - `playlistType` (`#EXT-X-PLAYLIST-TYPE`) — `VOD` / `EVENT` / undefined.
  * - `endList` (`#EXT-X-ENDLIST`) — playlist is complete; stop reloading.
  */
@@ -433,47 +361,36 @@ export interface MediaPlaylistMetadata {
   playlistType?: 'VOD' | 'EVENT';
   endList: boolean;
   /**
-   * Whether this rendition carries encrypted segments — any `#EXT-X-KEY` whose
-   * `METHOD` isn't `NONE`. Detection only: enough to tell that playback needs
-   * decryption support, not enough to perform it.
+   * Whether this rendition carries encrypted segments — any `#EXT-X-KEY` whose `METHOD` isn't `NONE`. Detection only:
+   * enough to tell that playback needs decryption support, not enough to perform it.
    *
-   * Deliberately *not* a model-level `protection` shape. CMAF-HAM puts
-   * `protection` on `SwitchingSet`, but that can't express two real cases: a
-   * clear lead (`METHOD=NONE` segments followed by encrypted ones — protection
-   * varies along the timeline within one rendition) or key rotation (its single
-   * `defaultKid` can't represent a key changing over time). Modeling it properly
-   * belongs to DRM support; until then this records the one fact a playlist
-   * reliably gives us. Per-rendition because that's HLS's granularity —
-   * `EXT-X-KEY` is a media-playlist tag.
+   * Deliberately _not_ a model-level `protection` shape. CMAF-HAM puts `protection` on `SwitchingSet`, but that can't
+   * express two real cases: a clear lead (`METHOD=NONE` segments followed by encrypted ones — protection varies along
+   * the timeline within one rendition) or key rotation (its single `defaultKid` can't represent a key changing over
+   * time). Modeling it properly belongs to DRM support; until then this records the one fact a playlist reliably gives
+   * us. Per-rendition because that's HLS's granularity — `EXT-X-KEY` is a media-playlist tag.
    *
-   * Conservative for a clear lead: a rendition whose opening segments are clear
-   * still reads as encrypted, so it's judged unplayable rather than played until
-   * it breaks.
+   * Conservative for a clear lead: a rendition whose opening segments are clear still reads as encrypted, so it's
+   * judged unplayable rather than played until it breaks.
    */
   encrypted?: boolean;
   /**
-   * `EXT-X-SERVER-CONTROL` `HOLD-BACK` (seconds) — the server's declared distance
-   * from the live edge for clients playing *complete* segments. Absent when the
-   * server doesn't advertise it, in which case the spec default (3 × target
-   * duration) applies. Deliberately HLS vocabulary living in the playlist
-   * metadata rather than on `Track`: whether a wall-clock holdback generalizes
-   * across delivery formats is unresolved.
+   * `EXT-X-SERVER-CONTROL` `HOLD-BACK` (seconds) — the server's declared distance from the live edge for clients
+   * playing _complete_ segments. Absent when the server doesn't advertise it, in which case the spec default (3 ×
+   * target duration) applies. Deliberately HLS vocabulary living in the playlist metadata rather than on `Track`:
+   * whether a wall-clock holdback generalizes across delivery formats is unresolved.
    *
-   * `PART-HOLD-BACK` is **not** captured — it only applies to clients playing
-   * partial segments, and using it while fetching whole segments would put the
-   * playhead ahead of the last complete segment. Add it with LL-HLS support.
+   * `PART-HOLD-BACK` is **not** captured — it only applies to clients playing partial segments, and using it while
+   * fetching whole segments would put the playhead ahead of the last complete segment. Add it with LL-HLS support.
    */
   holdBack?: number;
   /**
-   * Whether the server is delivering this rendition as Low-Latency HLS — any of
-   * `#EXT-X-PART`, `#EXT-X-PART-INF`, or `EXT-X-SERVER-CONTROL`'s
-   * `PART-HOLD-BACK`.
+   * Whether the server is delivering this rendition as Low-Latency HLS — any of `#EXT-X-PART`, `#EXT-X-PART-INF`, or
+   * `EXT-X-SERVER-CONTROL`'s `PART-HOLD-BACK`.
    *
-   * Detection only, and deliberately so: partial segments are ignored by the
-   * parser and the loader fetches whole segments, so an LL-HLS playlist plays as
-   * standard live at standard latency. Recording the fact is what lets a
-   * composition *say* that rather than silently under-delivering the latency the
-   * publisher configured.
+   * Detection only, and deliberately so: partial segments are ignored by the parser and the loader fetches whole
+   * segments, so an LL-HLS playlist plays as standard live at standard latency. Recording the fact is what lets a
+   * composition _say_ that rather than silently under-delivering the latency the publisher configured.
    */
   lowLatency?: boolean;
 }
@@ -491,16 +408,14 @@ export function getMediaPlaylistMetadata(ham: Pick<Ham, 'metadata'>): MediaPlayl
 // =============================================================================
 
 /**
- * The source's semantic nature — live vs on-demand. A model concept
- * (consumer-facing), distinct from completeness / duration: a live stream that
- * has *ended* is still `'live'`.
+ * The source's semantic nature — live vs on-demand. A model concept (consumer-facing), distinct from completeness /
+ * duration: a live stream that has _ended_ is still `'live'`.
  */
 export type StreamType = 'live' | 'on-demand';
 
 /**
- * Derive {@link StreamType} from a media playlist's metadata. Per the model,
- * only `#EXT-X-PLAYLIST-TYPE:VOD` marks on-demand; everything else (EVENT, or
- * the tag absent) is live — completeness (`endList`) never factors in.
+ * Derive {@link StreamType} from a media playlist's metadata. Per the model, only `#EXT-X-PLAYLIST-TYPE:VOD` marks
+ * on-demand; everything else (EVENT, or the tag absent) is live — completeness (`endList`) never factors in.
  */
 export function deriveStreamType(metadata: MediaPlaylistMetadata | undefined): StreamType {
   return metadata?.playlistType === 'VOD' ? 'on-demand' : 'live';
@@ -510,10 +425,7 @@ export function deriveStreamType(metadata: MediaPlaylistMetadata | undefined): S
 // Media Playlist Info
 // =============================================================================
 
-/**
- * Intermediate representation of a parsed media playlist.
- * Used internally before assembling into full Track structure.
- */
+/** Intermediate representation of a parsed media playlist. Used internally before assembling into full Track structure. */
 export interface MediaPlaylistInfo {
   version: number;
   targetDuration: number;
@@ -529,20 +441,19 @@ export interface MediaPlaylistInfo {
 // =============================================================================
 
 /**
- * Presentation - a single playable period of content.
- * Uses TimeSpan fields (startTime always 0, duration optional until track resolved).
+ * Presentation - a single playable period of content. Uses TimeSpan fields (startTime always 0, duration optional until
+ * track resolved).
  *
- * Extends AddressableObject so `url` contains the original manifest URL.
- * All URLs are fully qualified (parsers resolve relative URLs).
+ * Extends AddressableObject so `url` contains the original manifest URL. All URLs are fully qualified (parsers resolve
+ * relative URLs).
  */
 export type Presentation = Ham &
   AddressableObject &
   Partial<TimeSpan> & {
     selectionSets: SelectionSet[];
     /**
-     * Live vs on-demand — the source's semantic nature. Populated once a media
-     * playlist is parsed (derived from `#EXT-X-PLAYLIST-TYPE` via
-     * `deriveStreamType`); orthogonal to duration / completeness.
+     * Live vs on-demand — the source's semantic nature. Populated once a media playlist is parsed (derived from
+     * `#EXT-X-PLAYLIST-TYPE` via `deriveStreamType`); orthogonal to duration / completeness.
      */
     streamType?: StreamType;
   };
@@ -550,9 +461,8 @@ export type Presentation = Ham &
 /**
  * State-shaped presentation that may or may not be resolved yet.
  *
- * The lifecycle is a single value: a caller writes `{ url }`, and the
- * resolver populates the rest in place. `url` is always present; resolved
- * fields (`id`, `selectionSets`, duration) appear once parsing succeeds.
+ * The lifecycle is a single value: a caller writes `{ url }`, and the resolver populates the rest in place. `url` is
+ * always present; resolved fields (`id`, `selectionSets`, duration) appear once parsing succeeds.
  *
  * Use `isResolvedPresentation` to narrow to `Presentation`.
  */
@@ -562,10 +472,7 @@ export type MaybeResolvedPresentation = AddressableObject & Partial<Omit<Present
 // Type Guards
 // =============================================================================
 
-/**
- * Check if a track is resolved (has segments).
- * Works for all track types with overloaded signatures for type narrowing.
- */
+/** Check if a track is resolved (has segments). Works for all track types with overloaded signatures for type narrowing. */
 export function isResolvedTrack(track: PartiallyResolvedVideoTrack | VideoTrack): track is VideoTrack;
 export function isResolvedTrack(track: PartiallyResolvedAudioTrack | AudioTrack): track is AudioTrack;
 export function isResolvedTrack(track: PartiallyResolvedTextTrack | TextTrack): track is TextTrack;
@@ -574,10 +481,7 @@ export function isResolvedTrack(track: PartiallyResolvedTrack | ResolvedTrack): 
   return 'segments' in track;
 }
 
-/**
- * Check if a presentation has duration (at least one track resolved).
- * Narrows type to include required duration.
- */
+/** Check if a presentation has duration (at least one track resolved). Narrows type to include required duration. */
 export function hasPresentationDuration(
   presentation: MaybeResolvedPresentation
 ): presentation is MaybeResolvedPresentation & { duration: number } {
@@ -587,11 +491,9 @@ export function hasPresentationDuration(
 /**
  * Narrows a `MaybeResolvedPresentation` to a fully resolved `Presentation`.
  *
- * A presentation is resolved once `resolvePresentation` has parsed the
- * manifest and populated both `id` and `selectionSets`. Both must be
- * present — a partial value with only one of them isn't usable, and
- * letting it through would have downstream behaviors crash when they
- * access `selectionSets`.
+ * A presentation is resolved once `resolvePresentation` has parsed the manifest and populated both `id` and
+ * `selectionSets`. Both must be present — a partial value with only one of them isn't usable, and letting it through
+ * would have downstream behaviors crash when they access `selectionSets`.
  */
 export function isResolvedPresentation(
   presentation: MaybeResolvedPresentation | undefined

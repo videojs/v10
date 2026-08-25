@@ -16,7 +16,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** jsdom only gives a connected iframe the window the embed posts from. */
+/** Jsdom only gives a connected iframe the window the embed posts from. */
 function createIframe(): HTMLIFrameElement {
   const iframe = document.createElement('iframe');
 

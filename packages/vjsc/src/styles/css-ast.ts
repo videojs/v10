@@ -4,8 +4,10 @@ export function cloneCssAst<T>(value: T): T {
   return structuredClone(value);
 }
 
-/** Lightning CSS serializes optional AST fields as `null`, but its returned-AST
- * deserializer accepts them only when omitted. */
+/**
+ * Lightning CSS serializes optional AST fields as `null`, but its returned-AST deserializer accepts them only when
+ * omitted.
+ */
 export function withoutNullValues<T>(value: T): T {
   if (Array.isArray(value)) return value.map(withoutNullValues) as T;
 

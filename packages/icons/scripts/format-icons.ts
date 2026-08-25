@@ -46,12 +46,11 @@ function removeFillCurrentColor(node: XastElement): void {
 }
 
 /**
- * When the root `<svg>` has `fill="none"` but every shape descendant uses
- * `fill="currentColor"` (directly or inherited from a `<g>`), hoist
- * `fill="currentColor"` to the root and strip it from descendants.
+ * When the root `<svg>` has `fill="none"` but every shape descendant uses `fill="currentColor"` (directly or inherited
+ * from a `<g>`), hoist `fill="currentColor"` to the root and strip it from descendants.
  *
- * With `multipass: true`, SVGO's `collapseGroups` will then clean up any
- * `<g>` elements left with no attributes on the next pass.
+ * With `multipass: true`, SVGO's `collapseGroups` will then clean up any `<g>` elements left with no attributes on the
+ * next pass.
  */
 const hoistCurrentColorFill: CustomPlugin = {
   name: 'hoistCurrentColorFill',

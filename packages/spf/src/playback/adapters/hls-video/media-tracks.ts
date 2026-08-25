@@ -49,12 +49,11 @@ const sameIds = (a: { id: string }[], b: { id: string }[]): boolean =>
   a.length === b.length && a.every((item, i) => item.id === b[i]!.id);
 
 /**
- * Projects the SPF engine's presentation onto the media element's
- * `videoRenditions` / `audioTracks` lists, and wires user selection back to the
- * engine's `userVideoTrackSelection` / `userAudioTrackSelection` signals.
+ * Projects the SPF engine's presentation onto the media element's `videoRenditions` / `audioTracks` lists, and wires
+ * user selection back to the engine's `userVideoTrackSelection` / `userAudioTrackSelection` signals.
  *
- * Requires the media-tracks mixin (track-list infrastructure) earlier in the
- * chain so the host exposes `addVideoTrack`, `videoRenditions`, and friends.
+ * Requires the media-tracks mixin (track-list infrastructure) earlier in the chain so the host exposes `addVideoTrack`,
+ * `videoRenditions`, and friends.
  */
 export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class HlsVideoMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {

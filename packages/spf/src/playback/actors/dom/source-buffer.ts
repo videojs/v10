@@ -34,10 +34,9 @@ export type SourceBufferActorState = 'idle' | 'updating' | 'destroyed';
 export interface SourceBufferActorContext {
   initTrackId?: string | undefined;
   /**
-   * Language of the most recently appended init segment's track (when
-   * present on the playlist). Used by the segment-loader's `planTasks`
-   * to detect cross-language switches and schedule ahead-buffer flush.
-   * Undefined for video and for language-less audio.
+   * Language of the most recently appended init segment's track (when present on the playlist). Used by the
+   * segment-loader's `planTasks` to detect cross-language switches and schedule ahead-buffer flush. Undefined for video
+   * and for language-less audio.
    */
   initTrackLanguage?: string | undefined;
   segments: Array<
@@ -45,9 +44,8 @@ export interface SourceBufferActorContext {
       trackId: Track['id'];
       trackBandwidth?: number;
       /**
-       * True while a streaming append is in progress for this segment.
-       * The segment's data is partially present in the SourceBuffer.
-       * Downstream code must not treat a partial segment as fully buffered.
+       * True while a streaming append is in progress for this segment. The segment's data is partially present in the
+       * SourceBuffer. Downstream code must not treat a partial segment as fully buffered.
        */
       partial?: boolean;
     }

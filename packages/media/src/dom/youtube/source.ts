@@ -3,15 +3,13 @@ import { type YouTubeMediaProps, youtubeMediaDefaultProps } from './props';
 
 /**
  * YouTube engine options, spelled exactly as YouTube spells them
- * (https://developers.google.com/youtube/player_parameters). They are serialized
- * onto the embed URL verbatim, so what you write here is what the player reads.
+ * (https://developers.google.com/youtube/player_parameters). They are serialized onto the embed URL verbatim, so what
+ * you write here is what the player reads.
  *
- * Parameters the host owns are deliberately absent: `autoplay`, `controls`, and
- * `playsinline` come from the props of the same name, so configuring them here
- * would give two ways to say one thing. Parameters YouTube has deprecated
- * (`modestbranding`, `showinfo`, `autohide`, `theme`, and `listType: 'search'`)
- * are absent too. The index signature still carries anything not listed here, so
- * undocumented knobs and whatever YouTube adds next keep working.
+ * Parameters the host owns are deliberately absent: `autoplay`, `controls`, and `playsinline` come from the props of
+ * the same name, so configuring them here would give two ways to say one thing. Parameters YouTube has deprecated
+ * (`modestbranding`, `showinfo`, `autohide`, `theme`, and `listType: 'search'`) are absent too. The index signature
+ * still carries anything not listed here, so undocumented knobs and whatever YouTube adds next keep working.
  */
 export interface YouTubeEngineConfig extends Record<string, unknown> {
   /** ISO 639-1 language to display captions in. Pair with `cc_load_policy`. */
@@ -86,10 +84,9 @@ export function parseYouTubeVideoId(src: string) {
 }
 
 /**
- * Parse a YouTube source string. Recognizes raw 11-character ids, `youtu.be`
- * short links, `watch?v=`, `embed/`, `v/`, `shorts/` and `live/` URLs (with or
- * without the `-nocookie` host), playlist URLs via the `list` parameter, and
- * start times via the `t` parameter.
+ * Parse a YouTube source string. Recognizes raw 11-character ids, `youtu.be` short links, `watch?v=`, `embed/`, `v/`,
+ * `shorts/` and `live/` URLs (with or without the `-nocookie` host), playlist URLs via the `list` parameter, and start
+ * times via the `t` parameter.
  */
 export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   if (!src) return null;
@@ -148,8 +145,8 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
 }
 
 /**
- * Parse the `t` parameter from a YouTube URL and convert it to seconds.
- * Supports formats like: `t=171`, `t=171s`, `t=2m51s`, `t=2m`, `t=1h30m15s`.
+ * Parse the `t` parameter from a YouTube URL and convert it to seconds. Supports formats like: `t=171`, `t=171s`,
+ * `t=2m51s`, `t=2m`, `t=1h30m15s`.
  */
 function parseStartTime(url: string): number | null {
   const tValue = /[?&]t=([\dhms]+)/i.exec(url)?.[1]?.toLowerCase();

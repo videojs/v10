@@ -9,7 +9,6 @@ import { defineMdastPlugin } from 'satteri';
 
 // Astro evaluates this module while Vite+ is still loading the task graph, so
 // the built workspace package is not available yet.
-import { isString } from '../../../packages/utils/src/predicate/index.ts';
 import { resolveReferenceSlug } from './api-reference-overrides';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
 import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
@@ -35,20 +34,16 @@ interface ConditionalHeading {
 /**
  * Builds the conditional-heading list used for the docs table of contents.
  *
- * - Tracks which `<FrameworkCase>` / `<StyleCase>` a heading lives in (walking
- *   ancestors) and attaches that context.
- * - Reads `<ComponentReference>` / `<FeatureReference>` / `<UtilReference>` /
- *   `<MediaReference>` props, loads the generated JSON, and injects heading
- *   entries so API-reference sections appear in the TOC.
+ * - Tracks which `<FrameworkCase>` / `<StyleCase>` a heading lives in (walking ancestors) and attaches that context.
+ * - Reads `<ComponentReference>` / `<FeatureReference>` / `<UtilReference>` / `<MediaReference>` props, loads the
+ *   generated JSON, and injects heading entries so API-reference sections appear in the TOC.
  *
- * Markdown headings are slugged with a plain GithubSlugger in document order so
- * the slugs match the element ids the markdown-satteri `heading-ids` plugin
- * generates (otherwise TOC anchors would not resolve). API-reference headings
+ * Markdown headings are slugged with a plain GithubSlugger in document order so the slugs match the element ids the
+ * markdown-satteri `heading-ids` plugin generates (otherwise TOC anchors would not resolve). API-reference headings
  * keep their model-generated slugs, which match the ids their components render.
  *
- * A factory resets the per-document slugger and heading list. Sätteri has no
- * end hook, so we publish the (mutated-in-place) array reference onto the
- * frontmatter once and keep pushing to it.
+ * A factory resets the per-document slugger and heading list. Sätteri has no end hook, so we publish the
+ * (mutated-in-place) array reference onto the frontmatter once and keep pushing to it.
  */
 export function satteriConditionalHeadings(): MdastPluginInput {
   return () => {

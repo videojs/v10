@@ -1,6 +1,6 @@
 /**
- * Re-export types from the shared schema.
- * The shared schema in src/types/component-reference.ts is the single source of truth.
+ * Re-export types from the shared schema. The shared schema in src/types/component-reference.ts is the single source of
+ * truth.
  */
 export type {
   ComponentReference,
@@ -36,9 +36,7 @@ export { PresetReferenceSchema } from '../../../src/types/preset-reference.js';
 export type { UtilReference } from '../../../src/types/util-reference.js';
 export { UtilReferenceSchema } from '../../../src/types/util-reference.js';
 
-/**
- * Discovered part within a multi-part component.
- */
+/** Discovered part within a multi-part component. */
 export interface PartSource {
   /** PascalCase name (e.g., "Value", "Group", "Separator"). */
   name: string;
@@ -58,9 +56,7 @@ export interface PartSource {
   dataAttrsComponentName?: string;
 }
 
-/**
- * Source file locations for a component across packages.
- */
+/** Source file locations for a component across packages. */
 export interface ComponentSource {
   /** PascalCase component name (e.g., PlayButton) */
   name: string;
@@ -86,9 +82,7 @@ export interface ExtraDataAttrsSource {
   parts: string[];
 }
 
-/**
- * Extracted property from TypeScript analysis.
- */
+/** Extracted property from TypeScript analysis. */
 export interface ExtractedProp {
   name: string;
   type: string;
@@ -98,9 +92,7 @@ export interface ExtractedProp {
   required?: boolean;
 }
 
-/**
- * Extraction result from core package.
- */
+/** Extraction result from core package. */
 export interface CoreExtraction {
   description?: string;
   props: ExtractedProp[];
@@ -108,9 +100,7 @@ export interface CoreExtraction {
   defaultProps: Record<string, string>;
 }
 
-/**
- * Extraction result from data attributes file.
- */
+/** Extraction result from data attributes file. */
 export interface DataAttrsExtraction {
   attrs: Array<{ name: string; description: string; type?: string }>;
 }

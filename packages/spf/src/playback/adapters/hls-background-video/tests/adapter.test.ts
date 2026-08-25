@@ -1,14 +1,13 @@
 /**
  * HlsBackgroundVideoMediaElement adapter tests.
  *
- * Covers the HTMLMediaElement-compatible contract for `src` and `play()`.
- * Adapter-shape parallels `HlsVideoMediaElement`; the tests focus on what
- * diverges: silent autoplay-looping playback is fixed on the element at attach
- * rather than exposed, and the picker takes the largest rendition on offer,
- * since narrowing the set is the manifest's job rather than a property here.
+ * Covers the HTMLMediaElement-compatible contract for `src` and `play()`. Adapter-shape parallels
+ * `HlsVideoMediaElement`; the tests focus on what diverges: silent autoplay-looping playback is fixed on the element at
+ * attach rather than exposed, and the picker takes the largest rendition on offer, since narrowing the set is the
+ * manifest's job rather than a property here.
  *
- * `@videojs/spf/mux-background-video` re-exports these same classes, so its own
- * test asserts identity and leans on this file for behavior.
+ * `@videojs/spf/mux-background-video` re-exports these same classes, so its own test asserts identity and leans on this
+ * file for behavior.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 

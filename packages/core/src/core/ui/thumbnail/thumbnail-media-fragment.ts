@@ -54,9 +54,8 @@ export function parseMediaFragment(
 }
 
 /**
- * Convert an array of text cues (e.g. `VTTCue` from a `<track>` element)
- * into {@link ThumbnailImage} entries by parsing the media-fragment in
- * each cue's text.
+ * Convert an array of text cues (e.g. `VTTCue` from a `<track>` element) into {@link ThumbnailImage} entries by parsing
+ * the media-fragment in each cue's text.
  */
 export function mapCuesToThumbnails(cues: MediaTextCue[], baseURL?: string): ThumbnailImage[] {
   const images: ThumbnailImage[] = [];

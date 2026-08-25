@@ -1,11 +1,10 @@
 /**
  * Verify the built CDN output is self-contained.
  *
- * Mirroring `cdn/` onto your own origin is a supported way to run the player (see the site's
- * "Self-host the player" guide), and the release distribution archive is cut from this output.
- * That only holds while every module specifier is relative and resolves inside the directory — a
- * single absolute URL silently reintroduces a runtime dependency on a public CDN, which fails
- * closed in offline, air-gapped, and strict-CSP deployments.
+ * Mirroring `cdn/` onto your own origin is a supported way to run the player (see the site's "Self-host the player"
+ * guide), and the release distribution archive is cut from this output. That only holds while every module specifier is
+ * relative and resolves inside the directory — a single absolute URL silently reintroduces a runtime dependency on a
+ * public CDN, which fails closed in offline, air-gapped, and strict-CSP deployments.
  *
  * Prerequisites: `@videojs/html`'s `build:cdn`.
  */

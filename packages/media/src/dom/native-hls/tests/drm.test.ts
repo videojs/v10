@@ -24,7 +24,7 @@ function skdInitData(contentId: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-/** jsdom implements neither `MediaEncryptedEvent` nor `webkitneedkey`. */
+/** Jsdom implements neither `MediaEncryptedEvent` nor `webkitneedkey`. */
 function fireKeyRequest(
   video: HTMLVideoElement,
   type: 'encrypted' | 'webkitneedkey' = 'encrypted',
@@ -148,9 +148,8 @@ function stubFetch() {
 }
 
 /**
- * Licensed the standard way, through `source.drm`. Systems only an MSE engine
- * can negotiate are welcome there — one source describes every path — so the
- * helper takes whatever a caller would name.
+ * Licensed the standard way, through `source.drm`. Systems only an MSE engine can negotiate are welcome there — one
+ * source describes every path — so the helper takes whatever a caller would name.
  */
 function setup(
   drm: DrmSystemsConfig | null = { 'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } }
@@ -175,8 +174,8 @@ function setup(
 }
 
 /**
- * Let the setup chain (key access → certificate → session → license) settle.
- * Yielding to the macrotask queue drains every microtask in between.
+ * Let the setup chain (key access → certificate → session → license) settle. Yielding to the macrotask queue drains
+ * every microtask in between.
  */
 async function settle() {
   for (let i = 0; i < 3; i++) await new Promise((resolve) => setTimeout(resolve, 0));
@@ -482,8 +481,8 @@ describe('NativeHlsMediaDrmMixin', () => {
 
   describe('legacy WebKit fallback', () => {
     /**
-     * Drive the one handover the legacy path exists for: EME cannot generate a
-     * request while the playback target is an AirPlay receiver.
+     * Drive the one handover the legacy path exists for: EME cannot generate a request while the playback target is an
+     * AirPlay receiver.
      */
     async function setupFallback() {
       const eme = stubKeySystem();

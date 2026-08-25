@@ -48,24 +48,24 @@ export type UsePlayerHook<Store extends PlayerStore> = {
 /**
  * Create a player instance with a typed Player component and hooks.
  *
- * @label Video
  * @param config - Player configuration with features and optional display name.
+ * @label Video
  */
 export function createPlayer(config: CreatePlayerConfig<VideoFeatures>): CreatePlayerResult<VideoPlayerStore>;
 
 /**
  * Create a player for audio media.
  *
- * @label Audio
  * @param config - Player configuration with features and optional display name.
+ * @label Audio
  */
 export function createPlayer(config: CreatePlayerConfig<AudioFeatures>): CreatePlayerResult<AudioPlayerStore>;
 
 /**
  * Create a player with custom features.
  *
- * @label Generic
  * @param config - Player configuration with features and optional display name.
+ * @label Generic
  */
 export function createPlayer<const Features extends AnyPlayerFeature[]>(
   config: CreatePlayerConfig<Features>

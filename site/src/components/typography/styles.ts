@@ -1,9 +1,8 @@
 /**
  * Shared Tailwind class strings for typography elements.
  *
- * Used by both the Astro typography components and `renderInlineMarkdown`
- * so styling stays in sync across server-rendered MDX and programmatic
- * HTML generation.
+ * Used by both the Astro typography components and `renderInlineMarkdown` so styling stays in sync across
+ * server-rendered MDX and programmatic HTML generation.
  */
 export const shared = {
   a: 'underline intent:decoration-gold',

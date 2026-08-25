@@ -1,6 +1,6 @@
 /**
- * Augments `@types/chromecast-caf-sender` with HLS segment format
- * properties added after the community types were last updated.
+ * Augments `@types/chromecast-caf-sender` with HLS segment format properties added after the community types were last
+ * updated.
  */
 declare namespace chrome.cast.media {
   enum HlsSegmentFormat {

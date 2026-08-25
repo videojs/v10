@@ -547,8 +547,8 @@ describe('HlsJsMedia', () => {
     }
 
     /**
-     * Minimal stand-in for an `Hls` instance, enough to build the controller the
-     * element installed and ask it what the current policy resolves to.
+     * Minimal stand-in for an `Hls` instance, enough to build the controller the element installed and ask it what the
+     * current policy resolves to.
      */
     function probeEngine(levels: Array<{ width: number; height: number; bitrate: number }>) {
       const listeners = new Map<string, Array<{ fn: (...args: any[]) => void; ctx: unknown }>>();
@@ -578,9 +578,8 @@ describe('HlsJsMedia', () => {
     /**
      * What the engine's installed cap controller resolves the policy to now.
      *
-     * The probe defaults to a viewport larger than the whole ladder, so the
-     * player-size ceiling never binds and a requested resolution is what is
-     * being measured. Pass a smaller one to measure the size cap itself.
+     * The probe defaults to a viewport larger than the whole ladder, so the player-size ceiling never binds and a
+     * requested resolution is what is being measured. Pass a smaller one to measure the size cap itself.
      */
     function cappedIndex(media: HlsJsMedia, playerSize = { width: 4096, height: 2160 }) {
       const engine = probeEngine(LADDER);

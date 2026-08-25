@@ -20,13 +20,9 @@ import UploaderOverlay from './UploaderOverlay';
 /**
  * Mux video uploader with auth-gated flow.
  *
- * Flow:
- * 1. User drops/selects file → endpoint() called
- * 2. Try to create upload URL (requires auth)
- * 3. If 401: show login overlay, wait for auth, retry
- * 4. Upload begins with returned URL
- * 5. On success: poll for playback ID
- * 6. When ready: update renderer to 'hls', store playback ID in nanostore
+ * Flow: 1. User drops/selects file → endpoint() called 2. Try to create upload URL (requires auth) 3. If 401: show
+ * login overlay, wait for auth, retry 4. Upload begins with returned URL 5. On success: poll for playback ID 6. When
+ * ready: update renderer to 'hls', store playback ID in nanostore
  */
 export default function MuxUploaderPanel() {
   // Local state for upload flow (not shared across islands)
@@ -42,8 +38,7 @@ export default function MuxUploaderPanel() {
   const uploaderRef = useRef<HTMLElement>(null);
 
   /**
-   * Endpoint function called by MuxUploader when file is selected.
-   * Returns a Promise that resolves with the upload URL.
+   * Endpoint function called by MuxUploader when file is selected. Returns a Promise that resolves with the upload URL.
    * The upload waits for this Promise before starting.
    */
   const getEndpoint = useCallback(async (): Promise<string> => {
@@ -73,10 +68,7 @@ export default function MuxUploaderPanel() {
     return result.data.uploadUrl;
   }, []);
 
-  /**
-   * Handles OAuth login via popup.
-   * On success: fetches upload URL and resolves the pending Promise.
-   */
+  /** Handles OAuth login via popup. On success: fetches upload URL and resolves the pending Promise. */
   const handleLogin = useCallback(async () => {
     const result = await actions.auth.initiateLogin();
 
@@ -112,10 +104,7 @@ export default function MuxUploaderPanel() {
     });
   }, []);
 
-  /**
-   * Polls Mux API for playback ID after upload completes.
-   * Updates renderer to 'mux' and stores playback ID on success.
-   */
+  /** Polls Mux API for playback ID after upload completes. Updates renderer to 'mux' and stores playback ID on success. */
   const handleUploadSuccess = useCallback(async () => {
     if (!uploadId) return;
 

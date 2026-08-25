@@ -16,10 +16,7 @@ export interface DashSource {
 
 /** The engines a DASH source can configure. */
 export interface DashEngineConfig {
-  /**
-   * dash.js's own settings, passed through untouched. Replacing them resets any
-   * previously applied settings.
-   */
+  /** Dash.js's own settings, passed through untouched. Replacing them resets any previously applied settings. */
   dashJs?: dashjs.MediaPlayerSettingClass | undefined;
 }
 
@@ -67,9 +64,8 @@ class DashMediaBase
   }
 
   /**
-   * Underlying playback engine — the dash.js `MediaPlayerClass` instance. An
-   * advanced escape hatch for direct engine access; normal playback is driven
-   * through this element's own properties and methods.
+   * Underlying playback engine — the dash.js `MediaPlayerClass` instance. An advanced escape hatch for direct engine
+   * access; normal playback is driven through this element's own properties and methods.
    */
   get engine() {
     return this.#engine;
@@ -90,11 +86,10 @@ class DashMediaBase
   }
 
   /**
-   * Structured source: the MPD URL in `src`, plus dash.js settings in
-   * `engine.dashJs`. Replacing it re-derives `src`.
+   * Structured source: the MPD URL in `src`, plus dash.js settings in `engine.dashJs`. Replacing it re-derives `src`.
    *
-   * dash.js takes settings on a live player, so changing `engine.dashJs`
-   * re-applies them in place instead of recreating the engine.
+   * Dash.js takes settings on a live player, so changing `engine.dashJs` re-applies them in place instead of recreating
+   * the engine.
    */
   get source(): DashSource | null {
     return this.#source;
@@ -136,6 +131,7 @@ class DashMediaBase
 }
 
 /**
- * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the
+ *   new value.
  */
 export class DashMedia extends DashMediaMediaTracksMixin(DashMediaBase) {}

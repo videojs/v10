@@ -1,10 +1,9 @@
 /**
  * Generates Vite test pages from PageEntry definitions.
  *
- * Reads the media type configs and page arrays, then writes .ts/.tsx + .html
- * files to `apps/vite/src/pages/`, which is gitignored — every page there comes
- * from this script, including the special ones (ejected skins, captions,
- * background video), which take their own templates rather than the player shell.
+ * Reads the media type configs and page arrays, then writes .ts/.tsx + .html files to `apps/vite/src/pages/`, which is
+ * gitignored — every page there comes from this script, including the special ones (ejected skins, captions, background
+ * video), which take their own templates rather than the player shell.
  *
  * Run: `pnpm --dir apps/e2e generate-pages`
  */
@@ -289,15 +288,12 @@ createRoot(document.getElementById('root')!).render(<App />);
 // ---------------------------------------------------------------------------
 
 /**
- * The SPF background-video Media, alone rather than inside a player: the
- * composition subscribes to no store features and has no controls, so a skin
- * would only add moving parts to what the spec is measuring.
+ * The SPF background-video Media, alone rather than inside a player: the composition subscribes to no store features
+ * and has no controls, so a skin would only add moving parts to what the spec is measuring.
  *
- * `?src=` picks the source, so one page serves every shape
- * `spf-background-video.spec.ts` drives — playable, MPEG-TS, encrypted,
- * audio-only — and a test can compare two of them without a page each. Assigned
- * as a property rather than interpolated into markup, since the DRM source
- * carries a signed-URL query string.
+ * `?src=` picks the source, so one page serves every shape `spf-background-video.spec.ts` drives — playable, MPEG-TS,
+ * encrypted, audio-only — and a test can compare two of them without a page each. Assigned as a property rather than
+ * interpolated into markup, since the DRM source carries a signed-URL query string.
  */
 function backgroundVideoPage(config: MediaTypeConfig, resource: string): string {
   return `${config.imports.map((imp) => `import '${imp}';`).join('\n')}
@@ -318,11 +314,10 @@ document.getElementById('root')!.append(media);
 }
 
 /**
- * The React counterpart, and the only place `onError` can be observed: the
- * component hands out no reference to its Media, so what a consumer sees is
- * whatever React's own event plumbing delivers. Failures are counted onto
- * `window` rather than rendered — the assertion is that the prop fired at all,
- * since the condition behind it isn't reachable from here by design.
+ * The React counterpart, and the only place `onError` can be observed: the component hands out no reference to its
+ * Media, so what a consumer sees is whatever React's own event plumbing delivers. Failures are counted onto `window`
+ * rather than rendered — the assertion is that the prop fired at all, since the condition behind it isn't reachable
+ * from here by design.
  */
 function reactBackgroundVideoPage(media: string, resource: string): string {
   const reactMedia = REACT_MEDIA[media];

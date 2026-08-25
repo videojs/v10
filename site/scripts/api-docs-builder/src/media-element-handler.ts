@@ -1,24 +1,25 @@
 /**
  * Media element reference extraction.
  *
- * Discovers media elements from packages/html/src/define/media/*.ts and extracts
- * host properties, shared attributes/events, and CSS vars.
+ * Discovers media elements from packages/html/src/define/media/*.ts and extracts host properties, shared
+ * attributes/events, and CSS vars.
  *
  * Convention:
- *   - Define files: packages/html/src/define/media/*.ts with inline class + static tagName
- *   - Media element classes: packages/html/src/media/{name}/media.ts
- *     composed as MediaAttachMixin(CustomMediaElement('video'|'audio', Host))
- *   - React media components: packages/react/src/media/{name}/media.tsx
- *   - Host classes: packages/media/src/dom/{name}/media.ts extending
- *     HTMLVideoElementHost or HTMLAudioElementHost with getter/setter pairs
- *   - Shared data: packages/media/src/dom/custom-media-element/custom-media-element.ts
- *     exports CustomMediaElement factory (with static properties), VideoCSSVars,
- *     AudioCSSVars
+ *
+ * - Define files: packages/html/src/define/media/*.ts with inline class + static tagName
+ * - Media element classes: packages/html/src/media/{name}/media.ts composed as
+ *   MediaAttachMixin(CustomMediaElement('video'|'audio', Host))
+ * - React media components: packages/react/src/media/{name}/media.tsx
+ * - Host classes: packages/media/src/dom/{name}/media.ts extending HTMLVideoElementHost or HTMLAudioElementHost with
+ *   getter/setter pairs
+ * - Shared data: packages/media/src/dom/custom-media-element/custom-media-element.ts exports CustomMediaElement factory
+ *   (with static properties), VideoCSSVars, AudioCSSVars
  *
  * Exclusions (elements discovered but intentionally skipped):
- *   - container.ts: re-exports a class, doesn't declare one inline → no static tagName found
- *   - background-video.ts: uses MediaAttachMixin(HTMLElement) without CustomMediaElement →
- *     parseCustomMediaElementCall returns null. Its API reference is manually maintained in MDX.
+ *
+ * - Container.ts: re-exports a class, doesn't declare one inline → no static tagName found
+ * - Background-video.ts: uses MediaAttachMixin(HTMLElement) without CustomMediaElement → parseCustomMediaElementCall
+ *   returns null. Its API reference is manually maintained in MDX.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -74,15 +75,12 @@ interface StaticMediaProperty {
 // ─── Module Resolution ───────────────────────────────────────────────
 
 /**
- * Resolve an import specifier to an absolute file path using TypeScript's
- * module resolution. Handles both relative paths and workspace package
- * imports (e.g., @videojs/media/dom/hls) via the project's tsconfig.
+ * Resolve an import specifier to an absolute file path using TypeScript's module resolution. Handles both relative
+ * paths and workspace package imports (e.g., @videojs/media/dom/hls) via the project's tsconfig.
  *
- * Workspace imports go through `package.json#exports` and resolve to the
- * built `dist/dev/*.d.ts` files, where the TypeScript compiler has collapsed
- * mixin chains into opaque `_base` aliases. To preserve the original mixin
- * structure for extraction, we remap the resolved dist `.d.ts` path back to
- * the corresponding source `.ts` file.
+ * Workspace imports go through `package.json#exports` and resolve to the built `dist/dev/*.d.ts` files, where the
+ * TypeScript compiler has collapsed mixin chains into opaque `_base` aliases. To preserve the original mixin structure
+ * for extraction, we remap the resolved dist `.d.ts` path back to the corresponding source `.ts` file.
  */
 function resolveModuleToFile(
   fromFile: string,
@@ -156,9 +154,9 @@ function discoverMediaElements(monorepoRoot: string, compilerOptions: ts.Compile
 }
 
 /**
- * Parse a define/media file to extract class name, tagName, and import chain.
- * Returns null if the file doesn't declare an inline class with static tagName
- * (container.ts) or if the class doesn't use CustomMediaElement (background-video.ts).
+ * Parse a define/media file to extract class name, tagName, and import chain. Returns null if the file doesn't declare
+ * an inline class with static tagName (container.ts) or if the class doesn't use CustomMediaElement
+ * (background-video.ts).
  */
 function parseDefineFile(
   sourceFile: ts.SourceFile,
@@ -276,8 +274,8 @@ function stripElementSuffix(name: string): string {
 }
 
 /**
- * Parse the media element class to find the CustomMediaElement(tag, Host) call.
- * Returns null for elements that don't use CustomMediaElement (e.g., BackgroundVideo).
+ * Parse the media element class to find the CustomMediaElement(tag, Host) call. Returns null for elements that don't
+ * use CustomMediaElement (e.g., BackgroundVideo).
  */
 function parseCustomMediaElementCall(
   sourceFile: ts.SourceFile,
@@ -359,11 +357,9 @@ function parseCustomMediaElementCall(
 // ─── Host Property Extraction ───────────────────────────────────────
 
 /**
- * Extract getter/setter pairs from a host class and its ancestors,
- * mirroring what CustomMediaElement does at runtime when it walks
- * the MediaHost prototype chain. Defaults are collected from the
- * `*DefaultProps` exports in every file the walk visits — base files first,
- * then mixins innermost-to-outermost, then the leaf class file — so the
+ * Extract getter/setter pairs from a host class and its ancestors, mirroring what CustomMediaElement does at runtime
+ * when it walks the MediaHost prototype chain. Defaults are collected from the `*DefaultProps` exports in every file
+ * the walk visits — base files first, then mixins innermost-to-outermost, then the leaf class file — so the
  * most-derived default wins, matching property override semantics.
  */
 function extractHostProperties(
@@ -395,10 +391,9 @@ function extractHostProperties(
 }
 
 /**
- * Recursively extract getter/setter pairs from a class and its parent chain.
- * Handles both `extends Identifier` and `extends MixinA(MixinB(Base))`. Child
- * properties override parent properties (checked via the `seen` set). Stops
- * at host base classes (HTMLMediaElementHost, HTMLVideoElementHost, etc.).
+ * Recursively extract getter/setter pairs from a class and its parent chain. Handles both `extends Identifier` and
+ * `extends MixinA(MixinB(Base))`. Child properties override parent properties (checked via the `seen` set). Stops at
+ * host base classes (HTMLMediaElementHost, HTMLVideoElementHost, etc.).
  */
 function extractClassProperties(
   filePath: string,
@@ -474,9 +469,8 @@ function resolveLocalInitializer(sourceFile: ts.SourceFile, name: string): ts.Ex
 }
 
 /**
- * Process an `extends` expression — either an `Identifier` (regular class
- * inheritance) or a `CallExpression` (mixin chain like `OuterMixin(InnerMixin(Base))`).
- * Mixins are applied innermost-first so that outer mixin overrides win.
+ * Process an `extends` expression — either an `Identifier` (regular class inheritance) or a `CallExpression` (mixin
+ * chain like `OuterMixin(InnerMixin(Base))`). Mixins are applied innermost-first so that outer mixin overrides win.
  */
 function processExtendsExpression(
   extendsExpr: ts.Expression,
@@ -531,9 +525,8 @@ function processExtendsExpression(
 }
 
 /**
- * Unwind a mixin call chain like `OuterMixin(InnerMixin(Base))` into a list
- * of mixin names (outermost first) and the innermost expression (the base).
- * Parens and `as` casts are stripped between layers.
+ * Unwind a mixin call chain like `OuterMixin(InnerMixin(Base))` into a list of mixin names (outermost first) and the
+ * innermost expression (the base). Parens and `as` casts are stripped between layers.
  */
 function unwindMixinChain(callExpr: ts.CallExpression): {
   mixins: Array<{ name: string }>;
@@ -559,14 +552,13 @@ function unwindMixinChain(callExpr: ts.CallExpression): {
 }
 
 /**
- * Walk a mixin function and merge the inner class's getters/setters into
- * `properties`. Supports the three mixin shapes used in this codebase:
- *   A: `function MixinName(arg) { class Inner extends arg { ... } }`
- *   B: `const MixinName: Mixin<...> = (arg) => { class Inner extends arg { ... } }`
- *   C: `const MixinName = <Base extends ...>(arg) => { class Inner extends arg { ... } }`
+ * Walk a mixin function and merge the inner class's getters/setters into `properties`. Supports the three mixin shapes
+ * used in this codebase: A: `function MixinName(arg) { class Inner extends arg { ... } }` B: `const MixinName:
+ * Mixin<...> = (arg) => { class Inner extends arg { ... } }` C: `const MixinName = <Base extends ...>(arg) => { class
+ * Inner extends arg { ... } }`
  *
- * The inner class always extends a function parameter; we don't recurse on
- * that — the outer chain walk already handles the base.
+ * The inner class always extends a function parameter; we don't recurse on that — the outer chain walk already handles
+ * the base.
  */
 function processMixin(
   mixinName: string,
@@ -593,9 +585,8 @@ function processMixin(
 }
 
 /**
- * Resolve a mixin name to the file containing its declaration and the inner
- * class returned by the mixin. Follows re-exports through barrel files
- * (`export { Foo } from './bar'`). Returns `undefined` if not found.
+ * Resolve a mixin name to the file containing its declaration and the inner class returned by the mixin. Follows
+ * re-exports through barrel files (`export { Foo } from './bar'`). Returns `undefined` if not found.
  */
 function resolveMixinDeclaration(
   mixinName: string,
@@ -688,9 +679,8 @@ function resolveMixinDeclaration(
 }
 
 /**
- * Look for a `export { Foo } from './bar'` (or `export { Foo as Bar } from './bar'`)
- * matching the given name. Returns the source module specifier and the actual
- * exported identifier in the target module.
+ * Look for a `export { Foo } from './bar'` (or `export { Foo as Bar } from './bar'`) matching the given name. Returns
+ * the source module specifier and the actual exported identifier in the target module.
  */
 function findReExportSource(
   sourceFile: ts.SourceFile,
@@ -721,10 +711,7 @@ function findReExportSource(
   return result;
 }
 
-/**
- * Find the inner class declared inside a mixin function whose `extends`
- * targets one of the function's parameters.
- */
+/** Find the inner class declared inside a mixin function whose `extends` targets one of the function's parameters. */
 function findMixinInnerClass(sourceFile: ts.SourceFile, mixinName: string): ts.ClassDeclaration | undefined {
   let result: ts.ClassDeclaration | undefined;
 
@@ -794,9 +781,8 @@ function getParameterNames(params: ts.NodeArray<ts.ParameterDeclaration>): Set<s
 }
 
 /**
- * Collect getter/setter pairs from a single class node and merge them into
- * `properties`. Description fallback: if a child override has no JSDoc,
- * the closest ancestor's description is preserved.
+ * Collect getter/setter pairs from a single class node and merge them into `properties`. Description fallback: if a
+ * child override has no JSDoc, the closest ancestor's description is preserved.
  */
 function applyClassMembers(
   classNode: ts.ClassDeclaration,
@@ -851,9 +837,8 @@ function applyClassMembers(
 }
 
 /**
- * Resolve host property types via the type checker, keyed by property name.
- * Walking own class members only sees explicit annotations, so this reads the
- * class's full instance type — which the checker resolves through the mixin
+ * Resolve host property types via the type checker, keyed by property name. Walking own class members only sees
+ * explicit annotations, so this reads the class's full instance type — which the checker resolves through the mixin
  * chain — to recover types for unannotated getters (e.g. `get src()` → string).
  */
 function resolveInferredTypes(
@@ -894,15 +879,13 @@ function resolveInferredTypes(
 /**
  * Collect the options a media accepts under `source.engine`, keyed by engine name.
  *
- * Walks the host's `source` property type to `engine`, then lists each engine's
- * own members with their declared type and JSDoc. Driven by the type rather than
- * by file or name convention: the config interfaces sit in different files per
- * provider (`source.ts` for most, `media.ts` for Vimeo) and one extends a
- * third-party type (`@vimeo/player`), which the checker resolves the same way.
+ * Walks the host's `source` property type to `engine`, then lists each engine's own members with their declared type
+ * and JSDoc. Driven by the type rather than by file or name convention: the config interfaces sit in different files
+ * per provider (`source.ts` for most, `media.ts` for Vimeo) and one extends a third-party type (`@vimeo/player`), which
+ * the checker resolves the same way.
  *
- * Every member is emitted, described or not: an option in the API surface is one
- * a reader can set, and a name with its type still says what exists and what
- * shape it takes. JSDoc is the only source of prose, so a missing or wrong
+ * Every member is emitted, described or not: an option in the API surface is one a reader can set, and a name with its
+ * type still says what exists and what shape it takes. JSDoc is the only source of prose, so a missing or wrong
  * description is fixed on the interface member, never in the docs page.
  */
 function extractEngineOptions(
@@ -1012,9 +995,8 @@ function findImportPath(sourceFile: ts.SourceFile, name: string): string | undef
 const fileDefaultsCache = new Map<string, Map<string, string>>();
 
 /**
- * Collect default values from every `*DefaultProps` object literal exported
- * by a file, in declaration order. Spread entries are resolved through
- * imports (e.g. `{ ...hlsMediaDefaultProps, castSrc: '' }`).
+ * Collect default values from every `*DefaultProps` object literal exported by a file, in declaration order. Spread
+ * entries are resolved through imports (e.g. `{ ...hlsMediaDefaultProps, castSrc: '' }`).
  */
 function collectFileDefaults(filePath: string, compilerOptions: ts.CompilerOptions): Map<string, string> {
   const cached = fileDefaultsCache.get(filePath);
@@ -1052,9 +1034,8 @@ function collectFileDefaults(filePath: string, compilerOptions: ts.CompilerOptio
 }
 
 /**
- * Flatten an object literal into name → serialized value, resolving spreads
- * of identifiers declared in the same file or imported from another file.
- * Entries are processed in source order, so later entries override spreads.
+ * Flatten an object literal into name → serialized value, resolving spreads of identifiers declared in the same file or
+ * imported from another file. Entries are processed in source order, so later entries override spreads.
  */
 function resolveObjectLiteralEntries(
   objectLiteral: ts.ObjectLiteralExpression,
@@ -1102,13 +1083,12 @@ function resolveObjectLiteralEntries(
 }
 
 /**
- * Resolve an identifier to a `const name = { ... }` object literal declared in
- * the same file or reachable by following the imports that provide it.
+ * Resolve an identifier to a `const name = { ... }` object literal declared in the same file or reachable by following
+ * the imports that provide it.
  *
- * The chain is walked rather than hopped once: a React media file imports its
- * defaults from a package barrel, `mapDistToSource` rewrites that barrel to the
- * sibling `media.ts`, and a host module that keeps its props in a separate
- * `props.ts` only re-imports the const from there.
+ * The chain is walked rather than hopped once: a React media file imports its defaults from a package barrel,
+ * `mapDistToSource` rewrites that barrel to the sibling `media.ts`, and a host module that keeps its props in a
+ * separate `props.ts` only re-imports the const from there.
  */
 function resolveConstObjectLiteral(
   name: string,
@@ -1164,12 +1144,10 @@ function findConstObjectLiteral(sourceFile: ts.SourceFile, name: string): ts.Obj
 const LITERAL_IDENTIFIERS = new Set(['NaN', 'Infinity']);
 
 /**
- * Serialize a default value expression for display in the docs:
- *   - Literals (strings, numbers, booleans, null, undefined, NaN) verbatim
- *   - Empty object literals as `{}`, non-empty abbreviated as `{…}`
- *   - Short array literals verbatim, long ones abbreviated as `[…]`
- *   - `Obj.MEMBER` resolved to the member's literal in a `... as const` object
- *   - Anything else is omitted (returns undefined)
+ * Serialize a default value expression for display in the docs: - Literals (strings, numbers, booleans, null,
+ * undefined, NaN) verbatim - Empty object literals as `{}`, non-empty abbreviated as `{…}` - Short array literals
+ * verbatim, long ones abbreviated as `[…]` - `Obj.MEMBER` resolved to the member's literal in a `... as const` object -
+ * Anything else is omitted (returns undefined)
  */
 function serializeDefaultValue(
   expr: ts.Expression,
@@ -1225,9 +1203,8 @@ function serializeDefaultValue(
 // ─── Shared Data Extraction ──────────────────────────────────────────
 
 /**
- * Extract property-to-attribute mappings from the `static properties` object
- * inside the CustomMediaElement factory. The property name is needed to
- * classify standard attributes separately from Video.js-specific ones.
+ * Extract property-to-attribute mappings from the `static properties` object inside the CustomMediaElement factory. The
+ * property name is needed to classify standard attributes separately from Video.js-specific ones.
  */
 function extractStaticProperties(filePath: string): StaticMediaProperty[] {
   const content = fs.readFileSync(filePath, 'utf-8');
@@ -1284,11 +1261,10 @@ function extractStaticProperties(filePath: string): StaticMediaProperty[] {
  * Extract the public React surface from the matching media component.
  *
  * Convention:
- *   - `forwardRef<HTML*Element, *Props>` declares the public ref target.
- *   - extending `VideoHTMLAttributes` / `AudioHTMLAttributes` opts into the
- *     native React DOM props.
- *   - the defaults object passed to `useSyncProps` is the runtime source of
- *     truth for Video.js-specific props.
+ *
+ * - `forwardRef<HTML*Element, *Props>` declares the public ref target.
+ * - Extending `VideoHTMLAttributes` / `AudioHTMLAttributes` opts into the native React DOM props.
+ * - The defaults object passed to `useSyncProps` is the runtime source of truth for Video.js-specific props.
  */
 function extractReactReference(
   monorepoRoot: string,
@@ -1449,10 +1425,9 @@ const EXCLUDED_METHOD_NAMES = new Set([
 ]);
 
 /**
- * Collect public instance method names declared directly on a named class.
- * Excludes the constructor, lifecycle methods (attach/detach/destroy),
- * private/protected `_`/`#` names, and accessors (getters/setters are
- * properties, not methods). Returns [] if the file or class isn't found.
+ * Collect public instance method names declared directly on a named class. Excludes the constructor, lifecycle methods
+ * (attach/detach/destroy), private/protected `_`/`#` names, and accessors (getters/setters are properties, not
+ * methods). Returns [] if the file or class isn't found.
  */
 function extractPublicMethodNames(filePath: string, className: string): string[] {
   if (!fs.existsSync(filePath)) return [];
@@ -1503,11 +1478,11 @@ function mergeMethodNames(a: readonly string[], b: readonly string[]): string[] 
 // ─── Event Extraction ────────────────────────────────────────────────
 
 /**
- * Extract event names from a composite event interface (e.g. VideoEvents, AudioEvents)
- * by walking its `extends` chain and collecting property keys from each parent interface.
+ * Extract event names from a composite event interface (e.g. VideoEvents, AudioEvents) by walking its `extends` chain
+ * and collecting property keys from each parent interface.
  *
- * Convention: capability event interfaces (MediaPlaybackEvents, etc.) are flat
- * `eventName: EventLike` maps, and VideoEvents/AudioEvents compose them via `extends`.
+ * Convention: capability event interfaces (MediaPlaybackEvents, etc.) are flat `eventName: EventLike` maps, and
+ * VideoEvents/AudioEvents compose them via `extends`.
  */
 function extractEventsFromTypes(filePath: string, interfaceName: string): string[] {
   const content = fs.readFileSync(filePath, 'utf-8');
@@ -1569,12 +1544,11 @@ function extractEventsFromTypes(filePath: string, interfaceName: string): string
 }
 
 /**
- * Scan a host class (and its mixin/parent chain) for `this.dispatchEvent(new Event('name'))`
- * style calls and `@fires` JSDoc tags, collecting dispatched event names into `events`
- * and tag descriptions into `fires` (which also acts as an event source — dispatch
- * sites in helper files the walk never visits can be declared via `@fires` alone).
- * Forwarding patterns like `new (event.constructor as ...)(event.type, event)` are
- * naturally skipped because their first argument is not a `StringLiteral`.
+ * Scan a host class (and its mixin/parent chain) for `this.dispatchEvent(new Event('name'))` style calls and `@fires`
+ * JSDoc tags, collecting dispatched event names into `events` and tag descriptions into `fires` (which also acts as an
+ * event source — dispatch sites in helper files the walk never visits can be declared via `@fires` alone). Forwarding
+ * patterns like `new (event.constructor as ...)(event.type, event)` are naturally skipped because their first argument
+ * is not a `StringLiteral`.
  */
 function extractDispatchedEvents(
   filePath: string,
@@ -1685,9 +1659,8 @@ function walkExtendsForDispatchEvents(
 }
 
 /**
- * Collect `@fires name - description` JSDoc tags from a file. The tag may sit
- * on the dispatching class, a mixin function, or the const holding a mixin
- * arrow function.
+ * Collect `@fires name - description` JSDoc tags from a file. The tag may sit on the dispatching class, a mixin
+ * function, or the const holding a mixin arrow function.
  */
 function scanForFiresTags(sourceFile: ts.SourceFile, fires: Map<string, string>): void {
   function visit(node: ts.Node): void {
@@ -1808,9 +1781,8 @@ function dedupeStrings(values: readonly string[]): string[] {
 }
 
 /**
- * Build the set of property names declared on `HTMLMediaElement`,
- * `HTMLVideoElement`, and `HTMLAudioElement` (per `lib.dom.d.ts`). Used to
- * tag host properties that override a native member.
+ * Build the set of property names declared on `HTMLMediaElement`, `HTMLVideoElement`, and `HTMLAudioElement` (per
+ * `lib.dom.d.ts`). Used to tag host properties that override a native member.
  */
 function collectNativeMemberNames(program: ts.Program, anchorFile: ts.SourceFile): Set<string> {
   const checker = program.getTypeChecker();

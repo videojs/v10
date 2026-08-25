@@ -1,36 +1,32 @@
 /**
  * Util reference handler — TAE-based auto-discovery.
  *
- * Generates JSON reference files for hooks, controllers, mixins, factories,
- * contexts, selectors, and utilities by scanning package entry points.
+ * Generates JSON reference files for hooks, controllers, mixins, factories, contexts, selectors, and utilities by
+ * scanning package entry points.
  *
- * Exports are included by naming convention or `@public` JSDoc tag:
- *   select* (capital 3rd), use* (capital 3rd), *Controller (class),
- *   create* (function), or any export tagged @public.
+ * Exports are included by naming convention or `@public` JSDoc tag: select* (capital 3rd), use* (capital 3rd),
+ * _Controller (class), create_ (function), or any export tagged @public.
  *
  * Extraction routing is determined by export node type:
- *   - Class / *Controller non-function → controller extraction (raw TS AST)
- *   - Non-function → context extraction (type only)
- *   - Function → function extraction (TAE call signatures)
+ *
+ * - Class / *Controller non-function → controller extraction (raw TS AST)
+ * - Non-function → context extraction (type only)
+ * - Function → function extraction (TAE call signatures)
  *
  * 4 Discovery Strategies (run per entry point, in order):
  *
- *   Strategy 1 — TAE on local modules (primary path)
- *     Parses each resolved local module with typescript-api-extractor.
+ * Strategy 1 — TAE on local modules (primary path) Parses each resolved local module with typescript-api-extractor.
  *
- *   Strategy 2 — TAE on index file (class re-exports)
- *     Parses the entry index file itself to find controllers that are
- *     re-exported but whose source module is separate.
+ * Strategy 2 — TAE on index file (class re-exports) Parses the entry index file itself to find controllers that are
+ * re-exported but whose source module is separate.
  *
- *   Strategy 3 — Raw TS AST fallback (failed modules)
- *     When TAE fails on a module (e.g., UniqueESSymbol in HTML bundle),
- *     falls back to walking the raw TypeScript AST for exports.
+ * Strategy 3 — Raw TS AST fallback (failed modules) When TAE fails on a module (e.g., UniqueESSymbol in HTML bundle),
+ * falls back to walking the raw TypeScript AST for exports.
  *
- *   Strategy 4 — Raw TS AST for missed classes
- *     Scans local modules for exported classes that TAE parsed but missed.
+ * Strategy 4 — Raw TS AST for missed classes Scans local modules for exported classes that TAE parsed but missed.
  *
- * All overloads are preserved. When a function or constructor has multiple
- * overload signatures, each becomes a separate entry in the overloads array.
+ * All overloads are preserved. When a function or constructor has multiple overload signatures, each becomes a separate
+ * entry in the overloads array.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';

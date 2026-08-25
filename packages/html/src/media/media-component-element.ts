@@ -22,13 +22,12 @@ function resolveMediaHost(media: Media | null): MediaHost | null {
 }
 
 /**
- * Abstract base for elements that register a media component (e.g. Mux Data,
- * Google Cast) with the media provided by the surrounding player.
+ * Abstract base for elements that register a media component (e.g. Mux Data, Google Cast) with the media provided by
+ * the surrounding player.
  *
- * Place inside a player, as a sibling of the media element. The component is
- * registered when a media host becomes available, follows the media when it
- * changes, is removed when this element disconnects, and is destroyed with
- * this element.
+ * Place inside a player, as a sibling of the media element. The component is registered when a media host becomes
+ * available, follows the media when it changes, is removed when this element disconnects, and is destroyed with this
+ * element.
  */
 export abstract class MediaComponentElement<Component extends MediaComponent> extends UIElement {
   #component: Component | null = null;
@@ -38,9 +37,8 @@ export abstract class MediaComponentElement<Component extends MediaComponent> ex
   /**
    * Create the media component this element registers. Called once, lazily.
    *
-   * Must be a method rather than a field: upgrading an element that is already
-   * in the document runs its constructor while connected, so the media context
-   * callback below can fire before subclass field initializers have run.
+   * Must be a method rather than a field: upgrading an element that is already in the document runs its constructor
+   * while connected, so the media context callback below can fire before subclass field initializers have run.
    */
   protected abstract createComponent(): Component;
 

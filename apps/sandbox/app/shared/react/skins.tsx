@@ -85,10 +85,7 @@ function useLoadedComponent<Props>(
 
 type VideoSkinComponentProps = { skin: Skin; styling: Styling; live?: boolean } & VideoSkinProps;
 
-/**
- * Loads the video skin for the given skin/styling. When `live` is true,
- * the `live-video` skin variant is used instead.
- */
+/** Loads the video skin for the given skin/styling. When `live` is true, the `live-video` skin variant is used instead. */
 export function VideoSkinComponent({ skin, styling, live = false, ...props }: VideoSkinComponentProps) {
   const Component = useLoadedComponent(
     () => (live ? loadLiveVideoSkinComponent(skin, styling) : loadVideoSkinComponent(skin, styling)),

@@ -2,6 +2,7 @@
  * Build ejected skin snippets for copy-paste usage.
  *
  * Produces `site/src/content/ejected-skins.json` with:
+ *
  * - HTML skins: rendered HTML templates with <media-icon> elements and resolved classes
  * - React skins: TSX (with types) and JSX (types stripped) with public icon imports
  * - CSS variants include a `css` field with all @imports resolved
@@ -386,8 +387,8 @@ function tsxToJsx(source: string): string {
 // After all transforms, collected code is inserted after the final import.
 
 /**
- * Remove `cn` import and replace all `cn(...)` calls with template literals.
- * `cn(a, b)` → `` `${a} ${b}` ``, with string literal args inlined directly.
+ * Remove `cn` import and replace all `cn(...)` calls with template literals. `cn(a, b)` → `` `${a} ${b}` ``, with
+ * string literal args inlined directly.
  */
 function inlineCn(source: string): string {
   if (!source.match(/import\s+\{[^}]*\bcn\b[^}]*\}\s+from\s+['"]@videojs\/utils\/style['"]/)) {
@@ -491,10 +492,7 @@ function splitTopLevelCommas(str: string): string[] {
   return result;
 }
 
-/**
- * Rewrite package-private or local React icon imports to public package
- * re-exports for ejected skins.
- */
+/** Rewrite package-private or local React icon imports to public package re-exports for ejected skins. */
 function rewriteReactIconImports(source: string): string {
   return source
     .replace(/from\s+['"]@videojs\/icons\/react(?:\/default)?['"]/g, "from '@videojs/react/icons'")
@@ -506,8 +504,8 @@ function rewriteReactIconImports(source: string): string {
 }
 
 /**
- * Replace `@videojs/skins/*` imports (private package) with inline const
- * declarations containing the resolved token values.
+ * Replace `@videojs/skins/*` imports (private package) with inline const declarations containing the resolved token
+ * values.
  */
 async function inlineSkinTokens(source: string, postImport: string[]): Promise<string> {
   const regex = /import\s+\{([^}]*)\}\s+from\s+['"](@videojs\/skins\/[^'"]+)['"]\s*;?\n?/;
@@ -531,8 +529,8 @@ async function inlineSkinTokens(source: string, postImport: string[]): Promise<s
 }
 
 /**
- * Consolidate `@/` path alias imports into `@videojs/react`.
- * All UI components and hooks are re-exported from the main package entry.
+ * Consolidate `@/` path alias imports into `@videojs/react`. All UI components and hooks are re-exported from the main
+ * package entry.
  */
 function rewritePathAliases(source: string): string {
   const aliasRegex = /import\s+(type\s+)?\{([^}]+)\}\s+from\s+['"]@\/[^'"]+['"];?\n?/g;
@@ -579,10 +577,9 @@ function rewritePathAliases(source: string): string {
 }
 
 /**
- * Rewrite imports from private/internal packages:
- * - `@videojs/core/dom` → merge into `@videojs/react` (re-exported publicly)
- * - `@videojs/utils/predicate` → inline function definitions
- * - `isRenderProp` from `@videojs/react` → inline (not a public export)
+ * Rewrite imports from private/internal packages: - `@videojs/core/dom` → merge into `@videojs/react` (re-exported
+ * publicly) - `@videojs/utils/predicate` → inline function definitions - `isRenderProp` from `@videojs/react` → inline
+ * (not a public export)
  */
 function inlinePrivatePackages(source: string): { source: string; utilities: string[] } {
   const utilities: string[] = [];
@@ -689,9 +686,8 @@ function findLastImportEnd(source: string): number {
 // ---------------------------------------------------------------------------
 
 /**
- * The members a `Base*SkinProps` alias adds on top of `BaseSkinProps`, without
- * their JSDoc: the comments describe the skin component, not the player the
- * ejected file exports.
+ * The members a `Base*SkinProps` alias adds on top of `BaseSkinProps`, without their JSDoc: the comments describe the
+ * skin component, not the player the ejected file exports.
  */
 function getAddedMembers(statement: ts.Statement, sourceFile: ts.SourceFile): string[] {
   if (!ts.isTypeAliasDeclaration(statement) || !ts.isIntersectionTypeNode(statement.type)) return [];
@@ -703,9 +699,8 @@ function getAddedMembers(statement: ts.Statement, sourceFile: ts.SourceFile): st
 }
 
 /**
- * Replace the `BaseSkinProps` type chain with a clean interface. Removes the
- * intermediate type aliases and produces a flat exported interface, carrying
- * over whatever members those aliases added.
+ * Replace the `BaseSkinProps` type chain with a clean interface. Removes the intermediate type aliases and produces a
+ * flat exported interface, carrying over whatever members those aliases added.
  */
 export function resolvePropsInterface(source: string): string {
   const sourceFile = createSourceFile('props.tsx', source);
@@ -818,9 +813,8 @@ function sectionHeader(title: string): string {
 }
 
 /**
- * Reorganize the React skin output into well-defined sections.
- * Classifies each top-level declaration and reassembles with section headers.
- * Extra declarations (utilities, icon components) are appended to their sections.
+ * Reorganize the React skin output into well-defined sections. Classifies each top-level declaration and reassembles
+ * with section headers. Extra declarations (utilities, icon components) are appended to their sections.
  */
 function reorganizeReactOutput(source: string, extraUtilities: string[], extraIconComponents: string[]): string {
   const sourceFile = createSourceFile('output.tsx', source);
@@ -888,9 +882,8 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
 }
 
 /**
- * Flatten `ERROR_CLASSNAMES` into the inlined `ErrorDialog` component so the
- * ejected output has plain className strings instead of the classNames-prop
- * indirection.
+ * Flatten `ERROR_CLASSNAMES` into the inlined `ErrorDialog` component so the ejected output has plain className strings
+ * instead of the classNames-prop indirection.
  *
  * @temporary Remove once the ErrorDialog component no longer uses the
  *   `classNames` prop pattern. Tracked in https://github.com/videojs/v10/pull/1077.
@@ -944,9 +937,8 @@ function flattenErrorClasses(source: string): string {
 }
 
 /**
- * Move the destructured props from the skin function body into the function
- * argument so the signature reads e.g.:
- *   `function VideoSkin({ children, className, style, ...rest }: VideoSkinProps)`
+ * Move the destructured props from the skin function body into the function argument so the signature reads e.g.:
+ * `function VideoSkin({ children, className, style, ...rest }: VideoSkinProps)`
  */
 function destructureSkinProps(source: string): string {
   return source.replace(
@@ -956,15 +948,13 @@ function destructureSkinProps(source: string): string {
 }
 
 /**
- * Flatten the skin into a Player component. Produces two files:
- *   - `player.ts`: owns the `createPlayer({ features })` call and exports `Player`.
- *   - `VideoPlayer.tsx` / `AudioPlayer.tsx`: imports `Player` from `./player` and
- *     owns the React component. Splitting these avoids React Fast Refresh bailing
- *     out (a file must export only components for Fast Refresh to apply edits).
+ * Flatten the skin into a Player component. Produces two files: - `player.ts`: owns the `createPlayer({ features })`
+ * call and exports `Player`. - `VideoPlayer.tsx` / `AudioPlayer.tsx`: imports `Player` from `./player` and owns the
+ * React component. Splitting these avoids React Fast Refresh bailing out (a file must export only components for Fast
+ * Refresh to apply edits).
  *
- * Also: merges SkinProps into PlayerProps (adding `src`), inlines the skin body
- * into VideoPlayer/AudioPlayer wrapped in `Player`, and removes the
- * separate Skin export.
+ * Also: merges SkinProps into PlayerProps (adding `src`), inlines the skin body into VideoPlayer/AudioPlayer wrapped in
+ * `Player`, and removes the separate Skin export.
  */
 function flattenSkinIntoPlayer(
   source: string,
@@ -1053,10 +1043,7 @@ function flattenSkinIntoPlayer(
   return { player, component: source };
 }
 
-/**
- * Process a React skin: rewrite icon imports, resolve imports,
- * and produce both TSX and JSX versions.
- */
+/** Process a React skin: rewrite icon imports, resolve imports, and produce both TSX and JSX versions. */
 export async function processReactSkin(
   skin: ReactSkinDef
 ): Promise<{ tsx: Record<string, string>; jsx: Record<string, string> }> {

@@ -6,9 +6,9 @@ import type { PropDef } from './types.js';
 /**
  * Detect if a type string is a single function type (vs a top-level union).
  *
- * Tracks bracket depth to find the matching `)` for the opening `(` of the parameter list,
- * then checks if `=>` follows. Returns `false` for top-level unions that happen to contain
- * a function member (e.g., `((state: object) => string) | undefined`).
+ * Tracks bracket depth to find the matching `)` for the opening `(` of the parameter list, then checks if `=>` follows.
+ * Returns `false` for top-level unions that happen to contain a function member (e.g., `((state: object) => string) |
+ * undefined`).
  */
 function isFunctionType(type: string): boolean {
   if (!type.startsWith('(')) return false;
@@ -96,9 +96,7 @@ export function abbreviateType(name: string, type: string): string | undefined {
   return undefined;
 }
 
-/**
- * Format a list of properties into API reference format.
- */
+/** Format a list of properties into API reference format. */
 export function formatProperties(props: tae.PropertyNode[], allExports?: tae.ExportNode[]): Record<string, PropDef> {
   const result: Record<string, PropDef> = {};
 
@@ -133,8 +131,8 @@ export function formatProperties(props: tae.PropertyNode[], allExports?: tae.Exp
 /**
  * Format a type into a human-readable string, expanding type aliases when possible.
  *
- * Resolves `ExternalTypeNode` references against `allExports` so that type aliases
- * like `TimeType` are expanded to their underlying union (`'current' | 'duration' | 'remaining'`).
+ * Resolves `ExternalTypeNode` references against `allExports` so that type aliases like `TimeType` are expanded to
+ * their underlying union (`'current' | 'duration' | 'remaining'`).
  */
 export function formatDetailedType(
   type: tae.AnyType,
@@ -176,9 +174,7 @@ export function formatDetailedType(
   return formatType(type, removeUndefined);
 }
 
-/**
- * Format a type into a human-readable string.
- */
+/** Format a type into a human-readable string. */
 export function formatType(type: tae.AnyType, removeUndefined: boolean): string {
   if (type instanceof tae.ExternalTypeNode) {
     if (/^ReactElement(<.*>)?/.test(type.typeName.name || '')) {
@@ -323,9 +319,7 @@ function createNameWithTypeArguments(typeName: tae.TypeName): string {
   return typeName.name;
 }
 
-/**
- * Order members so null, undefined, and any come last.
- */
+/** Order members so null, undefined, and any come last. */
 function orderMembers(members: readonly tae.AnyType[]): readonly tae.AnyType[] {
   let ordered = pushToEnd(members, 'any');
 

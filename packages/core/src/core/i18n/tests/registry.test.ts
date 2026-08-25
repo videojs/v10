@@ -104,10 +104,9 @@ describe('i18n registry', () => {
 });
 
 /**
- * A page can end up with more than one copy of this module — separately loaded CDN bundles, a
- * pinned and an unpinned URL for the same file, or two bundlers' output. Registry state is
- * realm-global so those copies still agree; these tests stand in for that duplication by loading
- * the module twice through a reset module cache.
+ * A page can end up with more than one copy of this module — separately loaded CDN bundles, a pinned and an unpinned
+ * URL for the same file, or two bundlers' output. Registry state is realm-global so those copies still agree; these
+ * tests stand in for that duplication by loading the module twice through a reset module cache.
  */
 describe('i18n registry shared across module instances', () => {
   async function loadTwoInstances() {

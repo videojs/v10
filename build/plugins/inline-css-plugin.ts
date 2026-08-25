@@ -17,9 +17,8 @@ interface InlineCssPluginOptions {
 }
 
 /**
- * Rolldown/Vite+ pack plugin that inlines `.css?inline` imports as JavaScript
- * modules exporting the resolved CSS string. Mirrors the Vite `?inline`
- * convention so the same source works in both Vite dev and Vite+ package builds.
+ * Rolldown/Vite+ pack plugin that inlines `.css?inline` imports as JavaScript modules exporting the resolved CSS
+ * string. Mirrors the Vite `?inline` convention so the same source works in both Vite dev and Vite+ package builds.
  */
 export function inlineCssPlugin(options: InlineCssPluginOptions): BuildPlugin {
   const { skinsDir, rootDir = process.cwd(), minify = true } = options;

@@ -21,18 +21,16 @@ export interface NativeHlsMediaProps {
 /**
  * Structured native HLS source: which source to play, plus how to play it.
  *
- * Playback options sit under `engine`, keyed by engine, rather than at the top
- * level. Native HLS is one of two paths `HlsJsVideo` can take, and namespacing
- * by engine lets a single source describe both without either reading the
+ * Playback options sit under `engine`, keyed by engine, rather than at the top level. Native HLS is one of two paths
+ * `HlsJsVideo` can take, and namespacing by engine lets a single source describe both without either reading the
  * other's options.
  */
 export interface NativeHlsSource {
   /** Manifest URL. Mirrors the host's `src` property. */
   src?: string | undefined;
   /**
-   * License servers for protected content, keyed by EME key system id. Safari
-   * negotiates keys itself and reaches FairPlay only, so the `com.apple.fps`
-   * entry is the one read here — the rest can ride along for an engine that can
+   * License servers for protected content, keyed by EME key system id. Safari negotiates keys itself and reaches
+   * FairPlay only, so the `com.apple.fps` entry is the one read here — the rest can ride along for an engine that can
    * negotiate them.
    */
   drm?: DrmSystemsConfig | undefined;
@@ -47,14 +45,13 @@ export interface NativeHlsEngineConfig {
 }
 
 /**
- * Native HLS playback options. There is no JS engine to configure here — the
- * browser plays the manifest itself — so this is what Video.js does around it.
+ * Native HLS playback options. There is no JS engine to configure here — the browser plays the manifest itself — so
+ * this is what Video.js does around it.
  */
 export interface NativeHlsConfig {
   /**
-   * License servers for protected content, keyed by EME key system id. An
-   * escape hatch for licensing native playback differently from every other
-   * path: naming it replaces `source.drm` here, and nowhere else.
+   * License servers for protected content, keyed by EME key system id. An escape hatch for licensing native playback
+   * differently from every other path: naming it replaces `source.drm` here, and nowhere else.
    */
   drmSystems?: DrmSystemsConfig | undefined;
 }
@@ -71,21 +68,17 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
   #source: NativeHlsSource | null = nativeHlsMediaDefaultProps.source;
   #preload = nativeHlsMediaDefaultProps.preload;
 
-  /**
-   * Underlying playback engine — always `null`. Native HLS has no JS engine;
-   * the browser handles playback directly.
-   */
+  /** Underlying playback engine — always `null`. Native HLS has no JS engine; the browser handles playback directly. */
   get engine() {
     return null;
   }
 
   /**
-   * Media source URL. Assigning it replaces the identity half of `source` and
-   * leaves `engine` intact, so changing the URL never disturbs key exchange.
+   * Media source URL. Assigning it replaces the identity half of `source` and leaves `engine` intact, so changing the
+   * URL never disturbs key exchange.
    *
-   * Like the element's own `src`, assigning it always loads — including the URL
-   * already playing. This is the imperative half of the API, and what
-   * `HlsJsMedia` loads its native delegate through.
+   * Like the element's own `src`, assigning it always loads — including the URL already playing. This is the imperative
+   * half of the API, and what `HlsJsMedia` loads its native delegate through.
    */
   get src() {
     return this.#src;
@@ -108,16 +101,13 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
   }
 
   /**
-   * Structured source: what to play (`src`) plus how to play it
-   * (`engine.nativeHls`). Assigning it derives `src`.
+   * Structured source: what to play (`src`) plus how to play it (`engine.nativeHls`). Assigning it derives `src`.
    *
-   * Only a new URL reaches the element, so reassigning an equivalent source —
-   * an inline React prop, for instance — neither reloads nor disturbs key
-   * exchange. Use `src` or `load()` to reload what is already playing.
+   * Only a new URL reaches the element, so reassigning an equivalent source — an inline React prop, for instance —
+   * neither reloads nor disturbs key exchange. Use `src` or `load()` to reload what is already playing.
    *
-   * Unlike `HlsJsMedia`, this does not announce a `sourcechange`. It is also
-   * the delegate `HlsJsMedia` plays native sources through, and every event it
-   * dispatches is re-dispatched there — which already announces its own.
+   * Unlike `HlsJsMedia`, this does not announce a `sourcechange`. It is also the delegate `HlsJsMedia` plays native
+   * sources through, and every event it dispatches is re-dispatched there — which already announces its own.
    */
   get source(): NativeHlsSource | null {
     return this.#source;

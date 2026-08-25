@@ -122,19 +122,15 @@ const mediaDir = 'src/define/media';
 const mediaDirPath = resolve(packageDir, mediaDir);
 
 /**
- * Media entries, one bundle per module under `src/define/media` — or per flavor,
- * for a module that is a directory.
+ * Media entries, one bundle per module under `src/define/media` — or per flavor, for a module that is a directory.
  *
- * Discovered from the definitions so the npm and CDN delivery surfaces cannot
- * drift. A directory ships its index as the flavor-neutral bundle and each flavor
- * beside it, so `media/mux-video/spf` reads the same as the npm subpath it
- * mirrors. The installation page derives CDN URLs from npm media subpaths, so
- * the two layouts matching is what keeps a flavor reachable there without a
- * translation step.
+ * Discovered from the definitions so the npm and CDN delivery surfaces cannot drift. A directory ships its index as the
+ * flavor-neutral bundle and each flavor beside it, so `media/mux-video/spf` reads the same as the npm subpath it
+ * mirrors. The installation page derives CDN URLs from npm media subpaths, so the two layouts matching is what keeps a
+ * flavor reachable there without a translation step.
  *
- * A CDN page picks bundles at runtime rather than by import path, so this is
- * where two flavors of one element can end up in a single realm — see the
- * tag-collision note in `define/media/mux-video/spf`.
+ * A CDN page picks bundles at runtime rather than by import path, so this is where two flavors of one element can end
+ * up in a single realm — see the tag-collision note in `define/media/mux-video/spf`.
  */
 const cdnMediaEntries = readdirSync(mediaDirPath, { withFileTypes: true })
   .flatMap((entry) => {
@@ -158,9 +154,9 @@ const cdnLocaleEntries = localeTags.map((tag) => ({
 }));
 
 /**
- * Every CDN bundle the build emits, as `{ src, name }` where `name` is the output path without
- * its extension. Exported so the distribution archive can take its entry points from the build
- * definition rather than guessing which built files are entries and which are shared chunks.
+ * Every CDN bundle the build emits, as `{ src, name }` where `name` is the output path without its extension. Exported
+ * so the distribution archive can take its entry points from the build definition rather than guessing which built
+ * files are entries and which are shared chunks.
  *
  * The `src` paths are relative to this package, so importers must run from the package root.
  */

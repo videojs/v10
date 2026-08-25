@@ -11,21 +11,17 @@
 
 export interface StreamInfo {
   /**
-   * Describes the kind of live window available. `0` for a sliding live
-   * window, `Infinity` for a live event with playback history, and `NaN` for
-   * on-demand. This value is not a duration.
+   * Describes the kind of live window available. `0` for a sliding live window, `Infinity` for a live event with
+   * playback history, and `NaN` for on-demand. This value is not a duration.
    */
   targetLiveWindow: number;
-  /**
-   * Offset (seconds) from `seekable.end` at which the live edge window begins.
-   * `undefined` when the stream is not live.
-   */
+  /** Offset (seconds) from `seekable.end` at which the live edge window begins. `undefined` when the stream is not live. */
   liveEdgeStartOffset: number | undefined;
 }
 
 /**
- * Returns `true` when `src` looks like an HLS playlist URL. Permissive: a
- * path or query string containing `.m3u8` is enough.
+ * Returns `true` when `src` looks like an HLS playlist URL. Permissive: a path or query string containing `.m3u8` is
+ * enough.
  */
 export function looksLikeM3u8(src: string) {
   return src.toLowerCase().includes('.m3u8');
@@ -34,17 +30,15 @@ export function looksLikeM3u8(src: string) {
 /**
  * Returns `true` when the playlist text is a multivariant (master) playlist.
  *
- * The presence of `#EXT-X-STREAM-INF` is conclusive — media playlists only
- * contain `#EXTINF` segment tags.
+ * The presence of `#EXT-X-STREAM-INF` is conclusive — media playlists only contain `#EXTINF` segment tags.
  */
 export function isMultivariantPlaylist(playlist: string) {
   return playlist.includes('#EXT-X-STREAM-INF');
 }
 
 /**
- * Resolves the first media playlist URL referenced by a multivariant
- * playlist, relative to `baseUrl`. Returns `null` when none is found or the
- * URL cannot be parsed.
+ * Resolves the first media playlist URL referenced by a multivariant playlist, relative to `baseUrl`. Returns `null`
+ * when none is found or the URL cannot be parsed.
  */
 export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: string): string | null {
   const lines = multivariant.split(/\r?\n/);
@@ -68,17 +62,13 @@ export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: stri
 }
 
 /**
- * Parses the subset of media-playlist tags needed to derive live edge state:
- * `#EXT-X-PLAYLIST-TYPE`, `#EXT-X-ENDLIST`, `#EXT-X-TARGETDURATION`,
- * `#EXT-X-PART-INF`.
+ * Parses the subset of media-playlist tags needed to derive live edge state: `#EXT-X-PLAYLIST-TYPE`, `#EXT-X-ENDLIST`,
+ * `#EXT-X-TARGETDURATION`, `#EXT-X-PART-INF`.
  *
- * See spec:
- * - VOD or `#EXT-X-ENDLIST` present → on-demand, `targetLiveWindow = NaN`.
- * - `EVENT` playlist → DVR, `targetLiveWindow = Infinity`.
- * - Otherwise → standard live sliding window, `targetLiveWindow = 0`.
+ * See spec: - VOD or `#EXT-X-ENDLIST` present → on-demand, `targetLiveWindow = NaN`. - `EVENT` playlist → DVR,
+ * `targetLiveWindow = Infinity`. - Otherwise → standard live sliding window, `targetLiveWindow = 0`.
  *
- * The edge offset is `PART-TARGET * 2` for low-latency live and
- * `TARGETDURATION * 3` otherwise.
+ * The edge offset is `PART-TARGET * 2` for low-latency live and `TARGETDURATION * 3` otherwise.
  */
 export function parseStreamInfo(playlist: string): StreamInfo {
   const lines = playlist.split(/\r?\n/);
@@ -131,10 +121,10 @@ async function fetchPlaylist(url: string, init: RequestInit): Promise<{ text: st
 }
 
 /**
- * Fetches the HLS playlist at `src`, following the first variant if it's a
- * multivariant playlist, and parses it into a {@link StreamInfo}.
+ * Fetches the HLS playlist at `src`, following the first variant if it's a multivariant playlist, and parses it into a
+ * {@link StreamInfo}.
  *
- * @throws when the fetch fails or no media playlist URL can be resolved.
+ * @throws When the fetch fails or no media playlist URL can be resolved.
  */
 export async function getStreamInfoFromSrc(src: string, signal?: AbortSignal): Promise<StreamInfo> {
   const init: RequestInit = signal ? { signal } : {};

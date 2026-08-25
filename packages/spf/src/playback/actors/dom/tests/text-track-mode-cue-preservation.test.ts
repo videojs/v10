@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vite-plus/test';
 /**
  * Empirical tests for TextTrack cue preservation across mode transitions.
  *
- * Key question: does setting mode="disabled" permanently discard cues added
- * via addCue(), or are they preserved and accessible again after re-enabling?
+ * Key question: does setting mode="disabled" permanently discard cues added via addCue(), or are they preserved and
+ * accessible again after re-enabling?
  *
  * Tests run in real Chromium via @vitest/browser-playwright.
  */

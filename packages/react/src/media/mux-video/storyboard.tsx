@@ -7,8 +7,8 @@ import { useCallback, useSyncExternalStore } from 'react';
 /**
  * What the storyboard track needs from whichever Mux Media renders it.
  *
- * Structural on purpose: the hls.js-backed `MuxMedia` and the SPF-backed one
- * satisfy it identically, so this component carries no engine.
+ * Structural on purpose: the hls.js-backed `MuxMedia` and the SPF-backed one satisfy it identically, so this component
+ * carries no engine.
  */
 export interface MuxStoryboardMedia {
   readonly streamType: MediaStreamType | undefined;
@@ -17,10 +17,7 @@ export interface MuxStoryboardMedia {
   removeEventListener(type: string, listener: () => void): void;
 }
 
-/**
- * Renders the storyboard track in its own component so media changes don't
- * re-render the whole media component.
- */
+/** Renders the storyboard track in its own component so media changes don't re-render the whole media component. */
 export function MuxStoryboard({ media }: { media: MuxStoryboardMedia }) {
   const subscribe = useCallback(
     (onChange: () => void) => {

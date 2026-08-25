@@ -1,9 +1,8 @@
 /**
  * Investigation: Do manually added TextTrack cues persist after async operations?
  *
- * This test file investigates whether cues added via TextTrack.addCue() persist
- * after async boundaries (setTimeout, Promise.resolve, etc.) in the vitest
- * browser test environment.
+ * This test file investigates whether cues added via TextTrack.addCue() persist after async boundaries (setTimeout,
+ * Promise.resolve, etc.) in the vitest browser test environment.
  */
 
 import { describe, expect, it } from 'vite-plus/test';

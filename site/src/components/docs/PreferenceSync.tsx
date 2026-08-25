@@ -7,13 +7,11 @@ import { getFrameworkPreferenceClient, setFrameworkPreferenceClient } from '@/ut
 /**
  * PreferenceSync keeps the framework nanostore in sync with cookies.
  *
- * On mount: Reads cookies → initializes store
- * On store change: Writes to cookies
+ * On mount: Reads cookies → initializes store On store change: Writes to cookies
  *
  * Style preferences are handled via localStorage by StyleInit and PreferenceUpdater.
  *
- * This component should be loaded with client:idle in the base layout
- * to ensure preferences are available immediately.
+ * This component should be loaded with client:idle in the base layout to ensure preferences are available immediately.
  */
 export function PreferenceSync() {
   const framework = useStore(currentFramework);

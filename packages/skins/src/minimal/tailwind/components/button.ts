@@ -29,8 +29,8 @@ export const button = {
   pip: hideAtSmall,
   fullscreen: hideAtSmall,
   /**
-   * Live variant: wide pill button with a status dot rendered via `::before`
-   * (gray → red at the live edge) and "LIVE" as the button's own text.
+   * Live variant: wide pill button with a status dot rendered via `::before` (gray → red at the live edge) and "LIVE"
+   * as the button's own text.
    */
   live: cn(
     'inline-flex items-center gap-1.5',

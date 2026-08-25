@@ -22,9 +22,8 @@ interface MockVideoOverrides {
 /**
  * Create an `HTMLVideoElement` with overridable properties.
  *
- * Readonly properties (`paused`, `ended`, `readyState`, `duration`, `currentSrc`,
- * `buffered`, `seekable`) are set via `Object.defineProperty`.
- * Writable properties (`currentTime`, `volume`, `muted`, `src`) are assigned directly.
+ * Readonly properties (`paused`, `ended`, `readyState`, `duration`, `currentSrc`, `buffered`, `seekable`) are set via
+ * `Object.defineProperty`. Writable properties (`currentTime`, `volume`, `muted`, `src`) are assigned directly.
  */
 export function createMockVideo(overrides: MockVideoOverrides = {}): HTMLVideoElement {
   const video = document.createElement('video');

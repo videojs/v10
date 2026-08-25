@@ -5,12 +5,11 @@ import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 /**
  * Page Object Model for the Video.js player.
  *
- * Uses cross-renderer selectors that work for both:
- * - HTML (Web Components): custom element tags like `media-play-button`
- * - React: standard elements with CSS classes like `.media-button--play`
+ * Uses cross-renderer selectors that work for both: - HTML (Web Components): custom element tags like
+ * `media-play-button` - React: standard elements with CSS classes like `.media-button--play`
  *
- * Both renderers share the same data attributes for state, so all
- * assertions against `data-paused`, `data-muted`, etc. are portable.
+ * Both renderers share the same data attributes for state, so all assertions against `data-paused`, `data-muted`, etc.
+ * are portable.
  *
  * Playwright auto-pierces Shadow DOM for HTML custom elements.
  */
@@ -291,8 +290,8 @@ export class PlayerPage {
   }
 
   /**
-   * Opens the playback rate menu and selects the first option that differs from the current rate.
-   * Skins expose rate via a menu (not cycle-on-trigger).
+   * Opens the playback rate menu and selects the first option that differs from the current rate. Skins expose rate via
+   * a menu (not cycle-on-trigger).
    */
   async selectAlternativePlaybackRate(): Promise<void> {
     const initialRate = await this.getPlaybackRate();

@@ -33,8 +33,8 @@ const usePlaybackRateRadioOptions = createRadioOptionsHook({
 });
 
 /**
- * Create playback rate menu options from the player playback rate state.
- * Returns `null` when the playback rate feature is not configured.
+ * Create playback rate menu options from the player playback rate state. Returns `null` when the playback rate feature
+ * is not configured.
  *
  * @param props - Optional `label`, `formatRate`, and `disabled` overrides.
  */

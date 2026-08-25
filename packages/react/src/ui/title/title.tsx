@@ -14,17 +14,16 @@ export interface TitleProps extends Omit<UIComponentProps<'span', TitleCore.Stat
 /**
  * Displays the resolved content title.
  *
- * The component owns its text content. Set the title through the player's
- * `title` prop rather than by passing children.
+ * The component owns its text content. Set the title through the player's `title` prop rather than by passing children.
  *
  * Renders nothing when no title resolves.
  *
  * @example
- * ```tsx
- * <Title />
+ *   ```tsx
+ *   <Title />
  *
- * <Title className="title" />
- * ```
+ *   <Title className="title" />
+ *   ```;
  */
 export const Title = forwardRef(function Title(
   componentProps: TitleProps,

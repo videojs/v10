@@ -1,14 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it, type MockInstance, vi } from 'vite-plus/test';
 
 /**
- * Tests that composite define files register all expected custom elements
- * and that provider/parent elements are defined before consumer/child elements.
+ * Tests that composite define files register all expected custom elements and that provider/parent elements are defined
+ * before consumer/child elements.
  *
- * Tests run sequentially. Each dynamically imports a composite define file and
- * checks the batch of `customElements.define()` calls that resulted. Because
- * modules are cached within a test file, shared sub-elements (e.g. slider parts)
- * are only registered by the first composite that imports them — subsequent
- * composites skip them via `safeDefine`. This is intentional and tested.
+ * Tests run sequentially. Each dynamically imports a composite define file and checks the batch of
+ * `customElements.define()` calls that resulted. Because modules are cached within a test file, shared sub-elements
+ * (e.g. slider parts) are only registered by the first composite that imports them — subsequent composites skip them
+ * via `safeDefine`. This is intentional and tested.
  */
 describe('composite define registration', () => {
   let spy: MockInstance;

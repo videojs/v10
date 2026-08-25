@@ -5,25 +5,20 @@ import { PlayerPage } from '../page-objects/player';
 /**
  * SPF MediaSource attach + sourceclose-recovery smoke tests.
  *
- * Runs against the SPF engine page (`hls-video`) on every vite-*
- * project (Chromium, WebKit, Firefox). Two things under test:
+ * Runs against the SPF engine page (`hls-video`) on every vite-* project (Chromium, WebKit, Firefox). Two things under
+ * test:
  *
- * 1. The attach shape: the object URL rides a `<source>` child on every
- *    platform, not the `src` attribute. The HLS engine bakes
- *    `attachMediaSourceAsSourceElement` unconditionally because it composes
- *    `setupAirPlay`, whose native-HLS fallback has to stay a selectable
- *    sibling — `src`/`srcObject` would commit the element to the MSE resource
- *    and make any sibling inert.
- * 2. Sourceclose recovery: when the MSE attachment is torn down out from under
- *    the engine (the observable shape of an AirPlay handoff return or MMS
- *    eviction — the MediaSource fires `sourceclose`), `setupMediaSource`
- *    must rebuild a fresh MediaSource for the same source and playback
- *    must come back.
+ * 1. The attach shape: the object URL rides a `<source>` child on every platform, not the `src` attribute. The HLS engine
+ *    bakes `attachMediaSourceAsSourceElement` unconditionally because it composes `setupAirPlay`, whose native-HLS
+ *    fallback has to stay a selectable sibling — `src`/`srcObject` would commit the element to the MSE resource and
+ *    make any sibling inert.
+ * 2. Sourceclose recovery: when the MSE attachment is torn down out from under the engine (the observable shape of an
+ *    AirPlay handoff return or MMS eviction — the MediaSource fires `sourceclose`), `setupMediaSource` must rebuild a
+ *    fresh MediaSource for the same source and playback must come back.
  *
- * Position restore across the rebuild is asserted in unit tests
- * (`setup-mediasource.test.ts`, `apply-start-position.test.ts`) and verified
- * on-device for true AirPlay — this simulation's `load()` races the position
- * snapshot, so exact-position assertions would be flaky here.
+ * Position restore across the rebuild is asserted in unit tests (`setup-mediasource.test.ts`,
+ * `apply-start-position.test.ts`) and verified on-device for true AirPlay — this simulation's `load()` races the
+ * position snapshot, so exact-position assertions would be flaky here.
  */
 
 const PAGE = '/pages/html-hls-video-fmp4.html';

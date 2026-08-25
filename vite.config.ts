@@ -32,6 +32,7 @@ export default defineConfig({
     arrowParens: 'always',
     bracketSpacing: true,
     ignorePatterns: ignoredPaths,
+    jsdoc: true,
     printWidth: 120,
     semi: true,
     singleQuote: true,
