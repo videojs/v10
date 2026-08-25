@@ -1,8 +1,8 @@
 import type { State } from '@videojs/store';
 
 import type { MenuInput, MenuState } from '../../../core/ui/menu/core';
-import { MenuCSSVars } from '../../../core/ui/menu/vars';
 import { MenuItemDataAttrs } from '../../../core/ui/menu/item-data';
+import { MenuCSSVars } from '../../../core/ui/menu/vars';
 import { PopoverCSSVars } from '../../../core/ui/popover/vars';
 import { forceLayout } from '../../utils/layout';
 import type { UIFocusEvent, UIKeyboardEvent } from '../event';
