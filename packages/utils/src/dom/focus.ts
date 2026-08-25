@@ -35,6 +35,7 @@ export function getTabbableElements(root: ParentNode): HTMLElement[] {
 
   function visitElement(element: Element): void {
     if (visited.has(element)) return;
+
     visited.add(element);
 
     if (element instanceof HTMLElement && isTabbableElement(element)) {
@@ -43,11 +44,13 @@ export function getTabbableElements(root: ParentNode): HTMLElement[] {
 
     if (element instanceof HTMLSlotElement) {
       const assigned = element.assignedElements({ flatten: true });
+
       if (assigned.length > 0) {
         for (const child of assigned) visitElement(child);
       } else {
         visitChildren(element);
       }
+
       return;
     }
 
@@ -63,6 +66,7 @@ function isTabbableElement(element: HTMLElement): boolean {
   if (!element.matches(TABBABLE_SELECTOR) || element.tabIndex < 0 || element.matches(':disabled')) return false;
 
   let current: Element | null = element;
+
   while (current) {
     if (
       current instanceof HTMLElement &&
@@ -70,6 +74,7 @@ function isTabbableElement(element: HTMLElement): boolean {
     ) {
       return false;
     }
+
     current = getComposedParent(current);
   }
 
@@ -78,8 +83,10 @@ function isTabbableElement(element: HTMLElement): boolean {
 
 function getComposedParent(element: Element): Element | null {
   if (element.assignedSlot) return element.assignedSlot;
+
   if (element.parentElement) return element.parentElement;
 
   const root = element.getRootNode();
+
   return root instanceof ShadowRoot ? root.host : null;
 }

@@ -27,6 +27,7 @@ export function useDialogRoot({
   idPrefix = 'dialog',
 }: UseDialogRootOptions): DialogContextValue {
   const [core] = useState(coreFactory);
+
   core.setProps({ open: controlledOpen, defaultOpen, closeOnEscape });
 
   const isControlled = controlledOpen !== undefined;
@@ -43,6 +44,7 @@ export function useDialogRoot({
     });
 
     if (!isControlled && defaultOpen) instance.open();
+
     return instance;
   });
 
@@ -66,6 +68,7 @@ export function useDialogRoot({
   useDestroy(dialog);
 
   const input = useSnapshot(dialog.input);
+
   core.setInput(input);
 
   return {

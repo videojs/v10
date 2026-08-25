@@ -15,6 +15,7 @@ export interface DialogRootProps extends DialogProps {
 /** Manages dialog state and provides it to the compound parts. */
 export function DialogRoot(props: DialogRootProps): ReactNode {
   const context = useDialogRoot({ ...props, coreFactory: createDialogCore });
+
   return <DialogContextProvider value={context}>{props.children}</DialogContextProvider>;
 }
 

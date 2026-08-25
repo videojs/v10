@@ -21,5 +21,6 @@ export function useDialogContext(): DialogContextValue {
 export function useDialogContextFor(componentName: string): DialogContextValue {
   const ctx = useContext(DialogContext);
   if (!ctx) throw new Error(`${componentName} compound components must be used within a ${componentName}.Root`);
+
   return ctx;
 }

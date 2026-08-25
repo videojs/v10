@@ -65,6 +65,7 @@ export class DialogElementBase extends UIElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
+
     if (this.destroyed) return;
 
     this.#dialog = createDialog({
@@ -90,6 +91,7 @@ export class DialogElementBase extends UIElement {
 
   protected override firstUpdated(changed: PropertyValues): void {
     super.firstUpdated(changed);
+
     if (this.defaultOpen && !this.open) this.#dialog?.open();
   }
 
@@ -110,6 +112,7 @@ export class DialogElementBase extends UIElement {
 
     if (this.#dialog && changed.has('open')) {
       const { active: inputOpen } = this.#dialog.input.current;
+
       if (this.open !== inputOpen) {
         if (this.open) this.#dialog.open();
         else this.#dialog.close();
@@ -119,12 +122,15 @@ export class DialogElementBase extends UIElement {
 
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+
     if (!this.#dialog) return;
 
     const triggerElement = this.#bindTrigger ? this.#position.findTrigger() : null;
+
     this.#syncTrigger(triggerElement);
 
     const input = this.#dialog.input.current;
+
     this.#core.setInput(input);
     const state = this.#core.getState();
 

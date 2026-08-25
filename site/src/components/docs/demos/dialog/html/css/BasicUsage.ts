@@ -9,6 +9,7 @@ document.querySelectorAll<HTMLElement>('.html-dialog-basic').forEach((demo) => {
     if (!video) return;
 
     const { open } = (event as CustomEvent<{ open: boolean }>).detail;
+
     if (open) void video.play().catch(() => {});
     else video.pause();
   });
