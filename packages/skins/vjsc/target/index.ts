@@ -3,8 +3,8 @@ import type { ComponentTarget } from 'vjsc/target';
 import { createHtmlIconTarget, createReactIconTarget } from '../../../icons/vjsc/target.ts';
 import type { SkinConfig } from '../config.ts';
 import { skinStyles } from '../meta.ts';
-import { htmlComponentTarget } from './html.ts';
-import { reactComponentTarget } from './react.ts';
+import { htmlComponentTarget } from './html.tsx';
+import { reactComponentTarget } from './react.tsx';
 
 const reactIcons = new Map<string, ComponentTarget>();
 const htmlIcons = new Map<string, ComponentTarget>();

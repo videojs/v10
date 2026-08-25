@@ -1,6 +1,8 @@
+/** @jsxImportSource vjsc/target */
+
 import type coreSchema from '@videojs/core/vjsc';
 import { type ComponentTarget, defineComponentTarget, type TemplateTargetDefinition } from 'vjsc/target';
-import { Host, jsx } from 'vjsc/target/jsx-runtime';
+import { Host } from 'vjsc/target/jsx-runtime';
 
 import { reactComponentTransform } from './react-transform.ts';
 
@@ -25,12 +27,9 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
   const renderProps = code.param('props');
   const item = code.param<{ badge?: unknown; label: unknown; tier?: unknown }>('item');
   const optionTemplate: TemplateTargetDefinition = {
-    render: ({ children }) =>
-      jsx(Host, {
-        renderItem: code.fn([renderProps, item], code.withProps(children, renderProps)),
-      }),
+    render: ({ children }) => <Host renderItem={code.fn([renderProps, item], code.withProps(children, renderProps))} />,
     parts: {
-      label: ({ props }) => jsx(Span, { ...props, children: item.label }),
+      label: ({ props }) => <Span {...props}>{item.label}</Span>,
     },
   };
 
@@ -53,9 +52,9 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
     },
     components: {
       Popover: {
-        Trigger: ({ props, children }) => jsx(target.Popover.Trigger, { render: children, ...props }),
+        Trigger: ({ props, children }) => <target.Popover.Trigger render={children} {...props} />,
       },
-      Poster: ({ props, children }) => jsx(target.Poster, { render: children, ...props }),
+      Poster: ({ props, children }) => <target.Poster render={children} {...props} />,
       Slider: {
         Thumbnail: {
           Root: Div,
@@ -72,27 +71,33 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
         },
       },
       Tooltip: {
-        Trigger: ({ props, children }) => jsx(target.Tooltip.Trigger, { render: children, ...props }),
+        Trigger: ({ props, children }) => <target.Tooltip.Trigger render={children} {...props} />,
       },
     },
     primitives: {
       Group: Div,
       Slot: ({ children }) => children,
       Text: ({ props, children }) =>
-        props.has('token') ? jsx(I18nText, { ...props, children }) : jsx(Span, { ...props, children }),
+        props.has('token') ? <I18nText {...props}>{children}</I18nText> : <Span {...props}>{children}</Span>,
       Template: {
         chapter: {
-          render: ({ props, children }) =>
-            jsx(Host, {
-              renderChapter: code.fn([renderProps], jsx(Div, { ...props, ...renderProps, children })),
-            }),
+          render: ({ props, children }) => (
+            <Host
+              renderChapter={code.fn(
+                [renderProps],
+                <Div {...props} {...renderProps}>
+                  {children}
+                </Div>
+              )}
+            />
+          ),
         },
         'quality-option': {
           ...optionTemplate,
           parts: {
             ...optionTemplate.parts,
-            tier: ({ props }) => code.when(item.tier, jsx(Sup, { ...props, children: item.tier })),
-            badge: ({ props }) => code.when(item.badge, jsx(Span, { ...props, children: item.badge })),
+            tier: ({ props }) => code.when(item.tier, <Sup {...props}>{item.tier}</Sup>),
+            badge: ({ props }) => code.when(item.badge, <Span {...props}>{item.badge}</Span>),
           },
         },
         'audio-track-option': optionTemplate,

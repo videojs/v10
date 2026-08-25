@@ -1,3 +1,6 @@
+/** @jsxImportSource vjsc/target */
+/* oxlint-disable react/jsx-key -- Target arrays describe generated siblings, not React reconciliation. */
+
 import type coreSchema from '@videojs/core/vjsc';
 import {
   type ComponentTarget,
@@ -5,7 +8,7 @@ import {
   defineComponentTarget,
   type TemplateTargetDefinition,
 } from 'vjsc/target';
-import { Host, jsx } from 'vjsc/target/jsx-runtime';
+import { Host } from 'vjsc/target/jsx-runtime';
 
 type CoreSchema = typeof coreSchema;
 
@@ -136,9 +139,9 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
   });
 
   const optionTemplate: TemplateTargetDefinition = {
-    render: ({ children }) => jsx(HtmlTemplate, { children }),
+    render: ({ children }) => <HtmlTemplate>{children}</HtmlTemplate>,
     parts: {
-      label: ({ props }) => jsx(Span, { 'data-part': 'label', ...props }),
+      label: ({ props }) => <Span data-part="label" {...props} />,
     },
   };
 
@@ -160,32 +163,29 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
 
         if (popup) {
           return [
-            jsx(Button, { commandfor: controlledId, ...trigger.props, children: trigger.children }),
-            jsx(target.Menu.Popup, {
-              id: controlledId,
-              ...props.merge(popup.props),
-              children: popup.children,
-            }),
+            <Button commandfor={controlledId} {...trigger.props}>
+              {trigger.children}
+            </Button>,
+            <target.Menu.Popup id={controlledId} {...props.merge(popup.props)}>
+              {popup.children}
+            </target.Menu.Popup>,
           ];
         }
 
         const content = parts.Content.one();
 
         return [
-          jsx(target.Menu.Item, {
-            commandfor: controlledId,
-            ...trigger.props,
-            children: trigger.children,
-          }),
-          jsx(target.Menu.Content, { id: controlledId, ...content.props, children: content.children }),
+          <target.Menu.Item commandfor={controlledId} {...trigger.props}>
+            {trigger.children}
+          </target.Menu.Item>,
+          <target.Menu.Content id={controlledId} {...content.props}>
+            {content.children}
+          </target.Menu.Content>,
         ];
       },
       Popover: ({ props, parts }) => [
         parts.Trigger.children,
-        jsx(target.Popover.Popup, {
-          ...props.merge(parts.Popup.props),
-          children: parts.Popup.children,
-        }),
+        <target.Popover.Popup {...props.merge(parts.Popup.props)}>{parts.Popup.children}</target.Popover.Popup>,
       ],
       Slider: {
         Thumbnail: {
@@ -196,12 +196,10 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
         const trigger = id('trigger');
 
         return [
-          jsx(Host, { id: trigger, children: parts.Trigger.children }),
-          jsx(target.Tooltip.Popup, {
-            trigger,
-            ...props.merge(parts.Popup.props),
-            children: parts.Popup.children,
-          }),
+          <Host id={trigger}>{parts.Trigger.children}</Host>,
+          <target.Tooltip.Popup trigger={trigger} {...props.merge(parts.Popup.props)}>
+            {parts.Popup.children}
+          </target.Tooltip.Popup>,
         ];
       },
     },
@@ -209,17 +207,21 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
       Group: Div,
       Slot,
       Text: ({ props, children }) =>
-        props.has('token') ? jsx(I18nText, { ...props, children }) : jsx(Span, { ...props, children }),
+        props.has('token') ? <I18nText {...props}>{children}</I18nText> : <Span {...props}>{children}</Span>,
       Template: {
         chapter: {
-          render: ({ props, children }) => jsx(HtmlTemplate, { children: jsx(Div, { ...props, children }) }),
+          render: ({ props, children }) => (
+            <HtmlTemplate>
+              <Div {...props}>{children}</Div>
+            </HtmlTemplate>
+          ),
         },
         'quality-option': {
           ...optionTemplate,
           parts: {
             ...optionTemplate.parts,
-            tier: ({ props }) => jsx(Sup, { 'data-part': 'tier', ...props }),
-            badge: ({ props }) => jsx(Span, { 'data-part': 'badge', ...props }),
+            tier: ({ props }) => <Sup data-part="tier" {...props} />,
+            badge: ({ props }) => <Span data-part="badge" {...props} />,
           },
         },
         'audio-track-option': optionTemplate,
