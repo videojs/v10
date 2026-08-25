@@ -1,19 +1,10 @@
 import { isFunction } from '@videojs/utils/predicate';
 
+import type { GestureActionName } from '../../core/ui/gesture/core';
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 import type { AnyPlayerStore } from '../player';
 
-export type GestureActionName =
-  | 'togglePaused'
-  | 'toggleMuted'
-  | 'toggleFullscreen'
-  | 'toggleSubtitles'
-  | 'togglePictureInPicture'
-  | 'toggleControls'
-  | 'seekStep'
-  | 'volumeStep'
-  | 'speedUp'
-  | 'speedDown';
+export type { GestureActionName } from '../../core/ui/gesture/core';
 
 export interface GestureActionContext {
   store: AnyPlayerStore;

@@ -6,6 +6,7 @@ description: Map tap and double-tap gestures to player actions
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -43,7 +44,7 @@ import basicUsageHtmlTs from "@/components/docs/demos/gesture/html/css/BasicUsag
 
 ## Behavior
 
-`Gesture` is a behavior component: it renders no visible interface. Place it inside a `Container` to map a `tap` or `doubletap` gesture to a player action. A tap must use the primary pointer and complete within 250 milliseconds. When a matching double-tap gesture exists, the first tap waits briefly to see whether a second tap follows.
+`Gesture` is a behavior component: it renders no visible interface. Place it inside a <DocsLink slug="reference/player-container">Container</DocsLink> to map a `tap` or `doubletap` gesture to a player action. A tap must use the primary pointer and complete within 250 milliseconds. When a matching double-tap gesture exists, the first tap waits briefly to see whether a second tap follows.
 
 Use `pointer` to accept only `mouse`, `touch`, or `pen` input. Use `region` to divide the container horizontally:
 
@@ -54,22 +55,7 @@ Use `pointer` to accept only `mouse`, `touch`, or `pen` input. Use `region` to d
 
 An unregional gesture acts as a fallback outside the active regions. When several registrations match the same gesture, the first registration wins.
 
-The following player actions are built in:
-
-| Action | Behavior | `value` |
-| --- | --- | --- |
-| `togglePaused` | Toggle play and pause | Not used |
-| `toggleMuted` | Toggle mute | Not used |
-| `toggleFullscreen` | Enter or exit fullscreen | Not used |
-| `toggleSubtitles` | Show or hide subtitles | Not used |
-| `togglePictureInPicture` | Enter or exit picture-in-picture | Not used |
-| `toggleControls` | Show or hide the controls | Not used |
-| `seekStep` | Seek relative to the current time | Seconds to seek; use a negative number to seek backward |
-| `volumeStep` | Adjust the current volume | Volume delta, such as `0.05` or `-0.05` |
-| `speedUp` | Select the next configured playback rate | Not used |
-| `speedDown` | Select the previous configured playback rate | Not used |
-
-An application-defined action name may call a same-named action on the player store. Unknown action names do nothing and warn in development.
+Choose a built-in `action` from the API reference below, or use an application-defined name to call a same-named action on the player store. Pass `value` as seconds for `seekStep` or as a volume delta such as `0.05` or `-0.05` for `volumeStep`. Unknown action names do nothing and warn in development.
 
 ## Accessibility
 
