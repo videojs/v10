@@ -80,6 +80,7 @@ Checked-in skills are direct children of `.agents/skills/`. `pnpm install` expos
 - Docs and records: `write-docs`, `review-docs`, `write-api-reference`, `write-design-doc`, `write-rfc`
 - Site styling: `migrate-css-to-tailwind`, `review-tailwind-migration`
 - Toolchain workflows: `configure-vite-plus`
+- Skin parity: `maintain-vjsc-skin-gaps`
 - Delivery: `investigate-issue`, `create-issue`, `review-branch`, `commit-pr`
 - SPF behaviors: `create-spf-behavior`, `change-spf-behavior`
 - SPF registry: `document-spf-feature`, `document-spf-use-case`, `implement-spf-feature`, `implement-spf-use-case`
