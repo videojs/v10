@@ -12,17 +12,26 @@ import {
 import { deriveStatus } from './status-indicator-status';
 
 export interface StatusIndicatorProps extends IndicatorCoreProps {
+  /** Input actions allowed to open the indicator. All supported actions are allowed when omitted. */
   actions?: readonly InputAction[] | undefined;
+  /** Internal translated label overrides supplied by framework adapters. */
   labels?: Partial<InputIndicatorLabels> | undefined;
 }
 
 export interface StatusIndicatorState extends IndicatorLifecycleState {
+  /** Whether the indicator is open. */
+  open: boolean;
+  /** Increments each time a supported input action updates the indicator. */
+  generation: number;
+  /** Predicted visual status for the handled input action. */
   status: ReturnType<typeof deriveStatus> extends infer Details
     ? Details extends { status: infer Status }
       ? Status | null
       : never
     : never;
+  /** Translated label for the predicted status. */
   label: string | null;
+  /** Predicted volume percentage for volume actions, otherwise `null`. */
   value: string | null;
 }
 

@@ -1,0 +1,107 @@
+.react-status-indicator-basic {
+  position: relative;
+}
+
+.react-status-indicator-basic:focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.react-status-indicator-basic video {
+  display: block;
+  width: 100%;
+}
+
+.react-status-indicator-basic__instructions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  left: 10px;
+  padding: 6px 10px;
+  margin: 0;
+  color: white;
+  text-align: center;
+  background: rgb(0 0 0 / 70%);
+  border-radius: 4px;
+}
+
+.react-status-indicator-basic__indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  min-width: 92px;
+  padding: 16px;
+  color: white;
+  pointer-events: none;
+  background: rgb(0 0 0 / 72%);
+  border-radius: 12px;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  transition:
+    opacity 160ms ease-in-out,
+    scale 160ms ease-in-out;
+}
+
+.react-status-indicator-basic__indicator::before {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.react-status-indicator-basic__indicator[data-status="play"]::before {
+  content: "▶";
+}
+
+.react-status-indicator-basic__indicator[data-status="pause"]::before {
+  content: "Ⅱ";
+}
+
+.react-status-indicator-basic__indicator[data-status="volume-off"]::before {
+  content: "🔇";
+}
+
+.react-status-indicator-basic__indicator[data-status="volume-low"]::before {
+  content: "🔉";
+}
+
+.react-status-indicator-basic__indicator[data-status="volume-high"]::before {
+  content: "🔊";
+}
+
+.react-status-indicator-basic__indicator[data-status="captions-on"]::before,
+.react-status-indicator-basic__indicator[data-status="captions-off"]::before {
+  content: "CC";
+}
+
+.react-status-indicator-basic__indicator[data-status="captions-off"]::before {
+  text-decoration: line-through;
+}
+
+.react-status-indicator-basic__indicator[data-status="fullscreen"]::before {
+  content: "⛶";
+}
+
+.react-status-indicator-basic__indicator[data-status="exit-fullscreen"]::before {
+  content: "⊠";
+}
+
+.react-status-indicator-basic__indicator[data-status="pip"]::before,
+.react-status-indicator-basic__indicator[data-status="exit-pip"]::before {
+  content: "▣";
+}
+
+.react-status-indicator-basic__indicator[data-status="exit-pip"]::before {
+  text-decoration: line-through;
+}
+
+.react-status-indicator-basic__indicator[data-starting-style],
+.react-status-indicator-basic__indicator[data-ending-style] {
+  opacity: 0;
+  scale: 0.85;
+}
+
+.react-status-indicator-basic__value {
+  margin-top: 8px;
+  font-variant-numeric: tabular-nums;
+}

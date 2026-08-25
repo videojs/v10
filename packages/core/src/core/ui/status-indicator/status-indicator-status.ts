@@ -15,12 +15,17 @@ export type IndicatorStatus =
   | 'pip'
   | 'exit-pip';
 
+/** Predicted display details for a supported status-indicator action. */
 export interface StatusDetails {
+  /** Visual status corresponding to the predicted post-action state. */
   status: IndicatorStatus;
+  /** Translated label for the predicted status. */
   label: string;
+  /** Predicted volume percentage for volume actions, otherwise `null`. */
   value: string | null;
 }
 
+/** Derives the predicted visual status from an input action and its pre-action media snapshot. */
 export function deriveStatus(
   event: InputActionEvent,
   snapshot: MediaSnapshot,
@@ -73,6 +78,7 @@ export function deriveStatus(
   }
 }
 
+/** Returns the volume percentage when present, then the translated status label. */
 export function getStatusIndicatorDisplayValue(state: { value: string | null; label: string | null }): string {
   return state.value ?? state.label ?? '';
 }
