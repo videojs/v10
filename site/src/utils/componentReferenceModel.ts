@@ -80,7 +80,7 @@ function createSections(
   source: PartReference | ComponentReference,
   options: { forPart: true; partId: string } | { forPart: false }
 ): ApiReferenceSection[] {
-  return API_REFERENCE_SUBSECTIONS.flatMap((definition) => {
+  const sections = API_REFERENCE_SUBSECTIONS.flatMap((definition) => {
     if (!hasEntries(source[definition.key])) {
       return [];
     }
@@ -116,6 +116,22 @@ function createSections(
       },
     ];
   });
+
+  if (source.platforms.html?.events?.length) {
+    const section: ApiReferenceSection = {
+      key: 'events',
+      title: 'Events',
+      id: options.forPart ? `${options.partId}-events` : 'events',
+      depth: options.forPart ? 4 : 3,
+      frameworks: ['html'],
+    };
+
+    if (options.forPart) section.tocKind = 'api-reference-subsection';
+
+    sections.push(section);
+  }
+
+  return sections;
 }
 
 export function createComponentReferenceModel(

@@ -22,6 +22,10 @@ import { PlayerController } from '../../player/player-controller';
 import { sliderContext } from '../slider/context';
 import { UIElement } from '../ui-element';
 
+/**
+ * @fires drag-start - Fired when a pointer drag starts.
+ * @fires drag-end - Fired when a pointer drag ends.
+ */
 export class VolumeSliderElement extends UIElement {
   static readonly tagName = 'media-volume-slider';
 

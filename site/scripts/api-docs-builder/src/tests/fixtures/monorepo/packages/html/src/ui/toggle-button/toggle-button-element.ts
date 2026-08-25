@@ -6,4 +6,9 @@
 
 export class ToggleButtonElement {
   static readonly tagName = 'media-toggle-button';
+
+  /** @fires pressed-change - Emitted when the pressed state changes. */
+  announcePressed(pressed: boolean) {
+    this.dispatchEvent(new CustomEvent('pressed-change', { detail: { pressed }, bubbles: true }));
+  }
 }

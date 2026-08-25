@@ -13,13 +13,13 @@ import type {
 } from 'oxc-parser';
 
 import { extractCSSVars } from './css-vars-handler.js';
+import { collectDispatchedEvents, collectFires } from './event-handler.js';
 import { abbreviateType, formatDetailedType } from './formatter.js';
 import type { NamedDeclaration, OxcProject, ResolvedMember, ResolvedType, SourceFile } from './oxc-project.js';
 import {
   expressionText,
   getJSDocDescription,
   OxcProject as Project,
-  parseJSDoc,
   sourceText,
   staticName,
   unwrapExpression,
@@ -1083,77 +1083,6 @@ function extractEventsFromTypes(filePath: string, interfaceName: string, project
 
     return name ? [name] : [];
   });
-}
-
-function collectFires(files: readonly string[], project: OxcProject): Map<string, string> {
-  const fires = new Map<string, string>();
-
-  for (const filePath of files) {
-    const file = project.source(filePath);
-    if (!file) continue;
-
-    for (const comment of file.comments) {
-      if (comment.type !== 'Block' || !comment.value.startsWith('*')) continue;
-
-      for (const value of parseJSDoc(comment.value).tags.get('fires') ?? []) {
-        const match = value.match(/^(\S+)\s*(?:-\s*)?(.*)$/s);
-
-        if (match?.[1] && !fires.has(match[1])) fires.set(match[1], match[2]?.trim() ?? '');
-      }
-    }
-  }
-
-  return fires;
-}
-
-function collectDispatchedEvents(files: readonly string[], project: OxcProject): Set<string> {
-  const events = new Set<string>();
-
-  for (const filePath of files) {
-    const file = project.source(filePath);
-    if (!file) continue;
-
-    walkAst(file.program, (node) => {
-      if (node.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === 'emit') {
-        const argument = node.arguments[0];
-
-        if (argument?.type === 'Literal' && typeof argument.value === 'string') events.add(argument.value);
-      }
-
-      if (
-        node.type === 'CallExpression' &&
-        node.callee.type === 'MemberExpression' &&
-        !node.callee.computed &&
-        node.callee.property.type === 'Identifier' &&
-        node.callee.property.name === 'dispatchEvent'
-      ) {
-        const event = node.arguments[0];
-
-        if (event?.type !== 'NewExpression' || event.callee.type !== 'Identifier' || event.callee.name !== 'Event')
-          return;
-
-        const argument = event.arguments[0];
-
-        if (argument?.type === 'Literal' && typeof argument.value === 'string') events.add(argument.value);
-      }
-
-      if (node.type === 'ForOfStatement' && node.right.type === 'ArrayExpression') {
-        const variable =
-          node.left.type === 'VariableDeclaration'
-            ? staticName(node.left.declarations[0]?.id)
-            : node.left.type === 'Identifier'
-              ? node.left.name
-              : undefined;
-        if (!variable || !sourceText(file, node.body).includes(`Event(${variable})`)) return;
-
-        for (const element of node.right.elements) {
-          if (element?.type === 'Literal' && typeof element.value === 'string') events.add(element.value);
-        }
-      }
-    });
-  }
-
-  return events;
 }
 
 function collectNativeMemberNames(): Set<string> {

@@ -4,6 +4,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { UIElement } from '../ui-element';
 import { radioGroupContext } from './context';
 
+/** @fires value-change - Fired when the selected value changes. */
 export class RadioGroupElement extends UIElement {
   static override properties = {
     value: { type: String },

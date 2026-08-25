@@ -46,6 +46,7 @@ function isLabelTrigger(el: HTMLElement): el is TriggerElement {
   return '$state' in el;
 }
 
+/** @fires open-change - Fired when the tooltip's open state changes. */
 export class TooltipElement extends UIElement {
   static readonly tagName = 'media-tooltip';
 

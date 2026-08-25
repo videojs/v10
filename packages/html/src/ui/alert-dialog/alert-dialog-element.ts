@@ -2,7 +2,11 @@ import { AlertDialogCore, AlertDialogDataAttrs } from '@videojs/core';
 
 import { DialogElementBase } from '../dialog/dialog-element';
 
-/** A modal dialog with alert semantics. */
+/**
+ * A modal dialog with alert semantics.
+ *
+ * @fires open-change - Fired when the dialog's open state changes.
+ */
 export class AlertDialogElement extends DialogElementBase {
   static readonly tagName = 'media-alert-dialog';
 

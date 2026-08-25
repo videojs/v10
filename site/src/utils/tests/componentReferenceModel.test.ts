@@ -49,6 +49,40 @@ describe('createComponentReferenceModel', () => {
     });
   });
 
+  it('adds an HTML-only events section', () => {
+    const apiReference = {
+      name: 'Slider',
+      props: {},
+      state: {},
+      dataAttributes: {},
+      cssCustomProperties: {},
+      platforms: {
+        html: {
+          tagName: 'media-slider',
+          events: [{ name: 'value-change', description: 'Fired when the value changes.' }],
+        },
+      },
+    } satisfies ComponentReference;
+
+    const model = createComponentReferenceModel('Slider', apiReference);
+
+    expect(model?.sections).toEqual([
+      {
+        key: 'events',
+        title: 'Events',
+        id: 'events',
+        depth: 3,
+        frameworks: ['html'],
+      },
+    ]);
+    expect(buildComponentReferenceTocHeadings(model)).toContainEqual({
+      depth: 3,
+      text: 'Events',
+      slug: 'events',
+      frameworks: ['html'],
+    });
+  });
+
   it('builds a multi-part model with framework-specific labels and H4 section ids', () => {
     const apiReference = {
       name: 'Controls',

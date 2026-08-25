@@ -19,6 +19,7 @@ import { popupGroupContext } from '../../player/popup-group-context';
 import { PositionController } from '../position-controller';
 import { UIElement } from '../ui-element';
 
+/** @fires open-change - Fired when the popover's open state changes. */
 export class PopoverElement extends UIElement {
   static readonly tagName: string = 'media-popover';
 

@@ -19,6 +19,12 @@ import { PlayerController } from '../../player/player-controller';
 import { UIElement } from '../ui-element';
 import { sliderContext } from './context';
 
+/**
+ * @fires value-change - Fired while the slider value changes during an interaction.
+ * @fires value-commit - Fired when an interaction commits the slider value.
+ * @fires drag-start - Fired when a pointer drag starts.
+ * @fires drag-end - Fired when a pointer drag ends.
+ */
 export class SliderElement extends UIElement {
   static readonly tagName = 'media-slider';
 

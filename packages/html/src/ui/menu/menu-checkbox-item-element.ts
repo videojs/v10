@@ -5,6 +5,7 @@ import { ContextConsumer } from '@videojs/element/context';
 import { UIElement } from '../ui-element';
 import { menuContext } from './context';
 
+/** @fires checked-change - Fired when the checked state changes. */
 export class MenuCheckboxItemElement extends UIElement {
   static readonly tagName = 'media-menu-checkbox-item';
 

@@ -4,6 +4,7 @@
  */
 export type {
   ComponentReference,
+  ComponentEventDef,
   CSSVarDef,
   DataAttrDef,
   PartReference,
@@ -112,4 +113,5 @@ export interface CSSVarsExtraction {
 export interface HtmlExtraction {
   tagName: string;
   properties: string[];
+  events: ComponentEventDef[];
 }

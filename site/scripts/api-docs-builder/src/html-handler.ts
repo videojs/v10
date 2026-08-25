@@ -1,3 +1,4 @@
+import { collectDispatchedEvents, collectFires } from './event-handler.js';
 import type { OxcProject } from './oxc-project.js';
 import { staticName, unwrapExpression, unwrapObjectExpression } from './oxc-project.js';
 import type { HtmlExtraction } from './types.js';
@@ -53,5 +54,15 @@ export function extractHtml(
     }
   }
 
-  return tagName ? { tagName, properties: [...properties] } : null;
+  const files = [...new Set(hierarchy.map(({ file }) => file.filePath))];
+  const fires = collectFires(files, project);
+  const events = [...collectDispatchedEvents(files, project)]
+    .sort((a, b) => a.localeCompare(b))
+    .map((name) => {
+      const description = fires.get(name);
+
+      return description ? { name, description } : { name };
+    });
+
+  return tagName ? { tagName, properties: [...properties], events } : null;
 }

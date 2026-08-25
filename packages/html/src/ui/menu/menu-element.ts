@@ -27,7 +27,11 @@ import { PositionController } from '../position-controller';
 import { UIElement } from '../ui-element';
 import { menuContext } from './context';
 
-/** Root menu state and positioned popup. Content pages are direct children. */
+/**
+ * Root menu state and positioned popup. Content pages are direct children.
+ *
+ * @fires open-change - Fired before the menu's open state changes. Cancel the event to prevent the change.
+ */
 export class MenuElement extends UIElement {
   static readonly tagName: string = 'media-menu';
 
