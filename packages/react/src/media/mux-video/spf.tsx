@@ -10,12 +10,14 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 import { MuxStoryboard } from './storyboard';
 
-// `src` and `source` come from `MuxAdapterProps`: the Mux Media owns both, and its
-// `source` is the structured Mux one rather than the generic engine's.
+// `src` and `source` come from `MuxAdapterProps`: the Mux Adapter owns both, and its
+// `source` is the structured Mux one rather than the generic engine's. Both are
+// omitted from the base rather than intersected with it — the two `source` types
+// describe different things, and an intersection satisfies neither.
 export interface MuxVideoProps
   extends
     Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof HlsVideoAdapterProps | keyof MuxAdapterProps>,
-    Partial<Omit<HlsVideoAdapterProps, 'src'>>,
+    Partial<Omit<HlsVideoAdapterProps, 'src' | 'source'>>,
     Partial<MuxAdapterProps> {
   children?: ReactNode;
 }

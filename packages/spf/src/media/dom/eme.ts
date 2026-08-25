@@ -9,6 +9,7 @@ import type { MaybeResolvedPresentation } from '../types';
 import { buildMimeCodec } from './mse/mediasource-setup';
 
 export {
+  type DrmHeaders,
   type DrmSystemConfig,
   type DrmSystemsConfig,
   type DrmUrl,
@@ -16,6 +17,7 @@ export {
   declaredEncryptionScheme,
   KEY_SYSTEM_BY_KEY_FORMAT,
   keySystemCandidates,
+  resolveDrmHeaders,
   resolveDrmUrl,
   toCencInitData,
   unplayableEncryptedTypes,

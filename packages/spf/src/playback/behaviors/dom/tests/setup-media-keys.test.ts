@@ -499,6 +499,64 @@ describe('setupMediaKeys', () => {
     reactor.destroy();
   });
 
+  it("sends a key system's configured headers with its license request", async () => {
+    const eme = makeFakeEme();
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
+    const { reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY]) },
+      { mediaElement: document.createElement('video') },
+      {
+        'com.widevine.alpha': {
+          licenseUrl: 'https://license.example.com/widevine',
+          headers: { 'X-AxDRM-Message': 'entitlement', 'X-Extra': 'kept' },
+        },
+      }
+    );
+
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+
+    await vi.waitFor(() =>
+      expect(fetchLicense).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(), {
+        // Merged with, not replacing, the content type the request already needs.
+        'Content-Type': 'application/octet-stream',
+        'X-AxDRM-Message': 'entitlement',
+        'X-Extra': 'kept',
+      })
+    );
+
+    reactor.destroy();
+  });
+
+  it('lets the shaped request win over a configured header of the same name', async () => {
+    const eme = makeFakeEme();
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(eme);
+    vi.mocked(fetchLicense).mockResolvedValue(new Uint8Array([9]));
+    const { reactor } = setupSetupMediaKeys(
+      { presentation: makePresentation([WIDEVINE_KEY]) },
+      { mediaElement: document.createElement('video') },
+      {
+        'com.widevine.alpha': {
+          licenseUrl: 'https://license.example.com/widevine',
+          // A CDM naming its own Content-Type is not negotiable.
+          headers: { 'Content-Type': 'application/json' },
+        },
+      }
+    );
+
+    await vi.waitFor(() => expect(eme.sessions).toHaveLength(1));
+    eme.sessions[0]!.dispatchEvent(Object.assign(new Event('message'), { message: new Uint8Array([1]).buffer }));
+
+    await vi.waitFor(() =>
+      expect(fetchLicense).toHaveBeenCalledWith(expect.anything(), expect.anything(), expect.anything(), {
+        'Content-Type': 'application/octet-stream',
+      })
+    );
+
+    reactor.destroy();
+  });
+
   it('holds the gate and reports 4008 when no configured key system is usable', async () => {
     vi.mocked(requestKeySystemAccess).mockResolvedValue(undefined);
     const { state, context, reactor } = setupSetupMediaKeys(

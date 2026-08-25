@@ -29,7 +29,13 @@ import {
  * during pruning as well as at license time, so keep them cheap and free of
  * side effects.
  */
-export type DrmUrl = string | undefined | (() => string | undefined);
+export type DrmUrl = DrmValue<string>;
+
+/** A configured DRM value: the value itself, or a resolver asked for it. */
+export type DrmValue<T> = T | undefined | (() => T | undefined);
+
+/** Extra license-request headers, or a resolver asked for them. */
+export type DrmHeaders = DrmValue<Record<string, string>>;
 
 /**
  * Where one key system's licenses come from. Accepts `@videojs/media`'s
@@ -45,6 +51,23 @@ export interface DrmSystemConfig {
    * its CDM is pre-provisioned; Widevine and PlayReady ignore it.
    */
   serverCertificateUrl?: DrmUrl;
+  /**
+   * Extra headers for this system's license request.
+   *
+   * How most providers authenticate: Axinom reads an `X-AxDRM-Message`
+   * entitlement, BuyDRM a `customdata`, others an `Authorization`. A license URL
+   * alone can only carry a token a provider agrees to take as a query param.
+   *
+   * Merged with the headers the request already needs rather than replacing
+   * them, and the derived ones win — a classic PlayReady challenge names the
+   * headers its own CDM requires, and those are not negotiable.
+   *
+   * Deliberately plain data, not a resolver like {@link DrmUrl}: it is the field
+   * most likely to be worth promoting to `@videojs/media`'s shared source
+   * contract, and a function there would make every source assignment rebuild
+   * the hls.js and Shaka engines, which compare `source.drm` structurally.
+   */
+  headers?: DrmHeaders;
 }
 
 /** License servers keyed by EME key-system id — the shape of `source.drm`. */
@@ -56,9 +79,18 @@ export type DrmSystemsConfig = Partial<Record<string, DrmSystemConfig>>;
  * pruning pass, and a system whose URL can't be produced is unusable anyway.
  */
 export function resolveDrmUrl(url: DrmUrl): string | undefined {
-  if (typeof url !== 'function') return url;
+  return resolveDrmValue(url);
+}
+
+/** Resolve configured license-request headers. See {@link resolveDrmUrl}. */
+export function resolveDrmHeaders(headers: DrmHeaders): Record<string, string> | undefined {
+  return resolveDrmValue(headers);
+}
+
+function resolveDrmValue<T>(value: DrmValue<T>): T | undefined {
+  if (typeof value !== 'function') return value;
   try {
-    return url();
+    return (value as () => T | undefined)();
   } catch {
     return undefined;
   }
