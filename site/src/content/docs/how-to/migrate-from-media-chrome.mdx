@@ -8,7 +8,7 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 
-Video.js v10's HTML player uses the same `media-*` custom-element convention as Media Chrome, so most of the work is **renaming and reshaping**, not rewriting. This guide maps Media Chrome's API to Video.js v10.
+Video.js v10's HTML player uses the same `media-*` custom-element convention as Media Chrome, so most of the work is **renaming and reshaping**, not rewriting.
 
 <Aside type="note">
 Scoped to apps that compose their own player from Media Chrome elements. If you use `<mux-player>`, follow the Mux Player migration guide instead.
@@ -304,7 +304,7 @@ These Media Chrome features have no direct equivalent yet. Several can be approx
 
 - No configurable `autohide` delay or disable switch (`autohide="-1"`), and no `autohideovercontrols` ([#1728](https://github.com/videojs/v10/issues/1728))
 - No `defaultduration` placeholder before the media loads ([#1729](https://github.com/videojs/v10/issues/1729))
-- No preference persistence, so Media Chrome's `novolumepref`, `nomutedpref`, and `nosubtitleslangpref` opt-outs have nothing to opt out of. Persistence is out of scope for GA; tracked at [#944](https://github.com/videojs/v10/issues/944), with subtitle language at [#1423](https://github.com/videojs/v10/issues/1423)
+- Volume and muted preferences are not persisted across sessions, so Media Chrome's `novolumepref` and `nomutedpref` opt-outs have nothing to opt out of ([#944](https://github.com/videojs/v10/issues/944)). Video.js can choose an initial subtitle track from the locale, but it does not yet remember the viewer's later language choice ([#1786](https://github.com/videojs/v10/issues/1786)).
 - No `breakpoints` or container-breakpoint attributes; use CSS container queries instead
 - No `seektoliveoffset` or `noautoseektolive` controls, and live-edge offset and tolerance aren't configurable ([#1730](https://github.com/videojs/v10/issues/1730))
 - Chapters render and each time-slider segment reflects `data-active`, but there's no player-level active chapter value, `chapterchange` event, or menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
