@@ -6,6 +6,7 @@ description: Displays the resolved content title for the current media
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
@@ -21,6 +22,10 @@ import BasicUsageDemoHtml from "@/components/docs/demos/title/html/css/BasicUsag
 import basicUsageHtml from "@/components/docs/demos/title/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/title/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/title/html/css/BasicUsage.ts?raw";
+
+## Import
+
+<ComponentImports component="Title" html="title" />
 
 ## Anatomy
 

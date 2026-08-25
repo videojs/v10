@@ -1,0 +1,37 @@
+---
+import type { BundledLanguage } from 'shiki';
+
+import ServerCode from '@/components/Code/ServerCode.astro';
+import CodeFrame from '@/components/typography/CodeFrame.astro';
+import FrameworkCase from '../FrameworkCase.astro';
+
+interface Props {
+  component: string;
+  html: string;
+}
+
+const { component, html } = Astro.props;
+
+const imports: Array<{ code: string; framework: 'react' | 'html'; lang: BundledLanguage }> = [
+  {
+    code: `import { ${component} } from '@videojs/react';`,
+    framework: 'react',
+    lang: 'tsx',
+  },
+  {
+    code: `import '@videojs/html/ui/${html}';`,
+    framework: 'html',
+    lang: 'ts',
+  },
+];
+---
+
+{
+  imports.map(({ code, framework, lang }) => (
+    <FrameworkCase frameworks={[framework]}>
+      <CodeFrame lang={lang}>
+        <ServerCode code={code} lang={lang} />
+      </CodeFrame>
+    </FrameworkCase>
+  ))
+}

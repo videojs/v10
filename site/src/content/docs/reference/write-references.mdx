@@ -156,6 +156,7 @@ Use `frameworkTitle` to show the HTML custom element tag name when the HTML fram
 
 ```tsx
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import ComponentImports from "@/components/docs/api-reference/ComponentImports.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 
@@ -187,14 +188,23 @@ import basicUsageHtmlTs from "@/components/docs/demos/{name}/html/css/BasicUsage
 
 After imports, the page follows this order:
 
-1. **Anatomy** — show part nesting with self-closing placeholders for each framework using `<FrameworkCase>`, following the [Base UI anatomy convention](https://base-ui.com/react/overview/quick-start). No hooks, state, handlers, or option mapping — working code belongs in Examples.
-2. **Prose sections** (optional, as needed):
+1. **Import** — render the public React export and HTML registration module with `<ComponentImports>`.
+2. **Anatomy** — show part nesting with self-closing placeholders for each framework using `<FrameworkCase>`, following the [Base UI anatomy convention](https://base-ui.com/react/overview/quick-start). No hooks, state, handlers, or option mapping — working code belongs in Examples.
+3. **Prose sections** (optional, as needed):
    - **Behavior** — state transitions, timing, interaction logic
    - **Styling** — data attribute CSS selectors
    - **Accessibility** — ARIA attributes, keyboard interactions
    - Other sections as appropriate
-3. **Examples** — at least BasicUsage, wrapped in `<Demo>` with `<FrameworkCase>`
-4. **`<ComponentReference />`** — renders the generated JSON as props, state, and data attribute tables
+4. **Examples** — at least BasicUsage, wrapped in `<Demo>` with `<FrameworkCase>`
+5. **`<ComponentReference />`** — renders the generated JSON as props, state, and data attribute tables
+
+```mdx
+## Import
+
+<ComponentImports component="PlayButton" html="play-button" />
+```
+
+`component` is the named export from `@videojs/react`. `html` is the suffix of the side-effect registration import from `@videojs/html/ui/`.
 
 ```mdx
 <ComponentReference component="PlayButton" />
