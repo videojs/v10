@@ -3,7 +3,7 @@ import { readdir } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
 
 import { createLogger, createServer, type Plugin, type ViteDevServer } from 'vite';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 const packageDir = resolve(import.meta.dirname, '../..');
 const configFile = resolve(packageDir, 'dev/vite.config.ts');
