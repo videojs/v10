@@ -1,6 +1,9 @@
 import {
   type AttributeSnapshot,
+  getBlockExtent,
   getElementChildren,
+  getElementPadding,
+  getInlineExtent,
   measureElement,
   measureElementChildren,
   observeElements,
@@ -152,10 +155,16 @@ export function createMenuPopup(): MenuPopupApi {
     const current = getCurrentContent();
     if (!current) return;
 
-    const size = measureContent(current.element, getAvailableWidth(element));
+    // Root Content sits inside Popup padding. Positioned submenu pages own their padding.
+    const popupPadding = current.parent === null ? getElementPadding(element) : null;
+    const inlinePadding = popupPadding ? getInlineExtent(popupPadding) : 0;
+    const blockPadding = popupPadding ? getBlockExtent(popupPadding) : 0;
+    const availableWidth = getAvailableWidth(element);
+    const contentAvailableWidth = availableWidth === null ? null : Math.max(0, availableWidth - inlinePadding);
+    const size = measureContent(current.element, contentAvailableWidth);
 
-    element.style.setProperty(MenuCSSVars.width, `${Math.ceil(size.width)}px`);
-    element.style.setProperty(MenuCSSVars.height, `${Math.ceil(size.height)}px`);
+    element.style.setProperty(MenuCSSVars.width, `${Math.ceil(size.width + inlinePadding)}px`);
+    element.style.setProperty(MenuCSSVars.height, `${Math.ceil(size.height + blockPadding)}px`);
   }
 
   function setElement(next: HTMLElement | null): void {

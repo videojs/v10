@@ -171,7 +171,7 @@ describe('MenuElement', () => {
     expect(first.hasAttribute('inert')).toBe(true);
   });
 
-  it('sizes the Popup to the active registered Content page', async () => {
+  it('sizes the Popup to the active Content page and includes root padding', async () => {
     const { root, content } = createMenu();
     const rootItems = document.createElement('div');
     const trigger = createItem('Quality');
@@ -184,11 +184,18 @@ describe('MenuElement', () => {
     submenu.append(submenuItems);
     content.append(rootItems, submenu);
     root.open = true;
+    root.style.paddingInlineStart = '6px';
+    root.style.paddingInlineEnd = '6px';
+    root.style.paddingBlockStart = '4px';
+    root.style.paddingBlockEnd = '4px';
     setElementSize(rootItems, 180, 100);
     setElementSize(submenuItems, 220, 240);
     document.body.append(root);
 
-    await waitForAssertion(() => expect(root.style.getPropertyValue('--media-menu-width')).toBe('180px'));
+    await waitForAssertion(() => {
+      expect(root.style.getPropertyValue('--media-menu-width')).toBe('192px');
+      expect(root.style.getPropertyValue('--media-menu-height')).toBe('108px');
+    });
     trigger.click();
     await waitForAssertion(() => {
       expect(root.style.getPropertyValue('--media-menu-width')).toBe('220px');
