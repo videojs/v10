@@ -25,6 +25,7 @@ describe('PositionController', () => {
     const root = document.createDocumentFragment();
     const trigger = document.createElement('button');
     const host = createHost();
+
     trigger.id = 'trigger';
     root.append(trigger, host);
 
