@@ -353,7 +353,10 @@ describe('buildKeySystemConfigurations', () => {
       audio: [],
     });
 
-    expect(config?.initDataTypes).toEqual(['sinf', 'cenc']);
+    // `skd` is what a manifest-driven session generates a request under, so it
+    // has to be negotiated for even though `sinf` is what an appended segment
+    // reports.
+    expect(config?.initDataTypes).toEqual(['skd', 'sinf', 'cenc']);
   });
 
   it('stamps the declared encryption scheme on every capability', () => {
