@@ -24,6 +24,7 @@ function createDefinedElement<Class extends CustomElementConstructor & { readonl
   if (!customElements.get(Constructor.tagName)) {
     customElements.define(Constructor.tagName, Constructor);
   }
+
   return document.createElement(Constructor.tagName) as InstanceType<Class>;
 }
 
@@ -220,6 +221,7 @@ describe('AlertDialogBackdropElement', () => {
   it('is presentational and receives dialog state attributes', async () => {
     const dialog = createElement(AlertDialogElement);
     const backdrop = createDefinedElement(AlertDialogBackdropElement);
+
     dialog.open = true;
     dialog.append(backdrop);
 
@@ -241,6 +243,7 @@ describe('AlertDialogPopupElement', () => {
   it('receives dialog state attributes', async () => {
     const dialog = createElement(AlertDialogElement);
     const popup = createDefinedElement(AlertDialogPopupElement);
+
     dialog.open = true;
     dialog.append(popup);
 

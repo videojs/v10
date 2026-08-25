@@ -146,6 +146,7 @@ describe('composite define registration', () => {
   describe('ui/alert-dialog', () => {
     it('registers media-alert-dialog before sub-elements', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/alert-dialog');
       const batch = batchSince(before);
 
@@ -161,6 +162,7 @@ describe('composite define registration', () => {
   describe('ui/error-dialog', () => {
     it('registers media-error-dialog and reuses alert-dialog parts', async () => {
       const before = spy.mock.calls.length;
+
       await import('../ui/error-dialog');
       const batch = batchSince(before);
 

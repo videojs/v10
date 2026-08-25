@@ -194,6 +194,7 @@ describe('ControlsBackdropElement', () => {
     const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
     const controls = createDefinedElement(ControlsElement);
     const backdrop = createDefinedElement(ControlsBackdropElement);
+
     controls.append(backdrop);
 
     document.body.append(provider);

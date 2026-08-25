@@ -1,9 +1,4 @@
-export {
-  Backdrop,
-  type BackdropProps,
-  Popup,
-  type PopupProps,
-} from '../alert-dialog/index.parts';
+export { Backdrop, type BackdropProps, Popup, type PopupProps } from '../alert-dialog/index.parts';
 export { ErrorDialogClose as Close, type ErrorDialogCloseProps as CloseProps } from './error-dialog-close';
 export {
   ErrorDialogDescription as Description,
