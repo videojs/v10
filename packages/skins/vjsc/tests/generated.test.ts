@@ -39,7 +39,9 @@ describe('generated VJSC source', () => {
       enforce: 'pre',
       transform(code, id) {
         const key = generatedKey(id, sourceNames);
+
         if (key) transformed.set(key, normalizeGeneratedSource(code));
+
         return null;
       },
     };
@@ -56,6 +58,7 @@ describe('generated VJSC source', () => {
     await Promise.all(
       modules.map(async (module) => {
         const result = await server!.transformRequest(module.request);
+
         expect(result, module.key).not.toBeNull();
       })
     );
@@ -66,7 +69,9 @@ describe('generated VJSC source', () => {
     const output = modules
       .map((module) => {
         const code = transformed.get(module.key);
+
         if (!code) throw new Error(`VJSC did not transform \`${module.key}\`.`);
+
         return `// ===== ${module.key} =====\n${code.trim()}\n`;
       })
       .join('\n');
@@ -87,10 +92,12 @@ async function sourceModules(): Promise<string[]> {
 
 async function walkFiles(directory: string): Promise<string[]> {
   const entries = await readdir(directory, { withFileTypes: true });
+
   return (
     await Promise.all(
       entries.map((entry: Dirent) => {
         const path = resolve(directory, entry.name);
+
         return entry.isDirectory() ? walkFiles(path) : [path];
       })
     )
@@ -106,10 +113,12 @@ function generatedModules(sources: readonly string[]): GeneratedModule[] {
         for (const filename of sources) {
           const name = sourceName(filename);
           const ownedSkin = /^skins\/([^/]+)\//.exec(name)?.[1];
+
           if (ownedSkin && ownedSkin !== skin) continue;
 
           const parameters = new URLSearchParams({ target, skin, style });
           const key = `${target}/${skin}/${style}/${name}`;
+
           modules.push({ key, request: `/@fs${filename}?${parameters}` });
         }
       }
@@ -121,15 +130,18 @@ function generatedModules(sources: readonly string[]): GeneratedModule[] {
 
 function generatedKey(id: string, sourceNames: ReadonlyMap<string, string>): string | undefined {
   const queryIndex = id.indexOf('?');
+
   if (queryIndex < 0) return undefined;
 
   const name = sourceNames.get(id.slice(0, queryIndex));
+
   if (!name) return undefined;
 
   const parameters = new URLSearchParams(id.slice(queryIndex + 1));
   const target = parameters.get('target');
   const skin = parameters.get('skin');
   const style = parameters.get('style');
+
   return target && skin && style ? `${target}/${skin}/${style}/${name}` : undefined;
 }
 

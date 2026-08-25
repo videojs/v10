@@ -31,6 +31,7 @@ export interface SourceChildrenToken {
 
 export function singleJsxElementChild(node: JSXElement): JSXElement | undefined {
   const children = node.children.filter((child) => child.type !== 'JSXText' || child.value.trim() !== '');
+
   return children.length === 1 && children[0]?.type === 'JSXElement' ? children[0] : undefined;
 }
 

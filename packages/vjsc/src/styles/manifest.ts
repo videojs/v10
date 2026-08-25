@@ -67,6 +67,7 @@ export function utilityGroupsForRule(rule: StyleManifestRule, variants: readonly
   const selected = variants.flatMap((variant) => rule.variantGroups[variant] ?? []);
 
   if (selected.length === 0) return rule.utilityGroups;
+
   return mergeUtilityGroups([...rule.utilityGroups, ...selected]);
 }
 
