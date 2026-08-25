@@ -157,7 +157,7 @@ export default defineConfig({
     ...(shouldStartVjscServer
       ? [
           {
-            command: 'pnpm exec vite --host --port 5190 --strictPort',
+            command: 'pnpm exec vp -C dev dev --host --port 5190 --strictPort',
             cwd: '../../packages/skins',
             port: 5190,
             reuseExistingServer: !CI,
