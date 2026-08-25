@@ -150,8 +150,8 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       override connectedCallback() {
         this.#connected = true;
-        this.#syncInitialConfig();
         super.connectedCallback();
+        this.#syncInitialConfig();
         this.#playerProvider.setValue(this.store);
         this.#publishMedia();
         this.#publishContainer();

@@ -298,6 +298,32 @@ describe('createPlayer', () => {
     player.remove();
   });
 
+  it('applies property configuration that shadowed an accessor before connection', async () => {
+    const { ProviderMixin } = createPlayer({ features: [features.orientationLock] });
+    const ProviderElement = ProviderMixin(UIElement);
+    const tagName = `test-shadowed-config-provider-${tagCounter++}`;
+
+    customElements.define(tagName, ProviderElement);
+
+    // SAFETY: The tag was registered with ProviderElement immediately above.
+    const player = document.createElement(tagName) as InstanceType<typeof ProviderElement>;
+
+    Object.defineProperty(player, 'orientationLockType', {
+      value: 'portrait',
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
+    document.body.append(player);
+
+    await vi.waitFor(() => expect(player.store.orientationLockType).toBe('portrait'));
+
+    player.orientationLockType = 'natural';
+    await player.updateComplete;
+
+    expect(player.store.orientationLockType).toBe('natural');
+  });
+
   it('leaves config attributes inert when their feature is absent', () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
     const ProviderElement = ProviderMixin(UIElement);
