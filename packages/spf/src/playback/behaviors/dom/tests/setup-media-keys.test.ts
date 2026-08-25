@@ -12,6 +12,8 @@ import {
   SVTA_DRM_CERTIFICATE_ERROR,
   SVTA_DRM_LICENSE_REJECTED,
   SVTA_DRM_LICENSE_REQUEST_GENERATION_FAILED,
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
   type SvtaError,
 } from '../../../../media/errors';
@@ -421,6 +423,78 @@ describe('setupMediaKeys', () => {
     // parking the source.
     await vi.waitFor(() => expect(context.mediaKeys.get()).toBe(eme.mediaKeys));
     expect(fetchServerCertificate).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  // `makePresentation` leaves `encrypted` unset, which is what a rendition looks
+  // like before its playlist is parsed. These two pin the verdict on a
+  // presentation that has actually resolved as encrypted.
+  function makeEncryptedPresentation(types: Array<'video' | 'audio'>, keys: object[]): Presentation {
+    return {
+      id: 'p1',
+      url: 'https://example.com/multivariant.m3u8',
+      selectionSets: types.map((type, i) => ({
+        id: `ss-${type}`,
+        type,
+        switchingSets: [
+          {
+            id: `sw-${type}`,
+            type,
+            tracks: [
+              {
+                type,
+                id: `${type}-${i}`,
+                url: `https://example.com/${type}.m3u8`,
+                bandwidth: 1000,
+                mimeType: `${type}/mp4`,
+                codecs: [type === 'video' ? 'avc1.4d401f' : 'mp4a.40.2'],
+                segments: [{ id: 's0', url: 'https://example.com/0.m4s', startTime: 0, duration: 4 }],
+                startTime: 0,
+                duration: 4,
+                metadata: {
+                  mediaPlaylist: { targetDuration: 4, mediaSequence: 0, endList: true, keys, encrypted: true },
+                },
+              },
+            ],
+          },
+        ],
+      })),
+    } as unknown as Presentation;
+  }
+
+  it('follows 4008 with a per-type verdict when every rendition needs the CDM it could not get', async () => {
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(undefined);
+    const { state, reactor } = setupSetupMediaKeys(
+      { presentation: makeEncryptedPresentation(['video', 'audio'], [WIDEVINE_KEY]) },
+      { mediaElement: document.createElement('video') }
+    );
+
+    // Without the verdicts the adapter has no fatal condition and the source
+    // parks silently — the cause alone never reaches `media.error`.
+    await vi.waitFor(() =>
+      expect(state.errors.get()?.map((error) => error.code)).toEqual([
+        SVTA_UNSUPPORTED_DRM_SYSTEM,
+        SVTA_NO_SUPPORTED_VIDEO_TRACK,
+        SVTA_NO_SUPPORTED_AUDIO_TRACK,
+      ])
+    );
+
+    reactor.destroy();
+  });
+
+  it('reports only the cause when a type keeps a clear rendition', async () => {
+    vi.mocked(requestKeySystemAccess).mockResolvedValue(undefined);
+    // Mux's shape: encrypted video, clear audio. Audio still plays, so a verdict
+    // for it would be wrong.
+    const presentation = makeEncryptedPresentation(['video'], [WIDEVINE_KEY]);
+    const { state, reactor } = setupSetupMediaKeys({ presentation }, { mediaElement: document.createElement('video') });
+
+    await vi.waitFor(() => expect(state.errors.get()?.length).toBe(2));
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([
+      SVTA_UNSUPPORTED_DRM_SYSTEM,
+      SVTA_NO_SUPPORTED_VIDEO_TRACK,
+    ]);
 
     reactor.destroy();
   });

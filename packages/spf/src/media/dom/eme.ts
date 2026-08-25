@@ -18,6 +18,7 @@ export {
   keySystemCandidates,
   resolveDrmUrl,
   toCencInitData,
+  unplayableEncryptedTypes,
 } from '../drm';
 
 /**
