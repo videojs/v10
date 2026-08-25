@@ -271,10 +271,9 @@ Open `site/src/docs.config.ts` and add your page to the appropriate category und
 - **UI Components** — UI component reference pages, sorted alphabetically
 - **Media Components** — media elements that handle streaming protocols and playback
 - **Player Features** — feature modules passed to `createPlayer`
-- **Utilities** — hooks, utilities, controllers, and mixins. Commonly used entries
-  go at the top of the list; everything else follows.
+- **Utilities** — hooks, utilities, controllers, and mixins. Keep primary integration APIs at the top level and put lower-level implementation APIs in the single Advanced subgroup.
 
-The categories are flat by design, so don't nest a new subsection inside them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
+UI Components, Media Components, and Player Features are flat by design. Do not add nested subsections to them. Mark framework-specific entries with `frameworks: ['react']` or `frameworks: ['html']` on the entry itself.
 
 ```ts
 {
