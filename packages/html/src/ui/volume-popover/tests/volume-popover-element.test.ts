@@ -40,6 +40,7 @@ if (!customElements.get('test-volume-popover-player')) {
 
 function createPopover(): VolumePopoverElement {
   const tag = `test-volume-popover-${tagCounter++}`;
+
   customElements.define(tag, class extends VolumePopoverElement {});
   return document.createElement(tag) as VolumePopoverElement;
 }
@@ -59,6 +60,7 @@ describe('VolumePopoverElement', () => {
     ['unsupported', true],
   ] as const)('reflects %s volume controls with hidden=%s', async (volumeAvailability, hidden) => {
     const provider = document.createElement('test-volume-popover-player') as TestPlayerProviderElement;
+
     provider.store = createVolumeStore(volumeAvailability);
     const trigger = document.createElement('button');
     const popover = createPopover();

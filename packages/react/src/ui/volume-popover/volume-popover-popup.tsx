@@ -1,6 +1,7 @@
 import { VolumePopoverDataAttrs } from '@videojs/core';
 import { getStateDataAttrs } from '@videojs/core/dom';
 import { forwardRef } from 'react';
+
 import { PopoverPopup, type PopoverPopupProps } from '../popover/popover-popup';
 import { useVolumePopoverContext } from './context';
 
@@ -10,6 +11,7 @@ export interface VolumePopoverPopupProps extends PopoverPopupProps {}
 export const VolumePopoverPopup = forwardRef<HTMLDivElement, VolumePopoverPopupProps>(
   function VolumePopoverPopup(props, forwardedRef) {
     const { state } = useVolumePopoverContext();
+
     if (state.hidden) return null;
 
     return <PopoverPopup ref={forwardedRef} {...getStateDataAttrs(state, VolumePopoverDataAttrs)} {...props} />;

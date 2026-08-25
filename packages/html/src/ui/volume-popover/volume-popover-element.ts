@@ -2,6 +2,7 @@ import { VolumePopoverCore, VolumePopoverDataAttrs } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, selectVolume } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 import type { MediaVolumeState } from '@videojs/media';
+
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { PopoverElement } from '../popover/popover-element';
@@ -37,10 +38,13 @@ export class VolumePopoverElement extends PopoverElement {
     this.#core.setMedia(this.#volume.value ?? unavailableVolume);
 
     const state = this.#core.getState();
+
     applyStateDataAttrs(this, state, VolumePopoverDataAttrs);
     this.hidden = state.hidden;
+
     if (state.hidden) {
       this.close();
+
       if (this.triggerElement) {
         applyElementProps(this.triggerElement, {
           'aria-expanded': undefined,
