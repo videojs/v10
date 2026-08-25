@@ -137,7 +137,6 @@ function setNativeTextMode(showId: string | undefined) {
 
   for (let i = 0; i < tt.length; i++) {
     const track = tt[i];
-
     if (!track || (track.kind !== 'subtitles' && track.kind !== 'captions')) continue;
 
     track.mode = track.id === showId ? 'showing' : 'disabled';
@@ -645,7 +644,6 @@ function renderTextTrackPicker() {
   for (const track of tracks) {
     const language = track.language || undefined;
     const key = language ?? track.id;
-
     if (seen.has(key)) continue;
 
     seen.add(key);
@@ -702,13 +700,11 @@ function selectedTimelineTrack() {
 
   const state = snapshot(signals.state);
   const trackId = state.selectedVideoTrackId ?? state.selectedAudioTrackId;
-
   if (!state.presentation?.selectionSets || !trackId) return undefined;
 
   for (const selectionSet of state.presentation.selectionSets) {
     for (const switchingSet of selectionSet.switchingSets) {
       const track = switchingSet.tracks.find((t) => t.id === trackId);
-
       if (track) return track;
     }
   }
@@ -727,7 +723,6 @@ function liveHoldBack(): number {
 /** The live-edge seek target: seekable end − HOLD-BACK, clamped into the window. */
 function liveEdgeTarget(): number | undefined {
   const { seekable } = video;
-
   if (!seekable.length) return undefined;
 
   const end = seekable.end(seekable.length - 1);
@@ -941,7 +936,6 @@ function startEngine(src: string) {
 
       ctx.videoBuffer.addEventListener('updateend', () => {
         const buf = engine.context.videoBuffer.get();
-
         if (!buf) return;
 
         const ranges: string[] = [];
@@ -970,7 +964,6 @@ function startEngine(src: string) {
 
       ctx.audioBuffer.addEventListener('updateend', () => {
         const buf = engine.context.audioBuffer.get();
-
         if (!buf) return;
 
         const ranges: string[] = [];
@@ -1036,7 +1029,6 @@ document.getElementById('pause')!.addEventListener('click', () => {
 });
 document.getElementById('seek-to-edge')!.addEventListener('click', () => {
   const target = liveEdgeTarget();
-
   if (target === undefined) return log('Seek to live edge: no seekable window', 'warning');
 
   video.currentTime = target;
@@ -1044,7 +1036,6 @@ document.getElementById('seek-to-edge')!.addEventListener('click', () => {
 });
 document.getElementById('seek-behind-window')!.addEventListener('click', () => {
   const { seekable } = video;
-
   if (!seekable.length) return log('Seek out of window: no seekable window', 'warning');
 
   // 30s behind the window start. The browser clamps the seek to `seekable`, so
@@ -1062,7 +1053,6 @@ document.getElementById('clearLogs')!.addEventListener('click', () => {
 
 setSrcBtn.addEventListener('click', () => {
   const url = srcInput.value.trim();
-
   if (!url) return;
 
   log(`Setting src: ${url}`, 'info');
@@ -1075,7 +1065,6 @@ srcInput.addEventListener('input', updateShareUrl);
 
 srcPreset.addEventListener('change', () => {
   const preset = PRESETS.find((p) => p.url === srcPreset.value);
-
   if (!preset) return;
 
   srcInput.value = preset.url;

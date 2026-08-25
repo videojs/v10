@@ -13,7 +13,6 @@ import { effect } from './effect';
  */
 export function when(condition: () => boolean, options: { signal?: AbortSignal } = {}): Promise<void> {
   const { signal } = options;
-
   if (signal?.aborted) return Promise.reject(signal.reason);
 
   return new Promise<void>((resolve, reject) => {

@@ -161,11 +161,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
           // `properties` (like `loop`, `preload`) keep their legacy proto-walk
           // path so the mediaHost still receives the setter call.
           const propConfig = properties[prop];
-
           if (propConfig && (propConfig.attribute ?? prop.toLowerCase()) !== kebabCase(prop)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
-
           if (!descriptor) continue;
 
           const config: PropertyDescriptor = {
@@ -267,7 +265,6 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
     #attachToTarget(): void {
       const target = this.target;
-
       if (target === this.#mediaHost.target) return;
 
       if (this.#mediaHost.target) this.#mediaHost.detach();

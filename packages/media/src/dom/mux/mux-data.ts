@@ -216,7 +216,6 @@ export class MuxData implements MuxDataProps {
 
     const target = this.#target;
     const media = this.#media;
-
     if (!this.MuxDataSdk || !target || !media || (target.mux && !target.mux.deleted)) return;
 
     const {

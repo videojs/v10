@@ -364,7 +364,6 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   }
   set source(value: TwitchSource | null) {
     const source = value ?? null;
-
     // Changing anything takes a new object, so handing the same one back is a no-op.
     if (source === this.#source) return;
 
@@ -429,7 +428,6 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
   // Build the embed and listen to it once a source resolves; an unresolvable target settles its load and retries later.
   #createPlayer(): boolean {
     const target = this.#target;
-
     if (!target || this.#messages) return false;
 
     // The `src` property resolves an empty attribute to the document URL; only the attribute can spot a placeholder.
@@ -487,7 +485,6 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
 
   #sendCommand(command: number, params?: unknown) {
     const embedWindow = this.#target?.contentWindow;
-
     if (!embedWindow) return;
 
     const message: TwitchCommandMessage = { namespace: PLAYER_PROXY_NAMESPACE, eventName: command, params };
@@ -528,12 +525,10 @@ export class TwitchMedia extends TwitchMediaBase implements Partial<Video> {
     if (this.#isStale(attachId)) return;
 
     const embedWindow = this.#target?.contentWindow;
-
     // Any frame on the page can post here, so only the embed we bound is allowed to drive state.
     if (!embedWindow || event.source !== embedWindow) return;
 
     const { data } = event;
-
     if (!isTwitchMessage(data)) return;
 
     if (data.namespace === EMBED_NAMESPACE) {
@@ -691,7 +686,6 @@ function isContentOnlyChange(current: string, next: string): boolean {
 // Name the page in `parent` when the URL does not: the embed refuses to play in a page its ancestors list omits.
 function withPageParent(embedSrc: string): string {
   const hostname = globalThis.location?.hostname;
-
   if (!hostname) return embedSrc;
 
   let url: URL;

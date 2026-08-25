@@ -29,7 +29,6 @@ export async function compileStyles(options: CompileStylesOptions): Promise<Map<
     if (options.ruleClassNames && !options.ruleClassNames.has(rule.className)) continue;
 
     const compiled = compileRule(rule, options.design, options.variant);
-
     if (compiled.candidates.length === 0) continue;
 
     const existing = byFile.get(rule.file);
@@ -108,7 +107,6 @@ function collectRelationships(
 
 function registerRelationshipOwner(owners: Map<string, string>, utility: string, rule: StyleManifestRule): void {
   const previous = owners.get(utility);
-
   if (previous && previous !== rule.className) {
     throw new Error(`Style relationship marker \`${utility}\` maps to both \`${previous}\` and \`${rule.className}\`.`);
   }

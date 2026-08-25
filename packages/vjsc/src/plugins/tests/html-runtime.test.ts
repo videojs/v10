@@ -80,7 +80,6 @@ async function loadRuntime(): Promise<HtmlRuntime> {
   });
   const { output } = await build.generate({ format: 'esm' });
   const chunk = output.find((item) => item.type === 'chunk');
-
   if (!chunk) throw new Error('Expected the HTML runtime bundle to contain a chunk.');
 
   const url = `data:text/javascript;base64,${Buffer.from(chunk.code).toString('base64')}`;

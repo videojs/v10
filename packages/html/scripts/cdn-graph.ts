@@ -54,11 +54,9 @@ export function resolveClosure(dir: string, roots: readonly string[]): Set<strin
 
   while (queue.length > 0) {
     const file = queue.pop() as string;
-
     if (seen.has(file)) continue;
 
     const path = resolve(dir, file);
-
     if (!existsSync(path)) {
       throw new Error(`Expected bundle is missing from the build: ${file}`);
     }

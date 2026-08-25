@@ -96,7 +96,6 @@ export function PopoverRoot({
     if (isUndefined(controlledOpen)) return;
 
     const { active: inputOpen } = popover.input.current;
-
     if (controlledOpen === inputOpen) return;
 
     if (controlledOpen) {

@@ -231,7 +231,6 @@ function baseOptions(overrides: Partial<FixtureOptions> = {}): FixtureOptions {
       items: (modules) =>
         modules.flatMap<ShadcnItem<FixtureMeta>>((module) => {
           const { filename, meta: itemMeta, transform } = module;
-
           if (basename(filename) === 'utils.ts') {
             return [
               {
@@ -285,7 +284,6 @@ function setup(files: Readonly<Record<string, string>>): string {
 
 function assetJson(output: RolldownOutput, filename: string): any {
   const asset = output.output.find((item) => item.type === 'asset' && item.fileName === filename);
-
   if (asset?.type !== 'asset') throw new Error(`Missing asset: ${filename}`);
 
   return JSON.parse(String(asset.source));

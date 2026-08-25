@@ -43,7 +43,6 @@ const PLACEHOLDER_PATTERN = /{{([A-Z0-9_]+)}}/g;
 export function replaceDemoPlaceholders(source: string): string {
   return source.replace(PLACEHOLDER_PATTERN, (placeholder, name: string) => {
     const value = DEMO_PLACEHOLDERS[name as keyof typeof DEMO_PLACEHOLDERS];
-
     if (!value) {
       throw new Error(`Unknown demo placeholder: ${placeholder}`);
     }
@@ -56,7 +55,6 @@ export function transformDemoPlaceholders(source: string, id: string): string | 
   const [filePath, query = ''] = id.split('?', 2);
   const isRawHtml = filePath.endsWith('.html') && new URLSearchParams(query).has('raw');
   const isReactDemo = filePath.endsWith('.tsx');
-
   if (!filePath.includes(DEMOS_DIRECTORY) || (!isRawHtml && !isReactDemo)) {
     return null;
   }

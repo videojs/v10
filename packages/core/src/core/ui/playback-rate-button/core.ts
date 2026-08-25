@@ -46,7 +46,6 @@ export class PlaybackRateButtonCore {
 
   getLabel(state: PlaybackRateButtonState): Text | string {
     const custom = resolveLabel(this.#props.label, state);
-
     if (custom !== undefined) return custom;
 
     return rateText;
@@ -84,7 +83,6 @@ export class PlaybackRateButtonCore {
     if (this.#props.menuTrigger) return;
 
     const { playbackRates, playbackRate } = media;
-
     if (playbackRates.length === 0) return;
 
     const idx = playbackRates.indexOf(playbackRate);

@@ -65,7 +65,6 @@ export function applyRules<T, State, Context, Config>(
 
   for (const rule of rules) {
     const remaining = rule(current, deps);
-
     if (remaining.length === 0) continue;
 
     current = remaining;
@@ -156,7 +155,6 @@ export function excludeUnplayableTracks<T, State, Context, Config>(
   { config }: SelectionRuleDeps<State, Context, Config>
 ): readonly T[] {
   const canPlay = (config as CapabilityConstraintConfig | undefined)?.canPlayTrack;
-
   if (!canPlay) return tracks;
 
   return tracks.filter((track) => canPlay(track as Parameters<CanPlayTrack>[0]));
@@ -210,7 +208,6 @@ export function preferCodecFamilies<T, State, Context, Config>(
   { config }: SelectionRuleDeps<State, Context, Config>
 ): readonly T[] {
   const preferred = (config as CodecPreferenceConfig | undefined)?.preferredCodecs ?? DEFAULT_PREFERRED_CODECS;
-
   if (!preferred.length) return tracks;
 
   const preferredFamilies = new Set(preferred.map(getCodecFamily));

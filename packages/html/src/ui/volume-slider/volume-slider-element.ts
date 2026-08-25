@@ -140,7 +140,6 @@ export class VolumeSliderElement extends UIElement {
     if (!this.#slider) return;
 
     const media = this.#volumeState.value;
-
     if (!media) return;
 
     this.#core.setInput(this.#slider.input.current);

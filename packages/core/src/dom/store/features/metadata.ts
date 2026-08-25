@@ -65,7 +65,6 @@ export const metadataFeature = definePlayerFeature({
   },
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaContentDataCapable(media)) return;
 
     const sync = () =>

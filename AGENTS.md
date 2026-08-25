@@ -51,7 +51,7 @@ Use the narrowest relevant test/build while iterating. Before handoff, run check
 
 - Match nearby code before introducing a new abstraction or naming rule.
 - Check `@videojs/utils` before adding a helper. Prefer its predicate helpers over inline type/null checks where an equivalent exists.
-- Structure function bodies as semantic paragraphs. Keep related declarations and operations together; separate unrelated declaration groups and changes of phase—such as setup, validation, mutation, notification, and return—with one blank line.
+- Structure function bodies as semantic paragraphs. Keep a declaration and an immediately following guard for its value in the same paragraph. Otherwise, keep related declarations and operations together; separate unrelated declaration groups and changes of phase—such as setup, validation, mutation, notification, and return—with one blank line.
 - Keep types beside their implementation; do not create generic `types.ts` buckets.
 - Put package tests in a `tests/` directory beside the implementation and name them `<module>.test.ts`.
 - Use Vitest and name `describe()` after the exact export under test.

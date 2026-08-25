@@ -261,7 +261,6 @@ export function createSourceBufferActor(
           remove: onMessage,
           batch: (msg, { transition, setContext, getContext, runner }) => {
             const { messages } = msg;
-
             if (messages.length === 0) return;
 
             transition('updating');

@@ -187,7 +187,6 @@ function syncTextTracksSetup({
             // `showingTrack.id` matches the SPF id we set when the slot was
             // allocated. Empty-string ids fall through to `undefined`.
             const showingId = showingTrack?.id || undefined;
-
             // Echo guard: selectedTextTrackId is the id we last drove into the
             // DOM (mirror / resolver correction). A change still showing it is our
             // own echo — ignore it rather than write spurious intent.

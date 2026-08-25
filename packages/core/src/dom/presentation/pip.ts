@@ -25,7 +25,6 @@ export function isPictureInPictureEnabled() {
  */
 export function isPictureInPictureCapable(media: EventTarget) {
   const webkitVideo = media as WebKitVideoElement;
-
   if (isFunction(webkitVideo.webkitSetPresentationMode)) return true;
 
   return isMediaPictureInPictureCapable(media);
@@ -33,7 +32,6 @@ export function isPictureInPictureCapable(media: EventTarget) {
 
 export function isPictureInPicture(media: EventTarget) {
   const webkitVideo = media as WebKitVideoElement;
-
   if (webkitVideo.webkitPresentationMode === 'picture-in-picture') {
     return true;
   }
@@ -58,7 +56,6 @@ export async function requestPictureInPicture(media: EventTarget) {
   }
 
   const video = media as unknown as MediaPictureInPictureCapability;
-
   if (isFunction(video.requestPictureInPicture)) {
     return video.requestPictureInPicture() as Promise<void>;
   }
@@ -80,7 +77,6 @@ export async function exitPictureInPicture(media: EventTarget) {
   }
 
   const video = media as unknown as MediaPictureInPictureCapability;
-
   if (isFunction(video.exitPictureInPicture)) {
     return video.exitPictureInPicture() as Promise<void>;
   }

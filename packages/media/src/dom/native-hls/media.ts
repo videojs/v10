@@ -125,7 +125,6 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
   set source(value: NativeHlsSource | null) {
     const source = value ?? null;
-
     // Changing anything takes a new object, so handing the same one back costs
     // nothing.
     if (source === this.#source) return;

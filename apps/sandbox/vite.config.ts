@@ -28,7 +28,6 @@ function isHtmlCdnChunk(importer?: string): boolean {
 /** True when this import should share the single CDN i18n registry module instance. */
 function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
   const normalizedSource = normalizePath(source);
-
   if (
     source === '@videojs/html/cdn/i18n' ||
     normalizedSource === htmlCdnI18nRegistry ||
@@ -39,7 +38,6 @@ function resolvesToCdnI18nRegistry(source: string, importer?: string): boolean {
 
   const isRelativeI18nChunk =
     source === './i18n.dev.js' || source === '../i18n.dev.js' || source.endsWith('/i18n.dev.js');
-
   if (isRelativeI18nChunk && isHtmlCdnChunk(importer)) {
     return true;
   }
@@ -79,7 +77,6 @@ function cdnSandboxI18nPlugin(): Plugin {
 
         if (cdnEntryMatch && cdnEntryMatch[1] !== 'i18n') {
           const devEntry = resolveHtmlCdnDevEntry(cdnEntryMatch[1]);
-
           if (devEntry) return devEntry;
         }
 

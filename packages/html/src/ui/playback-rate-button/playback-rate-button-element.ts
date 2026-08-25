@@ -63,7 +63,6 @@ export class PlaybackRateButtonElement extends MediaButtonElement<PlaybackRateBu
     super.update(changed);
 
     const media = this.mediaState.value;
-
     if (!media || !this.commandfor) return;
 
     applyElementProps(this, {

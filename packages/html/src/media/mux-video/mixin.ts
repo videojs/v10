@@ -89,7 +89,6 @@ export function MuxVideoMixin<Class extends AnyConstructor<HTMLElement>>(BaseCla
     // the derived poster URL is built from.
     #applyPosterTime(time: number | undefined) {
       const source = this.host.source;
-
       if (source?.poster?.time === time) return;
 
       // Nothing to write into yet. `#syncPosterTime` re-applies the attribute once a

@@ -14,7 +14,6 @@ export const remotePlaybackFeature = definePlayerFeature({
 
     async toggleRemotePlayback() {
       const { media, container } = target();
-
       if (isRemotePlaybackConnected(media)) {
         return requestRemotePlayback(media);
       }
@@ -29,7 +28,6 @@ export const remotePlaybackFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaRemotePlaybackCapable(media)) return;
 
     // Safari's W3C `media.remote` events don't fire reliably for AirPlay

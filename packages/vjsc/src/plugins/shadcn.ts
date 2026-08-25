@@ -139,7 +139,6 @@ function collectChunkDependencies(bundle: OutputBundle, roots: Iterable<string>)
     if (collected.has(fileName)) return;
 
     const output = bundle[fileName];
-
     if (output?.type !== 'chunk') return;
 
     collected.add(fileName);
@@ -175,7 +174,6 @@ function discoverStyleFiles(input: string): string[] {
   const files = new Set<string>();
   const visit = (filename: string): void => {
     const resolved = resolveModulePath(filename);
-
     if (files.has(resolved)) return;
 
     files.add(resolved);

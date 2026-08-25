@@ -63,7 +63,6 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
           event.stopImmediatePropagation();
 
           const native = target.error;
-
           if (!native) return;
 
           const code = native.code;

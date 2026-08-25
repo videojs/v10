@@ -4,7 +4,6 @@ export function toggleCommandTarget(host: HTMLElement, commandfor: string): void
   const target =
     ('getElementById' in root ? root.getElementById(commandfor) : null) ??
     root.querySelector<HTMLElement>(`#${CSS.escape(commandfor)}`);
-
   if (!target || !('open' in target)) return;
 
   const popup = target as { open: boolean };

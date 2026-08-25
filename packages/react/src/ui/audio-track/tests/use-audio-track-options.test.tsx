@@ -41,7 +41,6 @@ function AudioTrackRadioGroup({
   formatTrack?: ((track: MediaAudioTrack) => string) | undefined;
 }): ReactNode {
   const audioTrack = useAudioTrackOptions(formatTrack ? { formatTrack } : undefined);
-
   if (!audioTrack) return null;
 
   const { options, selectedLabel, setValue, value } = audioTrack;

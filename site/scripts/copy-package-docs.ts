@@ -64,7 +64,6 @@ export function synthesizeReadme({
   version: string | undefined;
 }): string {
   const packageName = PACKAGE_NAMES[framework];
-
   if (!packageName) throw new Error(`Unknown framework: ${framework}`);
 
   const versionSuffix = version ? ` v${version}` : '';
@@ -176,7 +175,6 @@ export function packageDocumentation({
     for (const framework of frameworks) {
       const frameworkTarget = target === 'cli' ? join(stagingDirectory, framework) : stagingDirectory;
       const sourceDirectory = sources.get(framework);
-
       if (!sourceDirectory) throw new Error(`Missing documentation source for ${framework}`);
 
       copiedFiles += copyFrameworkDocumentation({

@@ -52,7 +52,6 @@ export async function pollForPlaybackId(options: PollOptions): Promise<PollResul
     await sleep(interval);
 
     const result = await getUploadStatus(uploadId);
-
     if (result.error) {
       return { status: 'error', message: result.error.message };
     }
@@ -73,7 +72,6 @@ export async function pollForPlaybackId(options: PollOptions): Promise<PollResul
     await sleep(interval);
 
     const result = await getAssetStatus(assetId);
-
     if (result.error) {
       return { status: 'error', message: result.error.message };
     }

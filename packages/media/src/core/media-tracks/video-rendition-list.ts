@@ -47,7 +47,6 @@ export function removeRendition(rendition: VideoRendition) {
 
 export function selectedChanged(rendition: VideoRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.videoRenditions as VideoRenditionList | undefined;
-
   // Prevent firing a rendition list `change` event multiple times per tick.
   if (!renditionList || getPrivate(renditionList).changeRequested) return;
 
@@ -57,7 +56,6 @@ export function selectedChanged(rendition: VideoRendition) {
     delete getPrivate(renditionList).changeRequested;
 
     const track = getPrivate(rendition).track as VideoTrack;
-
     if (!track.selected) return;
 
     renditionList.dispatchEvent(new Event('change'));
@@ -66,7 +64,6 @@ export function selectedChanged(rendition: VideoRendition) {
 
 export function activeChanged(rendition: VideoRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.videoRenditions as VideoRenditionList | undefined;
-
   if (!renditionList || getPrivate(renditionList).activeChangeRequested) return;
 
   getPrivate(renditionList).activeChangeRequested = true;
@@ -75,7 +72,6 @@ export function activeChanged(rendition: VideoRendition) {
     delete getPrivate(renditionList).activeChangeRequested;
 
     const track = getPrivate(rendition).track as VideoTrack;
-
     if (!track.selected) return;
 
     renditionList.dispatchEvent(new Event('activechange'));
@@ -84,7 +80,6 @@ export function activeChanged(rendition: VideoRendition) {
 
 function getCurrentRenditions(renditionList: VideoRenditionList): VideoRendition[] {
   const media = getPrivate(renditionList).media?.deref() as HTMLMediaElement | undefined;
-
   if (!media) return [];
 
   return [...media.videoTracks]

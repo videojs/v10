@@ -175,7 +175,6 @@ export function createI18nProviderMixin({ context, loader = defaultLoader }: I18
 
       #publish(): void {
         const locale = this.#resolvedLocale();
-
         if (
           this.#publishedLocale === locale &&
           this.#publishedRegistryEpoch === this.#registryEpoch &&

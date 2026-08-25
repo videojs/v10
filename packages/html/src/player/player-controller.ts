@@ -74,7 +74,6 @@ export class PlayerController<Store extends PlayerStore, Result = Store> impleme
 
   get value(): Result | undefined {
     const store = this.#consumer.value;
-
     if (!store) return undefined;
 
     // Without selector: return store directly

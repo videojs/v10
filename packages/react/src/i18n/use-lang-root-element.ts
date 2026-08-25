@@ -26,7 +26,6 @@ export function useLangRootElement(
     }
 
     const node = langRootRef.current;
-
     if (node === langRootElementRef.current) return;
 
     langRootElementRef.current = node;

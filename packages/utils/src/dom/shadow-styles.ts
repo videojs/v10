@@ -3,7 +3,6 @@ export type ShadowStyle = CSSStyleSheet | string;
 /** Inject a `<style>` tag into `document.head` once (idempotent by `id`). */
 export function ensureGlobalStyle(id: string, css: string): void {
   const doc = globalThis.document;
-
   if (!doc || doc.getElementById(id)) return;
 
   const style = doc.createElement('style');

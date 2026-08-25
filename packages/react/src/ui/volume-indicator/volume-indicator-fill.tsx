@@ -41,7 +41,6 @@ function getVolumeIndicatorFillStyle(
         [VolumeIndicatorCSSVars.fill]: state.fill,
       } as CSSProperties)
     : undefined;
-
   if (!vars) return style;
 
   if (isFunction(style)) {

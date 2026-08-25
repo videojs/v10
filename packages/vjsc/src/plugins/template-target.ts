@@ -40,11 +40,9 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
       filter: { id: SCRIPT_ID, code: 'Template' },
       handler(code, id, transform) {
         const targets = selectComponentTargets(options.targets, id);
-
         if (targets.length === 0 || !transform.ast || !transform.magicString) return null;
 
         const binding = collectTemplateBinding(transform.ast, targets);
-
         if (!binding) return null;
 
         const imports = createTargetModuleImports(transform.ast, transform.magicString);
@@ -58,7 +56,6 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
             const templates = node.children.filter(
               (child): child is JSXElement => child.type === 'JSXElement' && isTemplate(child, binding.local)
             );
-
             if (templates.length === 0) return;
 
             for (const template of templates) {
@@ -68,7 +65,6 @@ export function templateTargetPlugin(options: ComponentTargetPluginOptions): Plu
 
                 return rule ? [{ target, rule }] : [];
               });
-
               if (owned.length === 0) {
                 throw new Error(`Component target does not define <Template name=${JSON.stringify(name)}>.`);
               }
@@ -136,7 +132,6 @@ function collectTemplateBinding(ast: Program, targets: readonly ComponentTarget[
       if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') continue;
 
       const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value;
-
       if (imported === 'Template') return { local: specifier.local.name, targets };
     }
   }
@@ -177,7 +172,6 @@ function templateChildren(
 
       const name = staticName(node, code);
       const rule = definition.parts?.[name];
-
       if (!rule) throw new Error(`Template target does not define <Template.Part name=${JSON.stringify(name)}>.`);
 
       const partChildren = createSourceChildren(
@@ -242,12 +236,10 @@ function isTemplatePart(node: JSXElement, local: string): boolean {
 
 function staticName(node: JSXElement, code: string): string {
   const value = findJsxAttribute(node, 'name')?.value;
-
   if (value?.type === 'Literal' && typeof value.value === 'string') return value.value;
 
   if (value?.type === 'JSXExpressionContainer') {
     const expression = value.expression;
-
     if (expression.type === 'Literal' && typeof expression.value === 'string') return expression.value;
   }
 
@@ -273,7 +265,6 @@ function assertAvailableHostAttributes(opening: JSXOpeningElement, attributes: r
 
   for (const attribute of attributes) {
     const name = /^([:$\w-]+)/.exec(attribute)?.[1];
-
     if (name && declared.has(name)) {
       throw new Error(
         `Template parent already declares ${JSON.stringify(name)} in ${code.slice(opening.start, opening.end)}.`

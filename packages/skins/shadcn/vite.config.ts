@@ -70,7 +70,6 @@ export const shadcnPackConfig: PackUserConfig = {
         items: (modules) =>
           modules.flatMap<ShadcnItem<SkinModuleMeta>>((module) => {
             const { filename, meta, transform } = module;
-
             if (filename === registryUtils) {
               return [
                 {
@@ -91,7 +90,6 @@ export const shadcnPackConfig: PackUserConfig = {
             const skin = modules.find(
               (candidate) => candidate.meta?.type === 'skin' && candidate.meta.name === skinName
             )?.meta;
-
             if (skin?.type !== 'skin') throw new Error(`Unknown skin: \`${skinName}\`.`);
 
             const variant = skin.style.variant;

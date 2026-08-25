@@ -29,7 +29,6 @@ export async function ensureCdnSandboxLocale(tag: SandboxLocaleTag): Promise<voi
   }
 
   const load = cdnLocaleLoaders[tag as keyof typeof cdnLocaleLoaders];
-
   if (!load) {
     throw new Error(`Unknown sandbox locale: ${tag}`);
   }
@@ -39,7 +38,6 @@ export async function ensureCdnSandboxLocale(tag: SandboxLocaleTag): Promise<voi
   if (import.meta.env.DEV) {
     const registered = getI18nTranslations(tag)['buttons.play'];
     const enPlay = getI18nTranslations('en')['buttons.play'];
-
     if (registered === enPlay) {
       throw new Error(
         `[videojs/sandbox] Locale "${tag}" did not register on the CDN i18n registry (still "${enPlay}").`

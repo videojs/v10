@@ -10,7 +10,6 @@ import { UIElement } from '../ui-element';
 function composedChildren(element: Element): Element[] {
   if (element instanceof HTMLSlotElement) {
     const assigned = element.assignedElements();
-
     if (assigned.length > 0) return assigned;
   }
 
@@ -27,7 +26,6 @@ function findImage(element: Element): HTMLImageElement | null {
     if (child instanceof HTMLImageElement) return child;
 
     const nested = findImage(child);
-
     if (nested) return nested;
   }
 
@@ -127,7 +125,6 @@ export class PosterElement extends UIElement {
     super.update(changed);
 
     const playback = this.#playback.value;
-
     if (!playback) return;
 
     // `metadata` is optional: without it nothing resolves a URL, and this stays

@@ -45,11 +45,9 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
 
       const { target } = this;
-
       if (!target) return Number.NaN;
 
       const { seekable } = target;
-
       if (!seekable.length) return Number.NaN;
 
       return seekable.end(seekable.length - 1) - this.#liveEdgeStartOffset;
@@ -74,7 +72,6 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       if (streamType === MediaStreamTypes.LIVE) {
         // Update hls.js config for live/ll-live
         const hls = this.engine;
-
         if (!hls) return;
 
         if (lowLatency) {
@@ -105,7 +102,6 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
       this.#disarmSeekToLive();
 
       const target = this.target as HTMLVideoElement | null;
-
       if (!target || target.autoplay) return;
 
       this.#seekToLiveAbort = new AbortController();
@@ -127,11 +123,9 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
 
     #trySeekToLive() {
       const target = this.target as HTMLVideoElement | null;
-
       if (!target) return;
 
       const { liveEdgeStart } = this;
-
       if (!Number.isFinite(liveEdgeStart)) return;
 
       if (target.currentTime < liveEdgeStart) {

@@ -167,7 +167,6 @@ function renditionSignature(tracks: VideoTrack[], selectedId: string | undefined
 
 function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefined): void {
   const signature = renditionSignature(tracks, selectedId);
-
   if (signature === lastRenditionSignature) return;
 
   lastRenditionSignature = signature;
@@ -182,7 +181,6 @@ function renderRenditionList(tracks: VideoTrack[], selectedId: string | undefine
     const db = trackDimensions(b);
     const areaA = da.w * da.h;
     const areaB = db.w * db.h;
-
     if (areaB !== areaA) return areaB - areaA;
 
     return b.bandwidth - a.bandwidth;

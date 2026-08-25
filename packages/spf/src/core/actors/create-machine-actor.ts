@@ -185,14 +185,12 @@ export function createMachineActor<
 
     send(message: Message): void {
       const state = getState();
-
       if (state === 'destroyed') return;
 
       const stateDef = def.states[state as UserState];
       const handler = stateDef?.on?.[message.type as keyof typeof stateDef.on] as
         | ((msg: Message, ctx: HandlerContext<UserState, Context, RunnerFactory>) => void)
         | undefined;
-
       if (!handler) return;
 
       handler(message, {

@@ -108,7 +108,6 @@ vi.mock('@videojs/store/react', () => ({
         playback: mockPlaybackState,
         textTrack: mockTextTrackState,
       });
-
       if (result !== undefined) return result;
     } catch {
       // fall through

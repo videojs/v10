@@ -94,7 +94,6 @@ export class LiveButtonElement extends UIElement {
   /** Resolved label for tooltips and other display surfaces. */
   getResolvedLabel(): string | undefined {
     const media = this.#getMedia();
-
     if (!media) return undefined;
 
     const state = this.core.getState();
@@ -115,7 +114,6 @@ export class LiveButtonElement extends UIElement {
     }
 
     const media = this.#getMedia();
-
     if (!media) return;
 
     this.core.setMedia(media);
@@ -138,7 +136,6 @@ export class LiveButtonElement extends UIElement {
     const live = this.live.value;
     const time = this.time.value;
     const buffer = this.buffer.value;
-
     if (!live || !time || !buffer) return null;
 
     return {

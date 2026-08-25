@@ -59,7 +59,6 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     transition: options.transition,
     onOpenChange(open: boolean, details: PopoverChangeDetails) {
       const reason = REASON_MAP[details.reason];
-
       if (!reason) return;
 
       const group = options.group?.();
@@ -76,7 +75,6 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     openOnHover: () => true,
     delay: () => {
       const group = options.group?.();
-
       if (group?.shouldSkipDelay()) return 0;
 
       return options.delay?.() ?? group?.delay ?? 600;
@@ -111,7 +109,6 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
 
   function syncPopupGroup(): void {
     const next = options.popupGroup?.();
-
     if (next === popupGroup) return;
 
     unsubscribe?.();

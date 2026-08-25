@@ -100,13 +100,11 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
         if (!ts.isIdentifier(decl.name)) continue;
 
         const varName = decl.name.text;
-
         if (!varName.endsWith('Feature') || varName.endsWith('Features')) continue;
 
         if (!decl.initializer || !ts.isCallExpression(decl.initializer)) continue;
 
         const arg = decl.initializer.arguments[0];
-
         if (!arg || !ts.isObjectLiteralExpression(arg)) continue;
 
         let name: string | undefined;
@@ -165,7 +163,6 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
 /** Read the `derived` map, whose keys are published alongside the source state. */
 function parseDerivedKeys(node: ts.Expression): DerivedKeySource[] {
   const literal = unwrapObjectLiteral(node);
-
   if (!literal) return [];
 
   const keys: DerivedKeySource[] = [];
@@ -197,7 +194,6 @@ function parseDerivedKeys(node: ts.Expression): DerivedKeySource[] {
  */
 function parseConfigEntries(node: ts.Expression, featureName: string): FeatureConfigSource[] {
   const literal = unwrapObjectLiteral(node);
-
   if (!literal) return [];
 
   const entries: FeatureConfigSource[] = [];
@@ -206,7 +202,6 @@ function parseConfigEntries(node: ts.Expression, featureName: string): FeatureCo
     if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) continue;
 
     const entryLiteral = unwrapObjectLiteral(prop.initializer);
-
     if (!entryLiteral) continue;
 
     let actionKey: string | undefined;
@@ -222,7 +217,6 @@ function parseConfigEntries(node: ts.Expression, featureName: string): FeatureCo
       }
 
       const key = configKeyReference(member.initializer);
-
       if (!key) continue;
 
       if (member.name.text === 'action') actionKey = key;
@@ -259,7 +253,6 @@ function parseConfigEntries(node: ts.Expression, featureName: string): FeatureCo
  */
 function htmlAttributeName(node: ts.Expression): string | undefined {
   const literal = unwrapObjectLiteral(node);
-
   if (!literal) return undefined;
 
   for (const member of literal.properties) {
@@ -305,7 +298,6 @@ function parseStateInitialValues(node: ts.Expression, sourceFile: ts.SourceFile)
   if (!ts.isArrowFunction(node) && !ts.isFunctionExpression(node)) return values;
 
   const body = ts.isBlock(node.body) ? findReturnedObjectLiteral(node.body) : unwrapObjectLiteral(node.body);
-
   if (!body) return values;
 
   const constants = collectLiteralConstants(sourceFile);
@@ -316,11 +308,9 @@ function parseStateInitialValues(node: ts.Expression, sourceFile: ts.SourceFile)
     const key = ts.isComputedPropertyName(prop.name)
       ? ts.isIdentifier(prop.name.expression) && prop.name.expression.text
       : ts.isIdentifier(prop.name) && prop.name.text;
-
     if (!key) continue;
 
     const initializer = prop.initializer;
-
     if (ts.isIdentifier(initializer) && initializer.text === 'undefined') continue;
 
     const resolved = ts.isIdentifier(initializer) ? constants.get(initializer.text) : undefined;
@@ -400,7 +390,6 @@ function formatCheckerType(type: ts.Type, checker: ts.TypeChecker): string {
     // TypeScript internally represents `boolean` as `false | true`
     const isBooleanUnion =
       type.types.length === 2 && type.types.every((t) => !!(t.flags & ts.TypeFlags.BooleanLiteral));
-
     if (isBooleanUnion) return 'boolean';
 
     return type.types.map((t) => formatCheckerType(t, checker)).join(' | ');
@@ -425,7 +414,6 @@ function extractInterfaceMembers(
 
   for (const member of interfaceDecl.members) {
     const name = member.name?.getText(sourceFile);
-
     if (!name) continue;
 
     const description = getJSDocDescription(member);
@@ -490,7 +478,6 @@ function extractPublishedShape(
 
   for (const property of checker.getPropertiesOfType(declaredType)) {
     const name = property.escapedName as string;
-
     if (name.startsWith(SYMBOL_MEMBER_PREFIX)) continue;
 
     const type = checker.getTypeOfSymbolAtLocation(property, sourceStateDecl);
@@ -535,12 +522,10 @@ function derivedValueType(
   checker: ts.TypeChecker
 ): string {
   const property = derivedLiteral?.properties.find((p) => p.name && ts.isIdentifier(p.name) && p.name.text === name);
-
   if (!property) return 'unknown';
 
   const value = ts.isPropertyAssignment(property) ? property.initializer : property;
   const signature = checker.getSignaturesOfType(checker.getTypeAtLocation(value), ts.SignatureKind.Call)[0];
-
   if (!signature) return 'unknown';
 
   return formatCheckerType(signature.getReturnType(), checker);
@@ -599,7 +584,6 @@ function configInputType(
   // so it is matched by the identifier inside the brackets.
   const member = findComputedMember(sourceStateDecl, actionKey);
   const parameter = member && actionParameter(member);
-
   if (parameter?.type) return formatCheckerType(checker.getTypeFromTypeNode(parameter.type), checker);
 
   return namedActionInputType(actionKey, sourceStateDecl, checker);
@@ -617,12 +601,10 @@ function namedActionInputType(
 ): string {
   const declaredType = checker.getTypeAtLocation(sourceStateDecl);
   const property = checker.getPropertiesOfType(declaredType).find((p) => p.escapedName === actionKey);
-
   if (!property) return UNRESOLVED_TYPE;
 
   const type = checker.getTypeOfSymbolAtLocation(property, sourceStateDecl);
   const parameter = checker.getSignaturesOfType(type, ts.SignatureKind.Call)[0]?.getParameters()[0];
-
   if (!parameter) return UNRESOLVED_TYPE;
 
   return formatCheckerType(checker.getTypeOfSymbolAtLocation(parameter, sourceStateDecl), checker);
@@ -654,11 +636,9 @@ function actionParameter(member: ts.TypeElement): ts.ParameterDeclaration | unde
 export function generateFeatureReferences(monorepoRoot: string): FeatureResult[] {
   const featuresDir = path.join(monorepoRoot, 'packages/core/src/dom/store/features');
   const stateFilePath = path.join(monorepoRoot, 'packages/media/src/core/state.ts');
-
   if (!fs.existsSync(featuresDir) || !fs.existsSync(stateFilePath)) return [];
 
   const sources = discoverFeatureSources(featuresDir);
-
   if (sources.length === 0) return [];
 
   // The state file supplies published interfaces. A feature's own file is only
@@ -667,7 +647,6 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
   const program = createTypeScriptProgram(monorepoRoot, [stateFilePath, ...new Set(localFiles)]);
   const checker = program.getTypeChecker();
   const stateSourceFile = program.getSourceFile(stateFilePath);
-
   if (!stateSourceFile) return [];
 
   // Build a map of interface name → declaration
@@ -686,7 +665,6 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
     const config = extractFeatureConfig(source.config, sourceStateDecl, checker, source.name);
 
     const published = resolvePublishedShape(source, interfaces, sourceStateDecl, program, checker, stateSourceFile);
-
     if (!published) continue;
 
     const ref: FeatureReference = {
@@ -736,7 +714,6 @@ function resolvePublishedShape(
   if (!source.stateTypeName) return { state: {}, actions: {} };
 
   const interfaceDecl = interfaces.get(source.stateTypeName);
-
   if (interfaceDecl) {
     return {
       ...extractInterfaceMembers(interfaceDecl, checker, stateSourceFile),
@@ -770,7 +747,6 @@ function findSourceStateDecl(program: ts.Program, source: FeatureSource): ts.Int
   if (!source.stateTypeName) return undefined;
 
   const featureSourceFile = program.getSourceFile(source.filePath);
-
   if (!featureSourceFile) return undefined;
 
   let found: ts.InterfaceDeclaration | undefined;
@@ -795,7 +771,6 @@ function findDerivedLiteral(sourceFile: ts.SourceFile): ts.ObjectLiteralExpressi
       if (!decl.initializer || !ts.isCallExpression(decl.initializer)) continue;
 
       const arg = decl.initializer.arguments[0];
-
       if (!arg || !ts.isObjectLiteralExpression(arg)) continue;
 
       for (const prop of arg.properties) {

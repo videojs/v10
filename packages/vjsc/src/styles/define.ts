@@ -88,7 +88,6 @@ function freezeReferenceValue(value: object): object {
 
 export function validateStyleDefinition(definition: StyleDefinition): void {
   const fileSegments = definition.file.split('/');
-
   if (
     !definition.file.endsWith('.css') ||
     definition.file.startsWith('/') ||

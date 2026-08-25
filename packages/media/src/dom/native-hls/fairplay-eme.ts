@@ -67,7 +67,6 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
     // only a configuration choice — a rejected one is a real failure.
     if (appCertificate) {
       const accepted = await mediaKeys.setServerCertificate(appCertificate).catch(() => false);
-
       if (!accepted) {
         throw createDrmError(
           NativeHlsDrmMessages.SERVER_CERTIFICATE_FAILED,

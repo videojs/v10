@@ -20,7 +20,6 @@ export function extractCore(filePath: string, program: ts.Program, componentName
 
   // Find the State interface (e.g., PlayButtonState)
   const stateExport = ast.exports.find((exp) => exp.name === `${componentName}State`);
-
   if (!propsExport && !stateExport) {
     return null;
   }
@@ -73,7 +72,6 @@ export function extractDefaultProps(
   componentName: string
 ): Record<string, string> {
   const sourceFile = program.getSourceFile(filePath);
-
   if (!sourceFile) return {};
 
   const defaultProps: Record<string, string> = {};

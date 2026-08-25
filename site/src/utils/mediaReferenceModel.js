@@ -145,7 +145,6 @@ export function buildMediaReferenceTocHeadings(model) {
 
   for (const framework of ['html', 'react']) {
     const platform = model.platforms[framework];
-
     if (!platform) continue;
 
     for (const section of platform.sections) {

@@ -366,7 +366,6 @@ export function createSegmentLoaderActor(
         const existing = actorCtx.segments.find(
           (s) => !overlapsStale(s) && Math.abs(s.startTime - seg.startTime) < SEGMENT_TIME_EPSILON
         );
-
         // Partial segments are still streaming — treat as not buffered so they
         // are always re-planned (avoids relying on incomplete data).
         if (existing?.partial) return true;
@@ -417,7 +416,6 @@ export function createSegmentLoaderActor(
         on: {
           load: (msg, ctx) => {
             const allTasks = planTasks(msg);
-
             if (allTasks.length === 0) return;
 
             ctx.transition('loading');

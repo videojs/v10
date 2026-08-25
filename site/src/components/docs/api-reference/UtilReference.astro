@@ -21,11 +21,9 @@ const { util, slug } = Astro.props;
 
 const entry = await getEntry('utilReference', slug ?? utilReferenceSlug(util));
 const ref: UtilReference | null = entry?.data ?? null;
-
 if (!ref) return;
 
 const model = createUtilReferenceModel(util, ref);
-
 if (!model) return;
 ---
 

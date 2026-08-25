@@ -157,13 +157,11 @@ function placeOnPreviousTimeline(
  */
 function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
   const anchorSegment = segments.find((segment) => !isUndefined(segment.startDate));
-
   if (!anchorSegment || isUndefined(anchorSegment.startDate)) {
     return segments;
   }
 
   const shift = anchorSegment.startDate - anchor - anchorSegment.startTime;
-
   if (shift === 0) {
     return segments;
   }
@@ -227,7 +225,6 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
 
   for (const line of lines) {
     const trimmed = line.trim();
-
     if (!trimmed || (trimmed.startsWith('#') && !trimmed.startsWith('#EXT'))) {
       continue;
     }

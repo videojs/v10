@@ -4,7 +4,6 @@ import { isFunction } from '@videojs/utils/predicate';
 
 export function isFullscreenEnabled() {
   const doc = document as WebKitDocument;
-
   if (doc.fullscreenEnabled || doc.webkitFullscreenEnabled) {
     return true;
   }
@@ -32,13 +31,11 @@ function matchesFullscreen(element: EventTarget | null) {
 
 export function isFullscreen(container: HTMLElement | null, media: EventTarget) {
   const webkitVideo = media as WebKitVideoElement;
-
   if (webkitVideo.webkitPresentationMode === 'fullscreen') {
     return true;
   }
 
   const fullscreenElement = getFullscreenElement();
-
   if (fullscreenElement && (fullscreenElement === container || fullscreenElement === media)) {
     return true;
   }
@@ -63,7 +60,6 @@ export async function requestFullscreen(container: HTMLElement | null, media: Ev
 
   if (container && (doc.fullscreenEnabled || doc.webkitFullscreenEnabled)) {
     const el = container as WebKitFullscreenElement;
-
     if (isFunction(el.requestFullscreen)) {
       return el.requestFullscreen();
     }
@@ -81,7 +77,6 @@ export async function requestFullscreen(container: HTMLElement | null, media: Ev
   }
 
   const video = media as unknown as MediaFullscreenCapability;
-
   if (isFunction(video.requestFullscreen)) {
     return video.requestFullscreen() as Promise<void>;
   }
@@ -106,7 +101,6 @@ export async function exitFullscreen(media: EventTarget) {
   }
 
   const video = media as unknown as MediaFullscreenCapability;
-
   if (isFunction(video.exitFullscreen)) {
     return video.exitFullscreen() as Promise<void>;
   }

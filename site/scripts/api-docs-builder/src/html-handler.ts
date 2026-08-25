@@ -10,7 +10,6 @@ export function extractHtml(
   elementName?: string
 ): HtmlExtraction | null {
   const sourceFile = program.getSourceFile(filePath);
-
   if (!sourceFile) return null;
 
   const className = elementName ?? `${componentName}Element`;
@@ -89,7 +88,6 @@ export function extractHtml(
 
         const name =
           ts.isIdentifier(property.name) || ts.isStringLiteral(property.name) ? property.name.text : undefined;
-
         if (!name) continue;
 
         let declaration = property.initializer;

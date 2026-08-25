@@ -108,7 +108,6 @@ export async function mirrorTemplatesToSrc(): Promise<string[]> {
       if (await fs.pathExists(targetPath)) {
         const existing = await fs.readFile(targetPath, 'utf8');
         const next = await fs.readFile(templatePath, 'utf8');
-
         if (existing === next) continue;
       }
 
@@ -120,7 +119,6 @@ export async function mirrorTemplatesToSrc(): Promise<string[]> {
   for (const entry of await fs.readdir(TEMPLATES)) {
     const templatePath = path.join(TEMPLATES, entry);
     const stats = await fs.stat(templatePath);
-
     if (!stats.isDirectory()) continue;
 
     await fs.ensureDir(path.join(SRC, entry));
@@ -135,7 +133,6 @@ export async function removeGeneratedSrcFiles(): Promise<string[]> {
 
   for (const file of GENERATED_SRC_FILES) {
     const filePath = path.join(SRC, file);
-
     if (!(await fs.pathExists(filePath))) continue;
 
     await fs.remove(filePath);

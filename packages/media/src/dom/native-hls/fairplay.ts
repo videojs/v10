@@ -105,7 +105,6 @@ export function toDrmError(cause: unknown, message: string, context: NativeHlsDr
  */
 export async function requestAppCertificate({ config, signal }: FairPlayContext): Promise<ArrayBuffer | null> {
   const { serverCertificateUrl } = config;
-
   if (!serverCertificateUrl) return null;
 
   const response = await fetch(serverCertificateUrl, { signal }).catch((cause) => {
@@ -115,7 +114,6 @@ export async function requestAppCertificate({ config, signal }: FairPlayContext)
       NativeHlsDrmErrors.CERTIFICATE_REQUEST_FAILED
     );
   });
-
   if (!response.ok) {
     throw createDrmError(
       NativeHlsDrmMessages.CERTIFICATE_REQUEST_FAILED,
@@ -142,7 +140,6 @@ export async function requestLicenseKey(
   }).catch((cause) => {
     throw toDrmError(cause, NativeHlsDrmMessages.LICENSE_REQUEST_FAILED, NativeHlsDrmErrors.LICENSE_REQUEST_FAILED);
   });
-
   if (!response.ok) {
     throw createDrmError(NativeHlsDrmMessages.LICENSE_REQUEST_FAILED, NativeHlsDrmErrors.LICENSE_REQUEST_FAILED);
   }

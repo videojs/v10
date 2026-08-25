@@ -32,7 +32,6 @@ export function createSelector<S extends AnySlice>(slice: S): Selector<object, I
   const keys = [...Object.keys(initialState as object), ...Object.keys(slice.derived ?? {})];
 
   const firstKey = keys[0];
-
   if (!firstKey) {
     return Object.assign(() => undefined, { displayName: slice.name });
   }

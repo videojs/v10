@@ -58,7 +58,6 @@ export class SliderSegmentsCore {
   getGeometry(input: SliderSegmentsGeometryInput): SliderSegmentGeometry[] {
     const { ranges, min, max, orientation } = input;
     const domain = max - min;
-
     if (!Number.isFinite(domain) || domain <= 0) return [];
 
     const valid = ranges.filter((segment) => {

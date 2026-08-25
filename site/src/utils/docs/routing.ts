@@ -123,7 +123,6 @@ export function resolveFrameworkChange(
   sidebar: Sidebar = defaultSidebar
 ): FrameworkChangeResult {
   const { currentSlug, newFramework } = input;
-
   if (!isValidFramework(newFramework)) {
     throw new Error(`Invalid framework: ${newFramework}`);
   }
@@ -201,7 +200,6 @@ export function resolveDocsLinkUrl(input: DocsLinkInput, sidebar: Sidebar = defa
   const { targetSlug, contextFramework } = input;
 
   const guide = findGuideBySlug(targetSlug, sidebar);
-
   if (!guide) {
     throw new Error(`No guide found with slug "${targetSlug}"`);
   }

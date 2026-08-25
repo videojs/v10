@@ -43,7 +43,6 @@ export class MenuRadioItemElement extends UIElement {
 
     const menuCtx = this.#menuCtx.value;
     const groupCtx = this.#groupCtx.value;
-
     if (!menuCtx || !groupCtx || !this.#disconnect) return;
 
     if (!this.#registered) {
@@ -57,7 +56,6 @@ export class MenuRadioItemElement extends UIElement {
           onClick: () => {
             const currentMenuCtx = this.#menuCtx.value;
             const currentGroupCtx = this.#groupCtx.value;
-
             if (!currentMenuCtx || !currentGroupCtx || this.disabled) return;
 
             currentGroupCtx.onValueChange(this.value);

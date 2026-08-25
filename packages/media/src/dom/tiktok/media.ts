@@ -152,7 +152,6 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
     if (load !== this.#loadComplete) return;
 
     const target = this.#target;
-
     // Detached while waiting; `detach()` already settled this load.
     if (!target) return;
 
@@ -344,7 +343,6 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   }
   set source(value: TikTokSource | null) {
     const source = value ?? null;
-
     // Changing anything takes a new object, so handing the same one back costs nothing.
     if (source === this.#source) return;
 
@@ -409,7 +407,6 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   // its `onPlayerReady` settles the load; a target that cannot resolve yet settles its load, and `load()` retries.
   #createPlayer(): boolean {
     const target = this.#target;
-
     if (!target) return false;
 
     const props = this.#snapshotProps();
@@ -440,7 +437,6 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
   // Listen for what the embed reports; messages arrive on `window`, so each is matched against this host's frame.
   #listen(target: HTMLIFrameElement) {
     const win = globalThis.window;
-
     if (isUndefined(win)) return;
 
     const attachId = this.#attachId;
@@ -456,11 +452,9 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
 
     // A frame that is gone cannot have sent anything, so an absent window must not match.
     const frame = target.contentWindow;
-
     if (!frame || event.source !== frame) return;
 
     const message = event.data;
-
     if (!isTikTokPlayerMessage(message)) return;
 
     // An unrecognized source leaves the frame reporting the video it still holds; taking it would undo the reset.
@@ -530,7 +524,6 @@ export class TikTokMedia extends TikTokMediaBase implements Partial<Video> {
 
   #post(type: TikTokPlayerCommand, value?: number) {
     const frame = this.#target?.contentWindow;
-
     if (!frame) return;
 
     frame.postMessage(createTikTokPlayerCommand(type, value), PLAYER_TARGET_ORIGIN);

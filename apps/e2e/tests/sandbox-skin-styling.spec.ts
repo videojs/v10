@@ -136,7 +136,6 @@ for (const styling of ['css', 'tailwind'] as const) {
     await expect(slider).toBeVisible();
 
     const sliderBox = await slider.boundingBox();
-
     if (!sliderBox) throw new Error('Time slider is not visible');
 
     const thumbnailImage = page.locator('media-slider-thumbnail').first();
@@ -149,7 +148,6 @@ for (const styling of ['css', 'tailwind'] as const) {
       await expect(thumbnail).toHaveCSS('scale', '1');
 
       const [rootBox, thumbnailBox] = await Promise.all([root.boundingBox(), thumbnail.boundingBox()]);
-
       if (!rootBox || !thumbnailBox) throw new Error('Player or thumbnail is not visible');
 
       expect(thumbnailBox.x).toBeGreaterThanOrEqual(rootBox.x - 1);

@@ -143,7 +143,6 @@ function deriveState(
   if (!mediaSource || !presentation || !msIsOpen) return 'preconditions-unmet';
 
   const actors = [videoBufferActor, audioBufferActor].filter((a): a is SourceBufferActor => a !== undefined);
-
   // No active buffer actors means setup hasn't completed wiring yet.
   if (actors.length === 0) return 'preconditions-unmet';
 
@@ -154,15 +153,12 @@ function deriveState(
 
   for (const actor of actors) {
     const snapshot = actor.snapshot.get();
-
     if (snapshot.value !== 'idle') return 'preconditions-unmet';
 
     const { initTrackId, segments: appended } = snapshot.context;
-
     if (!initTrackId) return 'preconditions-unmet';
 
     const track = findTrackById(presentation, initTrackId);
-
     if (!track || !isResolvedTrack(track)) return 'preconditions-unmet';
 
     // Only a complete playlist has a true last segment: firing on an ongoing

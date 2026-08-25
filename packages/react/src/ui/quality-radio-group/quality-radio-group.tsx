@@ -56,7 +56,6 @@ export const QualityRadioGroup = forwardRef<HTMLDivElement, QualityRadioGroupPro
       ...elementProps
     } = componentProps;
     const quality = useQualityOptions({ label, formatRendition, disabled });
-
     if (!quality) return null;
 
     const { state, value, options, setValue } = quality;

@@ -87,7 +87,6 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
     ensureBindings();
 
     const src = url ?? '';
-
     if (src === lastSrc) return;
 
     lastSrc = src;
@@ -149,7 +148,6 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
 
     readConstraints(): ThumbnailConstraints {
       const el = getContainer();
-
       if (!el) {
         return { minWidth: 0, maxWidth: Infinity, minHeight: 0, maxHeight: Infinity };
       }

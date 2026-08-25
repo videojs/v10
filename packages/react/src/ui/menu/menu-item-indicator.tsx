@@ -20,7 +20,6 @@ export const MenuItemIndicator = forwardRef<HTMLSpanElement, MenuItemIndicatorPr
   const { state } = useMenuContext();
   const itemChecked = useOptionalMenuRadioItemContext();
   const resolvedChecked = checked ?? itemChecked;
-
   if (!resolvedChecked && !forceMount) return null;
 
   return renderElement(

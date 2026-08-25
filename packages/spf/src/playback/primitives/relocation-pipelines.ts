@@ -107,16 +107,13 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
    */
   const readInitTrackInfo: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
-
     if (op.type !== 'append-init' || !frame.data) return;
 
     const slot = containerSlot(deps);
-
     if (peek(slot)?.[trackType]?.timescale !== undefined) return; // already have it (any rung of this type)
 
     frame.data = await peekHead(frame.data, (bytes) => {
       const track = findMediaTrack(bytes, handlerType);
-
       if (track === undefined) return false;
 
       writeContainer(slot, trackType, { trackId: track.trackId, timescale: track.timescale });
@@ -134,23 +131,19 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
    */
   const readSegmentOrigin: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
-
     if (op.type !== 'append-segment' || !frame.data) return;
 
     const slot = containerSlot(deps);
     const container = peek(slot)?.[trackType];
-
     if (container?.baseMediaDecodeTime !== undefined) return; // established
 
     const { trackId } = container ?? {};
-
     if (trackId === undefined) return; // init didn't identify a media track — nothing to match
 
     const segmentStartTime = op.meta.startTime;
 
     frame.data = await peekHead(frame.data, (bytes) => {
       const baseMediaDecodeTime = readBaseMediaDecodeTime(bytes, trackId);
-
       if (baseMediaDecodeTime === undefined) return false;
 
       writeContainer(slot, trackType, { baseMediaDecodeTime, segmentStartTime });
@@ -179,14 +172,12 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
     // discoverable type awaits the derived origin (which for shared-`min` legitimately
     // blocks on the other selected type — the barrier).
     const own = peek(state.mediaContainerData)?.[trackType];
-
     if (own?.timescale === undefined || own.baseMediaDecodeTime === undefined || own.segmentStartTime === undefined) {
       return;
     }
 
     const startMediaTime = await awaitDefined(() => {
       const containerData = state.mediaContainerData.get();
-
       if (!containerData) return undefined;
 
       return derive(containerData, {
@@ -194,7 +185,6 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
         selectedAudioTrackId: state.selectedAudioTrackId?.get(),
       })[trackType];
     });
-
     if (signal.aborted || startMediaTime === 0) return;
 
     frame.meta = { ...(frame.meta ?? frame.op.meta), timestampOffset: -startMediaTime };
@@ -255,11 +245,9 @@ const relocateCuesStep = async <C extends Cue>(
   const state = deps.state as unknown as StateSignals<RelocationSlots>;
   const startMediaTime = await awaitDefined(() => {
     const presentation = state.presentation.get();
-
     if (!presentation) return undefined;
 
     const primaryId = state.selectedVideoTrackId.get() ?? state.selectedAudioTrackId.get();
-
     if (primaryId !== undefined) {
       // A/V selected: use its origin once stamped (undefined until then → keep waiting).
       return findTrackById(presentation, primaryId)?.startMediaTime;

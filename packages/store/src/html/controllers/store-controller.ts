@@ -76,7 +76,6 @@ export class StoreController<Store extends AnyStore, Result = Store> implements 
 
   get value(): Result {
     const store = this.#accessor.value;
-
     if (isNull(store)) {
       throw new Error('Store not available');
     }

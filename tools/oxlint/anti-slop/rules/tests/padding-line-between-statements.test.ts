@@ -10,8 +10,42 @@ const ruleTester = new RuleTester({
 	languageOptions: { parserOptions: { lang: "ts" } },
 });
 
+const crlf = (source: string) => source.replaceAll("\n", "\r\n");
+
 ruleTester.run("padding-line-between-statements", paddingLineBetweenStatementsRule, {
 	valid: [
+		{
+			name: "declaration-backed guard clauses",
+			code: `function run(locale: string) {
+  const target = resolveTarget(locale);
+  if (!target) return {};
+
+  const { value } = readTarget(target);
+  /* Missing values cannot be normalized.
+
+     Exit before entering the loop. */
+  if (!value) {
+    throw new Error("Missing value");
+  }
+
+  for (const item of value) {
+    const normalized = normalize(item);
+    if (!normalized) continue;
+
+    use(normalized);
+  }
+
+  while (true) {
+    const next = readNext();
+    if (!next) break;
+
+    use(next);
+  }
+
+  const labeled = readLabeled();
+  guard: if (!labeled) return;
+}`,
+		},
 		{
 			name: "logical declaration groups",
 			code: `function run() {
@@ -47,6 +81,79 @@ function run() {
 		},
 	],
 	invalid: [
+		{
+			name: "CRLF blank lines between declarations and their guards",
+			code: crlf(`function run() {
+  const result = prepare();
+
+  if (!result) return;
+}`),
+			output: crlf(`function run() {
+  const result = prepare();
+  if (!result) return;
+}`),
+			errors: [{ messageId: "unexpectedBlankLine", line: 4 }],
+		},
+		{
+			name: "blank lines between declarations and their guards",
+			code: `function run(locale: string) {
+  const target = resolveTarget(locale);
+
+  if (!target) return {};
+
+  const cached = cache.get(target);
+
+  // Cached results can return immediately.
+
+  if (cached) return cached;
+}`,
+			output: `function run(locale: string) {
+  const target = resolveTarget(locale);
+  if (!target) return {};
+
+  const cached = cache.get(target);
+  // Cached results can return immediately.
+  if (cached) return cached;
+}`,
+			errors: [
+				{ messageId: "unexpectedBlankLine", line: 4 },
+				{ messageId: "unexpectedBlankLine", line: 10 },
+			],
+		},
+		{
+			name: "an unrelated guard remains a separate paragraph",
+			code: `function run() {
+  const result = prepare();
+  if (!systemReady) return;
+
+  use(result);
+}`,
+			output: `function run() {
+  const result = prepare();
+
+  if (!systemReady) return;
+
+  use(result);
+}`,
+			errors: [{ messageId: "expectedBlankLine", line: 3 }],
+		},
+		{
+			name: "a shadowed binding does not back a guard",
+			code: `function run() {
+  const result = prepare();
+  if ([null].some((result) => !result)) return;
+
+  use(result);
+}`,
+			output: `function run() {
+  const result = prepare();
+
+  if ([null].some((result) => !result)) return;
+
+  use(result);
+}`,
+			errors: [{ messageId: "expectedBlankLine", line: 3 }],
+		},
 		{
 			name: "declaration group before a return",
 			code: `function run() {
@@ -88,13 +195,13 @@ function run() {
 			code: `function run() {
   const result = prepare();
   // Stop when preparation fails.
-  if (!result) return;
+  if (!ready) return;
 }`,
 			output: `function run() {
   const result = prepare();
 
   // Stop when preparation fails.
-  if (!result) return;
+  if (!ready) return;
 }`,
 			errors: [{ messageId: "expectedBlankLine", line: 4 }],
 		},
@@ -144,11 +251,8 @@ function run() {
 			name: "statements on the same line",
 			code: "function run() { const result = prepare(); if (result) return result; return null; }",
 			output:
-				"function run() { const result = prepare();\n\n if (result) return result;\n\n return null; }",
-			errors: [
-				{ messageId: "expectedBlankLine", line: 1 },
-				{ messageId: "expectedBlankLine", line: 1 },
-			],
+				"function run() { const result = prepare(); if (result) return result;\n\n return null; }",
+			errors: [{ messageId: "expectedBlankLine", line: 1 }],
 		},
 	],
 });

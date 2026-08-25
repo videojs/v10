@@ -57,7 +57,6 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       super(...args);
 
       const { engine } = this;
-
       if (!engine) return;
 
       engine.on(Hls.Events.MANIFEST_PARSED, this.#onManifestParsed);
@@ -125,7 +124,6 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
     // attributes rather than relying on object identity or ids alone.
     #audioTracksMatch(hlsAudioTracks: HlsJsMediaAudioTrack[]): boolean {
       const currentTracks = [...this.audioTracks];
-
       if (currentTracks.length !== hlsAudioTracks.length) return false;
 
       return hlsAudioTracks.every((hlsAudioTrack, index) => {
@@ -142,14 +140,12 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #switchAudioTrack = () => {
       const { engine } = this;
-
       if (!engine) return;
 
       // `enabled` is not exclusive like video `selected`, so prefer a newly
       // enabled track over the one that is already playing.
       const enabledTracks = [...this.audioTracks].filter((track) => track.enabled);
       const selectedTrack = enabledTracks.find((track) => Number(track.id) !== engine.audioTrack) ?? enabledTracks[0];
-
       if (!selectedTrack?.id) return;
 
       const audioTrackId = Number(selectedTrack.id);
@@ -187,7 +183,6 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #switchRendition = () => {
       const { engine } = this;
-
       if (!engine) return;
 
       const level = this.videoRenditions.selectedIndex;

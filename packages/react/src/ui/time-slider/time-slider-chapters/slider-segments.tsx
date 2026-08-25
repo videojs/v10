@@ -60,7 +60,6 @@ export const SliderSegments = forwardRef<HTMLDivElement, SliderSegmentsProps>(
     });
 
     const state = geometry.length > 0 ? core.getState(geometry[0]!, slider.state, pointerValue) : null;
-
     if (!state) return null;
 
     return renderElement(

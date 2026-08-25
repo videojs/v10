@@ -52,12 +52,10 @@ function liveWindowForType(
   if (!presentation || selectedId === undefined) return null;
 
   const selected = liveWindowFor(presentation, selectedId);
-
   if (selected) return selected;
 
   for (const track of getTracksByType(presentation, type)) {
     const window = liveWindowFor(presentation, track.id);
-
     if (window) return window;
   }
 
@@ -117,7 +115,6 @@ export function getLiveEdge({
   config?: { resolveLiveLatency?: ResolveLiveLatency };
 }): LiveEdge | null {
   const window = liveWindowFromState(state);
-
   if (!window) return null;
 
   const latency = config?.resolveLiveLatency?.(state.presentation.get(), liveTrackId(state)) ?? 0;

@@ -76,11 +76,9 @@ export function parseTwitchSource(src: string): ParsedTwitchSource | null {
 
   // A VOD URL also satisfies the channel pattern's host, so it is tried first.
   const videoId = MATCH_VIDEO.exec(src)?.[1];
-
   if (videoId) return { kind: 'video', id: videoId, channel: null };
 
   const channel = MATCH_CHANNEL.exec(src)?.[1];
-
   if (channel) return { kind: 'channel', id: null, channel };
 
   return null;
@@ -89,7 +87,6 @@ export function parseTwitchSource(src: string): ParsedTwitchSource | null {
 /** Build the iframe `src` URL for an initial Twitch embed from the given props. */
 export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProps> = {}) {
   const parsed = parseTwitchSource(src);
-
   if (!parsed) return '';
 
   // Neither of these travels with the rest: `parent` repeats (see below), and
@@ -111,7 +108,6 @@ export function buildTwitchIframeSrc(src: string, props: Partial<TwitchMediaProp
 
   for (const key in params) {
     const value = params[key];
-
     // Twitch reads every parameter by value, so an empty one says nothing and is
     // left off. The shared `serializeEmbedParams` cannot be used for this reason:
     // it writes the `1` an HTML attribute's presence means, which `time` and

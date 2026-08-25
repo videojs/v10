@@ -69,7 +69,6 @@ export function createFairPlayWebKit(context: FairPlayContext): FairPlayKeySyste
     if (element.webkitKeys) return;
 
     const MediaKeysConstructor = (globalThis as { WebKitMediaKeys?: WebKitMediaKeysConstructor }).WebKitMediaKeys;
-
     if (!MediaKeysConstructor || !supportsWebKitFairPlay(media)) {
       throw createDrmError(NativeHlsDrmMessages.UNSUPPORTED_KEY_SYSTEM, NativeHlsDrmErrors.UNSUPPORTED_KEY_SYSTEM);
     }

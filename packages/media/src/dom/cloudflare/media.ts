@@ -367,7 +367,6 @@ export class CloudflareMedia extends CloudflareMediaBase implements Partial<Vide
   }
   set source(value: CloudflareSource | null) {
     const source = value ?? null;
-
     // Changing anything takes a new object, so handing the same one back costs nothing.
     if (source === this.#source) return;
 
@@ -442,7 +441,6 @@ export class CloudflareMedia extends CloudflareMediaBase implements Partial<Vide
   // Build the embed and start player creation; an unresolvable source settles the load and returns false for a retry.
   #createPlayer(): boolean {
     const target = this.#target;
-
     if (!target || this.#player || this.#creatingPlayer) return false;
 
     // Answer now whether the embed came from the document: one built here navigates on its own while the SDK loads and
@@ -726,7 +724,6 @@ function embedParamsOf(src: string): string {
 // leaving it on readable, same-origin `about:blank`.
 function hasEmbedNavigated(target: HTMLIFrameElement): boolean {
   const frame = target.contentWindow;
-
   if (!frame) return false;
 
   try {

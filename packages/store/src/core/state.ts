@@ -86,7 +86,6 @@ class StateContainer<T> implements WritableState<T> {
 
   subscribe(callback: StateChange, options?: SubscribeOptions): () => void {
     const signal = options?.signal;
-
     if (signal?.aborted) return noop;
 
     this.#listeners.add(callback);

@@ -174,7 +174,6 @@ function setupSegmentLoading<
   // `Object.is` equality on this computed dedups within-segment ticks.
   const segmentBoundarySignal = computed(() => {
     const track = selectedTrack.get();
-
     if (!track) return undefined;
 
     return segmentStartForTime(state.currentTime.get() ?? 0, track.segments);

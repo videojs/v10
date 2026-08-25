@@ -178,7 +178,6 @@ function waitForAnimations(el: HTMLElement | null): Promise<void> {
   if (!el) return Promise.resolve();
 
   const animations = el.getAnimations?.() ?? [];
-
   if (animations.length === 0) return Promise.resolve();
 
   return Promise.all(animations.map((a) => a.finished)).then(noop, noop);

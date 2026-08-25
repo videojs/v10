@@ -85,7 +85,6 @@ export default function llmsMarkdown(): AstroIntegration {
 
             // Check if page has llms content
             const contentElements = document.querySelectorAll('[data-llms-content]');
-
             if (contentElements.length === 0) {
               // No llms content, skip silently
               return;
@@ -155,7 +154,6 @@ export default function llmsMarkdown(): AstroIntegration {
         const workers = Array.from({ length: CONCURRENCY }, async () => {
           while (queue.length > 0) {
             const pathname = queue.shift();
-
             if (pathname === undefined) return;
 
             await processPage(pathname);
@@ -318,7 +316,6 @@ function renderSidebarToMarkdown(
       content += renderSidebarToMarkdown(item.contents, pageBySlug, siteUrl, depth + 1);
     } else if (!isLink(item)) {
       const page = pageBySlug.get(item.slug);
-
       if (!page) continue;
 
       content += page.description

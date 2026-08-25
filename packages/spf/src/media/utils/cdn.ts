@@ -56,7 +56,6 @@ export function getOrderedCdnIds(presentation: MaybeResolvedPresentation, getId:
     for (const switchingSet of selectionSet.switchingSets) {
       for (const track of switchingSet.tracks) {
         const id = getId(track.url);
-
         if (seen.has(id)) continue;
 
         seen.add(id);

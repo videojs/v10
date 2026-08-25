@@ -63,7 +63,6 @@ function createSourcePropsFromAttributes<Props extends object>(
           const otherSource = (other as SourceProps<object> & { readonly [SOURCE_PROPS]?: SourcePropsToken })[
             SOURCE_PROPS
           ];
-
           if (!otherSource || otherSource.source.code !== token.source.code)
             throw new Error('vjsc/target: source props can only merge within one module.');
 

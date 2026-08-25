@@ -25,7 +25,6 @@ export const VolumeIndicatorRoot = forwardRef(function VolumeIndicatorRoot(
     },
     { replayOnUpdate: false }
   );
-
   if (!present) return null;
 
   return (

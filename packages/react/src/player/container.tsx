@@ -56,7 +56,6 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   const handlePointerUp: PointerEventHandler<HTMLDivElement> = (event) => {
     props.onPointerUp?.(event);
     const el = internalRef.current;
-
     if (!el) return;
 
     focusContainer(el);

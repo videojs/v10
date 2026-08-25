@@ -49,7 +49,6 @@ export function isMultivariantPlaylist(playlist: string) {
 export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: string): string | null {
   const lines = multivariant.split(/\r?\n/);
   const start = lines.findIndex((l) => l.startsWith('#EXT-X-STREAM-INF'));
-
   if (start === -1) return null;
 
   // The URI appears on the first non-blank, non-comment line that follows.
@@ -57,7 +56,6 @@ export function resolveFirstMediaPlaylistUrl(multivariant: string, baseUrl: stri
     .slice(start + 1)
     .map((l) => l.trim())
     .find((l) => l && !l.startsWith('#'));
-
   if (!uri) return null;
 
   try {
@@ -124,7 +122,6 @@ export function parseStreamInfo(playlist: string): StreamInfo {
 
 async function fetchPlaylist(url: string, init: RequestInit): Promise<{ text: string; url: string }> {
   const response = await fetch(url, init);
-
   if (!response.ok) throw new Error(`Failed to fetch playlist (${response.status}): ${url}`);
 
   return { text: await response.text(), url: response.url || url };
@@ -139,11 +136,9 @@ async function fetchPlaylist(url: string, init: RequestInit): Promise<{ text: st
 export async function getStreamInfoFromSrc(src: string, signal?: AbortSignal): Promise<StreamInfo> {
   const init: RequestInit = signal ? { signal } : {};
   const { text, url } = await fetchPlaylist(src, init);
-
   if (!isMultivariantPlaylist(text)) return parseStreamInfo(text);
 
   const mediaUrl = resolveFirstMediaPlaylistUrl(text, url);
-
   if (!mediaUrl) throw new Error('No media playlist URL found in multivariant playlist');
 
   const media = await fetchPlaylist(mediaUrl, init);

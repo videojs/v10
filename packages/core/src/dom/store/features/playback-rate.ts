@@ -20,7 +20,6 @@ export const playbackRateFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaPlaybackRateCapable(media)) return;
 
     const sync = () => set({ playbackRate: media.playbackRate });

@@ -139,7 +139,6 @@ export function createEndpointCoordinator(options: EndpointCoordinatorOptions): 
   async function waitForAuthAndRetry(): Promise<string> {
     // Get authorization URL
     const loginResult = await initiateLogin();
-
     if (loginResult.error) {
       throw new Error(loginResult.error.message);
     }

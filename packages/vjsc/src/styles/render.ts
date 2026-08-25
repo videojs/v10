@@ -39,7 +39,6 @@ export async function renderStylesheets(options: RenderStylesheetsOptions): Prom
 
   for (const file of [...options.files].sort((a, b) => a.name.localeCompare(b.name))) {
     const analyzed = analyzedFiles.get(file);
-
     if (!analyzed) throw new Error(`Style output '${file.name}' was not compiled.`);
 
     files.set(file.name, wrapFileCss(renderFile(analyzed, file), options.scope, file));
@@ -63,13 +62,11 @@ function wrapFileCss(css: string, scope: string | undefined, file: StyleOutputFi
           Rule: {
             style(rule) {
               const relationship = relationshipScope(rule, relationshipOwners);
-
               if (relationship) return relationship;
 
               if (!scope) return;
 
               const selectors = includeScopeRootSelectors(rule.value.selectors, scopeRootClasses);
-
               if (selectors === rule.value.selectors) return;
 
               return withoutNullValues({
@@ -99,7 +96,6 @@ function relationshipScope(
 ): Rule | undefined {
   const relationships = rule.value.selectors.map((selector) => scopedRelationship(selector, relationshipOwners));
   const owner = relationships[0]?.owner;
-
   if (!owner || relationships.some((relationship) => relationship?.owner !== owner)) return;
 
   const style = cloneCssAst(rule);
@@ -121,7 +117,6 @@ function scopedRelationship(
   relationshipOwners: ReadonlySet<string>
 ): { owner: string; selector: Selector } | undefined {
   const owner = selector[0];
-
   if (
     owner?.type !== 'pseudo-class' ||
     owner.kind !== 'where' ||
@@ -136,7 +131,6 @@ function scopedRelationship(
   const descendant = selector.findIndex(
     (component, index) => index > 0 && component.type === 'combinator' && component.value === 'descendant'
   );
-
   if (descendant < 0) return;
 
   return {
@@ -157,7 +151,6 @@ function renderFile(analyzed: AnalyzedFile, file: StyleOutputFile): string {
     .sort((a, b) => a.className.localeCompare(b.className))
     .map((rule) => {
       const source = analyzed.semanticRules.get(rule.className);
-
       if (!source) throw new Error(`Tailwind did not emit the semantic style '.${rule.className}'.`);
 
       const renderedRule = replaceRuleClasses(source, relationshipOwners);
@@ -184,7 +177,6 @@ function analyzeCompiledFile(css: string, file: StyleOutputFile): AnalyzedFile {
 
         for (const rule of stylesheet.rules) {
           const className = semanticRootClass(rule, semanticClassNames);
-
           if (!className) continue;
 
           if (semanticRules.has(className)) throw new Error(`Tailwind emitted '.${className}' more than once.`);
@@ -212,7 +204,6 @@ function semanticRootClass(rule: Rule, semanticClassNames: ReadonlySet<string>):
   if (rule.type !== 'style' || rule.value.selectors.length !== 1) return;
 
   const selector = rule.value.selectors[0];
-
   if (selector?.length !== 1 || selector[0]?.type !== 'class') return;
 
   return semanticClassNames.has(selector[0].name) ? selector[0].name : undefined;
@@ -239,7 +230,6 @@ function renderRuleSet(template: StyleSheet, rules: readonly Rule[]): string {
 
 function assertNoRelationshipMarkers(rule: Rule, bindings: ReadonlyMap<string, string>): void {
   const remaining = [...collectRuleClasses(rule, new Set())].filter((className) => bindings.has(className));
-
   if (remaining.length === 0) return;
 
   throw new Error(`style emission: relationship markers leaked into semantic CSS: ${remaining.join(', ')}`);

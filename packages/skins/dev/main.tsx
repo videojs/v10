@@ -69,7 +69,6 @@ if (framework === 'react') {
       : 'MinimalVideoSkin' in loaded
         ? loaded.MinimalVideoSkin
         : null;
-
   if (!Skin) throw new Error(`React Skin module \`${key}\` did not export a Skin component.`);
 
   createRoot(root).render(<App Skin={Skin as React.ComponentType<React.PropsWithChildren<{ className?: string }>>} />);
@@ -80,7 +79,6 @@ if (framework === 'react') {
       : 'MinimalVideoSkin' in loaded
         ? loaded.MinimalVideoSkin
         : null;
-
   if (!Skin) throw new Error(`HTML Skin module \`${key}\` did not export a Skin component.`);
 
   await import('../../html/src/define/video/player');

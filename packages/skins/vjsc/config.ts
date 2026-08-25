@@ -12,7 +12,6 @@ export interface SkinConfig {
 
 export function configureSkinModule({ parameters }: VjscModule): VjscModuleConfig | null {
   const config = validateSkinConfig(parameters);
-
   if (!config) return null;
 
   return {
@@ -25,7 +24,6 @@ export function validateSkinConfig(parameters: URLSearchParams): SkinConfig | nu
   const target = parameters.get('target');
   const skin = parameters.get('skin');
   const style = parameters.get('style');
-
   if (
     (target !== 'react' && target !== 'html') ||
     !skin ||

@@ -12,7 +12,6 @@ import { isNil } from '../predicate';
  */
 export function composeCallbacks<T extends (...args: any[]) => void>(...fns: (T | undefined | null)[]): T | undefined {
   const defined = fns.filter((fn): fn is T => !isNil(fn));
-
   if (defined.length === 0) return undefined;
 
   if (defined.length === 1) return defined[0];

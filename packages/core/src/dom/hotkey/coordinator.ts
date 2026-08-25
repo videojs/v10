@@ -86,7 +86,6 @@ export class HotkeyCoordinator {
 
   getShortcut(action: string, value?: number | undefined): HotkeyShortcutDetails {
     const bindings = this.#getActionBindings(action, value);
-
     if (!bindings.length) return {};
 
     const parsed = bindings.flatMap((binding) => binding.parsed);
@@ -118,7 +117,6 @@ export class HotkeyCoordinator {
     this.#bindings.sort((a, b) => {
       // Higher specificity (more modifiers) first.
       const specDiff = b.parsed[0]!.modifiers.size - a.parsed[0]!.modifiers.size;
-
       if (specDiff !== 0) return specDiff;
 
       // Then registration order.
@@ -168,7 +166,6 @@ export class HotkeyCoordinator {
 
     for (const binding of this.#bindings) {
       const { options, parsed } = binding;
-
       if (options.disabled) continue;
 
       if (event.repeat && options.repeatable === false) continue;
@@ -176,7 +173,6 @@ export class HotkeyCoordinator {
       // Only consider bindings matching the event's target scope.
       const isDocBinding = options.target === 'document';
       const isDocEvent = event.currentTarget === document;
-
       if (isDocBinding !== isDocEvent) continue;
 
       for (const p of parsed) {

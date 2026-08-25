@@ -101,7 +101,6 @@ function getRootSize(content: HTMLElement, children: HTMLElement[]): MenuSize {
 function getConstrainedElementSize(content: HTMLElement, element: HTMLElement): MenuSize {
   const naturalSize = measureMenuElement(element);
   const width = constrainWidth(content, naturalSize.width);
-
   if (width >= naturalSize.width) return naturalSize;
 
   const constrainedSize = measureMenuElement(element, width);

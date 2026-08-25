@@ -58,7 +58,6 @@ const { mockSliderApi, sliderOptionsRef } = vi.hoisted(() => {
           if (!options?.adjustPercent || state.thumbAlignment !== 'edge') return state;
 
           const thumbEl = options.getThumbElement?.();
-
           if (!thumbEl) return state;
 
           const rootEl = options.getElement!();

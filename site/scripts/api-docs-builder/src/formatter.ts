@@ -79,7 +79,6 @@ export function abbreviateType(name: string, type: string): string | undefined {
   if (type.includes('=>')) {
     const parts = type.split(' | ');
     const nonFunctionParts = parts.filter((p) => !p.includes('=>'));
-
     if (nonFunctionParts.length > 0) {
       return `${nonFunctionParts.join(' | ')} | function`;
     }
@@ -236,7 +235,6 @@ export function formatType(type: tae.AnyType, removeUndefined: boolean): string 
 
   if (type instanceof tae.ArrayNode) {
     const formattedMemberType = formatType(type.elementType, false);
-
     if (formattedMemberType.includes(' ')) {
       return `(${formattedMemberType})[]`;
     }

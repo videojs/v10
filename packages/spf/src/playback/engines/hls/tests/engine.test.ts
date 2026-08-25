@@ -44,7 +44,6 @@ describe('createHlsVideoEngine', () => {
 
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => {
       const text = args.map((a) => (typeof a === 'string' ? a : String(a))).join(' ');
-
       if (expectedErrorPatterns.some((p) => p.test(text))) return;
 
       originalConsoleError(...args);
@@ -440,7 +439,6 @@ describe('createHlsVideoEngine', () => {
     // cdn-a is down (media-playlist fetch rejects); cdn-b serves a valid playlist.
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
-
       if (url.includes('cdn-a')) throw new TypeError('cdn-a unreachable');
 
       return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
@@ -494,7 +492,6 @@ describe('createHlsVideoEngine', () => {
 
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
-
       if (url.includes('cdn=a')) throw new TypeError('cdn-a unreachable');
 
       return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
@@ -584,7 +581,6 @@ describe('createHlsVideoEngine', () => {
     // Mock fetch with URL-based lookup for different playlist types
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       // Multivariant playlist
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -641,7 +637,6 @@ http://example.com/segment1.m4s
     // Mock fetch with URL-based lookup for all playlist types
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       // Multivariant playlist with video and audio
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
@@ -759,7 +754,6 @@ http://example.com/audio-seg1.m4s
     // for B without recreating the engine.
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist-a.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -904,7 +898,6 @@ http://example.com/audio-b-seg1.m4s
     // Mock fetch for video-only stream
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -969,7 +962,6 @@ http://example.com/video-seg1.m4s
     // Mock fetch for audio-only stream
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1035,7 +1027,6 @@ http://example.com/audio-seg1.m4s
     // Mock fetch for stream with text tracks
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1094,7 +1085,6 @@ http://example.com/video-seg1.m4s
   it('resolves presentation and tracks but not MediaSource without mediaElement', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1161,7 +1151,6 @@ http://example.com/video-seg1.m4s
   it('defers resolution with preload: "none" until play event', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1252,7 +1241,6 @@ http://example.com/audio-seg1.m4s
   it('resolves presentation and tracks with preload: "metadata"', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1329,7 +1317,6 @@ http://example.com/seg1.m4s
   it('resolves only selected track (not all qualities)', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1421,7 +1408,6 @@ http://example.com/seg1.m4s
   it('manually selects text track via patch()', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1532,7 +1518,6 @@ http://example.com/text-es-seg1.vtt
   it('auto-selects DEFAULT text track when enableDefaultTrack is true', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1610,7 +1595,6 @@ http://example.com/text-es-seg1.vtt
   it('auto-selects preferred subtitle language', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1688,7 +1672,6 @@ http://example.com/text-fr-seg1.vtt
   it('switches between text tracks via patch()', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1809,7 +1792,6 @@ http://example.com/text-es-seg1.vtt
   it('creates track elements for all text tracks', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -1887,7 +1869,6 @@ http://example.com/video-seg1.m4s
   it('syncs text track modes with selection', async () => {
     const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (url.includes('playlist.m3u8')) {
         return Promise.resolve(
           new Response(`#EXTM3U
@@ -2007,7 +1988,6 @@ http://example.com/text-es-seg1.vtt
 it('tracks buffer state for video segments', async () => {
   const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
     if (url.includes('playlist.m3u8')) {
       return Promise.resolve(
         new Response(`#EXTM3U
@@ -2076,7 +2056,6 @@ http://example.com/seg2.m4s
 it('tracks buffer state separately for video and audio', async () => {
   const mockFetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
     if (url.includes('playlist.m3u8')) {
       return Promise.resolve(
         new Response(`#EXTM3U

@@ -2,14 +2,12 @@ import { walkAncestors } from '../walk-ancestors';
 
 function getElementLang(node: Element): string | undefined {
   const fromAttribute = node.getAttribute('lang')?.trim();
-
   if (fromAttribute) {
     return fromAttribute;
   }
 
   if ('lang' in node && typeof node.lang === 'string') {
     const fromProperty = node.lang.trim();
-
     if (fromProperty) {
       return fromProperty;
     }

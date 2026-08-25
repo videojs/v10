@@ -83,7 +83,6 @@ describe('ejected HTML skins', () => {
 
   it('wraps snippets with the matching player and CDN bundle', () => {
     const skin = SKINS.find(({ id }) => id === 'minimal-audio');
-
     if (skin?.platform !== 'html') throw new Error('Missing HTML skin fixture');
 
     expect(prependHtmlSkinScripts('<media-controls></media-controls>', skin)).toContain(
@@ -93,7 +92,6 @@ describe('ejected HTML skins', () => {
 
   it('loads the media bundle alongside the UI bundle for live skins', () => {
     const skin = SKINS.find(({ id }) => id === 'minimal-live-video');
-
     if (skin?.platform !== 'html') throw new Error('Missing live HTML skin fixture');
 
     const result = prependHtmlSkinScripts('<media-controls></media-controls>', skin);
@@ -105,7 +103,6 @@ describe('ejected HTML skins', () => {
 
   it('gives a video player the poster the collapsed slot no longer carries', () => {
     const skin = SKINS.find(({ id }) => id === 'default-video');
-
     if (skin?.platform !== 'html') throw new Error('Missing HTML skin fixture');
 
     expect(prependHtmlSkinScripts('<media-poster></media-poster>', skin)).toContain(
@@ -115,7 +112,6 @@ describe('ejected HTML skins', () => {
 
   it('gives a live video player the live poster', () => {
     const skin = SKINS.find(({ id }) => id === 'minimal-live-video');
-
     if (skin?.platform !== 'html') throw new Error('Missing live HTML skin fixture');
 
     expect(prependHtmlSkinScripts('<media-poster></media-poster>', skin)).toContain(
@@ -125,7 +121,6 @@ describe('ejected HTML skins', () => {
 
   it('does not link a generated stylesheet for Tailwind skins', () => {
     const skin = SKINS.find(({ id }) => id === 'minimal-live-video-tailwind');
-
     if (skin?.platform !== 'html') throw new Error('Missing live Tailwind HTML skin fixture');
 
     expect(prependHtmlSkinScripts('<media-controls></media-controls>', skin)).not.toContain('player.css');
@@ -136,7 +131,6 @@ describe('ejected React skins', () => {
   it('produces CSS and Tailwind players with matching dependencies', async () => {
     const cssSkin = SKINS.find(({ id }) => id === 'default-live-video-react');
     const tailwindSkin = SKINS.find(({ id }) => id === 'default-live-video-react-tailwind');
-
     if (cssSkin?.platform !== 'react' || tailwindSkin?.platform !== 'react') {
       throw new Error('Missing live React skin fixtures');
     }

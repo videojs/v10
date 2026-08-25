@@ -65,7 +65,6 @@ class TestPlayerProviderElement extends UIElement {
 
   setVisible(visible: boolean): void {
     const state = this.store.state as MediaControlsState;
-
     if (state.controlsVisible === visible) return;
 
     state.toggleControls();

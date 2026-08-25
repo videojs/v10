@@ -51,7 +51,6 @@ function snapshotTextTracks(media: HTMLMediaElement): TextTrackSnapshot[] {
     if (trackEl.hasAttribute(HLS_TRACK_ATTR)) continue;
 
     const { track } = trackEl;
-
     // A disabled track stays disabled through anything hls.js does, and only
     // holds cues if it was enabled long enough to load them. Skipping the rest
     // keeps the mode juggling below off the common path.
@@ -128,7 +127,6 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
 
       const { signal } = this.#disconnect;
       const { engine } = this;
-
       if (!engine || !this.target) return;
 
       // The hls.js delegate always binds to the real `<video>` element.
@@ -154,7 +152,6 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
 
       const onCuesParsed = (_event: string, { track, cues }: CuesParsedData) => {
         const textTrack = media.textTracks.getTrackById(track);
-
         if (!textTrack) return;
 
         const disabled = textTrack.mode === 'disabled';
@@ -180,7 +177,6 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
         const showingTrack = Array.from(media.textTracks).find((textTrack) => {
           return textTrack.id && textTrack.mode === 'showing' && isCaptionOrSubtitleTrack(textTrack);
         });
-
         if (!showingTrack) return;
 
         const currentHlsTrack = engine.subtitleTracks[engine.subtitleTrack];

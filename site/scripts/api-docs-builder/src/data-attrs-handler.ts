@@ -22,7 +22,6 @@ function inferStateTypes(satisfiesType: ts.TypeNode, program: ts.Program): Map<s
   const checker = program.getTypeChecker();
   const resolvedType = checker.getTypeAtLocation(stateTypeArg);
   const properties = resolvedType.getProperties();
-
   if (properties.length === 0) return undefined;
 
   const result = new Map<string, string>();
@@ -66,7 +65,6 @@ export function extractDataAttrs(
   componentName: string
 ): DataAttrsExtraction | null {
   const sourceFile = program.getSourceFile(filePath);
-
   if (!sourceFile) {
     return null;
   }
@@ -85,7 +83,6 @@ export function extractDataAttrs(
         }
 
         const objLiteral = unwrapObjectLiteral(decl.initializer);
-
         if (!objLiteral) continue;
 
         // Infer types from satisfies StateAttrMap<State>
@@ -144,12 +141,10 @@ export function parseJsDoc(
   sourceFile: ts.SourceFile
 ): { description: string; type?: string } {
   const raw = getJsDocComment(node, sourceFile);
-
   if (!raw) return { description: '' };
 
   // Extract @type {value} tag
   const typeMatch = raw.match(/@type\s*\{([^}]+)\}/);
-
   if (!typeMatch) return { description: raw };
 
   const type = typeMatch[1]!.trim();
@@ -167,16 +162,13 @@ export function getJsDocComment(node: ts.PropertyAssignment, sourceFile: ts.Sour
   const fullText = sourceFile.getFullText();
   const nodeStart = node.getFullStart();
   const ranges = ts.getLeadingCommentRanges(fullText, nodeStart);
-
   if (!ranges || ranges.length === 0) return '';
 
   // Get the last comment (closest to the property)
   const lastRange = ranges[ranges.length - 1];
-
   if (!lastRange) return '';
 
   const commentText = fullText.substring(lastRange.pos, lastRange.end);
-
   // Parse JSDoc comment
   if (commentText.startsWith('/**')) {
     return commentText

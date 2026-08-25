@@ -52,7 +52,6 @@ export class SeekButtonCore {
 
   getLabel(state: SeekButtonState): Text | string {
     const custom = resolveLabel(this.#props.label, state);
-
     if (custom !== undefined) return custom;
 
     return state.direction === 'backward' ? backwardText : forwardText;

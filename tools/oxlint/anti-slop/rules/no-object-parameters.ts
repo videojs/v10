@@ -81,7 +81,6 @@ export const noObjectParametersRule = defineRule({
 			}
 
 			const alias = aliases.get(type.typeName.name);
-
 			if (alias === undefined) return false;
 
 			const nextVisited = new Set(visited);
@@ -97,7 +96,6 @@ export const noObjectParametersRule = defineRule({
 
 			for (const parameter of node.params) {
 				const annotation = parameterAnnotation(parameter);
-
 				if (annotation === null || annotation === undefined) continue;
 
 				if (!resolvesToObject(annotation.typeAnnotation, shadowedAliases)) continue;

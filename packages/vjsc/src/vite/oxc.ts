@@ -29,7 +29,6 @@ export type ViteOxcPlugin = VitePlugin & { readonly enforce: 'pre' };
 /** Adapt a transform that consumes Rolldown's AST metadata to Vite's transform contract. */
 export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
   const transform = plugin.transform;
-
   if (!transform) return { ...plugin, enforce: 'pre' };
 
   const handler = (typeof transform === 'function' ? transform : transform.handler) as RolldownTransformHandler;
@@ -51,7 +50,6 @@ export function viteOxcPlugin(plugin: Plugin): ViteOxcPlugin {
       ast,
       magicString: magicString as unknown as RolldownMagicString,
     });
-
     if (!result || typeof result === 'string' || result.code === undefined || typeof result.code === 'string') {
       return result;
     }

@@ -17,7 +17,6 @@ export interface ImportReplacement extends ImportReference {
 /** Locate editable ESM import specifiers without changing source formatting. */
 export function analyzeImports(source: string, fileName: string): ImportReference[] {
   const parsed = parseSync(fileName, source);
-
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
   const references: ImportReference[] = [];
@@ -25,7 +24,6 @@ export function analyzeImports(source: string, fileName: string): ImportReferenc
   walk(parsed.program, {
     enter(node) {
       const reference = importReference(node);
-
       if (!reference) return;
 
       const { literal, kind } = reference;
@@ -96,7 +94,6 @@ function importReference(
 
     if (node.source.type === 'TemplateLiteral' && node.source.expressions.length === 0) {
       const value = node.source.quasis[0]?.value.cooked;
-
       if (value !== null && value !== undefined) {
         return { literal: { value, start: node.source.start, end: node.source.end }, kind: 'dynamic' };
       }

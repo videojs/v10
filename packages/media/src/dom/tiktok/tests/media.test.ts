@@ -34,7 +34,6 @@ function createEmptySrcIframe(): HTMLIFrameElement {
 
 function frameOf(iframe: HTMLIFrameElement): Window {
   const frame = iframe.contentWindow;
-
   if (!frame) throw new Error('iframe has no window');
 
   return frame;

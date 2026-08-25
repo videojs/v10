@@ -40,14 +40,12 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
       async handler(id, importer, resolveOptions) {
         const selected = selectedModule(id, options.ignore);
         const inherited = importer ? selectedModule(importer, options.ignore) : null;
-
         if (!selected && (!inherited || !id.startsWith('.'))) return null;
 
         const resolved = await this.resolve(selected?.filename ?? id, importer ? moduleFilename(importer) : undefined, {
           ...resolveOptions,
           skipSelf: true,
         });
-
         if (!resolved || resolved.external || !isVjscModule(resolved.id)) return resolved;
 
         return {
@@ -58,7 +56,6 @@ export function componentModulesPlugin(options: ComponentModulesPluginOptions = 
     },
     async load(id) {
       const selected = selectedModule(id, options.ignore);
-
       if (!selected) return null;
 
       this.addWatchFile(selected.filename);
@@ -121,7 +118,6 @@ function scriptModuleType(filename: string): ModuleType {
 
 function typeImportSpecifiers(code: string, filename: string): ReadonlySet<string> {
   const parsed = parseSync(filename, code);
-
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
   const specifiers = new Set<string>();
@@ -147,18 +143,15 @@ const sourceExtensionSet = new Set<string>(sourceExtensions);
 
 function resolveSourceModule(importer: string, specifier: string): string | undefined {
   const candidate = resolve(dirname(importer), specifier);
-
   if (sourceExtensionSet.has(extname(candidate)) && existsSync(candidate)) return candidate;
 
   for (const extension of sourceExtensions) {
     const filename = `${candidate}${extension}`;
-
     if (existsSync(filename)) return filename;
   }
 
   for (const extension of sourceExtensions) {
     const filename = resolve(candidate, `index${extension}`);
-
     if (existsSync(filename)) return filename;
   }
 

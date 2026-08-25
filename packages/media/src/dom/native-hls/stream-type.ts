@@ -67,7 +67,6 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
       if (!target) return MediaStreamTypes.UNKNOWN;
 
       const { duration } = target;
-
       if (duration === Infinity) return MediaStreamTypes.LIVE;
 
       if (Number.isFinite(duration) && duration > 0) return MediaStreamTypes.ON_DEMAND;

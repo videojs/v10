@@ -43,7 +43,6 @@ export class PlayButtonCore {
 
   getLabel(state: PlayButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     if (state.ended) return replayText;

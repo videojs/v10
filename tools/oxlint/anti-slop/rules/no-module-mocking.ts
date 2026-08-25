@@ -12,7 +12,6 @@ function resolveVariable(
 
   while (scope !== null) {
     const variable = scope.set.get(identifier.name);
-
     if (variable !== undefined) return variable;
 
     scope = scope.upper;
@@ -41,7 +40,6 @@ function isTestFrameworkObject(
   }
 
   const variable = resolveVariable(sourceCode, expression);
-
   if (variable === null || variable.defs.length === 0) {
     return expression.name === "vi" || expression.name === "jest";
   }

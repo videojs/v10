@@ -39,7 +39,6 @@ export function isEditableTarget(event: KeyboardEvent): boolean {
 /** Whether the event originated from an interactive control (button, slider, etc). */
 export function isInteractiveTarget(event: Event): boolean {
   const target = resolveEventTarget(event);
-
   if (!(target instanceof Element)) return false;
 
   return target.closest(INTERACTIVE_SELECTOR) !== null;

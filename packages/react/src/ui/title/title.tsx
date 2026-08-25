@@ -43,7 +43,6 @@ export const Title = forwardRef(function Title(
   }
 
   const state = core.getState(metadata);
-
   if (state.hidden) return null;
 
   return renderElement(

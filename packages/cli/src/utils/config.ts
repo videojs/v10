@@ -43,7 +43,6 @@ export function getConfigValue(key: string): string | undefined {
 
 export function setConfigValue(key: string, value: string): void {
   const validValues = VALID_CONFIG[key as keyof CliConfig];
-
   if (!validValues) {
     throw new Error(`Unknown config key: "${key}". Valid keys: ${Object.keys(VALID_CONFIG).join(', ')}`);
   }

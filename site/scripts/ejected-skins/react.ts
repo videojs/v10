@@ -119,7 +119,6 @@ function findLocalDeclarationText(sourceFile: ts.SourceFile, localName: string):
 function getNamedExportText(sourceFile: ts.SourceFile, exportName: string): string | null {
   for (const statement of sourceFile.statements) {
     const isExported = hasExportModifier(statement);
-
     if (isExported && getStatementName(statement) === exportName) {
       return stripExportModifier(statement.getText(sourceFile));
     }
@@ -151,7 +150,6 @@ function getLocalDeclarationTexts(sourceFile: ts.SourceFile): Map<string, string
     if (ts.isExportDeclaration(statement)) continue;
 
     const name = getStatementName(statement);
-
     if (!name) continue;
 
     const text = ts.canHaveModifiers(statement)
@@ -175,7 +173,6 @@ function collectDeclarationClosure(
   }
 
   const declarationText = declarations.get(declarationName) ?? getNamedExportText(sourceFile, declarationName);
-
   if (!declarationText) {
     throw new Error(`Could not find declaration "${declarationName}" in "${sourceFile.fileName}"`);
   }
@@ -235,13 +232,11 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
     }
 
     const specifier = statement.moduleSpecifier.getText(sourceFile).slice(1, -1);
-
     if (!isRelativeImport(specifier)) {
       continue;
     }
 
     const importClause = statement.importClause;
-
     if (!importClause?.namedBindings || !ts.isNamedImports(importClause.namedBindings) || importClause.name) {
       throw new Error(`Unsupported relative import in "${toRepoPath(sourcePath)}": ${statement.getText(sourceFile)}`);
     }
@@ -263,7 +258,6 @@ function inlineRelativeImports(source: string, sourcePath: string, rewriteSource
       }
 
       const targetSpecifier = targetStatement.moduleSpecifier.getText(transformedTargetFile).slice(1, -1);
-
       if (isRelativeImport(targetSpecifier)) {
         throw new Error(
           `Relative import remained after inlining in "${toRepoPath(targetPath)}": ${targetStatement.getText(
@@ -872,7 +866,6 @@ function reorganizeReactOutput(source: string, extraUtilities: string[], extraIc
 
   for (const key of sectionOrder) {
     const declarations = sections[key];
-
     if (declarations.length === 0) continue;
 
     const header = SECTION_HEADERS[key];
@@ -901,7 +894,6 @@ function flattenErrorClasses(source: string): string {
 
   // -- 1. Parse ERROR_CLASSNAMES const into a key → raw-expression map -------
   const blockMatch = source.match(/const ERROR_CLASSNAMES\s*=\s*\{([\s\S]*?)\};/);
-
   if (!blockMatch) return source;
 
   const classMap = new Map<string, string>();

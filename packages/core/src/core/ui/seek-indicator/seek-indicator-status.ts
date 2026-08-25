@@ -34,12 +34,10 @@ export function getSeekDirection(event: InputActionEvent, snapshot: MediaSnapsho
 
   if (event.action === 'seekToPercent') {
     const percent = getSeekToPercent(event);
-
     if (percent === null || snapshot.duration === undefined || snapshot.duration <= 0) return null;
 
     const targetTime = (percent / 100) * snapshot.duration;
     const currentTime = snapshot.currentTime ?? 0;
-
     if (targetTime > currentTime) return 'forward';
 
     if (targetTime < currentTime) return 'backward';

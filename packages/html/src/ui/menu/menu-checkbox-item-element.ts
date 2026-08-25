@@ -41,7 +41,6 @@ export class MenuCheckboxItemElement extends UIElement {
     super.update(_changed);
 
     const ctx = this.#ctx.value;
-
     if (!ctx || !this.#disconnect) return;
 
     if (!this.#registered) {
@@ -54,7 +53,6 @@ export class MenuCheckboxItemElement extends UIElement {
         {
           onClick: () => {
             const currentCtx = this.#ctx.value;
-
             if (!currentCtx || this.disabled) return;
 
             this.checked = !this.checked;

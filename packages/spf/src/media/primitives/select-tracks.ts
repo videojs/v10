@@ -75,7 +75,6 @@ export interface TextSelectionConfig {
 export function matchesPartialTrack<T>(track: T, filter: Partial<T>): boolean {
   for (const key in filter) {
     const filterValue = filter[key as keyof T];
-
     if (filterValue !== undefined && track[key as keyof T] !== filterValue) return false;
   }
 
@@ -152,7 +151,6 @@ export function pickAudioTrackFromTracks(
   // Try preferred language first
   if (config?.preferredAudioLanguage) {
     const languageMatch = tracks.find((track) => track.language === config.preferredAudioLanguage);
-
     if (languageMatch) {
       return languageMatch.id;
     }
@@ -160,7 +158,6 @@ export function pickAudioTrackFromTracks(
 
   // Try default track
   const defaultTrack = tracks.find((track) => track.default === true);
-
   if (defaultTrack) {
     return defaultTrack.id;
   }
@@ -184,20 +181,17 @@ export function pickTextTrackFromTracks(
   config?: TextSelectionConfig
 ): string | undefined {
   const availableTracks = config?.includeForcedTracks ? tracks : tracks.filter((track) => !track.forced);
-
   if (availableTracks.length === 0) return undefined;
 
   const { preferredSubtitleLanguage, enableDefaultTrack = false } = config ?? {};
 
   if (preferredSubtitleLanguage) {
     const languageMatch = availableTracks.find((track) => track.language === preferredSubtitleLanguage);
-
     if (languageMatch) return languageMatch.id;
   }
 
   if (enableDefaultTrack) {
     const defaultTrack = availableTracks.find((track) => track.default === true);
-
     if (defaultTrack) return defaultTrack.id;
   }
 

@@ -55,7 +55,6 @@ export function MuxStoryboard({ media }: { media: MuxStoryboardMedia }) {
   // The '' fallback keeps the snapshot a string rather than sometimes undefined.
   const getSnapshot = () => (media.streamType === MediaStreamTypes.LIVE ? '' : (media.contentData.storyboard ?? ''));
   const src = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-
   if (!src) return null;
 
   return <track kind="metadata" label="thumbnails" src={src} default />;

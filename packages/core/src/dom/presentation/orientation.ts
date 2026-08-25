@@ -40,7 +40,6 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
   const releaseOrientation = () => {
     const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
     const unlock = orientation?.unlock;
-
     if (!isFunction(unlock)) return;
 
     try {
@@ -71,7 +70,6 @@ export function createScreenOrientationLock(): ScreenOrientationLock {
 
         const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
         const lock = orientation?.lock;
-
         if (!isFunction(lock)) return;
 
         try {

@@ -65,7 +65,6 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLi
 
   get isFullscreen(): boolean {
     const el = this.target as HTMLVideoElement | null;
-
     if (!el) return false;
 
     if (this.webkitPresentationMode === 'fullscreen') return true;

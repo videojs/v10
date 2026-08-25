@@ -64,7 +64,6 @@ export function combinePlayerFeatureConfigs(features: readonly AnyPlayerFeature[
 /** Forward one configuration input through its feature-owned private action. */
 export function setPlayerConfigValue(store: object, entry: PlayerFeatureConfig[string], value: unknown): void {
   const action = (store as Record<PropertyKey, unknown>)[entry.action];
-
   if (typeof action !== 'function') {
     throw new TypeError(`Missing config action "${String(entry.action)}"`);
   }

@@ -26,7 +26,6 @@ function getMuxClient(token: string | undefined) {
 function getHealthMuxClient() {
   const tokenId = MUX_TOKEN_ID;
   const tokenSecret = MUX_TOKEN_SECRET;
-
   if (!tokenId || !tokenSecret) {
     throw new ActionError({
       code: 'INTERNAL_SERVER_ERROR',
@@ -141,7 +140,6 @@ export const mux = {
             video_quality: 'basic',
           },
         });
-
         if (!upload.url || !upload.id) {
           throw new Error('Mux did not return an upload URL and ID');
         }

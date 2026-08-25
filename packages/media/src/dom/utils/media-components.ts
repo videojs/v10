@@ -56,7 +56,6 @@ export function setMediaProp<T extends TargetLike, K extends keyof T>(host: Medi
 export function getMediaOwner<T extends TargetLike>(host: MediaHost<T>, prop: keyof T): Partial<T> | null {
   for (const component of getMediaComponents(host).values()) {
     const override = component.targetOverride as Partial<T> | null | undefined;
-
     if (override?.[prop] !== undefined) return override;
   }
 

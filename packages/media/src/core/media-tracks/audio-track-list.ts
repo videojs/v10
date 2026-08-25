@@ -35,11 +35,9 @@ export function addAudioTrack(media: HTMLMediaElement, track: AudioTrack) {
 
 export function removeAudioTrack(track: AudioTrack) {
   const trackList = getPrivate(track).media?.deref()?.audioTracks as AudioTrackList | undefined;
-
   if (!trackList) return;
 
   const trackSet = getPrivate(trackList).trackSet as Set<AudioTrack>;
-
   if (!trackSet.delete(track)) return;
 
   queueMicrotask(() => {
@@ -49,7 +47,6 @@ export function removeAudioTrack(track: AudioTrack) {
 
 export function enabledChanged(track: AudioTrack) {
   const trackList = getPrivate(track).media?.deref()?.audioTracks as AudioTrackList | undefined;
-
   // Prevent firing a track list `change` event multiple times per tick.
   if (!trackList || getPrivate(trackList).changeRequested) return;
 

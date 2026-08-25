@@ -25,7 +25,6 @@ export function moduleId(filename: string, parameters?: URLSearchParams | Readon
   if (!parameters) return filename;
 
   const entries = parameters instanceof URLSearchParams ? [...parameters.entries()] : Object.entries(parameters);
-
   if (entries.length === 0) return filename;
 
   const query = new URLSearchParams(entries.sort(([left], [right]) => left.localeCompare(right)));

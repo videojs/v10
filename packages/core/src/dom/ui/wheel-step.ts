@@ -19,7 +19,6 @@ export function createWheelStep(options: WheelStepOptions): WheelStepProps {
       if (options.isDisabled()) return;
 
       const direction = Math.sign(event.deltaY);
-
       if (direction === 0) return;
 
       event.preventDefault();

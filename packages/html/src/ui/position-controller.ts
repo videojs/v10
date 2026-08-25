@@ -34,7 +34,6 @@ export class PositionController implements ReactiveController {
 
     if (this.#implicitBinding) {
       const { id, trigger: boundTrigger } = this.#implicitBinding;
-
       if (
         this.#host.id === id &&
         boundTrigger.getAttribute('commandfor') === id &&
@@ -102,7 +101,6 @@ export class PositionController implements ReactiveController {
 
   #releaseImplicitBinding(): void {
     const binding = this.#implicitBinding;
-
     if (!binding) return;
 
     if (binding.trigger.getAttribute('commandfor') === binding.id) {

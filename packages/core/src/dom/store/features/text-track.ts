@@ -61,11 +61,9 @@ function findLocaleTrack(tracks: IdentifiedTrack[], locale: string): IdentifiedT
 
   for (const key of keys) {
     const exact = tracks.find(({ track }) => getCanonicalLocaleKey(track.language) === key);
-
     if (exact) return exact;
 
     const regional = tracks.find(({ track }) => getCanonicalLocaleKey(track.language).startsWith(`${key}-`));
-
     if (regional) return regional;
   }
 
@@ -88,11 +86,9 @@ export const textTrackFeature = definePlayerFeature({
       subtitlesShowing: false,
       toggleSubtitles(forceShow?: boolean) {
         const { media } = target();
-
         if (!isMediaTextTrackCapable(media)) return false;
 
         const subtitlesTracks = getSubtitlesTracks(media);
-
         if (!subtitlesTracks.length) return false;
 
         const showing = subtitlesTracks.find(({ track }) => track.mode === 'showing');
@@ -120,11 +116,9 @@ export const textTrackFeature = definePlayerFeature({
       },
       selectSubtitlesTrack(value: string) {
         const { media } = target();
-
         if (!isMediaTextTrackCapable(media)) return;
 
         const subtitlesTracks = getSubtitlesTracks(media);
-
         if (!subtitlesTracks.length) return;
 
         if (value === 'off') {
@@ -137,7 +131,6 @@ export const textTrackFeature = definePlayerFeature({
         }
 
         const active = subtitlesTracks.find(({ id }) => id === value);
-
         if (!active) return;
 
         lastShownId = active.id;
@@ -148,7 +141,6 @@ export const textTrackFeature = definePlayerFeature({
 
   attach({ target, signal, set }) {
     const { media } = target;
-
     if (!isMediaTextTrackCapable(media)) return;
 
     let trackCleanup: AbortController | null = null;

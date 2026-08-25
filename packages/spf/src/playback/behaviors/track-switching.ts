@@ -424,7 +424,6 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
   { state, config }: SelectionRuleDeps<UserSelectionStateMap<S, U, T>, AnySlotMap, UserSelectionConfig<S, U, T>>
 ): readonly T[] {
   const key = config.userSelectionKey;
-
   if (!key) return tracks;
 
   const filter = state[key]?.get();
@@ -467,7 +466,6 @@ function playerResolutionCap<S extends SelectionKey, T extends SwitchableTrack>(
   { state }: SelectionRuleDeps<PlayerResolutionCapStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
 ): readonly T[] {
   const playerResolution = state.playerResolution?.get();
-
   if (!playerResolution) return tracks;
 
   // A player larger than every rendition has no covering tier, so the cap is
@@ -494,7 +492,6 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
   { state, config }: SelectionRuleDeps<CdnConstraintStateMap<S>, AnySlotMap, CdnRuleConfig<S, T>>
 ): readonly T[] {
   const failed = state.failedCdns?.get();
-
   if (!failed?.length) return tracks;
 
   const getCdnId = config.getCdnId ?? defaultGetCdnId;
@@ -529,14 +526,12 @@ function preferActiveCdn<S extends SelectionKey, T extends SwitchableTrack>(
   { state, config }: SelectionRuleDeps<CdnScopeStateMap<S>, AnySlotMap, CdnRuleConfig<S, T>>
 ): readonly T[] {
   const cdnPriority = state.cdnPriority?.get();
-
   if (!cdnPriority?.length) return tracks;
 
   const getCdnId = config.getCdnId ?? defaultGetCdnId;
 
   for (const cdn of cdnPriority) {
     const tracksUsingCdn = tracks.filter((track) => getCdnId(track.url) === cdn);
-
     if (tracksUsingCdn.length) return tracksUsingCdn;
   }
 
@@ -593,16 +588,13 @@ export function stickToSelectedCodecs<S extends SelectionKey, T extends Switchab
   { state, config }: SelectionRuleDeps<TrackSwitchingStateMap<S>, AnySlotMap, TrackSwitchingConfig<S, T>>
 ): readonly T[] {
   const currentId = state[config.selectionKey].get();
-
   if (!currentId) return tracks;
 
   const presentation = state.presentation.get();
-
   if (!isResolvedPresentation(presentation)) return tracks;
 
   const current = config.getTracks(presentation).find((track) => track.id === currentId);
   const families = current && getCodecFamilies(current);
-
   if (!families) return tracks;
 
   return tracks.filter((track) => {
@@ -720,7 +712,6 @@ function pickResolvedTextTrack<T extends TextTrackCandidate>(
   { state, config }: SelectionRuleDeps<TextSelectionStateMap, AnySlotMap, TextTerminalConfig>
 ): string | undefined {
   const intent = state.userTextTrackSelection?.get();
-
   if (intent === 'off') return undefined;
 
   if (intent) {
@@ -728,7 +719,6 @@ function pickResolvedTextTrack<T extends TextTrackCandidate>(
     // partial shape so the generic `matchesPartialTrack` accepts it (every field
     // it carries — language, forced — exists on the candidate too).
     const matched = candidates.filter((track) => matchesPartialTrack(track, intent as Partial<T>));
-
     if (matched.length) return matched[0]!.id;
   }
 
@@ -774,7 +764,6 @@ export function setupTrackSwitching<
   const candidateSet = computed<readonly T[]>(
     () => {
       const presentation = state.presentation.get();
-
       if (!isResolvedPresentation(presentation)) return [];
 
       return applyConstraints(config.constraints ?? [], getTracks(presentation), deps);

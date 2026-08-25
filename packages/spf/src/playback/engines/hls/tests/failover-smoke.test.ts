@@ -29,7 +29,6 @@ function selectedVideoTrack(presentation: MaybeResolvedPresentation | undefined,
   for (const set of presentation.selectionSets ?? []) {
     for (const sw of set.switchingSets) {
       const track = sw.tracks.find((t) => t.id === id);
-
       if (track) return track;
     }
   }
@@ -50,7 +49,6 @@ describe.skipIf(!SMOKE)('multi-CDN failover (live smoke)', () => {
 
     globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
       const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-
       if (blockPrimary && url.includes(PRIMARY)) return Promise.reject(new TypeError('blocked (smoke)'));
 
       return realFetch(input as RequestInfo, init);

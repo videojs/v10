@@ -27,11 +27,9 @@ export function iconElementSourcePlugin(): Plugin {
       if (!id.startsWith(`\0${elementId}`)) return null;
 
       const family = iconFamily(id.slice(1));
-
       if (!family) return null;
 
       const directory = resolve(assetsRoot, family);
-
       if (!existsSync(directory)) throw new Error(`Unknown icon family: ${family}`);
 
       this.addWatchFile(directory);
@@ -39,7 +37,6 @@ export function iconElementSourcePlugin(): Plugin {
       const files = readdirSync(directory)
         .filter((file) => file.endsWith('.svg'))
         .sort();
-
       if (files.length === 0) throw new Error(`Icon family \`${family}\` does not contain any SVG assets.`);
 
       const icons = Object.fromEntries(

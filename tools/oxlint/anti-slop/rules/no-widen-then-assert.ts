@@ -42,7 +42,6 @@ function isUnknownOrAnyType(type: ESTree.TSType): boolean {
 
 function isBroadRecordKeyType(type: ESTree.TSType): boolean {
   const unwrapped = unwrapTypeParentheses(type);
-
   if (
     unwrapped.type === "TSStringKeyword" ||
     unwrapped.type === "TSNumberKeyword" ||
@@ -92,7 +91,6 @@ function isBroadRecordType(type: ESTree.TSType): boolean {
 
 function broadTypeKind(type: ESTree.TSType): BroadTypeKind | null {
   const unwrapped = unwrapTypeParentheses(type);
-
   if (unwrapped.type === "TSUnknownKeyword" || unwrapped.type === "TSAnyKeyword") return "top";
 
   if (unwrapped.type === "TSObjectKeyword") return "object";
@@ -155,7 +153,6 @@ function isDefinitelyObjectType(type: ESTree.TSType): boolean {
 
 function isDefinitelyNarrowerRecordType(type: ESTree.TSType): boolean {
   const unwrapped = unwrapTypeParentheses(type);
-
   if (unwrapped.type === "TSTypeLiteral") {
     return unwrapped.members.some((member) => member.type !== "TSIndexSignature");
   }
@@ -202,7 +199,6 @@ function resolvedVariableForIdentifier(
         candidate.identifier.start === identifier.start &&
         candidate.identifier.end === identifier.end,
     );
-
     if (reference !== undefined) return reference.resolved;
   }
 
@@ -251,7 +247,6 @@ function knownValueEvidence(
   if (unwrapped.type !== "Identifier") return null;
 
   const variable = resolvedVariableForIdentifier(scopes, unwrapped);
-
   if (variable === null || visitedVariables.has(variable)) return null;
 
   const annotatedIdentifier = variable.identifiers.find(
@@ -268,7 +263,6 @@ function knownValueEvidence(
   }
 
   const declarator = variableDeclarator(variable);
-
   if (
     declarator === null ||
     declarator.parent.type !== "VariableDeclaration" ||
@@ -298,7 +292,6 @@ function widenedBinding(
   readonly boundary: ESTree.Node | null;
 } | null {
   const declarator = variableDeclarator(variable);
-
   if (
     declarator === null ||
     declarator.parent.type !== "VariableDeclaration" ||
@@ -317,7 +310,6 @@ function widenedBinding(
     initializerAssertion === null ? null : broadTypeKind(initializerAssertion.typeAnnotation);
   const declaredBroadKind = declaredType === undefined ? null : broadTypeKind(declaredType);
   const broadKind = declaredBroadKind ?? initializerBroadKind;
-
   if (broadKind === null) return null;
 
   const originalExpression =
@@ -363,15 +355,12 @@ export const noWidenThenAssertRule = defineRule({
 
     const checkAssertion = (node: ESTree.TSAsExpression | ESTree.TSTypeAssertion) => {
       const expression = assertedExpression(node);
-
       if (expression.type !== "Identifier") return;
 
       const variable = resolvedVariableForIdentifier(scopes, expression);
-
       if (variable === null) return;
 
       const widened = widenedBinding(variable, scopes);
-
       if (
         widened === null ||
         node.start <= widened.declaredAt ||

@@ -78,7 +78,6 @@ export class CaptionsButtonElement extends MediaButtonElement<CaptionsButtonCore
     super.update(changed);
 
     const media = this.mediaState.value;
-
     if (!media) return;
 
     this.#syncCommandFor(media);

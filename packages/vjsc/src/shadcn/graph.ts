@@ -52,7 +52,6 @@ export function validateSourceGraph<Item extends ComponentMeta>(
 
     const filename = resolve(module.filename);
     const sourcePath = toPosixPath(relative(root, filename));
-
     if (!sourcePath || escapesRoot(sourcePath)) {
       throw new Error(`Shadcn graph module must be inside the graph root: \`${module.filename}\`.`);
     }
@@ -70,15 +69,12 @@ export function validateSourceGraph<Item extends ComponentMeta>(
       if (!sourceImport.resolvedId) continue;
 
       const dependency = graph.modules.get(sourceImport.resolvedId);
-
       if (dependency) continue;
 
       const dependencyFilename = moduleFilename(sourceImport.resolvedId);
-
       if (!isAbsolute(dependencyFilename)) continue;
 
       const dependencyPath = toPosixPath(relative(root, dependencyFilename));
-
       if (dependencyPath && !escapesRoot(dependencyPath)) {
         throw new Error(
           `Shadcn source dependency was not captured: \`${sourceImport.specifier}\` from \`${module.id}\`.`
@@ -105,7 +101,6 @@ export function collectOwnedModules<Item extends ComponentMeta>(
 
     for (const sourceImport of module.imports) {
       const dependency = sourceImport.resolvedId ? modules.get(sourceImport.resolvedId) : undefined;
-
       if (!dependency) continue;
 
       const dependencyItem = published.get(dependency.id);
@@ -121,7 +116,6 @@ export function collectOwnedModules<Item extends ComponentMeta>(
 
 function assertMetaRemoved(module: SourceModule): void {
   const parsed = parseSync(module.filename, module.source);
-
   if (parsed.errors.length > 0) throw new Error(parsed.errors.map((error) => error.message).join('\n'));
 
   for (const statement of parsed.program.body) {

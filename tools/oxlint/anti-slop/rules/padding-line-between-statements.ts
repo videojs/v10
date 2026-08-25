@@ -29,8 +29,73 @@ function isVariableDeclaration(statement: Statement): boolean {
 	return unwrapLabeledStatement(statement).type === "VariableDeclaration";
 }
 
+function variableDeclaration(statement: Statement): ESTree.VariableDeclaration | null {
+	const unwrapped = unwrapLabeledStatement(statement);
+
+	return unwrapped.type === "VariableDeclaration" ? unwrapped : null;
+}
+
 function isControlFlowStatement(statement: Statement): boolean {
 	return CONTROL_FLOW_TYPES.has(unwrapLabeledStatement(statement).type);
+}
+
+function isAbruptStatement(statement: Statement): boolean {
+	const unwrapped = unwrapLabeledStatement(statement);
+	if (unwrapped.type === "BlockStatement") {
+		return unwrapped.body.length === 1 && isAbruptStatement(unwrapped.body[0]);
+	}
+
+	return (
+		unwrapped.type === "BreakStatement" ||
+		unwrapped.type === "ContinueStatement" ||
+		unwrapped.type === "ReturnStatement" ||
+		unwrapped.type === "ThrowStatement"
+	);
+}
+
+function guardIfStatement(statement: Statement): ESTree.IfStatement | null {
+	const unwrapped = unwrapLabeledStatement(statement);
+
+	return unwrapped.type === "IfStatement" &&
+		unwrapped.alternate === null &&
+		isAbruptStatement(unwrapped.consequent)
+		? unwrapped
+		: null;
+}
+
+function testReferencesDeclaration(
+	sourceCode: SourceCode,
+	declaration: ESTree.VariableDeclaration,
+	test: ESTree.Expression,
+): boolean {
+	return sourceCode.scopeManager.scopes.some((scope) =>
+		scope.references.some((reference) => {
+			const identifier = reference.identifier;
+			if (identifier.range[0] < test.range[0] || identifier.range[1] > test.range[1]) {
+				return false;
+			}
+
+			return reference.resolved?.defs.some(
+				(definition) =>
+					definition.type === "Variable" && definition.node.parent === declaration,
+			);
+		}),
+	);
+}
+
+function isDeclarationBackedGuard(
+	sourceCode: SourceCode,
+	previous: Statement,
+	current: Statement,
+): boolean {
+	const declaration = variableDeclaration(previous);
+	const guard = guardIfStatement(current);
+
+	return (
+		declaration !== null &&
+		guard !== null &&
+		testReferencesDeclaration(sourceCode, declaration, guard.test)
+	);
 }
 
 function requiresBlankLine(previous: Statement, current: Statement): boolean {
@@ -45,7 +110,6 @@ function requiresBlankLine(previous: Statement, current: Statement): boolean {
 
 function hasBlankLine(sourceCode: SourceCode, previous: Statement, current: Statement): boolean {
 	const lastToken = sourceCode.getLastToken(previous);
-
 	if (!lastToken) return true;
 
 	let previousToken: ESTree.Comment | ESTree.Token = lastToken;
@@ -54,7 +118,6 @@ function hasBlankLine(sourceCode: SourceCode, previous: Statement, current: Stat
 		const nextToken: ESTree.Comment | ESTree.Token | null = sourceCode.getTokenAfter(previousToken, {
 			includeComments: true,
 		});
-
 		if (!nextToken) return true;
 
 		if (nextToken.loc.start.line - previousToken.loc.end.line >= 2) return true;
@@ -74,7 +137,6 @@ function insertBlankLine(
 	fixer: Fixer,
 ) {
 	let previousToken: ESTree.Comment | ESTree.Token | null = sourceCode.getLastToken(previous);
-
 	if (!previousToken) return null;
 
 	const nextToken =
@@ -96,16 +158,53 @@ function insertBlankLine(
 	return fixer.insertTextAfter(previousToken, text);
 }
 
-/** Keep declarations and control flow in distinct visual paragraphs. */
+function removeBlankLines(
+	sourceCode: SourceCode,
+	previous: Statement,
+	current: Statement,
+	fixer: Fixer,
+) {
+	const fixes = [];
+	let previousToken: ESTree.Comment | ESTree.Token | null = sourceCode.getLastToken(previous);
+	const newline = sourceCode.text.includes("\r\n") ? "\r\n" : "\n";
+
+	while (previousToken !== null && previousToken.range[0] < current.range[0]) {
+		const nextToken: ESTree.Comment | ESTree.Token | null = sourceCode.getTokenAfter(previousToken, {
+			includeComments: true,
+		});
+		if (nextToken === null || nextToken.range[0] > current.range[0]) break;
+
+		if (nextToken.loc.start.line - previousToken.loc.end.line >= 2) {
+			const gap = sourceCode.text.slice(previousToken.range[1], nextToken.range[0]);
+			const indentation = gap.slice(gap.lastIndexOf("\n") + 1);
+
+			fixes.push(
+				fixer.replaceTextRange(
+					[previousToken.range[1], nextToken.range[0]],
+					`${newline}${indentation}`,
+				),
+			);
+		}
+
+		previousToken = nextToken;
+	}
+
+	return fixes;
+}
+
+/** Keep declarations, their guards, and control flow in semantic visual paragraphs. */
 export const paddingLineBetweenStatementsRule = defineRule({
 	meta: {
 		type: "layout",
 		docs: {
-			description: "Require blank lines after declaration groups and around control-flow statements.",
+			description:
+				"Require semantic statement groups, including declaration-backed guards, to use consistent blank lines.",
 		},
 		fixable: "whitespace",
 		messages: {
 			expectedBlankLine: "Expected a blank line between these statements.",
+			unexpectedBlankLine:
+				"Unexpected blank line between a declaration and its guard clause.",
 		},
 	},
 	createOnce(context) {
@@ -113,8 +212,26 @@ export const paddingLineBetweenStatementsRule = defineRule({
 			for (let index = 1; index < statements.length; index++) {
 				const previous = statements[index - 1];
 				const current = statements[index];
+				const declarationBackedGuard = isDeclarationBackedGuard(
+					context.sourceCode,
+					previous,
+					current,
+				);
+				const blankLine = hasBlankLine(context.sourceCode, previous, current);
 
-				if (!requiresBlankLine(previous, current) || hasBlankLine(context.sourceCode, previous, current)) {
+				if (declarationBackedGuard) {
+					if (!blankLine) continue;
+
+					context.report({
+						node: current,
+						messageId: "unexpectedBlankLine",
+						fix: (fixer) => removeBlankLines(context.sourceCode, previous, current, fixer),
+					});
+
+					continue;
+				}
+
+				if (!requiresBlankLine(previous, current) || blankLine) {
 					continue;
 				}
 

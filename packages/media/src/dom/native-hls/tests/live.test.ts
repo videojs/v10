@@ -40,7 +40,6 @@ function mockFetch(responses: Record<string, string | { status: number; body?: s
     vi.fn(async (input: string | URL | Request) => {
       const url = input instanceof Request ? input.url : input.toString();
       const entry = responses[url] ?? responses[Object.keys(responses).find((key) => url.endsWith(key)) ?? ''];
-
       if (entry === undefined) {
         return new Response('not found', { status: 404 });
       }

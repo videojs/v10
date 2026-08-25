@@ -58,7 +58,6 @@ export interface PresetResult {
 function distToSrc(distPath: string): string {
   // Real packages: dist/(dev|default)/foo/bar.js → src/foo/bar.ts
   const distMatch = distPath.match(/^\.\/dist\/(?:dev|default)\/(.+?)(?:\.d\.ts|\.js)$/);
-
   if (distMatch) return `./src/${distMatch[1]}.ts`;
 
   // Already a source path (test fixtures)
@@ -89,7 +88,6 @@ function resolveExportPath(exportValue: unknown): string | undefined {
  */
 function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPath: string; scanDir: string }> {
   const pkgJsonPath = path.join(packageDir, 'package.json');
-
   if (!fs.existsSync(pkgJsonPath)) return new Map();
 
   const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
@@ -100,19 +98,16 @@ function discoverPresetsFromPackage(packageDir: string): Map<string, { barrelPat
   for (const key of Object.keys(exports)) {
     // Match ./name (not ./, not ./name/*, not ./name/*.css)
     const match = key.match(/^\.\/([a-z][a-z0-9-]*)$/);
-
     if (!match) continue;
 
     const name = match[1]!;
 
     // Must have a corresponding wildcard export
     const wildcardKey = `./${name}/*`;
-
     if (!(wildcardKey in exports)) continue;
 
     const barrelRaw = resolveExportPath(exports[key]);
     const wildcardRaw = resolveExportPath(exports[wildcardKey]);
-
     if (!barrelRaw || !wildcardRaw) continue;
 
     const barrelSrc = distToSrc(barrelRaw);
@@ -234,14 +229,12 @@ function extractClassesWithTagName(filePath: string): ClassWithTagName[] {
 function resolveModulePath(dir: string, specifier: string): string | undefined {
   for (const ext of ['.ts', '.tsx']) {
     const candidate = path.join(dir, `${specifier}${ext}`);
-
     if (fs.existsSync(candidate)) return candidate;
   }
 
   // Try index file in directory
   for (const ext of ['.ts', '.tsx']) {
     const candidate = path.join(dir, specifier, `index${ext}`);
-
     if (fs.existsSync(candidate)) return candidate;
   }
 
@@ -351,7 +344,6 @@ const FEATURE_SLUG_OVERRIDES: Record<string, string> = {
 
 function featureDocsSlug(featureName: string): string {
   const override = FEATURE_SLUG_OVERRIDES[featureName];
-
   if (override) return `reference/feature-${override}`;
 
   const kebab = featureName.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
@@ -388,7 +380,6 @@ function parseFeatureBundles(presetsFilePath: string): Map<string, string[]> {
       if (!ts.isIdentifier(decl.name)) continue;
 
       const name = decl.name.text;
-
       if (!name.endsWith('Features')) continue;
 
       if (decl.initializer && ts.isArrayLiteralExpression(decl.initializer)) {
@@ -419,7 +410,6 @@ function extractFileDescription(filePath: string): string | undefined {
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
 
   const firstStatement = sourceFile.statements[0];
-
   if (!firstStatement) return undefined;
 
   return getJSDocDescription(firstStatement);
@@ -495,7 +485,6 @@ function buildPresetReference(
   const bundleName =
     (preset.html && findFeatureBundleExport(preset.html.barrelPath)) ??
     (preset.react && findFeatureBundleExport(preset.react.barrelPath));
-
   if (!bundleName) return null;
 
   const featureNames = featureBundleMap.get(bundleName) ?? [];
@@ -537,7 +526,6 @@ export function generatePresetReferences(monorepoRoot: string): PresetResult[] {
   const featureBundleMap = parseFeatureBundles(presetsFilePath);
 
   const presets = discoverPresets(monorepoRoot);
-
   if (presets.length === 0) return [];
 
   const results: PresetResult[] = [];

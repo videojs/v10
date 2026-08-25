@@ -144,7 +144,6 @@ export class TimeCore {
 
   getLabel(state: TimeState, type = this.#props.type): Text | string {
     const custom = resolveLabel(this.#props.label, state);
-
     if (custom !== undefined) return custom;
 
     if (!this.#props.toggle) {
@@ -158,7 +157,6 @@ export class TimeCore {
 
   getLabelParams(state: TimeState): { duration: string } | undefined {
     const custom = resolveLabel(this.#props.label, state);
-
     if (custom !== undefined || !this.#props.toggle) return undefined;
 
     const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };

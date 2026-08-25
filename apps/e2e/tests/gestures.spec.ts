@@ -18,7 +18,6 @@ import { PlayerPage } from '../page-objects/player';
 // Helper to get center coordinates of an element
 async function getCenter(player: PlayerPage) {
   const box = await player.playerRoot.boundingBox();
-
   if (!box) throw new Error('Player not visible');
 
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -153,7 +152,6 @@ test.describe('Touch Gestures', () => {
 
     // Get a point in the right third of the player
     const box = await player.playerRoot.boundingBox();
-
     if (!box) throw new Error('Player not visible');
 
     const rightX = box.x + box.width * 0.85;
@@ -175,7 +173,6 @@ test.describe('Touch Gestures', () => {
 
     // Get a point in the left third of the player
     const box = await player.playerRoot.boundingBox();
-
     if (!box) throw new Error('Player not visible');
 
     const leftX = box.x + box.width * 0.15;

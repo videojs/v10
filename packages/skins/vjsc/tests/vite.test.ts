@@ -131,7 +131,6 @@ describe('Skins Vite workflow', () => {
     });
 
     const resolved = await server.pluginContainer.resolveId('@videojs/icons/element/minimal');
-
     if (!resolved) throw new Error('Expected the source icon plugin to resolve the minimal family.');
 
     const loaded = await server.pluginContainer.load(resolved.id);

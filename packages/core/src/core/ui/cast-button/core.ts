@@ -53,7 +53,6 @@ export class CastButtonCore {
 
   getLabel(state: CastButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     if (state.connection === 'connected') return stopText;

@@ -28,7 +28,6 @@ export class SliderValueElement extends UIElement {
     super.update(_changed);
 
     const ctx = this.#ctx.value;
-
     if (!ctx) return;
 
     const value = this.type === 'pointer' ? ctx.pointerValue : ctx.state.value;

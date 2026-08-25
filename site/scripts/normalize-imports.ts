@@ -83,7 +83,6 @@ export function normalizeImports(source: string): string {
   ];
   const body = source.slice(bodyStart).replace(/^\s+/, '');
   const header = [directives.join('\n'), importLines.join('\n')].filter(Boolean).join('\n\n');
-
   if (!header) {
     return body;
   }

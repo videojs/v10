@@ -24,7 +24,6 @@ export function createMuxDrmSystems(source?: MuxSourceBase | null): DrmSystemsCo
 
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, drm } = source;
   const { token } = drm ?? {};
-
   // License tokens must carry the DRM (`d`) audience.
   if (!token || parseJwt<MuxJWT>(token)?.aud !== 'd') return undefined;
 

@@ -14,7 +14,6 @@ export const TooltipShortcut = forwardRef<HTMLElement, TooltipShortcutProps>(fun
 ) {
   const { state, stateAttrMap, content } = useTooltipContext();
   const shortcut = children !== undefined && children !== null ? children : (content?.shortcut ?? null);
-
   if (!shortcut) {
     return null;
   }

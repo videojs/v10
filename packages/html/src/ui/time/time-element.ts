@@ -116,7 +116,6 @@ export class TimeElement extends UIElement {
 
   #getLabelParams(state: TimeCore.State): { duration: string } | undefined {
     const params = this.#core.getLabelParams(state);
-
     if (!params) return undefined;
 
     const duration = formatTimeAsPhrase(Math.abs(state.seconds), { locale: this.#i18n.locale });

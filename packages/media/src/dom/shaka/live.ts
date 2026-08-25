@@ -13,7 +13,6 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
       super(...args);
 
       const { engine } = this;
-
       if (!engine) return;
 
       engine.addEventListener('loading', this.#onLoading);
@@ -59,11 +58,9 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
 
       const { engine } = this;
-
       if (!engine) return Number.NaN;
 
       const { end } = engine.seekRange();
-
       if (!Number.isFinite(end)) return Number.NaN;
 
       return end - this.#liveEdgeStartOffset;
@@ -135,7 +132,6 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
       this.#disarmSeekToLive();
 
       const target = this.target as HTMLVideoElement | null;
-
       if (!target || target.autoplay) return;
 
       this.#seekToLiveAbort = new AbortController();
@@ -157,11 +153,9 @@ export function ShakaMediaLiveMixin<Base extends Constructor<ShakaEngineHost>>(B
 
     #trySeekToLive() {
       const target = this.target as HTMLVideoElement | null;
-
       if (!target) return;
 
       const { liveEdgeStart } = this;
-
       if (!Number.isFinite(liveEdgeStart)) return;
 
       if (target.currentTime < liveEdgeStart) {

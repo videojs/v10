@@ -122,7 +122,6 @@ export function selectQuality(
 
   // If no track fits with safety margin, fall back to lowest quality
   const optimal = chosen ?? sortedTracks[0];
-
   if (!optimal) return undefined;
 
   // Apply upgrade hysteresis. No currentTrack → no hysteresis, return

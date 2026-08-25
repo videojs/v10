@@ -31,13 +31,11 @@ export function createSchemaModule(options: CreateSchemaModuleOptions): SchemaMo
   const discovered = discoverSchema({ cwd, include, ...(exclude ? { exclude } : {}) });
 
   const entries = [...discovered.components].sort((a, b) => a.name.localeCompare(b.name));
-
   if (entries.length === 0) {
     throw new Error(`No component sources matched: ${JSON.stringify(include)}`);
   }
 
   const duplicate = entries.find((entry, index) => entry.name === entries[index - 1]?.name);
-
   if (duplicate) throw new Error(`Duplicate component name: ${duplicate.name}`);
 
   const code = `${[

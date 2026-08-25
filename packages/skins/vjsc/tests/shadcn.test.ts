@@ -11,7 +11,6 @@ describe('Skins Shadcn registry', () => {
       logLevel: 'silent',
       write: false,
     });
-
     if (!result) throw new Error('Expected one registry build output.');
 
     const output = result.chunks;
@@ -107,7 +106,6 @@ type BuiltItem = Omit<ShadcnRegistry['items'][number], 'files'> & {
 
 function assetJson<Value>(assets: ReadonlyMap<string, string>, fileName: string): Value {
   const source = assets.get(fileName);
-
   if (!source) throw new Error(`Missing registry asset: ${fileName}`);
 
   return JSON.parse(source) as Value;

@@ -78,7 +78,6 @@ describe('componentSchemaPlugin', () => {
       report: false,
     });
     const declaration = results[0]?.chunks.find((chunk) => /\.d\.[cm]?ts$/.test(chunk.fileName));
-
     if (declaration?.type !== 'chunk') throw new Error('The host build did not emit the schema declaration');
 
     expect(declaration.code).toContain('declare const PlayButton');

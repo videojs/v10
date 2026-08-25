@@ -28,7 +28,6 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
   // remount below, so it never needs to re-attach.
   useEffect(() => {
     const el = ref.current;
-
     if (!el) return;
 
     const observer = new MutationObserver(() => {

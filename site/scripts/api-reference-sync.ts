@@ -76,7 +76,6 @@ function directoryDiff(beforeDirectory: string, afterDirectory: string): string 
     encoding: 'utf-8',
     maxBuffer: MAX_DIFF_BUFFER_BYTES,
   });
-
   if (result.error || (result.status !== 0 && result.status !== 1)) {
     throw new Error(result.stderr || result.error?.message || `diff exited with status ${result.status}`);
   }

@@ -23,7 +23,6 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
 
   useEffect(() => {
     const element = elementRef.current;
-
     if (!element) return;
 
     return menu.registerItem(element);
@@ -45,7 +44,6 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
 
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
-
     if (!element || disabled) return;
 
     menu.highlight(element, { focus: false, pointer: true });

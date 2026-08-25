@@ -47,7 +47,6 @@ export function removeRendition(rendition: AudioRendition) {
 
 export function selectedChanged(rendition: AudioRendition) {
   const renditionList = getPrivate(rendition).media?.deref()?.audioRenditions as AudioRenditionList | undefined;
-
   // Prevent firing a rendition list `change` event multiple times per tick.
   if (!renditionList || getPrivate(renditionList).changeRequested) return;
 
@@ -57,7 +56,6 @@ export function selectedChanged(rendition: AudioRendition) {
     delete getPrivate(renditionList).changeRequested;
 
     const track = getPrivate(rendition).track as AudioTrack;
-
     if (!track.enabled) return;
 
     renditionList.dispatchEvent(new Event('change'));
@@ -66,7 +64,6 @@ export function selectedChanged(rendition: AudioRendition) {
 
 function getCurrentRenditions(renditionList: AudioRenditionList): AudioRendition[] {
   const media = getPrivate(renditionList).media?.deref() as HTMLMediaElement | undefined;
-
   if (!media) return [];
 
   return [...media.audioTracks]

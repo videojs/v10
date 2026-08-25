@@ -47,7 +47,6 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
       const depth = chunk.fileName.split('/').length - 1;
       const target = depth === 0 ? `./${file}` : `${'../'.repeat(depth)}${file}`;
       const magicString = meta?.magicString;
-
       if (!magicString) {
         throw new Error('cdn-i18n-external requires experimental.nativeMagicString: true.');
       }

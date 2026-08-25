@@ -200,7 +200,6 @@ btnParse.addEventListener('click', async () => {
   try {
     const masterText = await fetch(url).then((r) => r.text());
     const { videoUrl, audioUrl, codecsAttr } = parseMaster(masterText, url);
-
     if (!videoUrl) throw new Error('No video rendition found in master playlist');
 
     log(`Video playlist: ${videoUrl}`, 'ok');

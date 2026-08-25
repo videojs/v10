@@ -17,7 +17,6 @@ import { globWithParser } from './utils/globWithParser';
  */
 export function extractDateFromFilename(id: string): Date {
   const match = id.match(/^(\d{4})-(\d{2})-(\d{2})-/);
-
   if (!match) {
     throw new Error(`Filename "${id}" must follow format: YYYY-MM-DD-slug.mdx`);
   }

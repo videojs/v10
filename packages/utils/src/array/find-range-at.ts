@@ -8,7 +8,6 @@ export function findRangeAt<Range>(
   getEnd: (range: Range) => number
 ): Range | undefined {
   const index = findLastIndexAtOrBefore(ranges, value, getStart);
-
   if (index < 0) return undefined;
 
   const range = ranges[index]!;

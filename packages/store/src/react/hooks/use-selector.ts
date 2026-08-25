@@ -24,7 +24,6 @@ export function useSelector<S, R>(
 
   const getSelectedSnapshot = () => {
     const next = selector(getSnapshot());
-
     if (cache.current !== undefined && isEqual(cache.current, next)) {
       return cache.current;
     }

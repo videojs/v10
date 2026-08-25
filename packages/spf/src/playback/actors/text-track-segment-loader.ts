@@ -138,7 +138,6 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
    */
   const planTasks = (message: TextTrackSegmentLoaderMessage): TextLoadTask[] => {
     const { track, range } = message;
-
     if (!range) return [];
 
     const trackId = track.id;
@@ -217,7 +216,6 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
         on: {
           load: (msg, ctx) => {
             const tasks = planTasks(msg);
-
             if (tasks.length === 0) return;
 
             ctx.transition('loading');

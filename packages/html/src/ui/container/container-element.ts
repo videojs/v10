@@ -70,7 +70,6 @@ export class ContainerElement extends UIElement implements MediaContainer {
 
   #applyLabel(): void {
     const current = this.getAttribute('aria-label');
-
     if (current && current !== this.#label) return;
 
     if (this.hasAttribute('aria-labelledby')) {

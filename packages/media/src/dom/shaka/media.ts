@@ -154,7 +154,6 @@ class ShakaMediaBase
     if (target.preload !== this.#preload) target.preload = this.#preload;
 
     const engine = this.#engine;
-
     if (!engine || !isNewTarget) return;
 
     this.#run(engine.attach(target));
@@ -271,7 +270,6 @@ class ShakaMediaBase
     if (target && target.preload !== value) target.preload = value;
 
     const engine = this.#engine;
-
     if (!engine) return;
 
     if (this.#isLoadDeferred && (value === 'metadata' || value === 'auto')) {
@@ -295,7 +293,6 @@ class ShakaMediaBase
 
   set source(value: ShakaSource | null) {
     const source = value ?? null;
-
     // Changing anything takes a new object, so handing the same one back costs
     // nothing.
     if (source === this.#source) return;
@@ -321,7 +318,6 @@ class ShakaMediaBase
   // a key clears it instead of leaving the previous value behind.
   #applyEngineConfig() {
     const engine = this.#engine;
-
     if (!engine) return;
 
     engine.resetConfiguration();
@@ -338,7 +334,6 @@ class ShakaMediaBase
 
   #requestLoad() {
     const engine = this.#engine;
-
     // Nothing to load into yet — `attach()` loads what is waiting.
     if (!engine || !this.target) return;
 
@@ -409,7 +404,6 @@ class ShakaMediaBase
 
   #restoreBuffering(engine: shaka.Player) {
     const goals = this.#clampedGoals;
-
     if (!goals) return;
 
     this.#clampedGoals = null;
@@ -420,7 +414,6 @@ class ShakaMediaBase
     this.#disarmPlayIntent();
 
     const { target } = this;
-
     if (!target) return;
 
     this.#playIntentAbort = new AbortController();
@@ -466,7 +459,6 @@ class ShakaMediaBase
     }
 
     const mediaError = toMediaError(error);
-
     // An aborted load or a failure Shaka intends to retry is not worth
     // announcing.
     if (!mediaError) return;
@@ -519,7 +511,6 @@ function engineConfigKey(source: ShakaSource | null) {
  */
 function withDrmConfig(config: ShakaConfig | undefined, drm: DrmSystemsConfig | undefined) {
   const systems = Object.entries(drm ?? {});
-
   if (systems.length === 0 || config?.drm?.servers) return config;
 
   const servers: Record<string, string> = {};

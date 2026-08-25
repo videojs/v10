@@ -22,7 +22,6 @@ export function parseMediaFragment(
   if (!hash) return { url };
 
   const eqIndex = hash.indexOf('=');
-
   if (eqIndex === -1) return { url };
 
   const keys = hash.slice(0, eqIndex);

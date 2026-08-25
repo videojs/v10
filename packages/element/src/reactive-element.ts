@@ -176,11 +176,9 @@ export class ReactiveElement extends HTMLElement {
 
     const { props, attrToProp } = resolve(this.constructor as typeof ReactiveElement);
     const propName = attrToProp.get(attr);
-
     if (!propName) return;
 
     const decl = props.get(propName);
-
     if (!decl) return;
 
     let value: unknown = newValue;
@@ -371,7 +369,6 @@ export class ReactiveElement extends HTMLElement {
  */
 function resolve(ctor: typeof ReactiveElement): ResolvedMeta {
   const existing = cache.get(ctor);
-
   if (existing) return existing;
 
   const props = new Map<string, PropertyDeclaration>();

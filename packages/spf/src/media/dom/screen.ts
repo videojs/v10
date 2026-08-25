@@ -61,7 +61,6 @@ export function getScreenResolution(
   { useDevicePixelRatio }: ScreenResolutionOptions = { useDevicePixelRatio: true }
 ): ScreenResolution | undefined {
   const screen = globalThis.screen;
-
   if (!screen) return undefined;
 
   // A missing or nonsense ratio falls back to 1 (see `getDevicePixelRatio`): a
@@ -129,7 +128,6 @@ export function watchScreenResolution(
 
   const check = () => {
     const next = getScreenResolution(options);
-
     if (shallowEqual(current, next)) return;
 
     current = next;

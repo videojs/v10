@@ -194,7 +194,6 @@ export class ConcurrentRunner {
     if (this.#destroyed) return Promise.resolve() as Promise<TValue>;
 
     const existing = this.#pending.get(task.id);
-
     if (existing) return existing.promise as Promise<TValue>;
 
     if (this.#pending.size === 0) {

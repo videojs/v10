@@ -93,7 +93,6 @@ export function findFirstGuide(
       // Recursively search section contents
       try {
         const guide = findFirstGuide(framework, item.contents, isDev);
-
         if (guide) return guide;
       } catch {
         // Continue searching other sections
@@ -144,7 +143,6 @@ export function findGuideBySlug(slug: string, sidebarToSearch: Sidebar = sidebar
     if (isSection(item)) {
       // Recursively search section contents
       const guide = findGuideBySlug(slug, item.contents);
-
       if (guide) return guide;
     } else if (!isLink(item) && item.slug === slug) {
       // Found the guide
@@ -171,7 +169,6 @@ export function getSectionsForGuide(slug: string, sidebarToSearch: Sidebar = sid
       if (isSection(item)) {
         // Recursively search section contents with updated path
         const result = findInSidebar(item.contents, [...path, item.sidebarLabel]);
-
         if (result !== null) return result;
       } else if (!isLink(item) && item.slug === slug) {
         // Found the guide, return the accumulated path
@@ -198,7 +195,6 @@ export function getValidFrameworksForGuide(guide: Guide, sidebarToSearch: Sideba
       if (isSection(item)) {
         const sectionFrameworks = item.frameworks ? inherited.filter((f) => item.frameworks!.includes(f)) : inherited;
         const result = findWithRestrictions(item.contents, sectionFrameworks);
-
         if (result) return result;
       } else if (!isLink(item) && item.slug === guide.slug) {
         return item.frameworks ? inherited.filter((f) => item.frameworks!.includes(f)) : inherited;
@@ -231,7 +227,6 @@ export function getAdjacentGuides(
 
   // Find the current guide's index
   const currentIndex = allGuides.indexOf(currentSlug);
-
   if (currentIndex === -1) {
     // Current guide not found in filtered sidebar
     return { prev: null, next: null };

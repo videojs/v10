@@ -169,7 +169,6 @@ export function createMachineReactor<State extends string>(
   const toEffect = ({ fn, shouldSkip, toFnCall = (baseCall) => baseCall }: EffectDescriptor) =>
     effect(() => {
       const snapshot = snapshotSignal.get();
-
       if (shouldSkip(snapshot)) return;
 
       const baseCall = () => fn();
@@ -186,7 +185,6 @@ export function createMachineReactor<State extends string>(
 
     destroy(): void {
       const state = getState();
-
       if (state === 'destroying' || state === 'destroyed') return;
 
       // Two-step teardown: transition through 'destroying' first to leave room

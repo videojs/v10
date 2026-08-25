@@ -36,7 +36,6 @@ const GESTURE_ACTION_OVERRIDES: Partial<Record<GestureActionName, GestureActionR
 
 export function resolveGestureAction(name: GestureActionName | (string & {})): GestureActionResolver | undefined {
   const override = GESTURE_ACTION_OVERRIDES[name as GestureActionName];
-
   if (override) return override;
 
   // Direct store method call — togglePaused, toggleMuted, toggleFullscreen, etc.

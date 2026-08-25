@@ -44,7 +44,6 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
     if (!isSubMenuTrigger || !parentMenuApi) return;
 
     const element = elementRef.current;
-
     if (!element) return;
 
     menu.setTriggerElement(element);
@@ -74,7 +73,6 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   const handleSubMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       const defaultPreventedByUser = callKeyDownHandler(onKeyDown, event);
-
       if (disabled || defaultPreventedByUser) return;
 
       if (event.key === 'ArrowRight') {
@@ -87,7 +85,6 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
 
   const handlePointerEnter = useCallback(() => {
     const element = elementRef.current;
-
     if (!element || disabled || !parentMenuApi) return;
 
     parentMenuApi.highlight(element, { focus: false, pointer: true });

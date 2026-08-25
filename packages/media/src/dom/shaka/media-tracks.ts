@@ -41,7 +41,6 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       super(...args);
 
       const { engine } = this;
-
       if (!engine) return;
 
       engine.addEventListener('trackschanged', this.#onTracksChanged);
@@ -79,12 +78,10 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
     // different.
     #onTracksChanged = () => {
       const { engine } = this;
-
       if (!engine) return;
 
       const videoTracks = engine.getVideoTracks();
       const key = videoTracksKey(videoTracks);
-
       if (key === this.#videoTracksKey) return;
 
       this.#videoTracksKey = key;
@@ -123,12 +120,10 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #onAudioTracksChanged = () => {
       const { engine } = this;
-
       if (!engine) return;
 
       const audioTracks = engine.getAudioTracks();
       const key = audioTracksKey(audioTracks);
-
       if (key === this.#audioTracksKey) return;
 
       this.#audioTracksKey = key;
@@ -155,7 +150,6 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #onAudioTrackChanged = () => {
       const { engine } = this;
-
       if (!engine) return;
 
       const activeIndex = engine.getAudioTracks().findIndex((track) => track.active);
@@ -167,7 +161,6 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #switchRendition = () => {
       const { engine } = this;
-
       if (!engine) return;
 
       // Multiple renditions can be selected, but Shaka plays exactly one video
@@ -180,7 +173,6 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       }
 
       const videoTrack = engine.getVideoTracks()[Number(selected.id)];
-
       if (!videoTrack) return;
 
       this.#isAbrOff = true;
@@ -190,7 +182,6 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
 
     #switchAudioTrack = () => {
       const { engine } = this;
-
       if (!engine) return;
 
       // `enabled` is not exclusive the way video `selected` is, so prefer a
@@ -199,7 +190,6 @@ export function ShakaMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       const audioTracks = engine.getAudioTracks();
 
       const selectedTrack = enabledTracks.find((track) => !audioTracks[Number(track.id)]?.active) ?? enabledTracks[0];
-
       if (!selectedTrack?.id) return;
 
       const audioTrack = audioTracks[Number(selectedTrack.id)];

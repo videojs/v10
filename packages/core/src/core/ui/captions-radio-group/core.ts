@@ -71,7 +71,6 @@ export class CaptionsRadioGroupCore {
 
   getLabel(state: CaptionsRadioGroupState): Text | string {
     const label = resolveLabel(this.#props.label, state);
-
     if (label) return label;
 
     return captionsText;
@@ -126,7 +125,6 @@ export class CaptionsRadioGroupCore {
     if (this.#props.disabled) return;
 
     const captionTracks = getCaptionTracks(media.textTrackList);
-
     if (!captionTracks.length) return;
 
     if (value === CAPTIONS_OFF_VALUE) {

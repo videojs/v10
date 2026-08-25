@@ -311,7 +311,6 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   }
   set source(value: SpotifySource | null) {
     const source = value ?? null;
-
     // Changing anything takes a new object, so handing the same one back costs nothing.
     if (source === this.#source) return;
 
@@ -353,7 +352,6 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
   // iframe API only talks to an iframe already holding an embed, so an unresolved target settles the load for a retry.
   #createPlayer(): boolean {
     const target = this.#target;
-
     if (!target || this.#controller || this.#creatingController) return false;
 
     // The `src` property resolves an empty attribute to the document URL; only the attribute spots a placeholder.
@@ -536,7 +534,6 @@ export class SpotifyMedia extends SpotifyMediaBase implements Partial<Video> {
 
   #syncDuration(duration: number) {
     const seconds = duration / 1000;
-
     if (seconds === this.#duration) return;
 
     // A different duration is a different entity, so whatever ended before is no longer what is playing.

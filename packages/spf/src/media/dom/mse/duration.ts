@@ -41,7 +41,6 @@ export function getBufferedEnd(
   return (
     ([...buffers].reduce((endMatch: number | undefined, buffer) => {
       const { buffered } = buffer;
-
       if (!buffered.length) return endMatch;
 
       const end = buffered.end(buffered.length - 1);
@@ -103,7 +102,6 @@ export function shouldUpdateDuration(
   if (!canUpdateDuration(presentation, mediaSource)) return false;
 
   const duration = presentation!.duration!;
-
   if (Number.isNaN(duration) || duration <= 0) return false;
 
   return true;

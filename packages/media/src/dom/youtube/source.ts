@@ -104,7 +104,6 @@ export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   // Playlist embed URLs use the `videoseries` placeholder in the video id slot.
   const videoId = videoMatch?.[1] ?? null;
   const id = videoId === 'videoseries' ? null : videoId;
-
   if (!id && !listMatch) return null;
 
   return {
@@ -119,7 +118,6 @@ export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
 /** Build the iframe `src` URL for an initial YouTube embed from the given props. */
 export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaProps> = {}) {
   const parsed = parseYouTubeSource(src);
-
   if (!parsed) return '';
 
   const embedBase = parsed.noCookie ? EMBED_BASE_NOCOOKIE : EMBED_BASE;
@@ -153,7 +151,6 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
  */
 function parseStartTime(url: string): number | null {
   const tValue = /[?&]t=([\dhms]+)/i.exec(url)?.[1]?.toLowerCase();
-
   if (!tValue) return null;
 
   let totalSeconds = 0;

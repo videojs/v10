@@ -91,13 +91,11 @@ export function resolveErrorDialogDescription(
 
     if (message) {
       const defaultForCode = MediaError.defaultMessages[error.code];
-
       if (text && defaultForCode && message === defaultForCode) {
         return text;
       }
 
       const uaVariants = STANDARD_CODE_UA_MESSAGES[error.code];
-
       if (text && isStandardMediaErrorCode(error.code) && !error.context && uaVariants?.includes(message)) {
         return text;
       }
@@ -109,7 +107,6 @@ export function resolveErrorDialogDescription(
   }
 
   const cached = cachedMessage?.trim();
-
   if (cached) return cached;
 
   return unexpectedText;

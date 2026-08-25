@@ -21,7 +21,6 @@ const presets: PresetReferenceType[] = entries
   .sort((a, b) => {
     const aPin = PINNED_PRESETS.indexOf(a.name);
     const bPin = PINNED_PRESETS.indexOf(b.name);
-
     if (aPin !== -1 && bPin !== -1) return aPin - bPin;
 
     if (aPin !== -1) return -1;

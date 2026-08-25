@@ -13,7 +13,6 @@ async function expectLTRControlOrder(scope: Page | Frame): Promise<void> {
 
     await expect(control).toBeVisible();
     const box = await control.boundingBox();
-
     if (!box) throw new Error(`Control has no bounding box: ${selector}`);
 
     return box.x;
@@ -42,7 +41,6 @@ async function getPreviewFrame(page: Page, path: string): Promise<Frame> {
     .toContain(path);
 
   const frame = page.frames().find((frame) => frame.url().includes(path));
-
   if (!frame) throw new Error(`Preview frame not found: ${path}`);
 
   return frame;

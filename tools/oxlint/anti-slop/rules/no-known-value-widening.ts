@@ -36,7 +36,6 @@ function resolveVariable(
 
 	while (scope !== null) {
 		const variable = scope.set.get(identifier.name);
-
 		if (variable !== undefined) return variable;
 
 		scope = scope.upper;
@@ -70,15 +69,12 @@ function hasKnownEvidence(
 	if (isKnownEvidenceExpression(expression)) return true;
 
 	const unwrapped = unwrapExpression(expression);
-
 	if (unwrapped.type !== "Identifier") return false;
 
 	const variable = resolveVariable(sourceCode, unwrapped);
-
 	if (variable === null || visitedVariables.has(variable)) return false;
 
 	const declarator = variableDeclarator(variable);
-
 	if (
 		declarator === null ||
 		declarator.init === null ||
@@ -132,7 +128,6 @@ function functionName(sourceCode: SourceCode, owner: FunctionExpression | null):
 	if (owner.id !== null) return owner.id.name;
 
 	const parent = owner.parent;
-
 	if (parent.type === "VariableDeclarator" && parent.id.type === "Identifier")
 		return parent.id.name;
 
@@ -231,11 +226,9 @@ export const noKnownValueWideningRule = defineRule({
 				if (node.operator !== "=" || node.left.type !== "Identifier") return;
 
 				const variable = resolveVariable(context.sourceCode, node.left);
-
 				if (variable === null) return;
 
 				const declarator = variableDeclarator(variable);
-
 				if (declarator === null || declarator.id.type !== "Identifier") return;
 
 				reportFlow(

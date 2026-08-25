@@ -59,7 +59,6 @@ export const PlaybackRateRadioGroup = forwardRef<HTMLDivElement, PlaybackRateRad
       ...elementProps
     } = componentProps;
     const playbackRate = usePlaybackRateOptions({ label, formatRate, disabled });
-
     if (!playbackRate) return null;
 
     const { state, value, options, setValue } = playbackRate;
