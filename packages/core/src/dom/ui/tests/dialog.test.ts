@@ -72,6 +72,37 @@ describe('createDialog', () => {
     expect(document.activeElement).toBe(first);
   });
 
+  it('traps Tab focus across open shadow roots', () => {
+    const { dialog } = createTestDialog();
+    const popup = document.createElement('div');
+    popup.tabIndex = -1;
+    const first = document.createElement('button');
+    const skin = document.createElement('div');
+    const shadow = skin.attachShadow({ mode: 'open' });
+    const last = document.createElement('button');
+    shadow.append(last);
+    popup.append(first, skin);
+    document.body.append(popup);
+    dialog.setPopupElement(popup);
+    dialog.open();
+    flush();
+
+    first.focus();
+    const forward = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    document.dispatchEvent(forward);
+    expect(forward.defaultPrevented).toBe(false);
+
+    last.focus();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(first);
+
+    first.focus();
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true })
+    );
+    expect(shadow.activeElement).toBe(last);
+  });
+
   it('restores focus to the trigger after closing', async () => {
     const trigger = document.createElement('button');
     const popup = document.createElement('div');

@@ -21,13 +21,65 @@ export function getDeepActiveElement(root: Document | ShadowRoot = document): El
   return active;
 }
 
-/** Returns the elements in a subtree that participate in sequential keyboard navigation. */
+/** Returns the elements in a composed subtree that participate in sequential keyboard navigation. */
 export function getTabbableElements(root: ParentNode): HTMLElement[] {
-  return Array.from(root.querySelectorAll<HTMLElement>(TABBABLE_SELECTOR)).filter(isTabbableElement);
+  const tabbable: HTMLElement[] = [];
+  const visited = new Set<Element>();
+
+  visitChildren(root);
+  return tabbable;
+
+  function visitChildren(parent: ParentNode): void {
+    for (const child of parent.children) visitElement(child);
+  }
+
+  function visitElement(element: Element): void {
+    if (visited.has(element)) return;
+    visited.add(element);
+
+    if (element instanceof HTMLElement && isTabbableElement(element)) {
+      tabbable.push(element);
+    }
+
+    if (element instanceof HTMLSlotElement) {
+      const assigned = element.assignedElements({ flatten: true });
+      if (assigned.length > 0) {
+        for (const child of assigned) visitElement(child);
+      } else {
+        visitChildren(element);
+      }
+      return;
+    }
+
+    if (element.shadowRoot) {
+      visitChildren(element.shadowRoot);
+    } else {
+      visitChildren(element);
+    }
+  }
 }
 
 function isTabbableElement(element: HTMLElement): boolean {
-  if (element.tabIndex < 0 || element.hidden || element.matches(':disabled')) return false;
-  if (element.closest('[inert],[hidden],[aria-hidden="true"]')) return false;
+  if (!element.matches(TABBABLE_SELECTOR) || element.tabIndex < 0 || element.matches(':disabled')) return false;
+
+  let current: Element | null = element;
+  while (current) {
+    if (
+      current instanceof HTMLElement &&
+      (current.hidden || current.hasAttribute('inert') || current.getAttribute('aria-hidden') === 'true')
+    ) {
+      return false;
+    }
+    current = getComposedParent(current);
+  }
+
   return true;
+}
+
+function getComposedParent(element: Element): Element | null {
+  if (element.assignedSlot) return element.assignedSlot;
+  if (element.parentElement) return element.parentElement;
+
+  const root = element.getRootNode();
+  return root instanceof ShadowRoot ? root.host : null;
 }

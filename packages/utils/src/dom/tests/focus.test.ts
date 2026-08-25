@@ -33,6 +33,34 @@ describe('focus', () => {
     ]);
   });
 
+  it('gets tabbable elements in composed tree order', () => {
+    const root = document.createElement('div');
+    const first = document.createElement('button');
+    first.textContent = 'First';
+
+    const host = document.createElement('div');
+    const slotted = document.createElement('button');
+    slotted.textContent = 'Slotted';
+    host.append(slotted);
+
+    const shadow = host.attachShadow({ mode: 'open' });
+    const shadowButton = document.createElement('button');
+    shadowButton.textContent = 'Shadow';
+    const slot = document.createElement('slot');
+    shadow.append(shadowButton, slot);
+
+    const last = document.createElement('button');
+    last.textContent = 'Last';
+    root.append(first, host, last);
+
+    expect(getTabbableElements(root).map((element) => element.textContent)).toEqual([
+      'First',
+      'Shadow',
+      'Slotted',
+      'Last',
+    ]);
+  });
+
   it('excludes elements hidden from interaction by an ancestor', () => {
     const root = document.createElement('div');
     root.innerHTML = `
@@ -40,6 +68,18 @@ describe('focus', () => {
       <div hidden><button type="button">Hidden</button></div>
       <div aria-hidden="true"><button type="button">ARIA hidden</button></div>
     `;
+
+    expect(getTabbableElements(root)).toEqual([]);
+  });
+
+  it('excludes elements hidden by a shadow host', () => {
+    const root = document.createElement('div');
+    const host = document.createElement('div');
+    host.hidden = true;
+    const shadow = host.attachShadow({ mode: 'open' });
+    const button = document.createElement('button');
+    shadow.append(button);
+    root.append(host);
 
     expect(getTabbableElements(root)).toEqual([]);
   });
