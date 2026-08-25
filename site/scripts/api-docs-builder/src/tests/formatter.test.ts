@@ -90,25 +90,8 @@ describe('formatProperties', () => {
   const project = new OxcProject(FIXTURE_ROOT);
   const coreFile = path.join(FIXTURE_ROOT, 'packages/core/src/core/ui/toggle-button/core.ts');
   const declaration = project.resolveName(coreFile, 'ToggleButtonProps')!;
-  const type: import('oxc-parser').TSTypeReference = {
-    type: 'TSTypeReference',
-    typeName:
-      declaration.declaration.type === 'TSInterfaceDeclaration'
-        ? declaration.declaration.id
-        : {
-            type: 'Identifier',
-            name: 'ToggleButtonProps',
-            start: 0,
-            end: 0,
-            decorators: [],
-            optional: false,
-            typeAnnotation: null,
-          },
-    typeArguments: null,
-    start: declaration.declaration.start,
-    end: declaration.declaration.end,
-  };
-  const properties = formatProperties(project, project.interfaceMembers({ file: declaration.file, type }));
+  const type = parseType('ToggleButtonProps', declaration.file);
+  const properties = formatProperties(project, project.interfaceMembers(type));
 
   it('skips ref and @ignore members', () => {
     expect(properties.ref).toBeUndefined();
